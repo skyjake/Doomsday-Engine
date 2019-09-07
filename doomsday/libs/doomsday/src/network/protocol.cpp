@@ -37,7 +37,7 @@ static Packet::Type const CHALLENGE_PACKET_TYPE = Packet::typeFromString("Psw?")
 ChallengePacket::ChallengePacket() : Packet(CHALLENGE_PACKET_TYPE)
 {}
 
-Packet *ChallengePacket::fromBlock(Block const &block)
+Packet *ChallengePacket::fromBlock(const Block &block)
 {
     return constructFromBlock<ChallengePacket>(block, CHALLENGE_PACKET_TYPE);
 }
@@ -65,12 +65,12 @@ bool LogEntryPacket::isEmpty() const
     return _entries.isEmpty();
 }
 
-void LogEntryPacket::add(LogEntry const &entry)
+void LogEntryPacket::add(const LogEntry &entry)
 {
     _entries.append(new LogEntry(entry));
 }
 
-LogEntryPacket::Entries const &LogEntryPacket::entries() const
+const LogEntryPacket::Entries &LogEntryPacket::entries() const
 {
     return _entries;
 }
@@ -99,7 +99,7 @@ void LogEntryPacket::operator << (Reader &from)
     from.readObjects<LogEntry>(_entries);
 }
 
-Packet *LogEntryPacket::fromBlock(Block const &block)
+Packet *LogEntryPacket::fromBlock(const Block &block)
 {
     return constructFromBlock<LogEntryPacket>(block, LOG_ENTRY_PACKET_TYPE);
 }
@@ -117,7 +117,7 @@ PlayerInfoPacket::PlayerInfoPacket()
     : Packet(PLAYER_INFO_PACKET_TYPE), d(new Impl)
 {}
 
-void PlayerInfoPacket::add(Player const &player)
+void PlayerInfoPacket::add(const Player &player)
 {
     d->players.insert(player.number, player);
 }
@@ -127,7 +127,7 @@ dsize PlayerInfoPacket::count() const
     return d->players.size();
 }
 
-PlayerInfoPacket::Player const &PlayerInfoPacket::player(int number) const
+const PlayerInfoPacket::Player &PlayerInfoPacket::player(int number) const
 {
     DE_ASSERT(d->players.contains(number));
     return d->players[number];
@@ -166,7 +166,7 @@ void PlayerInfoPacket::operator<<(Reader &from)
     }
 }
 
-Packet *PlayerInfoPacket::fromBlock(Block const &block)
+Packet *PlayerInfoPacket::fromBlock(const Block &block)
 {
     return constructFromBlock<PlayerInfoPacket>(block, PLAYER_INFO_PACKET_TYPE);
 }
@@ -189,7 +189,7 @@ void MapOutlinePacket::clear()
     d->lines.clear();
 }
 
-void MapOutlinePacket::addLine(Vec2i const &vertex1, Vec2i const &vertex2, LineType type)
+void MapOutlinePacket::addLine(const Vec2i &vertex1, const Vec2i &vertex2, LineType type)
 {
     Line ln;
     ln.start = vertex1;
@@ -203,7 +203,7 @@ int MapOutlinePacket::lineCount() const
     return d->lines.sizei();
 }
 
-MapOutlinePacket::Line const &MapOutlinePacket::line(int index) const
+const MapOutlinePacket::Line &MapOutlinePacket::line(int index) const
 {
     DE_ASSERT(index >= 0 && index < d->lines.sizei());
     return d->lines[index];
@@ -237,7 +237,7 @@ void MapOutlinePacket::operator << (Reader &from)
     }
 }
 
-Packet *MapOutlinePacket::fromBlock(Block const &block)
+Packet *MapOutlinePacket::fromBlock(const Block &block)
 {
     return constructFromBlock<MapOutlinePacket>(block, MAP_OUTLINE_PACKET_TYPE);
 }
@@ -252,7 +252,7 @@ Protocol::Protocol()
     define(PlayerInfoPacket::fromBlock);
 }
 
-Protocol::PacketType Protocol::recognize(Packet const *packet)
+Protocol::PacketType Protocol::recognize(const Packet *packet)
 {
     if (packet->type() == CHALLENGE_PACKET_TYPE)
     {
@@ -279,7 +279,7 @@ Protocol::PacketType Protocol::recognize(Packet const *packet)
     }
 
     // One of the generic-format packets?
-    if (RecordPacket const *rec = maybeAs<RecordPacket>(packet))
+    if (const RecordPacket *rec = maybeAs<RecordPacket>(packet))
     {
         if (rec->name() == PT_COMMAND)
         {
@@ -297,7 +297,7 @@ Protocol::PacketType Protocol::recognize(Packet const *packet)
     return Unknown;
 }
 
-Block Protocol::passwordResponse(String const &plainPassword)
+Block Protocol::passwordResponse(const String &plainPassword)
 {
     Block response;
     response += "Shell";
@@ -306,29 +306,29 @@ Block Protocol::passwordResponse(String const &plainPassword)
     return response;
 }
 
-RecordPacket *Protocol::newCommand(String const &command)
+RecordPacket *Protocol::newCommand(const String &command)
 {
     RecordPacket *cmd = new RecordPacket(PT_COMMAND);
     cmd->record().addText("execute", command);
     return cmd;
 }
 
-static RecordPacket const &asRecordPacket(Packet const &packet, Protocol::PacketType type)
+static const RecordPacket &asRecordPacket(const Packet &packet, Protocol::PacketType type)
 {
-    RecordPacket const *rec = dynamic_cast<RecordPacket const *>(&packet);
+    const RecordPacket *rec = dynamic_cast<const RecordPacket *>(&packet);
     DE_ASSERT(rec != nullptr);
     DE_ASSERT(Protocol::recognize(&packet) == type);
     DE_UNUSED(type);
     return *rec;
 }
 
-String Protocol::command(Packet const &commandPacket)
+String Protocol::command(const Packet &commandPacket)
 {
-    RecordPacket const &rec = asRecordPacket(commandPacket, Command);
+    const RecordPacket &rec = asRecordPacket(commandPacket, Command);
     return rec["execute"].value().asText();
 }
 
-RecordPacket *Protocol::newConsoleLexicon(Lexicon const &lexicon)
+RecordPacket *Protocol::newConsoleLexicon(const Lexicon &lexicon)
 {
     RecordPacket *lex = new RecordPacket(PT_LEXICON);
     lex->record().addText("extraChars", lexicon.additionalWordChars());
@@ -340,9 +340,9 @@ RecordPacket *Protocol::newConsoleLexicon(Lexicon const &lexicon)
     return lex;
 }
 
-Lexicon Protocol::lexicon(Packet const &consoleLexiconPacket)
+Lexicon Protocol::lexicon(const Packet &consoleLexiconPacket)
 {
-    RecordPacket const &rec = asRecordPacket(consoleLexiconPacket, ConsoleLexicon);
+    const RecordPacket &rec = asRecordPacket(consoleLexiconPacket, ConsoleLexicon);
     Lexicon lexicon;
     DE_FOR_EACH_CONST(ArrayValue::Elements, i, rec["terms"].array().elements())
     {
@@ -352,10 +352,10 @@ Lexicon Protocol::lexicon(Packet const &consoleLexiconPacket)
     return lexicon;
 }
 
-RecordPacket *Protocol::newGameState(String const &mode,
-                                     String const &rules,
-                                     String const &mapId,
-                                     String const &mapTitle)
+RecordPacket *Protocol::newGameState(const String &mode,
+                                     const String &rules,
+                                     const String &mapId,
+                                     const String &mapTitle)
 {
     RecordPacket *gs = new RecordPacket(PT_GAME_STATE);
     Record &r = gs->record();

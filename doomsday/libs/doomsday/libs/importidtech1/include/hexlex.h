@@ -47,7 +47,7 @@ public:
      *
      * @see parse(), setSourcePath()
      */
-    explicit HexLex(Str const *script = nullptr, de::String const &sourcePath = "");
+    explicit HexLex(const Str *script = nullptr, const de::String &sourcePath = "");
 
     /**
      * Prepare a new script for parsing. It is assumed that the @a script data
@@ -55,7 +55,7 @@ public:
      *
      * @param script  The script source to be parsed.
      */
-    void parse(Str const *script);
+    void parse(const Str *script);
 
     /**
      * Change the source path used to identify the script in log messages.
@@ -64,14 +64,14 @@ public:
      *
      * @see sourcePath()
      */
-    void setSourcePath(de::String const &sourcePath);
+    void setSourcePath(const de::String &sourcePath);
 
     /**
      * Returns the currently configured source path.
      *
      * @see setSourcePath()
      */
-    de::String const &sourcePath() const;
+    const de::String &sourcePath() const;
 
     /**
      * Returns the line number at the current position in the script.
@@ -94,11 +94,11 @@ public:
     /**
      * Returns a copy of the last read token.
      */
-    Str const *token();
+    const Str *token();
 
     de::ddouble readNumber();
-    Str const *readString();
-    res::Uri readUri(de::String const &defaultScheme = "");
+    const Str *readString();
+    res::Uri readUri(const de::String &defaultScheme = "");
 
 private:
     DE_PRIVATE(d)

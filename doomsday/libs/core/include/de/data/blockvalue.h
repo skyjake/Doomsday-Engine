@@ -36,16 +36,16 @@ public:
     BlockValue();
 
     /// Copies the content of an existing block.
-    BlockValue(Block const &block);
+    BlockValue(const Block &block);
 
     /// Converts the BlockValue to a plain byte array (non-modifiable).
-    operator IByteArray const &() const;
+    operator const IByteArray &() const;
 
     /// Converts the BlockValue to a plain byte array.
     operator IByteArray &();
 
     Block &block();
-    Block const &block() const;
+    const Block &block() const;
 
     /// Empties the block value.
     void clear();
@@ -55,7 +55,7 @@ public:
     Text asText() const;
     dsize size() const;
     bool isTrue() const;
-    void sum(Value const &value);
+    void sum(const Value &value);
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

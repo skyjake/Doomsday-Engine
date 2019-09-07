@@ -40,7 +40,7 @@ public:
     DE_AUDIENCE(ContentHeight, void contentHeightIncreased(LogWidget &, int delta))
 
 public:
-    LogWidget(String const &name = {});
+    LogWidget(const String &name = {});
 
     /**
      * Sets the formatter that will be used for formatting log entries for the widget.
@@ -67,14 +67,14 @@ public:
      */
     void clear();
 
-    void setContentYOffset(Animation const &anim);
-    Animation const &contentYOffset() const;
+    void setContentYOffset(const Animation &anim);
+    const Animation &contentYOffset() const;
 
     // Events.
     void viewResized();
     void update();
     void drawContent();
-    bool handleEvent(Event const &event);
+    bool handleEvent(const Event &event);
 
 protected:
     void glInit();

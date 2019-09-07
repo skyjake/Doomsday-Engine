@@ -58,7 +58,7 @@ public:
         {
             _done.wait(timeout);
         }
-        catch (Waitable::TimeOutError const &)
+        catch (const Waitable::TimeOutError &)
         {
             cancel();
         }

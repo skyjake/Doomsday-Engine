@@ -31,9 +31,9 @@ class LIBDOOMSDAY_PUBLIC Episode : public Definition
 {
 public:
     Episode()                     : Definition() {}
-    Episode(Episode const &other) : Definition(other) {}
+    Episode(const Episode &other) : Definition(other) {}
     Episode(de::Record &d)        : Definition(d) {}
-    Episode(de::Record const &d)  : Definition(d) {}
+    Episode(const de::Record &d)  : Definition(d) {}
 
     void resetToDefaults();
 
@@ -41,10 +41,10 @@ public:
     int hubCount() const;
     bool hasHub(int index) const;
     de::Record &hub(int index);
-    de::Record const &hub(int index) const;
-    de::Record *tryFindHubByMapId(de::String const &mapId);
+    const de::Record &hub(int index) const;
+    de::Record *tryFindHubByMapId(const de::String &mapId);
 
-    de::Record *tryFindMapGraphNode(de::String const &mapId);
+    de::Record *tryFindMapGraphNode(const de::String &mapId);
     de::Record *tryFindMapGraphNodeByWarpNumber(int warpNumber);
 };
 

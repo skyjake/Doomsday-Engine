@@ -67,15 +67,15 @@ public:
     struct LIBDOOMSDAY_PUBLIC Component
     {
     public:
-        explicit Component(Vec2i const &origin = Vec2i());
+        explicit Component(const Vec2i &origin = Vec2i());
 
-        void setOrigin(Vec2i const &origin);
+        void setOrigin(const Vec2i &origin);
 
         /// Origin of the top left corner of the component (in texture space units).
-        Vec2i const &origin() const;
+        const Vec2i &origin() const;
 
-        bool operator == (Component const &other) const;
-        bool operator != (Component const &other) const;
+        bool operator == (const Component &other) const;
+        bool operator != (const Component &other) const;
 
         /// X-axis origin of the top left corner of the component (in texture space units).
         inline int xOrigin() const { return int(origin().x); }
@@ -99,8 +99,8 @@ public:
     /**
      * Construct a default composite texture.
      */
-    explicit Composite(String const &percentEncodedName = "",
-                       Vec2ui const &logicalDimensions = Vec2ui(),
+    explicit Composite(const String &percentEncodedName = "",
+                       const Vec2ui &logicalDimensions = Vec2ui(),
                        Flags flags = 0);
 
     /**
@@ -124,9 +124,9 @@ public:
      *
      * @return @c true if the definitions are equal.
      */
-    bool operator == (Composite const &other) const;
+    bool operator == (const Composite &other) const;
 
-    inline bool operator != (Composite const &other) const {
+    inline bool operator != (const Composite &other) const {
         return !(*this == other);
     }
 
@@ -134,10 +134,10 @@ public:
     String percentEncodedName() const;
 
     /// Returns the percent-endcoded symbolic name of the texture.
-    String const &percentEncodedNameRef() const;
+    const String &percentEncodedNameRef() const;
 
     /// Returns the logical dimensions of the texture (in map space units).
-    Vec2ui const &logicalDimensions() const;
+    const Vec2ui &logicalDimensions() const;
 
     /// Returns the logical width of the texture (in map space units).
     inline int logicalWidth() const { return int(logicalDimensions().x); }
@@ -146,7 +146,7 @@ public:
     inline int logicalHeight() const { return int(logicalDimensions().y); }
 
     /// Returns the pixel dimensions of the texture.
-    Vec2ui const &dimensions() const;
+    const Vec2ui &dimensions() const;
 
     /// Returns the pixel width of the texture.
     inline int width() const { return int(dimensions().x); }
@@ -166,7 +166,7 @@ public:
     /**
      * Provides access to the component images of the texture for efficent traversal.
      */
-    Components const &components() const;
+    const Components &components() const;
 
     /**
      * Returns @c true if the texture has flagged @a flagsToTest.

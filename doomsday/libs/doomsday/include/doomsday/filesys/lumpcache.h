@@ -42,7 +42,7 @@ private:
 
         uint8_t *data() const;
 
-        uint8_t const *replaceData(uint8_t *newData);
+        const uint8_t *replaceData(uint8_t *newData);
 
         Data &clearData(bool *retCleared = 0);
 
@@ -63,7 +63,7 @@ public:
 
     bool isValidIndex(uint idx) const;
 
-    uint8_t const *data(uint lumpIdx) const;
+    const uint8_t *data(uint lumpIdx) const;
 
     LumpCache &insert(uint lumpIdx, uint8_t *data);
 
@@ -80,7 +80,7 @@ public:
 protected:
     Data *cacheRecord(uint lumpIdx);
 
-    Data const *cacheRecord(uint lumpIdx) const;
+    const Data *cacheRecord(uint lumpIdx) const;
 
 private:
     uint _size;             ///< Number of data lumps which can be stored in the cache.

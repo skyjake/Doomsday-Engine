@@ -131,7 +131,7 @@ public:
      * @param size    Size of the image.
      * @param format  Data format.
      */
-    Image(Size const &size, Format format);
+    Image(const Size &size, Format format);
 
     /**
      * Constructs an image, taking a copy of the pixel data.
@@ -140,7 +140,7 @@ public:
      * @param format  Data format.
      * @param pixels  Pixel data.
      */
-    Image(Size const &size, Format format, IByteArray const &pixels);
+    Image(const Size &size, Format format, const IByteArray &pixels);
     
     /**
      * Constructs an image.
@@ -247,28 +247,28 @@ public:
     Color pixel(Vec2ui pos) const;
     
     // Drawing/editing methods.
-    Image       subImage(Rectanglei const &subArea) const;
-    void        resize(Size const &size);
+    Image       subImage(const Rectanglei &subArea) const;
+    void        resize(const Size &size);
     void        fill(Color color);
-    void        fill(Rectanglei const &rect, Color color);
+    void        fill(const Rectanglei &rect, Color color);
     inline void setPixel(duint x, duint y, Color color) { setPixel(Vec2ui(x, y), color); }
     void        setPixel(Vec2ui pos, Color color);
     void        drawRect(const Rectanglei &rect, Color color);
-    void        draw(Image const &image, Vec2i const &topLeft);
+    void        draw(const Image &image, const Vec2i &topLeft);
     inline void draw(int x, int y, const Image &image) { draw(image, Vec2i(x, y)); }
-    void        drawPartial(Image const &image, Rectanglei const &part, Vec2i const &topLeft);
+    void        drawPartial(const Image &image, const Rectanglei &part, const Vec2i &topLeft);
     inline void draw(int x, int y, const Image &image, int subX, int subY, int subW, int subH)
     {
         drawPartial(image, Rectanglei(subX, subY, subW, subH), Vec2i(x, y));
     }
 
-    Image multiplied(Image const &factorImage) const;
+    Image multiplied(const Image &factorImage) const;
     Image multiplied(Color color) const;
     Image colorized(Color color) const;
     Image invertedColor() const;
     Image mixed(const Image &low, const Image &high) const;
     Image mixed(const Color &zero, const Color &one, const int componentIndices[4] = nullptr) const;
-    Image withAlpha(Image const &grayscale) const;
+    Image withAlpha(const Image &grayscale) const;
     Image rgbSwapped() const;
     Image flipped() const;
 
@@ -284,7 +284,7 @@ public:
     static GLPixelFormat glFormat(Format imageFormat);
 //    static GLPixelFormat glFormat(QImage::Format qtImageFormat);
 
-    static Image solidColor(Color color, Size const &size);
+    static Image solidColor(Color color, const Size &size);
 
     /**
      * Loads an image from a block of data. The format of the image is autodetected.
@@ -294,18 +294,18 @@ public:
      * @param data        Block of data containing image data.
      * @param formatHint  Optionally, file name extension with dot included (".tga").
      */
-    static Image fromData(IByteArray const &data, String const &formatHint = "");
+    static Image fromData(const IByteArray &data, const String &formatHint = "");
 
     static Image fromXpmData(const char * const *xpmStrings);
 
     /// @copydoc fromData()
-    static Image fromData(Block const &data, String const &formatHint = "");
+    static Image fromData(const Block &data, const String &formatHint = "");
 
-    static Image fromRgbaData(Size const &size, IByteArray const &rgba);
+    static Image fromRgbaData(const Size &size, const IByteArray &rgba);
 
-    static Image fromIndexedData(Size const &      size,
-                                 IByteArray const &image,
-                                 IByteArray const &palette);
+    static Image fromIndexedData(const Size &      size,
+                                 const IByteArray &image,
+                                 const IByteArray &palette);
 
     /**
      * Converts a color indexed 8-bit image to RGBA_8888.
@@ -320,16 +320,16 @@ public:
      *
      * @return Image in RGBA_8888 format.
      */
-    static Image fromMaskedIndexedData(Image::Size const &size,
-                                       IByteArray const &imageAndMask,
-                                       IByteArray const &palette);
+    static Image fromMaskedIndexedData(const Image::Size &size,
+                                       const IByteArray &imageAndMask,
+                                       const IByteArray &palette);
 
     /**
      * Attempts to recognize if a file contains a supported image content format.
      * @param file  File whose contents to recognize.
      * @return `true` if image data can be loaded from the file.
      */
-    static bool recognize(File const &file);
+    static bool recognize(const File &file);
 
 private:
     DE_PRIVATE(d)

@@ -102,7 +102,7 @@ void NetSv_UpdateGameConfigDescription()
 {
     if (IS_CLIENT) return;
 
-    GameRules const &gameRules = gfw_Session()->rules();
+    const GameRules &gameRules = gfw_Session()->rules();
 
     String str = "skill" + String::asText(gameRules.values.skill + 1);
 
@@ -214,7 +214,7 @@ void NetSv_Ticker()
     }
 }
 
-static void NetSv_CycleToMapNum(res::Uri const &mapUri)
+static void NetSv_CycleToMapNum(const res::Uri &mapUri)
 {
     de::String const warpCommand = de::String("warp ") + mapUri.compose(res::Uri::DecodePath);
     DD_Execute(false, warpCommand);
@@ -570,11 +570,11 @@ void NetSv_NewPlayerEnters(int plrNum)
     else
     {
         playerclass_t pClass = P_ClassForPlayerWhenRespawning(plrNum, false);
-        playerstart_t const *start;
+        const playerstart_t *start;
 
         if((start = P_GetPlayerStart(gfw_Session()->mapEntryPoint(), plrNum, false)))
         {
-            mapspot_t const *spot = &mapSpots[start->spot];
+            const mapspot_t *spot = &mapSpots[start->spot];
 
             LOGDEV_MAP_MSG("NetSv_NewPlayerEnters: Spawning player with angle:%x") << spot->angle;
 
@@ -1145,7 +1145,7 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged, dd_bool stomping)
     tmp[1] = 0;
 
     // Choose the right kill message template.
-    char const *in = GET_TXT(stomping ? TXT_KILLMSG_STOMP : killer ==
+    const char *in = GET_TXT(stomping ? TXT_KILLMSG_STOMP : killer ==
                              fragged ? TXT_KILLMSG_SUICIDE : TXT_KILLMSG_WEAPON0 +
                              killer->readyWeapon);
 
@@ -1201,7 +1201,7 @@ void NetSv_SendJumpPower(int target, float power)
     Net_SendPacket(target, GPT_JUMP_POWER, Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_ExecuteCheat(int player, char const *command)
+void NetSv_ExecuteCheat(int player, const char *command)
 {
     // Killing self is always allowed.
     /// @todo fixme: really? Even in deathmatch?? (should be a game rule)
@@ -1442,7 +1442,7 @@ void NetSv_LoadGame(uint sessionId)
 #endif
 }
 
-void NetSv_SendMessageEx(int plrNum, char const *msg, dd_bool yellow)
+void NetSv_SendMessageEx(int plrNum, const char *msg, dd_bool yellow)
 {
     if(IS_CLIENT || !netSvAllowSendMsg)
         return;
@@ -1469,12 +1469,12 @@ void NetSv_SendMessageEx(int plrNum, char const *msg, dd_bool yellow)
                    Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_SendMessage(int plrNum, char const *msg)
+void NetSv_SendMessage(int plrNum, const char *msg)
 {
     NetSv_SendMessageEx(plrNum, msg, false);
 }
 
-void NetSv_SendYellowMessage(int plrNum, char const *msg)
+void NetSv_SendYellowMessage(int plrNum, const char *msg)
 {
     NetSv_SendMessageEx(plrNum, msg, true);
 }
@@ -1497,7 +1497,7 @@ void NetSv_MaybeChangeWeapon(int plrNum, int weapon, int ammo, int force)
     Net_SendPacket(plrNum, GPT_MAYBE_CHANGE_WEAPON, Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_SendLocalMobjState(mobj_t *mobj, char const *stateName)
+void NetSv_SendLocalMobjState(mobj_t *mobj, const char *stateName)
 {
     DE_ASSERT(mobj != 0);
 

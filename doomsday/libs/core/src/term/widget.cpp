@@ -58,7 +58,7 @@ DE_PIMPL_NOREF(Widget)
      *
      * @return Focus changed successfully.
      */
-    bool navigateFocus(TextRootWidget &root, String const &name)
+    bool navigateFocus(TextRootWidget &root, const String &name)
     {
         if (auto *w = root.find(name))
         {
@@ -70,7 +70,7 @@ DE_PIMPL_NOREF(Widget)
     }
 };
 
-Widget::Widget(String const &name)
+Widget::Widget(const String &name)
     : de::Widget(name)
     , d(new Impl)
 {
@@ -124,7 +124,7 @@ RuleRectangle &Widget::rule()
     return *d->rule;
 }
 
-RuleRectangle const &Widget::rule() const
+const RuleRectangle &Widget::rule() const
 {
     DE_ASSERT(d->rule != nullptr);
     return *d->rule;
@@ -145,12 +145,12 @@ void Widget::removeAction(Action &action)
     d->removeAction(action);
 }
 
-bool Widget::handleEvent(Event const &event)
+bool Widget::handleEvent(const Event &event)
 {
     // We only support KeyEvents.
     if (event.type() == Event::KeyPress)
     {
-        KeyEvent const &keyEvent = event.as<KeyEvent>();
+        const KeyEvent &keyEvent = event.as<KeyEvent>();
 
         for (Action *act : d->actions)
         {

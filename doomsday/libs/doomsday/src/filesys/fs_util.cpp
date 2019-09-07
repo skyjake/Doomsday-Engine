@@ -55,13 +55,13 @@
 using namespace de;
 using namespace res;
 
-int F_Access(char const *nativePath)
+int F_Access(const char *nativePath)
 {
     res::Uri path = res::Uri::fromNativePath(nativePath);
     return App_FileSystem().accessFile(path)? 1 : 0;
 }
 
-int F_FileExists(char const *path)
+int F_FileExists(const char *path)
 {
     int result = -1;
     if (path && path[0])
@@ -80,7 +80,7 @@ int F_FileExists(char const *path)
     return result;
 }
 
-uint F_GetLastModified(char const *path)
+uint F_GetLastModified(const char *path)
 {
 #ifdef UNIX
     struct stat s;
@@ -95,14 +95,14 @@ uint F_GetLastModified(char const *path)
 #endif
 }
 
-dd_bool F_MakePath(char const *path)
+dd_bool F_MakePath(const char *path)
 {
     try
     {
         App::fileSystem().makeFolder(path);
         return true;
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_WARNING("Failed to create path \"%s\": %s") << path << er.asText();
         return false;
@@ -259,7 +259,7 @@ dd_bool F_ToNativeSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
 /**
  * @return  @c true iff the path can be made into a relative path.
  */
-static bool F_IsRelativeToBase(char const *path, char const *base)
+static bool F_IsRelativeToBase(const char *path, const char *base)
 {
     DE_ASSERT(path != 0 && base != 0);
     return !iCmpStrNCase(path, base, strlen(base));
@@ -273,7 +273,7 @@ static bool F_IsRelativeToBase(char const *path, char const *base)
  *
  * @return  @c true iff the base path was found and removed.
  */
-static dd_bool F_RemoveBasePath(ddstring_t *dst, ddstring_t const *absPath)
+static dd_bool F_RemoveBasePath(ddstring_t *dst, const ddstring_t *absPath)
 {
     DE_ASSERT(dst != 0 && absPath != 0);
 
@@ -476,7 +476,7 @@ const char* F_PrettyPath(const char* path)
 }
 
 /*
-dd_bool F_Dump(void const *data, size_t size, char const *path)
+dd_bool F_Dump(const void *data, size_t size, const char *path)
 {
     DE_ASSERT(data != 0 && path != 0);
 
@@ -499,7 +499,7 @@ dd_bool F_Dump(void const *data, size_t size, char const *path)
     return true;
 }*/
 
-dd_bool F_DumpFile(File1 &file, char const *outputPath)
+dd_bool F_DumpFile(File1 &file, const char *outputPath)
 {
     String dumpPath = "/home" / ((!outputPath || !outputPath[0])? file.name() : String(outputPath));
     try
@@ -511,14 +511,14 @@ dd_bool F_DumpFile(File1 &file, char const *outputPath)
         LOG_RES_VERBOSE("%s dumped to %s") << file.name() << out.description();
         return true;
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_RES_ERROR("Failed to write to \"%s\": %s") << dumpPath << er.asText();
         return false;
     }
 }
 
-bool F_DumpNativeFile(Block const &data, NativePath const &filePath)
+bool F_DumpNativeFile(const Block &data, const NativePath &filePath)
 {
     try
     {
@@ -527,7 +527,7 @@ bool F_DumpNativeFile(Block const &data, NativePath const &filePath)
         *file << data;
         return true;
     }
-    catch (Error const &)
+    catch (const Error &)
     {
         return false;
     }

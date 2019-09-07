@@ -119,7 +119,7 @@ DE_PIMPL(GuiRootWidget)
     };
 #endif
     struct StyleImage : public TextureBank::ImageSource {
-        StyleImage(DotPath const &sourcePath) : ImageSource(sourcePath) {}
+        StyleImage(const DotPath &sourcePath) : ImageSource(sourcePath) {}
         Image load() const {
             return Style::get().images().image(sourcePath());
         }
@@ -194,10 +194,10 @@ DE_PIMPL(GuiRootWidget)
 //        texBank.add(ID_DOT,                 new TinyDotImage);
 
         // All style images.
-        Style const &st = Style::get();
+        const Style &st = Style::get();
         ImageBank::Names imageNames;
         st.images().allItems(imageNames);
-        for (String const &name : imageNames)
+        for (const String &name : imageNames)
         {
             texBank.add("Style." + name, new StyleImage(name));
         }
@@ -212,7 +212,7 @@ DE_PIMPL(GuiRootWidget)
 
     void focusedWidgetChanged(Widget *focused)
     {
-        if (GuiWidget const *w = maybeAs<GuiWidget>(focused))
+        if (const GuiWidget *w = maybeAs<GuiWidget>(focused))
         {
             focusIndicator->rule().setRect(w->hitRule());
             if (!w->attributes().testFlag(GuiWidget::FocusHidden))
@@ -308,7 +308,7 @@ Id GuiRootWidget::tinyDot() const
     return d->texBank.texture(DE_STR("Style.widget.dot"));
 }
 
-Id GuiRootWidget::styleTexture(DotPath const &styleImagePath) const
+Id GuiRootWidget::styleTexture(const DotPath &styleImagePath) const
 {
     d->initAtlas();
     return d->texBank.texture(DE_STR("Style.") + styleImagePath.toString());
@@ -345,7 +345,7 @@ void GuiRootWidget::routeMouse(Widget *routeTo)
 void GuiRootWidget::dispatchLatestMousePosition()
 {}
 
-bool GuiRootWidget::processEvent(Event const &event)
+bool GuiRootWidget::processEvent(const Event &event)
 {
     window().glActivate();
 
@@ -360,7 +360,7 @@ bool GuiRootWidget::processEvent(Event const &event)
     return wasProcessed;
 }
 
-void GuiRootWidget::handleEventAsFallback(Event const &)
+void GuiRootWidget::handleEventAsFallback(const Event &)
 {}
 
 void GuiRootWidget::loadCommonTextures()
@@ -369,14 +369,14 @@ void GuiRootWidget::loadCommonTextures()
     d->initBankContents();
 }
 
-GuiWidget const *GuiRootWidget::globalHitTest(Vec2i const &pos) const
+const GuiWidget *GuiRootWidget::globalHitTest(const Vec2i &pos) const
 {
     Widget::Children const childs = children();
     for (int i = childs.sizei() - 1; i >= 0; --i)
     {
-        if (auto const *w = maybeAs<GuiWidget>(childs.at(i)))
+        if (const auto *w = maybeAs<GuiWidget>(childs.at(i)))
         {
-            if (GuiWidget const *hit = w->treeHitTest(pos))
+            if (const GuiWidget *hit = w->treeHitTest(pos))
             {
                 return hit;
             }
@@ -385,7 +385,7 @@ GuiWidget const *GuiRootWidget::globalHitTest(Vec2i const &pos) const
     return nullptr;
 }
 
-GuiWidget const *GuiRootWidget::guiFind(String const &name) const
+const GuiWidget *GuiRootWidget::guiFind(const String &name) const
 {
     return maybeAs<GuiWidget>(find(name));
 }

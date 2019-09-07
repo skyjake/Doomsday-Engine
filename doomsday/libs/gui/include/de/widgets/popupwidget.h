@@ -37,7 +37,7 @@ namespace de {
 class LIBGUI_PUBLIC PopupWidget : public PanelWidget
 {
 public:
-    PopupWidget(String const &name = {});
+    PopupWidget(const String &name = {});
 
     /**
      * Determines how deeply nested this popup is within parent popups.
@@ -47,7 +47,7 @@ public:
      */
     int levelOfNesting() const;
 
-    void setAnchorAndOpeningDirection(RuleRectangle const &rule, ui::Direction dir);
+    void setAnchorAndOpeningDirection(const RuleRectangle &rule, ui::Direction dir);
 
     /**
      * Enables or disables the popup to flip the opening direction if there
@@ -57,14 +57,14 @@ public:
      */
     void setAllowDirectionFlip(bool flex);
 
-    void setAnchor(Vec2i const &pos);
+    void setAnchor(const Vec2i &pos);
     void setAnchorX(int xPos);
     void setAnchorY(int yPos);
-    void setAnchor(Rule const &x, Rule const &y);
-    void setAnchorX(Rule const &x);
-    void setAnchorY(Rule const &y);
+    void setAnchor(const Rule &x, const Rule &y);
+    void setAnchorX(const Rule &x);
+    void setAnchorY(const Rule &y);
 
-    RuleRectangle const &anchor() const;
+    const RuleRectangle &anchor() const;
 
     /**
      * Replace the anchor with rules of matching constant value.
@@ -106,7 +106,7 @@ public:
      *
      * @param outlineColor  Outline color.
      */
-    void setOutlineColor(DotPath const &outlineColor);
+    void setOutlineColor(const DotPath &outlineColor);
 
     void setCloseButtonVisible(bool enable);
 
@@ -120,7 +120,7 @@ public:
 
     // Events.
     void offerFocus() override;
-    bool handleEvent(Event const &event) override;
+    bool handleEvent(const Event &event) override;
 
 protected:
     void glMakeGeometry(GuiVertexBuilder &verts) override;

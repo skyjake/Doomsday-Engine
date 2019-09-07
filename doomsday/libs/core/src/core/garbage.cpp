@@ -39,7 +39,7 @@ struct Garbage : public Lockable
         recycle();
     }
 
-    bool contains(void const *ptr) const
+    bool contains(const void *ptr) const
     {
         DE_GUARD(this);
 
@@ -181,7 +181,7 @@ void Garbage_TrashInstance(void *ptr, GarbageDestructor destructor)
     }
 }
 
-int Garbage_IsTrashed(void const *ptr)
+int Garbage_IsTrashed(const void *ptr)
 {
     Garbage *g = garbageForThread(current_Thread());
     return g->contains(ptr);

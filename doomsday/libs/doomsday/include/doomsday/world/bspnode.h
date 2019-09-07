@@ -48,7 +48,7 @@ public:
 class LIBDOOMSDAY_PUBLIC BspNode : public BspElement, public de::Partition
 {
 public:
-    BspNode(de::Partition const &partition);
+    BspNode(const de::Partition &partition);
 };
 
 /**

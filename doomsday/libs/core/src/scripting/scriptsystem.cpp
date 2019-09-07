@@ -92,7 +92,7 @@ DE_PIMPL(ScriptSystem)
         modules.deleteAll();
     }
 
-    static Value *Function_ImportPath(Context &, Function::ArgumentValues const &)
+    static Value *Function_ImportPath(Context &, const Function::ArgumentValues &)
     {
         DE_ASSERT(_scriptSystem != nullptr);
 
@@ -100,7 +100,7 @@ DE_PIMPL(ScriptSystem)
         _scriptSystem->d->listImportPaths(importPaths);
 
         auto *array = new ArrayValue;
-        for (auto const &path : importPaths)
+        for (const auto &path : importPaths)
         {
             *array << TextValue(path);
         }
@@ -118,7 +118,7 @@ DE_PIMPL(ScriptSystem)
         addNativeModule("Core", coreModule);
     }
 
-    void addNativeModule(String const &name, Record &module)
+    void addNativeModule(const String &name, Record &module)
     {
         DE_GUARD(nativeModules);
         auto existing = nativeModules.value.find(name);
@@ -130,7 +130,7 @@ DE_PIMPL(ScriptSystem)
         module.audienceForDeletion() += this;
     }
 
-    void removeNativeModule(String const &name)
+    void removeNativeModule(const String &name)
     {
         DE_GUARD(nativeModules);
         if (!nativeModules.value.contains(name)) return;
@@ -158,12 +158,12 @@ DE_PIMPL(ScriptSystem)
         std::unique_ptr<ArrayValue> defaultImportPath(new ArrayValue);
         defaultImportPath->add("");
         //defaultImportPath->add("*"); // Newest module with a matching name.
-        ArrayValue const *importPath;
+        const ArrayValue *importPath;
         try
         {
             importPath = &App::config().geta("importPath");
         }
-        catch (Record::NotFoundError const &)
+        catch (const Record::NotFoundError &)
         {
             importPath = defaultImportPath.get();
         }
@@ -191,27 +191,27 @@ ScriptSystem::~ScriptSystem()
     _scriptSystem = nullptr;
 }
 
-void ScriptSystem::addModuleImportPath(Path const &path)
+void ScriptSystem::addModuleImportPath(const Path &path)
 {
     d->additionalImportPaths << path;
 }
 
-void ScriptSystem::removeModuleImportPath(Path const &path)
+void ScriptSystem::removeModuleImportPath(const Path &path)
 {
     d->additionalImportPaths.removeOne(path);
 }
 
-void ScriptSystem::addNativeModule(String const &name, Record &module)
+void ScriptSystem::addNativeModule(const String &name, Record &module)
 {
     d->addNativeModule(name, module);
 }
 
-void ScriptSystem::removeNativeModule(String const &name)
+void ScriptSystem::removeNativeModule(const String &name)
 {
     d->removeNativeModule(name);
 }
 
-Record &ScriptSystem::nativeModule(String const &name)
+Record &ScriptSystem::nativeModule(const String &name)
 {
     DE_GUARD_FOR(d->nativeModules, G);
     auto foundNative = d->nativeModules.value.find(name);
@@ -250,7 +250,7 @@ StringList ScriptSystem::nativeModules() const
                            [](const std::pair<String, Record *> &v) { return v.first; });
 }
 
-File const *ScriptSystem::tryFindModuleSource(String const &name, String const &localPath)
+const File *ScriptSystem::tryFindModuleSource(const String &name, const String &localPath)
 {
     // Compile a list of all possible import locations.
     StringList importPaths;
@@ -306,9 +306,9 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
     return nullptr;
 }
 
-File const &ScriptSystem::findModuleSource(String const &name, String const &localPath)
+const File &ScriptSystem::findModuleSource(const String &name, const String &localPath)
 {
-    File const *src = tryFindModuleSource(name, localPath);
+    const File *src = tryFindModuleSource(name, localPath);
     if (!src)
     {
         /// @throw NotFoundError  Module could not be found.
@@ -317,12 +317,12 @@ File const &ScriptSystem::findModuleSource(String const &name, String const &loc
     return *src;
 }
 
-Record &ScriptSystem::builtInClass(String const &name)
+Record &ScriptSystem::builtInClass(const String &name)
 {
     return builtInClass(DE_STR("Core"), name);
 }
 
-Record &ScriptSystem::builtInClass(String const &nativeModuleName, String const &className)
+Record &ScriptSystem::builtInClass(const String &nativeModuleName, const String &className)
 {
     return const_cast<Record &>(ScriptSystem::get().nativeModule(nativeModuleName)
                                 .getr(className).dereference());
@@ -334,7 +334,7 @@ ScriptSystem &ScriptSystem::get()
     return *_scriptSystem;
 }
 
-Record &ScriptSystem::importModule(String const &name, String const &importedFromPath)
+Record &ScriptSystem::importModule(const String &name, const String &importedFromPath)
 {
     LOG_AS("ScriptSystem::importModule");
 
@@ -356,7 +356,7 @@ Record &ScriptSystem::importModule(String const &name, String const &importedFro
     }
 
     // Get it from a file, then.
-    File const *src = tryFindModuleSource(name, importedFromPath.fileNamePath());
+    const File *src = tryFindModuleSource(name, importedFromPath.fileNamePath());
     if (src)
     {
         Module *module = new Module(*src);
@@ -367,7 +367,7 @@ Record &ScriptSystem::importModule(String const &name, String const &importedFro
     throw NotFoundError("ScriptSystem::importModule", "Cannot find module '" + name + "'");
 }
 
-void ScriptSystem::timeChanged(Clock const &)
+void ScriptSystem::timeChanged(const Clock &)
 {
     // perform time-based processing/scheduling/events
 }

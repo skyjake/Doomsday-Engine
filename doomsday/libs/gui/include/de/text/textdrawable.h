@@ -55,8 +55,8 @@ class LIBGUI_PUBLIC TextDrawable : public GLTextComposer
 public:
     TextDrawable();
 
-    void init(Atlas &atlas, Font const &font,
-              Font::RichFormat::IStyle const *style = 0);
+    void init(Atlas &atlas, const Font &font,
+              const Font::RichFormat::IStyle *style = 0);
 
     void deinit();
 
@@ -69,9 +69,9 @@ public:
      */
     void setLineWrapWidth(int maxLineWidth);
 
-    void setText(String const &styledText);
+    void setText(const String &styledText);
 
-    void setFont(Font const &font);
+    void setFont(const Font &font);
 
     /**
      * Sets the range of visible lines and releases all allocations outside
@@ -79,7 +79,7 @@ public:
      *
      * @param lineRange  Range of visible lines.
      */
-    void setRange(Rangei const &lineRange);
+    void setRange(const Rangei &lineRange);
 
     /**
      * Updates the status of the composer. This includes first checking if a
@@ -92,12 +92,12 @@ public:
      */
     bool update();
 
-    FontLineWrapping const &wraps() const;
+    const FontLineWrapping &wraps() const;
 
     Vec2ui wrappedSize() const;
     String text() const;
     bool isBeingWrapped() const;
-    Font const &font() const;
+    const Font &font() const;
 
 private:
     DE_PRIVATE(d)

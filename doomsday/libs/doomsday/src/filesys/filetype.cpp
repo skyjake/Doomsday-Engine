@@ -26,12 +26,12 @@ static NullFileType nullFileType;
 /// A symbolic name => file type map.
 static FileTypes fileTypeMap;
 
-void DD_AddFileType(FileType const &ftype)
+void DD_AddFileType(const FileType &ftype)
 {
     fileTypeMap.insert(ftype.name().lower(), &ftype);
 }
 
-FileType const &DD_FileTypeByName(String name)
+const FileType &DD_FileTypeByName(String name)
 {
     if (!name.isEmpty())
     {
@@ -41,13 +41,13 @@ FileType const &DD_FileTypeByName(String name)
     return nullFileType; // Not found.
 }
 
-FileType const &DD_GuessFileTypeFromFileName(String path)
+const FileType &DD_GuessFileTypeFromFileName(String path)
 {
     if (!path.isEmpty())
     {
         DE_FOR_EACH_CONST(FileTypes, i, fileTypeMap)
         {
-            FileType const &ftype = *i->second;
+            const FileType &ftype = *i->second;
             if (ftype.fileNameIsKnown(path))
                 return ftype;
         }

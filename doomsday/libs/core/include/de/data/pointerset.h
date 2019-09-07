@@ -37,7 +37,7 @@ class DE_PUBLIC PointerSet
 {
 public:
     typedef void * Pointer;
-    typedef Pointer const * const_iterator;
+    typedef const Pointer * const_iterator;
     typedef duint16 Flag;
 
     static Flag const AllowInsertionDuringIteration;
@@ -49,12 +49,12 @@ public:
     {
     public:
         virtual ~IIterationObserver() = default;
-        virtual void pointerSetIteratorsWereInvalidated(Pointer const *oldBase, Pointer const *newBase) = 0;
+        virtual void pointerSetIteratorsWereInvalidated(const Pointer *oldBase, const Pointer *newBase) = 0;
     };
 
 public:
     PointerSet();
-    PointerSet(PointerSet const &other);
+    PointerSet(const PointerSet &other);
     PointerSet(PointerSet &&moved);
 
     ~PointerSet();
@@ -65,7 +65,7 @@ public:
     void clear();
     Pointer take();
 
-    PointerSet &operator = (PointerSet const &other);
+    PointerSet &operator = (const PointerSet &other);
     PointerSet &operator = (PointerSet &&moved);
 
     inline Flag flags() const           { return _flags; }
@@ -107,15 +107,15 @@ class PointerSetT : public PointerSet
 public:
     typedef PointerSet::Pointer BasePointer;
     typedef Type * Pointer;
-    typedef Type const * ConstPointer;
-    typedef Pointer const * const_iterator;
+    typedef const Type * ConstPointer;
+    typedef const Pointer * const_iterator;
 
 public:
     PointerSetT() {}
-    PointerSetT(PointerSetT const &other) : PointerSet(other) {}
+    PointerSetT(const PointerSetT &other) : PointerSet(other) {}
     PointerSetT(PointerSetT &&moved)      : PointerSet(moved) {}
 
-    inline PointerSetT &operator = (PointerSetT const &other) {
+    inline PointerSetT &operator = (const PointerSetT &other) {
         PointerSet::operator = (other);
         return *this;
     }

@@ -74,7 +74,7 @@ DE_PIMPL(EntityRender)
     void loadModels()
     {
         auto &context = self().context();
-        auto const &pkg = PackageLoader::get().package("net.dengine.gloom.test"); // XXX
+        const auto &pkg = PackageLoader::get().package("net.dengine.gloom.test"); // XXX
 
         const char *filenames[] = {
             "models/tree1/t2.3ds",

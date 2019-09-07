@@ -106,11 +106,11 @@ public:
 
     /// Respond to the given (input) event @a ev.
     /// @return  @c true if the event is eaten.
-    virtual int handleEvent(event_t const &ev);
+    virtual int handleEvent(const event_t &ev);
 
     /// Respond to the given (input) event @a ev.
     /// @return  @c true if the event is eaten.
-    virtual int handleEvent_Privileged(event_t const &ev);
+    virtual int handleEvent_Privileged(const event_t &ev);
 
     /// Respond to the given menu @a command.
     /// @return  @c true if the command was eaten.
@@ -180,7 +180,7 @@ public:
      * @return  Rectangluar region of the parent space.
      */
     de::Rectanglei &geometry();
-    de::Rectanglei const &geometry() const;
+    const de::Rectanglei &geometry() const;
 
     /**
      * Retreive the current fixed origin coordinates.
@@ -192,7 +192,7 @@ public:
     inline int fixedX() const { return fixedOrigin().x; }
     inline int fixedY() const { return fixedOrigin().y; }
 
-    Widget &setFixedOrigin(de::Vec2i const &newOrigin);
+    Widget &setFixedOrigin(const de::Vec2i &newOrigin);
     Widget &setFixedX(int x);
     Widget &setFixedY(int y);
 
@@ -209,7 +209,7 @@ public:
     int font() const;
 
     Widget &setHelpInfo(de::String newHelpInfo);
-    de::String const &helpInfo() const;
+    const de::String &helpInfo() const;
 
     /**
      * Returns @c true if a triggerable action is defined for the specified @a id.

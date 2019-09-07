@@ -25,7 +25,7 @@ using namespace de;
 
 namespace world {
 
-static res::Uri findTextureForShineStage(ded_shine_stage_t const &def, bool findMask)
+static res::Uri findTextureForShineStage(const ded_shine_stage_t &def, bool findMask)
 {
     if (res::Uri *resourceUri = (findMask? def.maskTexture : def.texture))
     {
@@ -36,15 +36,15 @@ static res::Uri findTextureForShineStage(ded_shine_stage_t const &def, bool find
                            .findByResourceUri(*resourceUri)
                                .composeUri();
         }
-        catch (res::TextureScheme::NotFoundError const &)
+        catch (const res::TextureScheme::NotFoundError &)
         {} // Ignore this error.
     }
     return res::Uri();
 }
 
-ShineTextureMaterialLayer::AnimationStage::AnimationStage(res::Uri const &texture, int tics,
-    float variance, res::Uri const &maskTexture, blendmode_t blendMode, float opacity,
-    Vec3f const &minColor, Vec2f const &maskDimensions)
+ShineTextureMaterialLayer::AnimationStage::AnimationStage(const res::Uri &texture, int tics,
+    float variance, const res::Uri &maskTexture, blendmode_t blendMode, float opacity,
+    const Vec3f &minColor, const Vec2f &maskDimensions)
     : TextureMaterialLayer::AnimationStage(texture, tics, variance, 0, 0, Vec2f(0, 0),
                                            maskTexture, maskDimensions, blendMode, opacity)
     , minColor(minColor)
@@ -53,7 +53,7 @@ ShineTextureMaterialLayer::AnimationStage::AnimationStage(res::Uri const &textur
 
 }
 
-ShineTextureMaterialLayer::AnimationStage::AnimationStage(AnimationStage const &other)
+ShineTextureMaterialLayer::AnimationStage::AnimationStage(const AnimationStage &other)
     : TextureMaterialLayer::AnimationStage(other)
 {}
 
@@ -68,7 +68,7 @@ void ShineTextureMaterialLayer::AnimationStage::resetToDefaults()
 }
 
 ShineTextureMaterialLayer::AnimationStage *
-ShineTextureMaterialLayer::AnimationStage::fromDef(ded_shine_stage_t const &def)
+ShineTextureMaterialLayer::AnimationStage::fromDef(const ded_shine_stage_t &def)
 {
     res::Uri const texture     = findTextureForShineStage(def, false/*not mask*/);
     res::Uri const maskTexture = findTextureForShineStage(def, true/*mask*/);
@@ -87,7 +87,7 @@ ShineTextureMaterialLayer::ShineTextureMaterialLayer()
 ShineTextureMaterialLayer::~ShineTextureMaterialLayer()
 {}
 
-ShineTextureMaterialLayer *ShineTextureMaterialLayer::fromDef(ded_reflection_t const &layerDef)
+ShineTextureMaterialLayer *ShineTextureMaterialLayer::fromDef(const ded_reflection_t &layerDef)
 {
     auto *layer = new ShineTextureMaterialLayer();
     // Only the one stage.
@@ -95,7 +95,7 @@ ShineTextureMaterialLayer *ShineTextureMaterialLayer::fromDef(ded_reflection_t c
     return layer;
 }
 
-int ShineTextureMaterialLayer::addStage(ShineTextureMaterialLayer::AnimationStage const &stageToCopy)
+int ShineTextureMaterialLayer::addStage(const ShineTextureMaterialLayer::AnimationStage &stageToCopy)
 {
     _stages.append(new AnimationStage(stageToCopy));
     return _stages.count() - 1;

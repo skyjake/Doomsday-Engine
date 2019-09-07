@@ -45,14 +45,14 @@ public:
     DE_ERROR(ValueTypeError);
 
 public:
-    RecordAccessor(Record const *rec);
-    RecordAccessor(Record const &rec);
+    RecordAccessor(const Record *rec);
+    RecordAccessor(const Record &rec);
 
-    Record const &accessedRecord() const;
-    Record const *accessedRecordPtr() const;
+    const Record &accessedRecord() const;
+    const Record *accessedRecordPtr() const;
 
     bool has(const String &name) const;
-    Value const &get(const String &name) const;
+    const Value &get(const String &name) const;
     dint geti(const String &name) const;
     dint geti(const String &name, dint defaultValue) const;
     bool getb(const String &name) const;
@@ -65,16 +65,16 @@ public:
     ddouble getd(const String &name, ddouble defaultValue) const;
     String gets(const String &name) const;
     String gets(const String &name, const char *defaultValue) const;
-    ArrayValue const &geta(const String &name) const;
-    DictionaryValue const &getdt(const String &name) const;
-    RecordValue const &getr(const String &name) const;
+    const ArrayValue &geta(const String &name) const;
+    const DictionaryValue &getdt(const String &name) const;
+    const RecordValue &getr(const String &name) const;
     StringList getStringList(const String &name, StringList defaultValue = StringList()) const;
 
-    Record const &subrecord(const String &name) const;
+    const Record &subrecord(const String &name) const;
 
     template <typename ValueType>
-    ValueType const &getAs(const String &name) const {
-        ValueType const *v = maybeAs<ValueType>(get(name));
+    const ValueType &getAs(const String &name) const {
+        const ValueType *v = maybeAs<ValueType>(get(name));
         if (!v) {
             throw ValueTypeError("RecordAccessor::getAs", String("Cannot cast to expected type (") +
                                  DE_TYPE_NAME(ValueType) + " const)");
@@ -83,11 +83,11 @@ public:
     }
 
 protected:
-    void setAccessedRecord(Record const &rec);
-    void setAccessedRecord(Record const *rec);
+    void setAccessedRecord(const Record &rec);
+    void setAccessedRecord(const Record *rec);
 
 private:
-    Record const *_rec;
+    const Record *_rec;
 };
 
 } // namespace de

@@ -30,7 +30,7 @@ class guidata_readyammoicon_t : public HudWidget
 {
 public:
     guidata_readyammoicon_t(void (*updateGeometry) (HudWidget *wi),
-                            void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                            void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                             de::dint player);
     virtual ~guidata_readyammoicon_t();
 
@@ -38,7 +38,7 @@ public:
 
     void tick(timespan_t elapsed);
     //void updateGeometry();
-    //void draw(de::Vec2i const &offset = de::Vec2i()) const;
+    //void draw(const de::Vec2i &offset = de::Vec2i()) const;
 
 public:
     static void prepareAssets();
@@ -51,9 +51,9 @@ public:
 #endif
 };
 
-void ReadyAmmoIconWidget_Drawer    (guidata_readyammoicon_t *icon, Point2Raw const *offset);
+void ReadyAmmoIconWidget_Drawer    (guidata_readyammoicon_t *icon, const Point2Raw *offset);
 #if __JHERETIC__
-void SBarReadyAmmoIconWidget_Drawer(guidata_readyammoicon_t *icon, Point2Raw const *offset);
+void SBarReadyAmmoIconWidget_Drawer(guidata_readyammoicon_t *icon, const Point2Raw *offset);
 #endif  // __JHERETIC__
 
 void ReadyAmmoIconWidget_UpdateGeometry    (guidata_readyammoicon_t *icon);

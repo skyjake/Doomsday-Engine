@@ -71,7 +71,7 @@ typedef void (*Writer_Callback_WriteInt8) (Writer1 *w, char v);
 typedef void (*Writer_Callback_WriteInt16)(Writer1 *w, short v);
 typedef void (*Writer_Callback_WriteInt32)(Writer1 *w, int v);
 typedef void (*Writer_Callback_WriteFloat)(Writer1 *w, float v);
-typedef void (*Writer_Callback_WriteData) (Writer1 *w, char const *data, int len);
+typedef void (*Writer_Callback_WriteData) (Writer1 *w, const char *data, int len);
 
 /**
  * Constructs a new writer. The writer will use @a buffer as the writing buffer.
@@ -112,23 +112,23 @@ DE_PUBLIC void Writer_Delete(Writer1 *writer);
  * Returns the current output size of the writer, i.e., how much has been written
  * so far.
  */
-DE_PUBLIC size_t Writer_Size(Writer1 const *writer);
+DE_PUBLIC size_t Writer_Size(const Writer1 *writer);
 
 /**
  * Returns a pointer to the beginning of the written data.
  * @see Writer_Size()
  */
-DE_PUBLIC byte const *Writer_Data(Writer1 const *writer);
+DE_PUBLIC const byte *Writer_Data(const Writer1 *writer);
 
 /**
  * Returns the maximum size of the writing buffer.
  */
-DE_PUBLIC size_t Writer_TotalBufferSize(Writer1 const *writer);
+DE_PUBLIC size_t Writer_TotalBufferSize(const Writer1 *writer);
 
 /**
  * Returns the number of bytes left for writing.
  */
-DE_PUBLIC size_t Writer_BytesLeft(Writer1 const *writer);
+DE_PUBLIC size_t Writer_BytesLeft(const Writer1 *writer);
 
 /**
  * Sets the position of the writing cursor in the buffer.
@@ -154,7 +154,7 @@ DE_PUBLIC void Writer_WriteFloat  (Writer1 *writer, float    v);
 /**
  * Writes @a len bytes from @a buffer.
  */
-DE_PUBLIC void Writer_Write(Writer1 *writer, void const *buffer, size_t len);
+DE_PUBLIC void Writer_Write(Writer1 *writer, const void *buffer, size_t len);
 
 /**
  * Only 15 bits can be used for the number because the high bit of the

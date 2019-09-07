@@ -68,7 +68,7 @@ public:
      * @param right     Right child of this node. This node takes ownership.
      * @param left      Left child of this node. This node takes ownership.
      */
-    BinaryTree(Type const &userData = Type(), BinaryTree *parent = 0, BinaryTree *right = 0, BinaryTree *left = 0)
+    BinaryTree(const Type &userData = Type(), BinaryTree *parent = 0, BinaryTree *right = 0, BinaryTree *left = 0)
         : _parent(parent), _rightChild(right), _leftChild(left), _userDataValue(userData) {}
 
     virtual ~BinaryTree()
@@ -374,7 +374,7 @@ public:
      *
      * @param other  Tree to make copy of.
      */
-    BinaryTree &operator = (BinaryTree const &other)
+    BinaryTree &operator = (const BinaryTree &other)
     {
         // Remove old children.
         clear();

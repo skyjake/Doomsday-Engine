@@ -47,7 +47,7 @@ String ConstantRule::description() const
     return Stringf("%f", cachedValue());
 }
 
-ConstantRule const &ConstantRule::zero()
+const ConstantRule &ConstantRule::zero()
 {
     static ConstantRule *zeroRule = nullptr;
     if (!zeroRule)

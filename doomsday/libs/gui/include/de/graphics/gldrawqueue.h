@@ -50,18 +50,18 @@ public:
     void beginFrame();
 
     void setProgram(GLProgram &program,
-                    Block const &batchUniformName = Block(),
+                    const Block &batchUniformName = Block(),
                     GLUniform::Type batchUniformType = GLUniform::Float);
 
     int batchIndex() const;
 
-    void setBatchColor(Vec4f const &color);
+    void setBatchColor(const Vec4f &color);
 
     void setBatchSaturation(float saturation);
 
-    void setBatchScissorRect(Vec4f const &scissor);
+    void setBatchScissorRect(const Vec4f &scissor);
 
-    void setBuffer(GLBuffer const &buffer);
+    void setBuffer(const GLBuffer &buffer);
 
     /**
      * Enqueues a sub-buffer for drawing. If the previously enqueued buffers are not
@@ -69,7 +69,7 @@ public:
      *
      * @param sub  Sub-buffer to draw.
      */
-    void enqueueDraw(GLSubBuffer const &buffer);
+    void enqueueDraw(const GLSubBuffer &buffer);
 
     /**
      * Draws everything in the queue.

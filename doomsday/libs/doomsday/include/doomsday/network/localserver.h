@@ -45,13 +45,13 @@ public:
      *
      * @param name  Name.
      */
-    void setName(String const &name);
+    void setName(const String &name);
 
-    void setApplicationPath(NativePath const &path);
+    void setApplicationPath(const NativePath &path);
 
-    void start(duint16 port, String const &gameMode,
+    void start(duint16 port, const String &gameMode,
                const StringList &additionalOptions = {},
-               NativePath const &runtimePath = "");
+               const NativePath &runtimePath = "");
 
     void stop();
 

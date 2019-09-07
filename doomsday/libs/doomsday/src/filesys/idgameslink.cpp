@@ -41,10 +41,10 @@ DE_PIMPL(IdgamesLink)
 {
     struct PackageIndexEntry : public PathTree::Node
     {
-        FileEntry const *file = nullptr;
+        const FileEntry *file = nullptr;
         Version version;
 
-        PackageIndexEntry(PathTree::NodeArgs const &args) : Node(args) {}
+        PackageIndexEntry(const PathTree::NodeArgs &args) : Node(args) {}
 
         String descriptionPath() const
         {
@@ -60,7 +60,7 @@ DE_PIMPL(IdgamesLink)
         localRootPath = "/remote/" + WebRequest::hostNameFromUri(self().address());
     }
 
-    String packageIdentifierForFileEntry(FileEntry const &entry) const
+    String packageIdentifierForFileEntry(const FileEntry &entry) const
     {
         if (entry.name().fileNameExtension() == DE_STR(".zip"))
         {
@@ -109,7 +109,7 @@ DE_PIMPL(IdgamesLink)
         PathTreeIterator<FileTree> iter(self().fileTree().leafNodes());
         while (iter.hasNext())
         {
-            auto const &fileEntry = iter.next();
+            const auto &fileEntry = iter.next();
             if (String pkg = packageIdentifierForFileEntry(fileEntry))
             {
                 auto const id_ver = Package::split(pkg);
@@ -122,7 +122,7 @@ DE_PIMPL(IdgamesLink)
         debug("idgames package index has %zu entries", packageIndex.size());
     }
 
-    PackageIndexEntry const *findPackage(String const &packageId) const
+    const PackageIndexEntry *findPackage(const String &packageId) const
     {
         auto const id_ver = Package::split(packageId);
         if (auto *found = packageIndex.tryFind(DotPath(id_ver.first),
@@ -136,7 +136,7 @@ DE_PIMPL(IdgamesLink)
         return nullptr;
     }
 
-    RemoteFile &makeRemoteFile(Folder &folder, String const &remotePath, Block const &remoteMetaId)
+    RemoteFile &makeRemoteFile(Folder &folder, const String &remotePath, const Block &remoteMetaId)
     {
         auto *file = new RemoteFile(remotePath.fileName(),
                                     remotePath,
@@ -148,7 +148,7 @@ DE_PIMPL(IdgamesLink)
     }
 };
 
-IdgamesLink::IdgamesLink(String const &address)
+IdgamesLink::IdgamesLink(const String &address)
     : filesys::WebHostedLink(address, "ls-laR.gz")
     , d(new Impl(this))
 {}
@@ -220,7 +220,7 @@ void IdgamesLink::parseRepositoryIndex(const Block &data)
         setFileTree(tree.release());
         return String();
     },
-    [this] (String const &errorMessage)
+    [this] (const String &errorMessage)
     {
         if (!errorMessage)
         {
@@ -239,7 +239,7 @@ StringList IdgamesLink::categoryTags() const
     return {CATEGORY_LEVELS, CATEGORY_MUSIC, CATEGORY_SOUNDS, CATEGORY_THEMES};
 }
 
-LoopResult IdgamesLink::forPackageIds(std::function<LoopResult (String const &)> func) const
+LoopResult IdgamesLink::forPackageIds(std::function<LoopResult (const String &)> func) const
 {
     PathTreeIterator<Impl::PackageIndexEntry> iter(d->packageIndex.leafNodes());
     while (iter.hasNext())
@@ -252,7 +252,7 @@ LoopResult IdgamesLink::forPackageIds(std::function<LoopResult (String const &)>
     return LoopContinue;
 }
 
-String IdgamesLink::findPackagePath(String const &packageId) const
+String IdgamesLink::findPackagePath(const String &packageId) const
 {
     if (auto *found = d->findPackage(packageId))
     {
@@ -261,7 +261,7 @@ String IdgamesLink::findPackagePath(String const &packageId) const
     return String();
 }
 
-filesys::Link *IdgamesLink::construct(String const &address)
+filesys::Link *IdgamesLink::construct(const String &address)
 {
     if ((address.beginsWith("http:") || address.beginsWith("https:")) &&
         !address.contains("dengine.net"))
@@ -271,8 +271,8 @@ filesys::Link *IdgamesLink::construct(String const &address)
     return nullptr;
 }
 
-File *IdgamesLink::populateRemotePath(String const &packageId,
-                                      filesys::RepositoryPath const &path) const
+File *IdgamesLink::populateRemotePath(const String &packageId,
+                                      const filesys::RepositoryPath &path) const
 {
     DE_ASSERT(path.link == this);
 
@@ -295,7 +295,7 @@ File *IdgamesLink::populateRemotePath(String const &packageId,
     auto &txtFile = d->makeRemoteFile(pkgFolder,
                                       pkgEntry->descriptionPath(),
                                       md5Hash(address(), pkgEntry->descriptionPath(), pkgEntry->file->modTime));
-    if (auto const *txtEntry = findFile(pkgEntry->descriptionPath()))
+    if (const auto *txtEntry = findFile(pkgEntry->descriptionPath()))
     {
         txtFile.setStatus(File::Status(txtEntry->size, txtEntry->modTime));
     }

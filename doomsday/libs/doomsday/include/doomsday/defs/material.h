@@ -31,9 +31,9 @@ class LIBDOOMSDAY_PUBLIC MaterialDecoration : public Definition
 {
 public:
     MaterialDecoration()                                : Definition() {}
-    MaterialDecoration(MaterialDecoration const &other) : Definition(other) {}
+    MaterialDecoration(const MaterialDecoration &other) : Definition(other) {}
     MaterialDecoration(de::Record &d)                   : Definition(d) {}
-    MaterialDecoration(de::Record const &d)             : Definition(d) {}
+    MaterialDecoration(const de::Record &d)             : Definition(d) {}
 
     void resetToDefaults();
 
@@ -41,7 +41,7 @@ public:
     bool hasStage(int index) const;
 
     de::Record       &stage(int index);
-    de::Record const &stage(int index) const;
+    const de::Record &stage(int index) const;
 
     de::Record &addStage();
 };
@@ -53,9 +53,9 @@ class LIBDOOMSDAY_PUBLIC MaterialLayer : public Definition
 {
 public:
     MaterialLayer()                           : Definition() {}
-    MaterialLayer(MaterialLayer const &other) : Definition(other) {}
+    MaterialLayer(const MaterialLayer &other) : Definition(other) {}
     MaterialLayer(de::Record &d)              : Definition(d) {}
-    MaterialLayer(de::Record const &d)        : Definition(d) {}
+    MaterialLayer(const de::Record &d)        : Definition(d) {}
 
     void resetToDefaults();
 
@@ -63,7 +63,7 @@ public:
     bool hasStage(int index) const;
 
     de::Record       &stage(int index);
-    de::Record const &stage(int index) const;
+    const de::Record &stage(int index) const;
 
     de::Record &addStage();
 };
@@ -75,9 +75,9 @@ class LIBDOOMSDAY_PUBLIC Material : public Definition
 {
 public:
     Material()                      : Definition() {}
-    Material(Material const &other) : Definition(other) {}
+    Material(const Material &other) : Definition(other) {}
     Material(de::Record &d)         : Definition(d) {}
-    Material(de::Record const &d)   : Definition(d) {}
+    Material(const de::Record &d)   : Definition(d) {}
 
     void resetToDefaults();
 
@@ -87,7 +87,7 @@ public:  // Layers: -----------------------------------------------------
     bool hasLayer(int index) const;
 
     de::Record       &layer(int index);
-    de::Record const &layer(int index) const;
+    const de::Record &layer(int index) const;
 
     de::Record &addLayer();
 
@@ -97,7 +97,7 @@ public:  // Decorations: ------------------------------------------------
     bool hasDecoration(int index) const;
 
     de::Record       &decoration(int index);
-    de::Record const &decoration(int index) const;
+    const de::Record &decoration(int index) const;
 
     de::Record &addDecoration();
 };

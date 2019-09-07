@@ -32,10 +32,10 @@ namespace de {
 class LIBGUI_PUBLIC InputDialog : public MessageDialog
 {
 public:
-    InputDialog(String const &name = String());
+    InputDialog(const String &name = String());
 
     LineEditWidget &editor();
-    LineEditWidget const &editor() const;
+    const LineEditWidget &editor() const;
 
 protected:
     void preparePanelForOpening();

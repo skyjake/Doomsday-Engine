@@ -48,7 +48,7 @@ public:
         Serialized  ///< Data is present as a block of serialized bytes.
     };
 
-    static char const *formatAsText(Format f) {
+    static const char *formatAsText(Format f) {
         switch (f) {
         case Source:     return "Source";     break;
         case Object:     return "Object";     break;
@@ -87,7 +87,7 @@ public:
         _items.remove(&data);
     }
 
-    bool contains(ItemType const *data) const {
+    bool contains(const ItemType *data) const {
         DE_GUARD(this);
         return _items.contains(const_cast<ItemType *>(data));
     }
@@ -98,7 +98,7 @@ public:
         _currentBytes = 0;
     }
 
-    Items const &items() const { return _items; }
+    const Items &items() const { return _items; }
 
 protected:
     void addBytes(dint64 bytes) {
@@ -133,7 +133,7 @@ DE_PIMPL(Bank)
         Cache *cache;                   ///< Current cache for the data (never NULL).
         Time accessedAt;
 
-        Data(PathTree::NodeArgs const &args)
+        Data(const PathTree::NodeArgs &args)
             : Node(args)
             , bank(0)
             , cache(0)
@@ -204,7 +204,7 @@ DE_PIMPL(Bank)
             }
         }
 
-        bool isValidSerialTime(Time const &serialTime) const
+        bool isValidSerialTime(const Time &serialTime) const
         {
             return (!source->modifiedAt().isValid() ||
                     source->modifiedAt() == serialTime);
@@ -233,7 +233,7 @@ DE_PIMPL(Bank)
                 }
                 // We cannot use this.
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_WARNING("Failed to deserialize \"%s\":\n")
                         << path(bank->d->sepChar) << er.asText();
@@ -243,7 +243,7 @@ DE_PIMPL(Bank)
             loadFromSource();
         }
 
-        void serialize(Path const &folderPath)
+        void serialize(const Path &folderPath)
         {
             DE_GUARD(this);
 
@@ -365,7 +365,7 @@ DE_PIMPL(Bank)
             DataCache::remove(item);
         }
 
-        void setLocation(String const &location)
+        void setLocation(const String &location)
         {
             DE_ASSERT(!location.isEmpty());
             DE_GUARD(this);
@@ -374,7 +374,7 @@ DE_PIMPL(Bank)
             _path = location;
         }
 
-        Path const &path() const
+        const Path &path() const
         {
             return _path;
         }
@@ -435,7 +435,7 @@ DE_PIMPL(Bank)
         };
 
     public:
-        Job(Bank &bk, Task t, Path const &p = Path())
+        Job(Bank &bk, Task t, const Path &p = Path())
             : _bank(bk), _task(t), _path(p)
         {}
 
@@ -471,7 +471,7 @@ DE_PIMPL(Bank)
                 Data &it = item();
                 it.changeCache(_bank.d->memoryCache);
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_WARNING("Failed to load \"%s\" from source:\n") << _path << er.asText();
             }
@@ -488,7 +488,7 @@ DE_PIMPL(Bank)
                 LOG_XVERBOSE("Serializing \"%s\"", _path);
                 item().changeCache(*_bank.d->serialCache);
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_WARNING("Failed to serialize \"%s\" to hot storage:\n")
                         << _path << er.asText();
@@ -502,7 +502,7 @@ DE_PIMPL(Bank)
                 LOGDEV_RES_XVERBOSE("Unloading \"%s\"", _path);
                 item().changeCache(_bank.d->sourceCache);
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_WARNING("Error when unloading \"%s\":\n")
                         << _path << er.asText();
@@ -526,16 +526,16 @@ DE_PIMPL(Bank)
         Path path;
         DataCache *cache;
 
-        Notification(Kind k, Path const &p)
+        Notification(Kind k, const Path &p)
             : kind(k), path(p), cache(0) {}
 
-        Notification(Path const &p, DataCache &c)
+        Notification(const Path &p, DataCache &c)
             : kind(CacheChanged), path(p), cache(&c) {}
     };
 
     typedef FIFO<Notification> NotifyQueue;
 
-    char const *nameForLog;
+    const char *nameForLog;
     Char sepChar { '.' }; ///< Default separator in identifier paths.
     Flags flags;
     SourceCache sourceCache;
@@ -546,7 +546,7 @@ DE_PIMPL(Bank)
     NotifyQueue notifications;
     Dispatch dispatch;
 
-    Impl(Public *i, char const *name, Flags const &flg)
+    Impl(Public *i, const char *name, const Flags &flg)
         : Base(i)
         , nameForLog(name)
         , flags(flg)
@@ -623,7 +623,7 @@ DE_PIMPL(Bank)
         }
     }
 
-    void setSerialLocation(String const &location)
+    void setSerialLocation(const String &location)
     {
         if (location.isEmpty() || (flags & DisableHotStorage))
         {
@@ -670,12 +670,12 @@ DE_PIMPL(Bank)
         best->add(item);
     }
 
-    void load(Path const &path, Importance importance)
+    void load(const Path &path, Importance importance)
     {
         beginJob(new Job(self(), Job::Load, path), importance);
     }
 
-    void unload(Path const &path, CacheLevel toLevel, Importance importance)
+    void unload(const Path &path, CacheLevel toLevel, Importance importance)
     {
         if (toLevel < InMemory)
         {
@@ -685,7 +685,7 @@ DE_PIMPL(Bank)
         }
     }
 
-    void notify(Notification const &notif)
+    void notify(const Notification &notif)
     {
         notifications.put(new Notification(notif));
         if (isThreaded())
@@ -705,7 +705,7 @@ DE_PIMPL(Bank)
         }
     }
 
-    void performNotification(Notification const &nt)
+    void performNotification(const Notification &nt)
     {
         switch (nt.kind)
         {
@@ -737,7 +737,7 @@ DE_PIMPL(Bank)
 DE_AUDIENCE_METHOD(Bank, Load)
 DE_AUDIENCE_METHOD(Bank, CacheLevel)
 
-Bank::Bank(char const *nameForLog, Flags const &flags, String const &hotStorageLocation)
+Bank::Bank(const char *nameForLog, const Flags &flags, const String &hotStorageLocation)
     : d(new Impl(this, nameForLog, flags))
 {
     d->setSerialLocation(hotStorageLocation);
@@ -748,7 +748,7 @@ Bank::~Bank()
     clear();
 }
 
-char const *Bank::nameForLog() const
+const char *Bank::nameForLog() const
 {
     return d->nameForLog;
 }
@@ -763,7 +763,7 @@ void Bank::setSeparator(Char sep)
     d->sepChar = sep;
 }
 
-void Bank::setHotStorageCacheLocation(String const &location)
+void Bank::setHotStorageCacheLocation(const String &location)
 {
     d->setSerialLocation(location);
 }
@@ -817,7 +817,7 @@ void Bank::clear()
     d->clear();
 }
 
-void Bank::add(DotPath const &path, ISource *source)
+void Bank::add(const DotPath &path, ISource *source)
 {
     LOG_AS(d->nameForLog);
 
@@ -840,12 +840,12 @@ void Bank::add(DotPath const &path, ISource *source)
     d->putInBestCache(item);
 }
 
-void Bank::remove(DotPath const &path)
+void Bank::remove(const DotPath &path)
 {
     d->items.remove(path, PathTree::NoBranch);
 }
 
-bool Bank::has(DotPath const &path) const
+bool Bank::has(const DotPath &path) const
 {
     return d->items.has(path);
 }
@@ -858,13 +858,13 @@ Bank::ISource &Bank::source(const DotPath &path) const
 dint Bank::allItems(Names &names) const
 {
     names.clear();
-    iterate([&names] (DotPath const &path) {
+    iterate([&names] (const DotPath &path) {
         names.insert(path.toString());
     });
     return dint(names.size());
 }
 
-void Bank::iterate(const std::function<void (DotPath const &)> &func) const
+void Bank::iterate(const std::function<void (const DotPath &)> &func) const
 {
     PathTree::FoundPaths paths;
     d->items.findAllPaths(paths, PathTree::NoBranch, d->sepChar);
@@ -874,12 +874,12 @@ void Bank::iterate(const std::function<void (DotPath const &)> &func) const
     }
 }
 
-PathTree const &Bank::index() const
+const PathTree &Bank::index() const
 {
     return d->items;
 }
 
-void Bank::load(DotPath const &path, Importance importance)
+void Bank::load(const DotPath &path, Importance importance)
 {
     d->load(path, importance);
 }
@@ -894,7 +894,7 @@ void Bank::loadAll()
     }
 }
 
-Bank::IData &Bank::data(DotPath const &path) const
+Bank::IData &Bank::data(const DotPath &path) const
 {
     LOG_AS(d->nameForLog);
 
@@ -941,16 +941,16 @@ Bank::IData &Bank::data(DotPath const &path) const
     return *item.data;
 }
 
-bool Bank::isLoaded(DotPath const &path) const
+bool Bank::isLoaded(const DotPath &path) const
 {
-    if (Impl::Data const *item = d->items.tryFind(path, PathTree::MatchFull | PathTree::NoBranch))
+    if (const Impl::Data *item = d->items.tryFind(path, PathTree::MatchFull | PathTree::NoBranch))
     {
         return d->memoryCache.contains(item);
     }
     return false;
 }
 
-void Bank::unload(DotPath const &path, CacheLevel toLevel, Importance importance)
+void Bank::unload(const DotPath &path, CacheLevel toLevel, Importance importance)
 {
     d->unload(path, toLevel, importance);
 }
@@ -972,7 +972,7 @@ void Bank::unloadAll(Importance importance, CacheLevel maxLevel)
     }
 }
 
-void Bank::clearFromCache(DotPath const &path)
+void Bank::clearFromCache(const DotPath &path)
 {
     d->unload(path, InColdStorage, AfterQueued);
 }

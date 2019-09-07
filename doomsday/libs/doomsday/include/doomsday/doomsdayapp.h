@@ -50,12 +50,12 @@ class LIBDOOMSDAY_PUBLIC DoomsdayApp
 {
 public:
     /// Notified before the current game is unloaded.
-    DE_AUDIENCE(GameUnload, void aboutToUnloadGame(Game const &gameBeingUnloaded))
+    DE_AUDIENCE(GameUnload, void aboutToUnloadGame(const Game &gameBeingUnloaded))
 
-    DE_AUDIENCE(GameLoad, void aboutToLoadGame(Game const &gameBeingLoaded))
+    DE_AUDIENCE(GameLoad, void aboutToLoadGame(const Game &gameBeingLoaded))
 
     /// Notified after the current game has been changed.
-    DE_AUDIENCE(GameChange, void currentGameChanged(Game const &newGame))
+    DE_AUDIENCE(GameChange, void currentGameChanged(const Game &newGame))
 
     /// Notified when console variables and commands should be registered.
     DE_AUDIENCE(ConsoleRegistration, void consoleRegistration())
@@ -130,7 +130,7 @@ public:
      *                   been made current.
      * @param behaviors  Change behavior flags.
      */
-    bool changeGame(GameProfile const &profile,
+    bool changeGame(const GameProfile &profile,
                     const std::function<int (void *)> &gameActivationFunc,
                     Behaviors behaviors = DefaultBehavior);
 
@@ -211,14 +211,14 @@ public:
      * @param game  Game instance. Must not be deleted until another Game is
      *              used as the current one.
      */
-    static void setGame(Game const &game);
+    static void setGame(const Game &game);
 
     /**
      * Returns the currently active game.
      */
-    static Game const &game();
+    static const Game &game();
 
-    static GameProfile const *currentGameProfile();
+    static const GameProfile *currentGameProfile();
 
     static bool isGameLoaded();
 
@@ -237,9 +237,9 @@ protected:
      *
      * @param upcomingGame  Upcoming game that we will be changing to.
      */
-    virtual void unloadGame(GameProfile const &upcomingGame);
+    virtual void unloadGame(const GameProfile &upcomingGame);
 
-    virtual void makeGameCurrent(GameProfile const &game);
+    virtual void makeGameCurrent(const GameProfile &game);
 
     /**
      * Clears all allocated resources and subsystems. This is called when

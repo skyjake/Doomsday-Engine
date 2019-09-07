@@ -47,7 +47,7 @@ public:
     SafePtr(Type *ptr = nullptr) {
         reset(ptr);
     }
-    SafePtr(SafePtr const &other) {
+    SafePtr(const SafePtr &other) {
         reset(other._ptr);
     }
     ~SafePtr() override {
@@ -59,7 +59,7 @@ public:
         _ptr.value = ptr;
         if (_ptr.value) _ptr.value->Deletable::audienceForDeletion += this;
     }
-    SafePtr &operator = (SafePtr const &other) {
+    SafePtr &operator = (const SafePtr &other) {
         reset(other._ptr);
         return *this;
     }
@@ -68,7 +68,7 @@ public:
         if (!_ptr) throw Error("SafePtr::operator ->", "Object has been deleted");
         return _ptr;
     }
-    operator Type const * () const {
+    operator const Type * () const {
         DE_GUARD(_ptr);
         return _ptr;
     }

@@ -87,7 +87,7 @@ public:
     /**
      * The target object is locked.
      */
-    inline Guard(Lockable const &target)
+    inline Guard(const Lockable &target)
         : _target(&target)
 //        , _rwTarget(nullptr)
     {
@@ -97,7 +97,7 @@ public:
     /**
      * The target object is locked.
      */
-    inline Guard(Lockable const *target)
+    inline Guard(const Lockable *target)
         : _target(target)
 //        , _rwTarget(nullptr)
     {
@@ -106,7 +106,7 @@ public:
     }
 
 #if 0
-    inline Guard(ReadWriteLockable const &target, LockMode mode) : _target(nullptr), _rwTarget(&target) {
+    inline Guard(const ReadWriteLockable &target, LockMode mode) : _target(nullptr), _rwTarget(&target) {
         if (mode == Reading) {
             _rwTarget->lockForRead();
         }
@@ -115,7 +115,7 @@ public:
         }
     }
 
-    inline Guard(ReadWriteLockable const *target, LockMode mode) : _target(nullptr), _rwTarget(target) {
+    inline Guard(const ReadWriteLockable *target, LockMode mode) : _target(nullptr), _rwTarget(target) {
         DE_ASSERT(_rwTarget != nullptr);
         if (mode == Reading) {
             _rwTarget->lockForRead();
@@ -135,8 +135,8 @@ public:
     }
 
 private:
-    Lockable const *_target;
-//    ReadWriteLockable const *_rwTarget;
+    const Lockable *_target;
+//    const ReadWriteLockable *_rwTarget;
 };
 
 } // namespace de

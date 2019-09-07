@@ -50,7 +50,7 @@ public:
         {}
 
         /// @return  @c true= this game's title is lexically less than that of @a other.
-        bool operator < (GameListItem const &other) const {
+        bool operator < (const GameListItem &other) const {
             return game->title().compareWithoutCase(other.game->title()) < 0;
         }
     };
@@ -82,16 +82,16 @@ public:
     int numPlayable() const;
 
     /// @return  Number of games marked as currently playable in a game family.
-    int numPlayable(de::String const &family) const;
+    int numPlayable(const de::String &family) const;
 
     /**
      * @return  Game associated with @a identityKey.
      *
      * @throws NotFoundError if no game is associated with @a identityKey.
      */
-    Game &operator [] (de::String const &id) const;
+    Game &operator [] (const de::String &id) const;
 
-    bool contains(de::String const &id) const;
+    bool contains(const de::String &id) const;
 
     /**
      * @return  Game associated with unique index @a idx.
@@ -113,7 +113,7 @@ public:
      *
      * @return The created Game instance.
      */
-    Game &defineGame(de::String const &id, de::Record const &parameters);
+    Game &defineGame(const de::String &id, const de::Record &parameters);
 
     /**
      * Returns a list of all the Game instances in the collection.
@@ -144,7 +144,7 @@ public:
      * Find the first playable game in this collection (in registration order).
      * @return  The found game else @c NULL.
      */
-    GameProfile const *firstPlayable() const;
+    const GameProfile *firstPlayable() const;
 
     /**
      * Try to locate all startup resources for @a game.

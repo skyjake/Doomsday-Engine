@@ -25,7 +25,7 @@ DE_PIMPL_NOREF(Scheduler)
 {
     struct RunningTimeline
     {
-        Timeline const *timeline = nullptr;
+        const Timeline *timeline = nullptr;
         std::unique_ptr<Timeline::Clock> clock;
         bool isOwned = false;
 
@@ -59,7 +59,7 @@ DE_PIMPL_NOREF(Scheduler)
         return publicName;
     }
 
-    String start(RunningTimeline *run, String const &name)
+    String start(RunningTimeline *run, const String &name)
     {
         String const intName = internalName(name);
         stop(intName);
@@ -67,7 +67,7 @@ DE_PIMPL_NOREF(Scheduler)
         return intName;
     }
 
-    void stop(String const &intName)
+    void stop(const String &intName)
     {
         if (running.contains(intName))
         {
@@ -101,7 +101,7 @@ void Scheduler::clear()
     d->clear();
 }
 
-String Scheduler::start(Timeline *timeline, String const &name)
+String Scheduler::start(Timeline *timeline, const String &name)
 {
     auto *run = new Impl::RunningTimeline;
     run->isOwned = true;
@@ -110,7 +110,7 @@ String Scheduler::start(Timeline *timeline, String const &name)
     return d->start(run, name);
 }
 
-String Scheduler::start(Timeline const &sharedTimeline, Record *context, String const &name)
+String Scheduler::start(const Timeline &sharedTimeline, Record *context, const String &name)
 {
     auto *run = new Impl::RunningTimeline;
     run->isOwned = false;
@@ -119,7 +119,7 @@ String Scheduler::start(Timeline const &sharedTimeline, Record *context, String 
     return d->start(run, name);
 }
 
-void Scheduler::stop(String const &name)
+void Scheduler::stop(const String &name)
 {
     d->stop(name);
 }

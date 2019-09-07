@@ -42,25 +42,25 @@ public:
     typedef std::function<PopupWidget * ()> WidgetConstructor;
 
 public:
-    SubwidgetItem(String const &label, ui::Direction openingDirection,
+    SubwidgetItem(const String &label, ui::Direction openingDirection,
                   WidgetConstructor constructor)
         : ImageItem(ShownAsButton, label)
         , _constructor(constructor)
         , _dir(openingDirection) {}
 
-    SubwidgetItem(Semantics semantics, String const &label, ui::Direction openingDirection,
+    SubwidgetItem(Semantics semantics, const String &label, ui::Direction openingDirection,
                   WidgetConstructor constructor)
         : ImageItem(semantics, label)
         , _constructor(constructor)
         , _dir(openingDirection) {}
 
-    SubwidgetItem(Image const &image, String const &label, ui::Direction openingDirection,
+    SubwidgetItem(const Image &image, const String &label, ui::Direction openingDirection,
                   WidgetConstructor constructor)
         : ImageItem(ShownAsButton, image, label)
         , _constructor(constructor)
         , _dir(openingDirection) {}
 
-    SubwidgetItem(Image const &image, Semantics semantics, String const &label,
+    SubwidgetItem(const Image &image, Semantics semantics, const String &label,
                   ui::Direction openingDirection, WidgetConstructor constructor)
         : ImageItem(semantics, image, label)
         , _constructor(constructor)

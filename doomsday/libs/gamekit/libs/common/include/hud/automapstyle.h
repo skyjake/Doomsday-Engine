@@ -183,10 +183,10 @@ public:
 
     void applyDefaults();
 
-    automapcfg_lineinfo_t const &lineInfo(int lineType);
+    const automapcfg_lineinfo_t &lineInfo(int lineType);
 
-    automapcfg_lineinfo_t const *tryFindLineInfo(automapcfg_objectname_t name) const;
-    automapcfg_lineinfo_t const *tryFindLineInfo_special(int special, int flags, Sector const *frontsector, Sector const *backsector, int automapFlags) const;
+    const automapcfg_lineinfo_t *tryFindLineInfo(automapcfg_objectname_t name) const;
+    const automapcfg_lineinfo_t *tryFindLineInfo_special(int special, int flags, const Sector *frontsector, const Sector *backsector, int automapFlags) const;
 
     void objectColor(automapcfg_objectname_t name, float *r, float *g, float *b, float *a) const;
     void setObjectColor(automapcfg_objectname_t name, float r, float g, float b);
@@ -205,6 +205,6 @@ void ST_InitAutomapStyle();
 
 AutomapStyle *ST_AutomapStyle();
 
-void AM_GetMapColor(float *rgb, float const *uColor, int palidx, dd_bool customPal);
+void AM_GetMapColor(float *rgb, const float *uColor, int palidx, dd_bool customPal);
 
 #endif  // LIBCOMMON_UI_AUTOMAPSTYLE_H

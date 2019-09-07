@@ -22,19 +22,19 @@
 
 namespace de {
 
-RecordAccessor::RecordAccessor(Record const *rec) : _rec(rec)
+RecordAccessor::RecordAccessor(const Record *rec) : _rec(rec)
 {}
 
-RecordAccessor::RecordAccessor(Record const &rec) : _rec(&rec)
+RecordAccessor::RecordAccessor(const Record &rec) : _rec(&rec)
 {}
 
-Record const &RecordAccessor::accessedRecord() const
+const Record &RecordAccessor::accessedRecord() const
 {
     DE_ASSERT(_rec != 0);
     return *_rec;
 }
 
-Record const *RecordAccessor::accessedRecordPtr() const
+const Record *RecordAccessor::accessedRecordPtr() const
 {
     return _rec;
 }
@@ -44,7 +44,7 @@ bool RecordAccessor::has(const String &name) const
     return accessedRecord().has(name);
 }
 
-Value const &RecordAccessor::get(const String &name) const
+const Value &RecordAccessor::get(const String &name) const
 {
     return accessedRecord()[name].value();
 }
@@ -115,17 +115,17 @@ String RecordAccessor::gets(const String &name, const char *defaultValue) const
     return gets(name);
 }
 
-ArrayValue const &RecordAccessor::geta(const String &name) const
+const ArrayValue &RecordAccessor::geta(const String &name) const
 {
     return getAs<ArrayValue>(name);
 }
 
-DictionaryValue const &RecordAccessor::getdt(const String &name) const
+const DictionaryValue &RecordAccessor::getdt(const String &name) const
 {
     return getAs<DictionaryValue>(name);
 }
 
-RecordValue const &RecordAccessor::getr(const String &name) const
+const RecordValue &RecordAccessor::getr(const String &name) const
 {
     return getAs<RecordValue>(name);
 }
@@ -136,17 +136,17 @@ StringList RecordAccessor::getStringList(const String &name, StringList defaultV
     return get(name).asStringList();
 }
 
-Record const &RecordAccessor::subrecord(const String &name) const
+const Record &RecordAccessor::subrecord(const String &name) const
 {
     return accessedRecord().subrecord(name);
 }
 
-void RecordAccessor::setAccessedRecord(Record const &rec)
+void RecordAccessor::setAccessedRecord(const Record &rec)
 {
     _rec = &rec;
 }
 
-void RecordAccessor::setAccessedRecord(Record const *rec)
+void RecordAccessor::setAccessedRecord(const Record *rec)
 {
     _rec = rec;
 }

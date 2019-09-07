@@ -28,7 +28,7 @@ using namespace de;
 
 #define FRAME_COUNT                 ( 16 )
 
-static void TomeWidget_Draw(guidata_tomeofpower_t *tome, Point2Raw const *offset)
+static void TomeWidget_Draw(guidata_tomeofpower_t *tome, const Point2Raw *offset)
 {
     DE_ASSERT(tome);
     tome->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -72,7 +72,7 @@ void guidata_tomeofpower_t::tick(timespan_t /*elapsed*/)
     d->patchId = 0;
     d->countdownSeconds = 0;
 
-    player_t const *plr  = &::players[player()];
+    const player_t *plr  = &::players[player()];
     dint const ticsRemain = plr->powers[PT_WEAPONLEVEL2];
     if(ticsRemain <= 0 || 0 != plr->morphTics) return;
 
@@ -99,7 +99,7 @@ void guidata_tomeofpower_t::tick(timespan_t /*elapsed*/)
     }
 }
 
-void guidata_tomeofpower_t::draw(Vec2i const &offset) const
+void guidata_tomeofpower_t::draw(const Vec2i &offset) const
 {
 #define TRACKING            ( 2 )
 
@@ -159,7 +159,7 @@ void guidata_tomeofpower_t::updateGeometry()
     if(ST_AutomapIsOpen(player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    player_t const *plr   = &::players[player()];
+    const player_t *plr   = &::players[player()];
     dint const ticsRemain = plr->powers[PT_WEAPONLEVEL2];
     if(ticsRemain <= 0 || 0 != plr->morphTics) return;
 

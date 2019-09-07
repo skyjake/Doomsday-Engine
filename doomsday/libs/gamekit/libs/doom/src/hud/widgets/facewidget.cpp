@@ -66,13 +66,13 @@ DE_PIMPL_NOREF(guidata_face_t)
 
     dint painOffset(dint player) const
     {
-        player_t const *plr = &::players[player];
+        const player_t *plr = &::players[player];
         return FACE_STRIDE * (((100 - de::min(100, plr->health)) * FACE_PAIN_COUNT) / 101);
     }
 };
 
 guidata_face_t::guidata_face_t(void (*updateGeometry) (HudWidget *wi),
-                               void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                               void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                                dint player)
     : HudWidget(updateGeometry,
                 drawer,
@@ -106,7 +106,7 @@ void guidata_face_t::reset()
  */
 void guidata_face_t::tick(timespan_t /*elapsed*/)
 {
-    player_t const *plr = &::players[player()];
+    const player_t *plr = &::players[player()];
 
     if(Pause_IsPaused() || !DD_IsSharpTick())
         return;
@@ -289,7 +289,7 @@ void guidata_face_t::tick(timespan_t /*elapsed*/)
     d->faceTicks -= 1;
 }
 
-void Face_Drawer(guidata_face_t *face, Point2Raw const *offset)
+void Face_Drawer(guidata_face_t *face, const Point2Raw *offset)
 {
 #define X_OFFSET                ( 143 )
 #define Y_OFFSET                (   0 )
@@ -338,7 +338,7 @@ void Face_Drawer(guidata_face_t *face, Point2Raw const *offset)
 #undef X_OFFSET
 }
 
-void SBarFace_Drawer(guidata_face_t *face, Point2Raw const *offset)
+void SBarFace_Drawer(guidata_face_t *face, const Point2Raw *offset)
 {
 #define X_OFFSET                ( 143 )
 #define Y_OFFSET                (   0 )

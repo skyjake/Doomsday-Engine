@@ -40,10 +40,10 @@ enum Side
 
 DE_PIMPL(Margins)
 {
-    Rule const *inputs[4];
+    const Rule *inputs[4];
     IndirectRule *outputs[MAX_SIDES];
 
-    Impl(Public *i, DotPath const &defaultId) : Base(i)
+    Impl(Public *i, const DotPath &defaultId) : Base(i)
     {
         zap(inputs);
         zap(outputs);
@@ -70,12 +70,12 @@ DE_PIMPL(Margins)
         }
     }
 
-    void setInput(int side, DotPath const &styleId)
+    void setInput(int side, const DotPath &styleId)
     {
         setInput(side, Style::get().rules().rule(styleId));
     }
 
-    void setInput(int side, Rule const &rule)
+    void setInput(int side, const Rule &rule)
     {
         DE_ASSERT(side >= 0 && side < 4);
         changeRef(inputs[side], rule);
@@ -111,7 +111,7 @@ DE_PIMPL(Margins)
         }
     }
 
-    Rule const &getOutput(int side)
+    const Rule &getOutput(int side)
     {
         if (!outputs[side])
         {
@@ -126,10 +126,10 @@ DE_PIMPL(Margins)
 
 DE_AUDIENCE_METHOD(Margins, Change)
 
-Margins::Margins(String const &defaultMargin) : d(new Impl(this, defaultMargin))
+Margins::Margins(const String &defaultMargin) : d(new Impl(this, defaultMargin))
 {}
 
-Margins &Margins::set(Direction dir, DotPath const &marginId)
+Margins &Margins::set(Direction dir, const DotPath &marginId)
 {
     d->setInput(dir == Left?  SideLeft  :
                 dir == Right? SideRight :
@@ -137,7 +137,7 @@ Margins &Margins::set(Direction dir, DotPath const &marginId)
     return *this;
 }
 
-Margins &Margins::set(DotPath const &marginId)
+Margins &Margins::set(const DotPath &marginId)
 {
     set(Left,  marginId);
     set(Right, marginId);
@@ -146,37 +146,37 @@ Margins &Margins::set(DotPath const &marginId)
     return *this;
 }
 
-Margins &Margins::setLeft(DotPath const &leftMarginId)
+Margins &Margins::setLeft(const DotPath &leftMarginId)
 {
     return set(ui::Left, leftMarginId);
 }
 
-Margins &Margins::setRight(DotPath const &rightMarginId)
+Margins &Margins::setRight(const DotPath &rightMarginId)
 {
     return set(ui::Right, rightMarginId);
 }
 
-Margins &Margins::setLeftRight(DotPath const &marginId)
+Margins &Margins::setLeftRight(const DotPath &marginId)
 {
     return set(ui::Left, marginId).set(ui::Right, marginId);
 }
 
-Margins &Margins::setTopBottom(DotPath const &marginId)
+Margins &Margins::setTopBottom(const DotPath &marginId)
 {
     return set(ui::Up, marginId).set(ui::Down, marginId);
 }
 
-Margins &Margins::setTop(DotPath const &topMarginId)
+Margins &Margins::setTop(const DotPath &topMarginId)
 {
     return set(ui::Up, topMarginId);
 }
 
-Margins &Margins::setBottom(DotPath const &bottomMarginId)
+Margins &Margins::setBottom(const DotPath &bottomMarginId)
 {
     return set(ui::Down, bottomMarginId);
 }
 
-Margins &Margins::set(Direction dir, Rule const &rule)
+Margins &Margins::set(Direction dir, const Rule &rule)
 {
     d->setInput(dir == Left?  SideLeft  :
                 dir == Right? SideRight :
@@ -184,7 +184,7 @@ Margins &Margins::set(Direction dir, Rule const &rule)
     return *this;
 }
 
-Margins &Margins::set(Rule const &rule)
+Margins &Margins::set(const Rule &rule)
 {
     set(Left,  rule);
     set(Right, rule);
@@ -193,7 +193,7 @@ Margins &Margins::set(Rule const &rule)
     return *this;
 }
 
-Margins &Margins::setAll(Margins const &margins)
+Margins &Margins::setAll(const Margins &margins)
 {
     if (this == &margins) return *this;
 
@@ -209,57 +209,57 @@ Margins &Margins::setZero()
     return set("");
 }
 
-Margins &Margins::setLeft(Rule const &rule)
+Margins &Margins::setLeft(const Rule &rule)
 {
     return set(ui::Left, rule);
 }
 
-Margins &Margins::setRight(Rule const &rule)
+Margins &Margins::setRight(const Rule &rule)
 {
     return set(ui::Right, rule);
 }
 
-Margins &Margins::setTop(Rule const &rule)
+Margins &Margins::setTop(const Rule &rule)
 {
     return set(ui::Up, rule);
 }
 
-Margins &Margins::setBottom(Rule const &rule)
+Margins &Margins::setBottom(const Rule &rule)
 {
     return set(ui::Down, rule);
 }
 
-Rule const &Margins::left() const
+const Rule &Margins::left() const
 {
     return d->getOutput(SideLeft);
 }
 
-Rule const &Margins::right() const
+const Rule &Margins::right() const
 {
     return d->getOutput(SideRight);
 }
 
-Rule const &Margins::top() const
+const Rule &Margins::top() const
 {
     return d->getOutput(SideTop);
 }
 
-Rule const &Margins::bottom() const
+const Rule &Margins::bottom() const
 {
     return d->getOutput(SideBottom);
 }
 
-Rule const &Margins::width() const
+const Rule &Margins::width() const
 {
     return d->getOutput(LeftRight);
 }
 
-Rule const &Margins::height() const
+const Rule &Margins::height() const
 {
     return d->getOutput(TopBottom);
 }
 
-Rule const &Margins::margin(Direction dir) const
+const Rule &Margins::margin(Direction dir) const
 {
     return d->getOutput(dir == Left?  SideLeft  :
                         dir == Right? SideRight :

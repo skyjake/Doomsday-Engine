@@ -44,24 +44,24 @@ public:
     /**
      * Constructs a non-modifiable sub-array which refers to the @a mainArray.
      */
-    ByteSubArray(IByteArray const &mainArray, Offset at, Size size);
+    ByteSubArray(const IByteArray &mainArray, Offset at, Size size);
 
     /**
      * Constructs a non-modifiable sub-array which refers to the @a mainArray.
      * The sub-array starts at @a at and continues until the end of @a mainArray.
      */
-    ByteSubArray(IByteArray const &mainArray, Offset at);
+    ByteSubArray(const IByteArray &mainArray, Offset at);
 
     virtual ~ByteSubArray() {}
 
     // Implements IByteArray.
     Size size() const;
     void get(Offset at, Byte *values, Size count) const;
-    void set(Offset at, Byte const *values, Size count);
+    void set(Offset at, const Byte *values, Size count);
 
 private:
     IByteArray *_mainArray;
-    IByteArray const *_constMainArray;
+    const IByteArray *_constMainArray;
     Offset _at;
     Size _size;
 };

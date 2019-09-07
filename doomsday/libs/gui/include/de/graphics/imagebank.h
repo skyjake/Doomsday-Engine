@@ -45,15 +45,15 @@ public:
      *               images from their potentially encoded source data is
      *               faster/more efficient than deserializating raw pixel data.
      */
-    ImageBank(Flags const &flags = BackgroundThread | DisableHotStorage);
+    ImageBank(const Flags &flags = BackgroundThread | DisableHotStorage);
 
-    void add(DotPath const &path, String const &imageFilePath);
-    void addFromInfo(File const &file);
+    void add(const DotPath &path, const String &imageFilePath);
+    void addFromInfo(const File &file);
 
-    const Image &image(DotPath const &path) const;
+    const Image &image(const DotPath &path) const;
 
 protected:
-    ISource *newSourceFromInfo(String const &id);
+    ISource *newSourceFromInfo(const String &id);
     IData *loadFromSource(ISource &source);
     IData *newData();
 

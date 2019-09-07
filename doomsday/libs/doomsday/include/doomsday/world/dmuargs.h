@@ -60,9 +60,9 @@ public: /// @todo make private
      * incompatible types are not assigned. Simple conversions are also done,
      * e.g., float to fixed.
      */
-    void setValue(valuetype_t valueType, void const *src, uint index);
+    void setValue(valuetype_t valueType, const void *src, uint index);
 
-    typedef std::function<int (void const *)> PointerToIndexFunc;
+    typedef std::function<int (const void *)> PointerToIndexFunc;
     static void setPointerToIndexFunc(PointerToIndexFunc func);
 };
 

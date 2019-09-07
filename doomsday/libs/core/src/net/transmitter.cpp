@@ -28,19 +28,19 @@ namespace de {
 Transmitter::~Transmitter()
 {}
 
-IOStream &Transmitter::operator << (IByteArray const &data)
+IOStream &Transmitter::operator << (const IByteArray &data)
 {
     send(data);
     return *this;
 }
 
-Transmitter &Transmitter::operator << (Packet const &packet)
+Transmitter &Transmitter::operator << (const Packet &packet)
 {
     sendPacket(packet);
     return *this;
 }
 
-void Transmitter::sendPacket(Packet const &packet)
+void Transmitter::sendPacket(const Packet &packet)
 {
     Block data;
     Writer(data) << packet;

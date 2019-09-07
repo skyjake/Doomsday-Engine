@@ -35,30 +35,30 @@ public:
         duint64 size = 0;
         Time    modTime;
 
-        FileEntry(PathTree::NodeArgs const &args) : Node(args) {}
+        FileEntry(const PathTree::NodeArgs &args) : Node(args) {}
         FileEntry() = delete;
-        Block metaId(Link const &link) const;
+        Block metaId(const Link &link) const;
     };
 
     using FileTree = PathTreeT<FileEntry>;
 
 public:
-    WebHostedLink(String const &address, String const &indexPath);
+    WebHostedLink(const String &address, const String &indexPath);
 
-    PackagePaths locatePackages(StringList const &packageIds) const override;
+    PackagePaths locatePackages(const StringList &packageIds) const override;
 
 protected:
     virtual void setFileTree(FileTree *tree);
 
-    FileTree const &fileTree() const;
+    const FileTree &fileTree() const;
 
-    FileEntry const *findFile(Path const &path) const;
+    const FileEntry *findFile(const Path &path) const;
 
     virtual void parseRepositoryIndex(const Block &data) = 0;
 
-    virtual String findPackagePath(String const &packageId) const = 0;
+    virtual String findPackagePath(const String &packageId) const = 0;
 
-    void transmit(Query const &query) override;
+    void transmit(const Query &query) override;
 
 private:
     DE_PRIVATE(d)

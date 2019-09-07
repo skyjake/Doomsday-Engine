@@ -32,7 +32,7 @@ namespace de {
 class DE_PUBLIC AnimationValue : public Value
 {
 public:
-    AnimationValue(Animation const &animation = Animation());
+    AnimationValue(const Animation &animation = Animation());
 
     ~AnimationValue();
 
@@ -40,7 +40,7 @@ public:
     Animation &animation() { return *_anim; }
 
     /// Returns the time of the value.
-    Animation const &animation() const { return *_anim; }
+    const Animation &animation() const { return *_anim; }
 
     Record *memberScope() const override;
     Text typeId() const override;
@@ -49,7 +49,7 @@ public:
     Text asText() const override;
     Number asNumber() const override;
     bool isTrue() const override;
-    dint compare(Value const &value) const override;
+    dint compare(const Value &value) const override;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const override;
@@ -57,7 +57,7 @@ public:
 
 private:
     struct DE_PUBLIC CountedAnimation : public Animation, public Counted {
-        CountedAnimation(Animation const &anim);
+        CountedAnimation(const Animation &anim);
     };
 
     AnimationValue(CountedAnimation *countedAnim);

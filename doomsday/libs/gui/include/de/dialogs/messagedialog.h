@@ -31,7 +31,7 @@ namespace de {
 class LIBGUI_PUBLIC MessageDialog : public DialogWidget
 {
 public:
-    MessageDialog(String const &name = String());
+    MessageDialog(const String &name = String());
 
     void useInfoStyle();
 

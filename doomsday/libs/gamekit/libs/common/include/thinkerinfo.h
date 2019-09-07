@@ -92,7 +92,7 @@ ThinkerClassInfo *SV_ThinkerInfoForClass(thinkerclass_t tClass);
 /**
  * Returns the info for the specified thinker; otherwise @c 0 if not found.
  */
-ThinkerClassInfo *SV_ThinkerInfo(thinker_t const &thinker);
+ThinkerClassInfo *SV_ThinkerInfo(const thinker_t &thinker);
 #endif
 
 #endif // LIBCOMMON_SAVESTATE_THINKERINFO_H

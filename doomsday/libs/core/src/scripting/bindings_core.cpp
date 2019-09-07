@@ -34,61 +34,61 @@
 
 namespace de {
 
-static Value *Function_String_FileNamePath(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_String_FileNamePath(Context &ctx, const Function::ArgumentValues &)
 {
     return new TextValue(ctx.nativeSelf().asText().fileNamePath());
 }
 
-static Value *Function_String_FileNameExtension(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_String_FileNameExtension(Context &ctx, const Function::ArgumentValues &)
 {
     return new TextValue(ctx.nativeSelf().asText().fileNameExtension());
 }
 
-static Value *Function_String_FileNameWithoutExtension(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_String_FileNameWithoutExtension(Context &ctx, const Function::ArgumentValues &)
 {
     return new TextValue(ctx.nativeSelf().asText().fileNameWithoutExtension());
 }
 
-static Value *Function_String_FileNameAndPathWithoutExtension(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_String_FileNameAndPathWithoutExtension(Context &ctx, const Function::ArgumentValues &)
 {
     return new TextValue(ctx.nativeSelf().asText().fileNameAndPathWithoutExtension());
 }
 
-static Value *Function_String_Upper(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_String_Upper(Context &ctx, const Function::ArgumentValues &)
 {
     return new TextValue(ctx.nativeSelf().asText().upper());
 }
 
-static Value *Function_String_Lower(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_String_Lower(Context &ctx, const Function::ArgumentValues &)
 {
     return new TextValue(ctx.nativeSelf().asText().lower());
 }
 
-static Value *Function_String_BeginsWith(Context &ctx, Function::ArgumentValues const &args)
+static Value *Function_String_BeginsWith(Context &ctx, const Function::ArgumentValues &args)
 {
     return new NumberValue(ctx.nativeSelf().asText().beginsWith(args.at(0)->asText()));
 }
 
-static Value *Function_String_EndsWith(Context &ctx, Function::ArgumentValues const &args)
+static Value *Function_String_EndsWith(Context &ctx, const Function::ArgumentValues &args)
 {
     return new NumberValue(ctx.nativeSelf().asText().endsWith(args.at(0)->asText()));
 }
 
 //---------------------------------------------------------------------------------------
 
-static Value *Function_Path_WithoutFileName(Context &, Function::ArgumentValues const &args)
+static Value *Function_Path_WithoutFileName(Context &, const Function::ArgumentValues &args)
 {
     return new TextValue(args.at(0)->asText().fileNamePath());
 }
 
 //---------------------------------------------------------------------------------------
 
-static Value *Function_Dictionary_Keys(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_Dictionary_Keys(Context &ctx, const Function::ArgumentValues &)
 {
     return ctx.nativeSelf().as<DictionaryValue>().contentsAsArray(DictionaryValue::Keys);
 }
 
-static Value *Function_Dictionary_Values(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_Dictionary_Values(Context &ctx, const Function::ArgumentValues &)
 {
     return ctx.nativeSelf().as<DictionaryValue>().contentsAsArray(DictionaryValue::Values);
 }
@@ -107,45 +107,45 @@ static File &fileInstance(Context &ctx)
     return *file;
 }
 
-static File const &constFileInstance(Context &ctx)
+static const File &constFileInstance(Context &ctx)
 {
     return fileInstance(ctx);
 }
 
-static Value *Function_File_Name(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_File_Name(Context &ctx, const Function::ArgumentValues &)
 {
     return new TextValue(constFileInstance(ctx).name());
 }
 
-static Value *Function_File_Path(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_File_Path(Context &ctx, const Function::ArgumentValues &)
 {
     return new TextValue(constFileInstance(ctx).path());
 }
 
-static Value *Function_File_Type(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_File_Type(Context &ctx, const Function::ArgumentValues &)
 {
     return new TextValue(constFileInstance(ctx).status().type() == File::Type::File? "file" : "folder");
 }
 
-static Value *Function_File_Size(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_File_Size(Context &ctx, const Function::ArgumentValues &)
 {
     return new NumberValue(constFileInstance(ctx).size());
 }
 
-static Value *Function_File_ModifiedAt(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_File_ModifiedAt(Context &ctx, const Function::ArgumentValues &)
 {
     return new TimeValue(constFileInstance(ctx).status().modifiedAt);
 }
 
-static Value *Function_File_Description(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_File_Description(Context &ctx, const Function::ArgumentValues &)
 {
     return new TextValue(constFileInstance(ctx).description());
 }
 
-static Value *Function_File_Locate(Context &ctx, Function::ArgumentValues const &args)
+static Value *Function_File_Locate(Context &ctx, const Function::ArgumentValues &args)
 {
     Path const relativePath = args.at(0)->asText();
-    if (File const *found = maybeAs<File>(constFileInstance(ctx).tryFollowPath(relativePath)))
+    if (const File *found = maybeAs<File>(constFileInstance(ctx).tryFollowPath(relativePath)))
     {
         return new RecordValue(found->objectNamespace());
     }
@@ -153,48 +153,48 @@ static Value *Function_File_Locate(Context &ctx, Function::ArgumentValues const 
     return nullptr;
 }
 
-static Value *Function_File_Read(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_File_Read(Context &ctx, const Function::ArgumentValues &)
 {
     std::unique_ptr<BlockValue> data(new BlockValue);
     constFileInstance(ctx) >> *data;
     return data.release();
 }
 
-static Value *Function_File_ReadUtf8(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_File_ReadUtf8(Context &ctx, const Function::ArgumentValues &)
 {
     Block raw;
     constFileInstance(ctx) >> raw;
     return new TextValue(String::fromUtf8(raw));
 }
 
-static Value *Function_File_Replace(Context &ctx, Function::ArgumentValues const &args)
+static Value *Function_File_Replace(Context &ctx, const Function::ArgumentValues &args)
 {
     Folder &parentFolder = fileInstance(ctx).as<Folder>();
     File &created = parentFolder.replaceFile(args.at(0)->asText());
     return new RecordValue(created.objectNamespace());
 }
 
-static Value *Function_File_Write(Context &ctx, Function::ArgumentValues const &args)
+static Value *Function_File_Write(Context &ctx, const Function::ArgumentValues &args)
 {
-    BlockValue const &data = args.at(0)->as<BlockValue>();
+    const BlockValue &data = args.at(0)->as<BlockValue>();
     fileInstance(ctx) << data.block();
     return nullptr;
 }
 
-static Value *Function_File_Flush(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_File_Flush(Context &ctx, const Function::ArgumentValues &)
 {
     fileInstance(ctx).flush();
     return nullptr;
 }
 
-static Value *Function_File_MetaId(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_File_MetaId(Context &ctx, const Function::ArgumentValues &)
 {
     return new TextValue(constFileInstance(ctx).metaId().asHexadecimalText());
 }
 
-static Value *Function_Folder_List(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_Folder_List(Context &ctx, const Function::ArgumentValues &)
 {
-    Folder const &folder = constFileInstance(ctx).as<Folder>();
+    const Folder &folder = constFileInstance(ctx).as<Folder>();
     std::unique_ptr<ArrayValue> array(new ArrayValue);
     for (const auto &i : folder.contents())
     {
@@ -203,20 +203,20 @@ static Value *Function_Folder_List(Context &ctx, Function::ArgumentValues const 
     return array.release();
 }
 
-static Value *Function_Folder_ContentSize(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_Folder_ContentSize(Context &ctx, const Function::ArgumentValues &)
 {
-    Folder const &folder = constFileInstance(ctx).as<Folder>();
+    const Folder &folder = constFileInstance(ctx).as<Folder>();
     return new NumberValue(folder.contents().size());
 }
 
-static Value *Function_Folder_Contents(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_Folder_Contents(Context &ctx, const Function::ArgumentValues &)
 {
-    Folder const &folder = constFileInstance(ctx).as<Folder>();
+    const Folder &folder = constFileInstance(ctx).as<Folder>();
     LOG_SCR_MSG(_E(m) "%s") << folder.contentsAsText();
     return nullptr;
 }
 
-static Value *Function_RemoteFile_Download(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_RemoteFile_Download(Context &ctx, const Function::ArgumentValues &)
 {
     RemoteFile &rf = fileInstance(ctx).as<RemoteFile>();
     rf.download();
@@ -240,17 +240,17 @@ static Animation &animationInstance(Context &ctx)
     return *obj;
 }
 
-static Value *Function_Animation_Value(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_Animation_Value(Context &ctx, const Function::ArgumentValues &)
 {
     return new NumberValue(animationInstance(ctx).value());
 }
 
-static Value *Function_Animation_Target(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_Animation_Target(Context &ctx, const Function::ArgumentValues &)
 {
     return new NumberValue(animationInstance(ctx).target());
 }
 
-static Value *Function_Animation_SetValue(Context &ctx, Function::ArgumentValues const &args)
+static Value *Function_Animation_SetValue(Context &ctx, const Function::ArgumentValues &args)
 {
     animationInstance(ctx).setValue(float(args.at(0)->asNumber()), // value
                                     args.at(1)->asNumber(),        // span
@@ -258,7 +258,7 @@ static Value *Function_Animation_SetValue(Context &ctx, Function::ArgumentValues
     return nullptr;
 }
 
-static Value *Function_Animation_SetValueFrom(Context &ctx, Function::ArgumentValues const &args)
+static Value *Function_Animation_SetValueFrom(Context &ctx, const Function::ArgumentValues &args)
 {
     animationInstance(ctx).setValueFrom(float(args.at(0)->asNumber()), // fromValue
                                         float(args.at(1)->asNumber()), // toValue

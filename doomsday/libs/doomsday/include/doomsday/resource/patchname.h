@@ -42,7 +42,7 @@ public:
     de::String percentEncodedName() const;
 
     /// Returns the percent-endcoded symbolic name of the patch.
-    de::String const &percentEncodedNameRef() const;
+    const de::String &percentEncodedNameRef() const;
 
     /// Returns the lump number of the associated patch.
     /// @pre The global patchNames data is available.

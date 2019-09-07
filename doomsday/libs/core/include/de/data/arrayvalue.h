@@ -47,8 +47,8 @@ public:
 
 public:
     ArrayValue();
-    ArrayValue(ArrayValue const &other);
-    ArrayValue(StringList const &strings);
+    ArrayValue(const ArrayValue &other);
+    ArrayValue(const StringList &strings);
     ArrayValue(std::initializer_list<Value *> values);
 
     /**
@@ -56,7 +56,7 @@ public:
      * @param vec  Any kind of vector type (one of de::Vector<>).
      */
     template <typename VecType>
-    ArrayValue(VecType const &vec) {
+    ArrayValue(const VecType &vec) {
         for (int i = 0; i < vec.size(); ++i) {
             add(new NumberValue(vec[i]));
         }
@@ -65,7 +65,7 @@ public:
     ~ArrayValue();
 
     /// Const accessor to the array elements.
-    Elements const &elements() const { return _elements; }
+    const Elements &elements() const { return _elements; }
 
     /**
      * Adds a new Value to the elements of the array. The value is
@@ -80,11 +80,11 @@ public:
      * added to the end of the list of elements.
      * @param text Text to add to the array.
      */
-    void add(String const &text);
+    void add(const String &text);
 
     void addMany(duint count, Number value);
 
-    void addMany(duint count, String const &value);
+    void addMany(duint count, const String &value);
 
     /**
      * Pops the last element and gives its ownership to the caller.
@@ -139,18 +139,18 @@ public:
      * @param value  Value to add. A duplicate of this value is added to the array.
      * @return Reference to the array.
      */
-    ArrayValue &operator << (Value const &value);
+    ArrayValue &operator << (const Value &value);
 
     /**
      * Returns a reference to a value in the array.
      * @param index  Index of the element.
      * @return  Element at the index.
      */
-    Value const &at(dint index) const;
+    const Value &at(dint index) const;
 
-    Value const &front() const { return at(0); }
+    const Value &front() const { return at(0); }
 
-    Value const &back() const { return at(dint(size()) - 1); }
+    const Value &back() const { return at(dint(size()) - 1); }
 
     /**
      * Empties the array of all values.
@@ -168,15 +168,15 @@ public:
     Value *duplicate() const;
     Text asText() const;
     dsize size() const;
-    Value const &element(Value const &index) const;
-    Value &element(Value const &index);
-    void setElement(Value const &index, Value *value);
-    bool contains(Value const &value) const;
+    const Value &element(const Value &index) const;
+    Value &element(const Value &index);
+    void setElement(const Value &index, Value *value);
+    bool contains(const Value &value) const;
     Value *begin();
     Value *next();
     bool isTrue() const;
-    dint compare(Value const &value) const;
-    void sum(Value const &value);
+    dint compare(const Value &value) const;
+    void sum(const Value &value);
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
@@ -190,7 +190,7 @@ public:
      * @param args  Arguments for the calls. The first element must be a
      *              DictionaryValue containing any labeled argument values.
      */
-    void callElements(ArrayValue const &args);
+    void callElements(const ArrayValue &args);
 
     /**
      * Convenient element setter for native code.
@@ -204,10 +204,10 @@ public:
      * @param index  Index to set.
      * @param value  Value to set.
      */
-    void setElement(dint index, String const &value);
+    void setElement(dint index, const String &value);
 
-    Value const &element(dint index) const;
-    Value const &operator [] (dint index) const;
+    const Value &element(dint index) const;
+    const Value &operator [] (dint index) const;
 
     String asInfo() const;
 

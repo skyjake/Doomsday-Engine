@@ -64,7 +64,7 @@ namespace common {
 
 namespace internal
 {
-    static String composeSaveInfo(GameStateMetadata const &metadata)
+    static String composeSaveInfo(const GameStateMetadata &metadata)
     {
         String info;
 
@@ -86,7 +86,7 @@ namespace internal
     /**
      * Lookup the briefing Finale for the current episode, map (if any).
      */
-    static Record const *finaleBriefing(res::Uri const &mapUri)
+    static const Record *finaleBriefing(const res::Uri &mapUri)
     {
         if (::briefDisabled) return nullptr;
 
@@ -121,7 +121,7 @@ DE_PIMPL(GameSession)
     Impl(Public *i) : Base(i)
     {}
 
-    inline String userSavePath(String const &fileName)
+    inline String userSavePath(const String &fileName)
     {
         DE_ASSERT(DoomsdayApp::currentGameProfile());
         return SaveGames::savePath() / fileName + ".save";
@@ -174,7 +174,7 @@ DE_PIMPL(GameSession)
         M_ResetRandom();
     }
 
-    void setEpisode(String const &newEpisodeId)
+    void setEpisode(const String &newEpisodeId)
     {
         DE_ASSERT(!self().hasBegun());
 
@@ -221,7 +221,7 @@ DE_PIMPL(GameSession)
         if (rememberVisitedMaps)
         {
             ArrayValue *visitedMapsArray = new ArrayValue;
-            for (res::Uri const &visitedMap : visitedMaps)
+            for (const res::Uri &visitedMap : visitedMaps)
             {
                 *visitedMapsArray << TextValue(visitedMap.compose());
             }
@@ -262,7 +262,7 @@ DE_PIMPL(GameSession)
      * Update/create a new GameStateFolder at the specified @a path from the current
      * game state.
      */
-    GameStateFolder &updateGameStateFolder(String const &path, GameStateMetadata const &metadata)
+    GameStateFolder &updateGameStateFolder(const String &path, const GameStateMetadata &metadata)
     {
         DE_ASSERT(self().hasBegun());
 
@@ -381,7 +381,7 @@ DE_PIMPL(GameSession)
         if (fast == oldFast) return;
         oldFast = fast;
 
-        for (MissileData const &mdata : missileData)
+        for (const MissileData &mdata : missileData)
         {
             MOBJINFO[mdata.type].speed = mdata.speed[dint( fast )];
         }
@@ -466,10 +466,10 @@ DE_PIMPL(GameSession)
      * Constructs a MapStateReader for serialized map state format interpretation.
      */
     GameStateFolder::MapStateReader *makeMapStateReader(
-        GameStateFolder const &session, String const &mapUriAsText)
+        const GameStateFolder &session, const String &mapUriAsText)
     {
         res::Uri const mapUri(mapUriAsText, RC_NULL);
-        auto const &mapStateFile = session.locateState<File const>(String("maps") / mapUri.path());
+        const auto &mapStateFile = session.locateState<File const>(String("maps") / mapUri.path());
         if (!SV_OpenFileForRead(mapStateFile))
         {
             /// @throw Error The serialized map state file could not be opened for read.
@@ -505,7 +505,7 @@ DE_PIMPL(GameSession)
         throw Error("GameSession::makeMapStateReader", "Unrecognized map state format");
     }
 
-    void loadSaved(String const &savePath)
+    void loadSaved(const String &savePath)
     {
         ::briefDisabled = true;
 
@@ -544,8 +544,8 @@ DE_PIMPL(GameSession)
         //
         // GameStateFolder deserialization begins.
         //
-        auto const &saved = App::rootFolder().locate<GameStateFolder>(internalSavePath());
-        GameStateMetadata const &metadata = saved.metadata();
+        const auto &saved = App::rootFolder().locate<GameStateFolder>(internalSavePath());
+        const GameStateMetadata &metadata = saved.metadata();
 
         // Ensure a complete game ruleset is available.
         std::unique_ptr<GameRules> newRules;
@@ -553,7 +553,7 @@ DE_PIMPL(GameSession)
         {
             newRules.reset(GameRules::fromRecord(metadata.subrecord("gameRules")));
         }
-        catch (Record::NotFoundError const &)
+        catch (const Record::NotFoundError &)
         {
             // The game rules are incomplete. Likely because they were missing from a savegame that
             // was converted from a vanilla format (in which most of these values are omitted).
@@ -574,8 +574,8 @@ DE_PIMPL(GameSession)
         rememberVisitedMaps = metadata.has("visitedMaps");
         if (rememberVisitedMaps)
         {
-            ArrayValue const &vistedMapsArray = metadata.geta("visitedMaps");
-            for (Value const *value : vistedMapsArray.elements())
+            const ArrayValue &vistedMapsArray = metadata.geta("visitedMaps");
+            for (const Value *value : vistedMapsArray.elements())
             {
                 visitedMaps << res::makeUri(value->as<TextValue>());
             }
@@ -583,7 +583,7 @@ DE_PIMPL(GameSession)
 
 #if __JHEXEN__
         // Deserialize the world ACS state.
-        if (File const *state = saved.tryLocateStateFile("ACScript"))
+        if (const File *state = saved.tryLocateStateFile("ACScript"))
         {
             acscriptSys.readWorldState(de::Reader(*state).withHeader());
         }
@@ -607,7 +607,7 @@ DE_PIMPL(GameSession)
         self().setThinkerMapping(nullptr);
     }
 
-    void setMap(res::Uri const &newMapUri)
+    void setMap(const res::Uri &newMapUri)
     {
         DE_ASSERT(self().hasBegun());
 
@@ -621,10 +621,10 @@ DE_PIMPL(GameSession)
         }
 
         // Update game status cvars:
-        Con_SetUri2("map-id", reinterpret_cast<uri_s const *>(&mapUri), SVF_WRITE_OVERRIDE);
+        Con_SetUri2("map-id", reinterpret_cast<const uri_s *>(&mapUri), SVF_WRITE_OVERRIDE);
 
         String hubId;
-        if (Record const *hubRec = defn::Episode(*self().episodeDef()).tryFindHubByMapId(mapUri.compose()))
+        if (const Record *hubRec = defn::Episode(*self().episodeDef()).tryFindHubByMapId(mapUri.compose()))
         {
             hubId = hubRec->gets("id");
         }
@@ -639,7 +639,7 @@ DE_PIMPL(GameSession)
         Con_SetString2("map-name", mapTitle, SVF_WRITE_OVERRIDE);
     }
 
-    inline void setMapAndEntryPoint(res::Uri const &newMapUri, duint newMapEntryPoint)
+    inline void setMapAndEntryPoint(const res::Uri &newMapUri, duint newMapEntryPoint)
     {
         setMap(newMapUri);
         mapEntryPoint = newMapEntryPoint;
@@ -674,7 +674,7 @@ DE_PIMPL(GameSession)
         {
             ::briefDisabled = true;
         }
-        Record const *briefing = finaleBriefing(self().mapUri());
+        const Record *briefing = finaleBriefing(self().mapUri());
 
         // Restart the map music?
         if (!briefing)
@@ -693,7 +693,7 @@ DE_PIMPL(GameSession)
 #endif
 
             String const mapUriAsText = self().mapUri().compose();
-            auto const &saved = App::rootFolder().locate<GameStateFolder>(internalSavePath());
+            const auto &saved = App::rootFolder().locate<GameStateFolder>(internalSavePath());
             std::unique_ptr<GameStateFolder::MapStateReader> reader(makeMapStateReader(saved, mapUriAsText));
             self().setThinkerMapping(reader.get());
             reader->read(mapUriAsText);
@@ -726,7 +726,7 @@ DE_PIMPL(GameSession)
         for (dint i = 0; i < MAXPLAYERS; ++i)
         {
             playerbackup_t *pb  = &playerBackup[i];
-            player_t const *plr = &players[i];
+            const player_t *plr = &players[i];
 
             std::memcpy(&pb->player, plr, sizeof(player_t));
 
@@ -811,9 +811,9 @@ DE_PIMPL(GameSession)
             }
             else
             {
-                if (playerstart_t const *start = P_GetPlayerStart(mapEntryPoint, i, false))
+                if (const playerstart_t *start = P_GetPlayerStart(mapEntryPoint, i, false))
                 {
-                    mapspot_t const *spot = &mapSpots[start->spot];
+                    const mapspot_t *spot = &mapSpots[start->spot];
                     P_SpawnPlayer(i, cfg.playerClass[i], spot->origin[0],
                                   spot->origin[1], spot->origin[2], spot->angle,
                                   spot->flags, false, true);
@@ -853,7 +853,7 @@ DE_PIMPL(GameSession)
             }
         }
 
-        for (player_t const &plr : players)
+        for (const player_t &plr : players)
         {
             if (!plr.plr->inGame) continue;
 
@@ -921,7 +921,7 @@ bool GameSession::isSavingPossible()
     return true;
 }
 
-Record const *GameSession::episodeDef() const
+const Record *GameSession::episodeDef() const
 {
     if (hasBegun())
     {
@@ -936,16 +936,16 @@ String GameSession::episodeId() const
     return hasBegun()? d->episodeId : "";
 }
 
-Record const *GameSession::mapGraphNodeDef() const
+const Record *GameSession::mapGraphNodeDef() const
 {
-    if (Record const *episode = episodeDef())
+    if (const Record *episode = episodeDef())
     {
         return defn::Episode(*episode).tryFindMapGraphNode(mapUri().compose());
     }
     return nullptr;
 }
 
-Record const &GameSession::mapInfo() const
+const Record &GameSession::mapInfo() const
 {
     return G_MapInfoForMapUri(mapUri());
 }
@@ -967,13 +967,13 @@ GameSession::VisitedMaps GameSession::allVisitedMaps() const
 res::Uri GameSession::mapUriForNamedExit(const String& name) const
 {
     LOG_AS("GameSession");
-    if (Record const *mgNode = mapGraphNodeDef())
+    if (const Record *mgNode = mapGraphNodeDef())
     {
         // Build a lookup table mapping exit ids to exit records.
-        Map<String, Record const *, String::InsensitiveLessThan> exits;
-        for (Value const *value : mgNode->geta("exit").elements())
+        Map<String, const Record *, String::InsensitiveLessThan> exits;
+        for (const Value *value : mgNode->geta("exit").elements())
         {
-            Record const &exit = value->as<RecordValue>().dereference();
+            const Record &exit = value->as<RecordValue>().dereference();
             String id = exit.gets("id");
             if (!id.isEmpty())
             {
@@ -982,7 +982,7 @@ res::Uri GameSession::mapUriForNamedExit(const String& name) const
         }
 
         // Locate the named exit record.
-        Record const *chosenExit = nullptr;
+        const Record *chosenExit = nullptr;
         if (exits.size() > 1)
         {
             auto found = exits.find(name);
@@ -1014,12 +1014,12 @@ res::Uri GameSession::mapUriForNamedExit(const String& name) const
     return res::Uri();
 }
 
-GameRules const &GameSession::rules() const
+const GameRules &GameSession::rules() const
 {
     return d->rules;
 }
 
-void GameSession::applyNewRules(GameRules const &newRules)
+void GameSession::applyNewRules(const GameRules &newRules)
 {
     LOG_AS("GameSession");
 
@@ -1064,7 +1064,7 @@ void GameSession::endAndBeginTitle()
 {
     end();
 
-    if (Record const *finale = Defs().finales.tryFind("id", "title"))
+    if (const Record *finale = Defs().finales.tryFind("id", "title"))
     {
         G_StartFinale(finale->gets("script"), FF_LOCAL, FIMODE_NORMAL, "title");
         return;
@@ -1073,8 +1073,8 @@ void GameSession::endAndBeginTitle()
     throw Error("GameSession::endAndBeginTitle", "An InFine 'title' script must be defined");
 }
 
-void GameSession::begin(GameRules const &newRules, String const &episodeId,
-    res::Uri const &mapUri, uint mapEntryPoint)
+void GameSession::begin(const GameRules &newRules, const String &episodeId,
+    const res::Uri &mapUri, uint mapEntryPoint)
 {
     if (hasBegun())
     {
@@ -1141,7 +1141,7 @@ void GameSession::reloadMap()
             d->loadSaved(internalSavePath());
             return;
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_AS("GameSession");
             LOG_WARNING("Error loading current map state:\n") << er.asText();
@@ -1170,7 +1170,7 @@ void GameSession::reloadMap()
     }
 }
 
-void GameSession::leaveMap(res::Uri const &nextMapUri, uint nextMapEntryPoint)
+void GameSession::leaveMap(const res::Uri &nextMapUri, uint nextMapEntryPoint)
 {
     if (!hasBegun())
     {
@@ -1211,7 +1211,7 @@ void GameSession::leaveMap(res::Uri const &nextMapUri, uint nextMapEntryPoint)
         // Are we entering a new hub?
 #if __JHEXEN__
         defn::Episode epsd(*episodeDef());
-        Record const *currentHub = epsd.tryFindHubByMapId(mapUri().compose());
+        const Record *currentHub = epsd.tryFindHubByMapId(mapUri().compose());
         if (!currentHub || currentHub != epsd.tryFindHubByMapId(nextMapUri.compose()))
 #endif
         {
@@ -1327,7 +1327,7 @@ String GameSession::userDescription()
                                 .metadata().gets("userDescription", "");
 }
 
-static String chooseSaveDescription(String const &savePath, String const &userDescription)
+static String chooseSaveDescription(const String &savePath, const String &userDescription)
 {
     // Use the user description given.
     if (!userDescription.isEmpty())
@@ -1338,7 +1338,7 @@ static String chooseSaveDescription(String const &savePath, String const &userDe
     return G_DefaultGameStateFolderUserDescription(savePath.fileNameWithoutExtension());
 }
 
-void GameSession::save(String const &saveName, String const &userDescription)
+void GameSession::save(const String &saveName, const String &userDescription)
 {
     if (!hasBegun())
     {
@@ -1371,7 +1371,7 @@ void GameSession::save(String const &saveName, String const &userDescription)
         /// this notification is unnecessary.
         Plug_Notify(DD_NOTIFY_GAME_SAVED, nullptr);
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_RES_WARNING("Error saving game session to '%s':\n")
                 << savePath << er.asText();
@@ -1379,7 +1379,7 @@ void GameSession::save(String const &saveName, String const &userDescription)
 }
 
 /// @todo Use busy mode here.
-void GameSession::load(String const &saveName)
+void GameSession::load(const String &saveName)
 {
     String const savePath = d->userSavePath(saveName);
     LOG_MSG("Loading game from \"%s\"...") << savePath;
@@ -1387,21 +1387,21 @@ void GameSession::load(String const &saveName)
     P_SetMessage(&players[CONSOLEPLAYER], "Game loaded");
 }
 
-void GameSession::copySaved(String const &destName, String const &sourceName)
+void GameSession::copySaved(const String &destName, const String &sourceName)
 {
     AbstractSession::copySaved(d->userSavePath(destName), d->userSavePath(sourceName));
     LOG_MSG("Copied savegame \"%s\" to \"%s\"") << sourceName << destName;
 }
 
-void GameSession::removeSaved(String const &saveName)
+void GameSession::removeSaved(const String &saveName)
 {
     AbstractSession::removeSaved(d->userSavePath(saveName));
 }
 
-String GameSession::savedUserDescription(String const &saveName)
+String GameSession::savedUserDescription(const String &saveName)
 {
     String const savePath = d->userSavePath(saveName);
-    if (auto const *saved = App::rootFolder().tryLocate<GameStateFolder>(savePath))
+    if (const auto *saved = App::rootFolder().tryLocate<GameStateFolder>(savePath))
     {
         return saved->metadata().gets("userDescription", "");
     }
@@ -1416,9 +1416,9 @@ acs::System &GameSession::acsSystem()
 void GameSession::consoleRegister()  // static
 {
     static dint        gsvRuleSkill = 0;
-    static char const *gsvEpisode = "";
+    static const char *gsvEpisode = "";
     static uri_s      *gsvMap = nullptr;
-    static char const *gsvHub = "";
+    static const char *gsvHub = "";
 
 #define READONLYCVAR  (CVF_READ_ONLY | CVF_NO_MAX | CVF_NO_MIN | CVF_NO_ARCHIVE)
 

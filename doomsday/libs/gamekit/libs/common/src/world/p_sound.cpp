@@ -82,12 +82,12 @@ void S_PlaneSound(Plane *pln, int id)
 
 #ifdef __JHEXEN__
 
-int S_GetSoundID(char const *name)
+int S_GetSoundID(const char *name)
 {
     return Defs().getSoundNumForName(name);
 }
 
-void SndInfoParser(ddstring_s const *path)
+void SndInfoParser(const ddstring_s *path)
 {
     AutoStr *script = M_ReadFileIntoString(path, 0);
 
@@ -113,7 +113,7 @@ void SndInfoParser(ddstring_s const *path)
                 // $map int(map-number) string(lump-name)
                 // Associate a music lump to a map.
                 int const mapNumber        = (int)lexer.readNumber();
-                ddstring_t const *lumpName = lexer.readString();
+                const ddstring_t *lumpName = lexer.readString();
 
                 if(mapNumber > 0)
                 {
@@ -150,7 +150,7 @@ void SndInfoParser(ddstring_s const *path)
             // string(sound-id) string(lump-name | '?')
             // A sound definition.
             int const soundIndex       = Defs().getSoundNumForName(Str_Text(lexer.readString()));
-            ddstring_t const *lumpName = lexer.readString();
+            const ddstring_t *lumpName = lexer.readString();
 
             if(soundIndex)
             {

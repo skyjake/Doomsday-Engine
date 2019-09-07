@@ -32,7 +32,7 @@ namespace de {
 class LIBGUI_PUBLIC PopupMenuWidget : public PopupWidget
 {
 public:
-    PopupMenuWidget(String const &name = String());
+    PopupMenuWidget(const String &name = String());
 
     void setParentPopup(PopupWidget *parentPopup);
     PopupWidget *parentPopup() const;

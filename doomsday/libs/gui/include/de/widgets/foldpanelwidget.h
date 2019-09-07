@@ -44,7 +44,7 @@ namespace de {
 class LIBGUI_PUBLIC FoldPanelWidget : public PanelWidget
 {
 public:
-    FoldPanelWidget(String const &name = {});
+    FoldPanelWidget(const String &name = {});
 
     /**
      * Creates a title button widget for toggling the fold open and closed.
@@ -54,7 +54,7 @@ public:
      *
      * @return Button widget instance. Caller gets ownership.
      */
-    ButtonWidget *makeTitle(String const &text = "");
+    ButtonWidget *makeTitle(const String &text = "");
 
     ButtonWidget &title();
 

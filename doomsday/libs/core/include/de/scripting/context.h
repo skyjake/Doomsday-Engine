@@ -84,10 +84,10 @@ public:
      * @param jumpBreak     The statement to jump to when a "break" statement
      *                      is encountered.
      */
-    void start(Statement const *statement,
-               Statement const *flow = NULL,
-               Statement const *jumpContinue = NULL,
-               Statement const *jumpBreak = NULL);
+    void start(const Statement *statement,
+               const Statement *flow = NULL,
+               const Statement *jumpContinue = NULL,
+               const Statement *jumpBreak = NULL);
 
     /**
      * Clears the evaluator and control flow. Does not empty the namespace.
@@ -97,7 +97,7 @@ public:
 
     /// Returns the currently executed statement.
     /// @return Statement, or @c NULL if no control flow information exists.
-    Statement const *current();
+    const Statement *current();
 
     /**
      * Execute the current statement.

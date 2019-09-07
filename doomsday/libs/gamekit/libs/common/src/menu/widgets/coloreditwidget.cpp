@@ -105,7 +105,7 @@ DE_PIMPL(ColorEditWidget)
     }
 };
 
-ColorEditWidget::ColorEditWidget(Vec4f const &color, bool rgbaMode)
+ColorEditWidget::ColorEditWidget(const Vec4f &color, bool rgbaMode)
     : Widget()
     , d(new Impl(this))
 {
@@ -328,7 +328,7 @@ void ColorEditWidget::updateGeometry()
     }
 }
 
-ColorEditWidget &ColorEditWidget::setPreviewDimensions(Vec2i const &newDimensions)
+ColorEditWidget &ColorEditWidget::setPreviewDimensions(const Vec2i &newDimensions)
 {
     d->dimensions = newDimensions;
     return *this;
@@ -344,7 +344,7 @@ bool ColorEditWidget::rgbaMode() const
     return d->rgbaMode;
 }
 
-ColorEditWidget &ColorEditWidget::setColor(Vec4f const &newColor, int flags)
+ColorEditWidget &ColorEditWidget::setColor(const Vec4f &newColor, int flags)
 {
     int setComps = 0;
     int const setCompFlags = (flags | MNCOLORBOX_SCF_NO_ACTION);

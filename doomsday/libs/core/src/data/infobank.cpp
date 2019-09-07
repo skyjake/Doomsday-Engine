@@ -40,7 +40,7 @@ DE_PIMPL(InfoBank)
         info.audienceForNamedBlock() += this;
     }
 
-    void parsedNamedBlock(String const &, Record &block) override
+    void parsedNamedBlock(const String &, Record &block) override
     {
         if (block.gets(ScriptedInfo::VAR_BLOCK_TYPE) != ScriptedInfo::BLOCK_GROUP)
         {
@@ -54,10 +54,10 @@ DE_PIMPL(InfoBank)
      * the script namespace. Subgroups are checked recursively.
      */
     void removeFromGroup(Record &group,
-                         std::function<bool (String const &, Record const &)> shouldRemove,
+                         std::function<bool (const String &, const Record &)> shouldRemove,
                          String identifierBase = {})
     {
-        group.forSubrecords([&, this](String const &name, Record &sub)
+        group.forSubrecords([&, this](const String &name, Record &sub)
         {
             String fullIdentifier = identifierBase.concatenateMember(name);
             if (ScriptedInfo::blockType(sub) == ScriptedInfo::BLOCK_GROUP)
@@ -80,12 +80,12 @@ DE_PIMPL(InfoBank)
 
 const String InfoBank::Impl::VAR_NOT_IN_BANK{"__notInBank__"};
 
-InfoBank::InfoBank(char const *nameForLog, Flags const &flags, String const &hotStorageLocation)
+InfoBank::InfoBank(const char *nameForLog, const Flags &flags, const String &hotStorageLocation)
     : Bank(nameForLog, flags, hotStorageLocation)
     , d(new Impl(this))
 {}
 
-void InfoBank::parse(String const &source)
+void InfoBank::parse(const String &source)
 {
     try
     {
@@ -93,13 +93,13 @@ void InfoBank::parse(String const &source)
         d->modTime = Time();
         d->info.parse(source);
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_WARNING("Failed to read Info source:\n") << er.asText();
     }
 }
 
-void InfoBank::parse(File const &file)
+void InfoBank::parse(const File &file)
 {
     try
     {
@@ -107,7 +107,7 @@ void InfoBank::parse(File const &file)
         d->modTime = file.status().modifiedAt;
         d->info.parse(file);
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_WARNING("Failed to read Info file:\n") << er.asText();
     }
@@ -118,7 +118,7 @@ ScriptedInfo &InfoBank::info()
     return d->info;
 }
 
-ScriptedInfo const &InfoBank::info() const
+const ScriptedInfo &InfoBank::info() const
 {
     return d->info;
 }
@@ -128,12 +128,12 @@ Record &InfoBank::objectNamespace()
     return d->names;
 }
 
-Record const &InfoBank::objectNamespace() const
+const Record &InfoBank::objectNamespace() const
 {
     return d->names;
 }
 
-void InfoBank::addFromInfoBlocks(String const &blockType)
+void InfoBank::addFromInfoBlocks(const String &blockType)
 {
     for (const String &id : d->info.allBlocksOfType(blockType))
     {
@@ -148,15 +148,15 @@ void InfoBank::addFromInfoBlocks(String const &blockType)
     }
 }
 
-void InfoBank::removeAllWithRootPath(String const &rootPath)
+void InfoBank::removeAllWithRootPath(const String &rootPath)
 {
     LOG_AS(nameForLog());
-    d->removeFromGroup(d->names, [&rootPath] (String const &, Record const &rec) {
+    d->removeFromGroup(d->names, [&rootPath] (const String &, const Record &rec) {
         return ScriptedInfo::sourceLocation(rec).beginsWith(rootPath);
     });
 }
 
-void InfoBank::removeAllFromPackage(String const &packageId)
+void InfoBank::removeAllFromPackage(const String &packageId)
 {
     LOG_AS(nameForLog());
     d->removeFromGroup(d->names, [&packageId](const String &, const Record &rec) {
@@ -176,7 +176,7 @@ String InfoBank::bankRootPath() const
     return d->relativeToPath;
 }
 
-String InfoBank::absolutePathInContext(Record const &context, String const &relativePath) const
+String InfoBank::absolutePathInContext(const Record &context, const String &relativePath) const
 {
     if (Path(relativePath).isAbsolute())
     {

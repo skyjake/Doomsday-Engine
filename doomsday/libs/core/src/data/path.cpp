@@ -151,7 +151,7 @@ const String Path::Impl::emptyPath;
 Path::Path() : d(new Impl)
 {}
 
-Path::Path(String const &path, Char sep)
+Path::Path(const String &path, Char sep)
     : d(new Impl(path, sep))
 {}
 
@@ -159,15 +159,15 @@ Path::Path(const CString &path, Char sep)
     : d(new Impl(path.toString(), sep))
 {}
 
-Path::Path(char const *nullTerminatedCStr, Char sep)
+Path::Path(const char *nullTerminatedCStr, Char sep)
     : d(new Impl(nullTerminatedCStr, sep))
 {}
 
-Path::Path(char const *nullTerminatedCStr)
+Path::Path(const char *nullTerminatedCStr)
     : d(new Impl(nullTerminatedCStr, '/'))
 {}
 
-Path::Path(Path const &other)
+Path::Path(const Path &other)
     : d(new Impl(other.d->path, other.d->separator))
 {}
 
@@ -175,12 +175,12 @@ Path::Path(Path &&moved)
     : d(std::move(moved.d))
 {}
 
-Path &Path::operator=(char const *pathUtf8)
+Path &Path::operator=(const char *pathUtf8)
 {
     return *this = Path(pathUtf8);
 }
 
-Path &Path::operator=(Path const &other)
+Path &Path::operator=(const Path &other)
 {
     d.reset(new Impl(other.d->path, other.d->separator));
     return *this;
@@ -192,12 +192,12 @@ Path &Path::operator=(Path &&moved)
     return *this;
 }
 
-Path Path::operator+(String const &str) const
+Path Path::operator+(const String &str) const
 {
     return Path(d->path + str, d->separator);
 }
 
-Path Path::operator+(char const *nullTerminatedCStr) const
+Path Path::operator+(const char *nullTerminatedCStr) const
 {
     return Path(d->path + nullTerminatedCStr, d->separator);
 }
@@ -208,12 +208,12 @@ int Path::segmentCount() const
     return d->segments.sizei();
 }
 
-Path::Segment const &Path::segment(int index) const
+const Path::Segment &Path::segment(int index) const
 {
     return reverseSegment(segmentCount() - 1 - index);
 }
 
-Path::Segment const &Path::reverseSegment(int reverseIndex) const
+const Path::Segment &Path::reverseSegment(int reverseIndex) const
 {
     d->parse();
 
@@ -389,13 +389,13 @@ Path &Path::clear()
     return *this;
 }
 
-Path &Path::operator = (String const &newPath)
+Path &Path::operator = (const String &newPath)
 {
     set(newPath, '/');
     return *this;
 }
 
-Path &Path::set(String const &newPath, Char sep)
+Path &Path::set(const String &newPath, Char sep)
 {
     d->path = newPath; // implicitly shared
     d->separator = sep;
@@ -456,7 +456,7 @@ void Path::operator << (Reader &from)
     set(String::fromUtf8(b), Char(uint32_t(sep)));
 }
 
-String Path::normalizeString(String const &text, Char replaceWith)
+String Path::normalizeString(const String &text, Char replaceWith)
 {
     String result = text;
     if (replaceWith != '/')
@@ -471,7 +471,7 @@ String Path::normalizeString(String const &text, Char replaceWith)
     return result;
 }
 
-Path Path::normalize(String const &text, Char replaceWith)
+Path Path::normalize(const String &text, Char replaceWith)
 {
     return Path(normalizeString(text, replaceWith), replaceWith);
 }

@@ -93,9 +93,9 @@ public:
      *
      * @param arg  Argument to append.
      */
-    void append(String const &arg);
+    void append(const String &arg);
 
-    CommandLine &operator << (String const &arg) {
+    CommandLine &operator << (const String &arg) {
         append(arg);
         return *this;
     }
@@ -106,7 +106,7 @@ public:
      * @param pos  Index at which the new argument will be at.
      * @param arg  Argument to insert.
      */
-    void insert(dsize pos, String const &arg);
+    void insert(dsize pos, const String &arg);
 
     /**
      * Removes an argument by index.
@@ -127,7 +127,7 @@ public:
      *
      * @return  Index of the argument, if found. Otherwise zero.
      */
-    ArgWithParams check(String const &arg, dint count = 0) const;
+    ArgWithParams check(const String &arg, dint count = 0) const;
 
     /**
      * Calls a callback function for each of the parameters given to an argumnet.
@@ -139,8 +139,8 @@ public:
      *
      * @return Number of parameters handled.
      */
-    int forAllParameters(String const &arg,
-                         const std::function<void (dsize, String const &)>& paramHandler) const;
+    int forAllParameters(const String &arg,
+                         const std::function<void (dsize, const String &)>& paramHandler) const;
 
     /**
      * Gets the parameter for an argument.
@@ -152,7 +152,7 @@ public:
      * @return  @c true, if parameter was successfully returned.
      *      Otherwise @c false, in which case @a param is not modified.
      */
-    bool getParameter(String const &arg, String &param) const;
+    bool getParameter(const String &arg, String &param) const;
 
     /**
      * Determines whether @a arg exists in the list of arguments.
@@ -161,7 +161,7 @@ public:
      *
      * @return  Number of times @a arg is found in the arguments.
      */
-    dint has(String const &arg) const;
+    dint has(const String &arg) const;
 
     /**
      * Determines whether an argument is an option, i.e., it begins with a hyphen.
@@ -171,7 +171,7 @@ public:
     /**
      * Determines whether an argument is an option, i.e., it begins with a hyphen.
      */
-    static bool isOption(String const &arg);
+    static bool isOption(const String &arg);
 
     String at(dsize pos) const;
 
@@ -179,7 +179,7 @@ public:
      * Returns a list of pointers to the arguments. The list contains
      * count() strings and is NULL-terminated.
      */
-    char const *const *argv() const;
+    const char *const *argv() const;
 
     /**
      * Converts the argument at position @a pos into an absolute native path.
@@ -195,7 +195,7 @@ public:
      *
      * @param nativePath  File to parse.
      */
-    void parseResponseFile(NativePath const &nativePath);
+    void parseResponseFile(const NativePath &nativePath);
 
     /**
      * Breaks down a single string containing arguments.
@@ -208,7 +208,7 @@ public:
      *
      * @param cmdLine  String containing the arguments.
      */
-    void parse(String const &cmdLine);
+    void parse(const String &cmdLine);
 
     /**
      * Defines a new alias for a full argument.
@@ -216,15 +216,15 @@ public:
      * @param full  The full argument, e.g., "--help"
      * @param alias  Alias for the full argument, e.g., "-h"
      */
-    void alias(String const &full, String const &alias);
+    void alias(const String &full, const String &alias);
 
-    bool isAliasDefinedFor(String const &full) const;
+    bool isAliasDefinedFor(const String &full) const;
 
     /**
      * @return @c true, iff the two parameters are equivalent according to
      * the abbreviations.
      */
-    bool matches(String const &full, String const &fullOrAlias) const;
+    bool matches(const String &full, const String &fullOrAlias) const;
 
     /**
      * Spawns a new process using the command line. The first argument

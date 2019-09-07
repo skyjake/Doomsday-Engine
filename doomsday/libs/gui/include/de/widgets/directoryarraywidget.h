@@ -31,10 +31,10 @@ namespace de {
 class LIBGUI_PUBLIC DirectoryArrayWidget : public VariableArrayWidget
 {
 public:
-    DirectoryArrayWidget(Variable &variable, String const &name = String());
+    DirectoryArrayWidget(Variable &variable, const String &name = String());
 
 protected:
-    String labelForElement(Value const &value) const override;
+    String labelForElement(const Value &value) const override;
     void elementCreated(LabelWidget &, const ui::Item &) override;
 
 private:

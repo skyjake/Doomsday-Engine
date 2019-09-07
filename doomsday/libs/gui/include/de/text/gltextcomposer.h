@@ -44,18 +44,18 @@ public:
     GLTextComposer();
 
     void setAtlas(Atlas &atlas);
-    void setWrapping(FontLineWrapping const &wrappedLines);
+    void setWrapping(const FontLineWrapping &wrappedLines);
 
-    void setText(String const &text);
-    void setStyledText(String const &styledText);
-    void setText(/*String const &text, */Font::RichFormat const &format);
+    void setText(const String &text);
+    void setStyledText(const String &styledText);
+    void setText(/*const String &text, */const Font::RichFormat &format);
 
     /**
      * Sets the range of visible lines.
      *
      * @param visibleLineRange  Visible range of lines.
      */
-    void setRange(Rangei const &visibleLineRange);
+    void setRange(const Rangei &visibleLineRange);
 
     Rangei range() const;
 
@@ -85,9 +85,9 @@ public:
     void releaseLinesOutsideRange();
 
     void makeVertices(GuiVertexBuilder &triStrip,
-                      Vec2i const &topLeft,
-                      ui::Alignment const &lineAlign,
-                      Vec4f const &color = Vec4f(1));
+                      const Vec2i &topLeft,
+                      const ui::Alignment &lineAlign,
+                      const Vec4f &color = Vec4f(1));
 
     /**
      * Generates vertices for all the text lines and concatenates them onto the existing
@@ -100,10 +100,10 @@ public:
      * @param color        Vertex color for the generated vertices.
      */
     void makeVertices(GuiVertexBuilder &triStrip,
-                      Rectanglei const &rect,
-                      ui::Alignment const &alignInRect,
-                      ui::Alignment const &lineAlign,
-                      Vec4f const &color = Vec4f(1));
+                      const Rectanglei &rect,
+                      const ui::Alignment &alignInRect,
+                      const ui::Alignment &lineAlign,
+                      const Vec4f &color = Vec4f(1));
 
     /**
      * Returns the maximum width of the generated vertices. This is only valid after

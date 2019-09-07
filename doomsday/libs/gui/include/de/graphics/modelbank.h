@@ -54,12 +54,12 @@ public:
 public:
     ModelBank(const Constructor& modelConstructor = {});
 
-    void add(DotPath const &id, String const &sourcePath);
+    void add(const DotPath &id, const String &sourcePath);
 
-    ModelDrawable &model(DotPath const &id);
+    ModelDrawable &model(const DotPath &id);
 
     template <typename Type>
-    Type &model(DotPath const &id)
+    Type &model(const DotPath &id)
     {
         return static_cast<Type &>(model(id));
     }
@@ -69,14 +69,14 @@ public:
      * @param id        Model identifier.
      * @param userData  User data object. Ownership taken.
      */
-    void setUserData(DotPath const &id, IUserData *userData);
+    void setUserData(const DotPath &id, IUserData *userData);
 
-    IUserData const *userData(DotPath const &id) const;
+    const IUserData *userData(const DotPath &id) const;
 
-    ModelWithData modelAndData(DotPath const &id) const;
+    ModelWithData modelAndData(const DotPath &id) const;
 
     template <typename Type>
-    std::pair<ModelDrawable *, Type *> modelAndData(DotPath const &id) const
+    std::pair<ModelDrawable *, Type *> modelAndData(const DotPath &id) const
     {
         ModelWithData entry = modelAndData(id);
         return std::pair<ModelDrawable *, Type *>

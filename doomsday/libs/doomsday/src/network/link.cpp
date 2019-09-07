@@ -38,13 +38,13 @@ DE_PIMPL(Link)
     {}
 };
 
-Link::Link(String const &domain, TimeSpan timeout) : d(new Impl(this))
+Link::Link(const String &domain, TimeSpan timeout) : d(new Impl(this))
 {
     d->connectDomain  = domain;
     d->connectTimeout = timeout;
 }
 
-Link::Link(Address const &address) : d(new Impl(this))
+Link::Link(const Address &address) : d(new Impl(this))
 {
     d->connectAddress = address;
 }
@@ -75,7 +75,7 @@ void Link::connectLink()
     }
 }
 
-Packet *Link::interpret(Message const &msg)
+Packet *Link::interpret(const Message &msg)
 {
     return d->protocol.interpret(msg);
 }

@@ -64,7 +64,7 @@ DE_PIMPL_NOREF(Function)
 
     Impl() {}
 
-    Impl(Function::Arguments const &args, Function::Defaults const &defaults)
+    Impl(const Function::Arguments &args, const Function::Defaults &defaults)
         : arguments(args), defaults(defaults)
     {}
 };
@@ -72,11 +72,11 @@ DE_PIMPL_NOREF(Function)
 Function::Function() : d(new Impl)
 {}
 
-Function::Function(Arguments const &args, Defaults const &defaults)
+Function::Function(const Arguments &args, const Defaults &defaults)
     : d(new Impl(args, defaults))
 {}
 
-Function::Function(String const &nativeName, Arguments const &args, Defaults const &defaults)
+Function::Function(const String &nativeName, const Arguments &args, const Defaults &defaults)
     : d(new Impl(args, defaults))
 {
     try
@@ -84,7 +84,7 @@ Function::Function(String const &nativeName, Arguments const &args, Defaults con
         d->nativeName       = nativeName;
         d->nativeEntryPoint = nativeEntryPoint(nativeName);
     }
-    catch (Error const &)
+    catch (const Error &)
     {
         addRef(-1); // Cancelled construction of the instance; no one has a reference.
         throw;
@@ -126,7 +126,7 @@ Compound &Function::compound()
     return d->compound;
 }
 
-Compound const &Function::compound() const
+const Compound &Function::compound() const
 {
     return d->compound;
 }
@@ -136,7 +136,7 @@ Function::Arguments &Function::arguments()
     return d->arguments;
 }
 
-Function::Arguments const &Function::arguments() const
+const Function::Arguments &Function::arguments() const
 {
     return d->arguments;
 }
@@ -146,16 +146,16 @@ Function::Defaults &Function::defaults()
     return d->defaults;
 }
 
-Function::Defaults const &Function::defaults() const
+const Function::Defaults &Function::defaults() const
 {
     return d->defaults;
 }
 
-void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values) const
+void Function::mapArgumentValues(const ArrayValue &args, ArgumentValues &values) const
 {
     DE_ASSERT(args.size() > 0);
 
-    DictionaryValue const *labeledArgs = dynamic_cast<DictionaryValue const *>(
+    const DictionaryValue *labeledArgs = dynamic_cast<const DictionaryValue *>(
         args.elements().front());
 
     DE_ASSERT(labeledArgs != nullptr);
@@ -251,7 +251,7 @@ bool Function::isNative() const
     return d->nativeEntryPoint != nullptr;
 }
 
-Value *Function::callNative(Context &context, ArgumentValues const &args) const
+Value *Function::callNative(Context &context, const ArgumentValues &args) const
 {
     DE_ASSERT(isNative());
     DE_ASSERT(args.size() == d->arguments.size()); // all arguments provided
@@ -337,17 +337,17 @@ void Function::recordBeingDeleted(Record &DE_DEBUG_ONLY(record))
     d->globals = nullptr;
 }
 
-void Function::registerNativeEntryPoint(String const &name, Function::NativeEntryPoint entryPoint)
+void Function::registerNativeEntryPoint(const String &name, Function::NativeEntryPoint entryPoint)
 {
     entryPoints().insert(name, entryPoint);
 }
 
-void Function::unregisterNativeEntryPoint(String const &name)
+void Function::unregisterNativeEntryPoint(const String &name)
 {
     entryPoints().remove(name);
 }
 
-Function::NativeEntryPoint Function::nativeEntryPoint(String const &name)
+Function::NativeEntryPoint Function::nativeEntryPoint(const String &name)
 {
     auto found = entryPoints().find(name);
     if (found == entryPoints().end())

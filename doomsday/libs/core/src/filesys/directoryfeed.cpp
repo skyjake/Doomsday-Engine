@@ -40,7 +40,7 @@ DE_PIMPL_NOREF(DirectoryFeed)
     String namePattern;
 };
 
-DirectoryFeed::DirectoryFeed(const NativePath &nativePath, Flags const &mode)
+DirectoryFeed::DirectoryFeed(const NativePath &nativePath, const Flags &mode)
     : d(new Impl)
 {
     LOG_AS("DirectoryFeed");
@@ -71,7 +71,7 @@ const NativePath &DirectoryFeed::nativePath() const
     return d->nativePath;
 }
 
-Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
+Feed::PopulatedFiles DirectoryFeed::populate(const Folder &folder)
 {
     DE_ASSERT(!d->nativePath.toString().isEmpty());
 
@@ -145,7 +145,7 @@ void DirectoryFeed::populateSubFolder(const Folder &folder, const String &entryN
     }
 }
 
-void DirectoryFeed::populateFile(Folder const &folder, String const &entryName,
+void DirectoryFeed::populateFile(const Folder &folder, const String &entryName,
                                  PopulatedFiles &populated)
 {
     try
@@ -181,7 +181,7 @@ void DirectoryFeed::populateFile(Folder const &folder, String const &entryName,
 
         populated << file;
     }
-    catch (StatusError const &er)
+    catch (const StatusError &er)
     {
         LOG_WARNING("Error with \"%s\" in %s: %s")
                 << entryName
@@ -208,7 +208,7 @@ bool DirectoryFeed::prune(File &file) const
                 return true;
             }
         }
-        catch (StatusError const &)
+        catch (const StatusError &)
         {
             // Get rid of it.
             return true;
@@ -234,7 +234,7 @@ bool DirectoryFeed::prune(File &file) const
     return false;
 }
 
-File *DirectoryFeed::createFile(String const &name)
+File *DirectoryFeed::createFile(const String &name)
 {
     NativePath newPath = d->nativePath / name;
     /*if (NativePath::exists(newPath))
@@ -248,7 +248,7 @@ File *DirectoryFeed::createFile(String const &name)
     return file;
 }
 
-void DirectoryFeed::destroyFile(String const &name)
+void DirectoryFeed::destroyFile(const String &name)
 {
     NativePath path = d->nativePath / name;
 
@@ -266,7 +266,7 @@ void DirectoryFeed::destroyFile(String const &name)
     }
 }
 
-Feed *DirectoryFeed::newSubFeed(String const &name)
+Feed *DirectoryFeed::newSubFeed(const String &name)
 {
     NativePath subPath = d->nativePath / name;
     if (d->mode.testFlag(CreateIfMissing) || (subPath.exists() && subPath.isReadable()))
@@ -276,7 +276,7 @@ Feed *DirectoryFeed::newSubFeed(String const &name)
     return nullptr;
 }
 
-void DirectoryFeed::changeWorkingDir(NativePath const &nativePath)
+void DirectoryFeed::changeWorkingDir(const NativePath &nativePath)
 {
     if (!App::setCurrentWorkPath(nativePath))
     {
@@ -286,7 +286,7 @@ void DirectoryFeed::changeWorkingDir(NativePath const &nativePath)
     }
 }
 
-File::Status DirectoryFeed::fileStatus(NativePath const &nativePath)
+File::Status DirectoryFeed::fileStatus(const NativePath &nativePath)
 {
     auto info = tF::make_ref(new_FileInfo(nativePath.toString()));
     if (!exists_FileInfo(info))
@@ -312,7 +312,7 @@ File::Status DirectoryFeed::fileStatus(NativePath const &nativePath)
     return st;
 }
 
-void DirectoryFeed::setFileModifiedTime(NativePath const &nativePath, Time const &modifiedAt)
+void DirectoryFeed::setFileModifiedTime(const NativePath &nativePath, const Time &modifiedAt)
 {
     const String overrideName = nativePath + fileStatusSuffix;
     if (!modifiedAt.isValid())
@@ -327,7 +327,7 @@ void DirectoryFeed::setFileModifiedTime(NativePath const &nativePath, Time const
     }
 }
 
-File &DirectoryFeed::manuallyPopulateSingleFile(NativePath const &nativePath,
+File &DirectoryFeed::manuallyPopulateSingleFile(const NativePath &nativePath,
                                                 Folder &parentFolder) // static
 {
     const bool isExisting = nativePath.exists();

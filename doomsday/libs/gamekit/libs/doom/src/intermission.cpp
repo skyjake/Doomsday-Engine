@@ -59,8 +59,8 @@ namespace internal
         res::Uri mapUri;               ///< If path is not zero-length the animation should only be displayed on this map.
         interludestate_t beginState;  ///< State at which this animation begins/becomes visible.
 
-        Animation(Vec2i const &origin, int tics, StringList patchNames,
-                  res::Uri const &mapUri       = res::makeUri("Maps:"),
+        Animation(const Vec2i &origin, int tics, StringList patchNames,
+                  const res::Uri &mapUri       = res::makeUri("Maps:"),
                   interludestate_t beginState = ILS_SHOW_STATS)
             : origin    (origin)
             , tics      (tics)
@@ -79,7 +79,7 @@ namespace internal
         Vec2i origin;
         res::Uri mapUri;
 
-        Location(Vec2i const &origin, res::Uri const &mapUri)
+        Location(const Vec2i &origin, const res::Uri &mapUri)
             : origin(origin)
             , mapUri(mapUri)
         {}
@@ -125,27 +125,27 @@ namespace internal
 
     /// @todo Revise API to select a replacement mode according to the usage context
     /// and/or domain. Passing an "existing" text string is also a bit awkward... -ds
-    static inline String patchReplacementText(patchid_t patchId, String const &text = "")
+    static inline String patchReplacementText(patchid_t patchId, const String &text = "")
     {
         return Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.inludePatchReplaceMode),
                                          patchId, text);
     }
 
-    static void drawChar(Char const ch, Vec2i const &origin,
+    static void drawChar(Char const ch, const Vec2i &origin,
                          int alignFlags = ALIGN_TOPLEFT, int textFlags = DTF_NO_TYPEIN)
     {
         const Point2Raw rawOrigin = {{{origin.x, origin.y}}};
         FR_DrawChar3(char(ch), &rawOrigin, alignFlags, textFlags);
     }
 
-    static void drawText(String const &text, Vec2i const &origin,
+    static void drawText(const String &text, const Vec2i &origin,
                          int alignFlags = ALIGN_TOPLEFT, int textFlags = DTF_NO_TYPEIN)
     {
         const Point2Raw rawOrigin = {{{origin.x, origin.y}}};
         FR_DrawText3(text, &rawOrigin, alignFlags, textFlags);
     }
 
-    static void drawPercent(int percent, Vec2i const &origin)
+    static void drawPercent(int percent, const Vec2i &origin)
     {
         if(percent < 0) return;
         drawChar('%', origin, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
@@ -263,7 +263,7 @@ void IN_Shutdown()
     animStates.clear();
 }
 
-static String backgroundPatchForEpisode(String const &episodeId)
+static String backgroundPatchForEpisode(const String &episodeId)
 {
     if(!(gameModeBits & GM_ANY_DOOM2))
     {
@@ -277,7 +277,7 @@ static String backgroundPatchForEpisode(String const &episodeId)
     return "INTERPIC";
 }
 
-static Animations const *animationsForEpisode(String const &episodeId)
+static const Animations *animationsForEpisode(const String &episodeId)
 {
     if(!(gameModeBits & GM_ANY_DOOM2))
     {
@@ -288,7 +288,7 @@ static Animations const *animationsForEpisode(String const &episodeId)
     return nullptr; // Not found.
 }
 
-static Locations const *locationsForEpisode(String const &episodeId)
+static const Locations *locationsForEpisode(const String &episodeId)
 {
     if(!(gameModeBits & GM_ANY_DOOM2))
     {
@@ -299,11 +299,11 @@ static Locations const *locationsForEpisode(String const &episodeId)
     return nullptr; // Not found.
 }
 
-static Location const *tryFindLocationForMap(Locations const *locations, res::Uri const &mapUri)
+static const Location *tryFindLocationForMap(const Locations *locations, const res::Uri &mapUri)
 {
     if(locations)
     {
-        for(Location const &loc : *locations)
+        for(const Location &loc : *locations)
         {
             if(loc.mapUri == mapUri) return &loc;
         }
@@ -340,8 +340,8 @@ static int cntPar;
 static int cntPause;
 
 // Passed into intermission.
-static wbstartstruct_t const *wbs;
-static wbplayerstruct_t const *inPlayerInfo;
+static const wbstartstruct_t *wbs;
+static const wbplayerstruct_t *inPlayerInfo;
 
 static common::GameSession::VisitedMaps visitedMaps()
 {
@@ -384,14 +384,14 @@ static void drawBackground()
 
     GL_DrawPatch(pBackground, Vec2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
-    if(Animations const *anims = animationsForEpisode(gfw_Session()->episodeId()))
+    if(const Animations *anims = animationsForEpisode(gfw_Session()->episodeId()))
     {
         FR_SetFont(FID(GF_FONTB));
         FR_LoadDefaultAttrib();
 
         for(int i = 0; i < anims->count(); ++i)
         {
-            Animation const &def = (*anims)[i];
+            const Animation &def = (*anims)[i];
             wianimstate_t &state = animStates[i];
 
             // Has the animation begun yet?
@@ -496,7 +496,7 @@ static void drawEnteringTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static bool patchFits(patchid_t patchId, Vec2i const &origin)
+static bool patchFits(patchid_t patchId, const Vec2i &origin)
 {
     patchinfo_t info;
     if(!R_GetPatchInfo(patchId, &info)) return false;
@@ -508,7 +508,7 @@ static bool patchFits(patchid_t patchId, Vec2i const &origin)
     return (left >= 0 && right < SCREENWIDTH && top >= 0 && bottom < SCREENHEIGHT);
 }
 
-static patchid_t chooseYouAreHerePatch(Vec2i const &origin)
+static patchid_t chooseYouAreHerePatch(const Vec2i &origin)
 {
     if(patchFits(pYouAreHereRight, origin))
         return pYouAreHereRight;
@@ -519,7 +519,7 @@ static patchid_t chooseYouAreHerePatch(Vec2i const &origin)
     return 0; // None fits.
 }
 
-static void drawPatchIfFits(patchid_t patchId, Vec2i const &origin)
+static void drawPatchIfFits(patchid_t patchId, const Vec2i &origin)
 {
     if(patchFits(patchId, origin))
     {
@@ -533,12 +533,12 @@ static void drawPatchIfFits(patchid_t patchId, Vec2i const &origin)
  */
 static void beginAnimations()
 {
-    Animations const *anims = animationsForEpisode(gfw_Session()->episodeId());
+    const Animations *anims = animationsForEpisode(gfw_Session()->episodeId());
     if(!anims) return;
 
     for(int i = 0; i < anims->count(); ++i)
     {
-        Animation const &def = (*anims)[i];
+        const Animation &def = (*anims)[i];
         wianimstate_t &state = animStates[i];
 
         // Is the animation active for the next map?
@@ -567,12 +567,12 @@ static void beginAnimations()
 
 static void animateBackground()
 {
-    Animations const *anims = animationsForEpisode(gfw_Session()->episodeId());
+    const Animations *anims = animationsForEpisode(gfw_Session()->episodeId());
     if(!anims) return;
 
     for(int i = 0; i < anims->count(); ++i)
     {
-        Animation const &def = (*anims)[i];
+        const Animation &def = (*anims)[i];
         wianimstate_t &state = animStates[i];
 
         // Is the animation active for the next map?
@@ -658,7 +658,7 @@ static void tickShowNextMap()
  */
 static void drawLocationMarks()
 {
-    Locations const *locations = locationsForEpisode(gfw_Session()->episodeId());
+    const Locations *locations = locationsForEpisode(gfw_Session()->episodeId());
     if(!locations) return;
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -666,9 +666,9 @@ static void drawLocationMarks()
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
 
-    for (res::Uri const &visitedMap : visitedMaps())
+    for (const res::Uri &visitedMap : visitedMaps())
     {
-        if(Location const *loc = tryFindLocationForMap(locations, visitedMap))
+        if(const Location *loc = tryFindLocationForMap(locations, visitedMap))
         {
             drawPatchIfFits(pSplat, loc->origin);
         }
@@ -676,7 +676,7 @@ static void drawLocationMarks()
 
     if(drawYouAreHere)
     {
-        if(Location const *loc = tryFindLocationForMap(locations, wbs->nextMap))
+        if(const Location *loc = tryFindLocationForMap(locations, wbs->nextMap))
         {
             patchid_t const yahPatchId = chooseYouAreHerePatch(loc->origin);
             WI_DrawPatch(yahPatchId, patchReplacementText(yahPatchId),
@@ -1388,14 +1388,14 @@ static void loadData()
 
     // Are there any animation states to initialize?
     animStates.clear();
-    if(Animations const *anims = animationsForEpisode(episodeId))
+    if(const Animations *anims = animationsForEpisode(episodeId))
     {
         animStates.reserve(anims->count());
-        for(Animation const &def : *anims)
+        for(const Animation &def : *anims)
         {
             animStates.append(wianimstate_t());
             wianimstate_t &state = animStates.last();
-            for(String const &patchName : def.patchNames)
+            for(const String &patchName : def.patchNames)
             {
                 state.patches << R_DeclarePatch(patchName);
             }
@@ -1466,7 +1466,7 @@ void IN_Drawer()
     GL_EndBorderedProjection(&bp);
 }
 
-static void initVariables(wbstartstruct_t const &wbstartstruct)
+static void initVariables(const wbstartstruct_t &wbstartstruct)
 {
     wbs = &wbstartstruct;
 
@@ -1477,7 +1477,7 @@ static void initVariables(wbstartstruct_t const &wbstartstruct)
     inPlayerInfo = wbs->plyr;
 }
 
-void IN_Begin(wbstartstruct_t const &wbstartstruct)
+void IN_Begin(const wbstartstruct_t &wbstartstruct)
 {
     initVariables(wbstartstruct);
     loadData();

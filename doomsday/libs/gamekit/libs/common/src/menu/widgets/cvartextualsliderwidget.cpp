@@ -95,7 +95,7 @@ DE_PIMPL(CVarTextualSliderWidget)
             Str_Reserve(compStr, bufSize);
 
             // Composite the final string.
-            char const *c;
+            const char *c;
             char *beginSubstring = templateString;
             for(c = beginSubstring; *c; c++)
             {
@@ -122,7 +122,7 @@ DE_PIMPL(CVarTextualSliderWidget)
     }
 };
 
-CVarTextualSliderWidget::CVarTextualSliderWidget(char const *cvarPath, float min, float max,
+CVarTextualSliderWidget::CVarTextualSliderWidget(const char *cvarPath, float min, float max,
                                                  float step, bool floatMode)
     : CVarSliderWidget(cvarPath, min, max, step, floatMode)
     , d(new Impl(this))
@@ -135,9 +135,9 @@ CVarTextualSliderWidget::~CVarTextualSliderWidget()
 
 void CVarTextualSliderWidget::draw() const
 {
-    Vec2i const &origin    = geometry().topLeft;
+    const Vec2i &origin    = geometry().topLeft;
     String const valueAsText  = d->valueAsText();
-    Vec4f const &textColor = mnRendState->textColors[color()];
+    const Vec4f &textColor = mnRendState->textColors[color()];
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(origin.x, origin.y, 0);
@@ -165,7 +165,7 @@ void CVarTextualSliderWidget::updateGeometry()
     FR_PopAttrib();
 }
 
-CVarTextualSliderWidget &CVarTextualSliderWidget::setEmptyText(String const &newEmptyText)
+CVarTextualSliderWidget &CVarTextualSliderWidget::setEmptyText(const String &newEmptyText)
 {
     d->emptyText = newEmptyText;
     return *this;
@@ -176,7 +176,7 @@ String CVarTextualSliderWidget::emptyText() const
     return d->emptyText;
 }
 
-CVarTextualSliderWidget &CVarTextualSliderWidget::setOnethSuffix(String const &newOnethSuffix)
+CVarTextualSliderWidget &CVarTextualSliderWidget::setOnethSuffix(const String &newOnethSuffix)
 {
     d->onethSuffix = newOnethSuffix;
     return *this;
@@ -187,7 +187,7 @@ String CVarTextualSliderWidget::onethSuffix() const
     return d->onethSuffix;
 }
 
-CVarTextualSliderWidget &CVarTextualSliderWidget::setNthSuffix(String const &newNthSuffix)
+CVarTextualSliderWidget &CVarTextualSliderWidget::setNthSuffix(const String &newNthSuffix)
 {
     d->nthSuffix = newNthSuffix;
     return *this;

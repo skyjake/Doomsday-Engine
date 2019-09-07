@@ -41,7 +41,7 @@ DE_PIMPL_NOREF(HudWidget)
 };
 
 HudWidget::HudWidget(void (*updateGeometry) (HudWidget *wi),
-                     void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                     void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                      dint playerNum, uiwidgetid_t id)
     : updateGeometry(updateGeometry)
     , drawer(drawer)
@@ -85,7 +85,7 @@ Size2Raw &HudWidget::maximumSize() const
     return d->maxSize;
 }
 
-void HudWidget::setMaximumSize(Size2Raw const &newSize)
+void HudWidget::setMaximumSize(const Size2Raw &newSize)
 {
     if(d->maxSize.width == newSize.width &&
        d->maxSize.height == newSize.height) return;

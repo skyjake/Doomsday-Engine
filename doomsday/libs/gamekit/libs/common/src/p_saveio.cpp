@@ -106,7 +106,7 @@ void SV_CloseFile()
     delete writer; writer = 0;
 }
 
-bool SV_OpenFileForRead(de::File const &file)
+bool SV_OpenFileForRead(const de::File &file)
 {
     SV_CloseFile();
     reader = new de::Reader(file);
@@ -152,7 +152,7 @@ static void swf(Writer1 *w, float val)
     *writer << val;
 }
 
-static void swd(Writer1 *w, char const *data, int len)
+static void swd(Writer1 *w, const char *data, int len)
 {
     if(!w) return;
     DE_ASSERT(writer);

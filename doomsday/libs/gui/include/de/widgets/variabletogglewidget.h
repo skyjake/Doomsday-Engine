@@ -37,8 +37,8 @@ public:
     DE_ERROR(VariableMissingError);
 
 public:
-    VariableToggleWidget(Variable &variable, String const &name = String());
-    VariableToggleWidget(String const &styledText, Variable &variable, String const &name = String());
+    VariableToggleWidget(Variable &variable, const String &name = String());
+    VariableToggleWidget(const String &styledText, Variable &variable, const String &name = String());
 
     Variable &variable() const;
 

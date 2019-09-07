@@ -43,7 +43,7 @@ public:
 
     void clear();
 
-    SpriteSet &addSpriteSet(spritenum_t id, SpriteSet const &frames);
+    SpriteSet &addSpriteSet(spritenum_t id, const SpriteSet &frames);
 
     /**
      * Returns @c true if a Sprite exists with given unique @a id and @a frame number.
@@ -61,14 +61,14 @@ public:
     /**
      * Returns a pointer to the identified Sprite, or @c nullptr.
      */
-    defn::CompiledSpriteRecord const *spritePtr(spritenum_t id, de::dint frame) const;
+    const defn::CompiledSpriteRecord *spritePtr(spritenum_t id, de::dint frame) const;
 
-    SpriteSet const *tryFindSpriteSet(spritenum_t id) const;
+    const SpriteSet *tryFindSpriteSet(spritenum_t id) const;
 
     /**
      * Returns the SpriteSet associated with the given unique @a id.
      */
-    SpriteSet const &spriteSet(spritenum_t id) const;
+    const SpriteSet &spriteSet(spritenum_t id) const;
 
     /**
      * Returns the total number of SpriteSets.

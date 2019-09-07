@@ -42,14 +42,14 @@ namespace menu {
 class LabelWidget : public Widget
 {
 public:
-    LabelWidget(de::String const &text = "", patchid_t *patch = 0);
+    LabelWidget(const de::String &text = "", patchid_t *patch = 0);
     virtual ~LabelWidget();
 
     void draw() const;
     void updateGeometry();
 
     LabelWidget &setPatch(patchid_t *newPatch);
-    LabelWidget &setText(de::String const &newText);
+    LabelWidget &setText(const de::String &newText);
 
 private:
     DE_PRIVATE(d)

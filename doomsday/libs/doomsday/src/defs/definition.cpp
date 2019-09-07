@@ -35,7 +35,7 @@ Record &Definition::def()
     return const_cast<Record &>(accessedRecord());
 }
 
-Record const &Definition::def() const
+const Record &Definition::def() const
 {
     return accessedRecord();
 }

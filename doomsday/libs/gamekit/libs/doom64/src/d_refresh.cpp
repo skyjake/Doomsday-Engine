@@ -46,7 +46,7 @@ float quitDarkenOpacity = 0;
  * Draws a special filter over the screen (eg the inversing filter used
  * when in god mode).
  */
-void G_RendSpecialFilter(int player, RectRaw const *region)
+void G_RendSpecialFilter(int player, const RectRaw *region)
 {
     DE_ASSERT(region != 0);
 
@@ -212,7 +212,7 @@ void G_RendPlayerView(int player)
     R_RenderPlayerView(player);
 }
 
-void D64_DrawWindow(Size2Raw const * /*windowSize*/)
+void D64_DrawWindow(const Size2Raw * /*windowSize*/)
 {
     if(G_GameState() == GS_INTERMISSION)
     {

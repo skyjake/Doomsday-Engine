@@ -31,7 +31,7 @@ namespace de {
 class DE_PUBLIC TimeValue : public Value
 {
 public:
-    TimeValue(Time const &time = Time());
+    TimeValue(const Time &time = Time());
 
     /// Returns the time of the value.
     Time time() const { return _time; }
@@ -40,9 +40,9 @@ public:
     Value *duplicate() const;
     Text asText() const;
     bool isTrue() const;
-    dint compare(Value const &value) const;
-    void sum(Value const &value);
-    void subtract(Value const &subtrahend);
+    dint compare(const Value &value) const;
+    void sum(const Value &value);
+    void subtract(const Value &subtrahend);
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

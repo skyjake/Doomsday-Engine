@@ -105,7 +105,7 @@ static Material *findRecordMaterial(Records &records, SerialId id)
         {
             material = &world::Materials::get().material(res::makeUri(records.stringRef(id)));
         }
-        catch (Resources::MissingResourceManifestError const &)
+        catch (const Resources::MissingResourceManifestError &)
         {}  // Ignore this error.
 
         records.setUserPointer(id, material);
@@ -127,7 +127,7 @@ DE_PIMPL(MaterialArchive)
     Impl(Public *i) : Base(i)
     {}
 
-    inline SerialId insertRecord(res::Uri const &uri)
+    inline SerialId insertRecord(const res::Uri &uri)
     {
         return records.intern(uri.compose());
     }
@@ -262,7 +262,7 @@ world::Material *MaterialArchive::find(materialarchive_serialid_t serialId, int 
     return findRecordMaterial(d->records, serialId);
 }
 
-materialarchive_serialid_t MaterialArchive::addRecord(Material const &material)
+materialarchive_serialid_t MaterialArchive::addRecord(const Material &material)
 {
     SerialId id = d->insertRecord(material.manifest().composeUri());
     d->records.setUserPointer(id, const_cast<Material *>(&material));
@@ -346,7 +346,7 @@ void MaterialArchive::read(reader_s &reader, int forcedVersion)
 
 #define SELF_CONST(inst) \
     DE_ASSERT(inst); \
-    de::MaterialArchive const *self = TOINTERNAL_CONST(inst)
+    const de::MaterialArchive *self = TOINTERNAL_CONST(inst)
 
 #undef MaterialArchive_New
 MaterialArchive *MaterialArchive_New(int useSegments)
@@ -380,28 +380,28 @@ void MaterialArchive_Delete(MaterialArchive *arc)
 }
 
 #undef MaterialArchive_FindUniqueSerialId
-materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive const *arc, Material *mat)
+materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(const MaterialArchive *arc, Material *mat)
 {
     SELF_CONST(arc);
     return self->findUniqueSerialId(mat);
 }
 
 #undef MaterialArchive_Find
-Material *MaterialArchive_Find(MaterialArchive const *arc, materialarchive_serialid_t serialId, int group)
+Material *MaterialArchive_Find(const MaterialArchive *arc, materialarchive_serialid_t serialId, int group)
 {
     SELF_CONST(arc);
     return self->find(serialId, group);
 }
 
 #undef MaterialArchive_Count
-int MaterialArchive_Count(MaterialArchive const *arc)
+int MaterialArchive_Count(const MaterialArchive *arc)
 {
     SELF_CONST(arc);
     return self->count();
 }
 
 #undef MaterialArchive_Write
-void MaterialArchive_Write(MaterialArchive const *arc, Writer *writer)
+void MaterialArchive_Write(const MaterialArchive *arc, Writer *writer)
 {
     SELF_CONST(arc);
     self->write(*writer);

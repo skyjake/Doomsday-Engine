@@ -59,7 +59,7 @@ DE_PIMPL(ChoiceWidget)
     }
 };
 
-ChoiceWidget::ChoiceWidget(String const &name)
+ChoiceWidget::ChoiceWidget(const String &name)
     : LabelWidget(name)
     , d(new Impl(*this))
 {
@@ -77,14 +77,14 @@ ChoiceWidget::ChoiceWidget(String const &name)
     d->menu->audienceForClose() += d;
 }
 
-void ChoiceWidget::setItems(ChoiceWidget::Items const &items)
+void ChoiceWidget::setItems(const ChoiceWidget::Items &items)
 {
     d->items = items;
     d->updateMenu();
     d->updateLabel();
 }
 
-void ChoiceWidget::setPrompt(String const &prompt)
+void ChoiceWidget::setPrompt(const String &prompt)
 {
     d->prompt = prompt;
     d->updateLabel();
@@ -147,11 +147,11 @@ void ChoiceWidget::draw()
     targetCanvas().put(Vec2i(rect.right() - 1, rect.top()), AChar('>', attribs()));
 }
 
-bool ChoiceWidget::handleEvent(Event const &ev)
+bool ChoiceWidget::handleEvent(const Event &ev)
 {
     if (ev.type() == Event::KeyPress)
     {
-        KeyEvent const &event = ev.as<KeyEvent>();
+        const KeyEvent &event = ev.as<KeyEvent>();
         if (!event.text().isEmpty() || event.key() == Key::Enter)
         {
             DE_ASSERT(!isOpen());

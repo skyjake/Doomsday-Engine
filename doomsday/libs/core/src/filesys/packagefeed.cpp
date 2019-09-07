@@ -36,7 +36,7 @@ DE_PIMPL(PackageFeed)
         : Base(i), loader(ldr), linkMode(lm)
     {}
 
-    File *linkToPackage(Package &pkg, String const &linkName, Folder const &folder)
+    File *linkToPackage(Package &pkg, const String &linkName, const Folder &folder)
     {
         /// @todo Resolve conflicts: replace, ignore, or fail. -jk
 
@@ -66,7 +66,7 @@ DE_PIMPL(PackageFeed)
         return link;
     }
 
-    PopulatedFiles populate(Folder const &folder)
+    PopulatedFiles populate(const Folder &folder)
     {
         PopulatedFiles populated;
         for (auto &i : loader.loadedPackages())
@@ -110,20 +110,20 @@ String PackageFeed::description() const
     return "loaded packages";
 }
 
-Feed::PopulatedFiles PackageFeed::populate(Folder const &folder)
+Feed::PopulatedFiles PackageFeed::populate(const Folder &folder)
 {
     return d->populate(folder);
 }
 
 bool PackageFeed::prune(File &file) const
 {
-    if (LinkFile const *link = maybeAs<LinkFile>(file))
+    if (const LinkFile *link = maybeAs<LinkFile>(file))
     {
         // Links to unloaded packages should be pruned.
         if (!d->loader.isLoaded(link->objectNamespace().gets(VAR_LINK_PACKAGE_ID)))
             return true;
 
-        //if (Folder const *pkg = maybeAs<Folder>(link->target()))
+        //if (const Folder *pkg = maybeAs<Folder>(link->target()))
         {
             // Links to unloaded packages should be pruned.
             //if (!d->loader.isLoaded(*pkg)) return true;

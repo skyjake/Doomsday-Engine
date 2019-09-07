@@ -31,9 +31,9 @@ class LIBDOOMSDAY_PUBLIC Model : public Definition
 {
 public:
     Model()                    : Definition() {}
-    Model(Model const &other)  : Definition(other) {}
+    Model(const Model &other)  : Definition(other) {}
     Model(de::Record &d)       : Definition(d) {}
-    Model(de::Record const &d) : Definition(d) {}
+    Model(const de::Record &d) : Definition(d) {}
 
     void resetToDefaults();
 
@@ -41,9 +41,9 @@ public:
     int subCount() const;
     bool hasSub(int index) const;
     de::Record &sub(int index);
-    de::Record const &sub(int index) const;
+    const de::Record &sub(int index) const;
 
-    void cleanupAfterParsing(de::Record const &prev);
+    void cleanupAfterParsing(const de::Record &prev);
 };
 
 } // namespace defn

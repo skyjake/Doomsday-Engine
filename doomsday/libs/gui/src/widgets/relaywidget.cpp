@@ -56,7 +56,7 @@ DE_PIMPL(RelayWidget)
 
 DE_AUDIENCE_METHOD(RelayWidget, Target)
 
-RelayWidget::RelayWidget(GuiWidget *target, String const &name)
+RelayWidget::RelayWidget(GuiWidget *target, const String &name)
     : GuiWidget(name), d(new Impl(this))
 {
     d->setTarget(target);
@@ -110,7 +110,7 @@ void RelayWidget::update()
     }
 }
 
-bool RelayWidget::handleEvent(Event const &event)
+bool RelayWidget::handleEvent(const Event &event)
 {
     if (d->target)
     {
@@ -119,7 +119,7 @@ bool RelayWidget::handleEvent(Event const &event)
     return GuiWidget::handleEvent(event);
 }
 
-bool RelayWidget::hitTest(Vec2i const &pos) const
+bool RelayWidget::hitTest(const Vec2i &pos) const
 {
     if (d->target)
     {

@@ -98,12 +98,12 @@ Record &Model::sub(int index)
     return *def().geta("sub")[index].as<RecordValue>().record();
 }
 
-Record const &Model::sub(int index) const
+const Record &Model::sub(int index) const
 {
     return *geta("sub")[index].as<RecordValue>().record();
 }
 
-void Model::cleanupAfterParsing(Record const &prev)
+void Model::cleanupAfterParsing(const Record &prev)
 {
     if (gets("state") == "-")
     {

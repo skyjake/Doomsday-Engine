@@ -59,7 +59,7 @@ public:
      */
     AnimGroup *animGroup(de::dint uniqueId);
 
-    AnimGroup *animGroupForTexture(TextureManifest const &textureManifest);
+    AnimGroup *animGroupForTexture(const TextureManifest &textureManifest);
 
 private:
     DE_PRIVATE(d)

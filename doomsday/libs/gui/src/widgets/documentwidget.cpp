@@ -80,7 +80,7 @@ public Font::RichFormat::IStyle
 
     void updateStyle()
     {
-        Style const &st = style();
+        const Style &st = style();
 
         normalColor    = st.colors().color(colorIds[Font::RichFormat::NormalColor]);
         highlightColor = st.colors().color(colorIds[Font::RichFormat::HighlightColor]);
@@ -123,7 +123,7 @@ public Font::RichFormat::IStyle
         return style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
     }
 
-    Font const *richStyleFont(Font::RichFormat::Style fontStyle) const
+    const Font *richStyleFont(Font::RichFormat::Style fontStyle) const
     {
         if (fontStyle == Font::RichFormat::Monospace)
         {
@@ -206,7 +206,7 @@ public Font::RichFormat::IStyle
             DE_ASSERT(glText.isReady());
 
             // Determine visible range of lines.
-            Font const &font     = self().font();
+            const Font &font     = self().font();
             int contentHeight    = de::min(self().contentHeight(), self().rule().height().valuei());
             int const extraLines = 1;
             int numVisLines      = contentHeight / font.lineSpacing().valuei() + 2 * extraLines;
@@ -262,7 +262,7 @@ public Font::RichFormat::IStyle
     }
 };
 
-DocumentWidget::DocumentWidget(String const &name)
+DocumentWidget::DocumentWidget(const String &name)
     : ScrollAreaWidget(name)
     , d(new Impl(this))
 {
@@ -272,7 +272,7 @@ DocumentWidget::DocumentWidget(String const &name)
     enableIndicatorDraw(true);
 }
 
-void DocumentWidget::setText(String const &styledText)
+void DocumentWidget::setText(const String &styledText)
 {
     if (styledText != d->glText.text())
     {
@@ -323,7 +323,7 @@ void DocumentWidget::setMaximumLineWidth(const Rule &maxWidth)
     requestGeometry();
 }
 
-void DocumentWidget::setStyleColor(Font::RichFormat::Color id, DotPath const &colorName)
+void DocumentWidget::setStyleColor(Font::RichFormat::Color id, const DotPath &colorName)
 {
     DE_ASSERT(id != Font::RichFormat::AltAccentColor); // FIXME: not implemented!
 

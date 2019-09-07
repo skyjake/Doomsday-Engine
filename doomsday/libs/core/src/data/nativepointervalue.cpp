@@ -46,7 +46,7 @@ DE_PIMPL_NOREF(NativePointerValue)
     }
 };
 
-NativePointerValue::NativePointerValue(Object *object, Record const *memberScope)
+NativePointerValue::NativePointerValue(Object *object, const Record *memberScope)
     : d(new Impl)
 {
     d->memberScope = memberScope;

@@ -830,7 +830,7 @@ void NetCl_LoadGame(reader_s *msg)
 #endif
 }
 
-void NetCl_CheatRequest(char const *command)
+void NetCl_CheatRequest(const char *command)
 {
     writer_s *msg = D_NetWrite();
 

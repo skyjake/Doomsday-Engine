@@ -107,7 +107,7 @@ public:
      * @param other     Record to copy.
      * @param behavior  Which members to copy.
      */
-    Record(Record const &other, Behavior behavior = AllMembers);
+    Record(const Record &other, Behavior behavior = AllMembers);
 
     Record(Record &&moved);
 
@@ -132,7 +132,7 @@ public:
      * @param other     Record whose members are to be copied.
      * @param behavior  Copy behavior.
      */
-    void copyMembersFrom(Record const &other, Behavior behavior = AllMembers);
+    void copyMembersFrom(const Record &other, Behavior behavior = AllMembers);
 
     /**
      * Duplicates the contents of @a from into this record. Existing variables with
@@ -144,13 +144,13 @@ public:
      * @param from      Source record.
      * @param behavior  Assignment behavior.
      */
-    void assignPreservingVariables(Record const &from, Behavior behavior = AllMembers);
+    void assignPreservingVariables(const Record &from, Behavior behavior = AllMembers);
 
     /**
      * Assignment operator.
      * @return This record.
      */
-    Record &operator = (Record const &other);
+    Record &operator = (const Record &other);
 
     /**
      * Move assignment operator.
@@ -167,7 +167,7 @@ public:
      *
      * @return This record.
      */
-    Record &assign(Record const &other, Behavior behavior = AllMembers);
+    Record &assign(const Record &other, Behavior behavior = AllMembers);
 
     /**
      * Partial assignment. All members matching @a excluded are ignored both in the
@@ -279,9 +279,9 @@ public:
      *
      * @return  The text variable.
      */
-    Variable &addText(const String &variableName, Value::Text const &text);
+    Variable &addText(const String &variableName, const Value::Text &text);
 
-    Variable &addTime(const String &variableName, Time const &time);
+    Variable &addTime(const String &variableName, const Time &time);
 
     /**
      * Adds an array variable to the record. The variable is set up to only accept
@@ -379,10 +379,10 @@ public:
     Variable &set(const String &name, bool value);
 
     /// @copydoc set()
-    Variable &set(const String &name, char const *value);
+    Variable &set(const String &name, const char *value);
 
     /// @copydoc set()
-    Variable &set(const String &name, Value::Text const &value);
+    Variable &set(const String &name, const Value::Text &value);
 
     /// @copydoc set()
     Variable &set(const String &name, Value::Number value);
@@ -406,13 +406,13 @@ public:
     //Variable &set(const String &name, unsigned long value);
 
     /// @copydoc set()
-    Variable &set(const String &name, Time const &value);
+    Variable &set(const String &name, const Time &value);
 
     /// @copydoc set()
-    Variable &set(const String &name, Block const &value);
+    Variable &set(const String &name, const Block &value);
 
     /// @copydoc set()
-    Variable &set(const CString &name, Block const &value);
+    Variable &set(const CString &name, const Block &value);
 
     /// @copydoc set()
     Variable &set(const String &name, const Record &value);
@@ -427,7 +427,7 @@ public:
 
     Variable &set(const String &name, Value *value);
 
-    Variable &set(String const &name, const Value &value);
+    Variable &set(const String &name, const Value &value);
 
     /**
      * Appends a word to the value of the variable.
@@ -476,13 +476,13 @@ public:
 
     Variable *tryFind(const String &name);
 
-    Variable const *tryFind(const String &name) const;
+    const Variable *tryFind(const String &name) const;
 
     inline Variable &member(const String &name) {
         return (*this)[name];
     }
 
-    inline Variable const &member(const String &name) const {
+    inline const Variable &member(const String &name) const {
         return (*this)[name];
     }
 
@@ -502,7 +502,7 @@ public:
      *
      * @return  Subrecord (non-modifiable).
      */
-    Record const &subrecord(const String &name) const;
+    const Record &subrecord(const String &name) const;
 
     dsize size() const;
 
@@ -511,11 +511,11 @@ public:
     /**
      * Returns a non-modifiable map of the members.
      */
-    Members const &members() const;
+    const Members &members() const;
 
-    LoopResult forMembers(std::function<LoopResult (String const &, Variable &)> func);
+    LoopResult forMembers(std::function<LoopResult (const String &, Variable &)> func);
 
-    LoopResult forMembers(std::function<LoopResult (String const &, Variable const &)> func) const;
+    LoopResult forMembers(std::function<LoopResult (const String &, const Variable &)> func) const;
 
     /**
      * Collects a map of all the subrecords present in the record.
@@ -530,11 +530,11 @@ public:
      *
      * @return Map of subrecords.
      */
-    Subrecords subrecords(std::function<bool (Record const &)> filter) const;
+    Subrecords subrecords(std::function<bool (const Record &)> filter) const;
 
-    LoopResult forSubrecords(std::function<LoopResult (String const &, Record &)> func);
+    LoopResult forSubrecords(std::function<LoopResult (const String &, Record &)> func);
 
-    LoopResult forSubrecords(std::function<LoopResult (String const &, Record const &)> func) const;
+    LoopResult forSubrecords(std::function<LoopResult (const String &, const Record &)> func) const;
 
     /**
      * Checks if the value of any member variables have changed. The check is done
@@ -556,7 +556,7 @@ public:
      *
      * @return  Text representation.
      */
-    String asText(String const &prefix, List<KeyValue> *lines) const;
+    String asText(const String &prefix, List<KeyValue> *lines) const;
 
     /**
      * Convenience template for getting the value of a variable in a
@@ -567,7 +567,7 @@ public:
      * @return  Value cast to a specific value type.
      */
     template <typename ValueType>
-    ValueType const &value(const String &name) const {
+    const ValueType &value(const String &name) const {
         return (*this)[name].value<ValueType>();
     }
 
@@ -581,7 +581,7 @@ public:
      *
      * @return  The function instance.
      */
-    Function const &function(const String &name) const;
+    const Function &function(const String &name) const;
 
     /**
      * Adds a new record to be used as a superclass of this record.
@@ -596,7 +596,7 @@ public:
      * @param superRecord  Record to use as super record. A new RecordValue is
      *                     created to refer to this record.
      */
-    void addSuperRecord(Record const &superRecord);
+    void addSuperRecord(const Record &superRecord);
 
     /**
      * Adds a new native function to the record according to the specification.
@@ -605,7 +605,7 @@ public:
      *
      * @return  Reference to this record.
      */
-    Record &operator << (NativeFunctionSpec const &spec);
+    Record &operator << (const NativeFunctionSpec &spec);
 
     /**
      * Looks up the record that contains the variable referred to be @a name.
@@ -615,7 +615,7 @@ public:
      *
      * @return Record containing the @a name.
      */
-    Record const &parentRecordForMember(const String &name) const;
+    const Record &parentRecordForMember(const String &name) const;
 
     String asInfo() const;
 
@@ -634,7 +634,7 @@ public:
     Record &setMembers() { return *this; }
 
     template <typename NameType, typename ValueType, typename... Args>
-    Record &setMembers(NameType const &name, ValueType const &valueType, Args... args)
+    Record &setMembers(const NameType &name, const ValueType &valueType, Args... args)
     {
         set(name, valueType);
         return setMembers(args...);
@@ -651,7 +651,7 @@ private:
 };
 
 /// Converts the record into a human-readable text representation.
-DE_PUBLIC std::ostream &operator << (std::ostream &os, Record const &record);
+DE_PUBLIC std::ostream &operator << (std::ostream &os, const Record &record);
 
 } // namespace de
 

@@ -154,7 +154,7 @@ DE_PIMPL(GuiWidget)
         bool wasClipped = false;
         Rectanglei visibleArea = self().root().viewRule().recti();
 
-        for (GuiWidget const *w = self().parentGuiWidget(); w; w = w->parentGuiWidget())
+        for (const GuiWidget *w = self().parentGuiWidget(); w; w = w->parentGuiWidget())
         {
             // Does this ancestor use child clipping?
             if (w->behavior().testFlag(ChildVisibilityClipping))
@@ -363,7 +363,7 @@ DE_PIMPL(GuiWidget)
                 DE_BASE_GUI_APP->persistentUIState() >> *po;
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             // Benign: widget will use default state.
             LOG_VERBOSE("Failed to restore state of widget '%s': %s")
@@ -380,7 +380,7 @@ DE_PIMPL(GuiWidget)
                 DE_BASE_GUI_APP->persistentUIState() << *po;
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_WARNING("Failed to save state of widget '%s': %s")
                     << self().path() << er.asText();
@@ -418,7 +418,7 @@ DE_PIMPL(GuiWidget)
         return nullptr;
     }
 
-    float scoreForWidget(GuiWidget const &widget, ui::Direction dir) const
+    float scoreForWidget(const GuiWidget &widget, ui::Direction dir) const
     {
         if (!widget.canBeFocused() || &widget == thisPublic)
         {
@@ -570,7 +570,7 @@ DE_PIMPL(GuiWidget)
     }
 };
 
-GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Impl(this))
+GuiWidget::GuiWidget(const String &name) : Widget(name), d(new Impl(this))
 {
     d->rule.setDebugName(name);
 }
@@ -621,32 +621,32 @@ GuiWidget *GuiWidget::parentGuiWidget() const
     return static_cast<GuiWidget *>(p);
 }
 
-Style const &GuiWidget::style() const
+const Style &GuiWidget::style() const
 {
     return Style::get();
 }
 
-Rule const &GuiWidget::rule(DotPath const &path) const
+const Rule &GuiWidget::rule(const DotPath &path) const
 {
     return style().rules().rule(path);
 }
 
-Font const &GuiWidget::font() const
+const Font &GuiWidget::font() const
 {
     return style().fonts().font(d->fontId);
 }
 
-DotPath const &GuiWidget::fontId() const
+const DotPath &GuiWidget::fontId() const
 {
     return d->fontId;
 }
 
-DotPath const &GuiWidget::textColorId() const
+const DotPath &GuiWidget::textColorId() const
 {
     return d->textColorId;
 }
 
-void GuiWidget::setFont(DotPath const &id)
+void GuiWidget::setFont(const DotPath &id)
 {
     d->fontId = id;
     d->flags |= Impl::StyleChanged;
@@ -662,7 +662,7 @@ ColorBank::Colorf GuiWidget::textColorf() const
     return style().colors().colorf(d->textColorId);
 }
 
-void GuiWidget::setTextColor(DotPath const &id)
+void GuiWidget::setTextColor(const DotPath &id)
 {
     d->textColorId = id;
     d->flags |= Impl::StyleChanged;
@@ -679,7 +679,7 @@ Rectanglei GuiWidget::contentRect() const
     return rule().recti().adjusted(pad.xy(), -pad.zw());
 }
 
-RuleRectangle const &GuiWidget::rule() const
+const RuleRectangle &GuiWidget::rule() const
 {
     return d->rule;
 }
@@ -694,13 +694,13 @@ ui::Margins &GuiWidget::margins()
     return d->margins;
 }
 
-ui::Margins const &GuiWidget::margins() const
+const ui::Margins &GuiWidget::margins() const
 {
     return d->margins;
 }
 
-Rectanglef GuiWidget::normalizedRect(de::Rectanglei const &rect,
-                                     de::Rectanglei const &containerRect) // static
+Rectanglef GuiWidget::normalizedRect(const de::Rectanglei &rect,
+                                     const de::Rectanglei &containerRect) // static
 {
     Rectanglef const rectf = rect.moved(-containerRect.topLeft);
     Vec2f const contSize = containerRect.size();
@@ -726,7 +726,7 @@ Rectanglef GuiWidget::normalizedRect() const
                                      Rectanglei::fromSize(root().viewSize()));
 }
 
-Rectanglef GuiWidget::normalizedRect(Rectanglei const &viewSpaceRect) const
+Rectanglef GuiWidget::normalizedRect(const Rectanglei &viewSpaceRect) const
 {
     return GuiWidget::normalizedRect(viewSpaceRect,
                                      Rectanglei::fromSize(root().viewSize()));
@@ -738,7 +738,7 @@ Rectanglef GuiWidget::normalizedContentRect() const
                                                              margins().top().value()),
                                                    -Vec2f(margins().right().value(),
                                                              margins().bottom().value()));
-    GuiRootWidget::Size const &viewSize = root().viewSize();
+    const GuiRootWidget::Size &viewSize = root().viewSize();
     return Rectanglef(Vec2f(float(rect.left())   / float(viewSize.x),
                                float(rect.top())    / float(viewSize.y)),
                       Vec2f(float(rect.right())  / float(viewSize.x),
@@ -765,7 +765,7 @@ void GuiWidget::recycleTrashedWidgets()
     Garbage_RecycleAllWithDestructor(deleteGuiWidget);
 }
 
-void GuiWidget::set(Background const &bg)
+void GuiWidget::set(const Background &bg)
 {
     d->background = bg;
     requestGeometry();
@@ -781,7 +781,7 @@ bool GuiWidget::isClipped() const
     return behavior().testFlag(ContentClipping);
 }
 
-GuiWidget::Background const &GuiWidget::background() const
+const GuiWidget::Background &GuiWidget::background() const
 {
     return d->background;
 }
@@ -819,7 +819,7 @@ void GuiWidget::removeEventHandler(IEventHandler *handler)
     d->eventHandlers.removeOne(handler);
 }
 
-void GuiWidget::setAttribute(Attributes const &attr, FlagOpArg op)
+void GuiWidget::setAttribute(const Attributes &attr, FlagOpArg op)
 {
     applyFlagOperation(d->attribs, attr, op);
 }
@@ -832,7 +832,7 @@ GuiWidget::Attributes GuiWidget::attributes() const
 GuiWidget::Attributes GuiWidget::familyAttributes() const
 {
     Attributes attribs = d->attribs;
-    for (GuiWidget const *p = parentGuiWidget(); p; p = p->parentGuiWidget())
+    for (const GuiWidget *p = parentGuiWidget(); p; p = p->parentGuiWidget())
     {
         attribs |= p->attributes() & FamilyAttributes;
     }
@@ -876,7 +876,7 @@ void GuiWidget::initialize()
             d->restoreState();
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_WARNING("Error when initializing widget '%s': %s")
                 << name() << er.asText();
@@ -901,7 +901,7 @@ void GuiWidget::deinitialize()
         glDeinit();
         setRoot(nullptr);
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_WARNING("Error when deinitializing widget '%s': %s")
                 << name() << er.asText();
@@ -967,7 +967,7 @@ void GuiWidget::draw()
     }
 }
 
-bool GuiWidget::handleEvent(Event const &event)
+bool GuiWidget::handleEvent(const Event &event)
 {
     for (IEventHandler *handler : d->eventHandlers)
     {
@@ -979,7 +979,7 @@ bool GuiWidget::handleEvent(Event const &event)
 
     if (hasFocus() && event.isKeyDown())
     {
-        KeyEvent const &key = event.as<KeyEvent>();
+        const KeyEvent &key = event.as<KeyEvent>();
 
         if (!attributes().testFlag(FocusCyclingDisabled) && key.ddKey() == DDKEY_TAB)
         {
@@ -1024,7 +1024,7 @@ bool GuiWidget::handleEvent(Event const &event)
     return false;
 }
 
-bool GuiWidget::hitTest(Vec2i const &pos) const
+bool GuiWidget::hitTest(const Vec2i &pos) const
 {
     if (behavior().testFlag(Unhittable))
     {
@@ -1032,10 +1032,10 @@ bool GuiWidget::hitTest(Vec2i const &pos) const
         return false;
     }
 
-    Widget const *w = Widget::parent();
+    const Widget *w = Widget::parent();
     while (w)
     {
-        GuiWidget const *gui = dynamic_cast<GuiWidget const *>(w);
+        const GuiWidget *gui = dynamic_cast<const GuiWidget *>(w);
         if (gui)
         {
             if (gui->behavior().testFlag(ChildHitClipping) &&
@@ -1051,18 +1051,18 @@ bool GuiWidget::hitTest(Vec2i const &pos) const
     return hitRule().recti().contains(pos);
 }
 
-bool GuiWidget::hitTest(Event const &event) const
+bool GuiWidget::hitTest(const Event &event) const
 {
     return event.isMouse() && hitTest(event.as<MouseEvent>().pos());
 }
 
-GuiWidget const *GuiWidget::treeHitTest(Vec2i const &pos) const
+const GuiWidget *GuiWidget::treeHitTest(const Vec2i &pos) const
 {
     Children const childs = childWidgets();
     for (int i = childs.sizei() - 1; i >= 0; --i)
     {
         // Check children first.
-        if (GuiWidget const *hit = childs.at(i)->treeHitTest(pos))
+        if (const GuiWidget *hit = childs.at(i)->treeHitTest(pos))
         {
             return hit;
         }
@@ -1084,19 +1084,19 @@ RuleRectangle &GuiWidget::hitRule()
     return *d->hitRule;
 }
 
-RuleRectangle const &GuiWidget::hitRule() const
+const RuleRectangle &GuiWidget::hitRule() const
 {
     if (d->hitRule) return *d->hitRule;
     return d->rule;
 }
 
-GuiWidget::MouseClickStatus GuiWidget::handleMouseClick(Event const &event, MouseEvent::Button button)
+GuiWidget::MouseClickStatus GuiWidget::handleMouseClick(const Event &event, MouseEvent::Button button)
 {
     if (isDisabled()) return MouseClickUnrelated;
 
     if (event.type() == Event::MouseButton)
     {
-        MouseEvent const &mouse = event.as<MouseEvent>();
+        const MouseEvent &mouse = event.as<MouseEvent>();
         if (mouse.button() != button)
         {
             return MouseClickUnrelated;
@@ -1130,7 +1130,7 @@ void GuiWidget::glDeinit()
 void GuiWidget::drawContent()
 {}
 
-void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vec4f const &color, float opacity)
+void GuiWidget::drawBlurredRect(const Rectanglei &rect, const Vec4f &color, float opacity)
 {
     auto *blur = d->blur.get();
     if (!blur) return;
@@ -1183,12 +1183,12 @@ bool GuiWidget::canBeFocused() const
     return true;
 }
 
-GuiWidget *GuiWidget::guiFind(String const &name)
+GuiWidget *GuiWidget::guiFind(const String &name)
 {
     return maybeAs<GuiWidget>(find(name));
 }
 
-GuiWidget const *GuiWidget::guiFind(String const &name) const
+const GuiWidget *GuiWidget::guiFind(const String &name) const
 {
     return maybeAs<GuiWidget>(find(name));
 }

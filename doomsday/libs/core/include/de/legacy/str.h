@@ -155,7 +155,7 @@ DE_PUBLIC Str *Str_InitStd(Str *ds);
  * model is selected; use this for strings that remain constant.
  * If the string is never modified calling Str_Free() is not needed.
  */
-DE_PUBLIC Str *Str_InitStatic(Str *ds, char const *staticConstStr);
+DE_PUBLIC Str *Str_InitStatic(Str *ds, const char *staticConstStr);
 
 /**
  * Empty an existing string. After this the string is in the same
@@ -186,9 +186,9 @@ DE_PUBLIC Str *Str_Reserve(Str *ds, int length);
  */
 DE_PUBLIC Str *Str_ReserveNotPreserving(Str *str, int length);
 
-DE_PUBLIC Str *Str_Set(Str *ds, char const *text);
+DE_PUBLIC Str *Str_Set(Str *ds, const char *text);
 
-DE_PUBLIC Str *Str_Append(Str *ds, char const *appendText);
+DE_PUBLIC Str *Str_Append(Str *ds, const char *appendText);
 
 DE_PUBLIC Str *Str_AppendChar(Str *ds, char ch);
 
@@ -197,7 +197,7 @@ DE_PUBLIC Str *Str_AppendChar(Str *ds, char ch);
  * reserved before calling this. Use in situations where good performance is
  * critical.
  */
-DE_PUBLIC Str *Str_AppendWithoutAllocs(Str *str, Str const *append);
+DE_PUBLIC Str *Str_AppendWithoutAllocs(Str *str, const Str *append);
 
 /**
  * Appends a single character. Enough memory must already be reserved before
@@ -211,17 +211,17 @@ DE_PUBLIC Str *Str_AppendCharWithoutAllocs(Str *str, char ch);
 /**
  * Append formated text.
  */
-DE_PUBLIC Str *Str_Appendf(Str *ds, char const *format, ...) PRINTF_F(2,3);
+DE_PUBLIC Str *Str_Appendf(Str *ds, const char *format, ...) PRINTF_F(2,3);
 
 /**
  * Appends a portion of a string.
  */
-DE_PUBLIC Str *Str_PartAppend(Str *dest, char const *src, int start, int count);
+DE_PUBLIC Str *Str_PartAppend(Str *dest, const char *src, int start, int count);
 
 /**
  * Prepend is not even a word, is it? It should be 'prefix'?
  */
-DE_PUBLIC Str *Str_Prepend(Str *ds, char const *prependText);
+DE_PUBLIC Str *Str_Prepend(Str *ds, const char *prependText);
 DE_PUBLIC Str *Str_PrependChar(Str *ds, char ch);
 
 /**
@@ -233,7 +233,7 @@ DE_PUBLIC Str *Str_PrependChar(Str *ds, char ch);
  * @return Length of the string as an integer.
  * @see Str_Size()
  */
-DE_PUBLIC int Str_Length(Str const *ds);
+DE_PUBLIC int Str_Length(const Str *ds);
 
 /**
  * Determines the length of the string in characters. This is safe for all
@@ -244,14 +244,14 @@ DE_PUBLIC int Str_Length(Str const *ds);
  * @return Length of the string.
  * @see Str_Length()
  */
-DE_PUBLIC size_t Str_Size(Str const *ds);
+DE_PUBLIC size_t Str_Size(const Str *ds);
 
-DE_PUBLIC dd_bool Str_IsEmpty(Str const *ds);
+DE_PUBLIC dd_bool Str_IsEmpty(const Str *ds);
 
 /**
  * This is safe for all strings.
  */
-DE_PUBLIC char *Str_Text(Str const *ds);
+DE_PUBLIC char *Str_Text(const Str *ds);
 
 /**
  * Makes a copy of @a src and replaces the previous contents of @a dest with
@@ -266,9 +266,9 @@ DE_PUBLIC char *Str_Text(Str const *ds);
  *
  * @return  The @a dest string with the copied content.
  */
-DE_PUBLIC Str *Str_Copy(Str *dest, Str const *src);
+DE_PUBLIC Str *Str_Copy(Str *dest, const Str *src);
 
-DE_PUBLIC Str *Str_CopyOrClear(Str *dest, Str const *src);
+DE_PUBLIC Str *Str_CopyOrClear(Str *dest, const Str *src);
 
 /**
  * Strip whitespace from beginning.
@@ -323,7 +323,7 @@ DE_PUBLIC Str *Str_ReplaceAll(Str *ds, char from, char to);
  *
  * @return  @c true, if the string is found.
  */
-DE_PUBLIC dd_bool Str_StartsWith(Str const *ds, char const *text);
+DE_PUBLIC dd_bool Str_StartsWith(const Str *ds, const char *text);
 
 /**
  * Determines if the string ends with a specific suffic. The comparison is done
@@ -334,7 +334,7 @@ DE_PUBLIC dd_bool Str_StartsWith(Str const *ds, char const *text);
  *
  * @return  @c true, if the string is found.
  */
-DE_PUBLIC dd_bool Str_EndsWith(Str const *ds, char const *text);
+DE_PUBLIC dd_bool Str_EndsWith(const Str *ds, const char *text);
 
 /**
  * Extract a line of text from the source.
@@ -342,7 +342,7 @@ DE_PUBLIC dd_bool Str_EndsWith(Str const *ds, char const *text);
  * @param ds   String instance where to put the extracted line.
  * @param src  Source string. Must be @c NULL terminated.
  */
-DE_PUBLIC char const *Str_GetLine(Str *ds, char const *src);
+DE_PUBLIC const char *Str_GetLine(Str *ds, const char *src);
 
 /**
  * Copies characters from @a src to @a dest until a @a delimiter character is encountered.
@@ -355,19 +355,19 @@ DE_PUBLIC char const *Str_GetLine(Str *ds, char const *src);
  * @return              Pointer to the character within @a src where copy stopped
  *                      else @c NULL if the end was reached.
  */
-DE_PUBLIC char const *Str_CopyDelim2(Str *dest, char const *src, char delimiter, int cdflags);
+DE_PUBLIC const char *Str_CopyDelim2(Str *dest, const char *src, char delimiter, int cdflags);
 
-DE_PUBLIC char const *Str_CopyDelim(Str *dest, char const *src, char delimiter);
+DE_PUBLIC const char *Str_CopyDelim(Str *dest, const char *src, char delimiter);
 
 /**
  * Case sensitive comparison.
  */
-DE_PUBLIC int Str_Compare(Str const *str, char const *text);
+DE_PUBLIC int Str_Compare(const Str *str, const char *text);
 
 /**
  * Non case sensitive comparison.
  */
-DE_PUBLIC int Str_CompareIgnoreCase(Str const *ds, char const *text);
+DE_PUBLIC int Str_CompareIgnoreCase(const Str *ds, const char *text);
 
 /**
  * Retrieves a character in the string.
@@ -377,7 +377,7 @@ DE_PUBLIC int Str_CompareIgnoreCase(Str const *ds, char const *text);
  *
  * @return              The character at @c index, or 0 if the index is not in range.
  */
-DE_PUBLIC char Str_At(Str const *str, int index);
+DE_PUBLIC char Str_At(const Str *str, int index);
 
 /**
  * Retrieves a character in the string. Indices start from the end of the string.
@@ -387,7 +387,7 @@ DE_PUBLIC char Str_At(Str const *str, int index);
  *
  * @return              The character at @c index, or 0 if the index is not in range.
  */
-DE_PUBLIC char Str_RAt(Str const *str, int reverseIndex);
+DE_PUBLIC char Str_RAt(const Str *str, int reverseIndex);
 
 DE_PUBLIC void Str_Truncate(Str *str, int position);
 
@@ -409,7 +409,7 @@ DE_PUBLIC Str *Str_PercentEncode(Str *str);
  *                      @a excludeChars). @c 0 terminated.
  * @return              Same as @a str.
  */
-DE_PUBLIC Str *Str_PercentEncode2(Str *str, char const *excludeChars, char const *includeChars);
+DE_PUBLIC Str *Str_PercentEncode2(Str *str, const char *excludeChars, const char *includeChars);
 
 /**
  * Decode the percent-encoded string. Will match codes for the unicode
@@ -420,7 +420,7 @@ DE_PUBLIC Str *Str_PercentEncode2(Str *str, char const *excludeChars, char const
  */
 DE_PUBLIC Str *Str_PercentDecode(Str *str);
 
-DE_PUBLIC void Str_Write(Str const *str, Writer1 *writer);
+DE_PUBLIC void Str_Write(const Str *str, Writer1 *writer);
 
 DE_PUBLIC void Str_Read(Str *str, Reader1 *reader);
 
@@ -453,7 +453,7 @@ DE_PUBLIC AutoStr *AutoStr_FromStr(Str *str);
  *
  * @return  AutoStr instance.
  */
-DE_PUBLIC AutoStr *AutoStr_FromText(char const *text);
+DE_PUBLIC AutoStr *AutoStr_FromText(const char *text);
 
 /**
  * Constructs an AutoStr instance (standard malloc) and initializes its
@@ -463,7 +463,7 @@ DE_PUBLIC AutoStr *AutoStr_FromText(char const *text);
  *
  * @return  AutoStr instance.
  */
-DE_PUBLIC AutoStr *AutoStr_FromTextStd(char const *text);
+DE_PUBLIC AutoStr *AutoStr_FromTextStd(const char *text);
 
 /**
  * Converts an AutoStr to a normal ddstring. You must call Str_Delete()

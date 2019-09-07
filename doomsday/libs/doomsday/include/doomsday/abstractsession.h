@@ -77,16 +77,16 @@ public:
      * @param userDescription  Textual description of the current game state provided either
      *                         by the user or possibly generated automatically.
      */
-    virtual void save(de::String const &saveName, de::String const &userDescription) = 0;
+    virtual void save(const de::String &saveName, const de::String &userDescription) = 0;
 
     /**
      * Load the game state from the @em user saved session specified.
      *
      * @param saveName  Name of the saved session to be loaded.
      */
-    virtual void load(de::String const &saveName) = 0;
+    virtual void load(const de::String &saveName) = 0;
 
-    world::IThinkerMapping const *thinkerMapping() const;
+    const world::IThinkerMapping *thinkerMapping() const;
 
     /**
      * Sets the currently used serialization thinker mapping object.
@@ -96,7 +96,7 @@ public:
     void setThinkerMapping(world::IThinkerMapping *mapping);
 
 protected:
-    void setMapUri(res::Uri const &uri);
+    void setMapUri(const res::Uri &uri);
     void setInProgress(bool inProgress);
 
 //- Saved session management ------------------------------------------------------------
@@ -107,12 +107,12 @@ protected:
      * @param destPath    Path for the new/replaced saved session.
      * @param sourcePath  Path for the saved session to be copied.
      */
-    static void copySaved(de::String const &destPath, de::String const &sourcePath);
+    static void copySaved(const de::String &destPath, const de::String &sourcePath);
 
     /**
      * Removes the saved session at @a path.
      */
-    static void removeSaved(de::String const &path);
+    static void removeSaved(const de::String &path);
 
 private:
     DE_PRIVATE(d)

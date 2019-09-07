@@ -86,7 +86,7 @@ public:
      */
     Uri();
 
-    Uri(String const &percentEncoded);
+    Uri(const String &percentEncoded);
 
     /**
      * Construct a Uri instance from a text string.
@@ -102,7 +102,7 @@ public:
      * @param sep             Character used to separate path segments
      *                        in @a path.
      */
-    Uri(String const &percentEncoded, resourceclassid_t defaultResClass, Char sep = '/');
+    Uri(const String &percentEncoded, resourceclassid_t defaultResClass, Char sep = '/');
 
     /**
      * Construct a Uri from a textual scheme and a path.
@@ -110,7 +110,7 @@ public:
      * @param scheme  Scheme for the Uri.
      * @param path    Path for the Uri.
      */
-    Uri(String const &scheme, Path const &path);
+    Uri(const String &scheme, const Path &path);
 
     /**
      * Construct a Uri instance from a path. Note that Path instances can
@@ -121,14 +121,14 @@ public:
      *
      * @param path      Path of the URI.
      */
-    Uri(resourceclassid_t resClass, Path const &path);
+    Uri(resourceclassid_t resClass, const Path &path);
 
     /**
      * Construct a Uri instance from a path without a scheme.
      *
      * @param path      Path of the URI.
      */
-    Uri(Path const &path);
+    Uri(const Path &path);
 
     /**
      * Construct a Uri instance from a UTF-8 C-style text string, using RC_IMPLICIT
@@ -137,12 +137,12 @@ public:
      * @param nullTerminatedCStr  String to be parsed. Assumed to be in
      *                            percent-encoded representation.
      */
-    Uri(char const *nullTerminatedCStr);
+    Uri(const char *nullTerminatedCStr);
 
     /**
      * Construct a Uri instance by duplicating @a other.
      */
-    Uri(Uri const &other);
+    Uri(const Uri &other);
 
     inline Uri &operator = (Uri other) {
         d.swap(other.d);
@@ -157,9 +157,9 @@ public:
         d.swap(other.d);
     }
 
-    bool operator == (Uri const &other) const;
+    bool operator == (const Uri &other) const;
 
-    bool operator != (Uri const &other) const {
+    bool operator != (const Uri &other) const {
         return !(*this == other);
     }
 
@@ -172,7 +172,7 @@ public:
      * @param path  Native path to a file in the native file system.
      * @param defaultResourceClass  Default resource class.
      */
-    static Uri fromNativePath(NativePath const &path,
+    static Uri fromNativePath(const NativePath &path,
                               resourceclassid_t defaultResourceClass = RC_NULL);
 
     /**
@@ -185,7 +185,7 @@ public:
      *                       file system.
      * @param defaultResourceClass  Default resource class.
      */
-    static Uri fromNativeDirPath(NativePath const &nativeDirPath,
+    static Uri fromNativeDirPath(const NativePath &nativeDirPath,
                                  resourceclassid_t defaultResourceClass = RC_NULL);
 
     /**
@@ -245,32 +245,32 @@ public:
     /**
      * @return Scheme of the URI.
      */
-    String const &scheme() const;
+    const String &scheme() const;
 
     /**
      * @return Path of the URI.
      */
-    Path const &path() const;
+    const Path &path() const;
 
     /**
      * @return Scheme of the URI as plain text (UTF-8 encoding).
      */
-    char const *schemeCStr() const;
+    const char *schemeCStr() const;
 
     /**
      * @return  Path of the URI as plain text (UTF-8 encoding).
      */
-    char const *pathCStr() const;
+    const char *pathCStr() const;
 
     /*
      * @return  Scheme of the URI as plain text (UTF-8 encoding).
      */
-//    struct ddstring_s const *schemeStr() const;
+//    const struct ddstring_s *schemeStr() const;
 
     /*
      * @return  Path of the URI as plain text (UTF-8 encoding).
      */
-//    struct ddstring_s const *pathStr() const;
+//    const struct ddstring_s *pathStr() const;
 
     /**
      * Change the scheme of the URI to @a newScheme.
@@ -282,7 +282,7 @@ public:
      *
      * @param newPath  New path for the URI.
      */
-    Uri &setPath(Path const &newPath);
+    Uri &setPath(const Path &newPath);
 
     /**
      * Change the path of the URI to @a newPath.
@@ -294,7 +294,7 @@ public:
 
     Uri &setPath(const CString& newPath, Char sep = '/');
 
-    Uri &setPath(char const *newPathUtf8, char sep = '/');
+    Uri &setPath(const char *newPathUtf8, char sep = '/');
 
     /**
      * Update this URI by parsing new values from the specified arguments.
@@ -352,7 +352,7 @@ private:
     DE_PRIVATE(d)
 };
 
-inline Uri makeUri(String const &percentEncoded, Char sep = '/')
+inline Uri makeUri(const String &percentEncoded, Char sep = '/')
 {
     return Uri(percentEncoded, RC_NULL, sep);
 }

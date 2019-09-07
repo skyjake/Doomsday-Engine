@@ -102,7 +102,7 @@ static invitem_t invItems[NUM_INVENTORYITEM_TYPES - 1];
 
 static playerinventory_t inventories[MAXPLAYERS];
 
-static inline def_invitem_t const *itemDefForType(inventoryitemtype_t type)
+static inline const def_invitem_t *itemDefForType(inventoryitemtype_t type)
 {
     return &itemDefs[type - 1];
 }
@@ -118,17 +118,17 @@ static void freeItem(inventoryitem_t *item)
     M_Free(item);
 }
 
-static inline uint countItems2(playerinventory_t const *inv, inventoryitemtype_t type)
+static inline uint countItems2(const playerinventory_t *inv, inventoryitemtype_t type)
 {
     uint count = 0;
-    for(inventoryitem_t const *item = inv->items[type - 1]; item; item = item->next)
+    for(const inventoryitem_t *item = inv->items[type - 1]; item; item = item->next)
     {
         count++;
     }
     return count;
 }
 
-static uint countItems(playerinventory_t const *inv, inventoryitemtype_t type)
+static uint countItems(const playerinventory_t *inv, inventoryitemtype_t type)
 {
     if(type == IIT_NONE)
     {
@@ -148,7 +148,7 @@ static dd_bool useItem(playerinventory_t *inv, inventoryitemtype_t type, dd_bool
         return false; // That was a non-starter.
 
     int plrnum = inv - inventories;
-    invitem_t const *item = &invItems[type-1];
+    const invitem_t *item = &invItems[type-1];
 
     // Is this usable?
     if(!item->action)
@@ -159,7 +159,7 @@ static dd_bool useItem(playerinventory_t *inv, inventoryitemtype_t type, dd_bool
     // How about when panicked?
     if(panic)
     {
-        def_invitem_t const *def = itemDefForType(type);
+        const def_invitem_t *def = itemDefForType(type);
         if(!(def->flags & IIF_USE_PANIC))
         {
             return false;
@@ -183,7 +183,7 @@ static dd_bool giveItem(playerinventory_t *inv, inventoryitemtype_t type)
     uint count = countItems(inv, type);
 
     // Do not give items unavailable for the current game mode.
-    def_invitem_t const *def = itemDefForType(type);
+    const def_invitem_t *def = itemDefForType(type);
     if(!(def->gameModeBits & gameModeBits))
         return false;
 
@@ -271,7 +271,7 @@ static int tryUseItem(playerinventory_t *inv, inventoryitemtype_t type, int pani
     return false;
 }
 
-def_invitem_t const *P_GetInvItemDef(inventoryitemtype_t type)
+const def_invitem_t *P_GetInvItemDef(inventoryitemtype_t type)
 {
     DE_ASSERT(type >= IIT_FIRST && type < NUM_INVENTORYITEM_TYPES);
     return itemDefForType(type);
@@ -285,7 +285,7 @@ void P_InitInventory()
     {
         invitem_t *data          = &invItems[i];
         inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
-        def_invitem_t const *def = P_GetInvItemDef(type);
+        const def_invitem_t *def = P_GetInvItemDef(type);
 
         // Skip items unavailable for the current game mode.
         if(!(def->gameModeBits & gameModeBits))
@@ -309,7 +309,7 @@ void P_ShutdownInventory()
     }
 }
 
-invitem_t const *P_GetInvItem(int id)
+const invitem_t *P_GetInvItem(int id)
 {
     if(id < 0 || id >= NUM_INVENTORYITEM_TYPES - 1)
         return 0;
@@ -370,7 +370,7 @@ int P_InventorySetReadyItem(int player, inventoryitemtype_t type)
 
         if(type != IIT_NONE)
         {
-            def_invitem_t const *def = P_GetInvItemDef(type);
+            const def_invitem_t *def = P_GetInvItemDef(type);
             mustEquip = ((def->flags & IIF_READY_ALWAYS)? false : true);
         }
 
@@ -423,7 +423,7 @@ int P_InventoryGive(int player, inventoryitemtype_t type, int silent)
         if(oldNumItems == 0)
         {
             // This is the first item the player has been given; ready it.
-            def_invitem_t const *def = P_GetInvItemDef(type);
+            const def_invitem_t *def = P_GetInvItemDef(type);
 
             if(!(def->flags & IIF_READY_ALWAYS))
             {

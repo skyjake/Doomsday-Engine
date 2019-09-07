@@ -34,7 +34,7 @@ extern "C" {
 
 void G_RendPlayerView(int player);
 
-void D_DrawWindow(Size2Raw const *windowSize);
+void D_DrawWindow(const Size2Raw *windowSize);
 
 void D_EndFrame(void);
 

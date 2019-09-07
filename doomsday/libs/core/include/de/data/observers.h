@@ -73,7 +73,7 @@
     using Name##Audience = de::Observers<DE_AUDIENCE_INTERFACE(Name)>; \
     Name##Audience _audienceFor##Name; \
     Name##Audience &audienceFor##Name() { return _audienceFor##Name; } \
-    Name##Audience const &audienceFor##Name() const { return _audienceFor##Name; }
+    const Name##Audience &audienceFor##Name() const { return _audienceFor##Name; }
 
 #define DE_PIMPL_AUDIENCE(Name) \
     Name##Audience audienceFor##Name;
@@ -225,7 +225,7 @@ class DE_PUBLIC ObserverBase
 {
 public:
     ObserverBase();
-    ObserverBase(ObserverBase const &) = delete; // copying denied
+    ObserverBase(const ObserverBase &) = delete; // copying denied
     virtual ~ObserverBase();
 
     void addMemberOf   (IAudience &observers);
@@ -302,7 +302,7 @@ public:
     class Loop : public PointerSet::IIterationObserver
     {
     public:
-        Loop(Observers const &observers)
+        Loop(const Observers &observers)
             : _audience(&observers)
             , _prevObserver(nullptr)
         {
@@ -339,15 +339,15 @@ public:
                 ++_next;
             }
         }
-        const_iterator const &get() const { return _current; }
+        const const_iterator &get() const { return _current; }
         Type *operator->() const { return *get(); }
         Loop &operator++()
         {
             next();
             return *this;
         }
-        void pointerSetIteratorsWereInvalidated(PointerSet::Pointer const *oldBase,
-                                                PointerSet::Pointer const *newBase) override
+        void pointerSetIteratorsWereInvalidated(const PointerSet::Pointer *oldBase,
+                                                const PointerSet::Pointer *newBase) override
         {
             if (_prevObserver)
             {
@@ -360,9 +360,9 @@ public:
         }
 
     private:
-        inline Members const &members() const { return _audience->_members; }
+        inline const Members &members() const { return _audience->_members; }
 
-        Observers const *               _audience;
+        const Observers *               _audience;
         PointerSet::IIterationObserver *_prevObserver;
         const_iterator                  _current;
         const_iterator                  _next;
@@ -418,13 +418,13 @@ public:
         return *this;
     }
 
-    Observers<Type> const &operator+=(Type const *observer) const
+    Observers<Type> const &operator+=(const Type *observer) const
     {
         const_cast<Observers<Type> *>(this)->add(const_cast<Type *>(observer));
         return *this;
     }
 
-    Observers<Type> const &operator+=(Type const &observer) const
+    Observers<Type> const &operator+=(const Type &observer) const
     {
         const_cast<Observers<Type> *>(this)->add(const_cast<Type *>(&observer));
         return *this;
@@ -487,13 +487,13 @@ public:
 
     inline bool isEmpty() const { return size() == 0; }
 
-    bool contains(Type const *observer) const
+    bool contains(const Type *observer) const
     {
         DE_GUARD(this);
         return _members.contains(const_cast<Type *>(observer));
     }
 
-    bool contains(Type const &observer) const
+    bool contains(const Type &observer) const
     {
         DE_GUARD(this);
         return _members.contains(const_cast<Type *>(&observer));

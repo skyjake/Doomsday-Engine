@@ -66,7 +66,7 @@ DE_PIMPL(MultiAtlas)
         return blank;
     }
 
-    bool tryAllocatePending(Atlas &atlas, PendingImages const &pending)
+    bool tryAllocatePending(Atlas &atlas, const PendingImages &pending)
     {
         DE_ASSERT(atlas.flags().testFlag(Atlas::DeferredAllocations));
 
@@ -92,7 +92,7 @@ DE_PIMPL(MultiAtlas)
      *
      * @return Atlas object. Caller must commit the deferred allocations.
      */
-    Atlas &allocatePending(PendingImages const &pending)
+    Atlas &allocatePending(const PendingImages &pending)
     {
         // Let's see if the images fit on one of our existing atlases.
         for (Atlas *atlas : atlases)
@@ -197,7 +197,7 @@ MultiAtlas::AllocGroup::AllocGroup(MultiAtlas &multiAtlas)
     : d(new Impl(this, multiAtlas))
 {}
 
-Id MultiAtlas::AllocGroup::alloc(Image const &image, Id const &knownId)
+Id MultiAtlas::AllocGroup::alloc(const Image &image, const Id &knownId)
 {
     if (!d->atlas)
     {
@@ -216,7 +216,7 @@ Id MultiAtlas::AllocGroup::alloc(Image const &image, Id const &knownId)
     }
 }
 
-void MultiAtlas::AllocGroup::release(Id const &id)
+void MultiAtlas::AllocGroup::release(const Id &id)
 {
     auto foundPending = d->pending.find(id);
     if (foundPending != d->pending.end())
@@ -233,7 +233,7 @@ void MultiAtlas::AllocGroup::release(Id const &id)
     }
 }
 
-bool MultiAtlas::AllocGroup::contains(Id const &id) const
+bool MultiAtlas::AllocGroup::contains(const Id &id) const
 {
     return d->pending.contains(id) || d->allocated.contains(id);
 }
@@ -261,7 +261,7 @@ void MultiAtlas::AllocGroup::commit() const
     const_cast<MultiAtlas::AllocGroup *>(this)->setState(Ready);
 }
 
-Rectanglef MultiAtlas::AllocGroup::imageRectf(Id const &id) const
+Rectanglef MultiAtlas::AllocGroup::imageRectf(const Id &id) const
 {
     if (d->atlas)
     {
@@ -271,7 +271,7 @@ Rectanglef MultiAtlas::AllocGroup::imageRectf(Id const &id) const
                        "Allocation group has not yet been committed to an atlas");
 }
 
-Atlas const *MultiAtlas::AllocGroup::atlas() const
+const Atlas *MultiAtlas::AllocGroup::atlas() const
 {
     return d->atlas;
 }

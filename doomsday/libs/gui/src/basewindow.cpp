@@ -58,7 +58,7 @@ DE_PIMPL(BaseWindow)
                 .setBlendFunc(gfx::SrcAlpha, gfx::OneMinusSrcAlpha);
     }
 
-    void keyEvent(KeyEvent const &ev) override
+    void keyEvent(const KeyEvent &ev) override
     {
         /// @todo Input drivers should observe the notification instead, input
         /// subsystem passes it to window system. -jk
@@ -75,7 +75,7 @@ DE_PIMPL(BaseWindow)
 //        }
     }
 
-    void mouseEvent(MouseEvent const &event) override
+    void mouseEvent(const MouseEvent &event) override
     {
         MouseEvent ev = event;
 
@@ -101,7 +101,7 @@ DE_PIMPL(BaseWindow)
 //    }
 };
 
-BaseWindow::BaseWindow(String const &id)
+BaseWindow::BaseWindow(const String &id)
 #if !defined (DE_MOBILE)
     : LIBAPPFW_BASEWINDOW_SUPER(id)
     , d(new Impl(this))
@@ -196,7 +196,7 @@ void BaseWindow::postDraw()
 
 #if defined (DE_MOBILE)
 
-String BaseWindow::configName(String const &key) const
+String BaseWindow::configName(const String &key) const
 {
     return QString("window.main.%1").arg(key);
 }

@@ -35,7 +35,7 @@ res::Uri composeMapUri(int episode, int map)
     }
 }
 
-int valueDefForPath(String const &id, ded_value_t **def)
+int valueDefForPath(const String &id, ded_value_t **def)
 {
     if(!id.isEmpty())
     {
@@ -52,7 +52,7 @@ int valueDefForPath(String const &id, ded_value_t **def)
     return -1; // Not found.
 }
 
-StringList splitMax(String const &str, Char sep, int max)
+StringList splitMax(const String &str, Char sep, int max)
 {
     if (max < 0)
     {

@@ -29,7 +29,7 @@ DE_PIMPL_NOREF(GLSubBuffer)
     int                   batchIndexOffset = -1;
 };
 
-GLSubBuffer::GLSubBuffer(Rangeui16 const &hostRange, GLBuffer &hostBuffer)
+GLSubBuffer::GLSubBuffer(const Rangeui16 &hostRange, GLBuffer &hostBuffer)
     : d(new Impl)
 {
     d->host      = &hostBuffer;
@@ -46,7 +46,7 @@ void GLSubBuffer::clear()
     d->size = 0;
 }
 
-void GLSubBuffer::setVertices(dsize count, void const *data)
+void GLSubBuffer::setVertices(dsize count, const void *data)
 {
     DE_ASSERT(count <= dsize(d->hostRange.size()));
 
@@ -80,17 +80,17 @@ void GLSubBuffer::setHostBuffer(GLBuffer &hostBuffer)
     d->host = &hostBuffer;
 }
 
-Rangeui16 const &GLSubBuffer::hostRange() const
+const Rangeui16 &GLSubBuffer::hostRange() const
 {
     return d->hostRange;
 }
 
-void GLSubBuffer::setFormat(internal::AttribSpecs const &format)
+void GLSubBuffer::setFormat(const internal::AttribSpecs &format)
 {
     d->format = format;
     d->host->setFormat(format);
 
-    auto const *specs = format.first;
+    const auto *specs = format.first;
     for (dsize i = 0; i < format.second; ++i)
     {
         if (specs[i].semantic == internal::AttribSpec::Index)
@@ -100,7 +100,7 @@ void GLSubBuffer::setFormat(internal::AttribSpecs const &format)
     }
 }
 
-void GLSubBuffer::setHostRange(Rangeui16 const &range)
+void GLSubBuffer::setHostRange(const Rangeui16 &range)
 {
     d->hostRange = range;
 }

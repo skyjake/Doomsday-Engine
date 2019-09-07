@@ -31,7 +31,7 @@ class GLSubBuffer;
 class LIBGUI_PUBLIC GLAtlasBuffer
 {
 public:
-    GLAtlasBuffer(internal::AttribSpecs const &vertexFormat);
+    GLAtlasBuffer(const internal::AttribSpecs &vertexFormat);
 
     void setMaxElementCount(dsize maxElementCount);
     void setUsage(gfx::Usage usage);

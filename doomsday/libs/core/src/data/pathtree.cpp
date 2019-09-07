@@ -139,14 +139,14 @@ struct PathTree::Impl
      *
      * @return  The node that identifies the given path.
      */
-    Node *buildNodesForPath(Path const &path)
+    Node *buildNodesForPath(const Path &path)
     {
         const bool hasLeaf = !path.toCString().endsWith("/");
 
         Node *node = 0, *parent = &rootNode;
         for (int i = 0; i < path.segmentCount() - (hasLeaf? 1 : 0); ++i)
         {
-            Path::Segment const &pn = path.segment(i);
+            const Path::Segment &pn = path.segment(i);
             //qDebug() << "Add branch: " << pn.toString();
             node = nodeForSegment(pn, Branch, parent);
             parent = node;
@@ -154,14 +154,14 @@ struct PathTree::Impl
 
         if (hasLeaf)
         {
-            Path::Segment const &pn = path.lastSegment();
+            const Path::Segment &pn = path.lastSegment();
             //qDebug() << "Add leaf: " << pn.toString();
             node = nodeForSegment(pn, Leaf, parent);
         }
         return node;
     }
 
-    Node *findInHash(Nodes &hash, const LowercaseHashString &segment, Path const &searchPath,
+    Node *findInHash(Nodes &hash, const LowercaseHashString &segment, const Path &searchPath,
                      ComparisonFlags compFlags)
     {
         auto found = hash.equal_range(segment.hash);
@@ -185,7 +185,7 @@ struct PathTree::Impl
         return 0;
     }
 
-    Node *find(Path const &searchPath, ComparisonFlags compFlags)
+    Node *find(const Path &searchPath, ComparisonFlags compFlags)
     {
         if (searchPath.isEmpty() && !compFlags.testFlag(NoBranch))
         {
@@ -240,7 +240,7 @@ PathTree::~PathTree()
     delete d;
 }
 
-PathTree::Node &PathTree::insert(Path const &path)
+PathTree::Node &PathTree::insert(const Path &path)
 {
     DE_GUARD(this);
 
@@ -253,7 +253,7 @@ PathTree::Node &PathTree::insert(Path const &path)
     return *node;
 }
 
-bool PathTree::remove(Path const &path, ComparisonFlags flags)
+bool PathTree::remove(const Path &path, ComparisonFlags flags)
 {
     DE_GUARD(this);
 
@@ -268,7 +268,7 @@ bool PathTree::remove(Path const &path, ComparisonFlags flags)
     return false;
 }
 
-String const &PathTree::nodeTypeName(NodeType type)
+const String &PathTree::nodeTypeName(NodeType type)
 {
     static String const nodeNames[] = {
         "branch",
@@ -303,7 +303,7 @@ void PathTree::clear()
     d->clear();
 }
 
-bool PathTree::has(Path const &path, ComparisonFlags flags) const
+bool PathTree::has(const Path &path, ComparisonFlags flags) const
 {
     DE_GUARD(this);
 
@@ -311,11 +311,11 @@ bool PathTree::has(Path const &path, ComparisonFlags flags) const
     return d->find(path, flags) != 0;
 }
 
-PathTree::Node const &PathTree::find(Path const &searchPath, ComparisonFlags flags) const
+const PathTree::Node &PathTree::find(const Path &searchPath, ComparisonFlags flags) const
 {
     DE_GUARD(this);
 
-    Node const *found = d->find(searchPath, flags);
+    const Node *found = d->find(searchPath, flags);
     if (!found)
     {
         /// @throw NotFoundError  The referenced node could not be found.
@@ -324,25 +324,25 @@ PathTree::Node const &PathTree::find(Path const &searchPath, ComparisonFlags fla
     return *found;
 }
 
-PathTree::Node const *PathTree::tryFind(Path const &path, ComparisonFlags flags) const
+const PathTree::Node *PathTree::tryFind(const Path &path, ComparisonFlags flags) const
 {
     DE_GUARD(this);
     return d->find(path, flags);
 }
 
-PathTree::Node &PathTree::find(Path const &path, ComparisonFlags flags)
+PathTree::Node &PathTree::find(const Path &path, ComparisonFlags flags)
 {
-    Node const &node = const_cast<PathTree const *>(this)->find(path, flags);
+    const Node &node = const_cast<const PathTree *>(this)->find(path, flags);
     return const_cast<Node &>(node);
 }
 
-PathTree::Node *PathTree::tryFind(Path const &path, ComparisonFlags flags)
+PathTree::Node *PathTree::tryFind(const Path &path, ComparisonFlags flags)
 {
     DE_GUARD(this);
     return d->find(path, flags);
 }
 
-//String const &PathTree::segmentName(SegmentId segmentId) const
+//const String &PathTree::segmentName(SegmentId segmentId) const
 //{
 //    DE_GUARD(this);
 
@@ -356,24 +356,24 @@ PathTree::Node *PathTree::tryFind(Path const &path, ComparisonFlags flags)
 //    return d->segments.userValue(segmentId);
 //}
 
-PathTree::Node const &PathTree::rootBranch() const
+const PathTree::Node &PathTree::rootBranch() const
 {
     return d->rootNode;
 }
 
-PathTree::Node *PathTree::newNode(NodeArgs const &args)
+PathTree::Node *PathTree::newNode(const NodeArgs &args)
 {
     return new Node(args);
 }
 
-PathTree::Nodes const &PathTree::nodes(NodeType type) const
+const PathTree::Nodes &PathTree::nodes(NodeType type) const
 {
     DE_GUARD(this);
 
     return (type == Leaf? d->hash.leaves : d->hash.branches);
 }
 
-static void collectPathsInHash(PathTree::FoundPaths &found, PathTree::Nodes const &ph, Char separator)
+static void collectPathsInHash(PathTree::FoundPaths &found, const PathTree::Nodes &ph, Char separator)
 {
     if (ph.empty()) return;
 
@@ -400,9 +400,9 @@ int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, Char separa
     return found.size() - numFoundSoFar;
 }
 
-static int iteratePathsInHash(PathTree const &pathTree, //Path::hash_type hashKey,
+static int iteratePathsInHash(const PathTree &pathTree, //Path::hash_type hashKey,
                               PathTree::NodeType type, PathTree::ComparisonFlags flags,
-                              PathTree::Node const *parent,
+                              const PathTree::Node *parent,
                               int (*callback) (PathTree::Node &, void *), void *parameters)
 {
     int result = 0;
@@ -440,7 +440,7 @@ static int iteratePathsInHash(PathTree const &pathTree, //Path::hash_type hashKe
     return result;
 }
 
-int PathTree::traverse(ComparisonFlags flags, Node const *parent,
+int PathTree::traverse(ComparisonFlags flags, const Node *parent,
                        int (*callback) (Node &, void *), void *parameters) const
 {
     DE_GUARD(this);
@@ -474,7 +474,7 @@ void PathTree::debugPrint(Char separator) const
 }
 
 #if 0
-static void printDistributionOverviewElement(int const *colWidths, char const *name,
+static void printDistributionOverviewElement(const int *colWidths, const char *name,
     size_t numEmpty, size_t maxHeight, size_t numCollisions, size_t maxCollisions,
     size_t sum, size_t total)
 {
@@ -495,7 +495,7 @@ static void printDistributionOverviewElement(int const *colWidths, char const *n
         variance = coverage = collision = 0;
     }
 
-    int const *col = colWidths;
+    const int *col = colWidths;
     Con_Printf("%*s ",    *col++, name);
     Con_Printf("%*lu ",   *col++, (unsigned long)total);
     Con_Printf("%*lu",    *col++, Path::hash_range - (unsigned long)numEmpty);

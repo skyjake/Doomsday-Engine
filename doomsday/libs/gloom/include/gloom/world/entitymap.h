@@ -34,7 +34,7 @@ public:
     EntityMap();
 
     void clear();
-    void setBounds(de::Rectangled const &bounds);
+    void setBounds(const de::Rectangled &bounds);
     void insert(const Entity &entity);
 
     EntityList listRegionBackToFront(const de::Vec3f &pos, float radius) const;

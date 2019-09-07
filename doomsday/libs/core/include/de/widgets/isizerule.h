@@ -32,8 +32,8 @@ class DE_PUBLIC ISizeRule
 public:
     virtual ~ISizeRule() = default;
 
-    virtual Rule const &width() const = 0;
-    virtual Rule const &height() const = 0;
+    virtual const Rule &width() const = 0;
+    virtual const Rule &height() const = 0;
 };
 
 /**

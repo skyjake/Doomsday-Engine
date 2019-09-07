@@ -45,7 +45,7 @@ public:
      * @param nativePath  Path in the native file system to access. Relative
      *                    to the current working directory.
      */
-    NativeFile(String const &name, NativePath const &nativePath);
+    NativeFile(const String &name, const NativePath &nativePath);
 
     virtual ~NativeFile();
 
@@ -58,14 +58,14 @@ public:
     /**
      * Returns the native path of the file.
      */
-    NativePath const &nativePath() const;
+    const NativePath &nativePath() const;
 
-    void setMode(Flags const &newMode);
+    void setMode(const Flags &newMode);
 
     // Implements IByteArray.
     Size size() const;
     void get(Offset at, Byte *values, Size count) const;
-    void set(Offset at, Byte const *values, Size count);
+    void set(Offset at, const Byte *values, Size count);
 
 public:
     /**
@@ -80,7 +80,7 @@ public:
      * @return Native file initialized with the current status of the source file.
      * Caller gets ownership.
      */
-    static NativeFile *newStandalone(NativePath const &nativePath);
+    static NativeFile *newStandalone(const NativePath &nativePath);
 
 protected:
     /// Returns the input stream.

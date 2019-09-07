@@ -131,7 +131,7 @@ DE_PIMPL_NOREF(Time)
         return (flags & HighPerformance) != 0;
     }
 
-    bool isLessThan(Impl const &other) const
+    bool isLessThan(const Impl &other) const
     {
         if ((flags & HighPerformance) && (other.flags & HighPerformance))
         {
@@ -145,7 +145,7 @@ DE_PIMPL_NOREF(Time)
         return systemTime() < other.systemTime();
     }
 
-    bool isEqualTo(Impl const &other) const
+    bool isEqualTo(const Impl &other) const
     {
         if ((flags & HighPerformance) && (other.flags & HighPerformance))
         {
@@ -158,7 +158,7 @@ DE_PIMPL_NOREF(Time)
         return systemTime() == other.systemTime();
     }
 
-    void add(Span const &delta)
+    void add(const Span &delta)
     {
         if (flags & SysTime)
         {
@@ -170,7 +170,7 @@ DE_PIMPL_NOREF(Time)
         }
     }
 
-    Span delta(Impl const &earlier) const
+    Span delta(const Impl &earlier) const
     {
         if ((flags & HighPerformance) && (earlier.flags & HighPerformance))
         {
@@ -238,7 +238,7 @@ DE_PIMPL_NOREF(Time)
 Time::Time() : d(new Impl)
 {}
 
-Time::Time(Time const &other) : d(new Impl(*other.d))
+Time::Time(const Time &other) : d(new Impl(*other.d))
 {}
 
 Time::Time(Time &&moved) : d(std::move(moved.d))
@@ -284,7 +284,7 @@ Time Time::invalidTime()
     return Time(TimePoint());
 }
 
-Time &Time::operator = (Time const &other)
+Time &Time::operator = (const Time &other)
 {
     *d = *other.d;
     return *this;
@@ -317,30 +317,30 @@ bool Time::isValid() const
     return d->isValid();
 }
 
-bool Time::operator < (Time const &t) const
+bool Time::operator < (const Time &t) const
 {
     return d->isLessThan(*t.d);
 }
 
-bool Time::operator == (Time const &t) const
+bool Time::operator == (const Time &t) const
 {
     return d->isEqualTo(*t.d);
 }
 
-Time Time::operator + (Span const &span) const
+Time Time::operator + (const Span &span) const
 {
     Time result = *this;
     result += span;
     return result;
 }
 
-Time &Time::operator += (Span const &span)
+Time &Time::operator += (const Span &span)
 {
     d->add(span);
     return *this;
 }
 
-TimeSpan Time::operator - (Time const &earlierTime) const
+TimeSpan Time::operator - (const Time &earlierTime) const
 {
     return d->delta(*earlierTime.d);
 }
@@ -443,7 +443,7 @@ String Time::asText(const char *format) const
 
 static int parseMonth(const String &shortName)
 {
-    static char const *months[] = {
+    static const char *months[] = {
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     };
@@ -755,7 +755,7 @@ Time::Span Time::currentHighPerformanceDelta()
     return currentHighPerfDelta.load();
 }
 
-std::ostream &operator<<(std::ostream &os, Time const &t)
+std::ostream &operator<<(std::ostream &os, const Time &t)
 {
     return os << t.asText();
 }

@@ -72,12 +72,12 @@ class Image;
 class LIBGUI_PUBLIC LabelWidget : public GuiWidget, public IAssetGroup
 {
 public:
-    LabelWidget(String const &name = String());
+    LabelWidget(const String &name = String());
 
     AssetGroup &assets() override;
 
-    void setText(String const &text);
-    void setImage(Image const &image);
+    void setText(const String &text);
+    void setImage(const Image &image);
 
     /**
      * Sets the image drawn in the label. Procedural images can generate any
@@ -94,7 +94,7 @@ public:
      * @param heightFromFont  Optionally overrides the image size using the height of
      *             this font. Default is to use the image's own size.
      */
-    void setStyleImage(DotPath const &id, String const &heightFromFont = "");
+    void setStyleImage(const DotPath &id, const String &heightFromFont = "");
 
     ProceduralImage *image() const;
 
@@ -105,7 +105,7 @@ public:
      * @param alignment         Alignment for the overlaid image.
      */
     void setOverlayImage(ProceduralImage *overlayProcImage,
-                         ui::Alignment const &alignment = ui::AlignCenter);
+                         const ui::Alignment &alignment = ui::AlignCenter);
 
     String text() const;
     String plainText() const;
@@ -115,8 +115,8 @@ public:
      */
     Vec2ui textSize() const;
 
-    Rule const &contentWidth() const;
-    Rule const &contentHeight() const;
+    const Rule &contentWidth() const;
+    const Rule &contentHeight() const;
 
     enum FillMode {
         FillWithImage,
@@ -130,16 +130,16 @@ public:
      *
      * @param styleRuleId  Id of a rule in the style.
      */
-    void setTextGap(DotPath const &styleRuleId);
+    void setTextGap(const DotPath &styleRuleId);
 
-    DotPath const &textGap() const;
+    const DotPath &textGap() const;
 
     enum TextShadow {
         NoShadow,
         RectangleShadow
     };
 
-    void setTextShadow(TextShadow shadow, DotPath const &shadowColor = "label.shadow");
+    void setTextShadow(TextShadow shadow, const DotPath &shadowColor = "label.shadow");
 
     enum AlignmentMode {
         AlignByCombination,
@@ -154,16 +154,16 @@ public:
      * @param align      Alignment for all content.
      * @param alignMode  Mode of alignment (by combo/text/image).
      */
-    void setAlignment(ui::Alignment const &align,
+    void setAlignment(const ui::Alignment &align,
                       AlignmentMode alignMode = AlignByCombination);
 
-    void setTextAlignment(ui::Alignment const &textAlign);
+    void setTextAlignment(const ui::Alignment &textAlign);
 
     ui::Alignment textAlignment() const;
 
-    void setTextLineAlignment(ui::Alignment const &textLineAlign);
+    void setTextLineAlignment(const ui::Alignment &textLineAlign);
 
-    void setTextModulationColorf(Vec4f const &colorf);
+    void setTextModulationColorf(const Vec4f &colorf);
 
     Vec4f textModulationColorf() const;
 
@@ -175,9 +175,9 @@ public:
      */
     void setMaximumTextWidth(int pixels);
 
-    void setMaximumTextWidth(Rule const &pixels);
+    void setMaximumTextWidth(const Rule &pixels);
 
-    void setMinimumHeight(Rule const &minHeight);
+    void setMinimumHeight(const Rule &minHeight);
 
     /**
      * Sets an alternative style for text. By default, the rich text styling comes
@@ -185,7 +185,7 @@ public:
      *
      * @param richStyle  Rich text styling.
      */
-    void setTextStyle(Font::RichFormat::IStyle const *richStyle);
+    void setTextStyle(const Font::RichFormat::IStyle *richStyle);
 
     /**
      * Sets the font, text color, and margins for use as a menu/dialog separator label.
@@ -198,9 +198,9 @@ public:
      *
      * @param imageAlign  Alignment for the image.
      */
-    void setImageAlignment(ui::Alignment const &imageAlign);
+    void setImageAlignment(const ui::Alignment &imageAlign);
 
-    void setImageFit(ui::ContentFit const &fit);
+    void setImageFit(const ui::ContentFit &fit);
 
     /**
      * The image's actual size will be overridden by this size.
@@ -222,7 +222,7 @@ public:
 
     void setImageScale(float scaleFactor);
 
-    void setImageColor(Vec4f const &imageColor);
+    void setImageColor(const Vec4f &imageColor);
 
     bool hasImage() const;
 

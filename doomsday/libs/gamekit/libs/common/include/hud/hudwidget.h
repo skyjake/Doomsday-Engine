@@ -35,11 +35,11 @@ class HudWidget
 {
 public:
     void (*updateGeometry) (HudWidget *wi);
-    void (*drawer) (HudWidget *wi, Point2Raw const *offset);
+    void (*drawer) (HudWidget *wi, const Point2Raw *offset);
 
 public:
     explicit HudWidget(void (*updateGeometry) (HudWidget *wi),
-                       void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                       void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                        de::dint player = 0, uiwidgetid_t id = 0);
     virtual ~HudWidget();
 
@@ -55,7 +55,7 @@ public:
     Rect &geometry() const;
 
     Size2Raw &maximumSize() const;
-    void setMaximumSize(Size2Raw const &newMaxSize);
+    void setMaximumSize(const Size2Raw &newMaxSize);
 
     inline de::dint maximumHeight() const { return maximumSize().height; }
     inline de::dint maximumWidth () const { return maximumSize().width;  }
@@ -80,6 +80,6 @@ private:
 };
 
 typedef void (*UpdateGeometryFunc)(HudWidget *);
-typedef void (*DrawFunc)(HudWidget *, Point2Raw const *);
+typedef void (*DrawFunc)(HudWidget *, const Point2Raw *);
 
 #endif  // LIBCOMMON_UI_HUDWIDGET_H

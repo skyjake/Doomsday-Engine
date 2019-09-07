@@ -47,13 +47,13 @@ Value::Number Value::asNumber() const
     throw ConversionError("Value::asNumber", "Illegal conversion");
 }
 
-Value::Number Value::asSafeNumber(Number const &defaultValue) const
+Value::Number Value::asSafeNumber(const Number &defaultValue) const
 {
     try
     {
         return asNumber();
     }
-    catch (Error const &)
+    catch (const Error &)
     {
         return defaultValue;
     }
@@ -74,7 +74,7 @@ StringList Value::asStringList() const
     StringList str;
     if (is<ArrayValue>(this))
     {
-        for (Value const *val : as<ArrayValue>().elements())
+        for (const Value *val : as<ArrayValue>().elements())
         {
             str << val->asText();
         }
@@ -98,7 +98,7 @@ dsize Value::size() const
     throw IllegalError("Value::size", "Size is meaningless");
 }
 
-Value const &Value::element(Value const &/*index*/) const
+const Value &Value::element(const Value &/*index*/) const
 {
     /// @throw IllegalError Value cannot be indexed.
     throw IllegalError(
@@ -106,24 +106,24 @@ Value const &Value::element(Value const &/*index*/) const
         stringf("Value cannot be indexed (%s \"%s\")", typeid(*this).name(), asText().c_str()));
 }
 
-Value &Value::element(Value const &/*index*/)
+Value &Value::element(const Value &/*index*/)
 {
     /// @throw IllegalError Value cannot be indexed.
     throw IllegalError("Value::element", "Value cannot be indexed");
 }
 
-Value *Value::duplicateElement(Value const &index) const
+Value *Value::duplicateElement(const Value &index) const
 {
     return element(index).duplicate();
 }
 
-void Value::setElement(Value const &/*index*/, Value *)
+void Value::setElement(const Value &/*index*/, Value *)
 {
     /// @throw IllegalError Value cannot be indexed.
     throw IllegalError("Value::setElement", "Value cannot be indexed");
 }
 
-bool Value::contains(Value const &/*value*/) const
+bool Value::contains(const Value &/*value*/) const
 {
     /// @throw IllegalError Value cannot contain other values.
     throw IllegalError("Value::contains", "Value is not a container");
@@ -147,7 +147,7 @@ bool Value::isFalse() const
     return !isTrue();
 }
 
-dint Value::compare(Value const &value) const
+dint Value::compare(const Value &value) const
 {
     // Default to a generic text-based comparison.
     dint result = asText().compare(value.asText());
@@ -160,31 +160,31 @@ void Value::negate()
     throw ArithmeticError("Value::negate", "Value cannot be negated");
 }
 
-void Value::sum(Value const &/*value*/)
+void Value::sum(const Value &/*value*/)
 {
     /// @throw ArithmeticError Value cannot be summed.
     throw ArithmeticError("Value::sum", "Value cannot be summed");
 }
 
-void Value::subtract(Value const &/*subtrahend*/)
+void Value::subtract(const Value &/*subtrahend*/)
 {
     /// @throw ArithmeticError Value cannot be subtracted from.
     throw ArithmeticError("Value::subtract", "Value cannot be subtracted from");
 }
 
-void Value::divide(Value const &/*divisor*/)
+void Value::divide(const Value &/*divisor*/)
 {
     /// @throw ArithmeticError Value cannot be divided.
     throw ArithmeticError("Value::divide", "Value cannot be divided");
 }
 
-void Value::multiply(Value const &/*value*/)
+void Value::multiply(const Value &/*value*/)
 {
     /// @throw ArithmeticError Value cannot be multiplied.
     throw ArithmeticError("Value::multiply", "Value cannot be multiplied");
 }
 
-void Value::modulo(Value const &/*divisor*/)
+void Value::modulo(const Value &/*divisor*/)
 {
     /// @throw ArithmeticError Module operation is not defined for the value.
     throw ArithmeticError("Value::modulo", "Modulo not defined");
@@ -197,7 +197,7 @@ void Value::assign(Value *value)
     throw IllegalError("Value::assign", "Cannot assign to value");
 }
 
-void Value::call(Process &, Value const &, Value *) const
+void Value::call(Process &, const Value &, Value *) const
 {
     /// @throw IllegalError Value cannot be called.
     throw IllegalError("Value::call", "Value cannot be called");
@@ -265,7 +265,7 @@ Value *Value::constructFrom(Reader &reader)
 }
 
 /*
-Value *Value::constructFrom(Value const &value)
+Value *Value::constructFrom(const Value &value)
 {
     switch (variant.type())
     {
@@ -322,7 +322,7 @@ Value *Value::constructFrom(Value const &value)
 }
 */
 
-Value const &Value::element(dint index) const
+const Value &Value::element(dint index) const
 {
     return element(NumberValue(index));
 }

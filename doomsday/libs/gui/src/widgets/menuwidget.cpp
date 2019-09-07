@@ -51,7 +51,7 @@ DE_PIMPL(MenuWidget)
     class SubAction : public de::Action
     {
     public:
-        SubAction(MenuWidget::Impl *inst, ui::Item const &parentItem)
+        SubAction(MenuWidget::Impl *inst, const ui::Item &parentItem)
             : d(inst)
             , _parentItem(parentItem)
             , _dir(ui::Right)
@@ -110,7 +110,7 @@ DE_PIMPL(MenuWidget)
 
     protected:
         MenuWidget::Impl *d;
-        ui::Item const &_parentItem;
+        const ui::Item &_parentItem;
         ui::Direction _dir;
         SafeWidgetPtr<PopupWidget> _widget;
     };
@@ -121,7 +121,7 @@ DE_PIMPL(MenuWidget)
     class SubmenuAction : public SubAction
     {
     public:
-        SubmenuAction(MenuWidget::Impl *inst, ui::SubmenuItem const &parentItem)
+        SubmenuAction(MenuWidget::Impl *inst, const ui::SubmenuItem &parentItem)
             : SubAction(inst, parentItem)
         {
             _sub.reset(new PopupMenuWidget);
@@ -146,7 +146,7 @@ DE_PIMPL(MenuWidget)
     class SubwidgetAction : public SubAction, DE_OBSERVES(PanelWidget, Close)
     {
     public:
-        SubwidgetAction(MenuWidget::Impl *inst, ui::SubwidgetItem const &parentItem)
+        SubwidgetAction(MenuWidget::Impl *inst, const ui::SubwidgetItem &parentItem)
             : SubAction(inst, parentItem)
             , _item(parentItem)
         {}
@@ -176,7 +176,7 @@ DE_PIMPL(MenuWidget)
         }
 
     private:
-        ui::SubwidgetItem const &_item;
+        const ui::SubwidgetItem &_item;
     };
 
     AssetGroup assets;
@@ -184,7 +184,7 @@ DE_PIMPL(MenuWidget)
     bool variantsEnabled = false;
     GridLayout layout;
     ListData defaultItems;
-    Data const *items = nullptr;
+    const Data *items = nullptr;
     ChildWidgetOrganizer organizer;
     Set<PanelWidget *> openSubs;
     IndirectRule *outContentHeight;
@@ -217,7 +217,7 @@ DE_PIMPL(MenuWidget)
         defaultItems.clear();
     }
 
-    void setContext(Data const *ctx)
+    void setContext(const Data *ctx)
     {
         if (items)
         {
@@ -237,7 +237,7 @@ DE_PIMPL(MenuWidget)
         organizer.setContext(*items); // recreates widgets
     }
 
-    void dataItemAdded(Data::Pos, Item const &)
+    void dataItemAdded(Data::Pos, const Item &)
     {
         // Make sure we determine the layout for the new item.
         needLayout = true;
@@ -299,7 +299,7 @@ DE_PIMPL(MenuWidget)
     /*
      * Menu items are represented as buttons and labels.
      */
-    GuiWidget *makeItemWidget(Item const &item, GuiWidget const *)
+    GuiWidget *makeItemWidget(const Item &item, const GuiWidget *)
     {
         if (item.semantics().testFlag(Item::ShownAsButton))
         {
@@ -309,13 +309,13 @@ DE_PIMPL(MenuWidget)
             b->setTextAlignment(ui::AlignRight);
             if (is<SubmenuItem>(item))
             {
-                auto const &subItem = item.as<SubmenuItem>();
+                const auto &subItem = item.as<SubmenuItem>();
                 b->setAction(new SubmenuAction(this, subItem));
                 setFoldIndicatorForDirection(*b, subItem.openingDirection());
             }
             else if (is<SubwidgetItem>(item))
             {
-                auto const &subItem = item.as<SubwidgetItem>();
+                const auto &subItem = item.as<SubwidgetItem>();
                 b->setAction(new SubwidgetAction(this, subItem));
                 setFoldIndicatorForDirection(*b, subItem.openingDirection());
                 if (subItem.image().isNull())
@@ -344,7 +344,7 @@ DE_PIMPL(MenuWidget)
         else if (item.semantics().testFlag(Item::ShownAsToggle))
         {
             // We know how to present variable toggles.
-            if (VariableToggleItem const *varTog = maybeAs<VariableToggleItem>(item))
+            if (const VariableToggleItem *varTog = maybeAs<VariableToggleItem>(item))
             {
                 return new VariableToggleWidget(varTog->variable());
             }
@@ -357,10 +357,10 @@ DE_PIMPL(MenuWidget)
         return nullptr;
     }
 
-    void updateItemWidget(GuiWidget &widget, Item const &item)
+    void updateItemWidget(GuiWidget &widget, const Item &item)
     {
         // Image items apply their image to all label-based widgets.
-        if (ImageItem const *img = maybeAs<ImageItem>(item))
+        if (const ImageItem *img = maybeAs<ImageItem>(item))
         {
             if (LabelWidget *label = maybeAs<LabelWidget>(widget))
             {
@@ -371,7 +371,7 @@ DE_PIMPL(MenuWidget)
             }
         }
 
-        if (ActionItem const *act = maybeAs<ActionItem>(item))
+        if (const ActionItem *act = maybeAs<ActionItem>(item))
         {
             if (item.semantics().testFlag(Item::ShownAsButton))
             {
@@ -437,7 +437,7 @@ DE_PIMPL(MenuWidget)
         }
     }
 
-    bool isVisibleItem(GuiWidget const *child) const
+    bool isVisibleItem(const GuiWidget *child) const
     {
         if (child)
         {
@@ -475,7 +475,7 @@ DE_PIMPL(MenuWidget)
         }
     }
 
-    Rule const &contentHeight() const
+    const Rule &contentHeight() const
     {
         if (organizer.virtualizationEnabled())
         {
@@ -501,7 +501,7 @@ DE_PIMPL(MenuWidget)
 
 DE_AUDIENCE_METHODS(MenuWidget, ItemTriggered, SubWidgetOpened)
 
-MenuWidget::MenuWidget(String const &name)
+MenuWidget::MenuWidget(const String &name)
     : ScrollAreaWidget(name), d(new Impl(this))
 {
     setBehavior(ChildVisibilityClipping, UnsetFlags);
@@ -545,12 +545,12 @@ Data &MenuWidget::items()
     return *const_cast<Data *>(d->items);
 }
 
-Data const &MenuWidget::items() const
+const Data &MenuWidget::items() const
 {
     return *d->items;
 }
 
-void MenuWidget::setItems(Data const &items)
+void MenuWidget::setItems(const Data &items)
 {
     d->setContext(&items);
 }
@@ -570,7 +570,7 @@ int MenuWidget::count() const
     return d->countVisible();
 }
 
-bool MenuWidget::isWidgetPartOfMenu(GuiWidget const &widget) const
+bool MenuWidget::isWidgetPartOfMenu(const GuiWidget &widget) const
 {
     if (widget.parentWidget() != this) return false;
     return d->isVisibleItem(&widget);
@@ -596,7 +596,7 @@ void MenuWidget::updateLayout()
     d->needLayout = false;
 }
 
-GridLayout const &MenuWidget::layout() const
+const GridLayout &MenuWidget::layout() const
 {
     return d->layout;
 }
@@ -606,7 +606,7 @@ GridLayout &MenuWidget::layout()
     return d->layout;
 }
 
-Rule const &MenuWidget::contentHeight() const
+const Rule &MenuWidget::contentHeight() const
 {
     return *d->outContentHeight;
 }
@@ -628,7 +628,7 @@ ChildWidgetOrganizer &MenuWidget::organizer()
     return d->organizer;
 }
 
-ChildWidgetOrganizer const &MenuWidget::organizer() const
+const ChildWidgetOrganizer &MenuWidget::organizer() const
 {
     return d->organizer;
 }
@@ -648,7 +648,7 @@ void MenuWidget::setVariantItemsEnabled(bool variantsEnabled)
     {
         d->variantsEnabled = variantsEnabled;
 
-        items().forAll([] (ui::Item const &item)
+        items().forAll([] (const ui::Item &item)
         {
             if (is<ui::VariantActionItem>(item))
             {
@@ -664,7 +664,7 @@ bool MenuWidget::variantItemsEnabled() const
     return d->variantsEnabled;
 }
 
-ui::DataPos MenuWidget::findItem(GuiWidget const &widget) const
+ui::DataPos MenuWidget::findItem(const GuiWidget &widget) const
 {
     if (const auto *item = organizer().findItemForWidget(widget))
     {
@@ -688,12 +688,12 @@ void MenuWidget::update()
     ScrollAreaWidget::update();
 }
 
-bool MenuWidget::handleEvent(Event const &event)
+bool MenuWidget::handleEvent(const Event &event)
 {
     // If a menu item has focus, arrow keys can be used to move the focus.
     if (event.isKeyDown() && root().focus() && root().focus()->parentWidget() == this)
     {
-        KeyEvent const &key = event.as<KeyEvent>();
+        const KeyEvent &key = event.as<KeyEvent>();
         if (key.ddKey() == DDKEY_UPARROW || key.ddKey() == DDKEY_DOWNARROW)
         {
             root().focusIndicator().fadeIn();

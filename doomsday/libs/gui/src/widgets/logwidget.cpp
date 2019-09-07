@@ -61,7 +61,7 @@ DE_GUI_PIMPL(LogWidget)
     public:
         TextDrawable drawable;
 
-        CacheEntry(Font const &font, Font::RichFormat::IStyle &richStyle, Atlas &atlas)
+        CacheEntry(const Font &font, Font::RichFormat::IStyle &richStyle, Atlas &atlas)
             : _height(0)
             , _oldHeight(0)
         {
@@ -90,7 +90,7 @@ DE_GUI_PIMPL(LogWidget)
             return drawable.isReady();
         }
 
-        void setupWrap(String const &richText, int width)
+        void setupWrap(const String &richText, int width)
         {
             drawable.setText(richText);
             _needWrap = true;
@@ -135,7 +135,7 @@ DE_GUI_PIMPL(LogWidget)
          *
          * @return Possible change in the height of the entry.
          */
-        int updateVisibility(int yBottom, Rangei const &visiblePixels)
+        int updateVisibility(int yBottom, const Rangei &visiblePixels)
         {
             // If the wrapping hasn't been started yet for this item, do so now.
             beginWrap();
@@ -290,7 +290,7 @@ DE_GUI_PIMPL(LogWidget)
 
             while (_width > 0 && _next >= 0 && _next < entryCount())
             {
-                LogEntry const &ent = entry(_next);
+                const LogEntry &ent = entry(_next);
                 String const styled = d->formatter->logEntryToTextLines(ent).at(0);
 
                 CacheEntry *cached = new CacheEntry(*d->font, *d, *d->entryAtlas);
@@ -329,7 +329,7 @@ DE_GUI_PIMPL(LogWidget)
 
     // Style.
     LogSink::IFormatter *formatter;
-    Font const *font;
+    const Font *font;
     ColorBank::Color normalColor;
     ColorBank::Color highlightColor;
     ColorBank::Color dimmedColor;
@@ -396,7 +396,7 @@ DE_GUI_PIMPL(LogWidget)
 
     void updateStyle()
     {
-        Style const &st = style();
+        const Style &st = style();
 
         font           = &self().font();
 
@@ -444,7 +444,7 @@ DE_GUI_PIMPL(LogWidget)
         return style().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
     }
 
-    Font const *richStyleFont(Font::RichFormat::Style fontStyle) const
+    const Font *richStyleFont(Font::RichFormat::Style fontStyle) const
     {
         return style().richStyleFont(fontStyle);
     }
@@ -624,7 +624,7 @@ DE_GUI_PIMPL(LogWidget)
         uBgMvpMatrix = projMatrix;
     }
 
-    Rangei extendPixelRangeWithPadding(Rangei const &range)
+    Rangei extendPixelRangeWithPadding(const Rangei &range)
     {
         int const padding = range.size() / 2;
         return Rangei(range.start - padding, range.end + padding);
@@ -800,7 +800,7 @@ nextAttempt:
 
 DE_AUDIENCE_METHODS(LogWidget, ContentHeight)
 
-LogWidget::LogWidget(String const &name)
+LogWidget::LogWidget(const String &name)
     : ScrollAreaWidget(name), d(new Impl(this))
 {
     setOrigin(Bottom);
@@ -829,7 +829,7 @@ void LogWidget::clear()
     d->clear();
 }
 
-void LogWidget::setContentYOffset(Animation const &anim)
+void LogWidget::setContentYOffset(const Animation &anim)
 {
     if (isAtBottom())
     {
@@ -842,7 +842,7 @@ void LogWidget::setContentYOffset(Animation const &anim)
     }
 }
 
-Animation const &LogWidget::contentYOffset() const
+const Animation &LogWidget::contentYOffset() const
 {
     return d->contentOffset;
 }
@@ -873,7 +873,7 @@ void LogWidget::drawContent()
     ScrollAreaWidget::drawContent();
 }
 
-bool LogWidget::handleEvent(Event const &event)
+bool LogWidget::handleEvent(const Event &event)
 {
     return ScrollAreaWidget::handleEvent(event);
 }

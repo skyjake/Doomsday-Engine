@@ -57,7 +57,7 @@
 extern "C" {
 #endif
 
-void *  Common_GetGameAPI(char const *name);
+void *  Common_GetGameAPI(const char *name);
 int     Common_GetInteger(int id);
 void    Common_Load();
 void    Common_Unload();
@@ -72,9 +72,9 @@ void    Common_Register();
  *
  * @deprecated  Implement file access without depending on this specialized behavior.
  */
-inline res::LumpIndex const &CentralLumpIndex()
+inline const res::LumpIndex &CentralLumpIndex()
 {
-    return *reinterpret_cast<res::LumpIndex const *>(F_LumpIndex());
+    return *reinterpret_cast<const res::LumpIndex *>(F_LumpIndex());
 }
 
 #endif

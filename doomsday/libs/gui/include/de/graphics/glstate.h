@@ -127,8 +127,8 @@ public:
      */
     GLState();
 
-    GLState(GLState const &other);
-    GLState &operator=(GLState const &other);
+    GLState(const GLState &other);
+    GLState &operator=(const GLState &other);
     bool operator==(const GLState &);
 
     GLState &setCull(gfx::Face cullFace);
@@ -154,9 +154,9 @@ public:
     GLState &setStencilMask(duint mask, gfx::Face face = gfx::FrontAndBack);
     GLState &setTarget(GLFramebuffer &target);
     GLState &setDefaultTarget();
-    GLState &setViewport(Rectanglei const &viewportRect);
-    GLState &setViewport(Rectangleui const &viewportRect);
-    inline GLState &setViewport(Vec2ui const &size) { return setViewport(Rectangleui::fromSize(size)); }
+    GLState &setViewport(const Rectanglei &viewportRect);
+    GLState &setViewport(const Rectangleui &viewportRect);
+    inline GLState &setViewport(const Vec2ui &size) { return setViewport(Rectangleui::fromSize(size)); }
 
     /**
      * Sets a viewport using coordinates that have been normalized within the
@@ -165,10 +165,10 @@ public:
      *
      * @param normViewportRect  Normalized viewport rectangle.
      */
-    GLState &setNormalizedViewport(Rectanglef const &normViewportRect);
+    GLState &setNormalizedViewport(const Rectanglef &normViewportRect);
 
-    GLState &setScissor(Rectanglei const &scissorRect);
-    GLState &setScissor(Rectangleui const &scissorRect);
+    GLState &setScissor(const Rectanglei &scissorRect);
+    GLState &setScissor(const Rectangleui &scissorRect);
 
     /**
      * Sets a scissor using coordinates that have been normalized within the
@@ -176,7 +176,7 @@ public:
      *
      * @param normScissorRect  Normalized scissor rectangle.
      */
-    GLState &setNormalizedScissor(Rectanglef const &normScissorRect);
+    GLState &setNormalizedScissor(const Rectanglef &normScissorRect);
 
     GLState &clearScissor();
 

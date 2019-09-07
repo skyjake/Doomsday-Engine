@@ -87,10 +87,10 @@ static void initStateConditions(fi_state_t &s)
 
 #if __JHEXEN__
     // Leaving the current hub?
-    if(Record const *episodeDef = gfw_Session()->episodeDef())
+    if(const Record *episodeDef = gfw_Session()->episodeDef())
     {
         defn::Episode epsd(*episodeDef);
-        Record const *currentHub = epsd.tryFindHubByMapId(gfw_Session()->mapUri().compose());
+        const Record *currentHub = epsd.tryFindHubByMapId(gfw_Session()->mapUri().compose());
         s.conditions.leave_hub = (!currentHub || currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()));
     }
     LOGDEV_SCR_VERBOSE("Infine state condition: leave_hub=%i") << s.conditions.leave_hub;
@@ -125,7 +125,7 @@ static fi_state_t *stateForFinaleId(finaleid_t id)
     return 0;
 }
 
-static dd_bool stackHasDefId(char const *defId)
+static dd_bool stackHasDefId(const char *defId)
 {
     for(uint i = 0; i < finaleStackSize; ++i)
     {
@@ -144,7 +144,7 @@ static inline fi_state_t *stackTop()
 }
 
 static fi_state_t *stackPush(finaleid_t finaleId, finale_mode_t mode, gamestate_t prevGamestate,
-    char const *defId)
+    const char *defId)
 {
     finaleStack = (fi_state_t *)Z_Realloc(finaleStack, sizeof(*finaleStack) * ++finaleStackSize, PU_GAMESTATIC);
 
@@ -239,12 +239,12 @@ void FI_StackShutdown()
     finaleStackInited = false;
 }
 
-void FI_StackExecute(char const *scriptSrc, int flags, finale_mode_t mode)
+void FI_StackExecute(const char *scriptSrc, int flags, finale_mode_t mode)
 {
     FI_StackExecuteWithId(scriptSrc, flags, mode, NULL);
 }
 
-void FI_StackExecuteWithId(char const *scriptSrc, int flags, finale_mode_t mode, char const *defId)
+void FI_StackExecuteWithId(const char *scriptSrc, int flags, finale_mode_t mode, const char *defId)
 {
     DE_ASSERT(finaleStackInited);
 
@@ -467,7 +467,7 @@ int Hook_FinaleScriptTicker(int /*hookType*/, int finaleId, void *context)
 }
 
 #if __JHEXEN__
-static int playerClassForName(char const *name)
+static int playerClassForName(const char *name)
 {
     if(name && name[0])
     {
@@ -559,7 +559,7 @@ int Hook_FinaleScriptEvalIf(int /*hookType*/, int finaleId, void *context)
     return false;
 }
 
-int FI_PrivilegedResponder(void const *ev)
+int FI_PrivilegedResponder(const void *ev)
 {
     if(!finaleStackInited) return false;
 
@@ -605,7 +605,7 @@ D_CMD(StartFinale)
     // Only one active overlay is allowed.
     if(FI_StackActive()) return false;
 
-    if(Record const *finale = Defs().finales.tryFind("id", scriptId))
+    if(const Record *finale = Defs().finales.tryFind("id", scriptId))
     {
         G_SetGameAction(GA_NONE);
         FI_StackExecute(finale->gets("script"), FF_LOCAL, FIMODE_OVERLAY);

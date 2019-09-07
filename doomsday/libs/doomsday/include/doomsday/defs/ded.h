@@ -132,13 +132,13 @@ public:
 
     void clear();
 
-    int addFlag(de::String const &id, int value);
+    int addFlag(const de::String &id, int value);
 
     int addEpisode();
 
-    int addThing(de::String const &id);
+    int addThing(const de::String &id);
 
-    int addState(de::String const &id);
+    int addState(const de::String &id);
 
     int addDecoration();
 
@@ -154,60 +154,60 @@ public:
 
     int addSky();
 
-    int evalFlags(char const *ptr) const;
+    int evalFlags(const char *ptr) const;
 
-    int getEpisodeNum(de::String const &id) const;
+    int getEpisodeNum(const de::String &id) const;
 
-    int getMapInfoNum(res::Uri const &uri) const;
+    int getMapInfoNum(const res::Uri &uri) const;
 
-    int getMaterialNum(res::Uri const &uri) const;
+    int getMaterialNum(const res::Uri &uri) const;
 
-    int getMobjNum(de::String const &id) const;
+    int getMobjNum(const de::String &id) const;
 
-    int getMobjNumForName(char const *name) const;
+    int getMobjNumForName(const char *name) const;
 
     de::String getMobjName(int num) const;
 
-    int getModelNum(char const *id) const;
+    int getModelNum(const char *id) const;
 
-    int getMusicNum(char const *id) const;
+    int getMusicNum(const char *id) const;
 
-    int getSkyNum(char const *id) const;
+    int getSkyNum(const char *id) const;
 
-    int getSoundNum(char const *id) const;
-    int getSoundNum(de::String const &id) const;
+    int getSoundNum(const char *id) const;
+    int getSoundNum(const de::String &id) const;
 
     /**
      * Looks up a sound using @a name key.
      * @param name  Sound name.
      * @return If the name is not found, returns the NULL sound index (zero).
      */
-    int getSoundNumForName(char const *name) const;
+    int getSoundNumForName(const char *name) const;
 
-    int getSpriteNum(char const *id) const;
-    int getSpriteNum(de::String const &id) const;
+    int getSpriteNum(const char *id) const;
+    int getSpriteNum(const de::String &id) const;
 
-    int getStateNum(char const *id) const;
-    int getStateNum(de::String const &id) const;
+    int getStateNum(const char *id) const;
+    int getStateNum(const de::String &id) const;
 
-    int getTextNum(char const *id) const;
+    int getTextNum(const char *id) const;
 
-    int getValueNum(char const *id) const;
-    int getValueNum(de::String const &id) const;
+    int getValueNum(const char *id) const;
+    int getValueNum(const de::String &id) const;
 
-    ded_value_t *getValueById(char const *id) const;
-    ded_value_t *getValueById(de::String const &id) const;
-    ded_value_t *getValueByUri(res::Uri const &uri) const;
+    ded_value_t *getValueById(const char *id) const;
+    ded_value_t *getValueById(const de::String &id) const;
+    ded_value_t *getValueByUri(const res::Uri &uri) const;
 
-    ded_compositefont_t *findCompositeFontDef(res::Uri const &uri) const;
-    ded_compositefont_t *getCompositeFont(char const *uriCString) const;
+    ded_compositefont_t *findCompositeFontDef(const res::Uri &uri) const;
+    ded_compositefont_t *getCompositeFont(const char *uriCString) const;
 
     /**
      * Finds the episode that has a specific map in it.
      * @param mapId  Map identifier.
      * @return Episode ID.
      */
-    de::String findEpisode(de::String const &mapId) const;
+    de::String findEpisode(const de::String &mapId) const;
 
 protected:
     void release();

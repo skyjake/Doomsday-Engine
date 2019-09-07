@@ -199,7 +199,7 @@ DE_PIMPL(MapStateReader)
         dummyPlayer.plr = &dummyDDPlayer;
 
 #if !__JHEXEN__
-        ArrayValue const &presentPlayers = self().metadata().geta("players");
+        const ArrayValue &presentPlayers = self().metadata().geta("players");
 #endif
         for (int i = 0; i < MAXPLAYERS; ++i)
         {
@@ -733,7 +733,7 @@ DE_PIMPL(MapStateReader)
     }
 };
 
-MapStateReader::MapStateReader(GameStateFolder const &session)
+MapStateReader::MapStateReader(const GameStateFolder &session)
     : GameStateFolder::MapStateReader(session)
     , d(new Impl(this))
 {}
@@ -741,10 +741,10 @@ MapStateReader::MapStateReader(GameStateFolder const &session)
 MapStateReader::~MapStateReader()
 {}
 
-void MapStateReader::read(String const &mapUriStr)
+void MapStateReader::read(const String &mapUriStr)
 {
     res::Uri const mapUri(mapUriStr, RC_NULL);
-    File const &mapStateFile = folder().locate<File const>(String("maps") / mapUri.path() + "State");
+    const File &mapStateFile = folder().locate<File const>(String("maps") / mapUri.path() + "State");
     SV_OpenFileForRead(mapStateFile);
     d->reader = SV_NewReader();
 

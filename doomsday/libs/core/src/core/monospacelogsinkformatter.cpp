@@ -37,7 +37,7 @@ struct TabFiller
     String current;
     bool hasTabs;
 
-    TabFiller(String const &text) : hasTabs(false)
+    TabFiller(const String &text) : hasTabs(false)
     {
         esc.audienceForPlainText() += this;
         esc.audienceForEscapeSequence() += this;
@@ -230,7 +230,7 @@ MonospaceLogSinkFormatter::MonospaceLogSinkFormatter()
 #endif
 }
 
-StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
+StringList MonospaceLogSinkFormatter::logEntryToTextLines(const LogEntry &entry)
 {
     using namespace std;
 

@@ -63,20 +63,20 @@ public:
 
 public:
     GameRules();
-    GameRules(GameRules const &other);
+    GameRules(const GameRules &other);
 
     //static GameRules *fromReader(Reader1 *reader);
-    static GameRules *fromRecord(de::Record const &rec, GameRules const *defaults = nullptr);
+    static GameRules *fromRecord(const de::Record &rec, const GameRules *defaults = nullptr);
 
-    GameRules &operator = (GameRules const &other);
+    GameRules &operator = (const GameRules &other);
 
     de::String description() const;
 
     de::Record &       asRecord();
-    de::Record const & asRecord() const;
+    const de::Record & asRecord() const;
 
     template <typename T>
-    void set(de::String const &key, T const &value) {
+    void set(const de::String &key, const T &value) {
         asRecord().set(key, value);
     }
 

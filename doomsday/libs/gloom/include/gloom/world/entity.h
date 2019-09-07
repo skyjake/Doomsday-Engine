@@ -47,9 +47,9 @@ public:
 
     void setId(ID id);
     void setType(Type t);
-    void setPosition(de::Vec3d const &pos);
+    void setPosition(const de::Vec3d &pos);
     void setScale(float scale);
-    void setScale(de::Vec3f const &scale);
+    void setScale(const de::Vec3f &scale);
     void setAngle(float yawDegrees);
 
     ID        id() const;

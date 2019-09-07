@@ -49,11 +49,11 @@ public:
      * @return The cached metadata, if available. This will be an empty Block if no
      * metadata has yet been cached.
      */
-    Block check(String const &category, Block const &id);
+    Block check(const String &category, const Block &id);
 
-    void setMetadata(String const &category, Block const &id, Block const &metadata);
+    void setMetadata(const String &category, const Block &id, const Block &metadata);
 
-    Block metadata(String const &category, Block const &id) const;
+    Block metadata(const String &category, const Block &id) const;
 
     void clear();
 

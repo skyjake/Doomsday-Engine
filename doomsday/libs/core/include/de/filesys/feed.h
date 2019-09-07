@@ -83,7 +83,7 @@ public:
      *
      * @see Folder::populate()
      */
-    virtual PopulatedFiles populate(Folder const &folder) = 0;
+    virtual PopulatedFiles populate(const Folder &folder) = 0;
 
     /**
      * Determines whether a file has become obsolete and needs to be pruned.
@@ -105,14 +105,14 @@ public:
      *
      * @return  The new file. Caller gets ownership.
      */
-    virtual File *createFile(String const &name);
+    virtual File *createFile(const String &name);
 
     /**
      * Removes a file with the given name.
      *
      * @param name  Name of the removed file.
      */
-    virtual void destroyFile(String const &name);
+    virtual void destroyFile(const String &name);
 
     /**
      * Creates a new feed suitable for attaching to a subfolder of whatever
@@ -122,7 +122,7 @@ public:
      *
      * @return New feed instance. Caller gets ownership.
      */
-    virtual Feed *newSubFeed(String const &name);
+    virtual Feed *newSubFeed(const String &name);
 
     DE_CAST_METHODS()
 };

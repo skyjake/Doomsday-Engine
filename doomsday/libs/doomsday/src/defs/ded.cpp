@@ -96,7 +96,7 @@ void ded_s::clear()
     modelOffset = 0;
 }
 
-int ded_s::addFlag(String const &id, int value)
+int ded_s::addFlag(const String &id, int value)
 {
     Record &def = flags.append();
     def.addText(defn::Definition::VAR_ID, id);
@@ -111,7 +111,7 @@ int ded_s::addEpisode()
     return def.geti(defn::Definition::VAR_ORDER);
 }
 
-int ded_s::addThing(String const &id)
+int ded_s::addThing(const String &id)
 {
     Record &def = things.append();
     defn::Thing(def).resetToDefaults();
@@ -119,7 +119,7 @@ int ded_s::addThing(String const &id)
     return def.geti(defn::Definition::VAR_ORDER);
 }
 
-int ded_s::addState(String const &id)
+int ded_s::addState(const String &id)
 {
     Record &def = states.append();
     defn::State(def).resetToDefaults();
@@ -257,7 +257,7 @@ int DED_AddTextureEnv(ded_t* ded, char const* id)
     return ded->textureEnv.indexOf(env);
 }
 
-int DED_AddCompositeFont(ded_t* ded, char const *uri)
+int DED_AddCompositeFont(ded_t* ded, const char *uri)
 {
     ded_compositefont_t* cfont = ded->compositeFonts.append();
     if (uri) cfont->uri = new res::Uri(uri, RC_NULL);
@@ -275,7 +275,7 @@ int DED_AddValue(ded_t* ded, char const* id)
     return ded->values.indexOf(val);
 }
 
-int DED_AddDetail(ded_t *ded, char const *lumpname)
+int DED_AddDetail(ded_t *ded, const char *lumpname)
 {
     ded_detailtexture_t *dtl = ded->details.append();
 
@@ -358,9 +358,9 @@ int DED_AddLineType(ded_t* ded, int id)
     return ded->lineTypes.indexOf(li);
 }
 
-int ded_s::getMobjNum(String const &id) const
+int ded_s::getMobjNum(const String &id) const
 {
-    if (Record const *def = things.tryFind(defn::Definition::VAR_ID, id))
+    if (const Record *def = things.tryFind(defn::Definition::VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -381,7 +381,7 @@ int ded_s::getMobjNumForName(const char *name) const
     for (int i = mobjs.size() - 1; i >= 0; --i)
         if (!iCmpStrCase(mobjs[i].name, name))
             return i;*/
-    if (Record const *def = things.tryFind("name", name))
+    if (const Record *def = things.tryFind("name", name))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -396,21 +396,21 @@ String ded_s::getMobjName(int num) const
     return things[num].gets(defn::Definition::VAR_ID);
 }
 
-int ded_s::getStateNum(String const &id) const
+int ded_s::getStateNum(const String &id) const
 {
-    if (Record const *def = states.tryFind(defn::Definition::VAR_ID, id))
+    if (const Record *def = states.tryFind(defn::Definition::VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
     return -1;
 }
 
-int ded_s::getStateNum(char const *id) const
+int ded_s::getStateNum(const char *id) const
 {
     return getStateNum(String(id));
 }
 
-dint ded_s::evalFlags(char const *ptr) const
+dint ded_s::evalFlags(const char *ptr) const
 {
     LOG_AS("Defs::evalFlags");
 
@@ -424,7 +424,7 @@ dint ded_s::evalFlags(char const *ptr) const
         String flagName(ptr, flagNameLength);
         ptr += flagNameLength;
 
-        if (Record const *flag = flags.tryFind(defn::Definition::VAR_ID, flagName.lower()))
+        if (const Record *flag = flags.tryFind(defn::Definition::VAR_ID, flagName.lower()))
         {
             value |= flag->geti("value");
         }
@@ -436,25 +436,25 @@ dint ded_s::evalFlags(char const *ptr) const
     return value;
 }
 
-int ded_s::getEpisodeNum(String const &id) const
+int ded_s::getEpisodeNum(const String &id) const
 {
-    if (Record const *def = episodes.tryFind(defn::Definition::VAR_ID, id))
+    if (const Record *def = episodes.tryFind(defn::Definition::VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
     return -1;
 }
 
-int ded_s::getMapInfoNum(res::Uri const &uri) const
+int ded_s::getMapInfoNum(const res::Uri &uri) const
 {
-    if (Record const *def = mapInfos.tryFind(defn::Definition::VAR_ID, uri.compose()))
+    if (const Record *def = mapInfos.tryFind(defn::Definition::VAR_ID, uri.compose()))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
     return -1;  // Not found.
 }
 
-int ded_s::getMaterialNum(res::Uri const &uri) const
+int ded_s::getMaterialNum(const res::Uri &uri) const
 {
     if (uri.isEmpty()) return -1;  // Not found.
 
@@ -476,7 +476,7 @@ int ded_s::getMaterialNum(res::Uri const &uri) const
         /*if (idx >= 0)*/ return idx;
     }
 
-    if (Record const *def = materials.tryFind(defn::Definition::VAR_ID, uri.compose()))
+    if (const Record *def = materials.tryFind(defn::Definition::VAR_ID, uri.compose()))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -485,7 +485,7 @@ int ded_s::getMaterialNum(res::Uri const &uri) const
 
 int ded_s::getModelNum(const char *id) const
 {
-    if (Record const *def = models.tryFind(defn::Definition::VAR_ID, id))
+    if (const Record *def = models.tryFind(defn::Definition::VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -502,9 +502,9 @@ int ded_s::getModelNum(const char *id) const
     return idx;*/
 }
 
-int ded_s::getSkyNum(char const *id) const
+int ded_s::getSkyNum(const char *id) const
 {
-    if (Record const *def = skies.tryFind(defn::Definition::VAR_ID, id))
+    if (const Record *def = skies.tryFind(defn::Definition::VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -520,7 +520,7 @@ int ded_s::getSkyNum(char const *id) const
     return -1;*/
 }
 
-int ded_s::getSoundNum(String const &id) const
+int ded_s::getSoundNum(const String &id) const
 {
     return getSoundNum(id.c_str());
 }
@@ -550,12 +550,12 @@ int ded_s::getSoundNumForName(const char *name) const
     return 0;
 }
 
-int ded_s::getSpriteNum(String const &id) const
+int ded_s::getSpriteNum(const String &id) const
 {
     return getSpriteNum(id.c_str());
 }
 
-int ded_s::getSpriteNum(char const *id) const
+int ded_s::getSpriteNum(const char *id) const
 {
     if (id && id[0])
     {
@@ -568,9 +568,9 @@ int ded_s::getSpriteNum(char const *id) const
     return -1;  // Not found.
 }
 
-int ded_s::getMusicNum(char const *id) const
+int ded_s::getMusicNum(const char *id) const
 {
-    if (Record const *def = musics.tryFind(defn::Definition::VAR_ID, id))
+    if (const Record *def = musics.tryFind(defn::Definition::VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -587,7 +587,7 @@ int ded_s::getMusicNum(char const *id) const
     return idx;*/
 }
 
-int ded_s::getValueNum(char const *id) const
+int ded_s::getValueNum(const char *id) const
 {
     if (id && id[0])
     {
@@ -601,12 +601,12 @@ int ded_s::getValueNum(char const *id) const
     return -1;  // Not found.
 }
 
-int ded_s::getValueNum(String const &id) const
+int ded_s::getValueNum(const String &id) const
 {
     return getValueNum(id.c_str());
 }
 
-ded_value_t *ded_s::getValueById(char const *id) const
+ded_value_t *ded_s::getValueById(const char *id) const
 {
     if (!id || !id[0]) return nullptr;
 
@@ -618,12 +618,12 @@ ded_value_t *ded_s::getValueById(char const *id) const
     }
     return nullptr;
 }
-ded_value_t *ded_s::getValueById(String const &id) const
+ded_value_t *ded_s::getValueById(const String &id) const
 {
     return getValueById(id.c_str());
 }
 
-ded_value_t *ded_s::getValueByUri(res::Uri const &uri) const
+ded_value_t *ded_s::getValueByUri(const res::Uri &uri) const
 {
     if (!uri.scheme().compareWithoutCase("Values"))
     {
@@ -632,7 +632,7 @@ ded_value_t *ded_s::getValueByUri(res::Uri const &uri) const
     return nullptr;
 }
 
-ded_compositefont_t *ded_s::findCompositeFontDef(res::Uri const &uri) const
+ded_compositefont_t *ded_s::findCompositeFontDef(const res::Uri &uri) const
 {
     for (dint i = compositeFonts.size() - 1; i >= 0; i--)
     {
@@ -645,7 +645,7 @@ ded_compositefont_t *ded_s::findCompositeFontDef(res::Uri const &uri) const
     return nullptr;
 }
 
-ded_compositefont_t *ded_s::getCompositeFont(char const *uriCString) const
+ded_compositefont_t *ded_s::getCompositeFont(const char *uriCString) const
 {
     ded_compositefont_t *def = nullptr;
     if (uriCString && uriCString[0])
@@ -674,7 +674,7 @@ ded_compositefont_t *ded_s::getCompositeFont(char const *uriCString) const
     return def;
 }
 
-String ded_s::findEpisode(String const &mapId) const
+String ded_s::findEpisode(const String &mapId) const
 {
     res::Uri mapUri(mapId, RC_NULL);
     if (mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
@@ -690,7 +690,7 @@ String ded_s::findEpisode(String const &mapId) const
     return String();
 }
 
-int ded_s::getTextNum(char const *id) const
+int ded_s::getTextNum(const char *id) const
 {
     if (id && id[0])
     {

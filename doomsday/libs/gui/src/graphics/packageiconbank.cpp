@@ -27,8 +27,8 @@ DE_PIMPL_NOREF(PackageIconBank)
     class PackageImageSource : public TextureBank::ImageSource
     {
     public:
-        PackageImageSource(Path const &packagePath,
-                           Size const &displaySize)
+        PackageImageSource(const Path &packagePath,
+                           const Size &displaySize)
             : ImageSource(packagePath)
             , _displaySize(displaySize)
         {
@@ -40,11 +40,11 @@ DE_PIMPL_NOREF(PackageIconBank)
             const String iconPath = sourcePath() / DE_STR("icon");
 
             Image img;
-            if (ImageFile const *file = FS::tryLocate<ImageFile const>(iconPath + ".jpg"))
+            if (const ImageFile *file = FS::tryLocate<ImageFile const>(iconPath + ".jpg"))
             {
                 img = file->image();
             }
-            else if (ImageFile const *file = FS::tryLocate<ImageFile const>(iconPath + ".png"))
+            else if (const ImageFile *file = FS::tryLocate<ImageFile const>(iconPath + ".png"))
             {
                 img = file->image();
             }
@@ -92,12 +92,12 @@ PackageIconBank::PackageIconBank()
     setSeparator('/'); // expect package paths as keys
 }
 
-void PackageIconBank::setDisplaySize(Size const &displaySize)
+void PackageIconBank::setDisplaySize(const Size &displaySize)
 {
     d->displaySize = displaySize;
 }
 
-Id PackageIconBank::packageIcon(File const &packageFile)
+Id PackageIconBank::packageIcon(const File &packageFile)
 {
     const Path packagePath = packageFile.path();
     if (!has(packagePath))

@@ -61,7 +61,7 @@ DE_PIMPL(FocusWidget)
     }
 };
 
-FocusWidget::FocusWidget(String const &name)
+FocusWidget::FocusWidget(const String &name)
     : LabelWidget(name)
     , d(new Impl(this))
 {
@@ -69,7 +69,7 @@ FocusWidget::FocusWidget(String const &name)
     d->flashing += [this]() { updateFlash(); };
 }
 
-void FocusWidget::startFlashing(GuiWidget const *reference)
+void FocusWidget::startFlashing(const GuiWidget *reference)
 {
     d->reference.reset(reference);
     show();

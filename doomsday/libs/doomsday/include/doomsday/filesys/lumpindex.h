@@ -114,12 +114,12 @@ public:
          * Attempt to recognize an id Tech 1 format by traversing the WAD lump
          * index, beginning at the @a lumpIndexOffset specified.
          */
-        Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnum_t lumpIndexOffset);
+        Id1MapRecognizer(const LumpIndex &lumpIndex, lumpnum_t lumpIndexOffset);
 
-        String const &id() const;
+        const String &id() const;
         Format format() const;
 
-        Lumps const &lumps() const;
+        const Lumps &lumps() const;
 
         File1 *sourceFile() const;
 
@@ -134,7 +134,7 @@ public:
         /**
          * Returns the textual name for the identified map format @a id.
          */
-        static String const &formatName(Format id);
+        static const String &formatName(Format id);
 
         /**
          * Determines the type of a map data lump by @a name.
@@ -191,7 +191,7 @@ public:
     /**
      * Returns @c true iff the index contains one or more lumps with a matching @a path.
      */
-    bool contains(Path const &path) const;
+    bool contains(const Path &path) const;
 
     /**
      * Finds all indices for lumps with a matching @a path.
@@ -203,7 +203,7 @@ public:
      *
      * @see findFirst(), findLast()
      */
-    int findAll(Path const &path, FoundIndices &found) const;
+    int findAll(const Path &path, FoundIndices &found) const;
 
     /**
      * Returns the index of the @em first loaded lump with a matching @a path.
@@ -211,7 +211,7 @@ public:
      *
      * @see findLast(), findAll()
      */
-    lumpnum_t findFirst(Path const &path) const;
+    lumpnum_t findFirst(const Path &path) const;
 
     /**
      * Returns the index of the @em last loaded lump with a matching @a path.
@@ -219,7 +219,7 @@ public:
      *
      * @see findFirst(), findAll()
      */
-    lumpnum_t findLast(Path const &path) const;
+    lumpnum_t findLast(const Path &path) const;
 
     /**
      * Lookup a file at specific offset in the index.
@@ -242,7 +242,7 @@ public:
     /**
      * Provides access to list containing @em all the lumps, for efficient traversals.
      */
-    Lumps const &allLumps() const;
+    const Lumps &allLumps() const;
 
     /**
      * Clear the index back to its default (i.e., empty state).

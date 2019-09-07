@@ -63,7 +63,7 @@ DE_PUBLIC StringArray *StringArray_New(void);
  *      The returned array will contain @a count strings and
  *      must be deleted with StringArray_Delete().
  */
-DE_PUBLIC StringArray *StringArray_NewSub(StringArray const *ar, int fromIndex, int count);
+DE_PUBLIC StringArray *StringArray_NewSub(const StringArray *ar, int fromIndex, int count);
 
 /**
  * Destructs the string array @a ar.
@@ -81,14 +81,14 @@ DE_PUBLIC void StringArray_Clear(StringArray *ar);
  * Returns the number of strings in the array.
  * @param ar  StringArray instance.
  */
-DE_PUBLIC int StringArray_Size(StringArray const *ar);
+DE_PUBLIC int StringArray_Size(const StringArray *ar);
 
 /**
  * Appends a string at the end of the array.
  * @param ar  StringArray instance.
  * @param str  Text string to append. A copy is made of the contents.
  */
-DE_PUBLIC void StringArray_Append(StringArray *ar, char const *str);
+DE_PUBLIC void StringArray_Append(StringArray *ar, const char *str);
 
 /**
  * Appends an array of text strings at the end of the array.
@@ -96,14 +96,14 @@ DE_PUBLIC void StringArray_Append(StringArray *ar, char const *str);
  * @param other  Another StringArray instance whose strings will be appended
  * to the end of @a ar.
  */
-DE_PUBLIC void StringArray_AppendArray(StringArray *ar, StringArray const *other);
+DE_PUBLIC void StringArray_AppendArray(StringArray *ar, const StringArray *other);
 
 /**
  * Inserts a string to the start of the array.
  * @param ar  StringArray instance.
  * @param str  Text string to prepend. A copy is made of the contents.
  */
-DE_PUBLIC void StringArray_Prepend(StringArray *ar, char const *str);
+DE_PUBLIC void StringArray_Prepend(StringArray *ar, const char *str);
 
 /**
  * Inserts a string to the array.
@@ -113,7 +113,7 @@ DE_PUBLIC void StringArray_Prepend(StringArray *ar, char const *str);
  *      is complete. When inserting at position @em n, strings at positions
  *      <i>n+1..last</i> will be pushed to positions <i>n+2..last+1</i>.
  */
-DE_PUBLIC void StringArray_Insert(StringArray *ar, char const *str, int atIndex);
+DE_PUBLIC void StringArray_Insert(StringArray *ar, const char *str, int atIndex);
 
 /**
  * Removes the string at position @a index.
@@ -141,7 +141,7 @@ DE_PUBLIC void StringArray_RemoveRange(StringArray *ar, int fromIndex, int count
  *
  * @note Search operation performance is O(n).
  */
-DE_PUBLIC int StringArray_IndexOf(StringArray const *ar, char const *str);
+DE_PUBLIC int StringArray_IndexOf(const StringArray *ar, const char *str);
 
 /**
  * Returns a non-modifiable string at position @a index.
@@ -150,7 +150,7 @@ DE_PUBLIC int StringArray_IndexOf(StringArray const *ar, char const *str);
  *
  * @return  Text string.
  */
-DE_PUBLIC char const *StringArray_At(StringArray const *ar, int index);
+DE_PUBLIC const char *StringArray_At(const StringArray *ar, int index);
 
 /**
  * Returns a modifiable string at position @a index.
@@ -170,14 +170,14 @@ DE_PUBLIC Str *StringArray_StringAt(StringArray *ar, int index);
  *
  * @note Performance is O(n).
  */
-DE_PUBLIC dd_bool StringArray_Contains(StringArray const *ar, char const *str);
+DE_PUBLIC dd_bool StringArray_Contains(const StringArray *ar, const char *str);
 
 /**
  * Serializes the array of strings using @a writer.
  * @param ar StringArray instance.
  * @param writer  Writer1 instance.
  */
-DE_PUBLIC void StringArray_Write(StringArray const *ar, Writer1 *writer);
+DE_PUBLIC void StringArray_Write(const StringArray *ar, Writer1 *writer);
 
 /**
  * Deserializes the array of strings from @a reader.

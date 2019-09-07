@@ -72,9 +72,9 @@ public:
      *
      * @param record     Record.
      */
-    RecordValue(Record const &record);
+    RecordValue(const Record &record);
 
-    RecordValue(IObject const &object);
+    RecordValue(const IObject &object);
 
     virtual ~RecordValue();
 
@@ -106,7 +106,7 @@ public:
 
     void verify() const;
     Record &dereference();
-    Record const &dereference() const;
+    const Record &dereference() const;
 
     Text typeId() const;
     Value *duplicate() const;
@@ -114,12 +114,12 @@ public:
     Text asText() const;
     Record *memberScope() const;
     dsize size() const;
-    void setElement(Value const &index, Value *elementValue);
-    Value *duplicateElement(Value const &value) const;
-    bool contains(Value const &value) const;
+    void setElement(const Value &index, Value *elementValue);
+    Value *duplicateElement(const Value &value) const;
+    bool contains(const Value &value) const;
     bool isTrue() const;
-    dint compare(Value const &value) const;
-    void call(Process &process, Value const &arguments, Value *self = 0) const;
+    dint compare(const Value &value) const;
+    void call(Process &process, const Value &arguments, Value *self = 0) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

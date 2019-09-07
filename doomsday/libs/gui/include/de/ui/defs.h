@@ -75,7 +75,7 @@ enum AlignmentFlag {
 using Alignment = Flags;
 
 template <typename SizeType, typename RectType>
-typename RectType::Corner applyAlignment(Alignment align, SizeType const &size, RectType const &bounds)
+typename RectType::Corner applyAlignment(Alignment align, const SizeType &size, const RectType &bounds)
 {
     typename RectType::Corner p = bounds.topLeft;
 
@@ -101,7 +101,7 @@ typename RectType::Corner applyAlignment(Alignment align, SizeType const &size, 
 }
 
 template <typename RectType, typename BoundsRectType>
-void applyAlignment(Alignment align, RectType &alignedRect, BoundsRectType const &boundsRect)
+void applyAlignment(Alignment align, RectType &alignedRect, const BoundsRectType &boundsRect)
 {
     alignedRect.moveTopLeft(applyAlignment(align, alignedRect.size(), boundsRect));
 }

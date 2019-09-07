@@ -35,13 +35,13 @@ DE_PIMPL_NOREF(MaterialManifest)
     materialid_t id = 0;                 ///< Globally unique identifier.
     std::unique_ptr<Material> material;  ///< Associated resource (if any).
 
-    void materialBeingDeleted(Material const &)
+    void materialBeingDeleted(const Material &)
     {
         material.release();
     }
 };
 
-MaterialManifest::MaterialManifest(PathTree::NodeArgs const &args)
+MaterialManifest::MaterialManifest(const PathTree::NodeArgs &args)
     : Node(args)
     , d(new Impl)
 {}
@@ -87,7 +87,7 @@ MaterialScheme &MaterialManifest::scheme() const
     return *d->ownerScheme;
 }
 
-String const &MaterialManifest::schemeName() const
+const String &MaterialManifest::schemeName() const
 {
     return scheme().name();
 }

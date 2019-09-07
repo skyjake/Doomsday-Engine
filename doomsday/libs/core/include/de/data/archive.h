@@ -100,7 +100,7 @@ public:
      *              byte array remains in existence for the lifetime
      *              of the Archive instance.
      */
-    Archive(IByteArray const &data);
+    Archive(const IByteArray &data);
 
     virtual ~Archive();
 
@@ -109,7 +109,7 @@ public:
      * constructed without a source (as empty) or has been detached from
      * its original source.
      */
-    IByteArray const *source() const;
+    const IByteArray *source() const;
 
     enum CacheOperation {
         CacheAndRemainAttachedToSource = 0,
@@ -141,7 +141,7 @@ public:
      *
      * @return  @c true or @c false.
      */
-    bool hasEntry(Path const &path) const;
+    bool hasEntry(const Path &path) const;
 
     /**
      * List the files in a specific folder of the archive.
@@ -152,7 +152,7 @@ public:
      *
      * @return Number of names returned in @a names.
      */
-    dint listFiles(Names &names, Path const &folder = Path()) const;
+    dint listFiles(Names &names, const Path &folder = Path()) const;
 
     /**
      * List the folders in a specific folder of the archive.
@@ -163,7 +163,7 @@ public:
      *
      * @return Number of names returned in @a names.
      */
-    dint listFolders(Names &names, Path const &folder = Path()) const;
+    dint listFolders(Names &names, const Path &folder = Path()) const;
 
     /**
      * Returns information about the specified path.
@@ -172,7 +172,7 @@ public:
      *
      * @return Type, size, and other metadata about the entry.
      */
-    File::Status entryStatus(Path const &path) const;
+    File::Status entryStatus(const Path &path) const;
 
     /**
      * Returns the deserialized data of an entry for read-only access. The
@@ -188,9 +188,9 @@ public:
      *
      * @return Immutable contents of the entry.
      */
-    Block const &entryBlock(Path const &path) const;
+    const Block &entryBlock(const Path &path) const;
 
-    inline Block const &constEntryBlock(Path const &path) const {
+    inline const Block &constEntryBlock(const Path &path) const {
         return entryBlock(path);
     }
 
@@ -207,13 +207,13 @@ public:
      *
      * @return Modifiable contents of the entry.
      */
-    Block &entryBlock(Path const &path);
+    Block &entryBlock(const Path &path);
 
     /**
      * Release all cached data of a block. Unmodified blocks cannot be uncached.
      * The archive must have a source for uncaching to be possible.
      */
-    void uncacheBlock(Path const &path) const;
+    void uncacheBlock(const Path &path) const;
 
     /**
      * Adds an entry to the archive. The entry will not be committed to the
@@ -222,7 +222,7 @@ public:
      * @param path  Path of the entry within the archive.
      * @param data  Data of the entry.
      */
-    void add(Path const &path, IByteArray const &data);
+    void add(const Path &path, const IByteArray &data);
 
     /**
      * Removes an entry from the archive. If there is deserialized data for
@@ -230,7 +230,7 @@ public:
      *
      * @param path  Path of the entry.
      */
-    void remove(Path const &path);
+    void remove(const Path &path);
 
     /**
      * Clears the index of the archive. All entries are deleted.
@@ -276,7 +276,7 @@ protected:
         /// Cached copy of the serialized data. Can be @c nullptr. Entry has ownership.
         mutable std::unique_ptr<Block> dataInArchive;
 
-        Entry(PathTree::NodeArgs const &args);
+        Entry(const PathTree::NodeArgs &args);
         virtual ~Entry();
 
         // Must be constructed with args.
@@ -301,7 +301,7 @@ protected:
      * @param path   Path of the entry within the archive.
      * @param data   Data is written here.
      */
-    virtual void readFromSource(Entry const &entry, Path const &path, IBlock &data) const = 0;
+    virtual void readFromSource(const Entry &entry, const Path &path, IBlock &data) const = 0;
 
     /**
      * Inserts an entry into the archive's index. If the path already
@@ -311,7 +311,7 @@ protected:
      *
      * @return Inserted entry.
      */
-    Entry &insertEntry(Path const &path);
+    Entry &insertEntry(const Path &path);
 
     /**
      * Returns the full entry index so that derived classes can iterate the
@@ -319,7 +319,7 @@ protected:
      *
      * @return Entry index.
      */
-    PathTree const &index() const;
+    const PathTree &index() const;
 
 private:
     DE_PRIVATE(d)

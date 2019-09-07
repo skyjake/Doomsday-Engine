@@ -64,7 +64,7 @@ Record &Decoration::light(int index)
     return *def().geta(VAR_LIGHT)[index].as<RecordValue>().record();
 }
 
-Record const &Decoration::light(int index) const
+const Record &Decoration::light(int index) const
 {
     return *geta(VAR_LIGHT)[index].as<RecordValue>().record();
 }

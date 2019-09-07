@@ -37,7 +37,7 @@ FileId::FileId(const Md5Hash& _md5)
 #endif
 {}
 
-FileId::FileId(FileId const &other)
+FileId::FileId(const FileId &other)
     : LogEntry::Arg::Base()
     , md5_(other.md5())
 #ifdef DE_DEBUG
@@ -51,17 +51,17 @@ FileId &FileId::operator = (FileId other)
     return *this;
 }
 
-bool FileId::operator < (FileId const &other) const
+bool FileId::operator < (const FileId &other) const
 {
     return md5_ < other.md5_;
 }
 
-bool FileId::operator == (FileId const &other) const
+bool FileId::operator == (const FileId &other) const
 {
     return md5_ == other.md5_;
 }
 
-bool FileId::operator != (FileId const &other) const
+bool FileId::operator != (const FileId &other) const
 {
     return md5_ != other.md5_;
 }

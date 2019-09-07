@@ -39,7 +39,7 @@ DE_PIMPL_NOREF(ButtonWidget)
     bool      silent    = false;
 };
 
-ButtonWidget::ButtonWidget(String const &text, patchid_t patch)
+ButtonWidget::ButtonWidget(const String &text, patchid_t patch)
     : Widget()
     , d(new Impl)
 {
@@ -56,7 +56,7 @@ ButtonWidget::~ButtonWidget()
 void ButtonWidget::draw() const
 {
     fontid_t const fontId  = mnRendState->textFonts[font()];
-    Vec4f const &textColor = mnRendState->textColors[color()];
+    const Vec4f &textColor = mnRendState->textColors[color()];
     float t = (isFocused()? 1 : 0);
 
     const Vec4f color = selectionFlashColor(textColor);
@@ -164,7 +164,7 @@ String ButtonWidget::text() const
     return d->text;
 }
 
-ButtonWidget &ButtonWidget::setText(String const &newText)
+ButtonWidget &ButtonWidget::setText(const String &newText)
 {
     d->text = labelText(newText);
     return *this;

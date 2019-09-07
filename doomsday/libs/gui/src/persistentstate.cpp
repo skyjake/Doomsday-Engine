@@ -21,10 +21,10 @@
 
 namespace de {
 
-PersistentState::PersistentState(String const &name) : Refuge(name)
+PersistentState::PersistentState(const String &name) : Refuge(name)
 {}
 
-PersistentState &PersistentState::operator << (IPersistent const &object)
+PersistentState &PersistentState::operator << (const IPersistent &object)
 {
     object >> *this;
     return *this;

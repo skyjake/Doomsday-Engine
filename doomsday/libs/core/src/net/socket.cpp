@@ -323,7 +323,7 @@ DE_PIMPL_NOREF(Socket)
         }
     }
 
-    void serializeAndSendMessage(IByteArray const &packet)
+    void serializeAndSendMessage(const IByteArray &packet)
     {
         Block payload = packet;
         {
@@ -544,7 +544,7 @@ Socket::Socket()
 //    /QObject::connect(d->socket, SIGNAL(connected()), this, SIGNAL(connected()));
 }
 
-Socket::Socket(Address const &address, TimeSpan timeOut)
+Socket::Socket(const Address &address, TimeSpan timeOut)
     : d(new Impl)
 {
     LOG_AS("Socket");
@@ -572,7 +572,7 @@ Socket::Socket(Address const &address, TimeSpan timeOut)
 //                 d->socket->state() == QAbstractSocket::ConnectedState);
 }
 
-void Socket::open(Address const &address) // non-blocking
+void Socket::open(const Address &address) // non-blocking
 {
 //    DE_ASSERT(d->socket);
 //    DE_ASSERT(d->socket->state() == QAbstractSocket::UnconnectedState);
@@ -763,18 +763,18 @@ void Socket::setRetainOrder(bool retainOrder)
     d->retainOrder = retainOrder;
 }
 
-void Socket::send(IByteArray const &packet)
+void Socket::send(const IByteArray &packet)
 {
     send(packet, d->activeChannel);
 }
 
-Socket &Socket::operator<<(IByteArray const &packet)
+Socket &Socket::operator<<(const IByteArray &packet)
 {
     send(packet, d->activeChannel);
     return *this;
 }
 
-void Socket::send(IByteArray const &packet, duint /*channel*/)
+void Socket::send(const IByteArray &packet, duint /*channel*/)
 {
     if (!d->socket)
     {
@@ -789,7 +789,7 @@ void Socket::send(IByteArray const &packet, duint /*channel*/)
 }
 
 /*
-void Socket::hostResolved(QHostInfo const &info)
+void Socket::hostResolved(const QHostInfo &info)
 {
     if (info.error() != QHostInfo::NoError || info.addresses().isEmpty())
     {

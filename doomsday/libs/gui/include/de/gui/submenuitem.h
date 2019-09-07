@@ -34,14 +34,14 @@ namespace ui {
 class LIBGUI_PUBLIC SubmenuItem : public ImageItem
 {
 public:
-    SubmenuItem(String const &label, ui::Direction openingDirection)
+    SubmenuItem(const String &label, ui::Direction openingDirection)
         : ImageItem(ShownAsButton, label), _dir(openingDirection) {}
 
-    SubmenuItem(Image const &image, String const &label, ui::Direction openingDirection)
+    SubmenuItem(const Image &image, const String &label, ui::Direction openingDirection)
         : ImageItem(ShownAsButton, image, label), _dir(openingDirection) {}
 
     Data &items() { return _items; }
-    Data const &items() const { return _items; }
+    const Data &items() const { return _items; }
     ui::Direction openingDirection() const { return _dir; }
 
 private:

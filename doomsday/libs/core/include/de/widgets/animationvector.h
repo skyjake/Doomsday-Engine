@@ -34,19 +34,19 @@ public:
     AnimationVector2(Animation::Style style = Animation::EaseOut)
         : x(0, style), y(0, style) {}
 
-    AnimationVector2 &operator = (Vec2f const &vector)
+    AnimationVector2 &operator = (const Vec2f &vector)
     {
         setValue(vector);
         return *this;
     }
 
-    void setValue(Vec2f const &vector, TimeSpan transitionSpan = 0.0)
+    void setValue(const Vec2f &vector, TimeSpan transitionSpan = 0.0)
     {
         x.setValue(vector.x, transitionSpan);
         y.setValue(vector.y, transitionSpan);
     }
 
-    void setValueIfDifferentTarget(Vec2f const &vector, TimeSpan transitionSpan = 0.0)
+    void setValueIfDifferentTarget(const Vec2f &vector, TimeSpan transitionSpan = 0.0)
     {
         if (!fequal(x.target(), vector.x))
         {
@@ -94,13 +94,13 @@ public:
     AnimationVector3(Animation::Style style = Animation::EaseOut)
         : x(0, style), y(0, style), z(0, style) {}
 
-    AnimationVector3 &operator = (Vec3f const &vector)
+    AnimationVector3 &operator = (const Vec3f &vector)
     {
         setValue(vector);
         return *this;
     }
 
-    void setValue(Vec3f const &vector, float transitionSpan = 0.f)
+    void setValue(const Vec3f &vector, float transitionSpan = 0.f)
     {
         x.setValue(vector.x, transitionSpan);
         y.setValue(vector.y, transitionSpan);

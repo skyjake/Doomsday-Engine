@@ -29,7 +29,7 @@ DE_PIMPL_NOREF(GridPopupWidget)
     GridLayout layout;
 };
 
-GridPopupWidget::GridPopupWidget(String const &name)
+GridPopupWidget::GridPopupWidget(const String &name)
     : PopupWidget(name), d(new Impl)
 {
     setOpeningDirection(ui::Up);
@@ -41,7 +41,7 @@ GridPopupWidget::GridPopupWidget(String const &name)
     d->stylist.setContainer(*d->container);
 
     // Initialize the layout.
-    Rule const &gap = rule("gap");
+    const Rule &gap = rule("gap");
     d->layout.setLeftTop(d->container->rule().left() + gap,
                          d->container->rule().top()  + gap);
     d->layout.setGridSize(2, 0);
@@ -53,7 +53,7 @@ GridLayout &GridPopupWidget::layout()
     return d->layout;
 }
 
-LabelWidget &GridPopupWidget::addSeparatorLabel(String const &labelText)
+LabelWidget &GridPopupWidget::addSeparatorLabel(const String &labelText)
 {
 //    auto *label = LabelWidget::newWithText(_E(D) + labelText, d->container);
 //    label->setFont("separator.label");
@@ -70,7 +70,7 @@ GridPopupWidget &GridPopupWidget::operator<<(GuiWidget *widget)
     return *this;
 }
 
-GridPopupWidget &GridPopupWidget::operator<<(Rule const &rule)
+GridPopupWidget &GridPopupWidget::operator<<(const Rule &rule)
 {
     d->layout << rule;
     return *this;
@@ -86,7 +86,7 @@ GridPopupWidget &GridPopupWidget::addSpanning(GuiWidget *widget, int cellSpan)
 
 void GridPopupWidget::commit()
 {
-    Rule const &gap = rule("gap");
+    const Rule &gap = rule("gap");
     d->container->rule().setSize(d->layout.width()  + gap * 2,
                                  d->layout.height() + gap * 2);
 }

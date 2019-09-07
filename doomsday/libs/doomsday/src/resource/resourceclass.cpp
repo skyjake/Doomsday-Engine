@@ -69,7 +69,7 @@ ResourceClass &ResourceClass::addFileType(FileType *ftype)
     return *this;
 }
 
-ResourceClass::FileTypes const &ResourceClass::fileTypes() const
+const ResourceClass::FileTypes &ResourceClass::fileTypes() const
 {
     return d->fileTypes;
 }

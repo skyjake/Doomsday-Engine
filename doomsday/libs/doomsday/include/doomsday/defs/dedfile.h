@@ -41,7 +41,7 @@ LIBDOOMSDAY_PUBLIC int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum);
  * @param sourceFile      Just FYI.
  * @param sourceIsCustom  @c true= source is a user supplied add-on.
  */
-LIBDOOMSDAY_PUBLIC int DED_ReadData(ded_t *ded, char const *buffer, de::String sourceFile,
+LIBDOOMSDAY_PUBLIC int DED_ReadData(ded_t *ded, const char *buffer, de::String sourceFile,
     bool sourceIsCustom);
 
 /**
@@ -49,8 +49,8 @@ LIBDOOMSDAY_PUBLIC int DED_ReadData(ded_t *ded, char const *buffer, de::String s
  */
 int DED_Read(ded_t *ded, const de::String& path);
 
-void DED_SetError(de::String const &message);
+void DED_SetError(const de::String &message);
 
-LIBDOOMSDAY_PUBLIC char const *DED_Error();
+LIBDOOMSDAY_PUBLIC const char *DED_Error();
 
 #endif // LIBDOOMSDAY_DEFS_DED_H

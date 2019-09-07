@@ -50,7 +50,7 @@ bool CatchStatement::isFinal() const
     return flags.testFlag(FinalCompound);
 }
 
-bool CatchStatement::matches(Error const &err) const
+bool CatchStatement::matches(const Error &err) const
 {
     if (!_args->size())
     {
@@ -58,7 +58,7 @@ bool CatchStatement::matches(Error const &err) const
         return true;
     }
 
-    NameExpression const *name = dynamic_cast<NameExpression const *>(&_args->at(0));
+    const NameExpression *name = dynamic_cast<const NameExpression *>(&_args->at(0));
     DE_ASSERT(name != nullptr);
 
     return (name->identifier() == "Error" ||   // Generic catch-all.
@@ -66,7 +66,7 @@ bool CatchStatement::matches(Error const &err) const
             String(err.name()).endsWith("_" + name->identifier())); // Sub-error match.
 }
 
-void CatchStatement::executeCatch(Context &context, Error const &err) const
+void CatchStatement::executeCatch(Context &context, const Error &err) const
 {
     if (_args->size() > 1)
     {

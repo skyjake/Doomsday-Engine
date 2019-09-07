@@ -32,7 +32,7 @@ namespace de { namespace term {
 class DE_PUBLIC LabelWidget : public Widget
 {
 public:
-    LabelWidget(String const &name = String());
+    LabelWidget(const String &name = String());
 
     /**
      * Sets the background for the label.
@@ -57,12 +57,12 @@ public:
      * @param attribs  Attributes for the text.
      */
     void setLabel(
-        String const &                  text,
+        const String &                  text,
         TextCanvas::AttribChar::Attribs attribs = TextCanvas::AttribChar::DefaultAttributes);
 
-    void setAttribs(TextCanvas::AttribChar::Attribs const &attribs);
+    void setAttribs(const TextCanvas::AttribChar::Attribs &attribs);
 
-    void setBackgroundAttribs(TextCanvas::AttribChar::Attribs const &attribs);
+    void setBackgroundAttribs(const TextCanvas::AttribChar::Attribs &attribs);
 
     TextCanvas::AttribChar::Attribs attribs() const;
 

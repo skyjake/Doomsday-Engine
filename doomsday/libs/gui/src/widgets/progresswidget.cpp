@@ -165,7 +165,7 @@ DE_GUI_PIMPL(ProgressWidget), public Lockable
     }
 };
 
-ProgressWidget::ProgressWidget(String const &name)
+ProgressWidget::ProgressWidget(const String &name)
     : LabelWidget(name)
     , d(new Impl(this))
 {
@@ -182,7 +182,7 @@ ProgressWidget::ProgressWidget(String const &name)
     setTextShadow(RectangleShadow);
 }
 
-void ProgressWidget::useMiniStyle(DotPath const &colorId)
+void ProgressWidget::useMiniStyle(const DotPath &colorId)
 {
     d->mini = true;
     d->colorId = colorId;
@@ -220,19 +220,19 @@ bool ProgressWidget::isAnimating() const
     return d->framesWhileAnimDone < 2;
 }
 
-void ProgressWidget::setColor(DotPath const &styleId)
+void ProgressWidget::setColor(const DotPath &styleId)
 {
     d->colorId = styleId;
     d->updateStyle();
 }
 
-void ProgressWidget::setShadowColor(DotPath const &styleId)
+void ProgressWidget::setShadowColor(const DotPath &styleId)
 {
     d->shadowColorId = styleId;
     d->updateStyle();
 }
 
-void ProgressWidget::setText(String const &text)
+void ProgressWidget::setText(const String &text)
 {
     DE_GUARD(d);
     LabelWidget::setText(text);
@@ -248,7 +248,7 @@ void ProgressWidget::setMode(Mode progressMode)
     }
 }
 
-void ProgressWidget::setRange(Rangei const &range, Rangef const &visualRange)
+void ProgressWidget::setRange(const Rangei &range, const Rangef &visualRange)
 {
     DE_GUARD(d);
     d->range = range;

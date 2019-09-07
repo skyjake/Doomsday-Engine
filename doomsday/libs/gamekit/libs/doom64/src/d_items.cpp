@@ -187,12 +187,12 @@ void P_InitAmmoInfo()
     {
         String const name = ammoTypeName(i);
 
-        if(ded_value_t const *maxAmmo = Defs().getValueById("Player|Max ammo|" + name))
+        if(const ded_value_t *maxAmmo = Defs().getValueById("Player|Max ammo|" + name))
         {
             ::maxAmmo[i] = String(maxAmmo->text).toInt();
         }
 
-        if(ded_value_t const *clipAmmo = Defs().getValueById("Player|Clip ammo|" + name))
+        if(const ded_value_t *clipAmmo = Defs().getValueById("Player|Clip ammo|" + name))
         {
             ::clipAmmo[i] = String(clipAmmo->text).toInt();
         }
@@ -209,7 +209,7 @@ void P_InitWeaponInfo()
         DE_ASSERT(wminfo);
 
         /// @todo Only allows for one type of ammo per weapon.
-        if(ded_value_t const *ammo = Defs().getValueById("Weapon Info|" + id + "|Type"))
+        if(const ded_value_t *ammo = Defs().getValueById("Weapon Info|" + id + "|Type"))
         {
             de::zap(wminfo->ammoType);
             de::zap(wminfo->perShot);
@@ -221,7 +221,7 @@ void P_InitWeaponInfo()
                     if(!ammoTypeName(k).compareWithoutCase(ammo->text))
                     {
                         wminfo->ammoType[k] = true;
-                        if(ded_value_t const *perShot = Defs().getValueById("Weapon Info|" + id + "|Per shot"))
+                        if(const ded_value_t *perShot = Defs().getValueById("Weapon Info|" + id + "|Per shot"))
                         {
                             wminfo->perShot[k] = String(perShot->text).toInt();
                         }
@@ -234,13 +234,13 @@ void P_InitWeaponInfo()
 
         for(auto k = int( WSN_UP ); k < NUM_WEAPON_STATE_NAMES; ++k)
         {
-            if(ded_value_t const *state = Defs().getValueById("Weapon Info|" + id + "|" + weaponStateName(k)))
+            if(const ded_value_t *state = Defs().getValueById("Weapon Info|" + id + "|" + weaponStateName(k)))
             {
                 wminfo->states[k] = de::max<int>(S_NULL, Defs().getStateNum(state->text));
             }
         }
 
-        if(ded_value_t const *staticSwitch = Defs().getValueById("Weapon Info|" + id + "|Static"))
+        if(const ded_value_t *staticSwitch = Defs().getValueById("Weapon Info|" + id + "|Static"))
         {
             wminfo->staticSwitch = String(staticSwitch->text).toInt();
         }
@@ -265,12 +265,12 @@ void P_InitPlayerValues(player_t *plr)
 {
     DE_ASSERT(plr);
 
-    if(ded_value_t const *health = Defs().getValueById("Player|Health"))
+    if(const ded_value_t *health = Defs().getValueById("Player|Health"))
     {
         plr->health = String(health->text).toInt();
     }
 
-    if(ded_value_t const *weapon = Defs().getValueById("Player|Weapon"))
+    if(const ded_value_t *weapon = Defs().getValueById("Player|Weapon"))
     {
         plr->readyWeapon = weapontype_t( String(weapon->text).toInt() );
     }
@@ -278,7 +278,7 @@ void P_InitPlayerValues(player_t *plr)
 
     for(auto i = int( WT_FIRST ); i < NUM_WEAPON_TYPES; ++i)
     {
-        if(ded_value_t const *owned = Defs().getValueById("Weapon Info|" + String::asText(i) + "|Owned"))
+        if(const ded_value_t *owned = Defs().getValueById("Weapon Info|" + String::asText(i) + "|Owned"))
         {
             plr->weapons[i].owned = String(owned->text).toInt();
         }
@@ -286,7 +286,7 @@ void P_InitPlayerValues(player_t *plr)
 
     for(auto i = int( AT_FIRST ); i < NUM_AMMO_TYPES; ++i)
     {
-        if(ded_value_t const *owned = Defs().getValueById("Player|Init ammo|" + ammoTypeName(i)))
+        if(const ded_value_t *owned = Defs().getValueById("Player|Init ammo|" + ammoTypeName(i)))
         {
             plr->ammo[i].owned = String(owned->text).toInt();
         }

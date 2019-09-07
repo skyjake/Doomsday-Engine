@@ -151,7 +151,7 @@ void G_SetGameAction(gameaction_t newAction)
     }
 }
 
-void G_SetGameActionNewSession(GameRules const &rules, String episodeId, res::Uri const &mapUri,
+void G_SetGameActionNewSession(const GameRules &rules, String episodeId, const res::Uri &mapUri,
                                uint mapEntrance)
 {
     G_NewSessionRules()       = rules;
@@ -210,9 +210,9 @@ bool G_SetGameActionLoadSession(String slotId)
 
     try
     {
-        auto const &slot = G_SaveSlots()[slotId];
-        GameStateFolder const &save = App::rootFolder().locate<GameStateFolder const>(slot.savePath());
-        Record const &meta = save.metadata();
+        const auto &slot = G_SaveSlots()[slotId];
+        const GameStateFolder &save = App::rootFolder().locate<GameStateFolder const>(slot.savePath());
+        const Record &meta = save.metadata();
 
         if (meta.has("packages"))
         {
@@ -229,7 +229,7 @@ bool G_SetGameActionLoadSession(String slotId)
             scheduleLoad();
         }
     }
-    catch (SaveSlots::MissingSlotError const &er)
+    catch (const SaveSlots::MissingSlotError &er)
     {
         LOG_RES_WARNING("Save slot '%s' not found: %s") << slotId << er.asText();
         return false;
@@ -237,7 +237,7 @@ bool G_SetGameActionLoadSession(String slotId)
     return true;
 }
 
-void G_SetGameActionMapCompleted(res::Uri const &nextMapUri, uint nextMapEntryPoint, bool secretExit)
+void G_SetGameActionMapCompleted(const res::Uri &nextMapUri, uint nextMapEntryPoint, bool secretExit)
 {
 #if __JHEXEN__
     DE_UNUSED(secretExit);
@@ -477,7 +477,7 @@ void R_LoadColorPalettes()
             if (CentralLumpIndex().contains(lumpName))
             {
                 File1 &lump = CentralLumpIndex()[CentralLumpIndex().findLast(lumpName)];
-                uint8_t const *mappings = lump.cache();
+                const uint8_t *mappings = lump.cache();
                 Str_Appendf(Str_Clear(&xlatId), "%i", 7 * cl + i);
                 R_CreateColorPaletteTranslation(palId, &xlatId, mappings);
                 lump.unlock();
@@ -690,7 +690,7 @@ void R_LoadVectorGraphics()
  * @param name  Name of the font to lookup.
  * @return  Unique id of the found font.
  */
-fontid_t R_MustFindFontForName(char const *name)
+fontid_t R_MustFindFontForName(const char *name)
 {
     uri_s *uri = Uri_NewWithPath2(name, RC_NULL);
     fontid_t fontId = Fonts_ResolveUri(uri);
@@ -714,7 +714,7 @@ void R_InitRefresh()
         {
             paths[i] = ((borderGraphics[i] && borderGraphics[i][0])? Uri_NewWithPath2(borderGraphics[i], RC_NULL) : 0);
         }
-        R_SetBorderGfx((uri_s const **)paths);
+        R_SetBorderGfx((const uri_s **)paths);
         for (int i = 0; i < 9; ++i)
         {
             if (paths[i])
@@ -832,7 +832,7 @@ void G_AutoStartOrBeginTitleLoop()
     if (int arg = cmdLine.check("-episode", 1))
     {
         String episodeId = cmdLine.at(arg + 1);
-        if (Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
+        if (const Record *episodeDef = Defs().episodes.tryFind("id", episodeId))
         {
             // Ensure this is a playable episode.
             res::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
@@ -849,7 +849,7 @@ void G_AutoStartOrBeginTitleLoop()
         bool haveEpisode = (arg + 2 < cmdLine.count() && !cmdLine.isOption(arg + 2));
         if (haveEpisode)
         {
-            if (Record const *episodeDef = Defs().episodes.tryFind("id", cmdLine.at(arg + 1)))
+            if (const Record *episodeDef = Defs().episodes.tryFind("id", cmdLine.at(arg + 1)))
             {
                 // Ensure this is a playable episode.
                 res::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
@@ -899,7 +899,7 @@ void G_AutoStartOrBeginTitleLoop()
             startMapUri.clear();
 
             // Pick the start map from the episode, if specified and playable.
-            if (Record const *episodeDef = Defs().episodes.tryFind("id", startEpisodeId))
+            if (const Record *episodeDef = Defs().episodes.tryFind("id", startEpisodeId))
             {
                 res::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
                 if (P_MapExists(startMap.compose()))
@@ -959,11 +959,11 @@ gamestate_t G_GameState()
     return gameState;
 }
 
-static char const *getGameStateStr(gamestate_t state)
+static const char *getGameStateStr(gamestate_t state)
 {
     struct statename_s {
         gamestate_t state;
-        char const *name;
+        const char *name;
     } stateNames[] =
     {
         { GS_MAP,          "GS_MAP" },
@@ -1056,7 +1056,7 @@ void G_ChangeGameState(gamestate_t state)
     }
 }
 
-dd_bool G_StartFinale(char const *script, int flags, finale_mode_t mode, char const *defId)
+dd_bool G_StartFinale(const char *script, int flags, finale_mode_t mode, const char *defId)
 {
     if (!script || !script[0])
         return false;
@@ -1082,8 +1082,8 @@ void G_StartHelp()
         return;
     }
 
-    char const *scriptId = "help";
-    if (Record const *finale = Defs().finales.tryFind("id", scriptId))
+    const char *scriptId = "help";
+    if (const Record *finale = Defs().finales.tryFind("id", scriptId))
     {
         Hu_MenuCommand(MCMD_CLOSEFAST);
         G_StartFinale(finale->gets("script"), FF_LOCAL, FIMODE_NORMAL, scriptId);
@@ -1282,7 +1282,7 @@ void G_PrepareWIData()
     info->pNum = CONSOLEPLAYER;
     for (int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t const *p        = &players[i];
+        const player_t *p        = &players[i];
         wbplayerstruct_t *pStats = &info->plyr[i];
 
         pStats->inGame = p->plr->inGame;
@@ -1382,13 +1382,13 @@ static void runGameAction()
 
             try
             {
-                SaveSlot const &sslot = G_SaveSlots()[::gaLoadSessionSlot];
+                const SaveSlot &sslot = G_SaveSlots()[::gaLoadSessionSlot];
                 gfw_Session()->load(sslot.saveName());
 
                 // Make note of the last used save slot.
                 Con_SetInteger2("game-save-last-slot", sslot.id().toInt(), SVF_WRITE_OVERRIDE);
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_RES_WARNING("Error loading from save slot #%s:\n")
                         << ::gaLoadSessionSlot << er.asText();
@@ -1404,13 +1404,13 @@ static void runGameAction()
         case GA_SAVESESSION:
             try
             {
-                SaveSlot const &sslot = G_SaveSlots()[::gaSaveSessionSlot];
+                const SaveSlot &sslot = G_SaveSlots()[::gaSaveSessionSlot];
                 gfw_Session()->save(sslot.saveName(), ::gaSaveSessionUserDescription);
 
                 // Make note of the last used save slot.
                 Con_SetInteger2("game-save-last-slot", sslot.id().toInt(), SVF_WRITE_OVERRIDE);
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_RES_WARNING("Error saving to save slot #%s:\n")
                         << ::gaSaveSessionSlot << er.asText();
@@ -1449,10 +1449,10 @@ static void runGameAction()
             // Leaving the current hub?
             dd_bool newHub = true;
 #if __JHEXEN__
-            if (Record const *episodeDef = gfw_Session()->episodeDef())
+            if (const Record *episodeDef = gfw_Session()->episodeDef())
             {
                 defn::Episode epsd(*episodeDef);
-                Record const *currentHub = epsd.tryFindHubByMapId(gfw_Session()->mapUri().compose());
+                const Record *currentHub = epsd.tryFindHubByMapId(gfw_Session()->mapUri().compose());
                 newHub = (!currentHub || currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()));
             }
 #endif
@@ -1913,7 +1913,7 @@ void G_QueueBody(mobj_t *mo)
 /**
  * Lookup the debriefing Finale for the current episode and map (if any).
  */
-static Record const *finaleDebriefing()
+static const Record *finaleDebriefing()
 {
     if (::briefDisabled) return 0;
 
@@ -1921,7 +1921,7 @@ static Record const *finaleDebriefing()
     if (::cfg.overrideHubMsg && G_GameState() == GS_MAP)
     {
         defn::Episode epsd(*gfw_Session()->episodeDef());
-        Record const *currentHub = epsd.tryFindHubByMapId(gfw_Session()->mapUri().compose());
+        const Record *currentHub = epsd.tryFindHubByMapId(gfw_Session()->mapUri().compose());
         if (!currentHub || currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()))
         {
             return 0;
@@ -1943,7 +1943,7 @@ static Record const *finaleDebriefing()
 void G_IntermissionDone()
 {
     // We have left Intermission, however if there is an InFine for debriefing we should run it now.
-    if (Record const *finale = finaleDebriefing())
+    if (const Record *finale = finaleDebriefing())
     {
         if (G_StartFinale(finale->gets("script"), 0, FIMODE_AFTER, 0))
         {
@@ -1969,7 +1969,7 @@ void G_IntermissionDone()
     G_SetGameAction(GA_LEAVEMAP);
 }
 
-String G_DefaultGameStateFolderUserDescription(String const &saveName, bool autogenerate)
+String G_DefaultGameStateFolderUserDescription(const String &saveName, bool autogenerate)
 {
     // If the slot is already in use then choose existing description.
     if (!saveName.isEmpty())
@@ -2015,7 +2015,7 @@ String G_DefaultGameStateFolderUserDescription(String const &saveName, bool auto
 String G_EpisodeTitle(const String& episodeId)
 {
     String title;
-    if (Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
+    if (const Record *episodeDef = Defs().episodes.tryFind("id", episodeId))
     {
         title = episodeDef->gets("title");
 
@@ -2029,7 +2029,7 @@ String G_EpisodeTitle(const String& episodeId)
     return title;
 }
 
-uint G_MapNumberFor(res::Uri const &mapUri)
+uint G_MapNumberFor(const res::Uri &mapUri)
 {
     String path = mapUri.path();
     if (!path.isEmpty())
@@ -2080,7 +2080,7 @@ res::Uri G_ComposeMapUri(uint episode, uint map)
     return res::Uri("Maps", mapId);
 }
 
-Record &G_MapInfoForMapUri(res::Uri const &mapUri)
+Record &G_MapInfoForMapUri(const res::Uri &mapUri)
 {
     // Is there a MapInfo definition for the given URI?
     if (Record *def = Defs().mapInfos.tryFind("id", mapUri.compose()))
@@ -2105,7 +2105,7 @@ Record &G_MapInfoForMapUri(res::Uri const &mapUri)
     }
 }
 
-String G_MapTitle(res::Uri const &mapUri)
+String G_MapTitle(const res::Uri &mapUri)
 {
     // Perhaps a MapInfo definition exists for the map?
     String title = G_MapInfoForMapUri(mapUri).gets("title");
@@ -2128,7 +2128,7 @@ String G_MapTitle(res::Uri const &mapUri)
     return title;
 }
 
-String G_MapAuthor(res::Uri const &mapUri, bool supressGameAuthor)
+String G_MapAuthor(const res::Uri &mapUri, bool supressGameAuthor)
 {
     // Perhaps a MapInfo definition exists for the map?
     String author = G_MapInfoForMapUri(mapUri).gets("author");
@@ -2149,12 +2149,12 @@ String G_MapAuthor(res::Uri const &mapUri, bool supressGameAuthor)
     return author;
 }
 
-res::Uri G_MapTitleImage(res::Uri const &mapUri)
+res::Uri G_MapTitleImage(const res::Uri &mapUri)
 {
     return res::makeUri(G_MapInfoForMapUri(mapUri).gets("titleImage"));
 }
 
-String G_MapDescription(const String& episodeId, res::Uri const &mapUri)
+String G_MapDescription(const String& episodeId, const res::Uri &mapUri)
 {
     if (!P_MapExists(mapUri.compose()))
     {
@@ -2169,9 +2169,9 @@ String G_MapDescription(const String& episodeId, res::Uri const &mapUri)
         os << "Map: " DE2_ESC(i) DE2_ESC(b) << title << DE2_ESC(.)
            << " (Uri: " << mapUri;
 
-        if (Record const *rec = Defs().episodes.tryFind("id", episodeId))
+        if (const Record *rec = Defs().episodes.tryFind("id", episodeId))
         {
-            if (Record const *mgNodeDef = defn::Episode(*rec).tryFindMapGraphNode(mapUri.compose()))
+            if (const Record *mgNodeDef = defn::Episode(*rec).tryFindMapGraphNode(mapUri.compose()))
             {
                 os << ", warp: " << String::asText(mgNodeDef->geti("warpNumber"));
             }
@@ -2260,7 +2260,7 @@ void G_QuitGame()
         return;
     }
 
-    char const *endString;
+    const char *endString;
 #if __JDOOM__ || __JDOOM64__
     endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
 #else
@@ -2390,7 +2390,7 @@ D_CMD(LoadSession)
             S_LocalSound(SFX_QUICKLOAD_PROMPT, nullptr);
 
             // Compose the confirmation message.
-            String const &existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
+            const String &existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT,
                                        sslot->id().c_str(),
                                        existingDescription.c_str());
@@ -2546,7 +2546,7 @@ D_CMD(QuickSaveSession)
 
 static int deleteGameStateFolderConfirmed(msgresponse_t response, int /*userValue*/, void *context)
 {
-    String const *saveName = static_cast<de::String const *>(context);
+    const String *saveName = static_cast<const de::String *>(context);
     DE_ASSERT(saveName != 0);
     if (response == MSG_YES)
     {
@@ -2654,7 +2654,7 @@ D_CMD(SetDefaultSkill)
     {
         gfw_SetDefaultRule(skill, SM_MEDIUM);
     }
-    char const *skillNames[] = {
+    const char *skillNames[] = {
         "Novice",
         "Easy",
         "Normal",
@@ -2714,7 +2714,7 @@ D_CMD(WarpMap)
         episodeId = argv[1];
 
         // Catch invalid episodes.
-        if (Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
+        if (const Record *episodeDef = Defs().episodes.tryFind("id", episodeId))
         {
             // Ensure that the episode is playable.
             res::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
@@ -2841,13 +2841,13 @@ D_CMD(WarpMap)
     if (src == CMDS_GAME && !(IS_NETGAME && IS_SERVER))
     {
 #if __JHEXEN__
-        char const *msg = TXT_CHEATWARP;
+        const char *msg = TXT_CHEATWARP;
         int soundId     = SFX_PLATFORM_STOP;
 #elif __JHERETIC__
-        char const *msg = TXT_CHEATWARP;
+        const char *msg = TXT_CHEATWARP;
         int soundId     = SFX_DORCLS;
 #else //__JDOOM__ || __JDOOM64__
-        char const *msg = STSTR_CLEV;
+        const char *msg = STSTR_CLEV;
         int soundId     = SFX_NONE;
 #endif
         P_SetMessageWithFlags(&players[CONSOLEPLAYER], msg, LMF_NO_HIDE);

@@ -53,11 +53,11 @@ DE_PIMPL_NOREF(Config)
         , config(&refuge.objectNamespace())
     {}
 
-    void setOldVersion(Value const &old)
+    void setOldVersion(const Value &old)
     {
         try
         {
-            auto const &vers = old.as<ArrayValue>();
+            const auto &vers = old.as<ArrayValue>();
             oldVersion.major = int(vers.at(0).asNumber());
             oldVersion.minor = int(vers.at(1).asNumber());
             oldVersion.patch = int(vers.at(2).asNumber());
@@ -74,7 +74,7 @@ DE_PIMPL_NOREF(Config)
     }
 };
 
-Config::Config(Path const &path)
+Config::Config(const Path &path)
     : RecordAccessor(nullptr)
     , d(new Impl(path))
 {
@@ -111,7 +111,7 @@ Config::ReadStatus Config::read()
         // If the saved config is from a different version, rerun the script.
         if (objectNamespace().has("__version__"))
         {
-            Value const &oldVersion = objectNamespace()["__version__"].value();
+            const Value &oldVersion = objectNamespace()["__version__"].value();
             d->setOldVersion(oldVersion);
             if (oldVersion.compare(*version))
             {
@@ -152,17 +152,17 @@ Config::ReadStatus Config::read()
             shouldRunScript = true;
         }
     }
-    catch (Archive::NotFoundError const &)
+    catch (const Archive::NotFoundError &)
     {
         // It is missing from persist.pack if the config hasn't been written yet.
         shouldRunScript = true;
     }
-    catch (IByteArray::OffsetError const &)
+    catch (const IByteArray::OffsetError &)
     {
         // Empty or missing serialization?
         shouldRunScript = true;
     }
-    catch (Error const &error)
+    catch (const Error &error)
     {
         LOG_WARNING(error.what());
 
@@ -199,7 +199,7 @@ void Config::writeIfModified() const
             write();
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_WARNING("Failed to write Config: ") << er.asText();
     }
@@ -210,7 +210,7 @@ Record &Config::objectNamespace()
     return d->config.globals();
 }
 
-Record const &Config::objectNamespace() const
+const Record &Config::objectNamespace() const
 {
     return d->config.globals();
 }
@@ -240,7 +240,7 @@ Variable &Config::set(const String &name, bool value)
     return objectNamespace().set(name, value);
 }
 
-Variable &Config::set(const String &name, Value::Number const &value)
+Variable &Config::set(const String &name, const Value::Number &value)
 {
     return objectNamespace().set(name, NumberValue(value));
 }
@@ -260,7 +260,7 @@ Variable &Config::set(const String &name, ArrayValue *value)
     return objectNamespace().set(name, value);
 }
 
-Variable &Config::set(const String &name, Value::Text const &value)
+Variable &Config::set(const String &name, const Value::Text &value)
 {
     return objectNamespace().set(name, value);
 }

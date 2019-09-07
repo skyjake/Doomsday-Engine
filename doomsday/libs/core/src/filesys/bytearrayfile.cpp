@@ -26,7 +26,7 @@ dsize ByteArrayFile::size() const
     return File::size();
 }
 
-IOStream &ByteArrayFile::operator << (IByteArray const &bytes)
+IOStream &ByteArrayFile::operator << (const IByteArray &bytes)
 {
     // Append the bytes to the end of the file.
     Block block(bytes);
@@ -41,7 +41,7 @@ IIStream &ByteArrayFile::operator >> (IByteArray &)
     throw InputError("ByteArrayFile::operator >>", "ByteArrayFile is an immutable stream");
 }
 
-IIStream const &ByteArrayFile::operator >> (IByteArray &bytes) const
+const IIStream &ByteArrayFile::operator >> (IByteArray &bytes) const
 {
     // Read the entire contents of the file.
     Block block(File::size());

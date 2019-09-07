@@ -31,7 +31,7 @@ using namespace de;
 AssignStatement::AssignStatement() : _indexCount(0)
 {}
 
-AssignStatement::AssignStatement(Expression *target, Indices const &indices, Expression *value)
+AssignStatement::AssignStatement(Expression *target, const Indices &indices, Expression *value)
     : _indexCount(0)
 {
     _args.add(value);

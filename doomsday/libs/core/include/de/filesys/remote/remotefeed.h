@@ -31,15 +31,15 @@ namespace de {
 class DE_PUBLIC RemoteFeed : public Feed
 {
 public:
-    RemoteFeed(String const &repository, String const &remotePath = String("/"));
+    RemoteFeed(const String &repository, const String &remotePath = String("/"));
 
     String         repository() const;
     String         description() const;
-    PopulatedFiles populate(Folder const &folder);
+    PopulatedFiles populate(const Folder &folder);
     bool           prune(File &file) const;
 
 protected:
-    RemoteFeed(RemoteFeed const &parentFeed, String const &remotePath);
+    RemoteFeed(const RemoteFeed &parentFeed, const String &remotePath);
 
 private:
     DE_PRIVATE(d)

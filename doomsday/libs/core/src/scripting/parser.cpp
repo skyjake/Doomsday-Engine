@@ -56,7 +56,7 @@ Parser::Parser()
 Parser::~Parser()
 {}
 
-void Parser::parse(String const &input, Script &output)
+void Parser::parse(const String &input, Script &output)
 {
     // Lexical analyzer for Haw scripts.
     _analyzer = ScriptLex(input);
@@ -108,7 +108,7 @@ void Parser::parseStatement(Compound &compound)
 {
     DE_ASSERT(!_statementRange.isEmpty());
 
-    Token const &firstToken = _statementRange.firstToken();
+    const Token &firstToken = _statementRange.firstToken();
     const auto firstTokenLine = firstToken.line();
 
     // Statements with a compound: if, for, while, def.
@@ -557,7 +557,7 @@ AssignStatement *Parser::parseAssignStatement()
 
         return st;
     }
-    catch (Error const &)
+    catch (const Error &)
     {
         // Cleanup.
         for (AssignStatement::Indices::iterator i = indices.begin(); i != indices.end(); ++i)
@@ -573,7 +573,7 @@ ExpressionStatement *Parser::parseExpressionStatement()
     return new ExpressionStatement(parseExpression(_statementRange));
 }
 
-Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags const &flags)
+Expression *Parser::parseConditionalCompound(Compound &compound, const CompoundFlags &flags)
 {
     // keyword [expr] ":" statement
     // keyword [expr] "\n" compound
@@ -628,8 +628,8 @@ Expression *Parser::parseConditionalCompound(Compound &compound, CompoundFlags c
     return condition.release();
 }
 
-ArrayExpression *Parser::parseList(TokenRange const &range, const char *separator,
-                                   Flags const &flags)
+ArrayExpression *Parser::parseList(const TokenRange &range, const char *separator,
+                                   const Flags &flags)
 {
     std::unique_ptr<ArrayExpression> exp(new ArrayExpression);
     if (range.size() > 0)
@@ -644,7 +644,7 @@ ArrayExpression *Parser::parseList(TokenRange const &range, const char *separato
     return exp.release();
 }
 
-Expression *Parser::parseExpression(TokenRange const &fullRange, Flags const &flags)
+Expression *Parser::parseExpression(const TokenRange &fullRange, const Flags &flags)
 {
     TokenRange range = fullRange;
 
@@ -709,7 +709,7 @@ Expression *Parser::parseExpression(TokenRange const &fullRange, Flags const &fl
     }
 }
 
-ArrayExpression *Parser::parseArrayExpression(TokenRange const &range)
+ArrayExpression *Parser::parseArrayExpression(const TokenRange &range)
 {
     if (!range.firstToken().equals(Token::BRACKET_OPEN) ||
         range.closingBracket(0) != range.size() - 1)
@@ -721,7 +721,7 @@ ArrayExpression *Parser::parseArrayExpression(TokenRange const &range)
     return parseList(range.shrink(1));
 }
 
-DictionaryExpression *Parser::parseDictionaryExpression(TokenRange const &range)
+DictionaryExpression *Parser::parseDictionaryExpression(const TokenRange &range)
 {
     if (!range.firstToken().equals(Token::CURLY_OPEN) ||
         range.closingBracket(0) != range.size() - 1)
@@ -755,7 +755,7 @@ DictionaryExpression *Parser::parseDictionaryExpression(TokenRange const &range)
     return exp.release();
 }
 
-Expression *Parser::parseCallExpression(TokenRange const &nameRange, TokenRange const &argumentRange)
+Expression *Parser::parseCallExpression(const TokenRange &nameRange, const TokenRange &argumentRange)
 {
     //std::cerr << "call name: " << nameRange.asText() << "\n";
     //std::cerr << "call args: " << argumentRange.asText() << "\n";
@@ -817,8 +817,8 @@ Expression *Parser::parseCallExpression(TokenRange const &nameRange, TokenRange 
     return new OperatorExpression(CALL, identifier.release(), args.release());
 }
 
-OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange const &leftSide,
-    TokenRange const &rightSide, Flags const &rightFlags)
+OperatorExpression *Parser::parseOperatorExpression(Operator op, const TokenRange &leftSide,
+    const TokenRange &rightSide, const Flags &rightFlags)
 {
     //std::cerr << "left: " << leftSide.asText() << ", right: " << rightSide.asText() << "\n";
 
@@ -859,7 +859,7 @@ OperatorExpression *Parser::parseOperatorExpression(Operator op, TokenRange cons
     }
 }
 
-Expression *Parser::parseTokenExpression(TokenRange const &range, Flags const &flags)
+Expression *Parser::parseTokenExpression(const TokenRange &range, const Flags &flags)
 {
     if (!range.size())
     {
@@ -868,7 +868,7 @@ Expression *Parser::parseTokenExpression(TokenRange const &range, Flags const &f
             range.buffer().at(range.tokenIndex(0)).asText());
     }
 
-    Token const &token = range.token(0);
+    const Token &token = range.token(0);
 
     if (token.type() == Token::KEYWORD)
     {
@@ -935,7 +935,7 @@ Expression *Parser::parseTokenExpression(TokenRange const &range, Flags const &f
     }
 }
 
-Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSide, TokenRange &rightSide)
+Operator Parser::findLowestOperator(const TokenRange &range, TokenRange &leftSide, TokenRange &rightSide)
 {
     enum {
         MAX_RANK         = 0x7fffffff,
@@ -965,7 +965,7 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
         Operator op = NONE;
         Direction direction = LEFT_TO_RIGHT;
 
-        Token const &token = range.token(i);
+        const Token &token = range.token(i);
 
         if (token.equals(Token::PARENTHESIS_OPEN))
         {
@@ -1018,7 +1018,7 @@ Operator Parser::findLowestOperator(TokenRange const &range, TokenRange &leftSid
         else
         {
             const struct {
-                char const *token;
+                const char *token;
                 Operator op;
                 int rank;
                 Direction direction;

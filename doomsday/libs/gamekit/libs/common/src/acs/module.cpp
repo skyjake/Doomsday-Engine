@@ -52,7 +52,7 @@ DE_PIMPL_NOREF(Module)
 Module::Module() : d(new Impl)
 {}
 
-bool Module::recognize(res::File1 const &file)  // static
+bool Module::recognize(const res::File1 &file)  // static
 {
     if(file.size() <= 4) return false;
 
@@ -66,7 +66,7 @@ bool Module::recognize(res::File1 const &file)  // static
     return magic.at(3) == 0;
 }
 
-Module *Module::newFromBytecode(Block const &bytecode)  // static
+Module *Module::newFromBytecode(const Block &bytecode)  // static
 {
     DE_ASSERT(!IS_CLIENT);
     LOG_AS("acs::Module");
@@ -105,7 +105,7 @@ Module *Module::newFromBytecode(Block const &bytecode)  // static
         {
             throw FormatError("acs::Module", "Invalid script entrypoint offset");
         }
-        ep.pcodePtr = (int const *)(module->d->pcode.constData() + offset);
+        ep.pcodePtr = (const int *)(module->d->pcode.constData() + offset);
 
         from >> ep.scriptArgCount;
         if(ep.scriptArgCount > ACS_INTERPRETER_MAX_SCRIPT_ARGS)
@@ -133,7 +133,7 @@ Module *Module::newFromBytecode(Block const &bytecode)  // static
         from >> offset;
         constantOffsets << offset;
     }
-    for(auto const &offset : constantOffsets)
+    for(const auto &offset : constantOffsets)
     {
         Block utf;
         from.setOffset(dsize(offset));
@@ -144,7 +144,7 @@ Module *Module::newFromBytecode(Block const &bytecode)  // static
     return module.release();
 }
 
-Module *Module::newFromFile(res::File1 const &file)  // static
+Module *Module::newFromFile(const res::File1 &file)  // static
 {
     DE_ASSERT(!IS_CLIENT);
     LOG_AS("acs::Module");
@@ -179,7 +179,7 @@ bool Module::hasEntryPoint(int scriptNumber) const
     return d->epByScriptNumberLut.contains(scriptNumber);
 }
 
-Module::EntryPoint const &Module::entryPoint(int scriptNumber) const
+const Module::EntryPoint &Module::entryPoint(int scriptNumber) const
 {
     if(hasEntryPoint(scriptNumber)) return *d->epByScriptNumberLut[scriptNumber];
     /// @throw MissingEntryPointError  Invalid script number specified.
@@ -195,7 +195,7 @@ LoopResult Module::forAllEntryPoints(const std::function<LoopResult (EntryPoint 
     return LoopContinue;
 }
 
-Block const &Module::pcode() const
+const Block &Module::pcode() const
 {
     return d->pcode;
 }

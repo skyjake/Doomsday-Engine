@@ -61,7 +61,7 @@ DE_PUBLIC void Garbage_TrashInstance(void *ptr, GarbageDestructor destructor);
  *
  * @return @c true if the pointer is in the trash.
  */
-DE_PUBLIC int Garbage_IsTrashed(void const *ptr);
+DE_PUBLIC int Garbage_IsTrashed(const void *ptr);
 
 /**
  * Removes a region from the current thread's collector, if it is still there.

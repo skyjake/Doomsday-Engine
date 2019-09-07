@@ -57,7 +57,7 @@ public:
     /**
      * Determines if @a possibleAncestor is one of the ancestors of this node.
      */
-    bool hasAncestor(Node const &possibleAncestor) const;
+    bool hasAncestor(const Node &possibleAncestor) const;
 
     /**
      * Returns the parent node. May be NULL.
@@ -81,7 +81,7 @@ public:
      *
      * @return The located node, or @c NULL if the path was not found.
      */
-    virtual Node const *tryFollowPath(PathRef const &path) const;
+    virtual const Node *tryFollowPath(const PathRef &path) const;
 
     /**
      * Gets a child node with a specific name. The default implementation does nothing,
@@ -92,7 +92,7 @@ public:
      *
      * @return The child node, or @c NULL if there is no child named @a name.
      */
-    virtual Node const *tryGetChild(String const &name) const;
+    virtual const Node *tryGetChild(const String &name) const;
 
     DE_CAST_METHODS()
 
@@ -102,7 +102,7 @@ protected:
      *
      * @param name  Name of the node.
      */
-    explicit Node(String const &name = String());
+    explicit Node(const String &name = String());
 
 private:
     DE_PRIVATE(d)

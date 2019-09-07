@@ -34,7 +34,7 @@ public:
     de::String describe() const;
 
     void get(Offset at, Byte *values, Size count) const;
-    void set(Offset at, Byte const *values, Size count);
+    void set(Offset at, const Byte *values, Size count);
 };
 
 #endif // LIBDOOMSDAY_DATAFILE_H

@@ -28,7 +28,7 @@ using namespace de;
 
 static patchid_t pArmorIcon[NUMARMOR];
 
-static void ArmorIconsWidget_Draw(guidata_armoricons_t *icons, Point2Raw const *offset)
+static void ArmorIconsWidget_Draw(guidata_armoricons_t *icons, const Point2Raw *offset)
 {
     DE_ASSERT(icons);
     icons->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -58,14 +58,14 @@ void guidata_armoricons_t::tick(timespan_t /*elapsed*/)
 {
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
-    player_t const &plr = ::players[player()];
+    const player_t &plr = ::players[player()];
     for(dint i = 0; i < NUMARMOR; ++i)
     {
         _armorPoints[i] = plr.armorPoints[i];
     }
 }
 
-void guidata_armoricons_t::draw(Vec2i const &offset) const
+void guidata_armoricons_t::draw(const Vec2i &offset) const
 {
 #define X_OFFSET                ( 150 )
 #define Y_OFFSET                (   2 )
@@ -87,7 +87,7 @@ void guidata_armoricons_t::draw(Vec2i const &offset) const
     DGL_Scalef(::cfg.common.statusbarScale, ::cfg.common.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
 
-    classinfo_t const &pcdata = *PCLASS_INFO(plrClass);
+    const classinfo_t &pcdata = *PCLASS_INFO(plrClass);
     for(dint i = 0; i < NUMARMOR; ++i)
     {
         if(!_armorPoints[i]) continue;

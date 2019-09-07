@@ -43,7 +43,7 @@ class Id1MapElement
 {
 public:
     Id1MapElement(MapImporter &map) : _map(&map) {}
-    Id1MapElement(Id1MapElement const &other) : _map(other._map) {}
+    Id1MapElement(const Id1MapElement &other) : _map(other._map) {}
     virtual ~Id1MapElement() = default;
 
     MapImporter &map() const {
@@ -639,7 +639,7 @@ DE_PIMPL(MapImporter)
     {
         StringPool dict;
 
-        String const &find(MaterialId id) const
+        const String &find(MaterialId id) const
         {
             return dict.stringRef(id);
         }
@@ -786,7 +786,7 @@ DE_PIMPL(MapImporter)
     /**
      * Create a temporary polyobj.
      */
-    Polyobj *createPolyobj(Polyobj::LineIndices const &lineIndices, dint tag,
+    Polyobj *createPolyobj(const Polyobj::LineIndices &lineIndices, dint tag,
         dint sequenceType, dint16 anchorX, dint16 anchorY)
     {
         // Allocate the new polyobj.
@@ -1124,7 +1124,7 @@ DE_PIMPL(MapImporter)
      * @param lineList  @c NULL, will cause IterFindPolyLines to count the number
      *                  of lines in the polyobj.
      */
-    void collectPolyobjLinesWorker(Polyobj::LineIndices &lineList, Vec2d const &point)
+    void collectPolyobjLinesWorker(Polyobj::LineIndices &lineList, const Vec2d &point)
     {
         DE_FOR_EACH(Lines, i, lines)
         {
@@ -1161,7 +1161,7 @@ DE_PIMPL(MapImporter)
     }
 };
 
-MapImporter::MapImporter(Id1MapRecognizer const &recognized)
+MapImporter::MapImporter(const Id1MapRecognizer &recognized)
     : d(new Impl(this))
 {
     d->format = recognized.format();

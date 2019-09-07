@@ -40,9 +40,9 @@ public:
 
     dsize       size() const override;
     Item &      at(Pos pos) override;
-    Item const &at(Pos pos) const override;
-    Pos         find(Item const &item) const override;
-    Pos         findLabel(String const &label) const override;
+    const Item &at(Pos pos) const override;
+    Pos         find(const Item &item) const override;
+    Pos         findLabel(const String &label) const override;
     Pos         findData(const Value &data) const override;
 
     Data &clear() override;
@@ -68,8 +68,8 @@ public:
     ItemType &at(Pos pos) override {
         return static_cast<ItemType &>(ListData::at(pos));
     }
-    ItemType const &at(Pos pos) const override {
-        return static_cast<ItemType const &>(ListData::at(pos));
+    const ItemType &at(Pos pos) const override {
+        return static_cast<const ItemType &>(ListData::at(pos));
     }
     ItemType *take(Pos pos) override {
         return static_cast<ItemType *>(ListData::take(pos));

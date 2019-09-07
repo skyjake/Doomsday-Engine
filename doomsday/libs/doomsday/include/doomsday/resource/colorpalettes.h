@@ -46,7 +46,7 @@ public:
     /**
      * Returns the ColorPalette associated with unique @a id.
      */
-    ColorPalette &colorPalette(de::Id const &id) const;
+    ColorPalette &colorPalette(const de::Id &id) const;
 
     /**
      * Returns the symbolic name of the specified color @a palette. A zero-length
@@ -71,7 +71,7 @@ public:
      *                    to the resource system.
      * @param name        Symbolic name of the color palette.
      */
-    void addColorPalette(ColorPalette &newPalette, de::String const &name = de::String());
+    void addColorPalette(ColorPalette &newPalette, const de::String &name = de::String());
 
     /**
      * Returns the unique identifier of the current default color palette.

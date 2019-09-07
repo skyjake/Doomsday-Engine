@@ -48,7 +48,7 @@ public:
      *
      * @param sourcePath  Path of the source file.
      */
-    Module(String const &sourcePath);
+    Module(const String &sourcePath);
 
     /**
      * Constructs a new module. The source script is loaded from a
@@ -56,19 +56,19 @@ public:
      *
      * @param sourceFile  Script source file.
      */
-    Module(File const &sourceFile);
+    Module(const File &sourceFile);
 
     virtual ~Module();
 
     /// Returns the module's source script's absolute path.
-    String const &sourcePath() const { return _sourcePath; }
+    const String &sourcePath() const { return _sourcePath; }
 
     /// Returns the namespace of the module. The import statement gives access
     /// to this.
     Record &names();
 
 protected:
-    void initialize(Script const &script);
+    void initialize(const Script &script);
 
 private:
     /// Path of the script source file. Used to identify whether a script has

@@ -44,7 +44,7 @@ public:
     static de::String const SEMICOLON;
 
 public:
-    UDMFLex(de::String const &input = "");
+    UDMFLex(const de::String &input = "");
 
     /**
      * Reads tokens from the source until the end of an expression. The opening bracket
@@ -65,7 +65,7 @@ public:
     void parseString(de::TokenBuffer &output);
 
     /// Determines whether a token is a keyword.
-    static bool isKeyword(de::Token const &token);
+    static bool isKeyword(const de::Token &token);
 };
 
 #endif // IMPORTUDMF_UDMFLEX_H

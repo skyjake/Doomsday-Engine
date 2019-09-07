@@ -324,7 +324,7 @@ int polyevent_s::read(MapStateReader *msr)
     return true; // Add this thinker.
 }
 
-void SV_WriteMovePoly(polyevent_t const *th, MapStateWriter *msw)
+void SV_WriteMovePoly(const polyevent_t *th, MapStateWriter *msw)
 {
     Writer1 *writer = msw->writer();
 
@@ -818,7 +818,7 @@ void PO_InitForMap()
 
         // Find the mapspot associated with this polyobj.
         uint j = 0;
-        mapspot_t const *spot = 0;
+        const mapspot_t *spot = 0;
         while(j < numMapSpots && !spot)
         {
             if((mapSpots[j].doomEdNum == PO_SPAWN_DOOMEDNUM ||

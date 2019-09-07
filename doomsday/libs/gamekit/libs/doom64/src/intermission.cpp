@@ -74,14 +74,14 @@ namespace internal
 
     /// @todo Revise API to select a replacement mode according to the usage context
     /// and/or domain. Passing an "existing" text string is also a bit awkward... -ds
-    static inline String patchReplacementText(patchid_t patchId, String const &text = "")
+    static inline String patchReplacementText(patchid_t patchId, const String &text = "")
     {
         return Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.inludePatchReplaceMode),
                                          patchId, text);
     }
 
     static void drawChar(Char const   ch,
-                         Vec2i const &origin,
+                         const Vec2i &origin,
                          int          alignFlags = ALIGN_TOPLEFT,
                          int          textFlags  = DTF_NO_TYPEIN)
     {
@@ -89,8 +89,8 @@ namespace internal
         FR_DrawChar3(char(ch), &rawOrigin, alignFlags, textFlags);
     }
 
-    static void drawText(String const &text,
-                         Vec2i const & origin,
+    static void drawText(const String &text,
+                         const Vec2i & origin,
                          int           alignFlags = ALIGN_TOPLEFT,
                          int           textFlags  = DTF_NO_TYPEIN)
     {
@@ -98,7 +98,7 @@ namespace internal
         FR_DrawText3(text, &rawOrigin, alignFlags, textFlags);
     }
 
-    static void drawPercent(int percent, Vec2i const &origin)
+    static void drawPercent(int percent, const Vec2i &origin)
     {
         if(percent < 0) return;
         drawChar('%', origin, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
@@ -174,8 +174,8 @@ static int cntPar;
 static int cntPause;
 
 // Passed into intermission.
-static wbstartstruct_t const *wbs;
-static wbplayerstruct_t const *inPlayerInfo;
+static const wbstartstruct_t *wbs;
+static const wbplayerstruct_t *inPlayerInfo;
 
 // TODO common::GameSessionVisitedMaps visitedMaps() ?
 
@@ -1031,7 +1031,7 @@ void IN_Drawer()
     GL_EndBorderedProjection(&bp);
 }
 
-static void initVariables(wbstartstruct_t const &wbstartstruct)
+static void initVariables(const wbstartstruct_t &wbstartstruct)
 {
     wbs = &wbstartstruct;
 
@@ -1042,7 +1042,7 @@ static void initVariables(wbstartstruct_t const &wbstartstruct)
     inPlayerInfo = wbs->plyr;
 }
 
-void IN_Begin(wbstartstruct_t const &wbstartstruct)
+void IN_Begin(const wbstartstruct_t &wbstartstruct)
 {
     initVariables(wbstartstruct);
     loadData();

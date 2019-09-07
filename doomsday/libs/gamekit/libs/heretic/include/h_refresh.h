@@ -35,9 +35,9 @@ extern "C" {
 
 void G_RendPlayerView(int player);
 
-void H_DrawViewPort(int port, RectRaw const *portGeometry, RectRaw const *windowGeometry, int player, int layer);
+void H_DrawViewPort(int port, const RectRaw *portGeometry, const RectRaw *windowGeometry, int player, int layer);
 
-void H_DrawWindow(Size2Raw const *windowSize);
+void H_DrawWindow(const Size2Raw *windowSize);
 
 void H_EndFrame(void);
 

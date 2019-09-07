@@ -52,12 +52,12 @@ public Font::RichFormat::IStyle
     Vec4f imageColor;
     Vec4f textGLColor;
     Vec4f shadowColor;
-    Rule const *maxTextWidth;
+    const Rule *maxTextWidth;
 
     ConstantRule *width;
     ConstantRule *height;
     IndirectRule *minHeight;
-    Rule const *outHeight;
+    const Rule *outHeight;
     AnimationRule *appearSize;
     LabelWidget::AppearanceAnimation appearType;
     TimeSpan appearSpan;
@@ -71,7 +71,7 @@ public Font::RichFormat::IStyle
     ColorBank::Color accentColor;
     ColorBank::Color dimAccentColor;
     ColorBank::Color altAccentColor;
-    Font::RichFormat::IStyle const *richStyle;
+    const Font::RichFormat::IStyle *richStyle;
 
     String styledText;
     TextDrawable glText;
@@ -188,7 +188,7 @@ public Font::RichFormat::IStyle
         }
     }
 
-    Font const *richStyleFont(Font::RichFormat::Style fontStyle) const
+    const Font *richStyleFont(Font::RichFormat::Style fontStyle) const
     {
         if (richStyle)
         {
@@ -557,7 +557,7 @@ public Font::RichFormat::IStyle
         }
     }
 
-    Rule const *widthRule() const
+    const Rule *widthRule() const
     {
         switch (appearType)
         {
@@ -573,7 +573,7 @@ public Font::RichFormat::IStyle
         return nullptr;
     }
 
-    Rule const *heightRule() const
+    const Rule *heightRule() const
     {
         switch (appearType)
         {
@@ -590,7 +590,7 @@ public Font::RichFormat::IStyle
     }
 };
 
-LabelWidget::LabelWidget(String const &name) : GuiWidget(name), d(new Impl(this))
+LabelWidget::LabelWidget(const String &name) : GuiWidget(name), d(new Impl(this))
 {}
 
 AssetGroup &LabelWidget::assets()
@@ -598,7 +598,7 @@ AssetGroup &LabelWidget::assets()
     return d->assets;
 }
 
-void LabelWidget::setText(String const &text)
+void LabelWidget::setText(const String &text)
 {
     if (text != d->styledText)
     {
@@ -607,7 +607,7 @@ void LabelWidget::setText(String const &text)
     }
 }
 
-void LabelWidget::setImage(Image const &image)
+void LabelWidget::setImage(const Image &image)
 {
     if (!image.isNull())
     {
@@ -628,7 +628,7 @@ void LabelWidget::setImage(ProceduralImage *procImage)
     requestGeometry();
 }
 
-void LabelWidget::setStyleImage(DotPath const &id, String const &heightFromFont)
+void LabelWidget::setStyleImage(const DotPath &id, const String &heightFromFont)
 {
     if (!id.isEmpty())
     {
@@ -645,7 +645,7 @@ ProceduralImage *LabelWidget::image() const
     return d->image.get();
 }
 
-void LabelWidget::setOverlayImage(ProceduralImage *overlayProcImage, ui::Alignment const &alignment)
+void LabelWidget::setOverlayImage(ProceduralImage *overlayProcImage, const ui::Alignment &alignment)
 {
     d->overlayImage.reset(overlayProcImage);
     d->overlayAlign = alignment;
@@ -668,28 +668,28 @@ Vec2ui LabelWidget::textSize() const
     return d->textSize();
 }
 
-Rule const &LabelWidget::contentWidth() const
+const Rule &LabelWidget::contentWidth() const
 {
     return *d->width;
 }
 
-Rule const &LabelWidget::contentHeight() const
+const Rule &LabelWidget::contentHeight() const
 {
     return *d->height;
 }
 
-void LabelWidget::setTextGap(DotPath const &styleRuleId)
+void LabelWidget::setTextGap(const DotPath &styleRuleId)
 {
     d->gapId = styleRuleId;
     d->updateStyle();
 }
 
-DotPath const &LabelWidget::textGap() const
+const DotPath &LabelWidget::textGap() const
 {
     return d->gapId;
 }
 
-void LabelWidget::setTextShadow(TextShadow shadow, DotPath const &colorId)
+void LabelWidget::setTextShadow(TextShadow shadow, const DotPath &colorId)
 {
     d->textShadow = shadow;
     d->textShadowColorId = colorId;
@@ -701,13 +701,13 @@ void LabelWidget::setFillMode(FillMode fillMode)
     d->fillMode = fillMode;
 }
 
-void LabelWidget::setAlignment(Alignment const &align, AlignmentMode mode)
+void LabelWidget::setAlignment(const Alignment &align, AlignmentMode mode)
 {
     d->align = align;
     d->alignMode = mode;
 }
 
-void LabelWidget::setTextAlignment(Alignment const &textAlign)
+void LabelWidget::setTextAlignment(const Alignment &textAlign)
 {
     d->textAlign = textAlign;
 }
@@ -717,12 +717,12 @@ ui::Alignment LabelWidget::textAlignment() const
     return d->textAlign;
 }
 
-void LabelWidget::setTextLineAlignment(Alignment const &textLineAlign)
+void LabelWidget::setTextLineAlignment(const Alignment &textLineAlign)
 {
     d->lineAlign = textLineAlign;
 }
 
-void LabelWidget::setTextModulationColorf(Vec4f const &colorf)
+void LabelWidget::setTextModulationColorf(const Vec4f &colorf)
 {
     d->textGLColor = colorf;
     requestGeometry();
@@ -733,12 +733,12 @@ Vec4f LabelWidget::textModulationColorf() const
     return d->textGLColor;
 }
 
-void LabelWidget::setImageAlignment(Alignment const &imageAlign)
+void LabelWidget::setImageAlignment(const Alignment &imageAlign)
 {
     d->imageAlign = imageAlign;
 }
 
-void LabelWidget::setImageFit(ContentFit const &fit)
+void LabelWidget::setImageFit(const ContentFit &fit)
 {
     d->imageFit = fit;
 }
@@ -760,18 +760,18 @@ void LabelWidget::setMaximumTextWidth(int pixels)
     setMaximumTextWidth(Const(pixels));
 }
 
-void LabelWidget::setMaximumTextWidth(Rule const &pixels)
+void LabelWidget::setMaximumTextWidth(const Rule &pixels)
 {
     changeRef(d->maxTextWidth, pixels);
     requestGeometry();
 }
 
-void LabelWidget::setMinimumHeight(Rule const &minHeight)
+void LabelWidget::setMinimumHeight(const Rule &minHeight)
 {
     d->minHeight->setSource(minHeight);
 }
 
-void LabelWidget::setTextStyle(Font::RichFormat::IStyle const *richStyle)
+void LabelWidget::setTextStyle(const Font::RichFormat::IStyle *richStyle)
 {
     d->richStyle = richStyle;
 }
@@ -781,7 +781,7 @@ void LabelWidget::setImageScale(float scaleFactor)
     d->imageScale = scaleFactor;
 }
 
-void LabelWidget::setImageColor(Vec4f const &imageColor)
+void LabelWidget::setImageColor(const Vec4f &imageColor)
 {
     d->imageColor = imageColor;
     requestGeometry();
@@ -911,11 +911,11 @@ void LabelWidget::setAppearanceAnimation(AppearanceAnimation method, TimeSpan sp
     d->appearType = method;
     d->appearSpan = span;
 
-    if (Rule const *w = d->widthRule())
+    if (const Rule *w = d->widthRule())
     {
         rule().setInput(Rule::Width, *w);
     }
-    if (Rule const *h = d->heightRule())
+    if (const Rule *h = d->heightRule())
     {
         rule().setInput(Rule::Height, *h);
     }

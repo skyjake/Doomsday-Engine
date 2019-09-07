@@ -32,36 +32,36 @@ namespace ui {
 class LIBGUI_PUBLIC VariantActionItem : public ActionItem
 {
 public:
-    VariantActionItem(String const &label   = "",
-                      String const &label2  = "",
+    VariantActionItem(const String &label   = "",
+                      const String &label2  = "",
                       RefArg<Action> action = RefArg<Action>())
         : ActionItem(ShownAsButton | ActivationClosesPopup, label, action)
         , _label2(label2)
     {}
 
     VariantActionItem(Semantics semantics,
-                      String const &label   = "",
-                      String const &label2  = "",
+                      const String &label   = "",
+                      const String &label2  = "",
                       RefArg<Action> action = RefArg<Action>())
         : ActionItem(semantics, label, action)
         , _label2(label2)
     {}
 
     VariantActionItem(Semantics semantics,
-                      DotPath const &styleImageId,
-                      DotPath const &styleImageId2,
-                      String const &label   = "",
-                      String const &label2  = "",
+                      const DotPath &styleImageId,
+                      const DotPath &styleImageId2,
+                      const String &label   = "",
+                      const String &label2  = "",
                       RefArg<Action> action = RefArg<Action>())
         : ActionItem(semantics, styleImageId, label, action)
         , _label2(label2)
         , _image2(styleImageId2)
     {}
 
-    VariantActionItem(DotPath const &styleImageId,
-                      DotPath const &styleImageId2,
-                      String const &label   = "",
-                      String const &label2  = "",
+    VariantActionItem(const DotPath &styleImageId,
+                      const DotPath &styleImageId2,
+                      const String &label   = "",
+                      const String &label2  = "",
                       RefArg<Action> action = RefArg<Action>())
         : ActionItem(ShownAsButton | ActivationClosesPopup, styleImageId, label, action)
         , _label2(label2)
@@ -71,7 +71,7 @@ public:
     String label(bool useVariant) const {
         return useVariant? _label2 : ActionItem::label();
     }
-    DotPath const &styleImageId(bool useVariant) const {
+    const DotPath &styleImageId(bool useVariant) const {
         return useVariant? _image2 : ActionItem::styleImageId();
     }
 

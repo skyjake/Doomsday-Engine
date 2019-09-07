@@ -59,7 +59,7 @@ DE_PIMPL(LumpCatalog)
             // The package must be available as a file.
             if (const File *file = App::packageLoader().select(pkg))
             {
-                auto const *bundle = maybeAs<DataBundle>(file->target());
+                const auto *bundle = maybeAs<DataBundle>(file->target());
                 if (bundle && bundle->lumpDirectory())
                 {
                     bundles << bundle;
@@ -173,7 +173,7 @@ Block LumpCatalog::read(const LumpPos &lump) const
     if (lump.first)
     {
         DE_ASSERT(lump.first->lumpDirectory());
-        auto const &entry = lump.first->lumpDirectory()->entry(lump.second);
+        const auto &entry = lump.first->lumpDirectory()->entry(lump.second);
         data.copyFrom(*lump.first, entry.offset, entry.size);
     }
     return data;

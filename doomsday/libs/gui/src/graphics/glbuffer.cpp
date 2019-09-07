@@ -129,7 +129,7 @@ DE_PIMPL(GLBuffer)
 {
     GLenum           bufferType      = GL_ARRAY_BUFFER;
     GLuint           vao             = 0;
-    GLProgram const *vaoBoundProgram = nullptr;
+    const GLProgram *vaoBoundProgram = nullptr;
     GLuint           name            = 0;
     GLuint           idxName         = 0;
     dsize            count           = 0;
@@ -245,7 +245,7 @@ DE_PIMPL(GLBuffer)
         return GL_TRIANGLES;
     }
 
-    void setAttribPointer(GLuint index, AttribSpec const &spec, GLuint divisor, GLuint part = 0) const
+    void setAttribPointer(GLuint index, const AttribSpec &spec, GLuint divisor, GLuint part = 0) const
     {
         DE_ASSERT(!part || spec.type == GL_FLOAT);
 
@@ -258,7 +258,7 @@ DE_PIMPL(GLBuffer)
                                         spec.type,
                                         spec.normalized,
             GLsizei(spec.stride),
-            reinterpret_cast<void const *>(dintptr(spec.startOffset + part * 4 * sizeof(float))));
+            reinterpret_cast<const void *>(dintptr(spec.startOffset + part * 4 * sizeof(float))));
         LIBGUI_ASSERT_GL_OK();
 
 #if defined (DE_HAVE_INSTANCES)
@@ -297,7 +297,7 @@ DE_PIMPL(GLBuffer)
 
         for (duint i = 0; i < specs.second; ++i)
         {
-            AttribSpec const &spec = specs.first[i];
+            const AttribSpec &spec = specs.first[i];
 
             int index = vaoBoundProgram->attributeLocation(spec.semantic);
             if (index < 0) continue; // Not used.
@@ -373,12 +373,12 @@ void GLBuffer::clear()
     d->releaseArray();
 }
 
-void GLBuffer::setVertices(dsize count, void const *data, dsize dataSize, Usage usage)
+void GLBuffer::setVertices(dsize count, const void *data, dsize dataSize, Usage usage)
 {
     setVertices(Points, count, data, dataSize, usage);
 }
 
-void GLBuffer::setVertices(Primitive primitive, dsize count, void const *data, dsize dataSize, Usage usage)
+void GLBuffer::setVertices(Primitive primitive, dsize count, const void *data, dsize dataSize, Usage usage)
 {
     DE_ASSERT(d->bufferType == GL_ARRAY_BUFFER);
 
@@ -408,7 +408,7 @@ void GLBuffer::setVertices(Primitive primitive, dsize count, void const *data, d
     }
 }
 
-void GLBuffer::setIndices(Primitive primitive, dsize count, Index const *indices, Usage usage)
+void GLBuffer::setIndices(Primitive primitive, dsize count, const Index *indices, Usage usage)
 {
     d->prim         = Impl::glPrimitive(primitive);
     d->idxCount     = count;
@@ -432,12 +432,12 @@ void GLBuffer::setIndices(Primitive primitive, dsize count, Index const *indices
     }
 }
 
-void GLBuffer::setIndices(Primitive primitive, Indices const &indices, Usage usage)
+void GLBuffer::setIndices(Primitive primitive, const Indices &indices, Usage usage)
 {
     setIndices(primitive, indices.size(), indices.data(), usage);
 }
 
-void GLBuffer::setData(void const *data, dsize dataSize, gfx::Usage usage)
+void GLBuffer::setData(const void *data, dsize dataSize, gfx::Usage usage)
 {
     if (data && dataSize)
     {
@@ -453,7 +453,7 @@ void GLBuffer::setData(void const *data, dsize dataSize, gfx::Usage usage)
     }
 }
 
-void GLBuffer::setData(dsize startOffset, void const *data, dsize dataSize)
+void GLBuffer::setData(dsize startOffset, const void *data, dsize dataSize)
 {
     DE_ASSERT(isReady());
 
@@ -480,7 +480,7 @@ void GLBuffer::setUninitializedData(dsize dataSize, gfx::Usage usage)
     setState(Ready);
 }
 
-void GLBuffer::draw(DrawRanges const *ranges) const
+void GLBuffer::draw(const DrawRanges *ranges) const
 {
     if (!isReady() || !GLProgram::programInUse()) return;
 
@@ -574,7 +574,7 @@ void GLBuffer::draw(DrawRanges const *ranges) const
     d->bindArray(false);
 }
 
-void GLBuffer::drawWithIndices(GLBuffer const &indexBuffer) const
+void GLBuffer::drawWithIndices(const GLBuffer &indexBuffer) const
 {
     if (!isReady() || !indexBuffer.d->idxName || !GLProgram::programInUse()) return;
 
@@ -597,7 +597,7 @@ void GLBuffer::drawWithIndices(GLBuffer const &indexBuffer) const
     d->bindArray(false);
 }
 
-void GLBuffer::drawWithIndices(gfx::Primitive primitive, Index const *indices, dsize count) const
+void GLBuffer::drawWithIndices(gfx::Primitive primitive, const Index *indices, dsize count) const
 {
     if (!isReady() || !indices || !count || !GLProgram::programInUse()) return;
 
@@ -612,7 +612,7 @@ void GLBuffer::drawWithIndices(gfx::Primitive primitive, Index const *indices, d
     d->bindArray(false);
 }
 
-void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint count) const
+void GLBuffer::drawInstanced(const GLBuffer &instanceAttribs, duint first, dint count) const
 {
 #if defined (DE_HAVE_INSTANCES)
 
@@ -652,7 +652,7 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
         glDrawElementsInstanced(d->prim,
                                 count,
                                 GL_UNSIGNED_SHORT,
-                                   reinterpret_cast<void const *>(dintptr(first * 2)),
+                                   reinterpret_cast<const void *>(dintptr(first * 2)),
                                    GLsizei(instanceAttribs.count()));
         LIBGUI_ASSERT_GL_OK();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -687,7 +687,7 @@ dsize GLBuffer::count() const
     return d->count;
 }
 
-void GLBuffer::setFormat(AttribSpecs const &format)
+void GLBuffer::setFormat(const AttribSpecs &format)
 {
     d->specs = format;
 }

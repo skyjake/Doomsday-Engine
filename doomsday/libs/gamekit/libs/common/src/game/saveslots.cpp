@@ -149,12 +149,12 @@ bool SaveSlots::Slot::isUserWritable() const
     return d->userWritable;
 }
 
-String const &SaveSlots::Slot::id() const
+const String &SaveSlots::Slot::id() const
 {
     return d->id;
 }
 
-String const &SaveSlots::Slot::savePath() const
+const String &SaveSlots::Slot::savePath() const
 {
     return d->savePath;
 }
@@ -238,7 +238,7 @@ DE_PIMPL(SaveSlots)
         DE_FOR_EACH(Slots, i, sslots) { delete i->second; }
     }
 
-    SaveSlot *slotById(String const &id)
+    SaveSlot *slotById(const String &id)
     {
         Slots::const_iterator found = sslots.find(id);
         if (found != sslots.end())
@@ -269,7 +269,7 @@ DE_PIMPL(SaveSlots)
         return nullptr; // Not found.
     }
 
-    void fileAdded(File const &saveFolder, FileIndex const &)
+    void fileAdded(const File &saveFolder, const FileIndex &)
     {
         dispatch += [this, &saveFolder] ()
         {
@@ -280,7 +280,7 @@ DE_PIMPL(SaveSlots)
         };
     }
 
-    void fileRemoved(File const &saveFolder, FileIndex const &)
+    void fileRemoved(const File &saveFolder, const FileIndex &)
     {
         DE_FOR_EACH_CONST(Slots, i, sslots)
         {
@@ -294,7 +294,7 @@ DE_PIMPL(SaveSlots)
 
     void setAllIndexedSaves()
     {
-        auto const &index = SaveGames::get().saveIndex();
+        const auto &index = SaveGames::get().saveIndex();
         for (File *file : index.files())
         {
             fileAdded(*file, index);
@@ -305,7 +305,7 @@ DE_PIMPL(SaveSlots)
 SaveSlots::SaveSlots() : d(new Impl(this))
 {}
 
-void SaveSlots::add(String const &id, bool userWritable, String const &saveName, int menuWidgetId)
+void SaveSlots::add(const String &id, bool userWritable, const String &saveName, int menuWidgetId)
 {
     // Ensure the slot identifier is unique.
     if (d->slotById(id)) return;
@@ -319,12 +319,12 @@ int SaveSlots::count() const
     return int(d->sslots.size());
 }
 
-bool SaveSlots::has(String const &id) const
+bool SaveSlots::has(const String &id) const
 {
     return d->slotById(id) != 0;
 }
 
-SaveSlots::Slot &SaveSlots::slot(String const &id) const
+SaveSlots::Slot &SaveSlots::slot(const String &id) const
 {
     if (SaveSlot *sslot = d->slotById(id))
     {
@@ -334,12 +334,12 @@ SaveSlots::Slot &SaveSlots::slot(String const &id) const
     throw MissingSlotError("SaveSlots::slot", "Invalid slot id '" + id + "'");
 }
 
-SaveSlots::Slot *SaveSlots::slotBySaveName(String const &name) const
+SaveSlots::Slot *SaveSlots::slotBySaveName(const String &name) const
 {
     return d->slotBySavePath(SaveGames::savePath() / name);
 }
 
-SaveSlots::Slot *SaveSlots::slotBySavedUserDescription(String const &description) const
+SaveSlots::Slot *SaveSlots::slotBySavedUserDescription(const String &description) const
 {
     if (!description.isEmpty())
     {
@@ -355,7 +355,7 @@ SaveSlots::Slot *SaveSlots::slotBySavedUserDescription(String const &description
     return 0; // Not found.
 }
 
-SaveSlots::Slot *SaveSlots::slotByUserInput(String const &str) const
+SaveSlots::Slot *SaveSlots::slotByUserInput(const String &str) const
 {
     // Perhaps a user description of a saved session?
     if (Slot *sslot = slotBySavedUserDescription(str))

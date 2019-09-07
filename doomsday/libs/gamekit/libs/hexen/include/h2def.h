@@ -189,7 +189,7 @@ typedef enum {
 typedef struct classinfo_s
 {
     playerclass_t plrClass;
-    char const *niceName;
+    const char *niceName;
     dd_bool     userSelectable;
     mobjtype_t  mobjType;
     int         normalState;
@@ -210,9 +210,9 @@ typedef struct classinfo_s
     struct weaponpiecedata_s
     {
         Point2Raw   offset;
-        char const *patchName;
+        const char *patchName;
     } fourthWeaponPiece[WEAPON_FOURTH_PIECE_COUNT];
-    char const *fourthWeaponCompletePatchName;
+    const char *fourthWeaponCompletePatchName;
 } classinfo_t;
 
 DE_EXTERN_C classinfo_t classInfo[NUM_PLAYER_CLASSES];

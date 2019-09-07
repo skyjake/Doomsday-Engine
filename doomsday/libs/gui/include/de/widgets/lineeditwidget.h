@@ -42,16 +42,16 @@ public:
     DE_AUDIENCE(ContentChange, void editorContentChanged(LineEditWidget &))
 
 public:
-    LineEditWidget(String const &name= {});
+    LineEditWidget(const String &name= {});
 
-    void setText(String const &lineText) override;
+    void setText(const String &lineText) override;
 
     /**
      * Sets the text that will be shown in the editor when it is empty.
      *
      * @param hintText  Hint text.
      */
-    void setEmptyContentHint(String const &hintText, String const &hintFont = {});
+    void setEmptyContentHint(const String &hintText, const String &hintFont = {});
 
     /**
      * Enables or disables the signal emitted when the edit widget receives an
@@ -77,12 +77,12 @@ public:
     void focusLost() override;
     void update() override;
     void drawContent() override;
-    bool handleEvent(Event const &event) override;
+    bool handleEvent(const Event &event) override;
 
 public:
     static term::Key termKey(const KeyEvent &keyEvent);
 
-    static KeyModifiers modifiersFromKeyEvent(KeyEvent::Modifiers const &keyMods);
+    static KeyModifiers modifiersFromKeyEvent(const KeyEvent::Modifiers &keyMods);
 
 #if defined (DE_MOBILE)
 protected slots:

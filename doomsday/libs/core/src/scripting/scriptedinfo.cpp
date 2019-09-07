@@ -87,7 +87,7 @@ DE_PIMPL(ScriptedInfo)
         LOG_SCR_XVERBOSE("Processed contents:\n", process.globals().asText());
     }
 
-    void processElement(Info::Element const *element)
+    void processElement(const Info::Element *element)
     {
         if (element->isBlock())
         {
@@ -103,7 +103,7 @@ DE_PIMPL(ScriptedInfo)
         }
     }
 
-    void executeWithContext(Info::BlockElement const *context)
+    void executeWithContext(const Info::BlockElement *context)
     {
         Record &ns = process.globals();
 
@@ -134,7 +134,7 @@ DE_PIMPL(ScriptedInfo)
         }
     }
 
-    void inherit(Info::BlockElement const &block, InfoValue const &target)
+    void inherit(const Info::BlockElement &block, const InfoValue &target)
     {
         if (block.name().isEmpty())
         {
@@ -170,7 +170,7 @@ DE_PIMPL(ScriptedInfo)
             DE_ASSERT(!targetName.isEmpty());
 
             // Copy all present members of the target record.
-            Record const &src = ns[targetName].value<RecordValue>().dereference();
+            const Record &src = ns[targetName].value<RecordValue>().dereference();
             Record &dest = ns.subrecord(varName);
             dest.copyMembersFrom(src, Record::IgnoreDoubleUnderscoreMembers);
 
@@ -187,7 +187,7 @@ DE_PIMPL(ScriptedInfo)
         }
     }
 
-    void inheritFromAncestors(Info::BlockElement const &block, Info::BlockElement const *from)
+    void inheritFromAncestors(const Info::BlockElement &block, const Info::BlockElement *from)
     {
         if (!from) return;
 
@@ -218,13 +218,13 @@ DE_PIMPL(ScriptedInfo)
      * during processing of the ScriptedInfo document), or otherwise @c false, in which
      * case the script is assumed to be executed at a later point in time.
      */
-    bool isUnqualifiedScriptBlock(Info::BlockElement const &block)
+    bool isUnqualifiedScriptBlock(const Info::BlockElement &block)
     {
         if (block.blockType() != BLOCK_SCRIPT) return false;
-        for (auto const *child : block.contentsInOrder())
+        for (const auto *child : block.contentsInOrder())
         {
             if (!child->isKey()) return false;
-            Info::KeyElement const &key = child->as<Info::KeyElement>();
+            const Info::KeyElement &key = child->as<Info::KeyElement>();
             if (key.name() != KEY_SCRIPT && key.name() != KEY_CONDITION)
             {
                 return false;
@@ -241,7 +241,7 @@ DE_PIMPL(ScriptedInfo)
      *
      * @return Variable name.
      */
-    static String chooseScriptName(Record const &where)
+    static String chooseScriptName(const Record &where)
     {
         int counter = 0;
         for (;;)
@@ -252,7 +252,7 @@ DE_PIMPL(ScriptedInfo)
         }
     }
 
-    void processBlock(Info::BlockElement const &block)
+    void processBlock(const Info::BlockElement &block)
     {
         Record &ns = process.globals();
 
@@ -361,7 +361,7 @@ DE_PIMPL(ScriptedInfo)
                         auto *elem = i.second;
                         if (elem->isKey())
                         {
-                            auto const &key = elem->as<Info::KeyElement>();
+                            const auto &key = elem->as<Info::KeyElement>();
                             if (key.name() != KEY_CONDITION)
                             {
                                 blockRecord.addText(key.name(), key.value());
@@ -400,7 +400,7 @@ DE_PIMPL(ScriptedInfo)
      *
      * @return Variable name in the form <tt>ancestor.parent.elementname</tt>.
      */
-    String variableName(Info::Element const &element)
+    String variableName(const Info::Element &element)
     {
         String varName = element.name();
         for (Info::BlockElement *b = element.parent(); b != nullptr; b = b->parent())
@@ -457,7 +457,7 @@ DE_PIMPL(ScriptedInfo)
         return varName;
     }
 
-    Value *evaluate(String const &source, Info::BlockElement const *context)
+    Value *evaluate(const String &source, const Info::BlockElement *context)
     {
         script.reset(new Script(source));
         script->setPath(info.sourcePath()); // where the source comes from
@@ -477,7 +477,7 @@ DE_PIMPL(ScriptedInfo)
      *
      * @return Value instance. Caller gets ownership.
      */
-    Value *makeValue(InfoValue const &rawValue, Info::BlockElement const *context)
+    Value *makeValue(const InfoValue &rawValue, const Info::BlockElement *context)
     {
         if (rawValue.flags.testFlag(InfoValue::Script))
         {
@@ -486,13 +486,13 @@ DE_PIMPL(ScriptedInfo)
         return new TextValue(rawValue.text);
     }
 
-    void processKey(Info::KeyElement const &key)
+    void processKey(const Info::KeyElement &key)
     {
         std::unique_ptr<Value> v(makeValue(key.value(), key.parent()));
         process.globals().add(variableName(key)) = v.release();
     }
 
-    void processList(Info::ListElement const &list)
+    void processList(const Info::ListElement &list)
     {
         ArrayValue* av = new ArrayValue;
         for (const InfoValue &v : list.values())
@@ -502,7 +502,7 @@ DE_PIMPL(ScriptedInfo)
         process.globals().addArray(variableName(list), av);
     }
 
-    static void findBlocks(String const &blockType, Paths &paths, Record const &rec, const String& prefix = {})
+    static void findBlocks(const String &blockType, Paths &paths, const Record &rec, const String& prefix = {})
     {
         if (rec.hasMember(VAR_BLOCK_TYPE) &&
            !rec[VAR_BLOCK_TYPE].value().asText().compareWithoutCase(blockType))
@@ -530,21 +530,21 @@ void ScriptedInfo::clear()
     d->clear();
 }
 
-void ScriptedInfo::parse(String const &source)
+void ScriptedInfo::parse(const String &source)
 {
     d->clear();
     d->info.parse(source);
     d->processAll();
 }
 
-void ScriptedInfo::parse(File const &file)
+void ScriptedInfo::parse(const File &file)
 {
     d->clear();
     d->info.parse(file);
     d->processAll();
 }
 
-Value *ScriptedInfo::evaluate(String const &source)
+Value *ScriptedInfo::evaluate(const String &source)
 {
     return d->evaluate(source, nullptr);
 }
@@ -554,17 +554,17 @@ Record &ScriptedInfo::objectNamespace()
     return d->process.globals();
 }
 
-Record const &ScriptedInfo::objectNamespace() const
+const Record &ScriptedInfo::objectNamespace() const
 {
     return d->process.globals();
 }
 
-ScriptedInfo::Paths ScriptedInfo::allBlocksOfType(String const &blockType) const
+ScriptedInfo::Paths ScriptedInfo::allBlocksOfType(const String &blockType) const
 {
     return allBlocksOfType(blockType, d->process.globals());
 }
 
-String ScriptedInfo::absolutePathInContext(Record const &context, String const &relativePath) // static
+String ScriptedInfo::absolutePathInContext(const Record &context, const String &relativePath) // static
 {
     if (context.has(VAR_SOURCE))
     {
@@ -578,7 +578,7 @@ String ScriptedInfo::absolutePathInContext(Record const &context, String const &
             if (context.has(VAR_INHERITED_SOURCES))
             {
                 // Look in reverse so the latest inherited locations are checked first.
-                auto const &elems = context.geta(VAR_INHERITED_SOURCES);
+                const auto &elems = context.geta(VAR_INHERITED_SOURCES);
                 for (long i = elems.size() - 1; i >= 0; --i)
                 {
                     String inheritedPath = elems.at(i).asText().fileNamePath() / relativePath;
@@ -596,9 +596,9 @@ String ScriptedInfo::absolutePathInContext(Record const &context, String const &
     return relativePath;
 }
 
-bool ScriptedInfo::isTrue(Value const &value) // static
+bool ScriptedInfo::isTrue(const Value &value) // static
 {
-    if (TextValue const *textValue = maybeAs<TextValue>(value))
+    if (const TextValue *textValue = maybeAs<TextValue>(value))
     {
         // Text values are interpreted a bit more loosely.
         String const value = textValue->asText();
@@ -613,7 +613,7 @@ bool ScriptedInfo::isTrue(Value const &value) // static
     return value.isTrue();
 }
 
-bool ScriptedInfo::isTrue(RecordAccessor const &rec, String const &name, bool defaultValue)
+bool ScriptedInfo::isTrue(const RecordAccessor &rec, const String &name, bool defaultValue)
 {
     if (rec.has(name))
     {
@@ -622,12 +622,12 @@ bool ScriptedInfo::isTrue(RecordAccessor const &rec, String const &name, bool de
     return defaultValue;
 }
 
-String ScriptedInfo::blockType(Record const &block)
+String ScriptedInfo::blockType(const Record &block)
 {
     return block.gets(VAR_BLOCK_TYPE, BLOCK_GROUP).lower();
 }
 
-bool ScriptedInfo::isFalse(RecordAccessor const &rec, String const &name, bool defaultValue)
+bool ScriptedInfo::isFalse(const RecordAccessor &rec, const String &name, bool defaultValue)
 {
     if (rec.has(name))
     {
@@ -636,7 +636,7 @@ bool ScriptedInfo::isFalse(RecordAccessor const &rec, String const &name, bool d
     return defaultValue;
 }
 
-bool ScriptedInfo::isFalse(String const &token) // static
+bool ScriptedInfo::isFalse(const String &token) // static
 {
     // Text values are interpreted a bit more loosely.
     if (!token.compareWithoutCase("false") ||
@@ -648,35 +648,35 @@ bool ScriptedInfo::isFalse(String const &token) // static
     return false;
 }
 
-bool ScriptedInfo::isFalse(Value const &value) // static
+bool ScriptedInfo::isFalse(const Value &value) // static
 {
-    if (TextValue const *textValue = maybeAs<TextValue>(value))
+    if (const TextValue *textValue = maybeAs<TextValue>(value))
     {
         return isFalse(textValue->asText());
     }
     return !value.isTrue();
 }
 
-ScriptedInfo::Paths ScriptedInfo::allBlocksOfType(String const &blockType, Record const &root) // static
+ScriptedInfo::Paths ScriptedInfo::allBlocksOfType(const String &blockType, const Record &root) // static
 {
     Paths found;
     Impl::findBlocks(blockType, found, root);
     return found;
 }
 
-Record::Subrecords ScriptedInfo::subrecordsOfType(String const &blockType, Record const &record) // static
+Record::Subrecords ScriptedInfo::subrecordsOfType(const String &blockType, const Record &record) // static
 {
-    return record.subrecords([&] (Record const &sub) {
+    return record.subrecords([&] (const Record &sub) {
         return sub.gets(VAR_BLOCK_TYPE, "") == blockType;
     });
 }
 
-StringList ScriptedInfo::sortRecordsBySource(Record::Subrecords const &subrecs)
+StringList ScriptedInfo::sortRecordsBySource(const Record::Subrecords &subrecs)
 {
     StringList keys =
         map<StringList>(subrecs, [](const std::pair<String, Record *> &v) { return v.first; });
 
-    std::sort(keys.begin(), keys.end(), [&subrecs] (String const &a, String const &b) -> bool
+    std::sort(keys.begin(), keys.end(), [&subrecs] (const String &a, const String &b) -> bool
     {
         auto const src1 = Info::sourceLineTable().sourcePathAndLineNumber(subrecs[a]->getui(VAR_SOURCE, 0));
         auto const src2 = Info::sourceLineTable().sourcePathAndLineNumber(subrecs[b]->getui(VAR_SOURCE, 0));
@@ -692,12 +692,12 @@ StringList ScriptedInfo::sortRecordsBySource(Record::Subrecords const &subrecs)
     return keys;
 }
 
-String ScriptedInfo::sourceLocation(RecordAccessor const &record)
+String ScriptedInfo::sourceLocation(const RecordAccessor &record)
 {
     return Info::sourceLocation(record.getui(VAR_SOURCE, 0));
 }
 
-SourceLineTable::PathAndLine ScriptedInfo::sourcePathAndLine(RecordAccessor const &record)
+SourceLineTable::PathAndLine ScriptedInfo::sourcePathAndLine(const RecordAccessor &record)
 {
     return Info::sourceLineTable().sourcePathAndLineNumber(record.getui(VAR_SOURCE, 0));
 }

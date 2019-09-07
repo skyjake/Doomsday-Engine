@@ -34,21 +34,21 @@ public:
     DE_AUDIENCE(Change, void directoryListChanged())
 
 public:
-    DirectoryListDialog(String const &name = String());
+    DirectoryListDialog(const String &name = String());
 
-    Id addGroup(String const &title, String const &description);
+    Id addGroup(const String &title, const String &description);
 
     /**
      * Sets the list elements.
      * @param elements  Array of text strings, or a single TextValue.
      */
-    void setValue(Id const &group, Value const &elements);
+    void setValue(const Id &group, const Value &elements);
 
     /**
      * Returns the contents of the directory list.
      * Array of text strings, or a single TextValue.
      */
-    Value const &value(Id const &group) const;
+    const Value &value(const Id &group) const;
 
 protected:
     void prepare() override;

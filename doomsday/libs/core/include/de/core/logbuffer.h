@@ -117,7 +117,7 @@ public:
      *
      * @param entryFilter  Filter object. @c NULL to use the default filter.
      */
-    void setEntryFilter(IFilter const *entryFilter);
+    void setEntryFilter(const IFilter *entryFilter);
 
     /**
      * Checks if a log entry will be enabled if it has a particular set of
@@ -164,7 +164,7 @@ public:
      * @param path      Path of the file.
      * @param behavior  What to do with existing unflushed entries.
      */
-    void setOutputFile(String const &path,
+    void setOutputFile(const String &path,
                        OutputChangeBehavior behavior = FlushFirstToOldOutputs);
 
     /**

@@ -39,13 +39,13 @@ bool HexLex::atEnd()
     return (_readPos >= Str_Length(_script));
 }
 
-void HexLex::syntaxError(char const *message)
+void HexLex::syntaxError(const char *message)
 {
     Con_Error("HexLex: SyntaxError in \"%s\" on line #%i.\n%s",
               F_PrettyPath(Str_Text(&_sourcePath)), _lineNumber, message);
 }
 
-HexLex::HexLex(ddstring_s const *script, ddstring_s const *sourcePath)
+HexLex::HexLex(const ddstring_s *script, const ddstring_s *sourcePath)
     : _script    (0)
     , _readPos   (0)
     , _lineNumber(0)
@@ -71,7 +71,7 @@ HexLex::~HexLex()
     Str_Free(&_token);
 }
 
-void HexLex::parse(ddstring_s const *script)
+void HexLex::parse(const ddstring_s *script)
 {
     _script     = script;
     _readPos    = 0;
@@ -80,7 +80,7 @@ void HexLex::parse(ddstring_s const *script)
     Str_Clear(&_token);
 }
 
-void HexLex::setSourcePath(ddstring_s const *sourcePath)
+void HexLex::setSourcePath(const ddstring_s *sourcePath)
 {
     if(!sourcePath)
     {
@@ -201,7 +201,7 @@ void HexLex::unreadToken()
     _alreadyGot = true;
 }
 
-ddstring_s const *HexLex::token()
+const ddstring_s *HexLex::token()
 {
     return &_token;
 }
@@ -224,7 +224,7 @@ ddouble HexLex::readNumber()
     return number;
 }
 
-ddstring_s const *HexLex::readString()
+const ddstring_s *HexLex::readString()
 {
     if(!readToken())
     {
@@ -233,7 +233,7 @@ ddstring_s const *HexLex::readString()
     return &_token;
 }
 
-res::Uri HexLex::readUri(String const &defaultScheme)
+res::Uri HexLex::readUri(const String &defaultScheme)
 {
     if(!readToken())
     {

@@ -42,7 +42,7 @@ class TextRootWidget;
 class DE_PUBLIC Widget : public de::Widget
 {
 public:
-    Widget(String const &name = String());
+    Widget(const String &name = String());
 
     TextRootWidget &root() const;
 
@@ -85,7 +85,7 @@ public:
      * Returns the rule rectangle that defines the placement of the widget on
      * the target canvas.
      */
-    RuleRectangle const &rule() const;
+    const RuleRectangle &rule() const;
 
     /**
      * Returns the position of the cursor for the widget. If the widget
@@ -113,7 +113,7 @@ public:
     /**
      * Checks actions and triggers them when suitable event is received.
      */
-    bool handleEvent(Event const &event);
+    bool handleEvent(const Event &event);
 
 private:
     DE_PRIVATE(d)

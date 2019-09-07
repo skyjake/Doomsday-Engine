@@ -52,11 +52,11 @@ public:
     }
 
 #if _DEBUG
-    String const &name() const {
+    const String &name() const {
         return name_;
     }
 
-    FileRef &setName(String const &newName) {
+    FileRef &setName(const String &newName) {
         name_ = newName;
         return *this;
     }
@@ -128,7 +128,7 @@ public:
         }
     }
 
-    Node *findDirectoryNode(hash_type hashKey, PathTree::Node const &directoryNode)
+    Node *findDirectoryNode(hash_type hashKey, const PathTree::Node &directoryNode)
     {
         Node *node = buckets[hashKey].first;
         while (node && &node->fileRef.directoryNode() != &directoryNode)
@@ -138,7 +138,7 @@ public:
         return node;
     }
 
-    static hash_type hashName(String const &str)
+    static hash_type hashName(const String &str)
     {
         hash_type hashKey = 0;
         int op = 0;
@@ -195,7 +195,7 @@ struct FS1::Scheme::Impl
      *
      * @param searchPath  The path to resolve and search.
      */
-    void addFromSearchPath(SearchPath const &searchPath)
+    void addFromSearchPath(const SearchPath &searchPath)
     {
         try
         {
@@ -203,7 +203,7 @@ struct FS1::Scheme::Impl
             addDirectoryPathAndMaybeDescendBranch(true/*do descend*/, searchPath.resolved(),
                                                   true/*is-directory*/, searchPath.flags());
         }
-        catch (res::Uri::ResolveError const &er)
+        catch (const res::Uri::ResolveError &er)
         {
             LOGDEV_RES_VERBOSE(er.asText());
         }
@@ -332,7 +332,7 @@ FS1::Scheme::~Scheme()
     delete d;
 }
 
-String const &FS1::Scheme::name() const
+const String &FS1::Scheme::name() const
 {
     return d->name;
 }
@@ -372,7 +372,7 @@ void FS1::Scheme::rebuild()
 #endif*/
 }
 
-static inline String composeSchemeName(String const &filePath)
+static inline String composeSchemeName(const String &filePath)
 {
     return filePath.fileNameWithoutExtension();
 }
@@ -417,7 +417,7 @@ bool FS1::Scheme::add(PathTree::Node &resourceNode)
     return isNewNode;
 }
 
-static String const &nameForPathGroup(FS1::PathGroup group)
+static const String &nameForPathGroup(FS1::PathGroup group)
 {
     static String const names[] = {
         "Override",
@@ -429,7 +429,7 @@ static String const &nameForPathGroup(FS1::PathGroup group)
     return names[int(group)];
 }
 
-bool FS1::Scheme::addSearchPath(SearchPath const &search, FS1::PathGroup group)
+bool FS1::Scheme::addSearchPath(const SearchPath &search, FS1::PathGroup group)
 {
     LOG_AS("Scheme::addSearchPath");
 
@@ -472,7 +472,7 @@ void FS1::Scheme::clearAllSearchPaths()
     d->searchPaths.clear();
 }
 
-FS1::Scheme::SearchPaths const &FS1::Scheme::allSearchPaths() const
+const FS1::Scheme::SearchPaths &FS1::Scheme::allSearchPaths() const
 {
     return d->searchPaths;
 }
@@ -539,7 +539,7 @@ void FS1::Scheme::debugPrint() const
         NameHash::Bucket &bucket = d->nameHash.buckets[key];
         for (NameHash::Node *node = bucket.first; node; node = node->next)
         {
-            FileRef const &fileRef = node->fileRef;
+            const FileRef &fileRef = node->fileRef;
 
             LOGDEV_RES_MSG("  %u - %u:\"%s\" => %s")
                 << schemeIdx << key << fileRef.name()

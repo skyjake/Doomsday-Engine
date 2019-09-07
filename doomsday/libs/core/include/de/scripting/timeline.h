@@ -63,9 +63,9 @@ public:
      *
      * @return Scheduled Script (owned by Timeline).
      */
-    Script &addScript(TimeSpan at, String const &source, String const &sourcePath = "");
+    Script &addScript(TimeSpan at, const String &source, const String &sourcePath = "");
 
-    void addFromInfo(Record const &timelineRecord);
+    void addFromInfo(const Record &timelineRecord);
 
     /**
      * Clock for executing a timeline.
@@ -73,7 +73,7 @@ public:
     class DE_PUBLIC Clock
     {
     public:
-        Clock(Timeline const &timeline, Record *context = nullptr);
+        Clock(const Timeline &timeline, Record *context = nullptr);
 
         /**
          * Returns the current time of the clock.

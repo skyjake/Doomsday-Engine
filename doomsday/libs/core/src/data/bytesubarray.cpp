@@ -26,11 +26,11 @@ ByteSubArray::ByteSubArray(IByteArray &mainArray, Offset at, Size size)
     : _mainArray(&mainArray), _constMainArray(&mainArray), _at(at), _size(size)
 {}
 
-ByteSubArray::ByteSubArray(IByteArray const &mainArray, Offset at, Size size)
+ByteSubArray::ByteSubArray(const IByteArray &mainArray, Offset at, Size size)
     : _mainArray(nullptr), _constMainArray(&mainArray), _at(at), _size(size)
 {}
 
-ByteSubArray::ByteSubArray(IByteArray const &mainArray, Offset at)
+ByteSubArray::ByteSubArray(const IByteArray &mainArray, Offset at)
     : _mainArray(nullptr), _constMainArray(&mainArray), _at(at), _size(mainArray.size() - at)
 {}
 
@@ -44,7 +44,7 @@ void ByteSubArray::get(Offset at, Byte *values, Size count) const
     _constMainArray->get(_at + at, values, count);
 }
 
-void ByteSubArray::set(Offset at, Byte const *values, Size count)
+void ByteSubArray::set(Offset at, const Byte *values, Size count)
 {
     if (!_mainArray)
     {

@@ -50,24 +50,24 @@ public:
     };
 
 public:
-    ScrollAreaWidget(String const &name = String());
+    ScrollAreaWidget(const String &name = String());
 
-    void setScrollBarColor(DotPath const &colorId);
+    void setScrollBarColor(const DotPath &colorId);
 
     void setOrigin(Origin origin);
     Origin origin() const;
 
-    void setIndicatorUv(Rectanglef const &uv);
-    void setIndicatorUv(Vec2f const &uvPoint);
+    void setIndicatorUv(const Rectanglef &uv);
+    void setIndicatorUv(const Vec2f &uvPoint);
 
     void setContentWidth(int width);
-    void setContentWidth(Rule const &width);
+    void setContentWidth(const Rule &width);
     void setContentHeight(int height);
-    void setContentHeight(Rule const &height);
-    void setContentSize(Rule const &width, Rule const &height);
-    void setContentSize(ISizeRule const &dimensions);
-    void setContentSize(Vec2i const &size);
-    void setContentSize(Vec2ui const &size);
+    void setContentHeight(const Rule &height);
+    void setContentSize(const Rule &width, const Rule &height);
+    void setContentSize(const ISizeRule &dimensions);
+    void setContentSize(const Vec2i &size);
+    void setContentSize(const Vec2ui &size);
 
     void modifyContentWidth(int delta);
     void modifyContentHeight(int delta);
@@ -75,12 +75,12 @@ public:
     int contentWidth() const;
     int contentHeight() const;
 
-    RuleRectangle const &contentRule() const;
+    const RuleRectangle &contentRule() const;
 
     AnimationRule &scrollPositionX() const;
     AnimationRule &scrollPositionY() const;
-    Rule const &maximumScrollX() const;
-    Rule const &maximumScrollY() const;
+    const Rule &maximumScrollX() const;
+    const Rule &maximumScrollY() const;
 
     bool isScrolling() const;
 
@@ -108,11 +108,11 @@ public:
      * @param to    Scroll position.
      * @param span  Animation time span.
      */
-    void scroll(Vec2i const &to, const TimeSpan& span = 0.0);
+    void scroll(const Vec2i &to, const TimeSpan& span = 0.0);
 
     void scrollX(int to, TimeSpan span = 0.0);
     void scrollY(int to, TimeSpan span = 0.0);
-    void scrollY(Rule const &to, TimeSpan span = 0.0);
+    void scrollY(const Rule &to, TimeSpan span = 0.0);
 
     bool isScrollable() const;
 
@@ -143,13 +143,13 @@ public:
     void enableIndicatorDraw(bool enabled);
 
     void glMakeScrollIndicatorGeometry(GuiVertexBuilder &verts,
-                                       Vec2f const &origin = Vec2f(0, 0));
+                                       const Vec2f &origin = Vec2f(0, 0));
 
     // Events.
     //void viewResized() override;
     void update() override;
     void drawContent() override;
-    bool handleEvent(Event const &event) override;
+    bool handleEvent(const Event &event) override;
 
     void scrollToTop(const TimeSpan& span = 0.3);
 
@@ -167,7 +167,7 @@ public:
      * @param widget  Widget to center on.
      * @param span    Animation duration.
      */
-    void scrollToWidget(GuiWidget const &widget, TimeSpan span = 0.3);
+    void scrollToWidget(const GuiWidget &widget, TimeSpan span = 0.3);
 
     /**
      * Finds the topmost scroll area that can be scrolled. May return this widget

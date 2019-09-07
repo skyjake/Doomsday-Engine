@@ -111,7 +111,7 @@ public:
     DE_AUDIENCE(ChildRemoval, void widgetChildRemoved(Widget &child))
 
 public:
-    Widget(String const &name = String());
+    Widget(const String &name = String());
     virtual ~Widget();
 
     DE_CAST_METHODS()
@@ -122,7 +122,7 @@ public:
     Id id() const;
 
     String name() const;
-    void setName(String const &name);
+    void setName(const String &name);
 
     /**
      * Forms the dotted path of the widget. Assumes that the names of this
@@ -156,7 +156,7 @@ public:
      *
      * @return @c true, if behavior is set; otherwise @c false.
      */
-    bool hasFamilyBehavior(Behavior const &flags) const;
+    bool hasFamilyBehavior(const Behavior &flags) const;
 
     /**
      * Sets or clears one or more behavior flags.
@@ -181,7 +181,7 @@ public:
      *
      * @param name  Name of a widget for forwards navigation.
      */
-    void setFocusNext(String const &name);
+    void setFocusNext(const String &name);
 
     /**
      * Sets the identifier of the widget that will receive focus when
@@ -189,7 +189,7 @@ public:
      *
      * @param name  Name of a widget for backwards navigation.
      */
-    void setFocusPrev(String const &name);
+    void setFocusPrev(const String &name);
 
     String focusNext() const;
     String focusPrev() const;
@@ -236,13 +236,13 @@ public:
 
     Widget &addFirst(Widget *child);
 
-    Widget &insertBefore(Widget *child, Widget const &otherChild);
+    Widget &insertBefore(Widget *child, const Widget &otherChild);
     Widget *remove(Widget &child);
-    Widget *find(String const &name);
-    bool isInTree(Widget const &child) const;
-    bool hasAncestor(Widget const &ancestorOrParent) const;
-    Widget const *find(String const &name) const;
-    void moveChildBefore(Widget *child, Widget const &otherChild);
+    Widget *find(const String &name);
+    bool isInTree(const Widget &child) const;
+    bool hasAncestor(const Widget &ancestorOrParent) const;
+    const Widget *find(const String &name) const;
+    void moveChildBefore(Widget *child, const Widget &otherChild);
     void moveChildToLast(Widget &child);
     Children children() const;
     dsize childCount() const;
@@ -301,7 +301,7 @@ public:
     void orphan();
 
     // Utilities.
-    String uniqueName(String const &name) const;
+    String uniqueName(const String &name) const;
 
     /**
      * Arguments for notifyTree() and notifyTreeReversed().
@@ -327,10 +327,10 @@ public:
     };
 
     NotifyArgs notifyArgsForDraw() const;
-    NotifyArgs::Result notifyTree(NotifyArgs const &args);
-    NotifyArgs::Result notifySelfAndTree(NotifyArgs const &args);
-    void notifyTreeReversed(NotifyArgs const &args);
-    virtual bool dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &));
+    NotifyArgs::Result notifyTree(const NotifyArgs &args);
+    NotifyArgs::Result notifySelfAndTree(const NotifyArgs &args);
+    void notifyTreeReversed(const NotifyArgs &args);
+    virtual bool dispatchEvent(const Event &event, bool (Widget::*memberFunc)(const Event &));
 
     enum class CollectMode { OnlyVisible, All };
     virtual void collectUnreadyAssets(AssetGroup &collected,
@@ -352,14 +352,14 @@ public:
     virtual void draw();
     virtual void preDrawChildren();
     virtual void postDrawChildren();
-    virtual bool handleEvent(Event const &event);
+    virtual bool handleEvent(const Event &event);
 
     // Implements IObject.
     Record &      objectNamespace() override;
     const Record &objectNamespace() const override;
 
 public:
-    static void setFocusCycle(WidgetList const &order);
+    static void setFocusCycle(const WidgetList &order);
 
 private:
     DE_PRIVATE(d)
@@ -386,7 +386,7 @@ public:
     WidgetType *operator -> () const {
         return _ptr;
     }
-    operator WidgetType const * () const {
+    operator const WidgetType * () const {
         return _ptr;
     }
     operator WidgetType * () {

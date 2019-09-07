@@ -61,7 +61,7 @@ public:
      *
      * @return  @c true, if the path was defined; otherwise @c false.
      */
-    bool path(String const &key, NativePath &value) const;
+    bool path(const String &key, NativePath &value) const;
 
     /**
      * Returns a defaults preference.
@@ -71,7 +71,7 @@ public:
      *
      * @return @c true, iff the value is defined in the 'defaults' info file.
      */
-    bool defaults(String const &key, String &value) const;
+    bool defaults(const String &key, String &value) const;
 
 private:
     DE_PRIVATE(d)

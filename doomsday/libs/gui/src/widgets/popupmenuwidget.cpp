@@ -78,7 +78,7 @@ DE_GUI_PIMPL(PopupMenuWidget)
             _id = Id::None;
         }
 
-        void glMakeGeometry(GuiVertexBuilder &verts, Rectanglef const &rect) override
+        void glMakeGeometry(GuiVertexBuilder &verts, const Rectanglef &rect) override
         {
             if (!_id.isNone())
             {
@@ -94,9 +94,9 @@ DE_GUI_PIMPL(PopupMenuWidget)
     };
 
     ColorTheme colorTheme = Normal;
-    ButtonWidget const *hover;
+    const ButtonWidget *hover;
     int oldScrollY;
-    Rule const *widestItem;
+    const Rule *widestItem;
     IndirectRule *maxItemWidth;
     SafeWidgetPtr<PopupWidget> parentPopup;
 
@@ -123,7 +123,7 @@ DE_GUI_PIMPL(PopupMenuWidget)
         maxItemWidth->setSource(*widestItem);
     }
 
-    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
+    void widgetCreatedForItem(GuiWidget &widget, const ui::Item &item)
     {
         // Popup menu items' background is provided by the popup.
         widget.set(Background());
@@ -165,7 +165,7 @@ DE_GUI_PIMPL(PopupMenuWidget)
         }
     }
 
-    void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
+    void widgetUpdatedForItem(GuiWidget &widget, const ui::Item &item)
     {
         if (ButtonWidget *b = maybeAs<ButtonWidget>(widget))
         {
@@ -224,7 +224,7 @@ DE_GUI_PIMPL(PopupMenuWidget)
 
     void updateItemHitRules()
     {
-        GridLayout const &layout = self().menu().layout();
+        const GridLayout &layout = self().menu().layout();
         AutoRef<Rule const> halfUnit = self().rule("halfunit");
 
         for (GuiWidget *widget : self().menu().childWidgets())
@@ -270,15 +270,15 @@ DE_GUI_PIMPL(PopupMenuWidget)
     {
         bool const useExtraPadding = hasButtonsWithImages();
 
-        auto const &padding = rule("popup.menu.paddedmargin");
-        auto const &none    = rule("popup.menu.margin");
+        const auto &padding = rule("popup.menu.paddedmargin");
+        const auto &none    = rule("popup.menu.margin");
 
         for (GuiWidget *widget : self().menu().childWidgets())
         {
             // Pad annotations with the full amount.
             if (LabelWidget *label = maybeAs<LabelWidget>(widget))
             {
-                ui::Item const *item = self().menu().organizer().findItemForWidget(*widget);
+                const ui::Item *item = self().menu().organizer().findItemForWidget(*widget);
                 if (item->semantics().testFlag(ui::Item::Annotation))
                 {
                     if (useExtraPadding)
@@ -300,7 +300,7 @@ DE_GUI_PIMPL(PopupMenuWidget)
                 updateImageColor(*button);
                 if (useExtraPadding)
                 {
-                    Rule const *padRule = holdRef(padding);
+                    const Rule *padRule = holdRef(padding);
                     if (button->hasImage() && button->textAlignment() == ui::AlignRight)
                     {
                         LabelWidget::ContentLayout layout;
@@ -384,12 +384,12 @@ DE_GUI_PIMPL(PopupMenuWidget)
         self().requestGeometry();
     }
 
-    void variableValueChanged(Variable &, Value const &newValue)
+    void variableValueChanged(Variable &, const Value &newValue)
     {
         bool changed = false;
 
         // Update widgets of annotation items.
-        self().items().forAll([this, &newValue, &changed] (ui::Item const &item) {
+        self().items().forAll([this, &newValue, &changed] (const ui::Item &item) {
             if (item.semantics().testFlag(ui::Item::Annotation)) {
                 self().menu().itemWidget<GuiWidget>(item).show(newValue.isTrue());
                 changed = true;
@@ -428,7 +428,7 @@ DE_GUI_PIMPL(PopupMenuWidget)
     }
 };
 
-PopupMenuWidget::PopupMenuWidget(String const &name)
+PopupMenuWidget::PopupMenuWidget(const String &name)
     : PopupWidget(name), d(new Impl(this))
 {
     setContent(new MenuWidget(name.isEmpty()? "" : name + "-content"));

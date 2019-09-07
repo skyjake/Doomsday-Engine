@@ -65,8 +65,8 @@ public:
     de::String formatAsText() const;
     de::String description() const;
     de::File &asFile();
-    de::File const &asFile() const;
-    de::File const &sourceFile() const;
+    const de::File &asFile() const;
+    const de::File &sourceFile() const;
 
     de::String rootPath() const;
 
@@ -95,7 +95,7 @@ public:
      */
     de::Record &packageMetadata();
 
-    de::Record const &packageMetadata() const;
+    const de::Record &packageMetadata() const;
 
     /**
      * Determines if the bundle is nested inside another bundle.
@@ -133,7 +133,7 @@ public:
      * Returns the WAD file lump directory.
      * @return LumpDirectory for WADs; @c nullptr for non-WAD formats.
      */
-    res::LumpDirectory const *lumpDirectory() const;
+    const res::LumpDirectory *lumpDirectory() const;
 
     /**
      * Attempts to guess which game this data bundle is supposed to be used with.
@@ -147,7 +147,7 @@ public:
     // Implements IByteArray.
     Size size() const override;
     void get(Offset at, Byte *values, Size count) const override;
-    void set(Offset at, Byte const *values, Size count) override;
+    void set(Offset at, const Byte *values, Size count) override;
 
     // Implements IObject.
     de::Record &objectNamespace() override;
@@ -160,11 +160,11 @@ public:
      * @param packageId  Identifier.
      * @return Bundle format.
      */
-    static Format packageBundleFormat(de::String const &packageId);
+    static Format packageBundleFormat(const de::String &packageId);
 
-    static DataBundle const *bundleForPackage(de::String const &packageId);
+    static const DataBundle *bundleForPackage(const de::String &packageId);
 
-    static DataBundle const *tryLocateDataFile(de::Package const &package, de::String const &dataFilePath);
+    static const DataBundle *tryLocateDataFile(const de::Package &package, const de::String &dataFilePath);
 
     /**
      * Compiles a list of all data bundles that have been loaded via
@@ -173,7 +173,7 @@ public:
      *
      * @return List of bundles.
      */
-    static de::List<DataBundle const *> loadedBundles();
+    static de::List<const DataBundle *> loadedBundles();
 
     /**
      * Finds all DataFile and DataFolder instances with a matching file name or
@@ -186,14 +186,14 @@ public:
      *
      * @return List of matching files.
      */
-    static de::List<DataBundle const *> findAllNative(de::String const &fileNameOrPartialNativePath);
+    static de::List<const DataBundle *> findAllNative(const de::String &fileNameOrPartialNativePath);
 
     static de::StringList gameTags();
     static de::String anyGameTagPattern();
-    static de::String cleanIdentifier(de::String const &text);
-    static de::String stripVersion(de::String const &text, de::Version *version = nullptr);
-    static de::String stripRedundantParts(de::String const &id);
-    static de::String versionFromTimestamp(de::Time const &timestamp);
+    static de::String cleanIdentifier(const de::String &text);
+    static de::String stripVersion(const de::String &text, de::Version *version = nullptr);
+    static de::String stripRedundantParts(const de::String &id);
+    static de::String versionFromTimestamp(const de::Time &timestamp);
 
 protected:
     void setFormat(Format format);

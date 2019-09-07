@@ -50,7 +50,7 @@ static String readAndPercentEncodeRawName(de::Reader &from)
 
 } // namespace internal
 
-Composite::Component::Component(Vec2i const &origin)
+Composite::Component::Component(const Vec2i &origin)
     : _origin (origin)
     , _lumpNum(-1)
 {}
@@ -60,19 +60,19 @@ void Composite::Component::setOrigin(const Vec2i &origin)
     _origin = origin;
 }
 
-bool Composite::Component::operator == (Component const &other) const
+bool Composite::Component::operator == (const Component &other) const
 {
     if (lumpNum() != other.lumpNum()) return false;
     if (origin()  != other.origin())  return false;
     return true;
 }
 
-bool Composite::Component::operator != (Component const &other) const
+bool Composite::Component::operator != (const Component &other) const
 {
     return !(*this == other);
 }
 
-Vec2i const &Composite::Component::origin() const
+const Vec2i &Composite::Component::origin() const
 {
     return _origin;
 }
@@ -99,8 +99,8 @@ DE_PIMPL_NOREF(Composite)
     Impl() : origIndex(-1) {}
 };
 
-Composite::Composite(String const &percentEncodedName,
-    Vec2ui const &logicalDimensions, Flags flags)
+Composite::Composite(const String &percentEncodedName,
+    const Vec2ui &logicalDimensions, Flags flags)
     : d(new Impl)
 {
     d->name              = percentEncodedName;
@@ -108,7 +108,7 @@ Composite::Composite(String const &percentEncodedName,
     d->logicalDimensions = logicalDimensions;
 }
 
-bool Composite::operator == (Composite const &other) const
+bool Composite::operator == (const Composite &other) const
 {
     if (dimensions()        != other.dimensions())        return false;
     if (logicalDimensions() != other.logicalDimensions()) return false;
@@ -128,22 +128,22 @@ String Composite::percentEncodedName() const
     return d->name;
 }
 
-String const &Composite::percentEncodedNameRef() const
+const String &Composite::percentEncodedNameRef() const
 {
     return d->name;
 }
 
-Vec2ui const &Composite::logicalDimensions() const
+const Vec2ui &Composite::logicalDimensions() const
 {
     return d->logicalDimensions;
 }
 
-Vec2ui const &Composite::dimensions() const
+const Vec2ui &Composite::dimensions() const
 {
     return d->dimensions;
 }
 
-Composite::Components const &Composite::components() const
+const Composite::Components &Composite::components() const
 {
     return d->components;
 }
@@ -255,7 +255,7 @@ Composite *Composite::constructFrom(de::Reader &reader,
                         geom |= Rectanglei::fromSize(Vec2i(comp.origin().x, comp.origin().y),
                                                      Vec2ui(info.dimensions.x, info.dimensions.y));
                     }
-                    catch (IByteArray::OffsetError const &)
+                    catch (const IByteArray::OffsetError &)
                     {
                         LOG_RES_WARNING("Component image \"%s\" (#%i) does not appear to be a valid Patch. "
                                         "It may be missing from composite texture \"%s\".")

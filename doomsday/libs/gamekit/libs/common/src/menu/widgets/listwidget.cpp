@@ -29,13 +29,13 @@ using namespace de;
 namespace common {
 namespace menu {
 
-ListWidget::Item::Item(String const &text, int userValue)
+ListWidget::Item::Item(const String &text, int userValue)
 {
     setText(text);
     setUserValue(userValue);
 }
 
-void ListWidget::Item::setText(String const &newText)
+void ListWidget::Item::setText(const String &newText)
 {
     _text = newText;
 }
@@ -83,13 +83,13 @@ ListWidget &ListWidget::addItem(Item *item)
     return *this;
 }
 
-ListWidget &ListWidget::addItems(Items const &itemsToAdd)
+ListWidget &ListWidget::addItems(const Items &itemsToAdd)
 {
     for(Item *item : itemsToAdd) addItem(item);
     return *this;
 }
 
-ListWidget::Items const &ListWidget::items() const
+const ListWidget::Items &ListWidget::items() const
 {
     return d->items;
 }
@@ -123,7 +123,7 @@ void ListWidget::updateGeometry()
 void ListWidget::draw() const
 {
     bool const flashSelection = (isActive() && selectionIsVisible());
-    Vec4f const &textColor = mnRendState->textColors[color()];
+    const Vec4f &textColor = mnRendState->textColors[color()];
     float t = flashSelection? 1 : 0;
 
     Vec4f flashColor = textColor;

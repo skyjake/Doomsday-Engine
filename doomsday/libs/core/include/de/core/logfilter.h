@@ -51,7 +51,7 @@ public:
     bool allowDev(duint32 md) const;
     LogEntry::Level minLevel(duint32 md) const;
 
-    void read(Record const &rec);
+    void read(const Record &rec);
     void write(Record &rec) const;
 
     static String domainRecordName(LogEntry::Context domain);

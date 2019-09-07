@@ -51,7 +51,7 @@ public:
     /// Required resource URI is not defined. @ingroup errors
     DE_ERROR(MissingResourceUriError);
 
-    DE_DEFINE_AUDIENCE(Deletion,       void textureManifestBeingDeleted   (TextureManifest const &manifest))
+    DE_DEFINE_AUDIENCE(Deletion,       void textureManifestBeingDeleted   (const TextureManifest &manifest))
     DE_DEFINE_AUDIENCE(UniqueIdChange, void textureManifestUniqueIdChanged(TextureManifest &manifest))
     DE_DEFINE_AUDIENCE(TextureDerived, void textureManifestTextureDerived (TextureManifest &manifest, Texture &texture))
 
@@ -60,7 +60,7 @@ public:
 public:
     static void setTextureConstructor(TextureConstructor constructor);
 
-    TextureManifest(de::PathTree::NodeArgs const &args);
+    TextureManifest(const de::PathTree::NodeArgs &args);
 
     /**
      * Derive a new logical Texture instance by interpreting the manifest.
@@ -77,7 +77,7 @@ public:
     TextureScheme &scheme() const;
 
     /// Convenience method for returning the name of the owning scheme.
-    de::String const &schemeName() const;
+    const de::String &schemeName() const;
 
     /**
      * Compose a URI of the form "scheme:path" for the TextureManifest.
@@ -140,7 +140,7 @@ public:
      * @return  @c true iff @a newUri differed to the existing URI, which
      *          was subsequently changed.
      */
-    bool setResourceUri(res::Uri const &newUri);
+    bool setResourceUri(const res::Uri &newUri);
 
     /**
      * Returns the scheme-unique identifier for the manifest.
@@ -158,7 +158,7 @@ public:
     /**
      * Returns the logical dimensions property of the manifest.
      */
-    de::Vec2ui const &logicalDimensions() const;
+    const de::Vec2ui &logicalDimensions() const;
 
     /**
      * Change the logical dimensions property of the manifest.
@@ -167,19 +167,19 @@ public:
      * which case their value will be inherited from the pixel dimensions of
      * the image at load time.
      */
-    bool setLogicalDimensions(de::Vec2ui const &newDimensions);
+    bool setLogicalDimensions(const de::Vec2ui &newDimensions);
 
     /**
      * Returns the world origin offset property of the manifest.
      */
-    de::Vec2i const &origin() const;
+    const de::Vec2i &origin() const;
 
     /**
      * Change the world origin offest property of the manifest.
      *
      * @param newOrigin  New origin offset.
      */
-    void setOrigin(de::Vec2i const &newOrigin);
+    void setOrigin(const de::Vec2i &newOrigin);
 
     /**
      * Returns the texture flags property of the manifest.

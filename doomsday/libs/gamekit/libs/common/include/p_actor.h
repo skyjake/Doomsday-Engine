@@ -76,7 +76,7 @@ void P_MobjClearSRVO(mobj_t *mo);
  */
 void P_MobjAngleSRVOTicker(mobj_t *mo);
 
-dd_bool P_MobjIsCamera(mobj_t const *mo);
+dd_bool P_MobjIsCamera(const mobj_t *mo);
 
 /**
  * Returns @c true iff @a mobj is currently "crunchable", i.e., it can be turned
@@ -95,7 +95,7 @@ dd_bool Mobj_IsDroppedItem(mobj_t *mobj);
  *
  * @param mobj  Mobj instance.
  */
-terraintype_t const *P_MobjFloorTerrain(mobj_t const *mobj);
+const terraintype_t *P_MobjFloorTerrain(const mobj_t *mobj);
 
 /**
  * The first three bits of the selector special byte contain a relative

@@ -78,12 +78,12 @@ void GameProfiles::setGames(Games &games)
     games.audienceForAddition() += d;
 }
 
-GameProfiles::Profile const &GameProfiles::null()
+const GameProfiles::Profile &GameProfiles::null()
 {
     return nullGameProfile;
 }
 
-GameProfile const &GameProfiles::builtInProfile(String const &gameId) const
+const GameProfile &GameProfiles::builtInProfile(const String &gameId) const
 {
     return find(DoomsdayApp::games()[gameId].title()).as<GameProfile>();
 }
@@ -100,9 +100,9 @@ LoopResult GameProfiles::forAll(std::function<LoopResult (Profile &)> func)
     });
 }
 
-LoopResult GameProfiles::forAll(std::function<LoopResult (Profile const &)> func) const
+LoopResult GameProfiles::forAll(std::function<LoopResult (const Profile &)> func) const
 {
-    return Profiles::forAll([&func] (AbstractProfile const &prof) -> LoopResult
+    return Profiles::forAll([&func] (const AbstractProfile &prof) -> LoopResult
     {
         if (auto result = func(prof.as<Profile>()))
         {
@@ -112,7 +112,7 @@ LoopResult GameProfiles::forAll(std::function<LoopResult (Profile const &)> func
     });
 }
 
-List<GameProfile *> GameProfiles::profilesInFamily(de::String const &family)
+List<GameProfile *> GameProfiles::profilesInFamily(const de::String &family)
 {
     List<GameProfile *> profs;
     forAll([&profs, &family] (GameProfile &profile)
@@ -134,7 +134,7 @@ List<GameProfile *> GameProfiles::profilesSortedByFamily()
         profs << &profile;
         return LoopContinue;
     });
-    std::sort(profs.begin(), profs.end(), [] (GameProfile const *a, GameProfile const *b)
+    std::sort(profs.begin(), profs.end(), [] (const GameProfile *a, const GameProfile *b)
     {
         String family1 = a->game().family();
         String family2 = b->game().family();
@@ -149,10 +149,10 @@ List<GameProfile *> GameProfiles::profilesSortedByFamily()
     return profs;
 }
 
-List<GameProfile const *> GameProfiles::allPlayableProfiles() const
+List<const GameProfile *> GameProfiles::allPlayableProfiles() const
 {
-    List<GameProfile const *> playable;
-    forAll([&playable] (Profile const &prof)
+    List<const GameProfile *> playable;
+    forAll([&playable] (const Profile &prof)
     {
         if (prof.isPlayable()) playable << &prof;
         return LoopContinue;
@@ -160,16 +160,16 @@ List<GameProfile const *> GameProfiles::allPlayableProfiles() const
     return playable;
 }
 
-Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement const &block)
+Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(const Info::BlockElement &block)
 {
     std::unique_ptr<Profile> prof(new Profile);
 
     prof->setGame(block.keyValue(VAR_GAME()).text);
 
-    if (Info::ListElement const *pkgs = block.findAs<Info::ListElement>(VAR_PACKAGES()))
+    if (const Info::ListElement *pkgs = block.findAs<Info::ListElement>(VAR_PACKAGES()))
     {
         StringList ids;
-        for (auto const &val : pkgs->values())
+        for (const auto &val : pkgs->values())
         {
             ids << val.text;
         }
@@ -227,7 +227,7 @@ DE_PIMPL_NOREF(GameProfiles::Profile)
 
     Impl() {}
 
-    Impl(Impl const &other)
+    Impl(const Impl &other)
         : gameId             (other.gameId)
         , customDataFile     (other.customDataFile)
         , packages           (other.packages)
@@ -241,13 +241,13 @@ DE_PIMPL_NOREF(GameProfiles::Profile)
     {}
 };
 
-GameProfiles::Profile::Profile(String const &name)
+GameProfiles::Profile::Profile(const String &name)
     : d(new Impl)
 {
     setName(name);
 }
 
-GameProfiles::Profile::Profile(Profile const &other)
+GameProfiles::Profile::Profile(const Profile &other)
     : AbstractProfile(other)
     , d(new Impl(*other.d))
 {}
@@ -268,7 +268,7 @@ GameProfiles::Profile &GameProfiles::Profile::operator=(const Profile &other)
     return *this;
 }
 
-void GameProfiles::Profile::setGame(String const &id)
+void GameProfiles::Profile::setGame(const String &id)
 {
     if (d->gameId != id)
     {
@@ -313,7 +313,7 @@ void GameProfiles::Profile::setUseGameRequirements(bool useGameRequirements)
     }
 }
 
-void GameProfiles::Profile::setAutoStartMap(String const &map)
+void GameProfiles::Profile::setAutoStartMap(const String &map)
 {
     if (d->autoStartMap != map)
     {
@@ -361,7 +361,7 @@ void GameProfiles::Profile::setOptionValue(const String &option, const Value &va
     }
 }
 
-bool GameProfiles::Profile::appendPackage(String const &id)
+bool GameProfiles::Profile::appendPackage(const String &id)
 {
     if (!d->packages.contains(id))
     {
@@ -542,19 +542,19 @@ StringList GameProfiles::Profile::packagesAffectingGameplay() const
 
 StringList GameProfiles::Profile::unavailablePackages() const
 {
-    return de::filter(allRequiredPackages(), [] (String const &pkgId) {
+    return de::filter(allRequiredPackages(), [] (const String &pkgId) {
         return !PackageLoader::get().isAvailable(pkgId);
     });
 }
 
-bool GameProfiles::Profile::isCompatibleWithPackages(StringList const &ids) const
+bool GameProfiles::Profile::isCompatibleWithPackages(const StringList &ids) const
 {
     return GameProfiles::arePackageListsCompatible(packagesAffectingGameplay(), ids);
 }
 
 bool GameProfiles::Profile::isPlayable() const
 {
-    for (String const &pkg : allRequiredPackages())
+    for (const String &pkg : allRequiredPackages())
     {
         if (!App::packageLoader().isAvailable(pkg))
             return false;
@@ -564,7 +564,7 @@ bool GameProfiles::Profile::isPlayable() const
 
 void GameProfiles::Profile::loadPackages() const
 {
-    for (String const &id : allRequiredPackages())
+    for (const String &id : allRequiredPackages())
     {
         PackageLoader::get().load(id);
     }
@@ -629,7 +629,7 @@ const Record &GameProfiles::Profile::objectNamespace() const
     return d->values;
 }
 
-bool GameProfiles::arePackageListsCompatible(StringList const &list1, StringList const &list2) // static
+bool GameProfiles::arePackageListsCompatible(const StringList &list1, const StringList &list2) // static
 {
     if (list1.size() != list2.size()) return false;
 

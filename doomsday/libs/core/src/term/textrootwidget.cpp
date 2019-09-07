@@ -37,7 +37,7 @@ TextCanvas &TextRootWidget::rootCanvas()
     return *_canvas;
 }
 
-void TextRootWidget::setViewSize(Size const &viewSize)
+void TextRootWidget::setViewSize(const Size &viewSize)
 {
     // Shouldn't go below 1 x 1.
     Size vs = viewSize.max(Size(1, 1));

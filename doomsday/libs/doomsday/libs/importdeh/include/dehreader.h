@@ -48,6 +48,6 @@ using DehReaderFlags = de::Flags;
  * @param patchIsCustom  Source of the patch data is a user-supplied add-on
  * @param flags          @ref DehReaderFlags
  */
-void readDehPatch(de::Block const &patch, bool patchIsCustom, DehReaderFlags flags = 0);
+void readDehPatch(const de::Block &patch, bool patchIsCustom, DehReaderFlags flags = 0);
 
 #endif  // LIBDEHREAD_DEHREADER_H

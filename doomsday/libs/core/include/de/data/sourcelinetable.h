@@ -52,7 +52,7 @@ public:
      *
      * @return Unique source number.
      */
-    LineId lineId(String const &path, duint lineNumber);
+    LineId lineId(const String &path, duint lineNumber);
 
     String sourceLocation(LineId sourceId) const;
 

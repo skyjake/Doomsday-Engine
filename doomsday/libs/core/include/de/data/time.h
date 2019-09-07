@@ -162,7 +162,7 @@ public:
      */
     Time();
 
-    Time(Time const &other);
+    Time(const Time &other);
     Time(Time &&moved);
 
     Time(const TimePoint &tp);
@@ -179,7 +179,7 @@ public:
 
     static Time invalidTime();
 
-    Time &operator = (Time const &other);
+    Time &operator = (const Time &other);
     Time &operator = (Time &&moved);
 
     bool      isValid() const;
@@ -187,17 +187,17 @@ public:
     TimePoint toTimePoint() const;
     uint64_t  millisecondsSinceEpoch() const;
 
-    bool operator<(Time const &t) const;
+    bool operator<(const Time &t) const;
 
-    inline bool operator>(Time const &t) const { return t < *this; }
+    inline bool operator>(const Time &t) const { return t < *this; }
 
-    inline bool operator<=(Time const &t) const { return !(*this > t); }
+    inline bool operator<=(const Time &t) const { return !(*this > t); }
 
-    inline bool operator>=(Time const &t) const { return !(*this < t); }
+    inline bool operator>=(const Time &t) const { return !(*this < t); }
 
-    bool operator==(Time const &t) const;
+    bool operator==(const Time &t) const;
 
-    inline bool operator!=(Time const &t) const { return !(*this == t); }
+    inline bool operator!=(const Time &t) const { return !(*this == t); }
 
     /**
      * Add a time span to the point of time.
@@ -206,7 +206,7 @@ public:
      *
      * @return  Modified time.
      */
-    Time operator+(Span const &span) const;
+    Time operator+(const Span &span) const;
 
     /**
      * Subtract a time span from the point of time.
@@ -215,7 +215,7 @@ public:
      *
      * @return  Modified time.
      */
-    inline Time operator-(Span const &span) const { return *this + (-span); }
+    inline Time operator-(const Span &span) const { return *this + (-span); }
 
     /**
      * Modify point of time.
@@ -224,7 +224,7 @@ public:
      *
      * @return  Reference to this Time.
      */
-    Time &operator+=(Span const &span);
+    Time &operator+=(const Span &span);
 
     /**
      * Modify point of time.
@@ -233,14 +233,14 @@ public:
      *
      * @return  Reference to this Time.
      */
-    inline Time &operator-=(Span const &span) { return *this += -span; }
+    inline Time &operator-=(const Span &span) { return *this += -span; }
 
     /**
      * Difference between two times.
      *
      * @param earlierTime  Time at some point before this time.
      */
-    Span operator-(Time const &earlierTime) const;
+    Span operator-(const Time &earlierTime) const;
 
     /**
      * Difference between this time and the current point of time.
@@ -265,7 +265,7 @@ public:
      *
      * @return  Span.
      */
-    inline Span deltaTo(Time const &laterTime) const { return laterTime - *this; }
+    inline Span deltaTo(const Time &laterTime) const { return laterTime - *this; }
 
     /**
      * Makes a text representation of the time (default is ISO format, e.g.,
@@ -312,7 +312,7 @@ public:
      *
      * @return Time that corresponds @a text.
      */
-    static Time fromText(String const &text, Format format = ISOFormat);
+    static Time fromText(const String &text, Format format = ISOFormat);
 
     static Time parse(const String &text, const char *format);
 

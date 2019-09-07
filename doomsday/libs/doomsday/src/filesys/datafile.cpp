@@ -55,7 +55,7 @@ void DataFile::get(Offset at, Byte *values, Size count) const
     DataBundle::get(at, values, count);
 }
 
-void DataFile::set(Offset at, Byte const *values, Size count)
+void DataFile::set(Offset at, const Byte *values, Size count)
 {
     DataBundle::set(at, values, count);
 }

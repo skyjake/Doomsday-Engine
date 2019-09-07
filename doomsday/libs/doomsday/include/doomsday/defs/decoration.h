@@ -36,9 +36,9 @@ class LIBDOOMSDAY_PUBLIC Decoration : public Definition
 {
 public:
     Decoration()                        : Definition() {}
-    Decoration(Decoration const &other) : Definition(other) {}
+    Decoration(const Decoration &other) : Definition(other) {}
     Decoration(de::Record &d)           : Definition(d) {}
-    Decoration(de::Record const &d)     : Definition(d) {}
+    Decoration(const de::Record &d)     : Definition(d) {}
 
     void resetToDefaults();
 
@@ -46,7 +46,7 @@ public:
     bool hasLight(int index) const;
 
     de::Record       &light(int index);
-    de::Record const &light(int index) const;
+    const de::Record &light(int index) const;
 
     de::Record &addLight();
 };

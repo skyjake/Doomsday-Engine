@@ -97,7 +97,7 @@ public:
     /**
      * Returns the flags of the expression.
      */
-    Flags const &flags () const;
+    const Flags &flags () const;
 
     /**
      * Sets the flags of the expression.

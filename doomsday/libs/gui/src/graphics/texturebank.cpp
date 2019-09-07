@@ -28,12 +28,12 @@ DE_PIMPL_NOREF(TextureBank::ImageSource)
     int atlasId = 0;
 };
 
-TextureBank::ImageSource::ImageSource(DotPath const &sourcePath) : d(new Impl)
+TextureBank::ImageSource::ImageSource(const DotPath &sourcePath) : d(new Impl)
 {
     d->sourcePath = sourcePath;
 }
 
-TextureBank::ImageSource::ImageSource(int atlasId, DotPath const &sourcePath) : d(new Impl)
+TextureBank::ImageSource::ImageSource(int atlasId, const DotPath &sourcePath) : d(new Impl)
 {
     d->sourcePath = sourcePath;
     d->atlasId    = atlasId;
@@ -58,7 +58,7 @@ DE_PIMPL(TextureBank)
         Id _id { Id::None };
         std::unique_ptr<Image> pendingImage;
 
-        TextureData(AtlasId atlasId, Image const &image, Impl *owner) : d(owner), atlasId(atlasId)
+        TextureData(AtlasId atlasId, const Image &image, Impl *owner) : d(owner), atlasId(atlasId)
         {
             if (image)
             {
@@ -84,7 +84,7 @@ DE_PIMPL(TextureBank)
             }
         }
 
-        Id const &id()
+        const Id &id()
         {
             if (pendingImage && d->atlases.contains(atlasId))
             {
@@ -107,7 +107,7 @@ DE_PIMPL(TextureBank)
     }
 };
 
-TextureBank::TextureBank(char const *nameForLog, Flags const &flags)
+TextureBank::TextureBank(const char *nameForLog, const Flags &flags)
     : Bank(nameForLog, flags), d(new Impl(this))
 {}
 
@@ -127,13 +127,13 @@ IAtlas *TextureBank::atlas(AtlasId atlasId)
     return found != d->atlases.end()? found->second : nullptr;
 }
 
-TextureBank::Allocation TextureBank::texture(DotPath const &id)
+TextureBank::Allocation TextureBank::texture(const DotPath &id)
 {
     auto &item = data(id).as<Impl::TextureData>();
     return Allocation{item.id(), item.atlasId};
 }
 
-Path TextureBank::sourcePathForAtlasId(Id const &id) const
+Path TextureBank::sourcePathForAtlasId(const Id &id) const
 {
     auto found = d->pathForAtlasId.find(id);
     if (found != d->pathForAtlasId.end())
@@ -147,7 +147,7 @@ Bank::IData *TextureBank::loadFromSource(ISource &source)
 {
     auto &src = source.as<ImageSource>();
     auto *data = new Impl::TextureData(src.atlasId(), src.load(), d);
-    if (auto const &texId = data->id())
+    if (const auto &texId = data->id())
     {
         d->pathForAtlasId.insert(texId, std::make_pair(src.atlasId(), src.sourcePath().toString()));
     }

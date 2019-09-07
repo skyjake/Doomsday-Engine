@@ -50,7 +50,7 @@ Compound &FunctionStatement::compound()
     return _function->compound();
 }
 
-void FunctionStatement::addArgument(String const &argName, Expression *defaultValue)
+void FunctionStatement::addArgument(const String &argName, Expression *defaultValue)
 {
     _function->arguments().push_back(argName);
     if (defaultValue)

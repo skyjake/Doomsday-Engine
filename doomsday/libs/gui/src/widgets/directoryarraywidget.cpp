@@ -34,7 +34,7 @@ static const char *CFG_LAST_FOLDER("resource.latestDirectory");
 DE_PIMPL_NOREF(DirectoryArrayWidget)
 {};
 
-DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &name)
+DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, const String &name)
     : VariableArrayWidget(variable, name)
     , d(new Impl)
 {
@@ -60,7 +60,7 @@ DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &nam
     updateFromVariable();
 }
 
-String DirectoryArrayWidget::labelForElement(Value const &value) const
+String DirectoryArrayWidget::labelForElement(const Value &value) const
 {
     return NativePath(value.asText()).pretty();
 }

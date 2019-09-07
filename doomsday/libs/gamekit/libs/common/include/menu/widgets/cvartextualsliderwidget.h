@@ -35,20 +35,20 @@ namespace menu {
 class CVarTextualSliderWidget : public CVarSliderWidget
 {
 public:
-    CVarTextualSliderWidget(char const *cvarPath, float min = 0.0f, float max = 1.0f,
+    CVarTextualSliderWidget(const char *cvarPath, float min = 0.0f, float max = 1.0f,
                             float step = 0.1f, bool floatMode = true);
     virtual ~CVarTextualSliderWidget();
 
     void draw() const;
     void updateGeometry();
 
-    CVarTextualSliderWidget &setEmptyText(de::String const &newEmptyText);
+    CVarTextualSliderWidget &setEmptyText(const de::String &newEmptyText);
     de::String emptyText() const;
 
-    CVarTextualSliderWidget &setOnethSuffix(de::String const &newOnethSuffix);
+    CVarTextualSliderWidget &setOnethSuffix(const de::String &newOnethSuffix);
     de::String onethSuffix() const;
 
-    CVarTextualSliderWidget &setNthSuffix(de::String const &newNthSuffix);
+    CVarTextualSliderWidget &setNthSuffix(const de::String &newNthSuffix);
     de::String nthSuffix() const;
 
 private:

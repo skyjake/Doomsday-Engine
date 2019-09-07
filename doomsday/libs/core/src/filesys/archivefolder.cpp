@@ -21,7 +21,7 @@
 
 namespace de {
 
-ArchiveFolder::ArchiveFolder(File &sourceArchiveFile, String const &name) : Folder(name)
+ArchiveFolder::ArchiveFolder(File &sourceArchiveFile, const String &name) : Folder(name)
 {
     // Create the feed.
     attach(new ArchiveFeed(sourceArchiveFile));
@@ -63,7 +63,7 @@ Archive &ArchiveFolder::archive()
     return primaryFeed()->as<ArchiveFeed>().archive();
 }
 
-Archive const &ArchiveFolder::archive() const
+const Archive &ArchiveFolder::archive() const
 {
     return const_cast<ArchiveFolder *>(this)->archive();
 }

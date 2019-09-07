@@ -45,7 +45,7 @@ DE_PIMPL_NOREF(Variable)
 
     Impl() = default;
 
-    Impl(Impl const &other)
+    Impl(const Impl &other)
         : de::IPrivate()
         , name (other.name)
         , value(other.value->duplicate())
@@ -66,7 +66,7 @@ DE_AUDIENCE_METHOD(Variable, Deletion)
 DE_AUDIENCE_METHOD(Variable, Change)
 DE_AUDIENCE_METHOD(Variable, ChangeFrom)
 
-Variable::Variable(const String &name, Value *initial, Flags const &m)
+Variable::Variable(const String &name, Value *initial, const Flags &m)
     : d(new Impl)
 {
     std::unique_ptr<Value> v(initial);
@@ -80,7 +80,7 @@ Variable::Variable(const String &name, Value *initial, Flags const &m)
     }
 }
 
-Variable::Variable(Variable const &other)
+Variable::Variable(const Variable &other)
     : d(new Impl(*other.d))
 {}
 
@@ -89,7 +89,7 @@ Variable::~Variable()
     DE_NOTIFY(Deletion, i) i->variableBeingDeleted(*this);
 }
 
-String const &Variable::name() const
+const String &Variable::name() const
 {
     return d->name;
 }
@@ -100,7 +100,7 @@ Variable &Variable::operator = (Value *v)
     return *this;
 }
 
-Variable &Variable::operator = (String const &textValue)
+Variable &Variable::operator = (const String &textValue)
 {
     set(new TextValue(textValue));
     return *this;
@@ -129,7 +129,7 @@ Variable &Variable::set(Value *v)
             // Did it actually change? Let's compare...
             notify = !oldValue || oldValue->compare(*v);
         }
-        catch (Error const &)
+        catch (const Error &)
         {
             // Perhaps the values weren't comparable?
             notify = true;
@@ -150,7 +150,7 @@ Variable &Variable::set(Value *v)
     return *this;
 }
 
-Variable &Variable::set(Value const &v)
+Variable &Variable::set(const Value &v)
 {
     set(v.duplicate());
     return *this;
@@ -195,12 +195,12 @@ Record &Variable::valueAsRecord()
     return value<RecordValue>().dereference();
 }
 
-Record const &Variable::valueAsRecord() const
+const Record &Variable::valueAsRecord() const
 {
     return value<RecordValue>().dereference();
 }
 
-ArrayValue const &Variable::array() const
+const ArrayValue &Variable::array() const
 {
     return value<ArrayValue>();
 }
@@ -215,7 +215,7 @@ Variable::operator Record & ()
     return valueAsRecord();
 }
 
-Variable::operator Record const & () const
+Variable::operator const Record & () const
 {
     return valueAsRecord();
 }
@@ -235,7 +235,7 @@ Flags Variable::flags() const
     return d->flags;
 }
 
-void Variable::setFlags(Flags const &flags, FlagOpArg operation)
+void Variable::setFlags(const Flags &flags, FlagOpArg operation)
 {
     applyFlagOperation(d->flags, flags, operation);
 }
@@ -246,16 +246,16 @@ Variable &Variable::setReadOnly()
     return *this;
 }
 
-bool Variable::isValid(Value const &v) const
+bool Variable::isValid(const Value &v) const
 {
     /// @todo  Make sure this actually works and add func, record, ref.
-    if ((!d->flags.testFlag(AllowNone)       && dynamic_cast<NoneValue const *>(&v)      ) ||
-        (!d->flags.testFlag(AllowNumber)     && dynamic_cast<NumberValue const *>(&v)    ) ||
-        (!d->flags.testFlag(AllowText)       && dynamic_cast<TextValue const *>(&v)      ) ||
-        (!d->flags.testFlag(AllowArray)      && dynamic_cast<ArrayValue const *>(&v)     ) ||
-        (!d->flags.testFlag(AllowDictionary) && dynamic_cast<DictionaryValue const *>(&v)) ||
-        (!d->flags.testFlag(AllowBlock)      && dynamic_cast<BlockValue const *>(&v)     ) ||
-        (!d->flags.testFlag(AllowTime)       && dynamic_cast<TimeValue const *>(&v)      )  )
+    if ((!d->flags.testFlag(AllowNone)       && dynamic_cast<const NoneValue *>(&v)      ) ||
+        (!d->flags.testFlag(AllowNumber)     && dynamic_cast<const NumberValue *>(&v)    ) ||
+        (!d->flags.testFlag(AllowText)       && dynamic_cast<const TextValue *>(&v)      ) ||
+        (!d->flags.testFlag(AllowArray)      && dynamic_cast<const ArrayValue *>(&v)     ) ||
+        (!d->flags.testFlag(AllowDictionary) && dynamic_cast<const DictionaryValue *>(&v)) ||
+        (!d->flags.testFlag(AllowBlock)      && dynamic_cast<const BlockValue *>(&v)     ) ||
+        (!d->flags.testFlag(AllowTime)       && dynamic_cast<const TimeValue *>(&v)      )  )
     {
         return false;
     }
@@ -263,7 +263,7 @@ bool Variable::isValid(Value const &v) const
     return true;
 }
 
-void Variable::verifyValid(Value const &v) const
+void Variable::verifyValid(const Value &v) const
 {
     if (!isValid(v))
     {
@@ -273,7 +273,7 @@ void Variable::verifyValid(Value const &v) const
     }
 }
 
-void Variable::verifyWritable(Value const &attemptedNewValue)
+void Variable::verifyWritable(const Value &attemptedNewValue)
 {
     if (d->flags & ReadOnly)
     {
@@ -291,7 +291,7 @@ void Variable::verifyWritable(Value const &attemptedNewValue)
     }
 }
 
-void Variable::verifyName(String const &s)
+void Variable::verifyName(const String &s)
 {
     if (s.indexOf('.'))
     {

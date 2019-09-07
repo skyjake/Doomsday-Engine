@@ -139,7 +139,7 @@ DE_PIMPL(GLTextureFramebuffer)
                 }
                 resolvedFbo.setState(NotReady);
             }
-            catch (ConfigError const &er)
+            catch (const ConfigError &er)
             {
                 try
                 {
@@ -150,7 +150,7 @@ DE_PIMPL(GLTextureFramebuffer)
                     self().configure(size, ColorDepthStencil);
                     resolvedFbo.configure(Color0, *color[0].texture);
                 }
-                catch (ConfigError const &er)
+                catch (const ConfigError &er)
                 {
                     try
                     {
@@ -161,7 +161,7 @@ DE_PIMPL(GLTextureFramebuffer)
                         self().configure(Color0, *color[0].texture, Depth);
                         resolvedFbo.setState(NotReady);
                     }
-                    catch (ConfigError const &er)
+                    catch (const ConfigError &er)
                     {
                         LOG_GL_WARNING("Using final framebuffer configuration fallback 3 "
                                        "(only depth used for rendering, depth & stencil "
@@ -179,7 +179,7 @@ DE_PIMPL(GLTextureFramebuffer)
         LIBGUI_ASSERT_GL_OK();
     }
 
-    void resize(Size const &newSize)
+    void resize(const Size &newSize)
     {
         if (size != newSize)
         {
@@ -190,7 +190,7 @@ DE_PIMPL(GLTextureFramebuffer)
 };
 
 GLTextureFramebuffer::GLTextureFramebuffer(Image::Format colorFormat,
-                                           Size const &  initialSize,
+                                           const Size &  initialSize,
                                            int           sampleCount)
     : d(new Impl(this))
 {
@@ -254,7 +254,7 @@ void GLTextureFramebuffer::setColorFormat(Image::Format colorFormat)
     }
 }
 
-void GLTextureFramebuffer::resize(Size const &newSize)
+void GLTextureFramebuffer::resize(const Size &newSize)
 {
     d->resize(newSize);
 }

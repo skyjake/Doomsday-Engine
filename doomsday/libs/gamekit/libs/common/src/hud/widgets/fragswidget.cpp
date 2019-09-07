@@ -30,7 +30,7 @@
 using namespace de;
 
 guidata_frags_t::guidata_frags_t(void (*updateGeometry) (HudWidget *wi),
-                                 void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                                 void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                                  dint player)
     : HudWidget(updateGeometry,
                 drawer,
@@ -49,7 +49,7 @@ void guidata_frags_t::tick(timespan_t /*elapsed*/)
 {
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
-    player_t const *plr = &::players[player()];
+    const player_t *plr = &::players[player()];
 
     _value = 0;
     for(dint i = 0; i < MAXPLAYERS; ++i)
@@ -61,7 +61,7 @@ void guidata_frags_t::tick(timespan_t /*elapsed*/)
     }
 }
 
-void FragsWidget_Draw(guidata_frags_t *frags, Point2Raw const *offset)
+void FragsWidget_Draw(guidata_frags_t *frags, const Point2Raw *offset)
 {
 #if __JDOOM__ || __JDOOM64__
 #  define TRACKING              ( 0 )
@@ -136,7 +136,7 @@ void FragsWidget_UpdateGeometry(guidata_frags_t *frags)
 #undef TRACKING
 }
 
-void SBarFragsWidget_Draw(guidata_frags_t *frags, Point2Raw const *offset)
+void SBarFragsWidget_Draw(guidata_frags_t *frags, const Point2Raw *offset)
 {
 #define X_ORIGIN                (-ST_WIDTH / 2 )
 #define Y_ORIGIN                (-ST_HEIGHT )

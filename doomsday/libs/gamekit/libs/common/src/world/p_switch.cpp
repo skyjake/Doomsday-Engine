@@ -288,7 +288,7 @@ static void playSwitchSound(Side *side, uint sectionFlags, int sound)
     }
     else
     {
-        mobj_t const *sideEmitter = reinterpret_cast<mobj_t const *>
+        const mobj_t *sideEmitter = reinterpret_cast<const mobj_t *>
                 (P_GetPtrp(side, DMU_EMITTER | sectionFlags));
         S_StopSound(0, sideEmitter);
         S_StartSound(sound, sideEmitter);
@@ -414,7 +414,7 @@ static void startButton(Side *side, SideSection section, world_Material *mat, in
     }
 }
 
-static int chooseDefaultSound(switchlist_t const *info)
+static int chooseDefaultSound(const switchlist_t *info)
 {
     /// @todo Get these defaults from switchinfo.
 #if __JHEXEN__
@@ -436,7 +436,7 @@ dd_bool P_ToggleSwitch2(Side *side, SideSection section, int sound, dd_bool sile
     world_Material *current = reinterpret_cast<world_Material *>
                               (P_GetPtrp(side, sectionFlags | DMU_MATERIAL));
 
-    switchlist_t const *info;
+    const switchlist_t *info;
     if (world_Material *mat = findSwitch(current, &info))
     {
         if (!silent)

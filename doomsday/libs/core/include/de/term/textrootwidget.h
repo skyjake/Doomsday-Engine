@@ -58,7 +58,7 @@ public:
      *
      * @param viewSize  New size.
      */
-    void setViewSize(Size const &viewSize);
+    void setViewSize(const Size &viewSize);
 
     term::Widget *focus() const;
 

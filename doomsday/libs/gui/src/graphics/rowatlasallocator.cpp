@@ -94,7 +94,7 @@ DE_PIMPL(RowAtlasAllocator)
              *
              * @return If an empty slot was created, it is returned. Otherwise @c nullptr.
              */
-            Slot *allocateAndSplit(Id const &allocId, duint widthWithMargin)
+            Slot *allocateAndSplit(const Id &allocId, duint widthWithMargin)
             {
                 DE_ASSERT(isEmpty());
                 DE_ASSERT(width >= widthWithMargin);
@@ -144,7 +144,7 @@ DE_PIMPL(RowAtlasAllocator)
             }
 
             struct SortByWidth {
-                bool operator () (Slot const *a, Slot const *b) const {
+                bool operator () (const Slot *a, const Slot *b) const {
                     if (a->width == b->width) return a < b;
                     return a->width > b->width;
                 }
@@ -270,7 +270,7 @@ DE_PIMPL(RowAtlasAllocator)
             DE_ASSERT(vacant.find(slot) == vacant.end());
         }
 
-        Slot *findBestVacancy(Atlas::Size const &size) const
+        Slot *findBestVacancy(const Atlas::Size &size) const
         {
             Slot *best = nullptr;
 
@@ -305,7 +305,7 @@ DE_PIMPL(RowAtlasAllocator)
          *
          * @return Allocated slot, or @c nullptr.
          */
-        Slot *alloc(Atlas::Size const &size, Rectanglei &rect, Id::Type id = Id::None)
+        Slot *alloc(const Atlas::Size &size, Rectanglei &rect, Id::Type id = Id::None)
         {
             Slot *slot = findBestVacancy(size);
             if (!slot) return nullptr;
@@ -405,7 +405,7 @@ DE_PIMPL(RowAtlasAllocator)
             }
         }
 
-        void release(Id const &id)
+        void release(const Id &id)
         {
             DE_ASSERT(slotsById.contains(id));
 
@@ -446,8 +446,8 @@ DE_PIMPL(RowAtlasAllocator)
         Id::Type id;
         Atlas::Size size;
 
-        ContentSize(Id const &allocId, Vec2ui const &sz) : id(allocId), size(sz) {}
-        bool operator < (ContentSize const &other) const {
+        ContentSize(const Id &allocId, const Vec2ui &sz) : id(allocId), size(sz) {}
+        bool operator < (const ContentSize &other) const {
             if (size.y == other.size.y) {
                 // Secondary sorting by descending width.
                 return size.x > other.size.x;
@@ -469,7 +469,7 @@ DE_PIMPL(RowAtlasAllocator)
         Allocations optimal;
         std::unique_ptr<Rows> revised(new Rows(this));
 
-        for (auto const &ct : descending)
+        for (const auto &ct : descending)
         {
             Rectanglei optRect;
             if (!revised->alloc(ct.size, optRect, ct.id))
@@ -493,7 +493,7 @@ DE_PIMPL(RowAtlasAllocator)
 RowAtlasAllocator::RowAtlasAllocator() : d(new Impl(this))
 {}
 
-void RowAtlasAllocator::setMetrics(Atlas::Size const &totalSize, int margin)
+void RowAtlasAllocator::setMetrics(const Atlas::Size &totalSize, int margin)
 {
     d->size   = totalSize;
     d->margin = margin;
@@ -508,8 +508,8 @@ void RowAtlasAllocator::clear()
     d->allocs.clear();
 }
 
-Id RowAtlasAllocator::allocate(Atlas::Size const &size, Rectanglei &rect,
-                               Id const &knownId)
+Id RowAtlasAllocator::allocate(const Atlas::Size &size, Rectanglei &rect,
+                               const Id &knownId)
 {
     if (auto *slot = d->rows->alloc(size, rect, knownId))
     {
@@ -521,7 +521,7 @@ Id RowAtlasAllocator::allocate(Atlas::Size const &size, Rectanglei &rect,
     return 0;
 }
 
-void RowAtlasAllocator::release(Id const &id)
+void RowAtlasAllocator::release(const Id &id)
 {
     DE_ASSERT(d->allocs.contains(id));
 
@@ -544,7 +544,7 @@ Atlas::Ids RowAtlasAllocator::ids() const
     return ids;
 }
 
-void RowAtlasAllocator::rect(Id const &id, Rectanglei &rect) const
+void RowAtlasAllocator::rect(const Id &id, Rectanglei &rect) const
 {
     DE_ASSERT(d->allocs.contains(id));
     rect = d->allocs[id];

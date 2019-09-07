@@ -59,7 +59,7 @@ namespace internal {
                 gameIdKey.beginsWith("chex"));
     }
 
-    static inline String toMapId(res::Uri const &mapUri)
+    static inline String toMapId(const res::Uri &mapUri)
     {
         return mapUri.scheme().compareWithoutCase("Maps") ? mapUri.compose() : mapUri.path().toString();
     }
@@ -70,7 +70,7 @@ namespace internal {
         Music() : Record() {
             resetToDefaults();
         }
-        Music &operator = (Music const &other) {
+        Music &operator = (const Music &other) {
             static_cast<Record &>(*this) = other;
             return *this;
         }
@@ -90,7 +90,7 @@ namespace internal {
         MapInfo() : Record() {
             resetToDefaults();
         }
-        MapInfo &operator = (MapInfo const &other) {
+        MapInfo &operator = (const MapInfo &other) {
             static_cast<Record &>(*this) = other;
             return *this;
         }
@@ -126,7 +126,7 @@ namespace internal {
         EpisodeInfo() : Record() {
             resetToDefaults();
         }
-        EpisodeInfo &operator = (EpisodeInfo const &other) {
+        EpisodeInfo &operator = (const EpisodeInfo &other) {
             static_cast<Record &>(*this) = other;
             return *this;
         }
@@ -204,7 +204,7 @@ namespace internal {
          *
          * @return  MapInfo for the specified @a mapUri; otherwise @c 0 (not found).
          */
-        MapInfo *getMapInfo(res::Uri const &mapUri)
+        MapInfo *getMapInfo(const res::Uri &mapUri)
         {
             if(!mapUri.scheme().compareWithoutCase("Maps"))
             {
@@ -228,7 +228,7 @@ namespace internal {
         return res::makeUri(Stringf("Maps:MAP%02i", map+1));
     }
 
-    static uint mapWarpNumberFor(res::Uri const &mapUri)
+    static uint mapWarpNumberFor(const res::Uri &mapUri)
     {
         String path = mapUri.path();
         if(!path.isEmpty())
@@ -282,7 +282,7 @@ namespace internal {
             delete defaultMap; defaultMap = 0;
         }
 
-        void parse(AutoStr const &buffer, String /*sourceFile*/, bool sourceIsCustom)
+        void parse(const AutoStr &buffer, String /*sourceFile*/, bool sourceIsCustom)
         {
             LOG_AS("MapInfoParser");
 
@@ -569,7 +569,7 @@ namespace internal {
          */
         void parseMapNext(MapInfo &mapInfo, bool isSecret = false)
         {
-            ddstring_s const *tok = lexer.readString();
+            const ddstring_s *tok = lexer.readString();
 
             // Perhaps a ZDoom EndGame directive?
             if(!Str_CompareIgnoreCase(tok, "endpic"))
@@ -1088,7 +1088,7 @@ namespace internal {
         {
             LOG_MAP_WARNING("MAPINFO Skill definitions are not supported.");
 
-            /*ddstring_s const *id =*/ lexer.readString();
+            /*const ddstring_s *id =*/ lexer.readString();
 
             // Process optional tokens.
             while(lexer.readToken())
@@ -1212,7 +1212,7 @@ DE_PIMPL_NOREF(MapInfoTranslator)
              it != defs.mapInfos.end();
              ++it)
         {
-            MapInfo const &mapInfo = it->second;
+            const MapInfo &mapInfo = it->second;
 
             int hub = mapInfo.geti("hub");
             if (hubNumberIsEpisodeId)
@@ -1236,7 +1236,7 @@ DE_PIMPL_NOREF(MapInfoTranslator)
 
         for (HexDefs::MapInfos::iterator i = defs.mapInfos.begin(); i != defs.mapInfos.end(); ++i)
         {
-            MapInfo const &info = i->second;
+            const MapInfo &info = i->second;
 
             if (info.getui("warpTrans") == map)
             {
@@ -1301,7 +1301,7 @@ DE_PIMPL_NOREF(MapInfoTranslator)
 /*#ifdef DE_IMPORTIDTECH1_DEBUG
         for(HexDefs::MapInfos::const_iterator i = defs.mapInfos.begin(); i != defs.mapInfos.end(); ++i)
         {
-            MapInfo const &info = i->second;
+            const MapInfo &info = i->second;
             LOG_RES_MSG("MAPINFO %s { title: \"%s\" hub: %i map: %s warp: %i nextMap: %s }")
                     << i->first.c_str() << info.gets("title")
                     << info.geti("hub") << info.gets("id") << info.geti("warpTrans") << info.gets("nextMap");
@@ -1325,10 +1325,10 @@ DE_PIMPL_NOREF(MapInfoTranslator)
         os << "\n\nHeader { Version = 6; }";
 
         // Output episode defs.
-        for (auto const &pair : defs.episodeInfos)
+        for (const auto &pair : defs.episodeInfos)
         {
             String const episodeId  = pair.first;
-            EpisodeInfo const &info = pair.second;
+            const EpisodeInfo &info = pair.second;
 
             res::Uri startMapUri(info.gets("startMap"), RC_NULL);
             if(startMapUri.path().isEmpty()) continue;
@@ -1397,7 +1397,7 @@ DE_PIMPL_NOREF(MapInfoTranslator)
                 dsize n = mapInfosForHub.size();
                 while (n-- > 0)
                 {
-                    MapInfo const *mapInfo = mapInfosForHub.at(n);
+                    const MapInfo *mapInfo = mapInfosForHub.at(n);
                     res::Uri       mapUri(mapInfo->gets("id"), RC_NULL);
 
                     if (!mapUri.path().isEmpty())
@@ -1436,9 +1436,9 @@ DE_PIMPL_NOREF(MapInfoTranslator)
         DD_GameInfo(&gameInfo);
 
         // Output mapinfo defs.
-        for (auto const &pair : defs.mapInfos)
+        for (const auto &pair : defs.mapInfos)
         {
-            MapInfo const &info = pair.second;
+            const MapInfo &info = pair.second;
             res::Uri mapUri(info.gets("id"), RC_NULL);
 
             const bool isCustomMapInfo = info.getb("custom");
@@ -1530,9 +1530,9 @@ DE_PIMPL_NOREF(MapInfoTranslator)
         }
 
         // Output music modification defs for the non-map musics.
-        for (auto const &pair : defs.musics)
+        for (const auto &pair : defs.musics)
         {
-            Music const &music = pair.second;
+            const Music &music = pair.second;
             if(custom != music.getb("custom")) continue;
 
             os << "\n\nMusic Mods \"" + music.gets("id") + "\" {"
@@ -1553,7 +1553,7 @@ void MapInfoTranslator::reset()
     d->translatedFiles.clear();
 }
 
-void MapInfoTranslator::merge(ddstring_s const &definitions,
+void MapInfoTranslator::merge(const ddstring_s &definitions,
                               const String &    sourcePath,
                               bool              sourceIsCustom)
 {
@@ -1574,7 +1574,7 @@ void MapInfoTranslator::merge(ddstring_s const &definitions,
         MapInfoParser parser(d->defs);
         parser.parse(definitions, sourcePath, sourceIsCustom);
     }
-    catch (MapInfoParser::ParseError const &er)
+    catch (const MapInfoParser::ParseError &er)
     {
         LOG_MAP_WARNING("Failed to parse %s as MAPINFO:\n") << source << er.asText();
     }

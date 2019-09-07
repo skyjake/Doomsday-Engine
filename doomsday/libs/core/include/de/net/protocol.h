@@ -68,7 +68,7 @@ public:
      *
      * @return  Specialized Packet, or @c NULL.
      */
-    typedef Packet *(*Constructor)(Block const &);
+    typedef Packet *(*Constructor)(const Block &);
 
     /// Reply types. @see reply()
     enum Reply {
@@ -96,7 +96,7 @@ public:
      *
      * @return  Specialized Packet, or @c NULL.
      */
-    Packet *interpret(Block const &block) const;
+    Packet *interpret(const Block &block) const;
 
     /*
      * Sends a command packet and waits for reply. This is intended for issuing
@@ -128,7 +128,7 @@ public:
      * @param type     Type of reply.
      * @param message  Optional message (human readable).
      */
-    void reply(Transmitter &to, Reply type, String const &message);
+    void reply(Transmitter &to, Reply type, const String &message);
 
 private:
     typedef List<Constructor> Constructors;

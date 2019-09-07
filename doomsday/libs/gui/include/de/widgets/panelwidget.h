@@ -54,7 +54,7 @@ public:
     enum AnimationStyle { Bouncy, EasedOut, Smooth };
 
 public:
-    PanelWidget(String const &name = String());
+    PanelWidget(const String &name = String());
 
     void setWaitForContentReady(bool yes);
 
@@ -112,7 +112,7 @@ public:
     // Events.
     void viewResized() override;
     void update() override;
-    bool handleEvent(Event const &event) override;
+    bool handleEvent(const Event &event) override;
 
     /**
      * Opens the panel, positioning it appropriately so that is anchored to the

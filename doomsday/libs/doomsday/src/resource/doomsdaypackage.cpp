@@ -26,11 +26,11 @@ namespace res {
 
 static String const PACKAGE_DEFS_PATH("package.defsPath");
 
-DoomsdayPackage::DoomsdayPackage(Package const &package)
+DoomsdayPackage::DoomsdayPackage(const Package &package)
     : _pkg(package)
 {}
 
-File const &DoomsdayPackage::sourceFile() const
+const File &DoomsdayPackage::sourceFile() const
 {
     return _pkg.sourceFile();
 }
@@ -50,19 +50,19 @@ res::Uri DoomsdayPackage::loadableUri() const
     return loadableUri(_pkg.file());
 }
 
-bool DoomsdayPackage::hasDefinitions(File const &packageFile) // static
+bool DoomsdayPackage::hasDefinitions(const File &packageFile) // static
 {
     return packageFile.objectNamespace().has(PACKAGE_DEFS_PATH);
 }
 
-String DoomsdayPackage::defsPath(File const &packageFile) // static
+String DoomsdayPackage::defsPath(const File &packageFile) // static
 {
     return packageFile.objectNamespace().gets(PACKAGE_DEFS_PATH, "");
 }
 
-res::Uri DoomsdayPackage::loadableUri(File const &packageFile) // static
+res::Uri DoomsdayPackage::loadableUri(const File &packageFile) // static
 {
-    if (auto const *nativeSrc = maybeAs<NativeFile>(packageFile.source()))
+    if (const auto *nativeSrc = maybeAs<NativeFile>(packageFile.source()))
     {
         return res::Uri::fromNativePath(nativeSrc->nativePath());
     }

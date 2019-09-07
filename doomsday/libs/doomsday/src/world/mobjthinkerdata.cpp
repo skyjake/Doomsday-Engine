@@ -29,12 +29,12 @@ static String const VAR_ID("__id__");
 DE_PIMPL_NOREF(MobjThinkerData)
 {};
 
-MobjThinkerData::MobjThinkerData(de::Id const &id)
+MobjThinkerData::MobjThinkerData(const de::Id &id)
     : ThinkerData(id)
     , d(new Impl)
 {}
 
-MobjThinkerData::MobjThinkerData(MobjThinkerData const &other)
+MobjThinkerData::MobjThinkerData(const MobjThinkerData &other)
     : ThinkerData(other)
     , d(new Impl)
 {}
@@ -69,9 +69,9 @@ mobj_t *MobjThinkerData::mobj()
     return reinterpret_cast<mobj_t *>(&thinker());
 }
 
-mobj_t const *MobjThinkerData::mobj() const
+const mobj_t *MobjThinkerData::mobj() const
 {
-    return reinterpret_cast<mobj_t const *>(&thinker());
+    return reinterpret_cast<const mobj_t *>(&thinker());
 }
 
 void MobjThinkerData::initBindings()
@@ -86,12 +86,12 @@ void MobjThinkerData::initBindings()
     objectNamespace().addNumber(VAR_ID, mobj()->thinker.id).setReadOnly();
 }
 
-void MobjThinkerData::stateChanged(state_t const *)
+void MobjThinkerData::stateChanged(const state_t *)
 {
     // overridden
 }
 
-void MobjThinkerData::damageReceived(int, mobj_t const *)
+void MobjThinkerData::damageReceived(int, const mobj_t *)
 {}
 
 void MobjThinkerData::operator << (Reader &from)

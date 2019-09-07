@@ -158,7 +158,7 @@ DE_PIMPL(TextureScheme)
     }
 
     // Observes TextureManifest Deletion.
-    void textureManifestBeingDeleted(TextureManifest const &manifest)
+    void textureManifestBeingDeleted(const TextureManifest &manifest)
     {
         deindex(const_cast<TextureManifest &>(manifest));
     }
@@ -184,17 +184,17 @@ void TextureScheme::clear()
     d->uniqueIdLutDirty = true;
 }
 
-String const &TextureScheme::name() const
+const String &TextureScheme::name() const
 {
     return d->name;
 }
 
-TextureManifest &TextureScheme::declare(Path const &   path,
+TextureManifest &TextureScheme::declare(const Path &   path,
                                         Flags          flags,
-                                        Vec2ui const & dimensions,
-                                        Vec2i const &  origin,
+                                        const Vec2ui & dimensions,
+                                        const Vec2i &  origin,
                                         int            uniqueId,
-                                        res::Uri const *resourceUri)
+                                        const res::Uri *resourceUri)
 {
     LOG_AS("TextureScheme::declare");
 
@@ -261,13 +261,13 @@ TextureManifest &TextureScheme::declare(Path const &   path,
 }
 
 #if 0
-bool TextureScheme::has(Path const &path) const
+bool TextureScheme::has(const Path &path) const
 {
     return d->index.has(path, Index::NoBranch | Index::MatchFull);
 }
 #endif
 
-TextureManifest const &TextureScheme::find(Path const &path) const
+const TextureManifest &TextureScheme::find(const Path &path) const
 {
     if (auto *mft = tryFind(path))
     {
@@ -279,18 +279,18 @@ TextureManifest const &TextureScheme::find(Path const &path) const
 
 }
 
-TextureManifest &TextureScheme::find(Path const &path)
+TextureManifest &TextureScheme::find(const Path &path)
 {
-    TextureManifest const &found = const_cast<TextureScheme const *>(this)->find(path);
+    const TextureManifest &found = const_cast<const TextureScheme *>(this)->find(path);
     return const_cast<TextureManifest &>(found);
 }
 
-TextureManifest *TextureScheme::tryFind(Path const &path) const
+TextureManifest *TextureScheme::tryFind(const Path &path) const
 {
     return d->index.tryFind(path, Index::NoBranch | Index::MatchFull);
 }
 
-TextureManifest const &TextureScheme::findByResourceUri(res::Uri const &uri) const
+const TextureManifest &TextureScheme::findByResourceUri(const res::Uri &uri) const
 {
     if (auto *mft = tryFindByResourceUri(uri))
     {
@@ -301,7 +301,7 @@ TextureManifest const &TextureScheme::findByResourceUri(res::Uri const &uri) con
                         "No manifest found with a resource URI matching \"" + uri.asText() + "\"");
 }
 
-TextureManifest *TextureScheme::tryFindByResourceUri(res::Uri const &uri) const
+TextureManifest *TextureScheme::tryFindByResourceUri(const res::Uri &uri) const
 {
     if (!uri.isEmpty())
     {
@@ -321,13 +321,13 @@ TextureManifest *TextureScheme::tryFindByResourceUri(res::Uri const &uri) const
     return nullptr;
 }
 
-TextureManifest &TextureScheme::findByResourceUri(res::Uri const &uri)
+TextureManifest &TextureScheme::findByResourceUri(const res::Uri &uri)
 {
-    TextureManifest const &found = const_cast<TextureScheme const *>(this)->findByResourceUri(uri);
+    const TextureManifest &found = const_cast<const TextureScheme *>(this)->findByResourceUri(uri);
     return const_cast<TextureManifest &>(found);
 }
 
-TextureManifest const &TextureScheme::findByUniqueId(int uniqueId) const
+const TextureManifest &TextureScheme::findByUniqueId(int uniqueId) const
 {
     if (auto *mft = tryFindByUniqueId(uniqueId))
     {
@@ -340,7 +340,7 @@ TextureManifest const &TextureScheme::findByUniqueId(int uniqueId) const
 
 TextureManifest &TextureScheme::findByUniqueId(int uniqueId)
 {
-    TextureManifest const &found = const_cast<TextureScheme const *>(this)->findByUniqueId(uniqueId);
+    const TextureManifest &found = const_cast<const TextureScheme *>(this)->findByUniqueId(uniqueId);
     return const_cast<TextureManifest &>(found);
 }
 
@@ -356,7 +356,7 @@ TextureManifest *TextureScheme::tryFindByUniqueId(int uniqueId) const
     return nullptr;
 }
 
-TextureScheme::Index const &TextureScheme::index() const
+const TextureScheme::Index &TextureScheme::index() const
 {
     return d->index;
 }

@@ -22,7 +22,7 @@
 namespace de {
 namespace ui {
 
-Image const &ImageItem::image() const
+const Image &ImageItem::image() const
 {
     if (_styleId.isEmpty())
     {
@@ -31,19 +31,19 @@ Image const &ImageItem::image() const
     return Style::get().images().image(_styleId);
 }
 
-DotPath const &ImageItem::styleImageId() const
+const DotPath &ImageItem::styleImageId() const
 {
     return _styleId;
 }
 
-void ImageItem::setImage(Image const &image)
+void ImageItem::setImage(const Image &image)
 {
     _image   = image;
     _styleId = DotPath();
     notifyChange();
 }
 
-void ImageItem::setImage(DotPath const &styleImageId)
+void ImageItem::setImage(const DotPath &styleImageId)
 {
     _image   = Image();
     _styleId = styleImageId;

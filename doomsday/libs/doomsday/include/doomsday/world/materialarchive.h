@@ -89,7 +89,7 @@ public:
      * @param material  The material to be recorded.
      * @return  Unique SerialId of the recorded material.
      */
-    materialarchive_serialid_t addRecord(Material const &material);
+    materialarchive_serialid_t addRecord(const Material &material);
 
     /**
      * Serializes the state of the archive using @a writer.
@@ -131,7 +131,7 @@ void (*Delete)(MaterialArchive *arc);
 /**
  * @return A new (unused) SerialId for the specified material.
  */
-materialarchive_serialid_t (*FindUniqueSerialId)(MaterialArchive const *arc, Material *mat);
+materialarchive_serialid_t (*FindUniqueSerialId)(const MaterialArchive *arc, Material *mat);
 
 /**
  * Finds and returns a material with the identifier @a serialId.
@@ -142,14 +142,14 @@ materialarchive_serialid_t (*FindUniqueSerialId)(MaterialArchive const *arc, Mat
  *
  * @return  Pointer to a material instance. Ownership not given.
  */
-Material *(*Find)(MaterialArchive const *arc, materialarchive_serialid_t serialId, int group);
+Material *(*Find)(const MaterialArchive *arc, materialarchive_serialid_t serialId, int group);
 
 /**
  * Returns the number of materials in the archive.
  *
  * @param arc  MaterialArchive instance.
  */
-int (*Count)(MaterialArchive const *arc);
+int (*Count)(const MaterialArchive *arc);
 
 /**
  * Serializes the state of the archive using @a writer.
@@ -157,7 +157,7 @@ int (*Count)(MaterialArchive const *arc);
  * @param arc  MaterialArchive instance.
  * @param writer  Writer instance.
  */
-void (*Write)(MaterialArchive const *arc, Writer *writer);
+void (*Write)(const MaterialArchive *arc, Writer *writer);
 
 void (*Read)(MaterialArchive *arc, Reader *reader, int forcedVersion);
 

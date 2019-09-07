@@ -37,15 +37,15 @@ namespace menu {
 
 struct controlconfig_t
 {
-    char const *text;
-    char const *bindContext;
-    char const *controlName;
-    char const *command;
+    const char *text;
+    const char *bindContext;
+    const char *controlName;
+    const char *command;
     int flags;
 };
 
 void Hu_MenuInitControlsPage();
-void Hu_MenuControlGrabDrawer(char const *niceName, float alpha);
+void Hu_MenuControlGrabDrawer(const char *niceName, float alpha);
 
 } // namespace menu
 } // namespace common

@@ -162,7 +162,7 @@ public:
         ~Scheme();
 
         /// @return  Symbolic name of this scheme (e.g., "Models").
-        String const &name() const;
+        const String &name() const;
 
         /**
          * Clear this scheme back to it's "empty" state (i.e., no resources).
@@ -217,7 +217,7 @@ public:
          *
          * @return  @c true if @a path was well-formed and subsequently added.
          */
-        bool addSearchPath(SearchPath const &path, PathGroup group = DefaultPaths);
+        bool addSearchPath(const SearchPath &path, PathGroup group = DefaultPaths);
 
         /**
          * Clear search paths in @a group from the scheme.
@@ -229,7 +229,7 @@ public:
         /**
          * Provides access to the search paths for efficient traversals.
          */
-        SearchPaths const &allSearchPaths() const;
+        const SearchPaths &allSearchPaths() const;
 
         /**
          * Clear all search paths in all groups in the scheme.
@@ -272,11 +272,11 @@ public:
         Path path;
         int attrib;
 
-        PathListItem(Path const &_path, int _attrib = 0)
+        PathListItem(const Path &_path, int _attrib = 0)
             : path(_path), attrib(_attrib)
         {}
 
-        bool operator < (PathListItem const &other) const
+        bool operator < (const PathListItem &other) const
         {
             return path < other.path;
         }
@@ -322,7 +322,7 @@ public:
     /**
      * Returns the schemes for efficient traversal.
      */
-    Schemes const &allSchemes();
+    const Schemes &allSchemes();
 
     /**
      * Reset all the schemes, returning their indexes to an empty state and clearing
@@ -359,7 +359,7 @@ public:
     /**
      * @return  @c true if a file exists at @a path which can be opened for reading.
      */
-    bool accessFile(Uri const &path);
+    bool accessFile(const Uri &path);
 
     /**
      * Maintains a list of identifiers already seen.
@@ -367,7 +367,7 @@ public:
      * @return  @c true if the given file can be opened, or
      *          @c false if it has already been opened.
      */
-    bool checkFileId(Uri const &path);
+    bool checkFileId(const Uri &path);
 
     /**
      * Reset known fileId records so that the next time checkFileId() is called for
@@ -383,7 +383,7 @@ public:
      *
      * @return  The interpreted File file instance.
      */
-    File1 &interpret(FileHandle &hndl, String path, FileInfo const &info);
+    File1 &interpret(FileHandle &hndl, String path, const FileInfo &info);
 
     /**
      * Indexes @a file (which must have been opened with this file system) into
@@ -417,7 +417,7 @@ public:
      * Provides access to the main index of the file system. This can be
      * used for efficiently looking up files based on name.
      */
-    LumpIndex const &nameIndex() const;
+    const LumpIndex &nameIndex() const;
 
     /**
      * Convenient method of looking up a file from the lump name index given its
@@ -448,7 +448,7 @@ public:
      *
      * @throws NotFoundError If the requested file could not be found.
      */
-    FileHandle &openFile(String const &path, String const &mode, size_t baseOffset = 0,
+    FileHandle &openFile(const String &path, const String &mode, size_t baseOffset = 0,
                          bool allowDuplicate = true);
 
     /**
@@ -470,7 +470,7 @@ public:
      * @param search  The search term.
      * @return Found file.
      */
-    File1 &find(Uri const &search);
+    File1 &find(const Uri &search);
 
     /**
      * Finds all files which meet the supplied @a predicate.
@@ -538,8 +538,8 @@ public:
      *
      * @todo Fold into find() -ds
      */
-    String findPath(Uri const &search, int flags, ResourceClass &rclass);
-    String findPath(Uri const &search, int flags);
+    String findPath(const Uri &search, int flags, ResourceClass &rclass);
+    String findPath(const Uri &search, int flags);
 
     /**
      * Finds all paths which match the search criteria. Will search the Zip
@@ -567,7 +567,7 @@ public:
      * Provides access to the list of all loaded files (in load order), for
      * efficient traversal.
      */
-    FileList const &loadedFiles() const;
+    const FileList &loadedFiles() const;
 
     /**
      * Unload all files loaded after startup.
@@ -595,7 +595,7 @@ LIBDOOMSDAY_PUBLIC void F_Init();
 /// Shutdown this module.
 LIBDOOMSDAY_PUBLIC void F_Shutdown();
 
-LIBDOOMSDAY_PUBLIC void const *F_LumpIndex();
+LIBDOOMSDAY_PUBLIC const void *F_LumpIndex();
 
 #endif // __cplusplus
 #endif /* DE_FILESYS_MAIN_H */

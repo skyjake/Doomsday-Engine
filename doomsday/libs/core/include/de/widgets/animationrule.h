@@ -84,7 +84,7 @@ public:
     /**
      * Read-only access to the scalar animation.
      */
-    Animation const &animation() const {
+    const Animation &animation() const {
         return _animation;
     }
 
@@ -104,7 +104,7 @@ public:
 protected:
     ~AnimationRule() override;
     void update() override;
-    void timeChanged(Clock const &) override;
+    void timeChanged(const Clock &) override;
 
 private:
     Animation _animation;

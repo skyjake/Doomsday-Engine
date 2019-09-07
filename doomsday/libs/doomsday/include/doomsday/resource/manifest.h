@@ -49,7 +49,7 @@ public:
     /**
      * Returns a list of "identity keys" used to identify the resource.
      */
-    de::StringList const &identityKeys() const;
+    const de::StringList &identityKeys() const;
 
     /**
      * Add a new file segment identity key to the list for this manifest.
@@ -61,7 +61,7 @@ public:
     /**
      * Returns a list of known-names for the associated resource.
      */
-    de::StringList const &names() const;
+    const de::StringList &names() const;
 
     /**
      * Add a new file name to the list of names for this manifest.
@@ -90,7 +90,7 @@ public:
      *
      * @see locateFile()
      */
-    de::String const &resolvedPath(bool tryLocate = true);
+    const de::String &resolvedPath(bool tryLocate = true);
 
 private:
     DE_PRIVATE(d)

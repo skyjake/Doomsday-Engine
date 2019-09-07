@@ -37,7 +37,7 @@ void RemoteFeedQueryPacket::setQuery(Query query)
     _query = query;
 }
 
-void RemoteFeedQueryPacket::setPath(String const &path)
+void RemoteFeedQueryPacket::setPath(const String &path)
 {
     _path = path;
 }
@@ -64,7 +64,7 @@ void RemoteFeedQueryPacket::operator << (Reader &from)
     from.readAs<duint8>(_query) >> _path;
 }
 
-Packet *RemoteFeedQueryPacket::fromBlock(Block const &block)
+Packet *RemoteFeedQueryPacket::fromBlock(const Block &block)
 {
     return constructFromBlock<RemoteFeedQueryPacket>(block, QUERY_PACKET_TYPE);
 }
@@ -77,9 +77,9 @@ RemoteFeedMetadataPacket::RemoteFeedMetadataPacket()
     : IdentifiedPacket(METADATA_PACKET_TYPE)
 {}
 
-void RemoteFeedMetadataPacket::addFile(File const &file, String const &prefix)
+void RemoteFeedMetadataPacket::addFile(const File &file, const String &prefix)
 {
-    auto const &ns = file.target().objectNamespace();
+    const auto &ns = file.target().objectNamespace();
     auto const status = file.target().status();
 
     std::unique_ptr<Record> fileMeta(new Record);
@@ -109,7 +109,7 @@ void RemoteFeedMetadataPacket::addFile(File const &file, String const &prefix)
                   new RecordValue(fileMeta.release(), RecordValue::OwnsRecord));
 }
 
-void RemoteFeedMetadataPacket::addFolder(Folder const &folder, String prefix)
+void RemoteFeedMetadataPacket::addFolder(const Folder &folder, String prefix)
 {
     folder.forContents([this, prefix] (String, File &file)
     {
@@ -119,7 +119,7 @@ void RemoteFeedMetadataPacket::addFolder(Folder const &folder, String prefix)
     });
 }
 
-DictionaryValue const &RemoteFeedMetadataPacket::metadata() const
+const DictionaryValue &RemoteFeedMetadataPacket::metadata() const
 {
     return _metadata;
 }
@@ -141,7 +141,7 @@ void RemoteFeedMetadataPacket::operator << (Reader &from)
     from >> _metadata;
 }
 
-Packet *RemoteFeedMetadataPacket::fromBlock(Block const &block)
+Packet *RemoteFeedMetadataPacket::fromBlock(const Block &block)
 {
     return constructFromBlock<RemoteFeedMetadataPacket>(block, METADATA_PACKET_TYPE);
 }
@@ -155,7 +155,7 @@ RemoteFeedFileContentsPacket::RemoteFeedFileContentsPacket()
     , _startOffset(0)
 {}
 
-void RemoteFeedFileContentsPacket::setData(Block const &data)
+void RemoteFeedFileContentsPacket::setData(const Block &data)
 {
     _data = data;
 }
@@ -170,7 +170,7 @@ void RemoteFeedFileContentsPacket::setFileSize(dsize size)
     _fileSize = size;
 }
 
-Block const &RemoteFeedFileContentsPacket::data() const
+const Block &RemoteFeedFileContentsPacket::data() const
 {
     return _data;
 }
@@ -199,7 +199,7 @@ void RemoteFeedFileContentsPacket::operator << (Reader &from)
         >> _data;
 }
 
-Packet *RemoteFeedFileContentsPacket::fromBlock(Block const &block)
+Packet *RemoteFeedFileContentsPacket::fromBlock(const Block &block)
 {
     return constructFromBlock<RemoteFeedFileContentsPacket>(block, FILE_CONTENTS_PACKET_TYPE);
 }
@@ -213,7 +213,7 @@ RemoteFeedProtocol::RemoteFeedProtocol()
     define(RemoteFeedFileContentsPacket::fromBlock);
 }
 
-RemoteFeedProtocol::PacketType RemoteFeedProtocol::recognize(Packet const &packet)
+RemoteFeedProtocol::PacketType RemoteFeedProtocol::recognize(const Packet &packet)
 {
     if (packet.type() == QUERY_PACKET_TYPE)
     {

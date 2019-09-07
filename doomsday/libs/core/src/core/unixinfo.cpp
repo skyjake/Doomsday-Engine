@@ -55,7 +55,7 @@ public:
         delete etcInfo;
     }
 
-    bool find(String const &key, String &value) const
+    bool find(const String &key, String &value) const
     {
         // User-specific info overrides the system-level info.
         if (userInfo && userInfo->findValueForKey(key, value))
@@ -102,7 +102,7 @@ UnixInfo::UnixInfo() : d(new Impl)
 #endif
 }
 
-bool UnixInfo::path(String const &key, NativePath &value) const
+bool UnixInfo::path(const String &key, NativePath &value) const
 {
     if (d->paths)
     {
@@ -116,7 +116,7 @@ bool UnixInfo::path(String const &key, NativePath &value) const
     return false;
 }
 
-bool UnixInfo::defaults(String const &key, String &value) const
+bool UnixInfo::defaults(const String &key, String &value) const
 {
     if (d->defaults)
     {

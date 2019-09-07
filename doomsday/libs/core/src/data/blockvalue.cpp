@@ -28,7 +28,7 @@ namespace de {
 BlockValue::BlockValue()
 {}
 
-BlockValue::BlockValue(Block const &block) : _value(block)
+BlockValue::BlockValue(const Block &block) : _value(block)
 {}
 
 Block &BlockValue::block()
@@ -36,12 +36,12 @@ Block &BlockValue::block()
     return _value;
 }
 
-Block const &BlockValue::block() const
+const Block &BlockValue::block() const
 {
     return _value;
 }
 
-BlockValue::operator IByteArray const &() const
+BlockValue::operator const IByteArray &() const
 {
     return _value;
 }
@@ -76,9 +76,9 @@ bool BlockValue::isTrue() const
     return _value.size() > 0;
 }
 
-void BlockValue::sum(Value const &value)
+void BlockValue::sum(const Value &value)
 {
-    BlockValue const *other = dynamic_cast<BlockValue const *>(&value);
+    const BlockValue *other = dynamic_cast<const BlockValue *>(&value);
     if (!other)
     {
         /// @throw ArithmeticError @a value was not a BlockValue. BlockValue can only be

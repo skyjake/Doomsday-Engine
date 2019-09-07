@@ -42,7 +42,7 @@ public:
     class Builder
     {
     public:
-        Builder(NumberType const &number) : _number(number) {}
+        Builder(const NumberType &number) : _number(number) {}
 
         /**
          * Returns a new, refless ConstantRule instance with @a _number as
@@ -80,7 +80,7 @@ private:
 };
 
 template <typename Type>
-ConstantRule::Builder<Type>::operator Rule const &() const
+ConstantRule::Builder<Type>::operator const Rule &() const
 {
     if (fequal(float(_number), 0)) return ConstantRule::zero();
     return *refless(new ConstantRule(_number));

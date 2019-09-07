@@ -35,10 +35,10 @@ public:
     typedef StringList Items;
 
 public:
-    ChoiceWidget(String const &name = String());
+    ChoiceWidget(const String &name = String());
 
-    void setItems(Items const &items);
-    void setPrompt(String const &prompt);
+    void setItems(const Items &items);
+    void setPrompt(const String &prompt);
     void select(int pos);
 
     Items     items() const;
@@ -56,7 +56,7 @@ public:
     void focusLost();
     void focusGained();
     void draw();
-    bool handleEvent(Event const &event);
+    bool handleEvent(const Event &event);
 
     void updateSelectionFromMenu();
     void menuClosed();

@@ -129,7 +129,7 @@ DE_PIMPL(GLFramebuffer)
         zap(bufTextures);
     }
 
-    Impl(Public *i, Vec2ui const &targetSize, Flags fboFlags)
+    Impl(Public *i, const Vec2ui &targetSize, Flags fboFlags)
         : Base(i)
         , fbo(0)
         , flags(fboFlags)
@@ -402,7 +402,7 @@ DE_PIMPL(GLFramebuffer)
         }
     }
 
-    void resizeRenderBuffers(Size const &newSize)
+    void resizeRenderBuffers(const Size &newSize)
     {
         size = newSize;
 
@@ -545,7 +545,7 @@ GLFramebuffer::GLFramebuffer(Flags attachment, GLTexture &texture, Flags otherAt
     d->alloc();
 }
 
-GLFramebuffer::GLFramebuffer(Vec2ui const &size, Flags flags)
+GLFramebuffer::GLFramebuffer(const Vec2ui &size, Flags flags)
     : d(new Impl(this, size, flags))
 {
     LOG_AS("GLFramebuffer");
@@ -570,7 +570,7 @@ void GLFramebuffer::configure()
     setState(Ready);
 }
 
-void GLFramebuffer::configure(Vec2ui const &size, Flags flags, int sampleCount)
+void GLFramebuffer::configure(const Vec2ui &size, Flags flags, int sampleCount)
 {
     LOG_AS("GLFramebuffer");
 
@@ -738,7 +738,7 @@ Image GLFramebuffer::toImage() const
     return Image();
 }
 
-void GLFramebuffer::setClearColor(Vec4f const &color)
+void GLFramebuffer::setClearColor(const Vec4f &color)
 {
     d->clearColor = color;
 }
@@ -786,7 +786,7 @@ void GLFramebuffer::clear(Flags attachments)
     }
 }
 
-void GLFramebuffer::resize(Size const &size)
+void GLFramebuffer::resize(const Size &size)
 {
     // The default target resizes itself automatically with the canvas.
     if (d->size == size || d->isDefault()) return;
@@ -948,7 +948,7 @@ GLFramebuffer::Size GLFramebuffer::size() const
     return GLWindow::getMain().pixelSize();
 }
 
-void GLFramebuffer::setActiveRect(Rectangleui const &rect, bool applyGLState)
+void GLFramebuffer::setActiveRect(const Rectangleui &rect, bool applyGLState)
 {
     d->activeRect = rect;
     if (applyGLState)
@@ -982,7 +982,7 @@ Vec2f GLFramebuffer::activeRectNormalizedOffset() const
     return Vec2f(d->activeRect.topLeft) / size();
 }
 
-Rectangleui GLFramebuffer::scaleToActiveRect(Rectangleui const &rectInTarget) const
+Rectangleui GLFramebuffer::scaleToActiveRect(const Rectangleui &rectInTarget) const
 {
     // If no sub rectangle is defined, do nothing.
     if (!hasActiveRect())
@@ -998,7 +998,7 @@ Rectangleui GLFramebuffer::scaleToActiveRect(Rectangleui const &rectInTarget) co
                        rectInTarget.height() * scaling.y);
 }
 
-Rectangleui const &GLFramebuffer::activeRect() const
+const Rectangleui &GLFramebuffer::activeRect() const
 {
     return d->activeRect;
 }

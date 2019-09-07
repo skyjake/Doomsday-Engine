@@ -25,7 +25,7 @@
 
 using namespace de;
 
-Lex::Lex(String const &input, Char lineCommentChar, Char multiCommentChar, ModeFlags initialMode)
+Lex::Lex(const String &input, Char lineCommentChar, Char multiCommentChar, ModeFlags initialMode)
     : _input(&input)
     , _lineCommentChar(lineCommentChar)
     , _multiCommentChar(multiCommentChar)
@@ -34,7 +34,7 @@ Lex::Lex(String const &input, Char lineCommentChar, Char multiCommentChar, ModeF
     _state.pos = _state.lineStartPos = _input->begin();
 }
 
-String const &Lex::input() const
+const String &Lex::input() const
 {
     return *_input;
 }

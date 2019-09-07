@@ -24,21 +24,21 @@
 class IdgamesLink : public de::filesys::WebHostedLink
 {
 public:
-    static de::filesys::Link *construct(de::String const &address);
+    static de::filesys::Link *construct(const de::String &address);
 
-    de::File *populateRemotePath(de::String const &packageId,
-                                 de::filesys::RepositoryPath const &path) const override;
+    de::File *populateRemotePath(const de::String &packageId,
+                                 const de::filesys::RepositoryPath &path) const override;
 
     void parseRepositoryIndex(const de::Block &data) override;
 
     de::StringList categoryTags() const override;
 
-    de::LoopResult forPackageIds(std::function<de::LoopResult (de::String const &packageId)> func) const override;
+    de::LoopResult forPackageIds(std::function<de::LoopResult (const de::String &packageId)> func) const override;
 
-    de::String findPackagePath(de::String const &packageId) const override;
+    de::String findPackagePath(const de::String &packageId) const override;
 
 protected:
-    IdgamesLink(de::String const &address);
+    IdgamesLink(const de::String &address);
 
     void setFileTree(FileTree *tree) override;
 

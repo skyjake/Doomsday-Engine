@@ -31,9 +31,9 @@ class LIBDOOMSDAY_PUBLIC Finale : public Definition
 {
 public:
     Finale()                    : Definition() {}
-    Finale(Finale const &other) : Definition(other) {}
+    Finale(const Finale &other) : Definition(other) {}
     Finale(de::Record &d)       : Definition(d) {}
-    Finale(de::Record const &d) : Definition(d) {}
+    Finale(const de::Record &d) : Definition(d) {}
 
     void resetToDefaults();
 };

@@ -32,16 +32,16 @@ DE_PIMPL_NOREF(Lexicon)
 Lexicon::Lexicon() : d(new Impl)
 {}
 
-Lexicon::Lexicon(Lexicon const &other) : d(new Impl(*other.d))
+Lexicon::Lexicon(const Lexicon &other) : d(new Impl(*other.d))
 {}
 
-Lexicon &Lexicon::operator = (Lexicon const &other)
+Lexicon &Lexicon::operator = (const Lexicon &other)
 {
     d.reset(new Impl(*other.d));
     return *this;
 }
 
-void Lexicon::setAdditionalWordChars(String const &chars)
+void Lexicon::setAdditionalWordChars(const String &chars)
 {
     d->extraChars = chars;
 }
@@ -51,7 +51,7 @@ void Lexicon::setCaseSensitive(bool sensitive)
     d->caseSensitive = sensitive;
 }
 
-void Lexicon::addTerm(String const &term)
+void Lexicon::addTerm(const String &term)
 {
     d->terms.insert(term);
 }

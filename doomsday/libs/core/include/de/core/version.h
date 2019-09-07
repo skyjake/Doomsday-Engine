@@ -67,7 +67,7 @@ public:
      *                     be optionally suffixed after a dash "x.y.z-label".
      * @param buildNumber  Build number.
      */
-    Version(String const &version, int buildNumber = 0);
+    Version(const String &version, int buildNumber = 0);
 
     /**
      * Version information about this build. The version information is hardcoded in the
@@ -104,17 +104,17 @@ public:
      *
      * @param version  Version string.
      */
-    void parseVersionString(String const &version);
+    void parseVersionString(const String &version);
 
-    bool operator < (Version const &other) const;
+    bool operator < (const Version &other) const;
 
-    bool operator == (Version const &other) const;
+    bool operator == (const Version &other) const;
 
-    bool operator != (Version const &other) const {
+    bool operator != (const Version &other) const {
         return !(*this == other);
     }
 
-    bool operator > (Version const &other) const;
+    bool operator > (const Version &other) const;
 
     /**
      * Returns a user agent string for network requests.

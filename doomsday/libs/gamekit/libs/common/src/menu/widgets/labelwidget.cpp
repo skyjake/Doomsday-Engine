@@ -37,7 +37,7 @@ DE_PIMPL_NOREF(LabelWidget)
     int flags = 0;               ///< @ref mnTextFlags
 };
 
-LabelWidget::LabelWidget(String const &text, patchid_t *patch)
+LabelWidget::LabelWidget(const String &text, patchid_t *patch)
     : Widget()
     , d(new Impl)
 {
@@ -54,7 +54,7 @@ LabelWidget::~LabelWidget()
 void LabelWidget::draw() const
 {
     fontid_t fontId           = mnRendState->textFonts[font()];
-    Vec4f const &textColor = mnRendState->textColors[color()];
+    const Vec4f &textColor = mnRendState->textColors[color()];
 //    float t = (isFocused()? 1 : 0);
 
 //    // Flash if focused.

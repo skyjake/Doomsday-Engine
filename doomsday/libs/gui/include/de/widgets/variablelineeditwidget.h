@@ -37,7 +37,7 @@ public:
     DE_ERROR(VariableMissingError);
 
 public:
-    VariableLineEditWidget(Variable &variable, String const &name = {});
+    VariableLineEditWidget(Variable &variable, const String &name = {});
 
     Variable &variable() const;
 

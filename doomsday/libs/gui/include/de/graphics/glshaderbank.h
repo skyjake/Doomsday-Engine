@@ -47,9 +47,9 @@ public:
 
     void clear();
 
-    void addFromInfo(File const &file);
+    void addFromInfo(const File &file);
 
-    GLShader &shader(DotPath const &path, GLShader::Type type) const;
+    GLShader &shader(const DotPath &path, GLShader::Type type) const;
 
     /**
      * Builds a GL program using the defined shaders.
@@ -59,7 +59,7 @@ public:
      *
      * @return Reference to @a program.
      */
-    GLProgram &build(GLProgram &program, DotPath const &path) const;
+    GLProgram &build(GLProgram &program, const DotPath &path) const;
 
     /**
      * Sets additional preprocessor symbols to insert to compiled shaders.
@@ -70,7 +70,7 @@ public:
     void setPreprocessorDefines(const DictionaryValue &preDefines);
 
 protected:
-    ISource *newSourceFromInfo(String const &id);
+    ISource *newSourceFromInfo(const String &id);
     IData *  loadFromSource(ISource &source);
 
 private:

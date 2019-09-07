@@ -26,13 +26,13 @@ DE_PIMPL_NOREF(Node)
     String name; // lower-cased
     Node *parent;
 
-    Impl(String const &name_)
+    Impl(const String &name_)
         : name(name_.lower())
         , parent(nullptr)
     {}
 };
 
-Node::Node(String const &name) : d(new Impl(name))
+Node::Node(const String &name) : d(new Impl(name))
 {}
 
 Node::~Node()
@@ -58,9 +58,9 @@ Node *Node::parent() const
     return d->parent;
 }
 
-bool Node::hasAncestor(Node const &possibleAncestor) const
+bool Node::hasAncestor(const Node &possibleAncestor) const
 {
-    for (Node const *iter = parent(); iter; iter = iter->parent())
+    for (const Node *iter = parent(); iter; iter = iter->parent())
     {
         if (iter == &possibleAncestor) return true;
     }
@@ -69,7 +69,7 @@ bool Node::hasAncestor(Node const &possibleAncestor) const
 
 String Node::path() const
 {
-    Node const *p = parent();
+    const Node *p = parent();
     if (!p)
     {
         return "/" + name();
@@ -77,7 +77,7 @@ String Node::path() const
     return p->path() / name();
 }
 
-Node const *Node::tryFollowPath(PathRef const &path) const
+const Node *Node::tryFollowPath(const PathRef &path) const
 {
     static const char *DOT_SINGLE = ".";
     static const char *DOT_DOUBLE = "..";
@@ -120,7 +120,7 @@ Node const *Node::tryFollowPath(PathRef const &path) const
     }
 
     // Continue recursively to the next component.
-    if (Node const *child = tryGetChild(component))
+    if (const Node *child = tryGetChild(component))
     {
         return child->tryFollowPath(remainder);
     }
@@ -129,7 +129,7 @@ Node const *Node::tryFollowPath(PathRef const &path) const
     return nullptr;
 }
 
-Node const *Node::tryGetChild(String const &) const
+const Node *Node::tryGetChild(const String &) const
 {
     // We have no knowledge of children.
     return nullptr;

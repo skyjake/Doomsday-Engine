@@ -60,7 +60,7 @@ public:
     void deleteCache();
 
     // File streaming.
-    IIStream const &operator >> (IByteArray &bytes) const override;
+    const IIStream &operator >> (IByteArray &bytes) const override;
 
 private:
     DE_PRIVATE(d)

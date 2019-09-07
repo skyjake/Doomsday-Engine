@@ -25,7 +25,7 @@ namespace de {
 
 static IdentifiedPacket::Id idGen = 0;
 
-IdentifiedPacket::IdentifiedPacket(Type const &type, Id i)
+IdentifiedPacket::IdentifiedPacket(const Type &type, Id i)
     : Packet(type), _id(i)
 {}
 

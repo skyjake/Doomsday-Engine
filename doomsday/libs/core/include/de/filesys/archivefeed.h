@@ -59,17 +59,17 @@ public:
      * @param parentFeed  Feed whose archive will be used.
      * @param basePath    Path within the archive for the new feed.
      */
-    ArchiveFeed(ArchiveFeed &parentFeed, String const &basePath);
+    ArchiveFeed(ArchiveFeed &parentFeed, const String &basePath);
 
     virtual ~ArchiveFeed();
 
     String description() const override;
 
-    PopulatedFiles populate(Folder const &folder) override;
+    PopulatedFiles populate(const Folder &folder) override;
     bool prune(File &file) const override;
-    File *createFile(String const &name) override;
-    void destroyFile(String const &name) override;
-    Feed *newSubFeed(String const &name) override;
+    File *createFile(const String &name) override;
+    void destroyFile(const String &name) override;
+    Feed *newSubFeed(const String &name) override;
 
     /**
      * Returns the archive that the feed accesses.
@@ -79,17 +79,17 @@ public:
     /**
      * Returns the archive that the feed accesses.
      */
-    Archive const &archive() const;
+    const Archive &archive() const;
 
     /**
      * Returns the base path within the archive.
      */
-    String const &basePath() const;
+    const String &basePath() const;
 
     /**
      * Returns the file where the archive is stored (in a serialized format).
      */
-    File const &archiveSourceFile() const;
+    const File &archiveSourceFile() const;
 
     /**
      * Serializes the contents of the in-memory Archive to the File associated with

@@ -164,7 +164,7 @@ struct ded_text_t {
 
     void release() { M_Free(text); }
 
-    void setText(char const *newTextToCopy)
+    void setText(const char *newTextToCopy)
     {
         release();
         text = M_StrDup(newTextToCopy);
@@ -419,7 +419,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_group_s {
 
     void release() { members.clear(); }
 
-    ded_group_member_t *tryFindFirstMemberWithMaterial(res::Uri const &materialUri)
+    ded_group_member_t *tryFindFirstMemberWithMaterial(const res::Uri &materialUri)
     {
         if (!materialUri.isEmpty())
         {

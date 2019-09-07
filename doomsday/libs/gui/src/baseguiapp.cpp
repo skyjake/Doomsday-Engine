@@ -32,7 +32,7 @@
 
 namespace de {
 
-static Value *Function_App_LoadFont(Context &, Function::ArgumentValues const &args)
+static Value *Function_App_LoadFont(Context &, const Function::ArgumentValues &args)
 {
     try
     {
@@ -48,14 +48,14 @@ static Value *Function_App_LoadFont(Context &, Function::ArgumentValues const &a
             LOG_RES_WARNING("Failed to load font: %s") << fileName;
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_RES_WARNING("Failed to load font:\n") << er.asText();
     }
     return nullptr;
 }
 
-static Value *Function_App_AddFontMapping(Context &, Function::ArgumentValues const &args)
+static Value *Function_App_AddFontMapping(Context &, const Function::ArgumentValues &args)
 {
     // arg 0: family name
     // arg 1: dictionary with [Text style, Number weight] => Text fontname
@@ -64,11 +64,11 @@ static Value *Function_App_AddFontMapping(Context &, Function::ArgumentValues co
     // weight: 0-99 (25=light, 50=normal, 75=bold)
 
     NativeFont::StyleMapping mapping;
-    DictionaryValue const &dict = args.at(1)->as<DictionaryValue>();
+    const DictionaryValue &dict = args.at(1)->as<DictionaryValue>();
     DE_FOR_EACH_CONST(DictionaryValue::Elements, i, dict.elements())
     {
         NativeFont::Spec spec;
-        ArrayValue const &key = i->first.value->as<ArrayValue>();
+        const ArrayValue &key = i->first.value->as<ArrayValue>();
         if (key.at(0).asText() == "italic")
         {
             spec.style = NativeFont::Italic;

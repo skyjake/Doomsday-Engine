@@ -27,16 +27,16 @@ Feed::Feed()
 Feed::~Feed()
 {}
 
-File *Feed::createFile(String const &/*name*/)
+File *Feed::createFile(const String &/*name*/)
 {
     // By default feeds can't create files.
     return 0;
 }
 
-void Feed::destroyFile(String const &/*name*/)
+void Feed::destroyFile(const String &/*name*/)
 {}
 
-Feed *Feed::newSubFeed(String const &/*name*/)
+Feed *Feed::newSubFeed(const String &/*name*/)
 {
     // By default feeds can't create subfeeds.
     return 0;

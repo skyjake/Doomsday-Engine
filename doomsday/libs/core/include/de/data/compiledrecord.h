@@ -61,7 +61,7 @@ public:
         setCompiled(false);
     }
 
-    inline NativeStruct const &compiled() const
+    inline const NativeStruct &compiled() const
     {
         if (!isCompiled()) compile();
         return _compiled;

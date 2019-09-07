@@ -24,13 +24,13 @@ namespace de {
 
 DE_PIMPL(BitField)
 {
-    Elements const *elements;
+    const Elements *elements;
     Block packed;
 
     Impl(Public *i) : Base(i), elements(0)
     {}
 
-    Impl(Public *i, Impl const &other)
+    Impl(Public *i, const Impl &other)
         : Base     (i)
         , elements (other.elements)
         , packed   (other.packed)
@@ -79,7 +79,7 @@ DE_PIMPL(BitField)
         duint value = 0;
 
         //DE_ASSERT(elements.contains(id));
-        //Element const &f = elements.constFind(id).value();
+        //const Element &f = elements.constFind(id).value();
 
         int eFirstBit = 0;
         int eNumBits = 0;
@@ -103,7 +103,7 @@ DE_PIMPL(BitField)
         return value;
     }
 
-    Ids delta(Impl const &other) const
+    Ids delta(const Impl &other) const
     {
         DE_ASSERT(elements != 0);
         DE_ASSERT(other.elements != 0);
@@ -129,7 +129,7 @@ DE_PIMPL(BitField)
             Ids const lookup = elements->idsLaidOutOnByte(pos);
             DE_FOR_EACH_CONST(Ids, i, lookup)
             {
-                Id const &id = *i;
+                const Id &id = *i;
 
                 if (diffs.contains(id))
                     continue; // Already in the delta.
@@ -147,27 +147,27 @@ DE_PIMPL(BitField)
 BitField::BitField() : d(new Impl(this))
 {}
 
-BitField::BitField(Elements const &elements) : d(new Impl(this))
+BitField::BitField(const Elements &elements) : d(new Impl(this))
 {
     setElements(elements);
 }
 
-BitField::BitField(BitField const &other) : d(new Impl(this, *other.d))
+BitField::BitField(const BitField &other) : d(new Impl(this, *other.d))
 {}
 
-BitField::BitField(Block const &data) : d(new Impl(this))
+BitField::BitField(const Block &data) : d(new Impl(this))
 {
     d->packed = data;
 }
 
-BitField &BitField::operator = (BitField const &other)
+BitField &BitField::operator = (const BitField &other)
 {
     d->elements = other.d->elements;
     d->packed   = other.d->packed;
     return *this;
 }
 
-void BitField::setElements(Elements const &elements)
+void BitField::setElements(const Elements &elements)
 {
     clear();
 
@@ -191,7 +191,7 @@ bool BitField::isEmpty() const
     return !d->elements || !d->elements->size();
 }
 
-BitField::Elements const &BitField::elements() const
+const BitField::Elements &BitField::elements() const
 {
     return *d->elements;
 }
@@ -201,17 +201,17 @@ Block BitField::data() const
     return d->packed;
 }
 
-bool BitField::operator == (BitField const &other) const
+bool BitField::operator == (const BitField &other) const
 {
     return d->packed == other.d->packed;
 }
 
-bool BitField::operator != (BitField const &other) const
+bool BitField::operator != (const BitField &other) const
 {
     return d->packed != other.d->packed;
 }
 
-BitField::Ids BitField::delta(BitField const &other) const
+BitField::Ids BitField::delta(const BitField &other) const
 {
     return d->delta(*other.d);
 }

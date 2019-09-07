@@ -69,12 +69,12 @@ public:
         /**
          * Returns the unique identifier/name for the logical save slot.
          */
-        de::String const &id() const;
+        const de::String &id() const;
 
         /**
          * Returns the absolute path of the saved session, bound to the logical save slot.
          */
-        de::String const &savePath() const;
+        const de::String &savePath() const;
 
         /**
          * Returns the name of the saved session, bound to the logical save slot.
@@ -118,7 +118,7 @@ public:
      * @param menuWidgetId  Unique identifier of the game menu widget to associate this slot with.
      *                      Use @c 0 for none.
      */
-    void add(de::String const &id, bool userWritable, de::String const &saveName,
+    void add(const de::String &id, bool userWritable, const de::String &saveName,
              int menuWidgetId = 0);
 
     /**
@@ -132,10 +132,10 @@ public:
     /**
      * Returns @c true iff @a slotId is interpretable as a logical slot identifier.
      */
-    bool has(de::String const &slotId) const;
+    bool has(const de::String &slotId) const;
 
     /// @see slot()
-    inline Slot &operator [] (de::String const &slotId) {
+    inline Slot &operator [] (const de::String &slotId) {
         return slot(slotId);
     }
 
@@ -144,18 +144,18 @@ public:
      *
      * @see has()
      */
-    Slot &slot(de::String const &slotId) const;
+    Slot &slot(const de::String &slotId) const;
 
     /**
      * Returns the logical save slot associated with the saved session @a name specified.
      */
-    Slot *slotBySaveName(de::String const &name) const;
+    Slot *slotBySaveName(const de::String &name) const;
 
     /**
      * Returns the logical save slot associated with the @em first saved session with the
      * user @a description specified.
      */
-    Slot *slotBySavedUserDescription(de::String const &description) const;
+    Slot *slotBySavedUserDescription(const de::String &description) const;
 
     /**
      * Parse @a str and determine whether it references a logical save slot.
@@ -171,7 +171,7 @@ public:
      *
      * @return  The referenced Slot otherwise @c 0.
      */
-    Slot *slotByUserInput(de::String const &str) const;
+    Slot *slotByUserInput(const de::String &str) const;
 
     /**
      * Force a manual update of all save slot statuses and update any linked menu items.

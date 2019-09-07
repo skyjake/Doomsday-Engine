@@ -133,7 +133,7 @@ DE_PIMPL(LogWidget)
 
 DE_AUDIENCE_METHODS(LogWidget, Scroll, Maximum)
 
-LogWidget::LogWidget(String const &name) : Widget(name), d(new Impl(this))
+LogWidget::LogWidget(const String &name) : Widget(name), d(new Impl(this))
 {}
 
 LogSink &LogWidget::logSink()
@@ -197,7 +197,7 @@ void LogWidget::draw()
         int idx = d->cache.sizei();
 
         // No cached entry for this, generate one.
-        LogEntry const &entry = d->sink.entry(idx);
+        const LogEntry &entry = d->sink.entry(idx);
 
         MonospaceLogSinkFormatter::Lines lines = d->formatter.logEntryToTextLines(entry);
 
@@ -269,11 +269,11 @@ void LogWidget::draw()
     }
 }
 
-bool LogWidget::handleEvent(Event const &event)
+bool LogWidget::handleEvent(const Event &event)
 {
     if (event.type() != Event::KeyPress) return false;
 
-    KeyEvent const &ev = event.as<KeyEvent>();
+    const KeyEvent &ev = event.as<KeyEvent>();
 
     int pageSize = scrollPageSize();
 

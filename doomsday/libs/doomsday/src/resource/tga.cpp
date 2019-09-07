@@ -69,7 +69,7 @@ typedef struct {
 
 static char *lastTgaErrorMsg = 0; /// @todo potentially never free'd
 
-static void TGA_SetLastError(char const *msg)
+static void TGA_SetLastError(const char *msg)
 {
     size_t len;
     if (0 == msg || 0 == (len = strlen(msg)))
@@ -183,7 +183,7 @@ uint8_t *TGA_Load(FileHandle &file, Vec2ui &outSize, int &pixelSize)
     // "Unpack" the pixels (origin in the lower left corner).
     // TGA pixels are in BGRA format.
     dstBuf = (uint8_t *) M_Malloc(4 * numPels);
-    uint8_t const *src = srcBuf;
+    const uint8_t *src = srcBuf;
     for (int y = outSize.y - 1; y >= 0; y--)
     for (int x = 0; x < (signed) outSize.x; x++)
     {

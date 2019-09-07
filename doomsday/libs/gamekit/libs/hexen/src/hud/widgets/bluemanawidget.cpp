@@ -26,7 +26,7 @@
 using namespace de;
 
 guidata_bluemana_t::guidata_bluemana_t(void (*updateGeometry) (HudWidget *wi),
-                                       void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                                       void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                                        dint player)
     : HudWidget(updateGeometry,
                 drawer,
@@ -45,11 +45,11 @@ void guidata_bluemana_t::tick(timespan_t /*tickLength*/)
 {
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
-    player_t const &plr = ::players[player()];
+    const player_t &plr = ::players[player()];
     _value = plr.ammo[AT_BLUEMANA].owned;
 }
 
-void BlueManaWidget_Draw(guidata_bluemana_t *mana, Point2Raw const *offset)
+void BlueManaWidget_Draw(guidata_bluemana_t *mana, const Point2Raw *offset)
 {
 #define TRACKING                ( 1 )
 
@@ -82,7 +82,7 @@ void BlueManaWidget_Draw(guidata_bluemana_t *mana, Point2Raw const *offset)
 #undef TRACKING
 }
 
-void SBarBlueManaWidget_Draw(guidata_bluemana_t *mana, Point2Raw const *offset)
+void SBarBlueManaWidget_Draw(guidata_bluemana_t *mana, const Point2Raw *offset)
 {
 #define X_OFFSET                ( 91 )
 #define Y_OFFSET                ( 19 )

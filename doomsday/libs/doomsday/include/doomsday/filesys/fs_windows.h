@@ -34,9 +34,9 @@
 extern "C" {
 #endif
 
-LIBDOOMSDAY_PUBLIC FILE *FS_Win32_fopen(char const *filenameUtf8, char const *mode);
-LIBDOOMSDAY_PUBLIC int FS_Win32_access(char const *pathUtf8, int mode);
-LIBDOOMSDAY_PUBLIC int FS_Win32_mkdir(char const *dirnameUtf8);
+LIBDOOMSDAY_PUBLIC FILE *FS_Win32_fopen(const char *filenameUtf8, const char *mode);
+LIBDOOMSDAY_PUBLIC int FS_Win32_access(const char *pathUtf8, int mode);
+LIBDOOMSDAY_PUBLIC int FS_Win32_mkdir(const char *dirnameUtf8);
 
 #ifdef __cplusplus
 } //extern "C"

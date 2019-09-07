@@ -88,7 +88,7 @@ float ST_StatusBarShown(int localPlayer);
  * @param text         Message Text to be posted. Messages may use the same
  * parameter control blocks as with the engine's Text rendering API.
  */
-void ST_LogPost(int localPlayer, byte flags, char const *text);
+void ST_LogPost(int localPlayer, byte flags, const char *text);
 
 /**
  * Rewind the message log of the specified player, making the last few messages
@@ -128,7 +128,7 @@ float ST_AutomapOpacity(int localPlayer);
  *
  * @return  @true= there is no point even partially visible.
  */
-dd_bool ST_AutomapObscures2(int localPlayer, RectRaw const *region);
+dd_bool ST_AutomapObscures2(int localPlayer, const RectRaw *region);
 dd_bool ST_AutomapObscures(int localPlayer, int x, int y, int width, int height);
 
 int ST_AutomapAddPoint(int localPlayer, coord_t x, coord_t y, coord_t z);

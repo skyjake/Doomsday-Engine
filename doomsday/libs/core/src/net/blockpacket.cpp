@@ -27,14 +27,14 @@ static Packet::Type const BLOCK_PACKET_TYPE = Packet::typeFromString("BLCK");
 BlockPacket::BlockPacket() : Packet(BLOCK_PACKET_TYPE)
 {}
 
-BlockPacket::BlockPacket(Block const &block)
+BlockPacket::BlockPacket(const Block &block)
     : Packet(BLOCK_PACKET_TYPE), Block(block)
 {}
 
 void BlockPacket::operator >> (Writer &to) const
 {
     Packet::operator >> (to);
-    to << *static_cast<Block const *>(this);
+    to << *static_cast<const Block *>(this);
 }
 
 void BlockPacket::operator << (Reader &from)
@@ -48,12 +48,12 @@ Block &BlockPacket::block()
     return *this;
 }
 
-Block const &BlockPacket::block() const
+const Block &BlockPacket::block() const
 {
     return *this;
 }
 
-Packet *BlockPacket::fromBlock(Block const &block)
+Packet *BlockPacket::fromBlock(const Block &block)
 {
     // Attempts to deserialize from the data in block.
     return constructFromBlock<BlockPacket>(block, BLOCK_PACKET_TYPE);

@@ -38,13 +38,13 @@ namespace world { class Material; }
 class MapStateReader : public GameStateFolder::MapStateReader
 {
 public:
-    MapStateReader(GameStateFolder const &session);
+    MapStateReader(const GameStateFolder &session);
     virtual ~MapStateReader();
 
     /**
      * Deserialize the saved map state.
      */
-    void read(de::String const &mapUriStr);
+    void read(const de::String &mapUriStr);
 
     /**
      * Returns the logical map version of the saved map state.

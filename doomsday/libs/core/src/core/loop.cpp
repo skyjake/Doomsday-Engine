@@ -137,7 +137,7 @@ void Loop::nextLoopIteration()
             DE_NOTIFY(Iteration, i) i->loopIteration();
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_AS("Loop");
 
@@ -185,7 +185,7 @@ void Dispatch::loopIteration()
         _funcs.clear();
     }
 
-    for (Callback const &cb : funcs)
+    for (const Callback &cb : funcs)
     {
         cb();
     }

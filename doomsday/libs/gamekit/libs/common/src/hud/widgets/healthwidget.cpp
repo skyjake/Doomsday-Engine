@@ -30,7 +30,7 @@
 using namespace de;
 
 guidata_health_t::guidata_health_t(void (*updateGeometry) (HudWidget *wi),
-                                   void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                                   void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                                    dint player)
     : HudWidget(updateGeometry,
                 drawer,
@@ -49,11 +49,11 @@ void guidata_health_t::tick(timespan_t /*elapsed*/)
 {
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
-    player_t const *plr = &::players[player()];
+    const player_t *plr = &::players[player()];
     _value = plr->health;
 }
 
-void HealthWidget_Draw(guidata_health_t *hlth, Point2Raw const *offset)
+void HealthWidget_Draw(guidata_health_t *hlth, const Point2Raw *offset)
 {
 #if __JDOOM__
 #  define X_OFFSET              ( 0 )
@@ -107,7 +107,7 @@ void HealthWidget_Draw(guidata_health_t *hlth, Point2Raw const *offset)
 #undef X_OFFSET
 }
 
-void SBarHealthWidget_Draw(guidata_health_t *hlth, Point2Raw const *offset)
+void SBarHealthWidget_Draw(guidata_health_t *hlth, const Point2Raw *offset)
 {
 #if __JDOOM__
 #  define X_OFFSET              ( 90 )

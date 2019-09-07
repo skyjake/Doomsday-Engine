@@ -52,7 +52,7 @@ public:
      * @param colorCount  Number of discreet colors in @a colorData.
      * @param colorData   Color data (at least @a colorCount * 3 values).
      */
-    static de::List<de::Vec3ub> read(de::String format, int colorCount, de::dbyte const *colorData);
+    static de::List<de::Vec3ub> read(de::String format, int colorCount, const de::dbyte *colorData);
 };
 
 /**
@@ -135,7 +135,7 @@ public:
      *
      * @return  Closet matching color index or @c -1 if no colors in the palette.
      */
-    int nearestIndex(de::Vec3ub const &rgb) const;
+    int nearestIndex(const de::Vec3ub &rgb) const;
 
     /**
      * Clear all translation maps.
@@ -147,7 +147,7 @@ public:
      *
      * @return  Pointer to the identified translation; otherwise @c 0.
      */
-    Translation const *translation(de::String id) const;
+    const Translation *translation(de::String id) const;
 
     /**
      * Add/replace the identified translation map.
@@ -159,7 +159,7 @@ public:
      *
      * @see colorCount()
      */
-    void newTranslation(de::String id, Translation const &mappings);
+    void newTranslation(de::String id, const Translation &mappings);
 
 private:
     DE_PRIVATE(d)

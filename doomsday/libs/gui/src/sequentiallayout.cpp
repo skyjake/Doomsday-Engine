@@ -24,16 +24,16 @@ DE_PIMPL(SequentialLayout)
 {
     GuiWidgetList widgets;
     ui::Direction dir;
-    Rule const *initialX;
-    Rule const *initialY;
-    Rule const *posX;
-    Rule const *posY;
-    Rule const *fixedWidth;
-    Rule const *fixedHeight;
-    Rule const *totalWidth;
-    Rule const *totalHeight;
+    const Rule *initialX;
+    const Rule *initialY;
+    const Rule *posX;
+    const Rule *posY;
+    const Rule *fixedWidth;
+    const Rule *fixedHeight;
+    const Rule *totalWidth;
+    const Rule *totalHeight;
 
-    Impl(Public *i, Rule const &x, Rule const &y, ui::Direction direc)
+    Impl(Public *i, const Rule &x, const Rule &y, ui::Direction direc)
         : Base(i),
           dir(direc),
           initialX(holdRef(x)),
@@ -67,7 +67,7 @@ DE_PIMPL(SequentialLayout)
         changeRef(totalHeight, *refless(new ConstantRule(0)));
     }
 
-    void advancePos(Rule const &amount)
+    void advancePos(const Rule &amount)
     {
         switch (dir)
         {
@@ -96,7 +96,7 @@ DE_PIMPL(SequentialLayout)
         }
     }
 
-    void append(GuiWidget *widget, Rule const *spaceBefore, AppendMode mode)
+    void append(GuiWidget *widget, const Rule *spaceBefore, AppendMode mode)
     {
         if (spaceBefore)
         {
@@ -123,8 +123,8 @@ DE_PIMPL(SequentialLayout)
             rule.setInput(Rule::Top, *posY);
         }
 
-        Rule const &w = (fixedWidth?  *fixedWidth  : rule.width());
-        Rule const &h = (fixedHeight? *fixedHeight : rule.height());
+        const Rule &w = (fixedWidth?  *fixedWidth  : rule.width());
+        const Rule &h = (fixedHeight? *fixedHeight : rule.height());
 
         // Update the minor axis maximum size.
         if (mode == UpdateMinorAxis)
@@ -168,7 +168,7 @@ DE_PIMPL(SequentialLayout)
     }
 };
 
-SequentialLayout::SequentialLayout(Rule const &startX, Rule const &startY, ui::Direction direction)
+SequentialLayout::SequentialLayout(const Rule &startX, const Rule &startY, ui::Direction direction)
     : d(new Impl(this, startX, startY, direction))
 {}
 
@@ -177,12 +177,12 @@ void SequentialLayout::clear()
     d->clear();
 }
 
-void SequentialLayout::setStartX(Rule const &startX)
+void SequentialLayout::setStartX(const Rule &startX)
 {
     changeRef(d->initialX, startX);
 }
 
-void SequentialLayout::setStartY(Rule const &startY)
+void SequentialLayout::setStartY(const Rule &startY)
 {
     changeRef(d->initialY, startY);
 }
@@ -199,7 +199,7 @@ ui::Direction SequentialLayout::direction() const
     return d->dir;
 }
 
-void SequentialLayout::setOverrideWidth(Rule const &width)
+void SequentialLayout::setOverrideWidth(const Rule &width)
 {
     DE_ASSERT(isEmpty());
 
@@ -207,7 +207,7 @@ void SequentialLayout::setOverrideWidth(Rule const &width)
     changeRef(d->totalWidth, width);
 }
 
-void SequentialLayout::setOverrideHeight(Rule const &height)
+void SequentialLayout::setOverrideHeight(const Rule &height)
 {
     DE_ASSERT(isEmpty());
 
@@ -221,13 +221,13 @@ SequentialLayout &SequentialLayout::append(GuiWidget &widget, AppendMode mode)
     return *this;
 }
 
-SequentialLayout &SequentialLayout::append(GuiWidget &widget, Rule const &spaceBefore, AppendMode mode)
+SequentialLayout &SequentialLayout::append(GuiWidget &widget, const Rule &spaceBefore, AppendMode mode)
 {
     d->append(&widget, &spaceBefore, mode);
     return *this;
 }
 
-SequentialLayout &SequentialLayout::append(Rule const &emptySpace)
+SequentialLayout &SequentialLayout::append(const Rule &emptySpace)
 {
     d->append(nullptr, &emptySpace, IgnoreMinorAxis);
     return *this;
@@ -248,12 +248,12 @@ bool SequentialLayout::isEmpty() const
     return d->widgets.isEmpty();
 }
 
-Rule const &SequentialLayout::width() const
+const Rule &SequentialLayout::width() const
 {
     return *d->totalWidth;
 }
 
-Rule const &SequentialLayout::height() const
+const Rule &SequentialLayout::height() const
 {
     return *d->totalHeight;
 }

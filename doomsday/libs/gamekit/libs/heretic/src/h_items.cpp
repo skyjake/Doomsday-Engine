@@ -454,7 +454,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
   }
 };
 
-AmmoDef const *P_AmmoDef(ammotype_t type)
+const AmmoDef *P_AmmoDef(ammotype_t type)
 {
     static AmmoDef const ammoDefs[NUM_AMMO_TYPES] = {
         /*AT_CRYSTAL*/  { GM_ANY,           "INAMGLD" },

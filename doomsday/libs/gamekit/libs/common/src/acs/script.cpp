@@ -31,7 +31,7 @@ Script::Args::Args()
     fill(0);
 }
 
-Script::Args::Args(dbyte const *cArr, dint length)
+Script::Args::Args(const dbyte *cArr, dint length)
 {
     length = cArr? de::min(dint( size() ), length) : 0;
 
@@ -44,7 +44,7 @@ Script::Args::Args(dbyte const *cArr, dint length)
 
 DE_PIMPL_NOREF(Script)
 {
-    Module::EntryPoint const *entryPoint = nullptr;
+    const Module::EntryPoint *entryPoint = nullptr;
     State state   = Inactive;
     int waitValue = 0;
 
@@ -58,7 +58,7 @@ DE_PIMPL_NOREF(Script)
         waitValue = value;
     }
 
-    void resumeIfWaitingForScript(Script const &other)
+    void resumeIfWaitingForScript(const Script &other)
     {
         if(state != WaitingForScript) return;
         if(waitValue != other.entryPoint().scriptNumber) return;
@@ -70,14 +70,14 @@ DE_PIMPL_NOREF(Script)
 Script::Script() : d(new Impl)
 {}
 
-Script::Script(Module::EntryPoint const &ep) : d(new Impl)
+Script::Script(const Module::EntryPoint &ep) : d(new Impl)
 {
     setEntryPoint(ep);
 }
 
 String Script::describe() const
 {
-    Module::EntryPoint const &ep = entryPoint();
+    const Module::EntryPoint &ep = entryPoint();
     return "ACScript #" DE2_ESC(b) + String::asText(ep.scriptNumber)
          + DE2_ESC(l) " Args: " DE2_ESC(.) DE2_ESC(i) + String::asText(ep.scriptArgCount)
          + DE2_ESC(l) " Open: " DE2_ESC(.) DE2_ESC(i) + DE_BOOL_YESNO(ep.startWhenMapBegins);
@@ -89,7 +89,7 @@ String Script::description() const
          + (isWaiting()? DE2_ESC(l) " Wait-for: " DE2_ESC(.) DE2_ESC(i) + String::asText(d->waitValue) : "");
 }
 
-bool Script::start(Args const &args, mobj_t *activator, Line *line, int side, int delayCount)
+bool Script::start(const Args &args, mobj_t *activator, Line *line, int side, int delayCount)
 {
     // Resume a suspended script?
     if(isSuspended())
@@ -188,13 +188,13 @@ void Script::sectorFinished(int tag)
     }
 }
 
-Module::EntryPoint const &Script::entryPoint() const
+const Module::EntryPoint &Script::entryPoint() const
 {
     DE_ASSERT(d->entryPoint);
     return *d->entryPoint;
 }
 
-void Script::setEntryPoint(Module::EntryPoint const &entryPoint)
+void Script::setEntryPoint(const Module::EntryPoint &entryPoint)
 {
     d->entryPoint = &entryPoint;
 }
@@ -213,7 +213,7 @@ void Script::read(reader_s *reader)
     d->waitValue = Reader_ReadInt16(reader);
 }
 
-void Script::resumeIfWaitingForScript(Script const &other)
+void Script::resumeIfWaitingForScript(const Script &other)
 {
     if(&other == this) return;
     d->resumeIfWaitingForScript(other);
@@ -226,7 +226,7 @@ void Script::setState(Script::State newState)
 
 String Script::stateAsText(State state) // static
 {
-    static char const *texts[] = {
+    static const char *texts[] = {
         "Inactive",
         "Running",
         "Suspended",

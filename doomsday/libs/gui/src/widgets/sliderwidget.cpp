@@ -337,7 +337,7 @@ DE_GUI_PIMPL(SliderWidget)
         self().requestGeometry();
     }
 
-    void updateHover(Vec2i const &pos)
+    void updateHover(const Vec2i &pos)
     {
         if (state == Grabbed) return;
 
@@ -397,7 +397,7 @@ DE_GUI_PIMPL(SliderWidget)
         labels[End]  .setText(maxLabel.isEmpty()? String::asText(float(range.end   * displayFactor), precision) : maxLabel);
     }
 
-    void startGrab(MouseEvent const &ev)
+    void startGrab(const MouseEvent &ev)
     {
         if (sliderValueRect().contains(ev.pos()))
         {
@@ -407,7 +407,7 @@ DE_GUI_PIMPL(SliderWidget)
         }
     }
 
-    void updateGrab(MouseEvent const &ev)
+    void updateGrab(const MouseEvent &ev)
     {
         DE_ASSERT(state == Grabbed);
 
@@ -433,7 +433,7 @@ DE_GUI_PIMPL(SliderWidget)
         return 1.0 / std::pow(10.0, precision) / displayFactor;
     }
 
-    void endGrab(MouseEvent const &ev)
+    void endGrab(const MouseEvent &ev)
     {
         if (state == Grabbed)
         {
@@ -469,7 +469,7 @@ DE_GUI_PIMPL(SliderWidget)
 
 DE_AUDIENCE_METHODS(SliderWidget, Value, UserValue)
 
-SliderWidget::SliderWidget(String const &name)
+SliderWidget::SliderWidget(const String &name)
     : GuiWidget(name), d(new Impl(this))
 {
     // Default size.
@@ -479,17 +479,17 @@ SliderWidget::SliderWidget(String const &name)
                         font().height()) + margins().height());
 }
 
-void SliderWidget::setRange(Rangei const &intRange, int step)
+void SliderWidget::setRange(const Rangei &intRange, int step)
 {
     setRange(Ranged(intRange.start, intRange.end), ddouble(step));
 }
 
-void SliderWidget::setRange(Rangef const &floatRange, float step)
+void SliderWidget::setRange(const Rangef &floatRange, float step)
 {
     setRange(Ranged(floatRange.start, floatRange.end), ddouble(step));
 }
 
-void SliderWidget::setRange(Ranged const &doubleRange, ddouble step)
+void SliderWidget::setRange(const Ranged &doubleRange, ddouble step)
 {
     d->range = doubleRange;
     d->step = step;
@@ -583,7 +583,7 @@ void SliderWidget::drawContent()
     d->draw();
 }
 
-bool SliderWidget::handleEvent(Event const &event)
+bool SliderWidget::handleEvent(const Event &event)
 {
     if (event.type() == Event::MousePosition)
     {

@@ -42,13 +42,13 @@ void Data::sort(SortMethod method)
     switch (method)
     {
     case Ascending:
-        sort([] (Item const &a, Item const &b) {
+        sort([] (const Item &a, const Item &b) {
             return a.sortKey().compareWithoutCase(b.sortKey()) < 0;
         });
         break;
 
     case Descending:
-        sort([] (Item const &a, Item const &b) {
+        sort([] (const Item &a, const Item &b) {
             return a.sortKey().compareWithoutCase(b.sortKey()) > 0;
         });
         break;
@@ -64,7 +64,7 @@ LoopResult Data::forAll(const std::function<LoopResult (Item &)>& func)
     return LoopContinue;
 }
 
-LoopResult Data::forAll(const std::function<LoopResult (Item const &)> &func) const
+LoopResult Data::forAll(const std::function<LoopResult (const Item &)> &func) const
 {
     for (DataPos pos = 0; pos < size(); ++pos)
     {

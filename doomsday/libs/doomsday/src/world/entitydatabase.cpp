@@ -81,11 +81,11 @@ DE_PIMPL(EntityDatabase)
         return &result.first->second;
     }
 
-    PropertyValue const *tryFindPropertyValue(MapEntityPropertyDef const &def,
+    const PropertyValue *tryFindPropertyValue(const MapEntityPropertyDef &def,
                                               int elementIndex)
     {
          Entities *set = entities(def.entity->id);
-         Entity const *entity = entityByElementIndex(*set, elementIndex, false /*do not create*/);
+         const Entity *entity = entityByElementIndex(*set, elementIndex, false /*do not create*/);
          if (!entity)
          {
              throw Error("EntityDatabase::property",
@@ -105,25 +105,25 @@ DE_PIMPL(EntityDatabase)
 EntityDatabase::EntityDatabase() : d(new Impl(this))
 {}
 
-uint EntityDatabase::entityCount(MapEntityDef const *entityDef) const
+uint EntityDatabase::entityCount(const MapEntityDef *entityDef) const
 {
     DE_ASSERT(entityDef);
     Entities *set = d->entities(entityDef->id);
     return set->size();
 }
 
-bool EntityDatabase::hasEntity(MapEntityDef const *entityDef, int elementIndex) const
+bool EntityDatabase::hasEntity(const MapEntityDef *entityDef, int elementIndex) const
 {
     DE_ASSERT(entityDef);
     Entities *set = d->entities(entityDef->id);
     return d->entityByElementIndex(*set, elementIndex, false /*do not create*/) != 0;
 }
 
-PropertyValue const &EntityDatabase::property(MapEntityPropertyDef const *def,
+const PropertyValue &EntityDatabase::property(const MapEntityPropertyDef *def,
                                               int elementIndex) const
 {
     DE_ASSERT(def);
-    if (auto const *propValue = d->tryFindPropertyValue(*def, elementIndex))
+    if (const auto *propValue = d->tryFindPropertyValue(*def, elementIndex))
     {
         return *propValue;
     }
@@ -134,13 +134,13 @@ PropertyValue const &EntityDatabase::property(MapEntityPropertyDef const *def,
                         def->id));
 }
 
-bool EntityDatabase::hasPropertyValue(MapEntityPropertyDef const *def, int elementIndex) const
+bool EntityDatabase::hasPropertyValue(const MapEntityPropertyDef *def, int elementIndex) const
 {
     DE_ASSERT(def);
     return d->tryFindPropertyValue(*def, elementIndex) != nullptr;
 }
 
-void EntityDatabase::setProperty(MapEntityPropertyDef const *def, int elementIndex,
+void EntityDatabase::setProperty(const MapEntityPropertyDef *def, int elementIndex,
     PropertyValue *value)
 {
     DE_ASSERT(def);

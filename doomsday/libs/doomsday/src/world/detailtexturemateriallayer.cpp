@@ -26,7 +26,7 @@ using namespace de;
 
 namespace world {
 
-static res::Uri findTextureForDetailStage(ded_detail_stage_t const &def)
+static res::Uri findTextureForDetailStage(const ded_detail_stage_t &def)
 {
     try
     {
@@ -37,12 +37,12 @@ static res::Uri findTextureForDetailStage(ded_detail_stage_t const &def)
                            .composeUri();
         }
     }
-    catch (res::TextureScheme::NotFoundError const &)
+    catch (const res::TextureScheme::NotFoundError &)
     {} // Ignore this error.
     return res::Uri();
 }
 
-DetailTextureMaterialLayer::AnimationStage::AnimationStage(res::Uri const &texture, int tics,
+DetailTextureMaterialLayer::AnimationStage::AnimationStage(const res::Uri &texture, int tics,
     float variance, float scale, float strength, float maxDistance)
     : TextureMaterialLayer::AnimationStage(texture, tics, variance)
     , scale(scale)
@@ -54,7 +54,7 @@ DetailTextureMaterialLayer::AnimationStage::AnimationStage(res::Uri const &textu
 //    set("maxDistance", maxDistance);
 }
 
-DetailTextureMaterialLayer::AnimationStage::AnimationStage(AnimationStage const &other)
+DetailTextureMaterialLayer::AnimationStage::AnimationStage(const AnimationStage &other)
     : TextureMaterialLayer::AnimationStage(other)
 {}
 
@@ -73,7 +73,7 @@ void DetailTextureMaterialLayer::AnimationStage::resetToDefaults()
 }
 
 DetailTextureMaterialLayer::AnimationStage *
-DetailTextureMaterialLayer::AnimationStage::fromDef(ded_detail_stage_t const &def)
+DetailTextureMaterialLayer::AnimationStage::fromDef(const ded_detail_stage_t &def)
 {
     res::Uri const texture = findTextureForDetailStage(def);
     return new AnimationStage(texture, def.tics, def.variance,
@@ -82,7 +82,7 @@ DetailTextureMaterialLayer::AnimationStage::fromDef(ded_detail_stage_t const &de
 
 // ------------------------------------------------------------------------------------
 
-DetailTextureMaterialLayer *DetailTextureMaterialLayer::fromDef(ded_detailtexture_t const &layerDef)
+DetailTextureMaterialLayer *DetailTextureMaterialLayer::fromDef(const ded_detailtexture_t &layerDef)
 {
     auto *layer = new DetailTextureMaterialLayer();
     // Only the one stage.
@@ -90,7 +90,7 @@ DetailTextureMaterialLayer *DetailTextureMaterialLayer::fromDef(ded_detailtextur
     return layer;
 }
 
-int DetailTextureMaterialLayer::addStage(DetailTextureMaterialLayer::AnimationStage const &stageToCopy)
+int DetailTextureMaterialLayer::addStage(const DetailTextureMaterialLayer::AnimationStage &stageToCopy)
 {
     _stages.append(new AnimationStage(stageToCopy));
     return _stages.count() - 1;

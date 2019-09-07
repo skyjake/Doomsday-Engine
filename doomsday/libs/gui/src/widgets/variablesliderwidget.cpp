@@ -76,7 +76,7 @@ DE_PIMPL(VariableSliderWidget)
         var->audienceForChange() += this;
     }
 
-    void variableValueChanged(Variable &, Value const &)
+    void variableValueChanged(Variable &, const Value &)
     {
         updateFromVariable();
     }
@@ -88,8 +88,8 @@ DE_PIMPL(VariableSliderWidget)
     }
 };
 
-VariableSliderWidget::VariableSliderWidget(Variable &variable, Ranged const &range,
-                                           ddouble step, String const &name)
+VariableSliderWidget::VariableSliderWidget(Variable &variable, const Ranged &range,
+                                           ddouble step, const String &name)
     : SliderWidget(name)
     , d(new Impl(this, variable))
 {
@@ -103,8 +103,8 @@ VariableSliderWidget::VariableSliderWidget(Variable &variable, Ranged const &ran
 }
 
 VariableSliderWidget::VariableSliderWidget(ValueType valueType,
-                                           Variable &variable, Ranged const &range,
-                                           ddouble step, String const &name)
+                                           Variable &variable, const Ranged &range,
+                                           ddouble step, const String &name)
     : SliderWidget(name)
     , d(new Impl(this, variable))
 {

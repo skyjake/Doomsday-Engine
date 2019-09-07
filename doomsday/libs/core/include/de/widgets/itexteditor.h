@@ -33,7 +33,7 @@ class ITextEditor
 public:
     virtual ~ITextEditor() = default;
 
-    virtual void setText(String const &text) = 0;
+    virtual void setText(const String &text) = 0;
     virtual void setCursor(BytePos bytePos)  = 0;
 
     virtual String  text() const   = 0;

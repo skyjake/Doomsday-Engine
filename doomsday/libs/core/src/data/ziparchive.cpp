@@ -93,7 +93,7 @@ struct DOSTime {
     duint16 hours;
 
     DOSTime(duint16 h, duint16 m, duint16 s) : seconds(s), minutes(m), hours(h) {}
-    DOSTime(duint16 const &i) {
+    DOSTime(const duint16 &i) {
         seconds = (i & 0x1f) * 2;
         minutes = (i >> 5) & 0x3f;
         hours = i >> 11;
@@ -115,7 +115,7 @@ struct DOSDate {
     duint16 year;
 
     DOSDate(duint16 y, duint16 m, duint16 d) : dayOfMonth(d), month(m), year(y) {}
-    DOSDate(duint16 const &i) {
+    DOSDate(const duint16 &i) {
         dayOfMonth = i & 0x1f;
         month = (i >> 5) & 0xf;
         year = i >> 9;
@@ -427,7 +427,7 @@ DE_PIMPL(ZipArchive)
      */
     void writeCachedCentralDirectory(Writer &writer)
     {
-        for (auto const &name_header : centralHeaders)
+        for (const auto &name_header : centralHeaders)
         {
             writer << name_header.second
                    << FixedByteArray(name_header.first);
@@ -452,7 +452,7 @@ DE_PIMPL(ZipArchive)
         // Write the central directory.
         for (PathTreeIterator<Index> iter(self().index().leafNodes()); iter.hasNext(); )
         {
-            ZipEntry const &entry = iter.next();
+            const ZipEntry &entry = iter.next();
             String const fullPath = entry.path();
 
             CentralFileHeader header;
@@ -512,7 +512,7 @@ DE_PIMPL(ZipArchive)
                 return true;
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOGDEV_RES_WARNING("Corrupt cached metadata: %s") << er.asText();
         }
@@ -525,7 +525,7 @@ ZipArchive::ZipArchive() : d(new Impl(this))
     setIndex(new Index);
 }
 
-ZipArchive::ZipArchive(IByteArray const &archive, Block const &dirCacheId)
+ZipArchive::ZipArchive(const IByteArray &archive, const Block &dirCacheId)
     : Archive(archive)
     , d(new Impl(this))
 {
@@ -554,9 +554,9 @@ ZipArchive::ZipArchive(IByteArray const &archive, Block const &dirCacheId)
     d->centralHeaders.clear();
 }
 
-void ZipArchive::readFromSource(Entry const &e, Path const &, IBlock &uncompressedData) const
+void ZipArchive::readFromSource(const Entry &e, const Path &, IBlock &uncompressedData) const
 {
-    ZipEntry const &entry = static_cast<ZipEntry const &>(e);
+    const ZipEntry &entry = static_cast<const ZipEntry &>(e);
 
     if (entry.compression == NO_COMPRESSION)
     {
@@ -630,9 +630,9 @@ void ZipArchive::readFromSource(Entry const &e, Path const &, IBlock &uncompress
     }
 }
 
-ZipArchive::Index const &ZipArchive::index() const
+const ZipArchive::Index &ZipArchive::index() const
 {
-    return static_cast<Index const &>(Archive::index());
+    return static_cast<const Index &>(Archive::index());
 }
 
 void ZipArchive::operator >> (Writer &to) const
@@ -748,7 +748,7 @@ void ZipArchive::operator >> (Writer &to) const
     to.seek(writer.offset());
 }
 
-static bool recognizeZipExtension(String const &ext)
+static bool recognizeZipExtension(const String &ext)
 {    
     for (const char *e : {".pack", ".demo", ".save", ".addon", ".pk3", ".zip"})
     {
@@ -757,7 +757,7 @@ static bool recognizeZipExtension(String const &ext)
     return false;
 }
 
-bool ZipArchive::recognize(File const &file)
+bool ZipArchive::recognize(const File &file)
 {
     if (file.status().type() == File::Type::File)
     {
@@ -767,7 +767,7 @@ bool ZipArchive::recognize(File const &file)
     return false;
 }
 
-bool ZipArchive::recognize(NativePath const &path)
+bool ZipArchive::recognize(const NativePath &path)
 {
     return recognizeZipExtension(path.toString().fileNameExtension().lower());
 }
@@ -796,17 +796,17 @@ File *ZipArchive::Interpreter::interpretFile(File *sourceData) const
             package->setSource(sourceData);
             return package.release();
         }
-        catch (Archive::FormatError const &)
+        catch (const Archive::FormatError &)
         {
             // Even though it was recognized as an archive, the file
             // contents may still prove to be corrupted.
             LOG_RES_WARNING("Archive in %s is invalid") << sourceData->description();
         }
-        catch (IByteArray::OffsetError const &)
+        catch (const IByteArray::OffsetError &)
         {
             LOG_RES_WARNING("Archive in %s is truncated") << sourceData->description();
         }
-        catch (IIStream::InputError const &er)
+        catch (const IIStream::InputError &er)
         {
             LOG_RES_WARNING("Failed to read %s") << sourceData->description();
             LOGDEV_RES_WARNING("%s") << er.asText();

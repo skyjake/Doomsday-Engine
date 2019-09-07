@@ -81,7 +81,7 @@ String DoomsdayInfo::titleForGame(const String &mode)
     return mode;
 }
 
-List<DoomsdayInfo::GameOption> DoomsdayInfo::gameOptions(String const &gameId)
+List<DoomsdayInfo::GameOption> DoomsdayInfo::gameOptions(const String &gameId)
 {
     using GOValue = GameOption::Value;
 

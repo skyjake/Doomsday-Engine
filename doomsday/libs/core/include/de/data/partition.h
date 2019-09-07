@@ -41,11 +41,11 @@ public:
     Vec2d origin;
 
 public:
-    Partition(Vec2d const &direction = Vec2d(),
-              Vec2d const &origin    = Vec2d())
+    Partition(const Vec2d &direction = Vec2d(),
+              const Vec2d &origin    = Vec2d())
         : direction(direction), origin(origin) {}
 
-    Partition(Partition const &other)
+    Partition(const Partition &other)
         : direction(other.direction), origin(other.origin) {}
 
     /**
@@ -57,7 +57,7 @@ public:
      *         @c =0 Point lies directly on/incident with the line.
      *         @c >0 Point is to the right of the line.
      */
-    ddouble pointOnSide(Vec2d const &point) const {
+    ddouble pointOnSide(const Vec2d &point) const {
         return (origin.y - point.y) * direction.x - (origin.x - point.x) * direction.y;
     }
 
@@ -65,7 +65,7 @@ public:
      * Returns @c true iff "this" line and @a other are parallel. In the special
      * case of either line having a zero-length direction, @c true is returned.
      */
-    bool isParallelTo(Partition const &other, ddouble epsilon = .99999999) const
+    bool isParallelTo(const Partition &other, ddouble epsilon = .99999999) const
     {
         ddouble len = direction.length();
         if (len == 0) return true;
@@ -90,7 +90,7 @@ public:
      *
      * @see intercept()
      */
-    ddouble intersection(Partition const &other) const
+    ddouble intersection(const Partition &other) const
     {
         ddouble divsor = direction.x * other.direction.y -
                          direction.y * other.direction.x;
@@ -106,7 +106,7 @@ public:
      * Determine the intercept point where "this" line and @a other intersect
      * and return the Euclidean point at which the two intercept.
      */
-    inline Vec2d intercept(Partition const &other) const {
+    inline Vec2d intercept(const Partition &other) const {
         return origin + direction * intersection(other);
     }
 

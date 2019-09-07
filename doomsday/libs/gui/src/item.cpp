@@ -29,7 +29,7 @@ DE_PIMPL_NOREF(Item)
     String                 label;
     std::unique_ptr<Value> data;
 
-    Impl(Semantics sem, String const &text = "", Value *var = nullptr)
+    Impl(Semantics sem, const String &text = "", Value *var = nullptr)
         : context(nullptr)
         , semantics(sem)
         , label(text)
@@ -45,7 +45,7 @@ Item::Item(Semantics semantics)
     : d(new Impl(semantics))
 {}
 
-Item::Item(Semantics semantics, String const &label)
+Item::Item(Semantics semantics, const String &label)
     : d(new Impl(semantics, label))
 {}
 
@@ -62,7 +62,7 @@ bool Item::isSeparator() const
     return d->semantics.testFlag(Separator);
 }
 
-void Item::setLabel(String const &label)
+void Item::setLabel(const String &label)
 {
     d->label = label;
     notifyChange();

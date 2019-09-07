@@ -165,42 +165,42 @@ void Con_DeinitVariableDirectory();
 void Con_ClearVariables();
 void Con_AddKnownWordsForVariables();
 
-LIBDOOMSDAY_PUBLIC void Con_AddVariable(cvartemplate_t const *tpl);
-LIBDOOMSDAY_PUBLIC void Con_AddVariableList(cvartemplate_t const *tplList);
-LIBDOOMSDAY_PUBLIC cvar_t *Con_FindVariable(char const *path);
+LIBDOOMSDAY_PUBLIC void Con_AddVariable(const cvartemplate_t *tpl);
+LIBDOOMSDAY_PUBLIC void Con_AddVariableList(const cvartemplate_t *tplList);
+LIBDOOMSDAY_PUBLIC cvar_t *Con_FindVariable(const char *path);
 
-LIBDOOMSDAY_PUBLIC ddstring_t const *CVar_TypeName(cvartype_t type);
+LIBDOOMSDAY_PUBLIC const ddstring_t *CVar_TypeName(cvartype_t type);
 
 /// @return  @ref consoleVariableFlags
-LIBDOOMSDAY_PUBLIC int CVar_Flags(cvar_t const *var);
+LIBDOOMSDAY_PUBLIC int CVar_Flags(const cvar_t *var);
 
 /// @return  Type of the variable.
-LIBDOOMSDAY_PUBLIC cvartype_t CVar_Type(cvar_t const *var);
+LIBDOOMSDAY_PUBLIC cvartype_t CVar_Type(const cvar_t *var);
 
 /// @return  Symbolic name/path-to the variable.
-LIBDOOMSDAY_PUBLIC AutoStr *CVar_ComposePath(cvar_t const *var);
+LIBDOOMSDAY_PUBLIC AutoStr *CVar_ComposePath(const cvar_t *var);
 
-LIBDOOMSDAY_PUBLIC int CVar_Integer(cvar_t const *var);
-LIBDOOMSDAY_PUBLIC float CVar_Float(cvar_t const *var);
-LIBDOOMSDAY_PUBLIC byte CVar_Byte(cvar_t const *var);
-LIBDOOMSDAY_PUBLIC char const *CVar_String(cvar_t const *var);
-LIBDOOMSDAY_PUBLIC res::Uri const &CVar_Uri(cvar_t const *var);
+LIBDOOMSDAY_PUBLIC int CVar_Integer(const cvar_t *var);
+LIBDOOMSDAY_PUBLIC float CVar_Float(const cvar_t *var);
+LIBDOOMSDAY_PUBLIC byte CVar_Byte(const cvar_t *var);
+LIBDOOMSDAY_PUBLIC const char *CVar_String(const cvar_t *var);
+LIBDOOMSDAY_PUBLIC const res::Uri &CVar_Uri(const cvar_t *var);
 
-LIBDOOMSDAY_PUBLIC void CVar_SetUri(cvar_t *var, res::Uri const &uri);
-LIBDOOMSDAY_PUBLIC void CVar_SetUri2(cvar_t *var, res::Uri const &uri, int svFlags);
+LIBDOOMSDAY_PUBLIC void CVar_SetUri(cvar_t *var, const res::Uri &uri);
+LIBDOOMSDAY_PUBLIC void CVar_SetUri2(cvar_t *var, const res::Uri &uri, int svFlags);
 LIBDOOMSDAY_PUBLIC void CVar_SetString(cvar_t* var, char const* text);
-LIBDOOMSDAY_PUBLIC void CVar_SetString2(cvar_t *var, char const *text, int svFlags);
+LIBDOOMSDAY_PUBLIC void CVar_SetString2(cvar_t *var, const char *text, int svFlags);
 LIBDOOMSDAY_PUBLIC void CVar_SetInteger(cvar_t* var, int value);
 LIBDOOMSDAY_PUBLIC void CVar_SetInteger2(cvar_t* var, int value, int svFlags);
 LIBDOOMSDAY_PUBLIC void CVar_SetFloat(cvar_t* var, float value);
 LIBDOOMSDAY_PUBLIC void CVar_SetFloat2(cvar_t* var, float value, int svFlags);
 
-LIBDOOMSDAY_PUBLIC void Con_SetVariable(de::Path const &varPath, int value, int svFlags = 0);
-LIBDOOMSDAY_PUBLIC int Con_GetVariableInteger(de::Path const &varPath);
+LIBDOOMSDAY_PUBLIC void Con_SetVariable(const de::Path &varPath, int value, int svFlags = 0);
+LIBDOOMSDAY_PUBLIC int Con_GetVariableInteger(const de::Path &varPath);
 
-LIBDOOMSDAY_PUBLIC void Con_PrintCVar(cvar_t *cvar, char const *prefix);
-LIBDOOMSDAY_PUBLIC void CVar_PrintReadOnlyWarning(cvar_t const *var);
-LIBDOOMSDAY_PUBLIC de::String Con_VarAsStyledText(cvar_t *var, char const *prefix);
+LIBDOOMSDAY_PUBLIC void Con_PrintCVar(cvar_t *cvar, const char *prefix);
+LIBDOOMSDAY_PUBLIC void CVar_PrintReadOnlyWarning(const cvar_t *var);
+LIBDOOMSDAY_PUBLIC de::String Con_VarAsStyledText(cvar_t *var, const char *prefix);
 
 #endif // __cplusplus
 

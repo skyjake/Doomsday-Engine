@@ -43,7 +43,7 @@ void MemoryLogSink::clear()
     _entries.clear();
 }
 
-LogSink &MemoryLogSink::operator << (LogEntry const &entry)
+LogSink &MemoryLogSink::operator << (const LogEntry &entry)
 {
     if ((!_privileged &&  (entry.context() & LogEntry::Privileged)) ||
         (_privileged && !(entry.context() & LogEntry::Privileged)))
@@ -61,7 +61,7 @@ LogSink &MemoryLogSink::operator << (LogEntry const &entry)
     return *this;
 }
 
-LogSink &MemoryLogSink::operator << (String const &)
+LogSink &MemoryLogSink::operator << (const String &)
 {
     // Ignore...
     return *this;
@@ -73,7 +73,7 @@ int MemoryLogSink::entryCount() const
     return _entries.sizei();
 }
 
-LogEntry const &MemoryLogSink::entry(int index) const
+const LogEntry &MemoryLogSink::entry(int index) const
 {
     DE_GUARD(this);
     DE_ASSERT(index >= 0);

@@ -38,7 +38,7 @@ public:
      *
      * @see parse(), setSourcePath()
      */
-    HexLex(Str const *script = 0, Str const *sourcePath = 0);
+    HexLex(const Str *script = 0, const Str *sourcePath = 0);
     ~HexLex();
 
     /**
@@ -47,14 +47,14 @@ public:
      *
      * @param script  The script source to be parsed.
      */
-    void parse(Str const *script);
+    void parse(const Str *script);
 
     /**
      * Change the source path used to identify the script in log messages.
      *
      * @param sourcePath  New source path to apply. A copy is made.
      */
-    void setSourcePath(Str const *sourcePath = 0);
+    void setSourcePath(const Str *sourcePath = 0);
 
     /**
      * Attempt to read the next token from the script. @c true is returned if a
@@ -72,11 +72,11 @@ public:
     /**
      * Returns a copy of the last read token.
      */
-    Str const *token();
+    const Str *token();
 
     de::ddouble readNumber();
-    Str const *readString();
-    res::Uri readUri(de::String const &defaultScheme = "");
+    const Str *readString();
+    res::Uri readUri(const de::String &defaultScheme = "");
 
     /**
      * Returns the line number at the current position in the script.
@@ -86,11 +86,11 @@ public:
 private:
     void checkOpen();
     bool atEnd();
-    void syntaxError(char const *message);
+    void syntaxError(const char *message);
 
     Str _sourcePath;    ///< Used to identify the source in error messages.
 
-    Str const *_script; ///< The start of the script being parsed.
+    const Str *_script; ///< The start of the script being parsed.
     int _readPos;       ///< Current read position.
     int _lineNumber;
 

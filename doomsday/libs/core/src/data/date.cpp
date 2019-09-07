@@ -156,7 +156,7 @@ Date Date::currentDate()
     return Time().asDate();
 }
 
-Date Date::fromText(String const &text)
+Date Date::fromText(const String &text)
 {
     return Time::fromText(text, Time::HumanDate);
 }

@@ -49,7 +49,7 @@ public:
      * @param input  Input script in text format.
      * @param output  Output Script object.
      */
-    virtual void parse(String const &input, Script &output) = 0;
+    virtual void parse(const String &input, Script &output) = 0;
 };
 
 } // namespace de

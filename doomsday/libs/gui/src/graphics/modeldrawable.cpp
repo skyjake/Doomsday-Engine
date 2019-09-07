@@ -49,7 +49,7 @@ namespace internal {
 class ImpIOStream : public Assimp::IOStream
 {
 public:
-    ImpIOStream(ByteArrayFile const &file) : _file(file), _pos(0)
+    ImpIOStream(const ByteArrayFile &file) : _file(file), _pos(0)
     {}
 
     size_t Read(void *pvBuffer, size_t pSize, size_t pCount)
@@ -60,7 +60,7 @@ public:
         return pCount;
     }
 
-    size_t Write(void const *, size_t, size_t)
+    size_t Write(const void *, size_t, size_t)
     {
         throw Error("ImpIOStream::Write", "Writing not allowed");
     }
@@ -100,7 +100,7 @@ public:
     void Flush() {}
 
 private:
-    ByteArrayFile const &_file;
+    const ByteArrayFile &_file;
     size_t _pos;
 };
 
@@ -119,19 +119,19 @@ struct ImpIOSystem : public Assimp::IOSystem
 
     char getOsSeparator() const { return '/'; }
 
-    Path resolvePath(char const *fn) const
+    Path resolvePath(const char *fn) const
     {
         Path path(fn);
         if (path.isAbsolute()) return path;
         return referencePath / path;
     }
 
-    bool Exists(char const *pFile) const
+    bool Exists(const char *pFile) const
     {
         return App::rootFolder().has(resolvePath(pFile));
     }
 
-    Assimp::IOStream *Open(char const *pFile, char const *)
+    Assimp::IOStream *Open(const char *pFile, const char *)
     {
         Path const path = resolvePath(pFile);
         return new ImpIOStream(App::rootFolder().locate<ByteArrayFile const>(path));
@@ -145,7 +145,7 @@ struct ImpIOSystem : public Assimp::IOSystem
 
 struct ImpLogger : public Assimp::LogStream
 {
-    void write(char const *message)
+    void write(const char *message)
     {
         LOG_GL_VERBOSE("[ai] %s") << message;
     }
@@ -229,18 +229,18 @@ AttribSpec const ModelVertex::_spec[12] = {
 };
 LIBGUI_VERTEX_FORMAT_SPEC(ModelVertex, 42 * sizeof(float))
 
-static Mat4f convertMatrix(aiMatrix4x4 const &aiMat)
+static Mat4f convertMatrix(const aiMatrix4x4 &aiMat)
 {
     return Mat4f(&aiMat.a1).transpose();
 }
 
-static ddouble secondsToTicks(ddouble seconds, aiAnimation const &anim)
+static ddouble secondsToTicks(ddouble seconds, const aiAnimation &anim)
 {
     ddouble const ticksPerSec = anim.mTicksPerSecond != 0.f? anim.mTicksPerSecond : 25.0;
     return seconds * ticksPerSec;
 }
 
-static ddouble ticksToSeconds(ddouble ticks, aiAnimation const &anim)
+static ddouble ticksToSeconds(ddouble ticks, const aiAnimation &anim)
 {
     return ticks / secondsToTicks(1.0, anim);
 }
@@ -304,7 +304,7 @@ DE_PIMPL(ModelDrawable)
     String           sourcePath;
     ImpIOSystem *    importerIoSystem; // not owned
     std::unique_ptr<Assimp::Importer> importer;
-    aiScene const *  scene{nullptr};
+    const aiScene *  scene{nullptr};
 
     Vec3f minPoint; ///< Bounds in default pose.
     Vec3f maxPoint;
@@ -312,7 +312,7 @@ DE_PIMPL(ModelDrawable)
 
     List<VertexBone>             vertexBones; // indexed by vertex
     Hash<String, duint16>        boneNameToIndex;
-    Hash<String, aiNode const *> nodeNameToPtr;
+    Hash<String, const aiNode *> nodeNameToPtr;
     List<BoneData>               bones; // indexed by bone index
     AnimLookup                   animNameToIndex;
     List<Rangez>                 meshIndexRanges;
@@ -348,7 +348,7 @@ DE_PIMPL(ModelDrawable)
         {
             GLData *d;
 
-            TextureSource(TextureMap texMap, String const &path, GLData *glData)
+            TextureSource(TextureMap texMap, const String &path, GLData *glData)
                 : ImageSource(int(texMap == Height? Normals : texMap), Path(path))
                 , d(glData) {}
 
@@ -367,7 +367,7 @@ DE_PIMPL(ModelDrawable)
         bool             needMakeBuffer{false};
 
         String         sourcePath; ///< Location of the model file (imported with Assimp).
-        aiScene const *scene{nullptr};
+        const aiScene *scene{nullptr};
 
         GLData()
         {
@@ -427,7 +427,7 @@ DE_PIMPL(ModelDrawable)
             //scene = nullptr;
         }
 
-        void releaseTexture(Id const &id)
+        void releaseTexture(const Id &id)
         {
             if (!id) return; // We don't own this, don't release.
 
@@ -507,14 +507,14 @@ DE_PIMPL(ModelDrawable)
          * @param mesh  Identifies the mesh whose texture is being loaded.
          * @param type  AssImp texture type.
          */
-        void loadTextureImage(MeshId const &mesh, aiTextureType type)
+        void loadTextureImage(const MeshId &mesh, aiTextureType type)
         {
             DE_ASSERT(imageLoader != nullptr);
 
-            aiMesh     const &sceneMesh     = *scene->mMeshes[mesh.index];
-            aiMaterial const &sceneMaterial = *scene->mMaterials[sceneMesh.mMaterialIndex];
+            const aiMesh &sceneMesh     = *scene->mMeshes[mesh.index];
+            const aiMaterial &sceneMaterial = *scene->mMaterials[sceneMesh.mMaterialIndex];
 
-            auto const &meshTextures = materials.at(mesh.material)->meshTextures[mesh.index];
+            const auto &meshTextures = materials.at(mesh.material)->meshTextures[mesh.index];
             TextureMap const texMap = textureMapType(type);
 
             try
@@ -526,7 +526,7 @@ DE_PIMPL(ModelDrawable)
                     return setTexture(mesh, texMap, meshTextures.customPaths[texMap]);
                 }
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_GL_WARNING("Failed to load user-defined %s texture for "
                                "mesh %i (material %i): %s")
@@ -550,7 +550,7 @@ DE_PIMPL(ModelDrawable)
                         break;
                     }
                 }
-                catch (Error const &er)
+                catch (const Error &er)
                 {
                     LOG_GL_WARNING("Failed to load %s texture for mesh %i "
                                    "(material %i) based on info from model file: %s")
@@ -560,7 +560,7 @@ DE_PIMPL(ModelDrawable)
             }
         }
 
-        void setTexture(MeshId const &mesh, TextureMap texMap, String contentPath)
+        void setTexture(const MeshId &mesh, TextureMap texMap, String contentPath)
         {
             if (!scene) return;
             if (texMap == Unknown) return; // Ignore unmapped textures.
@@ -623,7 +623,7 @@ DE_PIMPL(ModelDrawable)
          * @param tex    Texture map.
          * @param path   Image file path.
          */
-        void setCustomTexturePath(MeshId const &mesh, TextureMap texMap, String const &path)
+        void setCustomTexturePath(const MeshId &mesh, TextureMap texMap, const String &path)
         {
             DE_ASSERT(!textureBank.atlas(texMap)); // in-use textures cannot be replaced on the fly
             DE_ASSERT(mesh.index < scene->mNumMeshes);
@@ -715,7 +715,7 @@ DE_PIMPL(ModelDrawable)
         // Determine the total bounding box.
         for (duint i = 0; i < scene->mNumMeshes; ++i)
         {
-            aiMesh const &mesh = *scene->mMeshes[i];
+            const aiMesh &mesh = *scene->mMeshes[i];
             for (duint i = 0; i < mesh.mNumVertices; ++i)
             {
                 addToBounds(Vec3f(&mesh.mVertices[i].x));
@@ -757,7 +757,7 @@ DE_PIMPL(ModelDrawable)
         defaultPasses << pass;
     }
 
-    void buildNodeLookup(aiNode const &node)
+    void buildNodeLookup(const aiNode &node)
     {
         String const name = node.mName.C_Str();
 #ifdef DE_DEBUG
@@ -827,18 +827,18 @@ DE_PIMPL(ModelDrawable)
         modelAsset.setState(NotReady);
     }
 
-    void addToBounds(Vec3f const &point)
+    void addToBounds(const Vec3f &point)
     {
         minPoint = minPoint.min(point);
         maxPoint = maxPoint.max(point);
     }
 
-    int findMaterial(String const &name) const
+    int findMaterial(const String &name) const
     {
         if (!scene) return -1;
         for (duint i = 0; i < scene->mNumMaterials; ++i)
         {
-            aiMaterial const &material = *scene->mMaterials[i];
+            const aiMaterial &material = *scene->mMaterials[i];
             aiString matName;
             if (material.Get(AI_MATKEY_NAME, matName) == AI_SUCCESS)
             {
@@ -862,7 +862,7 @@ DE_PIMPL(ModelDrawable)
         return bones.sizei();
     }
 
-    int addBone(String const &name)
+    int addBone(const String &name)
     {
         int idx = boneCount();
         bones << BoneData();
@@ -870,7 +870,7 @@ DE_PIMPL(ModelDrawable)
         return idx;
     }
 
-    int findBone(String const &name) const
+    int findBone(const String &name) const
     {
         if (boneNameToIndex.contains(name))
         {
@@ -879,7 +879,7 @@ DE_PIMPL(ModelDrawable)
         return -1;
     }
 
-    int addOrFindBone(String const &name)
+    int addOrFindBone(const String &name)
     {
         int i = findBone(name);
         if (i >= 0)
@@ -914,7 +914,7 @@ DE_PIMPL(ModelDrawable)
      * @param mesh        Source mesh.
      * @param vertexBase  Index of the first vertex of the mesh.
      */
-    void initMeshBones(aiMesh const &mesh, duint vertexBase)
+    void initMeshBones(const aiMesh &mesh, duint vertexBase)
     {
         vertexBones.resize(vertexBase + mesh.mNumVertices);
 
@@ -923,7 +923,7 @@ DE_PIMPL(ModelDrawable)
             // Mark the per-vertex bone weights.
             for (duint i = 0; i < mesh.mNumBones; ++i)
             {
-                aiBone const &bone = *mesh.mBones[i];
+                const aiBone &bone = *mesh.mBones[i];
 
                 duint const boneIndex = addOrFindBone(bone.mName.C_Str());
                 bones[boneIndex].offset = convertMatrix(bone.mOffsetMatrix);
@@ -960,7 +960,7 @@ DE_PIMPL(ModelDrawable)
         int base = 0;
         for (duint i = 0; i < scene->mNumMeshes; ++i)
         {
-            aiMesh const &mesh = *scene->mMeshes[i];
+            const aiMesh &mesh = *scene->mMeshes[i];
 
             LOGDEV_GL_VERBOSE("Initializing %i bones for mesh #%i %s")
                     << mesh.mNumBones << i << mesh.mName.C_Str();
@@ -999,17 +999,17 @@ DE_PIMPL(ModelDrawable)
         // All of the scene's meshes are combined into one GL buffer.
         for (duint m = 0; m < scene->mNumMeshes; ++m)
         {
-            aiMesh const &mesh = *scene->mMeshes[m];
+            const aiMesh &mesh = *scene->mMeshes[m];
 
             // Load vertices into the buffer.
             for (duint i = 0; i < mesh.mNumVertices; ++i)
             {
-                aiVector3D const *pos      = &mesh.mVertices[i];
-                aiColor4D  const *color    = (mesh.HasVertexColors(0)? &mesh.mColors[0][i] : &white);
-                aiVector3D const *normal   = (mesh.HasNormals()? &mesh.mNormals[i] : &zero);
-                aiVector3D const *texCoord = (mesh.HasTextureCoords(0)? &mesh.mTextureCoords[0][i] : &zero);
-                aiVector3D const *tangent  = (mesh.HasTangentsAndBitangents()? &mesh.mTangents[i] : &zero);
-                aiVector3D const *bitang   = (mesh.HasTangentsAndBitangents()? &mesh.mBitangents[i] : &zero);
+                const aiVector3D *pos      = &mesh.mVertices[i];
+                const aiColor4D *color    = (mesh.HasVertexColors(0)? &mesh.mColors[0][i] : &white);
+                const aiVector3D *normal   = (mesh.HasNormals()? &mesh.mNormals[i] : &zero);
+                const aiVector3D *texCoord = (mesh.HasTextureCoords(0)? &mesh.mTextureCoords[0][i] : &zero);
+                const aiVector3D *tangent  = (mesh.HasTangentsAndBitangents()? &mesh.mTangents[i] : &zero);
+                const aiVector3D *bitang   = (mesh.HasTangentsAndBitangents()? &mesh.mBitangents[i] : &zero);
 
                 VBuf::Type v;
 
@@ -1026,7 +1026,7 @@ DE_PIMPL(ModelDrawable)
                 v.texBounds[2] = Vec4f(0, 0, 1, 1);
                 v.texBounds[3] = Vec4f(0, 0, 1, 1);
 
-                auto const &meshTextures = material.meshTextures[m];
+                const auto &meshTextures = material.meshTextures[m];
 
                 for (int t = 0; t < MAX_TEXTURES; ++t)
                 {
@@ -1063,7 +1063,7 @@ DE_PIMPL(ModelDrawable)
             // Get face indices.
             for (duint i = 0; i < mesh.mNumFaces; ++i)
             {
-                aiFace const &face = mesh.mFaces[i];
+                const aiFace &face = mesh.mFaces[i];
                 DE_ASSERT(face.mNumIndices == 3); // expecting triangles
                 indx << VBuf::Index(face.mIndices[0] + base)
                      << VBuf::Index(face.mIndices[1] + base)
@@ -1090,17 +1090,17 @@ DE_PIMPL(ModelDrawable)
         const aiAnimation *anim = nullptr;
         List<Mat4f>        finalTransforms;
 
-        AccumData(Animator const &animator, int boneCount)
+        AccumData(const Animator &animator, int boneCount)
             : animator(animator)
             , finalTransforms(boneCount)
         {}
 
-        aiNodeAnim const *findNodeAnim(aiNode const &node) const
+        const aiNodeAnim *findNodeAnim(const aiNode &node) const
         {
             if (!anim) return nullptr;
             for (duint i = 0; i < anim->mNumChannels; ++i)
             {
-                aiNodeAnim const *na = anim->mChannels[i];
+                const aiNodeAnim *na = anim->mChannels[i];
                 if (na->mNodeName == node.mName)
                 {
                     return na;
@@ -1110,10 +1110,10 @@ DE_PIMPL(ModelDrawable)
         }
     };
 
-    void accumulateAnimationTransforms(Animator const &animator,
+    void accumulateAnimationTransforms(const Animator &animator,
                                        ddouble time,
-                                       aiAnimation const *animSeq,
-                                       aiNode const &rootNode) const
+                                       const aiAnimation *animSeq,
+                                       const aiNode &rootNode) const
     {
         AccumData data(animator, boneCount());
         data.anim = animSeq;
@@ -1129,8 +1129,8 @@ DE_PIMPL(ModelDrawable)
         }
     }
 
-    void accumulateTransforms(aiNode const &node, AccumData &data,
-                              Mat4f const &parentTransform = Mat4f()) const
+    void accumulateTransforms(const aiNode &node, AccumData &data,
+                              const Mat4f &parentTransform = Mat4f()) const
     {
         Mat4f nodeTransform = convertMatrix(node.mTransformation);
 
@@ -1138,7 +1138,7 @@ DE_PIMPL(ModelDrawable)
         Vec4f const axisAngle = data.animator.extraRotationForNode(node.mName.C_Str());
 
         // Transform according to the animation sequence.
-        if (aiNodeAnim const *anim = data.findNodeAnim(node))
+        if (const aiNodeAnim *anim = data.findNodeAnim(node))
         {
             // Interpolate for this point in time.
             Mat4f const translation = Mat4f::translate(interpolatePosition(data.time, *anim));
@@ -1180,7 +1180,7 @@ DE_PIMPL(ModelDrawable)
     }
 
     template <typename Type>
-    static duint findAnimKey(ddouble time, Type const *keys, duint count)
+    static duint findAnimKey(ddouble time, const Type *keys, duint count)
     {
         DE_ASSERT(count > 0);
         for (duint i = 0; i < count - 1; ++i)
@@ -1194,7 +1194,7 @@ DE_PIMPL(ModelDrawable)
         return 0;
     }
 
-    static Vec3f interpolateVectorKey(ddouble time, aiVectorKey const *keys, duint at)
+    static Vec3f interpolateVectorKey(ddouble time, const aiVectorKey *keys, duint at)
     {
         Vec3f const start(&keys[at]    .mValue.x);
         Vec3f const end  (&keys[at + 1].mValue.x);
@@ -1203,14 +1203,14 @@ DE_PIMPL(ModelDrawable)
                float((time - keys[at].mTime) / (keys[at + 1].mTime - keys[at].mTime));
     }
 
-    static aiQuaternion interpolateRotation(ddouble time, aiNodeAnim const &anim)
+    static aiQuaternion interpolateRotation(ddouble time, const aiNodeAnim &anim)
     {
         if (anim.mNumRotationKeys == 1)
         {
             return anim.mRotationKeys[0].mValue;
         }
 
-        aiQuatKey const *key =
+        const aiQuatKey *key =
             anim.mRotationKeys + findAnimKey(time, anim.mRotationKeys, anim.mNumRotationKeys);
 
         aiQuaternion interp;
@@ -1222,7 +1222,7 @@ DE_PIMPL(ModelDrawable)
         return interp;
     }
 
-    static Vec3f interpolateScaling(ddouble time, aiNodeAnim const &anim)
+    static Vec3f interpolateScaling(ddouble time, const aiNodeAnim &anim)
     {
         if (anim.mNumScalingKeys == 1)
         {
@@ -1233,7 +1233,7 @@ DE_PIMPL(ModelDrawable)
                                                 anim.mNumScalingKeys));
     }
 
-    static Vec3f interpolatePosition(ddouble time, aiNodeAnim const &anim)
+    static Vec3f interpolatePosition(ddouble time, const aiNodeAnim &anim)
     {
         if (anim.mNumPositionKeys == 1)
         {
@@ -1244,7 +1244,7 @@ DE_PIMPL(ModelDrawable)
                                                 anim.mNumPositionKeys));
     }
 
-    void updateMatricesFromAnimation(Animator const *animator) const
+    void updateMatricesFromAnimation(const Animator *animator) const
     {
         // Cannot do anything without an Animator.
         if (!animator) return;
@@ -1263,7 +1263,7 @@ DE_PIMPL(ModelDrawable)
         // Apply all current animations.
         for (int i = 0; i < animator->count(); ++i)
         {
-            auto const &animSeq = animator->at(i);
+            const auto &animSeq = animator->at(i);
 
             // The animation has been validated earlier.
             DE_ASSERT(duint(animSeq.animId) < scene->mNumAnimations);
@@ -1279,9 +1279,9 @@ DE_PIMPL(ModelDrawable)
 //- Drawing -----------------------------------------------------------------------------
 
     GLProgram *drawProgram = nullptr;
-    Pass const *drawPass = nullptr;
+    const Pass *drawPass = nullptr;
 
-    void preDraw(Animator const *animation)
+    void preDraw(const Animator *animation)
     {
         if (glData.needMakeBuffer) makeBuffer();
 
@@ -1293,7 +1293,7 @@ DE_PIMPL(ModelDrawable)
         GLState::current().apply();
     }
 
-    void setDrawProgram(GLProgram *prog, Appearance const *appearance = nullptr)
+    void setDrawProgram(GLProgram *prog, const Appearance *appearance = nullptr)
     {
         if (drawProgram)
         {
@@ -1316,13 +1316,13 @@ DE_PIMPL(ModelDrawable)
         }
     }
 
-    void initRanges(GLBuffer::DrawRanges &ranges, BitArray const &meshes)
+    void initRanges(GLBuffer::DrawRanges &ranges, const BitArray &meshes)
     {
         Rangez current;
         for (int i = 0; i < meshIndexRanges.sizei(); ++i)
         {
             if (!meshes.at(i)) continue;
-            auto const &mesh = meshIndexRanges.at(i);
+            const auto &mesh = meshIndexRanges.at(i);
             if (current.isEmpty())
             {
                 current = mesh;
@@ -1346,9 +1346,9 @@ DE_PIMPL(ModelDrawable)
         }
     }
 
-    void draw(Appearance const *appearance, Animator const *animation)
+    void draw(const Appearance *appearance, const Animator *animation)
     {
-        Passes const *passes =
+        const Passes *passes =
             appearance && appearance->drawPasses ? appearance->drawPasses : &defaultPasses;
         preDraw(animation);
 
@@ -1357,7 +1357,7 @@ DE_PIMPL(ModelDrawable)
             GLBuffer::DrawRanges ranges;
             for (dsize i = 0; i < passes->size(); ++i)
             {
-                Pass const &pass = passes->at(i);
+                const Pass &pass = passes->at(i);
 
                 // Is this pass disabled?
                 if (appearance && !appearance->passMask.isEmpty() &&
@@ -1410,7 +1410,7 @@ DE_PIMPL(ModelDrawable)
                 }
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_GL_ERROR("Failed to draw model \"%s\": %s")
                     << sourcePath
@@ -1420,7 +1420,7 @@ DE_PIMPL(ModelDrawable)
         postDraw();
     }
 
-    void drawInstanced(GLBuffer const &attribs, Animator const *animation)
+    void drawInstanced(const GLBuffer &attribs, const Animator *animation)
     {
         /// @todo Rendering passes for instanced drawing. -jk
 
@@ -1459,9 +1459,9 @@ static struct {
 
 } // namespace internal
 
-ModelDrawable::TextureMap ModelDrawable::textToTextureMap(String const &text) // static
+ModelDrawable::TextureMap ModelDrawable::textToTextureMap(const String &text) // static
 {
-    for (auto const &mapping : internal::mappings)
+    for (const auto &mapping : internal::mappings)
     {
         if (!text.compareWithoutCase(mapping.text))
             return mapping.map;
@@ -1471,7 +1471,7 @@ ModelDrawable::TextureMap ModelDrawable::textToTextureMap(String const &text) //
 
 String ModelDrawable::textureMapToText(TextureMap map) // static
 {
-    for (auto const &mapping : internal::mappings)
+    for (const auto &mapping : internal::mappings)
     {
         if (mapping.map == map)
             return mapping.text;
@@ -1494,7 +1494,7 @@ void ModelDrawable::useDefaultImageLoader()
     d->glData.imageLoader = &defaultImageLoader;
 }
 
-void ModelDrawable::load(File const &file)
+void ModelDrawable::load(const File &file)
 {
     LOG_AS("ModelDrawable");
 
@@ -1510,7 +1510,7 @@ void ModelDrawable::clear()
     d->clear();
 }
 
-int ModelDrawable::animationIdForName(String const &name) const
+int ModelDrawable::animationIdForName(const String &name) const
 {
     auto found = d->animNameToIndex.find(name);
     if (found != d->animNameToIndex.end())
@@ -1546,7 +1546,7 @@ int ModelDrawable::meshCount() const
     return d->scene->mNumMeshes;
 }
 
-int ModelDrawable::meshId(String const &name) const
+int ModelDrawable::meshId(const String &name) const
 {
     if (!d->scene) return -1;
     for (duint i = 0; i < d->scene->mNumMeshes; ++i)
@@ -1573,7 +1573,7 @@ String ModelDrawable::meshName(int id) const
     return name;
 }
 
-bool ModelDrawable::nodeExists(String const &name) const
+bool ModelDrawable::nodeExists(const String &name) const
 {
     return d->nodeNameToPtr.contains(name);
 }
@@ -1632,7 +1632,7 @@ void ModelDrawable::setTextureMapping(const Mapping &mapsToUse)
     d->glData.setTextureMapping(mapsToUse);
 }
 
-void ModelDrawable::setDefaultTexture(TextureMap textureType, Id const &atlasId)
+void ModelDrawable::setDefaultTexture(TextureMap textureType, const Id &atlasId)
 {
     DE_ASSERT(textureType >= 0 && textureType < MAX_TEXTURES);
     if (textureType < 0 || textureType >= MAX_TEXTURES) return;
@@ -1650,7 +1650,7 @@ void ModelDrawable::glDeinit()
     d->glDeinit();
 }
 
-int ModelDrawable::materialId(String const &name) const
+int ModelDrawable::materialId(const String &name) const
 {
     return d->findMaterial(name);
 }
@@ -1679,8 +1679,8 @@ GLProgram *ModelDrawable::program() const
     return d->program;
 }
 
-void ModelDrawable::draw(Appearance const *appearance,
-                           Animator const *animation) const
+void ModelDrawable::draw(const Appearance *appearance,
+                           const Animator *animation) const
 {
     const_cast<ModelDrawable *>(this)->glInit();
 
@@ -1690,8 +1690,8 @@ void ModelDrawable::draw(Appearance const *appearance,
     }
 }
 
-void ModelDrawable::drawInstanced(GLBuffer const &instanceAttribs,
-                                  Animator const *animation) const
+void ModelDrawable::drawInstanced(const GLBuffer &instanceAttribs,
+                                  const Animator *animation) const
 {
     const_cast<ModelDrawable *>(this)->glInit();
 
@@ -1710,7 +1710,7 @@ void ModelDrawable::drawInstanced(GLBuffer const &instanceAttribs,
 #endif
 }
 
-ModelDrawable::Pass const *ModelDrawable::currentPass() const
+const ModelDrawable::Pass *ModelDrawable::currentPass() const
 {
     return d->drawPass;
 }
@@ -1730,7 +1730,7 @@ Vec3f ModelDrawable::midPoint() const
     return (d->maxPoint + d->minPoint) / 2.f;
 }
 
-int ModelDrawable::Passes::findName(String const &name) const
+int ModelDrawable::Passes::findName(const String &name) const
 {
     for (dsize i = 0; i < size(); ++i)
     {
@@ -1754,7 +1754,7 @@ DE_PIMPL_NOREF(ModelDrawable::Animator)
     List<OngoingSequence *> anims;
     Flags                   flags = DefaultFlags;
 
-    Impl(const Constructor &ctr, ModelDrawable const *mdl = nullptr)
+    Impl(const Constructor &ctr, const ModelDrawable *mdl = nullptr)
         : constructor(ctr)
     {
         setModel(mdl);
@@ -1766,7 +1766,7 @@ DE_PIMPL_NOREF(ModelDrawable::Animator)
         deleteAll(anims);
     }
 
-    void setModel(ModelDrawable const *mdl)
+    void setModel(const ModelDrawable *mdl)
     {
         if (model) model->audienceForDeletion() -= this;
         model = mdl;
@@ -1799,7 +1799,7 @@ DE_PIMPL_NOREF(ModelDrawable::Animator)
         return *anims.last();
     }
 
-    void stopByNode(String const &node)
+    void stopByNode(const String &node)
     {
         for (auto i = anims.begin(); i != anims.end(); )
         {
@@ -1815,9 +1815,9 @@ DE_PIMPL_NOREF(ModelDrawable::Animator)
         }
     }
 
-    OngoingSequence const *findAny(String const &rootNode) const
+    const OngoingSequence *findAny(const String &rootNode) const
     {
-        for (OngoingSequence const *anim : anims)
+        for (const OngoingSequence *anim : anims)
         {
             if (anim->node == rootNode)
                 return anim;
@@ -1825,9 +1825,9 @@ DE_PIMPL_NOREF(ModelDrawable::Animator)
         return nullptr;
     }
 
-    OngoingSequence const *find(int animId, String const &rootNode) const
+    const OngoingSequence *find(int animId, const String &rootNode) const
     {
-        for (OngoingSequence const *anim : anims)
+        for (const OngoingSequence *anim : anims)
         {
             if (anim->animId == animId && anim->node == rootNode)
                 return anim;
@@ -1835,7 +1835,7 @@ DE_PIMPL_NOREF(ModelDrawable::Animator)
         return nullptr;
     }
 
-    bool isRunning(int animId, String const &rootNode) const
+    bool isRunning(int animId, const String &rootNode) const
     {
         return find(animId, rootNode) != nullptr;
     }
@@ -1845,16 +1845,16 @@ ModelDrawable::Animator::Animator(Constructor constructor)
     : d(new Impl(std::move(constructor)))
 {}
 
-ModelDrawable::Animator::Animator(ModelDrawable const &model, Constructor constructor)
+ModelDrawable::Animator::Animator(const ModelDrawable &model, Constructor constructor)
     : d(new Impl(std::move(constructor), &model))
 {}
 
-void ModelDrawable::Animator::setModel(ModelDrawable const &model)
+void ModelDrawable::Animator::setModel(const ModelDrawable &model)
 {
     d->setModel(&model);
 }
 
-void ModelDrawable::Animator::setFlags(Flags const &flags, FlagOp op)
+void ModelDrawable::Animator::setFlags(const Flags &flags, FlagOp op)
 {
     applyFlagOperation(d->flags, flags, op);
 }
@@ -1864,7 +1864,7 @@ Flags ModelDrawable::Animator::flags() const
     return d->flags;
 }
 
-ModelDrawable const &ModelDrawable::Animator::model() const
+const ModelDrawable &ModelDrawable::Animator::model() const
 {
     DE_ASSERT(d->model != nullptr);
     return *d->model;
@@ -1875,7 +1875,7 @@ int ModelDrawable::Animator::count() const
     return d->anims.sizei();
 }
 
-ModelDrawable::Animator::OngoingSequence const &
+const ModelDrawable::Animator::OngoingSequence &
 ModelDrawable::Animator::at(int index) const
 {
     return *d->anims.at(index);
@@ -1887,38 +1887,38 @@ ModelDrawable::Animator::at(int index)
     return *d->anims[index];
 }
 
-bool ModelDrawable::Animator::isRunning(String const &animName, String const &rootNode) const
+bool ModelDrawable::Animator::isRunning(const String &animName, const String &rootNode) const
 {
     return d->isRunning(model().animationIdForName(animName), rootNode);
 }
 
-bool ModelDrawable::Animator::isRunning(int animId, String const &rootNode) const
+bool ModelDrawable::Animator::isRunning(int animId, const String &rootNode) const
 {
     return d->isRunning(animId, rootNode);
 }
 
-ModelDrawable::Animator::OngoingSequence *ModelDrawable::Animator::find(String const &rootNode) const
+ModelDrawable::Animator::OngoingSequence *ModelDrawable::Animator::find(const String &rootNode) const
 {
     return const_cast<OngoingSequence *>(d->findAny(rootNode));
 }
 
-ModelDrawable::Animator::OngoingSequence *ModelDrawable::Animator::find(int animId, String const &rootNode) const
+ModelDrawable::Animator::OngoingSequence *ModelDrawable::Animator::find(int animId, const String &rootNode) const
 {
     return const_cast<OngoingSequence *>(d->find(animId, rootNode));
 }
 
 ModelDrawable::Animator::OngoingSequence &
-ModelDrawable::Animator::start(String const &animName, String const &rootNode)
+ModelDrawable::Animator::start(const String &animName, const String &rootNode)
 {
     return start(model().animationIdForName(animName), rootNode);
 }
 
 ModelDrawable::Animator::OngoingSequence &
-ModelDrawable::Animator::start(int animId, String const &rootNode)
+ModelDrawable::Animator::start(int animId, const String &rootNode)
 {
     d->stopByNode(rootNode);
 
-    aiScene const &scene = *model().d->scene;
+    const aiScene &scene = *model().d->scene;
 
     if (animId < 0 || animId >= int(scene.mNumAnimations))
     {
@@ -1926,7 +1926,7 @@ ModelDrawable::Animator::start(int animId, String const &rootNode)
                            stringf("Invalid animation ID %d", animId));
     }
 
-    auto const &animData = *scene.mAnimations[animId];
+    const auto &animData = *scene.mAnimations[animId];
 
     OngoingSequence *anim = d->constructor();
     anim->animId          = animId;
@@ -1955,7 +1955,7 @@ void ModelDrawable::Animator::advanceTime(TimeSpan )
 
 ddouble ModelDrawable::Animator::currentTime(int index) const
 {
-    auto const &anim = at(index);
+    const auto &anim = at(index);
     ddouble t = anim.time;
     if (anim.flags.testFlag(OngoingSequence::ClampToDuration))
     {
@@ -1964,7 +1964,7 @@ ddouble ModelDrawable::Animator::currentTime(int index) const
     return t;
 }
 
-Vec4f ModelDrawable::Animator::extraRotationForNode(String const &) const
+Vec4f ModelDrawable::Animator::extraRotationForNode(const String &) const
 {
     return Vec4f();
 }
@@ -2014,7 +2014,7 @@ ModelDrawable::Animator::OngoingSequence::make() // static
 
 } // namespace de
 
-//uint qHash(de::ModelDrawable::Pass const &pass)
+//uint qHash(const de::ModelDrawable::Pass &pass)
 //{
 //    return qHash(pass.name);
 //}

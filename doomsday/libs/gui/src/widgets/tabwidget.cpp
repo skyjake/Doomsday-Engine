@@ -69,7 +69,7 @@ DE_GUI_PIMPL(TabWidget)
         releaseRef(selWidth);
     }
 
-    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &)
+    void widgetCreatedForItem(GuiWidget &widget, const ui::Item &)
     {
         // Set the font and style.
         ButtonWidget &btn = widget.as<ButtonWidget>();
@@ -83,7 +83,7 @@ DE_GUI_PIMPL(TabWidget)
         btn.audienceForPress() += this;
     }
 
-    void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
+    void widgetUpdatedForItem(GuiWidget &widget, const ui::Item &item)
     {
         widget.as<ButtonWidget>().setShortcutKey(item.as<TabItem>().shortcutKey());
     }
@@ -93,7 +93,7 @@ DE_GUI_PIMPL(TabWidget)
         self().setCurrent(buttons->items().find(*buttons->organizer().findItemForWidget(button)));
     }
 
-    void dataItemAdded(ui::Data::Pos, ui::Item const &)
+    void dataItemAdded(ui::Data::Pos, const ui::Item &)
     {
         needUpdate = true;
     }
@@ -161,7 +161,7 @@ DE_GUI_PIMPL(TabWidget)
         }
     }
 
-    bool handleShortcutKey(KeyEvent const &key)
+    bool handleShortcutKey(const KeyEvent &key)
     {
         for (auto *w : buttons->childWidgets())
         {
@@ -181,7 +181,7 @@ DE_GUI_PIMPL(TabWidget)
 
 DE_AUDIENCE_METHOD(TabWidget, Tab)
 
-TabWidget::TabWidget(String const &name)
+TabWidget::TabWidget(const String &name)
     : GuiWidget(name), d(new Impl(this))
 {
     rule().setInput(Rule::Height, d->buttons->rule().height());
@@ -240,13 +240,13 @@ void TabWidget::update()
     }
 }
 
-bool TabWidget::handleEvent(Event const &ev)
+bool TabWidget::handleEvent(const Event &ev)
 {
     if (isEnabled())
     {
         if (ev.isKeyDown())
         {
-            KeyEvent const &key = ev.as<KeyEvent>();
+            const KeyEvent &key = ev.as<KeyEvent>();
             if (d->handleShortcutKey(key))
             {
                 return true;

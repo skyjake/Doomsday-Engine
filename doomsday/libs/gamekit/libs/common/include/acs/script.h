@@ -46,7 +46,7 @@ public:
     {
     public:
         Args();
-        Args(de::dbyte const *cArr, de::dint length);
+        Args(const de::dbyte *cArr, de::dint length);
     };
 
     /**
@@ -67,7 +67,7 @@ public:
 
 public:
     Script();
-    Script(Module::EntryPoint const &ep);
+    Script(const Module::EntryPoint &ep);
 
     /**
      * Composes the human-friendly, styled, textual name of the object.
@@ -96,7 +96,7 @@ public:
      *
      * @return  @c true if started/resumed.
      */
-    bool start(Args const &args, mobj_t *activator = nullptr,
+    bool start(const Args &args, mobj_t *activator = nullptr,
                Line *line = nullptr, int side = 0, int delayTics = 0);
 
     /**
@@ -132,12 +132,12 @@ public:
     /**
      * Returns the entry point info for the script.
      */
-    Module::EntryPoint const &entryPoint() const;
+    const Module::EntryPoint &entryPoint() const;
 
     /**
      * Reconfigure the entry point info for the script.
      */
-    void setEntryPoint(Module::EntryPoint const &entryPoint);
+    void setEntryPoint(const Module::EntryPoint &entryPoint);
 
     void read(Reader1 *reader);
     void write(Writer1 *writer) const;
@@ -149,7 +149,7 @@ public:  /// @todo make private:
      *
      * @param other  Script to be considered.
      */
-    void resumeIfWaitingForScript(Script const &other);
+    void resumeIfWaitingForScript(const Script &other);
 
     void setState(State newState);
 

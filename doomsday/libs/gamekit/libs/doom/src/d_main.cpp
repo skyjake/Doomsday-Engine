@@ -49,7 +49,7 @@ float defFontRGB3[3];
 
 // The patches used in drawing the view border.
 // Percent-encoded.
-char const *borderGraphics[] = {
+const char *borderGraphics[] = {
     "Flats:FLOOR7_2", // Background.
     "BRDR_T", // Top.
     "BRDR_R", // Right.
@@ -401,7 +401,7 @@ void D_PostInit()
 
     // Game parameters.
     ::monsterInfight = 0;
-    if(ded_value_t const *infight = Defs().getValueById("AI|Infight"))
+    if(const ded_value_t *infight = Defs().getValueById("AI|Infight"))
     {
         ::monsterInfight = String(infight->text).toInt();
     }

@@ -40,7 +40,7 @@
  * @param alignFlags  @ref alignmentFlags
  * @param patchFlags  @ref drawPatchFlags
  */
-void GL_DrawPatch(patchid_t id, de::Vec2i const &origin = de::Vec2i(),
+void GL_DrawPatch(patchid_t id, const de::Vec2i &origin = de::Vec2i(),
                   int alignFlags = ALIGN_TOPLEFT, int patchFlags = 0);
 
 #endif  // __cplusplus

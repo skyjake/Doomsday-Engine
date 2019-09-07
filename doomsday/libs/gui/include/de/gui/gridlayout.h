@@ -45,7 +45,7 @@ public:
 public:
     GridLayout(Mode mode = ColumnFirst);
 
-    GridLayout(Rule const &left, Rule const &top, Mode mode = ColumnFirst);
+    GridLayout(const Rule &left, const Rule &top, Mode mode = ColumnFirst);
 
     void clear();
 
@@ -60,18 +60,18 @@ public:
      * @param cell       Cell position.
      * @param cellAlign  Alignment for the cell.
      */
-    void setCellAlignment(Vec2i const &cell, ui::Alignment cellAlign);
+    void setCellAlignment(const Vec2i &cell, ui::Alignment cellAlign);
 
-    void setColumnFixedWidth(int column, Rule const &fixedWidth);
+    void setColumnFixedWidth(int column, const Rule &fixedWidth);
 
-    void setLeftTop(Rule const &left, Rule const &top);
-    void setOverrideWidth(Rule const &width);
-    void setOverrideHeight(Rule const &height);
-    void setColumnPadding(Rule const &gap);
-    void setRowPadding(Rule const &gap);
+    void setLeftTop(const Rule &left, const Rule &top);
+    void setOverrideWidth(const Rule &width);
+    void setOverrideHeight(const Rule &height);
+    void setColumnPadding(const Rule &gap);
+    void setRowPadding(const Rule &gap);
 
     GridLayout &operator << (GuiWidget &widget) { return append(widget); }
-    GridLayout &operator << (Rule const &empty) { return append(empty); }
+    GridLayout &operator << (const Rule &empty) { return append(empty); }
 
     GridLayout &append(GuiWidget &widget, int cellSpan = 1);
 
@@ -87,9 +87,9 @@ public:
      *
      * @return Reference to this GridLayout.
      */
-    GridLayout &append(GuiWidget &widget, Rule const &layoutWidth, int cellSpan = 1);
+    GridLayout &append(GuiWidget &widget, const Rule &layoutWidth, int cellSpan = 1);
 
-    GridLayout &append(Rule const &empty);
+    GridLayout &append(const Rule &empty);
 
     /**
      * Appends an empty cell according to the override width/height,
@@ -122,20 +122,20 @@ public:
      */
     Vec2i widgetPos(GuiWidget &widget) const;
 
-    GuiWidget *at(Vec2i const &cell) const;
+    GuiWidget *at(const Vec2i &cell) const;
 
-    int widgetCellSpan(GuiWidget const &widget) const;
+    int widgetCellSpan(const GuiWidget &widget) const;
 
-    Rule const &width() const override;
-    Rule const &height() const override;
-    Rule const &columnLeft(int col) const;
-    Rule const &columnRight(int col) const;
-    Rule const &columnWidth(int col) const;
-    Rule const &rowHeight(int row) const;
-    Rule const &overrideWidth() const;
-    Rule const &overrideHeight() const;
-    Rule const &columnPadding() const;
-    Rule const &rowPadding() const;
+    const Rule &width() const override;
+    const Rule &height() const override;
+    const Rule &columnLeft(int col) const;
+    const Rule &columnRight(int col) const;
+    const Rule &columnWidth(int col) const;
+    const Rule &rowHeight(int row) const;
+    const Rule &overrideWidth() const;
+    const Rule &overrideHeight() const;
+    const Rule &columnPadding() const;
+    const Rule &rowPadding() const;
 
 private:
     DE_PRIVATE(d)

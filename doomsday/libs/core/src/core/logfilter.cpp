@@ -32,7 +32,7 @@ namespace internal {
         NetworkFilter,
         NUM_FILTERS
     };
-    static char const *subRecName[NUM_FILTERS] = { // for Config
+    static const char *subRecName[NUM_FILTERS] = { // for Config
         "generic",
         "resource",
         "map",
@@ -68,7 +68,7 @@ DE_PIMPL_NOREF(LogFilter)
             return (md & (1 << domainBit)) != 0;
         }
 
-        void read(Record const &rec)
+        void read(const Record &rec)
         {
             minLevel = LogEntry::Level(dint(rec["minLevel"].value().asNumber()));
             allowDev = rec["allowDev"].value().isTrue();
@@ -97,7 +97,7 @@ DE_PIMPL_NOREF(LogFilter)
         // the entry is allowed.
         for (uint i = 0; i < NUM_FILTERS; ++i)
         {
-            Filter const &ftr = filterByContext[i];
+            const Filter &ftr = filterByContext[i];
             if (ftr.checkContextBit(md))
             {
                 if ((md & LogEntry::Dev) && !ftr.allowDev) continue; // No devs.
@@ -121,7 +121,7 @@ DE_PIMPL_NOREF(LogFilter)
         int lev = LogEntry::HighestLogLevel + 1;
         for (uint i = 0; i < NUM_FILTERS; ++i)
         {
-            Filter const &ftr = filterByContext[i];
+            const Filter &ftr = filterByContext[i];
             if (ftr.checkContextBit(md))
             {
                 lev = de::min(lev, int(ftr.minLevel));
@@ -134,7 +134,7 @@ DE_PIMPL_NOREF(LogFilter)
     {
         for (uint i = 0; i < NUM_FILTERS; ++i)
         {
-            Filter const &ftr = filterByContext[i];
+            const Filter &ftr = filterByContext[i];
             if (ftr.checkContextBit(md))
             {
                 if (ftr.allowDev) return true;
@@ -167,7 +167,7 @@ DE_PIMPL_NOREF(LogFilter)
         }
     }
 
-    void read(Record const &rec)
+    void read(const Record &rec)
     {
         try
         {
@@ -176,7 +176,7 @@ DE_PIMPL_NOREF(LogFilter)
                 filterByContext[i].read(rec.subrecord(subRecName[i]));
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOGDEV_WARNING("Failed to read filter from record: %s\nThe record is:\n%s")
                     << er.asText() << rec.asText();
@@ -229,7 +229,7 @@ LogEntry::Level LogFilter::minLevel(duint32 md) const
     return d->minLevel(md);
 }
 
-void LogFilter::read(Record const &rec)
+void LogFilter::read(const Record &rec)
 {
     d->read(rec);
 }

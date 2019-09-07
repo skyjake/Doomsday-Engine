@@ -207,7 +207,7 @@ void G_RendPlayerView(int player)
     GL_SetFilter((plr->plr->flags & DDPF_USE_VIEW_FILTER)? true : false);
     if(plr->plr->flags & DDPF_USE_VIEW_FILTER)
     {
-        float const *color = plr->plr->filterColor;
+        const float *color = plr->plr->filterColor;
         GL_SetFilterColor(color[CR], color[CG], color[CB], color[CA]);
     }
 
@@ -222,7 +222,7 @@ void G_RendPlayerView(int player)
 }
 
 #if 0
-static void rendHUD(int player, RectRaw const *portGeometry)
+static void rendHUD(int player, const RectRaw *portGeometry)
 {
     if(player < 0 || player >= MAXPLAYERS) return;
     if(G_GameState() != GS_MAP) return;
@@ -234,8 +234,8 @@ static void rendHUD(int player, RectRaw const *portGeometry)
     Hu_MapTitleDrawer(portGeometry);
 }
 
-void X_DrawViewPort(int port, RectRaw const *portGeometry,
-    RectRaw const *windowGeometry, int player, int layer)
+void X_DrawViewPort(int port, const RectRaw *portGeometry,
+    const RectRaw *windowGeometry, int player, int layer)
 {
     if(layer != 0)
     {
@@ -269,7 +269,7 @@ void X_DrawViewPort(int port, RectRaw const *portGeometry,
 }
 #endif
 
-void X_DrawWindow(Size2Raw const * /*windowSize*/)
+void X_DrawWindow(const Size2Raw * /*windowSize*/)
 {
     if(G_GameState() == GS_INTERMISSION)
     {

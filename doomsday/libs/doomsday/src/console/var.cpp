@@ -159,7 +159,7 @@ static cvar_t* addVariable(cvartemplate_t const& tpl)
     return newVar;
 }
 
-String CVar_TypeAsText(cvar_t const *var)
+String CVar_TypeAsText(const cvar_t *var)
 {
     // Human-readable type name.
     DE_ASSERT(var);
@@ -185,7 +185,7 @@ String CVar_TypeAsText(cvar_t const *var)
 }
 
 template <typename ValueType>
-void printTypeWarning(cvar_t const *var, String const &attemptedType, ValueType value)
+void printTypeWarning(const cvar_t *var, const String &attemptedType, ValueType value)
 {
     AutoStr* path = CVar_ComposePath(var);
     LOG_SCR_WARNING("Variable %s (of type '%s') is incompatible with %s ")
@@ -193,7 +193,7 @@ void printTypeWarning(cvar_t const *var, String const &attemptedType, ValueType 
             << attemptedType << value;
 }
 
-void CVar_PrintReadOnlyWarning(cvar_t const *var)
+void CVar_PrintReadOnlyWarning(const cvar_t *var)
 {
     AutoStr* path = CVar_ComposePath(var);
     LOG_SCR_WARNING("%s (%s cvar) is read-only; it cannot be changed (even with force)")
@@ -226,14 +226,14 @@ int CVar_Flags(const cvar_t* var)
     return var->flags;
 }
 
-AutoStr *CVar_ComposePath(cvar_t const *var)
+AutoStr *CVar_ComposePath(const cvar_t *var)
 {
     DE_ASSERT(var != 0);
     CVarDirectory::Node &node = *reinterpret_cast<CVarDirectory::Node *>(var->directoryNode);
     return AutoStr_FromTextStd(node.path(CVARDIRECTORY_DELIMITER));
 }
 
-void CVar_SetUri2(cvar_t *var, res::Uri const &uri, int svFlags)
+void CVar_SetUri2(cvar_t *var, const res::Uri &uri, int svFlags)
 {
     DE_ASSERT(var);
 
@@ -283,12 +283,12 @@ void CVar_SetUri2(cvar_t *var, res::Uri const &uri, int svFlags)
     }
 }
 
-void CVar_SetUri(cvar_t *var, res::Uri const &uri)
+void CVar_SetUri(cvar_t *var, const res::Uri &uri)
 {
     CVar_SetUri2(var, uri, 0);
 }
 
-void CVar_SetString2(cvar_t *var, char const *text, int svFlags)
+void CVar_SetString2(cvar_t *var, const char *text, int svFlags)
 {
     DE_ASSERT(var != 0);
 
@@ -427,7 +427,7 @@ void CVar_SetFloat(cvar_t* var, float value)
     CVar_SetFloat2(var, value, 0);
 }
 
-static void printConversionWarning(cvar_t const *var)
+static void printConversionWarning(const cvar_t *var)
 {
     AutoStr* path = CVar_ComposePath(var);
     LOGDEV_SCR_WARNING("Incompatible variable %s [%p type:%s]")
@@ -496,7 +496,7 @@ char const* CVar_String(cvar_t const* var)
     }
 }
 
-res::Uri const &CVar_Uri(cvar_t const *var)
+const res::Uri &CVar_Uri(const cvar_t *var)
 {
     if (!var) return *emptyUri;
 
@@ -511,7 +511,7 @@ res::Uri const &CVar_Uri(cvar_t const *var)
     }
 }
 
-void Con_AddVariable(cvartemplate_t const *tpl)
+void Con_AddVariable(const cvartemplate_t *tpl)
 {
     LOG_AS("Con_AddVariable");
 
@@ -527,7 +527,7 @@ void Con_AddVariable(cvartemplate_t const *tpl)
     addVariable(*tpl);
 }
 
-void Con_AddVariableList(cvartemplate_t const *tplList)
+void Con_AddVariableList(const cvartemplate_t *tplList)
 {
     if (!tplList) return;
 
@@ -541,9 +541,9 @@ void Con_AddVariableList(cvartemplate_t const *tplList)
     }
 }
 
-cvar_t *Con_FindVariable(Path const &path)
+cvar_t *Con_FindVariable(const Path &path)
 {
-    if (CVarDirectory::Node const *node =
+    if (const CVarDirectory::Node *node =
             cvarDirectory->tryFind(path, PathTree::NoBranch | PathTree::MatchFull))
     {
         return reinterpret_cast<cvar_t *>(node->userPointer());
@@ -551,12 +551,12 @@ cvar_t *Con_FindVariable(Path const &path)
     return nullptr;
 }
 
-cvar_t *Con_FindVariable(char const *path)
+cvar_t *Con_FindVariable(const char *path)
 {
     return Con_FindVariable(Path(path, CVARDIRECTORY_DELIMITER));
 }
 
-String Con_VarAsStyledText(cvar_t *var, char const *prefix)
+String Con_VarAsStyledText(cvar_t *var, const char *prefix)
 {
     if (!var) return "";
 
@@ -589,7 +589,7 @@ String Con_VarAsStyledText(cvar_t *var, char const *prefix)
     return os.str();
 }
 
-void Con_PrintCVar(cvar_t* var, char const *prefix)
+void Con_PrintCVar(cvar_t* var, const char *prefix)
 {
     LOG_SCR_MSG("%s") << Con_VarAsStyledText(var, prefix);
 }
@@ -615,7 +615,7 @@ void Con_AddKnownWordsForVariables()
                             addVariableToKnownWords);
 }
 
-void Con_SetVariable(Path const &varPath, int value, int svFlags)
+void Con_SetVariable(const Path &varPath, int value, int svFlags)
 {
     if (cvar_t *var = Con_FindVariable(varPath))
     {
@@ -627,7 +627,7 @@ void Con_SetVariable(Path const &varPath, int value, int svFlags)
     }
 }
 
-int Con_GetVariableInteger(Path const &varPath)
+int Con_GetVariableInteger(const Path &varPath)
 {
     if (cvar_t *var = Con_FindVariable(varPath))
     {
@@ -636,7 +636,7 @@ int Con_GetVariableInteger(Path const &varPath)
     return 0;
 }
 
-static Value *Function_Console_Get(Context &, Function::ArgumentValues const &args)
+static Value *Function_Console_Get(Context &, const Function::ArgumentValues &args)
 {
     String const name = args.at(0)->asText();
     cvar_t *var = Con_FindVariable(name.c_str());
@@ -668,7 +668,7 @@ static Value *Function_Console_Get(Context &, Function::ArgumentValues const &ar
     return nullptr;
 }
 
-static Value *Function_Console_Set(Context &, Function::ArgumentValues const &args)
+static Value *Function_Console_Set(Context &, const Function::ArgumentValues &args)
 {
     String const name = args.at(0)->asText();
     cvar_t *var = Con_FindVariable(name.c_str());
@@ -678,7 +678,7 @@ static Value *Function_Console_Set(Context &, Function::ArgumentValues const &ar
                     stringf("Unknown console variable: %s", name.c_str()));
     }
 
-    Value const &value = *args.at(1);
+    const Value &value = *args.at(1);
     switch (var->type)
     {
     case CVT_BYTE:

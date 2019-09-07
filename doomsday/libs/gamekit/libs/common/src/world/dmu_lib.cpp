@@ -628,7 +628,7 @@ void P_SectorModifyLightx(Sector *sector, fixed_t value)
     P_SetFloatp(sector, DMU_LIGHT_LEVEL, P_SectorLight(sector) + FIX2FLT(value) / 255.0f);
 }
 
-terraintype_t const *P_PlaneMaterialTerrainType(Sector *sec, int plane)
+const terraintype_t *P_PlaneMaterialTerrainType(Sector *sec, int plane)
 {
     return P_TerrainTypeForMaterial((world_Material *)P_GetPtrp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL)));
 }

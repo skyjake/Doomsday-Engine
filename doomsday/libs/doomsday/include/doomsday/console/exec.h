@@ -70,8 +70,8 @@ LIBDOOMSDAY_PUBLIC void Con_Ticker(timespan_t time);
  *
  * @return  Non-zero if successful else @c 0.
  */
-LIBDOOMSDAY_PUBLIC int Con_Execute(byte src, char const *command, int silent, dd_bool netCmd);
-LIBDOOMSDAY_PUBLIC int Con_Executef(byte src, int silent, char const *command, ...) PRINTF_F(3,4);
+LIBDOOMSDAY_PUBLIC int Con_Execute(byte src, const char *command, int silent, dd_bool netCmd);
+LIBDOOMSDAY_PUBLIC int Con_Executef(byte src, int silent, const char *command, ...) PRINTF_F(3,4);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -79,8 +79,8 @@ LIBDOOMSDAY_PUBLIC int Con_Executef(byte src, int silent, char const *command, .
 
 #ifdef __cplusplus
 
-LIBDOOMSDAY_PUBLIC bool Con_Parse(de::File const &file, bool silently);
-LIBDOOMSDAY_PUBLIC de::String Con_GameAsStyledText(Game const *game);
+LIBDOOMSDAY_PUBLIC bool Con_Parse(const de::File &file, bool silently);
+LIBDOOMSDAY_PUBLIC de::String Con_GameAsStyledText(const Game *game);
 
 #endif // __cplusplus
 

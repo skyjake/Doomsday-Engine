@@ -110,12 +110,12 @@ void *Texture::userDataPointer() const
     return d->userData;
 }
 
-Vec2ui const &Texture::dimensions() const
+const Vec2ui &Texture::dimensions() const
 {
     return d->dimensions;
 }
 
-void Texture::setDimensions(Vec2ui const &newDimensions)
+void Texture::setDimensions(const Vec2ui &newDimensions)
 {
     if (d->dimensions != newDimensions)
     {
@@ -142,12 +142,12 @@ void Texture::setHeight(duint newHeight)
     }
 }
 
-Vec2i const &Texture::origin() const
+const Vec2i &Texture::origin() const
 {
     return d->origin;
 }
 
-void Texture::setOrigin(Vec2i const &newOrigin)
+void Texture::setOrigin(const Vec2i &newOrigin)
 {
     if (d->origin != newOrigin)
     {
@@ -169,7 +169,7 @@ void Texture::clearAnalyses()
 
 void *Texture::analysisDataPointer(AnalysisId analysisId) const
 {
-    auto const &analyses = d.getConst()->analyses;
+    const auto &analyses = d.getConst()->analyses;
     auto found = analyses.find(analysisId);
     if (found != analyses.end())
     {
@@ -258,7 +258,7 @@ D_CMD(InspectTexture)
         }
         return true;
     }
-    catch (Resources::MissingResourceManifestError const &er)
+    catch (const Resources::MissingResourceManifestError &er)
     {
         LOG_RES_WARNING("%s.") << er.asText();
     }

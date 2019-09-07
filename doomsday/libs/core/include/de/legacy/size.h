@@ -53,25 +53,25 @@ typedef struct size2_s Size2;
 
 DE_PUBLIC Size2 *Size2_New(void);
 DE_PUBLIC Size2 *Size2_NewWithDimensions(int width, int height);
-DE_PUBLIC Size2 *Size2_NewFromRaw(Size2Raw const *rawSize);
+DE_PUBLIC Size2 *Size2_NewFromRaw(const Size2Raw *rawSize);
 DE_PUBLIC void Size2_Delete(Size2 *size);
 
-DE_PUBLIC Size2Raw *Size2_Raw(Size2 const *size, Size2Raw *rawSize);
+DE_PUBLIC Size2Raw *Size2_Raw(const Size2 *size, Size2Raw *rawSize);
 
-DE_PUBLIC dd_bool Size2_IsNull(Size2 const *size);
+DE_PUBLIC dd_bool Size2_IsNull(const Size2 *size);
 
-DE_PUBLIC int Size2_Width(Size2 const *size);
-DE_PUBLIC int Size2_Height(Size2 const *size);
+DE_PUBLIC int Size2_Width(const Size2 *size);
+DE_PUBLIC int Size2_Height(const Size2 *size);
 
 DE_PUBLIC void Size2_SetWidth(Size2 *size, int width);
 DE_PUBLIC void Size2_SetHeight(Size2 *size, int height);
 
-DE_PUBLIC int const *Size2_WidthHeight(Size2 const *size);
+DE_PUBLIC const int *Size2_WidthHeight(const Size2 *size);
 DE_PUBLIC void Size2_SetWidthHeight(Size2 *size, int width, int height);
 
-DE_PUBLIC void Size2_Sum(Size2 *size, Size2 const *other);
+DE_PUBLIC void Size2_Sum(Size2 *size, const Size2 *other);
 
-DE_PUBLIC dd_bool Size2_Equality(Size2 const *point, Size2 const *other);
+DE_PUBLIC dd_bool Size2_Equality(const Size2 *point, const Size2 *other);
 
 /**
  * Floating-point width and height. Intended as a handy POD structure for easy
@@ -95,25 +95,25 @@ typedef struct size2f_s Size2f;
 
 DE_PUBLIC Size2f *Size2f_New(void);
 DE_PUBLIC Size2f *Size2f_NewWithDimensions(double width, double height);
-DE_PUBLIC Size2f *Size2f_NewFromRaw(Size2Rawf const *rawSize);
+DE_PUBLIC Size2f *Size2f_NewFromRaw(const Size2Rawf *rawSize);
 DE_PUBLIC void Size2f_Delete(Size2f *size);
 
-DE_PUBLIC Size2Rawf *Size2f_Raw(Size2f const *size, Size2Rawf *rawSize);
+DE_PUBLIC Size2Rawf *Size2f_Raw(const Size2f *size, Size2Rawf *rawSize);
 
-DE_PUBLIC dd_bool Size2f_IsNull(Size2f const *size);
+DE_PUBLIC dd_bool Size2f_IsNull(const Size2f *size);
 
-DE_PUBLIC double Size2f_Width(Size2f const *size);
-DE_PUBLIC double Size2f_Height(Size2f const *size);
+DE_PUBLIC double Size2f_Width(const Size2f *size);
+DE_PUBLIC double Size2f_Height(const Size2f *size);
 
 DE_PUBLIC void Size2f_SetWidth(Size2f *size, double width);
 DE_PUBLIC void Size2f_SetHeight(Size2f *size, double height);
 
-DE_PUBLIC double const *Size2f_WidthHeight(Size2f const *size);
+DE_PUBLIC const double *Size2f_WidthHeight(const Size2f *size);
 DE_PUBLIC void Size2f_SetWidthHeight(Size2f *size, double width, double height);
 
-DE_PUBLIC void Size2f_Sum(Size2f *size, Size2f const *other);
+DE_PUBLIC void Size2f_Sum(Size2f *size, const Size2f *other);
 
-DE_PUBLIC dd_bool Size2f_Equality(Size2f const *size, Size2f const *other);
+DE_PUBLIC dd_bool Size2f_Equality(const Size2f *size, const Size2f *other);
 
 /// @}
 

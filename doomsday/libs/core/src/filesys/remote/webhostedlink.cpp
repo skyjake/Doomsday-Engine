@@ -51,7 +51,7 @@ DE_PIMPL(WebHostedLink)
         self().scope() += async([this, queryPath] () -> std::shared_ptr<DictionaryValue>
         {
             DE_GUARD(this);
-            if (auto const *dir = fileTree->tryFind
+            if (const auto *dir = fileTree->tryFind
                     (queryPath, FileTree::MatchFull | FileTree::NoLeaf))
             {
                 std::shared_ptr<DictionaryValue> list(new DictionaryValue);
@@ -64,7 +64,7 @@ DE_PIMPL(WebHostedLink)
                 auto addMeta = [this](DictionaryValue &list, const PathTree::Nodes &nodes) {
                     for (const auto &i : nodes)
                     {
-                        auto const &entry = i.second->as<FileEntry>();
+                        const auto &entry = i.second->as<FileEntry>();
                         list.add(new TextValue(entry.name()),
                                   RecordValue::takeRecord(
                                       Record::withMembers(
@@ -112,7 +112,7 @@ DE_PIMPL(WebHostedLink)
     }
 };
 
-WebHostedLink::WebHostedLink(String const &address, String const &indexPath)
+WebHostedLink::WebHostedLink(const String &address, const String &indexPath)
     : Link(address)
     , d(new Impl(this))
 {
@@ -147,18 +147,18 @@ void WebHostedLink::setFileTree(FileTree *tree)
     d->fileTree.reset(tree);
 }
 
-WebHostedLink::FileTree const &WebHostedLink::fileTree() const
+const WebHostedLink::FileTree &WebHostedLink::fileTree() const
 {
     return *d->fileTree;
 }
 
-WebHostedLink::FileEntry const *WebHostedLink::findFile(Path const &path) const
+const WebHostedLink::FileEntry *WebHostedLink::findFile(const Path &path) const
 {
     DE_GUARD(d);
     return d->fileTree->tryFind(path, PathTree::MatchFull);
 }
 
-filesys::PackagePaths WebHostedLink::locatePackages(StringList const &packageIds) const
+filesys::PackagePaths WebHostedLink::locatePackages(const StringList &packageIds) const
 {
     PackagePaths remotePaths;
     for (const String &packageId : packageIds)
@@ -172,7 +172,7 @@ filesys::PackagePaths WebHostedLink::locatePackages(StringList const &packageIds
     return remotePaths;
 }
 
-void WebHostedLink::transmit(Query const &query)
+void WebHostedLink::transmit(const Query &query)
 {
     // We can answer population queries instantly because an index was
     // downloaded when the connection was opened.
@@ -207,7 +207,7 @@ void WebHostedLink::transmit(Query const &query)
     web->get(uri);
 }
 
-Block WebHostedLink::FileEntry::metaId(Link const &link) const
+Block WebHostedLink::FileEntry::metaId(const Link &link) const
 {
     return md5Hash(link.address(), path(), size, modTime);
 }

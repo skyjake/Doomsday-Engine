@@ -68,7 +68,7 @@ public:
     /**
      * Returns the symbolic name of the scheme.
      */
-    de::String const &name() const;
+    const de::String &name() const;
 
     /**
      * Returns the total number of manifests in the scheme.
@@ -99,46 +99,46 @@ public:
      *
      * @return  The (possibly newly created) manifest at @a path.
      */
-    Manifest &declare(de::Path const &path,
+    Manifest &declare(const de::Path &path,
                       de::Flags flags,
-                      de::Vec2ui const &dimensions,
-                      de::Vec2i const &origin,
+                      const de::Vec2ui &dimensions,
+                      const de::Vec2i &origin,
                       int uniqueId,
-                      res::Uri const *resourceUri);
+                      const res::Uri *resourceUri);
 
     /*
      * Returns @c true if a manifest exists on the given @a path.
      */
-    //bool has(de::Path const &path) const;
+    //bool has(const de::Path &path) const;
 
     /**
      * Lookup a Manifest in the scheme with a matching @a path.
      */
-    Manifest       &find(de::Path const &path);
-    Manifest const &find(de::Path const &path) const;
+    Manifest       &find(const de::Path &path);
+    const Manifest &find(const de::Path &path) const;
 
-    Manifest *tryFind(de::Path const &path) const;
+    Manifest *tryFind(const de::Path &path) const;
 
     /**
      * Lookup a Manifest in the scheme with an associated resource URI matching @a uri.
      */
-    Manifest       &findByResourceUri(res::Uri const &uri);
-    Manifest const &findByResourceUri(res::Uri const &uri) const;
+    Manifest       &findByResourceUri(const res::Uri &uri);
+    const Manifest &findByResourceUri(const res::Uri &uri) const;
 
-    Manifest *tryFindByResourceUri(res::Uri const &uri) const;
+    Manifest *tryFindByResourceUri(const res::Uri &uri) const;
 
     /**
      * Lookup a Manifest in the scheme with an associated identifier matching @a uniqueId.
      */
     Manifest       &findByUniqueId(int uniqueId);
-    Manifest const &findByUniqueId(int uniqueId) const;
+    const Manifest &findByUniqueId(int uniqueId) const;
 
     Manifest *tryFindByUniqueId(int uniqueId) const;
 
     /**
      * Provides access to the manifest index for efficient traversal.
      */
-    Index const &index() const;
+    const Index &index() const;
 
 private:
     DE_PRIVATE(d)

@@ -40,7 +40,7 @@ public:
      *
      * @param file  File with Info source containing font definitions.
      */
-    void addFromInfo(File const &file);
+    void addFromInfo(const File &file);
 
     /**
      * Finds a specific font.
@@ -49,7 +49,7 @@ public:
      *
      * @return  Font instance.
      */
-    Font const &font(DotPath const &path) const;
+    const Font &font(const DotPath &path) const;
 
     /**
      * Sets a factor applied to all font sizes when loading the back.
@@ -61,7 +61,7 @@ public:
     void reload();
 
 protected:
-    virtual ISource *newSourceFromInfo(String const &id);
+    virtual ISource *newSourceFromInfo(const String &id);
     virtual IData *loadFromSource(ISource &source);
 
 private:

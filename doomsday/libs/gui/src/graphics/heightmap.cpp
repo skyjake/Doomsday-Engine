@@ -29,13 +29,13 @@ DE_PIMPL_NOREF(HeightMap)
     Vec2f  mapSize;
     float  heightRange = 1.f;
 
-    Vec2f pixelCoordf(Vec2f const &worldPos) const
+    Vec2f pixelCoordf(const Vec2f &worldPos) const
     {
         Vec2f normPos = worldPos / mapSize + Vec2f(.5f, .5f);
         return normPos * Vec2f(heightImage.width(), heightImage.height()) - Vec2f(.5f, .5f);
     }
 
-    Vec3f normalAtCoord(Vec2i const &pos) const
+    Vec3f normalAtCoord(const Vec2i &pos) const
     {
         int const w = heightImage.width();
         int const h = heightImage.height();
@@ -59,13 +59,13 @@ DE_PIMPL_NOREF(HeightMap)
 HeightMap::HeightMap() : d(new Impl)
 {}
 
-void HeightMap::setMapSize(Vec2f const &worldSize, float heightRange)
+void HeightMap::setMapSize(const Vec2f &worldSize, float heightRange)
 {
     d->mapSize     = worldSize;
     d->heightRange = heightRange;
 }
 
-void HeightMap::loadGrayscale(Image const &heightImage)
+void HeightMap::loadGrayscale(const Image &heightImage)
 {
     d->heightImage = heightImage;
 }
@@ -77,7 +77,7 @@ Image HeightMap::toImage() const
 
 Image HeightMap::makeNormalMap() const
 {
-    Image const &heightMap = d->heightImage;
+    const Image &heightMap = d->heightImage;
 
     Image img(heightMap.size(), Image::RGBA_8888);
 
@@ -104,9 +104,9 @@ Image HeightMap::makeNormalMap() const
     return img;
 }
 
-float HeightMap::heightAtPosition(Vec2f const &worldPos) const
+float HeightMap::heightAtPosition(const Vec2f &worldPos) const
 {
-    Image const &img = d->heightImage;
+    const Image &img = d->heightImage;
 
     Vec2f coord = d->pixelCoordf(worldPos);
     Vec2i pixelCoord = coord.toVec2i();
@@ -131,7 +131,7 @@ float HeightMap::heightAtPosition(Vec2f const &worldPos) const
     return value * -d->heightRange;
 }
 
-Vec3f HeightMap::normalAtPosition(Vec2f const &worldPos) const
+Vec3f HeightMap::normalAtPosition(const Vec2f &worldPos) const
 {
     Vec2i const pos = d->pixelCoordf(worldPos).toVec2i();
     return d->normalAtCoord(pos); // * Vec3f(1, 1, NORMAL_Z)).normalize();

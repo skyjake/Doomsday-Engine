@@ -42,7 +42,7 @@ D_CMD(SetClass);
 #endif
 D_CMD(LocalMessage);
 
-static void D_NetMessageEx(int player, char const *msg, dd_bool playSound);
+static void D_NetMessageEx(int player, const char *msg, dd_bool playSound);
 
 float netJumpPower = 9;
 
@@ -177,7 +177,7 @@ writer_s *D_NetWrite()
     return netWriter;
 }
 
-reader_s *D_NetRead(byte const *buffer, size_t len)
+reader_s *D_NetRead(const byte *buffer, size_t len)
 {
     // Get rid of the old reader.
     if(netReader)
@@ -212,7 +212,7 @@ int D_NetServerStarted(int before)
     P_ResetPlayerRespawnClasses();
 
     String episodeId = Con_GetString("server-game-episode");
-    res::Uri mapUri = *reinterpret_cast<res::Uri const *>(Con_GetUri("server-game-map"));
+    res::Uri mapUri = *reinterpret_cast<const res::Uri *>(Con_GetUri("server-game-map"));
     if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
 
     GameRules rules(gfw_Session()->rules()); // Make a copy of the current rules.
@@ -225,7 +225,7 @@ int D_NetServerStarted(int before)
         // First try the configured map.
         gfw_Session()->begin(rules, episodeId, mapUri);
     }
-    catch(Error const &er)
+    catch(const Error &er)
     {
         LOGDEV_ERROR("Failed to start server: %s") << er.asText();
         episodeId = D_NetDefaultEpisode();
@@ -369,11 +369,11 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 
         if(plrNumber > 0)
         {
-            Str_Appendf(msg, "%s: %s", Net_GetPlayerName(plrNumber), (char const *) data);
+            Str_Appendf(msg, "%s: %s", Net_GetPlayerName(plrNumber), (const char *) data);
         }
         else
         {
-            Str_Appendf(msg, "[sysop] %s", (char const *) data);
+            Str_Appendf(msg, "[sysop] %s", (const char *) data);
         }
         Str_Truncate(msg, NETBUFFER_MAXMESSAGE); // not overly long, please
 
@@ -669,7 +669,7 @@ void D_ChatSound()
  * @param player     Player number to send the message to.
  * @param playSound  @c true = play the chat sound.
  */
-static void D_NetMessageEx(int player, char const *msg, dd_bool playSound)
+static void D_NetMessageEx(int player, const char *msg, dd_bool playSound)
 {
     if(player < 0 || player > MAXPLAYERS) return;
     player_t *plr = &players[player];
@@ -690,12 +690,12 @@ static void D_NetMessageEx(int player, char const *msg, dd_bool playSound)
     netSvAllowSendMsg = true;
 }
 
-void D_NetMessage(int player, char const *msg)
+void D_NetMessage(int player, const char *msg)
 {
     D_NetMessageEx(player, msg, true);
 }
 
-void D_NetMessageNoSound(int player, char const *msg)
+void D_NetMessageNoSound(int player, const char *msg)
 {
     D_NetMessageEx(player, msg, false);
 }

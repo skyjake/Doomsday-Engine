@@ -50,7 +50,7 @@ public:
     /// Length of a type identifier.
     static dint const TYPE_SIZE = 4;
 
-    static Type typeFromString(char const *fourcc);
+    static Type typeFromString(const char *fourcc);
 
 public:
     /**
@@ -58,26 +58,26 @@ public:
      *
      * @param type  Type identifier of the packet.
      */
-    explicit Packet(Type const &type);
+    explicit Packet(const Type &type);
 
     virtual ~Packet() {}
 
     /**
      * Returns the type identifier of the packet.
      */
-    Type const &type() const { return _type; }
+    const Type &type() const { return _type; }
 
     /**
      * Determines where the packet was received from.
      */
-    Address const &from() const { return _from; }
+    const Address &from() const { return _from; }
 
     /**
      * Sets the address where the packet was received from.
      *
      * @param from  Address of the sender.
      */
-    void setFrom(Address const &from) { _from = from; }
+    void setFrom(const Address &from) { _from = from; }
 
     /**
      * Execute whatever action the packet defines. This is called for all
@@ -96,7 +96,7 @@ protected:
      *
      * @param t  Type identifier.
      */
-    void setType(Type const &t);
+    void setType(const Type &t);
 
 public:
     /**
@@ -106,10 +106,10 @@ public:
      * @param from  Reader.
      * @param type  Packet identifier.
      */
-    static bool checkType(Reader &from, Type const &type);
+    static bool checkType(Reader &from, const Type &type);
 
     template <typename PacketType>
-    static PacketType *constructFromBlock(Block const &block, Type const &packetTypeIdentifier)
+    static PacketType *constructFromBlock(const Block &block, const Type &packetTypeIdentifier)
     {
         Reader from(block);
         if (checkType(from, packetTypeIdentifier))

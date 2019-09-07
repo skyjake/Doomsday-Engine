@@ -60,7 +60,7 @@ coord_t Mobj_ThrustMulForFriction(coord_t friction)
     return (-114.7338958 * friction * friction + 208.0448223 * friction - 93.31092643);
 }
 
-coord_t Mobj_ThrustMul(mobj_t const *mo)
+coord_t Mobj_ThrustMul(const mobj_t *mo)
 {
     coord_t mul = 1.0;
 
@@ -88,12 +88,12 @@ coord_t Mobj_ThrustMul(mobj_t const *mo)
     return mul;
 }
 
-dd_bool Mobj_IsAirborne(mobj_t const *mo)
+dd_bool Mobj_IsAirborne(const mobj_t *mo)
 {
     return ((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) && !mo->onMobj) != 0;
 }
 
-coord_t Mobj_Friction(mobj_t const *mo)
+coord_t Mobj_Friction(const mobj_t *mo)
 {
     if(Mobj_IsAirborne(mo))
     {
@@ -109,7 +109,7 @@ coord_t Mobj_Friction(mobj_t const *mo)
 #endif
 
 #if __JHEXEN__
-    terraintype_t const *tt = P_MobjFloorTerrain(mo);
+    const terraintype_t *tt = P_MobjFloorTerrain(mo);
     if(tt->flags & TTF_FRICTION_LOW)
     {
         return FRICTION_LOW;
@@ -124,7 +124,7 @@ coord_t Mobj_Friction(mobj_t const *mo)
 #endif
 }
 
-dd_bool Mobj_IsVoodooDoll(mobj_t const *mo)
+dd_bool Mobj_IsVoodooDoll(const mobj_t *mo)
 {
     if(!mo) return false;
     return (mo->player && mo->player->plr->mo != mo);
@@ -233,13 +233,13 @@ dd_bool Mobj_IsPlayerClMobj(mobj_t *mo)
     return false;
 }
 
-uint32_t Mobj_PrivateID(mobj_t const *mob)
+uint32_t Mobj_PrivateID(const mobj_t *mob)
 {
     if (!mob)
     {
         return 0;
     }
-    if (auto const *td = THINKER_DATA_MAYBE(mob->thinker, ThinkerData))
+    if (const auto *td = THINKER_DATA_MAYBE(mob->thinker, ThinkerData))
     {
         return td->id();
     }
@@ -263,7 +263,7 @@ mobj_t *Mobj_FindByPrivateID(uint32_t privateId)
     return nullptr;
 }
 
-dd_bool Mobj_IsPlayer(mobj_t const *mob)
+dd_bool Mobj_IsPlayer(const mobj_t *mob)
 {
     if(!mob) return false;
     return (mob->player != 0);
@@ -283,7 +283,7 @@ angle_t Mobj_AimAtPoint(mobj_t *mob, coord_t const point[])
 angle_t Mobj_AimAtTarget(mobj_t *mob)
 {
     DE_ASSERT(mob);
-    if(auto const *target = mob->target)
+    if(const auto *target = mob->target)
     {
         return Mobj_AimAtPoint2(mob, target->origin, target->flags & MF_SHADOW);
     }
@@ -452,7 +452,7 @@ dd_bool P_MobjChangeStateNoAction(mobj_t *mobj, statenum_t stateNum)
 void mobj_s::write(MapStateWriter *msw) const
 {
     Writer1 *writer = msw->writer();
-    mobj_t const *mo = this;
+    const mobj_t *mo = this;
 
     // Version.
     // JHEXEN
@@ -1056,7 +1056,7 @@ mobj_t *Mobj_LaunchMissile(mobj_t *mob, mobj_t *missile, coord_t const targetPos
     return Mobj_LaunchMissile2(mob, missile, targetPos, sourcePos, 0/*no extra z-momentum*/);
 }
 
-void Mobj_InflictDamage(mobj_t *mob, mobj_t const *inflictor, int damage)
+void Mobj_InflictDamage(mobj_t *mob, const mobj_t *inflictor, int damage)
 {
     DE_ASSERT(mob);
 
@@ -1067,7 +1067,7 @@ void Mobj_InflictDamage(mobj_t *mob, mobj_t const *inflictor, int damage)
     THINKER_DATA(mob->thinker, MobjThinkerData).damageReceived(damage, inflictor);
 }
 
-de::String Mobj_StateAsInfo(mobj_t const *mob)
+de::String Mobj_StateAsInfo(const mobj_t *mob)
 {
     using de::String;
 
@@ -1101,7 +1101,7 @@ de::String Mobj_StateAsInfo(mobj_t const *mob)
     return str;
 }
 
-void Mobj_RestoreObjectState(mobj_t *mob, de::Info::BlockElement const &state)
+void Mobj_RestoreObjectState(mobj_t *mob, const de::Info::BlockElement &state)
 {
     static de::String const KEY_TARGET     ("target");
     static de::String const KEY_ON_MOBJ    ("onMobj");

@@ -33,7 +33,7 @@ static patchid_t pBackground;
 static patchid_t pIcons[FLASH_FRAME_COUNT];
 
 guidata_readyitem_t::guidata_readyitem_t(void (*updateGeometry) (HudWidget *wi),
-                                         void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                                         void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                                          dint player)
     : HudWidget(updateGeometry,
                 drawer,
@@ -71,7 +71,7 @@ void guidata_readyitem_t::tick(timespan_t /*elapsed*/)
 
 #if __JHERETIC__
 
-void ReadyItem_Drawer(guidata_readyitem_t *item, Point2Raw const *offset)
+void ReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw *offset)
 {
 #define TRACKING                ( 2 )
 
@@ -139,7 +139,7 @@ void ReadyItem_Drawer(guidata_readyitem_t *item, Point2Raw const *offset)
 #undef TRACKING
 }
 
-void SBarReadyItem_Drawer(guidata_readyitem_t *item, Point2Raw const *offset)
+void SBarReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw *offset)
 {
 #define TRACKING                ( 2 )
 #define ORIGINX                 (-ST_WIDTH / 2 )
@@ -315,7 +315,7 @@ void ReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw* offset)
     DGL_PopMatrix();
 }
 
-void SBarReadyItem_Drawer(guidata_readyitem_t *item, Point2Raw const *offset)
+void SBarReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw *offset)
 {
 #define ORIGINX             (-ST_WIDTH / 2 )
 #define ORIGINY             (-ST_HEIGHT )

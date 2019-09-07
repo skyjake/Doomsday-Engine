@@ -51,7 +51,7 @@ DE_PIMPL(LineEditWidget)
 
 DE_AUDIENCE_METHOD(LineEditWidget, Enter)
 
-LineEditWidget::LineEditWidget(de::String const &name)
+LineEditWidget::LineEditWidget(const de::String &name)
     : Widget(name)
     , AbstractLineEditor(new MonospaceLineWrapping)
     , d(new Impl(*this))
@@ -113,12 +113,12 @@ void LineEditWidget::draw()
     targetCanvas().draw(buf, pos.topLeft);
 }
 
-bool LineEditWidget::handleEvent(Event const &event)
+bool LineEditWidget::handleEvent(const Event &event)
 {
     DE_ASSERT(event.type() == Event::KeyPress);
 
     // There are only key press events.
-    KeyEvent const &ev = event.as<KeyEvent>();
+    const KeyEvent &ev = event.as<KeyEvent>();
 
     bool eaten = true;
 

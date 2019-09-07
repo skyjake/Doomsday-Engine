@@ -45,7 +45,7 @@ DE_PIMPL(Widget)
     Children children;
     NamedChildren index;
 
-    Impl(Public *i, String const &n) : Base(i), name(n)
+    Impl(Public *i, const String &n) : Base(i), name(n)
     {}
 
     ~Impl()
@@ -71,7 +71,7 @@ DE_PIMPL(Widget)
         {
             return manualRoot;
         }
-        Widget const *w = thisPublic;
+        const Widget *w = thisPublic;
         while (w->parent())
         {
             w = w->parent();
@@ -86,7 +86,7 @@ DE_PIMPL(Widget)
 
     enum AddBehavior { Append, Prepend, InsertBefore };
 
-    void add(Widget *child, AddBehavior behavior, Widget const *ref = nullptr)
+    void add(Widget *child, AddBehavior behavior, const Widget *ref = nullptr)
     {
         DE_ASSERT(child != nullptr);
         DE_ASSERT(child->d->parent == nullptr);
@@ -227,7 +227,7 @@ DE_AUDIENCE_METHOD(Widget, ParentChange)
 DE_AUDIENCE_METHOD(Widget, ChildAddition)
 DE_AUDIENCE_METHOD(Widget, ChildRemoval)
 
-Widget::Widget(String const &name) : d(new Impl(this, name))
+Widget::Widget(const String &name) : d(new Impl(this, name))
 {}
 
 Widget::~Widget()
@@ -262,7 +262,7 @@ String Widget::name() const
     return d->name;
 }
 
-void Widget::setName(String const &name)
+void Widget::setName(const String &name)
 {
     // Remove old name from parent's index.
     if (d->parent && !d->name.isEmpty())
@@ -281,7 +281,7 @@ void Widget::setName(String const &name)
 
 DotPath Widget::path() const
 {
-    Widget const *w = this;
+    const Widget *w = this;
     String result;
     while (w)
     {
@@ -333,9 +333,9 @@ bool Widget::canBeFocused() const
     return behavior().testFlag(Focusable) && isVisible() && isEnabled();
 }
 
-bool Widget::hasFamilyBehavior(Behavior const &flags) const
+bool Widget::hasFamilyBehavior(const Behavior &flags) const
 {
-    for (Widget const *w = this; w; w = w->d->parent)
+    for (const Widget *w = this; w; w = w->d->parent)
     {
         if (w->d->behavior.testFlag(flags)) return true;
     }
@@ -362,12 +362,12 @@ Widget::Behaviors Widget::behavior() const
     return d->behavior;
 }
 
-void Widget::setFocusNext(String const &name)
+void Widget::setFocusNext(const String &name)
 {
     d->focusNext = name;
 }
 
-void Widget::setFocusPrev(String const &name)
+void Widget::setFocusPrev(const String &name)
 {
     d->focusPrev = name;
 }
@@ -429,7 +429,7 @@ Widget &Widget::addFirst(Widget *child)
     return *child;
 }
 
-Widget &Widget::insertBefore(Widget *child, Widget const &otherChild)
+Widget &Widget::insertBefore(Widget *child, const Widget &otherChild)
 {
     DE_ASSERT(child != &otherChild);
     DE_ASSERT(otherChild.parent() == this);
@@ -475,7 +475,7 @@ void Widget::orphan()
     DE_ASSERT(d->parent == nullptr);
 }
 
-Widget *Widget::find(String const &name)
+Widget *Widget::find(const String &name)
 {
     if (d->name == name) return this;
 
@@ -495,7 +495,7 @@ Widget *Widget::find(String const &name)
     return nullptr;
 }
 
-bool Widget::isInTree(Widget const &child) const
+bool Widget::isInTree(const Widget &child) const
 {
     if (this == &child) return true;
 
@@ -509,21 +509,21 @@ bool Widget::isInTree(Widget const &child) const
     return false;
 }
 
-bool Widget::hasAncestor(Widget const &ancestorOrParent) const
+bool Widget::hasAncestor(const Widget &ancestorOrParent) const
 {
-    for (Widget const *iter = parent(); iter; iter = iter->parent())
+    for (const Widget *iter = parent(); iter; iter = iter->parent())
     {
         if (iter == &ancestorOrParent) return true;
     }
     return false;
 }
 
-Widget const *Widget::find(String const &name) const
+const Widget *Widget::find(const String &name) const
 {
     return const_cast<Widget *>(this)->find(name);
 }
 
-void Widget::moveChildBefore(Widget *child, Widget const &otherChild)
+void Widget::moveChildBefore(Widget *child, const Widget &otherChild)
 {
     if (child == &otherChild) return; // invalid
 
@@ -605,7 +605,7 @@ Widget *Widget::walkChildren(WalkDirection dir, const std::function<LoopResult (
                            dir, callback, +1);
 }
 
-String Widget::uniqueName(String const &name) const
+String Widget::uniqueName(const String &name) const
 {
     return Stringf("%s.%s", id().asText().c_str(), name.c_str());
 }
@@ -619,7 +619,7 @@ Widget::NotifyArgs Widget::notifyArgsForDraw() const
     return args;
 }
 
-Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
+Widget::NotifyArgs::Result Widget::notifyTree(const NotifyArgs &args)
 {
     NotifyArgs::Result result = NotifyArgs::Continue;
     bool preNotified = false;
@@ -684,13 +684,13 @@ Widget::NotifyArgs::Result Widget::notifyTree(NotifyArgs const &args)
     return result;
 }
 
-Widget::NotifyArgs::Result Widget::notifySelfAndTree(NotifyArgs const &args)
+Widget::NotifyArgs::Result Widget::notifySelfAndTree(const NotifyArgs &args)
 {
     (this->*args.notifyFunc)();
     return notifyTree(args);
 }
 
-void Widget::notifyTreeReversed(NotifyArgs const &args)
+void Widget::notifyTreeReversed(const NotifyArgs &args)
 {
     if (args.preNotifyFunc)
     {
@@ -714,7 +714,7 @@ void Widget::notifyTreeReversed(NotifyArgs const &args)
     }
 }
 
-bool Widget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &))
+bool Widget::dispatchEvent(const Event &event, bool (Widget::*memberFunc)(const Event &))
 {
     // Hidden widgets do not get events.
     if (isHidden() || d->behavior.testFlag(DisableEventDispatch)) return false;
@@ -833,7 +833,7 @@ void Widget::preDrawChildren()
 void Widget::postDrawChildren()
 {}
 
-bool Widget::handleEvent(Event const &)
+bool Widget::handleEvent(const Event &)
 {
     // Event is not handled.
     return false;
@@ -853,7 +853,7 @@ const Record &Widget::objectNamespace() const
     return const_cast<Widget *>(this)->objectNamespace();
 }
 
-void Widget::setFocusCycle(WidgetList const &order)
+void Widget::setFocusCycle(const WidgetList &order)
 {
     for (dsize i = 0; i < order.size(); ++i)
     {

@@ -29,7 +29,7 @@
 namespace de {
 
 /// The currently used GLProgram.
-static GLProgram const *currentProgram = nullptr;
+static const GLProgram *currentProgram = nullptr;
 
 using namespace internal;
 
@@ -99,7 +99,7 @@ DE_PIMPL(GLProgram)
         releaseButRetainBindings();
     }
 
-    void attach(GLShader const *shader)
+    void attach(const GLShader *shader)
     {
         DE_ASSERT(shader->isReady());
         alloc();
@@ -108,7 +108,7 @@ DE_PIMPL(GLProgram)
         shaders.insert(holdRef(shader));
     }
 
-    void detach(GLShader const *shader)
+    void detach(const GLShader *shader)
     {
         if (shader->isReady())
         {
@@ -128,7 +128,7 @@ DE_PIMPL(GLProgram)
 
     void unbindAll()
     {
-        for (GLUniform const *u : allBound)
+        for (const GLUniform *u : allBound)
         {
             u->audienceForValueChange() -= this;
             u->audienceForDeletion() -= this;
@@ -158,7 +158,7 @@ DE_PIMPL(GLProgram)
         // Look up where the attributes ended up being linked.
         for (uint i = 0; i < AttribSpec::MaxSemantics; ++i)
         {
-            char const *var = AttribSpec::semanticVariableName(AttribSpec::Semantic(i));
+            const char *var = AttribSpec::semanticVariableName(AttribSpec::Semantic(i));
             attribLocation[i] = glGetAttribLocation(name, var);
         }
     }
@@ -191,7 +191,7 @@ DE_PIMPL(GLProgram)
 
     void markAllBoundUniformsChanged()
     {
-        for (GLUniform const *u : active)
+        for (const GLUniform *u : active)
         {
             changed.insert(u);
         }
@@ -203,7 +203,7 @@ DE_PIMPL(GLProgram)
         if (changed.isEmpty()) return;
 
         // Apply the uniform values in this program.
-        for (GLUniform const *u : changed)
+        for (const GLUniform *u : changed)
         {
             DE_ASSERT(active.contains(u));
             if (!u->isSampler())
@@ -254,7 +254,7 @@ DE_PIMPL(GLProgram)
 
         alloc();
 
-        for (GLShader const *shader : shaders)
+        for (const GLShader *shader : shaders)
         {
             glAttachShader(name, shader->glName());
             LIBGUI_ASSERT_GL_OK();
@@ -281,7 +281,7 @@ DE_PIMPL(GLProgram)
         self().unbind(uniform);
     }
 
-    void addBinding(GLUniform const *uniform)
+    void addBinding(const GLUniform *uniform)
     {
         allBound.insert(uniform);
         uniform->audienceForValueChange() += this;
@@ -306,7 +306,7 @@ DE_PIMPL(GLProgram)
         }
     }
 
-    void removeBinding(GLUniform const *uniform)
+    void removeBinding(const GLUniform *uniform)
     {
         allBound.remove(uniform);
         uniform->audienceForValueChange() -= this;
@@ -356,7 +356,7 @@ void GLProgram::clear()
     d->release();
 }
 
-GLProgram &GLProgram::build(GLShader const *vertexShader, GLShader const *fragmentShader)
+GLProgram &GLProgram::build(const GLShader *vertexShader, const GLShader *fragmentShader)
 {
     return build({vertexShader, fragmentShader});
 }
@@ -377,8 +377,8 @@ GLProgram &GLProgram::build(const List<const GLShader *> &shaders)
     return *this;
 }
 
-GLProgram &GLProgram::build(IByteArray const &vertexShaderSource,
-                            IByteArray const &fragmentShaderSource)
+GLProgram &GLProgram::build(const IByteArray &vertexShaderSource,
+                            const IByteArray &fragmentShaderSource)
 {
     return build(refless(new GLShader(GLShader::Vertex,   vertexShaderSource)),
                  refless(new GLShader(GLShader::Fragment, fragmentShaderSource)));
@@ -394,12 +394,12 @@ void GLProgram::rebuild()
     d->rebuild();
 }
 
-GLProgram &GLProgram::operator << (GLUniform const &uniform)
+GLProgram &GLProgram::operator << (const GLUniform &uniform)
 {
     return bind(uniform);
 }
 
-GLProgram &GLProgram::bind(GLUniform const &uniform)
+GLProgram &GLProgram::bind(const GLUniform &uniform)
 {
     if (!d->allBound.contains(&uniform))
     {
@@ -413,7 +413,7 @@ GLProgram &GLProgram::bind(GLUniform const &uniform)
     return *this;
 }
 
-GLProgram &GLProgram::unbind(GLUniform const &uniform)
+GLProgram &GLProgram::unbind(const GLUniform &uniform)
 {
     if (d->allBound.contains(&uniform))
     {
@@ -462,7 +462,7 @@ void GLProgram::endUse() const
     glUseProgram(0);
 }
 
-GLProgram const *GLProgram::programInUse() // static
+const GLProgram *GLProgram::programInUse() // static
 {
     return currentProgram;
 }
@@ -472,12 +472,12 @@ GLuint GLProgram::glName() const
     return d->name;
 }
 
-int GLProgram::glUniformLocation(char const *uniformName) const
+int GLProgram::glUniformLocation(const char *uniformName) const
 {
     return glGetUniformLocation(d->name, uniformName);
 }
 
-bool GLProgram::glHasUniform(char const *uniformName) const
+bool GLProgram::glHasUniform(const char *uniformName) const
 {
     return glUniformLocation(uniformName) >= 0;
 }

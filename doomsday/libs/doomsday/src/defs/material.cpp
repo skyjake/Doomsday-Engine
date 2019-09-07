@@ -76,7 +76,7 @@ Record &MaterialDecoration::stage(int index)
     return *def().geta("stage")[index].as<RecordValue>().record();
 }
 
-Record const &MaterialDecoration::stage(int index) const
+const Record &MaterialDecoration::stage(int index) const
 {
     return *geta("stage")[index].as<RecordValue>().record();
 }
@@ -122,7 +122,7 @@ Record &MaterialLayer::stage(int index)
     return *def().geta("stage")[index].as<RecordValue>().record();
 }
 
-Record const &MaterialLayer::stage(int index) const
+const Record &MaterialLayer::stage(int index) const
 {
     return *geta("stage")[index].as<RecordValue>().record();
 }
@@ -165,7 +165,7 @@ Record &Material::decoration(int index)
     return *def().geta("decoration")[index].as<RecordValue>().record();
 }
 
-Record const &Material::decoration(int index) const
+const Record &Material::decoration(int index) const
 {
     return *geta("decoration")[index].as<RecordValue>().record();
 }
@@ -193,7 +193,7 @@ Record &Material::layer(int index)
     return *def().geta("layer")[index].as<RecordValue>().record();
 }
 
-Record const &Material::layer(int index) const
+const Record &Material::layer(int index) const
 {
     return *geta("layer")[index].as<RecordValue>().record();
 }

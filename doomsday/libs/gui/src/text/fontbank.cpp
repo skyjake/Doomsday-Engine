@@ -34,7 +34,7 @@ DE_PIMPL(FontBank)
         FontBank &bank;
         String    id;
 
-        FontSource(FontBank &b, String const &fontId)
+        FontSource(FontBank &b, const String &fontId)
             : bank(b)
             , id(fontId)
         {}
@@ -122,7 +122,7 @@ void FontBank::addFromInfo(const File &file)
     addFromInfoBlocks(BLOCK_FONT);
 }
 
-Font const &FontBank::font(const DotPath &path) const
+const Font &FontBank::font(const DotPath &path) const
 {
     return *data(path).as<Impl::FontData>().font;
 }
@@ -157,7 +157,7 @@ void FontBank::reload()
     }
 }
 
-Bank::ISource *FontBank::newSourceFromInfo(String const &id)
+Bank::ISource *FontBank::newSourceFromInfo(const String &id)
 {
     return new Impl::FontSource(*this, id);
 }

@@ -49,24 +49,24 @@ public:
      */
     Id();
 
-    Id(Type const &idValue) : _id(idValue) {}
+    Id(const Type &idValue) : _id(idValue) {}
 
     /**
      * Constructs an identifier from the text representation.
      *
      * @param text  Text representation of an identifier, such as returned by asText().
      */
-    Id(String const &text);
+    Id(const String &text);
 
     ~Id();
 
     bool isNone() const { return _id == None; }
 
-    bool operator < (Id const &other) const { return _id < other._id; }
+    bool operator < (const Id &other) const { return _id < other._id; }
 
-    bool operator == (Id const &other) const { return _id == other._id; }
+    bool operator == (const Id &other) const { return _id == other._id; }
 
-    bool operator != (Id const &other) const { return _id != other._id; }
+    bool operator != (const Id &other) const { return _id != other._id; }
 
     operator bool () const { return _id != None; }
 
@@ -102,7 +102,7 @@ private:
     Type _id;
 };
 
-DE_PUBLIC std::ostream &operator<<(std::ostream &os, Id const &id);
+DE_PUBLIC std::ostream &operator<<(std::ostream &os, const Id &id);
 
 /**
  * Utility for declaring identifiers that are initially uninitialized.
@@ -111,7 +111,7 @@ class DE_PUBLIC NoneId : public Id
 {
 public:
     NoneId() : Id(None) {}
-    NoneId(Id const &other) : Id(other) {}
+    NoneId(const Id &other) : Id(other) {}
 };
 
 inline bool operator!(const Id &id)

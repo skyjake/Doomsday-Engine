@@ -45,7 +45,7 @@ DE_PIMPL(Bundles)
 {
     String defPath;
     de::Info identityRegistry;
-    Set<DataBundle const *> bundlesToIdentify; // lock for access
+    Set<const DataBundle *> bundlesToIdentify; // lock for access
     Hash<int /*DataBundle::Format*/, BlockElements> formatEntries;
     TaskPool tasks;
 
@@ -70,7 +70,7 @@ DE_PIMPL(Bundles)
         tasks.waitForDone();
     }
 
-    void fileAdded(File const &dataFile, FileIndex const &) override
+    void fileAdded(const File &dataFile, const FileIndex &) override
     {
         DE_ASSERT(is<DataBundle>(dataFile));
         {
@@ -80,7 +80,7 @@ DE_PIMPL(Bundles)
         audienceForFolderPopulation += this;
     }
 
-    void fileRemoved(File const &dataFile, FileIndex const &) override
+    void fileRemoved(const File &dataFile, const FileIndex &) override
     {
         DE_ASSERT(is<DataBundle>(dataFile));
 
@@ -94,14 +94,14 @@ DE_PIMPL(Bundles)
         Loop::mainCall([this]() { self().identify(); });
     }
 
-    DataBundle const *nextToIdentify()
+    const DataBundle *nextToIdentify()
     {
         DE_GUARD(this);
         if (bundlesToIdentify.isEmpty())
         {
             return nullptr;
         }
-        auto const *bundle = *bundlesToIdentify.begin();
+        const auto *bundle = *bundlesToIdentify.begin();
         bundlesToIdentify.remove(bundle);
         return bundle;
     }
@@ -116,7 +116,7 @@ DE_PIMPL(Bundles)
         int  count         = 0;
         Time startedAt;
 
-        while (auto const *bundle = nextToIdentify())
+        while (const auto *bundle = nextToIdentify())
         {
             ++count;
             if (bundle->identifyPackages())
@@ -195,7 +195,7 @@ Bundles::Bundles(const String &bundleDefPath)
     : d(new Impl(this, bundleDefPath))
 {}
 
-de::Info const &Bundles::identityRegistry() const
+const de::Info &Bundles::identityRegistry() const
 {
     d->parseRegistry();
     return d->identityRegistry;
@@ -236,22 +236,22 @@ bool Bundles::isEverythingIdentified() const
     d->tasks.waitForDone();
 }*/
 
-Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
+Bundles::MatchResult Bundles::match(const DataBundle &bundle) const
 {
     using Info = de::Info;
 
     LOG_AS("res::Bundles");
 
     MatchResult match;
-    File const &source = bundle.asFile();
+    const File &source = bundle.asFile();
 
     // Find the best match from the registry.
-    for (auto const *def : formatEntries(bundle.format()))
+    for (const auto *def : formatEntries(bundle.format()))
     {
         int score = 0;
 
         // Match the file name.
-        if (auto const *fileName = def->find(DE_STR("fileName")))
+        if (const auto *fileName = def->find(DE_STR("fileName")))
         {
             if (fileName->isKey() &&
                 fileName->as<Info::KeyElement>().value()
@@ -262,7 +262,7 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
             else if (fileName->isList())
             {
                 // Any of the provided alternatives will be accepted.
-                for (auto const &cand : fileName->as<Info::ListElement>().values())
+                for (const auto &cand : fileName->as<Info::ListElement>().values())
                 {
                     if (!cand.text.compareWithoutCase(source.name()))
                     {
@@ -309,11 +309,11 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
                 }
             }
 
-            if (auto const *lumps = maybeAs<Info::ListElement>(def->find(DE_STR("lumps"))))
+            if (const auto *lumps = maybeAs<Info::ListElement>(def->find(DE_STR("lumps"))))
             {
                 ++score; // will be subtracted if not matched
 
-                for (auto const &val : lumps->values())
+                for (const auto &val : lumps->values())
                 {
                     static const RegExp sizeCondition("(.*)==([0-9]+)");
 

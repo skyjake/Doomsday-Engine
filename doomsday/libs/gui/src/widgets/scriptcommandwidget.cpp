@@ -51,7 +51,7 @@ DE_PIMPL(ScriptCommandWidget)
     void importNativeModules()
     {
         // Automatically import all native modules into the interactive process.
-        for (String const &name : App::scriptSystem().nativeModules())
+        for (const String &name : App::scriptSystem().nativeModules())
         {
             process.globals().add(new Variable(name,
                     new RecordValue(App::scriptSystem().nativeModule(name))));
@@ -86,9 +86,9 @@ DE_PIMPL(ScriptCommandWidget)
         self().setLexicon(lexi);
     }
 
-    bool shouldShowAsPopup(Error const &)
+    bool shouldShowAsPopup(const Error &)
     {
-        /*if (dynamic_cast<ScriptLex::MismatchedBracketError const *>(&er))
+        /*if (dynamic_cast<const ScriptLex::MismatchedBracketError *>(&er))
         {
             // Brackets may be left open to insert newlines.
             return false;
@@ -97,11 +97,11 @@ DE_PIMPL(ScriptCommandWidget)
     }
 };
 
-ScriptCommandWidget::ScriptCommandWidget(String const &name)
+ScriptCommandWidget::ScriptCommandWidget(const String &name)
     : CommandWidget(name), d(new Impl(this))
 {}
 
-bool ScriptCommandWidget::handleEvent(Event const &event)
+bool ScriptCommandWidget::handleEvent(const Event &event)
 {
     if (isDisabled()) return false;
 
@@ -120,7 +120,7 @@ void ScriptCommandWidget::updateCompletion()
     d->updateLexicon();
 }
 
-bool ScriptCommandWidget::isAcceptedAsCommand(String const &text)
+bool ScriptCommandWidget::isAcceptedAsCommand(const String &text)
 {
     // Try to parse the command.
     try
@@ -128,7 +128,7 @@ bool ScriptCommandWidget::isAcceptedAsCommand(String const &text)
         d->script.parse(text);
         return true; // Looks good!
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         if (d->shouldShowAsPopup(er))
         {
@@ -138,7 +138,7 @@ bool ScriptCommandWidget::isAcceptedAsCommand(String const &text)
     }
 }
 
-void ScriptCommandWidget::executeCommand(String const &text)
+void ScriptCommandWidget::executeCommand(const String &text)
 {
     LOG_SCR_NOTE(_E(1) "$ " _E(>) _E(m)) << text;
 
@@ -147,7 +147,7 @@ void ScriptCommandWidget::executeCommand(String const &text)
         d->process.run(d->script);
         d->process.execute();
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_SCR_WARNING("Error in script:\n") << er.asText();
     }
@@ -155,14 +155,14 @@ void ScriptCommandWidget::executeCommand(String const &text)
     // Print the result (if possible).
     try
     {
-        Value const &result = d->process.context().evaluator().result();
+        const Value &result = d->process.context().evaluator().result();
         if (!is<NoneValue>(result))
         {
             String msg = DE_CHAR_RIGHT_DOUBLEARROW " " _E(>)_E(m) + result.asText();
             LOG_SCR_MSG(msg);
         }
     }
-    catch (Error const &)
+    catch (const Error &)
     {}
 }
 

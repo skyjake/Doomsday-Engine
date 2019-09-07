@@ -37,7 +37,7 @@ class DE_PUBLIC ChallengePacket : public Packet
 {
 public:
     ChallengePacket();
-    static Packet *fromBlock(Block const &block);
+    static Packet *fromBlock(const Block &block);
 };
 
 /**
@@ -60,9 +60,9 @@ public:
      * Adds a log entry to the packet.
      * @param entry  Log entry.
      */
-    void add(LogEntry const &entry);
+    void add(const LogEntry &entry);
 
-    Entries const &entries() const;
+    const Entries &entries() const;
 
     /**
      * Adds all the entries into the application's log buffer.
@@ -73,7 +73,7 @@ public:
     void operator>>(Writer &to) const;
     void operator<<(Reader &from);
 
-    static Packet *fromBlock(Block const &block);
+    static Packet *fromBlock(const Block &block);
 
 private:
     Entries _entries;
@@ -92,8 +92,8 @@ public:
         String name;
         Vec3ub color;
 
-        Player(int num = 0, Vec2i const &pos = Vec2i(), String const &plrName = "",
-               Vec3ub const &plrColor = Vec3ub())
+        Player(int num = 0, const Vec2i &pos = Vec2i(), const String &plrName = "",
+               const Vec3ub &plrColor = Vec3ub())
             : number(num)
             , position(pos)
             , name(plrName)
@@ -106,7 +106,7 @@ public:
 public:
     PlayerInfoPacket();
 
-    void add(Player const &player);
+    void add(const Player &player);
 
     dsize         count() const;
     const Player &player(int number) const;
@@ -116,7 +116,7 @@ public:
     void operator>>(Writer &to) const;
     void operator<<(Reader &from);
 
-    static Packet *fromBlock(Block const &block);
+    static Packet *fromBlock(const Block &block);
 
 private:
     DE_PRIVATE(d)
@@ -146,7 +146,7 @@ public:
 
     void clear();
 
-    void addLine(Vec2i const &vertex1, Vec2i const &vertex2, LineType type);
+    void addLine(const Vec2i &vertex1, const Vec2i &vertex2, LineType type);
 
     /**
      * Returns the number of lines.
@@ -158,13 +158,13 @@ public:
      * @param index  Index of the line, in range [0, lineCount()).
      * @return Line specs.
      */
-    Line const &line(int index) const;
+    const Line &line(int index) const;
 
     // Implements ISerializable.
     void operator>>(Writer &to) const;
     void operator<<(Reader &from);
 
-    static Packet *fromBlock(Block const &block);
+    static Packet *fromBlock(const Block &block);
 
 private:
     DE_PRIVATE(d)
@@ -201,9 +201,9 @@ public:
      *
      * @return Type of the packet.
      */
-    static PacketType recognize(Packet const *packet);
+    static PacketType recognize(const Packet *packet);
 
-    static Block passwordResponse(String const &plainPassword);
+    static Block passwordResponse(const String &plainPassword);
 
     /**
      * Constructs a console command packet.
@@ -212,9 +212,9 @@ public:
      *
      * @return Packet. Caller gets ownership.
      */
-    RecordPacket *newCommand(String const &command);
+    RecordPacket *newCommand(const String &command);
 
-    String command(Packet const &commandPacket);
+    String command(const Packet &commandPacket);
 
     /**
      * Constructs a packet that defines all known terms of the console.
@@ -223,9 +223,9 @@ public:
      *
      * @return Packet. Caller gets ownership.
      */
-    RecordPacket *newConsoleLexicon(Lexicon const &lexicon);
+    RecordPacket *newConsoleLexicon(const Lexicon &lexicon);
 
-    Lexicon lexicon(Packet const &consoleLexiconPacket);
+    Lexicon lexicon(const Packet &consoleLexiconPacket);
 
     /**
      * Constructs a packet that describes the current gameplay state.
@@ -237,8 +237,8 @@ public:
      *
      * @return Packet. Caller gets ownership.
      */
-    RecordPacket *newGameState(String const &mode, String const &rules, String const &mapId,
-                               String const &mapTitle);
+    RecordPacket *newGameState(const String &mode, const String &rules, const String &mapId,
+                               const String &mapTitle);
 };
 
 } // namespace network

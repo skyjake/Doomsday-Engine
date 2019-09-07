@@ -111,7 +111,7 @@ dd_bool ST_StatusBarIsActive(int);
  * @param text         Message Text to be posted. Messages may use the same
  * parameter control blocks as with the engine's Text rendering API.
  */
-void    ST_LogPost(int, byte, char const *);
+void    ST_LogPost(int, byte, const char *);
 
 /**
  * Rewind the message log of the specified player, making the last few messages
@@ -153,7 +153,7 @@ float   ST_AutomapOpacity(int);
  * @return  @true= there is no point even partially visible.
  */
 dd_bool ST_AutomapObscures(int, int, int, int, int);
-dd_bool ST_AutomapObscures2(int, RectRaw const *);
+dd_bool ST_AutomapObscures2(int, const RectRaw *);
 int     ST_AutomapAddPoint(int, coord_t, coord_t, coord_t);
 void    ST_AutomapClearPoints(int);
 void    ST_SetAutomapCameraRotation(int, dd_bool);

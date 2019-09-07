@@ -126,7 +126,7 @@ public:
      *
      * @param identifier  Package identifier.
      */
-    void addInitPackage(String const &identifier);
+    void addInitPackage(const String &identifier);
 
     /**
      * Sets the path of the configuration script that will be automatically run if needed
@@ -138,7 +138,7 @@ public:
      * @param path  Location of the @em Config.ds script file. The default path of the
      *              script is "/modules/Config.ds".
      */
-//    void setConfigScript(Path const &path);
+//    void setConfigScript(const Path &path);
 
     /**
      * Sets the name of the application. Derived classes should call this from their
@@ -146,14 +146,14 @@ public:
      *
      * @param appName  Application name. Defaults to "Doomsday Engine".
      */
-//    void setName(String const &appName);
+//    void setName(const String &appName);
 
     /**
      * Sets the Unix-style home folder name. For instance, ".doomsday" could be used.
      *
      * @param name  Name of the (usually hidden) user-specific home data folder.
      */
-    void setUnixHomeFolderName(String const &name);
+    void setUnixHomeFolderName(const String &name);
 
     String unixHomeFolderName() const;
 
@@ -171,7 +171,7 @@ public:
     /**
      * Sets a callback to be called when an uncaught exception occurs.
      */
-    void setTerminateFunc(void (*func)(char const *msg));
+    void setTerminateFunc(void (*func)(const char *msg));
 
     /**
      * Finishes App construction by initializing all the application's
@@ -267,7 +267,7 @@ public:
      *
      * @return Persistent data archive.
      */
-    static Archive const &persistentData();
+    static const Archive &persistentData();
 
     /**
      * Returns the persistent data as a mutable archive. Accessing the entries in
@@ -304,7 +304,7 @@ public:
      * @return @c true, if the current working directory was changed,
      * otherwise @c false.
      */
-    static bool setCurrentWorkPath(NativePath const &cwd);
+    static bool setCurrentWorkPath(const NativePath &cwd);
 
     /**
      * Returns the application's file system.
@@ -415,14 +415,14 @@ public:
      * Events received from the operating system should be passed here; the
      * application will make sure all subsystems get a chance to process them.
      */
-    virtual bool processEvent(Event const &);
+    virtual bool processEvent(const Event &);
 
     /**
      * Informs all the subsystems about advancement of time. Subsystems will be
      * notified in the order they were added with addSystem(). This will be
      * automatically called by the application clock when time changes.
      */
-    void timeChanged(Clock const &);
+    void timeChanged(const Clock &);
 
 public:
     /**

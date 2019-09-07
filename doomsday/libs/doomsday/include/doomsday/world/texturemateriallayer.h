@@ -40,16 +40,16 @@ public:
     class LIBDOOMSDAY_PUBLIC AnimationStage : public Stage
     {
     public:
-        AnimationStage(res::Uri const &texture, int tics,
+        AnimationStage(const res::Uri &texture, int tics,
                        float variance                     = 0,
                        float glowStrength                 = 0,
                        float glowStrengthVariance         = 0,
                        de::Vec2f const origin          = de::Vec2f(),
-                       res::Uri const &maskTexture         = res::Uri(),
-                       de::Vec2f const &maskDimensions = de::Vec2f(1, 1),
+                       const res::Uri &maskTexture         = res::Uri(),
+                       const de::Vec2f &maskDimensions = de::Vec2f(1, 1),
                        blendmode_t blendMode              = BM_NORMAL,
                        float opacity                      = 1);
-        AnimationStage(AnimationStage const &other);
+        AnimationStage(const AnimationStage &other);
         virtual ~AnimationStage();
 
         virtual void resetToDefaults();
@@ -57,7 +57,7 @@ public:
         /**
          * Construct a new AnimationStage from the given @a stageDef.
          */
-        static AnimationStage *fromDef(de::Record const &stageDef);
+        static AnimationStage *fromDef(const de::Record &stageDef);
 
         de::String description() const;
 
@@ -78,7 +78,7 @@ public:
     /**
      * Construct a new TextureLayer from the given @a layerDef.
      */
-    static TextureMaterialLayer *fromDef(de::Record const &layerDef);
+    static TextureMaterialLayer *fromDef(const de::Record &layerDef);
 
     /**
      * Returns @c true if glow is enabled for one or more animation stages.
@@ -92,14 +92,14 @@ public:
      *
      * @return  Index of the newly added stage (0 based).
      */
-    int addStage(AnimationStage const &stage);
+    int addStage(const AnimationStage &stage);
 
     /**
      * Lookup an AnimationStage by it's unique @a index.
      *
      * @param index  Index of the AnimationStage to lookup. Will be cycled into valid range.
      */
-    AnimationStage const &stage(int index) const;
+    const AnimationStage &stage(int index) const;
 
     /**
      * Lookup an AnimationStage by it's unique @a index.

@@ -32,7 +32,7 @@ namespace de {
 
 using std::list;
 
-TextValue::TextValue(String const &initialValue)
+TextValue::TextValue(const String &initialValue)
     : _value(initialValue)
     , _iteration(nullptr)
 {}
@@ -47,7 +47,7 @@ TextValue::operator CString() const
     return _value;
 }
 
-TextValue::operator String const &() const
+TextValue::operator const String &() const
 {
     return _value;
 }
@@ -77,7 +77,7 @@ dsize TextValue::size() const
     return _value.size();
 }
 
-bool TextValue::contains(Value const &value) const
+bool TextValue::contains(const Value &value) const
 {
     // We are able to look for substrings within the text, without applying automatic
     // type conversions.
@@ -118,9 +118,9 @@ bool TextValue::isTrue() const
     return false;
 }
 
-dint TextValue::compare(Value const &value) const
+dint TextValue::compare(const Value &value) const
 {
-    TextValue const *other = dynamic_cast<TextValue const *>(&value);
+    const TextValue *other = dynamic_cast<const TextValue *>(&value);
     if (other)
     {
         return _value.compare(other->_value);
@@ -128,9 +128,9 @@ dint TextValue::compare(Value const &value) const
     return Value::compare(value);
 }
 
-void TextValue::sum(Value const &value)
+void TextValue::sum(const Value &value)
 {
-    TextValue const *other = dynamic_cast<TextValue const *>(&value);
+    const TextValue *other = dynamic_cast<const TextValue *>(&value);
     if (!other)
     {
         throw ArithmeticError("TextValue::sum", "Value cannot be summed");
@@ -139,9 +139,9 @@ void TextValue::sum(Value const &value)
     _value += other->_value;
 }
 
-void TextValue::multiply(Value const &value)
+void TextValue::multiply(const Value &value)
 {
-    NumberValue const *other = dynamic_cast<NumberValue const *>(&value);
+    const NumberValue *other = dynamic_cast<const NumberValue *>(&value);
     if (!other)
     {
         throw ArithmeticError("Value::multiply", "Value cannot be multiplied");
@@ -167,9 +167,9 @@ void TextValue::multiply(Value const &value)
     }
 }
 
-void TextValue::divide(Value const &value)
+void TextValue::divide(const Value &value)
 {
-    TextValue const *other = dynamic_cast<TextValue const *>(&value);
+    const TextValue *other = dynamic_cast<const TextValue *>(&value);
     if (!other)
     {
         throw ArithmeticError("TextValue::divide", "Text cannot be divided");
@@ -177,11 +177,11 @@ void TextValue::divide(Value const &value)
     _value = _value / other->_value;
 }
 
-void TextValue::modulo(Value const &value)
+void TextValue::modulo(const Value &value)
 {
-    list<Value const *> args;
+    list<const Value *> args;
 
-    ArrayValue const *array = dynamic_cast<ArrayValue const *>(&value);
+    const ArrayValue *array = dynamic_cast<const ArrayValue *>(&value);
     if (array)
     {
         for (ArrayValue::Elements::const_iterator i = array->elements().begin();
@@ -199,7 +199,7 @@ void TextValue::modulo(Value const &value)
     _value = substitutePlaceholders(_value, args);
 }
 
-String TextValue::substitutePlaceholders(String const &pattern, const std::list<Value const *> &args)
+String TextValue::substitutePlaceholders(const String &pattern, const std::list<const Value *> &args)
 {
     String result;
     auto arg = args.begin();
@@ -241,7 +241,7 @@ void TextValue::operator << (Reader &from)
     from >> _value;
 }
 
-void TextValue::setValue(String const &text)
+void TextValue::setValue(const String &text)
 {
     _value = text;
 }

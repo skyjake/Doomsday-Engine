@@ -92,7 +92,7 @@ LIBDOOMSDAY_PUBLIC int MapEntityDef_Property2(MapEntityDef *def, int propertyId,
  *
  * @return Logical index of the found property (zero-based) else @c -1 if not found.
  */
-LIBDOOMSDAY_PUBLIC int MapEntityDef_PropertyByName(MapEntityDef *def, char const *propertyName,
+LIBDOOMSDAY_PUBLIC int MapEntityDef_PropertyByName(MapEntityDef *def, const char *propertyName,
                                                    MapEntityPropertyDef **retDef = 0);
 #endif // __cplusplus
 
@@ -112,7 +112,7 @@ LIBDOOMSDAY_PUBLIC MapEntityDef *P_MapEntityDef(int id);
  *
  * @return Found MapEntityDef else @c NULL.
  */
-LIBDOOMSDAY_PUBLIC MapEntityDef *P_MapEntityDefByName(char const *name);
+LIBDOOMSDAY_PUBLIC MapEntityDef *P_MapEntityDefByName(const char *name);
 
 /**
  * Lookup the unique name associated with MapEntityDef @a def.
@@ -121,7 +121,7 @@ LIBDOOMSDAY_PUBLIC MapEntityDef *P_MapEntityDefByName(char const *name);
  *
  * @return Unique name associated with @a def if found, else a zero-length string.
  */
-LIBDOOMSDAY_PUBLIC AutoStr *P_NameForMapEntityDef(MapEntityDef const *def);
+LIBDOOMSDAY_PUBLIC AutoStr *P_NameForMapEntityDef(const MapEntityDef *def);
 
 /**
  * To be called to initialize the game map object defs.
@@ -133,9 +133,9 @@ LIBDOOMSDAY_PUBLIC void P_InitMapEntityDefs();
  */
 LIBDOOMSDAY_PUBLIC void P_ShutdownMapEntityDefs();
 
-LIBDOOMSDAY_PUBLIC dd_bool P_RegisterMapObj(int identifier, char const *name);
+LIBDOOMSDAY_PUBLIC dd_bool P_RegisterMapObj(int identifier, const char *name);
 LIBDOOMSDAY_PUBLIC dd_bool P_RegisterMapObjProperty(int entityId, int propertyId,
-                                                    char const *propertyName, valuetype_t type);
+                                                    const char *propertyName, valuetype_t type);
 LIBDOOMSDAY_PUBLIC byte     P_GetGMOByte(int entityId, int elementIndex, int propertyId);
 LIBDOOMSDAY_PUBLIC short    P_GetGMOShort(int entityId, int elementIndex, int propertyId);
 LIBDOOMSDAY_PUBLIC int      P_GetGMOInt(int entityId, int elementIndex, int propertyId);

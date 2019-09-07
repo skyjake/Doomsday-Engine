@@ -41,7 +41,7 @@ DE_GUI_PIMPL(VariableArrayWidget)
         VariableArrayWidget &owner;
 
         HoverHandler(VariableArrayWidget &owner) : owner(owner) {}
-        bool handleEvent(GuiWidget &widget, Event const &event) {
+        bool handleEvent(GuiWidget &widget, const Event &event) {
             if (event.isMouse() && widget.hitTest(event)) {
                 owner.d->setHoverItem(widget);
             }
@@ -81,7 +81,7 @@ DE_GUI_PIMPL(VariableArrayWidget)
         deleteButton->rule().setMidAnchorY(widget.rule().midY());
     }
 
-    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item) override
+    void widgetCreatedForItem(GuiWidget &widget, const ui::Item &item) override
     {
         auto &label = widget.as<LabelWidget>();
         label.setSizePolicy(ui::Expand, ui::Expand);
@@ -93,7 +93,7 @@ DE_GUI_PIMPL(VariableArrayWidget)
         self().elementCreated(label, item);
     }
 
-    void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item) override
+    void widgetUpdatedForItem(GuiWidget &widget, const ui::Item &item) override
     {
         widget.as<LabelWidget>().setText(item.label());
     }
@@ -104,9 +104,9 @@ DE_GUI_PIMPL(VariableArrayWidget)
 
         menu->items().clear();
 
-        if (auto const *array = maybeAs<ArrayValue>(var->value()))
+        if (const auto *array = maybeAs<ArrayValue>(var->value()))
         {
-            for (Value const *value : array->elements())
+            for (const Value *value : array->elements())
             {
                 menu->items() << self().makeItem(*value);
             }
@@ -147,7 +147,7 @@ DE_GUI_PIMPL(VariableArrayWidget)
         var->audienceForChange() += this;
     }
 
-    void variableValueChanged(Variable &, Value const &) override
+    void variableValueChanged(Variable &, const Value &) override
     {
         updateFromVariable();
     }
@@ -163,7 +163,7 @@ DE_GUI_PIMPL(VariableArrayWidget)
 
 DE_AUDIENCE_METHOD(VariableArrayWidget, Change)
 
-VariableArrayWidget::VariableArrayWidget(Variable &variable, String const &name)
+VariableArrayWidget::VariableArrayWidget(Variable &variable, const String &name)
     : GuiWidget(name)
     , d(new Impl(this, variable))
 {
@@ -227,7 +227,7 @@ MenuWidget &VariableArrayWidget::elementsMenu()
     return *d->menu;
 }
 
-String VariableArrayWidget::labelForElement(Value const &value) const
+String VariableArrayWidget::labelForElement(const Value &value) const
 {
     return value.asText();
 }
@@ -242,7 +242,7 @@ ButtonWidget &VariableArrayWidget::addButton()
     return *d->addButton;
 }
 
-ButtonWidget *VariableArrayWidget::detachAddButton(Rule const &contentWidth)
+ButtonWidget *VariableArrayWidget::detachAddButton(const Rule &contentWidth)
 {
     d->addButton->setSizePolicy(ui::Expand, ui::Expand);
     d->addButton->orphan();
@@ -256,19 +256,19 @@ ButtonWidget *VariableArrayWidget::detachAddButton(Rule const &contentWidth)
     return d->addButton;
 }
 
-ui::Item *VariableArrayWidget::makeItem(Value const &value)
+ui::Item *VariableArrayWidget::makeItem(const Value &value)
 {
     auto *item = new ui::Item(ui::Item::ShownAsLabel, labelForElement(value));
     item->setData(value);
     return item;
 }
 
-bool VariableArrayWidget::handleEvent(Event const &event)
+bool VariableArrayWidget::handleEvent(const Event &event)
 {
     // Hide the delete button when mouse leaves the widget's bounds.
     if (event.isMouse())
     {
-        MouseEvent const &mouse = event.as<MouseEvent>();
+        const MouseEvent &mouse = event.as<MouseEvent>();
         bool const isInside = rule().recti().contains(mouse.pos());
         if (d->mouseWasInside && !isInside)
         {

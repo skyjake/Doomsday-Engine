@@ -60,9 +60,9 @@ public:
      *
      * @return  Identifier for the specified mobj (may be zero).
      */
-    SerialId serialIdFor(struct mobj_s const *mobj);
+    SerialId serialIdFor(const struct mobj_s *mobj);
 
-    void insert(struct mobj_s const *mobj, SerialId serialId);
+    void insert(const struct mobj_s *mobj, SerialId serialId);
 
     /**
      * To be called after reading a game state has been read to lookup a pointer

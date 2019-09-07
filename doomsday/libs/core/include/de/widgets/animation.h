@@ -54,8 +54,8 @@ public:
 
 public:
     Animation(float value = 0, Style style = EaseOut);
-    Animation(Animation const &other);
-    Animation &operator = (Animation const &other);
+    Animation(const Animation &other);
+    Animation &operator = (const Animation &other);
 
     void setStyle(Style s);
     void setStyle(Style style, float bounce);
@@ -164,7 +164,7 @@ public:
     /**
      * Returns the clock used for this animation.
      */
-    Clock const &clock();
+    const Clock &clock();
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
@@ -177,7 +177,7 @@ public:
      *
      * @param clock  Clock.
      */
-    static void setClock(Clock const *clock);
+    static void setClock(const Clock *clock);
 
     static TimeSpan currentTime();
 
@@ -186,7 +186,7 @@ public:
 private:
     DE_PRIVATE(d)
 
-    static Clock const *_clock;
+    static const Clock *_clock;
 };
 
 } // namespace de

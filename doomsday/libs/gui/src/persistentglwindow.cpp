@@ -56,7 +56,7 @@ static Rectanglei desktopRect()
 #endif
 }
 
-static Rectanglei centeredRect(Vec2ui const &size)
+static Rectanglei centeredRect(const Vec2ui &size)
 {
     Vec2ui const screenSize(desktopRect().size().x, desktopRect().size().y);
     Vec2ui const clamped = size.min(screenSize);
@@ -115,7 +115,7 @@ DE_PIMPL(PersistentGLWindow)
                     fequal(refreshRate, other.refreshRate));
         }
 
-        bool operator != (State const &other) const
+        bool operator != (const State &other) const
         {
             return !(*this == other);
         }
@@ -150,7 +150,7 @@ DE_PIMPL(PersistentGLWindow)
             return (flags & VSync) != 0;
         }
 
-        void setFlag(Flags const &f, bool set = true)
+        void setFlag(const Flags &f, bool set = true)
         {
             if (set)
             {
@@ -170,7 +170,7 @@ DE_PIMPL(PersistentGLWindow)
             }
         }
 
-        String configName(String const &key) const
+        String configName(const String &key) const
         {
             return Stringf("window.%s.%s", winId.c_str(), key.c_str());
         }
@@ -207,7 +207,7 @@ DE_PIMPL(PersistentGLWindow)
             Config &config = App::config();
 
             // The default state of the window is determined by these values.
-            ArrayValue const &rect = config.geta(configName("rect"));
+            const ArrayValue &rect = config.geta(configName("rect"));
             if (rect.size() >= 4)
             {
                 windowRect = Rectanglei(rect.at(0).asInt(),
@@ -216,7 +216,7 @@ DE_PIMPL(PersistentGLWindow)
                                         rect.at(3).asInt());
             }
 
-            ArrayValue const &fs = config.geta(configName("fullSize"));
+            const ArrayValue &fs = config.geta(configName("fullSize"));
             if (fs.size() >= 2)
             {
                 fullSize = Size(fs.at(0).asInt(), fs.at(1).asInt());
@@ -253,7 +253,7 @@ DE_PIMPL(PersistentGLWindow)
             return {};
         }
 
-        void applyAttributes(int const *attribs)
+        void applyAttributes(const int *attribs)
         {
             for (int i = 0; attribs[i]; ++i)
             {
@@ -327,7 +327,7 @@ DE_PIMPL(PersistentGLWindow)
          */
         void modifyAccordingToOptions()
         {
-            CommandLine const &cmdLine = App::commandLine();
+            const CommandLine &cmdLine = App::commandLine();
 
             // We will compose a set of attributes based on the options.
             List<int> attribs;
@@ -463,7 +463,7 @@ DE_PIMPL(PersistentGLWindow)
             : type(t)
             , delay(std::move(defer))
         {}
-        Task(Rectanglei const &r, TimeSpan defer = 0.0)
+        Task(const Rectanglei &r, TimeSpan defer = 0.0)
             : type(SetGeometry)
             , rect(r)
             , delay(std::move(defer))
@@ -480,7 +480,7 @@ DE_PIMPL(PersistentGLWindow)
     typedef List<Task> Tasks;
     Tasks queue;
 
-    Impl(Public *i, String const &windowId)
+    Impl(Public *i, const String &windowId)
         : Base(i)
         , id(windowId)
         , state(windowId)
@@ -506,7 +506,7 @@ DE_PIMPL(PersistentGLWindow)
      * Parse the attributes array and check the values.
      * @param attribs  Array of attributes, terminated by Attribute::End.
      */
-    bool validateAttributes(int const *attribs)
+    bool validateAttributes(const int *attribs)
     {
         DE_ASSERT(attribs);
 
@@ -558,7 +558,7 @@ DE_PIMPL(PersistentGLWindow)
      *
      * @param attribs  Zero-terminated array of attributes and values.
      */
-    void applyAttributes(int const *attribs)
+    void applyAttributes(const int *attribs)
     {
         LOG_AS("applyAttributes");
 
@@ -597,7 +597,7 @@ DE_PIMPL(PersistentGLWindow)
      *
      * @param newState  State to apply.
      */
-    void applyToWidget(State const &newState)
+    void applyToWidget(const State &newState)
     {
         bool trapped = self().eventHandler().isMouseTrapped();
 
@@ -825,7 +825,7 @@ DE_PIMPL(PersistentGLWindow)
 
 DE_AUDIENCE_METHOD(PersistentGLWindow, AttributeChange)
 
-PersistentGLWindow::PersistentGLWindow(String const &id)
+PersistentGLWindow::PersistentGLWindow(const String &id)
     : d(new Impl(this, id))
 {
     try
@@ -856,7 +856,7 @@ PersistentGLWindow::PersistentGLWindow(String const &id)
         };
         restoreFromConfig();
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_WARNING("Failed to restore window state: %s") << er.asText();
     }
@@ -873,7 +873,7 @@ void PersistentGLWindow::saveToConfig()
     {
         d->currentState().saveToConfig();
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_WARNING("Failed to save window state: %s") << er.asText();
     }
@@ -955,7 +955,7 @@ void PersistentGLWindow::show(bool yes)
     }
 }
 
-bool PersistentGLWindow::changeAttributes(int const *attribs)
+bool PersistentGLWindow::changeAttributes(const int *attribs)
 {
     LOG_AS("PersistentGLWindow");
 
@@ -969,7 +969,7 @@ bool PersistentGLWindow::changeAttributes(int const *attribs)
     return false;
 }
 
-String PersistentGLWindow::configName(String const &key) const
+String PersistentGLWindow::configName(const String &key) const
 {
     return d->state.configName(key);
 }

@@ -55,7 +55,7 @@ public:
      *
      * @param source  Script source.
      */
-    Script(String const &source);
+    Script(const String &source);
 
     /**
      * Parses the source file info statements. The path of the source file
@@ -63,7 +63,7 @@ public:
      *
      * @param file  Source file.
      */
-    Script(File const &file);
+    Script(const File &file);
 
     /**
      * Parses a source into statements, replacing any statements currently
@@ -72,7 +72,7 @@ public:
      *
      * @param source  Script source.
      */
-    void parse(String const &source);
+    void parse(const String &source);
 
     /**
      * Sets the path of the source. Used as the value of __file__ in the
@@ -80,13 +80,13 @@ public:
      *
      * @param path  Path.
      */
-    void setPath(String const &path);
+    void setPath(const String &path);
 
-    String const &path() const;
+    const String &path() const;
 
     /// Returns the statement that begins the script. This is where
     /// a process begins the execution of a script.
-    Statement const *firstStatement() const;
+    const Statement *firstStatement() const;
 
     /// Returns a modifiable reference to the main statement compound
     /// of the script.

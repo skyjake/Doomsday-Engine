@@ -431,7 +431,7 @@ namespace internal
 
     ACS_COMMAND(Goto)
     {
-        interp.pcodePtr = (int const *) (interp.scriptSys().module().pcode().constData() + DD_LONG(*interp.pcodePtr));
+        interp.pcodePtr = (const int *) (interp.scriptSys().module().pcode().constData() + DD_LONG(*interp.pcodePtr));
         return Continue;
     }
 
@@ -439,7 +439,7 @@ namespace internal
     {
         if(interp.locals.pop())
         {
-            interp.pcodePtr = (int const *) (interp.scriptSys().module().pcode().constData() + DD_LONG(*interp.pcodePtr));
+            interp.pcodePtr = (const int *) (interp.scriptSys().module().pcode().constData() + DD_LONG(*interp.pcodePtr));
         }
         else
         {
@@ -700,7 +700,7 @@ namespace internal
         }
         else
         {
-            interp.pcodePtr = (int const *) (interp.scriptSys().module().pcode().constData() + DD_LONG(*interp.pcodePtr));
+            interp.pcodePtr = (const int *) (interp.scriptSys().module().pcode().constData() + DD_LONG(*interp.pcodePtr));
         }
         return Continue;
     }
@@ -736,7 +736,7 @@ namespace internal
     {
         if(interp.locals.top() == DD_LONG(*interp.pcodePtr++))
         {
-            interp.pcodePtr = (int const *) (interp.scriptSys().module().pcode().constData() + DD_LONG(*interp.pcodePtr));
+            interp.pcodePtr = (const int *) (interp.scriptSys().module().pcode().constData() + DD_LONG(*interp.pcodePtr));
             interp.locals.drop();
         }
         else
@@ -1024,7 +1024,7 @@ namespace internal
         return Continue;
     }
 
-    static CommandFunc const &findCommand(int name)
+    static const CommandFunc &findCommand(int name)
     {
         static CommandFunc const cmds[] =
         {
@@ -1068,10 +1068,10 @@ namespace acs {
 
 using namespace internal;
 
-thinker_t *Interpreter::newThinker(Script &script, Script::Args const &scriptArgs,
+thinker_t *Interpreter::newThinker(Script &script, const Script::Args &scriptArgs,
     mobj_t *activator, Line *line, int side, int delayCount)
 {
-    Module::EntryPoint const &ep = script.entryPoint();
+    const Module::EntryPoint &ep = script.entryPoint();
 
     Interpreter *th = (Interpreter *) Z_Calloc(sizeof(*th), PU_MAP, nullptr);
     th->thinker.function = (thinkfunc_t) acs_Interpreter_Think;
@@ -1197,7 +1197,7 @@ void Interpreter::write(MapStateWriter *msw) const
     {
         Writer_WriteInt32(writer, args[i]);
     }
-    Writer_WriteInt32(writer, ((dbyte const *)pcodePtr) - (dbyte const *)scriptSys().module().pcode().constData());
+    Writer_WriteInt32(writer, ((const dbyte *)pcodePtr) - (const dbyte *)scriptSys().module().pcode().constData());
 }
 
 int Interpreter::read(MapStateReader *msr)
@@ -1252,7 +1252,7 @@ int Interpreter::read(MapStateReader *msr)
             args[i] = Reader_ReadInt32(reader);
         }
 
-        pcodePtr = (int const *) (scriptSys().module().pcode().constData() + Reader_ReadInt32(reader));
+        pcodePtr = (const int *) (scriptSys().module().pcode().constData() + Reader_ReadInt32(reader));
     }
     else
     {
@@ -1292,7 +1292,7 @@ int Interpreter::read(MapStateReader *msr)
             args[i] = Reader_ReadInt32(reader);
         }
 
-        pcodePtr = (int const *) (scriptSys().module().pcode().constData() + Reader_ReadInt32(reader));
+        pcodePtr = (const int *) (scriptSys().module().pcode().constData() + Reader_ReadInt32(reader));
     }
 
     thinker.function = (thinkfunc_t) acs_Interpreter_Think;

@@ -101,7 +101,7 @@ static void composeYesNoMessage()
     tmp[1] = 0;
 
     // Get the message template.
-    char const *in = PRESSYN;
+    const char *in = PRESSYN;
 
     for(; *in; in++)
     {
@@ -134,7 +134,7 @@ static void drawMessage()
 
     short textFlags = Hu_MenuMergeEffectWithDrawTextFlags(0);
     Point2Raw origin = {{{SCREENWIDTH/2, SCREENHEIGHT/2}}};
-    char const *questionString = "";
+    const char *questionString = "";
 
     switch(msgType)
     {
@@ -228,7 +228,7 @@ dd_bool Hu_IsMessageActiveWithCallback(msgfunc_t callback)
     return messageToPrint && msgCallback == callback;
 }
 
-void Hu_MsgStart(msgtype_t type, char const *msg, msgfunc_t callback,
+void Hu_MsgStart(msgtype_t type, const char *msg, msgfunc_t callback,
     int userValue, void *userPointer)
 {
     DE_ASSERT(msg != 0);
@@ -280,7 +280,7 @@ D_CMD(MsgResponse)
             return true;
         }
 
-        char const *cmd = argv[0] + 7;
+        const char *cmd = argv[0] + 7;
         if(!iCmpStrCase(cmd, "yes"))
         {
             awaitingResponse = false;

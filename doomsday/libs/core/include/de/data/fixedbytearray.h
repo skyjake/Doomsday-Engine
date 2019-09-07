@@ -57,7 +57,7 @@ public:
      *
      * @param mainArray  Array that holds the data.
      */
-    FixedByteArray(IByteArray const &mainArray);
+    FixedByteArray(const IByteArray &mainArray);
 
     /**
      * Constructs a non-modifiable fixed-length byte array out of a portion
@@ -67,9 +67,9 @@ public:
      * @param at         Start of fixed-length region.
      * @param size       Size of fixed-length region.
      */
-    FixedByteArray(IByteArray const &mainArray, Offset at, Size size);
+    FixedByteArray(const IByteArray &mainArray, Offset at, Size size);
 
-    void set(Offset at, Byte const *values, Size count);
+    void set(Offset at, const Byte *values, Size count);
 };
 
 } // namespace de

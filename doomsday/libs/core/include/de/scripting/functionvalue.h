@@ -38,15 +38,15 @@ public:
     ~FunctionValue();
 
     /// Returns the function.
-    Function const &function() const { return *_func; }
+    const Function &function() const { return *_func; }
 
     Text typeId() const;
     Value *duplicate() const;
     Text asText() const;
     bool isTrue() const;
     bool isFalse() const;
-    dint compare(Value const &value) const;
-    void call(Process &process, Value const &arguments, Value *self) const;
+    dint compare(const Value &value) const;
+    void call(Process &process, const Value &arguments, Value *self) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

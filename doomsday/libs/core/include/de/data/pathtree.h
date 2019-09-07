@@ -114,7 +114,7 @@ public:
     };
 
     /// @return  Print-ready name for node @a type.
-    static String const &nodeTypeName(NodeType type);
+    static const String &nodeTypeName(NodeType type);
 
     /**
      * Identifier used with the search and iteration algorithms in place of
@@ -155,7 +155,7 @@ public:
         typedef PathTree::NodeHash Children;
 
     protected:
-        Node(NodeArgs const &args);
+        Node(const NodeArgs &args);
 
         virtual ~Node();
 
@@ -169,7 +169,7 @@ public:
 
         /// Returns the children of a branch node. Note that leaf nodes
         /// have no children -- calling this for leaf nodes is not allowed.
-        Children const &children() const;
+        const Children &children() const;
 
         /**
          * Returns the children of a branch node. Note that leaf nodes
@@ -179,7 +179,7 @@ public:
          *
          * @return Hash of nodes.
          */
-        Nodes const &childNodes(NodeType type) const;
+        const Nodes &childNodes(NodeType type) const;
 
         /// Determines if the node is at the root level of the tree
         /// (no other node is its parent).
@@ -199,7 +199,7 @@ public:
         }
 
         /// @return Name for this node's path segment.
-        String const &name() const;
+        const String &name() const;
 
         /// @return Hash for this node's path segment.
 //        Path::hash_type hash() const;
@@ -219,7 +219,7 @@ public:
          *
          * @todo This logic should be encapsulated in de::Path or de::Path::Segment. -ds
          */
-        int comparePath(de::Path const &searchPattern, ComparisonFlags flags) const;
+        int comparePath(const de::Path &searchPattern, ComparisonFlags flags) const;
 
         /**
          * Composes the path for this node. The whole path is upwardly
@@ -287,7 +287,7 @@ public:
      *         the path @c "c:/somewhere/something" this is the node for the
      *         path segment "something".
      */
-    Node &insert(Path const &path);
+    Node &insert(const Path &path);
 
     /**
      * Removes matching nodes from the tree.
@@ -297,7 +297,7 @@ public:
      *
      * @return @c true, if one or more nodes were removed; otherwise, @c false.
      */
-    bool remove(Path const &path, ComparisonFlags flags = 0);
+    bool remove(const Path &path, ComparisonFlags flags = 0);
 
     /**
      * Destroy the tree's contents, freeing all nodes.
@@ -312,7 +312,7 @@ public:
      *
      * @return @c true, if the node exists; otherwise @c false.
      */
-    bool has(Path const &path, ComparisonFlags flags = 0) const;
+    bool has(const Path &path, ComparisonFlags flags = 0) const;
 
     /**
      * Find a single node in the hierarchy.
@@ -325,16 +325,16 @@ public:
      *
      * @return Found node.
      */
-    Node const &find(Path const &path, ComparisonFlags flags) const;
+    const Node &find(const Path &path, ComparisonFlags flags) const;
 
-    Node const *tryFind(Path const &path, ComparisonFlags flags) const;
+    const Node *tryFind(const Path &path, ComparisonFlags flags) const;
 
     /**
      * @copydoc find()
      */
-    Node &find(Path const &path, ComparisonFlags flags);
+    Node &find(const Path &path, ComparisonFlags flags);
 
-    Node *tryFind(Path const &path, ComparisonFlags flags);
+    Node *tryFind(const Path &path, ComparisonFlags flags);
 
     /**
      * Collate all referenced paths in the hierarchy into a list.
@@ -363,7 +363,7 @@ public:
      *
      * @return  @c 0 iff iteration completed wholly.
      */
-    int traverse(ComparisonFlags flags, Node const *parent,
+    int traverse(ComparisonFlags flags, const Node *parent,
                  int (*callback) (Node &node, void *parameters), void *parameters = 0) const;
 
     /**
@@ -374,14 +374,14 @@ public:
      * @return Collection of nodes.
      * @see PathTreeIterator
      */
-    Nodes const &nodes(NodeType type) const;
+    const Nodes &nodes(NodeType type) const;
 
     /**
      * Provides access to the leaf nodes for efficent traversals.
      * @return Collection of nodes.
      * @see PathTreeIterator
      */
-    inline Nodes const &leafNodes() const {
+    inline const Nodes &leafNodes() const {
         return nodes(Leaf);
     }
 
@@ -390,7 +390,7 @@ public:
      * @return Collection of nodes.
      * @see PathTreeIterator
      */
-    inline Nodes const &branchNodes() const {
+    inline const Nodes &branchNodes() const {
         return nodes(Branch);
     }
 
@@ -399,12 +399,12 @@ public:
      */
 
 //    /// @return The path segment associated with @a segmentId.
-//    String const &segmentName(SegmentId segmentId) const;
+//    const String &segmentName(SegmentId segmentId) const;
 
 //    /// @return Hash associated with @a segmentId.
 //    Path::hash_type segmentHash(SegmentId segmentId) const;
 
-    Node const &rootBranch() const;
+    const Node &rootBranch() const;
 
 protected:
     /**
@@ -415,7 +415,7 @@ protected:
      *
      * @return New node. Caller gets ownership.
      */
-    virtual Node *newNode(NodeArgs const &args);
+    virtual Node *newNode(const NodeArgs &args);
 
 private:
     Impl *d;
@@ -426,7 +426,7 @@ private:
  * returning @c true if @a is less than @a b.
  */
 template <typename PathTreeNodeType>
-inline bool comparePathTreeNodePathsAscending(PathTreeNodeType const *a, PathTreeNodeType const *b)
+inline bool comparePathTreeNodePathsAscending(const PathTreeNodeType *a, const PathTreeNodeType *b)
 {
     return String::fromPercentEncoding(a->path().toString()).compareWithoutCase(
                String::fromPercentEncoding(b->path().toString())) < 0;
@@ -452,7 +452,7 @@ template <typename TreeType>
 class PathTreeIterator
 {
 public:
-    PathTreeIterator(PathTree::Nodes const &nodes) : _nodes(nodes) {
+    PathTreeIterator(const PathTree::Nodes &nodes) : _nodes(nodes) {
         _next = _iter = _nodes.begin();
         if (_next != _nodes.end()) ++_next;
         _current = _nodes.end();
@@ -486,7 +486,7 @@ public:
     }
 
 private:
-    PathTree::Nodes const &_nodes;
+    const PathTree::Nodes &_nodes;
     PathTree::Nodes::const_iterator _iter, _next, _current;
 };
 
@@ -504,27 +504,27 @@ public:
 public:
     explicit PathTreeT(Flags flags = 0) : PathTree(flags) {}
 
-    inline Type &insert(Path const &path) {
+    inline Type &insert(const Path &path) {
         return static_cast<Type &>(PathTree::insert(path));
     }
 
-    inline Type const &find(Path const &path, ComparisonFlags flags) const {
-        return static_cast<Type const &>(PathTree::find(path, flags));
+    inline const Type &find(const Path &path, ComparisonFlags flags) const {
+        return static_cast<const Type &>(PathTree::find(path, flags));
     }
 
-    inline Type &find(Path const &path, ComparisonFlags flags) {
+    inline Type &find(const Path &path, ComparisonFlags flags) {
         return static_cast<Type &>(PathTree::find(path, flags));
     }
 
-    inline Type const *tryFind(Path const &path, ComparisonFlags flags) const {
-        return static_cast<Type const *>(PathTree::tryFind(path, flags));
+    inline const Type *tryFind(const Path &path, ComparisonFlags flags) const {
+        return static_cast<const Type *>(PathTree::tryFind(path, flags));
     }
 
-    inline Type *tryFind(Path const &path, ComparisonFlags flags) {
+    inline Type *tryFind(const Path &path, ComparisonFlags flags) {
         return static_cast<Type *>(PathTree::tryFind(path, flags));
     }
 
-    inline int findAll(FoundNodes &found, bool (*predicate)(Type const &node, void *context),
+    inline int findAll(FoundNodes &found, bool (*predicate)(const Type &node, void *context),
                        void *context = 0) const {
         int numFoundSoFar = found.size();
         PathTreeIterator<PathTreeT> iter(leafNodes());
@@ -539,7 +539,7 @@ public:
         return found.size() - numFoundSoFar;
     }
 
-    inline int traverse(ComparisonFlags flags, Type const *parent,
+    inline int traverse(ComparisonFlags flags, const Type *parent,
                         int (*callback) (Type &node, void *context), void *context = 0) const {
         return PathTree::traverse(flags, parent,
                                   reinterpret_cast<int (*)(PathTree::Node &, void *)>(callback),
@@ -547,7 +547,7 @@ public:
     }
 
 protected:
-    PathTree::Node *newNode(NodeArgs const &args) {
+    PathTree::Node *newNode(const NodeArgs &args) {
         return new Type(args);
     }
 };
@@ -558,7 +558,7 @@ protected:
 class DE_PUBLIC UserDataNode : public PathTree::Node
 {
 public:
-    UserDataNode(PathTree::NodeArgs const &args, void *userPointer = 0, int userValue = 0);
+    UserDataNode(const PathTree::NodeArgs &args, void *userPointer = 0, int userValue = 0);
 
     /**
      * Sets the user-specified custom pointer.

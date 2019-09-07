@@ -36,7 +36,7 @@ class DE_PUBLIC PackageFeed : public Feed
 public:
     enum LinkMode { LinkIdentifier, LinkVersionedIdentifier };
 
-    typedef std::function<bool (Package const &)> Filter;
+    typedef std::function<bool (const Package &)> Filter;
 
 public:
     PackageFeed(PackageLoader &loader, LinkMode linkMode = LinkIdentifier);
@@ -46,7 +46,7 @@ public:
     PackageLoader &loader();
 
     String description() const override;
-    PopulatedFiles populate(Folder const &folder) override;
+    PopulatedFiles populate(const Folder &folder) override;
     bool prune(File &file) const override;
 
 private:

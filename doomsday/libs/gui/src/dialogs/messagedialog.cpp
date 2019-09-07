@@ -86,7 +86,7 @@ DE_GUI_PIMPL(MessageDialog)
     }
 };
 
-MessageDialog::MessageDialog(String const &name)
+MessageDialog::MessageDialog(const String &name)
     : DialogWidget(name)
     , d(new Impl(this))
 {}

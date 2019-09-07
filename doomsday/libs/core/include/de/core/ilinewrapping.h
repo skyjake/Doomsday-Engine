@@ -47,7 +47,7 @@ public:
 
     virtual bool        isEmpty() const                                         = 0;
     virtual void        clear()                                                 = 0;
-    virtual void        wrapTextToWidth(String const &text, WrapWidth maxWidth) = 0;
+    virtual void        wrapTextToWidth(const String &text, WrapWidth maxWidth) = 0;
     virtual WrappedLine line(int index) const                                   = 0;
 
     /// Determines the visible maximum width of the wrapped content.

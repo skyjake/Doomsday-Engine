@@ -125,7 +125,7 @@ DE_PIMPL(NativeFile)
     }
 };
 
-NativeFile::NativeFile(String const &name, NativePath const &nativePath)
+NativeFile::NativeFile(const String &name, const NativePath &nativePath)
     : ByteArrayFile(name), d(new Impl(this))
 {
     d->nativePath = nativePath;
@@ -177,7 +177,7 @@ void NativeFile::flush()
     DE_ASSERT(!d->out);
 }
 
-NativePath const &NativeFile::nativePath() const
+const NativePath &NativeFile::nativePath() const
 {
     DE_GUARD(this);
 
@@ -251,7 +251,7 @@ void NativeFile::set(Offset at, const Byte *values, Size count)
     setStatus(st);
 }
 
-NativeFile *NativeFile::newStandalone(NativePath const &nativePath)
+NativeFile *NativeFile::newStandalone(const NativePath &nativePath)
 {
     std::unique_ptr<NativeFile> file(new NativeFile(nativePath.fileName(), nativePath));
     if (nativePath.exists())
@@ -262,7 +262,7 @@ NativeFile *NativeFile::newStandalone(NativePath const &nativePath)
     return file.release();
 }
 
-void NativeFile::setMode(Flags const &newMode)
+void NativeFile::setMode(const Flags &newMode)
 {
     DE_GUARD(this);
 

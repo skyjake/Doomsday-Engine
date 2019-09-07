@@ -34,12 +34,12 @@ void Con_InitAliases();
 void Con_ClearAliases();
 void Con_AddKnownWordsForAliases();
 
-LIBDOOMSDAY_PUBLIC calias_t *Con_AddAlias(char const *name, char const *command);
+LIBDOOMSDAY_PUBLIC calias_t *Con_AddAlias(const char *name, const char *command);
 
 /**
  * @return  @c 0 if the specified alias can't be found.
  */
-LIBDOOMSDAY_PUBLIC calias_t *Con_FindAlias(char const *name);
+LIBDOOMSDAY_PUBLIC calias_t *Con_FindAlias(const char *name);
 
 LIBDOOMSDAY_PUBLIC void Con_DeleteAlias(calias_t *cal);
 

@@ -43,7 +43,7 @@ static HelpStrings helps;
  *
  * @param file  File containing help strings.
  */
-void Help_ReadStrings(File const &file)
+void Help_ReadStrings(const File &file)
 {
     LOG_RES_VERBOSE("Reading help strings from ") << file.description();
 
@@ -132,7 +132,7 @@ void Help_ReadStrings(File const &file)
     }
 }
 
-HelpId DH_Find(char const *id)
+HelpId DH_Find(const char *id)
 {
     // The identifiers are case insensitive.
     HelpStrings::const_iterator found = helps.find(String(id).lower());
@@ -143,12 +143,12 @@ HelpId DH_Find(char const *id)
     return nullptr;
 }
 
-char const *DH_GetString(HelpId found, int type)
+const char *DH_GetString(HelpId found, int type)
 {
     if (!found) return nullptr;
     if (type < 0 || type > NUM_HELPSTRING_TYPES) return nullptr;
 
-    StringsByType const *hs = reinterpret_cast<StringsByType const *>(found);
+    const StringsByType *hs = reinterpret_cast<const StringsByType *>(found);
 
     StringsByType::const_iterator i = hs->find(type);
     if (i != hs->end())
@@ -166,7 +166,7 @@ void DD_InitHelp()
         Help_ReadStrings(App::packageLoader().package("net.dengine.base")
                          .root().locate<File>("helpstrings.txt"));
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_RES_WARNING("") << er.asText();
     }

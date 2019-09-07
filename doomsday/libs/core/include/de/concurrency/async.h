@@ -80,7 +80,7 @@ public:
         , valid(true)
     {}
 
-    AsyncTaskThread(Task const &task)
+    AsyncTaskThread(const Task &task)
         : task(task)
         , valid(false)
     {}
@@ -132,7 +132,7 @@ AsyncTask *async(Task task, Completion completion)
 }
 
 /*template <typename Task>
-AsyncTask *async(Task const &task)
+AsyncTask *async(const Task &task)
 {
     auto *t = new internal::AsyncTaskThread<Task, void *>(task);
     t->start();

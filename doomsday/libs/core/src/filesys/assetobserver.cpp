@@ -35,16 +35,16 @@ DE_PIMPL(AssetObserver)
 {
     RegExp pattern;
 
-    static FileIndex const &linkIndex() {
+    static const FileIndex &linkIndex() {
         return FS::get().indexFor(DE_TYPE_NAME(LinkFile));
     }
 
-    static String assetIdentifier(File const &link) {
+    static String assetIdentifier(const File &link) {
         DE_ASSERT(link.name().beginsWith(PREFIX_DOT));
         return link.name().substr(BytePos(6));
     }
 
-    Impl(Public *i, String const &regex)
+    Impl(Public *i, const String &regex)
         : Base(i)
         , pattern(PREFIX_SLASH_DOT + regex, CaseInsensitive)
     {
@@ -53,7 +53,7 @@ DE_PIMPL(AssetObserver)
         linkIndex().audienceForRemoval()  += this;
     }
 
-    void fileAdded(File const &link, FileIndex const &)
+    void fileAdded(const File &link, const FileIndex &)
     {
         // Only matching assets cause notifications.
         if (!pattern.exactMatch(link.name())) return;
@@ -68,7 +68,7 @@ DE_PIMPL(AssetObserver)
         });
     }
 
-    void fileRemoved(File const &link, FileIndex const &)
+    void fileRemoved(const File &link, const FileIndex &)
     {
         // Only matching assets cause notifications.
         if (!pattern.exactMatch(link.name())) return;
@@ -88,7 +88,7 @@ DE_PIMPL(AssetObserver)
 
 DE_AUDIENCE_METHOD(AssetObserver, Availability)
 
-AssetObserver::AssetObserver(String const &regexPattern)
+AssetObserver::AssetObserver(const String &regexPattern)
     : d(new Impl(this, regexPattern))
 {}
 

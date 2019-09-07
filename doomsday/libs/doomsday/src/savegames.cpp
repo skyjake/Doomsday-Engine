@@ -42,7 +42,7 @@ using namespace de;
 /**
  * Native Doomsday Script utility for scheduling conversion of a single legacy savegame.
  */
-static Value *Function_GameStateFolder_Convert(Context &, Function::ArgumentValues const &args)
+static Value *Function_GameStateFolder_Convert(Context &, const Function::ArgumentValues &args)
 {
     String gameId     = args[0]->asText();
     String sourcePath = args[1]->asText();
@@ -53,7 +53,7 @@ static Value *Function_GameStateFolder_Convert(Context &, Function::ArgumentValu
  * Native Doomsday Script utility for scheduling conversion of @em all legacy savegames
  * for the specified gameId.
  */
-static Value *Function_GameStateFolder_ConvertAll(Context &, Function::ArgumentValues const &args)
+static Value *Function_GameStateFolder_ConvertAll(Context &, const Function::ArgumentValues &args)
 {
     String gameId = args[0]->asText();
     return new NumberValue(SaveGames::get().convertLegacySavegames(gameId));
@@ -100,7 +100,7 @@ DE_PIMPL(SaveGames)
         ddhook_savegame_convert_t parm;
 
     public:
-        ConvertSavegameTask(String const &sourcePath, String const &gameId)
+        ConvertSavegameTask(const String &sourcePath, const String &gameId)
         {
             // Ensure the game is defined (sanity check).
             if (DoomsdayApp::games().contains(gameId))
@@ -145,12 +145,12 @@ DE_PIMPL(SaveGames)
                 // The newly converted savegame(s) should now be somewhere in /home/savegames
                 FileSystem::get().root().locate<Folder>("/home/savegames").populate();
             }
-            catch (Folder::NotFoundError const &)
+            catch (const Folder::NotFoundError &)
             {} // Ignore.
         }
     }
 
-    void beginConvertLegacySavegame(String const &sourcePath, String const &gameId)
+    void beginConvertLegacySavegame(const String &sourcePath, const String &gameId)
     {
         LOG_AS("SaveGames");
         LOG_TRACE("Scheduling legacy savegame conversion for %s (gameId:%s)", sourcePath << gameId);
@@ -158,7 +158,7 @@ DE_PIMPL(SaveGames)
         convertSavegameTasks.start(new ConvertSavegameTask(sourcePath, gameId));
     }
 
-    void locateLegacySavegames(String const &gameId)
+    void locateLegacySavegames(const String &gameId)
     {
         LOG_AS("SaveGames");
         String const legacySavePath = String("/sys/legacysavegames") / gameId;
@@ -181,7 +181,7 @@ DE_PIMPL(SaveGames)
                             Folder::PopulateOnlyThisFolder /* no need to go deep */);
                 }
             }
-            catch (Games::NotFoundError const &)
+            catch (const Games::NotFoundError &)
             {} // Ignore this error
         }
     }
@@ -208,12 +208,12 @@ void SaveGames::initialize()
     fs.makeFolder("/sys/legacysavegames");
 }
 
-FileIndex const &SaveGames::saveIndex() const
+const FileIndex &SaveGames::saveIndex() const
 {
     return FileSystem::get().indexFor(DE_TYPE_NAME(GameStateFolder));
 }
 
-bool SaveGames::convertLegacySavegames(String const &gameId, String const &sourcePath)
+bool SaveGames::convertLegacySavegames(const String &gameId, const String &sourcePath)
 {
     // A converter plugin is required.
     if (!Plug_CheckForHook(HOOK_SAVEGAME_CONVERT)) return false;
@@ -227,12 +227,12 @@ bool SaveGames::convertLegacySavegames(String const &gameId, String const &sourc
     if (sourcePath.isEmpty())
     {
         // Process all legacy savegames.
-        if (Folder const *saveFolder = rootFolder.tryLocate<Folder>("sys/legacysavegames"/gameId))
+        if (const Folder *saveFolder = rootFolder.tryLocate<Folder>("sys/legacysavegames"/gameId))
         {
             /// @todo File name pattern matching should not be done here. This is to prevent
             /// attempting to convert Hexen's map state sidecar files separately when this
             /// is called from Doomsday Script (in bootstrap.de).
-            Game const &game = DoomsdayApp::games()[gameId];
+            const Game &game = DoomsdayApp::games()[gameId];
             if (game.legacySavegameNameExp())
             {
                 RegExp namePattern(game.legacySavegameNameExp(), CaseInsensitive);

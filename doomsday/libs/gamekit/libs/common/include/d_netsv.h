@@ -57,9 +57,9 @@ void NetSv_SendTotalCounts(int to);
  */
 void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int angle);
 
-void NetSv_SendMessage(int plrNum, char const *msg);
+void NetSv_SendMessage(int plrNum, const char *msg);
 
-void NetSv_SendYellowMessage(int plrNum, char const *msg);
+void NetSv_SendYellowMessage(int plrNum, const char *msg);
 
 void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, dd_bool reliable);
 
@@ -137,7 +137,7 @@ void NetSv_Paused(int pauseState);
  */
 void NetSv_DoCheat(int player, Reader1 *reader);
 
-void NetSv_ExecuteCheat(int player, char const *command);
+void NetSv_ExecuteCheat(int player, const char *command);
 
 /**
  * Process the requested player action, if possible.
@@ -155,7 +155,7 @@ void NetSv_SendJumpPower(int target, float power);
 
 void NetSv_MaybeChangeWeapon(int plrNum, int weapon, int ammo, int force);
 
-void NetSv_SendLocalMobjState(mobj_t *mobj, char const *stateName);
+void NetSv_SendLocalMobjState(mobj_t *mobj, const char *stateName);
 
 D_CMD(MapCycle);
 

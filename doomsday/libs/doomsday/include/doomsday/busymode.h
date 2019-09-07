@@ -123,7 +123,7 @@ public:
      *
      * @return  Return value of the worker.
      */
-    int runNewTaskWithName(int mode, busyworkerfunc_t worker, void *workerData, de::String const &taskName);
+    int runNewTaskWithName(int mode, busyworkerfunc_t worker, void *workerData, const de::String &taskName);
 
     /**
      * Run a single task with a std::function callback.
@@ -134,7 +134,7 @@ public:
      *
      * @return  Return value from the worker.
      */
-    int runNewTaskWithName(int mode, de::String const &taskName, const std::function<int (void *)>& worker);
+    int runNewTaskWithName(int mode, const de::String &taskName, const std::function<int (void *)>& worker);
 
     /**
      * Abnormally aborts the currently running task. Call this when the task encounters
@@ -144,12 +144,12 @@ public:
      *
      * @param message  Error message to be presented to the user.
      */
-    void abort(de::String const &message);
+    void abort(const de::String &message);
 
 public:
     DE_AUDIENCE(Beginning, void busyModeWillBegin(BusyTask &firstTask))
     DE_AUDIENCE(End,       void busyModeEnded())
-    DE_AUDIENCE(Abort,     void busyModeAborted(de::String const &message))
+    DE_AUDIENCE(Abort,     void busyModeAborted(const de::String &message))
     DE_AUDIENCE(TaskWillStart, void busyTaskWillStart(BusyTask &task))
     DE_AUDIENCE(TaskComplete, void busyTaskCompleted(BusyTask &task))
 
@@ -161,7 +161,7 @@ LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC bool BusyMode_Active();
 LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC int  BusyMode_RunTask(BusyTask *task);
 LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC int  BusyMode_RunTasks(BusyTask *task, int numTasks);
 LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC int  BusyMode_RunNewTask(int flags, busyworkerfunc_t worker, void *workerData);
-LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC int  BusyMode_RunNewTaskWithName(int flags, busyworkerfunc_t worker, void *workerData, char const *taskName);
+LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC int  BusyMode_RunNewTaskWithName(int flags, busyworkerfunc_t worker, void *workerData, const char *taskName);
 
 #endif // LIBDOOMSDAY_BUSYMODE_H
 

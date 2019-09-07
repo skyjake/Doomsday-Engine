@@ -39,7 +39,7 @@ static FinaleBackgroundMapping const finaleBGMappings[] = {
     { "",           ""}
 };
 
-int findFinaleBackgroundMappingForText(const String &text, FinaleBackgroundMapping const **mapping)
+int findFinaleBackgroundMappingForText(const String &text, const FinaleBackgroundMapping **mapping)
 {
     if(!text.isEmpty())
     for(int i = 0; !finaleBGMappings[i].text.isEmpty(); ++i)
@@ -131,7 +131,7 @@ static FlagMapping mobjtypeFlagMappings[] = {
     { 0, -1, "" } // terminator
 };
 
-int findMobjTypeFlagMappingByDehLabel(String const &name, FlagMapping const **mapping)
+int findMobjTypeFlagMappingByDehLabel(const String &name, const FlagMapping **mapping)
 {
     /// @todo Optimize - replace linear search.
     if(!name.isEmpty())
@@ -217,7 +217,7 @@ static String const MusicMap[] = {
     "" // Terminate.
 };
 
-int findMusicLumpNameInMap(String const &name)
+int findMusicLumpNameInMap(const String &name)
 {
     /// @todo Optimize - replace linear search.
     if(!name.isEmpty())
@@ -371,7 +371,7 @@ static String const SpriteMap[] = {
     "" // Terminate.
 };
 
-int findSpriteNameInMap(String const &name)
+int findSpriteNameInMap(const String &name)
 {
     /// @todo Optimize - replace linear search.
     if(!name.isEmpty())
@@ -495,7 +495,7 @@ static const StringList SoundMap = {
     "radio",
 };
 
-int findSoundLumpNameInMap(String const &name)
+int findSoundLumpNameInMap(const String &name)
 {
     /// @todo Optimize - replace linear search.
     if (!name.isEmpty())
@@ -516,7 +516,7 @@ static SoundMapping soundMappings[] = {
     { "",         soundname_t(-1), "" }
 };
 
-int findSoundMappingByDehLabel(String const &dehLabel, SoundMapping const **mapping)
+int findSoundMappingByDehLabel(const String &dehLabel, const SoundMapping **mapping)
 {
     if(!dehLabel.isEmpty())
     for(int i = 0; !soundMappings[i].dehLabel.isEmpty(); ++i)
@@ -542,7 +542,7 @@ static StateMapping stateMappings[] = {
     { "",             statename_t(-1),  ""        }
 };
 
-int findStateMappingByDehLabel(String const &dehLabel, StateMapping const **mapping)
+int findStateMappingByDehLabel(const String &dehLabel, const StateMapping **mapping)
 {
     if(!dehLabel.isEmpty())
     for(int i = 0; !stateMappings[i].dehLabel.isEmpty(); ++i)
@@ -565,7 +565,7 @@ static WeaponStateMapping weaponStateMappings[] = {
     { "",           weaponstatename_t(-1),  ""       }
 };
 
-int findWeaponStateMappingByDehLabel(String const &dehLabel, WeaponStateMapping const **mapping)
+int findWeaponStateMappingByDehLabel(const String &dehLabel, const WeaponStateMapping **mapping)
 {
     if(!dehLabel.isEmpty())
     for(int i = 0; !weaponStateMappings[i].dehLabel.isEmpty(); ++i)
@@ -986,7 +986,7 @@ static TextMapping const TextMap[] = {
     { "",          "" } // Terminate.
 };
 
-int textMappingForBlob(String const &origText, TextMapping const **mapping)
+int textMappingForBlob(const String &origText, const TextMapping **mapping)
 {
     /// @todo Optimize - replace linear search and hash the text blobs.
     if(!origText.isEmpty())
@@ -1076,7 +1076,7 @@ static ValueMapping const valueMappings[] = {
     { "", "" }
 };
 
-int findValueMappingForDehLabel(String const &dehLabel, ValueMapping const **mapping)
+int findValueMappingForDehLabel(const String &dehLabel, const ValueMapping **mapping)
 {
     /// @todo Optimize - replace linear search.
     if(!dehLabel.isEmpty())

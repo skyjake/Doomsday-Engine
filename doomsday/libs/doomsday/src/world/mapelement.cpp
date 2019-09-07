@@ -133,7 +133,7 @@ dint MapElement::property(DmuArgs &args) const
     return false; // Continue iteration.
 }
 
-dint MapElement::setProperty(DmuArgs const &args)
+dint MapElement::setProperty(const DmuArgs &args)
 {
     /// @throw WritePropertyError  The requested property is not writable.
     throw WritePropertyError(stringf("%s::setProperty", DMU_Str(d->type)),
@@ -142,13 +142,13 @@ dint MapElement::setProperty(DmuArgs const &args)
 
 }  // namespace world
 
-char const *DMU_Str(uint prop)
+const char *DMU_Str(uint prop)
 {
     static char propStr[40];
 
     struct prop_s {
         uint prop;
-        char const *str;
+        const char *str;
     } props[] =
     {
         { DMU_NONE,              "(invalid)" },

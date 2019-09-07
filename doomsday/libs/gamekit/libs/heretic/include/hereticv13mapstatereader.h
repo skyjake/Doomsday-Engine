@@ -36,10 +36,10 @@
 class HereticV13MapStateReader : public GameStateFolder::MapStateReader
 {
 public:
-    HereticV13MapStateReader(GameStateFolder const &session);
+    HereticV13MapStateReader(const GameStateFolder &session);
     ~HereticV13MapStateReader();
 
-    void read(de::String const &mapUriStr);
+    void read(const de::String &mapUriStr);
 
     thinker_t *thinkerForPrivateId(de::Id::Type id) const override;
 

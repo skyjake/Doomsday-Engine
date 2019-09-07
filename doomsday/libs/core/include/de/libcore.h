@@ -289,10 +289,10 @@
     for (IterClass::const_reverse_iterator Var = (ContainerRef).rbegin(); Var != (ContainerRef).rend(); ++Var)
 
 #define DE_NO_ASSIGN(ClassName) \
-    ClassName &operator = (ClassName const &) = delete;
+    ClassName &operator = (const ClassName &) = delete;
 
 #define DE_NO_COPY(ClassName) \
-    ClassName(ClassName const &) = delete;
+    ClassName(const ClassName &) = delete;
 
 /**
  * Macro for declaring methods for convenient casting:
@@ -317,14 +317,14 @@
         return static_cast<T_ *>(this); \
     } \
     template <typename T_> \
-    T_ const &as() const { \
+    const T_ &as() const { \
         DE_ASSERT(de::is<T_>(this)); \
-        return *static_cast<T_ const *>(this); \
+        return *static_cast<const T_ *>(this); \
     } \
     template <typename T_> \
-    T_ const *asPtr() const { \
+    const T_ *asPtr() const { \
         DE_ASSERT(de::is<T_>(this)); \
-        return static_cast<T_ const *>(this); \
+        return static_cast<const T_ *>(this); \
     }
 
 /**
@@ -456,8 +456,8 @@ inline bool is(T_ *ptr) {
 }
 
 template <typename X_, typename T_>
-inline bool is(T_ const *ptr) {
-    return dynamic_cast<X_ const *>(ptr) != nullptr;
+inline bool is(const T_ *ptr) {
+    return dynamic_cast<const X_ *>(ptr) != nullptr;
 }
 
 template <typename X_, typename T_>
@@ -466,8 +466,8 @@ inline bool is(T_ &obj) {
 }
 
 template <typename X_, typename T_>
-inline bool is(T_ const &obj) {
-    return dynamic_cast<X_ const *>(&obj) != nullptr;
+inline bool is(const T_ &obj) {
+    return dynamic_cast<const X_ *>(&obj) != nullptr;
 }
 
 template <typename X_, typename T_>
@@ -476,8 +476,8 @@ inline X_ *maybeAs(T_ *ptr) {
 }
 
 template <typename X_, typename T_>
-inline X_ const *maybeAs(T_ const *ptr) {
-    return dynamic_cast<X_ const *>(ptr);
+inline const X_ *maybeAs(const T_ *ptr) {
+    return dynamic_cast<const X_ *>(ptr);
 }
 
 template <typename X_, typename T_>
@@ -486,8 +486,8 @@ inline X_ *maybeAs(T_ &obj) {
 }
 
 template <typename X_, typename T_>
-inline X_ const *maybeAs(T_ const &obj) {
-    return dynamic_cast<X_ const *>(&obj);
+inline const X_ *maybeAs(const T_ &obj) {
+    return dynamic_cast<const X_ *>(&obj);
 }
 
 template <typename X_, typename T_>
@@ -498,8 +498,8 @@ inline X_ &expectedAs(T_ *ptr) {
 }
 
 template <typename X_, typename T_>
-inline X_ const &expectedAs(T_ const *ptr) {
-    if (auto const *t = maybeAs<X_>(ptr)) return *t;
+inline const X_ &expectedAs(const T_ *ptr) {
+    if (const auto *t = maybeAs<X_>(ptr)) return *t;
     DE_ASSERT(false);
     throw CastError(stringf("Cannot cast %s to %s", DE_TYPE_NAME(T_), DE_TYPE_NAME(X_)));
 }
@@ -556,7 +556,7 @@ public:
     inline ImplType *get() const {
         return ptr;
     }
-    inline ImplType const *getConst() const {
+    inline const ImplType *getConst() const {
         return ptr;
     }
     inline operator ImplType *() const {
@@ -724,7 +724,7 @@ struct FlagOpArg {
 };
 
 template <typename FlagsType, typename FlagsCompatibleType>
-void applyFlagOperation(FlagsType &flags, FlagsCompatibleType const &newFlags, FlagOpArg operation) {
+void applyFlagOperation(FlagsType &flags, const FlagsCompatibleType &newFlags, FlagOpArg operation) {
     switch (operation.op) {
     case SetFlags:     flags |=  newFlags; break;
     case UnsetFlags:   flags &= ~newFlags; break;

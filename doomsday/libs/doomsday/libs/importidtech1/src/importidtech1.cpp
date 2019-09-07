@@ -30,7 +30,7 @@ using namespace de;
 using namespace idtech1;
 using namespace res;
 
-static inline AutoStr *readFileIntoString(String const &path, bool *isCustom = 0)
+static inline AutoStr *readFileIntoString(const String &path, bool *isCustom = 0)
 {
     dd_bool _isCustom;
     ddstring_t sourcePath;
@@ -76,7 +76,7 @@ static int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
             map->transfer();
             return true; // success
         }
-        catch(MapImporter::LoadError const &er)
+        catch(const MapImporter::LoadError &er)
         {
             LOG_MAP_ERROR("Load error: ") << er.asText();
         }
@@ -93,7 +93,7 @@ static void convertMapInfos(const StringList &pathsInLoadOrder, String &xlat, St
     MapInfoTranslator translator;
 
     bool haveTranslation = false;
-    for(String const &sourcePath : pathsInLoadOrder)
+    for(const String &sourcePath : pathsInLoadOrder)
     {
         if(sourcePath.isEmpty()) continue;
 
@@ -140,12 +140,12 @@ static void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-static char const *deng_LibraryType()
+static const char *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }
 
-DE_ENTRYPOINT void *extension_importidtech1_symbol(char const *name)
+DE_ENTRYPOINT void *extension_importidtech1_symbol(const char *name)
 {
     DE_SYMBOL_PTR(name, deng_LibraryType)
     DE_SYMBOL_PTR(name, DP_Initialize);

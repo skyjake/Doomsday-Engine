@@ -333,7 +333,7 @@ static void initAutomapForCurrentMap(AutomapWidget& map)
 
     map.reset();
 
-    AABoxd const *mapBounds = reinterpret_cast<AABoxd *>(DD_GetVariable(DD_MAP_BOUNDING_BOX));
+    const AABoxd *mapBounds = reinterpret_cast<AABoxd *>(DD_GetVariable(DD_MAP_BOUNDING_BOX));
     map.setMapBounds(mapBounds->minX, mapBounds->maxX, mapBounds->minY, mapBounds->maxY);
 
     // Disable cheats for network games
@@ -428,7 +428,7 @@ static void ST_BuildWidgets(int player)
             { UWG_AUTOMAP,      ALIGN_TOPLEFT,      ORDER_NONE,         0,              0       }
         };
 
-        for (uiwidgetgroupdef_t const &def : widgetGroupDefs)
+        for (const uiwidgetgroupdef_t &def : widgetGroupDefs)
         {
             HudWidget* grp;
             {
@@ -472,7 +472,7 @@ static void ST_BuildWidgets(int player)
         };
 
         // Initialize widgets
-        for (uiwidgetdef_t const &def : widgetDefs)
+        for (const uiwidgetdef_t &def : widgetDefs)
         {
             HudWidget* widget = nullptr;
             switch (def.type)
@@ -553,7 +553,7 @@ static void ST_BuildWidgets(int player)
 }
 
 // TODO This is used everywhere, and could probably be added to libcommon
-static int parseTeamNumber(String const &str)
+static int parseTeamNumber(const String &str)
 {
     if(!str.isEmpty())
     {
@@ -567,7 +567,7 @@ static int parseTeamNumber(String const &str)
     return -1;
 }
 
-static int parseMacroId(String const &str) // static
+static int parseMacroId(const String &str) // static
 {
     if(!str.isEmpty())
     {

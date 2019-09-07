@@ -38,7 +38,7 @@ extern "C" {
  * @param mob  Map object.
  * @return Private ID.
  */
-uint32_t Mobj_PrivateID(mobj_t const *mob);
+uint32_t Mobj_PrivateID(const mobj_t *mob);
 
 /**
  * Determines the current friction affecting @a mo, given the sector it is in and
@@ -48,7 +48,7 @@ uint32_t Mobj_PrivateID(mobj_t const *mob);
  *
  * @return Friction factor to apply to the momentum.
  */
-coord_t Mobj_Friction(mobj_t const *mob);
+coord_t Mobj_Friction(const mobj_t *mob);
 
 /**
  * Calculates the thrust multiplier for the mobj, to be applied when the mobj momentum
@@ -59,7 +59,7 @@ coord_t Mobj_Friction(mobj_t const *mob);
  *
  * @return Thrust multiplier.
  */
-coord_t Mobj_ThrustMul(mobj_t const *mob);
+coord_t Mobj_ThrustMul(const mobj_t *mob);
 
 /**
  * Calculates the mobj thrust multiplier given a certain friction. The thrust multiplier
@@ -92,7 +92,7 @@ dd_bool Mobj_IsPlayerClMobj(mobj_t *mob);
  *
  * @return @c true iff the mobj is a player.
  */
-dd_bool Mobj_IsPlayer(mobj_t const *mob);
+dd_bool Mobj_IsPlayer(const mobj_t *mob);
 
 /**
  * Determines if a map-object is a voodoo doll.
@@ -101,7 +101,7 @@ dd_bool Mobj_IsPlayer(mobj_t const *mob);
  *
  * @return  @c true if the map-object is a voodoo doll.
  */
-dd_bool Mobj_IsVoodooDoll(mobj_t const *mob);
+dd_bool Mobj_IsVoodooDoll(const mobj_t *mob);
 
 /**
  * Determines if the map-object is currently in mid air (i.e., not touching the floor
@@ -111,7 +111,7 @@ dd_bool Mobj_IsVoodooDoll(mobj_t const *mob);
  *
  * @return  @c true if the map-object is considered to be airborne/flying.
  */
-dd_bool Mobj_IsAirborne(mobj_t const *mob);
+dd_bool Mobj_IsAirborne(const mobj_t *mob);
 
 /**
  * Determines the world space angle between @em this map-object and the given @a point.
@@ -226,7 +226,7 @@ mobj_t *Mobj_LaunchMissileAtAngle (mobj_t *mob, mobj_t *missile, angle_t angle, 
 mobj_t *Mobj_LaunchMissile2(mobj_t *mob, mobj_t *missile, coord_t const targetPos[3], coord_t const sourcePos[3], coord_t extraMomZ);
 mobj_t *Mobj_LaunchMissile (mobj_t *mob, mobj_t *missile, coord_t const targetPos[3], coord_t const sourcePos[3]/*, coord_t extraMomZ = 0*/);
 
-void Mobj_InflictDamage(mobj_t *mob, mobj_t const *inflictor, int damage);
+void Mobj_InflictDamage(mobj_t *mob, const mobj_t *inflictor, int damage);
 
 #ifdef __cplusplus
 }  // extern "C"
@@ -236,9 +236,9 @@ void Mobj_InflictDamage(mobj_t *mob, mobj_t const *inflictor, int damage);
  * @param mob  Map object.
  * @return Description text.
  */
-de::String Mobj_StateAsInfo(mobj_t const *mob);
+de::String Mobj_StateAsInfo(const mobj_t *mob);
 
-void Mobj_RestoreObjectState(mobj_t *mob, de::Info::BlockElement const &state);
+void Mobj_RestoreObjectState(mobj_t *mob, const de::Info::BlockElement &state);
 
 #endif
 

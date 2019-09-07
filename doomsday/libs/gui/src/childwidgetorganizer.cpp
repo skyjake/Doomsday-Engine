@@ -49,17 +49,17 @@ DE_PIMPL(ChildWidgetOrganizer)
 {
     typedef Rangei PvsRange;
 
-    ui::Data const *dataItems = nullptr;
+    const ui::Data *dataItems = nullptr;
     GuiWidget *container;
     IWidgetFactory *factory;
 
-    typedef Map<ui::Item const *, GuiWidget *> Mapping;
+    typedef Map<const ui::Item *, GuiWidget *> Mapping;
     Mapping mapping; ///< Maps items to corresponding widgets.
 
     bool virtualEnabled = false;
-    Rule const *virtualTop = nullptr;
-    Rule const *virtualMin = nullptr;
-    Rule const *virtualMax = nullptr;
+    const Rule *virtualTop = nullptr;
+    const Rule *virtualMin = nullptr;
+    const Rule *virtualMax = nullptr;
     ConstantRule *virtualStrut = nullptr;
     ConstantRule *estimatedHeight = nullptr;
     int averageItemHeight = 0;
@@ -91,7 +91,7 @@ DE_PIMPL(ChildWidgetOrganizer)
         releaseRef(estimatedHeight);
     }
 
-    void set(ui::Data const *ctx)
+    void set(const ui::Data *ctx)
     {
         if (dataItems)
         {
@@ -135,7 +135,7 @@ DE_PIMPL(ChildWidgetOrganizer)
             return nullptr;
         }
 
-        ui::Item const &item = dataItems->at(pos);
+        const ui::Item &item = dataItems->at(pos);
 
         GuiWidget *w = nullptr;
         if (recyclingEnabled && !recycledWidgets.isEmpty())
@@ -188,7 +188,7 @@ DE_PIMPL(ChildWidgetOrganizer)
 
     void removeItemWidget(ui::DataPos pos)
     {
-        ui::Item const *item = &dataItems->at(pos);
+        const ui::Item *item = &dataItems->at(pos);
         auto found = mapping.find(item);
         if (found != mapping.end())
         {
@@ -271,7 +271,7 @@ DE_PIMPL(ChildWidgetOrganizer)
         }
     }
 
-    void dataItemAdded(ui::DataPos pos, ui::Item const &)
+    void dataItemAdded(ui::DataPos pos, const ui::Item &)
     {
         if (!virtualEnabled)
         {
@@ -328,7 +328,7 @@ DE_PIMPL(ChildWidgetOrganizer)
         }
     }
 
-    void itemChanged(ui::Item const &item)
+    void itemChanged(const ui::Item &item)
     {
         if (!mapping.contains(&item))
         {
@@ -346,14 +346,14 @@ DE_PIMPL(ChildWidgetOrganizer)
         }
     }
 
-    GuiWidget *find(ui::Item const &item) const
+    GuiWidget *find(const ui::Item &item) const
     {
         Mapping::const_iterator found = mapping.find(&item);
         if (found == mapping.end()) return nullptr;
         return found->second;
     }
 
-    GuiWidget *findByLabel(String const &label) const
+    GuiWidget *findByLabel(const String &label) const
     {
         DE_FOR_EACH_CONST(Mapping, i, mapping)
         {
@@ -365,7 +365,7 @@ DE_PIMPL(ChildWidgetOrganizer)
         return nullptr;
     }
 
-    ui::Item const *findByWidget(GuiWidget const &widget) const
+    const ui::Item *findByWidget(const GuiWidget &widget) const
     {
         DE_FOR_EACH_CONST(Mapping, i, mapping)
         {
@@ -397,7 +397,7 @@ DE_PIMPL(ChildWidgetOrganizer)
         return container->childWidgets().last();
     }
 
-    float virtualItemHeight(GuiWidget const *widget) const
+    float virtualItemHeight(const GuiWidget *widget) const
     {
         float hgt = widget->rule().height().value();
         if (hgt > 0)
@@ -548,7 +548,7 @@ ChildWidgetOrganizer::ChildWidgetOrganizer(GuiWidget &container)
     : d(new Impl(this, &container))
 {}
 
-void ChildWidgetOrganizer::setContext(ui::Data const &context)
+void ChildWidgetOrganizer::setContext(const ui::Data &context)
 {
     d->set(&context);
 }
@@ -558,7 +558,7 @@ void ChildWidgetOrganizer::unsetContext()
     d->set(nullptr);
 }
 
-ui::Data const &ChildWidgetOrganizer::context() const
+const ui::Data &ChildWidgetOrganizer::context() const
 {
     DE_ASSERT(d->dataItems != nullptr);
     return *d->dataItems;
@@ -580,17 +580,17 @@ ChildWidgetOrganizer::IWidgetFactory &ChildWidgetOrganizer::widgetFactory() cons
     return *d->factory;
 }
 
-GuiWidget *ChildWidgetOrganizer::itemWidget(ui::Item const &item) const
+GuiWidget *ChildWidgetOrganizer::itemWidget(const ui::Item &item) const
 {
     return d->find(item);
 }
 
-GuiWidget *ChildWidgetOrganizer::itemWidget(String const &label) const
+GuiWidget *ChildWidgetOrganizer::itemWidget(const String &label) const
 {
     return d->findByLabel(label);
 }
 
-ui::Item const *ChildWidgetOrganizer::findItemForWidget(GuiWidget const &widget) const
+const ui::Item *ChildWidgetOrganizer::findItemForWidget(const GuiWidget &widget) const
 {
     return d->findByWidget(widget);
 }
@@ -617,12 +617,12 @@ void ChildWidgetOrganizer::setRecyclingEnabled(bool enabled)
     d->recyclingEnabled = enabled;
 }
 
-void ChildWidgetOrganizer::setVirtualTopEdge(Rule const &topEdge)
+void ChildWidgetOrganizer::setVirtualTopEdge(const Rule &topEdge)
 {
     changeRef(d->virtualTop, topEdge);
 }
 
-void ChildWidgetOrganizer::setVisibleArea(Rule const &minimum, Rule const &maximum)
+void ChildWidgetOrganizer::setVisibleArea(const Rule &minimum, const Rule &maximum)
 {
     changeRef(d->virtualMin, minimum);
     changeRef(d->virtualMax, maximum);
@@ -633,7 +633,7 @@ bool ChildWidgetOrganizer::virtualizationEnabled() const
     return d->virtualEnabled;
 }
 
-Rule const &ChildWidgetOrganizer::virtualStrut() const
+const Rule &ChildWidgetOrganizer::virtualStrut() const
 {
     DE_ASSERT(d->virtualEnabled);
     return *d->virtualStrut;
@@ -650,7 +650,7 @@ int ChildWidgetOrganizer::averageChildHeight() const
     return d->averageItemHeight;
 }
 
-Rule const &ChildWidgetOrganizer::estimatedTotalHeight() const
+const Rule &ChildWidgetOrganizer::estimatedTotalHeight() const
 {
     return *d->estimatedHeight;
 }
@@ -660,12 +660,12 @@ void ChildWidgetOrganizer::updateVirtualization()
     d->updateVirtualization();
 }
 
-GuiWidget *DefaultWidgetFactory::makeItemWidget(ui::Item const &, GuiWidget const *)
+GuiWidget *DefaultWidgetFactory::makeItemWidget(const ui::Item &, const GuiWidget *)
 {
     return new LabelWidget;
 }
 
-void DefaultWidgetFactory::updateItemWidget(GuiWidget &widget, ui::Item const &item)
+void DefaultWidgetFactory::updateItemWidget(GuiWidget &widget, const ui::Item &item)
 {
     widget.as<LabelWidget>().setText(item.label());
 }

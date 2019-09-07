@@ -115,9 +115,9 @@ public:
          * @param flags  Role flags for the button.
          * @param label  Label for the button. If empty, the default label will be used.
          */
-        ButtonItem(RoleFlags flags, String const &label = "");
+        ButtonItem(RoleFlags flags, const String &label = "");
 
-        ButtonItem(RoleFlags flags, Image const &image);
+        ButtonItem(RoleFlags flags, const Image &image);
 
         /**
          * Button with custom action.
@@ -125,11 +125,11 @@ public:
          * @param label   Label for the button. If empty, the default label will be used.
          * @param action  Action for the button.
          */
-        ButtonItem(RoleFlags flags, String const &label, const RefArg<de::Action>& action);
+        ButtonItem(RoleFlags flags, const String &label, const RefArg<de::Action>& action);
 
-        ButtonItem(RoleFlags flags, String const &label, const std::function<void ()>& action);
+        ButtonItem(RoleFlags flags, const String &label, const std::function<void ()>& action);
 
-        ButtonItem(RoleFlags flags, Image const &image, const RefArg<de::Action>& action);
+        ButtonItem(RoleFlags flags, const Image &image, const RefArg<de::Action>& action);
 
         ButtonItem(RoleFlags                 flags,
                    const Image &             image,
@@ -157,7 +157,7 @@ public:
     DE_ERROR(UndefinedLabel);
 
 public:
-    DialogWidget(String const &name = {}, Flags const &flags = DefaultFlags);
+    DialogWidget(const String &name = {}, const Flags &flags = DefaultFlags);
 
     Modality modality() const;
 
@@ -188,9 +188,9 @@ public:
      *
      * @param minWidth  Custom minimum width for the dialog.
      */
-    void setMinimumContentWidth(Rule const &minWidth);
+    void setMinimumContentWidth(const Rule &minWidth);
 
-    void setMaximumContentHeight(Rule const &maxHeight);
+    void setMaximumContentHeight(const Rule &maxHeight);
 
     MenuWidget &buttonsMenu();
 
@@ -206,8 +206,8 @@ public:
 
     ui::Data &buttons();
 
-    ButtonWidget &buttonWidget(String const &label) const;
-    PopupButtonWidget &popupButtonWidget(String const &label) const;
+    ButtonWidget &buttonWidget(const String &label) const;
+    PopupButtonWidget &popupButtonWidget(const String &label) const;
 
     ButtonWidget *buttonWidget(int roleId) const;
     PopupButtonWidget *popupButtonWidget(int roleId) const;
@@ -251,7 +251,7 @@ public:
     // Events.
     void offerFocus() override;
     void update() override;
-    bool handleEvent(Event const &event) override;
+    bool handleEvent(const Event &event) override;
 
     void accept(int result = 1);
     void reject(int result = 0);

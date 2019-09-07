@@ -28,7 +28,7 @@ using namespace de;
 namespace common {
 namespace menu {
 
-CVarInlineListWidget::CVarInlineListWidget(char const *cvarPath, int cvarValueMask)
+CVarInlineListWidget::CVarInlineListWidget(const char *cvarPath, int cvarValueMask)
     : InlineListWidget()
     , _cvarPath(cvarPath)
     , _cvarValueMask(cvarValueMask)
@@ -41,7 +41,7 @@ CVarInlineListWidget::CVarInlineListWidget(char const *cvarPath, int cvarValueMa
 CVarInlineListWidget::~CVarInlineListWidget()
 {}
 
-char const *CVarInlineListWidget::cvarPath() const
+const char *CVarInlineListWidget::cvarPath() const
 {
     return _cvarPath;
 }
@@ -53,7 +53,7 @@ int CVarInlineListWidget::cvarValueMask() const
 
 void CVarInlineListWidget_UpdateCVar(Widget &wi, Widget::Action action)
 {
-    CVarInlineListWidget const *list = &wi.as<CVarInlineListWidget>();
+    const CVarInlineListWidget *list = &wi.as<CVarInlineListWidget>();
 
     if(action != Widget::Modified) return;
 
@@ -62,7 +62,7 @@ void CVarInlineListWidget_UpdateCVar(Widget &wi, Widget::Action action)
     cvartype_t varType = Con_GetVariableType(list->cvarPath());
     if(CVT_NULL == varType) return;
 
-    ListWidget::Item const *item = list->items()[list->selection()];
+    const ListWidget::Item *item = list->items()[list->selection()];
     int value;
     if(list->cvarValueMask())
     {

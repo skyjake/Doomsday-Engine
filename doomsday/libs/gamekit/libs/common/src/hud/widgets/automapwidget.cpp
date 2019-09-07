@@ -48,7 +48,7 @@ static void AutomapWidget_UpdateGeometry(AutomapWidget *amap)
     amap->updateGeometry();
 }
 
-static void AutomapWidget_Draw(AutomapWidget *amap, Point2Raw const *offset)
+static void AutomapWidget_Draw(AutomapWidget *amap, const Point2Raw *offset)
 {
     DE_ASSERT(amap);
     amap->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -77,21 +77,21 @@ static DGLuint amMaskTexture;  // Used to mask the map primitives.
 
 namespace internal
 {
-    static Vec2d rotate(Vec2d const &point, ddouble radian)
+    static Vec2d rotate(const Vec2d &point, ddouble radian)
     {
         ddouble const c = std::cos(radian);
         ddouble const s = std::sin(radian);
         return Vec2d(c * point.x - s * point.y, s * point.x + c * point.y);
     }
 
-    static void initAABB(coord_t aabb[4], Vec2d const &point)
+    static void initAABB(coord_t aabb[4], const Vec2d &point)
     {
         DE_ASSERT(aabb);
         aabb[BOXLEFT] = aabb[BOXRIGHT ] = point.x;
         aabb[BOXTOP ] = aabb[BOXBOTTOM] = point.y;
     }
 
-    static void addToAABB(coord_t aabb[4], Vec2d const &point)
+    static void addToAABB(coord_t aabb[4], const Vec2d &point)
     {
         DE_ASSERT(aabb);
         if     (point.x < aabb[BOXLEFT  ]) aabb[BOXLEFT  ] = point.x;
@@ -116,9 +116,9 @@ namespace internal
         return false;
     }
 
-    static Vec2d fitPointInRectangle(Vec2d const &point, Vec2d const &topLeft,
-        Vec2d const &topRight, Vec2d const &bottomRight,
-        Vec2d const &bottomLeft, Vec2d const &viewPoint)
+    static Vec2d fitPointInRectangle(const Vec2d &point, const Vec2d &topLeft,
+        const Vec2d &topRight, const Vec2d &bottomRight,
+        const Vec2d &bottomLeft, const Vec2d &viewPoint)
     {
         ddouble pointV1[2];
         point.decompose(pointV1);
@@ -148,8 +148,8 @@ namespace internal
         return Vec2d(pointV1);
     }
 
-    static void drawVectorGraphic(svgid_t vgId, Vec2d const &origin, dfloat angle,
-        dfloat scale, Vec3f const &color, dfloat opacity, blendmode_t blendmode)
+    static void drawVectorGraphic(svgid_t vgId, const Vec2d &origin, dfloat angle,
+        dfloat scale, const Vec3f &color, dfloat opacity, blendmode_t blendmode)
     {
         opacity = de::clamp(0.f, opacity, 1.f);
 
@@ -330,8 +330,8 @@ DE_PIMPL(AutomapWidget)
         needViewScaleUpdate = false;
     }
 
-    static void drawLine2(Vec2d const &from, Vec2d const &to,
-        Vec3f const &color, dfloat opacity, glowtype_t glowType, dfloat glowStrength,
+    static void drawLine2(const Vec2d &from, const Vec2d &to,
+        const Vec3f &color, dfloat opacity, glowtype_t glowType, dfloat glowStrength,
         dfloat glowSize, dd_bool glowOnly, dd_bool scaleGlowWithView, dd_bool caps,
         /*blendmode_t blend, */dd_bool drawNormal)
     {
@@ -615,7 +615,7 @@ DE_PIMPL(AutomapWidget)
             return;
         }
 
-        automapcfg_lineinfo_t const *info = nullptr;
+        const automapcfg_lineinfo_t *info = nullptr;
         if ((flags & AWF_SHOW_ALLLINES) || xline->mapped[rs.plr - players])
         {
             auto *backSector = reinterpret_cast<Sector *>(P_GetPtrp(line, DMU_BACK_SECTOR));
@@ -746,7 +746,7 @@ DE_PIMPL(AutomapWidget)
         DGL_Enable(DGL_TEXTURE0);
     }
 
-    static void drawLine(Line *line, Vec3f const &color, dfloat opacity,
+    static void drawLine(Line *line, const Vec3f &color, dfloat opacity,
                          /*blendmode_t blendMode, */bool showNormal)
     {
         dfloat length = P_GetFloatp(line, DMU_LENGTH);
@@ -803,7 +803,7 @@ DE_PIMPL(AutomapWidget)
 
     static int drawLine_polyob(Line *line, void *context)
     {
-        auto const *inst = static_cast<Impl *>(context);
+        const auto *inst = static_cast<Impl *>(context);
         DE_ASSERT(inst);
 
         dfloat const opacity = uiRendState->pageAlpha;
@@ -833,7 +833,7 @@ DE_PIMPL(AutomapWidget)
             }
         }
 
-        if (automapcfg_lineinfo_t const *info = inst->style->tryFindLineInfo(amo))
+        if (const automapcfg_lineinfo_t *info = inst->style->tryFindLineInfo(amo))
         {
             drawLine(line, Vec3f(info->rgba), info->rgba[3] * cfg.common.automapLineAlpha * opacity,
                      /*info->blendMode, */(inst->flags & AWF_SHOW_LINE_NORMALS));
@@ -865,7 +865,7 @@ DE_PIMPL(AutomapWidget)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     static int drawLine_xg(Line *line, void *context)
     {
-        auto const *inst = static_cast<Impl *>(context);
+        const auto *inst = static_cast<Impl *>(context);
         DE_ASSERT(line && inst);
 
         xline_t *xline = P_ToXLine(line);
@@ -954,7 +954,7 @@ DE_PIMPL(AutomapWidget)
             { MT_AKYY,  KEY3_COLOR },
 #  endif
         };
-        for (auto const &thing : thingData)
+        for (const auto &thing : thingData)
         {
             if (thing.type == type) return thing.palColor;
         }
@@ -1050,7 +1050,7 @@ DE_PIMPL(AutomapWidget)
 
         dint idx = 0;
         const Point2Raw labelOffset{};
-        for (MarkedPoint const *point : points)
+        for (const MarkedPoint *point : points)
         {
             String const label    = String::asText(idx++);
             Vec2d const origin = fitPointInRectangle(point->origin(), topLeft, topRight, bottomRight, bottomLeft, view);
@@ -1178,7 +1178,7 @@ DE_PIMPL(AutomapWidget)
 
             dint player = self().player();
             dint num = 0;
-            for (inventoryitemtype_t const &item : items)
+            for (const inventoryitemtype_t &item : items)
             {
                 if (P_InventoryCount(player, item) > 0)
                     num += 1;
@@ -1303,7 +1303,7 @@ void AutomapWidget::setCameraFollowPlayer(dint newPlayer)
 
 void AutomapWidget::prepareAssets()  // static
 {
-    LumpIndex const &lumpIndex = CentralLumpIndex();
+    const LumpIndex &lumpIndex = CentralLumpIndex();
 
     if (autopageLumpNum >= 0)
     {
@@ -1315,7 +1315,7 @@ void AutomapWidget::prepareAssets()  // static
         if (lumpNum >= 0)
         {
             File1 &file = lumpIndex[lumpNum];
-            uint8_t const *pixels = file.cache();
+            const uint8_t *pixels = file.cache();
 
             amMaskTexture = DGL_NewTextureWithParams(DGL_LUMINANCE, 256/*width*/, 256/*height*/,
                                                      pixels, 0x8, DGL_NEAREST, DGL_LINEAR,
@@ -1339,7 +1339,7 @@ void AutomapWidget::reset()
     d->rotate         = cfg.common.automapRotate;
 }
 
-void AutomapWidget::lineAutomapVisibilityChanged(Line const &)
+void AutomapWidget::lineAutomapVisibilityChanged(const Line &)
 {
     d->needBuildLists = true;
 }
@@ -1349,7 +1349,7 @@ AutomapStyle *AutomapWidget::style() const
     return d->style;
 }
 
-void AutomapWidget::draw(Vec2i const &offset) const
+void AutomapWidget::draw(const Vec2i &offset) const
 {
     float const alpha = uiRendState->pageAlpha;
     player_t *plr = &players[player()];
@@ -1426,7 +1426,7 @@ void AutomapWidget::draw(Vec2i const &offset) const
     // Draw static map geometry.
     for (dint i = NUM_MAP_OBJECTLISTS-1; i >= 0; i--)
     {
-        automapcfg_lineinfo_t const &info = d->style->lineInfo(i);
+        const automapcfg_lineinfo_t &info = d->style->lineInfo(i);
         DGL_Color4f(info.rgba[0], info.rgba[1], info.rgba[2], info.rgba[3] * cfg.common.automapLineAlpha * alpha);
         d->drawAllLines(i);
     }
@@ -1758,7 +1758,7 @@ Vec2d AutomapWidget::cameraOrigin() const
     return d->view;
 }
 
-void AutomapWidget::setCameraOrigin(Vec2d const &newOrigin, bool instantly)
+void AutomapWidget::setCameraOrigin(const Vec2d &newOrigin, bool instantly)
 {
     // Already at this target?
     if (newOrigin == d->targetView)
@@ -1841,7 +1841,7 @@ dint AutomapWidget::pointCount() const
     return d->points.count();
 }
 
-dint AutomapWidget::addPoint(Vec3d const &origin)
+dint AutomapWidget::addPoint(const Vec3d &origin)
 {
     d->points << new MarkedPoint(origin);
     dint pointNum = d->points.count() - 1;  // base 0.

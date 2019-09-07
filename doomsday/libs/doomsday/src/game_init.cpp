@@ -51,7 +51,7 @@ static void updateProgress(int progress)
 
 int beginGameChangeBusyWorker(void *context)
 {
-    DoomsdayApp::GameChangeParameters const *parms = reinterpret_cast<
+    const DoomsdayApp::GameChangeParameters *parms = reinterpret_cast<
             DoomsdayApp::GameChangeParameters *>(context);
 
     P_InitMapEntityDefs();
@@ -62,7 +62,7 @@ int beginGameChangeBusyWorker(void *context)
     return 0;
 }
 
-static File1 *tryLoadFile(res::Uri const &search, size_t baseOffset = 0)
+static File1 *tryLoadFile(const res::Uri &search, size_t baseOffset = 0)
 {
     auto &fs1 = App_FileSystem();
     try
@@ -90,7 +90,7 @@ static File1 *tryLoadFile(res::Uri const &search, size_t baseOffset = 0)
 namespace res {
 
 // Helper function for accessing files via the legacy FS1.
-static void forNativeDataFiles(DataBundle const &bundle, std::function<void (String const &)> func)
+static void forNativeDataFiles(const DataBundle &bundle, std::function<void (const String &)> func)
 {
     DE_ASSERT(bundle.isLinkedAsPackage()); // couldn't be accessed otherwise
 
@@ -101,13 +101,13 @@ static void forNativeDataFiles(DataBundle const &bundle, std::function<void (Str
     case DataBundle::Lump:
     case DataBundle::Pk3:
     {
-        Record const &meta = bundle.packageMetadata();
-        for (auto const *v : meta.geta("dataFiles").elements())
+        const Record &meta = bundle.packageMetadata();
+        for (const auto *v : meta.geta("dataFiles").elements())
         {
 //            LOG_RES_MSG("bundle root: %s -> trying to load %s") << bundle.rootPath()
 //                     << v->asText();
             String const dataFilePath = bundle.rootPath() / v->asText();
-            if (File const *dataFile = FS::tryLocate<File const>(dataFilePath))
+            if (const File *dataFile = FS::tryLocate<File const>(dataFilePath))
             {
                 if (is<NativeFile>(dataFile->source()))
                 {
@@ -128,7 +128,7 @@ static void forNativeDataFiles(DataBundle const &bundle, std::function<void (Str
     }
 }
 
-File1 *File1::tryLoad(LoadFileMode loadMode, Uri const &search, size_t baseOffset) // static
+File1 *File1::tryLoad(LoadFileMode loadMode, const Uri &search, size_t baseOffset) // static
 {
     File1 *file = tryLoadFile(search, baseOffset);
     if (file)
@@ -138,7 +138,7 @@ File1 *File1::tryLoad(LoadFileMode loadMode, Uri const &search, size_t baseOffse
     return file;
 }
 
-bool File1::tryUnload(Uri const &search) // static
+bool File1::tryUnload(const Uri &search) // static
 {
     try
     {
@@ -162,14 +162,14 @@ bool File1::tryUnload(Uri const &search) // static
 
         return true;
     }
-    catch (FS1::NotFoundError const &er)
+    catch (const FS1::NotFoundError &er)
     {
         LOG_RES_MSG("Cannot unload file: %s") << er.asText();
         return false;
     }
 }
 
-File1 *File1::tryLoad(DataBundle const &bundle)
+File1 *File1::tryLoad(const DataBundle &bundle)
 {
     // If the bundle has been identified based on the known criteria, treat it as
     // one of the vanilla files.
@@ -180,9 +180,9 @@ File1 *File1::tryLoad(DataBundle const &bundle)
             << (loadMode == LoadAsVanillaFile? "vanilla" : "custom");
 
     File1 *result = nullptr;
-    forNativeDataFiles(bundle, [&result, loadMode] (String const &path)
+    forNativeDataFiles(bundle, [&result, loadMode] (const String &path)
     {
-        NativeFile const &dataFile = App::rootFolder().locate<File const>(path).source()->as<NativeFile>();
+        const NativeFile &dataFile = App::rootFolder().locate<File const>(path).source()->as<NativeFile>();
         if (File1 *file = tryLoad(loadMode, res::Uri::fromNativePath(dataFile.nativePath())))
         {
             result = file; // note: multiple files may actually be loaded
@@ -196,14 +196,14 @@ File1 *File1::tryLoad(DataBundle const &bundle)
     return result;
 }
 
-bool File1::tryUnload(DataBundle const &bundle)
+bool File1::tryUnload(const DataBundle &bundle)
 {
     LOG_RES_NOTE("Unloading %s") << bundle.description();
 
     bool unloaded = false;
-    forNativeDataFiles(bundle, [&unloaded] (String const &path)
+    forNativeDataFiles(bundle, [&unloaded] (const String &path)
     {
-        NativeFile const &dataFile = App::rootFolder().locate<File const>(path).source()->as<NativeFile>();
+        const NativeFile &dataFile = App::rootFolder().locate<File const>(path).source()->as<NativeFile>();
         unloaded = tryUnload(res::Uri::fromNativePath(dataFile.nativePath()));
     });
     return unloaded;
@@ -231,9 +231,9 @@ static void loadResource(ResourceManifest &manifest)
     }
 }
 
-static void parseStartupFilePathsAndAddFiles(char const *pathString)
+static void parseStartupFilePathsAndAddFiles(const char *pathString)
 {
-    static char const *ATWSEPS = ",; \t";
+    static const char *ATWSEPS = ",; \t";
 
     if (!pathString || !pathString[0]) return;
 
@@ -250,7 +250,7 @@ static void parseStartupFilePathsAndAddFiles(char const *pathString)
     M_Free(buffer);
 }
 
-static dint addListFiles(const StringList &list, FileType const &ftype)
+static dint addListFiles(const StringList &list, const FileType &ftype)
 {
     dint numAdded = 0;
     for (const auto &path : list)
@@ -293,7 +293,7 @@ int loadGameStartupResourcesBusyWorker(void *context)
     }
 
     // Load data files.
-    for (DataBundle const *bundle : DataBundle::loadedBundles())
+    for (const DataBundle *bundle : DataBundle::loadedBundles())
     {
         File1::tryLoad(*bundle);
     }
@@ -303,7 +303,7 @@ int loadGameStartupResourcesBusyWorker(void *context)
      * @note  Duplicate processing of the same file is automatically guarded
      *        against by the virtual file system layer.
      */
-    GameManifests const &gameManifests = DoomsdayApp::game().manifests();
+    const GameManifests &gameManifests = DoomsdayApp::game().manifests();
     const dsize numPackages = gameManifests.count(RC_PACKAGE);
     if (numPackages)
     {
@@ -348,7 +348,7 @@ static dint findAllGameDataPaths(FS1::PathList &found)
 #endif
     };
     dint const numFoundSoFar = found.count();
-    for (String const &ext : extensions)
+    for (const String &ext : extensions)
     {
         DE_ASSERT(!ext.isEmpty());
         String const searchPath = res::Uri(Path("$(App.DataPath)/$(GamePlugin.Name)/auto/*." + ext)).resolved();
@@ -401,7 +401,7 @@ int loadAddonResourcesBusyWorker(void *context)
 {
     DoomsdayApp::GameChangeParameters &parms = *(DoomsdayApp::GameChangeParameters *) context;
 
-    char const *startupFiles = CVar_String(Con_FindVariable("file-startup"));
+    const char *startupFiles = CVar_String(Con_FindVariable("file-startup"));
 
     /**
      * Add additional game-startup files.

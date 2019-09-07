@@ -60,7 +60,7 @@ StyledLogSinkFormatter::StyledLogSinkFormatter(const Flags &formatFlags)
     d->format = formatFlags;
 }
 
-LogSink::IFormatter::Lines StyledLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
+LogSink::IFormatter::Lines StyledLogSinkFormatter::logEntryToTextLines(const LogEntry &entry)
 {
     Flags formatFlags = d->format;
 

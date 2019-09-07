@@ -182,7 +182,7 @@ public:
     /// Multisampling used in unwarped Rift framebuffer.
     int riftFramebufferSampleCount() const;
 
-    float viewAspect(Vec2f const &viewPortSize) const;
+    float viewAspect(const Vec2f &viewPortSize) const;
 
     /**
      * Calculates a vertical field of view angle based on a horizontal FOV angle,
@@ -193,7 +193,7 @@ public:
      *
      * @return  Vertical field of view, in degrees.
      */
-    float verticalFieldOfView(float horizFovDegrees, Vec2f const &viewPortSize) const;
+    float verticalFieldOfView(float horizFovDegrees, const Vec2f &viewPortSize) const;
 
     /**
      * Produces a projection matrix suitable for the current VR configuration.
@@ -206,11 +206,11 @@ public:
      * @return Projection matrix.
      */
     Mat4f projectionMatrix(float fovDegrees,
-                              Vec2f const &viewPortSize,
+                              const Vec2f &viewPortSize,
                               float nearClip, float farClip) const;
 
     de::OculusRift &oculusRift();
-    de::OculusRift const &oculusRift() const;
+    const de::OculusRift &oculusRift() const;
 
 public:
     /**

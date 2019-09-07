@@ -49,7 +49,7 @@ Value &RefValue::dereference()
     return _variable->value();
 }
 
-Value const &RefValue::dereference() const
+const Value &RefValue::dereference() const
 {
     verify();
     return _variable->value();
@@ -80,22 +80,22 @@ dsize RefValue::size() const
     return dereference().size();
 }
 
-Value const &RefValue::element(Value const &index) const
+const Value &RefValue::element(const Value &index) const
 {
     return dereference().element(index);
 }
 
-Value &RefValue::element(Value const &index)
+Value &RefValue::element(const Value &index)
 {
     return dereference().element(index);
 }
 
-void RefValue::setElement(Value const &index, Value *elementValue)
+void RefValue::setElement(const Value &index, Value *elementValue)
 {
     dereference().setElement(index, elementValue);
 }
 
-bool RefValue::contains(Value const &value) const
+bool RefValue::contains(const Value &value) const
 {
     return dereference().contains(value);
 }
@@ -120,7 +120,7 @@ bool RefValue::isFalse() const
     return dereference().isFalse();
 }
 
-dint RefValue::compare(Value const &value) const
+dint RefValue::compare(const Value &value) const
 {
     return dereference().compare(value);
 }
@@ -130,27 +130,27 @@ void RefValue::negate()
     dereference().negate();
 }
 
-void RefValue::sum(Value const &value)
+void RefValue::sum(const Value &value)
 {
     dereference().sum(value);
 }
 
-void RefValue::subtract(Value const &subtrahend)
+void RefValue::subtract(const Value &subtrahend)
 {
     dereference().subtract(subtrahend);
 }
 
-void RefValue::divide(Value const &divisor)
+void RefValue::divide(const Value &divisor)
 {
     dereference().divide(divisor);
 }
 
-void RefValue::multiply(Value const &value)
+void RefValue::multiply(const Value &value)
 {
     dereference().multiply(value);
 }
 
-void RefValue::modulo(Value const &divisor)
+void RefValue::modulo(const Value &divisor)
 {
     dereference().modulo(divisor);
 }
@@ -161,7 +161,7 @@ void RefValue::assign(Value *value)
     _variable->set(value);
 }
 
-void RefValue::call(Process &process, Value const &arguments, Value *self) const
+void RefValue::call(Process &process, const Value &arguments, Value *self) const
 {
     dereference().call(process, arguments, self);
 }

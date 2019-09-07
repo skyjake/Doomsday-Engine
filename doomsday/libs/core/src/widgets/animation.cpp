@@ -69,7 +69,7 @@ using AnimationFlags = Flags;
 /// Thread-safe current time for animations.
 struct AnimationTime : DE_OBSERVES(Clock, TimeChange) {
     std::atomic<double> now;
-    void timeChanged(Clock const &clock) override {
+    void timeChanged(const Clock &clock) override {
         now.store(clock.time().highPerformanceTime());
     }
 };
@@ -79,7 +79,7 @@ static AnimationTime theTime;
 using namespace internal;
 
 /// Global animation time source.
-Clock const *Animation::_clock = nullptr;
+const Clock *Animation::_clock = nullptr;
 
 DE_PIMPL_NOREF(Animation)
 {
@@ -196,12 +196,12 @@ DE_PIMPL_NOREF(Animation)
 Animation::Animation(float val, Style s) : d(new Impl(val, s))
 {}
 
-Animation::Animation(Animation const &other)
+Animation::Animation(const Animation &other)
     : de::ISerializable()
     , d(new Impl(*other.d))
 {}
 
-Animation &Animation::operator = (Animation const &other)
+Animation &Animation::operator = (const Animation &other)
 {
     d.reset(new Impl(*other.d));
     return *this;
@@ -347,7 +347,7 @@ String Animation::asText() const
         "Animation(%f -> %f, ETA:%lf s)", d->value, d->target, ddouble(remainingTime()));
 }
 
-Clock const &Animation::clock()
+const Clock &Animation::clock()
 {
     DE_ASSERT(_clock != nullptr);
     if (!_clock)
@@ -390,7 +390,7 @@ void Animation::operator << (Reader &from)
     from >> d->spring;
 }
 
-void Animation::setClock(Clock const *clock)
+void Animation::setClock(const Clock *clock)
 {
     if (_clock) _clock->audienceForPriorityTimeChange -= theTime;
     _clock = clock;

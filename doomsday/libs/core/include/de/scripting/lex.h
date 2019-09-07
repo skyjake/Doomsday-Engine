@@ -56,7 +56,7 @@ public:
     class ModeSpan
     {
     public:
-        ModeSpan(Lex &lex, ModeFlags const &m)
+        ModeSpan(Lex &lex, const ModeFlags &m)
             : _lex(lex)
             , _originalMode(lex._mode)
         {
@@ -71,13 +71,13 @@ public:
     };
 
 public:
-    Lex(String const &input            = "",
+    Lex(const String &input            = "",
         Char          lineCommentChar  = Char('#'),
         Char          multiCommentChar = Char('\0'),
         ModeFlags     initialMode      = DefaultMode);
 
     /// Returns the input string in its entirety.
-    String const &input() const;
+    const String &input() const;
 
     /// Determines if the input string has been entirely read.
     bool atEnd() const;

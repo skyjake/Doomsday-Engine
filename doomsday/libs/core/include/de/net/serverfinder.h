@@ -46,9 +46,9 @@ public:
 
     List<Address> foundServers() const;
 
-    String name(Address const &server) const;
-    int    playerCount(Address const &server) const;
-    int    maxPlayers(Address const &server) const;
+    String name(const Address &server) const;
+    int    playerCount(const Address &server) const;
+    int    maxPlayers(const Address &server) const;
 
     /**
      * Returns the message sent by a server's beacon.
@@ -57,7 +57,7 @@ public:
      *
      * @return Server information.
      */
-    ServerInfo messageFromServer(Address const &address) const;
+    ServerInfo messageFromServer(const Address &address) const;
 
 private:
     DE_PRIVATE(d)

@@ -28,7 +28,7 @@ using namespace de;
 
 static patchid_t pBlueBackground[2];  ///< [ dim, bright ]
 
-static void BlueManaVialWidget_Draw(guidata_bluemanavial_t *vial, Point2Raw const *offset)
+static void BlueManaVialWidget_Draw(guidata_bluemanavial_t *vial, const Point2Raw *offset)
 {
     DE_ASSERT(vial);
     vial->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -61,7 +61,7 @@ void guidata_bluemanavial_t::tick(timespan_t /*elapsed*/)
 
     _backgroundIdx = 0;  // Dim icon.
 
-    player_t const &plr = ::players[player()];
+    const player_t &plr = ::players[player()];
     if(VALID_WEAPONTYPE(plr.readyWeapon))
     {
         // If the player owns some of this ammo and the ready weapon consumes it - use the bright icon.
@@ -77,7 +77,7 @@ void guidata_bluemanavial_t::tick(timespan_t /*elapsed*/)
     _filled = de::clamp(0.f, dfloat( plr.ammo[AT_BLUEMANA].owned ) / MAX_MANA, 1.f);
 }
 
-void guidata_bluemanavial_t::draw(Vec2i const &offset) const
+void guidata_bluemanavial_t::draw(const Vec2i &offset) const
 {
 #define X_OFFSET            ( 94 )
 #define Y_OFFSET            (  2 )

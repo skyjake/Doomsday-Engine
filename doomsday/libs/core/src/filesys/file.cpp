@@ -59,7 +59,7 @@ DE_PIMPL_NOREF(File)
 
 DE_AUDIENCE_METHOD(File, Deletion)
 
-File::File(String const &fileName) : Node(fileName), d(new Impl)
+File::File(const String &fileName) : Node(fileName), d(new Impl)
 {
     d->source = this;
 
@@ -211,7 +211,7 @@ void File::setSource(File *source)
     d->source = source;
 }
 
-File const *File::source() const
+const File *File::source() const
 {
     DE_GUARD(this);
 
@@ -246,12 +246,12 @@ File &File::target()
     return *this;
 }
 
-File const &File::target() const
+const File &File::target() const
 {
     return *this;
 }
 
-void File::setStatus(Status const &status)
+void File::setStatus(const Status &status)
 {
     DE_GUARD(this);
 
@@ -266,7 +266,7 @@ void File::setStatus(Status const &status)
     }
 }
 
-File::Status const &File::status() const
+const File::Status &File::status() const
 {
     DE_GUARD(this);
 
@@ -277,7 +277,7 @@ File::Status const &File::status() const
     return d->status;
 }
 
-void File::setMode(Flags const &newMode)
+void File::setMode(const Flags &newMode)
 {
     DE_GUARD(this);
 
@@ -307,7 +307,7 @@ Record &File::objectNamespace()
     return d->info;
 }
 
-Record const &File::objectNamespace() const
+const Record &File::objectNamespace() const
 {
     return d->info;
 }
@@ -385,7 +385,7 @@ NativePath File::correspondingNativePath() const
     return {};
 }
 
-IOStream &File::operator << (IByteArray const &bytes)
+IOStream &File::operator << (const IByteArray &bytes)
 {
     DE_UNUSED(bytes);
     throw OutputError("File::operator <<", description() + " does not accept a byte stream");
@@ -397,23 +397,23 @@ IIStream &File::operator >> (IByteArray &bytes)
     throw InputError("File::operator >>", description() + " does not produce a byte stream");
 }
 
-IIStream const &File::operator >> (IByteArray &bytes) const
+const IIStream &File::operator >> (IByteArray &bytes) const
 {
     DE_UNUSED(bytes);
     throw InputError("File::operator >>", description() + " does not offer an immutable byte stream");
 }
 
-static bool sortByNameAsc(File const *a, File const *b)
+static bool sortByNameAsc(const File *a, const File *b)
 {
     return a->name().compareWithoutCase(b->name()) < 0;
 }
 
-String File::fileListAsText(List<File const *> files)
+String File::fileListAsText(List<const File *> files)
 {
     std::sort(files.begin(), files.end(), sortByNameAsc);
 
     String txt;
-    for (File const *f : files)
+    for (const File *f : files)
     {
         // One line per file.
         if (!txt.isEmpty()) txt += "\n";
@@ -432,7 +432,7 @@ String File::fileListAsText(List<File const *> files)
                                       f->name().c_str());
 
         // Link target.
-        if (LinkFile const *link = maybeAs<LinkFile>(f))
+        if (const LinkFile *link = maybeAs<LinkFile>(f))
         {
             if (!link->isBroken())
             {
@@ -454,7 +454,7 @@ dsize File::size() const
 
 Block File::metaId() const
 {
-    auto const &st = target().status();
+    const auto &st = target().status();
     return md5Hash(path(), duint64(st.size), st.modifiedAt);
 }
 

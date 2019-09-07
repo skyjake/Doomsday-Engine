@@ -51,7 +51,7 @@
 using namespace de;
 
 // Identifiers given to the games we register during startup.
-static char const *gameIds[NUM_GAME_MODES] =
+static const char *gameIds[NUM_GAME_MODES] =
 {
     "heretic-share",
     "heretic",
@@ -157,7 +157,7 @@ static void DP_Unload(void)
     Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
 
-static void G_PreInit(char const *gameId)
+static void G_PreInit(const char *gameId)
 {
     /// \todo Refactor me away.
     size_t i;
@@ -186,7 +186,7 @@ static dd_bool G_TryShutdown(void)
     return true;
 }
 
-static void *GetGameAPI(char const *name)
+static void *GetGameAPI(const char *name)
 {
     if (auto *ptr = Common_GetGameAPI(name))
     {
@@ -225,7 +225,7 @@ static void DP_Initialize(void)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-static char const *deng_LibraryType(void)
+static const char *deng_LibraryType(void)
 {
     return "deng-plugin/game";
 }
@@ -278,7 +278,7 @@ DE_API_EXCHANGE(
     DE_GET_API(DE_API_URI, Uri);
 )
 
-DE_ENTRYPOINT void *extension_heretic_symbol(char const *name)
+DE_ENTRYPOINT void *extension_heretic_symbol(const char *name)
 {
     DE_SYMBOL_PTR(name, deng_LibraryType);
     DE_SYMBOL_PTR(name, deng_API);

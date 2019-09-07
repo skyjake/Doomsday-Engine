@@ -43,12 +43,12 @@ public:
     class TabItem : public ui::ImageItem
     {
     public:
-        TabItem(String const &label, const Value &userData = NoneValue())
+        TabItem(const String &label, const Value &userData = NoneValue())
             : ImageItem(ShownAsButton, label)
         {
             setData(userData);
         }
-        TabItem(Image const &img, String const &label)
+        TabItem(const Image &img, const String &label)
             : ImageItem(ShownAsButton, img, label)
         {}
         void setShortcutKey(int ddKey)
@@ -65,7 +65,7 @@ public:
     };
 
 public:
-    TabWidget(String const &name = String());
+    TabWidget(const String &name = String());
 
     void setTabFont(const DotPath &fontId, const DotPath &selectedFontId);
 
@@ -91,7 +91,7 @@ public:
 
     // Events.
     void update() override;
-    bool handleEvent(de::Event const &ev) override;
+    bool handleEvent(const de::Event &ev) override;
 
 private:
     DE_PRIVATE(d)

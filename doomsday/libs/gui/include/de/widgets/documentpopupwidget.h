@@ -33,14 +33,14 @@ namespace de {
 class LIBGUI_PUBLIC DocumentPopupWidget : public PopupWidget
 {
 public:
-    DocumentPopupWidget(String const &name = {});
-    DocumentPopupWidget(ButtonWidget *actionButton, String const &name = {});
+    DocumentPopupWidget(const String &name = {});
+    DocumentPopupWidget(ButtonWidget *actionButton, const String &name = {});
 
-    void setPreferredHeight(Rule const &preferredHeight);
-    void setPreferredHeight(Rule const &preferredHeight, Rule const &maxHeight);
+    void setPreferredHeight(const Rule &preferredHeight);
+    void setPreferredHeight(const Rule &preferredHeight, const Rule &maxHeight);
 
     DocumentWidget &document();
-    DocumentWidget const &document() const;
+    const DocumentWidget &document() const;
 
     ButtonWidget *button();
 

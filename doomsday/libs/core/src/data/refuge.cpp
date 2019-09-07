@@ -31,7 +31,7 @@ DE_PIMPL_NOREF(Refuge)
     Record names;
 };
 
-Refuge::Refuge(String const &persistentPath) : d(new Impl)
+Refuge::Refuge(const String &persistentPath) : d(new Impl)
 {
     d->persistentPath = persistentPath;
 
@@ -39,7 +39,7 @@ Refuge::Refuge(String const &persistentPath) : d(new Impl)
     {
         read();
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_AS("Refuge");
         LOGDEV_RES_MSG("\"%s\" could not be read: %s") << persistentPath << er.asText();
@@ -58,7 +58,7 @@ Refuge::~Refuge()
     {
         write();
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_AS("~Refuge");
         LOG_ERROR("\"%s\" could not be written: %s") << d->persistentPath << er.asText();
@@ -105,7 +105,7 @@ Record &Refuge::objectNamespace()
     return d->names;
 }
 
-Record const &Refuge::objectNamespace() const
+const Record &Refuge::objectNamespace() const
 {
     return d->names;
 }

@@ -31,17 +31,17 @@ class DE_PUBLIC NativeLink : public Link
 public:
     static const char *URL_SCHEME;
 
-    static Link *construct(String const &address);
+    static Link *construct(const String &address);
 
-    void         setLocalRoot(String const &rootPath) override;
-    PackagePaths locatePackages(StringList const &packageIds) const override;
-    LoopResult   forPackageIds(std::function<LoopResult(String const &pkgId)> func) const override;
+    void         setLocalRoot(const String &rootPath) override;
+    PackagePaths locatePackages(const StringList &packageIds) const override;
+    LoopResult   forPackageIds(std::function<LoopResult(const String &pkgId)> func) const override;
 
 protected:
-    NativeLink(String const &address);
+    NativeLink(const String &address);
 
     void wasConnected() override;
-    void transmit(Query const &query) override;
+    void transmit(const Query &query) override;
 
 private:
     DE_PRIVATE(d)

@@ -103,7 +103,7 @@ static FlagTranslation const flagTranslationTable[GFW_GAME_ID_COUNT][12] =
 int gfw_MapSpot_TranslateFlagsToInternal(gfw_mapspot_flags_t mapSpotFlags)
 {
     int internalFlags = defaultInternalFlags[gfw_CurrentGame()];
-    for (auto const &x : flagTranslationTable[gfw_CurrentGame()])
+    for (const auto &x : flagTranslationTable[gfw_CurrentGame()])
     {
         if (mapSpotFlags & x.gfwFlag)
         {
@@ -116,7 +116,7 @@ int gfw_MapSpot_TranslateFlagsToInternal(gfw_mapspot_flags_t mapSpotFlags)
 gfw_mapspot_flags_t gfw_MapSpot_TranslateFlagsFromInternal(int internalFlags)
 {
     gfw_mapspot_flags_t mapSpotFlags = defaultMapSpotFlags;
-    for (auto const &x : flagTranslationTable[gfw_CurrentGame()])
+    for (const auto &x : flagTranslationTable[gfw_CurrentGame()])
     {
         if (internalFlags & x.internalFlag)
         {

@@ -49,7 +49,7 @@ DE_PIMPL_NOREF(Thinker)
         if (data) data->setThinker(base);
     }
 
-    Impl(Impl const &other)
+    Impl(const Impl &other)
         : size(other.size)
         , base(reinterpret_cast<thinker_s *>(other.base->_flags & THINKF_STD_MALLOC?
                                                  M_MemDup(other.base, size) :
@@ -131,12 +131,12 @@ Thinker::Thinker(AllocMethod alloc, dsize sizeInBytes, Thinker::IData *data)
     function = Thinker_NoOperation;
 }
 
-Thinker::Thinker(Thinker const &other)
+Thinker::Thinker(const Thinker &other)
     : d(new Impl(*other.d))
     , STRUCT_MEMBER_ACCESSORS()
 {}
 
-Thinker::Thinker(thinker_s const &podThinker, dsize sizeInBytes, AllocMethod alloc)
+Thinker::Thinker(const thinker_s &podThinker, dsize sizeInBytes, AllocMethod alloc)
     : d(new Impl(alloc, sizeInBytes, 0))
     , STRUCT_MEMBER_ACCESSORS()
 {
@@ -158,7 +158,7 @@ Thinker::Thinker(thinker_s *podThinkerToTake, de::dsize sizeInBytes)
     , STRUCT_MEMBER_ACCESSORS()
 {}
 
-Thinker &Thinker::operator = (Thinker const &other)
+Thinker &Thinker::operator = (const Thinker &other)
 {
     d.reset(new Impl(*other.d));
     return *this;
@@ -187,7 +187,7 @@ thinker_s &Thinker::base()
     return *d->base;
 }
 
-thinker_s const &Thinker::base() const
+const thinker_s &Thinker::base() const
 {
     return *d->base;
 }
@@ -203,7 +203,7 @@ Thinker::IData &Thinker::data()
     return *d->data;
 }
 
-Thinker::IData const &Thinker::data() const
+const Thinker::IData &Thinker::data() const
 {
     DE_ASSERT(hasData());
     return *d->data;
@@ -264,7 +264,7 @@ void Thinker::setData(Thinker::IData *data)
     }
 }
 
-dd_bool Thinker_InStasis(thinker_s const *thinker)
+dd_bool Thinker_InStasis(const thinker_s *thinker)
 {
     if (!thinker) return false;
     return (thinker->_flags & THINKF_DISABLED) != 0;

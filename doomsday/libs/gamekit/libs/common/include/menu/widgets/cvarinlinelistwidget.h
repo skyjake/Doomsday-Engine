@@ -32,14 +32,14 @@ namespace menu {
 class CVarInlineListWidget : public InlineListWidget
 {
 public:
-    CVarInlineListWidget(char const *cvarPath, int cvarValueMask = 0);
+    CVarInlineListWidget(const char *cvarPath, int cvarValueMask = 0);
     virtual ~CVarInlineListWidget();
 
-    char const *cvarPath() const;
+    const char *cvarPath() const;
     int cvarValueMask() const;
 
 private:
-    char const *_cvarPath;
+    const char *_cvarPath;
     int _cvarValueMask;
 };
 

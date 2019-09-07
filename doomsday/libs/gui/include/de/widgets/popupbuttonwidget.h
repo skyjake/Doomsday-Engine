@@ -37,11 +37,11 @@ namespace de {
 class LIBGUI_PUBLIC PopupButtonWidget : public ButtonWidget
 {
 public:
-    typedef std::function<PopupWidget * (PopupButtonWidget const &)> Constructor;
+    typedef std::function<PopupWidget * (const PopupButtonWidget &)> Constructor;
     typedef std::function<void (PopupWidget *)> Opener;
 
 public:
-    PopupButtonWidget(String const &name = String());
+    PopupButtonWidget(const String &name = String());
 
     /**
      * Sets the popup that this button controls. The popup is automatically anchored

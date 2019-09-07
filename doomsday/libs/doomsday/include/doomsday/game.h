@@ -83,7 +83,7 @@ public:
      * @param id      Identifier. Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
      * @param params  Parameters.
      */
-    Game(de::String const &id, de::Record const &params);
+    Game(const de::String &id, const de::Record &params);
 
     virtual ~Game();
 
@@ -101,7 +101,7 @@ public:
      */
     void setRequiredPackages(const de::StringList &packageIds);
 
-    void addRequiredPackage(de::String const &packageId);
+    void addRequiredPackage(const de::String &packageId);
 
     /**
      * Returns the list of required package IDs for loading the game.
@@ -126,7 +126,7 @@ public:
      *
      * @see status()
      */
-    de::String const &statusAsText() const;
+    const de::String &statusAsText() const;
 
     /**
      * Returns information about the game as styled text. Printed by "inspectgame",
@@ -208,7 +208,7 @@ public:
     /**
      * Provides access to the manifests for efficent traversals.
      */
-    Manifests const &manifests() const;
+    const Manifests &manifests() const;
 
     /**
      * Is @a file required by this game? This decision is made by comparing the
@@ -244,7 +244,7 @@ public:
      *                  semicolon delimited list of identity keys.
      */
     void addResource(resourceclassid_t classId, de::dint rflags,
-                     char const *names, void const *params);
+                     const char *names, const void *params);
 
     /**
      * Returns the built-in profile of the game.
@@ -252,7 +252,7 @@ public:
     GameProfile &profile() const;
 
     // IObject.
-    de::Record const &objectNamespace() const;
+    const de::Record &objectNamespace() const;
     de::Record &objectNamespace();
 
 public:
@@ -262,7 +262,7 @@ public:
      * @todo This has been moved here so that strings like the game title and author
      *       can be overridden (e.g., via DEHACKED). Make it so!
      */
-    static void printBanner(Game const &game);
+    static void printBanner(const Game &game);
 
     /**
      * Composes a list of the resource files of the game.
@@ -274,12 +274,12 @@ public:
      */
     de::String filesAsText(int rflags, bool withStatus = true) const;
 
-    static void printFiles(Game const &game, int rflags, bool printStatus = true);
+    static void printFiles(const Game &game, int rflags, bool printStatus = true);
 
     /// Register the console commands, variables, etc..., of this module.
     static void consoleRegister();
 
-    static de::String logoImageForId(de::String const &id);
+    static de::String logoImageForId(const de::String &id);
 
     /**
      * Checks the Config if using local packages is enabled in multiplayer games. The
@@ -288,7 +288,7 @@ public:
      */
     static bool isLocalPackagesEnabled();
 
-    static de::StringList localMultiplayerPackages(de::String const &gameId);
+    static de::StringList localMultiplayerPackages(const de::String &gameId);
 
     /**
      * Sets the packages that will be loaded locally in addition to the server's
@@ -296,7 +296,7 @@ public:
      *
      * @param packages  List of local packages.
      */
-    static void setLocalMultiplayerPackages(de::String const &gameId, de::StringList packages);
+    static void setLocalMultiplayerPackages(const de::String &gameId, de::StringList packages);
 
 private:
     DE_PRIVATE(d)

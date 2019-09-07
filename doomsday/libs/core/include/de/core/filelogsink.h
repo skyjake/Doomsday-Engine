@@ -34,7 +34,7 @@ class FileLogSink : public LogSink
 public:
     FileLogSink(File &outputFile);
 
-    LogSink &operator << (String const &plainText);
+    LogSink &operator << (const String &plainText);
 
     void flush();
 

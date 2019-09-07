@@ -57,7 +57,7 @@ static bool checkLogEntryMetadata(unsigned int &metadata)
     return de::LogBuffer::get().isEnabled(metadata);
 }
 
-static void logFragmentPrinter(duint32 metadata, char const *fragment)
+static void logFragmentPrinter(duint32 metadata, const char *fragment)
 {
     static std::string currentLogLine;
 
@@ -71,7 +71,7 @@ static void logFragmentPrinter(duint32 metadata, char const *fragment)
     }
 }
 
-void App_Log(unsigned int metadata, char const *format, ...)
+void App_Log(unsigned int metadata, const char *format, ...)
 {
     if (!checkLogEntryMetadata(metadata)) return;
 
@@ -99,7 +99,7 @@ void App_Timer(unsigned int milliseconds, void (*callback)(void))
     de::Loop::timer(de::TimeSpan::fromMilliSeconds(milliseconds), callback);
 }
 
-void App_FatalError(char const *msgFormat, ...)
+void App_FatalError(const char *msgFormat, ...)
 {
     char buffer[4096];
     de::zap(buffer);
@@ -115,7 +115,7 @@ void App_FatalError(char const *msgFormat, ...)
     exit(-1);
 }
 
-void CommandLine_Alias(char const *longname, char const *shortname)
+void CommandLine_Alias(const char *longname, const char *shortname)
 {
     DE_COMMANDLINE().alias(longname, shortname);
 }
@@ -125,14 +125,14 @@ int CommandLine_Count(void)
     return DE_COMMANDLINE().sizei();
 }
 
-char const *CommandLine_At(int i)
+const char *CommandLine_At(int i)
 {
     DE_ASSERT(i >= 0);
     DE_ASSERT(i < DE_COMMANDLINE().sizei());
     return *(DE_COMMANDLINE().argv() + i);
 }
 
-char const *CommandLine_PathAt(int i)
+const char *CommandLine_PathAt(int i)
 {
     DE_COMMANDLINE().makeAbsolutePath(i);
     return CommandLine_At(i);
@@ -140,7 +140,7 @@ char const *CommandLine_PathAt(int i)
 
 static int argLastMatch = 0; // used only in ArgCheck/ArgNext (not thread-safe)
 
-char const *CommandLine_Next(void)
+const char *CommandLine_Next(void)
 {
     if (!argLastMatch || argLastMatch >= CommandLine_Count() - 1)
     {
@@ -150,7 +150,7 @@ char const *CommandLine_Next(void)
     return CommandLine_At(++argLastMatch);
 }
 
-char const *CommandLine_NextAsPath(void)
+const char *CommandLine_NextAsPath(void)
 {
     if (!argLastMatch || argLastMatch >= CommandLine_Count() - 1)
     {
@@ -161,17 +161,17 @@ char const *CommandLine_NextAsPath(void)
     return CommandLine_Next();
 }
 
-int CommandLine_Check(char const *check)
+int CommandLine_Check(const char *check)
 {
     return argLastMatch = DE_COMMANDLINE().check(check);
 }
 
-int CommandLine_CheckWith(char const *check, int num)
+int CommandLine_CheckWith(const char *check, int num)
 {
     return argLastMatch = DE_COMMANDLINE().check(check, num);
 }
 
-int CommandLine_Exists(char const *check)
+int CommandLine_Exists(const char *check)
 {
     return DE_COMMANDLINE().has(check);
 }
@@ -181,7 +181,7 @@ int CommandLine_IsOption(int i)
     return DE_COMMANDLINE().isOption(i);
 }
 
-int CommandLine_IsMatchingAlias(char const *original, char const *originalOrAlias)
+int CommandLine_IsMatchingAlias(const char *original, const char *originalOrAlias)
 {
     return DE_COMMANDLINE().matches(original, originalOrAlias);
 }
@@ -204,7 +204,7 @@ void LogBuffer_EnableStandardOutput(int enable)
     de::LogBuffer::get().enableStandardOutput(enable != 0);
 }
 
-void LogBuffer_Printf(unsigned int metadata, char const *format, ...)
+void LogBuffer_Printf(unsigned int metadata, const char *format, ...)
 {
     if (!checkLogEntryMetadata(metadata)) return;
 
@@ -219,20 +219,20 @@ void LogBuffer_Printf(unsigned int metadata, char const *format, ...)
     logFragmentPrinter(metadata, buffer);
 }
 
-de_Info *Info_NewFromString(char const *utf8text)
+de_Info *Info_NewFromString(const char *utf8text)
 {
     try
     {
         return reinterpret_cast<de_Info *>(new de::Info(de::String::fromUtf8(utf8text)));
     }
-    catch (de::Error const &er)
+    catch (const de::Error &er)
     {
         LOG_WARNING(er.asText());
         return nullptr;
     }
 }
 
-de_Info *Info_NewFromFile(char const *nativePath)
+de_Info *Info_NewFromFile(const char *nativePath)
 {
     try
     {
@@ -240,7 +240,7 @@ de_Info *Info_NewFromFile(char const *nativePath)
         info->parseNativeFile(nativePath);
         return reinterpret_cast<de_Info *>(info.release());
     }
-    catch (de::Error const &er)
+    catch (const de::Error &er)
     {
         LOG_WARNING(er.asText());
         return nullptr;
@@ -256,14 +256,14 @@ void Info_Delete(de_Info *info)
     }
 }
 
-int Info_FindValue(de_Info *info, char const *path, char *buffer, size_t bufSize)
+int Info_FindValue(de_Info *info, const char *path, char *buffer, size_t bufSize)
 {
     if (!info) return false;
 
     DE_SELF(Info, info);
-    de::Info::Element const *element = self->findByPath(path);
+    const de::Info::Element *element = self->findByPath(path);
     if (!element || !element->isKey()) return false;
-    de::String value = static_cast<de::Info::KeyElement const *>(element)->value();
+    de::String value = static_cast<const de::Info::KeyElement *>(element)->value();
     if (buffer)
     {
         strncpy(buffer, value, bufSize);
@@ -276,7 +276,7 @@ int Info_FindValue(de_Info *info, char const *path, char *buffer, size_t bufSize
     }
 }
 
-char *UnixInfo_GetConfigValue(char const *configFile, char const *key)
+char *UnixInfo_GetConfigValue(const char *configFile, const char *key)
 {
     de::UnixInfo &info = de::App::unixInfo();
 

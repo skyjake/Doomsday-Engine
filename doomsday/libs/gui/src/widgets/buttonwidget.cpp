@@ -113,7 +113,7 @@ DE_GUI_PIMPL(ButtonWidget)
         }
     }
 
-    void updateHover(Vec2i const &pos)
+    void updateHover(const Vec2i &pos)
     {
         if (state == Down) return;
         if (self().isDisabled())
@@ -177,7 +177,7 @@ DE_GUI_PIMPL(ButtonWidget)
         }
     }
 
-    void setTemporaryTextColor(DotPath const &id)
+    void setTemporaryTextColor(const DotPath &id)
     {
         DotPath const original = originalTextColor;
         self().setTextColor(id); // originalTextColor changes...
@@ -193,7 +193,7 @@ DE_AUDIENCE_METHOD(ButtonWidget, StateChange)
 DE_AUDIENCE_METHOD(ButtonWidget, Press)
 DE_AUDIENCE_METHOD(ButtonWidget, Triggered)
 
-ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Impl(this))
+ButtonWidget::ButtonWidget(const String &name) : LabelWidget(name), d(new Impl(this))
 {
     setBehavior(Focusable);
     setColorTheme(Normal);
@@ -244,25 +244,25 @@ GuiWidget::ColorTheme ButtonWidget::colorTheme() const
     return d->colorTheme;
 }
 
-void ButtonWidget::setTextColor(DotPath const &colorId)
+void ButtonWidget::setTextColor(const DotPath &colorId)
 {
     LabelWidget::setTextColor(colorId);
     d->originalTextColor = colorId;
 }
 
-void ButtonWidget::setHoverTextColor(DotPath const &hoverTextId, HoverColorMode mode)
+void ButtonWidget::setHoverTextColor(const DotPath &hoverTextId, HoverColorMode mode)
 {
     d->hoverTextColor = hoverTextId;
     d->hoverColorMode = mode;
 }
 
-void ButtonWidget::setBackgroundColor(DotPath const &bgColorId)
+void ButtonWidget::setBackgroundColor(const DotPath &bgColorId)
 {
     d->bgColorId = bgColorId;
     d->updateBackground();
 }
 
-void ButtonWidget::setBorderColor(DotPath const &borderColorId)
+void ButtonWidget::setBorderColor(const DotPath &borderColorId)
 {
     d->borderColorId = borderColorId;
     d->updateBackground();
@@ -288,7 +288,7 @@ void ButtonWidget::setActionFn(std::function<void ()> callback)
     setAction(new CallbackAction(std::move(callback)));
 }
 
-Action const *ButtonWidget::action() const
+const Action *ButtonWidget::action() const
 {
     return d->action;
 }
@@ -346,13 +346,13 @@ bool ButtonWidget::handleShortcut(const KeyEvent &keyEvent)
     return false;
 }
 
-bool ButtonWidget::handleEvent(Event const &event)
+bool ButtonWidget::handleEvent(const Event &event)
 {
     if (isDisabled()) return false;
 
     if (event.isKey() && hasFocus())
     {
-        KeyEvent const &key = event.as<KeyEvent>();
+        const KeyEvent &key = event.as<KeyEvent>();
         if (key.ddKey() == DDKEY_RETURN ||
             key.ddKey() == DDKEY_ENTER  ||
             key.ddKey() == ' ')
@@ -368,7 +368,7 @@ bool ButtonWidget::handleEvent(Event const &event)
 
     if (event.isMouse())
     {
-        MouseEvent const &mouse = event.as<MouseEvent>();
+        const MouseEvent &mouse = event.as<MouseEvent>();
 
         if (mouse.type() == Event::MousePosition)
         {
@@ -408,7 +408,7 @@ bool ButtonWidget::updateModelViewProjection(Mat4f &mvp)
 {
     if (!fequal(d->scale, 1.f))
     {
-        Rectanglef const &pos = rule().rect();
+        const Rectanglef &pos = rule().rect();
 
         // Apply a scale animation to indicate button response.
         mvp = root().projMatrix2D() *

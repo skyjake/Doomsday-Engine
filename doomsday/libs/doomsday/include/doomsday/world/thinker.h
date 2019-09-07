@@ -52,7 +52,7 @@ typedef struct thinker_s {
 extern "C" {
 #endif
 
-LIBDOOMSDAY_PUBLIC dd_bool Thinker_InStasis(thinker_t const *thinker);
+LIBDOOMSDAY_PUBLIC dd_bool Thinker_InStasis(const thinker_t *thinker);
 
 /**
  * Change the 'in stasis' state of a thinker (stop it from thinking).
@@ -102,12 +102,12 @@ public:
     public:
         MemberDelegate(Thinker &thinker, int offset) : _thinker(thinker), _offset(offset) {}
         inline T &ref() { return *reinterpret_cast<T *>((char *)&_thinker.base() + _offset); }
-        inline T const &ref() const { return *reinterpret_cast<T const *>((char const *)&_thinker.base() + _offset); }
+        inline const T &ref() const { return *reinterpret_cast<const T *>((const char *)&_thinker.base() + _offset); }
         inline T &operator -> () { return ref(); } // pointer type T expected
-        inline T const &operator -> () const { return ref(); } // pointer type T expected
+        inline const T &operator -> () const { return ref(); } // pointer type T expected
         inline operator T & () { return ref(); }
-        inline operator T const & () const { return ref(); }
-        inline T &operator = (T const &other) {
+        inline operator const T & () const { return ref(); }
+        inline T &operator = (const T &other) {
             ref() = other;
             return ref();
         }
@@ -143,7 +143,7 @@ public:
 
     Thinker(AllocMethod alloc, de::dsize sizeInBytes = 0, IData *data = 0);
 
-    Thinker(Thinker const &other);
+    Thinker(const Thinker &other);
 
     /**
      * Constructs a copy of a POD thinker. A duplicate of the private data is made
@@ -153,7 +153,7 @@ public:
      * @param sizeInBytes  Size of the thinker struct.
      * @param alloc        Allocation method.
      */
-    Thinker(thinker_s const &podThinker, de::dsize sizeInBytes,
+    Thinker(const thinker_s &podThinker, de::dsize sizeInBytes,
             AllocMethod alloc = AllocateStandard);
 
     /**
@@ -164,13 +164,13 @@ public:
      */
     Thinker(thinker_s *podThinkerToTake, de::dsize sizeInBytes);
 
-    Thinker &operator = (Thinker const &other);
+    Thinker &operator = (const Thinker &other);
 
     operator thinker_s * () { return &base(); }
-    operator thinker_s const * () { return &base(); }
+    operator const thinker_s * () { return &base(); }
 
     struct thinker_s &base();
-    struct thinker_s const &base() const;
+    const struct thinker_s &base() const;
 
     void enable(bool yes = true);
     inline void disable(bool yes = true) { enable(!yes); }
@@ -202,7 +202,7 @@ public:
     struct thinker_s *take();
 
     IData &data();
-    IData const &data() const;
+    const IData &data() const;
 
     /**
      * Sets the private data for the thinker.
@@ -256,27 +256,27 @@ public:
         : Thinker(alloc, sizeof(Type)) {}
     ThinkerT(de::dsize sizeInBytes, AllocMethod alloc = AllocateStandard)
         : Thinker(alloc, sizeInBytes) {}
-    ThinkerT(Type const &thinker,
+    ThinkerT(const Type &thinker,
              de::dsize sizeInBytes = sizeof(Type),
              AllocMethod alloc     = AllocateStandard)
-        : Thinker(reinterpret_cast<thinker_s const &>(thinker), sizeInBytes, alloc) {}
+        : Thinker(reinterpret_cast<const thinker_s &>(thinker), sizeInBytes, alloc) {}
     ThinkerT(Type *thinkerToTake, de::dsize sizeInBytes = sizeof(Type))
         : Thinker(reinterpret_cast<thinker_s *>(thinkerToTake), sizeInBytes) {}
 
     Type &base() { return *reinterpret_cast<Type *>(&Thinker::base()); }
-    Type const &base() const { return *reinterpret_cast<Type const *>(&Thinker::base()); }
+    const Type &base() const { return *reinterpret_cast<const Type *>(&Thinker::base()); }
 
     Type *operator -> () { return &base(); }
-    Type const *operator -> () const { return &base(); }
+    const Type *operator -> () const { return &base(); }
 
     operator Type * () { return &base(); }
-    operator Type const * () const { return &base(); }
+    operator const Type * () const { return &base(); }
 
     operator void * () { return reinterpret_cast<void *>(&base()); }
-    operator void const * () const { return reinterpret_cast<void const *>(&base()); }
+    operator const void * () const { return reinterpret_cast<const void *>(&base()); }
 
     operator Type & () { return base(); }
-    operator Type const & () const { return base(); }
+    operator const Type & () const { return base(); }
 
     Type *take() { return reinterpret_cast<Type *>(Thinker::take()); }
 

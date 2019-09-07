@@ -36,7 +36,7 @@ DE_PIMPL(Timeline)
         TimeSpan at;
         Script script;
 
-        Event(TimeSpan at, String const &source, String const &sourcePath)
+        Event(TimeSpan at, const String &source, const String &sourcePath)
             : at(at)
             , script(source)
         {
@@ -44,7 +44,7 @@ DE_PIMPL(Timeline)
         }
 
         struct Compare {
-            bool operator () (Event const *a, Event const *b) { return a->at > b->at; }
+            bool operator () (const Event *a, const Event *b) { return a->at > b->at; }
         };
     };
     typedef std::priority_queue<Event *, std::deque<Event *>, Event::Compare> Events;
@@ -103,26 +103,26 @@ Record *Timeline::context() const
     return d->context;
 }
 
-Script &Timeline::addScript(TimeSpan at, String const &source, String const &sourcePath)
+Script &Timeline::addScript(TimeSpan at, const String &source, const String &sourcePath)
 {
     auto *ev = new Impl::Event(at, source, sourcePath);
     d->events.push(ev);
     return ev->script;
 }
 
-void Timeline::addFromInfo(Record const &timelineRecord)
+void Timeline::addFromInfo(const Record &timelineRecord)
 {
     auto scripts = ScriptedInfo::subrecordsOfType(ScriptedInfo::SCRIPT, timelineRecord);
     for (String key : ScriptedInfo::sortRecordsBySource(scripts))
     {
-        auto const &def = *scripts[key];
+        const auto &def = *scripts[key];
         try
         {
             addScript(def.getd("at", 0.0),
                       def.gets(ScriptedInfo::SCRIPT),
                       ScriptedInfo::sourceLocation(def));
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_RES_ERROR("%s: Error in timeline script: %s")
                     << ScriptedInfo::sourceLocation(def)
@@ -139,7 +139,7 @@ DE_PIMPL_NOREF(Timeline::Clock)
     typedef Timeline::Impl::Events Events; // Events not owned
 
     Record *context = nullptr;
-    Timeline const *scheduler = nullptr;
+    const Timeline *scheduler = nullptr;
     TimeSpan at = 0.0;
     Events events;
 
@@ -165,7 +165,7 @@ DE_PIMPL_NOREF(Timeline::Clock)
 
         while (!events.empty())
         {
-            Event const *ev = events.top();
+            const Event *ev = events.top();
             if (ev->at > at) break;
 
             events.pop();
@@ -178,7 +178,7 @@ DE_PIMPL_NOREF(Timeline::Clock)
     }
 };
 
-Timeline::Clock::Clock(Timeline const &schedule, Record *context)
+Timeline::Clock::Clock(const Timeline &schedule, Record *context)
     : d(new Impl)
 {
     d->scheduler = &schedule;

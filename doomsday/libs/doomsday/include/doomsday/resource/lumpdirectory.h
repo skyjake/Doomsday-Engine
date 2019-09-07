@@ -64,7 +64,7 @@ public:
      * @param wadData  Data of a WAD file. No reference to the data is kept
      *                 afterwards.
      */
-    LumpDirectory(IByteArray const &wadData);
+    LumpDirectory(const IByteArray &wadData);
 
     bool isValid() const;
 
@@ -77,7 +77,7 @@ public:
      */
     Pos count() const;
 
-    Entry const &entry(Pos pos) const;
+    const Entry &entry(Pos pos) const;
 
     /**
      * Returns the CRC32 of the directory entries. This is not influenced by
@@ -92,9 +92,9 @@ public:
      *
      * @return @c true, if the lump is in the directory.
      */
-    bool has(Block const &lumpName) const;
+    bool has(const Block &lumpName) const;
 
-    duint32 lumpSize(Block const &lumpName) const;
+    duint32 lumpSize(const Block &lumpName) const;
 
     /**
      * Finds the entry of a lump in the directory. If there are multiple lumps with

@@ -32,9 +32,9 @@ namespace de {
 class LIBGUI_PUBLIC FocusWidget : public LabelWidget
 {
 public:
-    FocusWidget(de::String const &name = "focus");
+    FocusWidget(const de::String &name = "focus");
 
-    void startFlashing(GuiWidget const *reference = nullptr);
+    void startFlashing(const GuiWidget *reference = nullptr);
     void stopFlashing();
 
     void fadeIn();

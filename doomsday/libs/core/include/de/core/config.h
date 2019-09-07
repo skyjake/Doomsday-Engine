@@ -60,7 +60,7 @@ public:
      *
      * @param path  Name of the configuration file to read.
      */
-    Config(Path const &path);
+    Config(const Path &path);
 
     /// Read configuration from files.
     ReadStatus read();
@@ -81,10 +81,10 @@ public:
     Variable &set(const String &name, bool value);
 
     /// @copydoc set()
-    Variable &set(const String &name, Value::Text const &value);
+    Variable &set(const String &name, const Value::Text &value);
 
     /// @copydoc set()
-    Variable &set(const String &name, Value::Number const &value);
+    Variable &set(const String &name, const Value::Number &value);
 
     /// @copydoc set()
     Variable &set(const String &name, dint value);
@@ -108,7 +108,7 @@ public:
 
     // Implements IObject.
     Record &objectNamespace();
-    Record const &objectNamespace() const;
+    const Record &objectNamespace() const;
 
     static Config &get();
     static Variable &get(const String &name);

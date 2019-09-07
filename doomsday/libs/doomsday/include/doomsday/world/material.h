@@ -50,7 +50,7 @@ class LIBDOOMSDAY_PUBLIC Material : public MapElement
 {
 public:
     /// Notified when the material is about to be deleted.
-    DE_AUDIENCE(Deletion,         void materialBeingDeleted(Material const &))
+    DE_AUDIENCE(Deletion,         void materialBeingDeleted(const Material &))
 
     /// Notified whenever the logical dimensions change.
     DE_AUDIENCE(DimensionsChange, void materialDimensionsChanged(Material &))
@@ -71,7 +71,7 @@ public:
     /**
      * Returns the dimension metrics of the material.
      */
-    Vec2ui const &dimensions() const;
+    const Vec2ui &dimensions() const;
 
     inline int width () const { return int(dimensions().x); }
     inline int height() const { return int(dimensions().y); }
@@ -79,7 +79,7 @@ public:
     /**
      * Change the world dimensions of the material to @a newDimensions.
      */
-    void setDimensions(Vec2ui const &newDimensions);
+    void setDimensions(const Vec2ui &newDimensions);
 
     void setWidth (int newWidth);
     void setHeight(int newHeight);
@@ -171,7 +171,7 @@ public:
             float variance;  ///< Stage variance (time).
 
             Stage(int tics, float variance) : tics(tics), variance(variance) {}
-            Stage(Stage const &other) : tics(other.tics), variance(other.variance) {}
+            Stage(const Stage &other) : tics(other.tics), variance(other.variance) {}
             virtual ~Stage() {}
 
             DE_CAST_METHODS()

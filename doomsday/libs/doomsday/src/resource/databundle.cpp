@@ -60,7 +60,7 @@ static const char *TIMESTAMP_FORMAT = "0.%Y.%m%d.%H%M";
 
 namespace internal
 {
-    static char const *formatDescriptions[] =
+    static const char *formatDescriptions[] =
     {
         "unknown",
         "PK3 archive",
@@ -306,7 +306,7 @@ DE_PIMPL(DataBundle), public Lockable
                 return meta;
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOGDEV_RES_WARNING("Corrupt cached metadata: %s") << er.asText();
         }
@@ -600,7 +600,7 @@ DE_PIMPL(DataBundle), public Lockable
      * @param infoFile  Snowberry Info file.
      * @param meta      Package metadata.
      */
-    void parseSnowberryInfo(File const &infoFile, Record &meta)
+    void parseSnowberryInfo(const File &infoFile, Record &meta)
     {
         Info info;
         String parseErrorMsg;
@@ -608,11 +608,11 @@ DE_PIMPL(DataBundle), public Lockable
         {
             info.parse(infoFile);
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             parseErrorMsg = er.asText();
         }
-        auto const &rootBlock = info.root();
+        const auto &rootBlock = info.root();
 
         // Tag it as a Snowberry package.
         meta.appendUniqueWord(VAR_TAGS(), "legacy");
@@ -655,7 +655,7 @@ DE_PIMPL(DataBundle), public Lockable
             }
         }
 
-        if (Info::BlockElement const *english = rootBlock.findAs<Info::BlockElement>("english"))
+        if (const Info::BlockElement *english = rootBlock.findAs<Info::BlockElement>("english"))
         {
             if (english->blockType() == "language")
             {
@@ -754,7 +754,7 @@ DE_PIMPL(DataBundle), public Lockable
         }
     }
 
-    bool identifyMostLikelyGame(String const &text, String &identifiedTag)
+    bool identifyMostLikelyGame(const String &text, String &identifiedTag)
     {
         if (text.isEmpty()) return false;
 
@@ -772,7 +772,7 @@ DE_PIMPL(DataBundle), public Lockable
         Hash<String, int> scores;
         for (auto &i : terms) //= terms.constBegin(); i != terms.constEnd(); ++i)
         {
-            for (String const &term : i.second)
+            for (const String &term : i.second)
             {
                 const RegExp re(term, CaseInsensitive);
                 if (re.hasMatch(text))
@@ -802,20 +802,20 @@ DE_PIMPL(DataBundle), public Lockable
         return true;*/
     }
 
-    static bool containsAnyGameTag(Record const &meta)
+    static bool containsAnyGameTag(const Record &meta)
     {
         return countGameTags(meta) > 0;
     }
 
-    static bool containsAmbiguousGameTags(Record const &meta)
+    static bool containsAmbiguousGameTags(const Record &meta)
     {
         return countGameTags(meta) != 1;
     }
 
-    static int countGameTags(Record const &meta)
+    static int countGameTags(const Record &meta)
     {
         int count = 0;
-        for (auto const &tag : gameTags())
+        for (const auto &tag : gameTags())
         {
             const RegExp re(Stringf("\\b%s\\b", tag.c_str()), CaseInsensitive);
             RegExpMatch match;
@@ -985,7 +985,7 @@ DE_PIMPL(DataBundle), public Lockable
             }
             else
             {
-                auto const &file = bundleFolder().locate<File const>(linkPath);
+                const auto &file = bundleFolder().locate<File const>(linkPath);
 
                 if (const auto *linkFile = maybeAs<LinkFile>(file))
                 {
@@ -1109,12 +1109,12 @@ File &DataBundle::asFile()
     return *dynamic_cast<File *>(this);
 }
 
-File const &DataBundle::asFile() const
+const File &DataBundle::asFile() const
 {
-    return *dynamic_cast<File const *>(this);
+    return *dynamic_cast<const File *>(this);
 }
 
-File const &DataBundle::sourceFile() const
+const File &DataBundle::sourceFile() const
 {
     return *asFile().source();
 }
@@ -1160,7 +1160,7 @@ void DataBundle::get(Offset at, Byte *values, Size count) const
     d->source->as<ByteArrayFile>().get(at, values, count);
 }
 
-void DataBundle::set(Offset, Byte const *, Size)
+void DataBundle::set(Offset, const Byte *, Size)
 {
     throw File::OutputError("DataBundle::set", "Classic data formats are read-only");
 }
@@ -1171,15 +1171,15 @@ Record &DataBundle::objectNamespace()
     return asFile().objectNamespace().subrecord(DE_STR("package"));
 }
 
-Record const &DataBundle::objectNamespace() const
+const Record &DataBundle::objectNamespace() const
 {
-    DE_ASSERT(dynamic_cast<File const *>(this) != nullptr);
+    DE_ASSERT(dynamic_cast<const File *>(this) != nullptr);
     return asFile().objectNamespace().subrecord(DE_STR("package"));
 }
 
-DataBundle::Format DataBundle::packageBundleFormat(String const &packageId) // static
+DataBundle::Format DataBundle::packageBundleFormat(const String &packageId) // static
 {
-    if (auto const *bundle = bundleForPackage(packageId))
+    if (const auto *bundle = bundleForPackage(packageId))
     {
         Guard g(bundle->d);
         return bundle->format();
@@ -1187,11 +1187,11 @@ DataBundle::Format DataBundle::packageBundleFormat(String const &packageId) // s
     return Unknown;
 }
 
-DataBundle const *DataBundle::bundleForPackage(String const &packageId) // static
+const DataBundle *DataBundle::bundleForPackage(const String &packageId) // static
 {
-    if (File const *file = PackageLoader::get().select(packageId))
+    if (const File *file = PackageLoader::get().select(packageId))
     {
-        if (auto const *bundle = maybeAs<DataBundle>(file->target()))
+        if (const auto *bundle = maybeAs<DataBundle>(file->target()))
         {
             return bundle;
         }
@@ -1199,7 +1199,7 @@ DataBundle const *DataBundle::bundleForPackage(String const &packageId) // stati
     return nullptr;
 }
 
-DataBundle const *DataBundle::tryLocateDataFile(Package const &package, String const &dataFilePath)
+const DataBundle *DataBundle::tryLocateDataFile(const Package &package, const String &dataFilePath)
 {
     if (const auto *bundle = package.root().tryLocate<const DataBundle>(dataFilePath))
     {
@@ -1225,7 +1225,7 @@ bool DataBundle::identifyPackages() const
     {
         return d->identify();
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_RES_WARNING("Failed to identify %s: %s") << description() << er.asText();
     }
@@ -1247,7 +1247,7 @@ Record &DataBundle::packageMetadata()
     return d->pkgLink->objectNamespace().subrecord(Package::VAR_PACKAGE);
 }
 
-Record const &DataBundle::packageMetadata() const
+const Record &DataBundle::packageMetadata() const
 {
     return const_cast<DataBundle *>(this)->packageMetadata();
 }
@@ -1259,7 +1259,7 @@ bool DataBundle::isNested() const
 
 DataBundle *DataBundle::containerBundle() const
 {
-    auto const *file = dynamic_cast<File const *>(this);
+    const auto *file = dynamic_cast<const File *>(this);
     DE_ASSERT(file != nullptr);
 
     for (Folder *folder = file->parent(); folder; folder = folder->parent())
@@ -1274,7 +1274,7 @@ DataBundle *DataBundle::containerBundle() const
 
 String DataBundle::containerPackageId() const
 {
-    auto const *file = dynamic_cast<File const *>(this);
+    const auto *file = dynamic_cast<const File *>(this);
     DE_ASSERT(file != nullptr);
 
     return Package::identifierForContainerOfFile(*file);
@@ -1285,7 +1285,7 @@ bool DataBundle::readLumpDirectory() const
     return d->readLumpDirectory();
 }
 
-res::LumpDirectory const *DataBundle::lumpDirectory() const
+const res::LumpDirectory *DataBundle::lumpDirectory() const
 {
     return d->lumpDir.get();
 }
@@ -1314,7 +1314,7 @@ File *DataBundle::Interpreter::interpretFile(File *sourceData) const
         { ".box",     Collection },
     };
 
-    for (auto const &fmt : formats)
+    for (const auto &fmt : formats)
     {
         if (sourceData->name().endsWith(fmt.str, CaseInsensitive))
         {
@@ -1337,14 +1337,14 @@ File *DataBundle::Interpreter::interpretFile(File *sourceData) const
     return nullptr;
 }
 
-List<DataBundle const *> DataBundle::loadedBundles() // static
+List<const DataBundle *> DataBundle::loadedBundles() // static
 {
-    List<DataBundle const *> loaded;
+    List<const DataBundle *> loaded;
 
     // Check all the loaded packages to see which ones are data bundles.
     for (auto *f : PackageLoader::get().loadedPackagesAsFilesInPackageOrder())
     {
-        if (DataBundle const *bundle = maybeAs<DataBundle>(f))
+        if (const DataBundle *bundle = maybeAs<DataBundle>(f))
         {
             // Non-collection data files are loaded as-is.
             loaded << bundle;
@@ -1352,10 +1352,10 @@ List<DataBundle const *> DataBundle::loadedBundles() // static
         else
         {
             // Packages may declare a list of data files to load.
-            Package const *pkg = PackageLoader::get().tryFindLoaded(*f);
+            const Package *pkg = PackageLoader::get().tryFindLoaded(*f);
             DE_ASSERT(pkg);
 
-            auto const &meta = Package::metadata(*f);
+            const auto &meta = Package::metadata(*f);
             if (meta.has(VAR_DATA_FILES()))
             {
                 for (const Value *v : meta.geta(VAR_DATA_FILES()).elements())
@@ -1363,7 +1363,7 @@ List<DataBundle const *> DataBundle::loadedBundles() // static
                     String const dataFilePath = v->asText();
 
                     // Look up the data bundle file.
-                    if (DataBundle const *bundle = tryLocateDataFile(*pkg, dataFilePath))
+                    if (const DataBundle *bundle = tryLocateDataFile(*pkg, dataFilePath))
                     {
                         // Identify it now (if not already identified). Note that data
                         // files inside packages usually aren't identified during
@@ -1390,24 +1390,24 @@ List<DataBundle const *> DataBundle::loadedBundles() // static
     return loaded;
 }
 
-List<DataBundle const *> DataBundle::findAllNative(String const &fileNameOrPartialNativePath)
+List<const DataBundle *> DataBundle::findAllNative(const String &fileNameOrPartialNativePath)
 {
     NativePath const searchPath = NativePath(fileNameOrPartialNativePath).expand();
 
     FS::FoundFiles found;
     FS::get().findAllOfTypes(
         {DE_TYPE_NAME(DataFile), DE_TYPE_NAME(DataFolder)}, searchPath.fileName(), found);
-    List<DataBundle const *> bundles;
-    for (auto const *f : found)
+    List<const DataBundle *> bundles;
+    for (const auto *f : found)
     {
-        DE_ASSERT(dynamic_cast<DataBundle const *>(f));
-        bundles << dynamic_cast<DataBundle const *>(f);
+        DE_ASSERT(dynamic_cast<const DataBundle *>(f));
+        bundles << dynamic_cast<const DataBundle *>(f);
     }
 
     // Omit the ones that don't match the given native path.
     if (!searchPath.fileNamePath().isEmpty())
     {
-        bundles = de::filter(bundles, [&searchPath] (DataBundle const *b)
+        bundles = de::filter(bundles, [&searchPath] (const DataBundle *b)
         {
             NativePath const bundlePath = b->asFile().correspondingNativePath().fileNamePath();
             if (bundlePath.isEmpty()) return false;
@@ -1435,7 +1435,7 @@ String DataBundle::anyGameTagPattern()
     return Stringf("\\b(%s)\\b", String::join(gameTags(), "|").c_str());
 }
 
-String DataBundle::cleanIdentifier(String const &text)
+String DataBundle::cleanIdentifier(const String &text)
 {
     // Periods and underscores have special meaning in packages IDs.
     // Whitespace is used as separator in package ID lists (see PackageLoader).
@@ -1447,7 +1447,7 @@ String DataBundle::cleanIdentifier(String const &text)
     return cleaned;
 }
 
-String DataBundle::stripVersion(String const &text, Version *version)
+String DataBundle::stripVersion(const String &text, Version *version)
 {
     static const RegExp re(".*([-_. ]v?([0-9._-]+))$");
     RegExpMatch match;
@@ -1464,7 +1464,7 @@ String DataBundle::stripVersion(String const &text, Version *version)
     return text;
 }
 
-String DataBundle::stripRedundantParts(String const &id)
+String DataBundle::stripRedundantParts(const String &id)
 {
     const DotPath path(id);
     String stripped = path.segment(0).toLowercaseString();

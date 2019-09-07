@@ -32,7 +32,7 @@ DE_PIMPL_NOREF(DialogWidget)
 };
 DE_AUDIENCE_METHODS(DialogWidget, Accept, Reject)
 
-DialogWidget::DialogWidget(String const &name)
+DialogWidget::DialogWidget(const String &name)
     : Widget(name), d(new Impl)
 {
     // Dialogs are hidden until executed.
@@ -83,11 +83,11 @@ void DialogWidget::draw()
     targetCanvas().drawLineRect(pos);
 }
 
-bool DialogWidget::handleEvent(Event const &event)
+bool DialogWidget::handleEvent(const Event &event)
 {
     if (event.type() == Event::KeyPress)
     {
-        KeyEvent const &ev = event.as<KeyEvent>();
+        const KeyEvent &ev = event.as<KeyEvent>();
         if (ev.key() == Key::Escape)
         {
             reject();

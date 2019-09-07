@@ -142,7 +142,7 @@ DE_PIMPL(DoomsdayApp)
     Games              games;
     Game *             currentGame = nullptr;
     GameProfile        adhocProfile;
-    GameProfile const *currentProfile = nullptr;
+    const GameProfile *currentProfile = nullptr;
     StringList         preGamePackages;
     GameProfiles       gameProfiles;
     BusyMode           busyMode;
@@ -159,7 +159,7 @@ DE_PIMPL(DoomsdayApp)
     class GameChangeScriptAudience : DE_OBSERVES(DoomsdayApp, GameChange)
     {
     public:
-        void currentGameChanged(Game const &newGame)
+        void currentGameChanged(const Game &newGame)
         {
             ArrayValue args;
             args << DictionaryValue() << TextValue(newGame.id());
@@ -295,7 +295,7 @@ DE_PIMPL(DoomsdayApp)
         }
     }
 
-    void attachPacksFeed(String const &description, NativePath const &path,
+    void attachPacksFeed(const String &description, const NativePath &path,
                          Flags populationMode)
     {
         if (!path.isEmpty())
@@ -319,25 +319,25 @@ DE_PIMPL(DoomsdayApp)
         }
     }
 
-    void initCommandLineFiles(String const &option)
+    void initCommandLineFiles(const String &option)
     {
         FileSystem::get().makeFolder("/sys/cmdline", FS::DontInheritFeeds);
 
-        CommandLine::get().forAllParameters(option, [] (duint pos, String const &)
+        CommandLine::get().forAllParameters(option, [] (duint pos, const String &)
         {
             try
             {
                 auto &cmdLine = CommandLine::get();
                 cmdLine.makeAbsolutePath(pos);
                 Folder &argFolder = FS::get().makeFolder(Stringf("/sys/cmdline/arg%03i", pos));
-                File const &argFile = DirectoryFeed::manuallyPopulateSingleFile
+                const File &argFile = DirectoryFeed::manuallyPopulateSingleFile
                         (cmdLine.at(pos), argFolder);
                 // For future reference, store the name of the actual intended file as
                 // metadata in the "arg00N" folder. This way we don't need to go looking
                 // for it again later.
                 argFolder.objectNamespace().set("argPath", argFile.path());
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 throw Error("DoomsdayApp::initCommandLineFiles",
                             stringf("Problem with file path in command line argument %u: %s",
@@ -381,7 +381,7 @@ DE_PIMPL(DoomsdayApp)
                 "DOOM 3 BFG Edition/base/wads"
             };
 
-            for (auto const &appDir : appDirs)
+            for (const auto &appDir : appDirs)
             {
                 NativePath const p = steamPath / appDir;
                 if (p.exists())
@@ -511,7 +511,7 @@ DE_PIMPL(DoomsdayApp)
 #endif
     }
 
-//    void remoteRepositoryStatusChanged(String const &address, filesys::RemoteFeedRelay::Status status) override
+//    void remoteRepositoryStatusChanged(const String &address, filesys::RemoteFeedRelay::Status status) override
 //    {
 //        foreach (auto p, filesys::RemoteFeedRelay::get().locatePackages(
 //                     StringList({"idgames.levels.doom2.deadmen"})))
@@ -645,7 +645,7 @@ List<File *> DoomsdayApp::filesFromCommandLine() const
                 files << &FS::locate<File>(file.as<Folder>().objectNamespace().gets("argPath"));
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_RES_ERROR("Problem with a file specified on the command line: %s")
                     << er.asText();
@@ -775,7 +775,7 @@ void DoomsdayApp::setShuttingDown(bool shuttingDown)
     d->shuttingDown = shuttingDown;
 }
 
-std::string const &DoomsdayApp::doomsdayBasePath() const
+const std::string &DoomsdayApp::doomsdayBasePath() const
 {
     return d->ddBasePath;
 }
@@ -785,7 +785,7 @@ GameProfile &DoomsdayApp::adhocProfile()
     return d->adhocProfile;
 }
 
-void DoomsdayApp::setDoomsdayBasePath(NativePath const &path)
+void DoomsdayApp::setDoomsdayBasePath(const NativePath &path)
 {
     NativePath cleaned = App::commandLine().startupPath() / path; // In case it's relative.
     cleaned.addTerminatingSeparator();
@@ -800,13 +800,13 @@ void DoomsdayApp::setDoomsdayBasePath(NativePath const &path)
 // }
 // #endif
 
-Game const &DoomsdayApp::game()
+const Game &DoomsdayApp::game()
 {
     DE_ASSERT(app().d->currentGame != 0);
     return *app().d->currentGame;
 }
 
-GameProfile const *DoomsdayApp::currentGameProfile()
+const GameProfile *DoomsdayApp::currentGameProfile()
 {
     return app().d->currentProfile;
 }
@@ -833,7 +833,7 @@ StringList DoomsdayApp::loadedPackagesAffectingGameplay() // static
     return ids;
 }
 
-void DoomsdayApp::unloadGame(GameProfile const &/*upcomingGame*/)
+void DoomsdayApp::unloadGame(const GameProfile &/*upcomingGame*/)
 {
     auto &gx = plugins().gameExports();
 
@@ -929,17 +929,17 @@ void DoomsdayApp::reset()
     d->currentProfile = nullptr;
 }
 
-void DoomsdayApp::gameSessionWasSaved(AbstractSession const &, GameStateFolder &)
+void DoomsdayApp::gameSessionWasSaved(const AbstractSession &, GameStateFolder &)
 {
     //qDebug() << "App saving to" << toFolder.description();
 }
 
-void DoomsdayApp::gameSessionWasLoaded(AbstractSession const &, GameStateFolder const &)
+void DoomsdayApp::gameSessionWasLoaded(const AbstractSession &, const GameStateFolder &)
 {
     //qDebug() << "App loading from" << fromFolder.description();
 }
 
-void DoomsdayApp::setGame(Game const &game)
+void DoomsdayApp::setGame(const Game &game)
 {
     app().d->currentGame = const_cast<Game *>(&game);
 }
@@ -985,7 +985,7 @@ void DoomsdayApp::makeGameCurrent(const GameProfile &profile)
     {
         profile.loadPackages();
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_RES_ERROR("Failed to load the packages of profile \"%s\": %s")
                 << profile.name()
@@ -998,7 +998,7 @@ extern int beginGameChangeBusyWorker(void *context);
 extern int loadGameStartupResourcesBusyWorker(void *context);
 extern int loadAddonResourcesBusyWorker(void *context);
 
-bool DoomsdayApp::changeGame(GameProfile const &profile,
+bool DoomsdayApp::changeGame(const GameProfile &profile,
                              const std::function<int (void *)> &gameActivationFunc,
                              Behaviors behaviors)
 {

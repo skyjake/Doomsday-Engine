@@ -47,7 +47,7 @@ public:
      *                           ArchiveFolder uses this file as its source.
      * @param name               Name for the folder.
      */
-    ArchiveFolder(File &sourceArchiveFile, String const &name = String());
+    ArchiveFolder(File &sourceArchiveFile, const String &name = String());
 
     virtual ~ArchiveFolder();
 
@@ -61,7 +61,7 @@ public:
     Archive &archive();
 
     /// @copydoc archive()
-    Archive const &archive() const;
+    const Archive &archive() const;
 };
 
 } // namespace de

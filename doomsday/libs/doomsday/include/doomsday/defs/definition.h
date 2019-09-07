@@ -33,14 +33,14 @@ class LIBDOOMSDAY_PUBLIC Definition : public de::RecordAccessor
 {
 public:
     Definition()                        : RecordAccessor(0) {}
-    Definition(Definition const &other) : RecordAccessor(other) {}
+    Definition(const Definition &other) : RecordAccessor(other) {}
     Definition(de::Record &d)           : RecordAccessor(d) {}
-    Definition(de::Record const &d)     : RecordAccessor(d) {}
+    Definition(const de::Record &d)     : RecordAccessor(d) {}
 
     virtual ~Definition();
 
     de::Record &def();
-    de::Record const &def() const;
+    const de::Record &def() const;
 
     /**
      * Determines if this definition accessor points to a record.

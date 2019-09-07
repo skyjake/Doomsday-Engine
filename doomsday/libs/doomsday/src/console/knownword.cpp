@@ -50,10 +50,10 @@ void Con_ClearKnownWords(void)
 }
 
 /// Returns @c true, if a < b.
-static bool compareKnownWordByName(knownword_t const &a, knownword_t const &b)
+static bool compareKnownWordByName(const knownword_t &a, const knownword_t &b)
 {
-    knownword_t const *wA = &a;
-    knownword_t const *wB = &b;
+    const knownword_t *wA = &a;
+    const knownword_t *wB = &b;
     AutoStr *textA = 0, *textB = 0;
 
     switch (wA->type)
@@ -61,7 +61,7 @@ static bool compareKnownWordByName(knownword_t const &a, knownword_t const &b)
     case WT_CALIAS:   textA = AutoStr_FromTextStd(((calias_t *)wA->data)->name); break;
     case WT_CCMD:     textA = AutoStr_FromTextStd(((ccmd_t *)wA->data)->name); break;
     case WT_CVAR:     textA = CVar_ComposePath((cvar_t *)wA->data); break;
-    case WT_GAME:     textA = AutoStr_FromTextStd(reinterpret_cast<Game const *>(wA->data)->id()); break;
+    case WT_GAME:     textA = AutoStr_FromTextStd(reinterpret_cast<const Game *>(wA->data)->id()); break;
 
     default:
         DE_ASSERT_FAIL("compareKnownWordByName: Invalid type for word A");
@@ -73,7 +73,7 @@ static bool compareKnownWordByName(knownword_t const &a, knownword_t const &b)
     case WT_CALIAS:   textB = AutoStr_FromTextStd(((calias_t *)wB->data)->name); break;
     case WT_CCMD:     textB = AutoStr_FromTextStd(((ccmd_t *)wB->data)->name); break;
     case WT_CVAR:     textB = CVar_ComposePath((cvar_t *)wB->data); break;
-    case WT_GAME:     textB = AutoStr_FromTextStd(reinterpret_cast<Game const *>(wB->data)->id()); break;
+    case WT_GAME:     textB = AutoStr_FromTextStd(reinterpret_cast<const Game *>(wB->data)->id()); break;
 
     default:
         DE_ASSERT_FAIL("compareKnownWordByName: Invalid type for word B");
@@ -86,7 +86,7 @@ static bool compareKnownWordByName(knownword_t const &a, knownword_t const &b)
 /**
  * @return New AutoStr with the text of the known word. Caller gets ownership.
  */
-static AutoStr *textForKnownWord(knownword_t const *word)
+static AutoStr *textForKnownWord(const knownword_t *word)
 {
     AutoStr *text = 0;
 
@@ -95,7 +95,7 @@ static AutoStr *textForKnownWord(knownword_t const *word)
     case WT_CALIAS:   text = AutoStr_FromTextStd(((calias_t *)word->data)->name); break;
     case WT_CCMD:     text = AutoStr_FromTextStd(((ccmd_t *)word->data)->name); break;
     case WT_CVAR:     text = CVar_ComposePath((cvar_t *)word->data); break;
-    case WT_GAME:     text = AutoStr_FromTextStd(reinterpret_cast<Game const *>(word->data)->id()); break;
+    case WT_GAME:     text = AutoStr_FromTextStd(reinterpret_cast<const Game *>(word->data)->id()); break;
 
     default:
         DE_ASSERT_FAIL("textForKnownWord: Invalid type for word");
@@ -112,7 +112,7 @@ static dd_bool removeFromKnownWords(knownwordtype_t type, void* data)
 
     for (int i = 0; i < knownWords.size(); ++i)
     {
-        knownword_t const &word = knownWords.at(i);
+        const knownword_t &word = knownWords.at(i);
 
         if (word.type != type || word.data != data)
             continue;
@@ -190,13 +190,13 @@ static void updateKnownWords(void)
     knownWordsNeedUpdate = false;
 }
 
-AutoStr *Con_KnownWordToString(knownword_t const *word)
+AutoStr *Con_KnownWordToString(const knownword_t *word)
 {
     return textForKnownWord(word);
 }
 
-int Con_IterateKnownWords(char const *pattern, knownwordtype_t type,
-                          int (*callback)(knownword_t const *word, void *parameters),
+int Con_IterateKnownWords(const char *pattern, knownwordtype_t type,
+                          int (*callback)(const knownword_t *word, void *parameters),
                           void *parameters)
 {
     return Con_IterateKnownWords(KnownWordStartsWith, pattern, type, callback, parameters);
@@ -218,7 +218,7 @@ int Con_IterateKnownWords(KnownWordMatchMode matchMode,
 
     for (int i = 0; i < knownWords.sizei(); ++i)
     {
-        knownword_t const *word = &knownWords.at(i);
+        const knownword_t *word = &knownWords.at(i);
         if (matchType != WT_ANY && word->type != type) continue;
 
         if (patternLength)
@@ -293,7 +293,7 @@ knownword_t const** Con_CollectKnownWordsMatchingWord(char const* word,
     return 0; // No matches.
 }
 
-static int aproposPrinter(knownword_t const *word, void *matching)
+static int aproposPrinter(const knownword_t *word, void *matching)
 {
     AutoStr *text = textForKnownWord(word);
 
@@ -313,7 +313,7 @@ static int aproposPrinter(knownword_t const *word, void *matching)
         String tmp;
         if (word->type == WT_CCMD || word->type == WT_CVAR)
         {
-            char const *desc = DH_GetString(DH_Find(Str_Text(text)), HST_DESCRIPTION);
+            const char *desc = DH_GetString(DH_Find(Str_Text(text)), HST_DESCRIPTION);
             if (desc)
             {
                 tmp = desc;
@@ -321,7 +321,7 @@ static int aproposPrinter(knownword_t const *word, void *matching)
         }
         else if (word->type == WT_GAME)
         {
-            tmp = reinterpret_cast<Game const *>(word->data)->title();
+            tmp = reinterpret_cast<const Game *>(word->data)->title();
         }
 
         os << tmp;
@@ -332,7 +332,7 @@ static int aproposPrinter(knownword_t const *word, void *matching)
     return 0;
 }
 
-static void printApropos(char const *matching)
+static void printApropos(const char *matching)
 {
     /// @todo  Extend the search to cover the contents of all help strings (dd_help.c).
     Con_IterateKnownWords(0, WT_ANY, aproposPrinter, (void *)matching);
@@ -352,7 +352,7 @@ struct AnnotationWork
     de::String result;
 };
 
-static int annotateMatchedWordCallback(knownword_t const *word, void *parameters)
+static int annotateMatchedWordCallback(const knownword_t *word, void *parameters)
 {
     AnnotationWork *work = reinterpret_cast<AnnotationWork *>(parameters);
     AutoStr *name = Con_KnownWordToString(word);
@@ -382,7 +382,7 @@ static int annotateMatchedWordCallback(knownword_t const *word, void *parameters
         break;
 
     case WT_GAME:
-        found = Con_GameAsStyledText(reinterpret_cast<Game const *>(word->data));
+        found = Con_GameAsStyledText(reinterpret_cast<const Game *>(word->data));
         break;
 
     default:
@@ -409,7 +409,7 @@ de::String Con_AnnotatedConsoleTerms(const StringList &terms)
     return work.result;
 }
 
-static int addToTerms(knownword_t const *word, void *parameters)
+static int addToTerms(const knownword_t *word, void *parameters)
 {
     Lexicon *lexi = reinterpret_cast<Lexicon *>(parameters);
     lexi->addTerm(Str_Text(Con_KnownWordToString(word)));
@@ -429,14 +429,14 @@ void Con_SetApplicationKnownWordCallback(void (*callback)())
     appWordsCallback = callback;
 }
 
-static int addToStringList(knownword_t const *word, void *parameters)
+static int addToStringList(const knownword_t *word, void *parameters)
 {
     StringList *terms = reinterpret_cast<StringList *>(parameters);
     terms->append(Str_Text(Con_KnownWordToString(word)));
     return 0;
 }
 
-void Con_TermsRegex(StringList &terms, String const &pattern, knownwordtype_t wordType)
+void Con_TermsRegex(StringList &terms, const String &pattern, knownwordtype_t wordType)
 {
     terms.clear();
     Con_IterateKnownWords(KnownWordRegex, pattern, wordType,

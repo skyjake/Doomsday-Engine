@@ -191,7 +191,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
     return sampledata;
 }
 
-void *WAV_Load(char const *filename, int *bits, int *rate, int *samples)
+void *WAV_Load(const char *filename, int *bits, int *rate, int *samples)
 {
     try
     {
@@ -214,7 +214,7 @@ void *WAV_Load(char const *filename, int *bits, int *rate, int *samples)
         App_FileSystem().releaseFile(hndl->file());
 
         // Parse the RIFF data.
-        void *sampledata = WAV_MemoryLoad((byte const *) data, size, bits, rate, samples);
+        void *sampledata = WAV_MemoryLoad((const byte *) data, size, bits, rate, samples);
         if (!sampledata)
         {
             LOG_RES_WARNING("Failed to load \"%s\"") << filename;
@@ -223,7 +223,7 @@ void *WAV_Load(char const *filename, int *bits, int *rate, int *samples)
         M_Free(data);
         return sampledata;
     }
-    catch (res::FS1::NotFoundError const &)
+    catch (const res::FS1::NotFoundError &)
     {} // Ignore.
     return 0;
 }

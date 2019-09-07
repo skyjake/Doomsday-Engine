@@ -60,7 +60,7 @@ struct Interpreter
         void drop();
     } locals;
     int args[ACS_INTERPRETER_MAX_SCRIPT_ARGS];
-    int const *pcodePtr;
+    const int *pcodePtr;
 
     System &scriptSys() const;
 
@@ -90,7 +90,7 @@ struct Interpreter
      * @param delayCount  Number of tics to wait before interpretation begins.
      *                    (Can be used to delay processing during map startup.)
      */
-    static thinker_s *newThinker(Script &script, Script::Args const &scriptArgs,
+    static thinker_s *newThinker(Script &script, const Script::Args &scriptArgs,
         struct mobj_s *activator = nullptr, Line *line = nullptr, int side = 0,
         int delayCount = 0);
 };

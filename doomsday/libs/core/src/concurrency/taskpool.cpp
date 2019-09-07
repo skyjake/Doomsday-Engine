@@ -197,7 +197,7 @@ DE_PIMPL(TaskPool), public Waitable, public TaskPool::IPool
 //                    emit self().allTasksDone();
                     DE_NOTIFY_VAR(Done, i) i->taskPoolDone(self());
                 }
-                catch (Error const &er)
+                catch (const Error &er)
                 {
                     unlock();
                     throw er;

@@ -101,29 +101,29 @@ public:
     GLUniform &operator=(duint value);
     GLUniform &operator=(dfloat value);
     GLUniform &operator=(ddouble value);
-    GLUniform &operator=(Vec2f const &vec);
-    GLUniform &operator=(Vec3f const &vec);
-    GLUniform &operator=(Vec4f const &vec);
-    GLUniform &operator=(Mat3f const &vec);
-    GLUniform &operator=(Mat4f const &mat);
-    GLUniform &operator=(GLTexture const &texture);
-    GLUniform &operator=(GLTexture const *texture);
+    GLUniform &operator=(const Vec2f &vec);
+    GLUniform &operator=(const Vec3f &vec);
+    GLUniform &operator=(const Vec4f &vec);
+    GLUniform &operator=(const Mat3f &vec);
+    GLUniform &operator=(const Mat4f &mat);
+    GLUniform &operator=(const GLTexture &texture);
+    GLUniform &operator=(const GLTexture *texture);
 
     GLUniform &set(duint elementIndex, dfloat value);
     GLUniform &set(duint elementIndex, dint value);
-    GLUniform &set(duint elementIndex, Vec2f const &vec);
-    GLUniform &set(duint elementIndex, Vec3f const &vec);
-    GLUniform &set(duint elementIndex, Vec4f const &vec);
-    GLUniform &set(duint elementIndex, Mat4f const &mat);
+    GLUniform &set(duint elementIndex, const Vec2f &vec);
+    GLUniform &set(duint elementIndex, const Vec3f &vec);
+    GLUniform &set(duint elementIndex, const Vec4f &vec);
+    GLUniform &set(duint elementIndex, const Mat4f &mat);
 
     GLUniform &setUsedElementCount(duint elementCount);
 
-    GLUniform &set(dint const *intArray, dsize count);
-    GLUniform &set(float const *floatArray, dsize count);
-    GLUniform &set(Vec2f const *vectorArray, dsize count);
-    GLUniform &set(Vec3f const *vectorArray, dsize count);
-    GLUniform &set(Vec4f const *vectorArray, dsize count);
-    GLUniform &set(Mat4f const *mat4Array, dsize count);
+    GLUniform &set(const dint *intArray, dsize count);
+    GLUniform &set(const float *floatArray, dsize count);
+    GLUniform &set(const Vec2f *vectorArray, dsize count);
+    GLUniform &set(const Vec3f *vectorArray, dsize count);
+    GLUniform &set(const Vec4f *vectorArray, dsize count);
+    GLUniform &set(const Mat4f *mat4Array, dsize count);
 
     operator dint() const              { return toInt(); }
     operator duint() const             { return toUInt(); }
@@ -132,20 +132,20 @@ public:
     operator Vec2f() const             { return toVec2f(); }
     operator Vec3f() const             { return toVec3f(); }
     operator Vec4f() const             { return toVec4f(); }
-    operator Mat3f const &() const     { return toMat3f(); }
-    operator Mat4f const &() const     { return toMat4f(); }
-    operator GLTexture const *() const { return texture(); }
+    operator const Mat3f &() const     { return toMat3f(); }
+    operator const Mat4f &() const     { return toMat4f(); }
+    operator const GLTexture *() const { return texture(); }
 
     dint toInt() const;
     duint toUInt() const;
     dfloat toFloat() const;
-    Vec2f const &toVec2f() const;
-    Vec3f const &toVec3f() const;
-    Vec4f const &toVec4f() const;
-    Mat3f const &toMat3f() const;
-    Mat4f const &toMat4f() const;
+    const Vec2f &toVec2f() const;
+    const Vec3f &toVec3f() const;
+    const Vec4f &toVec4f() const;
+    const Mat3f &toMat3f() const;
+    const Mat4f &toMat4f() const;
 
-    GLTexture const *texture() const;
+    const GLTexture *texture() const;
 
     /**
      * Updates the value of the uniform in a particular GL program.

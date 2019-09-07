@@ -109,7 +109,7 @@ DE_GUI_PIMPL(CompositorWidget)
     }
 };
 
-CompositorWidget::CompositorWidget(String const &name)
+CompositorWidget::CompositorWidget(const String &name)
     : GuiWidget(name), d(new Impl(this))
 {}
 
@@ -119,7 +119,7 @@ GLTexture &CompositorWidget::composite() const
     return d->buffers.first()->texture;
 }
 
-void CompositorWidget::setCompositeProjection(Mat4f const &projMatrix)
+void CompositorWidget::setCompositeProjection(const Mat4f &projMatrix)
 {
     d->uMvpMatrix = projMatrix;
 }

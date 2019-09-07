@@ -43,7 +43,7 @@ duint32 randui32()
     return duint32(randf() * 0x10000) | (duint32(randf() * 0x10000) << 16);
 }
 
-duint32 crc32(IByteArray const &data)
+duint32 crc32(const IByteArray &data)
 {
 /* ====================================================================== */
 /*  COPYRIGHT (C) 1986 Gary S. Brown.  You may use this program, or       */

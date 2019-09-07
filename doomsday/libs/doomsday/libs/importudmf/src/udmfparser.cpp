@@ -36,12 +36,12 @@ void UDMFParser::setBlockHandler(UDMFParser::BlockFunc func)
     _blockHandler = std::move(func);
 }
 
-UDMFParser::Block const &UDMFParser::globals() const
+const UDMFParser::Block &UDMFParser::globals() const
 {
     return _globals;
 }
 
-void UDMFParser::parse(String const &input)
+void UDMFParser::parse(const String &input)
 {
     // Lexical analyzer for Haw scripts.
     _analyzer = UDMFLex(input);
@@ -114,7 +114,7 @@ void UDMFParser::parseAssignment(Block &block)
     }
 
     String const identifier = _range.firstToken().str().lower();
-    Token const &valueToken = _range.token(2);
+    const Token &valueToken = _range.token(2);
 
     // Store the assigned value into a variant.
     std::shared_ptr<Value> value;

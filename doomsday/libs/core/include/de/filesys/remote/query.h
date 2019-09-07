@@ -47,8 +47,8 @@ struct DE_PUBLIC RepositoryPath
 };
 
 using PackagePaths = Hash<String, RepositoryPath>;
-using FileMetadata = std::function<void(DictionaryValue const &)>;
-using FileContents = std::function<void(duint64 startOffset, Block const &, duint64 remainingBytes)>;
+using FileMetadata = std::function<void(const DictionaryValue &)>;
+using FileContents = std::function<void(duint64 startOffset, const Block &, duint64 remainingBytes)>;
 
 template <typename Callback>
 using Request = std::shared_ptr<AsyncCallback<Callback>>;

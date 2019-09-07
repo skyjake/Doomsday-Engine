@@ -23,7 +23,7 @@ namespace de {
 DE_PIMPL(Archive)
 {
     /// Source data provided at construction.
-    IByteArray const *source;
+    const IByteArray *source;
 
     /// Index maps entry paths to their metadata. Created by concrete subclasses
     /// but we have the ownership.
@@ -32,7 +32,7 @@ DE_PIMPL(Archive)
     /// Contents of the archive have been modified.
     bool modified;
 
-    Impl(Public &a, IByteArray const *src) : Base(a), source(src), index(0), modified(false)
+    Impl(Public &a, const IByteArray *src) : Base(a), source(src), index(0), modified(false)
     {}
 
     ~Impl()
@@ -40,9 +40,9 @@ DE_PIMPL(Archive)
         delete index;
     }
 
-    void readEntry(Path const &path, IBlock &deserializedData) const
+    void readEntry(const Path &path, IBlock &deserializedData) const
     {
-        Entry const &entry = static_cast<Entry const &>(
+        const Entry &entry = static_cast<const Entry &>(
                     index->find(path, PathTree::MatchFull | PathTree::NoBranch));
         if (!entry.size)
         {
@@ -65,7 +65,7 @@ DE_PIMPL(Archive)
 Archive::Archive() : d(new Impl(*this, 0))
 {}
 
-Archive::Archive(IByteArray const &archive) : d(new Impl(*this, &archive))
+Archive::Archive(const IByteArray &archive) : d(new Impl(*this, &archive))
 {}
 
 Archive::~Archive()
@@ -73,7 +73,7 @@ Archive::~Archive()
     clear();
 }
 
-IByteArray const *Archive::source() const
+const IByteArray *Archive::source() const
 {
     return d->source;
 }
@@ -114,21 +114,21 @@ void Archive::cache(CacheOperation operation)
     }
 }
 
-bool Archive::hasEntry(Path const &path) const
+bool Archive::hasEntry(const Path &path) const
 {
     DE_ASSERT(d->index != 0);
 
     return d->index->has(path, PathTree::MatchFull | PathTree::NoBranch);
 }
 
-dint Archive::listFiles(Archive::Names &names, Path const &folder) const
+dint Archive::listFiles(Archive::Names &names, const Path &folder) const
 {
     DE_ASSERT(d->index != 0);
 
     names.clear();
 
     // Find the folder in the index.
-    if (PathTree::Node const *parent = d->index->tryFind(folder, PathTree::MatchFull | PathTree::NoLeaf))
+    if (const PathTree::Node *parent = d->index->tryFind(folder, PathTree::MatchFull | PathTree::NoLeaf))
     {
         // Traverse the parent's nodes.
         for (PathTreeIterator<PathTree> iter(parent->children().leaves); iter.hasNext(); )
@@ -139,14 +139,14 @@ dint Archive::listFiles(Archive::Names &names, Path const &folder) const
     return dint(names.size());
 }
 
-dint Archive::listFolders(Archive::Names &names, Path const &folder) const
+dint Archive::listFolders(Archive::Names &names, const Path &folder) const
 {
     DE_ASSERT(d->index != 0);
 
     names.clear();
 
     // Find the folder in the index.
-    if (PathTree::Node const *parent = d->index->tryFind(folder, PathTree::MatchFull | PathTree::NoLeaf))
+    if (const PathTree::Node *parent = d->index->tryFind(folder, PathTree::MatchFull | PathTree::NoLeaf))
     {
         // Traverse the parent's nodes.
         for (PathTreeIterator<PathTree> iter(parent->children().branches); iter.hasNext(); )
@@ -157,11 +157,11 @@ dint Archive::listFolders(Archive::Names &names, Path const &folder) const
     return dint(names.size());
 }
 
-File::Status Archive::entryStatus(Path const &path) const
+File::Status Archive::entryStatus(const Path &path) const
 {
     DE_ASSERT(d->index != 0);
 
-    Entry const &found = static_cast<Entry const &>(d->index->find(path, PathTree::MatchFull));
+    const Entry &found = static_cast<const Entry &>(d->index->find(path, PathTree::MatchFull));
 
     return File::Status(
         found.isLeaf()? File::Type::File : File::Type::Folder,
@@ -169,7 +169,7 @@ File::Status Archive::entryStatus(Path const &path) const
         found.modifiedAt);
 }
 
-Block const &Archive::entryBlock(Path const &path) const
+const Block &Archive::entryBlock(const Path &path) const
 {
     DE_ASSERT(d->index != 0);
 
@@ -193,14 +193,14 @@ Block const &Archive::entryBlock(Path const &path) const
     }
 }
 
-Block &Archive::entryBlock(Path const &path)
+Block &Archive::entryBlock(const Path &path)
 {
     if (!hasEntry(path))
     {
         add(path, Block());
     }
 
-    Block const &block = const_cast<Archive const *>(this)->entryBlock(path);
+    const Block &block = const_cast<const Archive *>(this)->entryBlock(path);
 
     // Mark for recompression.
     Entry &entry = static_cast<Entry &>(d->index->find(path, PathTree::MatchFull | PathTree::NoBranch));
@@ -212,7 +212,7 @@ Block &Archive::entryBlock(Path const &path)
     return const_cast<Block &>(block);
 }
 
-void Archive::uncacheBlock(Path const &path) const
+void Archive::uncacheBlock(const Path &path) const
 {
     if (!d->source) return; // Wouldn't be able to re-cache the data.
 
@@ -237,7 +237,7 @@ void Archive::uncacheBlock(Path const &path) const
     }
 }
 
-void Archive::add(Path const &path, IByteArray const &data)
+void Archive::add(const Path &path, const IByteArray &data)
 {
     if (path.isEmpty())
     {
@@ -261,7 +261,7 @@ void Archive::add(Path const &path, IByteArray const &data)
     d->modified = true;
 }
 
-void Archive::remove(Path const &path)
+void Archive::remove(const Path &path)
 {
     DE_ASSERT(d->index != 0);
 
@@ -289,7 +289,7 @@ void Archive::setIndex(PathTree *tree)
     d->index = tree;
 }
 
-Archive::Entry &Archive::insertEntry(Path const &path)
+Archive::Entry &Archive::insertEntry(const Path &path)
 {
     LOG_AS("Archive");
     DE_ASSERT(d->index != 0);
@@ -300,14 +300,14 @@ Archive::Entry &Archive::insertEntry(Path const &path)
     return static_cast<Entry &>(d->index->insert(path));
 }
 
-PathTree const &Archive::index() const
+const PathTree &Archive::index() const
 {
     DE_ASSERT(d->index != 0);
 
     return *d->index;
 }
 
-Archive::Entry::Entry(PathTree::NodeArgs const &args)
+Archive::Entry::Entry(const PathTree::NodeArgs &args)
     : Node(args)
     , offset(0)
     , size(0)

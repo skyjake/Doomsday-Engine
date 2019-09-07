@@ -42,12 +42,12 @@ static String const VAR_MIRROR_X  ("mirrorX");
 CompiledSprite::CompiledSprite()
 {}
 
-CompiledSprite::CompiledSprite(Record const &spriteDef)
+CompiledSprite::CompiledSprite(const Record &spriteDef)
 {
     frontOnly = spriteDef.getb(VAR_FRONT_ONLY);
 
     // Compile the views into a vector.
-    auto const &viewsDict = spriteDef.getdt(VAR_VIEWS).elements();
+    const auto &viewsDict = spriteDef.getdt(VAR_VIEWS).elements();
     for (auto iter = viewsDict.begin(); iter != viewsDict.end(); ++iter)
     {
         ++viewCount;
@@ -55,7 +55,7 @@ CompiledSprite::CompiledSprite(Record const &spriteDef)
         int angle = iter->first.value->asInt();
         if (views.sizei() <= angle) views.resize(angle + 1);
 
-        Record const &viewDef = iter->second->as<RecordValue>().dereference();
+        const Record &viewDef = iter->second->as<RecordValue>().dereference();
         auto &view = views[angle];
 
         view.uri     = viewDef.get(VAR_MATERIAL).as<UriValue>().uri();
@@ -70,9 +70,9 @@ CompiledSpriteRecord &Sprite::def()
     return static_cast<CompiledSpriteRecord &>(Definition::def());
 }
 
-CompiledSpriteRecord const &Sprite::def() const
+const CompiledSpriteRecord &Sprite::def() const
 {
-    return static_cast<CompiledSpriteRecord const &>(Definition::def());
+    return static_cast<const CompiledSpriteRecord &>(Definition::def());
 }
 
 void Sprite::resetToDefaults()
@@ -91,7 +91,7 @@ DictionaryValue &Sprite::viewsDict()
     return def()[VAR_VIEWS].value<DictionaryValue>();
 }
 
-/*DictionaryValue const &Sprite::viewsDict() const
+/*const DictionaryValue &Sprite::viewsDict() const
 {
     return def().getdt(VAR_VIEWS);
 }*/
@@ -120,7 +120,7 @@ dint Sprite::viewCount() const
 
 bool Sprite::hasView(dint angle) const
 {
-    auto const &cmpl = def().compiled();
+    const auto &cmpl = def().compiled();
 
     if (cmpl.frontOnly) angle = 0;
 
@@ -128,9 +128,9 @@ bool Sprite::hasView(dint angle) const
 
     return (angle < cmpl.views.sizei() && !cmpl.views.at(angle).uri.isEmpty());
 
-    /*for (Value const *val : geta("views").elements())
+    /*for (const Value *val : geta("views").elements())
     {
-        Record const &view = val->as<RecordValue>().dereference();
+        const Record &view = val->as<RecordValue>().dereference();
         if (view.geti("angle") == angle)
             return true;
     }
@@ -154,12 +154,12 @@ Record &Sprite::findView(dint angle)
     throw MissingViewError("Sprite::view", "Unknown view:" + String::asText(angle));*/
 }
 
-Record const *Sprite::tryFindView(dint angle) const
+const Record *Sprite::tryFindView(dint angle) const
 {
     if (angle && getb(VAR_FRONT_ONLY)) angle = 0;
 
     NumberValue const ang(angle);
-    auto const &elems = viewsDict().elements();
+    const auto &elems = viewsDict().elements();
     auto found = elems.find(&ang);
     if (found != elems.end())
     {
@@ -173,7 +173,7 @@ static res::Uri nullUri;
 
 Sprite::View Sprite::view(de::dint angle) const
 {
-    auto const &cmpl = def().compiled();
+    const auto &cmpl = def().compiled();
 
     if (cmpl.frontOnly) angle = 0;
 
@@ -191,9 +191,9 @@ Sprite::View Sprite::view(de::dint angle) const
     return v;
 }
 
-res::Uri const &Sprite::viewMaterial(de::dint angle) const
+const res::Uri &Sprite::viewMaterial(de::dint angle) const
 {
-    auto const &cmpl = def().compiled();
+    const auto &cmpl = def().compiled();
     if (angle < cmpl.views.sizei())
     {
         return cmpl.views.at(angle).uri;

@@ -34,7 +34,7 @@ namespace ui {
 class LIBGUI_PUBLIC VariableToggleItem : public Item
 {
 public:
-    VariableToggleItem(String const &label, Variable &variable)
+    VariableToggleItem(const String &label, Variable &variable)
         : Item(ShownAsToggle, label), _var(variable) {}
 
     Variable &variable() const { return _var; }

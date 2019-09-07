@@ -90,7 +90,7 @@ public:
                     (attribs & VisualAttributes) == (other.attribs & VisualAttributes));
         }
 
-        AttribChar &operator=(AttribChar const &other)
+        AttribChar &operator=(const AttribChar &other)
         {
             bool changed = false;
 
@@ -117,7 +117,7 @@ public:
     };
 
 public:
-    TextCanvas(Size const &size = Size(1, 1));
+    TextCanvas(const Size &size = Size(1, 1));
     virtual ~TextCanvas();
 
     Size       size() const;
@@ -125,7 +125,7 @@ public:
     int        height() const;
     Rectanglei rect() const;
 
-    virtual void resize(Size const &newSize);
+    virtual void resize(const Size &newSize);
 
     /**
      * Returns a modifiable reference to a character. The character is
@@ -135,31 +135,31 @@ public:
      *
      * @return Character.
      */
-    AttribChar &at(Coord const &pos);
+    AttribChar &at(const Coord &pos);
 
-    AttribChar const &at(Coord const &pos) const;
+    const AttribChar &at(const Coord &pos) const;
 
     /**
      * Determines if a coordinate is valid.
      * @param pos  Coordinate.
      * @return @c true, if the position can be accessed with at().
      */
-    bool isValid(Coord const &pos) const;
+    bool isValid(const Coord &pos) const;
 
     /**
      * Marks the entire canvas dirty.
      */
     void markDirty();
 
-    void clear(AttribChar const &ch = AttribChar());
+    void clear(const AttribChar &ch = AttribChar());
 
-    void fill(Rectanglei const &rect, AttribChar const &ch);
+    void fill(const Rectanglei &rect, const AttribChar &ch);
 
-    void put(Coord const &pos, AttribChar const &ch);
+    void put(const Coord &pos, const AttribChar &ch);
 
-    void drawText(Coord const &              pos,
-                  String const &             text,
-                  AttribChar::Attribs const &attribs    = AttribChar::DefaultAttributes,
+    void drawText(const Coord &              pos,
+                  const String &             text,
+                  const AttribChar::Attribs &attribs    = AttribChar::DefaultAttributes,
                   BytePos                    richOffset = BytePos(0));
 
     /**
@@ -180,10 +180,10 @@ public:
 
     void clearRichFormat();
 
-    void setRichFormatRange(AttribChar::Attribs const &attribs, const String::ByteRange &range);
+    void setRichFormatRange(const AttribChar::Attribs &attribs, const String::ByteRange &range);
 
-    void drawLineRect(Rectanglei const &         rect,
-                      AttribChar::Attribs const &attribs = AttribChar::DefaultAttributes);
+    void drawLineRect(const Rectanglei &         rect,
+                      const AttribChar::Attribs &attribs = AttribChar::DefaultAttributes);
 
     /**
      * Draws the contents of a canvas onto this canvas.
@@ -191,7 +191,7 @@ public:
      * @param canvas   Source canvas.
      * @param topLeft  Top left coordinate of the destination area.
      */
-    void draw(TextCanvas const &canvas, Coord const &topLeft);
+    void draw(const TextCanvas &canvas, const Coord &topLeft);
 
     /**
      * Draws all characters marked dirty onto the screen so that they become
@@ -207,7 +207,7 @@ public:
      *
      * @param pos  Position.
      */
-    virtual void setCursorPosition(Coord const &pos);
+    virtual void setCursorPosition(const Coord &pos);
 
 private:
     DE_PRIVATE(d)

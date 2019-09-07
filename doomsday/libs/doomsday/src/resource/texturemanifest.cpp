@@ -52,13 +52,13 @@ DE_PIMPL(TextureManifest)
     }
 
     // Observes Texture Deletion.
-    void textureBeingDeleted(Texture const & /*texture*/)
+    void textureBeingDeleted(const Texture & /*texture*/)
     {
         texture.release();
     }
 };
 
-TextureManifest::TextureManifest(PathTree::NodeArgs const &args)
+TextureManifest::TextureManifest(const PathTree::NodeArgs &args)
     : Node(args)
     , d(new Impl(this))
 {}
@@ -100,7 +100,7 @@ TextureScheme &TextureManifest::scheme() const
     return *d->ownerScheme;
 }
 
-String const &TextureManifest::schemeName() const
+const String &TextureManifest::schemeName() const
 {
     return scheme().name();
 }
@@ -145,7 +145,7 @@ res::Uri TextureManifest::resourceUri() const
     throw MissingResourceUriError("TextureManifest::scheme", "No resource URI is defined");
 }
 
-bool TextureManifest::setResourceUri(res::Uri const &newUri)
+bool TextureManifest::setResourceUri(const res::Uri &newUri)
 {
     // Avoid resolving; compare as text.
     if (d->resourceUri.asText() != newUri.asText())
@@ -183,24 +183,24 @@ void TextureManifest::setFlags(Flags flagsToChange, FlagOp operation)
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
-Vec2ui const &TextureManifest::logicalDimensions() const
+const Vec2ui &TextureManifest::logicalDimensions() const
 {
     return d->logicalDimensions;
 }
 
-bool TextureManifest::setLogicalDimensions(Vec2ui const &newDimensions)
+bool TextureManifest::setLogicalDimensions(const Vec2ui &newDimensions)
 {
     if (d->logicalDimensions == newDimensions) return false;
     d->logicalDimensions = newDimensions;
     return true;
 }
 
-Vec2i const &TextureManifest::origin() const
+const Vec2i &TextureManifest::origin() const
 {
     return d->origin;
 }
 
-void TextureManifest::setOrigin(Vec2i const &newOrigin)
+void TextureManifest::setOrigin(const Vec2i &newOrigin)
 {
     if (d->origin != newOrigin)
     {

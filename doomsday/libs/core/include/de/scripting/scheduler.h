@@ -42,7 +42,7 @@ public:
      *                  be generated.
      * @return Name of the started timeline.
      */
-    String start(Timeline *timeline, String const &name = String());
+    String start(Timeline *timeline, const String &name = String());
 
     /**
      * Starts executing a shared timeline.
@@ -53,14 +53,14 @@ public:
      *                        name will be generated.
      * @return Name of the started timeline.
      */
-    String start(Timeline const &sharedTimeline, Record *context, String const &name = String());
+    String start(const Timeline &sharedTimeline, Record *context, const String &name = String());
 
     /**
      * Stops a running timeline.
      *
      * @param name  Timeline name.
      */
-    void stop(String const &name);
+    void stop(const String &name);
 
     void advanceTime(TimeSpan elapsed);
 

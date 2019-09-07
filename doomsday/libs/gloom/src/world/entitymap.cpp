@@ -97,14 +97,14 @@ DE_PIMPL(EntityMap)
     }
 
     /*
-    void iterateBlockAtCoord(Vec2i const &coord, Vec3f const &origin, float radius,
-                             Callback const &callback) const
+    void iterateBlockAtCoord(const Vec2i &coord, const Vec3f &origin, float radius,
+                             const Callback &callback) const
     {
-        Instance::Block const *bk = blockAtCoord(coord);
+        const Instance::Block *bk = blockAtCoord(coord);
         if(bk)
         {
-            QList<Entity const *> found;
-            foreach(Entity const *e, bk->entities)
+            QList<const Entity *> found;
+            foreach(const Entity *e, bk->entities)
             {
                 if((e->position() - origin).length() < radius)
                 {
@@ -113,13 +113,13 @@ DE_PIMPL(EntityMap)
             }
 
             // Sort by distance to the center.
-            qSort(found.begin(), found.end(), [&] (Entity const *a, Entity const *b) {
+            qSort(found.begin(), found.end(), [&] (const Entity *a, const Entity *b) {
                 return (a->position() - origin).lengthSquared() >
                        (b->position() - origin).lengthSquared();
             });
 
             // Do the callback for each.
-            foreach(Entity const *e, found)
+            foreach(const Entity *e, found)
             {
                 callback(*e);
             }
@@ -157,7 +157,7 @@ EntityMap::EntityList EntityMap::listRegionBackToFront(const Vec3f &pos, float r
         {
             if (const auto *bk = d->blockAtCoord(Vec2i(x, y)))
             {
-                for (Entity const *e : bk->entities)
+                for (const Entity *e : bk->entities)
                 {
                     if ((e->position() - pos).length() < radius)
                     {

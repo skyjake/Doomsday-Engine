@@ -121,7 +121,7 @@ static TextureAnimDef animsShared[] = {
     { -1, "\0", "\0", MACRO_LONG(0) }
 };
 
-static void loadAnimDefs(TextureAnimDef const *defs, bool customDefs)
+static void loadAnimDefs(const TextureAnimDef *defs, bool customDefs)
 {
     DE_ASSERT(defs != 0);
 
@@ -176,8 +176,8 @@ static void loadAnimDefs(TextureAnimDef const *defs, bool customDefs)
         // all textures/flats inbetween).
 
         int const groupNum     = R_CreateAnimGroup(AGF_SMOOTH);
-        AutoStr const *from    = Uri_ToString(startUri);
-        AutoStr const *to      = Uri_ToString(endUri);
+        const AutoStr *from    = Uri_ToString(startUri);
+        const AutoStr *to      = Uri_ToString(endUri);
         int const ticsPerFrame = DD_LONG(defs[i].speed);
 
         LOG_RES_AT_LEVEL(customDefs? LogEntry::Verbose : LogEntry::XVerbose,
@@ -201,11 +201,11 @@ static void loadAnimDefs(TextureAnimDef const *defs, bool customDefs)
 #endif // !__JHEXEN__
 
 #if __JHEXEN__
-static char const *textureScheme(ddstring_s const *string)
+static const char *textureScheme(const ddstring_s *string)
 {
     struct KnownScheme {
-        char const *label;
-        char const *scheme;
+        const char *label;
+        const char *scheme;
     } knownSchemes[] = {
         { "texture", "Textures" },
         { "flat", "Flats" },
@@ -224,7 +224,7 @@ static char const *textureScheme(ddstring_s const *string)
 /**
  * Attempt to parse the script on the identified @a path as "animation definition" data.
  */
-static void AnimDefsParser(ddstring_s const *path)
+static void AnimDefsParser(const ddstring_s *path)
 {
     dd_bool isCustom;
     AutoStr *script = M_ReadFileIntoString(path, &isCustom);
@@ -239,7 +239,7 @@ static void AnimDefsParser(ddstring_s const *path)
     while(lexer.readToken())
     {
         // string(texture-scheme) string(texture-path)
-        if(char const *scheme = textureScheme(lexer.token()))
+        if(const char *scheme = textureScheme(lexer.token()))
         {
             res::Uri uri = lexer.readUri(scheme);
             int const texNumBase = Textures_UniqueId2(reinterpret_cast<uri_s *>(&uri), !isCustom);
@@ -258,7 +258,7 @@ static void AnimDefsParser(ddstring_s const *path)
                     int picNum = lexer.readNumber();
 
                     int min = 0, max = 0;
-                    ddstring_s const *label = lexer.readString();
+                    const ddstring_s *label = lexer.readString();
                     if(!Str_CompareIgnoreCase(label, "tics"))
                     {
                         min = lexer.readNumber();

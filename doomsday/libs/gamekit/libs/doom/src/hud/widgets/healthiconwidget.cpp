@@ -25,7 +25,7 @@
 
 using namespace de;
 
-static void HealthIconWidget_Draw(guidata_healthicon_t *icon, Point2Raw const *offset)
+static void HealthIconWidget_Draw(guidata_healthicon_t *icon, const Point2Raw *offset)
 {
     DE_ASSERT(icon);
     icon->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -53,7 +53,7 @@ void guidata_healthicon_t::tick(timespan_t /*elapsed*/)
     // Nothing to do.
 }
 
-void guidata_healthicon_t::draw(Vec2i const &offset) const
+void guidata_healthicon_t::draw(const Vec2i &offset) const
 {
     dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 

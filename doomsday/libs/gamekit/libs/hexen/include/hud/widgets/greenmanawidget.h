@@ -30,7 +30,7 @@ class guidata_greenmana_t : public HudWidget
 {
 public:
     guidata_greenmana_t(void (*updateGeometry) (HudWidget *wi),
-                        void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                        void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                         de::dint player);
     virtual ~guidata_greenmana_t();
 
@@ -38,14 +38,14 @@ public:
 
     void tick(timespan_t elapsed);
     //void updateGeometry();
-    //void draw(de::Vec2i const &offset = de::Vec2i()) const;
+    //void draw(const de::Vec2i &offset = de::Vec2i()) const;
 
 //private:
     de::dint _value = 0;
 };
 
-void GreenManaWidget_Draw    (guidata_greenmana_t *mana, Point2Raw const *offset);
-void SBarGreenManaWidget_Draw(guidata_greenmana_t *mana, Point2Raw const *offset);
+void GreenManaWidget_Draw    (guidata_greenmana_t *mana, const Point2Raw *offset);
+void SBarGreenManaWidget_Draw(guidata_greenmana_t *mana, const Point2Raw *offset);
 
 void GreenManaWidget_UpdateGeometry    (guidata_greenmana_t *mana);
 void SBarGreenManaWidget_UpdateGeometry(guidata_greenmana_t *mana);

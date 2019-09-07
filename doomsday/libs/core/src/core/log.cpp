@@ -131,14 +131,14 @@ void LogEntry::Arg::setValue(ddouble d)
     _data.floatValue = d;
 }
 
-void LogEntry::Arg::setValue(void const *p)
+void LogEntry::Arg::setValue(const void *p)
 {
     clear();
     _type = IntegerArgument;
     _data.intValue = dint64(p);
 }
 
-void LogEntry::Arg::setValue(char const *s)
+void LogEntry::Arg::setValue(const char *s)
 {
     clear();
     _type = StringArgument;
@@ -171,7 +171,7 @@ void LogEntry::Arg::setValue(const std::array<char, 4> &typecode)
     setValue(String(typecode.data(), 4));
 }
 
-void LogEntry::Arg::setValue(LogEntry::Arg::Base const &arg)
+void LogEntry::Arg::setValue(const LogEntry::Arg::Base &arg)
 {
     switch (arg.logEntryArgType())
     {
@@ -189,7 +189,7 @@ void LogEntry::Arg::setValue(LogEntry::Arg::Base const &arg)
     }
 }
 
-LogEntry::Arg &LogEntry::Arg::operator = (Arg const &other)
+LogEntry::Arg &LogEntry::Arg::operator = (const Arg &other)
 {
     clear();
     if (other._type == StringArgument)
@@ -295,9 +295,9 @@ LogEntry::LogEntry() : _metadata(0), _sectionDepth(0), _disabled(true)
 {}
 
 LogEntry::LogEntry(duint32       metadata,
-                   String const &section,
+                   const String &section,
                    int           sectionDepth,
-                   String const &format,
+                   const String &format,
                    const Args &  args)
     : _metadata(metadata)
     , _section(section)
@@ -312,7 +312,7 @@ LogEntry::LogEntry(duint32       metadata,
     }
 }
 
-LogEntry::LogEntry(LogEntry const &other, Flags extraFlags)
+LogEntry::LogEntry(const LogEntry &other, Flags extraFlags)
     : Lockable()
     , ISerializable()
     , _when(other._when)
@@ -347,7 +347,7 @@ Flags LogEntry::flags() const
     return _defaultFlags;
 }
 
-String LogEntry::asText(Flags const &formattingFlags, dsize shortenSection) const
+String LogEntry::asText(const Flags &formattingFlags, dsize shortenSection) const
 {
     DE_GUARD(this);
 
@@ -416,7 +416,7 @@ String LogEntry::asText(Flags const &formattingFlags, dsize shortenSection) cons
             }
             else
             {
-                char const *levelNames[] = {
+                const char *levelNames[] = {
                     "", // not used
                     "XVerbose",
                     "Verbose",
@@ -509,7 +509,7 @@ String LogEntry::asText(Flags const &formattingFlags, dsize shortenSection) cons
         else
         {
             // If the section is very long, it's clearer to break the line here.
-            char const *separator = (sect.size() > LINE_BREAKING_SECTION_LENGTH? "\n     " : " ");
+            const char *separator = (sect.size() > LINE_BREAKING_SECTION_LENGTH? "\n     " : " ");
             output << "[" << sect << "]" << separator;
         }
     }
@@ -575,7 +575,7 @@ void LogEntry::operator << (Reader &from)
         .readObjects<Arg>(_args);
 }
 
-std::ostream &operator << (std::ostream &stream, LogEntry::Arg const &arg)
+std::ostream &operator << (std::ostream &stream, const LogEntry::Arg &arg)
 {
     switch (arg.type())
     {
@@ -594,7 +594,7 @@ std::ostream &operator << (std::ostream &stream, LogEntry::Arg const &arg)
     return stream;
 }
 
-Log::Section::Section(char const *name) : _log(threadLog()), _name(name)
+Log::Section::Section(const char *name) : _log(threadLog()), _name(name)
 {
     _log.beginSection(_name);
 }
@@ -646,12 +646,12 @@ bool Log::isStaging() const
     return d->currentEntryMedata != 0;
 }
 
-void Log::beginSection(char const *name)
+void Log::beginSection(const char *name)
 {
     d->sectionStack.push_back(name);
 }
 
-void Log::endSection(char const *DE_DEBUG_ONLY(name))
+void Log::endSection(const char *DE_DEBUG_ONLY(name))
 {
     DE_ASSERT(d->sectionStack.back() == name);
     d->sectionStack.pop_back();
@@ -673,12 +673,12 @@ bool Log::isInteractive() const
     return d->interactive > 0;
 }
 
-LogEntry &Log::enter(String const &format, LogEntry::Args arguments)
+LogEntry &Log::enter(const String &format, LogEntry::Args arguments)
 {
     return enter(LogEntry::Message, format, arguments);
 }
 
-LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args arguments)
+LogEntry &Log::enter(duint32 metadata, const String &format, LogEntry::Args arguments)
 {
     // Staging done.
     d->currentEntryMedata = 0;
@@ -781,7 +781,7 @@ void Log::disposeThreadLog()
 }
 #endif
 
-LogEntryStager::LogEntryStager(duint32 metadata, String const &format)
+LogEntryStager::LogEntryStager(duint32 metadata, const String &format)
     : _metadata(metadata)
 {
     if (!LogBuffer::appBufferExists())

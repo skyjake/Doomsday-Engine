@@ -34,12 +34,12 @@ DE_PIMPL_NOREF(SourceLineTable), public Lockable
         static std::atomic_uint counter;
 
         LineId id;
-        IdNode(PathTree::NodeArgs const &args)
+        IdNode(const PathTree::NodeArgs &args)
             : PathTree::Node(args), id(++counter) {}
     };
 
     PathTreeT<IdNode> paths;
-    Hash<duint, IdNode const *> lookup; // reverse lookup
+    Hash<duint, const IdNode *> lookup; // reverse lookup
 };
 
 std::atomic_uint SourceLineTable::Impl::IdNode::counter;
@@ -47,13 +47,13 @@ std::atomic_uint SourceLineTable::Impl::IdNode::counter;
 SourceLineTable::SourceLineTable() : d(new Impl)
 {}
 
-SourceLineTable::LineId SourceLineTable::lineId(String const &path, duint lineNumber)
+SourceLineTable::LineId SourceLineTable::lineId(const String &path, duint lineNumber)
 {
     Path const source(path);
 
     DE_GUARD(d);
 
-    auto const *node = d->paths.tryFind(source, PathTree::MatchFull | PathTree::NoBranch);
+    const auto *node = d->paths.tryFind(source, PathTree::MatchFull | PathTree::NoBranch);
     if (!node)
     {
         node = &d->paths.insert(source);

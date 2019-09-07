@@ -631,17 +631,17 @@ void GLWindow::checkNativeEvents()
     d->handleEvents();
 }
 
-void GLWindow::grabToFile(NativePath const &path) const
+void GLWindow::grabToFile(const NativePath &path) const
 {
     grabImage().save(path);
 }
 
-Image GLWindow::grabImage(Size const &outputSize) const
+Image GLWindow::grabImage(const Size &outputSize) const
 {
     return grabImage(Rectanglei::fromSize(pixelSize()), outputSize);
 }
 
-Image GLWindow::grabImage(Rectanglei const &area, Size const &outputSize) const
+Image GLWindow::grabImage(const Rectanglei &area, const Size &outputSize) const
 {
     Image grabbed;
     DE_ASSERT_FAIL("[GLWindow] grabImage not implemented");

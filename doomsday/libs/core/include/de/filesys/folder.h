@@ -87,7 +87,7 @@ public:
     };
 
 public:
-    explicit Folder(String const &name = {});
+    explicit Folder(const String &name = {});
 
     virtual ~Folder();
 
@@ -147,7 +147,7 @@ public:
      *
      * @return  The created file (write mode enabled).
      */
-    File &createFile(String const &name, FileCreationBehavior behavior = KeepExisting);
+    File &createFile(const String &name, FileCreationBehavior behavior = KeepExisting);
 
     /**
      * Creates a new file in the folder, replacing an existing file with the
@@ -157,7 +157,7 @@ public:
      *
      * @return  The created file (write mode enabled).
      */
-    File &replaceFile(String const &name);
+    File &replaceFile(const String &name);
 
     /**
      * Removes a file from a folder. The file will be deleted. If it has an
@@ -166,7 +166,7 @@ public:
      *
      * @param name  Name or path of file to remove, relative to this folder.
      */
-    void destroyFile(String const &name);
+    void destroyFile(const String &name);
 
     /**
      * Removes a file from a folder. The file will be deleted.  If it has an
@@ -177,7 +177,7 @@ public:
      *
      * @return @c true, if the file was deleted. @c false, if it did not exist.
      */
-    bool tryDestroyFile(String const &name);
+    bool tryDestroyFile(const String &name);
 
     /**
      * Removes all files in the folder. The files will be deleted. If the files
@@ -197,9 +197,9 @@ public:
      *
      * @param name  File to check for. The name is not case sensitive.
      */
-    bool has(String const &name) const;
+    bool has(const String &name) const;
 
-    inline bool contains(String const &name) const {
+    inline bool contains(const String &name) const {
         return has(name);
     }
 
@@ -237,7 +237,7 @@ public:
      */
     File *remove(const String &name);
 
-    File *remove(char const *nameUtf8);
+    File *remove(const char *nameUtf8);
 
     template <typename Type>
     Type *remove(Type *fileObject) {
@@ -255,10 +255,10 @@ public:
      */
     virtual File *remove(File &file);
 
-    File *tryLocateFile(String const &path) const;
+    File *tryLocateFile(const String &path) const;
 
     template <typename Type>
-    Type *tryLocate(String const &path) const {
+    Type *tryLocate(const String &path) const {
         File *f = tryLocateFile(path);
         if (!f) return nullptr;
         if (auto *casted = dynamic_cast<Type *>(f)) {
@@ -282,7 +282,7 @@ public:
      * @return  The found file.
      */
     template <typename Type>
-    Type &locate(String const &path) const {
+    Type &locate(const String &path) const {
         File *found = tryLocateFile(path);
         if (!found) {
             /// @throw NotFoundError  Path didn't exist.
@@ -359,8 +359,8 @@ public:
     String contentsAsText() const;
 
     // filesys::Node overrides:
-    Node const *tryFollowPath(PathRef const &path) const;
-    Node const *tryGetChild(String const &name) const;
+    const Node *tryFollowPath(const PathRef &path) const;
+    const Node *tryGetChild(const String &name) const;
 
 public:
     static Folder &root();

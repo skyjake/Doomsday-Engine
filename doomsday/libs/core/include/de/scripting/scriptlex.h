@@ -97,7 +97,7 @@ public:
     using Behaviors = Behavior;
 
 public:
-    ScriptLex(String const &input = "");
+    ScriptLex(const String &input = "");
 
     /**
      * Analyze one complete statement from the input.
@@ -107,7 +107,7 @@ public:
      *
      * @return  The number of tokens added to the output token buffer.
      */
-    duint getStatement(TokenBuffer &output, Behaviors const &behavior = DefaultBehavior);
+    duint getStatement(TokenBuffer &output, const Behaviors &behavior = DefaultBehavior);
 
     /**
      * Parse a string.
@@ -126,7 +126,7 @@ public:
     static bool isOperator(Char c);
 
     /// Determines whether a token is a Haw script keyword.
-    static bool isKeyword(Token const &token);
+    static bool isKeyword(const Token &token);
 
     /// Returns a list of all the keywords.
     static StringList keywords();

@@ -34,10 +34,10 @@ ded_t &Defs()
 dint PlayableEpisodeCount()
 {
     dint count = 0;
-    DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
-    for(auto const &pair : episodesById)
+    const DictionaryValue::Elements &episodesById = Defs().episodes.lookup("id").elements();
+    for(const auto &pair : episodesById)
     {
-        Record const &episodeDef = *pair.second->as<RecordValue>().record();
+        const Record &episodeDef = *pair.second->as<RecordValue>().record();
         res::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
         if(P_MapExists(startMap.compose()))
         {
@@ -49,10 +49,10 @@ dint PlayableEpisodeCount()
 
 String FirstPlayableEpisodeId()
 {
-    DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
-    for(auto const &pair : episodesById)
+    const DictionaryValue::Elements &episodesById = Defs().episodes.lookup("id").elements();
+    for(const auto &pair : episodesById)
     {
-        Record const &episodeDef = *pair.second->as<RecordValue>().record();
+        const Record &episodeDef = *pair.second->as<RecordValue>().record();
         res::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
         if(P_MapExists(startMap.compose()))
         {
@@ -62,12 +62,12 @@ String FirstPlayableEpisodeId()
     return "";  // Not found.
 }
 
-res::Uri TranslateMapWarpNumber(String const &episodeId, dint warpNumber)
+res::Uri TranslateMapWarpNumber(const String &episodeId, dint warpNumber)
 {
-    if(Record const *rec = Defs().episodes.tryFind("id", episodeId))
+    if(const Record *rec = Defs().episodes.tryFind("id", episodeId))
     {
         defn::Episode episodeDef(*rec);
-        if(Record const *mgNodeRec = episodeDef.tryFindMapGraphNodeByWarpNumber(warpNumber))
+        if(const Record *mgNodeRec = episodeDef.tryFindMapGraphNodeByWarpNumber(warpNumber))
         {
             return res::makeUri(mgNodeRec->gets("id"));
         }

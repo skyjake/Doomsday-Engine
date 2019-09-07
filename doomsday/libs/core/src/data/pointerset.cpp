@@ -34,7 +34,7 @@ PointerSet::PointerSet()
     , _size (0)
 {}
 
-PointerSet::PointerSet(PointerSet const &other)
+PointerSet::PointerSet(const PointerSet &other)
     : _iterationObserver(other._iterationObserver)
     , _flags(other._flags)
     , _size (other._size)
@@ -226,7 +226,7 @@ PointerSet::Pointer PointerSet::take()
     return ptr;
 }
 
-PointerSet &PointerSet::operator = (PointerSet const &other)
+PointerSet &PointerSet::operator = (const PointerSet &other)
 {
     auto const bytes = sizeof(Pointer) * other._size;
 

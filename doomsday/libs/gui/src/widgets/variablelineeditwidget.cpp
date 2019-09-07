@@ -52,7 +52,7 @@ DE_OBSERVES(Variable, Change  )
         var->audienceForChange() += this;
     }
 
-    void variableValueChanged(Variable &, Value const &)
+    void variableValueChanged(Variable &, const Value &)
     {
         updateFromVariable();
     }
@@ -64,7 +64,7 @@ DE_OBSERVES(Variable, Change  )
     }
 };
 
-VariableLineEditWidget::VariableLineEditWidget(Variable &variable, String const &name)
+VariableLineEditWidget::VariableLineEditWidget(Variable &variable, const String &name)
     : LineEditWidget(name), d(new Impl(this, variable))
 {
     audienceForContentChange() += [this](){ setVariableFromWidget(); };

@@ -64,9 +64,9 @@ DE_PIMPL_NOREF(Font::RichFormat)
 
     Impl() : style(nullptr) {}
 
-    Impl(IStyle const &style) : style(&style) {}
+    Impl(const IStyle &style) : style(&style) {}
 
-    Impl(Impl const &other)
+    Impl(const Impl &other)
         : style(other.style)
         , ranges(other.ranges)
         , tabs(other.tabs)
@@ -213,13 +213,13 @@ DE_PIMPL_NOREF(Font::RichFormat)
 Font::RichFormat::RichFormat() : d(new RichFormat::Impl)
 {}
 
-Font::RichFormat::RichFormat(IStyle const &style) : d(new RichFormat::Impl(style))
+Font::RichFormat::RichFormat(const IStyle &style) : d(new RichFormat::Impl(style))
 {}
 
-Font::RichFormat::RichFormat(RichFormat const &other) : d(new RichFormat::Impl(*other.d))
+Font::RichFormat::RichFormat(const RichFormat &other) : d(new RichFormat::Impl(*other.d))
 {}
 
-Font::RichFormat &Font::RichFormat::operator=(RichFormat const &other)
+Font::RichFormat &Font::RichFormat::operator=(const RichFormat &other)
 {
     d.reset(new RichFormat::Impl(*other.d));
     return *this;
@@ -233,7 +233,7 @@ void Font::RichFormat::clear()
     d->stack.emplace_back();
 }
 
-void Font::RichFormat::setStyle(IStyle const &style)
+void Font::RichFormat::setStyle(const IStyle &style)
 {
     d->style = &style;
 }
@@ -243,12 +243,12 @@ bool Font::RichFormat::hasStyle() const
     return d->style != nullptr;
 }
 
-Font::RichFormat::IStyle const &Font::RichFormat::style() const
+const Font::RichFormat::IStyle &Font::RichFormat::style() const
 {
     return *d->style;
 }
 
-Font::RichFormat Font::RichFormat::fromPlainText(String const &plainText)
+Font::RichFormat Font::RichFormat::fromPlainText(const String &plainText)
 {
     Impl::FormatRange all;
     all.range = plainText;
@@ -257,7 +257,7 @@ Font::RichFormat Font::RichFormat::fromPlainText(String const &plainText)
     return form;
 }
 
-void Font::RichFormat::initFromStyledText(String const &styledText)
+void Font::RichFormat::initFromStyledText(const String &styledText)
 {
     clear();
 
@@ -296,7 +296,7 @@ Font::RichFormatRef Font::RichFormat::subRange(const CString &range) const
     return RichFormatRef(*this, range);
 }
 
-Font::TabStops const &Font::RichFormat::tabStops() const
+const Font::TabStops &Font::RichFormat::tabStops() const
 {
     return d->tabs;
 }
@@ -341,7 +341,7 @@ Font::RichFormat::Ref::Ref(const RichFormat &richFormat)
     DE_ASSERT(_span.ptr());
 }
 
-Font::RichFormat::Ref::Ref(RichFormat const &richFormat, const CString &subSpan)
+Font::RichFormat::Ref::Ref(const RichFormat &richFormat, const CString &subSpan)
     : _ref(richFormat), _span(subSpan)
 {
     DE_ASSERT(_span.ptr());
@@ -425,7 +425,7 @@ void Font::RichFormat::Ref::updateIndices()
     DE_ASSERT(_indices.start <= _indices.end);
 }
 
-Font::RichFormat::Iterator::Iterator(Ref const &f) : format(f), index(-1) {}
+Font::RichFormat::Iterator::Iterator(const Ref &f) : format(f), index(-1) {}
 
 int Font::RichFormat::Iterator::size() const
 {

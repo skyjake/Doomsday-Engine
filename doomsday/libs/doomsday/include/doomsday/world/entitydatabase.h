@@ -46,13 +46,13 @@ public:
     EntityDatabase();
 
     /// @return Total number of entities by definition @a entityDef.
-    uint entityCount(MapEntityDef const *entityDef) const;
+    uint entityCount(const MapEntityDef *entityDef) const;
 
     /**
      * Returns @c true iff an entity with definition @a entityDef and
      * @a elementIndex is known/present.
      */
-    bool hasEntity(MapEntityDef const *entityDef, int elementIndex) const;
+    bool hasEntity(const MapEntityDef *entityDef, int elementIndex) const;
 
     /**
      * Lookup a known entity element property value in the database.
@@ -62,9 +62,9 @@ public:
      *
      * @return The found PropertyValue.
      */
-    PropertyValue const &property(MapEntityPropertyDef const *def, int elementIndex) const;
+    const PropertyValue &property(const MapEntityPropertyDef *def, int elementIndex) const;
 
-    bool hasPropertyValue(MapEntityPropertyDef const *def, int elementIndex) const;
+    bool hasPropertyValue(const MapEntityPropertyDef *def, int elementIndex) const;
 
     /**
      * Replace/add a value for a known entity element property to the database.
@@ -73,11 +73,11 @@ public:
      * @param elementIndex  Unique element index for the value.
      * @param value         The new PropertyValue. Ownership passes to this database.
      */
-    void setProperty(MapEntityPropertyDef const *def, int elementIndex,
+    void setProperty(const MapEntityPropertyDef *def, int elementIndex,
                      PropertyValue *value);
 
     /// @copydoc setProperty
-    inline void setProperty(MapEntityPropertyDef const *def, int elementIndex,
+    inline void setProperty(const MapEntityPropertyDef *def, int elementIndex,
                             valuetype_t valueType, void *valueAdr)
     {
         setProperty(def, elementIndex, BuildPropertyValue(valueType, valueAdr));

@@ -137,7 +137,7 @@ static void checkSizeConditionInIdentityKey(String &idKey, lumpsizecondition_t *
     idKey.truncate(condPos);
 }
 
-static lumpnum_t lumpNumForIdentityKey(LumpIndex const &lumpIndex, String idKey)
+static lumpnum_t lumpNumForIdentityKey(const LumpIndex &lumpIndex, String idKey)
 {
     if (idKey.isEmpty()) return -1;
 
@@ -181,7 +181,7 @@ static lumpnum_t lumpNumForIdentityKey(LumpIndex const &lumpIndex, String idKey)
 }
 
 /// @return  @c true, iff the resource appears to be what we think it is.
-static bool validateWad(String const &filePath, const StringList &identityKeys)
+static bool validateWad(const String &filePath, const StringList &identityKeys)
 {
     bool validated = true;
     try
@@ -228,14 +228,14 @@ static bool validateWad(String const &filePath, const StringList &identityKeys)
         App_FileSystem().releaseFile(hndl.file());
         delete &hndl;
     }
-    catch (FS1::NotFoundError const &)
+    catch (const FS1::NotFoundError &)
     {} // Ignore this error.
 
     return validated;
 }
 
 /// @return  @c true, iff the resource appears to be what we think it is.
-static bool validateZip(String const &filePath, const StringList & /*identityKeys*/)
+static bool validateZip(const String &filePath, const StringList & /*identityKeys*/)
 {
     try
     {
@@ -246,7 +246,7 @@ static bool validateZip(String const &filePath, const StringList & /*identityKey
         delete &hndl;
         return result;
     }
-    catch (FS1::NotFoundError const &)
+    catch (const FS1::NotFoundError &)
     {} // Ignore error.
     return false;
 }
@@ -270,7 +270,7 @@ void ResourceManifest::locateFile()
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
             candidates << foundPath;
         }
-        catch (FS1::NotFoundError const &)
+        catch (const FS1::NotFoundError &)
         {} // Ignore this error.
 
         // Also check what FS2 has to offer. FS1 can't access FS2's files, so we'll
@@ -278,7 +278,7 @@ void ResourceManifest::locateFile()
         App::fileSystem().forAll(*i, [&candidates] (File &f)
         {
             // We ignore interpretations and go straight to the source.
-            if (NativeFile const *native = maybeAs<NativeFile>(f.source()))
+            if (const NativeFile *native = maybeAs<NativeFile>(f.source()))
             {
                 candidates << native->nativePath();
             }
@@ -324,7 +324,7 @@ void ResourceManifest::forgetFile()
     }
 }
 
-String const &ResourceManifest::resolvedPath(bool tryLocate)
+const String &ResourceManifest::resolvedPath(bool tryLocate)
 {
     if (tryLocate)
     {

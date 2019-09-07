@@ -185,7 +185,7 @@ public:
     PropertyDoubleValue(double value) : PropertyValue(), value_(value) {}
 
     valuetype_t type() const { return DDVT_DOUBLE; }
-    char const *typeName() const { return "double"; }
+    const char *typeName() const { return "double"; }
 
     double value() const { return value_; }
 

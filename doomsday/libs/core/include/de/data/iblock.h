@@ -46,7 +46,7 @@ public:
      * @param count  Number of bytes to copy. This will also be the new size
      *               of the block after the operation.
      */
-    virtual void copyFrom(IByteArray const &array, IByteArray::Offset at, IByteArray::Size count) = 0;
+    virtual void copyFrom(const IByteArray &array, IByteArray::Offset at, IByteArray::Size count) = 0;
 
     /**
      * Resizes the block.
@@ -60,7 +60,7 @@ public:
      *
      * @return Pointer to the beginning of the data.
      */
-    virtual IByteArray::Byte const *data() const = 0;
+    virtual const IByteArray::Byte *data() const = 0;
 };
 
 } // namespace de

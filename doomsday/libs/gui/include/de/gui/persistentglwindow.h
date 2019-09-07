@@ -96,7 +96,7 @@ public:
      *
      * @param id  Identifier of the window.
      */
-    PersistentGLWindow(String const &id);
+    PersistentGLWindow(const String &id);
 
     String id() const;
 
@@ -134,7 +134,7 @@ public:
      * was then successfully updated accordingly. If any attribute failed to
      * validate, the window will remain unchanged and @a false is returned.
      */
-    bool changeAttributes(int const *attribs);
+    bool changeAttributes(const int *attribs);
 
     /**
      * Saves the window's state into a persistent storage so that it can be later
@@ -175,7 +175,7 @@ protected:
      *
      * @return Name of a variable in Config.
      */
-    String configName(String const &key) const;
+    String configName(const String &key) const;
 
 private:
     DE_PRIVATE(d)

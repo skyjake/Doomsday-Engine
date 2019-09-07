@@ -64,7 +64,7 @@ Version Version::currentBuild()
     return v;
 }
 
-Version::Version(String const &version, int buildNumber)
+Version::Version(const String &version, int buildNumber)
 {
     parseVersionString(version);
     if (buildNumber)
@@ -116,7 +116,7 @@ String Version::asHumanReadableText() const
     return v;
 }
 
-void Version::parseVersionString(String const &version)
+void Version::parseVersionString(const String &version)
 {
     major = minor = patch = build = 0;
     label.clear();
@@ -138,7 +138,7 @@ void Version::parseVersionString(String const &version)
     }
 }
 
-bool Version::operator<(Version const &other) const
+bool Version::operator<(const Version &other) const
 {
     if (major == other.major)
     {
@@ -155,13 +155,13 @@ bool Version::operator<(Version const &other) const
     return major < other.major;
 }
 
-bool Version::operator==(Version const &other) const
+bool Version::operator==(const Version &other) const
 {
     return major == other.major && minor == other.minor && patch == other.patch &&
            build == other.build;
 }
 
-bool Version::operator > (Version const &other) const
+bool Version::operator > (const Version &other) const
 {
     return !(*this < other || *this == other);
 }

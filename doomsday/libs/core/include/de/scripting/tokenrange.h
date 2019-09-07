@@ -51,12 +51,12 @@ public:
     TokenRange();
 
     /// Constructor that uses the entire range of tokens.
-    TokenRange(TokenBuffer const &tokens);
+    TokenRange(const TokenBuffer &tokens);
 
     /// Constructor that uses a specific set of tokens.
-    TokenRange(TokenBuffer const &tokens, dsize startIndex, dsize endIndex);
+    TokenRange(const TokenBuffer &tokens, dsize startIndex, dsize endIndex);
 
-    TokenBuffer const &buffer() const { return *_tokens; }
+    const TokenBuffer &buffer() const { return *_tokens; }
 
     /// Determines the length of the range.
     /// @return Number of tokens in the range.
@@ -75,11 +75,11 @@ public:
 
     /// Returns a specific token from the token buffer.
     /// @param pos Position of the token within the range.
-    Token const &token(dsize pos) const;
+    const Token &token(dsize pos) const;
 
-    Token const &firstToken() const;
+    const Token &firstToken() const;
 
-    Token const &lastToken() const;
+    const Token &lastToken() const;
 
     /// Determines whether the range begins with a specific token.
     bool beginsWith(const char *token) const;

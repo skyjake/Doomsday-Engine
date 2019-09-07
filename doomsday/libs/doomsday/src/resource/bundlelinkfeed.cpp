@@ -32,7 +32,7 @@ String BundleLinkFeed::description() const
     return "data bundle links";
 }
 
-Feed::PopulatedFiles BundleLinkFeed::populate(Folder const &)
+Feed::PopulatedFiles BundleLinkFeed::populate(const Folder &)
 {
     // Links are populated by DataBundle when files are identified.
     return PopulatedFiles();
@@ -40,7 +40,7 @@ Feed::PopulatedFiles BundleLinkFeed::populate(Folder const &)
 
 bool BundleLinkFeed::prune(File &file) const
 {
-    if (LinkFile const *link = maybeAs<LinkFile>(file))
+    if (const LinkFile *link = maybeAs<LinkFile>(file))
     {
         // Broken links must be removed.
         return link->isBroken();

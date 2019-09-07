@@ -60,7 +60,7 @@ public:
 
 public:
     Asset(State initialState = NotReady);
-    Asset(Asset const &other);
+    Asset(const Asset &other);
 
     virtual ~Asset();
 
@@ -107,7 +107,7 @@ public:
         Required        ///< Dependents cannot operate without the asset.
     };
 
-    typedef std::map<Asset const *, Policy> Members;
+    typedef std::map<const Asset *, Policy> Members;
 
 public:
     AssetGroup();
@@ -116,20 +116,20 @@ public:
 
     inline bool    isEmpty() const { return !size(); }
     dint           size() const;
-    bool           has(Asset const &dep) const;
+    bool           has(const Asset &dep) const;
     const Members &all() const;
 
     void clear();
-    void insert(Asset const &dep, Policy policy = Required);
-    void remove(Asset const &asset);
-    void setPolicy(Asset const &asset, Policy policy);
+    void insert(const Asset &dep, Policy policy = Required);
+    void remove(const Asset &asset);
+    void setPolicy(const Asset &asset, Policy policy);
 
-    AssetGroup &operator += (Asset const &dep) {
+    AssetGroup &operator += (const Asset &dep) {
         insert(dep, Required);
         return *this;
     }
 
-    AssetGroup &operator -= (Asset const &dep) {
+    AssetGroup &operator -= (const Asset &dep) {
         remove(dep);
         return *this;
     }

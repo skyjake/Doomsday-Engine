@@ -31,7 +31,7 @@ namespace de {
 DictionaryValue::DictionaryValue() : /*_iteration(0),*/ _validIteration(false)
 {}
 
-DictionaryValue::DictionaryValue(DictionaryValue const &other)
+DictionaryValue::DictionaryValue(const DictionaryValue &other)
     : Value(), /*_iteration(0),*/ _validIteration(false)
 {
     for (Elements::const_iterator i = other._elements.begin(); i != other._elements.end(); ++i)
@@ -76,7 +76,7 @@ void DictionaryValue::add(Value *key, Value *value)
     }
 }
 
-void DictionaryValue::remove(Value const &key)
+void DictionaryValue::remove(const Value &key)
 {
     Elements::iterator i = _elements.find(ValueRef(&key));
     if (i != _elements.end())
@@ -85,7 +85,7 @@ void DictionaryValue::remove(Value const &key)
     }
 }
 
-void DictionaryValue::remove(Elements::iterator const &pos)
+void DictionaryValue::remove(const Elements::iterator &pos)
 {
     delete pos->first.value;
     delete pos->second;
@@ -178,7 +178,7 @@ dsize DictionaryValue::size() const
     return _elements.size();
 }
 
-Value const &DictionaryValue::element(Value const &index) const
+const Value &DictionaryValue::element(const Value &index) const
 {
     Elements::const_iterator i = _elements.find(ValueRef(&index));
     if (i == _elements.end())
@@ -189,12 +189,12 @@ Value const &DictionaryValue::element(Value const &index) const
     return *i->second;
 }
 
-Value &DictionaryValue::element(Value const &index)
+Value &DictionaryValue::element(const Value &index)
 {
-    return const_cast<Value &>(const_cast<DictionaryValue const *>(this)->element(index));
+    return const_cast<Value &>(const_cast<const DictionaryValue *>(this)->element(index));
 }
 
-void DictionaryValue::setElement(Value const &index, Value *value)
+void DictionaryValue::setElement(const Value &index, Value *value)
 {
     Elements::iterator i = _elements.find(ValueRef(&index));
     if (i == _elements.end())
@@ -209,7 +209,7 @@ void DictionaryValue::setElement(Value const &index, Value *value)
     }
 }
 
-bool DictionaryValue::contains(Value const &value) const
+bool DictionaryValue::contains(const Value &value) const
 {
     return _elements.find(ValueRef(&value)) != _elements.end();
 }
@@ -243,9 +243,9 @@ bool DictionaryValue::isTrue() const
     return size() > 0;
 }
 
-dint DictionaryValue::compare(Value const &value) const
+dint DictionaryValue::compare(const Value &value) const
 {
-    DictionaryValue const *other = dynamic_cast<DictionaryValue const *>(&value);
+    const DictionaryValue *other = dynamic_cast<const DictionaryValue *>(&value);
     if (other)
     {
         if (size() < other->size())
@@ -273,9 +273,9 @@ dint DictionaryValue::compare(Value const &value) const
     return Value::compare(value);
 }
 
-void DictionaryValue::sum(Value const &value)
+void DictionaryValue::sum(const Value &value)
 {
-    DictionaryValue const *other = dynamic_cast<DictionaryValue const *>(&value);
+    const DictionaryValue *other = dynamic_cast<const DictionaryValue *>(&value);
     if (!other)
     {
         throw ArithmeticError("DictionaryValue::sum", "Values cannot be summed");
@@ -287,7 +287,7 @@ void DictionaryValue::sum(Value const &value)
     }
 }
 
-void DictionaryValue::subtract(Value const &subtrahend)
+void DictionaryValue::subtract(const Value &subtrahend)
 {
     Elements::iterator i = _elements.find(ValueRef(&subtrahend));
     if (i == _elements.end())

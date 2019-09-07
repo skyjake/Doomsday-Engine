@@ -113,7 +113,7 @@ DE_GUI_PIMPL(ScrollAreaWidget), public Lockable
 
     void updateStyle()
     {
-        Style const &st = style();
+        const Style &st = style();
 
         scrollBarWidth      = st.rules().rule("scrollarea.bar").valuei();
         scrollBarColor      = st.colors().colorf(scrollBarColorId);
@@ -145,7 +145,7 @@ DE_GUI_PIMPL(ScrollAreaWidget), public Lockable
 
     typedef std::pair<Rectanglef, Rectanglef> RectanglefPair;
 
-    RectanglefPair scrollIndicatorRects(Vec2f const &originPos) const
+    RectanglefPair scrollIndicatorRects(const Vec2f &originPos) const
     {
         const Vec2i viewSize = self().viewportSize();
         if (viewSize == Vec2i() || self().maximumScrollY().valuei() == 0)
@@ -180,7 +180,7 @@ DE_GUI_PIMPL(ScrollAreaWidget), public Lockable
     }
 };
 
-ScrollAreaWidget::ScrollAreaWidget(String const &name)
+ScrollAreaWidget::ScrollAreaWidget(const String &name)
     : GuiWidget(name), d(new Impl(this))
 {
     setBehavior(ChildHitClipping);
@@ -195,7 +195,7 @@ ScrollAreaWidget::ScrollAreaWidget(String const &name)
     setContentHeight(0);
 }
 
-void ScrollAreaWidget::setScrollBarColor(DotPath const &colorId)
+void ScrollAreaWidget::setScrollBarColor(const DotPath &colorId)
 {
     d->scrollBarColorId = colorId;
     d->updateStyle();
@@ -230,12 +230,12 @@ ScrollAreaWidget::Origin ScrollAreaWidget::origin() const
     return d->origin;
 }
 
-void ScrollAreaWidget::setIndicatorUv(Rectanglef const &uv)
+void ScrollAreaWidget::setIndicatorUv(const Rectanglef &uv)
 {
     d->indicatorUv = uv;
 }
 
-void ScrollAreaWidget::setIndicatorUv(Vec2f const &uvPoint)
+void ScrollAreaWidget::setIndicatorUv(const Vec2f &uvPoint)
 {
     d->indicatorUv = Rectanglef::fromSize(uvPoint, Vec2f(0, 0));
 }
@@ -246,7 +246,7 @@ void ScrollAreaWidget::setContentWidth(int width)
     d->contentRule.setInput(Rule::Width, Const(width));
 }
 
-void ScrollAreaWidget::setContentWidth(Rule const &width)
+void ScrollAreaWidget::setContentWidth(const Rule &width)
 {
     DE_GUARD(d);
     d->contentRule.setInput(Rule::Width, width);
@@ -258,34 +258,34 @@ void ScrollAreaWidget::setContentHeight(int height)
     d->contentRule.setInput(Rule::Height, Const(height));
 }
 
-void ScrollAreaWidget::setContentHeight(Rule const &height)
+void ScrollAreaWidget::setContentHeight(const Rule &height)
 {
     DE_GUARD(d);
     d->contentRule.setInput(Rule::Height, height);
 }
 
-void ScrollAreaWidget::setContentSize(Rule const &width, Rule const &height)
+void ScrollAreaWidget::setContentSize(const Rule &width, const Rule &height)
 {
     DE_GUARD(d);
     setContentWidth(width);
     setContentHeight(height);
 }
 
-void ScrollAreaWidget::setContentSize(ISizeRule const &dimensions)
+void ScrollAreaWidget::setContentSize(const ISizeRule &dimensions)
 {
     DE_GUARD(d);
     setContentWidth(dimensions.width());
     setContentHeight(dimensions.height());
 }
 
-void ScrollAreaWidget::setContentSize(Vec2i const &size)
+void ScrollAreaWidget::setContentSize(const Vec2i &size)
 {
     DE_GUARD(d);
     setContentWidth(size.x);
     setContentHeight(size.y);
 }
 
-void ScrollAreaWidget::setContentSize(Vec2ui const &size)
+void ScrollAreaWidget::setContentSize(const Vec2ui &size)
 {
     setContentSize(Vec2i(size.x, size.y));
 }
@@ -314,7 +314,7 @@ int ScrollAreaWidget::contentHeight() const
     return d->contentRule.height().valuei();
 }
 
-RuleRectangle const &ScrollAreaWidget::contentRule() const
+const RuleRectangle &ScrollAreaWidget::contentRule() const
 {
     return d->contentRule;
 }
@@ -329,12 +329,12 @@ AnimationRule &ScrollAreaWidget::scrollPositionY() const
     return *d->y;
 }
 
-Rule const &ScrollAreaWidget::maximumScrollX() const
+const Rule &ScrollAreaWidget::maximumScrollX() const
 {
     return *d->maxX;
 }
 
-Rule const &ScrollAreaWidget::maximumScrollY() const
+const Rule &ScrollAreaWidget::maximumScrollY() const
 {
     return *d->maxY;
 }
@@ -392,7 +392,7 @@ Vec2i ScrollAreaWidget::maximumScroll() const
     return Vec2i(maximumScrollX().valuei(), maximumScrollY().valuei());
 }
 
-void ScrollAreaWidget::scroll(Vec2i const &to, const TimeSpan& span)
+void ScrollAreaWidget::scroll(const Vec2i &to, const TimeSpan& span)
 {
     scrollX(to.x, span);
     scrollY(to.y, span);
@@ -409,7 +409,7 @@ void ScrollAreaWidget::scrollY(int to, TimeSpan span)
     d->restartScrollOpacityFade();
 }
 
-void ScrollAreaWidget::scrollY(Rule const &to, TimeSpan span)
+void ScrollAreaWidget::scrollY(const Rule &to, TimeSpan span)
 {
     d->y->set(OperatorRule::clamped(to, Const(0), maximumScrollY()), std::move(span));
     d->restartScrollOpacityFade();
@@ -441,7 +441,7 @@ void ScrollAreaWidget::enableIndicatorDraw(bool enabled)
     d->restartScrollOpacityFade();
 }
 
-bool ScrollAreaWidget::handleEvent(Event const &event)
+bool ScrollAreaWidget::handleEvent(const Event &event)
 {
     if (d->scrollBarGrabbed && event.isMouse())
     {
@@ -477,7 +477,7 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
     {
         if (event.type() == Event::MouseWheel)
         {
-            MouseEvent const &mouse = event.as<MouseEvent>();
+            const MouseEvent &mouse = event.as<MouseEvent>();
 #ifdef MACOSX
             if (mouse.wheelMotion() == MouseEvent::Pixels)
             {
@@ -535,7 +535,7 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
     // Page key scrolling.
     if (d->scrollingEnabled && event.isKeyDown())
     {
-        KeyEvent const &ev = event.as<KeyEvent>();
+        const KeyEvent &ev = event.as<KeyEvent>();
 
         float pageSize = scrollPageSize().y;
         if (d->origin == Bottom) pageSize = -pageSize;
@@ -608,7 +608,7 @@ void ScrollAreaWidget::scrollToRight(TimeSpan span)
     scrollX(maximumScrollX().valuei(), span);
 }
 
-void ScrollAreaWidget::scrollToWidget(GuiWidget const &widget, TimeSpan span)
+void ScrollAreaWidget::scrollToWidget(const GuiWidget &widget, TimeSpan span)
 {
     int off = widget.rule().midY().valuei() - contentRule().top().valuei() -
               rule().height().valuei()/2;
@@ -641,7 +641,7 @@ void ScrollAreaWidget::glDeinit()
 }
 
 void ScrollAreaWidget::glMakeScrollIndicatorGeometry(GuiVertexBuilder &verts,
-                                                     Vec2f const &origin)
+                                                     const Vec2f &origin)
 {
     // Draw the scroll indicator.
     if (d->scrollOpacity <= 0) return;

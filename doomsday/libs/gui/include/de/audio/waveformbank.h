@@ -39,15 +39,15 @@ public:
      *
      * @param flags  Bank behavior.
      */
-    WaveformBank(Flags const &flags = DisableHotStorage);
+    WaveformBank(const Flags &flags = DisableHotStorage);
 
-    void add(DotPath const &id, String const &waveformFilePath);
-    void addFromInfo(File const &file);
+    void add(const DotPath &id, const String &waveformFilePath);
+    void addFromInfo(const File &file);
 
-    Waveform const &waveform(DotPath const &id) const;
+    const Waveform &waveform(const DotPath &id) const;
 
 protected:
-    ISource *newSourceFromInfo(String const &id);
+    ISource *newSourceFromInfo(const String &id);
     IData *loadFromSource(ISource &source);
     IData *newData();
 

@@ -20,7 +20,7 @@
 
 namespace de {
 
-BlurWidget::BlurWidget(String const &name) : GuiWidget(name)
+BlurWidget::BlurWidget(const String &name) : GuiWidget(name)
 {
     set(Background(Vec4f(1, 1, 1, 0), Background::Blurred));
 }

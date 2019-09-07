@@ -114,7 +114,7 @@ public:
         return count.num;
     }
 
-    PODType const &at(int index) const
+    const PODType &at(int index) const
     {
         DE_ASSERT(index >= 0);
         DE_ASSERT(index < size());
@@ -128,12 +128,12 @@ public:
         return elements[index];
     }
 
-    PODType const &first() const
+    const PODType &first() const
     {
         return at(0);
     }
 
-    PODType const &last() const
+    const PODType &last() const
     {
         return at(size() - 1);
     }
@@ -197,7 +197,7 @@ public:
         elements[destIndex].reallocate();
     }
 
-    void copyTo(PODType *dest, PODType const *src)
+    void copyTo(PODType *dest, const PODType *src)
     {
         copyTo(indexOf(dest), indexOf(src));
     }
@@ -207,7 +207,7 @@ public:
         copyTo(indexOf(dest), srcIndex);
     }
 
-    int indexOf(PODType const *element) const
+    int indexOf(const PODType *element) const
     {
         if (size() > 0 && element >= &first() && element <= &last())
             return element - elements;

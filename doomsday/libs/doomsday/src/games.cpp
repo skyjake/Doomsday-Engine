@@ -51,7 +51,7 @@ DE_PIMPL(Games)
     Hash<String, Game *> idLookup; // not owned, lower case
 
     Dispatch dispatch;
-    Set<Game const *> lastCheckedPlayable; // determines when notification sent
+    Set<const Game *> lastCheckedPlayable; // determines when notification sent
 
     /**
      * Delegates game addition notifications to scripts.
@@ -169,7 +169,7 @@ int Games::numPlayable() const
     return count;
 }
 
-int Games::numPlayable(String const &family) const
+int Games::numPlayable(const String &family) const
 {
     DE_GUARD(d);
     int count = 0;
@@ -183,7 +183,7 @@ int Games::numPlayable(String const &family) const
     return count;
 }
 
-GameProfile const *Games::firstPlayable() const
+const GameProfile *Games::firstPlayable() const
 {
     DE_GUARD(d);
     for (Game *game : d->games)
@@ -193,7 +193,7 @@ GameProfile const *Games::firstPlayable() const
     return nullptr;
 }
 
-Game &Games::operator[](String const &id) const
+Game &Games::operator[](const String &id) const
 {
     DE_GUARD(d);
     if (id.isEmpty())
@@ -209,7 +209,7 @@ Game &Games::operator[](String const &id) const
     throw NotFoundError("Games::operator[]", "No game exists with ID '" + id + "'");
 }
 
-bool Games::contains(String const &id) const
+bool Games::contains(const String &id) const
 {
     DE_GUARD(d);
     return d->findById(id) != nullptr;
@@ -249,7 +249,7 @@ int Games::collectAll(GameList &collected)
     return collected.sizei() - numFoundSoFar;
 }
 
-Game &Games::defineGame(String const &id, Record const &parameters)
+Game &Games::defineGame(const String &id, const Record &parameters)
 {
     DE_GUARD(d);
     LOG_AS("Games");
@@ -349,7 +349,7 @@ void Games::checkReadiness()
         return LoopContinue;
     });
 */
-    Set<Game const *> playable;
+    Set<const Game *> playable;
     bool changed = false;
     {
         DE_GUARD(d);

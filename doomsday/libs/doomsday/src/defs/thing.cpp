@@ -47,7 +47,7 @@ void Thing::resetToDefaults()
     def().addArray ("misc").array().addMany(NUM_MOBJ_MISC, 0);
 }
     
-void Thing::setSound(int soundId, String const &sound)
+void Thing::setSound(int soundId, const String &sound)
 {
     def()["sounds"].array().setElement(soundId, sound);
 }

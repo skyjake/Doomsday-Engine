@@ -205,7 +205,7 @@ int P_IterateWeaponsBySlot(byte slot, dd_bool reverse, int (*callback) (weaponty
     if(slot <= NUM_WEAPON_SLOTS)
     {
         uint i = 0;
-        weaponslotinfo_t const *sl = &weaponSlots[slot];
+        const weaponslotinfo_t *sl = &weaponSlots[slot];
 
         while(i < sl->num &&
              (result = callback(sl->types[reverse ? sl->num - 1 - i : i],
@@ -228,7 +228,7 @@ void P_InitPlayerClassInfo()
 }
 #endif
 
-int P_GetPlayerNum(player_t const *player)
+int P_GetPlayerNum(const player_t *player)
 {
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
@@ -240,7 +240,7 @@ int P_GetPlayerNum(player_t const *player)
     return 0;
 }
 
-int P_GetPlayerCheats(player_t const *player)
+int P_GetPlayerCheats(const player_t *player)
 {
     if(!player) return 0;
 
@@ -251,7 +251,7 @@ int P_GetPlayerCheats(player_t const *player)
     return player->cheats;
 }
 
-int P_CountPlayersInGame(PlayerSelectionCriteria const &criteria)
+int P_CountPlayersInGame(const PlayerSelectionCriteria &criteria)
 {
     int count = 0;
     for(int i = 0; i < MAXPLAYERS; ++i)
@@ -694,7 +694,7 @@ void P_PlayerChangeClass(player_t *player, playerclass_t newClass)
 }
 #endif
 
-void P_SetMessageWithFlags(const player_t *pl, char const *msg, int flags)
+void P_SetMessageWithFlags(const player_t *pl, const char *msg, int flags)
 {
     DE_ASSERT(pl);
 
@@ -711,13 +711,13 @@ void P_SetMessageWithFlags(const player_t *pl, char const *msg, int flags)
     NetSv_SendMessage(pl - players, msg);
 }
 
-void P_SetMessage(const player_t *plr, char const *msg)
+void P_SetMessage(const player_t *plr, const char *msg)
 {
     P_SetMessageWithFlags(plr, msg, 0);
 }
 
 #if __JHEXEN__
-void P_SetYellowMessageWithFlags(player_t *pl, char const *msg, int flags)
+void P_SetYellowMessageWithFlags(player_t *pl, const char *msg, int flags)
 {
 #define YELLOW_FMT      "{r=1;g=0.7;b=0.3;}"
 #define YELLOW_FMT_LEN  18
@@ -748,7 +748,7 @@ void P_SetYellowMessageWithFlags(player_t *pl, char const *msg, int flags)
 #undef YELLOW_FMT
 }
 
-void P_SetYellowMessage(player_t *pl, char const *msg)
+void P_SetYellowMessage(player_t *pl, const char *msg)
 {
     P_SetYellowMessageWithFlags(pl, msg, 0);
 }
@@ -1332,7 +1332,7 @@ void Player_LeaveMap(player_t *player, dd_bool newHub)
     NetSv_SendPlayerState(plrNum, DDSP_ALL_PLAYERS, PSF_FRAGS | PSF_COUNTERS, true);
 }
 
-dd_bool Player_WaitingForReborn(player_t const *plr)
+dd_bool Player_WaitingForReborn(const player_t *plr)
 {
     DE_ASSERT(plr != 0);
     return (plr->plr->inGame && plr->playerState == PST_REBORN && !P_MobjIsCamera(plr->plr->mo));
@@ -1792,11 +1792,11 @@ void player_s::read(reader_s *reader, playerheader_t &plrHdr)
     update |= PSF_REBORN;
 }
 
-String Player_WeaponId(player_t const *plr)
+String Player_WeaponId(const player_t *plr)
 {
     String value = "Weapon Info|";
 #ifdef __JHEXEN__
-    static char const *className[] = { "Fighter", "Cleric", "Mage", "Pig" };
+    static const char *className[] = { "Fighter", "Cleric", "Mage", "Pig" };
     value.append(className[plr->class_]);
     value.append("|");
 #endif
@@ -1860,7 +1860,7 @@ void Player_NotifyPSpriteChange(player_t *player, int position)
 /**
  * Updates game status cvars for the specified player.
  */
-void Player_UpdateStatusCVars(player_t const *player)
+void Player_UpdateStatusCVars(const player_t *player)
 {
     DE_ASSERT(player);
 

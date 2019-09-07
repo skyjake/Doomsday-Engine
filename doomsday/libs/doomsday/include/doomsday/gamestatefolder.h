@@ -53,7 +53,7 @@ public:
         /**
          * Parses metadata in Info syntax from @a source.
          */
-        void parse(de::String const &source);
+        void parse(const de::String &source);
 
         /**
          * Composes a human-friendly, styled, textual representation suitable for use in user
@@ -82,25 +82,25 @@ public:
          *
          * @param session  The saved session to be read.
          */
-        MapStateReader(GameStateFolder const &session);
+        MapStateReader(const GameStateFolder &session);
         virtual ~MapStateReader();
 
         /**
          * Returns the deserialized metadata for the saved session being read.
          */
-        Metadata const &metadata() const;
+        const Metadata &metadata() const;
 
         /**
          * Returns the root folder of the saved session being read.
          */
-        Folder const &folder() const;
+        const Folder &folder() const;
 
         /**
          * Attempt to load (read/interpret) the serialized map state.
          *
          * @param mapUriStr  Unique identifier of the map state to deserialize.
          */
-        virtual void read(de::String const &mapUriStr) = 0;
+        virtual void read(const de::String &mapUriStr) = 0;
 
     private:
         DE_PRIVATE(d)
@@ -125,11 +125,11 @@ public:
          * if recognized. Ownership is given to the caller.
          */
         virtual MapStateReader *makeMapStateReader(
-                GameStateFolder const &session, de::String const &mapUriStr) = 0;
+                const GameStateFolder &session, const de::String &mapUriStr) = 0;
     };
 
 public:
-    GameStateFolder(File &sourceArchiveFile, de::String const &name = de::String());
+    GameStateFolder(File &sourceArchiveFile, const de::String &name = de::String());
 
     virtual ~GameStateFolder();
 
@@ -141,7 +141,7 @@ public:
     /**
      * Provides read-only access to a copy of the deserialized session metadata.
      */
-    Metadata const &metadata() const;
+    const Metadata &metadata() const;
 
     /**
      * Update the cached metadata with @a copied. Note that this will @em not alter the
@@ -150,14 +150,14 @@ public:
      *
      * @param copied  Replacement Metadata. A copy is made.
      */
-    void cacheMetadata(Metadata const &copied);
+    void cacheMetadata(const Metadata &copied);
 
     /**
      * Checks whether the saved session contains state data on the specified @a path.
      *
      * @param path  Of the state data to check for. Not case sensitive.
      */
-    inline bool hasState(de::String const &path) const {
+    inline bool hasState(const de::String &path) const {
         return has(stateFilePath(path));
     }
 
@@ -169,12 +169,12 @@ public:
      *
      * @return  The located file, or @c NULL if the path was not found.
      */
-    inline File *tryLocateStateFile(de::String const &path) const {
+    inline File *tryLocateStateFile(const de::String &path) const {
         return tryLocateFile(stateFilePath(path));
     }
 
     template <typename Type>
-    Type *tryLocateState(de::String const &path) const {
+    Type *tryLocateState(const de::String &path) const {
         return tryLocate<Type>(stateFilePath(path));
     }
 
@@ -187,7 +187,7 @@ public:
      * @return  The found file.
      */
     template <typename Type>
-    Type &locateState(de::String const &path) const {
+    Type &locateState(const de::String &path) const {
         return locate<Type>(stateFilePath(path));
     }
 
@@ -202,14 +202,14 @@ public:
      * @return @c true, if the package has gameplay-altering contents. @c false, if its
      * contents are only superficial.
      */
-    static bool isPackageAffectingGameplay(de::String const &packageId);
+    static bool isPackageAffectingGameplay(const de::String &packageId);
 
     /**
      * Utility for composing the full path of a state data file in the saved session.
      *
      * @param path  Path to and symbolic name of the state data.
      */
-    static de::String stateFilePath(de::String const &path);
+    static de::String stateFilePath(const de::String &path);
 
     struct Interpreter : public de::filesys::IInterpreter {
         de::File *interpretFile(de::File *file) const;

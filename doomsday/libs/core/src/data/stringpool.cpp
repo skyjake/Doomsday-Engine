@@ -57,7 +57,7 @@ public:
         : _str(text), _id(0), _userValue(0), _userPointer(0)
     {}
 
-    CaselessString(CaselessString const &other)
+    CaselessString(const CaselessString &other)
         : _str(other._str), _id(other._id), _userValue(other._userValue), _userPointer(0)
     {}
 
@@ -65,16 +65,16 @@ public:
     {
         _str = text;
     }
-    operator String const *() const {
+    operator const String *() const {
         return &_str;
     }
-    operator String const &() const {
+    operator const String &() const {
         return _str;
     }
-    bool operator < (CaselessString const &other) const {
+    bool operator < (const CaselessString &other) const {
         return _str.compareWithoutCase(other) < 0;
     }
-    bool operator == (CaselessString const &other) const {
+    bool operator == (const CaselessString &other) const {
         return _str.compareWithoutCase(other) == 0;
     }
     InternalId id() const {
@@ -117,10 +117,10 @@ private:
  */
 class CaselessStringRef {
 public:
-    CaselessStringRef(CaselessString const *s = 0) {
+    CaselessStringRef(const CaselessString *s = 0) {
         _str = s;
     }
-    CaselessStringRef(CaselessStringRef const &other) {
+    CaselessStringRef(const CaselessStringRef &other) {
         _str = other._str;
     }
     CaselessString *toStr() const {
@@ -130,18 +130,18 @@ public:
         DE_ASSERT(_str);
         return _str->id();
     }
-    bool operator < (CaselessStringRef const &other) const {
+    bool operator < (const CaselessStringRef &other) const {
         DE_ASSERT(_str);
         DE_ASSERT(other._str);
         return *_str < *other._str;
     }
-    bool operator == (CaselessStringRef const &other) const {
+    bool operator == (const CaselessStringRef &other) const {
         DE_ASSERT(_str);
         DE_ASSERT(other._str);
         return *_str == *other._str;
     }
 private:
-    CaselessString const *_str;
+    const CaselessString *_str;
 };
 #endif
 
@@ -424,7 +424,7 @@ String StringPool::string(Id id) const
     return stringRef(id);
 }
 
-String const &StringPool::stringRef(StringPool::Id id) const
+const String &StringPool::stringRef(StringPool::Id id) const
 {
     if (id == 0)
     {

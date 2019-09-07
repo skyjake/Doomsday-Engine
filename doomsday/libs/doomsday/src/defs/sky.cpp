@@ -76,7 +76,7 @@ Record &Sky::layer(int index)
     return *def().geta("layer")[index].as<RecordValue>().record();
 }
 
-Record const &Sky::layer(int index) const
+const Record &Sky::layer(int index) const
 {
     return *geta("layer")[index].as<RecordValue>().record();
 }
@@ -117,7 +117,7 @@ Record &Sky::model(int index)
     return *def().geta("model")[index].as<RecordValue>().record();
 }
 
-Record const &Sky::model(int index) const
+const Record &Sky::model(int index) const
 {
     return *geta("model")[index].as<RecordValue>().record();
 }

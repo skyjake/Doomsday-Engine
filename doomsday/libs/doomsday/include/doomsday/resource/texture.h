@@ -42,8 +42,8 @@ class TextureManifest;
 class LIBDOOMSDAY_PUBLIC Texture
 {
 public:
-    DE_DEFINE_AUDIENCE(Deletion,         void textureBeingDeleted      (Texture const &))
-    DE_DEFINE_AUDIENCE(DimensionsChange, void textureDimensionsChanged (Texture const &))
+    DE_DEFINE_AUDIENCE(Deletion,         void textureBeingDeleted      (const Texture &))
+    DE_DEFINE_AUDIENCE(DimensionsChange, void textureDimensionsChanged (const Texture &))
 
     /**
      * Classification/processing flags.
@@ -115,7 +115,7 @@ public:
      * units. The DimensionsChange audience is notified whenever dimensions
      * are changed.
      */
-    Vec2ui const &dimensions() const;
+    const Vec2ui &dimensions() const;
 
     /**
      * Convenient accessor method for returning the X axis size (width) of
@@ -139,7 +139,7 @@ public:
      *
      * @todo Update any Materials (and thus Surfaces) which reference this.
      */
-    void setDimensions(Vec2ui const &newDimensions);
+    void setDimensions(const Vec2ui &newDimensions);
 
     /**
      * Change the world width of the texture.
@@ -160,13 +160,13 @@ public:
     /**
      * Returns the world origin offset of texture in map coordinate space units.
      */
-    Vec2i const &origin() const;
+    const Vec2i &origin() const;
 
     /**
      * Change the world origin offset of the texture.
      * @param newOrigin  New origin in map coordinate space units.
      */
-    void setOrigin(Vec2i const &newOrigin);
+    void setOrigin(const Vec2i &newOrigin);
 
     /**
      * Returns @c true if the texture is flagged @a flagsToTest.

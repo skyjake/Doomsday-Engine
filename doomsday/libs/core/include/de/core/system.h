@@ -46,9 +46,9 @@ public:
     };
 
 public:
-    System(Flags const &behavior = DefaultBehavior);
+    System(const Flags &behavior = DefaultBehavior);
 
-    void setBehavior(Flags const &behavior, FlagOp operation = SetFlags);
+    void setBehavior(const Flags &behavior, FlagOp operation = SetFlags);
 
     Flags behavior() const;
 
@@ -61,10 +61,10 @@ public:
      * @return @c true, if the event was eaten and should not be processed by
      * others. @c false, if event was not eaten.
      */
-    virtual bool processEvent(Event const &ev);
+    virtual bool processEvent(const Event &ev);
 
     // Observes TimeChange.
-    virtual void timeChanged(Clock const &);
+    virtual void timeChanged(const Clock &);
 
 private:
     DE_PRIVATE(d)

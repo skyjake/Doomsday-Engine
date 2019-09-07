@@ -45,7 +45,7 @@ typedef struct Point2Raw_s {
     };
 //#ifdef __cplusplus
 //    Point2Raw_s(int x_ = 0, int y_ = 0) : x(x_), y(y_) {}
-//    Point2Raw_s(Point2Raw_s const &other) : x(other.x), y(other.y) {}
+//    Point2Raw_s(const Point2Raw_s &other) : x(other.x), y(other.y) {}
 //#endif
 } Point2Raw;
 
@@ -59,30 +59,30 @@ typedef struct point2_s Point2;
 
 DE_PUBLIC Point2 *Point2_New(void);
 DE_PUBLIC Point2 *Point2_NewWithCoords(int x, int y);
-DE_PUBLIC Point2 *Point2_NewFromRaw(Point2Raw const *rawPoint);
+DE_PUBLIC Point2 *Point2_NewFromRaw(const Point2Raw *rawPoint);
 DE_PUBLIC void Point2_Delete(Point2 *point);
 
-DE_PUBLIC Point2Raw *Point2_Raw(Point2 const *point, Point2Raw *rawPoint);
+DE_PUBLIC Point2Raw *Point2_Raw(const Point2 *point, Point2Raw *rawPoint);
 
-DE_PUBLIC dd_bool Point2_IsNull(Point2 const *point);
+DE_PUBLIC dd_bool Point2_IsNull(const Point2 *point);
 
-DE_PUBLIC int Point2_X(Point2 const *point);
-DE_PUBLIC int Point2_Y(Point2 const *point);
+DE_PUBLIC int Point2_X(const Point2 *point);
+DE_PUBLIC int Point2_Y(const Point2 *point);
 
 DE_PUBLIC void Point2_SetX(Point2 *point, int x);
 DE_PUBLIC void Point2_SetY(Point2 *point, int y);
 
-DE_PUBLIC int const *Point2_XY(Point2 const *point);
+DE_PUBLIC const int *Point2_XY(const Point2 *point);
 DE_PUBLIC void Point2_SetXY(Point2 *point, int x, int y);
 
-DE_PUBLIC void Point2_Translate(Point2 *point, Point2Raw const *delta);
+DE_PUBLIC void Point2_Translate(Point2 *point, const Point2Raw *delta);
 DE_PUBLIC void Point2_TranslateXY(Point2 *point, int x, int y);
 DE_PUBLIC void Point2_TranslateX(Point2 *point, int x);
 DE_PUBLIC void Point2_TranslateY(Point2 *point, int y);
 
-DE_PUBLIC void Point2_Sum(Point2 *point, Point2 const *other);
+DE_PUBLIC void Point2_Sum(Point2 *point, const Point2 *other);
 
-DE_PUBLIC dd_bool Point2_Equality(Point2 const *point, Point2 const *other);
+DE_PUBLIC dd_bool Point2_Equality(const Point2 *point, const Point2 *other);
 
 /**
  * 2D point with floating point values. A handy POD structure for easy
@@ -111,30 +111,30 @@ typedef struct point2f_s Point2f;
 
 DE_PUBLIC Point2f *Point2f_New(void);
 DE_PUBLIC Point2f *Point2f_NewWithCoords(double x, double y);
-DE_PUBLIC Point2f *Point2f_NewFromRaw(Point2Rawf const *rawPoint);
+DE_PUBLIC Point2f *Point2f_NewFromRaw(const Point2Rawf *rawPoint);
 DE_PUBLIC void Point2f_Delete(Point2f *point);
 
-DE_PUBLIC Point2Rawf *Point2f_Raw(Point2f const *point, Point2Rawf *rawPoint);
+DE_PUBLIC Point2Rawf *Point2f_Raw(const Point2f *point, Point2Rawf *rawPoint);
 
-DE_PUBLIC dd_bool Point2f_IsNull(Point2f const *point);
+DE_PUBLIC dd_bool Point2f_IsNull(const Point2f *point);
 
-DE_PUBLIC double Point2f_X(Point2f const *point);
-DE_PUBLIC double Point2f_Y(Point2f const *point);
+DE_PUBLIC double Point2f_X(const Point2f *point);
+DE_PUBLIC double Point2f_Y(const Point2f *point);
 
 DE_PUBLIC void Point2f_SetX(Point2f *point, double x);
 DE_PUBLIC void Point2f_SetY(Point2f *point, double y);
 
-DE_PUBLIC double const *Point2f_XY(Point2f const *point);
+DE_PUBLIC const double *Point2f_XY(const Point2f *point);
 DE_PUBLIC void Point2f_SetXY(Point2f *point, double x, double y);
 
-DE_PUBLIC void Point2f_Translate(Point2f *point, Point2Rawf const *delta);
+DE_PUBLIC void Point2f_Translate(Point2f *point, const Point2Rawf *delta);
 DE_PUBLIC void Point2f_TranslateXY(Point2f *point, double x, double y);
 DE_PUBLIC void Point2f_TranslateX(Point2f *point, double x);
 DE_PUBLIC void Point2f_TranslateY(Point2f *point, double y);
 
-DE_PUBLIC void Point2f_Sum(Point2f *point, Point2f const *other);
+DE_PUBLIC void Point2f_Sum(Point2f *point, const Point2f *other);
 
-DE_PUBLIC dd_bool Point2f_Equality(Point2f const *point, Point2f const *other);
+DE_PUBLIC dd_bool Point2f_Equality(const Point2f *point, const Point2f *other);
 
 /**
  * 3D point with integer values. A handy POD structure for easy manipulation of
@@ -162,22 +162,22 @@ typedef struct point3_s Point3;
 
 DE_PUBLIC Point3 *Point3_New(void);
 DE_PUBLIC Point3 *Point3_NewWithCoords(int x, int y, int z);
-DE_PUBLIC Point3 *Point3_NewFromRaw(Point3Raw const *rawPoint);
+DE_PUBLIC Point3 *Point3_NewFromRaw(const Point3Raw *rawPoint);
 DE_PUBLIC void Point3_Delete(Point3 *point);
 
-DE_PUBLIC Point3Raw *Point3_Raw(Point3 const *point, Point3Raw *rawPoint);
+DE_PUBLIC Point3Raw *Point3_Raw(const Point3 *point, Point3Raw *rawPoint);
 
-DE_PUBLIC dd_bool Point3_IsNull(Point3 const *point);
+DE_PUBLIC dd_bool Point3_IsNull(const Point3 *point);
 
-DE_PUBLIC int Point3_X(Point3 const *point);
-DE_PUBLIC int Point3_Y(Point3 const *point);
-DE_PUBLIC int Point3_Z(Point3 const *point);
+DE_PUBLIC int Point3_X(const Point3 *point);
+DE_PUBLIC int Point3_Y(const Point3 *point);
+DE_PUBLIC int Point3_Z(const Point3 *point);
 
 DE_PUBLIC void Point3_SetX(Point3 *point, int x);
 DE_PUBLIC void Point3_SetY(Point3 *point, int y);
 DE_PUBLIC void Point3_SetZ(Point3 *point, int z);
 
-DE_PUBLIC int const *Point3_XYZ(Point3 const *point);
+DE_PUBLIC const int *Point3_XYZ(const Point3 *point);
 DE_PUBLIC void Point3_SetXYZ(Point3 *point, int x, int y, int z);
 
 DE_PUBLIC void Point3_Translate(Point3 *point, int x, int y, int z);
@@ -185,9 +185,9 @@ DE_PUBLIC void Point3_TranslateX(Point3 *point, int x);
 DE_PUBLIC void Point3_TranslateY(Point3 *point, int y);
 DE_PUBLIC void Point3_TranslateZ(Point3 *point, int z);
 
-DE_PUBLIC void Point3_Sum(Point3 *point, Point3 const *other);
+DE_PUBLIC void Point3_Sum(Point3 *point, const Point3 *other);
 
-DE_PUBLIC dd_bool Point3_Equality(Point3 const *point, Point3 const *other);
+DE_PUBLIC dd_bool Point3_Equality(const Point3 *point, const Point3 *other);
 
 /**
  * 3D point with floating point values. A handy POD structure for easy
@@ -215,22 +215,22 @@ typedef struct point3f_s Point3f;
 
 DE_PUBLIC Point3f *Point3f_New(void);
 DE_PUBLIC Point3f *Point3f_NewWithCoords(double x, double y, double z);
-DE_PUBLIC Point3f *Point3f_NewFromRaw(Point3Rawf const *rawPoint);
+DE_PUBLIC Point3f *Point3f_NewFromRaw(const Point3Rawf *rawPoint);
 DE_PUBLIC void Point3f_Delete(Point3f *point);
 
-DE_PUBLIC Point3Rawf *Point3f_Raw(Point3f const *point, Point3Rawf *rawPoint);
+DE_PUBLIC Point3Rawf *Point3f_Raw(const Point3f *point, Point3Rawf *rawPoint);
 
-DE_PUBLIC dd_bool Point3f_IsNull(Point3f const *point);
+DE_PUBLIC dd_bool Point3f_IsNull(const Point3f *point);
 
-DE_PUBLIC double Point3f_X(Point3f const *point);
-DE_PUBLIC double Point3f_Y(Point3f const *point);
-DE_PUBLIC double Point3f_Z(Point3f const *point);
+DE_PUBLIC double Point3f_X(const Point3f *point);
+DE_PUBLIC double Point3f_Y(const Point3f *point);
+DE_PUBLIC double Point3f_Z(const Point3f *point);
 
 DE_PUBLIC void Point3f_SetX(Point3f *point, double x);
 DE_PUBLIC void Point3f_SetY(Point3f *point, double y);
 DE_PUBLIC void Point3f_SetZ(Point3f *point, double z);
 
-DE_PUBLIC double const *Point3f_XYZ(Point3f const *point);
+DE_PUBLIC const double *Point3f_XYZ(const Point3f *point);
 DE_PUBLIC void Point3f_SetXYZ(Point3f *point, double x, double y, double z);
 
 DE_PUBLIC void Point3f_Translate(Point3f *point, double x, double y, double z);
@@ -238,9 +238,9 @@ DE_PUBLIC void Point3f_TranslateX(Point3f *point, double x);
 DE_PUBLIC void Point3f_TranslateY(Point3f *point, double y);
 DE_PUBLIC void Point3f_TranslateZ(Point3f *point, double z);
 
-DE_PUBLIC void Point3f_Sum(Point3f *point, Point3f const *other);
+DE_PUBLIC void Point3f_Sum(Point3f *point, const Point3f *other);
 
-DE_PUBLIC dd_bool Point3f_Equality(Point3f const *point, Point3f const *other);
+DE_PUBLIC dd_bool Point3f_Equality(const Point3f *point, const Point3f *other);
 
 /// @}
 

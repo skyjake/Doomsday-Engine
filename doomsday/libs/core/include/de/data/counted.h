@@ -54,9 +54,9 @@ public:
     }
 
     template <typename Type>
-    inline Type const *ref() const {
+    inline const Type *ref() const {
         addRef();
-        return static_cast<Type const *>(this);
+        return static_cast<const Type *>(this);
     }
 
     /**
@@ -145,20 +145,20 @@ inline CountedType *holdRef(CountedType &counted) {
  * @return Same as @a counted (with reference count incremented).
  */
 template <typename CountedType>
-inline CountedType const *holdRef(CountedType const &counted) {
+inline const CountedType *holdRef(const CountedType &counted) {
     return counted.template ref<CountedType>();
 }
 
 template <typename CountedType>
-inline void changeRef(CountedType const *&counted, Counted const *newRef) {
-    CountedType const *old = counted;
+inline void changeRef(const CountedType *&counted, const Counted *newRef) {
+    const CountedType *old = counted;
     counted = (newRef? newRef->ref<CountedType>() : 0);
     releaseRef(old);
 }
 
 template <typename CountedType>
-inline void changeRef(CountedType const *&counted, Counted const &newRef) {
-    CountedType const *old = counted;
+inline void changeRef(const CountedType *&counted, const Counted &newRef) {
+    const CountedType *old = counted;
     counted = newRef.ref<CountedType>();
     releaseRef(old);
 }
@@ -196,7 +196,7 @@ inline void releaseRef(CountedType *&ref) {
  * @param ref  Pointer that holds a reference. May be NULL.
  */
 template <typename CountedType>
-inline void releaseRef(CountedType const *&ref) {
+inline void releaseRef(const CountedType *&ref) {
     if (ref) ref->release();
     ref = 0;
 }
@@ -218,16 +218,16 @@ class RefArg
 {
 public:
     RefArg() : _ref(0) {}
-    RefArg(RefArg const &other) : _ref(other._ref) {}
+    RefArg(const RefArg &other) : _ref(other._ref) {}
     RefArg(CountedType *preHeld) : _ref(refless(preHeld)) {}
-    RefArg(CountedType const &ref) : _ref(const_cast<CountedType *>(&ref)) {}
-    operator CountedType const * () const { return _ref; }
+    RefArg(const CountedType &ref) : _ref(const_cast<CountedType *>(&ref)) {}
+    operator const CountedType * () const { return _ref; }
     operator CountedType * () { return _ref; }
-    operator CountedType const & () const { return *_ref; }
+    operator const CountedType & () const { return *_ref; }
     CountedType *get() { return _ref; }
-    CountedType const &operator *  () const { return *_ref; }
+    const CountedType &operator *  () const { return *_ref; }
     CountedType &      operator *  ()       { return *_ref; }
-    CountedType const *operator -> () const { return _ref;  }
+    const CountedType *operator -> () const { return _ref;  }
     CountedType *      operator -> ()       { return _ref;  }
     CountedType *holdRef() { return de::holdRef(_ref); }
 private:
@@ -250,9 +250,9 @@ public:
     CountedType *get() const { return _ref; }
     CountedType &operator *  () const { return *_ref; }
     CountedType *operator -> () const { return _ref; }
-    operator CountedType const * () const { return _ref; }
+    operator const CountedType * () const { return _ref; }
     operator CountedType *       ()       { return _ref; }
-    operator CountedType const & () const { return *_ref; }
+    operator const CountedType & () const { return *_ref; }
     operator CountedType &       ()       { return *_ref; }
     operator RefArg<CountedType> () const { return RefArg<CountedType>(*_ref); }
     explicit operator bool       () const { return _ref != nullptr; }

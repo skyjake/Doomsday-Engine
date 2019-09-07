@@ -51,7 +51,7 @@ void Entity::setType(Type t)
     d->type = t;
 }
 
-void Entity::setPosition(Vec3d const &pos)
+void Entity::setPosition(const Vec3d &pos)
 {
     d->pos = pos;
 }
@@ -61,7 +61,7 @@ void Entity::setScale(float scale)
     d->scale = Vec3f(scale, scale, scale);
 }
 
-void Entity::setScale(Vec3f const &scale)
+void Entity::setScale(const Vec3f &scale)
 {
     d->scale = scale;
 }

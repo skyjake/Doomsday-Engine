@@ -27,7 +27,7 @@ static inline int operatorBits(OperatorRule::Operator op)
     return op << Rule::BaseFlagsShift; // Base class uses the lowest bits.
 }
 
-OperatorRule::OperatorRule(Operator op, Rule const &unary)
+OperatorRule::OperatorRule(Operator op, const Rule &unary)
     : Rule()
     , _leftOperand(&unary)
     , _rightOperand(nullptr)
@@ -38,7 +38,7 @@ OperatorRule::OperatorRule(Operator op, Rule const &unary)
     dependsOn(_leftOperand);
 }
 
-OperatorRule::OperatorRule(Operator op, Rule const &left, Rule const &right)
+OperatorRule::OperatorRule(Operator op, const Rule &left, const Rule &right)
     : Rule()
     , _leftOperand(&left)
     , _rightOperand(&right)
@@ -49,7 +49,7 @@ OperatorRule::OperatorRule(Operator op, Rule const &left, Rule const &right)
     if (_rightOperand != _leftOperand) dependsOn(_rightOperand);
 }
 
-OperatorRule::OperatorRule(OperatorRule::Operator op, Rule const &left, Rule const &right, Rule const &condition)
+OperatorRule::OperatorRule(OperatorRule::Operator op, const Rule &left, const Rule &right, const Rule &condition)
     : Rule()
     , _leftOperand(&left)
     , _rightOperand(&right)

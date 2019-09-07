@@ -44,7 +44,7 @@ public:
 
     ~FunctionStatement();
 
-    void addArgument(String const &argName, Expression *defaultValue = 0);
+    void addArgument(const String &argName, Expression *defaultValue = 0);
 
     /// Returns the statement compound of the function.
     Compound &compound();

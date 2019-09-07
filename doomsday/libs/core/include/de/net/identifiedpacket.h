@@ -42,7 +42,7 @@ public:
      * @param type  Type of the packet.
      * @param i     Identifier. If zero, a new identifier is generated.
      */
-    IdentifiedPacket(Type const &type, Id i = 0);
+    IdentifiedPacket(const Type &type, Id i = 0);
 
     void setId(Id id);
 

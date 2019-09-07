@@ -92,7 +92,7 @@ DE_PIMPL(Waveform)
         setSource(nullptr);
     }
 
-    void setSource(File const *src)
+    void setSource(const File *src)
     {
         if (source) source->audienceForDeletion() -= this;
         source = src;
@@ -110,7 +110,7 @@ DE_PIMPL(Waveform)
         sampleRate    = 0.0;
     }
 
-    void load(File const &src)
+    void load(const File &src)
     {
         if (!src.extension().compareWithoutCase(".wav"))
         {
@@ -126,7 +126,7 @@ DE_PIMPL(Waveform)
         setSource(&src);
     }
 
-    static bool recognizeWAV(IByteArray const &data)
+    static bool recognizeWAV(const IByteArray &data)
     {
         Block magic(4);
         data.get(0, magic.data(), 4);
@@ -140,7 +140,7 @@ DE_PIMPL(Waveform)
      *
      * @param data  Block containing WAV format data.
      */
-    void loadWAV(Block const &data)
+    void loadWAV(const Block &data)
     {
         if (!recognizeWAV(data))
         {
@@ -187,7 +187,7 @@ DE_PIMPL(Waveform)
         format = audio::PCMLittleEndian;
     }
 
-    void fileBeingDeleted(File const &delFile)
+    void fileBeingDeleted(const File &delFile)
     {
         if (source == &delFile)
         {
@@ -206,7 +206,7 @@ void Waveform::clear()
     d->clear();
 }
 
-void Waveform::load(File const &file)
+void Waveform::load(const File &file)
 {
     d->clear();
     d->load(file);
@@ -222,7 +222,7 @@ Block Waveform::sampleData() const
     return d->sampleData;
 }
 
-File const *Waveform::sourceFile() const
+const File *Waveform::sourceFile() const
 {
     return d->source;
 }

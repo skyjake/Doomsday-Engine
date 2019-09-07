@@ -42,27 +42,27 @@ DE_PIMPL(Context)
          * @param b        Statement where to jump to and flow from on "break".
          *                 @c NULL if breaking is not allowed.
          */
-        ControlFlow(Statement const *current,
-                    Statement const *f = nullptr,
-                    Statement const *c = nullptr,
-                    Statement const *b = nullptr)
+        ControlFlow(const Statement *current,
+                    const Statement *f = nullptr,
+                    const Statement *c = nullptr,
+                    const Statement *b = nullptr)
             : flow(f), jumpContinue(c), jumpBreak(b), _current(current) {}
 
         /// Returns the currently executed statement.
-        Statement const *current() const { return _current; }
+        const Statement *current() const { return _current; }
 
         /// Sets the currently executed statement. When the statement
         /// changes, the phase is reset back to zero.
-        void setCurrent(Statement const *s) { _current = s; }
+        void setCurrent(const Statement *s) { _current = s; }
 
     public:
-        Statement const *flow;
-        Statement const *jumpContinue;
-        Statement const *jumpBreak;
+        const Statement *flow;
+        const Statement *jumpContinue;
+        const Statement *jumpBreak;
         std::unique_ptr<Value> iteration;
 
     private:
-        Statement const *_current;
+        const Statement *_current;
     };
 
     /// Type of the execution context.
@@ -130,7 +130,7 @@ DE_PIMPL(Context)
     }
 
     /// Sets the currently executed statement.
-    void setCurrent(Statement const *statement)
+    void setCurrent(const Statement *statement)
     {
         if (controlFlow.size())
         {
@@ -173,8 +173,8 @@ Record &Context::names()
     return *d->names;
 }
 
-void Context::start(Statement const *statement,    Statement const *fallback,
-                    Statement const *jumpContinue, Statement const *jumpBreak)
+void Context::start(const Statement *statement,    const Statement *fallback,
+                    const Statement *jumpContinue, const Statement *jumpBreak)
 {
     d->controlFlow.push_back(Impl::ControlFlow(statement, fallback, jumpContinue, jumpBreak));
 
@@ -207,7 +207,7 @@ bool Context::execute()
 
 void Context::proceed()
 {
-    Statement const *st = nullptr;
+    const Statement *st = nullptr;
     if (current())
     {
         st = current()->next();
@@ -223,7 +223,7 @@ void Context::proceed()
 
 void Context::jumpContinue()
 {
-    Statement const *st = nullptr;
+    const Statement *st = nullptr;
     while (!st && d->controlFlow.size())
     {
         st = d->controlFlow.back().jumpContinue;
@@ -243,7 +243,7 @@ void Context::jumpBreak(duint count)
         throw JumpError("Context::jumpBreak", "Invalid number of nested breaks");
     }
 
-    Statement const *st = nullptr;
+    const Statement *st = nullptr;
     while ((!st || count > 0) && d->controlFlow.size())
     {
         st = d->controlFlow.back().jumpBreak;
@@ -265,7 +265,7 @@ void Context::jumpBreak(duint count)
     proceed();
 }
 
-Statement const *Context::current()
+const Statement *Context::current()
 {
     if (d->controlFlow.size())
     {

@@ -33,7 +33,7 @@ namespace de {
 class LIBGUI_PUBLIC BlurWidget : public GuiWidget
 {
 public:
-    BlurWidget(String const &name = String());
+    BlurWidget(const String &name = String());
 };
 
 } // namespace de

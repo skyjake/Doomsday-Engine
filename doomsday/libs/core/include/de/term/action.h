@@ -39,13 +39,13 @@ public:
 
     Action(const String &label, const Func &func);
 
-//    Action(String const &label, QObject *target, char const *slot = 0);
+//    Action(const String &label, QObject *target, const char *slot = 0);
 
     Action(const String &label, const KeyEvent &event, const Func &func = {});
 
-    Action(KeyEvent const &event, const Func &func);
+    Action(const KeyEvent &event, const Func &func);
 
-    void setLabel(String const &label);
+    void setLabel(const String &label);
 
     String label() const;
 
@@ -56,7 +56,7 @@ public:
      *
      * @return @c true, if the event is eaten by the action.
      */
-    bool tryTrigger(KeyEvent const &ev);
+    bool tryTrigger(const KeyEvent &ev);
 
 protected:
     ~Action();

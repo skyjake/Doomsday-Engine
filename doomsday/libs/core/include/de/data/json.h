@@ -56,7 +56,7 @@ DE_PUBLIC Value *parseJSONValue(const String &jsonText);
  *
  * @return JSON in UTF-8 encoding.
  */
-DE_PUBLIC String composeJSON(Record const &rec);
+DE_PUBLIC String composeJSON(const Record &rec);
 
 } // namespace de
 

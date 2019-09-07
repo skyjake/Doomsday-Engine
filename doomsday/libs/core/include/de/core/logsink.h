@@ -88,7 +88,7 @@ public:
      *
      * @return Reference to this sink.
      */
-    virtual LogSink &operator << (LogEntry const &entry);
+    virtual LogSink &operator << (const LogEntry &entry);
 
     /**
      * Output a plain text string to the sink. This will be called as a
@@ -98,7 +98,7 @@ public:
      *
      * @return Reference to this sink.
      */
-    virtual LogSink &operator << (String const &plainText) = 0;
+    virtual LogSink &operator << (const String &plainText) = 0;
 
     /**
      * Flushes buffered output.

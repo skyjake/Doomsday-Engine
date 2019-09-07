@@ -45,7 +45,7 @@ namespace menu {
 class ColorEditWidget : public Widget
 {
 public:
-    explicit ColorEditWidget(de::Vec4f const &color = de::Vec4f(),
+    explicit ColorEditWidget(const de::Vec4f &color = de::Vec4f(),
                              bool rgbaMode = false);
     virtual ~ColorEditWidget();
 
@@ -60,7 +60,7 @@ public:
      *
      * @return  Reference to this ColorEditWidget.
      */
-    ColorEditWidget &setPreviewDimensions(de::Vec2i const &newDimensions);
+    ColorEditWidget &setPreviewDimensions(const de::Vec2i &newDimensions);
 
     /**
      * Returns the dimensions of the preview area (in fixed 320x200 space).
@@ -90,7 +90,7 @@ public:
      *
      * @return  Reference to this ColorEditWidget.
      */
-    ColorEditWidget &setColor(de::Vec4f const &newColor, int flags = MNCOLORBOX_SCF_NO_ACTION);
+    ColorEditWidget &setColor(const de::Vec4f &newColor, int flags = MNCOLORBOX_SCF_NO_ACTION);
 
     ColorEditWidget &setRed  (float newRed,   int flags = MNCOLORBOX_SCF_NO_ACTION);
     ColorEditWidget &setGreen(float newGreen, int flags = MNCOLORBOX_SCF_NO_ACTION);

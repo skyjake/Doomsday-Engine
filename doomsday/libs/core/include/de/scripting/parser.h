@@ -80,13 +80,13 @@ public:
     ~Parser();
 
     // Implements IParser.
-    void parse(String const &input, Script &output);
+    void parse(const String &input, Script &output);
 
     void parseCompound(Compound &compound);
 
     void parseStatement(Compound &compound);
 
-    Expression *parseConditionalCompound(Compound &compound, CompoundFlags const &flags = 0);
+    Expression *parseConditionalCompound(Compound &compound, const CompoundFlags &flags = 0);
 
     IfStatement *parseIfStatement();
 
@@ -113,26 +113,26 @@ public:
     ExpressionStatement *parseExpressionStatement();
 
     /// Parse a range of tokens as a comma-separated argument list:
-    ArrayExpression *parseList(TokenRange const &range, char const *separator = Token::COMMA,
-                               Flags const &flags = Expression::ByValue);
+    ArrayExpression *parseList(const TokenRange &range, const char *separator = Token::COMMA,
+                               const Flags &flags = Expression::ByValue);
 
     /// Parse a range of tokens as an operator-based expression.
-    Expression *parseExpression(TokenRange const &range, Flags const &flags = Expression::ByValue);
+    Expression *parseExpression(const TokenRange &range, const Flags &flags = Expression::ByValue);
 
-    ArrayExpression *parseArrayExpression(TokenRange const &range);
+    ArrayExpression *parseArrayExpression(const TokenRange &range);
 
-    DictionaryExpression *parseDictionaryExpression(TokenRange const &range);
+    DictionaryExpression *parseDictionaryExpression(const TokenRange &range);
 
-    Expression *parseCallExpression(TokenRange const &nameRange, TokenRange const &argumentRange);
+    Expression *parseCallExpression(const TokenRange &nameRange, const TokenRange &argumentRange);
 
-    OperatorExpression *parseOperatorExpression(Operator op, TokenRange const &leftSide,
-                                                TokenRange const &rightSide,
-                                                Flags const &     rightFlags = Expression::ByValue);
+    OperatorExpression *parseOperatorExpression(Operator op, const TokenRange &leftSide,
+                                                const TokenRange &rightSide,
+                                                const Flags &     rightFlags = Expression::ByValue);
 
-    Expression *parseTokenExpression(TokenRange const &range,
-                                     Flags const &     flags = Expression::ByValue);
+    Expression *parseTokenExpression(const TokenRange &range,
+                                     const Flags &     flags = Expression::ByValue);
 
-    Operator findLowestOperator(TokenRange const &range, TokenRange &leftSide,
+    Operator findLowestOperator(const TokenRange &range, TokenRange &leftSide,
                                 TokenRange &rightSide);
 
 protected:

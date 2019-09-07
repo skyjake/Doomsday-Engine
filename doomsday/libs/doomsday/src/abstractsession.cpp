@@ -60,7 +60,7 @@ res::Uri AbstractSession::mapUri() const
     return hasBegun()? d->mapUri : res::makeUri("Maps:");
 }
 
-world::IThinkerMapping const *AbstractSession::thinkerMapping() const
+const world::IThinkerMapping *AbstractSession::thinkerMapping() const
 {
     return d->thinkerMapping;
 }
@@ -77,12 +77,12 @@ void AbstractSession::setThinkerMapping(world::IThinkerMapping *mapping)
 //    return gameProfile->gameId();
 //}
 
-void AbstractSession::setMapUri(res::Uri const &uri)
+void AbstractSession::setMapUri(const res::Uri &uri)
 {
     d->mapUri = uri;
 }
 
-void AbstractSession::removeSaved(String const &path) // static
+void AbstractSession::removeSaved(const String &path) // static
 {
     if (App::rootFolder().has(path))
     {
@@ -90,7 +90,7 @@ void AbstractSession::removeSaved(String const &path) // static
     }
 }
 
-void AbstractSession::copySaved(String const &destPath, String const &sourcePath) // static
+void AbstractSession::copySaved(const String &destPath, const String &sourcePath) // static
 {
     if (!destPath.compareWithoutCase(sourcePath)) return;
 
@@ -98,7 +98,7 @@ void AbstractSession::copySaved(String const &destPath, String const &sourcePath
 
     removeSaved(destPath);
 
-    GameStateFolder const &original = App::rootFolder().locate<GameStateFolder>(sourcePath);
+    const GameStateFolder &original = App::rootFolder().locate<GameStateFolder>(sourcePath);
     GameStateFolder &copied = FS::copySerialized(sourcePath, destPath).as<GameStateFolder>();
     copied.cacheMetadata(original.metadata()); // Avoid immediately opening the .save package.
 }

@@ -136,7 +136,7 @@ DE_PUBLIC uint32_t Sys_CurrentThreadId(void);
 
 DE_PUBLIC dd_bool Sys_InMainThread(void);
 
-DE_PUBLIC mutex_t Sys_CreateMutex(char const *name);
+DE_PUBLIC mutex_t Sys_CreateMutex(const char *name);
 
 DE_PUBLIC void Sys_DestroyMutex(mutex_t mutexHandle);
 

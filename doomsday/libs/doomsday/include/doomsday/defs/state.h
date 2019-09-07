@@ -30,9 +30,9 @@ class LIBDOOMSDAY_PUBLIC State : public Definition
 {
 public:
     State()                    : Definition() {}
-    State(State const &other)  : Definition(other) {}
+    State(const State &other)  : Definition(other) {}
     State(de::Record &d)       : Definition(d) {}
-    State(de::Record const &d) : Definition(d) {}
+    State(const de::Record &d) : Definition(d) {}
     
     void resetToDefaults();
     

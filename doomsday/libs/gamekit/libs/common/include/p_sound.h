@@ -62,7 +62,7 @@ void S_SectorStopSounds(Sector *sec);
 void S_PlaneSound(Plane *pln, int id);
 
 #ifdef __JHEXEN__
-int S_GetSoundID(char const *name);
+int S_GetSoundID(const char *name);
 
 /**
  * Attempt to parse the script on the identified @a path as "sound definition" data.
@@ -70,7 +70,7 @@ int S_GetSoundID(char const *name);
  * Important: This should never be called @em before MapInfoParser, as this may need
  * to patch those definitions...
  */
-void SndInfoParser(Str const *path);
+void SndInfoParser(const Str *path);
 #endif
 
 #ifdef __cplusplus

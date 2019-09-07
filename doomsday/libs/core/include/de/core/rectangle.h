@@ -50,14 +50,14 @@ public:
     Rectangle() {}
     Rectangle(Type left, Type top, SizeType width, SizeType height)
         : topLeft(left, top), bottomRight(left + width, top + height) {}
-    Rectangle(Corner const &tl, Corner const &br) : topLeft(tl), bottomRight(br) {}
-    static RectangleType fromSize(Size const &size) {
+    Rectangle(const Corner &tl, const Corner &br) : topLeft(tl), bottomRight(br) {}
+    static RectangleType fromSize(const Size &size) {
         return RectangleType(0, 0, size.x, size.y);
     }
-    static RectangleType fromSize(Corner const &tl, Size const &size) {
+    static RectangleType fromSize(const Corner &tl, const Size &size) {
         return RectangleType(tl.x, tl.y, size.x, size.y);
     }
-//    static RectangleType fromQRect(QRect const &qr) {
+//    static RectangleType fromQRect(const QRect &qr) {
 //        return RectangleType(qr.left(), qr.top(), qr.width(), qr.height());
 //    }
 
@@ -71,32 +71,32 @@ public:
     SizeType area() const { return width() * height(); }
     bool isNull() const { return area() == 0; }
     Size size() const { return Size(width(), height()); }
-    void moveLeft(Type const &value) {
+    void moveLeft(const Type &value) {
         bottomRight.x = value + width();
         topLeft.x = value;
     }
-    void moveTop(Type const &value) {
+    void moveTop(const Type &value) {
         bottomRight.y = value + height();
         topLeft.y = value;
     }
-    void moveTopLeft(CornerVectorType const &point) {
+    void moveTopLeft(const CornerVectorType &point) {
         Size s = size();
         topLeft = point;
         bottomRight.x = point.x + s.x;
         bottomRight.y = point.y + s.y;
     }
-    RectangleType &move(CornerVectorType const &delta) {
+    RectangleType &move(const CornerVectorType &delta) {
         topLeft     += delta;
         bottomRight += delta;
         return *this;
     }
-    RectangleType moved(CornerVectorType const &delta) const {
+    RectangleType moved(const CornerVectorType &delta) const {
         return RectangleType(topLeft + delta, bottomRight + delta);
     }
     void setWidth(SizeType w) { bottomRight.x = topLeft.x + w; }
     void setHeight(SizeType h) { bottomRight.y = topLeft.y + h; }
-    void setSize(SizeVectorType const &s) { setWidth(s.x); setHeight(s.y); }
-    void include(Corner const &point) {
+    void setSize(const SizeVectorType &s) { setWidth(s.x); setHeight(s.y); }
+    void include(const Corner &point) {
         topLeft = topLeft.min(point);
         bottomRight = bottomRight.max(point);
     }
@@ -112,7 +112,7 @@ public:
     RectangleType shrunk(Corner delta) const {
         return RectangleType(topLeft + delta, bottomRight - delta);
     }
-    RectangleType adjusted(CornerVectorType const &tl, CornerVectorType const &br) const {
+    RectangleType adjusted(const CornerVectorType &tl, const CornerVectorType &br) const {
         return RectangleType(topLeft + tl, bottomRight + br);
     }
     Rectangle<Vec2i, Vec2ui> toRectanglei() const {
@@ -123,38 +123,38 @@ public:
         Vec2ui br(duint(de::max(Type(0), bottomRight.x)), duint(de::max(Type(0), bottomRight.y)));
         return Rectangle<Vec2ui, Vec2ui>(tl, br);
     }
-    bool contains(Corner const &point) const {
+    bool contains(const Corner &point) const {
         return point >= topLeft && point < bottomRight;
     }
-    bool contains(RectangleType const &other) const {
+    bool contains(const RectangleType &other) const {
         return contains(other.topLeft) && contains(other.bottomRight);
     }
-    bool operator == (RectangleType const &other) const {
+    bool operator == (const RectangleType &other) const {
         return topLeft == other.topLeft && bottomRight == other.bottomRight;
     }
-    bool operator != (RectangleType const &other) const {
+    bool operator != (const RectangleType &other) const {
         return !(*this == other);
     }
-    RectangleType operator | (RectangleType const &other) const {
+    RectangleType operator | (const RectangleType &other) const {
         if (isNull()) return other;
         if (other.isNull()) return *this;
         return {topLeft.min(other.topLeft), bottomRight.max(other.bottomRight)};
     }
-    RectangleType &operator |= (RectangleType const &other) {
+    RectangleType &operator |= (const RectangleType &other) {
         return *this = *this | other;
     }
-    inline bool overlaps(RectangleType const &other) const {
+    inline bool overlaps(const RectangleType &other) const {
         return !(other.topLeft.x >= bottomRight.x ||
                  other.topLeft.y >= bottomRight.y ||
                  other.bottomRight.x <= topLeft.x ||
                  other.bottomRight.y <= topLeft.y);
     }
-    RectangleType operator & (RectangleType const &other) const {
+    RectangleType operator & (const RectangleType &other) const {
         if (!overlaps(other)) return RectangleType(); // disconnected
         return RectangleType(topLeft.max(other.topLeft),
                              bottomRight.min(other.bottomRight));
     }
-    RectangleType &operator &= (RectangleType const &other) {
+    RectangleType &operator &= (const RectangleType &other) {
         return (*this = *this & other);
     }
     String asText() const {

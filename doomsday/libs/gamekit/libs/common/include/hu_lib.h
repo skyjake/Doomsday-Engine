@@ -91,7 +91,7 @@ HudWidget *GUI_AddWidget(HudWidget *wi);
 
 void GUI_UpdateWidgetGeometry(HudWidget *wi);
 
-void GUI_DrawWidget(HudWidget *wi, Point2Raw const *origin);
+void GUI_DrawWidget(HudWidget *wi, const Point2Raw *origin);
 void GUI_DrawWidgetXY(HudWidget *wi, int x, int y);
 
 void GUI_SpriteSize(int sprite, float scale, int *width, int *height);
@@ -114,6 +114,6 @@ struct ui_rendstate_t
     float pageAlpha;
 };
 
-DE_EXTERN_C ui_rendstate_t const *uiRendState;
+DE_EXTERN_C const ui_rendstate_t *uiRendState;
 
 #endif  // LIBCOMMON_UI_LIBRARY_H

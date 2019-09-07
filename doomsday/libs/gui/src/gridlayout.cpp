@@ -31,26 +31,26 @@ DE_PIMPL(GridLayout)
     Mode mode;
     int maxCols;
     int maxRows;
-    Rule const *initialX;
-    Rule const *initialY;
-    Rule const *baseX;
-    Rule const *baseY;
+    const Rule *initialX;
+    const Rule *initialY;
+    const Rule *baseX;
+    const Rule *baseY;
     Vec2i cell;
-    Rule const *fixedCellWidth;
-    Rule const *fixedCellHeight;
-    Map<int, Rule const *> fixedColWidths;
-    Map<GuiWidget const *, int> widgetMultiCellCount; ///< Only multicell widgets.
+    const Rule *fixedCellWidth;
+    const Rule *fixedCellHeight;
+    Map<int, const Rule *> fixedColWidths;
+    Map<const GuiWidget *, int> widgetMultiCellCount; ///< Only multicell widgets.
     CellAlignments cellAlignment;
-    Rule const *colPad;
-    Rule const *rowPad;
+    const Rule *colPad;
+    const Rule *rowPad;
 
     struct Metric {
-        Rule const *fixedLength; ///< May be @c NULL.
-        Rule const *current;    ///< Current size of column/row (replaced many times).
+        const Rule *fixedLength; ///< May be @c NULL.
+        const Rule *current;    ///< Current size of column/row (replaced many times).
         IndirectRule *final;    ///< Final size of column/row (for others to use).
-        Rule const *accumulatedLengths; ///< Sum of sizes of previous columns/rows (for others to use).
-        Rule const *minEdge;    ///< Rule for the left/top edge.
-        Rule const *maxEdge;    ///< Rule for the right/bottom edge.
+        const Rule *accumulatedLengths; ///< Sum of sizes of previous columns/rows (for others to use).
+        const Rule *minEdge;    ///< Rule for the left/top edge.
+        const Rule *maxEdge;    ///< Rule for the right/bottom edge.
         ui::Alignment cellAlign;///< Cell alignment affecting the entire column/row.
 
         Metric()
@@ -77,15 +77,15 @@ DE_PIMPL(GridLayout)
     Metrics cols;
     Metrics rows;
 
-    Rule const *totalWidth;
-    Rule const *totalHeight;
+    const Rule *totalWidth;
+    const Rule *totalHeight;
     SequentialLayout *current;
     bool needTotalUpdate;
 
     IndirectRule *publicWidth;
     IndirectRule *publicHeight;
 
-    Impl(Public *i, Rule const &x, Rule const &y, Mode layoutMode)
+    Impl(Public *i, const Rule &x, const Rule &y, Mode layoutMode)
         : Base(i)
         , mode(layoutMode)
         , maxCols(1)
@@ -210,7 +210,7 @@ DE_PIMPL(GridLayout)
         list << m;
     }
 
-    void updateMaximum(Metrics &list, int index, Rule const &rule)
+    void updateMaximum(Metrics &list, int index, const Rule &rule)
     {
         if (index < 0) index = 0;
         if (index >= list.sizei())
@@ -238,11 +238,11 @@ DE_PIMPL(GridLayout)
         }
     }
 
-    Rule const &columnLeftX(int col)
+    const Rule &columnLeftX(int col)
     {
         if (!cols.at(col)->minEdge)
         {
-            Rule const *base = holdRef(initialX);
+            const Rule *base = holdRef(initialX);
             if (col > 0)
             {
                 if (colPad) changeRef(base, *base + *colPad * col);
@@ -253,7 +253,7 @@ DE_PIMPL(GridLayout)
         return *cols.at(col)->minEdge;
     }
 
-    Rule const &columnRightX(int col)
+    const Rule &columnRightX(int col)
     {
         if (col < cols.sizei() - 1)
         {
@@ -267,11 +267,11 @@ DE_PIMPL(GridLayout)
         return *cols.at(col)->maxEdge;
     }
 
-    Rule const &rowTopY(int row) const
+    const Rule &rowTopY(int row) const
     {
         if (!rows.at(row)->minEdge)
         {
-            Rule const *base = holdRef(initialY);
+            const Rule *base = holdRef(initialY);
             if (row > 0)
             {
                 if (rowPad) changeRef(base, *base + *rowPad * row);
@@ -360,14 +360,14 @@ DE_PIMPL(GridLayout)
      * @param layoutWidth  Optionally, a width to use for layout calculations instead
      *                     of the actual width of the widget/space.
      */
-    void append(GuiWidget *widget, Rule const *space, int cellSpan = 1, Rule const *layoutWidth = 0)
+    void append(GuiWidget *widget, const Rule *space, int cellSpan = 1, const Rule *layoutWidth = 0)
     {
         DE_ASSERT(!(widget && space));
         DE_ASSERT(widget || space);
 
         begin();
 
-        Rule const *pad = (mode == ColumnFirst? colPad : rowPad);
+        const Rule *pad = (mode == ColumnFirst? colPad : rowPad);
 
         widgets << widget; // NULLs included.
 
@@ -393,7 +393,7 @@ DE_PIMPL(GridLayout)
             current->append(*space);
         }
 
-        Rule const &cellWidth =
+        const Rule &cellWidth =
             (layoutWidth ? *layoutWidth : widget ? widget->rule().width() : *space);
 
         // Update the column and row maximum width/height.
@@ -488,7 +488,7 @@ GridLayout::GridLayout(Mode mode)
     : d(new Impl(this, Const(0), Const(0), mode))
 {}
 
-GridLayout::GridLayout(Rule const &startX, Rule const &startY, Mode mode)
+GridLayout::GridLayout(const Rule &startX, const Rule &startY, Mode mode)
     : d(new Impl(this, startX, startY, mode))
 {}
 
@@ -505,7 +505,7 @@ void GridLayout::setMode(GridLayout::Mode mode)
     d->setup(d->maxCols, d->maxRows);
 }
 
-void GridLayout::setLeftTop(Rule const &left, Rule const &top)
+void GridLayout::setLeftTop(const Rule &left, const Rule &top)
 {
     DE_ASSERT(isEmpty());
 
@@ -539,7 +539,7 @@ void GridLayout::setColumnAlignment(int column, ui::Alignment cellAlign)
     d->cols[column]->cellAlign = cellAlign;
 }
 
-void GridLayout::setColumnFixedWidth(int column, Rule const &fixedWidth)
+void GridLayout::setColumnFixedWidth(int column, const Rule &fixedWidth)
 {
     DE_ASSERT(isEmpty());
 
@@ -554,23 +554,23 @@ void GridLayout::setColumnFixedWidth(int column, Rule const &fixedWidth)
     d->setup(d->maxCols, d->maxRows);
 }
 
-void GridLayout::setOverrideWidth(Rule const &width)
+void GridLayout::setOverrideWidth(const Rule &width)
 {
     changeRef(d->fixedCellWidth, width);
 }
 
-void GridLayout::setOverrideHeight(Rule const &height)
+void GridLayout::setOverrideHeight(const Rule &height)
 {
     changeRef(d->fixedCellHeight, height);
 }
 
-void GridLayout::setColumnPadding(Rule const &gap)
+void GridLayout::setColumnPadding(const Rule &gap)
 {
     DE_ASSERT(isEmpty());
     changeRef(d->colPad, gap);
 }
 
-void GridLayout::setRowPadding(Rule const &gap)
+void GridLayout::setRowPadding(const Rule &gap)
 {
     DE_ASSERT(isEmpty());
     changeRef(d->rowPad, gap);
@@ -582,13 +582,13 @@ GridLayout &GridLayout::append(GuiWidget &widget, int cellSpan)
     return *this;
 }
 
-GridLayout &GridLayout::append(GuiWidget &widget, de::Rule const &layoutWidth, int cellSpan)
+GridLayout &GridLayout::append(GuiWidget &widget, const de::Rule &layoutWidth, int cellSpan)
 {
     d->append(&widget, 0, cellSpan, &layoutWidth);
     return *this;
 }
 
-GridLayout &GridLayout::append(Rule const &empty)
+GridLayout &GridLayout::append(const Rule &empty)
 {
     d->append(0, &empty);
     return *this;
@@ -661,7 +661,7 @@ Vec2i GridLayout::widgetPos(GuiWidget &widget) const
     return Vec2i(-1, -1);
 }
 
-GuiWidget *GridLayout::at(Vec2i const &cell) const
+GuiWidget *GridLayout::at(const Vec2i &cell) const
 {
     Vec2i pos;
     for (GuiWidget *w : d->widgets)
@@ -694,7 +694,7 @@ GuiWidget *GridLayout::at(Vec2i const &cell) const
     return nullptr;
 }
 
-int GridLayout::widgetCellSpan(GuiWidget const &widget) const
+int GridLayout::widgetCellSpan(const GuiWidget &widget) const
 {
     auto found = d->widgetMultiCellCount.find(&widget);
     if (found != d->widgetMultiCellCount.end())
@@ -704,67 +704,67 @@ int GridLayout::widgetCellSpan(GuiWidget const &widget) const
     return 1;
 }
 
-Rule const &GridLayout::width() const
+const Rule &GridLayout::width() const
 {
     d->updateTotal();
     return *d->publicWidth;
 }
 
-Rule const &GridLayout::height() const
+const Rule &GridLayout::height() const
 {
     d->updateTotal();
     return *d->publicHeight;
 }
 
-Rule const &GridLayout::columnLeft(int col) const
+const Rule &GridLayout::columnLeft(int col) const
 {
     DE_ASSERT(col >= 0 && col < d->cols.sizei());
     return d->columnLeftX(col);
 }
 
-Rule const &GridLayout::columnRight(int col) const
+const Rule &GridLayout::columnRight(int col) const
 {
     DE_ASSERT(col >= 0 && col < d->cols.sizei());
     return d->columnRightX(col);
 }
 
-Rule const &GridLayout::columnWidth(int col) const
+const Rule &GridLayout::columnWidth(int col) const
 {
     DE_ASSERT(col >= 0 && col < d->cols.sizei());
     return *d->cols.at(col)->final;
 }
 
-Rule const &GridLayout::rowHeight(int row) const
+const Rule &GridLayout::rowHeight(int row) const
 {
     DE_ASSERT(row >= 0 && row < d->rows.sizei());
     return *d->rows.at(row)->final;
 }
 
-Rule const &GridLayout::overrideWidth() const
+const Rule &GridLayout::overrideWidth() const
 {
     DE_ASSERT(d->fixedCellWidth != nullptr);
     return *d->fixedCellWidth;
 }
 
-Rule const &GridLayout::overrideHeight() const
+const Rule &GridLayout::overrideHeight() const
 {
     DE_ASSERT(d->fixedCellHeight != nullptr);
     return *d->fixedCellHeight;
 }
 
-Rule const &GridLayout::columnPadding() const
+const Rule &GridLayout::columnPadding() const
 {
     if (d->colPad) return *d->colPad;
     return ConstantRule::zero();
 }
 
-Rule const &GridLayout::rowPadding() const
+const Rule &GridLayout::rowPadding() const
 {
     if (d->rowPad) return *d->rowPad;
     return ConstantRule::zero();
 }
 
-void GridLayout::setCellAlignment(Vec2i const &cell, ui::Alignment cellAlign)
+void GridLayout::setCellAlignment(const Vec2i &cell, ui::Alignment cellAlign)
 {
     d->cellAlignment[cell] = cellAlign;
 }

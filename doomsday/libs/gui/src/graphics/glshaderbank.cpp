@@ -64,7 +64,7 @@ DE_PIMPL(GLShaderBank)
             Type   type;
             String source;
 
-            ShaderSource(String const &str = "", Type t = None)
+            ShaderSource(const String &str = "", Type t = None)
                 : type(t), source(str) {}
 
             void convertToSourceText()
@@ -76,7 +76,7 @@ DE_PIMPL(GLShaderBank)
                 }
             }
 
-            void insertFromFile(String const &path)
+            void insertFromFile(const String &path)
             {
                 if (type == None) return;
                 convertToSourceText();
@@ -86,7 +86,7 @@ DE_PIMPL(GLShaderBank)
                 source = String::fromLatin1(combo);
             }
 
-            void insertDefinition(String const &macroName, String const &content)
+            void insertDefinition(const String &macroName, const String &content)
             {
                 if (type == None) return;
                 convertToSourceText();
@@ -95,7 +95,7 @@ DE_PIMPL(GLShaderBank)
                 source = combo;
             }
 
-            void insertIncludes(GLShaderBank const &bank, Record const &def)
+            void insertIncludes(const GLShaderBank &bank, const Record &def)
             {
                 if (type == None) return;
                 convertToSourceText();
@@ -108,16 +108,16 @@ DE_PIMPL(GLShaderBank)
         ShaderSource  sources[3]; // GLShader::Type as index
 
         Source(GLShaderBank &      b,
-               String const &      id,
-               ShaderSource const &vtx,
-               ShaderSource const &geo,
-               ShaderSource const &frag)
+               const String &      id,
+               const ShaderSource &vtx,
+               const ShaderSource &geo,
+               const ShaderSource &frag)
             : bank(b)
             , id(id)
             , sources{vtx, geo, frag}
         {}
 
-        Time sourceModifiedAt(ShaderSource const &src) const
+        Time sourceModifiedAt(const ShaderSource &src) const
         {
             if (src.type == ShaderSource::FilePath && src.source)
             {
@@ -135,7 +135,7 @@ DE_PIMPL(GLShaderBank)
 
         GLShader *load(GLShader::Type type) const
         {
-            ShaderSource const &src = sources[type];
+            const ShaderSource &src = sources[type];
             if (src.type == ShaderSource::None)
         {
                 return nullptr;
@@ -207,7 +207,7 @@ DE_PIMPL(GLShaderBank)
         return sourceText;
     }
 
-    GLShader *findShader(String const &path, GLShader::Type type)
+    GLShader *findShader(const String &path, GLShader::Type type)
     {
         /// @todo Should check the modification time of the file to determine
         /// if recompiling the shader is appropriate.
@@ -234,24 +234,24 @@ void GLShaderBank::clear()
     InfoBank::clear();
 }
 
-void GLShaderBank::addFromInfo(File const &file)
+void GLShaderBank::addFromInfo(const File &file)
 {
     LOG_AS("GLShaderBank");
     parse(file);
     addFromInfoBlocks("shader");
 }
 
-GLShader &GLShaderBank::shader(DotPath const &path, GLShader::Type type) const
+GLShader &GLShaderBank::shader(const DotPath &path, GLShader::Type type) const
 {
     Impl::Data &i = data(path).as<Impl::Data>();
     return *i.shaders[type];
     }
 
-GLProgram &GLShaderBank::build(GLProgram &program, DotPath const &path) const
+GLProgram &GLShaderBank::build(GLProgram &program, const DotPath &path) const
 {
     Impl::Data &i = data(path).as<Impl::Data>();
 
-    List<GLShader const *> shaders;
+    List<const GLShader *> shaders;
     for (auto *s : i.shaders)
     {
         if (s) shaders << s;
@@ -273,12 +273,12 @@ void GLShaderBank::setPreprocessorDefines(const DictionaryValue &preDefines)
     d->preDefines.reset(static_cast<DictionaryValue *>(preDefines.duplicate()));
 }
 
-Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
+Bank::ISource *GLShaderBank::newSourceFromInfo(const String &id)
 {
     using Source       = Impl::Source;
     using ShaderSource = Impl::Source::ShaderSource;
 
-    Record const &def = info()[id];
+    const Record &def = info()[id];
 
     ShaderSource sources[3];
 
@@ -313,7 +313,7 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
         if (def.has(includeTokens[i]))
     {
         // Including in reverse to retain order -- each one is prepended.
-            auto const &incs = def[includeTokens[i]].value<ArrayValue>().elements();
+            const auto &incs = def[includeTokens[i]].value<ArrayValue>().elements();
             for (int j = incs.sizei() - 1; j >= 0; --j)
         {
                 sources[i].insertFromFile(absolutePathInContext(def, incs.at(j)->asText()));

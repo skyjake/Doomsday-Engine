@@ -234,7 +234,7 @@ static bool applyGamePathMappings(String &path)
     if (!path.contains('/'))
     {
         // No directory separators; i.e., a root file.
-        FileType const &ftype = DD_GuessFileTypeFromFileName(path.fileName());
+        const FileType &ftype = DD_GuessFileTypeFromFileName(path.fileName());
 
         switch (ftype.defaultClass())
         {
@@ -254,7 +254,7 @@ static bool applyGamePathMappings(String &path)
     }
 
     // Key-named directories in the root might be mapped to another location.
-    FS1::Schemes const &schemes = App_FileSystem().allSchemes();
+    const FS1::Schemes &schemes = App_FileSystem().allSchemes();
     DE_FOR_EACH_CONST(FS1::Schemes, i, schemes)
     {
         if (i->second->mapPath(path))
@@ -270,12 +270,12 @@ static bool applyGamePathMappings(String &path)
 using namespace internal;
 
 Zip::LumpFile::LumpFile(Entry &entry, FileHandle *hndl, String path,
-    FileInfo const &info, File1 *container)
+    const FileInfo &info, File1 *container)
     : File1(hndl, path, info, container)
     , entry(entry)
 {}
 
-String const &Zip::LumpFile::name() const
+const String &Zip::LumpFile::name() const
 {
     return directoryNode().name();
 }
@@ -300,7 +300,7 @@ size_t Zip::LumpFile::read(uint8_t *buffer, size_t startOffset, size_t length, b
     return zip().readLump(info_.lumpIdx, buffer, startOffset, length, tryCache);
 }
 
-uint8_t const *Zip::LumpFile::cache()
+const uint8_t *Zip::LumpFile::cache()
 {
     return zip().cacheLump(info_.lumpIdx);
 }
@@ -328,12 +328,12 @@ DE_PIMPL(Zip)
      * @param lump      Lump/file to be buffered.
      * @param buffer    Must be large enough to hold the entire uncompressed data lump.
      */
-    size_t bufferLump(LumpFile const &lump, uint8_t *buffer)
+    size_t bufferLump(const LumpFile &lump, uint8_t *buffer)
     {
         DE_ASSERT(buffer);
         LOG_AS("Zip");
 
-        FileInfo const &lumpInfo = lump.info();
+        const FileInfo &lumpInfo = lump.info();
         self().handle_->seek(lumpInfo.baseOffset, SeekSet);
 
         if (lumpInfo.isCompressed())
@@ -363,7 +363,7 @@ DE_PIMPL(Zip)
     }
 };
 
-Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
+Zip::Zip(FileHandle &hndl, String path, const FileInfo &info, File1 *container)
     : File1(&hndl, path, info, container)
     , LumpIndex(true/*paths are unique*/)
     , d(new Impl(this))
@@ -437,8 +437,8 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
         uint lumpIdx = 0;
         for (int index = 0; index < summary.totalEntryCount; ++index, pos += sizeof(centralfileheader_t))
         {
-            centralfileheader_t const *header = (centralfileheader_t *) pos;
-            char const *nameStart = pos + sizeof(centralfileheader_t);
+            const centralfileheader_t *header = (centralfileheader_t *) pos;
+            const char *nameStart = pos + sizeof(centralfileheader_t);
             localfileheader_t localHeader;
 
             // Advance the cursor past the variable sized fields.
@@ -563,7 +563,7 @@ void Zip::clearLumpCache()
     }
 }
 
-uint8_t const *Zip::cacheLump(int lumpIndex)
+const uint8_t *Zip::cacheLump(int lumpIndex)
 {
     LOG_AS("Zip::cacheLump");
 
@@ -580,7 +580,7 @@ uint8_t const *Zip::cacheLump(int lumpIndex)
         d->dataCache.reset(new LumpCache(lumpCount()));
     }
 
-    uint8_t const *data = d->dataCache->data(lumpIndex);
+    const uint8_t *data = d->dataCache->data(lumpIndex);
     if (data) return data;
 
     uint8_t *region = (uint8_t *) Z_Malloc(lumpFile.info().size, PU_APPSTATIC, 0);
@@ -623,7 +623,7 @@ size_t Zip::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
 {
     LOG_AS("Zip::readLump");
 
-    LumpFile const &lumpFile = static_cast<LumpFile &>(lump(lumpIndex));
+    const LumpFile &lumpFile = static_cast<LumpFile &>(lump(lumpIndex));
     LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s) [%u +%u]",
                NativePath(composePath()).pretty()
             << NativePath(lumpFile.composePath()).pretty()
@@ -635,7 +635,7 @@ size_t Zip::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
     // Try to avoid a file system read by checking for a cached copy.
     if (tryCache)
     {
-        uint8_t const *data = (d->dataCache ? d->dataCache->data(lumpIndex) : 0);
+        const uint8_t *data = (d->dataCache ? d->dataCache->data(lumpIndex) : 0);
         LOGDEV_RES_XVERBOSE("Cache %s on #%i", (data? "hit" : "miss") << lumpIndex);
         if (data)
         {
@@ -858,7 +858,7 @@ bool Zip::uncompressRaw(uint8_t *in, size_t inSize, uint8_t *out, size_t outSize
     return true;
 }
 
-Zip::LumpTree const &Zip::lumpTree() const
+const Zip::LumpTree &Zip::lumpTree() const
 {
     return d->entries;
 }

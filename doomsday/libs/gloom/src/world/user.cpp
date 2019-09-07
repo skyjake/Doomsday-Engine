@@ -29,7 +29,7 @@ namespace gloom {
 
 DE_PIMPL(User)
 {
-    World const *world = nullptr;
+    const World *world = nullptr;
 
     InputState input;
     Vec3f      pos;                // Current position of the user (feet).
@@ -343,7 +343,7 @@ DE_PIMPL(User)
 User::User() : d(new Impl(this))
 {}
 
-void User::setWorld(World const *world)
+void User::setWorld(const World *world)
 {
     d->world       = world;
     d->firstUpdate = true;
@@ -371,7 +371,7 @@ float User::pitch() const
     return d->pitch;
 }
 
-void User::setPosition(Vec3f const &pos)
+void User::setPosition(const Vec3f &pos)
 {
     auto oldPos = d->pos;
 
@@ -396,7 +396,7 @@ void User::setPain(float pain)
     DE_NOTIFY_VAR(PainLevel, i) { i->userPainLevel(*this, pain); }
 }
 
-void User::setInputState(InputState const &state)
+void User::setInputState(const InputState &state)
 {
     d->input = state;
 }

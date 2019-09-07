@@ -40,13 +40,13 @@ Item &ListData::at(Data::Pos pos)
     return *_items[pos];
 }
 
-Item const &ListData::at(Pos pos) const
+const Item &ListData::at(Pos pos) const
 {
     DE_ASSERT(pos < size());
     return *_items.at(pos);
 }
 
-Data::Pos ListData::find(Item const &item) const
+Data::Pos ListData::find(const Item &item) const
 {
     for (Pos i = 0; i < size(); ++i)
     {
@@ -55,7 +55,7 @@ Data::Pos ListData::find(Item const &item) const
     return InvalidPos;
 }
 
-Data::Pos ListData::findLabel(String const &label) const
+Data::Pos ListData::findLabel(const String &label) const
 {
     for (Pos i = 0; i < size(); ++i)
     {
@@ -105,7 +105,7 @@ Item *ListData::take(Data::Pos pos)
 
 void ListData::sort(LessThanFunc lessThan)
 {
-    std::sort(_items.begin(), _items.end(), [&lessThan] (Item const *a, Item const *b) {
+    std::sort(_items.begin(), _items.end(), [&lessThan] (const Item *a, const Item *b) {
         return lessThan(*a, *b);
     });
     DE_NOTIFY(OrderChange, i) i->dataItemOrderChanged();
@@ -113,7 +113,7 @@ void ListData::sort(LessThanFunc lessThan)
 
 void ListData::stableSort(LessThanFunc lessThan)
 {
-    std::stable_sort(_items.begin(), _items.end(), [&lessThan] (Item const *a, Item const *b) {
+    std::stable_sort(_items.begin(), _items.end(), [&lessThan] (const Item *a, const Item *b) {
         return lessThan(*a, *b);
     });
     DE_NOTIFY(OrderChange, i) i->dataItemOrderChanged();

@@ -42,7 +42,7 @@ DE_PIMPL(RuleRectangle)
     };
 
     // The input rules.
-    Rule const *inputRules[Rule::MAX_SEMANTICS];
+    const Rule *inputRules[Rule::MAX_SEMANTICS];
     AnimationRule *_normalizedAnchorX = nullptr;
     AnimationRule *_normalizedAnchorY = nullptr;
 
@@ -82,7 +82,7 @@ DE_PIMPL(RuleRectangle)
         }
     }
 
-    Rule const *&ruleRef(Rule::Semantic rule)
+    const Rule *&ruleRef(Rule::Semantic rule)
     {
         DE_ASSERT(rule >= Rule::Left);
         DE_ASSERT(rule < Rule::MAX_SEMANTICS);
@@ -114,7 +114,7 @@ DE_PIMPL(RuleRectangle)
         return _midY;
     }
 
-    inline Rule const &anchorPos(Rule::Semantic anchorInput)
+    inline const Rule &anchorPos(Rule::Semantic anchorInput)
     {
         if (anchorInput == Rule::AnchorX)
         {
@@ -140,7 +140,7 @@ DE_PIMPL(RuleRectangle)
         return !isHorizontalInput(inputRule);
     }
 
-    void setInputRule(Rule::Semantic inputRule, Rule const &rule)
+    void setInputRule(Rule::Semantic inputRule, const Rule &rule)
     {
         releaseRef(inputRules[inputRule]);
         inputRules[inputRule] = holdRef(rule);
@@ -247,42 +247,42 @@ DE_PIMPL(RuleRectangle)
 RuleRectangle::RuleRectangle() : d(new Impl(this))
 {}
 
-Rule const &RuleRectangle::left() const
+const Rule &RuleRectangle::left() const
 {
     return *d->outputRules[Impl::OutLeft];
 }
 
-Rule const &RuleRectangle::top() const
+const Rule &RuleRectangle::top() const
 {
     return *d->outputRules[Impl::OutTop];
 }
 
-Rule const &RuleRectangle::right() const
+const Rule &RuleRectangle::right() const
 {
     return *d->outputRules[Impl::OutRight];
 }
 
-Rule const &RuleRectangle::bottom() const
+const Rule &RuleRectangle::bottom() const
 {
     return *d->outputRules[Impl::OutBottom];
 }
 
-Rule const &RuleRectangle::width() const
+const Rule &RuleRectangle::width() const
 {
     return *d->outputRules[Impl::OutWidth];
 }
 
-Rule const &RuleRectangle::height() const
+const Rule &RuleRectangle::height() const
 {
     return *d->outputRules[Impl::OutHeight];
 }
 
-Rule const &RuleRectangle::midX() const
+const Rule &RuleRectangle::midX() const
 {
     return *d->midX();
 }
 
-Rule const &RuleRectangle::midY() const
+const Rule &RuleRectangle::midY() const
 {
     return *d->midY();
 }
@@ -293,21 +293,21 @@ RuleRectangle &RuleRectangle::setInput(Rule::Semantic inputRule, RefArg<Rule> ru
     return *this;
 }
 
-RuleRectangle &RuleRectangle::setLeftTop(Rule const &left, Rule const &top)
+RuleRectangle &RuleRectangle::setLeftTop(const Rule &left, const Rule &top)
 {
     setInput(Rule::Left, left);
     setInput(Rule::Top,  top);
     return *this;
 }
 
-RuleRectangle &RuleRectangle::setRightBottom(Rule const &right, Rule const &bottom)
+RuleRectangle &RuleRectangle::setRightBottom(const Rule &right, const Rule &bottom)
 {
     setInput(Rule::Right,  right);
     setInput(Rule::Bottom, bottom);
     return *this;
 }
 
-RuleRectangle &RuleRectangle::setRect(RuleRectangle const &rect)
+RuleRectangle &RuleRectangle::setRect(const RuleRectangle &rect)
 {
     setInput(Rule::Left,   rect.left());
     setInput(Rule::Top,    rect.top());
@@ -316,7 +316,7 @@ RuleRectangle &RuleRectangle::setRect(RuleRectangle const &rect)
     return *this;
 }
 
-RuleRectangle &RuleRectangle::setInputsFromRect(RuleRectangle const &rect)
+RuleRectangle &RuleRectangle::setInputsFromRect(const RuleRectangle &rect)
 {
     for (int i = 0; i < int(Rule::MAX_SEMANTICS); ++i)
     {
@@ -332,26 +332,26 @@ RuleRectangle &RuleRectangle::setInputsFromRect(RuleRectangle const &rect)
     return *this;
 }
 
-RuleRectangle &RuleRectangle::setSize(Rule const &width, Rule const &height)
+RuleRectangle &RuleRectangle::setSize(const Rule &width, const Rule &height)
 {
     setInput(Rule::Width,  width);
     setInput(Rule::Height, height);
     return *this;
 }
 
-RuleRectangle &RuleRectangle::setSize(ISizeRule const &dimensions)
+RuleRectangle &RuleRectangle::setSize(const ISizeRule &dimensions)
 {
     return setSize(dimensions.width(), dimensions.height());
 }
 
-RuleRectangle &RuleRectangle::setMidAnchorX(Rule const &middle)
+RuleRectangle &RuleRectangle::setMidAnchorX(const Rule &middle)
 {
     setInput(Rule::AnchorX, middle);
     d->normalizedAnchorX()->set(.5f);
     return *this;
 }
 
-RuleRectangle &RuleRectangle::setMidAnchorY(Rule const &middle)
+RuleRectangle &RuleRectangle::setMidAnchorY(const Rule &middle)
 {
     setInput(Rule::AnchorY, middle);
     d->normalizedAnchorY()->set(.5f);
@@ -364,13 +364,13 @@ RuleRectangle &RuleRectangle::clearInput(Rule::Semantic inputRule)
     return *this;
 }
 
-Rule const &RuleRectangle::inputRule(Rule::Semantic inputRule)
+const Rule &RuleRectangle::inputRule(Rule::Semantic inputRule)
 {
     DE_ASSERT(d->ruleRef(inputRule) != 0);
     return *d->ruleRef(inputRule);
 }
 
-void RuleRectangle::setAnchorPoint(Vec2f const &normalizedPoint, TimeSpan transition)
+void RuleRectangle::setAnchorPoint(const Vec2f &normalizedPoint, TimeSpan transition)
 {
     d->normalizedAnchorX()->set(normalizedPoint.x, transition);
     d->normalizedAnchorY()->set(normalizedPoint.y, transition);
@@ -404,7 +404,7 @@ Rectanglei RuleRectangle::recti() const
                       Vec2i(de::floor(r.bottomRight.x), de::floor(r.bottomRight.y)));
 }
 
-void RuleRectangle::setDebugName(String const &name)
+void RuleRectangle::setDebugName(const String &name)
 {
     d->debugName = name;
 }

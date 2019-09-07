@@ -113,7 +113,7 @@ DE_PIMPL(Material)
      */
     res::Texture *inheritDimensionsTexture() const
     {
-        if (auto const *texLayer = firstTextureLayer())
+        if (const auto *texLayer = firstTextureLayer())
         {
             if (texLayer->stageCount() >= 1)
             {
@@ -148,14 +148,14 @@ DE_PIMPL(Material)
     }
 
     // Observes Texture DimensionsChange.
-    void textureDimensionsChanged(res::Texture const &texture)
+    void textureDimensionsChanged(const res::Texture &texture)
     {
         DE_ASSERT(!haveValidDimensions()); // Sanity check.
         self().setDimensions(texture.dimensions());
     }
 
     // Observes Texture Deletion.
-    void textureBeingDeleted(res::Texture const &texture)
+    void textureBeingDeleted(const res::Texture &texture)
     {
         // If here it means the texture we were planning to inherit dimensions from is
         // being deleted and therefore we won't be able to.
@@ -198,12 +198,12 @@ MaterialManifest &Material::manifest() const
     return *d->manifest;
 }
 
-Vec2ui const &Material::dimensions() const
+const Vec2ui &Material::dimensions() const
 {
     return d->dimensions;
 }
 
-void Material::setDimensions(Vec2ui const &newDimensions)
+void Material::setDimensions(const Vec2ui &newDimensions)
 {
     if (d->dimensions != newDimensions)
     {
@@ -255,7 +255,7 @@ void Material::clearAllLayers()
 
 bool Material::hasAnimatedTextureLayers() const
 {
-    for (Layer const *layer : _layers)
+    for (const Layer *layer : _layers)
     {
         if (   !is<DetailTextureMaterialLayer>(layer)
             && !is<ShineTextureMaterialLayer>(layer))
@@ -307,7 +307,7 @@ String Material::description() const
                + _E(l) + " SkyMasked: "  + _E(.) + DE_BOOL_YESNO(isSkyMasked());
 
     // Add the layer config:
-    for (Layer const *layer : _layers)
+    for (const Layer *layer : _layers)
     {
         str += "\n" + layer->description();
     }
@@ -365,7 +365,7 @@ D_CMD(InspectMaterial)
         }
         return true;
     }
-    catch (Resources::MissingResourceManifestError const &er)
+    catch (const Resources::MissingResourceManifestError &er)
     {
         LOG_SCR_WARNING("%s") << er.asText();
     }

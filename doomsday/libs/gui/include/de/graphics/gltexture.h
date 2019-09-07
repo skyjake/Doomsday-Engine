@@ -95,7 +95,7 @@ public:
      * @param existingTexture  Existing texture.
      * @param size             Size of the texture in texels.
      */
-    GLTexture(GLuint existingTexture, Size const &size);
+    GLTexture(GLuint existingTexture, const Size &size);
 
     /**
      * Release all image content associated with the texture.
@@ -114,7 +114,7 @@ public:
         setWrapS(s);
         setWrapT(t);
     }
-    inline void setWrap(Wraps const &st) {
+    inline void setWrap(const Wraps &st) {
         setWrapS(st.x);
         setWrapT(st.y);
     }
@@ -153,7 +153,7 @@ public:
      *                Determines internal storage pixel format.
      * @param level   Mipmap level.
      */
-    void setUndefinedImage(Size const &size, Image::Format format, int level = 0);
+    void setUndefinedImage(const Size &size, Image::Format format, int level = 0);
 
     /**
      * Reserves a specific size of undefined memory for a cube map level.
@@ -164,13 +164,13 @@ public:
      *                Determines internal storage pixel format.
      * @param level   Mipmap level.
      */
-    void setUndefinedImage(gfx::CubeFace face, Size const &size, Image::Format format, int level = 0);
+    void setUndefinedImage(gfx::CubeFace face, const Size &size, Image::Format format, int level = 0);
 
-    void setUndefinedContent(Size const &size, GLPixelFormat const &glFormat, int level = 0);
+    void setUndefinedContent(const Size &size, const GLPixelFormat &glFormat, int level = 0);
 
-    void setUndefinedContent(gfx::CubeFace face, Size const &size, GLPixelFormat const &glFormat, int level = 0);
+    void setUndefinedContent(gfx::CubeFace face, const Size &size, const GLPixelFormat &glFormat, int level = 0);
 
-    void setDepthStencilContent(Size const &size);
+    void setDepthStencilContent(const Size &size);
 
     /**
      * Sets the image content of the texture at a particular level. The format
@@ -179,7 +179,7 @@ public:
      * @param image  Image to upload to a GL texture.
      * @param level  Level on which to store the image.
      */
-    void setImage(Image const &image, int level = 0);
+    void setImage(const Image &image, int level = 0);
 
     /**
      * Sets the image content of the texture at a particular level. The format
@@ -189,7 +189,7 @@ public:
      * @param image  Image to upload to a GL texture.
      * @param level  Level on which to store the image.
      */
-    void setImage(gfx::CubeFace face, Image const &image, int level = 0);
+    void setImage(gfx::CubeFace face, const Image &image, int level = 0);
 
     /**
      * Replaces a portion of existing content. The image must be provided in
@@ -199,7 +199,7 @@ public:
      * @param pos    Position where the image is being copied.
      * @param level  Mipmap level.
      */
-    void setSubImage(Image const &image, Vec2i const &pos, int level = 0);
+    void setSubImage(const Image &image, const Vec2i &pos, int level = 0);
 
     /**
      * Replaces a portion of existing content. The image must be provided in the same
@@ -211,10 +211,10 @@ public:
      * @param rect   Region of the image to copy.
      * @param level  Mipmap level.
      */
-    void setSubImage(Image const &image, Rectanglei const &rect, int level = 0);
+    void setSubImage(const Image &image, const Rectanglei &rect, int level = 0);
 
-    void setSubImage(gfx::CubeFace face, Image const &image, Vec2i const &pos, int level = 0);
-    void setSubImage(gfx::CubeFace face, Image const &image, Rectanglei const &rect, int level = 0);
+    void setSubImage(gfx::CubeFace face, const Image &image, const Vec2i &pos, int level = 0);
+    void setSubImage(gfx::CubeFace face, const Image &image, const Rectanglei &rect, int level = 0);
 
     /**
      * Generate a full set of mipmap levels based on the content on level 0.
@@ -283,9 +283,9 @@ public:
      *
      * @return Number of mipmap levels.
      */
-    static int levelsForSize(Size const &size);
+    static int levelsForSize(const Size &size);
 
-    static Size levelSize(Size const &size0, int level);
+    static Size levelSize(const Size &size0, int level);
 
 private:
     DE_PRIVATE(d)

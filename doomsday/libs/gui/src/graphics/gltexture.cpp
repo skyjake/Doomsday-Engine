@@ -185,8 +185,8 @@ DE_PIMPL(GLTexture)
         flags &= ~ParamsChanged;
     }
 
-    void glImage(int level, Size const &size, GLPixelFormat const &glFormat,
-                 void const *data, CubeFace face = PositiveX)
+    void glImage(int level, const Size &size, const GLPixelFormat &glFormat,
+                 const void *data, CubeFace face = PositiveX)
     {
         /*qDebug() << "glTexImage2D:" << name << (isCube()? glFace(face) : texTarget)
                 << level << internalFormat << size.x << size.y << 0
@@ -205,8 +205,8 @@ DE_PIMPL(GLTexture)
         LIBGUI_ASSERT_GL_OK();
     }
 
-    void glSubImage(int level, Vec2i const &pos, Size const &size,
-                    GLPixelFormat const &glFormat, void const *data, CubeFace face = PositiveX)
+    void glSubImage(int level, const Vec2i &pos, const Size &size,
+                    const GLPixelFormat &glFormat, const void *data, CubeFace face = PositiveX)
     {
         if (data) glPixelStorei(GL_UNPACK_ALIGNMENT, GLint(glFormat.rowStartAlignment));
         glTexSubImage2D(isCube() ? glFace(face) : texTarget,
@@ -221,10 +221,10 @@ DE_PIMPL(GLTexture)
         LIBGUI_ASSERT_GL_OK();
     }
 
-    void glSubImage(int level, Rectanglei const &rect, Image const &image,
+    void glSubImage(int level, const Rectanglei &rect, const Image &image,
                     CubeFace face = PositiveX)
     {
-        auto const &glFormat = image.glFormat();
+        const auto &glFormat = image.glFormat();
 
         glPixelStorei(GL_UNPACK_ALIGNMENT,  GLint(glFormat.rowStartAlignment));
         glPixelStorei(GL_UNPACK_ROW_LENGTH, GLint(image.width()));
@@ -251,7 +251,7 @@ DE_PIMPL(GLTexture)
 GLTexture::GLTexture() : d(new Impl(this))
 {}
 
-GLTexture::GLTexture(GLuint existingTexture, Size const &size) : d(new Impl(this))
+GLTexture::GLTexture(GLuint existingTexture, const Size &size) : d(new Impl(this))
 {
     d->size = size;
     d->name = existingTexture;
@@ -300,7 +300,7 @@ void GLTexture::setMaxLevel(dfloat maxLevel)
     d->flags |= ParamsChanged;
 }
 
-void GLTexture::setBorderColor(Vec4f const &color)
+void GLTexture::setBorderColor(const Vec4f &color)
 {
     d->borderColor = color;
     d->flags |= ParamsChanged;
@@ -368,7 +368,7 @@ bool GLTexture::autoGenMips() const
     return d->flags.testFlag(AutoMips);
 }
 
-void GLTexture::setUndefinedImage(GLTexture::Size const &size, Image::Format format, int level)
+void GLTexture::setUndefinedImage(const GLTexture::Size &size, Image::Format format, int level)
 {
     d->texTarget = GL_TEXTURE_2D;
     d->size = size;
@@ -382,7 +382,7 @@ void GLTexture::setUndefinedImage(GLTexture::Size const &size, Image::Format for
     setState(Ready);
 }
 
-void GLTexture::setUndefinedImage(CubeFace face, GLTexture::Size const &size,
+void GLTexture::setUndefinedImage(CubeFace face, const GLTexture::Size &size,
                                   Image::Format format, int level)
 {
     d->texTarget = GL_TEXTURE_CUBE_MAP;
@@ -397,7 +397,7 @@ void GLTexture::setUndefinedImage(CubeFace face, GLTexture::Size const &size,
     setState(Ready);
 }
 
-void GLTexture::setUndefinedContent(Size const &size, GLPixelFormat const &glFormat, int level)
+void GLTexture::setUndefinedContent(const Size &size, const GLPixelFormat &glFormat, int level)
 {
     d->texTarget = GL_TEXTURE_2D;
     d->size = size;
@@ -411,7 +411,7 @@ void GLTexture::setUndefinedContent(Size const &size, GLPixelFormat const &glFor
     setState(Ready);
 }
 
-void GLTexture::setUndefinedContent(CubeFace face, Size const &size, GLPixelFormat const &glFormat, int level)
+void GLTexture::setUndefinedContent(CubeFace face, const Size &size, const GLPixelFormat &glFormat, int level)
 {
     d->texTarget = GL_TEXTURE_CUBE_MAP;
     d->size = size;
@@ -425,14 +425,14 @@ void GLTexture::setUndefinedContent(CubeFace face, Size const &size, GLPixelForm
     setState(Ready);
 }
 
-void GLTexture::setDepthStencilContent(Size const &size)
+void GLTexture::setDepthStencilContent(const Size &size)
 {
     setUndefinedContent(size, GLPixelFormat(GL_DEPTH24_STENCIL8,
                                             GL_DEPTH_STENCIL,
                                             GL_UNSIGNED_INT_24_8));
 }
 
-void GLTexture::setImage(Image const &image, int level)
+void GLTexture::setImage(const Image &image, int level)
 {
     d->texTarget = GL_TEXTURE_2D;
     d->size = image.size();
@@ -451,7 +451,7 @@ void GLTexture::setImage(Image const &image, int level)
     setState(Ready);
 }
 
-void GLTexture::setImage(CubeFace face, Image const &image, int level)
+void GLTexture::setImage(CubeFace face, const Image &image, int level)
 {
     d->texTarget = GL_TEXTURE_CUBE_MAP;
     d->size = image.size();
@@ -470,7 +470,7 @@ void GLTexture::setImage(CubeFace face, Image const &image, int level)
     setState(Ready);
 }
 
-void GLTexture::setSubImage(Image const &image, Vec2i const &pos, int level)
+void GLTexture::setSubImage(const Image &image, const Vec2i &pos, int level)
 {
     d->texTarget = GL_TEXTURE_2D;
 
@@ -485,7 +485,7 @@ void GLTexture::setSubImage(Image const &image, Vec2i const &pos, int level)
     }
 }
 
-void GLTexture::setSubImage(Image const &image, Rectanglei const &rect, int level)
+void GLTexture::setSubImage(const Image &image, const Rectanglei &rect, int level)
 {
     d->texTarget = GL_TEXTURE_2D;
 
@@ -500,7 +500,7 @@ void GLTexture::setSubImage(Image const &image, Rectanglei const &rect, int leve
     }
 }
 
-void GLTexture::setSubImage(CubeFace face, Image const &image, Vec2i const &pos, int level)
+void GLTexture::setSubImage(CubeFace face, const Image &image, const Vec2i &pos, int level)
 {
     d->texTarget = GL_TEXTURE_CUBE_MAP;
 
@@ -515,7 +515,7 @@ void GLTexture::setSubImage(CubeFace face, Image const &image, Vec2i const &pos,
     }
 }
 
-void GLTexture::setSubImage(CubeFace face, Image const &image, Rectanglei const &rect, int level)
+void GLTexture::setSubImage(CubeFace face, const Image &image, const Rectanglei &rect, int level)
 {
     d->texTarget = GL_TEXTURE_CUBE_MAP;
 
@@ -605,7 +605,7 @@ void GLTexture::aboutToUse() const
     // nothing to do
 }
 
-int GLTexture::levelsForSize(GLTexture::Size const &size)
+int GLTexture::levelsForSize(const GLTexture::Size &size)
 {
     int mipLevels = 0;
     duint w = size.x;
@@ -619,7 +619,7 @@ int GLTexture::levelsForSize(GLTexture::Size const &size)
     return mipLevels;
 }
 
-GLTexture::Size GLTexture::levelSize(GLTexture::Size const &size0, int level)
+GLTexture::Size GLTexture::levelSize(const GLTexture::Size &size0, int level)
 {
     Size s = size0;
     for (int i = 0; i < level; ++i)

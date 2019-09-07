@@ -43,12 +43,12 @@ public:
 
     virtual ~IAtlas() = default;
 
-    virtual Id alloc(Image const &image, Id const &chosenId = Id::None) = 0;
-    virtual void release(Id const &id) = 0;
-    virtual bool contains(Id const &id) const = 0;
+    virtual Id alloc(const Image &image, const Id &chosenId = Id::None) = 0;
+    virtual void release(const Id &id) = 0;
+    virtual bool contains(const Id &id) const = 0;
     virtual void commit() const = 0;
 
-    virtual Rectanglef imageRectf(Id const &id) const = 0;
+    virtual Rectanglef imageRectf(const Id &id) const = 0;
 };
 
 /**
@@ -124,11 +124,11 @@ public:
          * @param margin     Number of pixels to leave between each allocated
          *                   image and also each edge of the total area.
          */
-        virtual void setMetrics(Size const &totalSize, int margin) = 0;
+        virtual void setMetrics(const Size &totalSize, int margin) = 0;
 
         virtual void clear() = 0;
-        virtual Id   allocate(Size const &size, Rectanglei &rect, Id const &knownId) = 0;
-        virtual void release(Id const &id) = 0;
+        virtual Id   allocate(const Size &size, Rectanglei &rect, const Id &knownId) = 0;
+        virtual void release(const Id &id) = 0;
 
         /**
          * Finds an optimal layout for all of the allocations.
@@ -137,7 +137,7 @@ public:
 
         virtual int  count() const = 0;
         virtual Ids  ids() const = 0;
-        virtual void rect(Id const &id, Rectanglei &rect) const = 0;
+        virtual void rect(const Id &id, Rectanglei &rect) const = 0;
 
         /**
          * Returns all the present allocations.
@@ -162,7 +162,7 @@ public:
     /**
      * Constructs a new atlas.
      */
-    Atlas(Flags const &flags = DefaultFlags, Size const &totalSize = Size());
+    Atlas(const Flags &flags = DefaultFlags, const Size &totalSize = Size());
 
     Flags flags() const;
 
@@ -206,7 +206,7 @@ public:
      *
      * @param totalSize  Total size of the atlas in pixels.
      */
-    void setTotalSize(Size const &totalSize);
+    void setTotalSize(const Size &totalSize);
 
     Size totalSize() const;
 
@@ -220,16 +220,16 @@ public:
      * @return Identifier of the allocated image. If Id::None, the allocation
      * failed because the atlas is too full.
      */
-    Id alloc(Image const &image, Id const &chosenId = Id::None) override;
+    Id alloc(const Image &image, const Id &chosenId = Id::None) override;
 
     /**
      * Releases a previously allocated image from the atlas.
      *
      * @param id  Identifier of an allocated image.
      */
-    void release(Id const &id) override;
+    void release(const Id &id) override;
 
-    bool contains(Id const &id) const override;
+    bool contains(const Id &id) const override;
 
     /**
      * Request committing the backing store to the physical atlas storage.
@@ -264,7 +264,7 @@ public:
      * @return Coordinates of the image on the atlas (as pixels). Always within
      * the Atlas::size().
      */
-    Rectanglei imageRect(Id const &id) const;
+    Rectanglei imageRect(const Id &id) const;
 
     /**
      * Returns the normalized position of an allocated image in the atlas.
@@ -274,7 +274,7 @@ public:
      * @return Normalized coordinates of the image on the atlas. Always within
      * [0,1].
      */
-    Rectanglef imageRectf(Id const &id) const override;
+    Rectanglef imageRectf(const Id &id) const override;
 
     /**
      * Returns the image content allocated earlier. Requires BackingStore.
@@ -283,10 +283,10 @@ public:
      *
      * @return Image that was provided earlier to alloc().
      */
-    Image image(Id const &id) const;
+    Image image(const Id &id) const;
 
 protected:
-    virtual void commitFull(Image const &fullImage) const = 0;
+    virtual void commitFull(const Image &fullImage) const = 0;
 
     /**
      * Commits an an image to the actual physical atlas storage.
@@ -294,7 +294,7 @@ protected:
      * @param image    Image to commit.
      * @param topLeft  Top left corner of where to place the image.
      */
-    virtual void commit(Image const &image, Vec2i const &topLeft) const = 0;
+    virtual void commit(const Image &image, const Vec2i &topLeft) const = 0;
 
     /**
      * Commits a subregion of an image to the actual physical atlas storage.
@@ -302,7 +302,7 @@ protected:
      * @param fullImage  Image to commit.
      * @param subregion  Section of the image to commit.
      */
-    virtual void commit(Image const &fullImage, Rectanglei const &subregion) const = 0;
+    virtual void commit(const Image &fullImage, const Rectanglei &subregion) const = 0;
 
 private:
     DE_PRIVATE(d)

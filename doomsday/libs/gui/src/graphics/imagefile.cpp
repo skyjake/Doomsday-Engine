@@ -219,14 +219,14 @@ Image ImageFile::image() const
     }
 }
 
-IIStream const &ImageFile::operator >> (IByteArray &bytes) const
+const IIStream &ImageFile::operator >> (IByteArray &bytes) const
 {
     // The source file likely supports streaming the raw data.
     *source() >> bytes;
     return *this;
 }
 
-filesys::Node const *ImageFile::tryGetChild(String const &name) const
+const filesys::Node *ImageFile::tryGetChild(const String &name) const
 {
     if (!name.compareWithoutCase(HEIGHTMAP_TO_NORMALS))
     {

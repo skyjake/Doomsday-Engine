@@ -111,7 +111,7 @@ D_CMD(DoomsdayScript);
 void initVariableBindings(Binder &);
 
 static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd);
-static void Con_SplitIntoSubCommands(char const *command,
+static void Con_SplitIntoSubCommands(const char *command,
                                      timespan_t markerOffset, byte src,
                                      dd_bool isNetCmd);
 
@@ -259,7 +259,7 @@ static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
 #undef IS_ESC_CHAR
 }
 
-static Value *Function_Console_ListVars(Context &, Function::ArgumentValues const &args)
+static Value *Function_Console_ListVars(Context &, const Function::ArgumentValues &args)
 {
     StringList vars;
     Con_TermsRegex(vars, args.at(0)->asText(), WT_CVAR);
@@ -879,7 +879,7 @@ int Con_Executef(byte src, int silent, const char *command, ...)
     return Con_Execute(src, buffer, silent, false);
 }
 
-bool Con_Parse(File const &file, bool silently)
+bool Con_Parse(const File &file, bool silently)
 {
     Block utf8;
     file >> utf8;
@@ -980,7 +980,7 @@ D_CMD(Parse)
                         NativeFile::newStandalone(App::app().nativeHomePath() / NativePath(argv[i])));
             Con_Parse(*file, false /*not silent*/);
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_SCR_ERROR("Failed to parse \"%s\": %s")
                     << argv[i] << er.asText();
@@ -1321,13 +1321,13 @@ void Con_ShutdownDatabases(void)
     inited = false;
 }
 
-String Con_GameAsStyledText(Game const *game)
+String Con_GameAsStyledText(const Game *game)
 {
     DE_ASSERT(game != 0);
     return String(_E(1)) + game->id() + _E(.);
 }
 
-static int printKnownWordWorker(knownword_t const *word, void *parameters)
+static int printKnownWordWorker(const knownword_t *word, void *parameters)
 {
     DE_ASSERT(word);
     uint *numPrinted = (uint *) parameters;
@@ -1357,7 +1357,7 @@ static int printKnownWordWorker(knownword_t const *word, void *parameters)
         break;
 
     case WT_GAME:
-        LOG_SCR_MSG("%s") << Con_GameAsStyledText((Game const *) word->data);
+        LOG_SCR_MSG("%s") << Con_GameAsStyledText((const Game *) word->data);
         break;
 
     default:

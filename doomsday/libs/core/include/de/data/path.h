@@ -193,7 +193,7 @@ public:
      *              (implicit sharing): all white space is included in the path.
      * @param sep   Character used to separate path segments in @a path.
      */
-    Path(String const &path, Char sep = '/');
+    Path(const String &path, Char sep = '/');
 
     Path(const CString &path, Char sep = '/');
 
@@ -203,27 +203,27 @@ public:
      * @param nullTerminatedCStr  Path to be parsed. All white space is included in the path.
      * @param sep   Character used to separate path segments.
      */
-    Path(char const *nullTerminatedCStr, Char sep);
+    Path(const char *nullTerminatedCStr, Char sep);
 
     /**
      * Construct a path from a UTF-8 C-style string that uses '/' separators.
      *
      * @param nullTerminatedCStr  Path to be parsed. All white space is included in the path.
      */
-    Path(char const *nullTerminatedCStr);
+    Path(const char *nullTerminatedCStr);
 
     /**
      * Construct a path by duplicating @a other.
      */
-    Path(Path const &other);
+    Path(const Path &other);
 
     Path(Path &&moved);
 
-    Path &operator=(Path const &other);
+    Path &operator=(const Path &other);
 
     Path &operator=(Path &&moved);
 
-    Path &operator=(char const *pathUtf8);
+    Path &operator=(const char *pathUtf8);
 
     /**
      * Append a string.
@@ -236,12 +236,12 @@ public:
      * operator for concatenating paths in a way that takes care of separators
      * and path relativity.
      */
-    Path operator+(String const &str) const;
+    Path operator+(const String &str) const;
 
     /**
      * @copydoc operator+
      */
-    Path operator+(char const *str) const;
+    Path operator+(const char *str) const;
 
     /**
      * Determines if this path is equal to @a other. The test is case
@@ -255,7 +255,7 @@ public:
      *
      * @return @c true, iff the paths are equal.
      */
-    bool operator==(Path const &other) const;
+    bool operator==(const Path &other) const;
 
     bool operator==(const char *cstr) const;
 
@@ -267,13 +267,13 @@ public:
      *
      * @return @c true, iff the paths are not equal.
      */
-    bool operator!=(Path const &other) const { return !(*this == other); }
+    bool operator!=(const Path &other) const { return !(*this == other); }
 
     /**
      * Returns @c true if this path is lexically less than @a other. The test
      * is case and separator insensitive.
      */
-    bool operator<(Path const &other) const;
+    bool operator<(const Path &other) const;
 
     /**
      * Concatenate paths together. This path's separator will be used for
@@ -283,7 +283,7 @@ public:
      *
      * @return Concatenated path.
      */
-    Path operator/(Path const &other) const;
+    Path operator/(const Path &other) const;
 
     /**
      * Concatenate paths together. This path's separator will be used for
@@ -298,7 +298,7 @@ public:
 
     Path operator/(const CString &other) const;
 
-    Path operator/(char const *otherNullTerminatedUtf8) const;
+    Path operator/(const char *otherNullTerminatedUtf8) const;
 
     /**
      * Convert this path to a text string.
@@ -354,7 +354,7 @@ public:
      *
      * @return This Path.
      */
-    Path &operator = (String const &newPath);
+    Path &operator = (const String &newPath);
 
     /**
      * Changes the path.
@@ -362,7 +362,7 @@ public:
      * @param newPath  New path.
      * @param sep      Character used to separate path segments in @a path.
      */
-    Path &set(String const &newPath, Char sep = '/');
+    Path &set(const String &newPath, Char sep = '/');
 
     /**
      * Returns a copy of the path where all segment separators have been
@@ -408,7 +408,7 @@ public:
      * @return  Referenced segment. Do not keep the returned reference after
      * making a change to the path.
      */
-    Segment const &segment(int index) const;
+    const Segment &segment(int index) const;
 
     /**
      * Retrieve a reference to the segment at @a reverseIndex. In this method
@@ -432,9 +432,9 @@ public:
      * @return  Referenced segment. Do not keep the returned reference after
      * making a change to the path.
      */
-    Segment const &reverseSegment(int reverseIndex) const;
+    const Segment &reverseSegment(int reverseIndex) const;
 
-    Path subPath(Rangei const &range) const;
+    Path subPath(const Rangei &range) const;
 
     Path beginningOmitted(int omittedSegmentCount = 1) const;
 
@@ -450,13 +450,13 @@ public:
      * @return First (i.e., left-most) segment in the path. If the path is
      * empty, the returned segment is an empty, zero-length segment.
      */
-    inline Segment const &firstSegment() const { return segment(0); }
+    inline const Segment &firstSegment() const { return segment(0); }
 
     /**
      * @return  Last (i.e., right-most) segment in the path. If the path is empty,
      * the returned segment is an empty, zero-length segment.
      */
-    inline Segment const &lastSegment() const { return segment(segmentCount() - 1); }
+    inline const Segment &lastSegment() const { return segment(segmentCount() - 1); }
 
     // Implements LogEntry::Arg::Base.
     LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::StringArgument; }
@@ -476,7 +476,7 @@ public:
      *
      * @return String with all slashes replaced with @a replaceWith.
      */
-    static String normalizeString(String const &text, Char replaceWith = '/');
+    static String normalizeString(const String &text, Char replaceWith = '/');
 
     /**
      * Makes a path where the given input text is first normalized so that
@@ -488,7 +488,7 @@ public:
      *
      * @return Path with @a replaceWith used in place of slashes.
      */
-    static Path normalize(String const &text, Char replaceWith = '/');
+    static Path normalize(const String &text, Char replaceWith = '/');
 
 private:
     DE_PRIVATE(d)
@@ -501,27 +501,27 @@ private:
 class DE_PUBLIC DotPath : public Path
 {
 public:
-    DotPath(String const &path = "")        : Path(path, '.') {}
-    DotPath(char const *nullTerminatedCStr) : Path(nullTerminatedCStr, '.') {}
-    DotPath(Path const &other)              : Path(other) {}
+    DotPath(const String &path = "")        : Path(path, '.') {}
+    DotPath(const char *nullTerminatedCStr) : Path(nullTerminatedCStr, '.') {}
+    DotPath(const Path &other)              : Path(other) {}
     DotPath(Path &&moved)                   : Path(moved) {}
-    DotPath(DotPath const &other)           : Path(other.toString(), other.separator()) {}
+    DotPath(const DotPath &other)           : Path(other.toString(), other.separator()) {}
     DotPath(DotPath &&moved)                : Path(moved) {}
 
-    DotPath &operator = (char const *nullTerminatedCStr) {
+    DotPath &operator = (const char *nullTerminatedCStr) {
         return *this = DotPath(nullTerminatedCStr);
     }
-    DotPath &operator = (String const &str) {
+    DotPath &operator = (const String &str) {
         return *this = DotPath(str);
     }
-//    DotPath &operator = (QString const &str) {
+//    DotPath &operator = (const QString &str) {
 //        return *this = DotPath(str);
 //    }
-    DotPath &operator = (Path const &other) {
+    DotPath &operator = (const Path &other) {
         Path::operator = (other);
         return *this;
     }
-    DotPath &operator = (DotPath const &other) {
+    DotPath &operator = (const DotPath &other) {
         Path::operator = (other);
         return *this;
     }
@@ -534,8 +534,8 @@ public:
         return *this;
     }
 
-    bool operator==(DotPath const &other) const { return Path::operator==(other); }
-    bool operator!=(DotPath const &other) const { return Path::operator!=(other); }
+    bool operator==(const DotPath &other) const { return Path::operator==(other); }
+    bool operator!=(const DotPath &other) const { return Path::operator!=(other); }
 
     bool operator==(const char *cstr) const { return toString() == cstr; }
 };
@@ -547,21 +547,21 @@ public:
 class DE_PUBLIC PathRef
 {
 public:
-    PathRef(Path const &path)
+    PathRef(const Path &path)
         : _path(path)
         , _range(0, path.segmentCount())
     {}
-    PathRef(Path const &path, Rangei const &segRange)
+    PathRef(const Path &path, const Rangei &segRange)
         : _path(path)
         , _range(segRange)
     {}
 
-    Path const &path() const { return _path; }
+    const Path &path() const { return _path; }
     Rangei      range() const { return _range; }
 
     bool    isEmpty() const { return _range.isEmpty(); }
     bool    isAbsolute() const { return !isEmpty() && !firstSegment().size(); }
-    PathRef subPath(Rangei const &sub) const { return PathRef(_path, sub + _range.start); }
+    PathRef subPath(const Rangei &sub) const { return PathRef(_path, sub + _range.start); }
     Path    toPath() const;
 
     const Path::Segment &segment(int index) const { return _path.segment(_range.start + index); }
@@ -571,7 +571,7 @@ public:
     inline const Path::Segment &lastSegment() const { return segment(segmentCount() - 1); }
 
 private:
-    Path const &_path;
+    const Path &_path;
     Rangei      _range;
 };
 

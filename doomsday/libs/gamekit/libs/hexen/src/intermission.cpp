@@ -130,7 +130,7 @@ void WI_initVariables(/*wbstartstruct_t *wbstartstruct */)
     interTime        = 0;
 }
 
-void IN_Begin(wbstartstruct_t const & /*wbstartstruct*/)
+void IN_Begin(const wbstartstruct_t & /*wbstartstruct*/)
 {
     DE_ASSERT(gfw_Rule(deathmatch));
 

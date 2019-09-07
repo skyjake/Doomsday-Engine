@@ -41,14 +41,14 @@ class Variable;
 class DE_PUBLIC RecordPacket : public IdentifiedPacket
 {
 public:
-    RecordPacket(String const &name = String(), Id id = 0);
+    RecordPacket(const String &name = String(), Id id = 0);
     virtual ~RecordPacket();
 
     /// Returns the caption of the packet.
-    String const &name() const { return _name; }
+    const String &name() const { return _name; }
 
     /// Sets the command of the packet.
-    void setName(String const &n) { _name = n; }
+    void setName(const String &n) { _name = n; }
 
     /// Returns the arguments of the packet (non-modifiable).
     const Record& record() const { return *_record; }
@@ -78,7 +78,7 @@ public:
      *
      * @return  Variable.
      */
-    Variable const &operator [] (String const &variableName) const;
+    const Variable &operator [] (const String &variableName) const;
 
     /**
      * Convenience method that returns a variable's value as text from
@@ -88,7 +88,7 @@ public:
      *
      * @return  Variable's value as text.
      */
-    String valueAsText(String const &variableName) const;
+    String valueAsText(const String &variableName) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
@@ -96,7 +96,7 @@ public:
 
 public:
     /// Constructor for the Protocol.
-    static Packet *fromBlock(Block const &block);
+    static Packet *fromBlock(const Block &block);
 
 private:
     String _name;

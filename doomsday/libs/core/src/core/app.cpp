@@ -69,14 +69,14 @@ const char *App::APP_VERSION = "version";
 const char *App::CONFIG_PATH = "config";
 const char *App::UNIX_HOME   = "unixHome";
 
-static Value *Function_App_Locate(Context &, Function::ArgumentValues const &args)
+static Value *Function_App_Locate(Context &, const Function::ArgumentValues &args)
 {
     std::unique_ptr<DictionaryValue> result(new DictionaryValue);
 
     String const packageId = args.first()->asText();
 
     // Local packages.
-    if (File const *pkg = PackageLoader::get().select(packageId))
+    if (const File *pkg = PackageLoader::get().select(packageId))
     {
         result->add(new TextValue(packageId), RecordValue::takeRecord(
                         Record::withMembers(
@@ -104,7 +104,7 @@ DE_PIMPL(App)
 , DE_OBSERVES(PackageLoader, Activity)
 {
     thrd_t mainThread{};
-    void (*terminateFunc)(char const *){};
+    void (*terminateFunc)(const char *){};
 
     Record metadata; // Metadata about the application.
 
@@ -317,7 +317,7 @@ DE_PIMPL(App)
                     level = LogEntry::textToLevel(cmdLine.at(pos + 1));
                 }
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 warning("%s", er.asText().c_str());
             }
@@ -371,10 +371,10 @@ DE_PIMPL(App)
         fs.root().locate<Folder>("/packs").populate();
     }
 
-    Record const *findAsset(const String &identifier) const
+    const Record *findAsset(const String &identifier) const
     {
         // Access the package that has this asset via a link.
-        Folder const *pkg = fs.root().tryLocate<Folder>(String("/packs/asset.") + identifier + "/.");
+        const Folder *pkg = fs.root().tryLocate<Folder>(String("/packs/asset.") + identifier + "/.");
         if (!pkg) return nullptr;
 
         // Find the record that has this asset's metadata.
@@ -452,12 +452,12 @@ const Record &App::metadata() const
     return d->metadata;
 }
 
-void App::addInitPackage(String const &identifier)
+void App::addInitPackage(const String &identifier)
 {
     d->packagesToLoadAtInit << identifier;
 }
 
-void App::setUnixHomeFolderName(String const &name)
+void App::setUnixHomeFolderName(const String &name)
 {
     d->metadata.set(UNIX_HOME, name);
 
@@ -491,7 +491,7 @@ String App::reverseDomainIdentifier() const
     return rdi.concatenateMember(unixEtcFolderName());
 }
 
-void App::setTerminateFunc(void (*func)(char const *))
+void App::setTerminateFunc(void (*func)(const char *))
 {
     d->terminateFunc = func;
 }
@@ -506,7 +506,7 @@ void App::handleUncaughtException(const String& message)
     if (d->terminateFunc) d->terminateFunc(esc.plainText());
 }
 
-bool App::processEvent(Event const &ev)
+bool App::processEvent(const Event &ev)
 {
     for (System *sys : d->systems)
     {
@@ -519,7 +519,7 @@ bool App::processEvent(Event const &ev)
     return false;
 }
 
-void App::timeChanged(Clock const &clock)
+void App::timeChanged(const Clock &clock)
 {
     for (System *sys : d->systems)
     {
@@ -695,7 +695,7 @@ NativePath App::cachePath()
     return dir;
 }
 
-bool App::setCurrentWorkPath(NativePath const &cwd)
+bool App::setCurrentWorkPath(const NativePath &cwd)
 {
     return NativePath::setWorkPath(cwd);
 }
@@ -813,7 +813,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
             logBuf.setOutputFile(d->config->gets("log.file"));
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_WARNING("Failed to set log output file:\n" + er.asText());
     }
@@ -829,7 +829,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
             d->logFilter.read(d->config->subrecord("log.filter"));
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_WARNING("Failed to apply log filter:\n" + er.asText());
     }
@@ -938,7 +938,7 @@ bool App::assetExists(const String &identifier)
 
 Package::Asset App::asset(const String &identifier)
 {
-    Record const *info = DE_APP->d->findAsset(identifier);
+    const Record *info = DE_APP->d->findAsset(identifier);
     if (!info)
     {
         throw AssetNotFoundError("App::asset", "Asset \"" + identifier + "\" does not exist");

@@ -35,7 +35,7 @@ public:
     enum State { Untrapped, Trapped };
 
     DE_AUDIENCE(MouseStateChange, void mouseStateChanged(State))
-    DE_AUDIENCE(MouseEvent,       void mouseEvent(MouseEvent const &))
+    DE_AUDIENCE(MouseEvent,       void mouseEvent(const MouseEvent &))
 
 public:
     MouseEventSource();

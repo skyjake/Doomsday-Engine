@@ -39,7 +39,7 @@ void Protocol::define(Constructor constructor)
     _constructors.append(constructor);
 }
 
-Packet *Protocol::interpret(Block const &block) const
+Packet *Protocol::interpret(const Block &block) const
 {
     for (Constructor constructor : _constructors)
     {
@@ -109,7 +109,7 @@ void Protocol::reply(Transmitter &to, Reply type, Record *record)
     to << packet;
 }
 
-void Protocol::reply(Transmitter &to, Reply type, String const &message)
+void Protocol::reply(Transmitter &to, Reply type, const String &message)
 {
     Record* rec = new Record();
     if (!message.empty())

@@ -165,7 +165,7 @@ void BossBrain_ClearTargets(BossBrain *bb)
     return bb->clearTargets();
 }
 
-int BossBrain_TargetCount(BossBrain const *bb)
+int BossBrain_TargetCount(const BossBrain *bb)
 {
     DE_ASSERT(bb != 0);
     return bb->targetCount();

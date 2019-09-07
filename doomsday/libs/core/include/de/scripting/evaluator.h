@@ -60,7 +60,7 @@ public:
     /**
      * Returns the process that owns this evaluator.
      */
-    Process const &process() const;
+    const Process &process() const;
 
     /**
      * Resets the evaluator so it's ready for another expression.
@@ -74,10 +74,10 @@ public:
      *
      * @return  Result of the evaluation.
      */
-    Value &evaluate(Expression const *expression);
+    Value &evaluate(const Expression *expression);
 
     template <typename Type>
-    Type &evaluateTo(Expression const *expr) {
+    Type &evaluateTo(const Expression *expr) {
         Type *r = dynamic_cast<Type *>(&evaluate(expr));
         if (!r) {
             throw ResultTypeError("Evaluator::result<Type>", "Unexpected result type");
@@ -116,7 +116,7 @@ public:
      * @param scope       Scope for this expression only (using memberScope()).
      *                    Evaluator takes ownership of this value.
      */
-    void push(Expression const *expression, Value *scope = 0);
+    void push(const Expression *expression, Value *scope = 0);
     
     /**
      * Push a value onto the result stack.

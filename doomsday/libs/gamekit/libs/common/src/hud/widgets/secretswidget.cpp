@@ -25,7 +25,7 @@
 
 using namespace de;
 
-static void SecretsWidget_Draw(guidata_secrets_t *scrts, Point2Raw const *offset)
+static void SecretsWidget_Draw(guidata_secrets_t *scrts, const Point2Raw *offset)
 {
     DE_ASSERT(scrts);
     scrts->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -51,7 +51,7 @@ void guidata_secrets_t::reset()
     _value = 1994;
 }
 
-void guidata_secrets_t::draw(Vec2i const &offset) const
+void guidata_secrets_t::draw(const Vec2i &offset) const
 {
 #if !__JHEXEN__
 
@@ -100,7 +100,7 @@ void guidata_secrets_t::tick(timespan_t /*elapsed*/)
 {
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
-    player_t const &plr = ::players[player()];
+    const player_t &plr = ::players[player()];
     _value = plr.secretCount;
 }
 

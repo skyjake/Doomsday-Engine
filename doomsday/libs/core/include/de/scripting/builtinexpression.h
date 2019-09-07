@@ -82,7 +82,7 @@ public:
     /**
      * Checks if the identifier is one of the built-in functions.
      */
-    static Type findType(String const &identifier);
+    static Type findType(const String &identifier);
 
     /**
      * Returns a list of all the built-in functions.

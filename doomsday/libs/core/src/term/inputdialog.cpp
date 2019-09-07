@@ -33,7 +33,7 @@ DE_PIMPL_NOREF(InputDialogWidget)
     int                 result = 0;
 };
 
-InputDialogWidget::InputDialogWidget(String const &name)
+InputDialogWidget::InputDialogWidget(const String &name)
     : DialogWidget(name)
     , d(new Impl)
 {
@@ -106,28 +106,28 @@ void InputDialogWidget::setWidth(int width)
     rule().setInput(Rule::Width, Const(width));
 }
 
-void InputDialogWidget::setDescription(String const &desc)
+void InputDialogWidget::setDescription(const String &desc)
 {
     d->label->setLabel(desc);
 }
 
-void InputDialogWidget::setPrompt(String const &prompt)
+void InputDialogWidget::setPrompt(const String &prompt)
 {
     d->edit->setPrompt(prompt);
 }
 
-void InputDialogWidget::setText(String const &text)
+void InputDialogWidget::setText(const String &text)
 {
     d->edit->setText(text);
 }
 
-void InputDialogWidget::setAcceptLabel(String const &label)
+void InputDialogWidget::setAcceptLabel(const String &label)
 {
     d->menu->itemAction(0).setLabel(label);
     redraw();
 }
 
-void InputDialogWidget::setRejectLabel(String const &label)
+void InputDialogWidget::setRejectLabel(const String &label)
 {
     d->menu->itemAction(1).setLabel(label);
     redraw();

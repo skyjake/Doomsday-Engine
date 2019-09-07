@@ -40,7 +40,7 @@ struct ThreadState
 
 static de::ThreadLocal<ThreadState> pluginState; ///< Thread-local plugin state.
 
-bool Plugins::Hook::operator == (Hook const &other) const
+bool Plugins::Hook::operator == (const Hook &other) const
 {
     if (!(_pluginId == 0 || other._pluginId == 0))
     {
@@ -71,7 +71,7 @@ DE_PIMPL_NOREF(Plugins)
     using PluginHandle = String;
     using HookRegister = List<Hook>;
 
-    void *(*getGameAPI)(char const *) = nullptr;
+    void *(*getGameAPI)(const char *) = nullptr;
     GameExports               gameExports;
     std::vector<PluginHandle> hInstPlug;
     HookRegister              hooks[NUM_HOOK_TYPES];
@@ -184,7 +184,7 @@ void Plugins::setActivePluginId(pluginid_t pluginId)
     d->setActivePluginId(pluginId);
 }
 
-void *Plugins::findEntryPoint(pluginid_t pluginId, char const *fn) const
+void *Plugins::findEntryPoint(pluginid_t pluginId, const char *fn) const
 {
     int const plugIndex = pluginId - 1;
 
@@ -315,9 +315,9 @@ bool Plugins::removeHook(HookType type, hookfunc_t function)
     return false;
 }
 
-LoopResult Plugins::forAllHooks(HookType type, const std::function<de::LoopResult (Hook const &)>& func) const
+LoopResult Plugins::forAllHooks(HookType type, const std::function<de::LoopResult (const Hook &)>& func) const
 {
-    for (Hook const &hook : d->hooks[type])
+    for (const Hook &hook : d->hooks[type])
     {
         if (auto result = func(hook))
             return result;
@@ -329,7 +329,7 @@ int Plugins::callAllHooks(HookType type, int parm, void *data)
 {
     // Try all the hooks.
     int results = 2;  // Assume all good.
-    forAllHooks(type, [&parm, &data, &results] (Hook const &hook)
+    forAllHooks(type, [&parm, &data, &results] (const Hook &hook)
     {
         if (hook.execute(parm, data))
         {

@@ -74,12 +74,12 @@ extern "C" {
 /**
  * Attempt to parse the script on the identified @a path as "sound sequence script" data.
  */
-void SndSeqParser(Str const *path);
+void SndSeqParser(const Str *path);
 
 int SN_ActiveSequenceCount(void);
 void SN_StartSequence(mobj_t *mobj, int sequence);
 void SN_StartSequenceInSec(Sector *sector, int seqBase);
-void SN_StartSequenceName(mobj_t *mobj, char const *name);
+void SN_StartSequenceName(mobj_t *mobj, const char *name);
 void SN_StopSequence(mobj_t *mobj);
 void SN_StopSequenceInSec(Sector *sector);
 void SN_UpdateActiveSequences(void);

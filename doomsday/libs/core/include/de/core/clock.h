@@ -36,7 +36,7 @@ public:
      * Notified whenever the time of the clock changes. The audience members
      * will be notified in unspecified order.
      */
-    DE_AUDIENCE(TimeChange, void timeChanged(Clock const &))
+    DE_AUDIENCE(TimeChange, void timeChanged(const Clock &))
 
     /**
      * Notified whenever the time of the clock changes. The entire priority
@@ -50,7 +50,7 @@ public:
 
     virtual ~Clock();
 
-    virtual void setTime(Time const &currentTime);
+    virtual void setTime(const Time &currentTime);
 
     void advanceTime(TimeSpan span);
 
@@ -65,7 +65,7 @@ public:
      *
      * @return Current time.
      */
-    Time const &time() const;
+    const Time &time() const;
 
     /**
      * Number of times the time has changed. Every time the clock time is changed,
@@ -76,7 +76,7 @@ public:
 public:
     static void setAppClock(Clock *c);
     static Clock &get();
-    static Time const &appTime();
+    static const Time &appTime();
 
 private:
     DE_PRIVATE(d)

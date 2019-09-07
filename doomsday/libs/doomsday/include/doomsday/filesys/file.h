@@ -77,7 +77,7 @@ public:
      * @param _info         Info descriptor for the file. A copy is made.
      * @param container     Container of this file. Can be @c NULL.
      */
-    File1(FileHandle *hndl, String _path, FileInfo const &_info, File1 *container = 0);
+    File1(FileHandle *hndl, String _path, const FileInfo &_info, File1 *container = 0);
 
     /**
      * Release all memory acquired for objects linked with this resource.
@@ -87,7 +87,7 @@ public:
     DE_CAST_METHODS()
 
     /// @return  Name of this file.
-    virtual String const &name() const;
+    virtual const String &name() const;
 
     /**
      * Compose the a URI to this file.
@@ -123,7 +123,7 @@ public:
     /**
      * @return  Immutable copy of the info descriptor for this resource.
      */
-    FileInfo const &info() const;
+    const FileInfo &info() const;
 
     // Convenient lookup method for when only the last-modified property is needed from info().
     /// @return  "Last modified" timestamp of the resource.
@@ -201,7 +201,7 @@ public:
      *
      * @return Pointer to the cached copy of the associated data.
      */
-    virtual uint8_t const *cache();
+    virtual const uint8_t *cache();
 
     /**
      * Remove a lock on the locally cached data.
@@ -232,9 +232,9 @@ public:
      *
      * @return  @c true if the referenced resource was loaded.
      */
-    static File1 *tryLoad(LoadFileMode loadMode, Uri const &path, size_t baseOffset = 0);
+    static File1 *tryLoad(LoadFileMode loadMode, const Uri &path, size_t baseOffset = 0);
 
-    static File1 *tryLoad(DataBundle const &bundle);
+    static File1 *tryLoad(const DataBundle &bundle);
 
     /**
      * Attempt to unload the (logical) resource indicated by the @a search term.
@@ -243,9 +243,9 @@ public:
      *
      * @return  @c true if the referenced resource was loaded and successfully unloaded.
      */
-    static bool tryUnload(Uri const &path);
+    static bool tryUnload(const Uri &path);
 
-    static bool tryUnload(DataBundle const &bundle);
+    static bool tryUnload(const DataBundle &bundle);
 
 protected:
     /// File stream handle.

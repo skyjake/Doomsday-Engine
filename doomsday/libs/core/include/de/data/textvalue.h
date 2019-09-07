@@ -41,12 +41,12 @@ public:
     DE_ERROR(IllegalPatternError);
 
 public:
-    TextValue(String const &initialValue = "");
+    TextValue(const String &initialValue = "");
 
     ~TextValue();
 
     /// Converts the TextValue to plain text.
-    operator String const &() const;
+    operator const String &() const;
 
     operator CString() const;
 
@@ -56,17 +56,17 @@ public:
     Text asText() const;
     Record *memberScope() const;
     dsize size() const;
-    bool contains(Value const &value) const;
+    bool contains(const Value &value) const;
     Value *duplicateElement(const Value &charPos) const;
     Value *next();
     bool isTrue() const;
-    dint compare(Value const &value) const;
-    void sum(Value const &value);
-    void multiply(Value const &value);
-    void divide(Value const &value);
-    void modulo(Value const &divisor);
+    dint compare(const Value &value) const;
+    void sum(const Value &value);
+    void multiply(const Value &value);
+    void divide(const Value &value);
+    void modulo(const Value &divisor);
 
-    static String substitutePlaceholders(String const &pattern, const std::list<Value const *> &args);
+    static String substitutePlaceholders(const String &pattern, const std::list<const Value *> &args);
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
@@ -74,7 +74,7 @@ public:
 
 protected:
     /// Changes the text of the value.
-    void setValue(String const &text);
+    void setValue(const String &text);
 
 private:
     Text _value;

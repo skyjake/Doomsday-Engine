@@ -87,7 +87,7 @@ DE_PIMPL(ServerFinder)
                 i->foundServersUpdated();
             }
         }
-        catch (Error const &)
+        catch (const Error &)
         {
             // Remove the message that failed to deserialize.
             if (servers.contains(host))
@@ -142,7 +142,7 @@ ServerFinder::ServerFinder() : d(new Impl(this))
             d->beacon.discover(0.0 /* no timeout */, 2.0);
         }
     }
-    catch (Beacon::PortError const &er)
+    catch (const Beacon::PortError &er)
     {
         LOG_WARNING("Automatic server discovery is not available:\n") << er.asText();
     }
@@ -164,22 +164,22 @@ List<Address> ServerFinder::foundServers() const
                               [](const decltype(d->servers)::value_type &v) { return v.first; });
 }
 
-String ServerFinder::name(Address const &server) const
+String ServerFinder::name(const Address &server) const
 {
     return messageFromServer(server).name();
 }
 
-int ServerFinder::playerCount(Address const &server) const
+int ServerFinder::playerCount(const Address &server) const
 {
     return messageFromServer(server).playerCount();
 }
 
-int ServerFinder::maxPlayers(Address const &server) const
+int ServerFinder::maxPlayers(const Address &server) const
 {
     return messageFromServer(server).maxPlayers();
 }
 
-ServerInfo ServerFinder::messageFromServer(Address const &address) const
+ServerInfo ServerFinder::messageFromServer(const Address &address) const
 {
     Address addr = checkPort(address);
     if (!d->servers.contains(addr))

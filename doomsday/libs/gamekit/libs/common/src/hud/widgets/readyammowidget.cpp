@@ -30,7 +30,7 @@
 using namespace de;
 
 guidata_readyammo_t::guidata_readyammo_t(void (*updateGeometry) (HudWidget *wi),
-                                         void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                                         void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                                          dint player)
     : HudWidget(updateGeometry,
                 drawer,
@@ -73,7 +73,7 @@ void guidata_readyammo_t::tick(timespan_t /*elapsed*/)
 
 #if defined(__JDOOM__) || defined(__JDOOM64__)
 
-void ReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
+void ReadyAmmo_Drawer(guidata_readyammo_t *ammo, const Point2Raw *offset)
 {
     DE_ASSERT(ammo);
     dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
@@ -101,7 +101,7 @@ void ReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
     DGL_PopMatrix();
 }
 
-void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
+void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, const Point2Raw *offset)
 {
     static const int ORIGINX       = -ST_WIDTH / 2;
     static const int ORIGINY       = -ST_HEIGHT;
@@ -196,7 +196,7 @@ void SBarReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo)
 
 #if __JHERETIC__
 
-void ReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
+void ReadyAmmo_Drawer(guidata_readyammo_t *ammo, const Point2Raw *offset)
 {
     static const int TRACKING = 1;
 
@@ -229,7 +229,7 @@ void ReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
     DGL_PopMatrix();
 }
 
-void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
+void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, const Point2Raw *offset)
 {
 #define ORIGINX                 (-ST_WIDTH / 2 )
 #define ORIGINY                 (-ST_HEIGHT )

@@ -30,7 +30,7 @@ class guidata_readyammo_t : public HudWidget
 {
 public:
     guidata_readyammo_t(void (*updateGeometry) (HudWidget *wi),
-                        void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                        void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                         de::dint player);
     virtual ~guidata_readyammo_t();
 
@@ -38,7 +38,7 @@ public:
 
     void tick(timespan_t elapsed);
     //void updateGeometry();
-    //void draw(de::Vec2i const &offset = de::Vec2i()) const;
+    //void draw(const de::Vec2i &offset = de::Vec2i()) const;
 
 //private:
     de::dint _value = 0;
@@ -47,7 +47,7 @@ public:
 void ReadyAmmo_UpdateGeometry    (guidata_readyammo_t *ammo);
 void SBarReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo);
 
-void ReadyAmmo_Drawer    (guidata_readyammo_t *ammo, Point2Raw const *offset);
-void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset);
+void ReadyAmmo_Drawer    (guidata_readyammo_t *ammo, const Point2Raw *offset);
+void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, const Point2Raw *offset);
 
 #endif  // LIBCOMMON_UI_READYAMMOWIDGET_H

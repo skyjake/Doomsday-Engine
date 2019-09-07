@@ -116,7 +116,7 @@ static dd_bool checkReject(Sector *sec1, Sector *sec2)
     return true;
 }
 
-dd_bool P_CheckSight(mobj_t const *beholder, mobj_t const *target)
+dd_bool P_CheckSight(const mobj_t *beholder, const mobj_t *target)
 {
     if(!beholder || !target) return false;
 
@@ -344,7 +344,7 @@ static int untouched(Line *line, mobj_t *mobj)
     coord_t const x      = mobj->origin[VX];
     coord_t const y      = mobj->origin[VY];
     coord_t const radius = mobj->radius;
-    AABoxd const *ldBox  = (AABoxd *)P_GetPtrp(line, DMU_BOUNDING_BOX);
+    const AABoxd *ldBox  = (AABoxd *)P_GetPtrp(line, DMU_BOUNDING_BOX);
     AABoxd moBox;
 
     if(((moBox.minX = x - radius) >= ldBox->maxX) ||
@@ -946,7 +946,7 @@ static int PIT_CheckThing(mobj_t *thing, void * /*context*/)
  */
 static int PIT_CheckLine(Line *ld, void * /*context*/)
 {
-    AABoxd const *aaBox = (AABoxd *)P_GetPtrp(ld, DMU_BOUNDING_BOX);
+    const AABoxd *aaBox = (AABoxd *)P_GetPtrp(ld, DMU_BOUNDING_BOX);
     if(tmBox.minX >= aaBox->maxX || tmBox.minY >= aaBox->maxY ||
        tmBox.maxX <= aaBox->minX || tmBox.maxY <= aaBox->minY)
     {
@@ -1497,7 +1497,7 @@ static dd_bool P_TryMove2(mobj_t *thing, coord_t x, coord_t y, dd_bool dropoff)
 
         if(FEQUAL(thing->origin[VZ], P_GetDoublep(Mobj_Sector(thing), DMU_FLOOR_HEIGHT)))
         {
-            terraintype_t const *tt = P_MobjFloorTerrain(thing);
+            const terraintype_t *tt = P_MobjFloorTerrain(thing);
             if(tt->flags & TTF_FLOORCLIP)
             {
                 thing->floorClip = 10;
@@ -1730,7 +1730,7 @@ struct ptr_shoottraverse_params_t
  * @todo This routine has gotten way too big, split if(in->isaline)
  *       to a seperate routine?
  */
-static int PTR_ShootTraverse(Intercept const *icpt, void *context)
+static int PTR_ShootTraverse(const Intercept *icpt, void *context)
 {
     vec3d_t const tracePos = {
         Interceptor_Origin(icpt->trace)[VX], Interceptor_Origin(icpt->trace)[VY], shootZ
@@ -2033,7 +2033,7 @@ static int PTR_ShootTraverse(Intercept const *icpt, void *context)
 /**
  * Sets linetarget and aimSlope when a target is aimed at.
  */
-static int PTR_AimTraverse(Intercept const *icpt, void * /*context*/)
+static int PTR_AimTraverse(const Intercept *icpt, void * /*context*/)
 {
     vec3d_t const tracePos = {
         Interceptor_Origin(icpt->trace)[VX], Interceptor_Origin(icpt->trace)[VY], shootZ
@@ -2388,7 +2388,7 @@ void P_RadiusAttack(mobj_t *bomb, mobj_t *source, int damage, int distance)
     Mobj_BoxIterator(&box, PIT_RadiusAttack, &parm);
 }
 
-static int PTR_UseTraverse(Intercept const *icpt, void *context)
+static int PTR_UseTraverse(const Intercept *icpt, void *context)
 {
     DE_ASSERT(icpt->type == ICPT_LINE);
 
@@ -2511,7 +2511,7 @@ struct ptr_slidetraverse_params_t
     coord_t bestDistance;
 };
 
-static int PTR_SlideTraverse(Intercept const *icpt, void *context)
+static int PTR_SlideTraverse(const Intercept *icpt, void *context)
 {
     DE_ASSERT(icpt->type == ICPT_LINE);
 
@@ -2930,7 +2930,7 @@ struct SavedPhysicalState
     coord_t origin[3];
     coord_t mom[3];
 
-    SavedPhysicalState(mobj_t const *mo)
+    SavedPhysicalState(const mobj_t *mo)
     {
         memcpy(origin, mo->origin, sizeof(origin));
         memcpy(mom, mo->mom, sizeof(mom));
@@ -3140,7 +3140,7 @@ struct ptr_boucetraverse_params_t
     coord_t bestDistance;
 };
 
-static int PTR_BounceTraverse(Intercept const *icpt, void *context)
+static int PTR_BounceTraverse(const Intercept *icpt, void *context)
 {
     DE_ASSERT(icpt->type == ICPT_LINE);
 
@@ -3241,7 +3241,7 @@ struct ptr_puzzleitemtraverse_params_t
     bool activated;
 };
 
-static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
+static int PTR_PuzzleItemTraverse(const Intercept *icpt, void *context)
 {
     int const USE_PUZZLE_ITEM_SPECIAL = 129;
 

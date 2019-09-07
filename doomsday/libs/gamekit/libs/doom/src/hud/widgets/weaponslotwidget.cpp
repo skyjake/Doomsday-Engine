@@ -34,7 +34,7 @@ using namespace de;
 // Weapon ownership patches.
 static patchid_t pArms[6][2];
 
-static void WeaponSlotWidget_Draw(guidata_weaponslot_t *ws, Point2Raw const *offset)
+static void WeaponSlotWidget_Draw(guidata_weaponslot_t *ws, const Point2Raw *offset)
 {
     DE_ASSERT(ws);
     ws->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -55,7 +55,7 @@ struct countownedweaponsinslot_params_t
 static int countOwnedWeaponsInSlot(weapontype_t type, void *context)
 {
     auto &p = *static_cast<countownedweaponsinslot_params_t *>(context);
-    player_t const *plr = &players[p.player];
+    const player_t *plr = &players[p.player];
     if(plr->weapons[type].owned)
     {
         p.numOwned += 1;
@@ -87,7 +87,7 @@ void guidata_weaponslot_t::tick(timespan_t /*elapsed*/)
 {
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
-    player_t const *plr = &players[player()];
+    const player_t *plr = &players[player()];
 
     bool used = false;
     if(cfg.fixStatusbarOwnedWeapons)
@@ -107,7 +107,7 @@ void guidata_weaponslot_t::tick(timespan_t /*elapsed*/)
     _patchId = pArms[_slot - 1][dint( used )];
 }
 
-void guidata_weaponslot_t::draw(Vec2i const &offset) const
+void guidata_weaponslot_t::draw(const Vec2i &offset) const
 {
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (-ST_HEIGHT)
@@ -121,7 +121,7 @@ void guidata_weaponslot_t::draw(Vec2i const &offset) const
         Vec2i( ORIGINX+ST_ARMSX + ST_ARMSXSPACE*2,   ORIGINY+ST_ARMSY + ST_ARMSYSPACE ),
     };
 
-    Vec2i const &element = elements[_slot - 1];
+    const Vec2i &element = elements[_slot - 1];
 
     int const activeHud     = ST_ActiveHud(player());
     int const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(player()));

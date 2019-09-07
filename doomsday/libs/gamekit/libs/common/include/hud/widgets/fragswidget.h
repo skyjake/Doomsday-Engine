@@ -30,7 +30,7 @@ class guidata_frags_t : public HudWidget
 {
 public:
     guidata_frags_t(void (*updateGeometry) (HudWidget *wi),
-                    void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                    void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                     de::dint player);
     virtual ~guidata_frags_t();
 
@@ -38,14 +38,14 @@ public:
 
     void tick(timespan_t elapsed);
     //void updateGeometry();
-    //void draw(de::Vec2i const &offset = de::Vec2i()) const;
+    //void draw(const de::Vec2i &offset = de::Vec2i()) const;
 
 //private:
     de::dint _value = 0;
 };
 
-void FragsWidget_Draw    (guidata_frags_t *frags, Point2Raw const *offset);
-void SBarFragsWidget_Draw(guidata_frags_t *frags, Point2Raw const *offset);
+void FragsWidget_Draw    (guidata_frags_t *frags, const Point2Raw *offset);
+void SBarFragsWidget_Draw(guidata_frags_t *frags, const Point2Raw *offset);
 
 void FragsWidget_UpdateGeometry    (guidata_frags_t *frags);
 void SBarFragsWidget_UpdateGeometry(guidata_frags_t *frags);

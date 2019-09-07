@@ -508,18 +508,18 @@ public:
                                     currentLineNumber));
                     }
                 }
-                catch(UnknownSection const &er)
+                catch(const UnknownSection &er)
                 {
                     LOG_WARNING("%s. Skipping section...") << er.asText();
                     skipToNextSection();
                 }
             }
         }
-        catch(EndOfFile const & /*er*/)
+        catch(const EndOfFile & /*er*/)
         {} // Ignore.
     }
 
-    void parseAssignmentStatement(String const &line, String &var, String &expr)
+    void parseAssignmentStatement(const String &line, String &var, String &expr)
     {
         // Determine the split (or 'pivot') position.
         auto assign = line.indexOf('=');
@@ -553,76 +553,76 @@ public:
         }
     }
 
-    bool parseAmmoNum(String const &str, int *ammoNum)
+    bool parseAmmoNum(const String &str, int *ammoNum)
     {
         int result = str.toInt(0, 0, String::AllowSuffix);
         if(ammoNum) *ammoNum = result;
         return (result >= 0 && result < 4);
     }
 
-    int parseMobjNum(String const &str)
+    int parseMobjNum(const String &str)
     {
         int const num = str.toInt(0, 0, String::AllowSuffix) - 1; // Patch indices are 1-based.
         if(num < 0 || num >= ded->things.size()) return -1;
         return num;
     }
 
-    int parseSoundNum(String const &str)
+    int parseSoundNum(const String &str)
     {
         int const num = str.toInt(0, 0, String::AllowSuffix);
         if(num < 0 || num >= ded->sounds.size()) return -1;
         return num;
     }
 
-    int parseSpriteNum(String const &str)
+    int parseSpriteNum(const String &str)
     {
         int const num = str.toInt(0, 0, String::AllowSuffix);
         if(num < 0 || num >= NUMSPRITES) return -1;
         return num;
     }
 
-    int parseStateNum(String const &str)
+    int parseStateNum(const String &str)
     {
         int const num = str.toInt(0, 0, String::AllowSuffix);
         if(num < 0 || num >= ded->states.size()) return -1;
         return num;
     }
 
-    int parseStateNumFromActionOffset(String const &str)
+    int parseStateNumFromActionOffset(const String &str)
     {
         int const num = stateIndexForActionOffset(str.toInt(0, 0, String::AllowSuffix));
         if(num < 0 || num >= ded->states.size()) return -1;
         return num;
     }
 
-    bool parseWeaponNum(String const &str, int *weaponNum)
+    bool parseWeaponNum(const String &str, int *weaponNum)
     {
         int result = str.toInt(0, 0, String::AllowSuffix);
         if(weaponNum) *weaponNum = result;
         return (result >= 0);
     }
 
-    bool parseMobjTypeState(String const &token, StateMapping const **state)
+    bool parseMobjTypeState(const String &token, const StateMapping **state)
     {
         return findStateMappingByDehLabel(token, state) >= 0;
     }
 
-    bool parseMobjTypeFlag(String const &token, FlagMapping const **flag)
+    bool parseMobjTypeFlag(const String &token, const FlagMapping **flag)
     {
         return findMobjTypeFlagMappingByDehLabel(token, flag) >= 0;
     }
 
-    bool parseMobjTypeSound(String const &token, SoundMapping const **sound)
+    bool parseMobjTypeSound(const String &token, const SoundMapping **sound)
     {
         return findSoundMappingByDehLabel(token, sound) >= 0;
     }
 
-    bool parseWeaponState(String const &token, WeaponStateMapping const **state)
+    bool parseWeaponState(const String &token, const WeaponStateMapping **state)
     {
         return findWeaponStateMappingByDehLabel(token, state) >= 0;
     }
 
-    bool parseMiscValue(String const &token, ValueMapping const **value)
+    bool parseMiscValue(const String &token, const ValueMapping **value)
     {
         return findValueMappingForDehLabel(token, value) >= 0;
     }
@@ -672,7 +672,7 @@ public:
             }
             else
             {
-                char const *includes = (maxIncludeDepth == 1 ? "include" : "includes");
+                const char *includes = (maxIncludeDepth == 1 ? "include" : "includes");
                 LOG_WARNING("Sorry, there can be at most %i nested %s. Directive ignored")
                     << maxIncludeDepth << includes;
             }
@@ -697,7 +697,7 @@ public:
                         LOG_RES_VERBOSE("Including \"%s\"...") << filePath.pretty();
                         DehReader(Block::readAll(file), true /*is-custom*/, includeFlags).parse();
                     }
-                    catch (Error const &er)
+                    catch (const Error &er)
                     {
                         LOG_WARNING(er.asText() + ".");
                     }
@@ -744,7 +744,7 @@ public:
      *
      * @return (& 0x1)= flag group #1 changed, (& 0x2)= flag group #2 changed, etc..
      */
-    int parseMobjTypeFlags(String const &arg, int flagGroups[NUM_MOBJ_FLAGS])
+    int parseMobjTypeFlags(const String &arg, int flagGroups[NUM_MOBJ_FLAGS])
     {
         DE_ASSERT(flagGroups);
 
@@ -770,7 +770,7 @@ public:
             }
 
             // Flags can also be specified by name (a BEX extension).
-            FlagMapping const *flag;
+            const FlagMapping *flag;
             if(parseMobjTypeFlag(token, &flag))
             {
                 /// @todo fixme - Get the proper bit values from the ded def db.
@@ -807,7 +807,7 @@ public:
 
             if(var.endsWith(" frame", CaseInsensitive))
             {
-                StateMapping const *mapping;
+                const StateMapping *mapping;
                 String const dehStateName = var.left(var.sizeb() - 6);
                 if(!parseMobjTypeState(dehStateName, &mapping))
                 {
@@ -828,7 +828,7 @@ public:
                         else
                         {
                             int const stateIdx = value;
-                            Record const &state = ded->states[stateIdx];
+                            const Record &state = ded->states[stateIdx];
 
                             DE_ASSERT(mapping->id >= 0 && mapping->id < STATENAMES_COUNT);
                             /*qstrncpy(mobj->states[mapping->id], state.gets("id").toLatin1(),
@@ -845,7 +845,7 @@ public:
             }
             else if(var.endsWith(" sound", CaseInsensitive))
             {
-                SoundMapping const *mapping;
+                const SoundMapping *mapping;
                 String const dehSoundName = var.left(var.sizeb() - 6);
                 if(!parseMobjTypeSound(dehSoundName, &mapping))
                 {
@@ -872,7 +872,7 @@ public:
                             }
 
                             int const soundsIdx = value;
-                            ded_sound_t const &sound = ded->sounds[soundsIdx];
+                            const ded_sound_t &sound = ded->sounds[soundsIdx];
                             mobj.setSound(mapping->id, sound.id);
 
                             LOG_DEBUG("Type #%i \"%s\" sound:%s => \"%s\" (#%i)")
@@ -1098,7 +1098,7 @@ public:
                     else
                     {
                         int const spriteIdx = value;
-                        ded_sprid_t const &sprite = ded->sprites[spriteIdx];
+                        const ded_sprid_t &sprite = ded->sprites[spriteIdx];
                         state.def().set("sprite", sprite.id);
                         LOG_DEBUG("State #%i \"%s\" sprite => \"%s\" (#%i)")
                                 << stateNum << state.gets("id") << state.gets("sprite")
@@ -1185,7 +1185,7 @@ public:
                     }
                     else
                     {
-                        ded_sprid_t const &origSprite = origSpriteNames[offset];
+                        const ded_sprid_t &origSprite = origSpriteNames[offset];
                         strncpy(sprite->id, origSprite.id, DED_STRINGID_LEN + 1);
                         LOG_DEBUG("Sprite #%i id => \"%s\" (#%i)") << sprNum << sprite->id << offset;
                     }
@@ -1270,7 +1270,7 @@ public:
                 int const lumpNum = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
-                    LumpIndex const &lumpIndex = *reinterpret_cast<LumpIndex const *>(F_LumpIndex());
+                    const LumpIndex &lumpIndex = *reinterpret_cast<const LumpIndex *>(F_LumpIndex());
                     int const numLumps = lumpIndex.size();
                     if(lumpNum < 0 || lumpNum >= numLumps)
                     {
@@ -1294,8 +1294,8 @@ public:
 
     void parseAmmo(int const ammoNum, bool ignore = false)
     {
-        static char const *ammostr[4] = { "Clip", "Shell", "Cell", "Misl" };
-        char const *theAmmo = ammostr[ammoNum];
+        static const char *ammostr[4] = { "Clip", "Shell", "Cell", "Misl" };
+        const char *theAmmo = ammostr[ammoNum];
         LOG_AS("parseAmmo");
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1333,7 +1333,7 @@ public:
                 String const dehStateName = var.left(var.sizeb() - 6);
                 int const value           = expr.toInt(0, 0, String::AllowSuffix);
 
-                WeaponStateMapping const *weapon;
+                const WeaponStateMapping *weapon;
                 if(!parseWeaponState(dehStateName, &weapon))
                 {
                     if(!ignore)
@@ -1353,7 +1353,7 @@ public:
                         {
                             DE_ASSERT(weapon->id >= 0 && weapon->id < ded->states.size());
 
-                            Record const &state = ded->states[value];
+                            const Record &state = ded->states[value];
                             createValueDef(
                                 Stringf("Weapon Info|%i|%s", weapNum, weapon->name.c_str()),
                                 state.gets("id"));
@@ -1436,7 +1436,7 @@ public:
             String var, expr;
             parseAssignmentStatement(line, var, expr);
 
-            ValueMapping const *mapping;
+            const ValueMapping *mapping;
             if(parseMiscValue(var, &mapping))
             {
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
@@ -1519,7 +1519,7 @@ public:
                     }
                 }
             }
-            catch(SyntaxError const &er)
+            catch(const SyntaxError &er)
             {
                 LOG_WARNING("%s") << er.asText();
             }
@@ -1561,7 +1561,7 @@ public:
                     LOG_WARNING("Failed to locate sound \"%s\" for patching") << var;
                 }
             }
-            catch (SyntaxError const &er)
+            catch (const SyntaxError &er)
             {
                 LOG_WARNING("%s") << er.asText();
             }
@@ -1591,7 +1591,7 @@ public:
                     LOG_WARNING("Failed to locate music \"%s\" for patching") << var;
                 }
             }
-            catch (SyntaxError const &er)
+            catch (const SyntaxError &er)
             {
                 LOG_WARNING("%s") << er.asText();
             }
@@ -1695,7 +1695,7 @@ public:
         skipToNextLine();
     }
 
-    static void replaceTextValue(String const &id, String newValue)
+    static void replaceTextValue(const String &id, String newValue)
     {
         if(id.isEmpty()) return;
 
@@ -1775,7 +1775,7 @@ public:
         }
     }
 
-    void createValueDef(String const &path, String const &value)
+    void createValueDef(const String &path, const String &value)
     {
         // An existing value?
         ded_value_t *def;
@@ -1796,7 +1796,7 @@ public:
         LOG_DEBUG("Value #%i \"%s\" => \"%s\"") << idx << path << def->text;
     }
 
-    bool patchSpriteNames(String const &origName, String const &newName)
+    bool patchSpriteNames(const String &origName, const String &newName)
     {
         // Is this a sprite name?
         if(origName.length() != 4) return false;
@@ -1827,15 +1827,15 @@ public:
 #endif
     }
 
-    bool patchFinaleBackgroundNames(String const &origName, String const &newName)
+    bool patchFinaleBackgroundNames(const String &origName, const String &newName)
     {
-        FinaleBackgroundMapping const *mapping;
+        const FinaleBackgroundMapping *mapping;
         if(findFinaleBackgroundMappingForText(origName, &mapping) < 0) return false;
         createValueDef(mapping->mnemonic, newName);
         return true;
     }
 
-    bool patchMusicLumpNames(String const &origName, String const &newName)
+    bool patchMusicLumpNames(const String &origName, const String &newName)
     {
         // Only music lump names in the original name map can be patched.
         /// @todo Why the restriction?
@@ -1860,7 +1860,7 @@ public:
         return (numPatched > 0);
     }
 
-    bool patchSoundLumpNames(String const &origName, String const &newName)
+    bool patchSoundLumpNames(const String &origName, const String &newName)
     {
         // Only sound lump names in the original name map can be patched.
         /// @todo Why the restriction?
@@ -1885,9 +1885,9 @@ public:
         return (numPatched > 0);
     }
 
-    bool patchText(String const &origStr, String const &newStr)
+    bool patchText(const String &origStr, const String &newStr)
     {
-        TextMapping const *textMapping;
+        const TextMapping *textMapping;
 
         // Which text are we replacing?
         if (textMappingForBlob(origStr, &textMapping) < 0) return false;
@@ -1910,13 +1910,13 @@ public:
     }
 };
 
-void readDehPatch(Block const &patch, bool patchIsCustom, DehReaderFlags flags)
+void readDehPatch(const Block &patch, bool patchIsCustom, DehReaderFlags flags)
 {
     try
     {
         DehReader(patch, patchIsCustom, flags).parse();
     }
-    catch(Error const &er)
+    catch(const Error &er)
     {
         LOG_WARNING(er.asText() + ".");
     }

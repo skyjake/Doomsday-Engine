@@ -43,10 +43,10 @@ DE_PIMPL_NOREF(LumpDirectory), public ISerializable
     List<Entry>      entries;
     Hash<Block, int> index; // points to entries
 
-    void read(IByteArray const &source)
+    void read(const IByteArray &source)
     {
         // First check the metadata cache if we already have this directory.
-        if (File const *file = dynamic_cast<File const *>(&source))
+        if (const File *file = dynamic_cast<const File *>(&source))
         {
             if (readFromCache(file->metaId())) return;
         }
@@ -102,13 +102,13 @@ DE_PIMPL_NOREF(LumpDirectory), public ISerializable
             }
         }
 
-        if (File const *file = dynamic_cast<File const *>(&source))
+        if (const File *file = dynamic_cast<const File *>(&source))
         {
             updateCache(file->metaId());
         }
     }
 
-    bool readFromCache(Block const &id)
+    bool readFromCache(const Block &id)
     {
         try
         {
@@ -126,14 +126,14 @@ DE_PIMPL_NOREF(LumpDirectory), public ISerializable
                 return true;
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOGDEV_RES_WARNING("Corrupt cached metadata: %s") << er.asText();
         }
         return false;
     }
 
-    void updateCache(Block const &id)
+    void updateCache(const Block &id)
     {
         Block data;
         Writer writer(data);
@@ -155,7 +155,7 @@ DE_PIMPL_NOREF(LumpDirectory), public ISerializable
     }
 };
 
-LumpDirectory::LumpDirectory(IByteArray const &wadData)
+LumpDirectory::LumpDirectory(const IByteArray &wadData)
     : d(new Impl)
 {
     d->read(wadData);
@@ -181,7 +181,7 @@ LumpDirectory::Pos LumpDirectory::count() const
     return Pos(d->entries.size());
 }
 
-LumpDirectory::Entry const &LumpDirectory::entry(Pos pos) const
+const LumpDirectory::Entry &LumpDirectory::entry(Pos pos) const
 {
     if (pos >= count())
     {
@@ -197,7 +197,7 @@ duint32 LumpDirectory::crc32() const
     return d->crc;
 }
 
-duint32 LumpDirectory::lumpSize(Block const &lumpName) const
+duint32 LumpDirectory::lumpSize(const Block &lumpName) const
 {
     auto found = d->index.find(lumpName);
     if (found != d->index.end())
@@ -207,12 +207,12 @@ duint32 LumpDirectory::lumpSize(Block const &lumpName) const
     return 0;
 }
 
-bool LumpDirectory::has(Block const &lumpName) const
+bool LumpDirectory::has(const Block &lumpName) const
 {
     return d->index.contains(lumpName);
 }
 
-LumpDirectory::Pos LumpDirectory::find(Block const &lumpName) const
+LumpDirectory::Pos LumpDirectory::find(const Block &lumpName) const
 {
     auto found = d->index.find(lumpName);
     if (found != d->index.end())
@@ -295,7 +295,7 @@ StringList LumpDirectory::mapsInContiguousRangesAsText() const
     for (const String &prefix : prefixes)
     {
         List<int> numbers;
-        for (String const &map : maps)
+        for (const String &map : maps)
         {
             if (map.beginsWith(prefix))
             {

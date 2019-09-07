@@ -34,7 +34,7 @@ DE_PIMPL_NOREF(ImageBank)
         String filePath;
         float  pointRatio;
 
-        ImageSource(String const &path, float pointRatio)
+        ImageSource(const String &path, float pointRatio)
             : filePath(path)
             , pointRatio(pointRatio)
         {}
@@ -60,7 +60,7 @@ DE_PIMPL_NOREF(ImageBank)
         Image image;
 
         ImageData() {}
-        ImageData(Image const &img) : image(img) {}
+        ImageData(const Image &img) : image(img) {}
 
         ISerializable *asSerializable()
         {
@@ -74,29 +74,29 @@ DE_PIMPL_NOREF(ImageBank)
     };
 };
 
-ImageBank::ImageBank(Flags const &flags) : InfoBank("ImageBank", flags), d(new Impl)
+ImageBank::ImageBank(const Flags &flags) : InfoBank("ImageBank", flags), d(new Impl)
 {}
 
-void ImageBank::add(DotPath const &path, String const &imageFilePath)
+void ImageBank::add(const DotPath &path, const String &imageFilePath)
 {
     Bank::add(path, new Impl::ImageSource(imageFilePath, 0.f));
 }
 
-void ImageBank::addFromInfo(File const &file)
+void ImageBank::addFromInfo(const File &file)
 {
     LOG_AS("ImageBank");
     parse(file);
     addFromInfoBlocks("image");
 }
 
-Image const &ImageBank::image(DotPath const &path) const
+const Image &ImageBank::image(const DotPath &path) const
 {
     return data(path).as<Impl::ImageData>().image;
 }
 
-Bank::ISource *ImageBank::newSourceFromInfo(String const &id)
+Bank::ISource *ImageBank::newSourceFromInfo(const String &id)
 {
-    Record const &def = info()[id];
+    const Record &def = info()[id];
     return new Impl::ImageSource(absolutePathInContext(def, def["path"]),
                                  def.getf("pointRatio", 0.f));
 }

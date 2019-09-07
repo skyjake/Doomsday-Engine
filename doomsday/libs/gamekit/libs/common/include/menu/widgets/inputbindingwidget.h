@@ -44,10 +44,10 @@ public:
 
     void draw() const override;
     void updateGeometry() override;
-    int handleEvent_Privileged(event_t const &event) override;
+    int handleEvent_Privileged(const event_t &event) override;
     int handleCommand(menucommand_e command) override;
 
-    char const *controlName() const;
+    const char *controlName() const;
     de::String bindContext() const;
 
     void pageActivated() override;

@@ -68,7 +68,7 @@ void GroupWidget::addChild(HudWidget *other)
 /// @todo optimize Do not peform the id => widget lookup constantly!
 LoopResult GroupWidget::forAllChildren(const std::function<LoopResult (HudWidget &)>& func) const
 {
-    for(uiwidgetid_t const &childId : d->children)
+    for(const uiwidgetid_t &childId : d->children)
     {
         if(auto result = func(GUI_FindWidgetById(childId)))
             return result;
@@ -113,7 +113,7 @@ void GroupWidget::setPadding(dint newPadding)
 
 void GroupWidget::tick(timespan_t elapsed)
 {
-    for(uiwidgetid_t const &childId : d->children)
+    for(const uiwidgetid_t &childId : d->children)
     {
         GUI_FindWidgetById(childId).tick(elapsed);
     }
@@ -148,7 +148,7 @@ void GroupWidget::updateGeometry()
     dint x = 0, y = 0;
     applyAlignmentOffset(this, &x, &y);
 
-    for(uiwidgetid_t const &childId : d->children)
+    for(const uiwidgetid_t &childId : d->children)
     {
         HudWidget &child = GUI_FindWidgetById(childId);
 
@@ -159,7 +159,7 @@ void GroupWidget::updateGeometry()
             Rect_SetX(&child.geometry(), Rect_X(&child.geometry()) + x);
             Rect_SetY(&child.geometry(), Rect_Y(&child.geometry()) + y);
 
-            Rect const *childGeometry = &child.geometry();
+            const Rect *childGeometry = &child.geometry();
             if(Rect_Width(childGeometry) > 0 && Rect_Height(childGeometry) > 0)
             {
                 if(d->order == ORDER_RIGHTTOLEFT)

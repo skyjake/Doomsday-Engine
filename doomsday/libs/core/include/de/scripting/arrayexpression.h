@@ -61,11 +61,11 @@ public:
      *
      * @return  Expression.
      */
-    Expression const &at(dint pos) const;
+    const Expression &at(dint pos) const;
 
-    Expression const &front() const { return at(0); }
+    const Expression &front() const { return at(0); }
 
-    Expression const &back() const { return at(size() - 1); }
+    const Expression &back() const { return at(size() - 1); }
 
     /**
      * Collects the result values of the arguments and puts them

@@ -34,18 +34,18 @@ class DE_PUBLIC BlockPacket : public Packet, private Block
 public:
     BlockPacket();
 
-    BlockPacket(Block const &block);
+    BlockPacket(const Block &block);
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
     void operator << (Reader &from);
 
     Block &block();
-    Block const &block() const;
+    const Block &block() const;
 
 public:
     /// Constructor for a Protocol.
-    static Packet *fromBlock(Block const &block);
+    static Packet *fromBlock(const Block &block);
 };
 
 } // namespace de

@@ -54,7 +54,7 @@ public:
      *                the assignment.
      * @param value   Expression that determines the value of the variable.
      */
-    AssignStatement(Expression *target, Indices const &indices, Expression *value);
+    AssignStatement(Expression *target, const Indices &indices, Expression *value);
 
     ~AssignStatement();
 

@@ -73,7 +73,7 @@ public:
     using Modifiers = Flags;
 
 public:
-    KeyEvent(String const &keyText, Modifiers mods = None)
+    KeyEvent(const String &keyText, Modifiers mods = None)
         : Event(KeyPress)
         , _text(keyText)
         , _code(Key::None)
@@ -89,7 +89,7 @@ public:
     Key       key() const { return _code; }
     Modifiers modifiers() const { return _modifiers; }
 
-    bool operator==(KeyEvent const &other) const
+    bool operator==(const KeyEvent &other) const
     {
         return _text == other._text && _code == other._code && _modifiers == other._modifiers;
     }

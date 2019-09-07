@@ -112,7 +112,7 @@ using namespace de;
         : DMU_BOTTOM_COLOR_BLUE)
 
 void XL_ChangeMaterial(Line *line, int sidenum, int section, world_Material *mat,
-    blendmode_t blend = BM_NORMAL, Vec4f const &tintColor = Vec4f(), int flags = 0);
+    blendmode_t blend = BM_NORMAL, const Vec4f &tintColor = Vec4f(), int flags = 0);
 
 int XL_DoChainSequence(Line *line, dd_bool ceiling, void *context, void *context2, mobj_t *activator);
 int XL_DoDamage(Line *line, dd_bool ceiling, void *context, void *context2, mobj_t *activator);
@@ -1276,7 +1276,7 @@ int XL_TraverseLines(Line* line, int rtype, int ref, void* data,
  * @return  Value as determined by the reference type from the specified line, using data
  *          from either the line itself or context (will always be linetype_t).
  */
-int XL_ValidateLineRef(Line *line, int reftype, void * /*context*/, char const *parmname)
+int XL_ValidateLineRef(Line *line, int reftype, void * /*context*/, const char *parmname)
 {
     LOG_AS("XL_ValidateLineRef");
 
@@ -2040,7 +2040,7 @@ int XLTrav_LineTeleport(Line *newLine, dd_bool /*ceiling*/, void *context,
 
         if(FEQUAL(mobj->origin[VZ], P_GetDoublep(Mobj_Sector(mobj), DMU_FLOOR_HEIGHT)))
         {
-            terraintype_t const *tt = P_MobjFloorTerrain(mobj);
+            const terraintype_t *tt = P_MobjFloorTerrain(mobj);
             if(tt->flags & TTF_FLOORCLIP)
             {
                 mobj->floorClip = 10;
@@ -2211,7 +2211,7 @@ void XL_SwapSwitchTextures(Line *line, int snum)
  * Changes material of the given line.
  */
 void XL_ChangeMaterial(Line *line, int sidenum, int section, world_Material *mat,
-    blendmode_t blendmode, Vec4f const &tintColor, int flags)
+    blendmode_t blendmode, const Vec4f &tintColor, int flags)
 {
     Side *side = (Side *)P_GetPtrp(line, sidenum? DMU_BACK:DMU_FRONT);
     if(!side) return;

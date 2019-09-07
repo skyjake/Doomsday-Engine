@@ -33,12 +33,12 @@ static DmuArgs::PointerToIndexFunc ptrToIndexFunc;
 /**
  * Convert propertyType enum constant into a string for error/debug messages.
  */
-static char const *value_Str(dint val)
+static const char *value_Str(dint val)
 {
     static char valStr[40];
     struct val_s {
         dint val;
-        char const *str;
+        const char *str;
     } valuetypes[] = {
         { DDVT_BOOL,        "DDVT_BOOL" },
         { DDVT_BYTE,        "DDVT_BYTE" },
@@ -324,7 +324,7 @@ void DmuArgs::value(valuetype_t dstValueType, void *dst, uint index) const
 #undef DMUARGS_LOG_ERROR
 }
 
-void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
+void DmuArgs::setValue(valuetype_t srcValueType, const void *src, uint index)
 {
 #define DMUARGS_LOG_ERROR() { LOG_AS("DmuArgs::setValue"); \
     LOGDEV_MAP_ERROR("%s incompatible with value type %s") \
@@ -332,7 +332,7 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
 
     if (srcValueType == DDVT_FIXED)
     {
-        fixed_t const *s = (fixed_t const *)src;
+        const fixed_t *s = (const fixed_t *)src;
 
         switch (valueType)
         {
@@ -358,7 +358,7 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
     }
     else if (srcValueType == DDVT_FLOAT)
     {
-        float const *s = (float const *)src;
+        const float *s = (const float *)src;
 
         switch (valueType)
         {
@@ -384,7 +384,7 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
     }
     else if (srcValueType == DDVT_DOUBLE)
     {
-        double const *s = (double const *)src;
+        const double *s = (const double *)src;
 
         switch (valueType)
         {
@@ -410,7 +410,7 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
     }
     else if (srcValueType == DDVT_BOOL)
     {
-        dd_bool const *s = (dd_bool const *)src;
+        const dd_bool *s = (const dd_bool *)src;
 
         switch (valueType)
         {
@@ -424,7 +424,7 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
     }
     else if (srcValueType == DDVT_BYTE)
     {
-        byte const *s = (byte const *)src;
+        const byte *s = (const byte *)src;
 
         switch (valueType)
         {
@@ -450,7 +450,7 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
     }
     else if (srcValueType == DDVT_INT)
     {
-        int const *s = (int const *)src;
+        const int *s = (const int *)src;
 
         switch (valueType)
         {
@@ -479,7 +479,7 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
     }
     else if (srcValueType == DDVT_SHORT)
     {
-        short const *s = (short const *)src;
+        const short *s = (const short *)src;
 
         switch (valueType)
         {
@@ -508,7 +508,7 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
     }
     else if (srcValueType == DDVT_ANGLE)
     {
-        angle_t const *s = (angle_t const *)src;
+        const angle_t *s = (const angle_t *)src;
 
         switch (valueType)
         {
@@ -522,7 +522,7 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
     }
     else if (srcValueType == DDVT_BLENDMODE)
     {
-        blendmode_t const *s = (blendmode_t const *)src;
+        const blendmode_t *s = (const blendmode_t *)src;
 
         switch (valueType)
         {
@@ -536,7 +536,7 @@ void DmuArgs::setValue(valuetype_t srcValueType, void const *src, uint index)
     }
     else if (srcValueType == DDVT_PTR)
     {
-        void const *const *s = (void const *const *)src;
+        const void *const *s = (const void *const *)src;
 
         switch (valueType)
         {

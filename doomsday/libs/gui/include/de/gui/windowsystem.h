@@ -60,14 +60,14 @@ public:
     void setStyle(Style *style);
 
     template <typename WindowType>
-    WindowType *newWindow(String const &id) {
+    WindowType *newWindow(const String &id) {
         DE_ASSERT(!find(id));
         WindowType *win = new WindowType(id);
         addWindow(id, win);
         return win;
     }
 
-    void addWindow(String const &id, BaseWindow *window);
+    void addWindow(const String &id, BaseWindow *window);
 
     /**
      * Returns @c true iff a main window is available.
@@ -116,8 +116,8 @@ public:
     Vec2i latestMousePosition() const;
 
     // System.
-    bool processEvent(Event const &);
-    void timeChanged(Clock const &);
+    bool processEvent(const Event &);
+    void timeChanged(const Clock &);
 
 public:
     static void setAppWindowSystem(WindowSystem &winSys);
@@ -126,7 +126,7 @@ public:
 protected:
     virtual void closingAllWindows();
 
-    virtual bool rootProcessEvent(Event const &event) = 0;
+    virtual bool rootProcessEvent(const Event &event) = 0;
     virtual void rootUpdate() = 0;
 
 private:

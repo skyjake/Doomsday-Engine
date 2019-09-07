@@ -30,7 +30,7 @@ class guidata_readyitem_t : public HudWidget
 {
 public:
     guidata_readyitem_t(void (*updateGeometry) (HudWidget *wi),
-                        void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                        void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                         de::dint player);
     virtual ~guidata_readyitem_t();
 
@@ -38,7 +38,7 @@ public:
 
     void tick(timespan_t elapsed);
     //void updateGeometry();
-    //void draw(de::Vec2i const &offset = de::Vec2i()) const;
+    //void draw(const de::Vec2i &offset = de::Vec2i()) const;
 
 public:
     static void prepareAssets();
@@ -47,8 +47,8 @@ public:
     patchid_t _patchId = 0;
 };
 
-void ReadyItem_Drawer    (guidata_readyitem_t *item, Point2Raw const *offset);
-void SBarReadyItem_Drawer(guidata_readyitem_t *item, Point2Raw const *offset);
+void ReadyItem_Drawer    (guidata_readyitem_t *item, const Point2Raw *offset);
+void SBarReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw *offset);
 
 void ReadyItem_UpdateGeometry    (guidata_readyitem_t *item);
 void SBarReadyItem_UpdateGeometry(guidata_readyitem_t *item);

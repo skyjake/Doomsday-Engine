@@ -45,7 +45,7 @@ uint8_t *LumpCache::Data::data() const
     return data_;
 }
 
-uint8_t const *LumpCache::Data::replaceData(uint8_t *newData)
+const uint8_t *LumpCache::Data::replaceData(uint8_t *newData)
 {
     clearData();
     data_ = newData;
@@ -110,7 +110,7 @@ bool LumpCache::isValidIndex(uint idx) const
     return idx < _size;
 }
 
-uint8_t const *LumpCache::data(uint lumpIdx) const
+const uint8_t *LumpCache::data(uint lumpIdx) const
 {
     LOG_AS("LumpCache::data");
     Data const* record = cacheRecord(lumpIdx);
@@ -188,7 +188,7 @@ LumpCache::Data *LumpCache::cacheRecord(uint lumpIdx)
     return _dataCache? &(*_dataCache)[lumpIdx] : 0;
 }
 
-LumpCache::Data const *LumpCache::cacheRecord(uint lumpIdx) const
+const LumpCache::Data *LumpCache::cacheRecord(uint lumpIdx) const
 {
     if (!isValidIndex(lumpIdx)) return 0;
     return _dataCache? &(*_dataCache)[lumpIdx] : 0;

@@ -57,11 +57,11 @@ DE_PUBLIC void *M_Calloc(size_t size);
  */
 DE_PUBLIC void *M_Realloc(void *ptr, size_t size);
 
-DE_PUBLIC void *M_MemDup(void const *ptr, size_t size);
+DE_PUBLIC void *M_MemDup(const void *ptr, size_t size);
 
 DE_PUBLIC void M_Free(void *ptr);
 
-DE_PUBLIC char *M_StrDup(char const *str);
+DE_PUBLIC char *M_StrDup(const char *str);
 
 /// @}
 

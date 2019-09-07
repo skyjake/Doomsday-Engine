@@ -71,7 +71,7 @@ public:
      *
      * @param other  Reader.
      */
-    Reader(Reader const &other);
+    Reader(const Reader &other);
 
     /**
      * Constructs a new reader.
@@ -80,7 +80,7 @@ public:
      * @param byteOrder  Byte order to use.
      * @param offset     Offset in @a source where to start reading.
      */
-    Reader(IByteArray const &source, ByteOrder const &byteOrder = littleEndianByteOrder,
+    Reader(const IByteArray &source, const ByteOrder &byteOrder = littleEndianByteOrder,
            IByteArray::Offset offset = 0);
 
     /**
@@ -90,7 +90,7 @@ public:
      * @param stream     Stream where input is read.
      * @param byteOrder  Byte order to use.
      */
-    Reader(IIStream &stream, ByteOrder const &byteOrder = littleEndianByteOrder);
+    Reader(IIStream &stream, const ByteOrder &byteOrder = littleEndianByteOrder);
 
     /**
      * Constructs a new reader that reads from an immutable stream. The bytes
@@ -99,7 +99,7 @@ public:
      * @param stream     Const stream where input is read.
      * @param byteOrder  Byte order to use.
      */
-    Reader(IIStream const &stream, ByteOrder const &byteOrder = littleEndianByteOrder);
+    Reader(const IIStream &stream, const ByteOrder &byteOrder = littleEndianByteOrder);
 
     /**
      * Reads the serialization protocol header from the source. The header is
@@ -272,7 +272,7 @@ public:
     /**
      * Returns the source byte array of the reader.
      */
-    IByteArray const *source() const;
+    const IByteArray *source() const;
 
     /**
      * Determines if the reader's position is at the end of the source data;
@@ -328,7 +328,7 @@ public:
     /**
      * Returns the byte order of the writer.
      */
-    ByteOrder const &byteOrder() const;
+    const ByteOrder &byteOrder() const;
 
     inline void swap(Reader &other) {
         d.swap(other.d);

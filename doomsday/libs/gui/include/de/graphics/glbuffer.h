@@ -79,7 +79,7 @@ namespace internal
          * @param semantic  Attribute data semantic.
          * @return Variable name.
          */
-        static inline char const *semanticVariableName(Semantic semantic) {
+        static inline const char *semanticVariableName(Semantic semantic) {
             switch (semantic) {
                 case Position:       return "aVertex";
                 case TexCoord:       return "aUV";
@@ -127,7 +127,7 @@ namespace internal
         duint    startOffset; ///< Offset in bytes from the start of the buffer.
     };
 
-    typedef std::pair<AttribSpec const *, dsize> AttribSpecs;
+    typedef std::pair<const AttribSpec *, dsize> AttribSpecs;
 }
 
 #define LIBGUI_DECLARE_VERTEX_FORMAT(NumElems) \
@@ -366,17 +366,17 @@ public:
 
     void clear();
 
-    void setVertices(dsize count, void const *data, dsize dataSize, gfx::Usage usage);
+    void setVertices(dsize count, const void *data, dsize dataSize, gfx::Usage usage);
 
-    void setVertices(gfx::Primitive primitive, dsize count, void const *data, dsize dataSize, gfx::Usage usage);
+    void setVertices(gfx::Primitive primitive, dsize count, const void *data, dsize dataSize, gfx::Usage usage);
 
-    void setIndices(gfx::Primitive primitive, dsize count, Index const *indices, gfx::Usage usage);
+    void setIndices(gfx::Primitive primitive, dsize count, const Index *indices, gfx::Usage usage);
 
-    void setIndices(gfx::Primitive primitive, Indices const &indices, gfx::Usage usage);
+    void setIndices(gfx::Primitive primitive, const Indices &indices, gfx::Usage usage);
 
-    void setData(void const *data, dsize dataSize, gfx::Usage usage);
+    void setData(const void *data, dsize dataSize, gfx::Usage usage);
 
-    void setData(dsize startOffset, void const *data, dsize dataSize);
+    void setData(dsize startOffset, const void *data, dsize dataSize);
 
     void setUninitializedData(dsize dataSize, gfx::Usage usage);
 
@@ -387,11 +387,11 @@ public:
      *
      * @param ranges  Range of vertices to draw. If nullptr, all vertices are drawn.
      */
-    void draw(DrawRanges const *ranges = nullptr) const;
+    void draw(const DrawRanges *ranges = nullptr) const;
 
-    void drawWithIndices(GLBuffer const &indexBuffer) const;
+    void drawWithIndices(const GLBuffer &indexBuffer) const;
 
-    void drawWithIndices(gfx::Primitive primitive, Index const *indices, dsize count) const;
+    void drawWithIndices(gfx::Primitive primitive, const Index *indices, dsize count) const;
 
     /**
      * Draws the buffer with instancing. One instance of the buffer is drawn per
@@ -404,14 +404,14 @@ public:
      * @param first            First vertex in this buffer to start drawing from.
      * @param count            Number of vertices in this buffer to draw in each instance.
      */
-    void drawInstanced(GLBuffer const &instanceAttribs, duint first = 0, dint count = -1) const;
+    void drawInstanced(const GLBuffer &instanceAttribs, duint first = 0, dint count = -1) const;
 
     /**
      * Returns the number of vertices in the buffer.
      */
     dsize count() const;
 
-    void setFormat(internal::AttribSpecs const &format);
+    void setFormat(const internal::AttribSpecs &format);
 
     GLuint glName() const;
 
@@ -438,19 +438,19 @@ public:
         setFormat(VertexType::formatSpec());
     }
 
-    void setVertices(VertexType const *vertices, dsize count, gfx::Usage usage) {
+    void setVertices(const VertexType *vertices, dsize count, gfx::Usage usage) {
         GLBuffer::setVertices(count, vertices, sizeof(VertexType) * count, usage);
     }
 
-    void setVertices(Vertices const &vertices, gfx::Usage usage) {
+    void setVertices(const Vertices &vertices, gfx::Usage usage) {
         GLBuffer::setVertices(vertices.size(), vertices.data(), sizeof(VertexType) * vertices.size(), usage);
     }
 
-    void setVertices(gfx::Primitive primitive, VertexType const *vertices, dsize count, gfx::Usage usage) {
+    void setVertices(gfx::Primitive primitive, const VertexType *vertices, dsize count, gfx::Usage usage) {
         GLBuffer::setVertices(primitive, count, vertices, sizeof(VertexType) * count, usage);
     }
 
-    void setVertices(gfx::Primitive primitive, Vertices const &vertices, gfx::Usage usage) {
+    void setVertices(gfx::Primitive primitive, const Vertices &vertices, gfx::Usage usage) {
         GLBuffer::setVertices(primitive, vertices.size(), vertices.data(), sizeof(VertexType) * vertices.size(), usage);
     }
 };

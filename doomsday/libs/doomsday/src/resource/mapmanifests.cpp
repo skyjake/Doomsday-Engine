@@ -42,7 +42,7 @@ DE_PIMPL_NOREF(MapManifests)
 MapManifests::MapManifests() : d(new Impl)
 {}
 
-res::MapManifest &MapManifests::findMapManifest(res::Uri const &mapUri) const
+res::MapManifest &MapManifests::findMapManifest(const res::Uri &mapUri) const
 {
     // Only one resource scheme is known for maps.
     if (!mapUri.scheme().compareWithoutCase("Maps"))
@@ -55,7 +55,7 @@ res::MapManifest &MapManifests::findMapManifest(res::Uri const &mapUri) const
     throw Resources::MissingResourceManifestError("MapManifests::findMapManifest", "Failed to locate a manifest for \"" + mapUri.asText() + "\"");
 }
 
-res::MapManifest *MapManifests::tryFindMapManifest(res::Uri const &mapUri) const
+res::MapManifest *MapManifests::tryFindMapManifest(const res::Uri &mapUri) const
 {
     // Only one resource scheme is known for maps.
     if (mapUri.scheme().compareWithoutCase("Maps")) return nullptr;
@@ -74,7 +74,7 @@ void MapManifests::initMapManifests()
     // Locate all the maps using the central lump index:
     /// @todo Locate new maps each time a package is loaded rather than rely on
     /// the central lump index.
-    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+    const LumpIndex &lumpIndex = App_FileSystem().nameIndex();
     lumpnum_t lastLump = -1;
     while (lastLump < lumpIndex.size())
     {
@@ -93,7 +93,7 @@ void MapManifests::initMapManifests()
     }
 }
 
-MapManifests::Tree const &MapManifests::allMapManifests() const
+const MapManifests::Tree &MapManifests::allMapManifests() const
 {
     return d->manifests;
 }

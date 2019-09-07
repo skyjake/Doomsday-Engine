@@ -32,7 +32,7 @@ namespace menu {
 class ButtonWidget : public Widget
 {
 public:
-    explicit ButtonWidget(de::String const &text = "", patchid_t patch = 0);
+    explicit ButtonWidget(const de::String &text = "", patchid_t patch = 0);
     virtual ~ButtonWidget();
 
     void draw() const;
@@ -41,7 +41,7 @@ public:
 
     void setSilent(bool silent);
 
-    ButtonWidget &setText(de::String const &newText);
+    ButtonWidget &setText(const de::String &newText);
     de::String text() const;
 
     ButtonWidget &setPatch(patchid_t newPatch);

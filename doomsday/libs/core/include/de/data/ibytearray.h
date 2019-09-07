@@ -77,7 +77,7 @@ public:
      * @throw IByteArray::OffsetError  @a at is past the end of the array. For example,
      * attempting to write to offset 1 when the array is empty.
      */
-    virtual void set(Offset at, Byte const *values, Size count) = 0;
+    virtual void set(Offset at, const Byte *values, Size count) = 0;
 };
 
 } // namespace de

@@ -75,7 +75,7 @@ public:
      *
      * @return Reference to this program.
      */
-    GLProgram &build(GLShader const *vertexShader, GLShader const *fragmentShader);
+    GLProgram &build(const GLShader *vertexShader, const GLShader *fragmentShader);
 
     /**
      * Builds a program out of a list of shaders. GLProgram retains a reference to
@@ -87,18 +87,18 @@ public:
      */
     GLProgram &build(const List<const GLShader *> &shaders);
 
-    GLProgram &build(IByteArray const &vertexShaderSource,
-                     IByteArray const &fragmentShaderSource);
+    GLProgram &build(const IByteArray &vertexShaderSource,
+                     const IByteArray &fragmentShaderSource);
 
     void rebuildBeforeNextUse();
 
     void rebuild();
 
-    GLProgram &operator << (GLUniform const &uniform);
+    GLProgram &operator << (const GLUniform &uniform);
 
-    GLProgram &bind(GLUniform const &uniform);
+    GLProgram &bind(const GLUniform &uniform);
 
-    GLProgram &unbind(GLUniform const &uniform);
+    GLProgram &unbind(const GLUniform &uniform);
 
     /**
      * Takes this program into use. Only one GLProgram can be in use at a time.
@@ -110,13 +110,13 @@ public:
     /**
      * Returns the program currently in use.
      */
-    static GLProgram const *programInUse();
+    static const GLProgram *programInUse();
 
     GLuint glName() const;
 
-    int glUniformLocation(char const *uniformName) const;
+    int glUniformLocation(const char *uniformName) const;
 
-    bool glHasUniform(char const *uniformName) const;
+    bool glHasUniform(const char *uniformName) const;
 
     /**
      * Determines which attribute location is used for a particular attribute semantic.

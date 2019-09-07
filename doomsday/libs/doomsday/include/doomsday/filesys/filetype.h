@@ -167,11 +167,11 @@ inline bool isNativeFileType(FileType const& ftype) {
 }
 
 /// Map of symbolic file type names to file types (not owned).
-typedef Map<String, FileType const *> FileTypes;
+typedef Map<String, const FileType *> FileTypes;
 
 } // namespace res
 
-LIBDOOMSDAY_PUBLIC void DD_AddFileType(res::FileType const &ftype);
+LIBDOOMSDAY_PUBLIC void DD_AddFileType(const res::FileType &ftype);
 
 /**
  * Lookup a FileType by symbolic name.
@@ -179,7 +179,7 @@ LIBDOOMSDAY_PUBLIC void DD_AddFileType(res::FileType const &ftype);
  * @param name  Symbolic name of the type.
  * @return  FileType associated with @a name. May return a null-object.
  */
-LIBDOOMSDAY_PUBLIC res::FileType const &DD_FileTypeByName(de::String name);
+LIBDOOMSDAY_PUBLIC const res::FileType &DD_FileTypeByName(de::String name);
 
 /**
  * Attempts to determine which "type" should be attributed to a resource, solely
@@ -187,7 +187,7 @@ LIBDOOMSDAY_PUBLIC res::FileType const &DD_FileTypeByName(de::String name);
  *
  * @return  Type determined for this resource. May return a null-object.
  */
-LIBDOOMSDAY_PUBLIC res::FileType const &DD_GuessFileTypeFromFileName(de::String name);
+LIBDOOMSDAY_PUBLIC const res::FileType &DD_GuessFileTypeFromFileName(de::String name);
 
 /// Returns the registered file types for efficient traversal.
 LIBDOOMSDAY_PUBLIC res::FileTypes &DD_FileTypes();

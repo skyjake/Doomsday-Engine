@@ -47,20 +47,20 @@ public:
     {
     public:
         AbstractProfile();
-        AbstractProfile(AbstractProfile const &profile);
+        AbstractProfile(const AbstractProfile &profile);
 
         /**
          * Assigns another profile's data to this one. The owner pointer is not copied.
          * @param other  Other profile.
          * @return Reference.
          */
-        AbstractProfile &operator = (AbstractProfile const &other);
+        AbstractProfile &operator = (const AbstractProfile &other);
 
         void setOwner(Profiles *owner);
 
         Profiles &owner();
 
-        Profiles const &owner() const;
+        const Profiles &owner() const;
 
         /**
          * Returns the name of the profile.
@@ -75,7 +75,7 @@ public:
          * @return @c true, if renamed successfully. The renaming will fail if
          * a profile with the new name already exists.
          */
-        bool setName(String const &newName);
+        bool setName(const String &newName);
 
         /**
          * Determines if a profile should be considered read-only. The UI
@@ -129,7 +129,7 @@ public:
      * @param name  Persistent name for the register. Must be file name and
      *              script variable name friendly.
      */
-    void setPersistentName(String const &name);
+    void setPersistentName(const String &name);
 
     String persistentName() const;
 
@@ -153,9 +153,9 @@ public:
      *
      * @return Profile object, or nullptr if not found.
      */
-    AbstractProfile *tryFind(String const &name) const;
+    AbstractProfile *tryFind(const String &name) const;
 
-    AbstractProfile &find(String const &name) const;
+    AbstractProfile &find(const String &name) const;
 
     void clear();
 
@@ -182,7 +182,7 @@ public:
      * changing the name in @a profile. Returns @c false if the name is invalid, in
      * which case the caller should keep the existing name.
      */
-    bool rename(AbstractProfile const &profile, String const &newName);
+    bool rename(const AbstractProfile &profile, const String &newName);
 
     /**
      * Serializes all the profiles to /home/configs/(persistentName).dei. Only
@@ -200,7 +200,7 @@ public:
 
 protected:
     virtual AbstractProfile *profileFromInfoBlock(
-            de::Info::BlockElement const &block) = 0;
+            const de::Info::BlockElement &block) = 0;
 
 private:
     DE_PRIVATE(d)

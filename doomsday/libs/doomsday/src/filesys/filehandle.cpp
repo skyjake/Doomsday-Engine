@@ -67,7 +67,7 @@ DE_PIMPL_NOREF(FileHandle)
     }
 };
 
-static void errorIfNotValid(FileHandle const &file, char const * /*callerName*/)
+static void errorIfNotValid(const FileHandle &file, const char * /*callerName*/)
 {
     DE_ASSERT(file.isValid());
     if (!file.isValid()) exit(1);

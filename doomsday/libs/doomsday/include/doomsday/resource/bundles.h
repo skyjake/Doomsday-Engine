@@ -64,7 +64,7 @@ public:
      * Returns the collection of information for identifying known data files.
      * @return Info document.
      */
-    Info const &identityRegistry() const;
+    const Info &identityRegistry() const;
 
     BlockElements formatEntries(DataBundle::Format format) const;
 
@@ -76,9 +76,9 @@ public:
      * @param path       Path of a data bundle.
      * @param packageId  Package identifier.
      */
-//    void defineKnownPackage(Path const &path, String const &packageId);
+//    void defineKnownPackage(const Path &path, const String &packageId);
 
-//    void undefineKnownPackage(Path const &path);
+//    void undefineKnownPackage(const Path &path);
 
     /**
      * Tries to identify of the data files that have been indexed since the
@@ -103,7 +103,7 @@ public:
      *
      * @return Best match.
      */
-    MatchResult match(DataBundle const &bundle) const;
+    MatchResult match(const DataBundle &bundle) const;
 
 private:
     DE_PRIVATE(d)

@@ -47,7 +47,7 @@ DE_PIMPL(Info)
 
     struct DefaultIncludeFinder : public IIncludeFinder
     {
-        String findIncludedInfoSource(String const &includeName, Info const &info,
+        String findIncludedInfoSource(const String &includeName, const Info &info,
                                       String *sourcePath) const override
         {
             String path = info.sourcePath().fileNamePath() / includeName;
@@ -84,7 +84,7 @@ DE_PIMPL(Info)
      * Initialize the parser for reading a block of source content.
      * @param source  Text to be parsed.
      */
-    void init(String const &source)
+    void init(const String &source)
     {
         rootBlock.clear();
 
@@ -397,7 +397,7 @@ DE_PIMPL(Info)
      * Parse a key element.
      * @param name Name of the parsed key element.
      */
-    KeyElement *parseKeyElement(String const &name)
+    KeyElement *parseKeyElement(const String &name)
     {
         InfoValue value;
 
@@ -452,7 +452,7 @@ DE_PIMPL(Info)
     /**
      * Parse a list element, identified by the given name.
      */
-    ListElement *parseListElement(String const &name)
+    ListElement *parseListElement(const String &name)
     {
         if (peekToken() != "<")
         {
@@ -634,7 +634,7 @@ DE_PIMPL(Info)
             // instead. Inclusions are only possible at the root level.
             if (e->isList() && e->name() == INCLUDE_TOKEN)
             {
-                for (Element::Value const &val : e->as<ListElement>().values())
+                for (const Element::Value &val : e->as<ListElement>().values())
                 {
                     includeFrom(val);
                 }
@@ -645,7 +645,7 @@ DE_PIMPL(Info)
         }
     }
 
-    void parse(File const &file)
+    void parse(const File &file)
     {
         sourcePath = file.path();
         parse(String::fromUtf8(Block(file)));
@@ -662,7 +662,7 @@ DE_PIMPL_NOREF(Info::Element)
     SourceLineTable::LineId sourceLine = 0;
 };
 
-Info::Element::Element(Type type, String const &name)
+Info::Element::Element(Type type, const String &name)
     : d(new Impl)
 {
     d->type = type;
@@ -699,12 +699,12 @@ Info::Element::Type Info::Element::type() const
     return d->type;
 }
 
-String const &Info::Element::name() const
+const String &Info::Element::name() const
 {
     return d->name;
 }
 
-void Info::Element::setName(String const &name)
+void Info::Element::setName(const String &name)
 {
     d->name = name;
 }
@@ -736,15 +736,15 @@ void Info::BlockElement::add(Info::Element *elem)
     }
 }
 
-Info::Element *Info::BlockElement::find(String const &name) const
+Info::Element *Info::BlockElement::find(const String &name) const
 {
     auto found = _contents.find(name.lower());
     if (found == _contents.end()) return nullptr;
     return found->second;
 }
 
-Info::Element::Value Info::BlockElement::keyValue(String const &name,
-                                                  String const &defaultValue) const
+Info::Element::Value Info::BlockElement::keyValue(const String &name,
+                                                  const String &defaultValue) const
 {
     Element *e = findByPath(name);
     if (!e || !e->isKey()) return Value(defaultValue);
@@ -756,7 +756,7 @@ String Info::BlockElement::operator[](const String &name) const
     return keyValue(name).text;
 }
 
-Info::Element *Info::BlockElement::findByPath(String const &path) const
+Info::Element *Info::BlockElement::findByPath(const String &path) const
 {
     String name;
     String remainder;
@@ -827,21 +827,21 @@ Record Info::BlockElement::asRecord() const
 Info::Info() : d(new Impl(this))
 {}
 
-Info::Info(String const &source) : d(nullptr)
+Info::Info(const String &source) : d(nullptr)
 {
     std::unique_ptr<Impl> inst(new Impl(this)); // parsing may throw exception
     inst->parse(source);
     d.reset(inst.release());
 }
 
-Info::Info(File const &file) : d(nullptr)
+Info::Info(const File &file) : d(nullptr)
 {
     std::unique_ptr<Impl> inst(new Impl(this)); // parsing may throw exception
     inst->parse(file);
     d.reset(inst.release());
 }
 
-Info::Info(String const &source, IIncludeFinder const &finder) : d(nullptr)
+Info::Info(const String &source, const IIncludeFinder &finder) : d(nullptr)
 {
     std::unique_ptr<Impl> inst(new Impl(this)); // parsing may throw exception
     inst->finder = &finder;
@@ -849,7 +849,7 @@ Info::Info(String const &source, IIncludeFinder const &finder) : d(nullptr)
     d.reset(inst.release());
 }
 
-void Info::setFinder(IIncludeFinder const &finder)
+void Info::setFinder(const IIncludeFinder &finder)
 {
     d->finder = &finder;
 }
@@ -872,22 +872,22 @@ void Info::setAllowDuplicateBlocksOfType(const StringList &duplicatesAllowed)
     d->allowDuplicateBlocksOfType = duplicatesAllowed;
 }
 
-void Info::setImplicitBlockType(String const &implicitBlock)
+void Info::setImplicitBlockType(const String &implicitBlock)
 {
     d->implicitBlockType = implicitBlock;
 }
 
-void Info::parse(String const &infoSource)
+void Info::parse(const String &infoSource)
 {
     d->parse(infoSource);
 }
 
-void Info::parse(File const &file)
+void Info::parse(const File &file)
 {
     d->parse(file);
 }
 
-void Info::parseNativeFile(NativePath const &nativePath)
+void Info::parseNativeFile(const NativePath &nativePath)
 {
     if (std::ifstream file{nativePath})
     {
@@ -901,7 +901,7 @@ void Info::clear()
     parse("");
 }
 
-void Info::setSourcePath(String const &path)
+void Info::setSourcePath(const String &path)
 {
     d->sourcePath = path;
 }
@@ -911,20 +911,20 @@ String Info::sourcePath() const
     return d->sourcePath;
 }
 
-Info::BlockElement const &Info::root() const
+const Info::BlockElement &Info::root() const
 {
     return d->rootBlock;
 }
 
-Info::Element const *Info::findByPath(String const &path) const
+const Info::Element *Info::findByPath(const String &path) const
 {
     if (path.isEmpty()) return &d->rootBlock;
     return d->rootBlock.findByPath(path);
 }
 
-bool Info::findValueForKey(String const &key, String &value) const
+bool Info::findValueForKey(const String &key, String &value) const
 {
-    Element const *element = findByPath(key);
+    const Element *element = findByPath(key);
     if (element && element->isKey())
     {
         value = element->as<KeyElement>().value();
@@ -945,7 +945,7 @@ bool Info::isEmpty() const
     return d->rootBlock.isEmpty();
 }
 
-String Info::quoteString(String const &text)
+String Info::quoteString(const String &text)
 {
     String quoted = text;
     quoted.replace("\"", "''");
@@ -957,7 +957,7 @@ String Info::sourceLocation(duint32 lineId) // static
     return de::sourceLineTable.sourceLocation(lineId);
 }
 
-SourceLineTable const &Info::sourceLineTable() // static
+const SourceLineTable &Info::sourceLineTable() // static
 {
     return de::sourceLineTable;
 }

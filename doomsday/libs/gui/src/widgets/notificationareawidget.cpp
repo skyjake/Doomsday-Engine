@@ -62,7 +62,7 @@ DE_GUI_PIMPL(NotificationAreaWidget)
 
     void updateChildLayout()
     {
-        Rule const &gap = rule(RuleBank::UNIT);
+        const Rule &gap = rule(RuleBank::UNIT);
 
         // The children are laid out simply in a row from right to left.
         SequentialLayout layout(self().rule().right(), self().rule().top(), ui::Left);
@@ -148,7 +148,7 @@ DE_GUI_PIMPL(NotificationAreaWidget)
     }
 };
 
-NotificationAreaWidget::NotificationAreaWidget(String const &name)
+NotificationAreaWidget::NotificationAreaWidget(const String &name)
     : GuiWidget(name)
     , d(new Impl(this))
 {
@@ -159,14 +159,14 @@ NotificationAreaWidget::NotificationAreaWidget(String const &name)
     hide();
 }
 
-void NotificationAreaWidget::useDefaultPlacement(RuleRectangle const &area,
-                                                 Rule const &horizontalOffset)
+void NotificationAreaWidget::useDefaultPlacement(const RuleRectangle &area,
+                                                 const Rule &horizontalOffset)
 {
     rule().setInput(Rule::Top,   area.top() + rule("gap") - shift())
           .setInput(Rule::Right, area.right() - rule("gap") + horizontalOffset);
 }
 
-Rule const &NotificationAreaWidget::shift()
+const Rule &NotificationAreaWidget::shift()
 {
     return *d->shift;
 }

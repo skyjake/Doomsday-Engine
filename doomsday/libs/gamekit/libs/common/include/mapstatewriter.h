@@ -70,12 +70,12 @@ public:
      */
     Writer1 *writer();
 
-    ThingArchive::SerialId serialIdFor(struct mobj_s const *mobj);
+    ThingArchive::SerialId serialIdFor(const struct mobj_s *mobj);
     materialarchive_serialid_t serialIdFor(world::Material *material);
     materialarchive_serialid_t serialIdFor(struct material_s *material);
 
     // Implements world::IThinkerMapping.
-    //int mappedNumberfromThinkerId(de::Id const &thinkerId) const override;
+    //int mappedNumberfromThinkerId(const de::Id &thinkerId) const override;
     //de::Id thinkerIdFromMappedNumber(int mappedNumber) const override;
 
 private:

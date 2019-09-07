@@ -41,9 +41,9 @@ bool NoneValue::isTrue() const
     return false;
 }
 
-dint NoneValue::compare(Value const &value) const
+dint NoneValue::compare(const Value &value) const
 {
-    NoneValue const *other = dynamic_cast<NoneValue const *>(&value);
+    const NoneValue *other = dynamic_cast<const NoneValue *>(&value);
     if (other)
     {
         // All nones are equal.

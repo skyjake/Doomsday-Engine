@@ -30,7 +30,7 @@ DE_PIMPL(LinkFile)
         , target(i) {}
 };
 
-LinkFile::LinkFile(String const &name)
+LinkFile::LinkFile(const String &name)
     : File(name)
     , d(new Impl(this))
 {}
@@ -45,7 +45,7 @@ LinkFile::~LinkFile()
     deindex();
 }
 
-File const &LinkFile::target() const
+const File &LinkFile::target() const
 {
     DE_GUARD(this);
 
@@ -67,7 +67,7 @@ File &LinkFile::target()
     return File::target();
 }
 
-Folder const *LinkFile::targetFolder() const
+const Folder *LinkFile::targetFolder() const
 {
     return maybeAs<Folder>(target());
 }
@@ -77,14 +77,14 @@ Folder *LinkFile::targetFolder()
     return maybeAs<Folder>(target());
 }
 
-void LinkFile::setTarget(File const &file)
+void LinkFile::setTarget(const File &file)
 {
     DE_GUARD(this);
 
     d->target.reset(&file);
 }
 
-void LinkFile::setTarget(File const *fileOrNull)
+void LinkFile::setTarget(const File *fileOrNull)
 {
     DE_GUARD(this);
 
@@ -108,7 +108,7 @@ String LinkFile::describe() const
     return "broken link";
 }
 
-IIStream const &LinkFile::operator >> (IByteArray &bytes) const
+const IIStream &LinkFile::operator >> (IByteArray &bytes) const
 {
     if (!isBroken())
     {
@@ -121,25 +121,25 @@ IIStream const &LinkFile::operator >> (IByteArray &bytes) const
     }
 }
 
-filesys::Node const *LinkFile::tryFollowPath(PathRef const &path) const
+const filesys::Node *LinkFile::tryFollowPath(const PathRef &path) const
 {
-    if (Folder const *folder = targetFolder())
+    if (const Folder *folder = targetFolder())
     {
         return folder->tryFollowPath(path);
     }
     return nullptr;
 }
 
-filesys::Node const *LinkFile::tryGetChild(String const &name) const
+const filesys::Node *LinkFile::tryGetChild(const String &name) const
 {
-    if (Folder const *folder = targetFolder())
+    if (const Folder *folder = targetFolder())
     {
         return folder->tryGetChild(name);
     }
     return nullptr;
 }
 
-LinkFile *LinkFile::newLinkToFile(File const &file, String linkName)
+LinkFile *LinkFile::newLinkToFile(const File &file, String linkName)
 {
     // Fall back to using the target's name.
     if (linkName.isEmpty()) linkName = file.name();

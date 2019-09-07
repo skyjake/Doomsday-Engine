@@ -28,7 +28,7 @@ DE_PIMPL(GLTextComposer)
 
     const Font *            font  = nullptr;
     Atlas *                 atlas = nullptr;
-    FontLineWrapping const *wraps = nullptr;
+    const FontLineWrapping *wraps = nullptr;
     Font::RichFormat        format;
     bool                    needRedo          = false; ///< Release completely and allocate.
     int                     maxGeneratedWidth = 0;
@@ -107,12 +107,12 @@ DE_PIMPL(GLTextComposer)
         return visibleLineRange.contains(int(line));
     }
 
-    CString segmentText(int seg, FontLineWrapping::LineInfo const &info) const
+    CString segmentText(int seg, const FontLineWrapping::LineInfo &info) const
     {
         return info.segs[seg].range;
     }
 
-    bool matchingSegments(int lineIndex, FontLineWrapping::LineInfo const &info) const
+    bool matchingSegments(int lineIndex, const FontLineWrapping::LineInfo &info) const
     {
         if (info.segs.size() != lines[lineIndex].segs.size())
         {
@@ -222,7 +222,7 @@ DE_PIMPL(GLTextComposer)
         return changed;
     }
 
-    void updateLineLayout(Rangei const &lineRange)
+    void updateLineLayout(const Rangei &lineRange)
     {
         if (lineRange.isEmpty()) return;
 
@@ -247,7 +247,7 @@ DE_PIMPL(GLTextComposer)
      *
      * @return The actual end of the updated range.
      */
-    inline int updateLineLayoutUntilUntabbed(Rangei const &lineRange)
+    inline int updateLineLayoutUntilUntabbed(const Rangei &lineRange)
     {
         bool includesTabbedLines = false;
         int rangeEnd = lineRange.end;
@@ -314,7 +314,7 @@ DE_PIMPL(GLTextComposer)
             {
                 if (i >= visibleLineRange.end) break;
 
-                FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);
+                const FontLineWrapping::LineInfo &info = wraps->lineInfo(i);
 
                 DE_ASSERT(info.segs.size() == lines[i].segs.size());
                 for (int k = 0; k < info.segs.sizei(); ++k)
@@ -334,7 +334,7 @@ DE_PIMPL(GLTextComposer)
 
                 int localRight = maxRight;
 
-                FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);
+                const FontLineWrapping::LineInfo &info = wraps->lineInfo(i);
                 for (int k = 0; k < info.segs.sizei(); ++k)
                 {
                     if (info.segs[k].tabStop == tab)
@@ -372,7 +372,7 @@ void GLTextComposer::setAtlas(Atlas &atlas)
     d->atlas = &atlas;
 }
 
-void GLTextComposer::setWrapping(FontLineWrapping const &wrappedLines)
+void GLTextComposer::setWrapping(const FontLineWrapping &wrappedLines)
 {
     if (d->wraps != &wrappedLines)
     {
@@ -382,12 +382,12 @@ void GLTextComposer::setWrapping(FontLineWrapping const &wrappedLines)
     }
 }
 
-void GLTextComposer::setText(String const &text)
+void GLTextComposer::setText(const String &text)
 {
     setText(Font::RichFormat::fromPlainText(text));
 }
 
-void GLTextComposer::setStyledText(String const &styledText)
+void GLTextComposer::setStyledText(const String &styledText)
 {
     d->format.clear();
     d->format.initFromStyledText(styledText);
@@ -395,7 +395,7 @@ void GLTextComposer::setStyledText(String const &styledText)
     setState(false);
 }
 
-void GLTextComposer::setText(/*String const &text, */Font::RichFormat const &format)
+void GLTextComposer::setText(/*const String &text, */const Font::RichFormat &format)
 {
 //    d->text = text;
     d->format = format;
@@ -403,7 +403,7 @@ void GLTextComposer::setText(/*String const &text, */Font::RichFormat const &for
     setState(false);
 }
 
-void GLTextComposer::setRange(Rangei const &visibleLineRange)
+void GLTextComposer::setRange(const Rangei &visibleLineRange)
 {
     if (d->visibleLineRange != visibleLineRange)
     {
@@ -454,18 +454,18 @@ void GLTextComposer::forceUpdate()
 }
 
 void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
-                                  Vec2i const &     topLeft,
-                                  Alignment const & lineAlign,
-                                  Vec4f const &     color)
+                                  const Vec2i &     topLeft,
+                                  const Alignment & lineAlign,
+                                  const Vec4f &     color)
 {
     makeVertices(triStrip, Rectanglei(topLeft, topLeft), AlignTopLeft, lineAlign, color);
 }
 
 void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
-                                  Rectanglei const &rect,
-                                  Alignment const & alignInRect,
-                                  Alignment const & lineAlign,
-                                  Vec4f const &     color)
+                                  const Rectanglei &rect,
+                                  const Alignment & alignInRect,
+                                  const Alignment & lineAlign,
+                                  const Vec4f &     color)
 {
     if (!isReady()) return;
 
@@ -512,16 +512,16 @@ void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
     // Generate vertices for each line.
     for (int i = 0; i < d->wraps->height(); ++i)
     {
-        Impl::Line const &line = d->lines[i];
+        const Impl::Line &line = d->lines[i];
 
         if (d->isLineVisible(i))
         {
-            FontLineWrapping::LineInfo const &info = d->wraps->lineInfo(i);
+            const FontLineWrapping::LineInfo &info = d->wraps->lineInfo(i);
             Vec2f linePos = p;
 
             for (int k = 0; k < info.segs.sizei(); ++k)
             {
-                Impl::Line::Segment const &seg = line.segs[k];
+                const Impl::Line::Segment &seg = line.segs[k];
 
                 // Empty lines are skipped.
                 if (seg.id.isNone()) continue;

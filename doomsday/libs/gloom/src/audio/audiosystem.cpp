@@ -19,10 +19,10 @@ namespace gloom {
  */
 struct FileAdapter
 {
-    ByteArrayFile const *file; // random access needed
+    const ByteArrayFile *file; // random access needed
     dsize pos;
 
-    FileAdapter(ByteArrayFile const &f) : file(&f), pos(0) {}
+    FileAdapter(const ByteArrayFile &f) : file(&f), pos(0) {}
 
     static FMOD_RESULT F_CALLBACK open(const char *  name,
                                        unsigned int *filesize,
@@ -36,7 +36,7 @@ struct FileAdapter
             *filesize = uint(adapter->file->size());
             *handle = adapter;
         }
-        catch(Error const &er)
+        catch(const Error &er)
         {
             LOG_AS("FileAdapter::open");
             LOGDEV_RES_WARNING("") << er.asText();
@@ -68,7 +68,7 @@ struct FileAdapter
             adapter->pos += count;
             *bytesread = uint(count);
         }
-        catch(Error const &er)
+        catch(const Error &er)
         {
             LOG_AS("FileAdapter::read");
             LOGDEV_RES_WARNING("") << er.asText();
@@ -106,7 +106,7 @@ DE_PIMPL(AudioSystem)
 
     public:
         FMOD_SYSTEM *  system = nullptr;
-        Waveform const &wf;
+        const Waveform &wf;
 
         typedef Set<AudibleSound *> PlayingSounds; // owned
         PlayingSounds sounds;
@@ -117,7 +117,7 @@ DE_PIMPL(AudioSystem)
          * @param waveform  Waveform data. Does @em NOT take ownership or copy of this
          *                  object. The original waveform must exist elsewhere.
          */
-        CachedWaveform(FMOD_SYSTEM *sys, Waveform const &waveform)
+        CachedWaveform(FMOD_SYSTEM *sys, const Waveform &waveform)
             : system(sys)
             , wf(waveform)
         {}
@@ -483,7 +483,7 @@ DE_PIMPL(AudioSystem)
         FMOD_System_Update(system);
     }
 
-    Sound &load(Waveform const &waveform)
+    Sound &load(const Waveform &waveform)
     {
         DE_ASSERT(system != 0);
 
@@ -511,12 +511,12 @@ AudioSystem &AudioSystem::get()
     return *theAudioSystem;
 }
 
-Sound &AudioSystem::newSound(Waveform const &waveform)
+Sound &AudioSystem::newSound(const Waveform &waveform)
 {
     return d->load(waveform);
 }
 
-Sound &AudioSystem::newSound(DotPath const &appWaveform)
+Sound &AudioSystem::newSound(const DotPath &appWaveform)
 {
     Sound &sound = newSound(BaseGuiApp::waveforms().waveform(appWaveform));
     DE_NOTIFY_VAR(NewSound, i)
@@ -526,7 +526,7 @@ Sound &AudioSystem::newSound(DotPath const &appWaveform)
     return sound;
 }
 
-void AudioSystem::timeChanged(Clock const &)
+void AudioSystem::timeChanged(const Clock &)
 {
     d->refresh();
 }

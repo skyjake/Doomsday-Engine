@@ -37,7 +37,7 @@ public:
 
     void initialize();
 
-    de::FileIndex const &saveIndex() const;
+    const de::FileIndex &saveIndex() const;
 
     /**
      * Utility for scheduling legacy savegame conversion(s) (delegated to background Tasks).
@@ -51,7 +51,7 @@ public:
      *
      * @return  @c true if one or more conversion tasks were scheduled.
      */
-    bool convertLegacySavegames(de::String const &gameId, de::String const &sourcePath = "");
+    bool convertLegacySavegames(const de::String &gameId, const de::String &sourcePath = "");
 
     static void consoleRegister();
     static de::String savePath();

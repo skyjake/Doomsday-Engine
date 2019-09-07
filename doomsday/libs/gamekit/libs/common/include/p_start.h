@@ -221,7 +221,7 @@ void P_AddMaceSpot(mapspotid_t id);
  *
  * @return  The chosen map spot; otherwise @c 0.
  */
-mapspot_t const *P_ChooseRandomMaceSpot(void);
+const mapspot_t *P_ChooseRandomMaceSpot(void);
 
 void P_AddBossSpot(mapspotid_t id);
 #endif
@@ -236,7 +236,7 @@ uint P_GetNumPlayerStarts(dd_bool deathmatch);
  * @return  The correct start for the player. The start is in the given
  *          group for specified entry point.
  */
-playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, dd_bool deathmatch);
+const playerstart_t *P_GetPlayerStart(uint entryPoint, int pnum, dd_bool deathmatch);
 
 /**
  * Gives all the players in the game a playerstart.

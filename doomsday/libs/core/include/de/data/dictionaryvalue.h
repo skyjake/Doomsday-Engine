@@ -41,26 +41,26 @@ public:
     DE_ERROR(KeyError);
 
     struct ValueRef {
-        ValueRef(Value const *v) : value(v) {}
-        ValueRef(ValueRef const &other) : value(other.value) {}
+        ValueRef(const Value *v) : value(v) {}
+        ValueRef(const ValueRef &other) : value(other.value) {}
 
         // Operators for the map.
-        bool operator < (ValueRef const &other) const {
+        bool operator < (const ValueRef &other) const {
             return value->compare(*other.value) < 0;
         }
 
-        Value const *value;
+        const Value *value;
     };
 
     typedef std::map<ValueRef, Value *> Elements;
 
 public:
     DictionaryValue();
-    DictionaryValue(DictionaryValue const &other);
+    DictionaryValue(const DictionaryValue &other);
     ~DictionaryValue();
 
     /// Returns a direct reference to the elements map.
-    Elements const &elements() const { return _elements; }
+    const Elements &elements() const { return _elements; }
 
     /// Returns a direct reference to the elements map.
     Elements &elements() { return _elements; }
@@ -84,9 +84,9 @@ public:
      *
      * @param key  Key that will be removed.
      */
-    void remove(Value const &key);
+    void remove(const Value &key);
 
-    void remove(Elements::iterator const &pos);
+    void remove(const Elements::iterator &pos);
 
     const Value *find(const Value &key) const;
 
@@ -112,16 +112,16 @@ public:
     Text asText() const;
     Record *memberScope() const;
     dsize size() const;
-    Value const &element(Value const &index) const;
-    Value &element(Value const &index);
-    void setElement(Value const &index, Value *value);
-    bool contains(Value const &value) const;
+    const Value &element(const Value &index) const;
+    Value &element(const Value &index);
+    void setElement(const Value &index, Value *value);
+    bool contains(const Value &value) const;
     Value *begin();
     Value *next();
     bool isTrue() const;
-    dint compare(Value const &value) const;
-    void sum(Value const &value);
-    void subtract(Value const &subtrahend);
+    dint compare(const Value &value) const;
+    void sum(const Value &value);
+    void subtract(const Value &subtrahend);
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

@@ -40,7 +40,7 @@ DE_PIMPL(DirectoryListDialog)
         groups.deleteAll();
     }
 
-    Id addGroup(String const &title, String const &description)
+    Id addGroup(const String &title, const String &description)
     {
         Id groupId;
         std::unique_ptr<Group> group(new Group);
@@ -86,7 +86,7 @@ DE_PIMPL(DirectoryListDialog)
 
 DE_AUDIENCE_METHOD(DirectoryListDialog, Change)
 
-DirectoryListDialog::DirectoryListDialog(String const &name)
+DirectoryListDialog::DirectoryListDialog(const String &name)
     : MessageDialog(name)
     , d(new Impl(this))
 {
@@ -100,7 +100,7 @@ DirectoryListDialog::DirectoryListDialog(String const &name)
     }));
 }
 
-Id DirectoryListDialog::addGroup(String const &title, String const &description)
+Id DirectoryListDialog::addGroup(const String &title, const String &description)
 {
     return d->addGroup(title, description);
 }
@@ -111,13 +111,13 @@ void DirectoryListDialog::prepare()
     updateLayout();
 }
 
-void DirectoryListDialog::setValue(Id const &id, Value const &elements)
+void DirectoryListDialog::setValue(const Id &id, const Value &elements)
 {
     DE_ASSERT(d->groups.contains(id));
     d->groups[id]->array.set(elements);
 }
 
-Value const &DirectoryListDialog::value(Id const &id) const
+const Value &DirectoryListDialog::value(const Id &id) const
 {
     DE_ASSERT(d->groups.contains(id));
     return d->groups[id]->array.value();

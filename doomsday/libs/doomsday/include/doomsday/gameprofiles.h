@@ -44,23 +44,23 @@ public:
     class LIBDOOMSDAY_PUBLIC Profile : public AbstractProfile, public de::IObject
     {
     public:
-        Profile(de::String const &name = de::String());
-        Profile(Profile const &other);
+        Profile(const de::String &name = de::String());
+        Profile(const Profile &other);
 
-        Profile &operator = (Profile const &other);
+        Profile &operator = (const Profile &other);
 
-        void setGame(de::String const &id);
+        void setGame(const de::String &id);
         void setCustomDataFile(const de::String &id);
         void setPackages(const de::StringList& packagesInOrder);
         void setUserCreated(bool userCreated);
         void setUseGameRequirements(bool useGameRequirements);
-        void setAutoStartMap(de::String const &map);
+        void setAutoStartMap(const de::String &map);
         void setAutoStartSkill(int level);
         void setLastPlayedAt(const de::Time &at = de::Time());
         void setSaveLocationId(de::duint32 saveLocationId);
         void setOptionValue(const de::String &option, const de::Value &value);
 
-        bool appendPackage(de::String const &id);
+        bool appendPackage(const de::String &id);
 
         de::String gameId() const;
         Game &game() const;
@@ -90,7 +90,7 @@ public:
 
         de::StringList unavailablePackages() const;
 
-        bool isCompatibleWithPackages(de::StringList const &ids) const;
+        bool isCompatibleWithPackages(const de::StringList &ids) const;
 
         bool isPlayable() const;
 
@@ -125,22 +125,22 @@ public:
      * @param gameId  Game identifier.
      * @return Profile.
      */
-    Profile const &builtInProfile(de::String const &gameId) const;
+    const Profile &builtInProfile(const de::String &gameId) const;
 
     de::LoopResult forAll(std::function<de::LoopResult (Profile &)> func);
-    de::LoopResult forAll(std::function<de::LoopResult (Profile const &)> func) const;
+    de::LoopResult forAll(std::function<de::LoopResult (const Profile &)> func) const;
 
-    de::List<Profile const *> allPlayableProfiles() const;
-    de::List<Profile *> profilesInFamily(de::String const &family);
+    de::List<const Profile *> allPlayableProfiles() const;
+    de::List<Profile *> profilesInFamily(const de::String &family);
     de::List<Profile *> profilesSortedByFamily();
 
-    static Profile const &null();
+    static const Profile &null();
 
-    static bool arePackageListsCompatible(de::StringList const &list1,
-                                          de::StringList const &list2);
+    static bool arePackageListsCompatible(const de::StringList &list1,
+                                          const de::StringList &list2);
 
 protected:
-    AbstractProfile *profileFromInfoBlock(de::Info::BlockElement const &block);
+    AbstractProfile *profileFromInfoBlock(const de::Info::BlockElement &block);
 
 private:
     DE_PRIVATE(d)

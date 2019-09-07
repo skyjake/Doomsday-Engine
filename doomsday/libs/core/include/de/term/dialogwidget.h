@@ -36,7 +36,7 @@ public:
     DE_AUDIENCE(Reject, void rejected(int result))
 
 public:
-    DialogWidget(String const &name = String());
+    DialogWidget(const String &name = String());
 
     /**
      * Shows the dialog and gives it focus. Execution is blocked until the
@@ -51,7 +51,7 @@ public:
 
     // Events.
     void draw();
-    bool handleEvent(Event const &event);
+    bool handleEvent(const Event &event);
 
     void accept(int result = 1);
     void reject(int result = 0);

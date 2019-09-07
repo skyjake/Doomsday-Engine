@@ -124,8 +124,8 @@ DE_PIMPL(TextDrawable)
     class WrapTask : public Task, public Impl::IDeletionObserver
     {
     public:
-        WrapTask(Impl *inst, String const &styledText, int toWidth, Font const &font,
-                 Font::RichFormat::IStyle const *style)
+        WrapTask(Impl *inst, const String &styledText, int toWidth, const Font &font,
+                 const Font::RichFormat::IStyle *style)
             : d(inst)
             , _text(styledText)
             , _width(toWidth)
@@ -143,7 +143,7 @@ DE_PIMPL(TextDrawable)
             {
                 runWrapTask();
             }
-            catch (Error const &)
+            catch (const Error &)
             {
                 // Cancelled.
             }
@@ -203,16 +203,16 @@ DE_PIMPL(TextDrawable)
         LockablePointer<Impl> d;
         String _text;
         int _width;
-        Font const &_font;
-        Font::RichFormat::IStyle const *_style;
+        const Font &_font;
+        const Font::RichFormat::IStyle *_style;
         duint32 _valid;
         std::unique_ptr<Wrapper> _wrapper;
     };
 
     bool inited { false };
-    Font::RichFormat::IStyle const *style { nullptr };
+    const Font::RichFormat::IStyle *style { nullptr };
     String styledText;
-    Font const *font { nullptr };
+    const Font *font { nullptr };
     float fontHeight = 0.f;
     int wrapWidth { 0 };
     Wrapper *visibleWrap; ///< For drawing.
@@ -290,7 +290,7 @@ TextDrawable::TextDrawable() : d(new Impl(this))
     setWrapping(*d->visibleWrap);
 }
 
-void TextDrawable::init(Atlas &atlas, Font const &font, Font::RichFormat::IStyle const *style)
+void TextDrawable::init(Atlas &atlas, const Font &font, const Font::RichFormat::IStyle *style)
 {
     d->inited = true;
 
@@ -331,7 +331,7 @@ void TextDrawable::setLineWrapWidth(int maxLineWidth)
     }
 }
 
-void TextDrawable::setText(String const &styledText)
+void TextDrawable::setText(const String &styledText)
 {
     if (d->styledText != styledText)
     {
@@ -340,7 +340,7 @@ void TextDrawable::setText(String const &styledText)
     }
 }
 
-void TextDrawable::setFont(Font const &font)
+void TextDrawable::setFont(const Font &font)
 {
     if (d->font != &font || !fequal(d->fontHeight, font.height().value()))
     {
@@ -350,7 +350,7 @@ void TextDrawable::setFont(Font const &font)
     }
 }
 
-void TextDrawable::setRange(Rangei const &lineRange)
+void TextDrawable::setRange(const Rangei &lineRange)
 {
     GLTextComposer::setRange(lineRange);
     releaseLinesOutsideRange();
@@ -366,7 +366,7 @@ bool TextDrawable::update()
     return GLTextComposer::update() || swapped || (isReady() && wasNotReady);
 }
 
-FontLineWrapping const &TextDrawable::wraps() const
+const FontLineWrapping &TextDrawable::wraps() const
 {
     return *d->visibleWrap;
 }
@@ -387,7 +387,7 @@ bool TextDrawable::isBeingWrapped() const
     return !d->tasks.isDone();
 }
 
-Font const &TextDrawable::font() const
+const Font &TextDrawable::font() const
 {
     DE_ASSERT(d->font != nullptr);
     return *d->font;

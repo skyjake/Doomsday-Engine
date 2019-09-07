@@ -69,7 +69,7 @@ DE_PIMPL(Profiles)
         }
     }
 
-    void changeLookupKey(AbstractProfile const &profile, String const &newName)
+    void changeLookupKey(const AbstractProfile &profile, const String &newName)
     {
         profiles.remove(profile.name());
         profiles.insert(newName, const_cast<AbstractProfile *>(&profile));
@@ -109,7 +109,7 @@ DE_PIMPL(Profiles)
         return Stringf("/home/configs/%s.dei", persistentName.c_str());
     }
 
-    void loadProfilesFromInfo(File const &file, bool markReadOnly)
+    void loadProfilesFromInfo(const File &file, bool markReadOnly)
     {
         try
         {
@@ -142,7 +142,7 @@ DE_PIMPL(Profiles)
                 }
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_RES_WARNING("Failed to load profiles from %s:\n%s")
                     << file.description() << er.asText();
@@ -171,7 +171,7 @@ int Profiles::count() const
     return d->profiles.sizei();
 }
 
-Profiles::AbstractProfile *Profiles::tryFind(String const &name) const
+Profiles::AbstractProfile *Profiles::tryFind(const String &name) const
 {
     auto found = d->profiles.find(name);
     if (found != d->profiles.end())
@@ -181,7 +181,7 @@ Profiles::AbstractProfile *Profiles::tryFind(String const &name) const
     return nullptr;
 }
 
-Profiles::AbstractProfile &Profiles::find(String const &name) const
+Profiles::AbstractProfile &Profiles::find(const String &name) const
 {
     if (auto *p = tryFind(name))
     {
@@ -190,7 +190,7 @@ Profiles::AbstractProfile &Profiles::find(String const &name) const
     throw NotFoundError("Profiles::find", "Profile '" + name + "' not found");
 }
 
-void Profiles::setPersistentName(String const &name)
+void Profiles::setPersistentName(const String &name)
 {
     d->persistentName = name;
 }
@@ -234,7 +234,7 @@ void Profiles::remove(AbstractProfile &profile)
     d->remove(profile);
 }
 
-bool Profiles::rename(AbstractProfile const &profile, String const &newName)
+bool Profiles::rename(const AbstractProfile &profile, const String &newName)
 {
     if (newName.isEmpty() || tryFind(newName)) return false;
     d->changeLookupKey(profile, newName);
@@ -293,7 +293,7 @@ void Profiles::deserialize()
     App::fileSystem().findAll("profiles" / d->persistentName, folders);
     for (auto *i : folders)
     {
-        if (auto const *folder = maybeAs<Folder>(*i))
+        if (const auto *folder = maybeAs<Folder>(*i))
         {
             // Let's see if it contains any .dei files.
             folder->forContents([this](String name, File &file) {
@@ -341,14 +341,14 @@ Profiles::AbstractProfile::AbstractProfile()
     : d(new Impl(this))
 {}
 
-Profiles::AbstractProfile::AbstractProfile(AbstractProfile const &profile)
+Profiles::AbstractProfile::AbstractProfile(const AbstractProfile &profile)
     : d(new Impl(this))
 {
     d->name     = profile.name();
     d->readOnly = profile.isReadOnly();
 }
 
-Profiles::AbstractProfile &Profiles::AbstractProfile::operator = (AbstractProfile const &other)
+Profiles::AbstractProfile &Profiles::AbstractProfile::operator = (const AbstractProfile &other)
 {
     d->name     = other.d->name;
     d->readOnly = other.d->readOnly;
@@ -368,7 +368,7 @@ Profiles &Profiles::AbstractProfile::owner()
     return *d->owner;
 }
 
-Profiles const &Profiles::AbstractProfile::owner() const
+const Profiles &Profiles::AbstractProfile::owner() const
 {
     DE_ASSERT(d->owner);
     return *d->owner;
@@ -379,7 +379,7 @@ String Profiles::AbstractProfile::name() const
     return d->name;
 }
 
-bool Profiles::AbstractProfile::setName(String const &newName)
+bool Profiles::AbstractProfile::setName(const String &newName)
 {
     if (newName.isEmpty()) return false;
 

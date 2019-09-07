@@ -37,7 +37,7 @@ using namespace OVR;
 namespace de {
 
 #ifdef DE_HAVE_OCULUS_API
-Vec3f quaternionToPRYAngles(Quatf const &q)
+Vec3f quaternionToPRYAngles(const Quatf &q)
 {
     Vec3f pry;
     q.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&pry.z, &pry.x, &pry.y);
@@ -141,7 +141,7 @@ DE_PIMPL(OculusRift)
         return window->transform().as<VRWindowTransform>().unwarpedFramebuffer();
     }
 
-    void variableValueChanged(Variable &, Value const &)
+    void variableValueChanged(Variable &, const Value &)
     {
         densityChanged = true;
     }
@@ -417,7 +417,7 @@ DE_PIMPL(OculusRift)
     /**
      * Observe key events (any key) to dismiss the OVR Health and Safety warning.
      */
-    void keyEvent(KeyEvent const &ev)
+    void keyEvent(const KeyEvent &ev)
     {
         if (!window || ev.type() == Event::KeyRelease) return;
 

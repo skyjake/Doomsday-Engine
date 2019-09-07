@@ -52,7 +52,7 @@ DE_GUI_PIMPL(CommandWidget)
 
 DE_AUDIENCE_METHODS(CommandWidget, GotFocus, LostFocus, Command)
 
-CommandWidget::CommandWidget(String const &name)
+CommandWidget::CommandWidget(const String &name)
     : LineEditWidget(name), d(new Impl(this))
 {}
 
@@ -77,13 +77,13 @@ void CommandWidget::focusLost()
     DE_NOTIFY(LostFocus, i) { i->lostFocus(*this); }
 }
 
-bool CommandWidget::handleEvent(Event const &event)
+bool CommandWidget::handleEvent(const Event &event)
 {
     if (isDisabled()) return false;
 
     if (hasFocus() && event.isKeyDown())
     {
-        KeyEvent const &key = event.as<KeyEvent>();
+        const KeyEvent &key = event.as<KeyEvent>();
 
         if (d->allowReshow &&
             isSuggestingCompletion() &&
@@ -137,7 +137,7 @@ void CommandWidget::update()
     setAttribute(FocusCyclingDisabled, !text().isEmpty());
 }
 
-bool CommandWidget::handleControlKey(term::Key key, KeyModifiers const &mods)
+bool CommandWidget::handleControlKey(term::Key key, const KeyModifiers &mods)
 {
     if (LineEditWidget::handleControlKey(key, mods))
     {
@@ -157,7 +157,7 @@ void CommandWidget::operator>>(PersistentState &toState) const
                                   new ArrayValue(d->history.fullHistory(MAX_PERSISTENT_HISTORY)));
 }
 
-void CommandWidget::operator<<(PersistentState const &fromState)
+void CommandWidget::operator<<(const PersistentState &fromState)
 {
     d->history.setFullHistory(fromState.objectNamespace()
                               .getStringList(name().concatenateMember("history")));
@@ -179,7 +179,7 @@ void CommandWidget::closeAutocompletionPopup()
     d->allowReshow = false;
 }
 
-void CommandWidget::showAutocompletionPopup(String const &completionsText)
+void CommandWidget::showAutocompletionPopup(const String &completionsText)
 {
     d->popup->document().setText(completionsText);
     d->popup->document().scrollToTop(0.0);

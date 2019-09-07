@@ -50,16 +50,16 @@ DE_PIMPL_NOREF(LabelWidget)
     }
 };
 
-LabelWidget::LabelWidget(String const &name)
+LabelWidget::LabelWidget(const String &name)
     : Widget(name), d(new Impl)
 {}
 
-void LabelWidget::setBackground(TextCanvas::AttribChar const &background)
+void LabelWidget::setBackground(const TextCanvas::AttribChar &background)
 {
     d->background = background;
 }
 
-void LabelWidget::setLabel(String const &text, TextCanvas::AttribChar::Attribs attribs)
+void LabelWidget::setLabel(const String &text, TextCanvas::AttribChar::Attribs attribs)
 {
     d->label   = text;
     d->attribs = std::move(attribs);
@@ -67,13 +67,13 @@ void LabelWidget::setLabel(String const &text, TextCanvas::AttribChar::Attribs a
     redraw();
 }
 
-void LabelWidget::setAttribs(TextCanvas::AttribChar::Attribs const &attribs)
+void LabelWidget::setAttribs(const TextCanvas::AttribChar::Attribs &attribs)
 {
     d->attribs = attribs;
     redraw();
 }
 
-void LabelWidget::setBackgroundAttribs(TextCanvas::AttribChar::Attribs const &attribs)
+void LabelWidget::setBackgroundAttribs(const TextCanvas::AttribChar::Attribs &attribs)
 {
     d->background.attribs = attribs;
     redraw();

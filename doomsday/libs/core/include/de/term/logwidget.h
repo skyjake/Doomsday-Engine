@@ -32,7 +32,7 @@ namespace de { namespace term {
 class DE_PUBLIC LogWidget : public Widget
 {
 public:
-    LogWidget(String const &name = {});
+    LogWidget(const String &name = {});
 
     /**
      * Returns the log sink that can be connected to a log buffer for receiving
@@ -72,7 +72,7 @@ public:
     void scroll(int to);
 
     void draw();
-    bool handleEvent(Event const &event);
+    bool handleEvent(const Event &event);
 
     /**
      * Moves the scroll offset of the widget to the bottom of the history.

@@ -25,7 +25,7 @@
 
 using namespace de;
 
-static void KillsWidget_Draw(guidata_kills_t *kills, Point2Raw const *offset)
+static void KillsWidget_Draw(guidata_kills_t *kills, const Point2Raw *offset)
 {
     DE_ASSERT(kills);
     kills->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -55,11 +55,11 @@ void guidata_kills_t::tick(timespan_t /*elapsed*/)
 {
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
-    player_t const *plr = &players[player()];
+    const player_t *plr = &players[player()];
     _value = plr->killCount;
 }
 
-void guidata_kills_t::draw(Vec2i const &offset) const
+void guidata_kills_t::draw(const Vec2i &offset) const
 {
 #if !__JHEXEN__
 

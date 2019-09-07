@@ -57,7 +57,7 @@ DE_PIMPL(PackageLoader)
      * @param file  Package root.
      * @return @c true, if loaded.
      */
-    Package *tryFindLoaded(File const &file) const
+    Package *tryFindLoaded(const File &file) const
     {
         #if 0
         {
@@ -72,7 +72,7 @@ DE_PIMPL(PackageLoader)
         auto found = loaded.find(Package::identifierForFile(file));
         if (found != loaded.end())
         {
-            auto const &pkg = *found->second;
+            const auto &pkg = *found->second;
             if (&pkg.file() == &file || &pkg.sourceFile() == &file)
             {
                 return found->second;
@@ -81,9 +81,9 @@ DE_PIMPL(PackageLoader)
         return nullptr;
     }
 
-    static bool shouldIgnoreFile(File const &packageFile)
+    static bool shouldIgnoreFile(const File &packageFile)
     {
-        if (Feed const *feed = packageFile.originFeed())
+        if (const Feed *feed = packageFile.originFeed())
         {
             // PackageFeed generates links to loaded packages.
             if (is<PackageFeed>(feed)) return true;
@@ -91,7 +91,7 @@ DE_PIMPL(PackageLoader)
         return false;
     }
 
-    int findAllVariants(String const &packageIdVer, FS::FoundFiles &found) const
+    int findAllVariants(const String &packageIdVer, FS::FoundFiles &found) const
     {
         // The version may be provided optionally, to set the preferred version.
         auto idVer = Package::split(packageIdVer);
@@ -145,11 +145,11 @@ DE_PIMPL(PackageLoader)
         Package::validateMetadata(packFile.objectNamespace().subrecord("package"));
     }
 
-    File const *selectPackage(IdentifierList const &idList) const
+    const File *selectPackage(const IdentifierList &idList) const
     {
-        for (auto const &id : idList.ids)
+        for (const auto &id : idList.ids)
         {
-            if (File const *f = selectPackage(id))
+            if (const File *f = selectPackage(id))
                 return f;
         }
         return nullptr;
@@ -164,7 +164,7 @@ DE_PIMPL(PackageLoader)
      *
      * @return Selected package, or @c NULL if a version could not be selected.
      */
-    File const *selectPackage(String const &packageId) const
+    const File *selectPackage(const String &packageId) const
     {
         LOG_AS("selectPackage");
 
@@ -208,7 +208,7 @@ DE_PIMPL(PackageLoader)
         }
 
         // Sorted descending by version.
-        found.sort([] (File const *a, File const *b) -> bool
+        found.sort([] (const File *a, const File *b) -> bool
         {
             // The version must be specified using a format understood by Version.
             Version const aVer(a->objectNamespace().gets(VAR_PACKAGE_VERSION));
@@ -227,7 +227,7 @@ DE_PIMPL(PackageLoader)
         return found.back();
     }
 
-    Package &load(String const &packageId, File const &source)
+    Package &load(const String &packageId, const File &source)
     {
         if (loaded.contains(packageId))
         {
@@ -280,7 +280,7 @@ DE_PIMPL(PackageLoader)
         unload(pkgId);
     }
 
-    void listPackagesInIndex(FileIndex const &index, StringList &list)
+    void listPackagesInIndex(const FileIndex &index, StringList &list)
     {
         for (File *indexedFile : index.files())
         {
@@ -302,22 +302,22 @@ DE_PIMPL(PackageLoader)
 
                     list.append(path);
                 }
-                catch (Package::NotPackageError const &er)
+                catch (const Package::NotPackageError &er)
                 {
                     // This is usually a .pack folder used only for nesting.
                     LOG_RES_XVERBOSE("\"%s\": %s", fileName << er.asText());
                 }
-                catch (Package::ValidationError const &er)
+                catch (const Package::ValidationError &er)
                 {
                     // Not a loadable package.
                     LOG_RES_MSG("\"%s\": Package is invalid: %s") << fileName << er.asText();
                 }
-                catch (Parser::SyntaxError const &er)
+                catch (const Parser::SyntaxError &er)
                 {
                     LOG_RES_WARNING("\"%s\": Package has a Doomsday Script syntax error: %s")
                             << fileName << er.asText();
                 }
-                catch (Info::SyntaxError const &er)
+                catch (const Info::SyntaxError &er)
                 {
                     // Not a loadable package.
                     LOG_RES_WARNING("\"%s\": Package has a syntax error: %s")
@@ -334,9 +334,9 @@ DE_PIMPL(PackageLoader)
         }
     }
 
-    void loadRequirements(File const &packageFile)
+    void loadRequirements(const File &packageFile)
     {
-        for (String const &reqId : Package::requiredPackages(packageFile))
+        for (const String &reqId : Package::requiredPackages(packageFile))
         {
             if (!self().isLoaded(reqId))
             {
@@ -345,21 +345,21 @@ DE_PIMPL(PackageLoader)
         }
     }
 
-    void forOptionalContent(File const &packageFile,
-                            std::function<void (String const &)> callback) const
+    void forOptionalContent(const File &packageFile,
+                            std::function<void (const String &)> callback) const
     {
         // Packages enabled/disabled for use.
-        DictionaryValue const &selPkgs = Config::get("fs.selectedPackages")
+        const DictionaryValue &selPkgs = Config::get("fs.selectedPackages")
                                          .value<DictionaryValue>();
 
         const Record &meta = Package::metadata(packageFile);
         const String idVer = Package::versionedIdentifierForFile(packageFile);
 
         // Helper function to determine if a particular package is marked for loading.
-        auto isPackageSelected = [&idVer, &selPkgs] (TextValue const &id, bool byDefault) -> bool {
+        auto isPackageSelected = [&idVer, &selPkgs] (const TextValue &id, bool byDefault) -> bool {
             TextValue const key(idVer);
             if (selPkgs.contains(key)) {
-                auto const &sels = selPkgs.element(key).as<DictionaryValue>();
+                const auto &sels = selPkgs.element(key).as<DictionaryValue>();
                 if (sels.contains(id)) {
                     return sels.element(id).isTrue();
                 }
@@ -377,7 +377,7 @@ DE_PIMPL(PackageLoader)
 
         if (meta.has("recommends"))
         {
-            for (auto const *id : meta.geta("recommends").elements())
+            for (const auto *id : meta.geta("recommends").elements())
             {
                 String const pkgId = id->asText();
                 if (isPackageSelected(pkgId, true))
@@ -388,7 +388,7 @@ DE_PIMPL(PackageLoader)
         }
         if (meta.has("extras"))
         {
-            for (auto const *id : meta.geta("extras").elements())
+            for (const auto *id : meta.geta("extras").elements())
             {
                 String const pkgId = id->asText();
                 if (isPackageSelected(pkgId, false))
@@ -399,9 +399,9 @@ DE_PIMPL(PackageLoader)
         }
     }
 
-    void loadOptionalContent(File const &packageFile)
+    void loadOptionalContent(const File &packageFile)
     {
-        forOptionalContent(packageFile, [this] (String const &pkgId)
+        forOptionalContent(packageFile, [this] (const String &pkgId)
         {
             if (!self().isLoaded(pkgId))
             {
@@ -414,7 +414,7 @@ DE_PIMPL(PackageLoader)
     {
         List<Package *> pkgs;
         for (auto &i : loaded) pkgs << i.second;
-        std::sort(pkgs.begin(), pkgs.end(), [] (Package const *a, Package const *b) {
+        std::sort(pkgs.begin(), pkgs.end(), [] (const Package *a, const Package *b) {
             return a->order() < b->order();
         });
         return pkgs;
@@ -432,21 +432,21 @@ DE_AUDIENCE_METHOD(PackageLoader, Unload)
 PackageLoader::PackageLoader() : d(new Impl(this))
 {}
 
-bool PackageLoader::isAvailable(String const &packageId) const
+bool PackageLoader::isAvailable(const String &packageId) const
 {
     return d->selectPackage(IdentifierList(packageId)) != nullptr;
 }
 
-File const *PackageLoader::select(String const &packageId) const
+const File *PackageLoader::select(const String &packageId) const
 {
     return d->selectPackage(IdentifierList(packageId));
 }
 
-Package const &PackageLoader::load(String const &packageId)
+const Package &PackageLoader::load(const String &packageId)
 {
     LOG_AS("PackageLoader");
 
-    File const *packFile = d->selectPackage(IdentifierList(packageId));
+    const File *packFile = d->selectPackage(IdentifierList(packageId));
     if (!packFile)
     {
         throw NotFoundError("PackageLoader::load",
@@ -469,7 +469,7 @@ Package const &PackageLoader::load(String const &packageId)
             i->setOfLoadedPackagesChanged();
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         // Someone took issue with the loaded package; cancel the load.
         unload(id);
@@ -481,7 +481,7 @@ Package const &PackageLoader::load(String const &packageId)
     return package(id);
 }
 
-void PackageLoader::unload(String const &packageId)
+void PackageLoader::unload(const String &packageId)
 {
     String id = Package::split(packageId).first;
 
@@ -518,7 +518,7 @@ void PackageLoader::refresh()
     FS::locate<Folder>("/packs").populate(Folder::PopulateOnlyThisFolder);
 }
 
-bool PackageLoader::isLoaded(String const &packageId) const
+bool PackageLoader::isLoaded(const String &packageId) const
 {
     // Split ID, check version too if specified.
     auto const id_ver = Package::split(packageId);
@@ -531,17 +531,17 @@ bool PackageLoader::isLoaded(String const &packageId) const
             id_ver.second == found->second->version());
 }
 
-bool PackageLoader::isLoaded(File const &file) const
+bool PackageLoader::isLoaded(const File &file) const
 {
     return d->tryFindLoaded(file) != nullptr;
 }
 
-Package const *PackageLoader::tryFindLoaded(File const &file) const
+const Package *PackageLoader::tryFindLoaded(const File &file) const
 {
     return d->tryFindLoaded(file);
 }
 
-PackageLoader::LoadedPackages const &PackageLoader::loadedPackages() const
+const PackageLoader::LoadedPackages &PackageLoader::loadedPackages() const
 {
     return d->loaded;
 }
@@ -568,7 +568,7 @@ StringList PackageLoader::loadedPackageIdsInOrder(IdentifierType idType) const
     StringList ids;
     for (auto p : pkgs)
     {
-        Record const &meta = Package::metadata(p->file());
+        const Record &meta = Package::metadata(p->file());
         Version const pkgVersion(meta.gets("version"));
         if (idType == Versioned && pkgVersion.isValid()) // nonzero
         {
@@ -583,7 +583,7 @@ StringList PackageLoader::loadedPackageIdsInOrder(IdentifierType idType) const
     return ids;
 }
 
-Package const &PackageLoader::package(String const &packageId) const
+const Package &PackageLoader::package(const String &packageId) const
 {
     if (!isLoaded(packageId))
     {
@@ -600,7 +600,7 @@ void PackageLoader::sortInPackageOrder(FS::FoundFiles &filesToSort) const
     List<FileAndOrder> all;
     for (auto *i : filesToSort)
     {
-        Package const *pkg = 0;
+        const Package *pkg = 0;
         String identifier = Package::identifierForContainerOfFile(*i);
         if (isLoaded(identifier))
         {
@@ -655,18 +655,18 @@ StringList PackageLoader::findAllPackages() const
     return all;
 }
 
-StringList PackageLoader::expandDependencies(StringList const &packageIdentifiers) const
+StringList PackageLoader::expandDependencies(const StringList &packageIdentifiers) const
 {
     StringList expanded;
     for (String pkgId : packageIdentifiers)
     {
-        if (File const *file = select(pkgId))
+        if (const File *file = select(pkgId))
         {
             for (String reqId : Package::requiredPackages(*file))
             {
                 expanded << reqId;
             }
-            d->forOptionalContent(*file, [&expanded] (String const &pkgId)
+            d->forOptionalContent(*file, [&expanded] (const String &pkgId)
             {
                 expanded << pkgId;
             });

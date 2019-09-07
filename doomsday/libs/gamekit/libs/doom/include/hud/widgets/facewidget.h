@@ -31,7 +31,7 @@ class guidata_face_t : public HudWidget
 {
 public:
     guidata_face_t(void (*updateGeometry) (HudWidget *wi),
-                   void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                   void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                    de::dint player);
     virtual ~guidata_face_t();
 
@@ -39,7 +39,7 @@ public:
 
     void tick(timespan_t elapsed);
     //void updateGeometry();
-    //void draw(de::Vec2i const &offset = de::Vec2i()) const;
+    //void draw(const de::Vec2i &offset = de::Vec2i()) const;
 
 public:
     static void prepareAssets();
@@ -48,8 +48,8 @@ public:
     DE_PRIVATE(d)
 };
 
-void Face_Drawer    (guidata_face_t *face, Point2Raw const *offset);
-void SBarFace_Drawer(guidata_face_t *face, Point2Raw const *offset);
+void Face_Drawer    (guidata_face_t *face, const Point2Raw *offset);
+void SBarFace_Drawer(guidata_face_t *face, const Point2Raw *offset);
 
 void Face_UpdateGeometry    (guidata_face_t *face);
 void SBarFace_UpdateGeometry(guidata_face_t *face);

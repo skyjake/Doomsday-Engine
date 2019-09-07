@@ -46,7 +46,7 @@ public:
      *
      * @param file  File with Info source containing color definitions.
      */
-    void addFromInfo(File const &file);
+    void addFromInfo(const File &file);
 
     /**
      * Finds a specific color.
@@ -55,7 +55,7 @@ public:
      *
      * @return  Vector with the color values (0...255).
      */
-    Color color(DotPath const &path) const;
+    Color color(const DotPath &path) const;
 
     /**
      * Finds a specific color.
@@ -64,10 +64,10 @@ public:
      *
      * @return  Vector with the floating-point color values (0...1).
      */
-    Colorf colorf(DotPath const &path) const;
+    Colorf colorf(const DotPath &path) const;
 
 protected:
-    virtual ISource *newSourceFromInfo(String const &id);
+    virtual ISource *newSourceFromInfo(const String &id);
     virtual IData *loadFromSource(ISource &source);
 
 private:

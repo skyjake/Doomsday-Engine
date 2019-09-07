@@ -54,7 +54,7 @@ DE_GUI_PIMPL(LineEditWidget)
     // Style.
     ColorTheme colorTheme = Normal;
     Vec4f textColor;
-    Font const *font;
+    const Font *font;
     Time blinkTime;
     Animation hovering;
     float unfocusedBackgroundOpacity = 0.f;
@@ -211,7 +211,7 @@ DE_GUI_PIMPL(LineEditWidget)
                 .setVertices(gfx::TriangleStrip, verts, gfx::Static);
     }
 
-    void updateHover(Vec2i const &pos)
+    void updateHover(const Vec2i &pos)
     {
         if (/*!self().hasFocus() && */ self().hitTest(pos))
         {
@@ -248,7 +248,7 @@ DE_GUI_PIMPL(LineEditWidget)
 
 DE_AUDIENCE_METHODS(LineEditWidget, Enter, ContentChange)
 
-LineEditWidget::LineEditWidget(String const &name)
+LineEditWidget::LineEditWidget(const String &name)
     : GuiWidget(name),
       AbstractLineEditor(new FontLineWrapping),
       d(new Impl(this))
@@ -260,7 +260,7 @@ LineEditWidget::LineEditWidget(String const &name)
     rule().setInput(Rule::Height, *d->height);
 }
 
-void LineEditWidget::setText(String const &lineText)
+void LineEditWidget::setText(const String &lineText)
 {
     AbstractLineEditor::setText(lineText);
 
@@ -277,8 +277,8 @@ void LineEditWidget::setText(String const &lineText)
     }
 }
 
-void LineEditWidget::setEmptyContentHint(String const &hintText,
-                                         String const &hintFont)
+void LineEditWidget::setEmptyContentHint(const String &hintText,
+                                         const String &hintFont)
 {
     if (!d->hint)
     {
@@ -481,7 +481,7 @@ void LineEditWidget::drawContent()
     GLState::pop();
 }
 
-bool LineEditWidget::handleEvent(Event const &event)
+bool LineEditWidget::handleEvent(const Event &event)
 {
     if (isDisabled()) return false;
 
@@ -515,7 +515,7 @@ bool LineEditWidget::handleEvent(Event const &event)
     // Only handle keys when focused.
     if (hasFocus() && event.isKeyDown())
     {
-        KeyEvent const &key = event.as<KeyEvent>();
+        const KeyEvent &key = event.as<KeyEvent>();
 
         if (key.isModifier())
         {
@@ -627,7 +627,7 @@ term::Key LineEditWidget::termKey(const KeyEvent &keyEvent) // static
     }
 }
 
-AbstractLineEditor::KeyModifiers LineEditWidget::modifiersFromKeyEvent(KeyEvent::Modifiers const &keyMods)
+AbstractLineEditor::KeyModifiers LineEditWidget::modifiersFromKeyEvent(const KeyEvent::Modifiers &keyMods)
 {
     KeyModifiers mods;
 

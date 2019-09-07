@@ -43,7 +43,7 @@ public:
     DE_AUDIENCE(Change, void variableArrayChanged(VariableArrayWidget &))
 
 public:
-    VariableArrayWidget(Variable &variable, String const &name = String());
+    VariableArrayWidget(Variable &variable, const String &name = String());
 
     Variable &variable() const;
     MenuWidget &elementsMenu();
@@ -58,15 +58,15 @@ public:
      *
      * @return Pointer to the add button, whose ownership is given to the caller.
      */
-    ButtonWidget *detachAddButton(Rule const &contentWidth);
+    ButtonWidget *detachAddButton(const Rule &contentWidth);
 
-    ui::Item *makeItem(Value const &value);
+    ui::Item *makeItem(const Value &value);
 
     // Events.
-    bool handleEvent(Event const &event) override;
+    bool handleEvent(const Event &event) override;
 
 protected:
-    virtual String labelForElement(Value const &value) const;
+    virtual String labelForElement(const Value &value) const;
     virtual void   elementCreated(LabelWidget &, const ui::Item &);
 
     void updateFromVariable();

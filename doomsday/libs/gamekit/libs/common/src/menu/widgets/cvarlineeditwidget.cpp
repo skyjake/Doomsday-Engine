@@ -28,7 +28,7 @@ using namespace de;
 namespace common {
 namespace menu {
 
-CVarLineEditWidget::CVarLineEditWidget(char const *cvarPath)
+CVarLineEditWidget::CVarLineEditWidget(const char *cvarPath)
     : LineEditWidget()
     , _cvarPath(cvarPath)
 {
@@ -39,14 +39,14 @@ CVarLineEditWidget::CVarLineEditWidget(char const *cvarPath)
 CVarLineEditWidget::~CVarLineEditWidget()
 {}
 
-char const *CVarLineEditWidget::cvarPath() const
+const char *CVarLineEditWidget::cvarPath() const
 {
     return _cvarPath;
 }
 
 void CVarLineEditWidget_UpdateCVar(Widget &wi, Widget::Action action)
 {
-    CVarLineEditWidget const &edit = wi.as<CVarLineEditWidget>();
+    const CVarLineEditWidget &edit = wi.as<CVarLineEditWidget>();
     cvartype_t varType = Con_GetVariableType(edit.cvarPath());
 
     if(action != Widget::Modified) return;

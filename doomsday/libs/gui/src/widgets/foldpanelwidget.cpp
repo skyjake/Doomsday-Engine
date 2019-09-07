@@ -77,11 +77,11 @@ DE_PIMPL_NOREF(FoldPanelWidget)
             return changed;
         }
 
-        void glMakeGeometry(GuiVertexBuilder &verts, Rectanglef const &rect) override
+        void glMakeGeometry(GuiVertexBuilder &verts, const Rectanglef &rect) override
         {
             GuiRootWidget &root = fold.root();
             Atlas &atlas = root.atlas();
-            ColorBank::Colorf const &textColor = fold.title().textColorf();
+            const ColorBank::Colorf &textColor = fold.title().textColorf();
 
             // Frame.
             /*verts.makeFlexibleFrame(rect.toRectanglei(), 5, textColor,
@@ -106,10 +106,10 @@ DE_PIMPL_NOREF(FoldPanelWidget)
     }
 };
 
-FoldPanelWidget::FoldPanelWidget(String const &name) : PanelWidget(name), d(new Impl)
+FoldPanelWidget::FoldPanelWidget(const String &name) : PanelWidget(name), d(new Impl)
 {}
 
-ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
+ButtonWidget *FoldPanelWidget::makeTitle(const String &text)
 {
     d->title.reset(new ButtonWidget("fold-title"));
 

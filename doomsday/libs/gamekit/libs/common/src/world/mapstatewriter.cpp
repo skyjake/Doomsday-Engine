@@ -173,7 +173,7 @@ DE_PIMPL(MapStateWriter)
      */
     static int writeThinkerWorker(thinker_t *th, void *context)
     {
-        writethinkerworker_params_t const &p = *static_cast<writethinkerworker_params_t *>(context);
+        const writethinkerworker_params_t &p = *static_cast<writethinkerworker_params_t *>(context);
 
         // We are only concerned with thinkers we have save info for.
         ThinkerClassInfo *thInfo = SV_ThinkerInfo(*th);
@@ -347,7 +347,7 @@ void MapStateWriter::write(Writer1 *writer, bool excludePlayers)
     delete d->materialArchive;  d->materialArchive = 0;
 }
 
-ThingArchive::SerialId MapStateWriter::serialIdFor(mobj_t const *mobj)
+ThingArchive::SerialId MapStateWriter::serialIdFor(const mobj_t *mobj)
 {
     DE_ASSERT(d->thingArchive != 0);
     return d->thingArchive->serialIdFor(mobj);

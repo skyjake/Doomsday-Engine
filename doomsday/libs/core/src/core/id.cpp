@@ -39,7 +39,7 @@ Id::Id() : _id(idGenerator++)
     }
 }
 
-Id::Id(String const &text) : _id(None)
+Id::Id(const String &text) : _id(None)
 {
     if (text.beginsWith("{") && text.endsWith("}"))
     {
@@ -75,7 +75,7 @@ dint64 Id::asInt64() const
     return _id;
 }
 
-std::ostream &operator << (std::ostream &os, Id const &id)
+std::ostream &operator << (std::ostream &os, const Id &id)
 {
     os << id.asText().c_str();
     return os;

@@ -67,12 +67,12 @@ public:  // Modules: -----------------------------------------------------------
      * Discard the currently loaded ACS code module and attempt to load the module
      * associated with the given @a mapUri reference.
      */
-    void loadModuleForMap(res::Uri const &mapUri);
+    void loadModuleForMap(const res::Uri &mapUri);
 
     /**
      * Provides readonly access to the currently loaded bytecode module.
      */
-    Module const &module() const;
+    const Module &module() const;
 
 public:  // Scripts: -----------------------------------------------------------
 
@@ -105,7 +105,7 @@ public:  // Scripts: -----------------------------------------------------------
      *
      * @return  @c true iff a script was newly started (or deferred).
      */
-    bool deferScriptStart(res::Uri const &mapUri, int scriptNumber, Script::Args const &args);
+    bool deferScriptStart(const res::Uri &mapUri, int scriptNumber, const Script::Args &args);
 
 public:  // (De)serialization: -------------------------------------------------
 
@@ -121,7 +121,7 @@ public:  /// @todo make private: -----------------------------------------------
      * To be called when the current map changes to activate any deferred scripts
      * which should now begin/resume.
      */
-    void runDeferredTasks(res::Uri const &mapUri);
+    void runDeferredTasks(const res::Uri &mapUri);
 
     /**
      * Start all scripts flagged to begin immediately (but allow a 1 second delay

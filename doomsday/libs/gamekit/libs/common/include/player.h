@@ -70,7 +70,7 @@ weapontype_t P_WeaponSlotCycle(weapontype_t type, dd_bool prev);
  *
  * @return  Number of the given player.
  */
-int P_GetPlayerNum(player_t const *plr);
+int P_GetPlayerNum(const player_t *plr);
 
 /**
  * Return a bit field for the current player's cheats.
@@ -79,7 +79,7 @@ int P_GetPlayerNum(player_t const *plr);
  *
  * @return  Cheats active for the given player in a bitfield.
  */
-int P_GetPlayerCheats(player_t const *plr);
+int P_GetPlayerCheats(const player_t *plr);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -97,7 +97,7 @@ enum PlayerSelectionCriteria {
  *
  * @return  Total count.
  */
-int P_CountPlayersInGame(PlayerSelectionCriteria const &criteria = All);
+int P_CountPlayersInGame(const PlayerSelectionCriteria &criteria = All);
 
 extern "C" {
 #endif
@@ -181,8 +181,8 @@ void P_PlayerChangeClass(player_t *plr, playerclass_t newClass);
  * @param msg     The message to be sent.
  * @param flags   @ref logMessageFlags
  */
-void P_SetMessageWithFlags(const player_t *plr, char const *msg, int flags);
-void P_SetMessage(const player_t *plr, char const *msg/*, int flags = 0*/);
+void P_SetMessageWithFlags(const player_t *plr, const char *msg, int flags);
+void P_SetMessage(const player_t *plr, const char *msg/*, int flags = 0*/);
 
 /**
  * Send a yellow message to the given player and maybe echos it to the console.
@@ -192,8 +192,8 @@ void P_SetMessage(const player_t *plr, char const *msg/*, int flags = 0*/);
  * @param flags   @ref logMessageFlags
  */
 #if __JHEXEN__
-void P_SetYellowMessageWithFlags(player_t *plr, char const *msg, int flags);
-void P_SetYellowMessage (player_t *plr, char const *msg/*, int flags = 0*/);
+void P_SetYellowMessageWithFlags(player_t *plr, const char *msg, int flags);
+void P_SetYellowMessage (player_t *plr, const char *msg/*, int flags = 0*/);
 #endif
 
 /**
@@ -239,7 +239,7 @@ void Player_LeaveMap(player_t *player, dd_bool newHub);
 /**
  * Determines whether the player is currently waiting to be reborn in the current map.
  */
-dd_bool Player_WaitingForReborn(player_t const *player);
+dd_bool Player_WaitingForReborn(const player_t *player);
 
 /**
  * Determine the viewing yaw angle for a player. If a body yaw has been applied to the player,
@@ -254,7 +254,7 @@ angle_t Player_ViewYawAngle(int playerNum);
 /**
  * Updates game status cvars for the player.
  */
-void Player_UpdateStatusCVars(player_t const *player);
+void Player_UpdateStatusCVars(const player_t *player);
 
 void Player_NotifyPSpriteChange(player_t *player, int position);
 

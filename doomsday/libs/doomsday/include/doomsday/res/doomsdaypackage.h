@@ -33,9 +33,9 @@ namespace res {
 class LIBDOOMSDAY_PUBLIC DoomsdayPackage
 {
 public:
-    DoomsdayPackage(de::Package const &package);
+    DoomsdayPackage(const de::Package &package);
 
-    de::File const &sourceFile() const;
+    const de::File &sourceFile() const;
 
     bool hasDefinitions() const;
 
@@ -44,17 +44,17 @@ public:
     res::Uri loadableUri() const;
 
 public:
-    static bool hasDefinitions(de::File const &packageFile);
+    static bool hasDefinitions(const de::File &packageFile);
 
-    static de::String defsPath(de::File const &packageFile);
+    static de::String defsPath(const de::File &packageFile);
 
     /**
      * Returns the URI of the package for loading via FS1.
      */
-    static res::Uri loadableUri(de::File const &packageFile);
+    static res::Uri loadableUri(const de::File &packageFile);
 
 private:
-    de::Package const &_pkg;
+    const de::Package &_pkg;
 };
 
 } // namespace res

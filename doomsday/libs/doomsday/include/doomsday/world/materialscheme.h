@@ -63,7 +63,7 @@ public:
     explicit MaterialScheme(de::String symbolicName);
 
     /// @return  Symbolic name of this scheme (e.g., "Flats").
-    de::String const &name() const;
+    const de::String &name() const;
 
     /// @return  Total number of manifests in the scheme.
     inline int size() const { return index().size(); }
@@ -84,30 +84,30 @@ public:
      * @param path  Virtual path for the resultant manifest.
      * @return  The (possibly newly created) manifest at @a path.
      */
-    Manifest &declare(de::Path const &path);
+    Manifest &declare(const de::Path &path);
 
     /**
      * Determines if a manifest exists on the given @a path.
      * @return @c true if a manifest exists; otherwise @a false.
      */
-    bool has(de::Path const &path) const;
+    bool has(const de::Path &path) const;
 
     /**
      * Search the scheme for a manifest matching @a path.
      *
      * @return  Found manifest.
      */
-    Manifest const &find(de::Path const &path) const;
+    const Manifest &find(const de::Path &path) const;
 
     /// @copydoc find()
-    Manifest &find(de::Path const &path);
+    Manifest &find(const de::Path &path);
 
-    Manifest *tryFind(de::Path const &path) const;
+    Manifest *tryFind(const de::Path &path) const;
 
     /**
      * Provides access to the manifest index for efficient traversal.
      */
-    Index const &index() const;
+    const Index &index() const;
 
 private:
     DE_PRIVATE(d)

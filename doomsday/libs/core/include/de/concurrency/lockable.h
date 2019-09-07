@@ -58,11 +58,11 @@ struct LockableT : public Lockable
     Type value;
 
     LockableT() {}
-    LockableT(Type const &initial) : value(initial) {}
+    LockableT(const Type &initial) : value(initial) {}
     LockableT(Type &&initial) : value(initial) {}
 
     operator Type &() { return value; }
-    operator Type const &() const { return value; }
+    operator const Type &() const { return value; }
 };
 
 } // namespace de

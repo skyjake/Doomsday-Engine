@@ -28,12 +28,12 @@ static duint const UNDEFINED_POS = 0xffffffff;
 TokenRange::TokenRange() : _tokens(nullptr), _start(0), _end(0)
 {}
 
-TokenRange::TokenRange(TokenBuffer const &tokens) : _tokens(&tokens), _start(0)
+TokenRange::TokenRange(const TokenBuffer &tokens) : _tokens(&tokens), _start(0)
 {
     _end = _tokens->size();
 }
 
-TokenRange::TokenRange(TokenBuffer const &tokens, dsize start, dsize end)
+TokenRange::TokenRange(const TokenBuffer &tokens, dsize start, dsize end)
     : _tokens(&tokens), _start(start), _end(end)
 {
 }
@@ -65,7 +65,7 @@ dsize TokenRange::tokenPos(dsize index) const
     return index - _start;
 }
 
-Token const &TokenRange::token(dsize pos) const
+const Token &TokenRange::token(dsize pos) const
 {
     if (pos >= size())
     {
@@ -75,7 +75,7 @@ Token const &TokenRange::token(dsize pos) const
     return _tokens->at(tokenIndex(pos));
 }
 
-Token const &TokenRange::firstToken() const
+const Token &TokenRange::firstToken() const
 {
     if (!size())
     {
@@ -85,7 +85,7 @@ Token const &TokenRange::firstToken() const
     return token(0);
 }
 
-Token const &TokenRange::lastToken() const
+const Token &TokenRange::lastToken() const
 {
     if (!size())
     {
@@ -159,7 +159,7 @@ dint TokenRange::findIndexSkippingBrackets(const char *token, dsize startIndex) 
 
     for (dsize i = startIndex; i < _end; ++i)
     {
-        Token const &t = _tokens->at(i);
+        const Token &t = _tokens->at(i);
         if (t.equals(Token::PARENTHESIS_OPEN) || t.equals(Token::BRACKET_OPEN) ||
             t.equals(Token::CURLY_OPEN))
         {
@@ -205,7 +205,7 @@ bool TokenRange::getNextDelimited(const char *delimiter, TokenRange &subrange) c
     return true;
 }
 
-void TokenRange::bracketTokens(Token const &openingToken, const char * &opening,
+void TokenRange::bracketTokens(const Token &openingToken, const char * &opening,
                                const char * &closing)
 {
     opening = nullptr;
@@ -238,7 +238,7 @@ dsize TokenRange::closingBracket(dsize openBracketPos) const
     int level = 1;
     for (dsize i = tokenIndex(openBracketPos + 1); i < _end; ++i)
     {
-        Token const &token = _tokens->at(i);
+        const Token &token = _tokens->at(i);
         if (token.equals(closingToken))
         {
             --level;

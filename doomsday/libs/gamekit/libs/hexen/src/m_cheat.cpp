@@ -43,7 +43,7 @@ typedef eventsequencehandler_t cheatfunc_t;
 #define CHEAT(x) G_Cheat##x
 
 /// Helper macro for declaring cheat callback functions.
-#define CHEAT_FUNC(x) int G_Cheat##x(int player, EventSequenceArg const *args, int numArgs)
+#define CHEAT_FUNC(x) int G_Cheat##x(int player, const EventSequenceArg *args, int numArgs)
 
 /// Helper macro for registering new cheat event sequence handlers.
 #define ADDCHEAT(name, callback) G_AddEventSequence((name), CHEAT(callback))

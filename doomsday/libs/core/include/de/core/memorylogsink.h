@@ -36,13 +36,13 @@ public:
 
     void setPrivileged(bool onlyPrivileged);
 
-    LogSink &operator << (LogEntry const &entry);
-    LogSink &operator << (String const &plainText);
+    LogSink &operator << (const LogEntry &entry);
+    LogSink &operator << (const String &plainText);
 
     void flush() {}
 
     int entryCount() const;
-    LogEntry const &entry(int index) const;
+    const LogEntry &entry(int index) const;
     void remove(int pos, int n = 1);
     void clear();
 

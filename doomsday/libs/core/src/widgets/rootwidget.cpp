@@ -60,42 +60,42 @@ RootWidget::Size RootWidget::viewSize() const
     return d->viewSize();
 }
 
-RuleRectangle const &RootWidget::viewRule() const
+const RuleRectangle &RootWidget::viewRule() const
 {
     return *d->viewRect;
 }
 
-Rule const &RootWidget::viewLeft() const
+const Rule &RootWidget::viewLeft() const
 {
     return d->viewRect->left();
 }
 
-Rule const &RootWidget::viewRight() const
+const Rule &RootWidget::viewRight() const
 {
     return d->viewRect->right();
 }
 
-Rule const &RootWidget::viewTop() const
+const Rule &RootWidget::viewTop() const
 {
     return d->viewRect->top();
 }
 
-Rule const &RootWidget::viewBottom() const
+const Rule &RootWidget::viewBottom() const
 {
     return d->viewRect->bottom();
 }
 
-Rule const &RootWidget::viewWidth() const
+const Rule &RootWidget::viewWidth() const
 {
     return d->viewRect->width();
 }
 
-Rule const &RootWidget::viewHeight() const
+const Rule &RootWidget::viewHeight() const
 {
     return d->viewRect->height();
 }
 
-void RootWidget::setViewSize(Size const &size)
+void RootWidget::setViewSize(const Size &size)
 {
 #if defined (DE_MOBILE)
     DE_GUARD(this);
@@ -166,7 +166,7 @@ void RootWidget::draw()
     Rule::markRulesValid(); // All done for this frame.
 }
 
-bool RootWidget::processEvent(Event const &event)
+bool RootWidget::processEvent(const Event &event)
 {
 #if defined (DE_MOBILE)
     DE_GUARD(this);

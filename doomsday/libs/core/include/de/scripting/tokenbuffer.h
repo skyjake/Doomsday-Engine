@@ -208,9 +208,9 @@ public:
     bool empty() const { return !size(); }
 
     /// Returns a specific token in the buffer.
-    Token const &at(dsize i) const;
+    const Token &at(dsize i) const;
 
-    Token const &latest() const;
+    const Token &latest() const;
 
 private:
     /**

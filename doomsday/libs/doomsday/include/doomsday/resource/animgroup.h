@@ -94,7 +94,7 @@ public:
      *
      * @see frames()
      */
-    bool hasFrameFor(TextureManifest const &textureManifest) const;
+    bool hasFrameFor(const TextureManifest &textureManifest) const;
 
     /**
      * Append a new frame to the animation.
@@ -131,7 +131,7 @@ public:
      *
      * @see frame()
      */
-    Frames const &allFrames() const;
+    const Frames &allFrames() const;
 
 private:
     DE_PRIVATE(d)

@@ -24,9 +24,9 @@ using namespace de;
 
 namespace world {
 
-TextureMaterialLayer::AnimationStage::AnimationStage(res::Uri const &texture, int tics,
+TextureMaterialLayer::AnimationStage::AnimationStage(const res::Uri &texture, int tics,
     float variance, float glowStrength, float glowStrengthVariance, Vec2f const origin,
-    res::Uri const &maskTexture, Vec2f const &maskDimensions, blendmode_t blendMode, float opacity)
+    const res::Uri &maskTexture, const Vec2f &maskDimensions, blendmode_t blendMode, float opacity)
     : /*Record()
     , */ Stage(tics, variance)
     , texture(texture)
@@ -51,7 +51,7 @@ TextureMaterialLayer::AnimationStage::AnimationStage(res::Uri const &texture, in
     set("glowStrengthVariance", glowStrengthVariance);*/
 }
 
-TextureMaterialLayer::AnimationStage::AnimationStage(AnimationStage const &other)
+TextureMaterialLayer::AnimationStage::AnimationStage(const AnimationStage &other)
     : /*Record(other)
     , */Stage(other)
 {}
@@ -81,7 +81,7 @@ void TextureMaterialLayer::AnimationStage::resetToDefaults()
 }
 
 TextureMaterialLayer::AnimationStage *
-TextureMaterialLayer::AnimationStage::fromDef(Record const &stageDef)
+TextureMaterialLayer::AnimationStage::fromDef(const Record &stageDef)
 {
     return new AnimationStage(res::makeUri(stageDef.gets("texture")),
                               stageDef.geti("tics"),
@@ -99,7 +99,7 @@ String TextureMaterialLayer::AnimationStage::description() const
 
 // ------------------------------------------------------------------------------------
 
-TextureMaterialLayer *TextureMaterialLayer::fromDef(Record const &definition)
+TextureMaterialLayer *TextureMaterialLayer::fromDef(const Record &definition)
 {
     defn::MaterialLayer layerDef(definition);
     auto *layer = new TextureMaterialLayer();
@@ -110,15 +110,15 @@ TextureMaterialLayer *TextureMaterialLayer::fromDef(Record const &definition)
     return layer;
 }
 
-int TextureMaterialLayer::addStage(TextureMaterialLayer::AnimationStage const &stageToCopy)
+int TextureMaterialLayer::addStage(const TextureMaterialLayer::AnimationStage &stageToCopy)
 {
     _stages.append(new AnimationStage(stageToCopy));
     return _stages.count() - 1;
 }
 
-TextureMaterialLayer::AnimationStage const &TextureMaterialLayer::stage(int index) const
+const TextureMaterialLayer::AnimationStage &TextureMaterialLayer::stage(int index) const
 {
-    return static_cast<AnimationStage const &>(Layer::stage(index));
+    return static_cast<const AnimationStage &>(Layer::stage(index));
 }
 
 TextureMaterialLayer::AnimationStage &TextureMaterialLayer::stage(int index)

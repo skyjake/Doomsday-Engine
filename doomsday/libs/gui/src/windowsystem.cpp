@@ -85,7 +85,7 @@ void WindowSystem::setStyle(Style *style)
     d->setStyle(style);
 }
 
-void WindowSystem::addWindow(String const &id, BaseWindow *window)
+void WindowSystem::addWindow(const String &id, BaseWindow *window)
 {
     window->audienceForPixelRatio() += d;
     d->windows.insert(id, window);
@@ -102,7 +102,7 @@ BaseWindow &WindowSystem::main() // static
     return *get().d->windows.find(DE_STR("main"))->second;
 }
 
-BaseWindow *WindowSystem::find(String const &id) const
+BaseWindow *WindowSystem::find(const String &id) const
 {
     Impl::Windows::const_iterator found = d->windows.find(id);
     if (found != d->windows.end())
@@ -147,7 +147,7 @@ Vec2i WindowSystem::latestMousePosition() const
     return d->latestMousePos;
 }
 
-bool WindowSystem::processEvent(Event const &event)
+bool WindowSystem::processEvent(const Event &event)
 {
     /*
      * Mouse motion is filtered as it may be produced needlessly often with
@@ -158,7 +158,7 @@ bool WindowSystem::processEvent(Event const &event)
 
     if (event.type() == Event::MousePosition)
     {
-        MouseEvent const &mouse = event.as<MouseEvent>();
+        const MouseEvent &mouse = event.as<MouseEvent>();
 
         if (mouse.pos() != d->latestMousePos)
         {
@@ -173,7 +173,7 @@ bool WindowSystem::processEvent(Event const &event)
     return rootProcessEvent(event);
 }
 
-void WindowSystem::timeChanged(Clock const &/*clock*/)
+void WindowSystem::timeChanged(const Clock &/*clock*/)
 {
     d->processLatestMousePositionIfMoved();
 

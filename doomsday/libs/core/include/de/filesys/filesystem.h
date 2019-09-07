@@ -146,7 +146,7 @@ public:
      *
      * @param interpreter  Interpreter object.
      */
-    void addInterpreter(filesys::IInterpreter const &interpreter);
+    void addInterpreter(const filesys::IInterpreter &interpreter);
 
     void printIndex();
 
@@ -191,7 +191,7 @@ public:
      *
      * @return  Folder at @a path.
      */
-    Folder &makeFolder(String const &path,
+    Folder &makeFolder(const String &path,
                        FolderCreationBehaviors behavior = InheritPrimaryFeedAndPopulate);
 
     /**
@@ -209,7 +209,7 @@ public:
      *
      * @return  Folder at @a path.
      */
-    Folder &makeFolderWithFeed(String const &path, Feed *feed,
+    Folder &makeFolderWithFeed(const String &path, Feed *feed,
                                Folder::PopulationBehavior populationBehavior = Folder::PopulateFullTree,
                                FolderCreationBehaviors behavior = InheritPrimaryFeedAndPopulate);
 
@@ -223,23 +223,23 @@ public:
      *
      * @return  Number of files found.
      */
-    int findAll(String const &partialPath, FoundFiles &found) const;
+    int findAll(const String &partialPath, FoundFiles &found) const;
 
-    LoopResult forAll(String const &partialPath, std::function<LoopResult (File &)> func);
+    LoopResult forAll(const String &partialPath, std::function<LoopResult (File &)> func);
 
     template <typename Predicate>
-    int findAll(Predicate exclusion, String const &partialPath, FoundFiles &found) const {
+    int findAll(Predicate exclusion, const String &partialPath, FoundFiles &found) const {
         findAll(partialPath, found);
         found.remove_if(exclusion);
         return int(found.size());
     }
 
-    int findAllOfType(String const &typeIdentifier, String const &path, FoundFiles &found) const;
+    int findAllOfType(const String &typeIdentifier, const String &path, FoundFiles &found) const;
 
-    LoopResult forAllOfType(String const &typeIdentifier, String const &path,
+    LoopResult forAllOfType(const String &typeIdentifier, const String &path,
                             std::function<LoopResult (File &)> func);
 
-    int findAllOfTypes(StringList typeIdentifiers, String const &path, FoundFiles &found) const;
+    int findAllOfTypes(StringList typeIdentifiers, const String &path, FoundFiles &found) const;
 
     /**
      * Finds a single file matching a full or partial path. The search is
@@ -250,7 +250,7 @@ public:
      *
      * @return  The found file.
      */
-    File &find(String const &path) const;
+    File &find(const String &path) const;
 
     /**
      * Finds a file of a specific type. The search is done using the file
@@ -264,7 +264,7 @@ public:
      * for manual searches.
      */
     template <typename Type>
-    Type &find(String const &path) const {
+    Type &find(const String &path) const {
         FoundFiles found;
         // Filter out the wrong types.
         findAll(internal::cannotCastFileTo<Type>, path, found);
@@ -300,7 +300,7 @@ public:
      *
      * @note The file names are indexed in lower case.
      */
-    FileIndex const &nameIndex() const;
+    const FileIndex &nameIndex() const;
 
     /**
      * Retrieves the index of files of a particular type.
@@ -312,10 +312,10 @@ public:
      *
      * For example, to look up the index for NativeFile instances:
      * @code
-     * FileIndex const &nativeFileIndex = App::fileSystem().indexFor(DE_TYPE_NAME(NativeFile));
+     * const FileIndex &nativeFileIndex = App::fileSystem().indexFor(DE_TYPE_NAME(NativeFile));
      * @endcode
      */
-    FileIndex const &indexFor(String const &typeIdentifier) const;
+    const FileIndex &indexFor(const String &typeIdentifier) const;
 
     /**
      * Adds a new custom index to the file system.
@@ -346,7 +346,7 @@ public:
      */
     void deindex(File &file);
 
-    void timeChanged(Clock const &);
+    void timeChanged(const Clock &);
 
     void changeBusyLevel(int increment);
     int  busyLevel() const;
@@ -355,12 +355,12 @@ public:
     static void waitForIdle();
 
     template <typename T>
-    static T &locate(String const &path) {
+    static T &locate(const String &path) {
         return get().root().locate<T>(path);
     }
 
     template <typename T>
-    static T *tryLocate(String const &path) {
+    static T *tryLocate(const String &path) {
         return get().root().tryLocate<T>(path);
     }
 
@@ -386,10 +386,10 @@ public:
      * @param destinationPath  Destination path.
      * @param behavior         Copy behavior: which members to copy.
      */
-    static File &copySerialized(String const &sourcePath, String const &destinationPath,
+    static File &copySerialized(const String &sourcePath, const String &destinationPath,
                                 CopyBehaviors behavior = DefaultCopyBehavior);
 
-    static String accessNativeLocation(NativePath const &nativePath,
+    static String accessNativeLocation(const NativePath &nativePath,
                                        Flags flags = File::ReadOnly);
 
 private:

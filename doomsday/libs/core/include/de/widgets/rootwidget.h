@@ -52,20 +52,20 @@ public:
 
     Size viewSize() const;
 
-    RuleRectangle const &viewRule() const;
-    Rule const &viewLeft() const;
-    Rule const &viewRight() const;
-    Rule const &viewTop() const;
-    Rule const &viewBottom() const;
-    Rule const &viewWidth() const;
-    Rule const &viewHeight() const;
+    const RuleRectangle &viewRule() const;
+    const Rule &viewLeft() const;
+    const Rule &viewRight() const;
+    const Rule &viewTop() const;
+    const Rule &viewBottom() const;
+    const Rule &viewWidth() const;
+    const Rule &viewHeight() const;
 
     /**
      * Sets the size of the view. All widgets in the tree are notified.
      *
      * @param viewSize  View size.
      */
-    virtual void setViewSize(Size const &viewSize);
+    virtual void setViewSize(const Size &viewSize);
 
     /**
      * Sets the focus widget. It is the first widget to be offered input
@@ -88,7 +88,7 @@ public:
      *
      * @return @c true, if event was eaten.
      */
-    bool processEvent(Event const &event);
+    bool processEvent(const Event &event);
 
     void initialize();
 

@@ -194,7 +194,7 @@ int VRConfig::riftFramebufferSampleCount() const
     return d->riftFramebufferSamples;
 }
 
-float VRConfig::viewAspect(Vec2f const &viewPortSize) const
+float VRConfig::viewAspect(const Vec2f &viewPortSize) const
 {
     /*if (mode() == OculusRift)
     {
@@ -206,7 +206,7 @@ float VRConfig::viewAspect(Vec2f const &viewPortSize) const
     return viewPortSize.x / viewPortSize.y;
 }
 
-float VRConfig::verticalFieldOfView(float horizFovDegrees, Vec2f const &viewPortSize) const
+float VRConfig::verticalFieldOfView(float horizFovDegrees, const Vec2f &viewPortSize) const
 {
     // We're assuming pixels are squares.
     float const aspect = viewAspect(viewPortSize);
@@ -222,7 +222,7 @@ float VRConfig::verticalFieldOfView(float horizFovDegrees, Vec2f const &viewPort
 }
 
 Mat4f VRConfig::projectionMatrix(float fovDegrees,
-                                    Vec2f const &viewPortSize,
+                                    const Vec2f &viewPortSize,
                                     float nearClip, float farClip) const
 {
     if (mode() == OculusRift && oculusRift().isReady())
@@ -267,7 +267,7 @@ OculusRift &VRConfig::oculusRift()
     return d->ovr;
 }
 
-OculusRift const &VRConfig::oculusRift() const
+const OculusRift &VRConfig::oculusRift() const
 {
     return d->ovr;
 }

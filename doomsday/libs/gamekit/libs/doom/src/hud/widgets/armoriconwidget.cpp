@@ -24,7 +24,7 @@
 
 using namespace de;
 
-static void ArmorIcon_Draw(guidata_armoricon_t *icon, Point2Raw const *offset)
+static void ArmorIcon_Draw(guidata_armoricon_t *icon, const Point2Raw *offset)
 {
     DE_ASSERT(icon);
     icon->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -57,11 +57,11 @@ void guidata_armoricon_t::tick(timespan_t /*elapsed*/)
 {
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
-    player_t const *plr = &players[player()];
+    const player_t *plr = &players[player()];
     currentSprite = (plr->armorType == 2 ? this->armorSprite2 : this->armorSprite1);
 }
 
-void guidata_armoricon_t::draw(Vec2i const &offset) const
+void guidata_armoricon_t::draw(const Vec2i &offset) const
 {
     dfloat const iconOpacity = uiRendState->pageAlpha * cfg.common.hudIconAlpha;
 

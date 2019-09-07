@@ -185,7 +185,7 @@ DE_PIMPL(GLState)
         , target(nullptr)
     {}
 
-    Impl(Public *i, Impl const &other)
+    Impl(Public *i, const Impl &other)
         : Base(i)
         , props(other.props)
         , target(other.target)
@@ -481,10 +481,10 @@ GLState::GLState() : d(new Impl(this))
     setDefaultTarget();
 }
 
-GLState::GLState(GLState const &other) : d(new Impl(this, *other.d))
+GLState::GLState(const GLState &other) : d(new Impl(this, *other.d))
 {}
 
-GLState &GLState::operator=(GLState const &other)
+GLState &GLState::operator=(const GLState &other)
 {
     d.reset(new Impl(this, *other.d));
     return *this;
@@ -627,12 +627,12 @@ GLState &GLState::setDefaultTarget()
     return *this;
 }
 
-GLState &GLState::setViewport(Rectanglei const &viewportRect)
+GLState &GLState::setViewport(const Rectanglei &viewportRect)
 {
     return setViewport(viewportRect.toRectangleui());
 }
 
-GLState &GLState::setViewport(Rectangleui const &viewportRect)
+GLState &GLState::setViewport(const Rectangleui &viewportRect)
 {
     d->props.set(internal::ViewportX,      viewportRect.left());
     d->props.set(internal::ViewportY,      viewportRect.top());
@@ -641,7 +641,7 @@ GLState &GLState::setViewport(Rectangleui const &viewportRect)
     return *this;
 }
 
-GLState &GLState::setNormalizedViewport(Rectanglef const &normViewportRect)
+GLState &GLState::setNormalizedViewport(const Rectanglef &normViewportRect)
 {
     GLFramebuffer::Size const size = target().size();
     Rectangleui vp(Vec2ui(normViewportRect.left() * size.x,
@@ -651,12 +651,12 @@ GLState &GLState::setNormalizedViewport(Rectanglef const &normViewportRect)
     return setViewport(vp);
 }
 
-GLState &GLState::setScissor(Rectanglei const &scissorRect)
+GLState &GLState::setScissor(const Rectanglei &scissorRect)
 {
     return setScissor(scissorRect.toRectangleui());
 }
 
-GLState &GLState::setScissor(Rectangleui const &newScissorRect)
+GLState &GLState::setScissor(const Rectangleui &newScissorRect)
 {
     Rectangleui cumulative;
     if (scissor())
@@ -676,7 +676,7 @@ GLState &GLState::setScissor(Rectangleui const &newScissorRect)
     return *this;
 }
 
-GLState &GLState::setNormalizedScissor(Rectanglef const &normScissorRect)
+GLState &GLState::setNormalizedScissor(const Rectanglef &normScissorRect)
 {
     Rectangleui vp = viewport();
     Rectanglei scis(Vec2i(normScissorRect.left()   * vp.width(),
@@ -848,7 +848,7 @@ void GLState::apply() const
 
     if (internal::currentTarget != newTarget)
     {
-        GLFramebuffer const *oldTarget = internal::currentTarget;
+        const GLFramebuffer *oldTarget = internal::currentTarget;
         if (oldTarget)
         {
             oldTarget->glRelease();
@@ -902,7 +902,7 @@ void GLState::apply() const
     // Verify that the state is correct.
     for (int i = 0; i < d->props.elements().size(); ++i)
     {
-        auto const &elem = d->props.elements().at(i);
+        const auto &elem = d->props.elements().at(i);
         int val;
         switch (elem.id)
         {

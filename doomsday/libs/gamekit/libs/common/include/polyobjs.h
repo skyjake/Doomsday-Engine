@@ -52,7 +52,7 @@ typedef struct polyevent_s {
 } polyevent_t;
 
 #ifdef __cplusplus
-void SV_WriteMovePoly(polyevent_t const *movepoly, MapStateWriter *msw);
+void SV_WriteMovePoly(const polyevent_t *movepoly, MapStateWriter *msw);
 int SV_ReadMovePoly(polyevent_t *movepoly, MapStateReader *msr);
 #endif
 

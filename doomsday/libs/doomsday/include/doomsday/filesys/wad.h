@@ -57,11 +57,11 @@ public:
     class LumpFile : public File1
     {
     public:
-        LumpFile(Entry &entry, FileHandle *hndl, String path, FileInfo const &info,
+        LumpFile(Entry &entry, FileHandle *hndl, String path, const FileInfo &info,
                  File1 *container);
 
         /// @return  Name of this file.
-        String const &name() const;
+        const String &name() const;
 
         /**
          * Compose an absolute URI to this file.
@@ -109,7 +109,7 @@ public:
          *
          * @return Pointer to the cached copy of the associated data.
          */
-        uint8_t const *cache();
+        const uint8_t *cache();
 
         /**
          * Remove a lock on the locally cached data.
@@ -128,7 +128,7 @@ public:
     };
 
 public:
-    Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container = 0);
+    Wad(FileHandle &hndl, String path, const FileInfo &info, File1 *container = 0);
     virtual ~Wad();
 
     /**
@@ -172,7 +172,7 @@ public:
      *
      * @throws NotFoundError  If @a lumpIndex is not valid.
      */
-    uint8_t const *cacheLump(int lumpIndex);
+    const uint8_t *cacheLump(int lumpIndex);
 
     /**
      * Remove a lock on a cached data lump.
@@ -224,7 +224,7 @@ protected:
         std::unique_ptr<LumpFile> lumpFile;  ///< File system object for the lump data.
         uint crc;                           ///< CRC for the lump data.
 
-        Entry(PathTree::NodeArgs const &args)
+        Entry(const PathTree::NodeArgs &args)
             : Node(args), offset(0), size(0), crc(0)
         {}
 
@@ -238,7 +238,7 @@ protected:
     /**
      * Provides access to the internal LumpTree, for efficient traversal.
      */
-    LumpTree const &lumpTree() const;
+    const LumpTree &lumpTree() const;
 
 private:
     DE_PRIVATE(d)

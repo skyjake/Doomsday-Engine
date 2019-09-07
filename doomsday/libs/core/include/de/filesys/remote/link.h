@@ -44,12 +44,12 @@ class DE_PUBLIC Link
 public:
     enum State { Deinitialized, Initializing, Ready };
 
-    using Constructor = std::function<Link * (String const &address)>;
+    using Constructor = std::function<Link * (const String &address)>;
 
 public:
     virtual ~Link();
 
-    virtual void setLocalRoot(String const &rootPath);
+    virtual void setLocalRoot(const String &rootPath);
 
     Folder &localRoot() const;
     String  address() const;
@@ -64,7 +64,7 @@ public:
      * @return Paths for located packages. May contain fewer entries than was provided
      * via @a packageIds -- empty if nothing was found.
      */
-    virtual PackagePaths locatePackages(StringList const &packageIds) const = 0;
+    virtual PackagePaths locatePackages(const StringList &packageIds) const = 0;
 
     /**
      * Returns a list of the categories in the repository. These can be used as tags
@@ -78,14 +78,14 @@ public:
      * Iterates the full list of all packages available in the repository. Note this
      * may be large set of packages.
      */
-    virtual LoopResult forPackageIds(std::function<LoopResult (String const &packageId)> func) const = 0;
+    virtual LoopResult forPackageIds(std::function<LoopResult (const String &packageId)> func) const = 0;
 
     QueryId sendQuery(Query query);
 
-    virtual File *populateRemotePath(String const &packageId, RepositoryPath const &path) const;
+    virtual File *populateRemotePath(const String &packageId, const RepositoryPath &path) const;
 
 protected:
-    Link(String const &address);
+    Link(const String &address);
 
     AsyncScope &scope();
 
@@ -94,13 +94,13 @@ protected:
     void cancelAllQueries();
     void cleanupQueries();
 
-    void metadataReceived(QueryId id, DictionaryValue const &metadata);
+    void metadataReceived(QueryId id, const DictionaryValue &metadata);
     void chunkReceived(QueryId id, duint64 startOffset, const Block &chunk, duint64 fileSize);
 
     virtual void wasConnected();
     virtual void wasDisconnected();
     virtual void handleError(const String &errorMessage);
-    virtual void transmit(Query const &query) = 0;
+    virtual void transmit(const Query &query) = 0;
 
 private:
     DE_PRIVATE(d)

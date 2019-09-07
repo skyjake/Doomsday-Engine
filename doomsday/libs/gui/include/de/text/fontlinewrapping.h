@@ -48,7 +48,7 @@ class LIBGUI_PUBLIC FontLineWrapping : public Lockable, public ILineWrapping
 public:
     FontLineWrapping();
 
-    void        setFont(Font const &font);
+    void        setFont(const Font &font);
     const Font &font() const;
     bool        hasFont() const;
 
@@ -66,7 +66,7 @@ public:
     void wrapTextToWidth(const String &text, WrapWidth maxWidth) override;
     void wrapTextToWidth(const String &text, const Font::RichFormat &format, WrapWidth maxWidth);
 
-    void rasterizeLines(Rangei const &lineRange);
+    void rasterizeLines(const Rangei &lineRange);
     void clearRasterizedLines() const;
 
     /**
@@ -134,7 +134,7 @@ public:
      *
      * @param index  Wrapped line number.
      */
-    LineInfo const &lineInfo(int index) const;
+    const LineInfo &lineInfo(int index) const;
 
     /**
      * Returns a rasterized version of a segment.

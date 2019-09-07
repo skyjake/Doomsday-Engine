@@ -34,13 +34,13 @@
 class LIBDOOMSDAY_PUBLIC UriValue : public de::Value
 {
 public:
-    UriValue(res::Uri const &initialValue = "");
+    UriValue(const res::Uri &initialValue = "");
 
     /// Converts the UriValue to plain res::Uri.
-    operator res::Uri const &() const;
+    operator const res::Uri &() const;
 
     res::Uri &uri();
-    res::Uri const &uri() const;
+    const res::Uri &uri() const;
 
     Text typeId() const;
     de::Value *duplicate() const;
@@ -48,13 +48,13 @@ public:
     Text asText() const;
     //Record *memberScope() const;
     //dsize size() const;
-    bool contains(de::Value const &value) const;
+    bool contains(const de::Value &value) const;
     bool isTrue() const;
-    de::dint compare(de::Value const &value) const;
-    //void sum(Value const &value);
-    //void multiply(Value const &value);
-    //void divide(Value const &value);
-    //void modulo(Value const &divisor);
+    de::dint compare(const de::Value &value) const;
+    //void sum(const Value &value);
+    //void multiply(const Value &value);
+    //void divide(const Value &value);
+    //void modulo(const Value &divisor);
 
     // Implements ISerializable.
     void operator >> (de::Writer &to) const;
@@ -62,7 +62,7 @@ public:
 
 protected:
     /// Changes the URI.
-    void setValue(res::Uri const &uri);
+    void setValue(const res::Uri &uri);
 
 private:
     res::Uri _uri;

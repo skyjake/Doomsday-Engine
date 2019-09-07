@@ -29,7 +29,7 @@ using namespace de;
 static patchid_t pPiece[NUM_PLAYER_CLASSES][WEAPON_FOURTH_PIECE_COUNT];
 static patchid_t pComplete[NUM_PLAYER_CLASSES];
 
-static void WeaponPiecesWidget_Draw(guidata_weaponpieces_t *wp, Point2Raw const *offset)
+static void WeaponPiecesWidget_Draw(guidata_weaponpieces_t *wp, const Point2Raw *offset)
 {
     DE_ASSERT(wp);
     wp->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -62,7 +62,7 @@ void guidata_weaponpieces_t::tick(timespan_t /*elapsed*/)
     _ownedPieces = players[player()].pieces;
 }
 
-void guidata_weaponpieces_t::draw(Vec2i const &offset) const
+void guidata_weaponpieces_t::draw(const Vec2i &offset) const
 {
     static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
@@ -89,7 +89,7 @@ void guidata_weaponpieces_t::draw(Vec2i const &offset) const
     }
     else
     {
-        classinfo_t const &pcdata = *PCLASS_INFO(plrClass);
+        const classinfo_t &pcdata = *PCLASS_INFO(plrClass);
         for(dint piece = 0; piece < WEAPON_FOURTH_PIECE_COUNT; ++piece)
         {
             if(_ownedPieces & (1 << piece))
@@ -124,7 +124,7 @@ void guidata_weaponpieces_t::prepareAssets()  // static
 
     for(dint plrClass = 0; plrClass < NUM_PLAYER_CLASSES; ++plrClass)
     {
-        classinfo_t const &pcdata = *PCLASS_INFO(plrClass);
+        const classinfo_t &pcdata = *PCLASS_INFO(plrClass);
 
         // Only user-selectable player classes can collect fourth-weapon pieces.
         if(!pcdata.userSelectable) continue;

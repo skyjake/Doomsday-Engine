@@ -105,7 +105,7 @@ public:
      * @param size   Size of the render target.
      * @param flags  Attachments to set up.
      */
-    GLFramebuffer(Vec2ui const &size, Flags flags = DefaultFlags);
+    GLFramebuffer(const Vec2ui &size, Flags flags = DefaultFlags);
 
     Flags flags() const;
 
@@ -130,7 +130,7 @@ public:
      * @param flags        Which attachments to set up.
      * @param sampleCount  Number of samples per pixel in each attachment.
      */
-    void configure(Vec2ui const &size,
+    void configure(const Vec2ui &size,
                    Flags flags = DefaultFlags,
                    int sampleCount = 1);
 
@@ -209,7 +209,7 @@ public:
      *
      * @param color  Color for clearing.
      */
-    void setClearColor(Vec4f const &color);
+    void setClearColor(const Vec4f &color);
 
     /**
      * Clears the contents of the render target's attached buffers.
@@ -227,7 +227,7 @@ public:
      *
      * @param size  New size for buffers and/or textures.
      */
-    void resize(Size const &size);
+    void resize(const Size &size);
 
     /**
      * Returns the texture being used for a particular attachment in this target.
@@ -294,14 +294,14 @@ public:
      *               use the entire window (like normally).
      * @param applyGLState  Immediately update current OpenGL state accordingly.
      */
-    void setActiveRect(Rectangleui const &rect, bool applyGLState = false);
+    void setActiveRect(const Rectangleui &rect, bool applyGLState = false);
 
     void unsetActiveRect(bool applyGLState = false);
 
     Vec2f activeRectScale() const;
     Vec2f activeRectNormalizedOffset() const;
-    Rectangleui scaleToActiveRect(Rectangleui const &rect) const;
-    Rectangleui const &activeRect() const;
+    Rectangleui scaleToActiveRect(const Rectangleui &rect) const;
+    const Rectangleui &activeRect() const;
     bool hasActiveRect() const;
 
     /**

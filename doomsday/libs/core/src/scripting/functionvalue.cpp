@@ -58,9 +58,9 @@ bool FunctionValue::isFalse() const
     return false;
 }
 
-dint FunctionValue::compare(Value const &value) const
+dint FunctionValue::compare(const Value &value) const
 {
-    FunctionValue const *other = dynamic_cast<FunctionValue const *>(&value);
+    const FunctionValue *other = dynamic_cast<const FunctionValue *>(&value);
     if (!other)
     {
         return -1;
@@ -77,9 +77,9 @@ dint FunctionValue::compare(Value const &value) const
     return -1;
 }
 
-void FunctionValue::call(Process &process, Value const &arguments, Value *self) const
+void FunctionValue::call(Process &process, const Value &arguments, Value *self) const
 {
-    ArrayValue const *array = dynamic_cast<ArrayValue const *>(&arguments);
+    const ArrayValue *array = dynamic_cast<const ArrayValue *>(&arguments);
     if (!array)
     {
         /// @throw IllegalError  The call arguments must be an array value.

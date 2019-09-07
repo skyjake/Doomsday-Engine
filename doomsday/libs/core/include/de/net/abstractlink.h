@@ -53,14 +53,14 @@ public:
      * @param domain   Domain/IP address of the server.
      * @param timeout  Keep trying until this much time has passed.
      */
-    virtual void connectDomain(String const &domain, TimeSpan timeout = 0.0);
+    virtual void connectDomain(const String &domain, TimeSpan timeout = 0.0);
 
     /**
      * Opens a connection to a server over the network.
      *
      * @param address  Address of the server.
      */
-    virtual void connectHost(Address const &address);
+    virtual void connectHost(const Address &address);
 
     /**
      * Takes over an existing socket.
@@ -100,10 +100,10 @@ public:
     Packet *nextPacket();
 
     // Transmitter.
-    void send(IByteArray const &data);
+    void send(const IByteArray &data);
 
 protected:
-    virtual Packet *interpret(Message const &msg) = 0;
+    virtual Packet *interpret(const Message &msg) = 0;
 
     /**
      * Called immediately after a connection has been formed.

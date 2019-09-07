@@ -42,15 +42,15 @@ namespace de {
 class DE_PUBLIC ByteArrayFile : public File, public IByteArray
 {
 protected:
-    ByteArrayFile(String const &name = String()) : File(name) {}
+    ByteArrayFile(const String &name = String()) : File(name) {}
 
 public:
     dsize size() const;
 
     // Implements IIOStream.
-    IOStream &operator << (IByteArray const &bytes);
+    IOStream &operator << (const IByteArray &bytes);
     IIStream &operator >> (IByteArray &bytes);
-    IIStream const &operator >> (IByteArray &bytes) const;
+    const IIStream &operator >> (IByteArray &bytes) const;
 };
 
 } // namespace de

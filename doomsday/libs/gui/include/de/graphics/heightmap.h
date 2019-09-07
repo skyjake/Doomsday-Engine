@@ -38,17 +38,17 @@ class HeightMap
 public:
     HeightMap();
 
-    void setMapSize(Vec2f const &worldSize, float heightRange);
+    void setMapSize(const Vec2f &worldSize, float heightRange);
 
-    void loadGrayscale(Image const &heightImage);
+    void loadGrayscale(const Image &heightImage);
 
     Image toImage() const;
 
     Image makeNormalMap() const;
 
-    float heightAtPosition(Vec2f const &worldPos) const;
+    float heightAtPosition(const Vec2f &worldPos) const;
 
-    Vec3f normalAtPosition(Vec2f const &worldPos) const;
+    Vec3f normalAtPosition(const Vec2f &worldPos) const;
 
 private:
     DE_PRIVATE(d)

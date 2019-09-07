@@ -27,14 +27,14 @@ DE_PIMPL_NOREF(DocumentPopupWidget)
     ButtonWidget *  button = nullptr;
 };
 
-DocumentPopupWidget::DocumentPopupWidget(String const &name)
+DocumentPopupWidget::DocumentPopupWidget(const String &name)
     : PopupWidget(name), d(new Impl)
 {
     useInfoStyle();
     setContent(d->doc = new DocumentWidget);
 }
 
-DocumentPopupWidget::DocumentPopupWidget(ButtonWidget *actionButton, String const &name)
+DocumentPopupWidget::DocumentPopupWidget(ButtonWidget *actionButton, const String &name)
     : PopupWidget(name), d(new Impl)
 {
     DE_ASSERT(actionButton);
@@ -48,7 +48,7 @@ DocumentPopupWidget::DocumentPopupWidget(ButtonWidget *actionButton, String cons
     box->add(actionButton);
     actionButton->setSizePolicy(ui::Expand, ui::Expand);
 
-    Rule const &gap = rule("gap");
+    const Rule &gap = rule("gap");
 
     box->rule()
             .setInput(Rule::Width,  d->doc->rule().width())
@@ -66,7 +66,7 @@ DocumentPopupWidget::DocumentPopupWidget(ButtonWidget *actionButton, String cons
     setContent(box);
 }
 
-void DocumentPopupWidget::setPreferredHeight(Rule const &preferredHeight)
+void DocumentPopupWidget::setPreferredHeight(const Rule &preferredHeight)
 {
     d->doc->rule().setInput(Rule::Height,
                 OperatorRule::minimum(preferredHeight,
@@ -74,7 +74,7 @@ void DocumentPopupWidget::setPreferredHeight(Rule const &preferredHeight)
                                       d->doc->margins().height()));
 }
 
-void DocumentPopupWidget::setPreferredHeight(Rule const &preferredHeight, Rule const &maxHeight)
+void DocumentPopupWidget::setPreferredHeight(const Rule &preferredHeight, const Rule &maxHeight)
 {
     d->doc->rule().setInput(Rule::Height,
             OperatorRule::minimum(
@@ -89,7 +89,7 @@ DocumentWidget &DocumentPopupWidget::document()
     return *d->doc;
 }
 
-DocumentWidget const &DocumentPopupWidget::document() const
+const DocumentWidget &DocumentPopupWidget::document() const
 {
     return *d->doc;
 }

@@ -69,7 +69,7 @@ public:
      * Returns the current Episode definition for the game session in progress. If the session
      * has not yet begun then @c nullptr is returned.
      */
-    de::Record const *episodeDef() const;
+    const de::Record *episodeDef() const;
 
     /**
      * Returns the current episode id for the game session in progress. If the session has not
@@ -81,14 +81,14 @@ public:
      * Returns the current MapGraphNode definition for the game session in progress. If the
      * session has not yet begun then @c nullptr is returned.
      */
-    de::Record const *mapGraphNodeDef() const;
+    const de::Record *mapGraphNodeDef() const;
 
     /**
      * Returns the current MapInfo definition for the game session in progress. If the session
      * has not yet begun, or no definition exists for the current map then the default definition
      * is returned instead.
      */
-    de::Record const &mapInfo() const;
+    const de::Record &mapInfo() const;
 
     /**
      * Returns the player entry point for the current map, for the game session in progress.
@@ -111,7 +111,7 @@ public:
     /**
      * Returns the current ruleset for the game session.
      */
-    GameRules const &rules() const;
+    const GameRules &rules() const;
 
     /**
      * To be called when a new game begins to effect the game rules. Note that some of the rules
@@ -119,7 +119,7 @@ public:
      *
      * @todo Prevent this outright if the game session is already in progress!
      */
-    void applyNewRules(GameRules const &rules);
+    void applyNewRules(const GameRules &rules);
 
     /**
      * Determines whether saved game progress will be restored when the current map is reloaded,
@@ -150,7 +150,7 @@ public:
      *
      * @throws InProgressError if the session has already begun.
      */
-    void begin(GameRules const &rules, de::String const &episodeId, res::Uri const &mapUri,
+    void begin(const GameRules &rules, const de::String &episodeId, const res::Uri &mapUri,
                uint mapEntryPoint = 0);
 
     /**
@@ -167,7 +167,7 @@ public:
      * @param nextMapUri         Map identifier.
      * @param nextMapEntryPoint  Map entry point number, for player reborn.
      */
-    void leaveMap(res::Uri const &nextMapUri, uint nextMapEntryPoint = 0);
+    void leaveMap(const res::Uri &nextMapUri, uint nextMapEntryPoint = 0);
 
     /**
      * Convenient method of looking up the user description of the game session in progress.
@@ -192,14 +192,14 @@ public:  // Saved session management -------------------------------------------
      * @param userDescription  Textual description of the current game state provided either
      *                         by the user or possibly generated automatically.
      */
-    void save(de::String const &saveName, de::String const &userDescription);
+    void save(const de::String &saveName, const de::String &userDescription);
 
     /**
      * Load the game state from the @em user saved session specified.
      *
      * @param saveName  Name of the saved session to be loaded.
      */
-    void load(de::String const &saveName);
+    void load(const de::String &saveName);
 
     /**
      * Makes a copy of the @em user saved session specified in /home/savegames/<gameId>
@@ -207,12 +207,12 @@ public:  // Saved session management -------------------------------------------
      * @param destName    Name of the new/replaced saved session.
      * @param sourceName  Name of the saved session to be copied.
      */
-    void copySaved(de::String const &destName, de::String const &sourceName);
+    void copySaved(const de::String &destName, const de::String &sourceName);
 
     /**
      * Removes the @em user saved session /home/savegames/<gameId>/<@a saveName>.save
      */
-    void removeSaved(de::String const &saveName);
+    void removeSaved(const de::String &saveName);
 
     /**
      * Convenient method of looking up the @em user description of an existing saved session.
@@ -221,7 +221,7 @@ public:  // Saved session management -------------------------------------------
      *
      * @return  User description of the named session or a zero-length string if not found.
      */
-    de::String savedUserDescription(de::String const &saveName);
+    de::String savedUserDescription(const de::String &saveName);
 
 public:
     /// Returns the singleton instance.

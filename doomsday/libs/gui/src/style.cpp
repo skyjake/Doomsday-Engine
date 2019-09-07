@@ -93,7 +93,7 @@ DE_PIMPL(Style)
         fonts.setFontSizeFactor(fontSize);
     }
 
-    void load(Package const &pack)
+    void load(const Package &pack)
     {
         loadedPack = &pack;
 
@@ -143,28 +143,28 @@ Style::Style() : d(new Impl(this))
 Style::~Style()
 {}
 
-void Style::load(Package const &pack)
+void Style::load(const Package &pack)
 {
     d->clear();
     d->load(pack);
 }
 
-RuleBank const &Style::rules() const
+const RuleBank &Style::rules() const
 {
     return d->rules;
 }
 
-FontBank const &Style::fonts() const
+const FontBank &Style::fonts() const
 {
     return d->fonts;
 }
 
-ColorBank const &Style::colors() const
+const ColorBank &Style::colors() const
 {
     return d->colors;
 }
 
-ImageBank const &Style::images() const
+const ImageBank &Style::images() const
 {
     return d->images;
 }
@@ -249,7 +249,7 @@ void Style::richStyleFormat(int contentStyle,
     }
 }
 
-Font const *Style::richStyleFont(Font::RichFormat::Style fontStyle) const
+const Font *Style::richStyleFont(Font::RichFormat::Style fontStyle) const
 {
     switch (fontStyle)
     {

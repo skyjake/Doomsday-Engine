@@ -43,7 +43,7 @@ LogSink::Mode LogSink::mode() const
     return _mode;
 }
 
-bool LogSink::willAccept(LogEntry const &entry) const
+bool LogSink::willAccept(const LogEntry &entry) const
 {
     switch (_mode)
     {

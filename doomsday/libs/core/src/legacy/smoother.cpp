@@ -82,14 +82,14 @@ void Smoother_Delete(Smoother *sm)
     free(sm);
 }
 
-void Smoother_Debug(Smoother const *sm)
+void Smoother_Debug(const Smoother *sm)
 {
     DE_ASSERT(sm);
     LOG_DEBUG("Smoother_Debug: [past=%3.3f / now=%3.3f / future=%3.3f] at=%3.3f")
             << sm->past.time << sm->now.time << sm->points[0].time << sm->at;
 }
 
-static dd_bool Smoother_IsValid(Smoother const *sm)
+static dd_bool Smoother_IsValid(const Smoother *sm)
 {
     DE_ASSERT(sm);
     if (sm->past.time == 0 || sm->now.time == 0)
@@ -181,7 +181,7 @@ replaceLastPoint:
     }
 }
 
-dd_bool Smoother_EvaluateComponent(Smoother const *sm, int component, coord_t *v)
+dd_bool Smoother_EvaluateComponent(const Smoother *sm, int component, coord_t *v)
 {
     coord_t xyz[3];
 
@@ -194,11 +194,11 @@ dd_bool Smoother_EvaluateComponent(Smoother const *sm, int component, coord_t *v
     return true;
 }
 
-dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
+dd_bool Smoother_Evaluate(const Smoother *sm, coord_t *xyz)
 {
     DE_ASSERT(sm);
-    pos_t const *past = &sm->past;
-    pos_t const *now = &sm->now;
+    const pos_t *past = &sm->past;
+    const pos_t *now = &sm->now;
 
     if (!Smoother_IsValid(sm))
         return false;
@@ -249,7 +249,7 @@ dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
     return true;
 }
 
-dd_bool Smoother_IsOnFloor(Smoother const *sm)
+dd_bool Smoother_IsOnFloor(const Smoother *sm)
 {
     DE_ASSERT(sm);
 
@@ -260,7 +260,7 @@ dd_bool Smoother_IsOnFloor(Smoother const *sm)
     return (past->onFloor && now->onFloor);
 }
 
-dd_bool Smoother_IsMoving(Smoother const *sm)
+dd_bool Smoother_IsMoving(const Smoother *sm)
 {
     DE_ASSERT(sm);
 

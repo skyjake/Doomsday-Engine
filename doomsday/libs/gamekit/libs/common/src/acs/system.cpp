@@ -49,7 +49,7 @@ DE_PIMPL_NOREF(System)
         Script::Args scriptArgs;
 
         ScriptStartTask() : scriptNumber(-1) {}
-        ScriptStartTask(res::Uri const &mapUri, dint32 scriptNumber, Script::Args const &scriptArgs)
+        ScriptStartTask(const res::Uri &mapUri, dint32 scriptNumber, const Script::Args &scriptArgs)
             : mapUri      (mapUri)
             , scriptNumber(scriptNumber)
             , scriptArgs  (scriptArgs)
@@ -66,7 +66,7 @@ DE_PIMPL_NOREF(System)
         {
             to << mapUri.compose()
                << scriptNumber;
-            for(dbyte const &arg : scriptArgs) to << arg;
+            for(const dbyte &arg : scriptArgs) to << arg;
         }
 
         void operator << (de::Reader &from)
@@ -103,7 +103,7 @@ DE_PIMPL_NOREF(System)
     {
         clearScripts();
 
-        currentModule->forAllEntryPoints([this] (Module::EntryPoint const &ep)
+        currentModule->forAllEntryPoints([this] (const Module::EntryPoint &ep)
         {
             scripts << new Script(ep);
             return LoopContinue;
@@ -130,7 +130,7 @@ void System::reset()
     worldVars.fill(0);
 }
 
-void System::loadModuleForMap(res::Uri const &mapUri)
+void System::loadModuleForMap(const res::Uri &mapUri)
 {
 #if __JHEXEN__
     if(IS_CLIENT) return;
@@ -154,7 +154,7 @@ void System::loadModuleForMap(res::Uri const &mapUri)
         d->currentModule.reset(Module::newFromFile(file));
         d->makeScripts();
     }
-    catch(Module::FormatError const &er)
+    catch(const Module::FormatError &er)
     {
         // Empty file / invalid bytecode.
         LOG_SCR_WARNING("File %s:%s does not appear to be valid ACS bytecode\n")
@@ -167,7 +167,7 @@ void System::loadModuleForMap(res::Uri const &mapUri)
 #endif
 }
 
-Module const &System::module() const
+const Module &System::module() const
 {
     DE_ASSERT(bool( d->currentModule ));
     return *d->currentModule;
@@ -180,7 +180,7 @@ dint System::scriptCount() const
 
 bool System::hasScript(dint scriptNumber) const
 {
-    for(Script const *script : d->scripts)
+    for(const Script *script : d->scripts)
     {
         if(script->entryPoint().scriptNumber == scriptNumber)
         {
@@ -192,7 +192,7 @@ bool System::hasScript(dint scriptNumber) const
 
 Script &System::script(dint scriptNumber) const
 {
-    for(Script const *script : d->scripts)
+    for(const Script *script : d->scripts)
     {
         if(script->entryPoint().scriptNumber == scriptNumber)
         {
@@ -212,8 +212,8 @@ LoopResult System::forAllScripts(std::function<LoopResult (Script &)> func) cons
     return LoopContinue;
 }
 
-bool System::deferScriptStart(res::Uri const &mapUri, dint scriptNumber,
-    Script::Args const &scriptArgs)
+bool System::deferScriptStart(const res::Uri &mapUri, dint scriptNumber,
+    const Script::Args &scriptArgs)
 {
     DE_ASSERT(!IS_CLIENT);
     DE_ASSERT(gfw_Session()->mapUri() != mapUri);
@@ -225,7 +225,7 @@ bool System::deferScriptStart(res::Uri const &mapUri, dint scriptNumber,
         return true;
 
     // Don't allow duplicates.
-    for(Impl::ScriptStartTask const *task : d->tasks)
+    for(const Impl::ScriptStartTask *task : d->tasks)
     {
         if(task->scriptNumber == scriptNumber &&
            task->mapUri       == mapUri)
@@ -245,11 +245,11 @@ Block System::serializeWorldState() const
     de::Writer writer(data);
 
     // Write the world-global variable namespace.
-    for(auto const &var : worldVars) writer << var;
+    for(const auto &var : worldVars) writer << var;
 
     // Write the deferred task queue.
     writer << dint32( d->tasks.count() );
-    for(auto const *task : d->tasks) writer << *task;
+    for(const auto *task : d->tasks) writer << *task;
 
     return data;
 }
@@ -276,10 +276,10 @@ void System::writeMapState(MapStateWriter *msw) const
     writer_s *writer = msw->writer();
 
     // Write each script state.
-    for(auto const *script : d->scripts) script->write(writer);
+    for(const auto *script : d->scripts) script->write(writer);
 
     // Write each variable.
-    for(auto const &var : mapVars) Writer_WriteInt32(writer, var);
+    for(const auto &var : mapVars) Writer_WriteInt32(writer, var);
 }
 
 void System::readMapState(MapStateReader *msr)
@@ -293,7 +293,7 @@ void System::readMapState(MapStateReader *msr)
     for(auto &var : mapVars) var = Reader_ReadInt32(reader);
 }
 
-void System::runDeferredTasks(res::Uri const &mapUri)
+void System::runDeferredTasks(const res::Uri &mapUri)
 {
     LOG_AS("acs::System");
     for(dint i = 0; i < d->tasks.count(); ++i)
@@ -351,7 +351,7 @@ D_CMD(InspectACScript)
         return false;
     }
 
-    Script const &script = scriptSys.script(scriptNumber);
+    const Script &script = scriptSys.script(scriptNumber);
     LOG_SCR_MSG("%s\n  %s") << script.describe() << script.description();
     return true;
 }
@@ -364,7 +364,7 @@ D_CMD(ListACScripts)
     if (scriptSys.scriptCount())
     {
         LOG_SCR_MSG("Available ACScripts:");
-        scriptSys.forAllScripts([](Script const &script) {
+        scriptSys.forAllScripts([](const Script &script) {
             LOG_SCR_MSG("  %s") << script.describe();
             return LoopContinue;
         });
@@ -372,14 +372,14 @@ D_CMD(ListACScripts)
 #ifdef DE_DEBUG
         LOG_SCR_MSG("World variables:");
         dint idx = 0;
-        for (dint const &var : scriptSys.worldVars)
+        for (const dint &var : scriptSys.worldVars)
         {
             LOG_SCR_MSG("  #%i: %i") << (idx++) << var;
         }
         
         LOG_SCR_MSG("Map variables:");
         idx = 0;
-        for (dint const &var : scriptSys.mapVars)
+        for (const dint &var : scriptSys.mapVars)
         {
             LOG_SCR_MSG("  #%i: %i") << (idx++) << var;
         }

@@ -37,7 +37,7 @@ struct mn_rendstate_t
     de::Vec4f textColors[MENU_COLOR_COUNT];
     fontid_t textFonts[MENU_FONT_COUNT];
 };
-extern mn_rendstate_t const *mnRendState;
+extern const mn_rendstate_t *mnRendState;
 
 typedef de::List<Widget *> WidgetList;
 
@@ -64,7 +64,7 @@ public:
     using Children = WidgetList;
 
     using OnActiveCallback = std::function<void(Page &)>;
-    using OnDrawCallback   = std::function<void(Page const &, de::Vec2i const &)>;
+    using OnDrawCallback   = std::function<void(const Page &, const de::Vec2i &)>;
     using CommandResponder = std::function<int(Page &, menucommand_e)>;
 
 public:
@@ -90,10 +90,10 @@ public:
      */
     de::String name() const;
 
-    void setTitle(de::String const &newTitle);
+    void setTitle(const de::String &newTitle);
     de::String title() const;
 
-    void setOrigin(de::Vec2i const &newOrigin);
+    void setOrigin(const de::Vec2i &newOrigin);
     de::Vec2i origin() const;
 
     Flags flags() const;
@@ -148,7 +148,7 @@ public:
     /**
      * Provides access to the list of child widgets of the Page, for efficient traversal.
      */
-    Children const &children() const;
+    const Children &children() const;
 
     /**
      * Returns the in-page index of the given @a widget; otherwise @c -1

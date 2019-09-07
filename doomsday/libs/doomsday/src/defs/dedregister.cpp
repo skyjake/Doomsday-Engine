@@ -41,7 +41,7 @@ DE_PIMPL(DEDRegister)
     ArrayValue *orderArray;
     struct Key {
         LookupFlags flags;
-        Key(LookupFlags const &f = DefaultLookup) : flags(f) {}
+        Key(const LookupFlags &f = DefaultLookup) : flags(f) {}
     };
     typedef Map<String, Key> Keys;
     Keys keys;
@@ -77,7 +77,7 @@ DE_PIMPL(DEDRegister)
 #endif
     }
 
-    void addKey(String const &name, LookupFlags const &flags)
+    void addKey(const String &name, const LookupFlags &flags)
     {
         keys.insert(name, Key(flags));
         names->addDictionary(name + "Lookup");
@@ -89,25 +89,25 @@ DE_PIMPL(DEDRegister)
         return *orderArray;
     }
 
-    ArrayValue const &order() const
+    const ArrayValue &order() const
     {
         DE_ASSERT(orderArray != nullptr);
         return *orderArray;
     }
 
-    DictionaryValue &lookup(String const &keyName)
+    DictionaryValue &lookup(const String &keyName)
     {
         return (*names)[keyName + "Lookup"].value<DictionaryValue>();
     }
 
-    DictionaryValue const &lookup(String const &keyName) const
+    const DictionaryValue &lookup(const String &keyName) const
     {
         return (*names)[keyName + "Lookup"].value<DictionaryValue>();
     }
 
     template <typename Type>
-    Type lookupOperation(String const &key, String value,
-                         std::function<Type (DictionaryValue const &, String)> operation) const
+    Type lookupOperation(const String &key, String value,
+                         std::function<Type (const DictionaryValue &, String)> operation) const
     {
         auto foundKey = keys.find(key);
         if (foundKey == keys.end()) return Type{0};
@@ -121,10 +121,10 @@ DE_PIMPL(DEDRegister)
         return operation(lookup(key), value);
     }
 
-    Record const *tryFind(String const &key, String const &value) const
+    const Record *tryFind(const String &key, const String &value) const
     {
-        return lookupOperation<Record const *>(key, value,
-            [] (DictionaryValue const &lut, String v) -> Record const * {
+        return lookupOperation<const Record *>(key, value,
+            [] (const DictionaryValue &lut, String v) -> const Record * {
                 TextValue const val(v);
                 auto i = lut.elements().find(DictionaryValue::ValueRef(&val));
                 if (i == lut.elements().end()) return nullptr; // Value not in dictionary.
@@ -132,9 +132,9 @@ DE_PIMPL(DEDRegister)
             });
     }
 
-    bool has(String const &key, String const &value) const
+    bool has(const String &key, const String &value) const
     {
-        return lookupOperation<bool>(key, value, [] (DictionaryValue const &lut, String v) {
+        return lookupOperation<bool>(key, value, [] (const DictionaryValue &lut, String v) {
             return lut.contains(TextValue(v));
         });
     }
@@ -155,12 +155,12 @@ DE_PIMPL(DEDRegister)
         return *sub;
     }
 
-    bool isEmptyKeyValue(Value const &value) const
+    bool isEmptyKeyValue(const Value &value) const
     {
         return is<TextValue>(value) && value.asText().isEmpty();
     }
 
-    bool isValidKeyValue(Value const &value) const
+    bool isValidKeyValue(const Value &value) const
     {
         // Empty strings are not indexable.
         if (isEmptyKeyValue(value)) return false;
@@ -168,7 +168,7 @@ DE_PIMPL(DEDRegister)
     }
 
     /// Returns @c true if the value was added.
-    bool addToLookup(String const &key, Value const &value, Record &def)
+    bool addToLookup(const String &key, const Value &value, Record &def)
     {
         if (!isValidKeyValue(value))
             return false;
@@ -195,7 +195,7 @@ DE_PIMPL(DEDRegister)
         return true;
     }
 
-    bool removeFromLookup(String const &key, Value const &value, Record &def)
+    bool removeFromLookup(const String &key, const Value &value, Record &def)
     {
         //qDebug() << "removeFromLookup" << key << value.asText() << &def;
 
@@ -216,9 +216,9 @@ DE_PIMPL(DEDRegister)
         // Remove from the index.
         if (dict.contains(TextValue(valText)))
         {
-            Value const &indexed = dict.element(TextValue(valText));
+            const Value &indexed = dict.element(TextValue(valText));
             //qDebug() << " -" << indexed.as<RecordValue>().record() << &def;
-            Record const *indexedDef = indexed.as<RecordValue>().record();
+            const Record *indexedDef = indexed.as<RecordValue>().record();
             if (!indexedDef || indexedDef == &def)
             {
                 // This is the definition that was indexed using the key value.
@@ -261,7 +261,7 @@ DE_PIMPL(DEDRegister)
         }
     }
 
-    void variableValueChangedFrom(Variable &key, Value const &oldValue, Value const &newValue)
+    void variableValueChangedFrom(Variable &key, const Value &oldValue, const Value &newValue)
     {
         //qDebug() << "changed" << key.name() << "from" << oldValue.asText() << "to"
         //         << newValue.asText();
@@ -277,7 +277,7 @@ DE_PIMPL(DEDRegister)
 DEDRegister::DEDRegister(Record &names) : d(new Impl(this, names))
 {}
 
-void DEDRegister::addLookupKey(String const &variableName, LookupFlags const &flags)
+void DEDRegister::addLookupKey(const String &variableName, const LookupFlags &flags)
 {
     d->addKey(variableName, flags);
 }
@@ -318,7 +318,7 @@ int DEDRegister::size() const
     return d->order().size();
 }
 
-bool DEDRegister::has(String const &key, String const &value) const
+bool DEDRegister::has(const String &key, const String &value) const
 {
     return d->has(key, value);
 }
@@ -328,33 +328,33 @@ Record &DEDRegister::operator [] (int index)
     return *d->order().at(index).as<RecordValue>().record();
 }
 
-Record const &DEDRegister::operator [] (int index) const
+const Record &DEDRegister::operator [] (int index) const
 {
     return *d->order().at(index).as<RecordValue>().record();
 }
 
-Record *DEDRegister::tryFind(String const &key, String const &value)
+Record *DEDRegister::tryFind(const String &key, const String &value)
 {
     return const_cast<Record *>(d->tryFind(key, value));
 }
 
-Record const *DEDRegister::tryFind(String const &key, const String &value) const
+const Record *DEDRegister::tryFind(const String &key, const String &value) const
 {
     return d->tryFind(key, value);
 }
 
-Record &DEDRegister::find(String const &key, String const &value)
+Record &DEDRegister::find(const String &key, const String &value)
 {
-    return const_cast<Record &>(const_cast<DEDRegister const *>(this)->find(key, value));
+    return const_cast<Record &>(const_cast<const DEDRegister *>(this)->find(key, value));
 }
 
-Record const &DEDRegister::find(String const &key, String const &value) const
+const Record &DEDRegister::find(const String &key, const String &value) const
 {
     if (!d->keys.contains(key))
     {
         throw UndefinedKeyError("DEDRegister::find", "Key '" + key + "' not defined");
     }
-    Record const *rec = tryFind(key, value);
+    const Record *rec = tryFind(key, value);
     if (!rec)
     {
         throw NotFoundError("DEDRegister::find", key + " '" + value + "' not found");
@@ -362,7 +362,7 @@ Record const &DEDRegister::find(String const &key, String const &value) const
     return *rec;
 }
 
-DictionaryValue const &DEDRegister::lookup(String const &key) const
+const DictionaryValue &DEDRegister::lookup(const String &key) const
 {
     if (!d->keys.contains(key))
     {

@@ -39,7 +39,7 @@ namespace de {
 class LIBGUI_PUBLIC CompositorWidget : public GuiWidget
 {
 public:
-    CompositorWidget(String const &name = String());
+    CompositorWidget(const String &name = String());
 
     GLTexture &composite() const;
 
@@ -49,7 +49,7 @@ public:
      *
      * @param projMatrix  Projection matrix.
      */
-    void setCompositeProjection(Mat4f const &projMatrix);
+    void setCompositeProjection(const Mat4f &projMatrix);
 
     /**
      * Sets the projection used for displaying the composited content to the

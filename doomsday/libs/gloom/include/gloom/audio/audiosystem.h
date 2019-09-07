@@ -40,18 +40,18 @@ public:
      * @return Sound instance for controlling and querying the playing sound. AudioSystem
      * retains ownership of all Sounds.
      */
-    de::Sound &newSound(de::Waveform const &waveform);
+    de::Sound &newSound(const de::Waveform &waveform);
 
-    de::Sound &newSound(de::DotPath const &appWaveform);
+    de::Sound &newSound(const de::DotPath &appWaveform);
 
-    void timeChanged(de::Clock const &);
+    void timeChanged(const de::Clock &);
 
     void setListener(const ICamera *camera);
 
     const ICamera *listener() const;
 
 public:
-    DE_DEFINE_AUDIENCE(NewSound, void newSoundCreated(de::Sound &, de::DotPath const &name))
+    DE_DEFINE_AUDIENCE(NewSound, void newSoundCreated(de::Sound &, const de::DotPath &name))
 
 private:
     DE_PRIVATE(d)

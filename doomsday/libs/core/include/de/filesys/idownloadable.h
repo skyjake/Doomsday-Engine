@@ -34,7 +34,7 @@ public:
 
     virtual Asset &asset() = 0;
 
-    virtual Asset const &asset() const = 0;
+    virtual const Asset &asset() const = 0;
 
     virtual dsize downloadSize() const = 0;
 

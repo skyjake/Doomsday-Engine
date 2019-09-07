@@ -32,7 +32,7 @@
 /// @return Newly composed map URI.
 res::Uri composeMapUri(int episode, int map);
 
-int valueDefForPath(de::String const &id, ded_value_t **def = 0);
+int valueDefForPath(const de::String &id, ded_value_t **def = 0);
 
 /**
  * Tokenize a @a string, splitting it into at most @a max tokens.
@@ -50,6 +50,6 @@ int valueDefForPath(de::String const &id, ded_value_t **def = 0);
  *
  * @return Resulting StringList containing the parsed string tokens.
  */
-de::StringList splitMax(de::String const &string, de::Char sep, int max = -1);
+de::StringList splitMax(const de::String &string, de::Char sep, int max = -1);
 
 #endif // LIBDEHREAD_DEHREADER_UTIL_H

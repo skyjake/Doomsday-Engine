@@ -61,7 +61,7 @@ public:
      *
      * @return  @c true, if the error is caught and catch compound should be executed.
      */
-    bool matches(Error const &err) const;
+    bool matches(const Error &err) const;
 
     /**
      * Assigns the exception to the specified variable and begins the catch compound.
@@ -69,7 +69,7 @@ public:
      * @param context  Execution context.
      * @param err      Error.
      */
-    void executeCatch(Context &context, Error const &err) const;
+    void executeCatch(Context &context, const Error &err) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

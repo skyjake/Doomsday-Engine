@@ -56,7 +56,7 @@ public:
     /**
      * Attempt to construct a new Id1Map from the @a recognized data specified.
      */
-    MapImporter(res::Id1MapRecognizer const &recognized);
+    MapImporter(const res::Id1MapRecognizer &recognized);
 
     /**
      * Transfer the map to Doomsday (i.e., rebuild in native map format via the

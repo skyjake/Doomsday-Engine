@@ -30,7 +30,7 @@ DE_PIMPL_NOREF(WaveformBank)
     {
         String filePath;
 
-        Source(String const &path) : filePath(path) {}
+        Source(const String &path) : filePath(path) {}
 
         Time modifiedAt() const
         {
@@ -59,29 +59,29 @@ DE_PIMPL_NOREF(WaveformBank)
     };
 };
 
-WaveformBank::WaveformBank(Flags const &flags) : InfoBank("WaveformBank", flags), d(new Impl)
+WaveformBank::WaveformBank(const Flags &flags) : InfoBank("WaveformBank", flags), d(new Impl)
 {}
 
-void WaveformBank::add(DotPath const &id, String const &waveformFilePath)
+void WaveformBank::add(const DotPath &id, const String &waveformFilePath)
 {
     Bank::add(id, new Impl::Source(waveformFilePath));
 }
 
-void WaveformBank::addFromInfo(File const &file)
+void WaveformBank::addFromInfo(const File &file)
 {
     LOG_AS("WaveformBank");
     parse(file);
     addFromInfoBlocks("waveform");
 }
 
-Waveform const &WaveformBank::waveform(DotPath const &id) const
+const Waveform &WaveformBank::waveform(const DotPath &id) const
 {
     return *data(id).as<Impl::Data>().waveform;
 }
 
-Bank::ISource *WaveformBank::newSourceFromInfo(String const &id)
+Bank::ISource *WaveformBank::newSourceFromInfo(const String &id)
 {
-    Record const &def = info()[id];
+    const Record &def = info()[id];
     return new Impl::Source(absolutePathInContext(def, def["path"]));
 }
 

@@ -47,7 +47,7 @@ DE_PIMPL_NOREF(GameRules)
 
     Impl() {}
 
-    Impl(Impl const &other)
+    Impl(const Impl &other)
         : rules(other.rules)
     {}
 };
@@ -58,7 +58,7 @@ GameRules::GameRules()
     update();
 }
 
-GameRules::GameRules(GameRules const &other)
+GameRules::GameRules(const GameRules &other)
     : d(new Impl(*other.d))
 {
     update();
@@ -71,7 +71,7 @@ GameRules::GameRules(GameRules const &other)
 //    return rules;
 //}
 
-GameRules *GameRules::fromRecord(Record const &record, GameRules const *defaults) // static
+GameRules *GameRules::fromRecord(const Record &record, const GameRules *defaults) // static
 {
     GameRules *gr = new GameRules;
 
@@ -114,7 +114,7 @@ Record &GameRules::asRecord()
     return d->rules;
 }
 
-Record const &GameRules::asRecord() const
+const Record &GameRules::asRecord() const
 {
     return d->rules;
 
@@ -135,7 +135,7 @@ Record const &GameRules::asRecord() const
 //    return rec;
 }
 
-GameRules &GameRules::operator = (GameRules const &other)
+GameRules &GameRules::operator = (const GameRules &other)
 {
     d->rules = other.d->rules;
 

@@ -44,7 +44,7 @@ public:
     /// FilteredData is meant for immutable access only. @ingroup errors
     DE_ERROR(ImmutableError);
 
-    typedef std::function<bool (Item const &item)> FilterFunc;
+    typedef std::function<bool (const Item &item)> FilterFunc;
 
 public:
     /**
@@ -53,7 +53,7 @@ public:
      * @param source  Source items. This must not be deleted while FilteredData is
      *                being used.
      */
-    FilteredData(Data const &source);
+    FilteredData(const Data &source);
 
     Data &clear() override;
 
@@ -76,9 +76,9 @@ public:
     void        remove(Pos pos) override;
     Item *      take(Pos pos) override;
     Item &      at(Pos pos) override;
-    Item const &at(Pos pos) const override;
-    Pos         find(Item const &item) const override;
-    Pos         findLabel(String const &label) const override;
+    const Item &at(Pos pos) const override;
+    Pos         find(const Item &item) const override;
+    Pos         findLabel(const String &label) const override;
     Pos         findData(const Value &data) const override;
     void        sort(SortMethod method = Ascending) override { Data::sort(method); }
     void        sort(LessThanFunc lessThan) override;
@@ -96,12 +96,12 @@ template <typename ItemType>
 class FilteredDataT : public FilteredData
 {
 public:
-    FilteredDataT(Data const &source) : FilteredData(source) {}
+    FilteredDataT(const Data &source) : FilteredData(source) {}
     ItemType &at(Pos pos) override {
         return static_cast<ItemType &>(FilteredData::at(pos));
     }
-    ItemType const &at(Pos pos) const override {
-        return static_cast<ItemType const &>(FilteredData::at(pos));
+    const ItemType &at(Pos pos) const override {
+        return static_cast<const ItemType &>(FilteredData::at(pos));
     }
 };
 

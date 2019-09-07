@@ -84,7 +84,7 @@ void World::reset()
     });
 }
 
-void World::timeChanged(Clock const &)
+void World::timeChanged(const Clock &)
 {
     // Nothing to do.
 }
@@ -110,7 +110,7 @@ Materials &World::materials()
     return d->materials;
 }
 
-Materials const &World::materials() const
+const Materials &World::materials() const
 {
     return d->materials;
 }

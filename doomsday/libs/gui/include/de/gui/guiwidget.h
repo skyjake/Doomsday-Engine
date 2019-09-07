@@ -118,21 +118,21 @@ public:
         Background()
             : type(None), thickness(0) {}
 
-        Background(GuiWidget &blurred, Vec4f const &blurColor)
+        Background(GuiWidget &blurred, const Vec4f &blurColor)
             : solidFill(blurColor), type(SharedBlur), thickness(0), blur(&blurred) {}
 
-        Background(Vec4f const &solid, Type t = None)
+        Background(const Vec4f &solid, Type t = None)
             : solidFill(solid), type(t), thickness(0) {}
 
-        Background(Type t, Vec4f const &borderColor, float borderThickness = 0)
+        Background(Type t, const Vec4f &borderColor, float borderThickness = 0)
             : type(t), color(borderColor), thickness(borderThickness) {}
 
-        Background(Vec4f const &solid, Type t,
-                   Vec4f const &borderColor,
+        Background(const Vec4f &solid, Type t,
+                   const Vec4f &borderColor,
                    float borderThickness = 0)
             : solidFill(solid), type(t), color(borderColor), thickness(borderThickness) {}
 
-        inline Background withSolidFill(Vec4f const &newSolidFill) const {
+        inline Background withSolidFill(const Vec4f &newSolidFill) const {
             Background bg = *this;
             bg.solidFill = newSolidFill;
             return bg;
@@ -165,7 +165,7 @@ public:
          *
          * @return @c true, if the event was eaten. @c false otherwise.
          */
-        virtual bool handleEvent(GuiWidget &widget, Event const &event) = 0;
+        virtual bool handleEvent(GuiWidget &widget, const Event &event) = 0;
     };
 
     enum Attribute
@@ -257,14 +257,14 @@ public:
     GuiRootWidget &root() const;
     Children childWidgets() const;
     GuiWidget *parentGuiWidget() const;
-    Style const &style() const;
+    const Style &style() const;
 
     /**
      * Shortcut for accessing individual rules in the active UI style.
      * @param path  Identifier of the rule.
      * @return Rule from the Style.
      */
-    Rule const &rule(DotPath const &path) const;
+    const Rule &rule(const DotPath &path) const;
 
     /**
      * Returns the rule rectangle that defines the placement of the widget on
@@ -278,7 +278,7 @@ public:
      * Returns the rule rectangle that defines the placement of the widget on
      * the target canvas.
      */
-    RuleRectangle const &rule() const;
+    const RuleRectangle &rule() const;
 
     /**
      * Calculates an estimate of the height of the widget. Widgets used in virtualized
@@ -289,10 +289,10 @@ public:
     virtual float estimatedHeight() const;
 
     ui::Margins &margins();
-    ui::Margins const &margins() const;
+    const ui::Margins &margins() const;
 
     Rectanglef normalizedRect() const;
-    Rectanglef normalizedRect(Rectanglei const &viewSpaceRect) const;
+    Rectanglef normalizedRect(const Rectanglei &viewSpaceRect) const;
 
     /**
      * Normalized content rectangle. Same as normalizedRect() except margins
@@ -300,14 +300,14 @@ public:
      */
     Rectanglef normalizedContentRect() const;
 
-    void setFont(DotPath const &id);
-    virtual void setTextColor(DotPath const &id);
-    void set(Background const &bg);
+    void setFont(const DotPath &id);
+    virtual void setTextColor(const DotPath &id);
+    void set(const Background &bg);
     void setSaturation(float saturation);
 
-    Font const &font() const;
-    DotPath const &fontId() const;
-    DotPath const &textColorId() const;
+    const Font &font() const;
+    const DotPath &fontId() const;
+    const DotPath &textColorId() const;
     ColorBank::Color textColor() const;
     ColorBank::Colorf textColorf() const;
 
@@ -318,7 +318,7 @@ public:
      */
     bool isClipped() const;
 
-    Background const &background() const;
+    const Background &background() const;
 
     /**
      * Sets the opacity of the widget. Child widgets' opacity is also affected.
@@ -356,7 +356,7 @@ public:
      * @param attr  Attribute(s) to modify.
      * @param op    Flag operation.
      */
-    void setAttribute(Attributes const &attr, FlagOpArg op = SetFlags);
+    void setAttribute(const Attributes &attr, FlagOpArg op = SetFlags);
 
     /**
      * Returns this widget's attributes.
@@ -389,7 +389,7 @@ public:
     void draw() override final;
     void preDrawChildren() override;
     void postDrawChildren() override;
-    bool handleEvent(Event const &event) override;
+    bool handleEvent(const Event &event) override;
 
     /**
      * Determines if the widget occupies on-screen position @a pos.
@@ -398,9 +398,9 @@ public:
      *
      * @return @c true, if hit.
      */
-    virtual bool hitTest(Vec2i const &pos) const;
+    virtual bool hitTest(const Vec2i &pos) const;
 
-    bool hitTest(Event const &event) const;
+    bool hitTest(const Event &event) const;
 
     /**
      * Checks if the position is on any of the children of this widget.
@@ -409,7 +409,7 @@ public:
      *
      * @return  The child that occupied the position in the view.
      */
-    GuiWidget const *treeHitTest(Vec2i const &pos) const;
+    const GuiWidget *treeHitTest(const Vec2i &pos) const;
 
     /**
      * Returns the rule rectangle used for hit testing. Defaults to a rectangle
@@ -420,7 +420,7 @@ public:
      */
     RuleRectangle &hitRule();
 
-    RuleRectangle const &hitRule() const;
+    const RuleRectangle &hitRule() const;
 
     enum MouseClickStatus {
         MouseClickUnrelated, ///< Event was not related to mouse clicks.
@@ -429,7 +429,7 @@ public:
         MouseClickAborted
     };
 
-    MouseClickStatus handleMouseClick(Event const &event,
+    MouseClickStatus handleMouseClick(const Event &event,
                                       MouseEvent::Button button = MouseEvent::Left);
     
     /**
@@ -448,8 +448,8 @@ public:
 
     bool canBeFocused() const override;
 
-    GuiWidget *guiFind(String const &name);
-    GuiWidget const *guiFind(String const &name) const;
+    GuiWidget *guiFind(const String &name);
+    const GuiWidget *guiFind(const String &name) const;
 
     /**
      * Finds the popup widget that this widget resides in.
@@ -474,8 +474,8 @@ public:
      *
      * @return Normalized rectangle.
      */
-    static Rectanglef normalizedRect(Rectanglei const &rect,
-                                     Rectanglei const &containerRect);
+    static Rectanglef normalizedRect(const Rectanglei &rect,
+                                     const Rectanglei &containerRect);
 
     static float pointsToPixels(float points);
     static float pixelsToPoints(float pixels);
@@ -489,13 +489,13 @@ public:
     }
 
     template <typename Vector2>
-    static Vector2 pointsToPixels(Vector2 const &type) {
+    static Vector2 pointsToPixels(const Vector2 &type) {
         return Vector2(typename Vector2::ValueType(pointsToPixels(type.x)),
                        typename Vector2::ValueType(pointsToPixels(type.y)));
     }
 
     template <typename Vector2>
-    static Vector2 pixelsToPoints(Vector2 const &type) {
+    static Vector2 pixelsToPoints(const Vector2 &type) {
         return Vector2(typename Vector2::ValueType(pixelsToPoints(type.x)),
                        typename Vector2::ValueType(pixelsToPoints(type.y)));
     }
@@ -538,7 +538,7 @@ protected:
      */
     virtual void drawContent();
 
-    void drawBlurredRect(Rectanglei const &rect, Vec4f const &color, float opacity = 1.0f);
+    void drawBlurredRect(const Rectanglei &rect, const Vec4f &color, float opacity = 1.0f);
 
     /**
      * Extensible mechanism for derived widgets to build their geometry. The

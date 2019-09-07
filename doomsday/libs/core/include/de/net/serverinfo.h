@@ -27,7 +27,7 @@ namespace de {
 // Default TCP/UDP port for servers to listen on.
 static constexpr duint16 DEFAULT_PORT = 13209;
 
-inline Address checkPort(Address const &address)
+inline Address checkPort(const Address &address)
 {
     if (address.port() == 0) return Address(address.hostName(), DEFAULT_PORT);
     return address;
@@ -42,9 +42,9 @@ public:
     enum Flag { AllowJoin = 0x1, DefaultFlags = AllowJoin };
 
     ServerInfo();
-    ServerInfo(ServerInfo const &other);
-    ServerInfo(Record const &rec);
-    ServerInfo &operator=(ServerInfo const &other);
+    ServerInfo(const ServerInfo &other);
+    ServerInfo(const Record &rec);
+    ServerInfo &operator=(const ServerInfo &other);
 
     Version version() const;
     int     compatibilityVersion() const;
@@ -72,19 +72,19 @@ public:
 
     ServerInfo &setCompatibilityVersion(int compatVersion);
     ServerInfo &setServerId(duint32 sid);
-    ServerInfo &setAddress(Address const &address);
-    ServerInfo &setDomainName(String const &domain);
-    ServerInfo &setName(String const &name);
-    ServerInfo &setDescription(String const &description);
-    ServerInfo &setPluginDescription(String const &pluginDescription);
+    ServerInfo &setAddress(const Address &address);
+    ServerInfo &setDomainName(const String &domain);
+    ServerInfo &setName(const String &name);
+    ServerInfo &setDescription(const String &description);
+    ServerInfo &setPluginDescription(const String &pluginDescription);
     ServerInfo &setPackages(StringList packages);
-    ServerInfo &setGameId(String const &gameId);
-    ServerInfo &setGameConfig(String const &gameConfig);
-    ServerInfo &setMap(String const &map);
-    ServerInfo &addPlayer(String const &playerName);
-    ServerInfo &removePlayer(String const &playerName);
+    ServerInfo &setGameId(const String &gameId);
+    ServerInfo &setGameConfig(const String &gameConfig);
+    ServerInfo &setMap(const String &map);
+    ServerInfo &addPlayer(const String &playerName);
+    ServerInfo &removePlayer(const String &playerName);
     ServerInfo &setMaxPlayers(int count);
-    ServerInfo &setFlags(Flags const &flags);
+    ServerInfo &setFlags(const Flags &flags);
 
     /**
      * Prints server/host information into the console. The header line is

@@ -83,7 +83,7 @@ struct Header : public IReadable
     }
 };
 
-static bool recognize(Block const &data)
+static bool recognize(const Block &data)
 {
     try
     {
@@ -96,7 +96,7 @@ static bool recognize(Block const &data)
                 header.encoding == RLE_ENCODING &&
                 header.bitsPerPixel == 8);
     }
-    catch (Error const &)
+    catch (const Error &)
     {
         return false;
     }
@@ -121,8 +121,8 @@ static Image load(const Block &data)
     Image image(size, Image::RGB_888);
     DE_ASSERT(image.depth() == 24);
 
-    dbyte const *palette = data.data() + data.size() - 768;
-    dbyte const *pos = data.data() + HEADER_SIZE;
+    const dbyte *palette = data.data() + data.size() - 768;
+    const dbyte *pos = data.data() + HEADER_SIZE;
     dbyte *dst = reinterpret_cast<dbyte *>(image.bits());
 
     for (duint y = 0; y < size.y; ++y, dst += size.x * 3)
@@ -228,7 +228,7 @@ struct Header : public IReadable
     }
 };
 
-static bool recognize(Block const &data)
+static bool recognize(const Block &data)
 {
     try
     {
@@ -343,7 +343,7 @@ DE_PIMPL(Image)
         , format(Unknown)
     {}
 
-    Impl(Public *i, Impl const &other)
+    Impl(Public *i, const Impl &other)
         : Base(i)
         , format(other.format)
         , size(other.size)
@@ -353,13 +353,13 @@ DE_PIMPL(Image)
         , origin(other.origin)
     {}
 
-    Impl(Public *i, Size const &imgSize, Format imgFormat)
+    Impl(Public *i, const Size &imgSize, Format imgFormat)
         : Base(i)
         , format(imgFormat)
         , size(imgSize)
     {}
 
-    Impl(Public *i, Size const &imgSize, Format imgFormat, IByteArray const &imgPixels)
+    Impl(Public *i, const Size &imgSize, Format imgFormat, const IByteArray &imgPixels)
         : Base(i)
         , format(imgFormat)
         , size(imgSize)
@@ -373,7 +373,7 @@ DE_PIMPL(Image)
         , pixels(imgPixels)
     {}
 
-    Impl(Public *i, Size const &imgSize, Format imgFormat, ByteRefArray const &imgRefPixels)
+    Impl(Public *i, const Size &imgSize, Format imgFormat, const ByteRefArray &imgRefPixels)
         : Base(i)
         , format(imgFormat)
         , size(imgSize)
@@ -389,7 +389,7 @@ DE_PIMPL(Image)
 Image::Image() : d(new Impl(this))
 {}
 
-Image::Image(Image const &other)
+Image::Image(const Image &other)
     : d(new Impl(this, *other.d))
 {}
 
@@ -397,7 +397,7 @@ Image::Image(Image &&moved)
     : d(std::move(moved.d))
 {}
 
-Image::Image(Size const &size, Format format)
+Image::Image(const Size &size, Format format)
     : d(new Impl(this, size, format))
 {
     d->pixels.resize(stride() * size.y);
@@ -407,11 +407,11 @@ Image::Image(const Size &size, Format format, const Block &pixels)
     : d(new Impl(this, size, format, pixels))
 {}
     
-Image::Image(Size const &size, Format format, IByteArray const &pixels)
+Image::Image(const Size &size, Format format, const IByteArray &pixels)
     : d(new Impl(this, size, format, pixels))
 {}
 
-Image::Image(Size const &size, Format format, ByteRefArray const &refPixels)
+Image::Image(const Size &size, Format format, const ByteRefArray &refPixels)
     : d(new Impl(this, size, format, refPixels))
 {}
 
@@ -427,7 +427,7 @@ Image &Image::operator=(Image &&moved)
     return *this;
 }
 
-//Image &Image::operator = (QImage const &other)
+//Image &Image::operator = (const QImage &other)
 //{
 //    d.reset(new Impl(this, other));
 //    return *this;
@@ -689,7 +689,7 @@ void Image::setPointRatio(float pointsPerPixel)
     d->pointRatio = pointsPerPixel;
 }
 
-Image Image::subImage(Rectanglei const &subArea) const
+Image Image::subImage(const Rectanglei &subArea) const
 {
     const dsize bpp    = bytesPerPixel();
     const auto  bounds = d->rect() & subArea;
@@ -701,7 +701,7 @@ Image Image::subImage(Rectanglei const &subArea) const
     return sub;
 }
 
-void Image::resize(Size const &size)
+void Image::resize(const Size &size)
 {
     DE_ASSERT(d->format == RGB_888 || d->format == RGBA_8888);
 
@@ -732,7 +732,7 @@ void Image::fill(Color color)
     }
 }
 
-void Image::fill(Rectanglei const &rect, Color color)
+void Image::fill(const Rectanglei &rect, Color color)
 {
     IMAGE_ASSERT_EDITABLE(d);
 
@@ -786,12 +786,12 @@ void Image::drawRect(const Rectanglei &rect, Color color)
     }
 }
 
-void Image::draw(Image const &image, Vec2i const &topLeft)
+void Image::draw(const Image &image, const Vec2i &topLeft)
 {
     drawPartial(image, image.d->rect(), topLeft);
 }
 
-void Image::drawPartial(Image const &image, Rectanglei const &part, Vec2i const &topLeft)
+void Image::drawPartial(const Image &image, const Rectanglei &part, const Vec2i &topLeft)
 {
     DE_ASSERT(d->format == image.d->format); // conversion not supported
     IMAGE_ASSERT_EDITABLE(d);
@@ -895,7 +895,7 @@ Image Image::invertedColor() const
     return img;
 }
 
-Image Image::mixed(Image const &low, Image const &high) const
+Image Image::mixed(const Image &low, const Image &high) const
 {
     DE_ASSERT(size() == low.size());
     DE_ASSERT(size() == high.size());
@@ -962,7 +962,7 @@ Image Image::mixed(const Color &zero, const Color &one, const int componentIndic
     return mix;
 }
 
-Image Image::withAlpha(Image const &grayscale) const
+Image Image::withAlpha(const Image &grayscale) const
 {
     DE_ASSERT(size() == grayscale.size());
     const Image &alpha = grayscale;
@@ -995,7 +995,7 @@ Image Image::flipped() const
     return flip;
 }
 
-Image Image::solidColor(Color color, Size const &size)
+Image Image::solidColor(Color color, const Size &size)
 {
     Image img(size, Image::RGBA_8888);
     img.fill(color);
@@ -1268,7 +1268,7 @@ GLPixelFormat Image::glFormat(QImage::Format format)
 }
 #endif
 
-Image Image::fromData(IByteArray const &data, String const &formatHint)
+Image Image::fromData(const IByteArray &data, const String &formatHint)
 {
     return fromData(Block(data), formatHint);
 }
@@ -1303,7 +1303,7 @@ Image Image::fromXpmData(const char * const *xpmStrings)
     return xpm;
 }
 
-Image Image::fromData(Block const &data, String const &formatHint)
+Image Image::fromData(const Block &data, const String &formatHint)
 {
     // Targa doesn't have a reliable "magic" identifier so we require a hint.
     if (!formatHint.compareWithoutCase(".tga") && tga::recognize(data))
@@ -1347,13 +1347,13 @@ Image Image::fromRgbaData(const Size &size, const IByteArray &rgba)
     return img;
 }
 
-Image Image::fromIndexedData(Size const &size, IByteArray const &image, IByteArray const &palette)
+Image Image::fromIndexedData(const Size &size, const IByteArray &image, const IByteArray &palette)
 {
     return fromRgbaData(size, Block(image).mapAsIndices(3, palette, {{0, 0, 0, 255}}));
 }
 
-Image Image::fromMaskedIndexedData(Size const &size, IByteArray const &imageAndMask,
-                                   IByteArray const &palette)
+Image Image::fromMaskedIndexedData(const Size &size, const IByteArray &imageAndMask,
+                                   const IByteArray &palette)
 {
     const auto layerSize = imageAndMask.size() / 2;
     Block pixels = Block(imageAndMask, 0, layerSize)
@@ -1361,7 +1361,7 @@ Image Image::fromMaskedIndexedData(Size const &size, IByteArray const &imageAndM
     return fromRgbaData(size, pixels);
 }
 
-bool Image::recognize(File const &file)
+bool Image::recognize(const File &file)
 {
     const String ext = file.extension();
     for (const char *e : {".tga", ".pcx", ".png", ".jpg", ".jpeg", ".bmp"})

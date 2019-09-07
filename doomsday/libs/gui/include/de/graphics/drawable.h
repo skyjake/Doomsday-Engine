@@ -115,9 +115,9 @@ public:
         return static_cast<VBType &>(buffer(id));
     }
 
-    GLBuffer &buffer(Name const &bufferName) const;
+    GLBuffer &buffer(const Name &bufferName) const;
 
-    Id bufferId(Name const &bufferName) const;
+    Id bufferId(const Name &bufferName) const;
 
     /**
      * Finds an exising program.
@@ -126,13 +126,13 @@ public:
      */
     GLProgram &program(Id id = 0) const;
 
-    GLProgram &program(Name const &programName) const;
+    GLProgram &program(const Name &programName) const;
 
-    Id programId(Name const &programName) const;
+    Id programId(const Name &programName) const;
 
-    GLProgram const &programForBuffer(Id bufferId) const;
+    const GLProgram &programForBuffer(Id bufferId) const;
 
-    GLProgram const &programForBuffer(Name const &bufferName) const;
+    const GLProgram &programForBuffer(const Name &bufferName) const;
 
     /**
      * Finds an existing state.
@@ -141,13 +141,13 @@ public:
      */
     GLState &state(Id id) const;
 
-    GLState &state(Name const &stateName) const;
+    GLState &state(const Name &stateName) const;
 
-    Id stateId(Name const &stateName) const;
+    Id stateId(const Name &stateName) const;
 
-    GLState const *stateForBuffer(Id bufferId) const;
+    const GLState *stateForBuffer(Id bufferId) const;
 
-    GLState const *stateForBuffer(Name const &bufferName) const;
+    const GLState *stateForBuffer(const Name &bufferName) const;
 
     /**
      * Adds a new buffer or replaces an existing one. The buffer will use the
@@ -167,7 +167,7 @@ public:
      */
     void addBuffer(Id id, const std::shared_ptr<GLBuffer>& buffer);
 
-    Id addBuffer(Name const &bufferName, GLBuffer *buffer);
+    Id addBuffer(const Name &bufferName, GLBuffer *buffer);
 
     /**
      * Adds a new buffer, reserving an unused identifier for it. The chosen
@@ -192,11 +192,11 @@ public:
      *
      * @return  Identifier chosen for the buffer.
      */
-    Id addBufferWithNewProgram(GLBuffer *buffer, Name const &programName = "");
+    Id addBufferWithNewProgram(GLBuffer *buffer, const Name &programName = "");
 
-    void addBufferWithNewProgram(Id id, GLBuffer *buffer, Name const &programName = "");
+    void addBufferWithNewProgram(Id id, GLBuffer *buffer, const Name &programName = "");
 
-    Id addBufferWithNewProgram(Name const &bufferName, GLBuffer *buffer, Name const &programName = "");
+    Id addBufferWithNewProgram(const Name &bufferName, GLBuffer *buffer, const Name &programName = "");
 
     /**
      * Creates a program or replaces an existing one with a blank program.
@@ -205,7 +205,7 @@ public:
      */
     GLProgram &addProgram(Id id);
 
-    Id addProgram(Name const &programName);
+    Id addProgram(const Name &programName);
 
     /**
      * Creates a state or replaces an existing one with a default state.
@@ -213,17 +213,17 @@ public:
      * @param state  State to add.
      * @return GL state.
      */
-    GLState &addState(Id id, GLState const &state = GLState());
+    GLState &addState(Id id, const GLState &state = GLState());
 
-    Id addState(Name const &stateName, GLState const &state = GLState());
+    Id addState(const Name &stateName, const GLState &state = GLState());
 
     void removeBuffer(Id id);
     void removeProgram(Id id);
     void removeState(Id id);
 
-    void removeBuffer(Name const &bufferName);
-    void removeProgram(Name const &programName);
-    void removeState(Name const &stateName);
+    void removeBuffer(const Name &bufferName);
+    void removeProgram(const Name &programName);
+    void removeState(const Name &stateName);
 
     /**
      * Sets the program to be used with a buffer.
@@ -235,9 +235,9 @@ public:
     void setProgram(Id bufferId, GLProgram &program);
 
     void setProgram(Id bufferId, Id programId);
-    void setProgram(Id bufferId, Name const &programName);
-    void setProgram(Name const &bufferName, GLProgram &program);
-    void setProgram(Name const &bufferName, Name const &programName);
+    void setProgram(Id bufferId, const Name &programName);
+    void setProgram(const Name &bufferName, GLProgram &program);
+    void setProgram(const Name &bufferName, const Name &programName);
 
     /**
      * Sets the program to be used with all buffers.
@@ -248,7 +248,7 @@ public:
     void setProgram(GLProgram &program);
 
     void setProgram(Id programId);
-    void setProgram(Name const &programName);
+    void setProgram(const Name &programName);
 
     /**
      * Sets the state to be used with a buffer.
@@ -259,9 +259,9 @@ public:
      */
     void setState(Id bufferId, GLState &state);
 
-    void setState(Name const &bufferName, GLState &state);
-    void setState(Id bufferId, Name const &stateName);
-    void setState(Name const &bufferName, Name const &stateName);
+    void setState(const Name &bufferName, GLState &state);
+    void setState(Id bufferId, const Name &stateName);
+    void setState(const Name &bufferName, const Name &stateName);
 
     /**
      * Sets the state to be used with all buffers.
@@ -271,7 +271,7 @@ public:
      */
     void setState(GLState &state);
 
-    void setState(Name const &stateName);
+    void setState(const Name &stateName);
 
     /**
      * Removes the state configured for a buffer. When the buffer is drawn, the
@@ -282,7 +282,7 @@ public:
      */
     void unsetState(Id bufferId);
 
-    void unsetState(Name const &bufferName);
+    void unsetState(const Name &bufferName);
 
     /**
      * Removes the state configured for all buffers. When drawing, the current

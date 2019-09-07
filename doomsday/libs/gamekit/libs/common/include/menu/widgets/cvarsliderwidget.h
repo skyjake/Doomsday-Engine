@@ -34,14 +34,14 @@ namespace menu {
 class CVarSliderWidget : public SliderWidget
 {
 public:
-    explicit CVarSliderWidget(char const *cvarPath, float min = 0.0f, float max = 1.0f,
+    explicit CVarSliderWidget(const char *cvarPath, float min = 0.0f, float max = 1.0f,
                               float step = 0.1f, bool floatMode = true);
     virtual ~CVarSliderWidget();
 
-    char const *cvarPath() const;
+    const char *cvarPath() const;
 
 private:
-    char const *_cvarPath;
+    const char *_cvarPath;
 };
 
 void CVarSliderWidget_UpdateCVar(Widget &wi, Widget::Action action);

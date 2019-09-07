@@ -132,12 +132,12 @@ Address &Address::operator=(const Address &other)
     return *this;
 }
 
-bool Address::operator<(Address const &other) const
+bool Address::operator<(const Address &other) const
 {
     return asText() < other.asText();
 }
 
-bool Address::operator==(Address const &other) const
+bool Address::operator==(const Address &other) const
 {
     if (d->port != other.d->port) return false;
     return equal_Address(d->get(), other.d->get());
@@ -183,7 +183,7 @@ duint16 Address::port() const
 //    d->port = p;
 //}
 
-//bool Address::matches(Address const &other, duint32 mask)
+//bool Address::matches(const Address &other, duint32 mask)
 //{
 //    return (d->host.toIPv4Address() & mask) == (other.d->host.toIPv4Address() & mask);
 //}
@@ -215,7 +215,7 @@ String Address::asText() const
     return d->textRepr;
 }
 
-Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPort) // static
+Address Address::parse(const String &addressWithOptionalPort, duint16 defaultPort) // static
 {
     duint16 port = defaultPort;
     String  str  = addressWithOptionalPort;
@@ -238,7 +238,7 @@ Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPor
     return Address(str, port);
 }
 
-std::ostream &operator<<(std::ostream &os, Address const &address)
+std::ostream &operator<<(std::ostream &os, const Address &address)
 {
     os << address.asText().c_str();
     return os;

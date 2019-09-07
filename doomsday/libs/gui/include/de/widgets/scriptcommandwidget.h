@@ -41,9 +41,9 @@ namespace de {
 class LIBGUI_PUBLIC ScriptCommandWidget : public CommandWidget
 {
 public:
-    ScriptCommandWidget(String const &name = String());
+    ScriptCommandWidget(const String &name = String());
 
-    bool handleEvent(Event const &event);
+    bool handleEvent(const Event &event);
 
     /**
      * Checks the native script modules and shell Lexicon for known words.
@@ -51,9 +51,9 @@ public:
     void updateCompletion();
 
 protected:
-    bool isAcceptedAsCommand(String const &text);
-    void executeCommand(String const &text);
-    void autoCompletionBegan(String const &prefix);
+    bool isAcceptedAsCommand(const String &text);
+    void executeCommand(const String &text);
+    void autoCompletionBegan(const String &prefix);
 
 private:
     DE_PRIVATE(d)

@@ -48,7 +48,7 @@ DE_PIMPL_NOREF(FileSystem)
 
     Record fsModule;
 
-    List<filesys::IInterpreter const *> interpreters;
+    List<const filesys::IInterpreter *> interpreters;
     
     /// The main index to all files in the file system.
     FileIndex index;
@@ -79,7 +79,7 @@ DE_PIMPL_NOREF(FileSystem)
         typeIndex.value.clear();
     }
 
-    FileIndex &getTypeIndex(String const &typeName)
+    FileIndex &getTypeIndex(const String &typeName)
     {
         DE_GUARD(typeIndex);
         FileIndex *&idx = typeIndex.value[typeName];
@@ -98,7 +98,7 @@ DE_AUDIENCE_METHOD(FileSystem, Busy)
 FileSystem::FileSystem() : d(new Impl)
 {}
 
-void FileSystem::addInterpreter(filesys::IInterpreter const &interpreter)
+void FileSystem::addInterpreter(const filesys::IInterpreter &interpreter)
 {
     d->interpreters.prepend(&interpreter);
 }
@@ -113,7 +113,7 @@ void FileSystem::refreshAsync()
     });
 }
 
-Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behavior)
+Folder &FileSystem::makeFolder(const String &path, FolderCreationBehaviors behavior)
 {
     LOG_AS("FS::makeFolder");
 
@@ -176,7 +176,7 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
     return *subFolder;
 }
 
-Folder &FileSystem::makeFolderWithFeed(String const &path, Feed *feed,
+Folder &FileSystem::makeFolderWithFeed(const String &path, Feed *feed,
                                        Folder::PopulationBehavior populationBehavior,
                                        FolderCreationBehaviors behavior)
 {
@@ -200,7 +200,7 @@ File *FileSystem::interpret(File *sourceData)
     LOG_AS("FS::interpret");
     try
     {
-        for (filesys::IInterpreter const *i : d->interpreters)
+        for (const filesys::IInterpreter *i : d->interpreters)
         {
             if (auto *file = i->interpretFile(sourceData))
             {
@@ -208,7 +208,7 @@ File *FileSystem::interpret(File *sourceData)
             }
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_RES_ERROR("Failed to interpret contents of %s: %s")
                 << sourceData->description() << er.asText();
@@ -222,12 +222,12 @@ File *FileSystem::interpret(File *sourceData)
     return sourceData;
 }
 
-FileIndex const &FileSystem::nameIndex() const
+const FileIndex &FileSystem::nameIndex() const
 {
     return d->index;
 }
 
-int FileSystem::findAll(String const &path, FoundFiles &found) const
+int FileSystem::findAll(const String &path, FoundFiles &found) const
 {
     LOG_AS("FS::findAll");
 
@@ -236,7 +236,7 @@ int FileSystem::findAll(String const &path, FoundFiles &found) const
     return int(found.size());
 }
 
-LoopResult FileSystem::forAll(String const &partialPath, std::function<LoopResult (File &)> func)
+LoopResult FileSystem::forAll(const String &partialPath, std::function<LoopResult (File &)> func)
 {
     FoundFiles files;
     findAll(partialPath, files);
@@ -247,14 +247,14 @@ LoopResult FileSystem::forAll(String const &partialPath, std::function<LoopResul
     return LoopContinue;
 }
 
-int FileSystem::findAllOfType(String const &typeIdentifier, String const &path, FoundFiles &found) const
+int FileSystem::findAllOfType(const String &typeIdentifier, const String &path, FoundFiles &found) const
 {
     LOG_AS("FS::findAllOfType");
 
     return findAllOfTypes(StringList() << typeIdentifier, path, found);
 }
 
-LoopResult FileSystem::forAllOfType(String const &typeIdentifier, String const &path,
+LoopResult FileSystem::forAllOfType(const String &typeIdentifier, const String &path,
                                     std::function<LoopResult (File &)> func)
 {
     FoundFiles files;
@@ -266,19 +266,19 @@ LoopResult FileSystem::forAllOfType(String const &typeIdentifier, String const &
     return LoopContinue;
 }
 
-int FileSystem::findAllOfTypes(StringList typeIdentifiers, String const &path, FoundFiles &found) const
+int FileSystem::findAllOfTypes(StringList typeIdentifiers, const String &path, FoundFiles &found) const
 {
     LOG_AS("FS::findAllOfTypes");
 
     found.clear();
-    for (String const &id : typeIdentifiers)
+    for (const String &id : typeIdentifiers)
     {
         indexFor(id).findPartialPath(path, found);
     }
     return int(found.size());
 }
 
-File &FileSystem::find(String const &path) const
+File &FileSystem::find(const String &path) const
 {
     return find<File>(path);
 }
@@ -311,7 +311,7 @@ void FileSystem::deindex(File &file)
     }
 }
 
-File &FileSystem::copySerialized(String const &sourcePath, String const &destinationPath,
+File &FileSystem::copySerialized(const String &sourcePath, const String &destinationPath,
                                  CopyBehaviors behavior) // static
 {
     auto &fs = get();
@@ -338,7 +338,7 @@ File &FileSystem::copySerialized(String const &sourcePath, String const &destina
     return *dest;
 }
 
-void FileSystem::timeChanged(Clock const &)
+void FileSystem::timeChanged(const Clock &)
 {
     // perform time-based processing (indexing/pruning/refreshing)
 }
@@ -398,7 +398,7 @@ void FileSystem::waitForIdle() // static
     }
 }
 
-FileIndex const &FileSystem::indexFor(String const &typeName) const
+const FileIndex &FileSystem::indexFor(const String &typeName) const
 {
     return d->getTypeIndex(typeName);
 }
@@ -431,7 +431,7 @@ void FileSystem::printIndex()
     }
 }
 
-String FileSystem::accessNativeLocation(NativePath const &nativePath, Flags flags) // static
+String FileSystem::accessNativeLocation(const NativePath &nativePath, Flags flags) // static
 {
     static const String SYS_NATIVE = "/sys/native";
     static const String VAR_MAPPING = "accessNames";
@@ -485,7 +485,7 @@ Folder &FileSystem::root()
     return *d->root;
 }
 
-Folder const &FileSystem::root() const
+const Folder &FileSystem::root() const
 {
     return *d->root;
 }

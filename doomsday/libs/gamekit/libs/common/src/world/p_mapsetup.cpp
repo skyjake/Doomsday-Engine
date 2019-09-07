@@ -115,7 +115,7 @@ xsector_t *P_ToXSector(Sector *sector)
     }
 }
 
-xsector_t const *P_ToXSector_const(Sector const *sector)
+const xsector_t *P_ToXSector_const(const Sector *sector)
 {
     return P_ToXSector(const_cast<Sector *>(sector));
 }
@@ -207,7 +207,7 @@ int applySurfaceColor(void *obj, void *context)
 }
 #endif
 
-static dd_bool checkMapSpotSpawnFlags(mapspot_t const *spot)
+static dd_bool checkMapSpotSpawnFlags(const mapspot_t *spot)
 {
 #if __JHEXEN__
     /// @todo Move to classinfo_t
@@ -296,7 +296,7 @@ static dd_bool P_IsClientAllowedToSpawn(int doomEdNum)
 /**
  * Should we auto-spawn one or more mobjs from the specified map spot?
  */
-static dd_bool checkMapSpotAutoSpawn(mapspot_t const *spot)
+static dd_bool checkMapSpotAutoSpawn(const mapspot_t *spot)
 {
 #if __JHERETIC__
     // Ambient sound sequence activator?
@@ -513,7 +513,7 @@ static void initMapSpots()
 }
 
 #if __JHERETIC__
-mapspot_t const *P_ChooseRandomMaceSpot()
+const mapspot_t *P_ChooseRandomMaceSpot()
 {
     if(!maceSpots || !maceSpotCount)
         return 0;
@@ -526,7 +526,7 @@ mapspot_t const *P_ChooseRandomMaceSpot()
     {
         mapspotid_t mapSpotId = maceSpots[i];
         DE_ASSERT(mapSpots != 0 && mapSpotId < numMapSpots);
-        mapspot_t const *mapSpot = &mapSpots[mapSpotId];
+        const mapspot_t *mapSpot = &mapSpots[mapSpotId];
 
         // Does this spot qualify given the current game configuration?
         if(checkMapSpotSpawnFlags(mapSpot))
@@ -543,7 +543,7 @@ mapspot_t const *P_ChooseRandomMaceSpot()
     for(uint i = 0; i < maceSpotCount; ++i)
     {
         mapspotid_t mapSpotId = maceSpots[i];
-        mapspot_t const *mapSpot = &mapSpots[mapSpotId];
+        const mapspot_t *mapSpot = &mapSpots[mapSpotId];
 
         if(!checkMapSpotSpawnFlags(mapSpot))
             continue;
@@ -569,7 +569,7 @@ static void spawnMapObjects()
 {
     for(uint i = 0; i < numMapSpots; ++i)
     {
-        mapspot_t const *spot = &mapSpots[i];
+        const mapspot_t *spot = &mapSpots[i];
 
         // Not all map spots spawn mobjs on map load.
         if(!checkMapSpotAutoSpawn(spot))
@@ -654,7 +654,7 @@ static void spawnMapObjects()
             // Sometimes the Firemace doesn't show up if not in deathmatch.
             if (gfw_Rule(deathmatch) || M_Random() >= 64)
             {
-                if (mapspot_t const *spot = P_ChooseRandomMaceSpot())
+                if (const mapspot_t *spot = P_ChooseRandomMaceSpot())
                 {
                     App_Log(DE2_DEV_MAP_VERBOSE,
                             "spawnMapObjects: Spawning Firemace at (%g, %g, %g)",
@@ -677,7 +677,7 @@ static void spawnMapObjects()
     P_SpawnPlayers();
 }
 
-void P_SetupMap(res::Uri const &mapUri)
+void P_SetupMap(const res::Uri &mapUri)
 {
     if (IS_DEDICATED)
     {
@@ -896,9 +896,9 @@ static void precacheResources()
 #endif
 }
 
-void P_FinalizeMapChange(uri_s const *mapUri_)
+void P_FinalizeMapChange(const uri_s *mapUri_)
 {
-    res::Uri const &mapUri = *reinterpret_cast<res::Uri const *>(mapUri_);
+    const res::Uri &mapUri = *reinterpret_cast<const res::Uri *>(mapUri_);
 #if !__JHEXEN__
     DE_UNUSED(mapUri);
 #endif

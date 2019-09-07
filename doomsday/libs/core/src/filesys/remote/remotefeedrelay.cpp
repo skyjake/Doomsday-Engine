@@ -69,8 +69,8 @@ void RemoteFeedRelay::defineLink(const Link::Constructor &linkConstructor)
     d->linkConstructors.push_front(linkConstructor);
 }
 
-void RemoteFeedRelay::addRepository(String const &address,
-                                    String const &localRootPath)
+void RemoteFeedRelay::addRepository(const String &address,
+                                    const String &localRootPath)
 {
     for (const auto &constructor : d->linkConstructors)
     {
@@ -83,7 +83,7 @@ void RemoteFeedRelay::addRepository(String const &address,
     }
 }
 
-void RemoteFeedRelay::removeRepository(String const &address)
+void RemoteFeedRelay::removeRepository(const String &address)
 {
     if (auto *repo = d->repositories.take(address))
     {
@@ -91,7 +91,7 @@ void RemoteFeedRelay::removeRepository(String const &address)
     }
 }
 
-Link *RemoteFeedRelay::repository(String const &address) const
+Link *RemoteFeedRelay::repository(const String &address) const
 {
     auto found = d->repositories.find(address);
     if (found != d->repositories.end())
@@ -111,7 +111,7 @@ StringList RemoteFeedRelay::repositories() const
     return repos;
 }
 
-bool RemoteFeedRelay::isConnected(String const &address) const
+bool RemoteFeedRelay::isConnected(const String &address) const
 {
     if (auto *repo = repository(address))
     {
@@ -120,7 +120,7 @@ bool RemoteFeedRelay::isConnected(String const &address) const
     return false;
 }
 
-PackagePaths RemoteFeedRelay::locatePackages(StringList const &packageIds) const
+PackagePaths RemoteFeedRelay::locatePackages(const StringList &packageIds) const
 {
     PackagePaths located;
     for (auto &r : d->repositories)
@@ -142,7 +142,7 @@ PackagePaths RemoteFeedRelay::locatePackages(StringList const &packageIds) const
 }
 
 Request<FileMetadata>
-RemoteFeedRelay::fetchFileList(String const &repository, String folderPath, FileMetadata metadataReceived)
+RemoteFeedRelay::fetchFileList(const String &repository, String folderPath, FileMetadata metadataReceived)
 {
     DE_ASSERT(d->repositories.contains(repository));
 
@@ -160,7 +160,7 @@ RemoteFeedRelay::fetchFileList(String const &repository, String folderPath, File
 }
 
 Request<FileContents>
-RemoteFeedRelay::fetchFileContents(String const &repository, String filePath, FileContents contentsReceived)
+RemoteFeedRelay::fetchFileContents(const String &repository, String filePath, FileContents contentsReceived)
 {
     DE_ASSERT(d->repositories.contains(repository));
 

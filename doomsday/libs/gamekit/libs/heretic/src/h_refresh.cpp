@@ -39,7 +39,7 @@
 float quitDarkenOpacity = 0;
 
 #if 0
-void G_RendSpecialFilter(int player, RectRaw const *region)
+void G_RendSpecialFilter(int player, const RectRaw *region)
 {
     player_t *plr = players + player;
     const struct filter_s {
@@ -171,7 +171,7 @@ void G_RendPlayerView(int player)
     R_RenderPlayerView(player);
 }
 
-void H_DrawWindow(Size2Raw const * /*windowSize*/)
+void H_DrawWindow(const Size2Raw * /*windowSize*/)
 {
     if(G_GameState() == GS_INTERMISSION)
     {

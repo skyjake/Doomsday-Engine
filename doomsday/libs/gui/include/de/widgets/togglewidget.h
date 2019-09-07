@@ -47,7 +47,7 @@ public:
     DE_AUDIENCE(UserToggle, void toggleStateChangedByUser(ToggleState active))
 
 public:
-    ToggleWidget(Flags const &flags = DefaultFlags, String const &name = String());
+    ToggleWidget(const Flags &flags = DefaultFlags, const String &name = String());
 
     /**
      * Sets the toggle state of the widget.

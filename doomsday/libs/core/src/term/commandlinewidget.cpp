@@ -36,18 +36,18 @@ DE_PIMPL(CommandLineWidget)
 
 DE_AUDIENCE_METHOD(CommandLineWidget, Command)
 
-CommandLineWidget::CommandLineWidget(String const &name)
+CommandLineWidget::CommandLineWidget(const String &name)
     : LineEditWidget(name)
     , d(new Impl(this))
 {
     setPrompt("> ");
 }
 
-bool CommandLineWidget::handleEvent(Event const &event)
+bool CommandLineWidget::handleEvent(const Event &event)
 {
     // There are only key press events.
     DE_ASSERT(event.type() == Event::KeyPress);
-    KeyEvent const &ev = event.as<KeyEvent>();
+    const KeyEvent &ev = event.as<KeyEvent>();
 
     // Override the editor's normal Enter handling.
     if (ev.key() == Key::Enter)
@@ -66,7 +66,7 @@ bool CommandLineWidget::handleEvent(Event const &event)
     return d->history.handleControlKey(ev.key());
 }
 
-void CommandLineWidget::autoCompletionBegan(String const &wordBase)
+void CommandLineWidget::autoCompletionBegan(const String &wordBase)
 {
     LineEditWidget::autoCompletionBegan(wordBase);
 

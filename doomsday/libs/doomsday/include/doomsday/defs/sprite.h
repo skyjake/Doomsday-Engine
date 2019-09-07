@@ -46,7 +46,7 @@ struct LIBDOOMSDAY_PUBLIC CompiledSprite
     int viewCount = 0;      // number of non-missing views
 
     CompiledSprite();
-    CompiledSprite(de::Record const &spriteDef);
+    CompiledSprite(const de::Record &spriteDef);
 };
 
 typedef de::CompiledRecordT<CompiledSprite> CompiledSpriteRecord;
@@ -76,18 +76,18 @@ public:
 
     struct LIBDOOMSDAY_PUBLIC View
     {
-        res::Uri const *material; // never nullptr
+        const res::Uri *material; // never nullptr
         bool mirrorX;
     };
 
 public:
     Sprite()                    : Definition() {}
-    Sprite(Sprite const &other) : Definition(other) {}
+    Sprite(const Sprite &other) : Definition(other) {}
     Sprite(de::Record &d)       : Definition(d) {}
-    Sprite(de::Record const &d) : Definition(d) {}
+    Sprite(const de::Record &d) : Definition(d) {}
 
     CompiledSpriteRecord &       def();
-    CompiledSpriteRecord const & def() const;
+    const CompiledSpriteRecord & def() const;
 
     void resetToDefaults();
 
@@ -102,7 +102,7 @@ public:
     de::dint viewCount() const;
 
     de::DictionaryValue &viewsDict();
-    //de::DictionaryValue const &viewsDict() const;
+    //const de::DictionaryValue &viewsDict() const;
 
     /**
      * Returns @c true if a View is defined for the specified @a angle.
@@ -118,11 +118,11 @@ public:
      */
     //de::Record &findView(de::dint angle);
 
-    //de::Record const *tryFindView(de::dint angle) const;
+    //const de::Record *tryFindView(de::dint angle) const;
 
     View view(de::dint angle) const;
 
-    res::Uri const &viewMaterial(de::dint angle) const;
+    const res::Uri &viewMaterial(de::dint angle) const;
 
     /**
      * Select an appropriate View for visualizing the entity, given a mobj angle and the

@@ -48,22 +48,22 @@ public:
     class Item : public ui::ActionItem
     {
     public:
-        Item(String const &label, Image const &image = Image())
+        Item(const String &label, const Image &image = Image())
             : ui::ActionItem(image, label) {}
 
-        Item(String const &label, const Value &userData, Image const &image = Image())
+        Item(const String &label, const Value &userData, const Image &image = Image())
             : ui::ActionItem(image, label)
         {
             setData(userData);
         }
 
-        Item(String const &label, const String &userText, Image const &image = Image());
-        Item(String const &label, dint userNumber, Image const &image = Image());
-        Item(String const &label, ddouble userNumber, Image const &image = Image());
+        Item(const String &label, const String &userText, const Image &image = Image());
+        Item(const String &label, dint userNumber, const Image &image = Image());
+        Item(const String &label, ddouble userNumber, const Image &image = Image());
     };
 
 public:
-    ChoiceWidget(String const &name = String());
+    ChoiceWidget(const String &name = String());
 
     ui::Data &items();
 
@@ -73,9 +73,9 @@ public:
      *
      * @param items  Ownership not taken.
      */
-    void setItems(ui::Data const &items);
+    void setItems(const ui::Data &items);
 
-    void setNoSelectionHint(String const &hint);
+    void setNoSelectionHint(const String &hint);
 
     void useDefaultItems();
 
@@ -85,7 +85,7 @@ public:
 
     bool isValidSelection() const;
     ui::Data::Pos selected() const;
-    ui::Item const &selectedItem() const;
+    const ui::Item &selectedItem() const;
 
     /**
      * Returns a rule that determines what is the maximum width of the widget. This is
@@ -95,7 +95,7 @@ public:
      * the selected item uses the "choice.selected" font, so the maximum width depends on
      * what is the widest item using that font.
      */
-    Rule const &maximumWidth() const;
+    const Rule &maximumWidth() const;
 
     void openPopup();
 

@@ -44,7 +44,7 @@ DE_PIMPL(MenuWidget)
 
         Item() : action(nullptr), separatorAfter(false) {}
 
-        Item(Item const &other)
+        Item(const Item &other)
             : action(holdRef(other.action))
             , shortcutLabel(other.shortcutLabel)
             , separatorAfter(other.separatorAfter) {}
@@ -53,7 +53,7 @@ DE_PIMPL(MenuWidget)
             releaseRef(action);
         }
 
-        Item &operator = (Item const &other) {
+        Item &operator = (const Item &other) {
             changeRef(action, other.action);
             shortcutLabel = other.shortcutLabel;
             separatorAfter = other.separatorAfter;
@@ -126,7 +126,7 @@ DE_PIMPL(MenuWidget)
 
 DE_AUDIENCE_METHOD(MenuWidget, Close)
 
-MenuWidget::MenuWidget(Preset preset, String const &name)
+MenuWidget::MenuWidget(Preset preset, const String &name)
     : Widget(name), d(new Impl(*this))
 {
     switch (preset)
@@ -152,7 +152,7 @@ int MenuWidget::itemCount() const
     return d->items.sizei();
 }
 
-void MenuWidget::appendItem(RefArg<Action> action, String const &shortcutLabel)
+void MenuWidget::appendItem(RefArg<Action> action, const String &shortcutLabel)
 {
     Impl::Item item;
     item.action = action.holdRef();
@@ -173,7 +173,7 @@ void MenuWidget::appendSeparator()
     redraw();
 }
 
-void MenuWidget::insertItem(int pos, RefArg<Action> action, String const &shortcutLabel)
+void MenuWidget::insertItem(int pos, RefArg<Action> action, const String &shortcutLabel)
 {
     Impl::Item item;
     item.action = action.holdRef();
@@ -211,7 +211,7 @@ Action &MenuWidget::itemAction(int pos) const
     return *d->items[pos].action;
 }
 
-int MenuWidget::findLabel(String const &label) const
+int MenuWidget::findLabel(const String &label) const
 {
     for (int i = 0; i < d->items.sizei(); ++i)
     {
@@ -221,7 +221,7 @@ int MenuWidget::findLabel(String const &label) const
     return -1;
 }
 
-bool MenuWidget::hasLabel(String const &label) const
+bool MenuWidget::hasLabel(const String &label) const
 {
     return findLabel(label) >= 0;
 }
@@ -232,7 +232,7 @@ void MenuWidget::setCursor(int pos)
     redraw();
 }
 
-void MenuWidget::setCursorByLabel(String const &label)
+void MenuWidget::setCursorByLabel(const String &label)
 {
     int idx = findLabel(label);
     if (idx >= 0)
@@ -256,13 +256,13 @@ void MenuWidget::setClosable(bool canBeClosed)
     d->closable = canBeClosed;
 }
 
-void MenuWidget::setSelectionAttribs(AChar::Attribs const &attribs)
+void MenuWidget::setSelectionAttribs(const AChar::Attribs &attribs)
 {
     d->selectionAttr = attribs;
     redraw();
 }
 
-void MenuWidget::setBackgroundAttribs(AChar::Attribs const &attribs)
+void MenuWidget::setBackgroundAttribs(const AChar::Attribs &attribs)
 {
     d->backgroundAttr = attribs;
     redraw();
@@ -274,7 +274,7 @@ void MenuWidget::setBorder(MenuWidget::BorderStyle style)
     redraw();
 }
 
-void MenuWidget::setBorderAttribs(AChar::Attribs const &attribs)
+void MenuWidget::setBorderAttribs(const AChar::Attribs &attribs)
 {
     d->borderAttr = attribs;
     redraw();
@@ -317,7 +317,7 @@ void MenuWidget::draw()
     int y = border;
     for (int i = 0; i < d->items.sizei(); ++i)
     {
-        Impl::Item const &item = d->items[i];
+        const Impl::Item &item = d->items[i];
 
         // Determine style.
         AChar::Attribs itemAttr =
@@ -363,14 +363,14 @@ void MenuWidget::draw()
     targetCanvas().draw(buf, pos.topLeft);
 }
 
-bool MenuWidget::handleEvent(Event const &event)
+bool MenuWidget::handleEvent(const Event &event)
 {
     if (!itemCount() || event.type() != Event::KeyPress)
     {
         return false;
     }
 
-    KeyEvent const &ev = event.as<KeyEvent>();
+    const KeyEvent &ev = event.as<KeyEvent>();
 
     // Check menu-related control keys.
     if (ev.text().isEmpty())

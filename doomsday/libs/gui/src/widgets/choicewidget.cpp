@@ -39,9 +39,9 @@ DE_GUI_PIMPL(ChoiceWidget)
     struct SelectAction : public de::Action
     {
         ChoiceWidget::Impl *wd;
-        ui::Item const &selItem;
+        const ui::Item &selItem;
 
-        SelectAction(ChoiceWidget::Impl *inst, ui::Item const &item)
+        SelectAction(ChoiceWidget::Impl *inst, const ui::Item &item)
             : wd(inst), selItem(item) {}
 
         void trigger()
@@ -103,7 +103,7 @@ DE_GUI_PIMPL(ChoiceWidget)
         choices->set(choices->background().withSolidFill(style().colors().colorf("choice.popup")));
     }
 
-    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
+    void widgetCreatedForItem(GuiWidget &widget, const ui::Item &item)
     {
         if (auto *label = maybeAs<LabelWidget>(widget))
         {
@@ -117,7 +117,7 @@ DE_GUI_PIMPL(ChoiceWidget)
         }
     }
 
-    void widgetUpdatedForItem(GuiWidget &, ui::Item const &item)
+    void widgetUpdatedForItem(GuiWidget &, const ui::Item &item)
     {
         if (isValidSelection() && &item == &self().selectedItem())
         {
@@ -130,7 +130,7 @@ DE_GUI_PIMPL(ChoiceWidget)
     {
         // We'll need to calculate this manually because the fonts keep changing due to
         // selection and thus we can't just check the current layout.
-        Font const &font = self().font();
+        const Font &font = self().font();
         int widest = 0;
         for (uint i = 0; i < items().size(); ++i)
         {
@@ -142,7 +142,7 @@ DE_GUI_PIMPL(ChoiceWidget)
                                                   Const(widest) + self().margins().width()));
     }
 
-    Data const &items() const
+    const Data &items() const
     {
         return choices->items();
     }
@@ -152,7 +152,7 @@ DE_GUI_PIMPL(ChoiceWidget)
         return selected < items().size();
     }
 
-    void dataItemAdded(Data::Pos id, ui::Item const &)
+    void dataItemAdded(Data::Pos id, const ui::Item &)
     {
         updateMaximumWidth();
 
@@ -200,11 +200,11 @@ DE_GUI_PIMPL(ChoiceWidget)
         }
     }
 
-    void updateButtonWithItem(ui::Item const &item)
+    void updateButtonWithItem(const ui::Item &item)
     {
         self().setText(item.label());
 
-        ActionItem const *act = dynamic_cast<ActionItem const *>(&item);
+        const ActionItem *act = dynamic_cast<const ActionItem *>(&item);
         if (act)
         {
             self().setImage(act->image());
@@ -236,7 +236,7 @@ DE_GUI_PIMPL(ChoiceWidget)
 
 DE_AUDIENCE_METHODS(ChoiceWidget, Selection, UserSelection)
 
-ChoiceWidget::ChoiceWidget(String const &name)
+ChoiceWidget::ChoiceWidget(const String &name)
     : PopupButtonWidget(name), d(new Impl(this))
 {
     d->updateButtonWithSelection();
@@ -267,13 +267,13 @@ Data::Pos ChoiceWidget::selected() const
     return d->selected;
 }
 
-Item const &ChoiceWidget::selectedItem() const
+const Item &ChoiceWidget::selectedItem() const
 {
     DE_ASSERT(d->isValidSelection());
     return d->items().at(d->selected);
 }
 
-Rule const &ChoiceWidget::maximumWidth() const
+const Rule &ChoiceWidget::maximumWidth() const
 {
     return *d->maxWidth;
 }
@@ -289,13 +289,13 @@ ui::Data &ChoiceWidget::items()
     return d->choices->items();
 }
 
-void ChoiceWidget::setItems(Data const &items)
+void ChoiceWidget::setItems(const Data &items)
 {
     popup().menu().setItems(items);
     d->updateMaximumWidth();
 }
 
-void ChoiceWidget::setNoSelectionHint(String const &hint)
+void ChoiceWidget::setNoSelectionHint(const String &hint)
 {
     d->noSelectionHint = hint;
 }

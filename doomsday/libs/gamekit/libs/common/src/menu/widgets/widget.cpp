@@ -63,12 +63,12 @@ Widget::Widget() : d(new Impl)
 Widget::~Widget()
 {}
 
-int Widget::handleEvent(event_t const &)
+int Widget::handleEvent(const event_t &)
 {
     return 0; // Not handled.
 }
 
-int Widget::handleEvent_Privileged(event_t const &)
+int Widget::handleEvent_Privileged(const event_t &)
 {
     return 0; // Not handled.
 }
@@ -141,12 +141,12 @@ Rectanglei &Widget::geometry()
     return d->geometry;
 }
 
-Rectanglei const &Widget::geometry() const
+const Rectanglei &Widget::geometry() const
 {
     return d->geometry;
 }
 
-Widget &Widget::setFixedOrigin(Vec2i const &newOrigin)
+Widget &Widget::setFixedOrigin(const Vec2i &newOrigin)
 {
     d->origin = newOrigin;
     return *this;
@@ -233,7 +233,7 @@ Widget &Widget::setHelpInfo(String newHelpInfo)
     return *this;
 }
 
-String const &Widget::helpInfo() const
+const String &Widget::helpInfo() const
 {
     return d->helpInfo;
 }

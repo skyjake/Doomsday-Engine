@@ -133,7 +133,7 @@ public:
     virtual void setWorld(World *world);
 
     ddplayer_t &publicData();
-    ddplayer_t const &publicData() const;
+    const ddplayer_t &publicData() const;
 
     /**
      * Determines if the player is in the game and has a mobj.
@@ -143,7 +143,7 @@ public:
     /**
      * Returns the player's namespace.
      */
-    de::Record const &info() const;
+    const de::Record &info() const;
 
     /**
      * Returns the player's namespace.
@@ -153,7 +153,7 @@ public:
     Smoother *smoother();
 
     Pinger &pinger();
-    Pinger const &pinger() const;
+    const Pinger &pinger() const;
 
     /**
      * Called once on every tick.

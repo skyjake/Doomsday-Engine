@@ -330,7 +330,7 @@ dsize TokenBuffer::size() const
     return _tokens.size();
 }
 
-Token const &TokenBuffer::at(dsize i) const
+const Token &TokenBuffer::at(dsize i) const
 {
     if (i >= _tokens.size())
     {
@@ -340,7 +340,7 @@ Token const &TokenBuffer::at(dsize i) const
     return _tokens[i];
 }
 
-Token const &TokenBuffer::latest() const
+const Token &TokenBuffer::latest() const
 {
     return _tokens.back();
 }

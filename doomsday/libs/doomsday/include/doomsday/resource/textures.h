@@ -35,13 +35,13 @@ namespace res {
 //{
 //    de::String scheme;
 
-//    TextureSchemeHashKey(de::String const &s) : scheme(s) {}
-//    bool operator == (TextureSchemeHashKey const &other) const {
+//    TextureSchemeHashKey(const de::String &s) : scheme(s) {}
+//    bool operator == (const TextureSchemeHashKey &other) const {
 //        return !scheme.compare(other.scheme, Qt::CaseInsensitive);
 //    }
 //};
 
-//LIBDOOMSDAY_PUBLIC uint qHash(TextureSchemeHashKey const &key);
+//LIBDOOMSDAY_PUBLIC uint qHash(const TextureSchemeHashKey &key);
 
 class LIBDOOMSDAY_PUBLIC Textures
 {
@@ -71,8 +71,8 @@ public:
      *
      * @see hasTextureManifest(), TextureManifest::hasTexture()
      */
-    inline bool hasTexture(res::Uri const &path) const {
-        if (auto const *mft = textureManifestPtr(path)) {
+    inline bool hasTexture(const res::Uri &path) const {
+        if (const auto *mft = textureManifestPtr(path)) {
             return mft->hasTexture();
         }
         return false;
@@ -86,7 +86,7 @@ public:
      *
      * @see textureManifest(), TextureManifest::texture()
      */
-    inline Texture &texture(res::Uri const &path) const {
+    inline Texture &texture(const res::Uri &path) const {
         return textureManifest(path).texture();
     }
 
@@ -94,14 +94,14 @@ public:
      * Returns a pointer to the identified Texture.
      * @param path  Texture path.
      */
-    inline Texture *texturePtr(res::Uri const &path) const {
-        if (auto const *mft = textureManifestPtr(path)) {
+    inline Texture *texturePtr(const res::Uri &path) const {
+        if (const auto *mft = textureManifestPtr(path)) {
             return mft->texturePtr();
         }
         return nullptr;
     }
 
-    /*inline Texture *texturePtr(res::Uri const &path) {
+    /*inline Texture *texturePtr(const res::Uri &path) {
         if (hasTextureManifest(path)) return textureManifest(path).texturePtr();
         return nullptr;
     }*/
@@ -115,14 +115,14 @@ public:
      *
      * @return  The found texture; otherwise @c nullptr.
      */
-    Texture *tryFindTextureByResourceUri(de::String const &schemeName, res::Uri const &resourceUri);
+    Texture *tryFindTextureByResourceUri(const de::String &schemeName, const res::Uri &resourceUri);
 
     /*
      * Determines if a texture manifest exists for a declared texture on @a path.
      *
      * @return @c true, if a manifest exists; otherwise @a false.
      */
-    /*inline bool hasTextureManifest(res::Uri const &path) const {
+    /*inline bool hasTextureManifest(const res::Uri &path) const {
         return tryFindTextureManifest(path) != nullptr;
     }*/
 
@@ -132,9 +132,9 @@ public:
      * @param search  The search term.
      * @return Found unique identifier.
      */
-    TextureManifest &textureManifest(res::Uri const &search) const;
+    TextureManifest &textureManifest(const res::Uri &search) const;
 
-    TextureManifest *textureManifestPtr(res::Uri const &search) const;
+    TextureManifest *textureManifestPtr(const res::Uri &search) const;
 
     /**
      * Lookup a subspace scheme by symbolic name.
@@ -144,19 +144,19 @@ public:
      *
      * @throws UnknownSchemeError If @a name is unknown.
      */
-    TextureScheme &textureScheme(de::String const &name) const;
+    TextureScheme &textureScheme(const de::String &name) const;
 
-    TextureScheme *textureSchemePtr(de::String const &name) const;
+    TextureScheme *textureSchemePtr(const de::String &name) const;
 
     /**
      * Returns @c true iff a Scheme exists with the symbolic @a name.
      */
-    bool isKnownTextureScheme(de::String const &name) const;
+    bool isKnownTextureScheme(const de::String &name) const;
 
     /**
      * Returns a list of all the schemes for efficient traversal.
      */
-    TextureSchemes const &allTextureSchemes() const;
+    const TextureSchemes &allTextureSchemes() const;
 
     /**
      * Returns the total number of manifest schemes in the collection.
@@ -176,7 +176,7 @@ public:
      * Returns a list of all the unique texture instances in the collection,
      * from all schemes.
      */
-    AllTextures const &allTextures() const;
+    const AllTextures &allTextures() const;
 
     /**
      * Declare a texture in the collection, producing a manifest for a logical
@@ -199,23 +199,23 @@ public:
      * @return  Manifest for this URI.
      */
     inline TextureManifest &declareTexture(
-            res::Uri const &uri,
+            const res::Uri &uri,
             de::Flags flags,
-            de::Vec2ui const &dimensions,
-            de::Vec2i const &origin,
+            const de::Vec2ui &dimensions,
+            const de::Vec2i &origin,
             de::dint uniqueId,
-            res::Uri const *resourceUri = nullptr)
+            const res::Uri *resourceUri = nullptr)
     {
         return textureScheme(uri.scheme())
                    .declare(uri.path(), flags, dimensions, origin, uniqueId,
                             resourceUri);
     }
 
-    TextureManifest &declareSystemTexture(de::Path const &texturePath, res::Uri const &resourceUri);
+    TextureManifest &declareSystemTexture(const de::Path &texturePath, const res::Uri &resourceUri);
 
-    Texture *defineTexture(de::String    const &schemeName,
-                           res::Uri       const &resourceUri,
-                           de::Vec2ui const &dimensions = de::Vec2ui());
+    Texture *defineTexture(const de::String &schemeName,
+                           const res::Uri &resourceUri,
+                           const de::Vec2ui &dimensions = de::Vec2ui());
 
     /**
      * Ensure a texture has been derived for @a manifest.
@@ -226,7 +226,7 @@ public:
 
     void deriveAllTexturesInScheme(de::String schemeName);
 
-    patchid_t declarePatch(de::String const &encodedName);
+    patchid_t declarePatch(const de::String &encodedName);
 
 private:
     DE_PRIVATE(d)

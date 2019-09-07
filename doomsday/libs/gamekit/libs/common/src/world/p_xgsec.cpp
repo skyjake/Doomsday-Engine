@@ -636,7 +636,7 @@ void XS_ChangePlaneMaterial(Sector &sector, bool ceiling, world_Material &newMat
     P_SetPtrp(&sector, ceiling ? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL, &newMaterial);
 }
 
-void XS_ChangePlaneColor(Sector &sector, bool ceiling, de::Vec3f const &newColor, bool isDelta)
+void XS_ChangePlaneColor(Sector &sector, bool ceiling, const de::Vec3f &newColor, bool isDelta)
 {
     LOG_AS("XS_ChangePlaneColor");
     LOG_MAP_MSG_XGDEVONLY2("Sector %i, %s, tintColor:%s",
@@ -2305,7 +2305,7 @@ int C_DECL XSTrav_Teleport(Sector* sector, dd_bool /*ceiling*/, void* /*context*
 
             if(FEQUAL(thing->origin[VZ], P_GetDoublep(Mobj_Sector(thing), DMU_FLOOR_HEIGHT)))
             {
-                terraintype_t const *tt = P_MobjFloorTerrain(thing);
+                const terraintype_t *tt = P_MobjFloorTerrain(thing);
                 if(tt->flags & TTF_FLOORCLIP)
                 {
                     thing->floorClip = 10;
@@ -3025,9 +3025,9 @@ coord_t XS_Gravity(Sector* sec)
     }
 }
 
-coord_t XS_Friction(Sector const *sector)
+coord_t XS_Friction(const Sector *sector)
 {
-    auto const *xsec = P_ToXSector_const(sector);
+    const auto *xsec = P_ToXSector_const(sector);
 
     if(!xsec->xg || !(xsec->xg->info.flags & STF_FRICTION))
         return FRICTION_NORMAL; // Normal friction.

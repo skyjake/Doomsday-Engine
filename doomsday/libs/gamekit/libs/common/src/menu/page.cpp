@@ -45,7 +45,7 @@ namespace menu {
 
 // Page draw state.
 static mn_rendstate_t rs;
-mn_rendstate_t const *mnRendState = &rs;
+const mn_rendstate_t *mnRendState = &rs;
 
 DE_PIMPL(Page)
 {
@@ -397,7 +397,7 @@ Widget &Page::addWidget(Widget *widget)
     return *widget;
 }
 
-Page::Children const &Page::children() const
+const Page::Children &Page::children() const
 {
     return d->children;
 }
@@ -447,7 +447,7 @@ static void drawNavigation(Vec2i const origin)
 #endif
 }
 
-static void drawTitle(String const &title)
+static void drawTitle(const String &title)
 {
     if(title.isEmpty()) return;
 
@@ -516,7 +516,7 @@ void Page::draw(float alpha, bool showFocusCursor)
         /// @kludge
         /// We cannot yet query the subobjects of the list for these values
         /// so we must calculate them ourselves, here.
-        if (ListWidget const *list = maybeAs<ListWidget>(focused))
+        if (const ListWidget *list = maybeAs<ListWidget>(focused))
         {
             if (focused->isActive() && list->selectionIsVisible())
             {
@@ -601,7 +601,7 @@ void Page::draw(float alpha, bool showFocusCursor)
     }
 }
 
-void Page::setTitle(String const &newTitle)
+void Page::setTitle(const String &newTitle)
 {
     d->title = newTitle;
 }
@@ -611,7 +611,7 @@ String Page::title() const
     return d->title;
 }
 
-void Page::setOrigin(Vec2i const &newOrigin)
+void Page::setOrigin(const Vec2i &newOrigin)
 {
     d->origin = newOrigin;
 }

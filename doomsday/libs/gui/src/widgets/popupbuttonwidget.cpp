@@ -79,7 +79,7 @@ DE_PIMPL(PopupButtonWidget)
     }
 };
 
-PopupButtonWidget::PopupButtonWidget(String const &name)
+PopupButtonWidget::PopupButtonWidget(const String &name)
     : ButtonWidget(name)
     , d(new Impl(this))
 {

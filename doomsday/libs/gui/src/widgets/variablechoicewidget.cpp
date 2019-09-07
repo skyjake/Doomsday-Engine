@@ -71,7 +71,7 @@ DE_OBSERVES(Variable, Change  )
         var->audienceForChange() += this;
     }
 
-    void variableValueChanged(Variable &, Value const &)
+    void variableValueChanged(Variable &, const Value &)
     {
         updateFromVariable();
     }
@@ -84,7 +84,7 @@ DE_OBSERVES(Variable, Change  )
 };
 
 VariableChoiceWidget::VariableChoiceWidget(Variable &variable, VariableType variableType,
-                                           String const &name)
+                                           const String &name)
     : ChoiceWidget(name)
     , d(new Impl(this, variable, variableType))
 {

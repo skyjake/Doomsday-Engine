@@ -72,7 +72,7 @@ RecordValue::RecordValue(Record *record, OwnershipFlags o)
     }
 }
 
-RecordValue::RecordValue(Record const &record)
+RecordValue::RecordValue(const Record &record)
     : RecordAccessor(record)
     , d(new Impl(this))
 {
@@ -85,7 +85,7 @@ RecordValue::RecordValue(Record const &record)
     }
 }
 
-RecordValue::RecordValue(IObject const &object)
+RecordValue::RecordValue(const IObject &object)
     : RecordAccessor(object.objectNamespace())
     , d(new Impl(this))
 {
@@ -174,7 +174,7 @@ Record &RecordValue::dereference()
     return *d->record;
 }
 
-Record const &RecordValue::dereference() const
+const Record &RecordValue::dereference() const
 {
     verify();
     return *d->record;
@@ -218,10 +218,10 @@ dsize RecordValue::size() const
     return dereference().members().size();
 }
 
-void RecordValue::setElement(Value const &index, Value *elementValue)
+void RecordValue::setElement(const Value &index, Value *elementValue)
 {
     // We're expecting text.
-    TextValue const *text = dynamic_cast<TextValue const *>(&index);
+    const TextValue *text = dynamic_cast<const TextValue *>(&index);
     if (!text)
     {
         throw IllegalIndexError("RecordValue::setElement",
@@ -230,10 +230,10 @@ void RecordValue::setElement(Value const &index, Value *elementValue)
     dereference().add(new Variable(text->asText(), elementValue));
 }
 
-Value *RecordValue::duplicateElement(Value const &value) const
+Value *RecordValue::duplicateElement(const Value &value) const
 {
     // We're expecting text.
-    TextValue const *text = dynamic_cast<TextValue const *>(&value);
+    const TextValue *text = dynamic_cast<const TextValue *>(&value);
     if (!text)
     {
         throw IllegalIndexError("RecordValue::duplicateElement",
@@ -247,10 +247,10 @@ Value *RecordValue::duplicateElement(Value const &value) const
                         "'" + text->asText() + "' does not exist in the record");
 }
 
-bool RecordValue::contains(Value const &value) const
+bool RecordValue::contains(const Value &value) const
 {
     // We're expecting text.
-    TextValue const *text = dynamic_cast<TextValue const *>(&value);
+    const TextValue *text = dynamic_cast<const TextValue *>(&value);
     if (!text)
     {
         throw IllegalIndexError("RecordValue::contains",
@@ -264,19 +264,19 @@ bool RecordValue::isTrue() const
     return size() > 0;
 }
 
-dint RecordValue::compare(Value const &value) const
+dint RecordValue::compare(const Value &value) const
 {
-    RecordValue const *recValue = dynamic_cast<RecordValue const *>(&value);
+    const RecordValue *recValue = dynamic_cast<const RecordValue *>(&value);
     if (!recValue)
     {
         // Can't be the same.
-        return cmp(reinterpret_cast<void const *>(this),
-                   reinterpret_cast<void const *>(&value));
+        return cmp(reinterpret_cast<const void *>(this),
+                   reinterpret_cast<const void *>(&value));
     }
     return cmp(recValue->d->record, d->record);
 }
 
-void RecordValue::call(Process &process, Value const &arguments, Value *) const
+void RecordValue::call(Process &process, const Value &arguments, Value *) const
 {
     verify();
 

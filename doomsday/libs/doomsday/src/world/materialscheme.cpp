@@ -51,12 +51,12 @@ void MaterialScheme::clear()
     d->index.clear();
 }
 
-String const &MaterialScheme::name() const
+const String &MaterialScheme::name() const
 {
     return d->name;
 }
 
-MaterialManifest &MaterialScheme::declare(Path const &path)
+MaterialManifest &MaterialScheme::declare(const Path &path)
 {
     LOG_AS("MaterialScheme::declare");
 
@@ -81,12 +81,12 @@ MaterialManifest &MaterialScheme::declare(Path const &path)
     return *newManifest;
 }
 
-bool MaterialScheme::has(Path const &path) const
+bool MaterialScheme::has(const Path &path) const
 {
     return d->index.has(path, Index::NoBranch | Index::MatchFull);
 }
 
-MaterialManifest const &MaterialScheme::find(Path const &path) const
+const MaterialManifest &MaterialScheme::find(const Path &path) const
 {
     if (has(path))
     {
@@ -96,18 +96,18 @@ MaterialManifest const &MaterialScheme::find(Path const &path) const
     throw NotFoundError("MaterialScheme::find", "Failed to locate a manifest matching \"" + path.asText() + "\"");
 }
 
-MaterialManifest &MaterialScheme::find(Path const &path)
+MaterialManifest &MaterialScheme::find(const Path &path)
 {
-    Index::Node const &found = const_cast<MaterialScheme const *>(this)->find(path);
+    const Index::Node &found = const_cast<const MaterialScheme *>(this)->find(path);
     return const_cast<Index::Node &>(found);
 }
 
-MaterialManifest *MaterialScheme::tryFind(Path const & path) const
+MaterialManifest *MaterialScheme::tryFind(const Path & path) const
 {
     return d->index.tryFind(path, Index::NoBranch | Index::MatchFull);
 }
 
-MaterialScheme::Index const &MaterialScheme::index() const
+const MaterialScheme::Index &MaterialScheme::index() const
 {
     return d->index;
 }

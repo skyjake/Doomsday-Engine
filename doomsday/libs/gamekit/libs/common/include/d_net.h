@@ -196,7 +196,7 @@ extern "C" {
 
 Writer1 *D_NetWrite(void);
 
-Reader1 *D_NetRead(byte const *buffer, size_t len);
+Reader1 *D_NetRead(const byte *buffer, size_t len);
 
 void D_NetClearBuffer(void);
 
@@ -251,14 +251,14 @@ void D_NetConsoleRegister(void);
  *
  * @param msg  Ptr to the message to print.
  */
-void D_NetMessage(int player, char const *msg);
+void D_NetMessage(int player, const char *msg);
 
 /**
  * Show message on screen.
  *
  * @param msg
  */
-void D_NetMessageNoSound(int player, char const *msg);
+void D_NetMessageNoSound(int player, const char *msg);
 
 #ifdef __cplusplus
 } // extern "C"

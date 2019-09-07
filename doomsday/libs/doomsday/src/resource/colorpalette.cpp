@@ -93,7 +93,7 @@ static void parseColorFormat(const String &fmt, Vec3ui &compOrder, Vec3ui &compB
 typedef List<de::Vec3ub> ColorTable;
 
 ColorTable ColorTableReader::read(String format, int colorCount,
-                                  dbyte const *colorData) // static
+                                  const dbyte *colorData) // static
 {
     Vec3ui order;
     Vec3ui bits;
@@ -105,7 +105,7 @@ ColorTable ColorTableReader::read(String format, int colorCount,
     if (8 == bits.x && 8 == bits.y && 8 == bits.z)
     {
         // Great! Just copy it as-is.
-        dbyte const *src = colorData;
+        const dbyte *src = colorData;
         for (int i = 0; i < colorCount; ++i, src += 3)
         {
             colors[i] = Vec3ub(src[order.x], src[order.y], src[order.z]);
@@ -114,7 +114,7 @@ ColorTable ColorTableReader::read(String format, int colorCount,
     else
     {
         // Conversion is necessary.
-        dbyte const *src = colorData;
+        const dbyte *src = colorData;
         dbyte cb = 0;
         for (int i = 0; i < colorCount; ++i)
         {
@@ -219,7 +219,7 @@ DE_PIMPL(ColorPalette)
             int smallestDiff = DDMAXINT;
             for (int i = 0; i < colors.count(); ++i)
             {
-                Color const &color = colors[i];
+                const Color &color = colors[i];
                 int diff = (color.x - (r << 2)) * (color.x - (r << 2)) +
                            (color.y - (g << 2)) * (color.y - (g << 2)) +
                            (color.z - (b << 2)) * (color.z - (b << 2));
@@ -241,7 +241,7 @@ DE_PIMPL(ColorPalette)
 ColorPalette::ColorPalette() : d(new Impl(this))
 {}
 
-ColorPalette::ColorPalette(ColorTable const &colors)
+ColorPalette::ColorPalette(const ColorTable &colors)
     : d(new Impl(this))
 {
     replaceColorTable(colors);
@@ -257,7 +257,7 @@ int ColorPalette::colorCount() const
     return d->colors.count();
 }
 
-ColorPalette &ColorPalette::replaceColorTable(ColorTable const &colorTable)
+ColorPalette &ColorPalette::replaceColorTable(const ColorTable &colorTable)
 {
     LOG_AS("ColorPalette");
 
@@ -305,7 +305,7 @@ Vec3f ColorPalette::colorf(int colorIdx) const
     return color(colorIdx).toVec3f() * reciprocal255;
 }
 
-int ColorPalette::nearestIndex(Vec3ub const &rgb) const
+int ColorPalette::nearestIndex(const Vec3ub &rgb) const
 {
     LOG_AS("ColorPalette");
 
@@ -326,13 +326,13 @@ void ColorPalette::clearTranslations()
     d->translations.clear();
 }
 
-ColorPalette::Translation const *ColorPalette::translation(String id) const
+const ColorPalette::Translation *ColorPalette::translation(String id) const
 {
     LOG_AS("ColorPalette");
     return d->translation(id);
 }
 
-void ColorPalette::newTranslation(String xlatId, Translation const &mappings)
+void ColorPalette::newTranslation(String xlatId, const Translation &mappings)
 {
     LOG_AS("ColorPalette");
 

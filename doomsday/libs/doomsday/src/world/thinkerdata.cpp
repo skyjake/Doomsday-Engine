@@ -32,13 +32,13 @@ DE_PIMPL(ThinkerData)
     Id id; ///< Internal unique ID.
     Record names;
 
-    Impl(Public *i, Id const &id)
+    Impl(Public *i, const Id &id)
         : Base(i)
         , think(0)
         , id(id)
     {}
 
-    Impl(Public *i, Impl const &other)
+    Impl(Public *i, const Impl &other)
         : Base(i)
         , think(other.think)
         , id(other.id)
@@ -60,7 +60,7 @@ DE_PIMPL(ThinkerData)
 
 DE_AUDIENCE_METHOD(ThinkerData, Deletion)
 
-ThinkerData::ThinkerData(Id const &id)
+ThinkerData::ThinkerData(const Id &id)
     : d(new Impl(this, id))
 {
     if (d->id)
@@ -69,7 +69,7 @@ ThinkerData::ThinkerData(Id const &id)
     }
 }
 
-ThinkerData::ThinkerData(ThinkerData const &other) : d(new Impl(this, *other.d))
+ThinkerData::ThinkerData(const ThinkerData &other) : d(new Impl(this, *other.d))
 {
     if (d->id)
     {
@@ -77,12 +77,12 @@ ThinkerData::ThinkerData(ThinkerData const &other) : d(new Impl(this, *other.d))
     }
 }
 
-Id const &ThinkerData::id() const
+const Id &ThinkerData::id() const
 {
     return d->id;
 }
 
-void ThinkerData::setId(Id const &id)
+void ThinkerData::setId(const Id &id)
 {
     multiRemove(thinkerLookup, d->id, this);
     thinkerLookup.insert(std::make_pair(id, this));
@@ -111,7 +111,7 @@ thinker_s &ThinkerData::thinker()
     return *d->think;
 }
 
-thinker_s const &ThinkerData::thinker() const
+const thinker_s &ThinkerData::thinker() const
 {
     DE_ASSERT(d->think != 0);
     return *d->think;
@@ -122,7 +122,7 @@ Record &ThinkerData::objectNamespace()
     return d->names;
 }
 
-Record const &ThinkerData::objectNamespace() const
+const Record &ThinkerData::objectNamespace() const
 {
     return d->names;
 }
@@ -159,7 +159,7 @@ void ThinkerData::operator << (Reader &from)
     thinkerLookup.insert(std::make_pair(d->id, this));
 }
 
-ThinkerData *ThinkerData::find(Id const &id)
+ThinkerData *ThinkerData::find(const Id &id)
 {
     auto found = thinkerLookup.find(id);
     if (found != thinkerLookup.end())

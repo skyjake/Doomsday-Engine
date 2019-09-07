@@ -99,13 +99,13 @@ void Painter::setTexture(GLUniform &uTex)
     d->batchProgram << uTex;
 }
 
-void Painter::setModelViewProjection(Mat4f const &mvp)
+void Painter::setModelViewProjection(const Mat4f &mvp)
 {
     flush();
     d->uMvpMatrix = mvp;
 }
 
-void Painter::setNormalizedScissor(Rectanglef const &normScissorRect)
+void Painter::setNormalizedScissor(const Rectanglef &normScissorRect)
 {
     d->normScissorRect = normScissorRect & Rectanglef(0, 0, 1, 1);
 
@@ -133,7 +133,7 @@ Rectanglef Painter::normalizedScissor() const
     return d->normScissorRect;
 }
 
-void Painter::setColor(Vec4f const &color)
+void Painter::setColor(const Vec4f &color)
 {
     d->queue.setBatchColor(color);
 }

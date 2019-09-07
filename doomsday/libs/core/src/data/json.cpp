@@ -327,30 +327,30 @@ public:
 
 //---------------------------------------------------------------------------------------
 
-static String recordToJSON(Record const &rec);
-static String valueToJSON(Value const &value);
+static String recordToJSON(const Record &rec);
+static String valueToJSON(const Value &value);
 
-static String valueToJSONWithTabNewlines(Value const &value)
+static String valueToJSONWithTabNewlines(const Value &value)
 {
     String json = valueToJSON(value);
     json.replace("\n", "\n\t");
     return json;
 }
 
-static String valueToJSON(Value const &value)
+static String valueToJSON(const Value &value)
 {
     if (is<NoneValue>(value))
     {
         return "null";
     }
-    if (auto const *rec = maybeAs<RecordValue>(value))
+    if (const auto *rec = maybeAs<RecordValue>(value))
     {
         return recordToJSON(rec->dereference());
     }
-    if (auto const *dict = maybeAs<DictionaryValue>(value))
+    if (const auto *dict = maybeAs<DictionaryValue>(value))
     {
         String out = "{";
-        auto const &elems = dict->elements();
+        const auto &elems = dict->elements();
         for (auto i = elems.begin(); i != elems.end(); ++i)
         {
             if (i != elems.begin())
@@ -362,10 +362,10 @@ static String valueToJSON(Value const &value)
         }
         return out + "\n}";
     }
-    if (auto const *array = maybeAs<ArrayValue>(value))
+    if (const auto *array = maybeAs<ArrayValue>(value))
     {
         String out = "[";
-        auto const &elems = array->elements();
+        const auto &elems = array->elements();
         for (auto i = elems.begin(); i != elems.end(); ++i)
         {
             if (i != elems.begin())
@@ -376,7 +376,7 @@ static String valueToJSON(Value const &value)
         }
         return out + "\n]";
     }
-    if (auto const *num = maybeAs<NumberValue>(value))
+    if (const auto *num = maybeAs<NumberValue>(value))
     {
         if (num->semanticHints() & NumberValue::Boolean)
         {
@@ -389,7 +389,7 @@ static String valueToJSON(Value const &value)
     return "\"" + value.asText().escaped() + "\"";
 }
 
-static String recordToJSON(Record const &rec)
+static String recordToJSON(const Record &rec)
 {
     String out = "{\n\t\"__obj__\": \"Record\"";
     rec.forMembers([&out] (const String &name, const Variable &var)
@@ -422,14 +422,14 @@ Record parseJSON(const String &jsonText)
             return parsed->as<RecordValue>().dereference();
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_WARNING(er.asText().c_str());
     }
     return {}; // invalid
 }
 
-String composeJSON(Record const &rec)
+String composeJSON(const Record &rec)
 {
     return internal::recordToJSON(rec) + "\n";
 }

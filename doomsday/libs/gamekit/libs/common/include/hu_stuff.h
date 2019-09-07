@@ -41,7 +41,7 @@ DE_EXTERN_C patchid_t pInvPageRight[2];
 #if __JDOOM__ || __JDOOM64__
 // Quit messages.
 #define NUM_QUITMESSAGES    22
-DE_EXTERN_C char const *endmsg[NUM_QUITMESSAGES + 1];
+DE_EXTERN_C const char *endmsg[NUM_QUITMESSAGES + 1];
 #endif
 
 DE_EXTERN_C dd_bool shiftdown;
@@ -155,7 +155,7 @@ enum patchreplacemode_t
  *
  * @return  Patch replacement string if defined/found else @c nullptr.
  */
-char const *Hu_FindPatchReplacementString(patchid_t patchId, int flags);
+const char *Hu_FindPatchReplacementString(patchid_t patchId, int flags);
 
 /**
  * Determine whether a string-replacement for the specified patch is allowed
@@ -168,7 +168,7 @@ char const *Hu_FindPatchReplacementString(patchid_t patchId, int flags);
  * @param text         A prechoosen string replacement to be used if appropriate.
  */
 de::String Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t patchId,
-                                     de::String const &text = "");
+                                     const de::String &text = "");
 
 /**
  * Implements patch replacement.
@@ -182,8 +182,8 @@ de::String Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t p
  * @param textFlags    @ref drawTextFlags
  */
 void WI_DrawPatch(patchid_t patchId,
-                  de::String const &replacement = "",
-                  de::Vec2i const &origin    = de::Vec2i(0, 0),
+                  const de::String &replacement = "",
+                  const de::Vec2i &origin    = de::Vec2i(0, 0),
                   int alignFlags                = ALIGN_TOPLEFT,
                   int patchFlags                = 0,
                   short textFlags               = 0);

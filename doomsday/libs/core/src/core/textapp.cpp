@@ -77,7 +77,7 @@ bool TextApp::notify(QObject *receiver, QEvent *event)
     {
         return QCoreApplication::notify(receiver, event);
     }
-    catch (std::exception const &error)
+    catch (const std::exception &error)
     {
         handleUncaughtException(error.what());
     }

@@ -109,7 +109,7 @@ DE_PIMPL(Folder)
     }
 };
 
-Folder::Folder(String const &name) : File(name), d(new Impl(this))
+Folder::Folder(const String &name) : File(name), d(new Impl(this))
 {
     setStatus(Type::Folder);
     objectNamespace().addSuperRecord(ScriptSystem::builtInClass(DE_STR("Folder")));
@@ -137,7 +137,7 @@ Folder::~Folder()
 String Folder::describe() const
 {
     // As a special case, plain native directories should be described as such.
-    if (auto const *direcFeed = primaryFeedMaybeAs<DirectoryFeed>())
+    if (const auto *direcFeed = primaryFeedMaybeAs<DirectoryFeed>())
     {
         return Stringf("directory \"%s\"", direcFeed->nativePath().pretty().c_str());
     }
@@ -371,7 +371,7 @@ List<Folder *> Folder::subfolders() const
     return d->subfolders();
 }
 
-File &Folder::createFile(String const &newPath, FileCreationBehavior behavior)
+File &Folder::createFile(const String &newPath, FileCreationBehavior behavior)
 {
     String path = newPath.fileNamePath();
     if (!path.empty())
@@ -388,7 +388,7 @@ File &Folder::createFile(String const &newPath, FileCreationBehavior behavior)
         {
             destroyFile(newPath);
         }
-        catch (Feed::RemoveError const &er)
+        catch (const Feed::RemoveError &er)
         {
             LOG_RES_WARNING("Failed to replace %s: existing file could not be removed.\n")
                     << newPath << er.asText();
@@ -417,12 +417,12 @@ File &Folder::createFile(String const &newPath, FileCreationBehavior behavior)
                        "' in " + description());
 }
 
-File &Folder::replaceFile(String const &newPath)
+File &Folder::replaceFile(const String &newPath)
 {
     return createFile(newPath, ReplaceExisting);
 }
 
-void Folder::destroyFile(String const &removePath)
+void Folder::destroyFile(const String &removePath)
 {
     DE_GUARD(this);
 
@@ -438,7 +438,7 @@ void Folder::destroyFile(String const &removePath)
     d->destroy(removePath, &locate<File>(removePath));
 }
 
-bool Folder::tryDestroyFile(String const &removePath)
+bool Folder::tryDestroyFile(const String &removePath)
 {
     try
     {
@@ -448,7 +448,7 @@ bool Folder::tryDestroyFile(String const &removePath)
             return true;
         }
     }
-    catch (Error const &)
+    catch (const Error &)
     {
         // This shouldn't happen.
     }
@@ -474,7 +474,7 @@ void Folder::destroyAllFilesRecursively()
     Impl::destroyRecursive(*this);
 }
 
-bool Folder::has(String const &name) const
+bool Folder::has(const String &name) const
 {
     if (name.isEmpty()) return false;
 
@@ -520,7 +520,7 @@ File *Folder::remove(const String &name)
     return removed;
 }
 
-File *Folder::remove(char const *nameUtf8)
+File *Folder::remove(const char *nameUtf8)
 {
     return remove(String(nameUtf8));
 }
@@ -530,7 +530,7 @@ File *Folder::remove(File &file)
     return remove(file.name());
 }
 
-filesys::Node const *Folder::tryGetChild(String const &name) const
+const filesys::Node *Folder::tryGetChild(const String &name) const
 {
     DE_GUARD(this);
 
@@ -597,7 +597,7 @@ void Folder::checkDefaultSettings()
     }
 }
 
-filesys::Node const *Folder::tryFollowPath(PathRef const &path) const
+const filesys::Node *Folder::tryFollowPath(const PathRef &path) const
 {
     // Absolute paths refer to the file system root.
     if (path.isAbsolute())
@@ -608,9 +608,9 @@ filesys::Node const *Folder::tryFollowPath(PathRef const &path) const
     return Node::tryFollowPath(path);
 }
 
-File *Folder::tryLocateFile(String const &path) const
+File *Folder::tryLocateFile(const String &path) const
 {
-    if (filesys::Node const *node = tryFollowPath(Path(path)))
+    if (const filesys::Node *node = tryFollowPath(Path(path)))
     {
         return const_cast<File *>(maybeAs<File>(node));
     }
@@ -669,7 +669,7 @@ Folder::Feeds Folder::feeds() const
 
 String Folder::contentsAsText() const
 {
-    List<File const *> files;
+    List<const File *> files;
     forContents([&files] (String, File &f)
     {
         files << &f;

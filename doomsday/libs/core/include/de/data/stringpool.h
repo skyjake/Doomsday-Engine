@@ -78,7 +78,7 @@ public:
      * @param strings  Array of strings to be interned (must contain at least @a count strings).
      * @param count    Number of strings to be interned.
      */
-    StringPool(String const *strings, uint count);
+    StringPool(const String *strings, uint count);
 
     /**
      * Clear the string pool. All strings in the pool will be destroyed.
@@ -191,7 +191,7 @@ public:
      * @return Reference to interned string. Do not change the contents of
      * the pool while retaining the returned reference.
      */
-    String const &stringRef(Id id) const;
+    const String &stringRef(Id id) const;
 
     /**
      * Removes a string from the pool.

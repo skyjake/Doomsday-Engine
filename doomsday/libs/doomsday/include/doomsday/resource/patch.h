@@ -85,14 +85,14 @@ public:
      * Attempt to read metadata from @a data.
      * @param data      Data to read metadata from.
      */
-    static Metadata loadMetadata(IByteArray const &data);
+    static Metadata loadMetadata(const IByteArray &data);
 
     /**
      * Attempt to interpret @a data as a Patch.
      * @param data      Data to interpret as a Patch.
      * @param flags     Flags determining how the data should be interpreted.
      */
-    static Block load(IByteArray const &data,
+    static Block load(const IByteArray &data,
                       Metadata *        loadedMetadata = nullptr,
                       Flags             flags          = DefaultFlags);
 
@@ -101,8 +101,8 @@ public:
      * @param xlatTable  If not @c NULL, use this translation table when
      *                   compositing final color palette indices.
      */
-    static Block load(IByteArray const &             data,
-                      ColorPaletteTranslation const &xlatTable,
+    static Block load(const IByteArray &             data,
+                      const ColorPaletteTranslation &xlatTable,
                       Flags                          flags = DefaultFlags);
 
     /**
@@ -112,7 +112,7 @@ public:
      *
      * @return  @c true if the data looks like a patch; otherwise @c false.
      */
-    static bool recognize(IByteArray const &data);
+    static bool recognize(const IByteArray &data);
 };
 
 typedef Patch::Metadata PatchMetadata;

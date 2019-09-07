@@ -61,7 +61,7 @@ public:
      *
      * @return Index of the player, or -1 if not found.
      */
-    int indexOf(Player const *player) const;
+    int indexOf(const Player *player) const;
 
     /**
      * Finds the index number of a player based on the public data.
@@ -70,7 +70,7 @@ public:
      *
      * @return Index of the player, or -1 if not found.
      */
-    int indexOf(ddplayer_s const *publicData) const;
+    int indexOf(const ddplayer_s *publicData) const;
 
 private:
     DE_PRIVATE(d)

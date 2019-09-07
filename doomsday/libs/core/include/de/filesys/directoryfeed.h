@@ -69,7 +69,7 @@ public:
      * @param nativePath  Path of the native directory.
      * @param mode        Feed mode.
      */
-    DirectoryFeed(NativePath const &nativePath, Flags const &mode = DefaultFlags);
+    DirectoryFeed(const NativePath &nativePath, const Flags &mode = DefaultFlags);
 
     /**
      * Sets the file name pattern that determines which files are populated by the feed.
@@ -84,13 +84,13 @@ public:
     /**
      * Returns the native path of the source folder.
      */
-    NativePath const &nativePath() const;
+    const NativePath &nativePath() const;
 
-    PopulatedFiles populate(Folder const &folder);
+    PopulatedFiles populate(const Folder &folder);
     bool prune(File &file) const;
-    File *createFile(String const &name);
-    void destroyFile(String const &name);
-    Feed *newSubFeed(String const &name);
+    File *createFile(const String &name);
+    void destroyFile(const String &name);
+    Feed *newSubFeed(const String &name);
 
 public:
     /**
@@ -98,7 +98,7 @@ public:
      *
      * @param nativePath  New path to use as the working directory.
      */
-    static void changeWorkingDir(NativePath const &nativePath);
+    static void changeWorkingDir(const NativePath &nativePath);
 
     /**
      * Determines the status of a file in the directory.
@@ -109,9 +109,9 @@ public:
      *
      * @return  Status of the file.
      */
-    static File::Status fileStatus(NativePath const &nativePath);
+    static File::Status fileStatus(const NativePath &nativePath);
 
-    static void setFileModifiedTime(NativePath const &nativePath, Time const &modifiedAt);
+    static void setFileModifiedTime(const NativePath &nativePath, const Time &modifiedAt);
 
     /**
      * Creates and interprets a single native file and adds it to a folder.
@@ -127,7 +127,7 @@ public:
      *
      * @return Reference to the interpreted file.
      */
-    static File &manuallyPopulateSingleFile(NativePath const &nativePath, Folder &parentFolder);
+    static File &manuallyPopulateSingleFile(const NativePath &nativePath, Folder &parentFolder);
 
 protected:
     void populateSubFolder(const Folder &folder, const String &entryName);

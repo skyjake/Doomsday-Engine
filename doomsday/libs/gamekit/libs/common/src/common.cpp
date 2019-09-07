@@ -55,7 +55,7 @@ int Common_GetInteger(int id)
     return 0;
 }
 
-void *Common_GetGameAPI(char const *name)
+void *Common_GetGameAPI(const char *name)
 {
     #define HASH_ENTRY(Name, Func) std::make_pair(Name, de::function_cast<void *>(Func))
     static de::Hash<de::String, void *> const funcs(

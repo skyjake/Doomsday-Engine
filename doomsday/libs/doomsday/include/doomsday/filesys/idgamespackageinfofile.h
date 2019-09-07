@@ -30,19 +30,19 @@
 class IdgamesPackageInfoFile : public de::File, public de::IDownloadable
 {
 public:
-    IdgamesPackageInfoFile(de::String const &name);
+    IdgamesPackageInfoFile(const de::String &name);
 
-    void setSourceFiles(de::RemoteFile const &dataFile, de::RemoteFile const &descriptionFile);
+    void setSourceFiles(const de::RemoteFile &dataFile, const de::RemoteFile &descriptionFile);
 
     // Downloadable interface.
     de::Asset &asset() override;
-    de::Asset const &asset() const override;
+    const de::Asset &asset() const override;
     de::dsize downloadSize() const override;
     void download() override;
     void cancelDownload() override;
 
     // Stream access.
-    IIStream const &operator >> (de::IByteArray &bytes) const override;
+    const IIStream &operator >> (de::IByteArray &bytes) const override;
 
 private:
     DE_PRIVATE(d)

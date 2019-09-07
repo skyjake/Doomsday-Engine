@@ -35,7 +35,7 @@ class DE_PUBLIC PackageDownloader
 public:
     PackageDownloader();
 
-    typedef std::function<void(filesys::Link const *)> MountCallback;
+    typedef std::function<void(const filesys::Link *)> MountCallback;
 
     /**
      * Mount a server's remote file repository.
@@ -43,7 +43,7 @@ public:
      * @param serverInfo      Server information.
      * @param afterConnected  Callback to call when the repository is connected and ready for use.
      */
-    void mountServerRepository(ServerInfo const &serverInfo, const MountCallback& afterConnected);
+    void mountServerRepository(const ServerInfo &serverInfo, const MountCallback& afterConnected);
 
     void unmountServerRepository();
 
@@ -77,7 +77,7 @@ public:
      * remaining to download. `bytes.size()` is the number of bytes downloaded so far.
      * `bytes.end` is the total number of bytes overall.
      */
-    DE_AUDIENCE(Status, void downloadStatusUpdate(Rangei64 const &bytes, Rangei const &files))
+    DE_AUDIENCE(Status, void downloadStatusUpdate(const Rangei64 &bytes, const Rangei &files))
 
 private:
     DE_PRIVATE(d)

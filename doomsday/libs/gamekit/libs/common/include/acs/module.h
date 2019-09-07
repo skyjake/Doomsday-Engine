@@ -53,7 +53,7 @@ public:
      */
     struct EntryPoint
     {
-        int const *pcodePtr       = nullptr;
+        const int *pcodePtr       = nullptr;
         bool startWhenMapBegins   = false;
         de::dint32 scriptNumber   = 0;
         de::dint32 scriptArgCount = 0;
@@ -63,17 +63,17 @@ public:
     /**
      * Returns @c true if data @a file appears to be valid ACS code module.
      */
-    static bool recognize(/*de::IByteArray const &data*/ res::File1 const &file);
+    static bool recognize(/*const de::IByteArray &data*/ const res::File1 &file);
 
     /**
      * Loads an ACS @a code module (a copy is made).
      */
-    static Module *newFromBytecode(de::Block const &code);
+    static Module *newFromBytecode(const de::Block &code);
 
     /**
      * Loads an ACS code module from the specified @a file.
      */
-    static Module *newFromFile(res::File1 const &file);
+    static Module *newFromFile(const res::File1 &file);
 
     /**
      * Provides readonly access to a constant (string-)value from the loaded code module.
@@ -93,7 +93,7 @@ public:
     /**
      * Lookup the EntryPoint data for the given @a scriptNumber.
      */
-    EntryPoint const &entryPoint(int scriptNumber) const;
+    const EntryPoint &entryPoint(int scriptNumber) const;
 
     /**
      * Iterate through the EntryPoints of the loaded code module.
@@ -105,7 +105,7 @@ public:
     /**
      * Provides readonly access to the loaded bytecode.
      */
-    de::Block const &pcode() const;
+    const de::Block &pcode() const;
 
 private:
     Module();

@@ -42,20 +42,20 @@ struct VertexBuilder
         explicit operator bool() const {
             return !Base::isEmpty();
         }
-        void transform(Mat4f const &matrix) {
+        void transform(const Mat4f &matrix) {
             for (dsize i = 0; i < Base::size(); ++i) {
                 (*this)[i].pos = matrix * (*this)[i].pos;
             }
         }
-        Vertices &operator += (Vertices const &other) {
+        Vertices &operator += (const Vertices &other) {
             concatenate(other, *this);
             return *this;
         }
-        Vertices operator + (Vertices const &other) const {
+        Vertices operator + (const Vertices &other) const {
             Vertices v(*this);
             return v += other;
         }
-        Vertices &makeQuad(Rectanglef const &rect, Vec4f const &color, Vec2f const &uv) {
+        Vertices &makeQuad(const Rectanglef &rect, const Vec4f &color, const Vec2f &uv) {
             Vertices quad;
             VertexType v;
             v.rgba = color;
@@ -66,7 +66,7 @@ struct VertexBuilder
             v.pos = rect.bottomRight;  quad << v;
             return *this += quad;
         }
-        Vertices &makeQuad(Rectanglef const &rect, Rectanglef const &uv) {
+        Vertices &makeQuad(const Rectanglef &rect, const Rectanglef &uv) {
             Vertices quad;
             VertexType v;
             v.pos = rect.topLeft;      v.texCoord = uv.topLeft;      quad << v;
@@ -75,8 +75,8 @@ struct VertexBuilder
             v.pos = rect.bottomRight;  v.texCoord = uv.bottomRight;  quad << v;
             return *this += quad;
         }
-        Vertices &makeQuad(Rectanglef const &rect, Vec4f const &color, Rectanglef const &uv,
-                           Mat4f const *matrix = nullptr) {
+        Vertices &makeQuad(const Rectanglef &rect, const Vec4f &color, const Rectanglef &uv,
+                           const Mat4f *matrix = nullptr) {
             Vertices quad;
             VertexType v;
             v.rgba = color;
@@ -89,10 +89,10 @@ struct VertexBuilder
         }
         /// Makes a 3D quad with indirect UV coords. The points p1...p4 are specified
         /// with a clockwise winding (use Vertex3Tex2BoundsRgba).
-        Vertices &makeQuadIndirect(Vec3f const &p1, Vec3f const &p2,
-                                   Vec3f const &p3, Vec3f const &p4,
-                                   Vec4f const &color, Rectanglef const &uv,
-                                   Vec4f const &uvBounds, Vec2f const &texSize) {
+        Vertices &makeQuadIndirect(const Vec3f &p1, const Vec3f &p2,
+                                   const Vec3f &p3, const Vec3f &p4,
+                                   const Vec4f &color, const Rectanglef &uv,
+                                   const Vec4f &uvBounds, const Vec2f &texSize) {
             Vertices quad;
             VertexType v;
             v.rgba = color;
@@ -104,11 +104,11 @@ struct VertexBuilder
             v.pos = p3; v.texCoord[0] = uv.bottomRight;  quad << v;
             return *this += quad;
         }
-        Vertices &makeCubeIndirect(Vec3f const &minPoint,
-                                   Vec3f const &maxPoint,
-                                   Rectanglef const &uv,
-                                   Vec4f const &uvBounds,
-                                   Vec2f const &texSize,
+        Vertices &makeCubeIndirect(const Vec3f &minPoint,
+                                   const Vec3f &maxPoint,
+                                   const Rectanglef &uv,
+                                   const Vec4f &uvBounds,
+                                   const Vec2f &texSize,
                                    Vec4f const faceColors[6]) {
             // Back.
             makeQuadIndirect(minPoint,
@@ -154,8 +154,8 @@ struct VertexBuilder
 
             return *this;
         }
-        Vertices &makeRing(Vec2f const &center, float outerRadius, float innerRadius,
-                           int divisions, Vec4f const &color, Rectanglef const &uv,
+        Vertices &makeRing(const Vec2f &center, float outerRadius, float innerRadius,
+                           int divisions, const Vec4f &color, const Rectanglef &uv,
                            float innerTexRadius = -1) {
             if (innerTexRadius < 0) innerTexRadius = innerRadius / outerRadius;
             Vertices ring;
@@ -175,12 +175,12 @@ struct VertexBuilder
             }
             return *this += ring;
         }
-        Vertices &makeRing(Vec2f const &center, float outerRadius, float innerRadius,
-                           int divisions, Vec4f const &color, Vec2f const &uv) {
+        Vertices &makeRing(const Vec2f &center, float outerRadius, float innerRadius,
+                           int divisions, const Vec4f &color, const Vec2f &uv) {
             return makeRing(center, outerRadius, innerRadius, divisions, color, Rectanglef(uv, uv));
         }
-        Vertices &makeFlexibleFrame(Rectanglef const &rect, float cornerThickness,
-                                    Vec4f const &color, Rectanglef const &uv) {
+        Vertices &makeFlexibleFrame(const Rectanglef &rect, float cornerThickness,
+                                    const Vec4f &color, const Rectanglef &uv) {
             Vec2f const uvOff = uv.size() / 2;
             Vertices verts;
             VertexType v;
@@ -292,7 +292,7 @@ struct VertexBuilder
         }
     };
 
-    static void concatenate(Vertices const &stripSequence, Vertices &destStrip)
+    static void concatenate(const Vertices &stripSequence, Vertices &destStrip)
     {
         if (!stripSequence.size()) return;
         if (!destStrip.isEmpty())

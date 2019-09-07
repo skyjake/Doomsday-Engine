@@ -32,7 +32,7 @@ static void FlightWidget_UpdateGeometry(guidata_flight_t *flht)
     flht->updateGeometry();
 }
 
-static void FlightWidget_Draw(guidata_flight_t *flht, Point2Raw const *offset)
+static void FlightWidget_Draw(guidata_flight_t *flht, const Point2Raw *offset)
 {
     DE_ASSERT(flht);
     flht->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -64,7 +64,7 @@ void guidata_flight_t::tick(timespan_t /*elapsed*/)
 
     _patchId = 0;
 
-    player_t const *plr = &::players[player()];
+    const player_t *plr = &::players[player()];
     if(plr->powers[PT_FLIGHT] <= 0) return;
 
     if(plr->powers[PT_FLIGHT] > BLINKTHRESHOLD || !(plr->powers[PT_FLIGHT] & 16))
@@ -94,7 +94,7 @@ void guidata_flight_t::tick(timespan_t /*elapsed*/)
 #endif
 }
 
-void guidata_flight_t::draw(Vec2i const &offset) const
+void guidata_flight_t::draw(const Vec2i &offset) const
 {
 #if __JHERETIC__ || __JHEXEN__
     dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
@@ -131,7 +131,7 @@ void guidata_flight_t::updateGeometry()
 #  define HEIGHT                ( 28 )
 #  endif
 
-    player_t const *plr = &::players[player()];
+    const player_t *plr = &::players[player()];
 
     Rect_SetWidthHeight(&geometry(), 0, 0);
 

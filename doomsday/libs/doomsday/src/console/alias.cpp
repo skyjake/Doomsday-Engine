@@ -50,7 +50,7 @@ void Con_ClearAliases()
     numCAliases = 0;
 }
 
-calias_t *Con_FindAlias(char const *name)
+calias_t *Con_FindAlias(const char *name)
 {
     uint bottomIdx, topIdx, pivot;
     calias_t* cal;

@@ -40,18 +40,18 @@ public:
     class LIBDOOMSDAY_PUBLIC AnimationStage : public TextureMaterialLayer::AnimationStage
     {
     public:
-        AnimationStage(res::Uri const &texture, int tics,
+        AnimationStage(const res::Uri &texture, int tics,
                        float variance    = 0,
                        float scale       = 1,
                        float strength    = 1,
                        float maxDistance = 0);
-        AnimationStage(AnimationStage const &other);
+        AnimationStage(const AnimationStage &other);
         virtual ~AnimationStage();
 
         /**
          * Construct a new AnimationStage from the given @a definition.
          */
-        static AnimationStage *fromDef(ded_detail_stage_t const &definition);
+        static AnimationStage *fromDef(const ded_detail_stage_t &definition);
 
         void resetToDefaults();
 
@@ -67,7 +67,7 @@ public:
     /**
      * Construct a new DetailTextureLayer from the given @a definition.
      */
-    static DetailTextureMaterialLayer *fromDef(ded_detailtexture_t const &definition);
+    static DetailTextureMaterialLayer *fromDef(const ded_detailtexture_t &definition);
 
     /**
      * Add a new animation stage to the detail texture layer.
@@ -76,7 +76,7 @@ public:
      *
      * @return  Index of the newly added stage (0 based).
      */
-    int addStage(AnimationStage const &stage);
+    int addStage(const AnimationStage &stage);
 
     de::String describe() const;
 };

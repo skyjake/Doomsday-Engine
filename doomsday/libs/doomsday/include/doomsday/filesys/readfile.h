@@ -29,9 +29,9 @@ extern "C" {
 /**
  * Read a file into a buffer allocated using M_Malloc().
  */
-DE_PUBLIC size_t M_ReadFile(char const *name, char **buffer);
+DE_PUBLIC size_t M_ReadFile(const char *name, char **buffer);
 
-DE_PUBLIC AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom);
+DE_PUBLIC AutoStr *M_ReadFileIntoString(const ddstring_t *path, dd_bool *isCustom);
 
 #ifdef __cplusplus
 } // extern "C"

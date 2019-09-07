@@ -49,11 +49,11 @@ public:
 
 public:
     NameExpression();
-    NameExpression(String const &identifier, Flags const &flags = ByValue,
-                   String const &scopeIdentifier = "");
+    NameExpression(const String &identifier, const Flags &flags = ByValue,
+                   const String &scopeIdentifier = "");
 
     /// Returns the identifier in the name expression.
-    String const &identifier() const;
+    const String &identifier() const;
 
     Value *evaluate(Evaluator &evaluator) const;
 

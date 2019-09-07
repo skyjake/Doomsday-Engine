@@ -27,7 +27,7 @@
 
 using namespace de;
 
-static void ChainWidget_Draw(guidata_chain_t *chain, Point2Raw const *offset)
+static void ChainWidget_Draw(guidata_chain_t *chain, const Point2Raw *offset)
 {
     DE_ASSERT(chain);
     chain->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -72,7 +72,7 @@ void guidata_chain_t::tick(timespan_t /*elapsed*/)
 
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
-    player_t const *plr  = &::players[player()];
+    const player_t *plr  = &::players[player()];
     dint const curHealth = de::max(plr->plr->mo->health, 0);
 
     // Health marker chain animates up to the actual health value.
@@ -121,7 +121,7 @@ static void drawShadows(dint x, dint y, dfloat alpha)
 }
 #endif
 
-void guidata_chain_t::draw(Vec2i const &offset) const
+void guidata_chain_t::draw(const Vec2i &offset) const
 {
 #if __JHERETIC__
 

@@ -25,7 +25,7 @@ DE_PIMPL_NOREF(InputDialog)
     LineEditWidget *editor;
 };
 
-InputDialog::InputDialog(String const &name)
+InputDialog::InputDialog(const String &name)
     : MessageDialog(name), d(new Impl)
 {
     // Create the editor.
@@ -44,7 +44,7 @@ LineEditWidget &InputDialog::editor()
     return *d->editor;
 }
 
-LineEditWidget const &InputDialog::editor() const
+const LineEditWidget &InputDialog::editor() const
 {
     return *d->editor;
 }

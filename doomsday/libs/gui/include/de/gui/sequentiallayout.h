@@ -37,14 +37,14 @@ namespace de {
 class LIBGUI_PUBLIC SequentialLayout : public ISizeRule
 {
 public:
-    SequentialLayout(Rule const &startX,
-                     Rule const &startY,
+    SequentialLayout(const Rule &startX,
+                     const Rule &startY,
                      ui::Direction direction = ui::Down);
 
     void clear();
 
-    void setStartX(Rule const &startX);
-    void setStartY(Rule const &startY);
+    void setStartX(const Rule &startX);
+    void setStartY(const Rule &startY);
 
     /**
      * Sets the direction of the layout. The direction can only be changed
@@ -62,7 +62,7 @@ public:
      *
      * @param width  Width for all widgets in the layout.
      */
-    void setOverrideWidth(Rule const &width);
+    void setOverrideWidth(const Rule &width);
 
     /**
      * Defines a height for all appended widgets. If the widget already has a
@@ -70,10 +70,10 @@ public:
      *
      * @param height  Height for all widgets in the layout.
      */
-    void setOverrideHeight(Rule const &height);
+    void setOverrideHeight(const Rule &height);
 
     SequentialLayout &operator << (GuiWidget &widget) { return append(widget); }
-    SequentialLayout &operator << (Rule const &emptySpace) { return append(emptySpace); }
+    SequentialLayout &operator << (const Rule &emptySpace) { return append(emptySpace); }
 
     enum AppendMode {
         UpdateMinorAxis,    ///< Layout total length on the minor axis is updated.
@@ -81,15 +81,15 @@ public:
     };
 
     SequentialLayout &append(GuiWidget &widget, AppendMode mode = UpdateMinorAxis);
-    SequentialLayout &append(GuiWidget &widget, Rule const &spaceBefore, AppendMode mode = UpdateMinorAxis);
-    SequentialLayout &append(Rule const &emptySpace);
+    SequentialLayout &append(GuiWidget &widget, const Rule &spaceBefore, AppendMode mode = UpdateMinorAxis);
+    SequentialLayout &append(const Rule &emptySpace);
 
     GuiWidgetList widgets() const;
     int size() const;
     bool isEmpty() const;
 
-    Rule const &width() const override;
-    Rule const &height() const override;
+    const Rule &width() const override;
+    const Rule &height() const override;
 
 private:
     DE_PRIVATE(d)

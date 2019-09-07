@@ -24,7 +24,7 @@
 
 namespace de {
 
-TimeValue::TimeValue(Time const &time) : _time(time)
+TimeValue::TimeValue(const Time &time) : _time(time)
 {}
 
 Value *TimeValue::duplicate() const
@@ -43,9 +43,9 @@ bool TimeValue::isTrue() const
     return _time.isValid();
 }
 
-dint TimeValue::compare(Value const &value) const
+dint TimeValue::compare(const Value &value) const
 {
-    TimeValue const *other = dynamic_cast<TimeValue const *>(&value);
+    const TimeValue *other = dynamic_cast<const TimeValue *>(&value);
     if (other)
     {
         if (other->_time > _time) return 1;
@@ -55,12 +55,12 @@ dint TimeValue::compare(Value const &value) const
     return Value::compare(value);
 }
 
-void TimeValue::sum(Value const &value)
+void TimeValue::sum(const Value &value)
 {
     _time += TimeSpan(value.asNumber());
 }
 
-void TimeValue::subtract(Value const &subtrahend)
+void TimeValue::subtract(const Value &subtrahend)
 {
     _time -= TimeSpan(subtrahend.asNumber());
 }

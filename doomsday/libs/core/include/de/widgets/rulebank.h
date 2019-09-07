@@ -42,7 +42,7 @@ public:
      *
      * @param file  File with Info source containing rule definitions.
      */
-    void addFromInfo(File const &file);
+    void addFromInfo(const File &file);
 
     /**
      * Finds a specific rule.
@@ -51,14 +51,14 @@ public:
      *
      * @return  Rule instance.
      */
-    Rule const &rule(DotPath const &path) const;
+    const Rule &rule(const DotPath &path) const;
 
     const Rule &dpiRule() const;
 
     static DotPath const UNIT;
 
 protected:
-    virtual ISource *newSourceFromInfo(String const &id);
+    virtual ISource *newSourceFromInfo(const String &id);
     virtual IData *loadFromSource(ISource &source);
 
 private:

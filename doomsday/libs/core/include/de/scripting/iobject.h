@@ -47,7 +47,7 @@ public:
     virtual Record &objectNamespace() = 0;
 
     /// @copydoc objectNamespace()
-    virtual Record const &objectNamespace() const = 0;
+    virtual const Record &objectNamespace() const = 0;
 
     /**
      * Looks up a variable in the object namespace. Variables in subrecords can
@@ -73,7 +73,7 @@ public:
      *
      * @return  Variable.
      */
-    inline Variable const &operator [] (const String &name) const {
+    inline const Variable &operator [] (const String &name) const {
         return objectNamespace()[name];
     }
 };

@@ -52,24 +52,24 @@ public:
     };
 
 public:
-    ProgressWidget(String const &name = String());
+    ProgressWidget(const String &name = String());
 
-    void useMiniStyle(DotPath const &colorId = "text");
+    void useMiniStyle(const DotPath &colorId = "text");
     void setRotationSpeed(float anglesPerSecond);
 
     Mode mode() const;
     Rangei range() const;
     bool isAnimating() const;
 
-    void setColor(DotPath const &styleId);
-    void setShadowColor(DotPath const &styleId);
+    void setColor(const DotPath &styleId);
+    void setShadowColor(const DotPath &styleId);
 
     /**
      * Sets the text displayed in the widget. Thread-safe.
      *
      * @param text  New text for the progress.
      */
-    void setText(String const &text);
+    void setText(const String &text);
 
     void setMode(Mode progressMode);
 
@@ -80,7 +80,7 @@ public:
      * @param range        Range of valid values for setProgress().
      * @param visualRange  Range to which @a range maps to (within 0...1).
      */
-    void setRange(Rangei const &range, Rangef const &visualRange = Rangef(0.f, 1.f));
+    void setRange(const Rangei &range, const Rangef &visualRange = Rangef(0.f, 1.f));
 
     void setProgress(int currentProgress, TimeSpan transitionSpan = 0.5);
 

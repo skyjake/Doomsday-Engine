@@ -56,7 +56,7 @@ public:
      *
      * @param infoSource  Source text in Info syntax.
      */
-    void parse(String const &infoSource);
+    void parse(const String &infoSource);
 
     /**
      * Parses definitions from a file. This will erase the previously parsed
@@ -65,12 +65,12 @@ public:
      *
      * @param infoFile  File that uses Info syntax.
      */
-    void parse(File const &infoFile);
+    void parse(const File &infoFile);
 
     ScriptedInfo &      info();
     const ScriptedInfo &info() const;
 
-    void addFromInfoBlocks(String const &blockType);
+    void addFromInfoBlocks(const String &blockType);
 
     /**
      * Removes all bank items read from a matching source path. The check is
@@ -78,7 +78,7 @@ public:
      *
      * @param rootPath  Root path to look for.
      */
-    void removeAllWithRootPath(String const &rootPath);
+    void removeAllWithRootPath(const String &rootPath);
 
     /**
      * Removes all bank items whose source path can be identified as belonging
@@ -86,7 +86,7 @@ public:
      *
      * @param packageId  Package identifier.
      */
-    void removeAllFromPackage(String const &packageId);
+    void removeAllFromPackage(const String &packageId);
 
     Time   sourceModifiedAt() const;
     String bankRootPath() const;
@@ -104,14 +104,14 @@ public:
      *
      * @return Absolute path.
      */
-    String absolutePathInContext(Record const &context, String const &relativePath) const;
+    String absolutePathInContext(const Record &context, const String &relativePath) const;
 
     // Implements IObject.
     Record &      objectNamespace() override;
     const Record &objectNamespace() const override;
 
 protected:
-    virtual ISource *newSourceFromInfo(String const &id) = 0;
+    virtual ISource *newSourceFromInfo(const String &id) = 0;
 
 private:
     DE_PRIVATE(d)

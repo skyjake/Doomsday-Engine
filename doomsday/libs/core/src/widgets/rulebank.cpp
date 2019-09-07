@@ -34,12 +34,12 @@ DE_PIMPL_NOREF(RuleBank)
         RuleBank &bank;
         String id;
 
-        RuleSource(RuleBank &b, String const &ruleId) : bank(b), id(ruleId) {}
+        RuleSource(RuleBank &b, const String &ruleId) : bank(b), id(ruleId) {}
         Time modifiedAt() const { return bank.sourceModifiedAt(); }
 
         const Rule &load() const
         {
-            Record const &def = bank[id];
+            const Record &def = bank[id];
             return *bank.d->dpiRule * float(def["constant"].value().asNumber());
         }
     };
@@ -65,14 +65,14 @@ RuleBank::RuleBank(const Rule &dpiRule)
     d->dpiRule = holdRef(dpiRule);
 }
 
-void RuleBank::addFromInfo(File const &file)
+void RuleBank::addFromInfo(const File &file)
 {
     LOG_AS("RuleBank");
     parse(file);
     addFromInfoBlocks("rule");
 }
 
-Rule const &RuleBank::rule(DotPath const &path) const
+const Rule &RuleBank::rule(const DotPath &path) const
 {
     if (path.isEmpty()) return ConstantRule::zero();
     return *static_cast<Impl::RuleData &>(data(path)).rule;
@@ -83,7 +83,7 @@ const Rule &RuleBank::dpiRule() const
     return *d->dpiRule;
 }
 
-Bank::ISource *RuleBank::newSourceFromInfo(String const &id)
+Bank::ISource *RuleBank::newSourceFromInfo(const String &id)
 {
     return new Impl::RuleSource(*this, id);
 }

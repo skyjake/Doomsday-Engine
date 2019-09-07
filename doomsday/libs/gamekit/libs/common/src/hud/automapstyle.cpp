@@ -114,13 +114,13 @@ AutomapStyle::AutomapStyle() : d(new Impl)
 AutomapStyle::~AutomapStyle()
 {}
 
-automapcfg_lineinfo_t const &AutomapStyle::lineInfo(int lineType)
+const automapcfg_lineinfo_t &AutomapStyle::lineInfo(int lineType)
 {
     DE_ASSERT(lineType >= 0 && lineType < NUM_MAP_OBJECTLISTS);
     return d->mapObjectInfo[lineType];
 }
 
-automapcfg_lineinfo_t const *AutomapStyle::tryFindLineInfo(automapcfg_objectname_t name) const
+const automapcfg_lineinfo_t *AutomapStyle::tryFindLineInfo(automapcfg_objectname_t name) const
 {
     if(name == AMO_NONE) return nullptr;  // Ignore
 
@@ -141,14 +141,14 @@ automapcfg_lineinfo_t const *AutomapStyle::tryFindLineInfo(automapcfg_objectname
     return nullptr;
 }
 
-automapcfg_lineinfo_t const *AutomapStyle::tryFindLineInfo_special(int special,
-    int flags, Sector const *frontsector, Sector const *backsector, int automapFlags) const
+const automapcfg_lineinfo_t *AutomapStyle::tryFindLineInfo_special(int special,
+    int flags, const Sector *frontsector, const Sector *backsector, int automapFlags) const
 {
     if(special > 0)
     {
         for(uint i = 0; i < d->lineInfoCount; ++i)
         {
-            automapcfg_lineinfo_t const *info = &d->lineInfo[i];
+            const automapcfg_lineinfo_t *info = &d->lineInfo[i];
 
             // Special restriction?
             if(info->reqSpecial != special) continue;
@@ -301,7 +301,7 @@ void AutomapStyle::objectColor(automapcfg_objectname_t name, float *r, float *g,
         throw Error("AutomapStyle::objectColor", "Unknown object #" + String::asText((int) name));
 
     // It must be an object with an info.
-    automapcfg_lineinfo_t const *info = nullptr;
+    const automapcfg_lineinfo_t *info = nullptr;
     switch(name)
     {
     case AMO_UNSEENLINE:        info = &d->mapObjectInfo[MOL_LINEDEF_UNSEEN  ]; break;
@@ -435,7 +435,7 @@ void ST_InitAutomapStyle()
     style.applyDefaults();
 }
 
-void AM_GetMapColor(float *rgb, float const *uColor, int palidx, dd_bool customPal)
+void AM_GetMapColor(float *rgb, const float *uColor, int palidx, dd_bool customPal)
 {
     if ((!customPal && !cfg.common.automapCustomColors) ||
         (customPal && cfg.common.automapCustomColors != 2))

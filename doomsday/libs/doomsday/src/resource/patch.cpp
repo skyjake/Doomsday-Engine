@@ -100,7 +100,7 @@ static bool readNextPost(Post &post, Reader &reader)
 /**
  * Visit each of @a offsets producing a column => post map.
  */
-static Columns readPosts(ColumnOffsets const &offsets, Reader &reader)
+static Columns readPosts(const ColumnOffsets &offsets, Reader &reader)
 {
     Columns columns;
 #ifdef DE_QT_4_7_OR_NEWER
@@ -155,7 +155,7 @@ static inline Columns readColumns(int width, Reader &reader)
 /**
  * Process @a columns to calculate the "real" pixel height of the image.
  */
-static int calcRealHeight(Columns const &columns)
+static int calcRealHeight(const Columns &columns)
 {
     auto geom = Rectanglei::fromSize(Vec2ui(1, 0));
 
@@ -165,7 +165,7 @@ static int calcRealHeight(Columns const &columns)
 
         DE_FOR_EACH_CONST(Posts, postIt, *colIt)
         {
-            Post const &post = *postIt;
+            const Post &post = *postIt;
 
             // Does this post extend the previous one? (a so-called "tall-patch").
             if (post.topOffset <= tallTop)
@@ -185,9 +185,9 @@ static int calcRealHeight(Columns const &columns)
 }
 
 static Block compositeImage(Reader &                       reader,
-                            ColorPaletteTranslation const *xlatTable,
-                            Columns const &                columns,
-                            Patch::Metadata const &        meta,
+                            const ColorPaletteTranslation *xlatTable,
+                            const Columns &                columns,
+                            const Patch::Metadata &        meta,
                             Flags                          flags)
 {
     bool const maskZero                = flags.testFlag(Patch::MaskZero);
@@ -211,7 +211,7 @@ static Block compositeImage(Reader &                       reader,
 #endif
 
     // Determine the dimensions of the output buffer.
-    Vec2ui const &dimensions = clipToLogicalDimensions? meta.logicalDimensions : meta.dimensions;
+    const Vec2ui &dimensions = clipToLogicalDimensions? meta.logicalDimensions : meta.dimensions;
     int const w = dimensions.x;
     int const h = dimensions.y;
     size_t const pels = w * h;
@@ -231,7 +231,7 @@ static Block compositeImage(Reader &                       reader,
 
         DE_FOR_EACH_CONST(Posts, postIt, *colIt)
         {
-            Post const &post = *postIt;
+            const Post &post = *postIt;
 
             // Does this post extend the previous one? (a so-called "tall-patch").
             if (post.topOffset <= tallTop)
@@ -305,7 +305,7 @@ static Block compositeImage(Reader &                       reader,
     return output;
 }
 
-static Patch::Metadata prepareMetadata(Header const &hdr, int realHeight)
+static Patch::Metadata prepareMetadata(const Header &hdr, int realHeight)
 {
     Patch::Metadata meta;
     meta.dimensions        = Vec2ui(hdr.dimensions[0], realHeight);
@@ -314,7 +314,7 @@ static Patch::Metadata prepareMetadata(Header const &hdr, int realHeight)
     return meta;
 }
 
-Patch::Metadata Patch::loadMetadata(IByteArray const &data)
+Patch::Metadata Patch::loadMetadata(const IByteArray &data)
 {
     LOG_AS("Patch::loadMetadata");
     Reader reader = Reader(data);
@@ -325,7 +325,7 @@ Patch::Metadata Patch::loadMetadata(IByteArray const &data)
     return prepareMetadata(hdr, calcRealHeight(columns));
 }
 
-Block Patch::load(IByteArray const &data, ColorPaletteTranslation const &xlatTable, Flags flags)
+Block Patch::load(const IByteArray &data, const ColorPaletteTranslation &xlatTable, Flags flags)
 {
     LOG_AS("Patch::load");
     Reader reader = Reader(data);
@@ -337,7 +337,7 @@ Block Patch::load(IByteArray const &data, ColorPaletteTranslation const &xlatTab
     return compositeImage(reader, &xlatTable, columns, meta, flags);
 }
 
-Block Patch::load(IByteArray const &data, Metadata *loadedMetadata, Flags flags)
+Block Patch::load(const IByteArray &data, Metadata *loadedMetadata, Flags flags)
 {
     LOG_AS("Patch::load");
     Reader reader = Reader(data);
@@ -353,7 +353,7 @@ Block Patch::load(IByteArray const &data, Metadata *loadedMetadata, Flags flags)
     return compositeImage(reader, nullptr /* no translation */, columns, meta, flags);
 }
 
-bool Patch::recognize(IByteArray const &data)
+bool Patch::recognize(const IByteArray &data)
 {
     try
     {
@@ -374,7 +374,7 @@ bool Patch::recognize(IByteArray const &data)
         // Validated.
         return true;
     }
-    catch (IByteArray::OffsetError const &)
+    catch (const IByteArray::OffsetError &)
     {
         // Invalid!
         return false;

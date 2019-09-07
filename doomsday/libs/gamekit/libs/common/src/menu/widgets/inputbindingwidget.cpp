@@ -46,10 +46,10 @@ enum bindingitertype_t
     MIBT_JOY
 };
 
-static char const *findInString(char const *str, char const *token, int n)
+static const char *findInString(const char *str, const char *token, int n)
 {
     int tokenLen = strlen(token);
-    char const *at = strstr(str, token);
+    const char *at = strstr(str, token);
 
     // Not there at all?
     if(!at) return 0;
@@ -63,7 +63,7 @@ static char const *findInString(char const *str, char const *token, int n)
     return 0;
 }
 
-static void drawSmallText(char const *string, int x, int y, float alpha)
+static void drawSmallText(const char *string, int x, int y, float alpha)
 {
     int height = FR_TextHeight(string);
 
@@ -92,7 +92,7 @@ DE_PIMPL(InputBindingWidget)
     void iterateBindings(
         int flags,
         const std::function<
-            void(bindingitertype_t type, int bid, char const *ev, dd_bool isInverse)>
+            void(bindingitertype_t type, int bid, const char *ev, dd_bool isInverse)>
             &callback) const
     {
         // Bindings are collected to this map so they're iterated in order.
@@ -393,14 +393,14 @@ void InputBindingWidget::updateGeometry()
 /**
  * Read the symbolic descriptor from the given @a event.
  */
-static String symbolicDescriptor(event_t const &event)
+static String symbolicDescriptor(const event_t &event)
 {
     if(event.type == EV_SYMBOLIC)
     {
 #ifndef __64BIT__
-        String symbol = (char const *) event.data1;
+        String symbol = (const char *) event.data1;
 #else
-        String symbol = (char const *) event.data_u64;
+        String symbol = (const char *) event.data_u64;
 #endif
         if(symbol.beginsWith("echo-"))
         {
@@ -410,7 +410,7 @@ static String symbolicDescriptor(event_t const &event)
     return ""; // No symbolic descriptor.
 }
 
-int InputBindingWidget::handleEvent_Privileged(event_t const &event)
+int InputBindingWidget::handleEvent_Privileged(const event_t &event)
 {
     LOG_AS("InputBindingWidget");
 
@@ -518,7 +518,7 @@ int InputBindingWidget::handleEvent_Privileged(event_t const &event)
     return true;
 }
 
-char const *InputBindingWidget::controlName() const
+const char *InputBindingWidget::controlName() const
 {
     DE_ASSERT(binds);
     // Map to a text definition?

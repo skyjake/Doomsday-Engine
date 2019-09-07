@@ -42,7 +42,7 @@ DE_PIMPL(LogBuffer)
     typedef Set<LogSink *> Sinks;
 
     SimpleLogFilter defaultFilter;
-    IFilter const *entryFilter;
+    const IFilter *entryFilter;
     dint maxEntryCount;
     bool useStandardOutput;
     bool flushingEnabled;
@@ -199,7 +199,7 @@ void LogBuffer::latestEntries(Entries &entries, int count) const
     }
 }
 
-void LogBuffer::setEntryFilter(IFilter const *entryFilter)
+void LogBuffer::setEntryFilter(const IFilter *entryFilter)
 {
     if (entryFilter)
     {
@@ -265,7 +265,7 @@ void LogBuffer::setAutoFlushInterval(TimeSpan interval)
     d->autoFlushTimer->setInterval(interval);
 }
 
-void LogBuffer::setOutputFile(String const &path, OutputChangeBehavior behavior)
+void LogBuffer::setOutputFile(const String &path, OutputChangeBehavior behavior)
 {
     DE_GUARD(this);
 
@@ -317,7 +317,7 @@ void LogBuffer::flush()
                     {
                         *sink << *entry;
                     }
-                    catch (Error const &error)
+                    catch (const Error &error)
                     {
                         *sink << String("Exception during log flush:\n") +
                                         error.what() + "\n(the entry format is: '" +

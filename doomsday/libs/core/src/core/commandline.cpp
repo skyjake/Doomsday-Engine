@@ -35,7 +35,7 @@
 
 namespace de {
 
-static char *duplicateStringAsUtf8(String const &s)
+static char *duplicateStringAsUtf8(const String &s)
 {
     return iDupStr(s);
 }
@@ -89,7 +89,7 @@ DE_PIMPL(CommandLine)
         DE_ASSERT(pointers.back() == nullptr);
     }
 
-    void insert(dsize pos, String const &arg)
+    void insert(dsize pos, const String &arg)
     {
         if (pos > arguments.size())
         {
@@ -192,12 +192,12 @@ void CommandLine::clear()
     d->clear();
 }
 
-void CommandLine::append(String const &arg)
+void CommandLine::append(const String &arg)
 {
     d->appendArg(arg);
 }
 
-void CommandLine::insert(dsize pos, String const &arg)
+void CommandLine::insert(dsize pos, const String &arg)
 {
     d->insert(pos, arg);
 }
@@ -207,7 +207,7 @@ void CommandLine::remove(dsize pos)
     d->remove(pos);
 }
 
-CommandLine::ArgWithParams CommandLine::check(String const &arg, dint numParams) const
+CommandLine::ArgWithParams CommandLine::check(const String &arg, dint numParams) const
 {
     // Do a search for arg.
     Impl::Arguments::const_iterator i = d->arguments.begin();
@@ -237,8 +237,8 @@ CommandLine::ArgWithParams CommandLine::check(String const &arg, dint numParams)
     return found;
 }
 
-int CommandLine::forAllParameters(String const &arg,
-                                  const std::function<void (dsize, String const &)>& paramHandler) const
+int CommandLine::forAllParameters(const String &arg,
+                                  const std::function<void (dsize, const String &)>& paramHandler) const
 {
     int total = 0;
     bool inside = false;
@@ -266,7 +266,7 @@ int CommandLine::forAllParameters(String const &arg,
     return total;
 }
 
-bool CommandLine::getParameter(String const &arg, String &param) const
+bool CommandLine::getParameter(const String &arg, String &param) const
 {
     dint pos = check(arg, 1);
     if (pos > 0)
@@ -277,7 +277,7 @@ bool CommandLine::getParameter(String const &arg, String &param) const
     return false;
 }
 
-dint CommandLine::has(String const &arg) const
+dint CommandLine::has(const String &arg) const
 {
     dint howMany = 0;
 
@@ -302,7 +302,7 @@ bool CommandLine::isOption(dsize pos) const
     return isOption(d->arguments[pos]);
 }
 
-bool CommandLine::isOption(String const &arg)
+bool CommandLine::isOption(const String &arg)
 {
     return !(arg.empty() || arg.first() != '-');
 }
@@ -312,7 +312,7 @@ String CommandLine::at(dsize pos) const
     return d->arguments.at(pos);
 }
 
-char const *const *CommandLine::argv() const
+const char *const *CommandLine::argv() const
 {
     DE_ASSERT(*d->pointers.rbegin() == nullptr); // the list itself must be null-terminated
     return &d->pointers[0];
@@ -368,7 +368,7 @@ void CommandLine::makeAbsolutePath(dsize pos)
     }
 }
 
-void CommandLine::parseResponseFile(NativePath const &nativePath)
+void CommandLine::parseResponseFile(const NativePath &nativePath)
 {
     if (std::ifstream response{nativePath.expand()})
     {
@@ -380,7 +380,7 @@ void CommandLine::parseResponseFile(NativePath const &nativePath)
     }
 }
 
-void CommandLine::parse(String const &cmdLine)
+void CommandLine::parse(const String &cmdLine)
 {
     String::const_iterator i = cmdLine.begin();
 
@@ -460,18 +460,18 @@ void CommandLine::parse(String const &cmdLine)
     }
 }
 
-void CommandLine::alias(String const &full, String const &alias)
+void CommandLine::alias(const String &full, const String &alias)
 {
     d->aliases[full.toStdString()].push_back(alias);
 }
 
-bool CommandLine::isAliasDefinedFor(String const &full) const
+bool CommandLine::isAliasDefinedFor(const String &full) const
 {
-    auto const &aliases = d.getConst()->aliases;
+    const auto &aliases = d.getConst()->aliases;
     return aliases.find(full.toStdString()) != aliases.end();
 }
 
-bool CommandLine::matches(String const &full, String const &fullOrAlias) const
+bool CommandLine::matches(const String &full, const String &fullOrAlias) const
 {
     if (!full.compareWithoutCase(fullOrAlias))
     {

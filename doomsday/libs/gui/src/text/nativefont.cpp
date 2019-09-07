@@ -73,17 +73,17 @@ DE_PIMPL(NativeFont)
     }
 };
 
-void NativeFont::defineMapping(String const &family, StyleMapping const &mapping)
+void NativeFont::defineMapping(const String &family, const StyleMapping &mapping)
 {
     s_families.insert(family, mapping);
 }
 
-NativeFont::NativeFont(String const &family) : d(new Impl(this))
+NativeFont::NativeFont(const String &family) : d(new Impl(this))
 {
     setFamily(family);
 }
 
-NativeFont::NativeFont(NativeFont const &other) : Asset(other), d(new Impl(this))
+NativeFont::NativeFont(const NativeFont &other) : Asset(other), d(new Impl(this))
 {
     *this = other;
 }
@@ -99,7 +99,7 @@ NativeFont &NativeFont::operator=(const NativeFont &other)
     return *this;
 }
 
-void NativeFont::setFamily(String const &family)
+void NativeFont::setFamily(const String &family)
 {
     d->family = family;
     d->markNotReady();
@@ -221,7 +221,7 @@ Rectanglei NativeFont::measure(const String &text) const
     return bounds;
 }
 
-int NativeFont::advanceWidth(String const &text) const
+int NativeFont::advanceWidth(const String &text) const
 {
     d->prepare();
     return nativeFontAdvanceWidth(text);

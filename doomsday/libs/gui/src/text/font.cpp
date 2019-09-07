@@ -164,7 +164,7 @@ DE_PIMPL(Font)
         return pf;
     }
 
-    PlatformFont &getFontMod(FontParams const &params)
+    PlatformFont &getFontMod(const FontParams &params)
     {
         auto &plat = getThreadFonts();
 
@@ -187,7 +187,7 @@ DE_PIMPL(Font)
      *
      * @return  Font with applied formatting.
      */
-    PlatformFont const &alteredFont(RichFormat::Iterator const &rich)
+    const PlatformFont &alteredFont(const RichFormat::Iterator &rich)
     {
         auto &plat = getThreadFonts();
 
@@ -220,7 +220,7 @@ DE_PIMPL(Font)
             case RichFormat::Monospace:
                 if (rich.format.format().hasStyle())
                 {
-                    if (Font const *altFont = rich.format.format().style().richStyleFont(rich.style()))
+                    if (const Font *altFont = rich.format.format().style().richStyleFont(rich.style()))
                     {
                         modParams = FontParams(altFont->d->getThreadFonts().font);
                     }
@@ -247,7 +247,7 @@ Font::Font()
     : d(new Impl(this))
 {}
 
-Font::Font(Font const &other)
+Font::Font(const Font &other)
     : d(new Impl(this, other.d->fontParams))
 {}
 
@@ -261,12 +261,12 @@ void Font::initialize(const FontParams &params)
     d->updateMetrics();
 }
 
-Rectanglei Font::measure(String const &textLine) const
+Rectanglei Font::measure(const String &textLine) const
 {
     return measure(RichFormat::fromPlainText(textLine));
 }
 
-Rectanglei Font::measure(RichFormatRef const &format) const
+Rectanglei Font::measure(const RichFormatRef &format) const
 {
     Rectanglei bounds;
     int advance = 0;
@@ -292,12 +292,12 @@ Rectanglei Font::measure(RichFormatRef const &format) const
     return bounds;
 }
 
-int Font::advanceWidth(String const &textLine) const
+int Font::advanceWidth(const String &textLine) const
 {
     return advanceWidth(RichFormat::fromPlainText(textLine));
 }
 
-int Font::advanceWidth(RichFormatRef const &format) const
+int Font::advanceWidth(const RichFormatRef &format) const
 {
     int advance = 0;
     RichFormat::Iterator iter(format);
@@ -312,19 +312,19 @@ int Font::advanceWidth(RichFormatRef const &format) const
     return advance;
 }
 
-Image Font::rasterize(String const &      textLine,
-                      Image::Color const &foreground,
-                      Image::Color const &background) const
+Image Font::rasterize(const String &      textLine,
+                      const Image::Color &foreground,
+                      const Image::Color &background) const
 {
     if (textLine.isEmpty()) return {};
     return rasterize(RichFormat::fromPlainText(textLine), foreground, background);
 }
 
-Image Font::rasterize(RichFormatRef const &format,
-                      Image::Color const & foreground,
-                      Image::Color const & background) const
+Image Font::rasterize(const RichFormatRef &format,
+                      const Image::Color & foreground,
+                      const Image::Color & background) const
 {
-    auto const &plat = d->getThreadFonts();
+    const auto &plat = d->getThreadFonts();
 
     const Rectanglei bounds = measure(format);
 
@@ -381,22 +381,22 @@ Image Font::rasterize(RichFormatRef const &format,
     return img;
 }
 
-Rule const &Font::height() const
+const Rule &Font::height() const
 {
     return *d->heightRule;
 }
 
-Rule const &Font::ascent() const
+const Rule &Font::ascent() const
 {
     return *d->ascentRule;
 }
 
-Rule const &Font::descent() const
+const Rule &Font::descent() const
 {
     return *d->descentRule;
 }
 
-Rule const &Font::lineSpacing() const
+const Rule &Font::lineSpacing() const
 {
     return *d->lineSpacingRule;
 }

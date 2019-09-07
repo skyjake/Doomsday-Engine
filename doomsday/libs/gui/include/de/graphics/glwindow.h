@@ -214,7 +214,7 @@ public:
      *              that indicates which format to use (e.g, "screenshot.jpg").
      *              If omitted, defaults to PNG.
      */
-    void grabToFile(NativePath const &path) const;
+    void grabToFile(const NativePath &path) const;
 
     /**
      * Grabs the contents of the window framebuffer.
@@ -224,7 +224,7 @@ public:
      *
      * @return  Framebuffer contents (no alpha channel).
      */
-    Image grabImage(Size const &outputSize = Size()) const;
+    Image grabImage(const Size &outputSize = Size()) const;
 
     /**
      * Grabs a portion of the contents of the window framebuffer.
@@ -235,7 +235,7 @@ public:
      *
      * @return  Framebuffer contents (no alpha channel).
      */
-    Image grabImage(Rectanglei const &area, Size const &outputSize = Size()) const;
+    Image grabImage(const Rectanglei &area, const Size &outputSize = Size()) const;
 
     /**
      * Activates the window's GL context so that OpenGL API calls can be made.

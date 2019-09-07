@@ -79,7 +79,7 @@ DE_PIMPL(Record)
     struct ExcludeByBehavior {
         Behavior behavior;
         ExcludeByBehavior(Behavior b) : behavior(b) {}
-        bool operator () (Variable const &member) {
+        bool operator () (const Variable &member) {
             return (behavior == IgnoreDoubleUnderscoreMembers &&
                     member.name().beginsWith("__"));
         }
@@ -93,7 +93,7 @@ DE_PIMPL(Record)
         }
     };
 
-    void clear(const std::function<bool (Variable const &)>& excluded)
+    void clear(const std::function<bool (const Variable &)>& excluded)
     {
         if (!members.empty())
         {
@@ -116,9 +116,9 @@ DE_PIMPL(Record)
         }
     }
 
-    void copyMembersFrom(Record const &other, const std::function<bool (Variable const &)>& excluded)
+    void copyMembersFrom(const Record &other, const std::function<bool (const Variable &)>& excluded)
     {
-        auto const *other_d = other.d.getConst();
+        const auto *other_d = other.d.getConst();
         DE_GUARD(other_d);
 
         for (auto &i : other_d->members)
@@ -159,9 +159,9 @@ DE_PIMPL(Record)
         }
     }
 
-    void assignPreservingVariables(Record const &other, std::function<bool (Variable const &)> excluded)
+    void assignPreservingVariables(const Record &other, std::function<bool (const Variable &)> excluded)
     {
-        auto const *other_d = other.d.getConst();
+        const auto *other_d = other.d.getConst();
         DE_GUARD(other_d);
 
         // Add variables or update existing ones.
@@ -229,13 +229,13 @@ DE_PIMPL(Record)
         }
     }
 
-    static bool isRecord(Variable const &var)
+    static bool isRecord(const Variable &var)
     {
         const auto *value = maybeAs<RecordValue>(var.value());
         return value && value->record();
     }
 
-    static bool isSubrecord(Variable const &var)
+    static bool isSubrecord(const Variable &var)
     {
         // Subrecords are owned by this record.
         // Note: Non-owned Records are likely imports from other modules.
@@ -243,12 +243,12 @@ DE_PIMPL(Record)
         return value && value->record() && value->hasOwnership();
     }
 
-    LoopResult forSubrecords(std::function<LoopResult (String const &, Record &)> func) const
+    LoopResult forSubrecords(std::function<LoopResult (const String &, Record &)> func) const
     {
         Members const unmodifiedMembers = members; // In case a callback removes members.
         for (auto &i : unmodifiedMembers)
         {
-            Variable const &member = *i.second;
+            const Variable &member = *i.second;
             if (isSubrecord(member))
             {
                 Record *rec = member.value<RecordValue>().record();
@@ -263,7 +263,7 @@ DE_PIMPL(Record)
         return LoopContinue;
     }
 
-    Record::Subrecords listSubrecords(std::function<bool (Record const &)> filter) const
+    Record::Subrecords listSubrecords(std::function<bool (const Record &)> filter) const
     {
         DE_GUARD(this);
 
@@ -280,7 +280,7 @@ DE_PIMPL(Record)
         return subs;
     }
 
-    Variable const *findMemberByPath(const String &name) const
+    const Variable *findMemberByPath(const String &name) const
     {
         // Path notation allows looking into subrecords.
         if (auto pos = name.indexOf('.'))
@@ -361,7 +361,7 @@ DE_PIMPL(Record)
      *
      * @param refMap  Known records indexes with their old IDs.
      */
-    void reconnectReferencesAfterDeserialization(RefMap const &refMap)
+    void reconnectReferencesAfterDeserialization(const RefMap &refMap)
     {
         for (auto &i : members)
         {
@@ -403,7 +403,7 @@ DE_AUDIENCE_METHOD(Record, Removal)
 Record::Record() : RecordAccessor(this), d(new Impl(*this))
 {}
 
-Record::Record(Record const &other, Behavior behavior)
+Record::Record(const Record &other, Behavior behavior)
     : RecordAccessor(this)
     , d(new Impl(*this))
 {
@@ -448,17 +448,17 @@ void Record::clear(Behavior behavior)
     d->clear(Impl::ExcludeByBehavior(behavior));
 }
 
-void Record::copyMembersFrom(Record const &other, Behavior behavior)
+void Record::copyMembersFrom(const Record &other, Behavior behavior)
 {
     d->copyMembersFrom(other, Impl::ExcludeByBehavior(behavior));
 }
 
-void Record::assignPreservingVariables(Record const &from, Behavior behavior)
+void Record::assignPreservingVariables(const Record &from, Behavior behavior)
 {
     d->assignPreservingVariables(from, Impl::ExcludeByBehavior(behavior));
 }
 
-Record &Record::operator = (Record const &other)
+Record &Record::operator = (const Record &other)
 {
     return assign(other);
 }
@@ -470,7 +470,7 @@ Record &Record::operator = (Record &&moved)
     return *this;
 }
 
-Record &Record::assign(Record const &other, Behavior behavior)
+Record &Record::assign(const Record &other, Behavior behavior)
 {
     if (this == &other) return *this;
 
@@ -481,7 +481,7 @@ Record &Record::assign(Record const &other, Behavior behavior)
     return *this;
 }
 
-Record &Record::assign(Record const &other, const RegExp &excluded)
+Record &Record::assign(const Record &other, const RegExp &excluded)
 {
     DE_GUARD(d);
 
@@ -502,13 +502,13 @@ bool Record::hasMember(const String &variableName) const
 
 bool Record::hasSubrecord(const String &subrecordName) const
 {
-    Variable const *found = d->findMemberByPath(subrecordName);
+    const Variable *found = d->findMemberByPath(subrecordName);
     return found? d->isSubrecord(*found) : false;
 }
 
 bool Record::hasRecord(const String &recordName) const
 {
-    Variable const *found = d->findMemberByPath(recordName);
+    const Variable *found = d->findMemberByPath(recordName);
     return found? d->isRecord(*found) : false;
 }
 
@@ -580,12 +580,12 @@ Variable &Record::addBoolean(const String &name, bool booleanValue)
     return add(name, Variable::AllowNumber).set(NumberValue(booleanValue, NumberValue::Boolean));
 }
 
-Variable &Record::addText(const String &name, Value::Text const &text)
+Variable &Record::addText(const String &name, const Value::Text &text)
 {
     return add(name, Variable::AllowText).set(TextValue(text));
 }
 
-Variable &Record::addTime(const String &name, Time const &time)
+Variable &Record::addTime(const String &name, const Time &time)
 {
     return add(name, Variable::AllowTime).set(TimeValue(time));
 }
@@ -658,7 +658,7 @@ Variable &Record::set(const String &name, bool value)
     return addBoolean(name, value);
 }
 
-Variable &Record::set(const String &name, char const *value)
+Variable &Record::set(const String &name, const char *value)
 {
     DE_GUARD(d);
 
@@ -669,7 +669,7 @@ Variable &Record::set(const String &name, char const *value)
     return addText(name, value);
 }
 
-Variable &Record::set(const String &name, Value::Text const &value)
+Variable &Record::set(const String &name, const Value::Text &value)
 {
     DE_GUARD(d);
 
@@ -721,7 +721,7 @@ Variable &Record::set(const String &name, duint64 value)
 //     return set(name, NumberValue(value));
 // }
 
-Variable &Record::set(const String &name, Time const &value)
+Variable &Record::set(const String &name, const Time &value)
 {
     DE_GUARD(d);
 
@@ -732,7 +732,7 @@ Variable &Record::set(const String &name, Time const &value)
     return addTime(name, value);
 }
 
-Variable &Record::set(const String &name, Block const &value)
+Variable &Record::set(const String &name, const Block &value)
 {
     DE_GUARD(d);
 
@@ -868,13 +868,13 @@ Variable &Record::insertToSortedArray(const String &name, Value *value)
 
 Variable &Record::operator [] (const String &name)
 {
-    return const_cast<Variable &>((*const_cast<Record const *>(this))[name]);
+    return const_cast<Variable &>((*const_cast<const Record *>(this))[name]);
 }
 
-Variable const &Record::operator [] (const String &name) const
+const Variable &Record::operator [] (const String &name) const
 {
     // Path notation allows looking into subrecords.
-    Variable const *found = d->findMemberByPath(name);
+    const Variable *found = d->findMemberByPath(name);
     if (found)
     {
         return *found;
@@ -887,17 +887,17 @@ Variable *Record::tryFind(const String &name)
     return const_cast<Variable *>(d->findMemberByPath(name));
 }
 
-Variable const *Record::tryFind(const String &name) const
+const Variable *Record::tryFind(const String &name) const
 {
     return d->findMemberByPath(name);
 }
 
 Record &Record::subrecord(const String &name)
 {
-    return const_cast<Record &>((const_cast<Record const *>(this))->subrecord(name));
+    return const_cast<Record &>((const_cast<const Record *>(this))->subrecord(name));
 }
 
-Record const &Record::subrecord(const String &name) const
+const Record &Record::subrecord(const String &name) const
 {
     // Path notation allows looking into subrecords.
     if (auto pos = name.indexOf('.'))
@@ -918,7 +918,7 @@ dsize Record::size() const
     return dsize(d->members.size());
 }
 
-Record::Members const &Record::members() const
+const Record::Members &Record::members() const
 {
     return d->members;
 }
@@ -935,7 +935,7 @@ LoopResult Record::forMembers(std::function<LoopResult (const String &, Variable
     return LoopContinue;
 }
 
-LoopResult Record::forMembers(std::function<LoopResult (const String &, Variable const &)> func) const
+LoopResult Record::forMembers(std::function<LoopResult (const String &, const Variable &)> func) const
 {
     for (Members::const_iterator i = d->members.begin(); i != d->members.end(); ++i)
     {
@@ -949,23 +949,23 @@ LoopResult Record::forMembers(std::function<LoopResult (const String &, Variable
 
 Record::Subrecords Record::subrecords() const
 {
-    return d->listSubrecords([] (Record const &) { return true; /* unfiltered */ });
+    return d->listSubrecords([] (const Record &) { return true; /* unfiltered */ });
 }
 
-Record::Subrecords Record::subrecords(std::function<bool (Record const &)> filter) const
+Record::Subrecords Record::subrecords(std::function<bool (const Record &)> filter) const
 {
-    return d->listSubrecords([&] (Record const &rec)
+    return d->listSubrecords([&] (const Record &rec)
     {
         return filter(rec);
     });
 }
 
-LoopResult Record::forSubrecords(std::function<LoopResult (String const &, Record &)> func)
+LoopResult Record::forSubrecords(std::function<LoopResult (const String &, Record &)> func)
 {
     return d->forSubrecords(func);
 }
 
-LoopResult Record::forSubrecords(std::function<LoopResult (String const &, Record const &)> func) const
+LoopResult Record::forSubrecords(std::function<LoopResult (const String &, const Record &)> func) const
 {
     return d->forSubrecords([func] (const String &name, Record &rec)
     {
@@ -977,7 +977,7 @@ bool Record::anyMembersChanged() const
 {
     DE_GUARD(d);
 
-    auto const *const_d = d.getConst();
+    const auto *const_d = d.getConst();
     for (auto i = const_d->members.begin(); i != const_d->members.end(); ++i)
     {
         if (d->isSubrecord(*i->second))
@@ -1010,7 +1010,7 @@ void Record::markAllMembersUnchanged()
     }
 }
 
-String Record::asText(String const &prefix, List<KeyValue> *lines) const
+String Record::asText(const String &prefix, List<KeyValue> *lines) const
 {
     DE_GUARD(d);
 
@@ -1111,7 +1111,7 @@ String Record::asText(String const &prefix, List<KeyValue> *lines) const
     return os.str();
 }
 
-Function const &Record::function(const String &name) const
+const Function &Record::function(const String &name) const
 {
     return (*this)[name].value<FunctionValue>().function();
 }
@@ -1127,7 +1127,7 @@ void Record::addSuperRecord(Value *superValue)
     (*this)[VAR_SUPER].array().add(superValue);
 }
 
-void Record::addSuperRecord(Record const &superRecord)
+void Record::addSuperRecord(const Record &superRecord)
 {
     addSuperRecord(new RecordValue(superRecord));
 }
@@ -1184,13 +1184,13 @@ void Record::operator << (Reader &from)
 #endif
 }
 
-Record &Record::operator << (NativeFunctionSpec const &spec)
+Record &Record::operator << (const NativeFunctionSpec &spec)
 {
     addFunction(spec.name(), refless(spec.make())).setReadOnly();
     return *this;
 }
 
-Record const &Record::parentRecordForMember(const String &name) const
+const Record &Record::parentRecordForMember(const String &name) const
 {
     String const lastOmitted = name.fileNamePath('.');
     if (lastOmitted.isEmpty()) return *this;
@@ -1206,7 +1206,7 @@ String Record::asInfo() const
     {
         if (out) out += "\n";
 
-        Variable const &var = *i.second;
+        const Variable &var = *i.second;
         String src = i.first;
 
         if (is<RecordValue>(var.value()))
@@ -1235,7 +1235,7 @@ String Record::asInfo() const
     return out;
 }
 
-std::ostream &operator<<(std::ostream &os, Record const &record)
+std::ostream &operator<<(std::ostream &os, const Record &record)
 {
     return os << record.asText();
 }

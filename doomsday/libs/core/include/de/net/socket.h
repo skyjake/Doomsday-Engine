@@ -90,7 +90,7 @@ public:
      * @param address  Address to connect to.
      * @param timeOut  Maximum time to wait for connection.
      */
-    Socket(Address const &address, TimeSpan timeOut);
+    Socket(const Address &address, TimeSpan timeOut);
 
     virtual ~Socket();
 
@@ -100,7 +100,7 @@ public:
      *
      * @param address  Address to connect to.
      */
-    void open(Address const &address);
+    void open(const Address &address);
 
     /**
      * Opens a connection to a host and returns immediately. If the IP address
@@ -114,7 +114,7 @@ public:
      * optional port appended (e.g., "myhost.com:13209").
      * @param defaultPort  Port number to use if not specified in the first argument.
      */
-    void open(String const &domainNameWithOptionalPort, duint16 defaultPort = 0);
+    void open(const String &domainNameWithOptionalPort, duint16 defaultPort = 0);
 
     /**
      * Returns the currently active channel.
@@ -149,7 +149,7 @@ public:
      *
      * @param packet  Data to send.
      */
-    void send(IByteArray const &packet);
+    void send(const IByteArray &packet);
 
     /**
      * Sends the given data over the socket.  Copies the data into
@@ -160,7 +160,7 @@ public:
      *
      * @return  Reference to this socket.
      */
-    Socket &operator<<(IByteArray const &data);
+    Socket &operator<<(const IByteArray &data);
 
     /**
      * Returns the next received message. If nothing has been received,
@@ -240,7 +240,7 @@ protected:
      */
     void receiveBytes(duint count, dbyte *buffer);
 
-    void send(IByteArray const &packet, duint channel);
+    void send(const IByteArray &packet, duint channel);
 
 private:
     DE_PRIVATE(d)

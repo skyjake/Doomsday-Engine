@@ -41,7 +41,7 @@ public:
      * @param persistentPath  Path of the serialized data file written to the persistent
      *                        data archive.
      */
-    Refuge(String const &persistentPath);
+    Refuge(const String &persistentPath);
 
     /**
      * Returns the path of the serialized data in the persistent archive.
@@ -69,7 +69,7 @@ public:
 
     // Implements IObject.
     Record &objectNamespace();
-    Record const &objectNamespace() const;
+    const Record &objectNamespace() const;
 
 private:
     DE_PRIVATE(d)

@@ -25,11 +25,11 @@
 
 using namespace de;
 
-UriValue::UriValue(res::Uri const &initialValue)
+UriValue::UriValue(const res::Uri &initialValue)
     : _uri(initialValue)
 {}
 
-UriValue::operator res::Uri const &() const
+UriValue::operator const res::Uri &() const
 {
     return _uri;
 }
@@ -39,7 +39,7 @@ res::Uri &UriValue::uri()
     return _uri;
 }
 
-res::Uri const &UriValue::uri() const
+const res::Uri &UriValue::uri() const
 {
     return _uri;
 }
@@ -59,7 +59,7 @@ Value::Text UriValue::asText() const
     return _uri.size();
 }*/
 
-bool UriValue::contains(Value const &value) const
+bool UriValue::contains(const Value &value) const
 {
     // We are able to look for substrings within the text, without applying automatic
     // type conversions.
@@ -75,9 +75,9 @@ bool UriValue::isTrue() const
     return !_uri.isEmpty();
 }
 
-dint UriValue::compare(Value const &value) const
+dint UriValue::compare(const Value &value) const
 {
-    UriValue const *other = dynamic_cast<UriValue const *>(&value);
+    const UriValue *other = dynamic_cast<const UriValue *>(&value);
     if (other)
     {
         return _uri.asText().compare(other->_uri.asText());
@@ -101,7 +101,7 @@ void UriValue::operator << (de::Reader &from)
     from >> _uri;
 }
 
-void UriValue::setValue(res::Uri const &uri)
+void UriValue::setValue(const res::Uri &uri)
 {
     _uri = uri;
 }

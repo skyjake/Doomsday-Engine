@@ -36,7 +36,7 @@ namespace ui {
 class LIBGUI_PUBLIC ActionItem : public ImageItem
 {
 public:
-    ActionItem(String const &label = "", RefArg<Action> action = RefArg<Action>())
+    ActionItem(const String &label = "", RefArg<Action> action = RefArg<Action>())
         : ImageItem(ShownAsButton | ActivationClosesPopup, label)
         , _action(action.holdRef())
     {}
@@ -47,44 +47,44 @@ public:
         , _action(new CallbackAction(actionFunc)) {}
 
     ActionItem(Semantics semantics,
-               String const &label   = "",
+               const String &label   = "",
                RefArg<Action> action = RefArg<Action>())
         : ImageItem(semantics, label)
         , _action(action.holdRef()) {}
 
     ActionItem(Semantics semantics,
-               Image const &img,
-               String const &label   = "",
+               const Image &img,
+               const String &label   = "",
                RefArg<Action> action = RefArg<Action>())
         : ImageItem(semantics, img, label)
         , _action(action.holdRef()) {}
 
-    ActionItem(Image const &img,
-               String const &label   = "",
+    ActionItem(const Image &img,
+               const String &label   = "",
                RefArg<Action> action = RefArg<Action>())
         : ImageItem(ShownAsButton | ActivationClosesPopup, img, label)
         , _action(action.holdRef()) {}
 
-    ActionItem(Image const &img,
-               String const &label,
+    ActionItem(const Image &img,
+               const String &label,
                const std::function<void ()> &actionFunc)
         : ImageItem(ShownAsButton | ActivationClosesPopup, img, label)
         , _action(new CallbackAction(actionFunc)) {}
 
     ActionItem(Semantics semantics,
-               DotPath const &styleImageId,
-               String const &label   = "",
+               const DotPath &styleImageId,
+               const String &label   = "",
                RefArg<Action> action = RefArg<Action>())
         : ImageItem(semantics, styleImageId, label)
         , _action(action.holdRef()) {}
 
-    ActionItem(DotPath const &styleImageId,
-               String const &label   = "",
+    ActionItem(const DotPath &styleImageId,
+               const String &label   = "",
                RefArg<Action> action = RefArg<Action>())
         : ImageItem(ShownAsButton | ActivationClosesPopup, styleImageId, label)
         , _action(action.holdRef()) {}
 
-    Action const *action() const { return _action; }
+    const Action *action() const { return _action; }
 
     void setAction(RefArg<Action> action)
     {

@@ -35,7 +35,7 @@ static void ChatWidget_UpdateGeometry(ChatWidget *chat)
     chat->updateGeometry();
 }
 
-static void ChatWidget_Draw(ChatWidget *chat, Point2Raw const *offset)
+static void ChatWidget_Draw(ChatWidget *chat, const Point2Raw *offset)
 {
     DE_ASSERT(chat);
     chat->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -160,7 +160,7 @@ void ChatWidget::setDestination(dint newDestination)
     throw DestinationError("ChatWidget::setDestination", "Unknown destination #" + String::asText(newDestination) + " (not changed)");
 }
 
-dint ChatWidget::handleEvent(event_t const &ev)
+dint ChatWidget::handleEvent(const event_t &ev)
 {
     if(!isActive())
         return false;
@@ -227,7 +227,7 @@ void ChatWidget::messageClear()
     d->text.clear();
 }
 
-void ChatWidget::messageAppend(String const &str)
+void ChatWidget::messageAppend(const String &str)
 {
     d->text += str;
 }
@@ -237,7 +237,7 @@ String ChatWidget::messageAsText() const
     return d->text;
 }
 
-void ChatWidget::draw(Vec2i const &offset) const
+void ChatWidget::draw(const Vec2i &offset) const
 {
     dfloat const textOpacity = uiRendState->pageAlpha * cfg.common.hudColor[3];
     //dfloat const iconOpacity = uiRendState->pageAlpha * cfg.common.hudIconAlpha;

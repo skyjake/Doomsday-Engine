@@ -29,7 +29,7 @@ DE_PIMPL(MetadataBank), public Lockable
     {
         Block metaId;
 
-        Source(Block const &id) : metaId(id) {}
+        Source(const Block &id) : metaId(id) {}
     };
 
     struct Data : public IData
@@ -50,7 +50,7 @@ DE_PIMPL(MetadataBank), public Lockable
 
     Impl(Public *i) : Base(i) {}
 
-    static DotPath pathFromId(String const &category, Block const &id)
+    static DotPath pathFromId(const String &category, const Block &id)
     {
         DE_ASSERT(!id.isEmpty());
         String const hex = id.asHexadecimalText();
@@ -74,7 +74,7 @@ MetadataBank &MetadataBank::get() // static
     return App::metadataBank();
 }
 
-Block MetadataBank::check(String const &category, Block const &id)
+Block MetadataBank::check(const String &category, const Block &id)
 {
     DE_GUARD(d);
     DotPath const path = Impl::pathFromId(category, id);
@@ -85,7 +85,7 @@ Block MetadataBank::check(String const &category, Block const &id)
     return data(path).as<Impl::Data>().metadata;
 }
 
-void MetadataBank::setMetadata(String const &category, Block const &id, Block const &metadata)
+void MetadataBank::setMetadata(const String &category, const Block &id, const Block &metadata)
 {
     DE_GUARD(d);
     DotPath const path = Impl::pathFromId(category, id);
@@ -98,7 +98,7 @@ void MetadataBank::setMetadata(String const &category, Block const &id, Block co
     entry.isChanged = true;
 }
 
-Block MetadataBank::metadata(String const &category, Block const &id) const
+Block MetadataBank::metadata(const String &category, const Block &id) const
 {
     DE_GUARD(d);
     return data(Impl::pathFromId(category, id)).as<Impl::Data>().metadata;

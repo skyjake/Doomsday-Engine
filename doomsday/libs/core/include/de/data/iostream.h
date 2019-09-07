@@ -45,7 +45,7 @@ public:
      *
      * @return Reference to this IOStream object.
      */
-    virtual IOStream &operator << (IByteArray const &bytes) = 0;
+    virtual IOStream &operator << (const IByteArray &bytes) = 0;
 };
 
 } // namespace de

@@ -38,7 +38,7 @@ namespace de {
 class DE_PUBLIC LinkFile : public File
 {
 public:
-    LinkFile(String const &name = String());
+    LinkFile(const String &name = String());
 
     ~LinkFile();
 
@@ -47,9 +47,9 @@ public:
      *
      * @param file  Target file. This file will observe the target file for deletion.
      */
-    void setTarget(File const &file);
+    void setTarget(const File &file);
 
-    void setTarget(File const *fileOrNull);
+    void setTarget(const File *fileOrNull);
 
     /**
      * Returns the file's target. This is used for indirection when descending into
@@ -61,12 +61,12 @@ public:
      *
      * @see LinkFile
      */
-    File const &target() const override;
+    const File &target() const override;
 
     /// @copydoc target() const
     File &target() override;
 
-    Folder const *targetFolder() const;
+    const Folder *targetFolder() const;
 
     Folder *targetFolder();
 
@@ -78,11 +78,11 @@ public:
     String describe() const override;
 
     // Stream access:
-    IIStream const &operator >> (IByteArray &bytes) const override;
+    const IIStream &operator >> (IByteArray &bytes) const override;
 
     // filesys::Node overrides:
-    Node const *tryFollowPath(PathRef const &path) const override;
-    Node const *tryGetChild(String const &name) const override;
+    const Node *tryFollowPath(const PathRef &path) const override;
+    const Node *tryGetChild(const String &name) const override;
 
 public:
     /**
@@ -94,7 +94,7 @@ public:
      *
      * @return New LinkFile instance. Caller gets ownership.
      */
-    static LinkFile *newLinkToFile(File const &file, String linkName = "");
+    static LinkFile *newLinkToFile(const File &file, String linkName = "");
 
 private:
     DE_PRIVATE(d)

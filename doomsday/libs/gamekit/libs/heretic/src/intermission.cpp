@@ -51,7 +51,7 @@ namespace internal
         Vec2i origin;
         res::Uri mapUri;
 
-        Location(Vec2i const &origin, res::Uri const &mapUri)
+        Location(const Vec2i &origin, const res::Uri &mapUri)
             : origin(origin)
             , mapUri(mapUri)
         {}
@@ -147,7 +147,7 @@ void IN_Shutdown()
     // Nothing to do.
 }
 
-static String backgroundPatchForEpisode(String const &episodeId)
+static String backgroundPatchForEpisode(const String &episodeId)
 {
     bool isNumber;
     int const oldEpisodeNum = episodeId.toInt(&isNumber) - 1; // 1-based
@@ -158,7 +158,7 @@ static String backgroundPatchForEpisode(String const &episodeId)
     return ""; // None.
 }
 
-static Locations const *locationsForEpisode(String const &episodeId)
+static const Locations *locationsForEpisode(const String &episodeId)
 {
     if(episodeId == "1") return &episode1Locations;
     if(episodeId == "2") return &episode2Locations;
@@ -166,11 +166,11 @@ static Locations const *locationsForEpisode(String const &episodeId)
     return nullptr; // Not found.
 }
 
-static Location const *tryFindLocationForMap(Locations const *locations, res::Uri const &mapUri)
+static const Location *tryFindLocationForMap(const Locations *locations, const res::Uri &mapUri)
 {
     if(locations)
     {
-        for(Location const &loc : *locations)
+        for(const Location &loc : *locations)
         {
             if(loc.mapUri == mapUri) return &loc;
         }
@@ -208,7 +208,7 @@ static fixed_t dSlideX[NUMTEAMS];
 static fixed_t dSlideY[NUMTEAMS];
 
 // Passed into intermission.
-static wbstartstruct_t const *wbs;
+static const wbstartstruct_t *wbs;
 
 static common::GameSession::VisitedMaps visitedMaps()
 {
@@ -315,16 +315,16 @@ static void drawEnteringTitle()
  */
 static void drawLocationMarks(bool drawYouAreHere = false, bool flashCurrent = true)
 {
-    Locations const *locations = locationsForEpisode(gfw_Session()->episodeId());
+    const Locations *locations = locationsForEpisode(gfw_Session()->episodeId());
     if(!locations) return;
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
 
     common::GameSession::VisitedMaps const visited = visitedMaps();
-    for(res::Uri const &visitedMap : visited)
+    for(const res::Uri &visitedMap : visited)
     {
-        if(Location const *loc = tryFindLocationForMap(locations, visitedMap))
+        if(const Location *loc = tryFindLocationForMap(locations, visitedMap))
         {
             if(flashCurrent && visitedMap == wbs->currentMap && (interTime & 16))
             {
@@ -337,7 +337,7 @@ static void drawLocationMarks(bool drawYouAreHere = false, bool flashCurrent = t
 
     if(drawYouAreHere)
     {
-        if(Location const *loc = tryFindLocationForMap(locations, wbs->nextMap))
+        if(const Location *loc = tryFindLocationForMap(locations, wbs->nextMap))
         {
             GL_DrawPatch(pGoingThere, loc->origin);
         }
@@ -420,7 +420,7 @@ static void drawDeathmatchStats()
 #define TRACKING                (1)
 
     static int sounds;
-    static char const *killersText = "KILLERS";
+    static const char *killersText = "KILLERS";
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -1020,7 +1020,7 @@ void IN_Drawer()
     GL_EndBorderedProjection(&bp);
 }
 
-static void initVariables(wbstartstruct_t const &wbstartstruct)
+static void initVariables(const wbstartstruct_t &wbstartstruct)
 {
     wbs = &wbstartstruct;
 
@@ -1067,7 +1067,7 @@ static void initVariables(wbstartstruct_t const &wbstartstruct)
     haveLocationMap = locationsForEpisode(gfw_Session()->episodeId()) != nullptr;
 }
 
-void IN_Begin(wbstartstruct_t const &wbstartstruct)
+void IN_Begin(const wbstartstruct_t &wbstartstruct)
 {
     initVariables(wbstartstruct);
     loadData();

@@ -40,9 +40,9 @@ public:
     void glInit() override;
     void glDeinit() override;
 
-    Vec2ui logicalRootSize(Vec2ui const &physicalWindowSize) const override;
-    Vec2f  windowToLogicalCoords(Vec2i const &pos) const override;
-    Vec2f  logicalToWindowCoords(Vec2i const &pos) const override;
+    Vec2ui logicalRootSize(const Vec2ui &physicalWindowSize) const override;
+    Vec2f  windowToLogicalCoords(const Vec2i &pos) const override;
+    Vec2f  logicalToWindowCoords(const Vec2i &pos) const override;
 
     void drawTransformed() override;
 

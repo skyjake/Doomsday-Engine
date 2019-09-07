@@ -55,7 +55,7 @@ static void backupData()
     }
 }
 
-static void readLump(LumpIndex const &lumpIndex, lumpnum_t lumpNum)
+static void readLump(const LumpIndex &lumpIndex, lumpnum_t lumpNum)
 {
     if (0 > lumpNum || lumpNum >= lumpIndex.size())
     {
@@ -86,7 +86,7 @@ static void readLump(LumpIndex const &lumpIndex, lumpnum_t lumpNum)
 }
 
 #if 0
-static void readFile(String const &sourcePath, bool sourceIsCustom = true)
+static void readFile(const String &sourcePath, bool sourceIsCustom = true)
 {
     LOG_AS("DehRead::readFile");
 
@@ -105,11 +105,11 @@ static void readFile(String const &sourcePath, bool sourceIsCustom = true)
 }
 #endif
 
-static void readFile2(String const &path, bool sourceIsCustom = true)
+static void readFile2(const String &path, bool sourceIsCustom = true)
 {
     LOG_AS("DehRead::readFile2");
 
-    if (File const *file = App::rootFolder().tryLocate<File const>(path))
+    if (const File *file = App::rootFolder().tryLocate<File const>(path))
     {
         LOG_RES_MSG("Applying %s%s")
                 << file->description()
@@ -125,7 +125,7 @@ static void readFile2(String const &path, bool sourceIsCustom = true)
     }
 }
 
-static void readPatchLumps(LumpIndex const &lumpIndex)
+static void readPatchLumps(const LumpIndex &lumpIndex)
 {
     bool const readAll = DE_APP->commandLine().check("-alldehs");
     for (int i = lumpIndex.size() - 1; i >= 0; i--)
@@ -141,12 +141,12 @@ static void readPatchLumps(LumpIndex const &lumpIndex)
 static void readPatchFiles()
 {
     // Patches may be loaded as data bundles.
-    for (DataBundle const *bundle : DataBundle::loadedBundles())
+    for (const DataBundle *bundle : DataBundle::loadedBundles())
     {
         if (bundle->format() == DataBundle::Dehacked)
         {
             String const bundleRoot = bundle->rootPath();
-            for (Value const *path : bundle->packageMetadata().geta("dataFiles").elements())
+            for (const Value *path : bundle->packageMetadata().geta("dataFiles").elements())
             {
                 readFile2(bundleRoot / path->asText());
             }
@@ -166,7 +166,7 @@ static int DefsHook(int /*hook_type*/, int /*parm*/, void *data)
     backupData();
 
     // Check for DEHACKED lumps.
-    readPatchLumps(*reinterpret_cast<res::LumpIndex const *>(F_LumpIndex()));
+    readPatchLumps(*reinterpret_cast<const res::LumpIndex *>(F_LumpIndex()));
 
     // Process all patch files specified with -deh options on the command line.
     readPatchFiles();
@@ -187,7 +187,7 @@ static void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-static char const *deng_LibraryType()
+static const char *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }
@@ -204,7 +204,7 @@ static char const *deng_LibraryType()
 //    DE_GET_API(DE_API_FILE_SYSTEM, F);
 //)
 
-DE_ENTRYPOINT void *extension_importdeh_symbol(char const *name)
+DE_ENTRYPOINT void *extension_importdeh_symbol(const char *name)
 {
     DE_SYMBOL_PTR(name, deng_LibraryType)
     DE_SYMBOL_PTR(name, DP_Initialize);

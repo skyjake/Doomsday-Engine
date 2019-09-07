@@ -80,20 +80,20 @@ ServerInfo::ServerInfo()
     d->info->addArray(VAR_PLAYERS);
 }
 
-ServerInfo::ServerInfo(ServerInfo const &other)
+ServerInfo::ServerInfo(const ServerInfo &other)
     : d(new Impl(this))
 {
     d->info = other.d->info;
 }
 
-ServerInfo::ServerInfo(Record const &rec)
+ServerInfo::ServerInfo(const Record &rec)
     : d(new Impl(this))
 {
     d->info.reset(new Record(rec));
     d->checkValid();
 }
 
-ServerInfo &ServerInfo::operator=(ServerInfo const &other)
+ServerInfo &ServerInfo::operator=(const ServerInfo &other)
 {
     d->info = other.d->info;
     return *this;
@@ -137,7 +137,7 @@ String ServerInfo::domainName() const
     return d->info->gets(VAR_DOMAIN, "");
 }
 
-ServerInfo &ServerInfo::setAddress(Address const &address)
+ServerInfo &ServerInfo::setAddress(const Address &address)
 {
     d->detach();
     d->info->set(VAR_HOST, address.hostName());
@@ -161,7 +161,7 @@ String ServerInfo::name() const
     return d->info->gets(VAR_NAME, "");
 }
 
-ServerInfo &ServerInfo::setName(String const &name)
+ServerInfo &ServerInfo::setName(const String &name)
 {
     d->detach();
     d->info->set(VAR_NAME, name);
@@ -185,7 +185,7 @@ String ServerInfo::pluginDescription() const
     return d->info->gets(VAR_PLUGIN, "");
 }
 
-ServerInfo &ServerInfo::setPluginDescription(String const &pluginDescription)
+ServerInfo &ServerInfo::setPluginDescription(const String &pluginDescription)
 {
     d->detach();
     d->info->set(VAR_PLUGIN, pluginDescription);
@@ -201,7 +201,7 @@ ServerInfo &ServerInfo::setPackages(StringList packages)
 {
     d->detach();
     ArrayValue &pkgs = d->info->addArray(VAR_PACKAGES).value<ArrayValue>();
-    for (String const &p : packages)
+    for (const String &p : packages)
     {
         pkgs << TextValue(p);
     }
@@ -213,7 +213,7 @@ String ServerInfo::gameId() const
     return d->info->gets(VAR_GAME_ID, "");
 }
 
-ServerInfo &ServerInfo::setGameId(String const &gameId)
+ServerInfo &ServerInfo::setGameId(const String &gameId)
 {
     d->detach();
     d->info->set(VAR_GAME_ID, gameId);
@@ -225,7 +225,7 @@ String ServerInfo::gameConfig() const
     return d->info->gets(VAR_GAME_CONFIG, "");
 }
 
-ServerInfo &ServerInfo::setGameConfig(String const &gameConfig)
+ServerInfo &ServerInfo::setGameConfig(const String &gameConfig)
 {
     d->detach();
     d->info->set(VAR_GAME_CONFIG, gameConfig);
@@ -237,7 +237,7 @@ String ServerInfo::map() const
     return d->info->gets(VAR_MAP, "");
 }
 
-ServerInfo &ServerInfo::setMap(String const &map)
+ServerInfo &ServerInfo::setMap(const String &map)
 {
     d->detach();
     d->info->set(VAR_MAP, map);
@@ -254,7 +254,7 @@ int ServerInfo::playerCount() const
     return d->info->geti(VAR_PLAYER_COUNT, 0);
 }
 
-ServerInfo &ServerInfo::addPlayer(String const &playerName)
+ServerInfo &ServerInfo::addPlayer(const String &playerName)
 {
     d->detach();
     ArrayValue &players = d->info->member(VAR_PLAYERS).value<ArrayValue>();
@@ -263,7 +263,7 @@ ServerInfo &ServerInfo::addPlayer(String const &playerName)
     return *this;
 }
 
-ServerInfo &ServerInfo::removePlayer(String const &playerName)
+ServerInfo &ServerInfo::removePlayer(const String &playerName)
 {
     d->detach();
     ArrayValue &players = d->info->member(VAR_PLAYERS).value<ArrayValue>();
@@ -341,14 +341,14 @@ Record ServerInfo::strippedForBroadcast() const
     return stripped;
 }
 
-ServerInfo &ServerInfo::setDomainName(String const &domain)
+ServerInfo &ServerInfo::setDomainName(const String &domain)
 {
     d->detach();
     d->info->set(VAR_DOMAIN, domain);
     return *this;
 }
 
-ServerInfo &ServerInfo::setFlags(Flags const &flags)
+ServerInfo &ServerInfo::setFlags(const Flags &flags)
 {
     d->detach();
     d->info->set(VAR_FLAGS, duint32(flags));

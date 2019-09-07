@@ -70,12 +70,12 @@ Record &Episode::hub(int index)
     return *def().geta("hub")[index].as<RecordValue>().record();
 }
 
-Record const &Episode::hub(int index) const
+const Record &Episode::hub(int index) const
 {
     return *geta("hub")[index].as<RecordValue>().record();
 }
 
-Record *Episode::tryFindHubByMapId(String const &mapId)
+Record *Episode::tryFindHubByMapId(const String &mapId)
 {
     res::Uri const mapUri(mapId, RC_NULL);
     if (!mapUri.path().isEmpty())
@@ -96,7 +96,7 @@ Record *Episode::tryFindHubByMapId(String const &mapId)
     return nullptr; // Not found.
 }
 
-Record *Episode::tryFindMapGraphNode(String const &mapId)
+Record *Episode::tryFindMapGraphNode(const String &mapId)
 {
     res::Uri const mapUri(mapId, RC_NULL);
     if (!mapUri.path().isEmpty())
@@ -104,7 +104,7 @@ Record *Episode::tryFindMapGraphNode(String const &mapId)
         // First, try the hub maps.
         for (int i = 0; i < hubCount(); ++i)
         {
-            Record const &hubRec = hub(i);
+            const Record &hubRec = hub(i);
             for (Value *mapIt : hubRec.geta("map").elements())
             {
                 Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
@@ -134,7 +134,7 @@ de::Record *Episode::tryFindMapGraphNodeByWarpNumber(int warpNumber)
         // First, try the hub maps.
         for (int i = 0; i < hubCount(); ++i)
         {
-            Record const &hubRec = hub(i);
+            const Record &hubRec = hub(i);
             for (Value *mapIt : hubRec.geta("map").elements())
             {
                 Record &mgNodeDef = mapIt->as<RecordValue>().dereference();

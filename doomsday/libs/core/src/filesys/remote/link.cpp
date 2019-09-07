@@ -87,7 +87,7 @@ DE_PIMPL(Link), public AsyncScope
                 deferredQueries.append(query);
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_NET_ERROR("Error sending file repository query: %s")
                     << er.asText();
@@ -96,7 +96,7 @@ DE_PIMPL(Link), public AsyncScope
 
     void sendDeferredQueries()
     {
-        for (Query const &query : deferredQueries)
+        for (const Query &query : deferredQueries)
         {
             if (query.isValid())
             {
@@ -117,7 +117,7 @@ DE_PIMPL(Link), public AsyncScope
     }
 };
 
-Link::Link(String const &address)
+Link::Link(const String &address)
     : d(new Impl(this))
 {
     d->address = address;
@@ -137,7 +137,7 @@ Link::~Link()
     }
 }
 
-void Link::setLocalRoot(String const &rootPath)
+void Link::setLocalRoot(const String &rootPath)
 {
     d->localRootPath = rootPath;
     // Create the folder right away.
@@ -237,20 +237,20 @@ QueryId Link::sendQuery(Query query)
         }
         return query.id;
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_NET_ERROR("Error sending file repository query: %s") << er.asText();
         return 0;
     }
 }
 
-File *Link::populateRemotePath(String const &, RepositoryPath const &path) const
+File *Link::populateRemotePath(const String &, const RepositoryPath &path) const
 {
     // By default we assume the remote files are all populated while connecting.
     return FS::tryLocate<File>(path.localPath);
 }
 
-void Link::metadataReceived(QueryId id, DictionaryValue const &metadata)
+void Link::metadataReceived(QueryId id, const DictionaryValue &metadata)
 {
     if (auto *query = findQuery(id))
     {

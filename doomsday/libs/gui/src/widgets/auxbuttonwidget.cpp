@@ -34,7 +34,7 @@ DE_GUI_PIMPL(AuxButtonWidget)
         aux->setFont("small");
         aux->setTextColor("text");
         aux->setSizePolicy(ui::Expand, ui::Fixed);
-        Rule const &unit = rule(RuleBank::UNIT);
+        const Rule &unit = rule(RuleBank::UNIT);
         aux->rule()
                 .setInput(Rule::Right,  self().rule().right()  - unit)
                 .setInput(Rule::Top,    self().rule().top()    + unit)
@@ -46,12 +46,12 @@ DE_GUI_PIMPL(AuxButtonWidget)
         self().margins().setRight(aux->rule().width() + rule("gap"));
     }
 
-    void setAuxBorderColorf(Vec4f const &colorf)
+    void setAuxBorderColorf(const Vec4f &colorf)
     {
         aux->set(Background(Background::Rounded, colorf, 6));
     }
 
-    void setAuxBorderColorf(Vec4f const &colorf, Vec4f const &bgColor)
+    void setAuxBorderColorf(const Vec4f &colorf, const Vec4f &bgColor)
     {
         aux->set(Background(bgColor, Background::Rounded, colorf, 6));
     }
@@ -133,7 +133,7 @@ DE_GUI_PIMPL(AuxButtonWidget)
     }
 };
 
-AuxButtonWidget::AuxButtonWidget(String const &name)
+AuxButtonWidget::AuxButtonWidget(const String &name)
     : ButtonWidget(name), d(new Impl(this))
 {
     useNormalStyle();

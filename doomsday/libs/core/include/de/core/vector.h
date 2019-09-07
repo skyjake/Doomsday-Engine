@@ -47,15 +47,15 @@ namespace de {
 
 // Function for comparing numbers for equality in the Vector templates.
 template <typename T>
-inline bool numberEqual(T const &a, T const &b) {
+inline bool numberEqual(const T &a, const T &b) {
     return a == b;
 }
 template <>
-inline bool numberEqual(dfloat const &a, dfloat const &b) {
+inline bool numberEqual(const dfloat &a, const dfloat &b) {
     return fequal(a, b);
 }
 template <>
-inline bool numberEqual(ddouble const &a, ddouble const &b) {
+inline bool numberEqual(const ddouble &a, const ddouble &b) {
     return fequal(a, b);
 }
 
@@ -69,7 +69,7 @@ inline bool numberEqual(ddouble const &a, ddouble const &b) {
  * @return Vector.
  */
 template <typename VecType>
-VecType vectorFromValue(Value const &value) {
+VecType vectorFromValue(const Value &value) {
     VecType converted;
     for (int i = 0; i < converted.size(); ++i) {
         converted[i] = typename VecType::value_type(value.element(i).asNumber());
@@ -110,8 +110,8 @@ public:
     constexpr Vector2(Type xy = Type(0)) : x(xy), y(xy) {}
     constexpr Vector2(Type a, Type b) : x(a), y(b) {}
     explicit Vector2(const Type *ab) : x(ab[0]), y(ab[1]) {}
-    Vector2(Value const &value) { *this = vectorFromValue<Vector2<Type>>(value); }
-    Vector2(Vector2 const &other) = default;
+    Vector2(const Value &value) { *this = vectorFromValue<Vector2<Type>>(value); }
+    Vector2(const Vector2 &other) = default;
 
     /// Implicit conversion operator to a float vector.
     operator Vector2<dfloat> () const {
@@ -136,7 +136,7 @@ public:
     ByteRefArray data() {
         return ByteRefArray(&x, size() * sizeof(value_type));
     }
-    value_type const *constPtr() const {
+    const value_type *constPtr() const {
         return &x;
     }
     Type &operator [] (int index) {
@@ -147,13 +147,13 @@ public:
         }
         throw Error("Vector2::operator []", "Illegal index " + String::asText(index));
     }
-    Type const &operator [] (int index) const {
+    const Type &operator [] (int index) const {
         return const_cast<Vector2<Type> &>(*this)[index];
     }
-    Vector2 operator + (Vector2 const &other) const {
+    Vector2 operator + (const Vector2 &other) const {
         return Vector2(x + other.x, y + other.y);
     }
-    Vector2 operator - (Vector2 const &other) const {
+    Vector2 operator - (const Vector2 &other) const {
         return Vector2(x - other.x, y - other.y);
     }
     Vector2 operator - () const {
@@ -168,21 +168,21 @@ public:
     Vector2 operator * (double scalar) const {
         return Vector2(Type(x * scalar), Type(y * scalar));
     }
-    Vector2 operator * (Vector2 const &other) const {
+    Vector2 operator * (const Vector2 &other) const {
         return Vector2(x * other.x, y * other.y);
     }
     Vector2 operator / (ddouble scalar) const {
         return *this * (1.0 / scalar);
     }
-    Vector2 operator / (Vector2 const &other) const {
+    Vector2 operator / (const Vector2 &other) const {
         return Vector2(x / other.x, y / other.y);
     }
-    Vector2 &operator += (Vector2 const &other) {
+    Vector2 &operator += (const Vector2 &other) {
         x += other.x;
         y += other.y;
         return *this;
     }
-    Vector2 &operator -= (Vector2 const &other) {
+    Vector2 &operator -= (const Vector2 &other) {
         x -= other.x;
         y -= other.y;
         return *this;
@@ -192,7 +192,7 @@ public:
         y *= scalar;
         return *this;
     }
-    inline Vector2 &operator *= (Vector2 const &other) {
+    inline Vector2 &operator *= (const Vector2 &other) {
         x *= other.x;
         y *= other.y;
         return *this;
@@ -200,24 +200,24 @@ public:
     inline Vector2 &operator /= (ddouble scalar) {
         return (*this) *= 1.0 / scalar;
     }
-    inline bool operator == (Vector2 const &other) const {
+    inline bool operator == (const Vector2 &other) const {
         return numberEqual(x, other.x) && numberEqual(y, other.y);
     }
-    inline bool operator != (Vector2 const &other) const {
+    inline bool operator != (const Vector2 &other) const {
         return !(*this == other);
     }
-    bool operator > (Vector2 const &other) const {
+    bool operator > (const Vector2 &other) const {
         if (x == other.x) return y > other.y;
         return x > other.x && y > other.y;
     }
-    bool operator < (Vector2 const &other) const {
+    bool operator < (const Vector2 &other) const {
         if (x == other.x) return y < other.y;
         return x < other.x && y < other.y;
     }
-    bool operator >= (Vector2 const &other) const {
+    bool operator >= (const Vector2 &other) const {
         return *this == other || *this > other;
     }
-    bool operator <= (Vector2 const &other) const {
+    bool operator <= (const Vector2 &other) const {
         return *this == other || *this < other;
     }
     inline ddouble length() const {
@@ -244,16 +244,16 @@ public:
     Vector2 abs() const {
         return Vector2(de::abs(x), de::abs(y));
     }
-    ddouble dot(Vector2 const &other) const {
+    ddouble dot(const Vector2 &other) const {
         return x * other.x + y * other.y;
     }
-    ddouble cross(Vector2 const &other) const {
+    ddouble cross(const Vector2 &other) const {
         return x * other.y - y * other.x;
     }
-    Vector2 min(Vector2 const &other) const {
+    Vector2 min(const Vector2 &other) const {
         return Vector2(de::min(x, other.x), de::min(y, other.y));
     }
-    Vector2 max(Vector2 const &other) const {
+    Vector2 max(const Vector2 &other) const {
         return Vector2(de::max(x, other.x), de::max(y, other.y));
     }
     Type min() const {
@@ -291,7 +291,7 @@ inline Writer &operator << (Writer &to, Vector2<Type> const &vec2) {
 }
 
 template <typename Type>
-inline void operator << (Writer const &to, Vector2<Type> const &vec2) {
+inline void operator << (const Writer &to, Vector2<Type> const &vec2) {
     Writer w(to);
     w << vec2.x << vec2.y;
 }
@@ -303,7 +303,7 @@ inline Reader &operator >> (Reader &from, Vector2<Type> &vec2) {
 }
 
 template <typename Type>
-inline void operator >> (Reader const &from, Vector2<Type> &vec2) {
+inline void operator >> (const Reader &from, Vector2<Type> &vec2) {
     Reader r(from);
     r >> vec2.x >> vec2.y;
 }
@@ -365,13 +365,13 @@ public:
         }
         throw Error("Vector3::operator []", "Illegal index " + String::asText(index));
     }
-    Type const &operator [] (int index) const {
+    const Type &operator [] (int index) const {
         return const_cast<Vector3<Type> &>(*this)[index];
     }
-    Vector3 operator + (Vector3 const &other) const {
+    Vector3 operator + (const Vector3 &other) const {
         return Vector3(Vector2<Type>::x + other.x, Vector2<Type>::y + other.y, z + other.z);
     }
-    Vector3 operator - (Vector3 const &other) const {
+    Vector3 operator - (const Vector3 &other) const {
         return Vector3(Vector2<Type>::x - other.x, Vector2<Type>::y - other.y, z - other.z);
     }
     Vector3 operator - () const {
@@ -381,22 +381,22 @@ public:
         return Vector3(Type(Vector2<Type>::x * scalar), Type(Vector2<Type>::y * scalar),
             Type(z * scalar));
     }
-    Vector3 operator * (Vector3 const &other) const {
+    Vector3 operator * (const Vector3 &other) const {
         return Vector3(Vector2<Type>::x * other.x, Vector2<Type>::y * other.y, z * other.z);
     }
     Vector3 operator / (ddouble scalar) const {
         return *this * (1.0 / scalar);
     }
-    Vector3 operator / (Vector3 const &other) const {
+    Vector3 operator / (const Vector3 &other) const {
         return Vector3(Vector2<Type>::x / other.x, Vector2<Type>::y / other.y, z / other.z);
     }
-    Vector3 &operator += (Vector3 const &other) {
+    Vector3 &operator += (const Vector3 &other) {
         Vector2<Type>::x += other.x;
         Vector2<Type>::y += other.y;
         z += other.z;
         return *this;
     }
-    Vector3 &operator -= (Vector3 const &other) {
+    Vector3 &operator -= (const Vector3 &other) {
         Vector2<Type>::x -= other.x;
         Vector2<Type>::y -= other.y;
         z -= other.z;
@@ -407,7 +407,7 @@ public:
         z *= scalar;
         return *this;
     }
-    inline Vector3 &operator *= (Vector3 const &other) {
+    inline Vector3 &operator *= (const Vector3 &other) {
         Vector2<Type>::operator *= (other);
         z *= other.z;
         return *this;
@@ -415,24 +415,24 @@ public:
     inline Vector3 &operator /= (ddouble scalar) {
         return (*this) *= 1.0 / scalar;
     }
-    inline bool operator == (Vector3 const &other) const {
+    inline bool operator == (const Vector3 &other) const {
         return Vector2<Type>::operator == (other) && numberEqual(z, other.z);
     }
-    inline bool operator != (Vector3 const &other) const {
+    inline bool operator != (const Vector3 &other) const {
         return !(*this == other);
     }
-    bool operator > (Vector3 const &other) const {
+    bool operator > (const Vector3 &other) const {
         if (Vector2<Type>::operator == (other)) return z > other.z;
         return Vector2<Type>::operator > (other) && z > other.z;
     }
-    bool operator < (Vector3 const &other) const {
+    bool operator < (const Vector3 &other) const {
         if (Vector2<Type>::operator == (other)) return z < other.z;
         return Vector2<Type>::operator < (other) && z < other.z;
     }
-    bool operator >= (Vector3 const &other) const {
+    bool operator >= (const Vector3 &other) const {
         return *this == other || *this > other;
     }
-    bool operator <= (Vector3 const &other) const {
+    bool operator <= (const Vector3 &other) const {
         return *this == other || *this < other;
     }
     inline ddouble length() const {
@@ -459,19 +459,19 @@ public:
     Vector3 abs() const {
         return Vector3(de::abs(Vector2<Type>::x), de::abs(Vector2<Type>::y), de::abs(z));
     }
-    ddouble dot(Vector3 const &other) const {
+    ddouble dot(const Vector3 &other) const {
         return Vector2<Type>::x * other.x + Vector2<Type>::y * other.y + z * other.z;
     }
-    inline Vector3 cross(Vector3 const &other) const {
+    inline Vector3 cross(const Vector3 &other) const {
         return Vector3(Vector2<Type>::y * other.z - z * other.y,
                        z * other.x - Vector2<Type>::x * other.z,
                        Vector2<Type>::x * other.y - Vector2<Type>::y * other.x);
     }
-    Vector3 min(Vector3 const &other) const {
+    Vector3 min(const Vector3 &other) const {
         return Vector3(de::min(Vector2<Type>::x, other.x), de::min(Vector2<Type>::y, other.y),
             de::min(z, other.z));
     }
-    Vector3 max(Vector3 const &other) const {
+    Vector3 max(const Vector3 &other) const {
         return Vector3(de::max(Vector2<Type>::x, other.x), de::max(Vector2<Type>::y, other.y),
             de::max(z, other.z));
     }
@@ -514,7 +514,7 @@ inline Writer &operator << (Writer &to, Vector3<Type> const &vec3) {
 }
 
 template <typename Type>
-inline void operator << (Writer const &to, Vector3<Type> const &vec3) {
+inline void operator << (const Writer &to, Vector3<Type> const &vec3) {
     Writer w(to);
     w << vec3.x << vec3.y << vec3.z;
 }
@@ -526,7 +526,7 @@ inline Reader &operator >> (Reader &from, Vector3<Type> &vec3) {
 }
 
 template <typename Type>
-inline void operator >> (Reader const &from, Vector3<Type> &vec3) {
+inline void operator >> (const Reader &from, Vector3<Type> &vec3) {
     Reader r(from);
     r >> vec3.x >> vec3.y >> vec3.z;
 }
@@ -560,9 +560,9 @@ public:
     constexpr Vector4(Vector2<Type> const &a, Type c = Type(0), Type d = Type(0)) : Vector3<Type>(a, c), w(d) {}
     constexpr Vector4(Vector2<Type> const &a, Vector2<Type> const &b) : Vector3<Type>(a, b.x), w(b.y) {}
     explicit Vector4(const Type *abcd) : Vector3<Type>(abcd), w(abcd[3]) {}
-    Vector4(Value const &value4) { *this = vectorFromValue<Vector4<Type>>(value4); }
-    Vector4(Value const &value3, Type d) { *this = Vector4<Type>(vectorFromValue<Vector3<Type>>(value3), d); }
-    Vector4(Vector4 const &other) = default;
+    Vector4(const Value &value4) { *this = vectorFromValue<Vector4<Type>>(value4); }
+    Vector4(const Value &value3, Type d) { *this = Vector4<Type>(vectorFromValue<Vector3<Type>>(value3), d); }
+    Vector4(const Vector4 &other) = default;
 
     /// Implicit conversion operator to a float vector.
     operator Vector4<dfloat> () const {
@@ -598,14 +598,14 @@ public:
         }
         throw Error("Vector4::operator []", "Illegal index " + String::asText(index));
     }
-    Type const &operator [] (int index) const {
+    const Type &operator [] (int index) const {
         return const_cast<Vector4<Type> &>(*this)[index];
     }
-    Vector4 operator + (Vector4 const &other) const {
+    Vector4 operator + (const Vector4 &other) const {
         return Vector4(Vector3<Type>::x + other.x, Vector3<Type>::y + other.y,
             Vector3<Type>::z + other.z, w + other.w);
     }
-    Vector4 operator - (Vector4 const &other) const {
+    Vector4 operator - (const Vector4 &other) const {
         return Vector4(Vector3<Type>::x - other.x, Vector3<Type>::y - other.y,
             Vector3<Type>::z - other.z, w - other.w);
     }
@@ -616,18 +616,18 @@ public:
         return Vector4(Type(Vector3<Type>::x * scalar), Type(Vector3<Type>::y * scalar),
             Type(Vector3<Type>::z * scalar), Type(w * scalar));
     }
-    Vector4 operator * (Vector4 const &other) const {
+    Vector4 operator * (const Vector4 &other) const {
         return Vector4(Vector3<Type>::x * other.x, Vector3<Type>::y * other.y,
             Vector3<Type>::z * other.z, w * other.w);
     }
-    Vector4 &operator += (Vector4 const &other) {
+    Vector4 &operator += (const Vector4 &other) {
         Vector3<Type>::x += other.x;
         Vector3<Type>::y += other.y;
         Vector3<Type>::z += other.z;
         w += other.w;
         return *this;
     }
-    Vector4 &operator -= (Vector4 const &other) {
+    Vector4 &operator -= (const Vector4 &other) {
         Vector3<Type>::x -= other.x;
         Vector3<Type>::y -= other.y;
         Vector3<Type>::z -= other.z;
@@ -639,7 +639,7 @@ public:
         w *= scalar;
         return *this;
     }
-    inline Vector4 &operator *= (Vector4 const &other) {
+    inline Vector4 &operator *= (const Vector4 &other) {
         Vector3<Type>::operator *= (other);
         w *= other.w;
         return *this;
@@ -650,24 +650,24 @@ public:
     inline Vector4 &operator /= (ddouble scalar) {
         return (*this) *= 1.0 / scalar;
     }
-    inline bool operator == (Vector4 const &other) const {
+    inline bool operator == (const Vector4 &other) const {
         return Vector3<Type>::operator == (other) && numberEqual(w, other.w);
     }
-    inline bool operator != (Vector4 const &other) const {
+    inline bool operator != (const Vector4 &other) const {
         return !(*this == other);
     }
-    bool operator > (Vector4 const &other) const {
+    bool operator > (const Vector4 &other) const {
         if (Vector3<Type>::operator == (other)) return w > other.w;
         return Vector3<Type>::operator > (other) && w > other.w;
     }
-    bool operator < (Vector4 const &other) const {
+    bool operator < (const Vector4 &other) const {
         if (Vector3<Type>::operator == (other)) return w < other.w;
         return Vector3<Type>::operator < (other) && w < other.w;
     }
-    bool operator >= (Vector4 const &other) const {
+    bool operator >= (const Vector4 &other) const {
         return *this == other || *this > other;
     }
-    bool operator <= (Vector4 const &other) const {
+    bool operator <= (const Vector4 &other) const {
         return *this == other || *this < other;
     }
     String asText() const {
@@ -678,15 +678,15 @@ public:
     Vector4 abs() const {
         return Vector4(de::abs(Vector3<Type>::x), de::abs(Vector3<Type>::y), de::abs(Vector3<Type>::z), de::abs(w));
     }
-    ddouble dot(Vector4 const &other) const {
+    ddouble dot(const Vector4 &other) const {
         return Vector3<Type>::x * other.x + Vector3<Type>::y * other.y
              + Vector3<Type>::z * other.z + w * other.w;
     }
-    Vector4 min(Vector4 const &other) const {
+    Vector4 min(const Vector4 &other) const {
         return Vector4(de::min(Vector3<Type>::x, other.x), de::min(Vector3<Type>::y, other.y),
             de::min(Vector3<Type>::z, other.z), de::min(w, other.w));
     }
-    Vector4 max(Vector4 const &other) const {
+    Vector4 max(const Vector4 &other) const {
         return Vector4(de::max(Vector3<Type>::x, other.x), de::max(Vector3<Type>::y, other.y),
             de::max(Vector3<Type>::z, other.z), de::max(w, other.w));
     }
@@ -742,7 +742,7 @@ public:
     Vector2<Type> zw() const   { return swizzle(*this, AxisZ, AxisW); }
     Vector3<Type> xyz() const  { return *this; }
     Vector4<Type> zyxw() const { return swizzle(*this, AxisZ, AxisY, AxisX, AxisW); }
-    Vector4<Type> replaced(int index, Type const &value) const {
+    Vector4<Type> replaced(int index, const Type &value) const {
         Vector4 v = *this;
         v[index] = value;
         return v;
@@ -785,24 +785,24 @@ Vector4<Type> ceil(const Vector4<Type> &vec4) {
 
 // Swizzling.
 template <typename Type>
-typename Type::value_type swizzledComponent(Type const &vec, SwizzleAxis axis) {
+typename Type::value_type swizzledComponent(const Type &vec, SwizzleAxis axis) {
     if (axis >= 0) return vec[axis];
     return -vec[-axis - 1];
 }
 
 template <typename Type>
-Vector2<typename Type::value_type> swizzle(Type const &vec, SwizzleAxis a, SwizzleAxis b) {
+Vector2<typename Type::value_type> swizzle(const Type &vec, SwizzleAxis a, SwizzleAxis b) {
     return Vector2<typename Type::value_type>(swizzledComponent(vec, a), swizzledComponent(vec, b));
 }
 
 template <typename Type>
-Vector3<typename Type::value_type> swizzle(Type const &vec, SwizzleAxis a, SwizzleAxis b, SwizzleAxis c) {
+Vector3<typename Type::value_type> swizzle(const Type &vec, SwizzleAxis a, SwizzleAxis b, SwizzleAxis c) {
     return Vector3<typename Type::value_type>(
         swizzledComponent(vec, a), swizzledComponent(vec, b), swizzledComponent(vec, c));
 }
 
 template <typename Type>
-Vector4<typename Type::value_type> swizzle(Type const &vec, SwizzleAxis a, SwizzleAxis b, SwizzleAxis c, SwizzleAxis d) {
+Vector4<typename Type::value_type> swizzle(const Type &vec, SwizzleAxis a, SwizzleAxis b, SwizzleAxis c, SwizzleAxis d) {
     return Vector4<typename Type::value_type>(swizzledComponent(vec, a),
                                               swizzledComponent(vec, b),
                                               swizzledComponent(vec, c),
@@ -817,7 +817,7 @@ inline Writer &operator << (Writer &to, Vector4<Type> const &vec4) {
 }
 
 template <typename Type>
-inline void operator << (Writer const &to, Vector4<Type> const &vec4) {
+inline void operator << (const Writer &to, Vector4<Type> const &vec4) {
     Writer w(to);
     w << vec4.x << vec4.y << vec4.z << vec4.w;
 }
@@ -829,7 +829,7 @@ inline Reader &operator >> (Reader &from, Vector4<Type> &vec4) {
 }
 
 template <typename Type>
-inline void operator >> (Reader const &from, Vector4<Type> &vec4) {
+inline void operator >> (const Reader &from, Vector4<Type> &vec4) {
     Reader r(from);
     r >> vec4.x >> vec4.y >> vec4.z >> vec4.w;
 }

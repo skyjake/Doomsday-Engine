@@ -66,7 +66,7 @@ String DataFolder::describe() const
     return desc;
 }
 
-IIStream const &DataFolder::operator >> (IByteArray &bytes) const
+const IIStream &DataFolder::operator >> (IByteArray &bytes) const
 {
     if (source())
     {

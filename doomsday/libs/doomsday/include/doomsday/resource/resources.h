@@ -63,7 +63,7 @@ public:
     Resources();
 
     // Systems observe the passage of time.
-    void timeChanged(de::Clock const &) override;
+    void timeChanged(const de::Clock &) override;
 
     /**
      * Release all allocations, returning to the initial state.
@@ -96,19 +96,19 @@ public:
     de::NativePath nativeSavePath() const;
 
     res::MapManifests &         mapManifests();
-    res::MapManifests const &   mapManifests() const;
+    const res::MapManifests &   mapManifests() const;
 
     res::ColorPalettes &        colorPalettes();
-    res::ColorPalettes const &  colorPalettes() const;
+    const res::ColorPalettes &  colorPalettes() const;
 
     res::Textures &         textures();
-    res::Textures const &   textures() const;
+    const res::Textures &   textures() const;
 
     res::AnimGroups &       animGroups();
-    res::AnimGroups const & animGroups() const;
+    const res::AnimGroups & animGroups() const;
 
     res::Sprites &          sprites();
-    res::Sprites const &    sprites() const;
+    const res::Sprites &    sprites() const;
 
     /**
      * Attempt to locate a music file referenced in the given @em Music @a definition.
@@ -120,10 +120,10 @@ public:
      *
      * @return  Absolute path to the music if found; otherwise a zero-length string.
      */
-    de::String tryFindMusicFile(de::Record const &musicDef);
+    de::String tryFindMusicFile(const de::Record &musicDef);
 
 public:
-    static de::String resolveSymbol(de::String const &symbol);
+    static de::String resolveSymbol(const de::String &symbol);
 
     static void consoleRegister();
 
@@ -134,9 +134,9 @@ private:
 namespace res
 {
     template <typename ManifestType>
-    inline bool pathBeginsWithComparator(ManifestType const &manifest, void *context)
+    inline bool pathBeginsWithComparator(const ManifestType &manifest, void *context)
     {
-        auto const *path = reinterpret_cast<de::Path *>(context);
+        const auto *path = reinterpret_cast<de::Path *>(context);
         /// @todo Use PathTree::Node::compare()
         return manifest.path().toString().beginsWith(path->toString(), de::CaseInsensitive);
     }

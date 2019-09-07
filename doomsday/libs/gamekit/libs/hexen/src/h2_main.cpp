@@ -53,7 +53,7 @@ float const defFontRGB3[] = {  .9f, .9f,  .9f };
 
 // The patches used in drawing the view border.
 // Percent-encoded.
-char const *borderGraphics[] = {
+const char *borderGraphics[] = {
     "Flats:F_022", // Background.
     "BORDT", // Top.
     "BORDR", // Right.

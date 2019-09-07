@@ -48,19 +48,19 @@ public:
     using InputState = Flags;
 
     DE_DEFINE_AUDIENCE(Deletion,  void userBeingDeleted  (User &))
-    DE_DEFINE_AUDIENCE(Warp,      void userWarped        (User const &))
-    DE_DEFINE_AUDIENCE(PainLevel, void userPainLevel     (User const &, float pain))
-    DE_DEFINE_AUDIENCE(Move,      void userMoved         (User const &, Vec3f const &pos))
-    DE_DEFINE_AUDIENCE(Turn,      void userTurned        (User const &, float yaw))
+    DE_DEFINE_AUDIENCE(Warp,      void userWarped        (const User &))
+    DE_DEFINE_AUDIENCE(PainLevel, void userPainLevel     (const User &, float pain))
+    DE_DEFINE_AUDIENCE(Move,      void userMoved         (const User &, const Vec3f &pos))
+    DE_DEFINE_AUDIENCE(Turn,      void userTurned        (const User &, float yaw))
 
 public:
     User();
 
-    void setWorld(World const *world);
-    void setPosition(Vec3f const &pos);
+    void setWorld(const World *world);
+    void setPosition(const Vec3f &pos);
     void setYaw(float yaw);
     void setPain(float pain);
-    void setInputState(InputState const &state);
+    void setInputState(const InputState &state);
     void turn(float yaw, float pitch);
     void turn(const Vec2f &angles) { turn(angles.x, angles.y); }
 

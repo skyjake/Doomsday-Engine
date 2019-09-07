@@ -47,7 +47,7 @@ public:
      *                           Domain names are allowed.
      * @param port  Port number.
      */
-    Address(char const *hostNameOrAddress, duint16 port = 0);
+    Address(const char *hostNameOrAddress, duint16 port = 0);
 
     Address(const iAddress *);
     Address(const Address &other);
@@ -94,7 +94,7 @@ public:
 public:
     static Address take(iAddress *);
 
-    static Address parse(String const &addressWithOptionalPort, duint16 defaultPort = 0);
+    static Address parse(const String &addressWithOptionalPort, duint16 defaultPort = 0);
 
     /**
      * Determines whether a host address refers to the local host.
@@ -112,7 +112,7 @@ private:
     DE_PRIVATE(d)
 };
 
-DE_PUBLIC std::ostream &operator << (std::ostream &os, Address const &address);
+DE_PUBLIC std::ostream &operator << (std::ostream &os, const Address &address);
 
 } // namespace de
 

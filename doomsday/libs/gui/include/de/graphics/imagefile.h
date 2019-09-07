@@ -73,10 +73,10 @@ public:
     Image image() const;
 
     // File overrides:
-    IIStream const &operator >> (IByteArray &bytes) const;
+    const IIStream &operator >> (IByteArray &bytes) const;
 
     // filesys::Node overrides:
-    Node const *tryGetChild(String const &name) const;
+    const Node *tryGetChild(const String &name) const;
 
 public:
     struct LIBGUI_PUBLIC Interpreter : public filesys::IInterpreter {

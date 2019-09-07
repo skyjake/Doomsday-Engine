@@ -38,7 +38,7 @@ static void KeysWidget_UpdateGeometry(guidata_keys_t *keys)
     keys->updateGeometry();
 }
 
-static void KeysWidget_Draw(guidata_keys_t *keys, Point2Raw const *offset)
+static void KeysWidget_Draw(guidata_keys_t *keys, const Point2Raw *offset)
 {
     DE_ASSERT(keys);
     keys->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -62,7 +62,7 @@ void guidata_keys_t::tick(timespan_t /*elapsed*/)
 {
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
-    player_t const *plr = &::players[player()];
+    const player_t *plr = &::players[player()];
     for(dint i = 0; i < NUM_KEY_TYPES; ++i)
     {
 #if __JHEXEN__
@@ -73,7 +73,7 @@ void guidata_keys_t::tick(timespan_t /*elapsed*/)
     }
 }
 
-void guidata_keys_t::draw(Vec2i const &offset) const
+void guidata_keys_t::draw(const Vec2i &offset) const
 {
 #if __JDOOM__
 

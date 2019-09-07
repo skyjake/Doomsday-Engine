@@ -34,12 +34,12 @@ DE_PIMPL(FilteredData)
 {
     typedef Hash<const Item *, Pos> PosMapping;
 
-    Data const &source;
-    List<Item const *> items; ///< Maps filtered items to source items.
+    const Data &source;
+    List<const Item *> items; ///< Maps filtered items to source items.
     PosMapping reverseMapping;
     FilterFunc isItemAccepted;
 
-    Impl(Public *i, Data const &source)
+    Impl(Public *i, const Data &source)
         : Base(i)
         , source(source)
     {
@@ -48,7 +48,7 @@ DE_PIMPL(FilteredData)
         source.audienceForOrderChange() += this;
     }
 
-    void dataItemAdded(Pos, Item const &item)
+    void dataItemAdded(Pos, const Item &item)
     {
         if (isItemAccepted && isItemAccepted(item))
         {
@@ -105,7 +105,7 @@ DE_PIMPL(FilteredData)
 
         for (Pos i = 0; i < source.size(); ++i)
         {
-            Item const *item = &source.at(i);
+            const Item *item = &source.at(i);
             if (filterFunc(*item))
             {
                 reverseMapping.insert(item, items.size());
@@ -121,7 +121,7 @@ DE_PIMPL(FilteredData)
     void remap()
     {
         PosMapping const oldMapping = reverseMapping;
-        applyFilter([&oldMapping] (Item const &item)
+        applyFilter([&oldMapping] (const Item &item)
         {
             // All items already mapped will be included in the filtered items.
             return oldMapping.contains(&item);
@@ -142,7 +142,7 @@ DE_PIMPL(FilteredData)
     }
 };
 
-FilteredData::FilteredData(Data const &source)
+FilteredData::FilteredData(const Data &source)
     : d(new Impl(this, source))
 {}
 
@@ -151,7 +151,7 @@ Data &FilteredData::clear()
     throw ImmutableError("FilteredData::clear", "Cannot clear an immutable data model");
 }
 
-void FilteredData::setFilter(std::function<bool (Item const &item)> isItemAccepted)
+void FilteredData::setFilter(std::function<bool (const Item &item)> isItemAccepted)
 {
     d->isItemAccepted = std::move(isItemAccepted);
     refilter();
@@ -207,13 +207,13 @@ Item &FilteredData::at(Pos pos)
     return *const_cast<Item *>(d->items.at(pos));
 }
 
-Item const &FilteredData::at(Pos pos) const
+const Item &FilteredData::at(Pos pos) const
 {
     DE_ASSERT(pos < size());
     return *d->items.at(pos);
 }
 
-Data::Pos FilteredData::find(Item const &item) const
+Data::Pos FilteredData::find(const Item &item) const
 {
     auto found = d->reverseMapping.find(&item);
     if (found != d->reverseMapping.end())
@@ -223,7 +223,7 @@ Data::Pos FilteredData::find(Item const &item) const
     return InvalidPos;
 }
 
-Data::Pos FilteredData::findLabel(String const &label) const
+Data::Pos FilteredData::findLabel(const String &label) const
 {
     for (Pos i = 0; i < Pos(d->items.size()); ++i)
     {
@@ -243,7 +243,7 @@ Data::Pos FilteredData::findData(const Value &data) const
 
 void FilteredData::sort(LessThanFunc lessThan)
 {
-    std::sort(d->items.begin(), d->items.end(), [&lessThan] (Item const *a, Item const *b) {
+    std::sort(d->items.begin(), d->items.end(), [&lessThan] (const Item *a, const Item *b) {
         return lessThan(*a, *b);
     });
     d->updateReverseMapping();
@@ -252,7 +252,7 @@ void FilteredData::sort(LessThanFunc lessThan)
 
 void FilteredData::stableSort(LessThanFunc lessThan)
 {
-    std::stable_sort(d->items.begin(), d->items.end(), [&lessThan] (Item const *a, Item const *b) {
+    std::stable_sort(d->items.begin(), d->items.end(), [&lessThan] (const Item *a, const Item *b) {
         return lessThan(*a, *b);
     });
     d->updateReverseMapping();

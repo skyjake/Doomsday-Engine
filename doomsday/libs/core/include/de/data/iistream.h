@@ -71,7 +71,7 @@ public:
      *
      * @return Reference to this IIStream object.
      */
-    virtual IIStream const &operator >> (IByteArray &bytes) const = 0;
+    virtual const IIStream &operator >> (IByteArray &bytes) const = 0;
 };
 
 } // namespace de

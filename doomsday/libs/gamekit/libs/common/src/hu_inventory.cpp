@@ -139,7 +139,7 @@ static void rebuildInventory(hud_inventory_t *inv)
     inv->flags &= ~HIF_IS_DIRTY;
 }
 
-static void inventoryIndexes(player_t const * /*plr*/, hud_inventory_t const *inv,
+static void inventoryIndexes(const player_t * /*plr*/, const hud_inventory_t *inv,
     uint maxVisSlots, int origCursor, uint *firstVisible, uint *cursorPos,
     uint *fromSlot, uint *toSlot)
 {
@@ -254,7 +254,7 @@ void Hu_InventoryDraw(int player, int x, int y, float textOpacity, float iconOpa
     if(player < 0 || player >= MAXPLAYERS) return;
     player_t *plr = &players[player];
 
-    hud_inventory_t const *inv = &hudInventories[player];
+    const hud_inventory_t *inv = &hudInventories[player];
     uint const maxVisSlots     = maxVisibleSlots();
 
     uint first, selected, startSlot, endSlot;
@@ -307,7 +307,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
 
         if(i >= startSlot && i < endSlot)
         {
-            invitem_t const *item = P_GetInvItem(inv->invSlots[idx]);
+            const invitem_t *item = P_GetInvItem(inv->invSlots[idx]);
             uint count            = P_InventoryCount(player, item->type);
             if(count)
             {
@@ -380,7 +380,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
     if(player < 0 || player >= MAXPLAYERS) return;
     player_t *plr = &players[player];
 
-    hud_inventory_t const *inv = &hudInventories[player];
+    const hud_inventory_t *inv = &hudInventories[player];
 
     uint first, cursor, startSlot, endSlot;
     inventoryIndexes(plr, inv, NUMVISINVSLOTS, inv->fixedCursorPos, &first, &cursor, &startSlot, &endSlot);
@@ -404,7 +404,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
     {
         if(i >= startSlot && i < endSlot)
         {
-            invitem_t const *item = P_GetInvItem(inv->invSlots[idx]);
+            const invitem_t *item = P_GetInvItem(inv->invSlots[idx]);
             uint const count      = P_InventoryCount(player, item->type);
             if(count)
             {

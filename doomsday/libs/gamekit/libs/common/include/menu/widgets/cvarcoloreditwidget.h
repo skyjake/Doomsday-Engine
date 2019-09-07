@@ -34,21 +34,21 @@ namespace menu {
 class CVarColorEditWidget : public ColorEditWidget
 {
 public:
-    explicit CVarColorEditWidget(char const *redCVarPath,  char const *greenCVarPath,
-                                 char const *blueCVarPath, char const *alphaCVarPath = 0,
-                                 de::Vec4f const &color = de::Vec4f(),
+    explicit CVarColorEditWidget(const char *redCVarPath,  const char *greenCVarPath,
+                                 const char *blueCVarPath, const char *alphaCVarPath = 0,
+                                 const de::Vec4f &color = de::Vec4f(),
                                  bool rgbaMode = false);
     virtual ~CVarColorEditWidget();
 
-    char const *cvarPath(int component) const;
+    const char *cvarPath(int component) const;
 
-    inline char const *redCVarPath()   const { return cvarPath(0); }
-    inline char const *greenCVarPath() const { return cvarPath(1); }
-    inline char const *blueCVarPath()  const { return cvarPath(2); }
-    inline char const *alphaCVarPath() const { return cvarPath(3); }
+    inline const char *redCVarPath()   const { return cvarPath(0); }
+    inline const char *greenCVarPath() const { return cvarPath(1); }
+    inline const char *blueCVarPath()  const { return cvarPath(2); }
+    inline const char *alphaCVarPath() const { return cvarPath(3); }
 
 private:
-    char const *_cvarPaths[4];
+    const char *_cvarPaths[4];
 };
 
 void CVarColorEditWidget_UpdateCVar(Widget &wi, Widget::Action action);

@@ -87,13 +87,13 @@ int StringArray_Size(const StringArray *ar)
     return ar->array.size();
 }
 
-void StringArray_Append(StringArray *ar, char const *str)
+void StringArray_Append(StringArray *ar, const char *str)
 {
     assert(ar);
     ar->array.push_back(new de::Str(str));
 }
 
-void StringArray_AppendArray(StringArray *ar, StringArray const *other)
+void StringArray_AppendArray(StringArray *ar, const StringArray *other)
 {
     assert(ar);
     assert(other);
@@ -104,12 +104,12 @@ void StringArray_AppendArray(StringArray *ar, StringArray const *other)
     }
 }
 
-void StringArray_Prepend(StringArray *ar, char const *str)
+void StringArray_Prepend(StringArray *ar, const char *str)
 {
     StringArray_Insert(ar, str, 0);
 }
 
-void StringArray_Insert(StringArray *ar, char const *str, int atIndex)
+void StringArray_Insert(StringArray *ar, const char *str, int atIndex)
 {
     assert(ar);
     ar->assertValidIndex(atIndex);
@@ -136,7 +136,7 @@ void StringArray_RemoveRange(StringArray *ar, int fromIndex, int count)
     }
 }
 
-int StringArray_IndexOf(const StringArray *ar, char const *str)
+int StringArray_IndexOf(const StringArray *ar, const char *str)
 {
     assert(ar);
     for (uint i = 0; i < ar->array.size(); ++i)
@@ -147,7 +147,7 @@ int StringArray_IndexOf(const StringArray *ar, char const *str)
     return -1;
 }
 
-char const *StringArray_At(const StringArray *ar, int index)
+const char *StringArray_At(const StringArray *ar, int index)
 {
     assert(ar);
     ar->assertValidIndex(index);
@@ -161,7 +161,7 @@ Str *StringArray_StringAt(StringArray *ar, int index)
     return *ar->array[index];
 }
 
-dd_bool StringArray_Contains(StringArray const *ar, char const *str)
+dd_bool StringArray_Contains(const StringArray *ar, const char *str)
 {
     return StringArray_IndexOf(ar, str) >= 0;
 }

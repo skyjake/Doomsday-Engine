@@ -31,9 +31,9 @@ class LIBDOOMSDAY_PUBLIC MapGraphNode : public Definition
 {
 public:
     MapGraphNode()                          : Definition() {}
-    MapGraphNode(MapGraphNode const &other) : Definition(other) {}
+    MapGraphNode(const MapGraphNode &other) : Definition(other) {}
     MapGraphNode(de::Record &d)             : Definition(d) {}
-    MapGraphNode(de::Record const &d)       : Definition(d) {}
+    MapGraphNode(const de::Record &d)       : Definition(d) {}
 
     void resetToDefaults();
 
@@ -41,7 +41,7 @@ public:
     int exitCount() const;
     bool hasExit(int index) const;
     de::Record &exit(int index);
-    de::Record const &exit(int index) const;
+    const de::Record &exit(int index) const;
 };
 
 } // namespace defn

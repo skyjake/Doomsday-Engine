@@ -266,7 +266,7 @@ void GLUniform::bindSamplerTexture(duint unit) const
     }
     else
     {
-        if (GLTexture const *tex = texture())
+        if (const GLTexture *tex = texture())
         {
             tex->glBindToUnit(unit);
         }
@@ -305,7 +305,7 @@ GLUniform &GLUniform::operator = (ddouble value)
     return *this = dfloat(value);
 }
 
-GLUniform &GLUniform::operator = (Vec2f const &vec)
+GLUniform &GLUniform::operator = (const Vec2f &vec)
 {
     DE_ASSERT(d->type == Vec2);
 
@@ -317,7 +317,7 @@ GLUniform &GLUniform::operator = (Vec2f const &vec)
     return *this;
 }
 
-GLUniform &GLUniform::operator = (Vec3f const &vec)
+GLUniform &GLUniform::operator = (const Vec3f &vec)
 {
     DE_ASSERT(d->type == Vec3);
 
@@ -329,7 +329,7 @@ GLUniform &GLUniform::operator = (Vec3f const &vec)
     return *this;
 }
 
-GLUniform &GLUniform::operator = (Vec4f const &vec)
+GLUniform &GLUniform::operator = (const Vec4f &vec)
 {
     DE_ASSERT(d->type == Vec4);
 
@@ -341,7 +341,7 @@ GLUniform &GLUniform::operator = (Vec4f const &vec)
     return *this;
 }
 
-GLUniform &GLUniform::operator = (Mat3f const &mat)
+GLUniform &GLUniform::operator = (const Mat3f &mat)
 {
     DE_ASSERT(d->type == Mat3);
 
@@ -351,7 +351,7 @@ GLUniform &GLUniform::operator = (Mat3f const &mat)
     return *this;
 }
 
-GLUniform &GLUniform::operator = (Mat4f const &mat)
+GLUniform &GLUniform::operator = (const Mat4f &mat)
 {
     DE_ASSERT(d->type == Mat4);
 
@@ -361,12 +361,12 @@ GLUniform &GLUniform::operator = (Mat4f const &mat)
     return *this;
 }
 
-GLUniform &GLUniform::operator = (GLTexture const &texture)
+GLUniform &GLUniform::operator = (const GLTexture &texture)
 {
     return *this = &texture;
 }
 
-GLUniform &GLUniform::operator = (GLTexture const *texture)
+GLUniform &GLUniform::operator = (const GLTexture *texture)
 {
     if (texture && texture->isReady())
     {
@@ -400,7 +400,7 @@ GLUniform &GLUniform::set(duint elementIndex, dfloat value)
     return *this;
 }
 
-GLUniform &GLUniform::set(duint elementIndex, Vec3f const &vec)
+GLUniform &GLUniform::set(duint elementIndex, const Vec3f &vec)
 {
     DE_ASSERT(d->type == Vec3Array);
     DE_ASSERT(elementIndex < d->elemCount);
@@ -414,7 +414,7 @@ GLUniform &GLUniform::set(duint elementIndex, Vec3f const &vec)
     return *this;
 }
 
-GLUniform &GLUniform::set(duint elementIndex, Vec4f const &vec)
+GLUniform &GLUniform::set(duint elementIndex, const Vec4f &vec)
 {
     DE_ASSERT(d->type == Vec4Array);
     DE_ASSERT(elementIndex < d->elemCount);
@@ -428,7 +428,7 @@ GLUniform &GLUniform::set(duint elementIndex, Vec4f const &vec)
     return *this;
 }
 
-GLUniform &GLUniform::set(duint elementIndex, Mat4f const &mat)
+GLUniform &GLUniform::set(duint elementIndex, const Mat4f &mat)
 {
     DE_ASSERT(d->type == Mat4Array);
     DE_ASSERT(elementIndex < d->elemCount);
@@ -451,7 +451,7 @@ GLUniform &GLUniform::set(const int *intArray, dsize count)
     return *this;
 }
 
-GLUniform &GLUniform::set(float const *floatArray, dsize count)
+GLUniform &GLUniform::set(const float *floatArray, dsize count)
 {
     DE_ASSERT(d->type == FloatArray);
     DE_ASSERT(count <= d->elemCount);
@@ -473,7 +473,7 @@ GLUniform &GLUniform::set(const Vec3f *vectorArray, dsize count)
     return *this;
 }
 
-GLUniform &GLUniform::set(Vec4f const *vectorArray, dsize count)
+GLUniform &GLUniform::set(const Vec4f *vectorArray, dsize count)
 {
     DE_ASSERT(d->type == Vec4Array);
     DE_ASSERT(count <= d->elemCount);
@@ -564,37 +564,37 @@ dfloat GLUniform::toFloat() const
     }
 }
 
-Vec2f const &GLUniform::toVec2f() const
+const Vec2f &GLUniform::toVec2f() const
 {
     DE_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
     return *d->value.vector;
 }
 
-Vec3f const &GLUniform::toVec3f() const
+const Vec3f &GLUniform::toVec3f() const
 {
     DE_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
     return *d->value.vector;
 }
 
-Vec4f const &GLUniform::toVec4f() const
+const Vec4f &GLUniform::toVec4f() const
 {
     DE_ASSERT(d->type == Vec2 || d->type == Vec3 || d->type == Vec4);
     return *d->value.vector;
 }
 
-Mat3f const &GLUniform::toMat3f() const
+const Mat3f &GLUniform::toMat3f() const
 {
     DE_ASSERT(d->type == Mat3);
     return *d->value.mat3;
 }
 
-Mat4f const &GLUniform::toMat4f() const
+const Mat4f &GLUniform::toMat4f() const
 {
     DE_ASSERT(d->type == Mat4);
     return *d->value.mat4;
 }
 
-GLTexture const *GLUniform::texture() const
+const GLTexture *GLUniform::texture() const
 {
     DE_ASSERT(isSampler());
     DE_ASSERT(d->type != SamplerBuffer); // GLTexture not used

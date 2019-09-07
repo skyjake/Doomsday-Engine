@@ -37,16 +37,16 @@ class LIBGUI_PUBLIC KdTreeAtlasAllocator : public Atlas::IAllocator
 public:
     KdTreeAtlasAllocator();
 
-    void setMetrics(Atlas::Size const &totalSize, int margin) override;
+    void setMetrics(const Atlas::Size &totalSize, int margin) override;
 
     void clear() override;
-    Id   allocate(Atlas::Size const &size, Rectanglei &rect, Id const &knownId) override;
-    void release(Id const &id) override;
+    Id   allocate(const Atlas::Size &size, Rectanglei &rect, const Id &knownId) override;
+    void release(const Id &id) override;
     bool optimize() override;
 
     int         count() const override;
     Atlas::Ids  ids() const override;
-    void        rect(Id const &id, Rectanglei &rect) const override;
+    void        rect(const Id &id, Rectanglei &rect) const override;
     Allocations allocs() const override;
 
 private:

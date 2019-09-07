@@ -45,8 +45,8 @@ public:
             String label;
             String ruleSemantic; // for determining if the option is set
 
-            Value(String const &value = String(), String const &label = String(),
-                  String const &ruleSemantic = String())
+            Value(const String &value = String(), const String &label = String(),
+                  const String &ruleSemantic = String())
                 : value(value)
                 , label(label)
                 , ruleSemantic(ruleSemantic)
@@ -70,9 +70,9 @@ public:
      */
     static de::List<Game> allGames();
 
-    static String titleForGame(String const &gameId);
+    static String titleForGame(const String &gameId);
 
-    static de::List<GameOption> gameOptions(String const &gameId);
+    static de::List<GameOption> gameOptions(const String &gameId);
 
     static de::NativePath defaultServerRuntimeFolder();
 };

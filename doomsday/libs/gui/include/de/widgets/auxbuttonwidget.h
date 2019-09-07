@@ -31,7 +31,7 @@ namespace de {
 class LIBGUI_PUBLIC AuxButtonWidget : public ButtonWidget
 {
 public:
-    AuxButtonWidget(String const &name = String());
+    AuxButtonWidget(const String &name = String());
 
     ButtonWidget &auxiliary();
 

@@ -67,7 +67,7 @@ typedef void  (*Reader_Callback_ReadData) (Reader1 *, char *data, int len);
  * @param buffer  Buffer to use for reading.
  * @param len     Length of the buffer.
  */
-DE_PUBLIC Reader1 *Reader_NewWithBuffer(byte const *buffer, size_t len);
+DE_PUBLIC Reader1 *Reader_NewWithBuffer(const byte *buffer, size_t len);
 
 /**
  * Constructs a new reader that has no memory buffer of its own. Instead, all the
@@ -87,18 +87,18 @@ DE_PUBLIC void Reader_Delete(Reader1 *reader);
 /**
  * Returns the current position of the reader.
  */
-DE_PUBLIC size_t Reader_Pos(Reader1 const *reader);
+DE_PUBLIC size_t Reader_Pos(const Reader1 *reader);
 
 /**
  * Returns the size of the reading buffer.
  */
-DE_PUBLIC size_t Reader_Size(Reader1 const *reader);
+DE_PUBLIC size_t Reader_Size(const Reader1 *reader);
 
 /**
  * Determines whether the reader is in the end of buffer, i.e., there is nothing
  * more to read.
  */
-DE_PUBLIC dd_bool Reader_AtEnd(Reader1 const *reader);
+DE_PUBLIC dd_bool Reader_AtEnd(const Reader1 *reader);
 
 /**
  * Sets the position of the reading cursor in the buffer.

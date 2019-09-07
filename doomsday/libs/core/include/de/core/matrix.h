@@ -32,12 +32,12 @@
 namespace de {
 
 // Utilities.
-DE_PUBLIC dfloat  Matrix3_Determinant(dfloat  const *values9);
-DE_PUBLIC ddouble Matrix3_Determinant(ddouble const *values9);
-DE_PUBLIC bool    Matrix3_Inverse(dfloat  *out9,  dfloat const  *in9);
-DE_PUBLIC bool    Matrix3_Inverse(ddouble *out9,  ddouble const *in9);
-DE_PUBLIC bool    Matrix4_Inverse(dfloat  *out16, dfloat const  *in16);
-DE_PUBLIC bool    Matrix4_Inverse(ddouble *out16, ddouble const *in16);
+DE_PUBLIC dfloat  Matrix3_Determinant(const dfloat *values9);
+DE_PUBLIC ddouble Matrix3_Determinant(const ddouble *values9);
+DE_PUBLIC bool    Matrix3_Inverse(dfloat  *out9,  const dfloat *in9);
+DE_PUBLIC bool    Matrix3_Inverse(ddouble *out9,  const ddouble *in9);
+DE_PUBLIC bool    Matrix4_Inverse(dfloat  *out16, const dfloat *in16);
+DE_PUBLIC bool    Matrix4_Inverse(ddouble *out16, const ddouble *in16);
 
 /**
  * 3x3 matrix. @ingroup math
@@ -70,10 +70,10 @@ public:
             break;
         }
     }
-    Matrix3(Type const *values9) {
-        data().set(0, reinterpret_cast<IByteArray::Byte const *>(values9), sizeof(_values));
+    Matrix3(const Type *values9) {
+        data().set(0, reinterpret_cast<const IByteArray::Byte *>(values9), sizeof(_values));
     }
-    Matrix3(ByteRefArray const &otherData) {
+    Matrix3(const ByteRefArray &otherData) {
         DE_ASSERT(otherData.size() == sizeof(_values));
         otherData.get(0, _values, sizeof(_values));
     }
@@ -109,7 +109,7 @@ public:
     ByteRefArray data() {
         return ByteRefArray(_values, sizeof(_values));
     }
-    Type const *values() const {
+    const Type *values() const {
         return _values;
     }
     Type *values() {
@@ -117,7 +117,7 @@ public:
     }
 
     // Math operations.
-    Matrix3 operator * (Matrix3 const &right) const {
+    Matrix3 operator * (const Matrix3 &right) const {
         Matrix3 result(Zero);
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j)
@@ -125,14 +125,14 @@ public:
                     result.at(i, j) += at(i, k) * right.at(k, j);
         return result;
     }
-    Vec3 operator * (Vec3 const &vector) const {
+    Vec3 operator * (const Vec3 &vector) const {
         Vec3 result;
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j)
                 result[i] += at(i, j) * vector[j];
         return result;
     }
-    Vec4 operator * (Vec4 const &vector) const {
+    Vec4 operator * (const Vec4 &vector) const {
         return Vec4::fromEuclidean(*this * vector.toEuclidean());
     }
     Matrix3 inverse() const {
@@ -172,7 +172,7 @@ inline Writer &operator << (Writer &to, Matrix3<Type> const &mat3) {
 }
 
 template <typename Type>
-inline void operator << (Writer const &to, Matrix3<Type> const &mat3) {
+inline void operator << (const Writer &to, Matrix3<Type> const &mat3) {
     Writer w(to);
     for (int i = 0; i < 9; ++i) w << mat3[i];
 }
@@ -184,7 +184,7 @@ inline Reader &operator >> (Reader &from, Matrix3<Type> &mat3) {
 }
 
 template <typename Type>
-inline void operator >> (Reader const &from, Matrix3<Type> &mat3) {
+inline void operator >> (const Reader &from, Matrix3<Type> &mat3) {
     Reader r(from);
     for (int i = 0; i < 9; ++i) r >> mat3[i];
 }
@@ -226,10 +226,10 @@ public:
             break;
         }
     }
-    Matrix4(Type const *values16) {
-        data().set(0, reinterpret_cast<IByteArray::Byte const *>(values16), sizeof(_values));
+    Matrix4(const Type *values16) {
+        data().set(0, reinterpret_cast<const IByteArray::Byte *>(values16), sizeof(_values));
     }
-    Matrix4(ByteRefArray const &otherData) {
+    Matrix4(const ByteRefArray &otherData) {
         DE_ASSERT(otherData.size() == sizeof(_values));
         otherData.get(0, _values, sizeof(_values));
     }
@@ -265,7 +265,7 @@ public:
     ByteRefArray data() {
         return ByteRefArray(_values, sizeof(_values));
     }
-    Type const *values() const {
+    const Type *values() const {
         return _values;
     }
     Type *values() {
@@ -273,7 +273,7 @@ public:
     }
 
     // Math operations.
-    Matrix4 operator * (Matrix4 const &right) const {
+    Matrix4 operator * (const Matrix4 &right) const {
         Matrix4 result(Zero);
         for (int i = 0; i < 4; ++i)
             for (int j = 0; j < 4; ++j)
@@ -281,13 +281,13 @@ public:
                     result.at(i, j) += at(i, k) * right.at(k, j);
         return result;
     }
-    Vec2 operator * (Vec2 const &vector) const {
+    Vec2 operator * (const Vec2 &vector) const {
         return (*this * Vec4::fromEuclidean(vector)).toEuclidean();
     }
-    Vec3 operator * (Vec3 const &vector) const {
+    Vec3 operator * (const Vec3 &vector) const {
         return (*this * Vec4::fromEuclidean(vector)).toEuclidean();
     }
-    Vec4 operator * (Vec4 const &vector) const {
+    Vec4 operator * (const Vec4 &vector) const {
         Vec4 result;
         for (int i = 0; i < 4; ++i)
             for (int j = 0; j < 4; ++j)
@@ -389,7 +389,7 @@ public:
         };
         return m;
     }
-    static Matrix4 rotate(Type angleDegrees, Vec3 const &unitAxis = Vec3(0, 0, 1)) {
+    static Matrix4 rotate(Type angleDegrees, const Vec3 &unitAxis = Vec3(0, 0, 1)) {
         Type const ang = degreeToRadian(angleDegrees);
         Type const c   = std::cos(ang);
         Type const s   = std::sin(ang);
@@ -401,31 +401,31 @@ public:
         };
         return m;
     }
-    static Matrix4 rotateAround(Vec3 const &pivot, Type angleDegrees, Vec3 const &axis = Vec3(0, 0, 1)) {
+    static Matrix4 rotateAround(const Vec3 &pivot, Type angleDegrees, const Vec3 &axis = Vec3(0, 0, 1)) {
         return translate(pivot) * rotate(angleDegrees, axis) * translate(-pivot);
     }
-    static Matrix4 translate(Vec3 const &translation) {
+    static Matrix4 translate(const Vec3 &translation) {
         return scaleThenTranslate(Vec3(1, 1, 1), translation);
     }
     static Matrix4 scale(Type scalar) {
         return scale(Vec3(scalar, scalar, scalar));
     }
-    static Matrix4 scale(Vec2 const &scalar) {
+    static Matrix4 scale(const Vec2 &scalar) {
         return scale(Vec3(scalar, Type(1)));
     }
-    static Matrix4 scale(Vec3 const &scalar) {
+    static Matrix4 scale(const Vec3 &scalar) {
         return scaleThenTranslate(scalar, Vec3(0, 0, 0));
     }
-    static Matrix4 scaleThenTranslate(Type scalar, Vec3 const &translation) {
+    static Matrix4 scaleThenTranslate(Type scalar, const Vec3 &translation) {
         return scaleThenTranslate(Vec3(scalar, scalar, scalar), translation);
     }
-    static Matrix4 scaleThenTranslate(Vec2 const &scalar, Vec2 const &translation) {
+    static Matrix4 scaleThenTranslate(const Vec2 &scalar, const Vec2 &translation) {
         return scaleThenTranslate(scalar, Vec3(translation, 0));
     }
-    static Matrix4 scaleThenTranslate(Vec2 const &scalar, Vec3 const &translation) {
+    static Matrix4 scaleThenTranslate(const Vec2 &scalar, const Vec3 &translation) {
         return scaleThenTranslate(Vec3(scalar, Type(1)), translation);
     }
-    static Matrix4 scaleThenTranslate(Vec3 const &scalar, Vec3 const &translation) {
+    static Matrix4 scaleThenTranslate(const Vec3 &scalar, const Vec3 &translation) {
         Matrix4 m(Zero);
         m[0]  = scalar.x;
         m[5]  = scalar.y;
@@ -436,13 +436,13 @@ public:
         m[15] = 1;
         return m;
     }
-    static Matrix4 lookAt(Vec3 const &target, Vec3 const &eyePos, Vec3 const &up) {
+    static Matrix4 lookAt(const Vec3 &target, const Vec3 &eyePos, const Vec3 &up) {
         return frame(target - eyePos, up, true /* right-handed */) * translate(-eyePos);
     }
-    static Matrix4 frame(Vec3 const &front, Vec3 const &up, bool mirrored = false) {
+    static Matrix4 frame(const Vec3 &front, const Vec3 &up, bool mirrored = false) {
         return unnormalizedFrame(front.normalize(), up.normalize(), mirrored);
     }
-    static Matrix4 unnormalizedFrame(Vec3 const &front, Vec3 const &up, bool mirrored = false) {
+    static Matrix4 unnormalizedFrame(const Vec3 &front, const Vec3 &up, bool mirrored = false) {
         Matrix4 m(Zero);
         Vec3 f = front;
         Vec3 s = f.cross(up);
@@ -473,7 +473,7 @@ inline Writer &operator << (Writer &to, Matrix4<Type> const &mat4) {
 }
 
 template <typename Type>
-inline void operator << (Writer const &to, Matrix4<Type> const &mat4) {
+inline void operator << (const Writer &to, Matrix4<Type> const &mat4) {
     Writer w(to);
     for (int i = 0; i < 16; ++i) w << mat4[i];
 }
@@ -485,7 +485,7 @@ inline Reader &operator >> (Reader &from, Matrix4<Type> &mat4) {
 }
 
 template <typename Type>
-inline void operator >> (Reader const &from, Matrix4<Type> &mat4) {
+inline void operator >> (const Reader &from, Matrix4<Type> &mat4) {
     Reader r(from);
     for (int i = 0; i < 16; ++i) r >> mat4[i];
 }

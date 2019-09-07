@@ -37,7 +37,7 @@
 #include "polyobjs.h"
 
 template <typename Type>
-static void writeThinkerAs(thinker_t const *th, MapStateWriter *msWriter)
+static void writeThinkerAs(const thinker_t *th, MapStateWriter *msWriter)
 {
     Type *t = (Type*)th;
     t->write(msWriter);
@@ -241,7 +241,7 @@ ThinkerClassInfo *SV_ThinkerInfoForClass(thinkerclass_t tClass)
     return 0; // Not found.
 }
 
-ThinkerClassInfo *SV_ThinkerInfo(thinker_t const &thinker)
+ThinkerClassInfo *SV_ThinkerInfo(const thinker_t &thinker)
 {
     for(ThinkerClassInfo *info = thinkerInfo; info->thinkclass != TC_NULL; info++)
     {

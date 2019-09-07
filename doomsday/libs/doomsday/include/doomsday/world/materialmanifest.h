@@ -47,7 +47,7 @@ public:
     /// Required material instance is missing. @ingroup errors
     DE_ERROR(MissingMaterialError);
 
-    DE_DEFINE_AUDIENCE(Deletion,        void materialManifestBeingDeleted   (MaterialManifest const &manifest))
+    DE_DEFINE_AUDIENCE(Deletion,        void materialManifestBeingDeleted   (const MaterialManifest &manifest))
     DE_DEFINE_AUDIENCE(MaterialDerived, void materialManifestMaterialDerived(MaterialManifest &manifest, Material &material))
 
     enum Flag
@@ -62,7 +62,7 @@ public:
     typedef std::function<Material * (MaterialManifest &)> MaterialConstructor;
 
 public:
-    MaterialManifest(de::PathTree::NodeArgs const &args);
+    MaterialManifest(const de::PathTree::NodeArgs &args);
 
     ~MaterialManifest();
 
@@ -81,7 +81,7 @@ public:
     MaterialScheme &scheme() const;
 
     /// Convenience method for returning the name of the owning scheme.
-    de::String const &schemeName() const;
+    const de::String &schemeName() const;
 
     /**
      * Compose a URI of the form "scheme:path" for the material manifest.

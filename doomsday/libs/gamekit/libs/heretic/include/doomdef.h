@@ -208,7 +208,7 @@ typedef enum {
  */
 typedef struct {
     int gameModeBits;    ///< Game modes the ammo type is available in.
-    char const *hudIcon; ///< Name of the Patch to use in headup displays.
+    const char *hudIcon; ///< Name of the Patch to use in headup displays.
 } AmmoDef;
 
 /**

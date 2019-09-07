@@ -87,8 +87,8 @@ public:
     virtual Sound &setVolume(dfloat volume);
     virtual Sound &setPan(dfloat pan);
     virtual Sound &setFrequency(dfloat factor);
-    virtual Sound &setPosition(Vec3f const &position, Positioning positioning = Absolute);
-    virtual Sound &setVelocity(Vec3f const &velocity);
+    virtual Sound &setPosition(const Vec3f &position, Positioning positioning = Absolute);
+    virtual Sound &setVelocity(const Vec3f &velocity);
     virtual Sound &setMinDistance(dfloat minDistance);
     virtual Sound &setSpatialSpread(dfloat degrees);
 
@@ -110,10 +110,10 @@ public:
     DE_CAST_METHODS()
 
     /// Audience that is notified when the sound is played.
-    DE_AUDIENCE(Play, void soundPlayed(Sound const &))
+    DE_AUDIENCE(Play, void soundPlayed(const Sound &))
 
     /// Audience that is notified when the properties of the sound change.
-    DE_AUDIENCE(Change, void soundPropertyChanged(Sound const &))
+    DE_AUDIENCE(Change, void soundPropertyChanged(const Sound &))
 
     /// Audience that is notified when the sound stops.
     DE_AUDIENCE(Stop, void soundStopped(Sound &))

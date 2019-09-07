@@ -61,7 +61,7 @@ void ArrayExpression::push(Evaluator &evaluator, Value *scope) const
     }
 }
 
-Expression const &ArrayExpression::at(dint pos) const
+const Expression &ArrayExpression::at(dint pos) const
 {
     return *_arguments.at(pos);
 }

@@ -33,9 +33,9 @@ DE_PIMPL_NOREF(ArchiveEntryFile)
     Path entryPath;
 
     /// Pointer to the data of the entry within the archive.
-    Block const *readBlock = nullptr;
+    const Block *readBlock = nullptr;
 
-    Block const &entryData()
+    const Block &entryData()
     {
         if (!readBlock)
         {
@@ -47,13 +47,13 @@ DE_PIMPL_NOREF(ArchiveEntryFile)
                 DE_PRINT_BACKTRACE();
             }
 #endif
-            readBlock = &const_cast<Archive const *>(archive)->entryBlock(entryPath);
+            readBlock = &const_cast<const Archive *>(archive)->entryBlock(entryPath);
         }
         return *readBlock;
     }
 };
 
-ArchiveEntryFile::ArchiveEntryFile(String const &name, Archive &archive, String const &entryPath)
+ArchiveEntryFile::ArchiveEntryFile(const String &name, Archive &archive, const String &entryPath)
     : ByteArrayFile(name)
     , d(new Impl)
 {
@@ -112,7 +112,7 @@ void ArchiveEntryFile::flush()
 Block ArchiveEntryFile::metaId() const
 {
     Block data = File::metaId() + d->entryPath.toUtf8();
-    if (File const *sourceFile = maybeAs<File const>(archive().source()))
+    if (const File *sourceFile = maybeAs<File const>(archive().source()))
     {
         data += sourceFile->metaId();
     }
@@ -124,7 +124,7 @@ Archive &ArchiveEntryFile::archive()
     return *d->archive;
 }
 
-Archive const &ArchiveEntryFile::archive() const
+const Archive &ArchiveEntryFile::archive() const
 {
     return *d->archive;
 }
@@ -154,7 +154,7 @@ void ArchiveEntryFile::get(Offset at, Byte *values, Size count) const
     d->entryData().get(at, values, count);
 }
 
-void ArchiveEntryFile::set(Offset at, Byte const *values, Size count)
+void ArchiveEntryFile::set(Offset at, const Byte *values, Size count)
 {
     DE_GUARD(this);
 

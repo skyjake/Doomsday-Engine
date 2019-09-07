@@ -61,7 +61,7 @@ public:
     public:
         Elements();
 
-        Elements(Spec const *elements, dsize count);
+        Elements(const Spec *elements, dsize count);
 
         /**
          * Adds a new element into the field.
@@ -73,7 +73,7 @@ public:
          */
         Elements &add(Id id, dsize numBits);
 
-        void add(Spec const *elements, dsize count);
+        void add(const Spec *elements, dsize count);
 
         void add(const List<Spec> &elements);
 
@@ -86,7 +86,7 @@ public:
 
         Spec at(int index) const;
 
-        void elementLayout(Id const &id, int &firstBit, int &numBits) const;
+        void elementLayout(const Id &id, int &firstBit, int &numBits) const;
 
         /**
          * Total number of bits in the packed elements.
@@ -117,11 +117,11 @@ public:
 
 public:
     BitField();
-    BitField(Elements const &elements);
-    BitField(BitField const &other);
-    BitField(Block const &data);
+    BitField(const Elements &elements);
+    BitField(const BitField &other);
+    BitField(const Block &data);
 
-    BitField &operator=(BitField const &other);
+    BitField &operator=(const BitField &other);
 
     /**
      * Sets the elements of the bit field.
@@ -129,9 +129,9 @@ public:
      * @param elements  Elements metadata. BitField does not take ownership, so this must
      *                  exist as long as the bit field is in use.
      */
-    void setElements(Elements const &elements);
+    void setElements(const Elements &elements);
 
-    Elements const &elements() const;
+    const Elements &elements() const;
 
     /**
      * Removes all the elements and the data contained in the bit field. Elements must be
@@ -164,8 +164,8 @@ public:
      */
     Block data() const;
 
-    bool operator==(BitField const &other) const;
-    bool operator!=(BitField const &other) const;
+    bool operator==(const BitField &other) const;
+    bool operator!=(const BitField &other) const;
 
     /**
      * Determines which elements in this pack are different when compared to @a
@@ -177,7 +177,7 @@ public:
      * @return List of element Ids whose values are different than the ones
      * in @a other.
      */
-    Ids delta(BitField const &other) const;
+    Ids delta(const BitField &other) const;
 
     /**
      * Returns the plain (unsigned integer) value of an element.

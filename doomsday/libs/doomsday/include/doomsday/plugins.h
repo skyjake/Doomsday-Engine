@@ -58,7 +58,7 @@ typedef enum {
 
 /// Parameters for HOOK_FINALE_EVAL_IF
 typedef struct {
-    char const *token;
+    const char *token;
     dd_bool     returnVal;
 } ddhook_finale_script_evalif_paramaters_t;
 
@@ -92,13 +92,13 @@ typedef struct {
 typedef struct {
     int player;
     int weapon;             ///< Number of the weapon.
-    char const *weaponId;   ///< Defined in Values (includes power-ups) (UTF-8).
+    const char *weaponId;   ///< Defined in Values (includes power-ups) (UTF-8).
 } ddnotify_player_weapon_changed_t;
 
 /// Parameters for DD_NOTIFY_PSPRITE_STATE_CHANGED
 typedef struct {
     int player;
-    struct state_s const *state;
+    const struct state_s *state;
 } ddnotify_psprite_state_changed_t;
 
 #ifdef __cplusplus
@@ -116,7 +116,7 @@ typedef struct {
 struct GameExports
 {
     // Base-level.
-    void        (*PreInit) (char const *gameId);
+    void        (*PreInit) (const char *gameId);
     void        (*PostInit) (void);
     dd_bool     (*TryShutdown) (void);
     void        (*Shutdown) (void);
@@ -138,7 +138,7 @@ struct GameExports
     void        (*Ticker) (timespan_t ticLength);
 
     // Responders.
-    int         (*FinaleResponder) (void const *ddev);
+    int         (*FinaleResponder) (const void *ddev);
     int         (*PrivilegedResponder) (struct event_s *ev);
     int         (*Responder) (struct event_s *ev);
     int         (*FallbackResponder) (struct event_s *ev);
@@ -189,8 +189,8 @@ struct GameExports
      *      - 1: Displays to be drawn on top of view window (after bordering),
      *        such as the player HUD.
      */
-    void        (*DrawViewPort) (int port, RectRaw const *portGeometry,
-                                 RectRaw const *windowGeometry, int player, int layer);
+    void        (*DrawViewPort) (int port, const RectRaw *portGeometry,
+                                 const RectRaw *windowGeometry, int player, int layer);
 
     /**
      * Draw over-viewport displays covering the whole game window. Typically
@@ -198,15 +198,15 @@ struct GameExports
      *
      * @param windowSize  Dimensions of the game window in real screen pixels.
      */
-    void        (*DrawWindow) (Size2Raw const *windowSize);
+    void        (*DrawWindow) (const Size2Raw *windowSize);
 
     // Miscellaneous.
     void        (*MobjThinker) (void *mobj);
-    coord_t     (*MobjFriction) (struct mobj_s const *mobj);  // Returns a friction factor.
+    coord_t     (*MobjFriction) (const struct mobj_s *mobj);  // Returns a friction factor.
     dd_bool     (*MobjCheckPositionXYZ) (struct mobj_s *mobj, coord_t x, coord_t y, coord_t z);
     dd_bool     (*MobjTryMoveXYZ) (struct mobj_s *mobj, coord_t x, coord_t y, coord_t z);
-    de::String  (*MobjStateAsInfo) (struct mobj_s const *);
-    void        (*MobjRestoreState) (struct mobj_s *, de::Info::BlockElement const &stateInfoBlockElement);
+    de::String  (*MobjStateAsInfo) (const struct mobj_s *);
+    void        (*MobjRestoreState) (struct mobj_s *, const de::Info::BlockElement &stateInfoBlockElement);
 
     void        (*SectorHeightChangeNotification)(int sectorIdx);  // Applies necessary checks on objects.
 
@@ -216,7 +216,7 @@ struct GameExports
      * Called once a map change (i.e., P_MapChange()) has completed to allow the
      * game to do any post change finalization it needs to do at this time.
      */
-    void        (*FinalizeMapChange) (void const *uri);
+    void        (*FinalizeMapChange) (const void *uri);
 
     /**
      * Called when trying to assign a value read from the map data (to a
@@ -282,14 +282,14 @@ public:
     /*
      * Locate the LibraryFile attributed with the given @a id.
      */
-//    de::LibraryFile const &fileForPlugin(pluginid_t id) const;
+//    const de::LibraryFile &fileForPlugin(pluginid_t id) const;
 
     de::String extensionName(pluginid_t pluginId) const;
 
     /**
      * Locate the address of the named, exported procedure in the plugin.
      */
-    void *findEntryPoint(pluginid_t pluginId, char const *fn) const;
+    void *findEntryPoint(pluginid_t pluginId, const char *fn) const;
 
     bool exchangeGameEntryPoints(pluginid_t pluginId);
 
@@ -310,8 +310,8 @@ public:  // Function hooks: ----------------------------------------------------
          * Note that if the plugin Id of either is not valid then this attribute is
          * considered @em wild and therefore plugin Ids are ignored when matching.
          */
-        bool        operator == (Hook const &other) const;
-        inline bool operator != (Hook const &other) const { return !(*this == other); }
+        bool        operator == (const Hook &other) const;
+        inline bool operator != (const Hook &other) const { return !(*this == other); }
 
         /**
          * Execute the hook function and return the result.
@@ -361,7 +361,7 @@ public:  // Function hooks: ----------------------------------------------------
      *
      * @see callAllHooks()
      */
-    de::LoopResult forAllHooks(HookType type, const std::function<de::LoopResult (Hook const &)>& func) const;
+    de::LoopResult forAllHooks(HookType type, const std::function<de::LoopResult (const Hook &)>& func) const;
 
     /**
      * Convenient method of executing all hook functions of the given @a type in

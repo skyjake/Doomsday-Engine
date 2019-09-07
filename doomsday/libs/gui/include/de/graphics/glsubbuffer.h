@@ -29,7 +29,7 @@ namespace de {
 class LIBGUI_PUBLIC GLSubBuffer
 {
 public:
-    GLSubBuffer(Rangeui16 const &hostRange, GLBuffer &hostBuffer);
+    GLSubBuffer(const Rangeui16 &hostRange, GLBuffer &hostBuffer);
 
     /**
      * Returns the number of vertices currently being used. This may be smaller than
@@ -41,7 +41,7 @@ public:
 
     void clear();
 
-    void setVertices(dsize count, void const *data);
+    void setVertices(dsize count, const void *data);
 
     void setBatchVertices(int batchIndex, dsize count, void *data);
 
@@ -54,16 +54,16 @@ public:
      *
      * @param range  Range of elements in the host buffer belonging to this sub-buffer.
      */
-    void setHostRange(Rangeui16 const &range);
+    void setHostRange(const Rangeui16 &range);
 
-    Rangeui16 const &hostRange() const;
+    const Rangeui16 &hostRange() const;
 
     template <typename VertexType>
     void setVertices(const List<VertexType> &vertices) {
         setVertices(sizeof(VertexType), vertices.size(), vertices.data());
     }
 
-    void setFormat(internal::AttribSpecs const &format);
+    void setFormat(const internal::AttribSpecs &format);
 
 private:
     DE_PRIVATE(d)
@@ -81,12 +81,12 @@ public:
     typedef typename VertexBuilder<VertexType>::Vertices Builder;
 
 public:
-    void setVertices(VertexType const *vertices, dsize count) {
+    void setVertices(const VertexType *vertices, dsize count) {
         setFormat(VertexType::formatSpec());
         GLSubBuffer::setVertices(sizeof(VertexType), count, vertices);
     }
 
-    void setVertices(Vertices const &vertices) {
+    void setVertices(const Vertices &vertices) {
         setFormat(VertexType::formatSpec());
         GLSubBuffer::setVertices(sizeof(VertexType), vertices.size(), vertices.constData());
     }

@@ -41,10 +41,10 @@ static constexpr TimeSpan FLASH_ANIM_SPAN = 750_ms;
  *
  * @return @c true, if a < b.
  */
-static bool dialogButtonOrder(ui::Item const &a, ui::Item const &b)
+static bool dialogButtonOrder(const ui::Item &a, const ui::Item &b)
 {
-    DialogButtonItem const &left  = a.as<DialogButtonItem>();
-    DialogButtonItem const &right = b.as<DialogButtonItem>();
+    const DialogButtonItem &left  = a.as<DialogButtonItem>();
+    const DialogButtonItem &right = b.as<DialogButtonItem>();
 
     if (!left.role().testFlag(DialogWidget::Default) && right.role().testFlag(DialogWidget::Default))
     {
@@ -101,9 +101,9 @@ DE_GUI_PIMPL(DialogWidget)
     std::unique_ptr<Untrapper> untrapper;
     DialogContentStylist stylist;
     IndirectRule *minWidth;
-    Rule const *maxContentHeight = nullptr;
+    const Rule *maxContentHeight = nullptr;
 
-    Impl(Public *i, Flags const &dialogFlags)
+    Impl(Public *i, const Flags &dialogFlags)
         : Base(i)
         , modality(Modal)
         , flags(dialogFlags)
@@ -140,13 +140,13 @@ DE_GUI_PIMPL(DialogWidget)
         buttonItems.audienceForRemoval()  += this;
 
         // Segregate Action buttons into the extra buttons set.
-        mainButtonItems.setFilter([] (ui::Item const &it)
+        mainButtonItems.setFilter([] (const ui::Item &it)
         {
             if (!is<DialogButtonItem>(it)) return false;
             // Non-Action buttons only.
             return !it.as<DialogButtonItem>().role().testFlag(Action);
         });
-        extraButtonItems.setFilter([] (ui::Item const &it)
+        extraButtonItems.setFilter([] (const ui::Item &it)
         {
             if (!is<DialogButtonItem>(it)) return false;
             // Only Action buttons allowed.
@@ -259,7 +259,7 @@ DE_GUI_PIMPL(DialogWidget)
     void updateContentHeight()
     {
         // Determine suitable maximum height.
-        Rule const *maxHeight = holdRef(root().viewHeight());
+        const Rule *maxHeight = holdRef(root().viewHeight());
         if (self().openingDirection() == ui::Down)
         {
             changeRef(maxHeight, *maxHeight - self().anchor().top() - rule("gap"));
@@ -294,7 +294,7 @@ DE_GUI_PIMPL(DialogWidget)
         releaseRef(maxHeight);
     }
 
-    void dataItemAdded(ui::Data::Pos, ui::Item const &)
+    void dataItemAdded(ui::Data::Pos, const ui::Item &)
     {
         needButtonUpdate = true;
     }
@@ -310,7 +310,7 @@ DE_GUI_PIMPL(DialogWidget)
         needButtonUpdate = false;
     }
 
-    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
+    void widgetCreatedForItem(GuiWidget &widget, const ui::Item &item)
     {
         // Make sure all label-based widgets in the button area
         // manage their own size.
@@ -320,7 +320,7 @@ DE_GUI_PIMPL(DialogWidget)
         }
 
         // Apply dialog button specific roles.
-        if (ButtonItem const *i = maybeAs<ButtonItem>(item))
+        if (const ButtonItem *i = maybeAs<ButtonItem>(item))
         {
             ButtonWidget &but = widget.as<ButtonWidget>();
             but.setColorTheme(self().colorTheme());
@@ -338,9 +338,9 @@ DE_GUI_PIMPL(DialogWidget)
         }
     }
 
-    void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
+    void widgetUpdatedForItem(GuiWidget &widget, const ui::Item &item)
     {
-        if (ButtonItem const *i = maybeAs<ButtonItem>(item))
+        if (const ButtonItem *i = maybeAs<ButtonItem>(item))
         {
             ButtonWidget &but = widget.as<ButtonWidget>();
 
@@ -385,13 +385,13 @@ DE_GUI_PIMPL(DialogWidget)
         }
     }
 
-    ui::ActionItem const *findDefaultAction() const
+    const ui::ActionItem *findDefaultAction() const
     {
         // Note: extra buttons not searched because they shouldn't contain default actions.
 
         for (ui::Data::Pos i = 0; i < mainButtonItems.size(); ++i)
         {
-            ButtonItem const *act = maybeAs<ButtonItem>(mainButtonItems.at(i));
+            const ButtonItem *act = maybeAs<ButtonItem>(mainButtonItems.at(i));
             if (act->role().testFlag(Default) &&
                 buttons->organizer().itemWidget(i)->isEnabled())
             {
@@ -403,14 +403,14 @@ DE_GUI_PIMPL(DialogWidget)
 
     ButtonWidget *findDefaultButton() const
     {
-        if (ui::ActionItem const *defaultAction = findDefaultAction())
+        if (const ui::ActionItem *defaultAction = findDefaultAction())
         {
             return &buttonWidget(*defaultAction);
         }
         return nullptr;
     }
 
-    ButtonWidget &buttonWidget(ui::Item const &item) const
+    ButtonWidget &buttonWidget(const ui::Item &item) const
     {
         GuiWidget *w = extraButtons->organizer().itemWidget(item);
         if (w) return w->as<ButtonWidget>();
@@ -470,7 +470,7 @@ DE_GUI_PIMPL(DialogWidget)
 
 DE_AUDIENCE_METHODS(DialogWidget, Accept, Reject)
 
-DialogWidget::DialogWidget(String const &name, Flags const &flags)
+DialogWidget::DialogWidget(const String &name, const Flags &flags)
     : PopupWidget(name), d(new Impl(this, flags))
 {
     d->stylist.setContainer(area());
@@ -507,7 +507,7 @@ ScrollAreaWidget &DialogWidget::rightArea()
     return *d->rightArea;
 }
 
-void DialogWidget::setMinimumContentWidth(Rule const &minWidth)
+void DialogWidget::setMinimumContentWidth(const Rule &minWidth)
 {
     d->minWidth->setSource(minWidth);
 }
@@ -532,7 +532,7 @@ ui::Data &DialogWidget::buttons()
     return d->buttonItems;
 }
 
-ButtonWidget &DialogWidget::buttonWidget(String const &label) const
+ButtonWidget &DialogWidget::buttonWidget(const String &label) const
 {
     GuiWidget *w = d->buttons->organizer().itemWidget(label);
     if (w) return w->as<ButtonWidget>();
@@ -543,7 +543,7 @@ ButtonWidget &DialogWidget::buttonWidget(String const &label) const
     throw UndefinedLabel("DialogWidget::buttonWidget", "Undefined label \"" + label + "\"");
 }
 
-PopupButtonWidget &DialogWidget::popupButtonWidget(String const &label) const
+PopupButtonWidget &DialogWidget::popupButtonWidget(const String &label) const
 {
     return buttonWidget(label).as<PopupButtonWidget>();
 }
@@ -552,7 +552,7 @@ ButtonWidget *DialogWidget::buttonWidget(int roleId) const
 {
     for (uint i = 0; i < d->buttonItems.size(); ++i)
     {
-        DialogButtonItem const &item = d->buttonItems.at(i).as<DialogButtonItem>();
+        const DialogButtonItem &item = d->buttonItems.at(i).as<DialogButtonItem>();
 
         if ((item.role() & IdMask) == uint(roleId))
         {
@@ -669,13 +669,13 @@ void DialogWidget::update()
     }
 }
 
-bool DialogWidget::handleEvent(Event const &event)
+bool DialogWidget::handleEvent(const Event &event)
 {
     if (!isOpen()) return false;
 
     if (event.isKeyDown())
     {
-        KeyEvent const &key = event.as<KeyEvent>();
+        const KeyEvent &key = event.as<KeyEvent>();
 
         if (key.ddKey() == DDKEY_ENTER  ||
             key.ddKey() == DDKEY_RETURN ||
@@ -797,18 +797,18 @@ void DialogWidget::finish(int result)
     }
 }
 
-DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, String const &label)
+DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, const String &label)
     : ui::ActionItem(itemSemantics(flags), label, nullptr)
     , _role(flags)
 {}
 
-DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, Image const &image)
+DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, const Image &image)
     : ui::ActionItem(itemSemantics(flags), image)
     , _role(flags)
 {}
 
 DialogWidget::ButtonItem::ButtonItem(RoleFlags                 flags,
-                                     String const &            label,
+                                     const String &            label,
                                      const RefArg<de::Action> &action)
     : ui::ActionItem(itemSemantics(flags), label, action)
     , _role(flags)
@@ -829,8 +829,8 @@ DialogWidget::ButtonItem::ButtonItem(RoleFlags                 flags,
 {}
 
 DialogWidget::ButtonItem::ButtonItem(RoleFlags                 flags,
-                                     Image const &             image,
-                                     String const &            label,
+                                     const Image &             image,
+                                     const String &            label,
                                      const RefArg<de::Action> &action)
     : ui::ActionItem(itemSemantics(flags), image, label, action)
     , _role(flags)

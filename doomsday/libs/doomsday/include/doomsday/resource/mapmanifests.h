@@ -39,7 +39,7 @@ public:
      * Note that the existence of a resource manifest does not automatically mean the
      * associated resource data is actually loadable.
      */
-    res::MapManifest &findMapManifest(res::Uri const &mapUri) const;
+    res::MapManifest &findMapManifest(const res::Uri &mapUri) const;
 
     /**
      * Lookup the map resource manifest associated with the given, unique @a mapUri.
@@ -48,7 +48,7 @@ public:
      *
      * @return  MapManifest associated with @a mapUri if found; otherwise @c nullptr.
      */
-    res::MapManifest *tryFindMapManifest(res::Uri const &mapUri) const;
+    res::MapManifest *tryFindMapManifest(const res::Uri &mapUri) const;
 
     /**
      * Returns the total number of map resource manifests in the system.
@@ -58,7 +58,7 @@ public:
     /// @todo make private.
     void initMapManifests();
 
-    Tree const &allMapManifests() const;
+    const Tree &allMapManifests() const;
 
 private:
     DE_PRIVATE(d)

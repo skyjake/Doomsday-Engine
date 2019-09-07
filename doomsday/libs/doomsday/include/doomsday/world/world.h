@@ -65,10 +65,10 @@ public:
     world::BaseMap &map() const;
 
     world::Materials &       materials();
-    world::Materials const & materials() const;
+    const world::Materials & materials() const;
 
     // Systems observe the passage of time.
-    void timeChanged(de::Clock const &) override;
+    void timeChanged(const de::Clock &) override;
 
 protected:
     void setMap(world::BaseMap *map);

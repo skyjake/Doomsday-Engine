@@ -53,23 +53,23 @@ public:
      * @param physicalCanvasSize  Canvas size (pixels).
      * @return Logical size (UI units).
      */
-    virtual Vec2ui logicalRootSize(Vec2ui const &physicalCanvasSize) const;
+    virtual Vec2ui logicalRootSize(const Vec2ui &physicalCanvasSize) const;
 
     /**
      * Translate a point in physical window coordinates to logical coordinates.
      * @param pos  Window coordinates (pixels).
      * @return Logical coordinates inside the root widget's area.
      */
-    virtual Vec2f windowToLogicalCoords(Vec2i const &pos) const;
+    virtual Vec2f windowToLogicalCoords(const Vec2i &pos) const;
 
     /**
      * Translate a point in logical coordinates to window coordinates.
      * @param rect  Logical coordinates.
      * @return Window coordinates (pixels).
      */
-    virtual Vec2f logicalToWindowCoords(Vec2i const &pos) const;
+    virtual Vec2f logicalToWindowCoords(const Vec2i &pos) const;
 
-    Rectanglef logicalToWindowCoords(Rectanglei const &rect) const;
+    Rectanglef logicalToWindowCoords(const Rectanglei &rect) const;
 
     /**
      * Applies the appropriate transformation state and tells the window to draw its

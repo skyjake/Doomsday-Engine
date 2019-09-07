@@ -30,19 +30,19 @@ using namespace de;
 using namespace res;
 
 template <valuetype_t VALUE_TYPE, typename Type>
-void gmoSetThingProperty(int index, char const *propertyId, Type value)
+void gmoSetThingProperty(int index, const char *propertyId, Type value)
 {
     MPE_GameObjProperty("Thing", index, propertyId, VALUE_TYPE, &value);
 }
 
 template <valuetype_t VALUE_TYPE, typename Type>
-void gmoSetSectorProperty(int index, char const *propertyId, Type value)
+void gmoSetSectorProperty(int index, const char *propertyId, Type value)
 {
     MPE_GameObjProperty("XSector", index, propertyId, VALUE_TYPE, &value);
 }
 
 template <valuetype_t VALUE_TYPE, typename Type>
-void gmoSetLineProperty(int index, char const *propertyId, Type value)
+void gmoSetLineProperty(int index, const char *propertyId, Type value)
 {
     MPE_GameObjProperty("XLinedef", index, propertyId, VALUE_TYPE, &value);
 }
@@ -56,7 +56,7 @@ void gmoSetLineProperty(int index, char const *propertyId, Type value)
  */
 static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
 {
-    if (Id1MapRecognizer const *recognizer = reinterpret_cast<Id1MapRecognizer *>(context))
+    if (const Id1MapRecognizer *recognizer = reinterpret_cast<Id1MapRecognizer *>(context))
     {
         if (recognizer->format() == Id1MapRecognizer::UniversalFormat)
         {
@@ -87,7 +87,7 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                 };
                 ImportState importState;
 
-                parser.setGlobalAssignmentHandler([&importState] (String const &ident, Value const &value)
+                parser.setGlobalAssignmentHandler([&importState] (const String &ident, const Value &value)
                 {
                     if (ident == UDMFLex::NAMESPACE)
                     {
@@ -104,7 +104,7 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                     }
                 });
 
-                parser.setBlockHandler([&importState] (String const &type, UDMFParser::Block const &block)
+                parser.setBlockHandler([&importState] (const String &type, const UDMFParser::Block &block)
                 {
                     if (type == UDMFLex::THING)
                     {
@@ -217,13 +217,13 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                 // Now that all the linedefs and sidedefs are read, let's create them.
                 for (int index = 0; index < importState.linedefs.size(); ++index)
                 {
-                    UDMFParser::Block const &linedef = importState.linedefs.at(index);
+                    const UDMFParser::Block &linedef = importState.linedefs.at(index);
 
                     int sidefront = linedef["sidefront"]->asInt();
                     int sideback  = linedef.contains("sideback")? linedef["sideback"]->asInt() : -1;
 
-                    UDMFParser::Block const &front = importState.sidedefs.at(sidefront);
-                    UDMFParser::Block const *back  =
+                    const UDMFParser::Block &front = importState.sidedefs.at(sidefront);
+                    const UDMFParser::Block *back  =
                             (sideback >= 0? &importState.sidedefs.at(sideback) : nullptr);
 
                     int frontSectorIdx = front["sector"]->asInt();
@@ -322,7 +322,7 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                 LOG_MAP_WARNING("Loading UDMF maps is an experimental feature");
                 return true;
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_MAP_ERROR("Error while loading UDMF: ") << er.asText();
             }
@@ -344,12 +344,12 @@ static void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-static char const *deng_LibraryType()
+static const char *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }
 
-DE_ENTRYPOINT void *extension_importudmf_symbol(char const *name)
+DE_ENTRYPOINT void *extension_importudmf_symbol(const char *name)
 {
     DE_SYMBOL_PTR(name, deng_LibraryType)
     DE_SYMBOL_PTR(name, DP_Initialize);

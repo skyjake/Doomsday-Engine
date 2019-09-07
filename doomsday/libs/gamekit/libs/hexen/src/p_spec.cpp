@@ -725,7 +725,7 @@ void P_PlayerOnSpecialFloor(player_t *player)
 {
     DE_ASSERT(player);
     mobj_t *plrMo           = player->plr->mo;
-    terraintype_t const *tt = P_MobjFloorTerrain(plrMo);
+    const terraintype_t *tt = P_MobjFloorTerrain(plrMo);
     DE_ASSERT(tt);
 
     if(!(tt->flags & TTF_DAMAGING))

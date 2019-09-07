@@ -26,19 +26,19 @@
 
 namespace de {
 
-Packet::Type Packet::typeFromString(char const *fourcc)
+Packet::Type Packet::typeFromString(const char *fourcc)
 {
     Type type;
     std::memcpy(type.data(), fourcc, 4);
     return type;
 }
 
-Packet::Packet(Type const &t)
+Packet::Packet(const Type &t)
 {
     setType(t);
 }
 
-void Packet::setType(Type const &t)
+void Packet::setType(const Type &t)
 {
     _type = t;
 }
@@ -65,7 +65,7 @@ void Packet::operator << (Reader &from)
 void Packet::execute() const
 {}
 
-bool Packet::checkType(Reader &from, Type const &type)
+bool Packet::checkType(Reader &from, const Type &type)
 {
     from.mark();
     Type ident;

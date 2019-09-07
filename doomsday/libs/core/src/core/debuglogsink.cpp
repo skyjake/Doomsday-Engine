@@ -27,7 +27,7 @@ DebugLogSink::DebugLogSink(QtMsgType msgType) : LogSink(_format), _msgType(msgTy
 DebugLogSink::~DebugLogSink()
 {}
 
-LogSink &DebugLogSink::operator << (String const &plainText)
+LogSink &DebugLogSink::operator << (const String &plainText)
 {
     QByteArray utf8 = plainText.toUtf8();
     if (_msgType == QtWarningMsg)

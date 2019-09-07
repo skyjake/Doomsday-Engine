@@ -33,12 +33,12 @@ template <typename Type>
 class Zeroed
 {
 public:
-    Zeroed(Type const &v = 0) : value(v) {}
-    operator Type const &() const { return value; }
+    Zeroed(const Type &v = 0) : value(v) {}
+    operator const Type &() const { return value; }
     operator Type &() { return value; }
-    Type const *ptr() const { return &value; }
+    const Type *ptr() const { return &value; }
     Type *ptr() { return &value; }
-    Zeroed<Type> &operator = (Type const &v) {
+    Zeroed<Type> &operator = (const Type &v) {
         value = v;
         return *this;
     }

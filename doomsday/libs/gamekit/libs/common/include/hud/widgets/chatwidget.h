@@ -75,11 +75,11 @@ public:
      */
     void setDestination(de::dint newDestination);
 
-    de::dint handleEvent(event_t const &ev);
+    de::dint handleEvent(const event_t &ev);
     de::dint handleMenuCommand(menucommand_e cmd);
 
     void updateGeometry();
-    void draw(de::Vec2i const &offset = de::Vec2i()) const;
+    void draw(const de::Vec2i &offset = de::Vec2i()) const;
 
 public:  // Outbound message staging: ---------------------------------------------
     /**
@@ -91,13 +91,13 @@ public:  // Outbound message staging: ------------------------------------------
      * Append the given @a text to the chat message being staged.
      * @param text  Text to be appended.
      */
-    void messageAppend(de::String const &text);
+    void messageAppend(const de::String &text);
 
     /**
      * Convenient method of replacing the chat message being staged.
      * @param text  Text to be copied.
      */
-    inline void messageCopy(de::String const &text) {
+    inline void messageCopy(const de::String &text) {
         messageClear();
         messageAppend(text);
     }

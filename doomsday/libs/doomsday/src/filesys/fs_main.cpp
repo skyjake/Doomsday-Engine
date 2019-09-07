@@ -41,7 +41,7 @@
 #include <de/legacy/findfile.h>
 #include <de/FileSystem>
 
-extern uint F_GetLastModified(char const *path);
+extern uint F_GetLastModified(const char *path);
 
 namespace res {
 
@@ -113,7 +113,7 @@ static FileList::iterator findListFileByPath(FileList &list, const String& path)
     return i;
 }
 
-static bool applyPathMapping(ddstring_t *path, PathMapping const &vdm);
+static bool applyPathMapping(ddstring_t *path, const PathMapping &vdm);
 
 /**
  * Performs a case-insensitive pattern match. The pattern can contain
@@ -124,7 +124,7 @@ static bool applyPathMapping(ddstring_t *path, PathMapping const &vdm);
  *
  * @return  @c true, if @a filePath matches the pattern.
  */
-static bool matchFileName(String const &string, String const &pattern)
+static bool matchFileName(const String &string, const String &pattern)
 {
     static constexpr Char ASTERISK('*');
     static constexpr Char QUESTION_MARK('?');
@@ -254,7 +254,7 @@ DE_PIMPL(FS1)
         zipFileIndex.clear();
     }
 
-    String findPath(res::Uri const &search)
+    String findPath(const res::Uri &search)
     {
         // Within a subspace scheme?
         if (self().knownScheme(search.scheme()))
@@ -298,7 +298,7 @@ DE_PIMPL(FS1)
         return ""; // Not found.
     }
 
-    File1 *findLump(String path, String const & /*mode*/)
+    File1 *findLump(String path, const String & /*mode*/)
     {
         if (path.isEmpty()) return 0;
 
@@ -317,7 +317,7 @@ DE_PIMPL(FS1)
         {
             DE_FOR_EACH_CONST(LumpMappings, i, lumpMappings)
             {
-                LumpMapping const &mapping = *i;
+                const LumpMapping &mapping = *i;
                 if (mapping.first.compare(path)) continue;
 
                 lumpnum_t lumpNum = self().lumpNumForName(mapping.second);
@@ -330,7 +330,7 @@ DE_PIMPL(FS1)
         return 0;
     }
 
-    FILE *findAndOpenNativeFile(String path, String const &mymode, String &foundPath)
+    FILE *findAndOpenNativeFile(String path, const String &mymode, String &foundPath)
     {
         DE_ASSERT(!path.isEmpty());
 
@@ -376,7 +376,7 @@ DE_PIMPL(FS1)
         return 0;
     }
 
-    File1 *openFile(String path, String const &mode, size_t baseOffset,
+    File1 *openFile(String path, const String &mode, size_t baseOffset,
                     bool allowDuplicate)
     {
         if (path.isEmpty()) return 0;
@@ -529,7 +529,7 @@ void FS1::deindex(File1 &file)
     delete fileHandle;
 }
 
-File1 &FS1::find(res::Uri const &search)
+File1 &FS1::find(const res::Uri &search)
 {
     LOG_AS("FS1::find");
     if (!search.isEmpty())
@@ -548,7 +548,7 @@ File1 &FS1::find(res::Uri const &search)
                 return (*found)->file();
             }
         }
-        catch (res::Uri::ResolveError const &er)
+        catch (const res::Uri::ResolveError &er)
         {
             // Log but otherwise ignore unresolved paths.
             LOGDEV_RES_VERBOSE(er.asText());
@@ -559,7 +559,7 @@ File1 &FS1::find(res::Uri const &search)
     throw NotFoundError("FS1::find", "No files found matching '" + search.compose() + "'");
 }
 
-String FS1::findPath(res::Uri const &search, int flags, ResourceClass &rclass)
+String FS1::findPath(const res::Uri &search, int flags, ResourceClass &rclass)
 {
     LOG_AS("FS1::findPath");
     if (!search.isEmpty())
@@ -596,7 +596,7 @@ String FS1::findPath(res::Uri const &search, int flags, ResourceClass &rclass)
                 }
             };
         }
-        catch (res::Uri::ResolveError const &er)
+        catch (const res::Uri::ResolveError &er)
         {
             // Log but otherwise ignore unresolved paths.
             LOGDEV_RES_VERBOSE(er.asText());
@@ -607,13 +607,13 @@ String FS1::findPath(res::Uri const &search, int flags, ResourceClass &rclass)
     throw NotFoundError("FS1::findPath", "No paths found matching '" + search.compose() + "'");
 }
 
-String FS1::findPath(res::Uri const &search, int flags)
+String FS1::findPath(const res::Uri &search, int flags)
 {
     return findPath(search, flags, ResourceClass::classForId(RC_NULL));
 }
 
 #ifdef DE_DEBUG
-static void printFileIds(FileIds const &fileIds)
+static void printFileIds(const FileIds &fileIds)
 {
     uint idx = 0;
     DE_FOR_EACH_CONST(FileIds, i, fileIds)
@@ -678,7 +678,7 @@ int FS1::unloadAllNonStartupFiles()
     return numUnloadedFiles;
 }
 
-bool FS1::checkFileId(res::Uri const &path)
+bool FS1::checkFileId(const res::Uri &path)
 {
     if (!accessFile(path)) return false;
 
@@ -703,7 +703,7 @@ void FS1::endStartup()
     d->loadingForStartup = false;
 }
 
-LumpIndex const &FS1::nameIndex() const
+const LumpIndex &FS1::nameIndex() const
 {
     return d->primaryIndex;
 }
@@ -769,7 +769,7 @@ uint FS1::loadedFilesCRC()
     return d->loadedFilesCRC;
 }
 
-FileList const &FS1::loadedFiles() const
+const FileList &FS1::loadedFiles() const
 {
     return d->loadedFiles;
 }
@@ -802,8 +802,8 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList &found)
      */
     DE_FOR_EACH_CONST(LumpIndex::Lumps, i, d->zipFileIndex.allLumps())
     {
-        File1 const &lump = **i;
-        PathTree::Node const &node = lump.directoryNode();
+        const File1 &lump = **i;
+        const PathTree::Node &node = lump.directoryNode();
 
         String filePath;
         bool patternMatched;
@@ -895,15 +895,15 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList &found)
     return found.count() - numFoundSoFar;
 }
 
-File1 &FS1::interpret(FileHandle &hndl, String filePath, FileInfo const &info)
+File1 &FS1::interpret(FileHandle &hndl, String filePath, const FileInfo &info)
 {
     DE_ASSERT(!filePath.isEmpty());
 
     File1 *interpretedFile = 0;
 
     // Firstly try the interpreter for the guessed resource types.
-    FileType const &ftypeGuess = DD_GuessFileTypeFromFileName(filePath);
-    if (NativeFileType const* fileType = dynamic_cast<NativeFileType const *>(&ftypeGuess))
+    const FileType &ftypeGuess = DD_GuessFileTypeFromFileName(filePath);
+    if (NativeFileType const* fileType = dynamic_cast<const NativeFileType *>(&ftypeGuess))
     {
         interpretedFile = fileType->interpret(hndl, filePath, info);
     }
@@ -911,10 +911,10 @@ File1 &FS1::interpret(FileHandle &hndl, String filePath, FileInfo const &info)
     // If not yet interpreted - try each recognisable format in order.
     if (!interpretedFile)
     {
-        FileTypes const &fileTypes = DD_FileTypes();
+        const FileTypes &fileTypes = DD_FileTypes();
         DE_FOR_EACH_CONST(FileTypes, i, fileTypes)
         {
-            if (NativeFileType const *fileType = dynamic_cast<NativeFileType const *>(i->second))
+            if (const NativeFileType *fileType = dynamic_cast<const NativeFileType *>(i->second))
             {
                 // Already tried this?
                 if (fileType == &ftypeGuess) continue;
@@ -937,7 +937,7 @@ File1 &FS1::interpret(FileHandle &hndl, String filePath, FileInfo const &info)
     return *interpretedFile;
 }
 
-FileHandle &FS1::openFile(String const &path, String const &mode, size_t baseOffset, bool allowDuplicate)
+FileHandle &FS1::openFile(const String &path, const String &mode, size_t baseOffset, bool allowDuplicate)
 {
 #ifdef DE_DEBUG
     //for (int i = 0; i < mode.length(); ++i)
@@ -965,14 +965,14 @@ FileHandle &FS1::openLump(File1 &lump)
     return hndl;
 }
 
-bool FS1::accessFile(res::Uri const &search)
+bool FS1::accessFile(const res::Uri &search)
 {
     try
     {
         std::unique_ptr<File1> file(d->openFile(search.resolved(), "rb", 0, true /* allow duplicates */));
         return bool(file);
     }
-    catch (res::Uri::ResolveError const &er)
+    catch (const res::Uri::ResolveError &er)
     {
         // Log but otherwise ignore unresolved paths.
         LOGDEV_RES_VERBOSE(er.asText());
@@ -995,7 +995,7 @@ void FS1::addPathLumpMapping(String lumpName, String destination)
     LumpMappings::iterator found = d->lumpMappings.begin();
     for (; found != d->lumpMappings.end(); ++found)
     {
-        LumpMapping const &ldm = *found;
+        const LumpMapping &ldm = *found;
         if (!ldm.first.compare(destination, CaseInsensitive))
             break;
     }
@@ -1023,7 +1023,7 @@ void FS1::clearPathLumpMappings()
 }
 
 /// @return  @c true iff the mapping matched the path.
-static bool applyPathMapping(ddstring_t *path, PathMapping const &pm)
+static bool applyPathMapping(ddstring_t *path, const PathMapping &pm)
 {
     if (!path) return false;
 //    QByteArray destUtf8 = pm.first.toUtf8();
@@ -1047,7 +1047,7 @@ void FS1::addPathMapping(String source, String destination)
     PathMappings::iterator found = d->pathMappings.begin();
     for (; found != d->pathMappings.end(); ++found)
     {
-        PathMapping const &pm = *found;
+        const PathMapping &pm = *found;
         if (!pm.second.compare(source, CaseInsensitive))
             break;
     }
@@ -1115,7 +1115,7 @@ FS1::Scheme &FS1::scheme(const String& name)
     throw UnknownSchemeError("FS1::scheme", "No scheme found matching '" + name + "'");
 }
 
-FS1::Schemes const &FS1::allSchemes()
+const FS1::Schemes &FS1::allSchemes()
 {
     return d->schemes;
 }
@@ -1168,7 +1168,7 @@ D_CMD(ListLumps)
 
     if (!fileSystem) return false;
 
-    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+    const LumpIndex &lumpIndex = App_FileSystem().nameIndex();
     int const numRecords       = lumpIndex.size();
 //    int const numIndexDigits   = de::max(3, M_NumDigits(numRecords));
 
@@ -1177,7 +1177,7 @@ D_CMD(ListLumps)
     int idx = 0;
     DE_FOR_EACH_CONST(LumpIndex::Lumps, i, lumpIndex.allLumps())
     {
-        File1 const &lump = **i;
+        const File1 &lump = **i;
         String containerPath  = NativePath(lump.container().composePath()).pretty();
         String lumpPath       = NativePath(lump.composePath()).pretty();
 
@@ -1280,7 +1280,7 @@ void F_Shutdown()
     res::fileSystem = nullptr;
 }
 
-void const *F_LumpIndex()
+const void *F_LumpIndex()
 {
     return &App_FileSystem().nameIndex();
 }

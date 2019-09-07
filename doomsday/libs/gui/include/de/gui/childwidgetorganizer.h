@@ -59,7 +59,7 @@ public:
          * @param item    Item that has the content.
          * @param parent  Future parent of the widget, if any (can be @c NULL).
          */
-        virtual GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *parent) = 0;
+        virtual GuiWidget *makeItemWidget(const ui::Item &item, const GuiWidget *parent) = 0;
 
         /**
          * Called whenever the item's content changes and this should be reflected
@@ -68,7 +68,7 @@ public:
          * @param widget  Widget that represents the item.
          * @param item    Item that has the content.
          */
-        virtual void updateItemWidget(GuiWidget &widget, ui::Item const &item) = 0;
+        virtual void updateItemWidget(GuiWidget &widget, const ui::Item &item) = 0;
     };
 
 public:
@@ -92,17 +92,17 @@ public:
      *
      * @param context  Context with items.
      */
-    void setContext(ui::Data const &context);
+    void setContext(const ui::Data &context);
 
     void unsetContext();
 
-    ui::Data const &context() const;
+    const ui::Data &context() const;
 
     GuiWidget *itemWidget(ui::Data::Pos pos) const;
-    GuiWidget *itemWidget(ui::Item const &item) const;
-    GuiWidget *itemWidget(String const &label) const;
+    GuiWidget *itemWidget(const ui::Item &item) const;
+    GuiWidget *itemWidget(const String &label) const;
 
-    ui::Item const *findItemForWidget(GuiWidget const &widget) const;
+    const ui::Item *findItemForWidget(const GuiWidget &widget) const;
 
 //- Child Widget Virtualization ---------------------------------------------------------
 
@@ -129,9 +129,9 @@ public:
      */
     void setRecyclingEnabled(bool enabled);
 
-    void setVirtualTopEdge(Rule const &topEdge);
+    void setVirtualTopEdge(const Rule &topEdge);
 
-    void setVisibleArea(Rule const &minimum, Rule const &maximum);
+    void setVisibleArea(const Rule &minimum, const Rule &maximum);
 
     bool virtualizationEnabled() const;
 
@@ -142,7 +142,7 @@ public:
      *
      * The initial value is zero.
      */
-    Rule const &virtualStrut() const;
+    const Rule &virtualStrut() const;
 
     /**
      * The average child height is used when estimating the maximum number of widgets
@@ -154,7 +154,7 @@ public:
 
     int averageChildHeight() const;
 
-    Rule const &estimatedTotalHeight() const;
+    const Rule &estimatedTotalHeight() const;
 
     /**
      * After child widgets have been moved around, this must be called to update the
@@ -170,7 +170,7 @@ public:
      */
     DE_AUDIENCE(WidgetCreation,
                            void widgetCreatedForItem(GuiWidget &widget,
-                                                     ui::Item const &item))
+                                                     const ui::Item &item))
 
     /**
      * Notified when the organizer updates a widget for a changed context item.
@@ -178,7 +178,7 @@ public:
      */
     DE_AUDIENCE(WidgetUpdate,
                            void widgetUpdatedForItem(GuiWidget &widget,
-                                                     ui::Item const &item))
+                                                     const ui::Item &item))
 
 private:
     DE_PRIVATE(d)
@@ -191,8 +191,8 @@ private:
 class DefaultWidgetFactory : public ChildWidgetOrganizer::IWidgetFactory
 {
 public:
-    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *parent);
-    void updateItemWidget(GuiWidget &widget, ui::Item const &item);
+    GuiWidget *makeItemWidget(const ui::Item &item, const GuiWidget *parent);
+    void updateItemWidget(GuiWidget &widget, const ui::Item &item);
 };
 
 } // namespace de

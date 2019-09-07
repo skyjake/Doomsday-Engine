@@ -22,11 +22,11 @@
 
 namespace res {
 
-SearchPath::SearchPath(res::Uri const &_uri, Flags _flags)
+SearchPath::SearchPath(const res::Uri &_uri, Flags _flags)
     : Uri(_uri), flags_(_flags)
 {}
 
-SearchPath::SearchPath(SearchPath const &other)
+SearchPath::SearchPath(const SearchPath &other)
     : Uri(other), flags_(other.flags_)
 {}
 

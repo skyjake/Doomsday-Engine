@@ -35,9 +35,9 @@ class IPersistent;
 class LIBGUI_PUBLIC PersistentState : public Refuge
 {
 public:
-    PersistentState(String const &name);
+    PersistentState(const String &name);
 
-    PersistentState &operator << (IPersistent const &object);
+    PersistentState &operator << (const IPersistent &object);
     PersistentState &operator >> (IPersistent &object);
 };
 

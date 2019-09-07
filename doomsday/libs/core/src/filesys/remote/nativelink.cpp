@@ -98,7 +98,7 @@ DE_PIMPL(NativeLink)
                     break;
                 }
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_NET_ERROR("Error when handling remote feed response: %s")
                         << er.asText();
@@ -108,7 +108,7 @@ DE_PIMPL(NativeLink)
     }
 };
 
-NativeLink::NativeLink(String const &address)
+NativeLink::NativeLink(const String &address)
     : Link(address)
     , d(new Impl(this))
 {
@@ -120,7 +120,7 @@ NativeLink::NativeLink(String const &address)
     d->socket.open(address.substr(BytePos(strlen(URL_SCHEME))));
 }
 
-Link *NativeLink::construct(String const &address)
+Link *NativeLink::construct(const String &address)
 {
     if (address.beginsWith(URL_SCHEME))
     {
@@ -129,7 +129,7 @@ Link *NativeLink::construct(String const &address)
     return nullptr;
 }
 
-void NativeLink::setLocalRoot(String const &rootPath)
+void NativeLink::setLocalRoot(const String &rootPath)
 {
     Link::setLocalRoot(rootPath);
 
@@ -154,7 +154,7 @@ PackagePaths NativeLink::locatePackages(const StringList &packageIds) const
     return remotePaths;
 }
 
-LoopResult filesys::NativeLink::forPackageIds(std::function<LoopResult (String const &)> func) const
+LoopResult filesys::NativeLink::forPackageIds(std::function<LoopResult (const String &)> func) const
 {
     return FS::locate<Folder>(DE_STR("/remote/server"))
         .forContents([&func](String name, File &) -> LoopResult {
@@ -172,7 +172,7 @@ void NativeLink::wasConnected()
     Link::wasConnected();
 }
 
-void NativeLink::transmit(Query const &query)
+void NativeLink::transmit(const Query &query)
 {
     DE_ASSERT(query.isValid());
 

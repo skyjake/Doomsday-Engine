@@ -36,7 +36,7 @@ namespace de {
 DE_PUBLIC void registerExtension(const char *name, void *(*getProcAddress)(const char *));
 
 #define DE_EXTENSION(Name) \
-    DE_EXTERN_C void *extension_##Name##_symbol(char const *); \
+    DE_EXTERN_C void *extension_##Name##_symbol(const char *); \
     struct Extension_##Name { \
         Extension_##Name() { \
             de::registerExtension(#Name, extension_##Name##_symbol); \

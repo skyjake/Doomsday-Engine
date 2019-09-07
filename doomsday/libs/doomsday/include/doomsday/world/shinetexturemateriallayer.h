@@ -40,19 +40,19 @@ public:
     class LIBDOOMSDAY_PUBLIC AnimationStage : public TextureMaterialLayer::AnimationStage
     {
     public:
-        AnimationStage(res::Uri const &texture, int tics, float variance,
-                       res::Uri const &maskTexture     = {},
+        AnimationStage(const res::Uri &texture, int tics, float variance,
+                       const res::Uri &maskTexture     = {},
                        blendmode_t blendMode           = BM_ADD,
                        float opacity                   = 1,
-                       de::Vec3f const &minColor       = {0.f},
-                       de::Vec2f const &maskDimensions = {1.f});
-        AnimationStage(AnimationStage const &other);
+                       const de::Vec3f &minColor       = {0.f},
+                       const de::Vec2f &maskDimensions = {1.f});
+        AnimationStage(const AnimationStage &other);
         virtual ~AnimationStage();
 
         /**
          * Construct a new AnimationStage from the given @a definition.
          */
-        static AnimationStage *fromDef(ded_shine_stage_t const &definition);
+        static AnimationStage *fromDef(const ded_shine_stage_t &definition);
 
         void resetToDefaults();
 
@@ -68,7 +68,7 @@ public:
     /**
      * Construct a new layer from the specified definition.
      */
-    static ShineTextureMaterialLayer *fromDef(ded_reflection_t const &def);
+    static ShineTextureMaterialLayer *fromDef(const ded_reflection_t &def);
 
     /**
      * Add a new animation Stage to the layer.
@@ -77,7 +77,7 @@ public:
      *
      * @return  Index of the newly added stage (0 based).
      */
-    int addStage(AnimationStage const &stage);
+    int addStage(const AnimationStage &stage);
 
     de::String describe() const;
 };

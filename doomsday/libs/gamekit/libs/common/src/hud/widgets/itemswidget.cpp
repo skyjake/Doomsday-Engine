@@ -25,7 +25,7 @@
 
 using namespace de;
 
-static void ItemsWidget_Draw(guidata_items_t *items, Point2Raw const *offset)
+static void ItemsWidget_Draw(guidata_items_t *items, const Point2Raw *offset)
 {
     DE_ASSERT(items);
     items->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -55,11 +55,11 @@ void guidata_items_t::tick(timespan_t /*elapsed*/)
 {
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
-    player_t const *plr = &players[player()];
+    const player_t *plr = &players[player()];
     _value = plr->itemCount;
 }
 
-void guidata_items_t::draw(Vec2i const &offset) const
+void guidata_items_t::draw(const Vec2i &offset) const
 {
 #if !__JHEXEN__
 

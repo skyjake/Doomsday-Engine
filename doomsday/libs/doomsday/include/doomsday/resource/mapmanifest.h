@@ -39,7 +39,7 @@ namespace res {
 class LIBDOOMSDAY_PUBLIC MapManifest : public de::PathTree::Node, public de::Record
 {
 public:
-    MapManifest(de::PathTree::NodeArgs const &args);
+    MapManifest(const de::PathTree::NodeArgs &args);
 
     /**
      * Returns a textual description of the manifest.
@@ -56,13 +56,13 @@ public:
     /**
      * Returns the id used to uniquely reference the map in some (old) definitions.
      */
-    de::String composeUniqueId(Game const &currentGame) const;
+    de::String composeUniqueId(const Game &currentGame) const;
 
     MapManifest &setSourceFile(File1 *newSourceFile);
     File1 *sourceFile() const;
 
     MapManifest &setRecognizer(Id1MapRecognizer *newRecognizer);
-    Id1MapRecognizer const &recognizer() const;
+    const Id1MapRecognizer &recognizer() const;
 
 private:
     //de::String cachePath;

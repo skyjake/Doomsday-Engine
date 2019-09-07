@@ -66,8 +66,8 @@ public:
     class DE_PUBLIC Asset : public RecordAccessor
     {
     public:
-        Asset(Record const &rec);
-        Asset(Record const *rec);
+        Asset(const Record &rec);
+        Asset(const Record *rec);
 
         /**
          * Retrieves the value of a variable and resolves it to an absolute path in
@@ -79,7 +79,7 @@ public:
          *
          * @see ScriptedInfo::absolutePathInContext()
          */
-        String absolutePath(String const &varName) const;
+        String absolutePath(const String &varName) const;
     };
 
 public:
@@ -89,7 +89,7 @@ public:
      *
      * @param file  File or folder containing the package's contents.
      */
-    Package(File const &file);
+    Package(const File &file);
 
     virtual ~Package();
 
@@ -100,21 +100,21 @@ public:
      *
      * @return Package file.
      */
-    File const &file() const;
+    const File &file() const;
 
     /**
      * Returns the original source file of the package, where the package's contents are
      * being sourced from. This is usually the file referenced by the "path" member in
      * the package metadata.
      */
-    File const &sourceFile() const;
+    const File &sourceFile() const;
 
     bool sourceFileExists() const;
 
     /**
      * Returns the package's root folder.
      */
-    Folder const &root() const;
+    const Folder &root() const;
 
     /**
      * Returns the unique package identifier. This is the file name of the package
@@ -143,13 +143,13 @@ public:
      * @return @c true, if the function exists and was called. @c false, if the
      * function was not found.
      */
-    bool executeFunction(String const &name);
+    bool executeFunction(const String &name);
 
     void setOrder(int ordinal);
 
     int order() const;
 
-    void findPartialPath(String const &path, FileIndex::FoundFiles &found) const;
+    void findPartialPath(const String &path, FileIndex::FoundFiles &found) const;
 
     /**
      * Called by PackageLoader after the package has been marked as loaded.
@@ -163,7 +163,7 @@ public:
 
     // Implements IObject.
     Record &objectNamespace();
-    Record const &objectNamespace() const;
+    const Record &objectNamespace() const;
 
 public:
     /**
@@ -179,25 +179,25 @@ public:
      *
      * @param packageInfo  Metadata to validate.
      */
-    static void validateMetadata(Record const &packageInfo);
+    static void validateMetadata(const Record &packageInfo);
 
-    static Record &initializeMetadata(File &packageFile, String const &id = String());
+    static Record &initializeMetadata(File &packageFile, const String &id = String());
 
-    static Record const &metadata(File const &packageFile);
+    static const Record &metadata(const File &packageFile);
 
-    static StringList tags(File const &packageFile);
+    static StringList tags(const File &packageFile);
 
-    static bool matchTags(File const &packageFile, String const &tagRegExp);
+    static bool matchTags(const File &packageFile, const String &tagRegExp);
 
     static StringList tags(String const& tagsString);
 
-    static StringList requiredPackages(File const &packageFile);
+    static StringList requiredPackages(const File &packageFile);
 
-    static void addRequiredPackage(File &packageFile, String const &id);
+    static void addRequiredPackage(File &packageFile, const String &id);
 
-    static bool hasOptionalContent(String const &packageId);
+    static bool hasOptionalContent(const String &packageId);
 
-    static bool hasOptionalContent(File const &packageFile);
+    static bool hasOptionalContent(const File &packageFile);
 
     /**
      * Splits a string containing a package identifier and version. The
@@ -207,17 +207,17 @@ public:
      *
      * @return The split components.
      */
-    static std::pair<String, Version> split(String const &identifier_version);
+    static std::pair<String, Version> split(const String &identifier_version);
 
-    static String splitToHumanReadable(String const &identifier_version);
+    static String splitToHumanReadable(const String &identifier_version);
 
-    static bool equals(String const &id1, String const &id2);
+    static bool equals(const String &id1, const String &id2);
 
-    static String identifierForFile(File const &file);
+    static String identifierForFile(const File &file);
 
-    static String versionedIdentifierForFile(File const &file);
+    static String versionedIdentifierForFile(const File &file);
 
-    static Version versionForFile(File const &file);
+    static Version versionForFile(const File &file);
 
     /**
      * Locates the file that represents the package where @a file is in.
@@ -226,9 +226,9 @@ public:
      *
      * @return Containing package, or nullptr if the file is not inside a package.
      */
-    static File const *containerOfFile(File const &file);
+    static const File *containerOfFile(const File &file);
 
-    static String identifierForContainerOfFile(File const &file);
+    static String identifierForContainerOfFile(const File &file);
 
     /**
      * Finds the package that contains @a file and returns its modification time.
@@ -239,7 +239,7 @@ public:
      *
      * @return Modification time of file or package.
      */
-    static Time containerOfFileModifiedAt(File const &file);
+    static Time containerOfFileModifiedAt(const File &file);
 
     static const String VAR_PACKAGE;
     static const String VAR_PACKAGE_ID;

@@ -51,7 +51,7 @@ class LIBGUI_PUBLIC GLTextureFramebuffer : public GLFramebuffer
 {
 public:
     GLTextureFramebuffer(Image::Format colorFormat = Image::RGB_888,
-                         Size const &  initialSize = Size(),
+                         const Size &  initialSize = Size(),
                          int           sampleCount = 0 /*default*/);
 
     using Formats = List<Image::Format>;
@@ -72,7 +72,7 @@ public:
      *
      * @param newSize  New size for the framebuffer.
      */
-    void resize(Size const &newSize);
+    void resize(const Size &newSize);
 
     /**
      * Updates the color and depth textures by blitting from the multisampled

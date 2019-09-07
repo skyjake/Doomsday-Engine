@@ -69,7 +69,7 @@ dint ColorPalettes::colorPaletteCount() const
     return dint(d->colorPalettes.size());
 }
 
-ColorPalette &ColorPalettes::colorPalette(Id const &id) const
+ColorPalette &ColorPalettes::colorPalette(const Id &id) const
 {
     auto found = d->colorPalettes.find(id.isNone()? d->defaultColorPalette : id);
     if (found != d->colorPalettes.end()) return *found->second;
@@ -100,7 +100,7 @@ ColorPalette &ColorPalettes::colorPalette(const String& name) const
     throw Resources::MissingResourceError("ColorPalettes::colorPalette", "Unknown name '" + name + "'");
 }
 
-void ColorPalettes::addColorPalette(ColorPalette &newPalette, String const &name)
+void ColorPalettes::addColorPalette(ColorPalette &newPalette, const String &name)
 {
     // Do we already own this palette?
     if (d->colorPalettes.contains(newPalette.id()))

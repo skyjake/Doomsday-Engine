@@ -22,21 +22,21 @@
 
 namespace de {
 
-AtlasTexture::AtlasTexture(Flags const &flags, Atlas::Size const &totalSize)
+AtlasTexture::AtlasTexture(const Flags &flags, const Atlas::Size &totalSize)
     : Atlas(flags, totalSize)
 {
     // Atlas textures are updated automatically when needed.
     setState(Ready);
 }
 
-AtlasTexture *AtlasTexture::newWithRowAllocator(Flags const &flags, Atlas::Size const &totalSize)
+AtlasTexture *AtlasTexture::newWithRowAllocator(const Flags &flags, const Atlas::Size &totalSize)
 {
     AtlasTexture *atlas = new AtlasTexture(flags, totalSize);
     atlas->setAllocator(new RowAtlasAllocator);
     return atlas;
 }
 
-AtlasTexture *AtlasTexture::newWithKdTreeAllocator(Flags const &flags, Atlas::Size const &totalSize)
+AtlasTexture *AtlasTexture::newWithKdTreeAllocator(const Flags &flags, const Atlas::Size &totalSize)
 {
     AtlasTexture *atlas = new AtlasTexture(flags, totalSize);
     atlas->setAllocator(new KdTreeAtlasAllocator);
@@ -56,7 +56,7 @@ void AtlasTexture::aboutToUse() const
     Atlas::commit();
 }
 
-void AtlasTexture::commitFull(Image const &fullImage) const
+void AtlasTexture::commitFull(const Image &fullImage) const
 {
     DE_ASSERT(fullImage.size() == totalSize());
 
@@ -64,7 +64,7 @@ void AtlasTexture::commitFull(Image const &fullImage) const
     const_cast<AtlasTexture *>(this)->setImage(fullImage);
 }
 
-void AtlasTexture::commit(Image const &image, Vec2i const &topLeft) const
+void AtlasTexture::commit(const Image &image, const Vec2i &topLeft) const
 {
     GLTexture *tex = const_cast<AtlasTexture *>(this);
 
@@ -77,7 +77,7 @@ void AtlasTexture::commit(Image const &image, Vec2i const &topLeft) const
     tex->setSubImage(image, topLeft);
 }
 
-void AtlasTexture::commit(Image const &fullImage, Rectanglei const &subregion) const
+void AtlasTexture::commit(const Image &fullImage, const Rectanglei &subregion) const
 {
     GLTexture *tex = const_cast<AtlasTexture *>(this);
 

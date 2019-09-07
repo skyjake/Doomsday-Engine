@@ -30,13 +30,13 @@ class LIBDOOMSDAY_PUBLIC Thing : public Definition
 {
 public:
     Thing()                    : Definition() {}
-    Thing(Thing const &other)  : Definition(other) {}
+    Thing(const Thing &other)  : Definition(other) {}
     Thing(de::Record &d)       : Definition(d) {}
-    Thing(de::Record const &d) : Definition(d) {}
+    Thing(const de::Record &d) : Definition(d) {}
     
     void resetToDefaults();
     
-    void setSound(int soundId, de::String const &sound);
+    void setSound(int soundId, const de::String &sound);
     de::String sound(int soundId) const;
     
     int flags(de::dint index) const;

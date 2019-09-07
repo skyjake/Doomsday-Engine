@@ -73,7 +73,7 @@ extern "C" {
 /**
  * Returns the AmmoDef for the specified ammunition @a type; otherwise @c 0.
  */
-AmmoDef const *P_AmmoDef(ammotype_t type);
+const AmmoDef *P_AmmoDef(ammotype_t type);
 
 void P_InitWeaponInfo(void);
 

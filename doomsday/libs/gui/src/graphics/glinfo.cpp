@@ -79,8 +79,8 @@ void APIENTRY debugMessageCallback(gl::GLenum source,
         return;
     }
 
-    char const *mType = "--";
-    char const *mSeverity = "--";
+    const char *mType = "--";
+    const char *mSeverity = "--";
 
     switch (type)
     {
@@ -178,7 +178,7 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
      * McReynolds in the book "Advanced Graphics Programming Using OpenGL"
      * ISBN: 1-55860-659-9.
      */
-    bool checkExtensionString(char const *name, char const *extensions)
+    bool checkExtensionString(const char *name, const char *extensions)
     {
         const char *start;
         const char *c, *terminator;
@@ -215,7 +215,7 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
         return false;
     }
 
-    bool doQuery(char const *ext)
+    bool doQuery(const char *ext)
     {
         DE_ASSERT(ext);
         //DE_ASSERT(QOpenGLContext::currentContext() != nullptr);
@@ -225,7 +225,7 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
 // #ifdef WIN32
 //         // Prefer the wgl-specific extensions.
 //         if (wglGetExtensionsStringARB != nullptr &&
-//            checkExtensionString(ext, (GLubyte const *)wglGetExtensionsStringARB(wglGetCurrentDC())))
+//            checkExtensionString(ext, (const GLubyte *)wglGetExtensionsStringARB(wglGetCurrentDC())))
 //             return true;
 // #endif
 // #endif
@@ -244,7 +244,7 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
         return SDL_GL_ExtensionSupported(ext);
     }
 
-    bool query(char const *ext)
+    bool query(const char *ext)
     {
         bool found = doQuery(ext);
         LOGDEV_GL_VERBOSE("%s: %b") << ext << found;
@@ -278,7 +278,7 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
                 NPOTTextures,
                 NPOTTextureRepeat,
             };
-            for (auto const &feature : requiredFeatures)
+            for (const auto &feature : requiredFeatures)
             {
                 if (!openGLFeatures().testFlag(feature))
                 {
@@ -340,17 +340,17 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
 //            if (ext.X11_EXT_swap_control)
 //            {
 //                glXSwapIntervalEXT = de::function_cast<decltype(glXSwapIntervalEXT)>
-//                        (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalEXT")));
+//                        (glXGetProcAddress(reinterpret_cast<const GLubyte *>("glXSwapIntervalEXT")));
 //            }
 //            if (ext.X11_SGI_swap_control)
 //            {
 //                glXSwapIntervalSGI = de::function_cast<decltype(glXSwapIntervalSGI)>
-//                        (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalSGI")));
+//                        (glXGetProcAddress(reinterpret_cast<const GLubyte *>("glXSwapIntervalSGI")));
 //            }
 //            if (ext.X11_MESA_swap_control)
 //            {
 //                glXSwapIntervalMESA = de::function_cast<decltype(glXSwapIntervalMESA)>
-//                        (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalMESA")));
+//                        (glXGetProcAddress(reinterpret_cast<const GLubyte *>("glXSwapIntervalMESA")));
 //            }
 //        }
 //        #endif
@@ -404,7 +404,7 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
 
 #if 0
         // Check default OpenGL format attributes.
-        QOpenGLContext const *ctx = QOpenGLContext::currentContext();
+        const QOpenGLContext *ctx = QOpenGLContext::currentContext();
         QSurfaceFormat form = ctx->format();
 
         LOGDEV_GL_MSG("Initial OpenGL format:");
@@ -494,13 +494,13 @@ void GLInfo::setSwapInterval(int interval)
     SDL_GL_SetSwapInterval(interval);
 }
 
-GLInfo::Extensions const &GLInfo::extensions()
+const GLInfo::Extensions &GLInfo::extensions()
 {
     DE_ASSERT(info.d->inited);
     return info.d->ext;
 }
 
-GLInfo::Limits const &GLInfo::limits()
+const GLInfo::Limits &GLInfo::limits()
 {
     DE_ASSERT(info.d->inited);
     return info.d->lim;
@@ -511,7 +511,7 @@ bool GLInfo::isFramebufferMultisamplingSupported()
     return true;
 }
 
-void GLInfo::checkError(char const *file, int line)
+void GLInfo::checkError(const char *file, int line)
 {
     LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
     GLenum error = GL_NO_ERROR;

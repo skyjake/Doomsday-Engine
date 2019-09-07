@@ -42,17 +42,17 @@
 extern "C" {
 #endif
 
-LIBDOOMSDAY_PUBLIC int F_Access(char const *nativePath);
+LIBDOOMSDAY_PUBLIC int F_Access(const char *nativePath);
 
-LIBDOOMSDAY_PUBLIC int F_FileExists(char const *path);
+LIBDOOMSDAY_PUBLIC int F_FileExists(const char *path);
 
-LIBDOOMSDAY_PUBLIC dd_bool F_MakePath(char const *path);
+LIBDOOMSDAY_PUBLIC dd_bool F_MakePath(const char *path);
 
 /**
  * Converts directory slashes to our internal '/'.
  * @return  @c true iff the path was modified.
  */
-LIBDOOMSDAY_PUBLIC dd_bool F_FixSlashes(ddstring_t *dst, ddstring_t const *src);
+LIBDOOMSDAY_PUBLIC dd_bool F_FixSlashes(ddstring_t *dst, const ddstring_t *src);
 
 /**
  * Appends a slash at the end of @a path if there isn't one.
@@ -64,13 +64,13 @@ LIBDOOMSDAY_PUBLIC dd_bool F_AppendMissingSlashCString(char *path, size_t maxLen
  * Converts directory slashes to tha used by the host file system.
  * @return  @c true iff the path was modified.
  */
-LIBDOOMSDAY_PUBLIC dd_bool F_ToNativeSlashes(ddstring_t *dst, ddstring_t const *src);
+LIBDOOMSDAY_PUBLIC dd_bool F_ToNativeSlashes(ddstring_t *dst, const ddstring_t *src);
 
 /**
  * @return  @c true, if the given path is absolute (starts with \ or / or the
  *          second character is a ':' (drive).
  */
-LIBDOOMSDAY_PUBLIC dd_bool F_IsAbsolute(ddstring_t const *path);
+LIBDOOMSDAY_PUBLIC dd_bool F_IsAbsolute(const ddstring_t *path);
 
 /**
  * Expands relative path directives like '>'.
@@ -86,9 +86,9 @@ LIBDOOMSDAY_PUBLIC dd_bool F_IsAbsolute(ddstring_t const *path);
  *
  * @return  @c true iff the path was expanded.
  */
-LIBDOOMSDAY_PUBLIC dd_bool F_ExpandBasePath(ddstring_t *dst, ddstring_t const *src);
+LIBDOOMSDAY_PUBLIC dd_bool F_ExpandBasePath(ddstring_t *dst, const ddstring_t *src);
 
-LIBDOOMSDAY_PUBLIC char const *F_PrettyPath(char const *path);
+LIBDOOMSDAY_PUBLIC const char *F_PrettyPath(const char *path);
 
 /**
  * Write the data associated with the specified lump index to @a outputPath.
@@ -100,7 +100,7 @@ LIBDOOMSDAY_PUBLIC char const *F_PrettyPath(char const *path);
  *
  * @return  @c true iff successful.
  */
-LIBDOOMSDAY_PUBLIC dd_bool F_DumpFile(res::File1 &file, char const *outputPath);
+LIBDOOMSDAY_PUBLIC dd_bool F_DumpFile(res::File1 &file, const char *outputPath);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -113,7 +113,7 @@ LIBDOOMSDAY_PUBLIC dd_bool F_DumpFile(res::File1 &file, char const *outputPath);
  *
  * @return @c true if successful, otherwise @c false.
  */
-LIBDOOMSDAY_PUBLIC bool F_DumpNativeFile(de::Block const &data, de::NativePath const &filePath);
+LIBDOOMSDAY_PUBLIC bool F_DumpNativeFile(const de::Block &data, const de::NativePath &filePath);
 
 #endif
 

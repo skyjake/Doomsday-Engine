@@ -34,7 +34,7 @@
 class MapPoint
 {
 public:
-    MapPoint(de::Vec3d const &origin = de::Vec3d()) {
+    MapPoint(const de::Vec3d &origin = de::Vec3d()) {
         setOrigin(origin);
     }
     virtual ~MapPoint() {}
@@ -43,7 +43,7 @@ public:
      * Returns the origin of the point in world space.
      */
     de::Vec3d origin() const { return _origin; }
-    void setOrigin(de::Vec3d const &newOrigin = de::Vec3d()) {
+    void setOrigin(const de::Vec3d &newOrigin = de::Vec3d()) {
         _origin = newOrigin;
     }
 
@@ -195,7 +195,7 @@ public:  // Map space camera: --------------------------------------------------
      *
      * @see moveCameraOrigin()
      */
-    void setCameraOrigin(de::Vec2d const &newOrigin, bool instantly = false);
+    void setCameraOrigin(const de::Vec2d &newOrigin, bool instantly = false);
 
     /**
      * Translate the world space origin of the camera given the relative @a delta.
@@ -205,7 +205,7 @@ public:  // Map space camera: --------------------------------------------------
      *
      * @see AutomapWidget_SetCameraOrigin()
      */
-    inline void moveCameraOrigin(de::Vec2d const &delta, bool instantly = false) {
+    inline void moveCameraOrigin(const de::Vec2d &delta, bool instantly = false) {
         setCameraOrigin(cameraOrigin() + delta, instantly);
     }
 
@@ -223,7 +223,7 @@ public:  // Marked map space points of interest: -------------------------------
      *
      * @return  Index number of the newly added point (base 0).
      */
-    de::dint addPoint(de::Vec3d const &origin);
+    de::dint addPoint(const de::Vec3d &origin);
 
     /**
      * Returns @c true if @a index is a known point of interest.
@@ -258,7 +258,7 @@ public:  // Marked map space points of interest: -------------------------------
 public:  /// @todo make private:
 
     void reset();
-    void lineAutomapVisibilityChanged(Line const &line);
+    void lineAutomapVisibilityChanged(const Line &line);
 
     void setMapBounds(coord_t lowX, coord_t hiX, coord_t lowY, coord_t hiY);
 
@@ -266,7 +266,7 @@ public:  /// @todo make private:
 
     void tick(timespan_t elapsed);
     void updateGeometry();
-    void draw(de::Vec2i const &offset = de::Vec2i()) const;
+    void draw(const de::Vec2i &offset = de::Vec2i()) const;
 
     void pvisibleBounds(coord_t *lowX, coord_t *hiX, coord_t *lowY, coord_t *hiY) const;
 

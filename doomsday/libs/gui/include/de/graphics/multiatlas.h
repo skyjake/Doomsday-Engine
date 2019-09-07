@@ -70,18 +70,18 @@ public:
          * @return Id of the new allocation. This Id will be used for final
          * committed allocation, too.
          */
-        Id alloc(Image const &image, Id const &knownId = Id::None) override;
+        Id alloc(const Image &image, const Id &knownId = Id::None) override;
 
-        void release(Id const &id) override;
+        void release(const Id &id) override;
 
-        bool contains(Id const &id) const override;
+        bool contains(const Id &id) const override;
 
         /**
          * Commit all the allocated images.
          */
         void commit() const override;
 
-        Rectanglef imageRectf(Id const &id) const override;
+        Rectanglef imageRectf(const Id &id) const override;
 
         /**
          * Returns the Atlas where the group's images have been allocated to.
@@ -89,7 +89,7 @@ public:
          * @return Atlas object (if asset ready), or nullptr if the AllocGroup
          * has not been committed yet (asset not ready).
          */
-        Atlas const *atlas() const;
+        const Atlas *atlas() const;
 
         /**
          * Returns the MultiAtlas this allocation group belongs to.

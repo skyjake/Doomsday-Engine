@@ -33,7 +33,7 @@ class DE_PUBLIC MonospaceLogSinkFormatter : public LogSink::IFormatter
 public:
     MonospaceLogSinkFormatter();
 
-    StringList logEntryToTextLines(LogEntry const &entry);
+    StringList logEntryToTextLines(const LogEntry &entry);
 
     /**
      * Sets the maximum line length. Entries will be wrapped onto multiple

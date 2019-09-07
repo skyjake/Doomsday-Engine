@@ -71,7 +71,7 @@ public:
      *
      * @return Id of the texture allocation.
      */
-    Id styleTexture(DotPath const &styleImagePath) const;
+    Id styleTexture(const DotPath &styleImagePath) const;
 
     static GLShaderBank &shaders();
 
@@ -86,7 +86,7 @@ public:
 
     void routeMouse(Widget *routeTo);
 
-    bool processEvent(Event const &event);
+    bool processEvent(const Event &event);
 
     /**
      * Finds the widget that occupies the given point, looking through the entire tree. The
@@ -97,9 +97,9 @@ public:
      *
      * @return  Widget, or @c NULL if none were found.
      */
-    GuiWidget const *globalHitTest(Vec2i const &pos) const;
+    const GuiWidget *globalHitTest(const Vec2i &pos) const;
 
-    GuiWidget const *guiFind(String const &name) const;
+    const GuiWidget *guiFind(const String &name) const;
 
     FocusWidget &focusIndicator();
 
@@ -153,7 +153,7 @@ public:
      *
      * @param event  Event.
      */
-    virtual void handleEventAsFallback(Event const &event);
+    virtual void handleEventAsFallback(const Event &event);
 
 protected:
     virtual void loadCommonTextures();

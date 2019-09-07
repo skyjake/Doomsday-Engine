@@ -55,7 +55,7 @@ static void setdata(FindData *dta)
     }
 }
 
-int FindFile_FindFirst(FindData *dta, char const *filenameUtf8)
+int FindFile_FindFirst(FindData *dta, const char *filenameUtf8)
 {
     DE_ASSERT(filenameUtf8 && dta);
 

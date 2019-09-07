@@ -364,7 +364,7 @@ struct Huffman
         zapPtr(buffer);
     }
 
-    dbyte *encode(dbyte const *data, dsize size, dsize *encodedSize) const
+    dbyte *encode(const dbyte *data, dsize size, dsize *encodedSize) const
     {
         HuffBuffer huffEnc;
         dsize i;
@@ -429,13 +429,13 @@ struct Huffman
         return huffEnc.data;
     }
 
-    dbyte *decode(dbyte const *data, dsize size, dsize *decodedSize) const
+    dbyte *decode(const dbyte *data, dsize size, dsize *decodedSize) const
     {
         HuffBuffer huffDec;
         HuffNode *node;
         dsize outBytes = 0;
-        dbyte const *in = data;
-        dbyte const *lastIn = in + size - 1;
+        const dbyte *in = data;
+        const dbyte *lastIn = in + size - 1;
         dbyte bit = 3, lastByteBits;
 
         if (!data || size == 0) return nullptr;
@@ -502,7 +502,7 @@ struct Huffman
 
 static internal::Huffman huff;
 
-Block codec::huffmanEncode(Block const &data)
+Block codec::huffmanEncode(const Block &data)
 {
     Block result;
     dsize size = 0;
@@ -515,7 +515,7 @@ Block codec::huffmanEncode(Block const &data)
     return result;
 }
 
-Block codec::huffmanDecode(Block const &codedData)
+Block codec::huffmanDecode(const Block &codedData)
 {
     Block result;
     dsize size = 0;

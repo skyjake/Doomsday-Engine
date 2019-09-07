@@ -72,8 +72,8 @@ void R_CycleGammaLevel(void);
 
 void R_StatusBarSize(int player, Size2Raw *statusBarSize);
 
-void G_DrawViewPort(int port, RectRaw const *portGeometry,
-                    RectRaw const *windowGeometry, int player, int layer);
+void G_DrawViewPort(int port, const RectRaw *portGeometry,
+                    const RectRaw *windowGeometry, int player, int layer);
 
 /**
  * Remove all visual effects applied to the view, e.g., post-processing shader,

@@ -484,7 +484,7 @@ public:
 #if defined(MACOSX)
         inline void setValue(size_t i) { setValue(uint64_t(i)); }
 #endif
-        void setValue(void const *p);
+        void setValue(const void *p);
         void setValue(const char *s);
         void setValue(const std::string &s);
         void setValue(const String &s);
@@ -493,9 +493,9 @@ public:
         void setValue(const std::array<char, 4> &typecode);
 
         template <typename ValueType>
-        Arg &set(ValueType const &s) { setValue(s); return *this; }
+        Arg &set(const ValueType &s) { setValue(s); return *this; }
 
-        Arg &operator = (Arg const &other);
+        Arg &operator = (const Arg &other);
 
         inline Type type() const { return _type; }
         inline dint64 intValue() const {
@@ -524,7 +524,7 @@ public:
         static void returnToPool(Arg *arg);
 
         template <typename ValueType>
-        static inline Arg *newFromPool(ValueType const &v) {
+        static inline Arg *newFromPool(const ValueType &v) {
             return &(newFromPool()->set(v));
         }
 
@@ -589,7 +589,7 @@ public:
      * @param other       Log entry.
      * @param extraFlags  Additional flags to apply to the new entry.
      */
-    LogEntry(LogEntry const &other, Flags extraFlags = 0);
+    LogEntry(const LogEntry &other, Flags extraFlags = 0);
 
     ~LogEntry();
 
@@ -606,12 +606,12 @@ public:
 
     /// Returns a reference to the entry's section part. Reference is valid
     /// for the lifetime of the entry.
-    String const &section() const { return _section; }
+    const String &section() const { return _section; }
 
     /// Returns the number of sub-sections in the entry's section part.
     int sectionDepth() const { return _sectionDepth; }
 
-    String const &format() const { return _format; }
+    const String &format() const { return _format; }
 
     /**
      * Converts the log entry to a string.
@@ -623,7 +623,7 @@ public:
      *
      * @return Composed textual representation of the entry.
      */
-    String asText(Flags const &flags = 0, dsize shortenSection = 0) const;
+    String asText(const Flags &flags = 0, dsize shortenSection = 0) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
@@ -705,14 +705,14 @@ public:
      * @param name  Name of the section. No copy of this string is made,
      *              so it must exist while the section is in use.
      */
-    void beginSection(char const *name);
+    void beginSection(const char *name);
 
     /**
      * Ends the topmost section in the log.
      *
      * @param name  Name of the topmost section.
      */
-    void endSection(char const *name);
+    void endSection(const char *name);
 
     /**
      * Begins an interactive section. All entries added while interactive get
@@ -736,7 +736,7 @@ public:
      * @param arguments  List of arguments. The entry is given ownership of
      *                   each Arg instance.
      */
-    LogEntry &enter(String const &format, LogEntry::Args arguments = LogEntry::Args());
+    LogEntry &enter(const String &format, LogEntry::Args arguments = LogEntry::Args());
 
     /**
      * Creates a new log entry with the specified log entry level.
@@ -746,7 +746,7 @@ public:
      * @param arguments  List of arguments. The entry is given ownership of
      *                   each Arg instance.
      */
-    LogEntry &enter(duint32 metadata, String const &format, LogEntry::Args arguments = LogEntry::Args());
+    LogEntry &enter(duint32 metadata, const String &format, LogEntry::Args arguments = LogEntry::Args());
 
 public:
     /**
@@ -773,11 +773,11 @@ private:
 class DE_PUBLIC LogEntryStager
 {
 public:
-    LogEntryStager(duint32 metadata, String const &format);
+    LogEntryStager(duint32 metadata, const String &format);
 
     /// Appends a new argument to the entry.
     template <typename ValueType>
-    inline LogEntryStager &operator << (ValueType const &v) {
+    inline LogEntryStager &operator << (const ValueType &v) {
         // Args are created only if the level is enabled.
         if (!_disabled) {
             _args << LogEntry::Arg::newFromPool(v);

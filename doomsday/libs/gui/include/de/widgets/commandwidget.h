@@ -40,21 +40,21 @@ public:
     DE_AUDIENCE(Command,   void commandEntered(const String &command))
 
 public:
-    CommandWidget(String const &name = {});
+    CommandWidget(const String &name = {});
 
     PopupWidget &autocompletionPopup();
 
     // Events.
     void focusGained() override;
     void focusLost() override;
-    bool handleEvent(Event const &event) override;
+    bool handleEvent(const Event &event) override;
     void update() override;
 
-    bool handleControlKey(term::Key key, KeyModifiers const &mods) override;
+    bool handleControlKey(term::Key key, const KeyModifiers &mods) override;
 
     // IPersistent.
     void operator>>(PersistentState &toState) const override;
-    void operator<<(PersistentState const &fromState) override;
+    void operator<<(const PersistentState &fromState) override;
 
     /**
      * Moves the current contents of the command line to the history. The
@@ -73,16 +73,16 @@ protected:
      *
      * @return @c true, if the text is an executable command.
      */
-    virtual bool isAcceptedAsCommand(String const &text) = 0;
+    virtual bool isAcceptedAsCommand(const String &text) = 0;
 
-    virtual void executeCommand(String const &text) = 0;
+    virtual void executeCommand(const String &text) = 0;
 
     /**
      * Shows the popup with a list of possible completions.
      *
      * @param completionsText  Styled content for the popup.
      */
-    void showAutocompletionPopup(String const &completionsText);
+    void showAutocompletionPopup(const String &completionsText);
 
     void autoCompletionEnded(bool accepted) override;
 

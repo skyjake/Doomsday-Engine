@@ -76,7 +76,7 @@ public:
      * @param defaults  Default values for some or all of the arguments. Ownership
      *                  of the values is transferred to Function.
      */
-    Function(Arguments const &args, Defaults const &defaults);
+    Function(const Arguments &args, const Defaults &defaults);
 
     /**
      * Construct a function that uses a native entry point.
@@ -87,24 +87,24 @@ public:
      *
      * @see nativeEntryPoint()
      */
-    Function(String const    &nativeName,
-             Arguments const &args = Arguments(),
-             Defaults const  &defaults = Defaults());
+    Function(const String &nativeName,
+             const Arguments &args = Arguments(),
+             const Defaults &defaults = Defaults());
 
     /// Returns a human-readable representation of the function.
     String asText() const;
 
     Compound &compound();
 
-    Compound const &compound() const;
+    const Compound &compound() const;
 
     Arguments &arguments();
 
-    Arguments const &arguments() const;
+    const Arguments &arguments() const;
 
     Defaults &defaults();
 
-    Defaults const &defaults() const;
+    const Defaults &defaults() const;
 
     /**
      * Maps a set of named and unnamed argument values to the list of values that
@@ -118,7 +118,7 @@ public:
      *                The values are in the order the arguments have been declared in
      *                the function statement.
      */
-    void mapArgumentValues(ArrayValue const &args, ArgumentValues &values) const;
+    void mapArgumentValues(const ArrayValue &args, ArgumentValues &values) const;
 
     /**
      * Sets the global namespace of the function. This is the namespace where the
@@ -158,7 +158,7 @@ public:
      *
      * @return Return value from the native function. Always a valid Value.
      */
-    virtual Value *callNative(Context &context, ArgumentValues const &args) const;
+    virtual Value *callNative(Context &context, const ArgumentValues &args) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
@@ -173,7 +173,7 @@ public:
      * produce a return value (returns @c NULL), a NoneValue is
      * automatically created.
      */
-    typedef Value *(*NativeEntryPoint)(Context &, ArgumentValues const &);
+    typedef Value *(*NativeEntryPoint)(Context &, const ArgumentValues &);
 
     /**
      * Registers a native entry point.
@@ -182,7 +182,7 @@ public:
      *                    serialized data.
      * @param entryPoint  Pointer to the entry point. (Not serialized.)
      */
-    static void registerNativeEntryPoint(String const &name, NativeEntryPoint entryPoint);
+    static void registerNativeEntryPoint(const String &name, NativeEntryPoint entryPoint);
 
     /**
      * Unregisters a native entry point. This is required for instance when
@@ -192,7 +192,7 @@ public:
      *
      * @param name  Name of a previously registered native entry point.
      */
-    static void unregisterNativeEntryPoint(String const &name);
+    static void unregisterNativeEntryPoint(const String &name);
 
     /**
      * Finds a native entry point. The entry point needs to be either one
@@ -203,7 +203,7 @@ public:
      *
      * @return Native entry point.
      */
-    static NativeEntryPoint nativeEntryPoint(String const &name);
+    static NativeEntryPoint nativeEntryPoint(const String &name);
 
 protected:
     ~Function(); // Counted
@@ -222,10 +222,10 @@ class DE_PUBLIC NativeFunctionSpec
 {
 public:
     NativeFunctionSpec(Function::NativeEntryPoint entryPoint,
-                       char const *nativeName,
-                       String const &name,
-                       Function::Arguments const &argNames = Function::Arguments(),
-                       Function::Defaults const &argDefaults = Function::Defaults())
+                       const char *nativeName,
+                       const String &name,
+                       const Function::Arguments &argNames = Function::Arguments(),
+                       const Function::Defaults &argDefaults = Function::Defaults())
         : _entryPoint(entryPoint)
         , _nativeName(nativeName)
         , _name(name)
@@ -239,12 +239,12 @@ public:
      */
     Function *make() const;
 
-    char const *nativeName() const { return _nativeName; }
+    const char *nativeName() const { return _nativeName; }
     String name() const { return _name; }
 
 private:
     Function::NativeEntryPoint _entryPoint;
-    char const *_nativeName;
+    const char *_nativeName;
     String _name;
     Function::Arguments _argNames;
     Function::Defaults _argDefaults;
@@ -312,7 +312,7 @@ public:
 
     Record &module() const;
 
-    Binder &operator << (NativeFunctionSpec const &spec);
+    Binder &operator << (const NativeFunctionSpec &spec);
 
 private:
     Record *_module;

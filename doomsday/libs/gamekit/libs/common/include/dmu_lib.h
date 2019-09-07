@@ -273,7 +273,7 @@ Sector *P_FindSectorSurroundingNextHighestLight(Sector *sector, float baseLight,
  * @param sec  The sector to check.
  * @param plane  The plane id to check.
  */
-terraintype_t const *P_PlaneMaterialTerrainType(Sector *sec, int plane);
+const terraintype_t *P_PlaneMaterialTerrainType(Sector *sec, int plane);
 
 /**
  * Copies all (changeable) properties from one line to another including the

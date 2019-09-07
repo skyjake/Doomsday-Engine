@@ -45,7 +45,7 @@ public:
      *
      * @param name  Widget name.
      */
-    LineEditWidget(String const &name = String());
+    LineEditWidget(const String &name = String());
 
     /**
      * Enables or disables the signal emitted when the edit widget receives an
@@ -57,13 +57,13 @@ public:
 
     Vec2i cursorPosition() const;
 
-    bool handleControlKey(Key key, KeyModifiers const &mods = Unmodified);
+    bool handleControlKey(Key key, const KeyModifiers &mods = Unmodified);
 
     // Events.
     void viewResized();
     void update();
     void draw();
-    bool handleEvent(Event const &event);
+    bool handleEvent(const Event &event);
 
 protected:
     virtual int  maximumWidth() const;

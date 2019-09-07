@@ -47,24 +47,24 @@ extern "C" {
 /*
  * App
  */
-DE_PUBLIC void App_Log(unsigned int metadata, char const *format, ...);
+DE_PUBLIC void App_Log(unsigned int metadata, const char *format, ...);
 DE_PUBLIC void App_Timer(unsigned int milliseconds, void (*callback)(void));
-DE_PUBLIC DE_NORETURN void App_FatalError(char const *msgFormat, ...);
+DE_PUBLIC DE_NORETURN void App_FatalError(const char *msgFormat, ...);
 
 /*
  * CommandLine
  */
-DE_PUBLIC void CommandLine_Alias(char const *longname, char const *shortname);
+DE_PUBLIC void CommandLine_Alias(const char *longname, const char *shortname);
 DE_PUBLIC int CommandLine_Count(void);
-DE_PUBLIC char const *CommandLine_At(int i);
-DE_PUBLIC char const *CommandLine_PathAt(int i);
-DE_PUBLIC char const *CommandLine_Next(void);
-DE_PUBLIC char const *CommandLine_NextAsPath(void);
-DE_PUBLIC int CommandLine_Check(char const *check);
-DE_PUBLIC int CommandLine_CheckWith(char const *check, int num);
-DE_PUBLIC int CommandLine_Exists(char const *check);
+DE_PUBLIC const char *CommandLine_At(int i);
+DE_PUBLIC const char *CommandLine_PathAt(int i);
+DE_PUBLIC const char *CommandLine_Next(void);
+DE_PUBLIC const char *CommandLine_NextAsPath(void);
+DE_PUBLIC int CommandLine_Check(const char *check);
+DE_PUBLIC int CommandLine_CheckWith(const char *check, int num);
+DE_PUBLIC int CommandLine_Exists(const char *check);
 DE_PUBLIC int CommandLine_IsOption(int i);
-DE_PUBLIC int CommandLine_IsMatchingAlias(char const *original, char const *originalOrAlias);
+DE_PUBLIC int CommandLine_IsMatchingAlias(const char *original, const char *originalOrAlias);
 
 /*
  * LogBuffer
@@ -227,22 +227,22 @@ logentry_metadata_t;
 DE_PUBLIC void LogBuffer_EnableStandardOutput(int enable);
 DE_PUBLIC void LogBuffer_Flush(void);
 DE_PUBLIC void LogBuffer_Clear(void);
-DE_PUBLIC void LogBuffer_Printf(unsigned int metadata, char const *format, ...); // note: manual newlines
+DE_PUBLIC void LogBuffer_Printf(unsigned int metadata, const char *format, ...); // note: manual newlines
 
 /*
  * Info
  */
 DE_OPAQUE(de_Info)
 
-DE_PUBLIC de_Info *Info_NewFromString(char const *utf8text);
-DE_PUBLIC de_Info *Info_NewFromFile(char const *nativePath);
+DE_PUBLIC de_Info *Info_NewFromString(const char *utf8text);
+DE_PUBLIC de_Info *Info_NewFromFile(const char *nativePath);
 DE_PUBLIC void Info_Delete(de_Info *info);
-DE_PUBLIC int Info_FindValue(de_Info *info, char const *path, char *buffer, size_t bufSize);
+DE_PUBLIC int Info_FindValue(de_Info *info, const char *path, char *buffer, size_t bufSize);
 
 /*
  * UnixInfo
  */
-DE_PUBLIC char *UnixInfo_GetConfigValue(char const *configFile, char const *key); // caller must free() returned
+DE_PUBLIC char *UnixInfo_GetConfigValue(const char *configFile, const char *key); // caller must free() returned
 
 /*
  * ByteOrder

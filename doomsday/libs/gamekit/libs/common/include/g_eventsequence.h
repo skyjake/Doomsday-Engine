@@ -43,7 +43,7 @@ typedef int EventSequenceArg;
 /**
  * Event sequence callback handler.
  */
-typedef int (*eventsequencehandler_t) (int player, EventSequenceArg const *args, int numArgs);
+typedef int (*eventsequencehandler_t) (int player, const EventSequenceArg *args, int numArgs);
 
 // Initialize this subsystem.
 void G_InitEventSequences(void);
@@ -65,7 +65,7 @@ int G_EventSequenceResponder(event_t *ev);
  * @param sequence  Text description of the sequence.
  * @param callback  Handler function to be called upon sequence completion.
  */
-void G_AddEventSequence(char const *sequence, eventsequencehandler_t callback);
+void G_AddEventSequence(const char *sequence, eventsequencehandler_t callback);
 
 /**
  * Add a new event sequence.
@@ -73,7 +73,7 @@ void G_AddEventSequence(char const *sequence, eventsequencehandler_t callback);
  * @param sequence     Text description of the sequence.
  * @param cmdTemplate  Templated console command to be executed upon sequence completion.
  */
-void G_AddEventSequenceCommand(char const *sequence, char const *commandTemplate);
+void G_AddEventSequenceCommand(const char *sequence, const char *commandTemplate);
 
 #if __cplusplus
 } // extern "C"

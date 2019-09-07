@@ -52,7 +52,7 @@ DE_PIMPL(PackageDownloader)
 
     Impl(Public *i) : Base(i) {}
 
-    void remoteRepositoryStatusChanged(String const &address,
+    void remoteRepositoryStatusChanged(const String &address,
                                        filesys::RemoteFeedRelay::Status) override
     {
         if (address == fileRepository)
@@ -197,7 +197,7 @@ DE_PIMPL(PackageDownloader)
      * @param ids  Identifiers of remote packages that have been downloaded and are now
      *             being prepared for loading.
      */
-    void linkRemotePackages(filesys::PackagePaths const &pkgPaths)
+    void linkRemotePackages(const filesys::PackagePaths &pkgPaths)
     {
         Folder &remotePacks = FS::get().makeFolder(PATH_REMOTE_PACKS);
         for (auto i = pkgPaths.begin(); i != pkgPaths.end(); ++i)

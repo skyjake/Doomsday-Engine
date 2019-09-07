@@ -73,7 +73,7 @@ DE_PIMPL(EditorHistory)
         return history[historyPos];
     }
 
-    Command const &command() const
+    const Command &command() const
     {
         DE_ASSERT(historyPos >= 0 && historyPos < history.sizei());
         return history[historyPos];

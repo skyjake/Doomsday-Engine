@@ -28,12 +28,12 @@ DE_PIMPL(System)
     {}
 };
 
-System::System(Flags const &behavior) : d(new Impl(this))
+System::System(const Flags &behavior) : d(new Impl(this))
 {
     d->behavior = behavior;
 }
 
-void System::setBehavior(Flags const &behavior, FlagOp operation)
+void System::setBehavior(const Flags &behavior, FlagOp operation)
 {
     applyFlagOperation(d->behavior, behavior, operation);
 }
@@ -43,12 +43,12 @@ Flags System::behavior() const
     return d->behavior;
 }
 
-bool System::processEvent(Event const &)
+bool System::processEvent(const Event &)
 {
     return false;
 }
 
-void System::timeChanged(Clock const &)
+void System::timeChanged(const Clock &)
 {}
 
 } // namespace de

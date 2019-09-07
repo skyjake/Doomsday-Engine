@@ -53,7 +53,7 @@ extern "C" {
  * @return  @c true iff an unobstructed line of sight exists from @a beholder
  * to the @a target.
  */
-dd_bool P_CheckSight(mobj_t const *beholder, mobj_t const *target);
+dd_bool P_CheckSight(const mobj_t *beholder, const mobj_t *target);
 
 /**
  * Determines the world space angle between the points @a from and @a to.

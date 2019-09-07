@@ -58,7 +58,7 @@ DE_PIMPL_NOREF(Sprites)
                                               "Unknown sprite id " + String::asText(id));
     }
 
-    SpriteSet &addSpriteSet(spritenum_t id, SpriteSet const &frames)
+    SpriteSet &addSpriteSet(spritenum_t id, const SpriteSet &frames)
     {
         DE_ASSERT(!tryFindSpriteSet(id));  // sanity check.
         sprites.insert(id, frames);
@@ -75,7 +75,7 @@ void Sprites::clear()
     d->sprites.clear();
 }
 
-Sprites::SpriteSet &Sprites::addSpriteSet(spritenum_t id, SpriteSet const &frames)
+Sprites::SpriteSet &Sprites::addSpriteSet(spritenum_t id, const SpriteSet &frames)
 {
     return d->addSpriteSet(id, frames);
 }
@@ -87,7 +87,7 @@ dint Sprites::spriteCount() const
 
 bool Sprites::hasSprite(spritenum_t id, dint frame) const
 {
-    if (SpriteSet const *frames = d.getConst()->tryFindSpriteSet(id))
+    if (const SpriteSet *frames = d.getConst()->tryFindSpriteSet(id))
     {
         return frames->contains(frame);
     }
@@ -99,9 +99,9 @@ defn::CompiledSpriteRecord &Sprites::sprite(spritenum_t id, dint frame)
     return d->findSpriteSet(id).find(frame)->second;
 }
 
-defn::CompiledSpriteRecord const *Sprites::spritePtr(spritenum_t id, de::dint frame) const
+const defn::CompiledSpriteRecord *Sprites::spritePtr(spritenum_t id, de::dint frame) const
 {
-    if (Sprites::SpriteSet const *sprSet = tryFindSpriteSet(id))
+    if (const Sprites::SpriteSet *sprSet = tryFindSpriteSet(id))
     {
         auto found = sprSet->find(frame);
         if (found != sprSet->end()) return &found->second;
@@ -109,12 +109,12 @@ defn::CompiledSpriteRecord const *Sprites::spritePtr(spritenum_t id, de::dint fr
     return nullptr;
 }
 
-Sprites::SpriteSet const *Sprites::tryFindSpriteSet(spritenum_t id) const
+const Sprites::SpriteSet *Sprites::tryFindSpriteSet(spritenum_t id) const
 {
     return d->tryFindSpriteSet(id);
 }
 
-Sprites::SpriteSet const &Sprites::spriteSet(spritenum_t id) const
+const Sprites::SpriteSet &Sprites::spriteSet(spritenum_t id) const
 {
     return d->findSpriteSet(id);
 }
@@ -152,7 +152,7 @@ typedef Hash<String, SpriteFrameDefs> SpriteDefs;        ///< sprite name => fra
  * around the axis. This is not the same as the angle, which increases
  * counter clockwise (protractor).
  */
-static SpriteDefs buildSpriteFramesFromTextures(res::TextureScheme::Index const &texIndex)
+static SpriteDefs buildSpriteFramesFromTextures(const res::TextureScheme::Index &texIndex)
 {
     static dint const NAME_LENGTH = 4;
 
@@ -162,7 +162,7 @@ static SpriteDefs buildSpriteFramesFromTextures(res::TextureScheme::Index const 
     PathTreeIterator<res::TextureScheme::Index> iter(texIndex.leafNodes());
     while (iter.hasNext())
     {
-        res::TextureManifest const &texManifest = iter.next();
+        const res::TextureManifest &texManifest = iter.next();
 
         String const material   = res::Uri("Sprites", texManifest.path()).compose();
         // Decode the sprite frame descriptor.
@@ -239,7 +239,7 @@ static Sprites::SpriteSet buildSprites(const std::multimap<dint, SpriteFrameDef>
             defn::Sprite(*rec).resetToDefaults();
         }
 
-        SpriteFrameDef const &def = it->second;
+        const SpriteFrameDef &def = it->second;
         defn::Sprite(*rec).addView(def.material, def.angle, def.mirrored);
     }
 

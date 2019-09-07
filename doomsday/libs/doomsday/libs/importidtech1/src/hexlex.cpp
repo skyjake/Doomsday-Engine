@@ -31,7 +31,7 @@ namespace idtech1 {
 DE_PIMPL(HexLex)
 {
     String sourcePath;                   ///< Used to identify the source in error messages.
-    ddstring_s const *script = nullptr;  ///< The start of the script being parsed.
+    const ddstring_s *script = nullptr;  ///< The start of the script being parsed.
     int readPos              = 0;        ///< Current read position.
     int lineNumber           = 0;
     ddstring_s token;
@@ -66,7 +66,7 @@ DE_PIMPL(HexLex)
     }
 };
 
-HexLex::HexLex(ddstring_s const *script, String const &sourcePath)
+HexLex::HexLex(const ddstring_s *script, const String &sourcePath)
     : d(new Impl(this))
 {
     setSourcePath(sourcePath);
@@ -76,7 +76,7 @@ HexLex::HexLex(ddstring_s const *script, String const &sourcePath)
     }
 }
 
-void HexLex::parse(ddstring_s const *script)
+void HexLex::parse(const ddstring_s *script)
 {
     LOG_AS("HexLex");
 
@@ -87,12 +87,12 @@ void HexLex::parse(ddstring_s const *script)
     Str_Clear(&d->token);
 }
 
-void HexLex::setSourcePath(String const &sourcePath)
+void HexLex::setSourcePath(const String &sourcePath)
 {
     d->sourcePath = sourcePath;
 }
 
-String const &HexLex::sourcePath() const
+const String &HexLex::sourcePath() const
 {
     return d->sourcePath;
 }
@@ -212,7 +212,7 @@ void HexLex::unreadToken()
     d->alreadyGot = true;
 }
 
-ddstring_s const *HexLex::token()
+const ddstring_s *HexLex::token()
 {
     return &d->token;
 }
@@ -239,7 +239,7 @@ ddouble HexLex::readNumber()
     return number;
 }
 
-ddstring_s const *HexLex::readString()
+const ddstring_s *HexLex::readString()
 {
     LOG_AS("HexLex");
     if(!readToken())
@@ -250,7 +250,7 @@ ddstring_s const *HexLex::readString()
     return &d->token;
 }
 
-res::Uri HexLex::readUri(String const &defaultScheme)
+res::Uri HexLex::readUri(const String &defaultScheme)
 {
     LOG_AS("HexLex");
     if(!readToken())

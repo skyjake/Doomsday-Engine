@@ -46,14 +46,14 @@ DE_PIMPL(BitField::Elements)
         , totalBits(0)
     {}
 
-    Impl(Public *i, Impl const &other)
+    Impl(Public *i, const Impl &other)
         : Base     (i)
         , elements (other.elements)
         , totalBits(other.totalBits)
         , lookup   (other.lookup)
     {}
 
-    Element const &element(Id id) const
+    const Element &element(Id id) const
     {
         DE_ASSERT(elements.contains(id));
         return elements.constFind(id)->second;
@@ -63,7 +63,7 @@ DE_PIMPL(BitField::Elements)
 BitField::Elements::Elements() : d(new Impl(this))
 {}
 
-BitField::Elements::Elements(Spec const *elements, dsize count)
+BitField::Elements::Elements(const Spec *elements, dsize count)
     : d(new Impl(this))
 {
     add(elements, count);
@@ -101,7 +101,7 @@ BitField::Elements &BitField::Elements::add(Id id, dsize numBits)
     return *this;
 }
 
-void BitField::Elements::add(Spec const *elements, dsize count)
+void BitField::Elements::add(const Spec *elements, dsize count)
 {
     while (count-- > 0)
     {
@@ -139,9 +139,9 @@ BitField::Spec BitField::Elements::at(int index) const
     return {};
 }
 
-void BitField::Elements::elementLayout(Id const &id, int &firstBit, int &numBits) const
+void BitField::Elements::elementLayout(const Id &id, int &firstBit, int &numBits) const
 {
-    Impl::Element const &elem = d->element(id);
+    const Impl::Element &elem = d->element(id);
     firstBit = elem.firstBit;
     numBits  = elem.numBits;
 }

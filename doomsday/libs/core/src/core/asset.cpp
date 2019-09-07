@@ -27,7 +27,7 @@ DE_PIMPL_NOREF(Asset)
     State state;
 
     Impl(State s) : state(s) {}
-    Impl(Impl const &other) : de::IPrivate(), state(other.state) {}
+    Impl(const Impl &other) : de::IPrivate(), state(other.state) {}
 
     DE_PIMPL_AUDIENCE(StateChange)
     DE_PIMPL_AUDIENCE(Deletion)
@@ -39,7 +39,7 @@ DE_AUDIENCE_METHOD(Asset, Deletion)
 Asset::Asset(State initialState) : d(new Impl(initialState))
 {}
 
-Asset::Asset(Asset const &other) : d(new Impl(*other.d))
+Asset::Asset(const Asset &other) : d(new Impl(*other.d))
 {}
 
 Asset::~Asset()
@@ -173,7 +173,7 @@ void AssetGroup::clear()
     d->update(*this);
 }
 
-void AssetGroup::insert(Asset const &asset, Policy policy)
+void AssetGroup::insert(const Asset &asset, Policy policy)
 {
     d->deps[&asset] = policy;
     asset.audienceForDeletion() += this;
@@ -181,7 +181,7 @@ void AssetGroup::insert(Asset const &asset, Policy policy)
     d->update(*this);
 }
 
-void AssetGroup::remove(Asset const &asset)
+void AssetGroup::remove(const Asset &asset)
 {
     asset.audienceForDeletion() -= this;
     asset.audienceForStateChange() -= this;
@@ -189,12 +189,12 @@ void AssetGroup::remove(Asset const &asset)
     d->update(*this);
 }
 
-bool AssetGroup::has(Asset const &asset) const
+bool AssetGroup::has(const Asset &asset) const
 {
     return d->deps.find(&asset) != d->deps.end();
 }
 
-void AssetGroup::setPolicy(Asset const &asset, Policy policy)
+void AssetGroup::setPolicy(const Asset &asset, Policy policy)
 {
     auto found = d->deps.find(&asset);
     DE_ASSERT(found != d->deps.end());
@@ -205,7 +205,7 @@ void AssetGroup::setPolicy(Asset const &asset, Policy policy)
     }
 }
 
-AssetGroup::Members const &AssetGroup::all() const
+const AssetGroup::Members &AssetGroup::all() const
 {
     return d->deps;
 }

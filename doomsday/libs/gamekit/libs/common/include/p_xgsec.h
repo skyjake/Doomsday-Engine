@@ -165,7 +165,7 @@ void XS_Update(void);
 void XS_Thinker(void *xsThinker);
 
 coord_t XS_Gravity(Sector *sector);
-coord_t XS_Friction(Sector const *sector);
+coord_t XS_Friction(const Sector *sector);
 
 void XS_InitMovePlane(Line *line);
 
@@ -204,7 +204,7 @@ D_CMD(MovePlane);
 
 void XS_ChangePlaneMaterial(Sector &sector, bool ceiling, world_Material &newMaterial);
 
-void XS_ChangePlaneColor(Sector &sector, bool ceiling, de::Vec3f const &newColor, bool isDelta = false);
+void XS_ChangePlaneColor(Sector &sector, bool ceiling, const de::Vec3f &newColor, bool isDelta = false);
 
 #endif
 

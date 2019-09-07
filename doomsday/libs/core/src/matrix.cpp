@@ -21,25 +21,25 @@
 namespace de {
 
 template <typename Type>
-Type Matrix3_DeterminantT(Type const *mat)
+Type Matrix3_DeterminantT(const Type *mat)
 {
     return (mat[0] * ( mat[4] * mat[8] - mat[7] * mat[5] ) -
             mat[1] * ( mat[3] * mat[8] - mat[6] * mat[5] ) +
             mat[2] * ( mat[3] * mat[7] - mat[6] * mat[4] ));
 }
 
-dfloat Matrix3_Determinant(dfloat const *values9)
+dfloat Matrix3_Determinant(const dfloat *values9)
 {
     return Matrix3_DeterminantT(values9);
 }
 
-ddouble Matrix3_Determinant(ddouble const *values9)
+ddouble Matrix3_Determinant(const ddouble *values9)
 {
     return Matrix3_DeterminantT(values9);
 }
 
 template <typename Type>
-bool Matrix3_InverseT(Type *result, Type const *mat)
+bool Matrix3_InverseT(Type *result, const Type *mat)
 {
     Type det = Matrix3_DeterminantT(mat);
     if (de::abs(det) < .0005f)
@@ -63,18 +63,18 @@ bool Matrix3_InverseT(Type *result, Type const *mat)
     return true;
 }
 
-bool Matrix3_Inverse(dfloat *out9, dfloat const *in9)
+bool Matrix3_Inverse(dfloat *out9, const dfloat *in9)
 {
     return Matrix3_InverseT(out9, in9);
 }
 
-bool Matrix3_Inverse(ddouble *out9, ddouble const *in9)
+bool Matrix3_Inverse(ddouble *out9, const ddouble *in9)
 {
     return Matrix3_InverseT(out9, in9);
 }
 
 template <typename Type>
-void Matrix4_SubmatrixT(Type const *mat4, Type *mat3, int i, int j)
+void Matrix4_SubmatrixT(const Type *mat4, Type *mat3, int i, int j)
 {
     // Loop through 3x3 submatrix.
     for (int di = 0; di < 3; di++)
@@ -92,7 +92,7 @@ void Matrix4_SubmatrixT(Type const *mat4, Type *mat3, int i, int j)
 }
 
 template <typename Type>
-Type Matrix4_DeterminantT(Type const *mat)
+Type Matrix4_DeterminantT(const Type *mat)
 {
     Type result = 0;
     Type i = 1;
@@ -106,7 +106,7 @@ Type Matrix4_DeterminantT(Type const *mat)
 }
 
 template <typename Type>
-bool Matrix4_InverseT(Type *out16, Type const *in16)
+bool Matrix4_InverseT(Type *out16, const Type *in16)
 {
     Type det = Matrix4_DeterminantT(in16);
 
@@ -132,12 +132,12 @@ bool Matrix4_InverseT(Type *out16, Type const *in16)
     return true;
 }
 
-bool Matrix4_Inverse(dfloat *out16, dfloat const *in16)
+bool Matrix4_Inverse(dfloat *out16, const dfloat *in16)
 {
     return Matrix4_InverseT(out16, in16);
 }
 
-bool Matrix4_Inverse(ddouble *out16, ddouble const *in16)
+bool Matrix4_Inverse(ddouble *out16, const ddouble *in16)
 {
     return Matrix4_InverseT(out16, in16);
 }

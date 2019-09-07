@@ -53,7 +53,7 @@ DE_PIMPL(FileIndex), public Lockable
         return name;
     }
 
-    void add(File const &file)
+    void add(const File &file)
     {
         DE_GUARD(this);
         const String name = indexedName(file);
@@ -61,7 +61,7 @@ DE_PIMPL(FileIndex), public Lockable
         index.insert(std::pair<String, File *>(name, const_cast<File *>(&file)));
     }
 
-    void remove(File const &file)
+    void remove(const File &file)
     {
         DE_GUARD(this);
 
@@ -118,12 +118,12 @@ DE_AUDIENCE_METHOD(FileIndex, Removal)
 FileIndex::FileIndex() : d(new Impl(this))
 {}
 
-void FileIndex::setPredicate(IPredicate const &predicate)
+void FileIndex::setPredicate(const IPredicate &predicate)
 {
     d->predicate = &predicate;
 }
 
-bool FileIndex::maybeAdd(File const &file)
+bool FileIndex::maybeAdd(const File &file)
 {
     if (d->predicate && !d->predicate->shouldIncludeInIndex(file))
     {
@@ -141,7 +141,7 @@ bool FileIndex::maybeAdd(File const &file)
     return true;
 }
 
-void FileIndex::remove(File const &file)
+void FileIndex::remove(const File &file)
 {
     d->remove(file);
 
@@ -174,7 +174,7 @@ void FileIndex::findPartialPath(const String &path, FoundFiles &found, Behavior 
     }
 }
 
-void FileIndex::findPartialPath(Folder const &rootFolder, const String &path,
+void FileIndex::findPartialPath(const Folder &rootFolder, const String &path,
                                 FoundFiles &found, Behavior behavior) const
 {
     findPartialPath(path, found, behavior);
@@ -189,7 +189,7 @@ void FileIndex::findPartialPath(const String &packageId, const String &path,
                                 FoundFiles &found) const
 {
     // We can only look in Folder-like packages.
-    Package const &pkg = App::packageLoader().package(packageId);
+    const Package &pkg = App::packageLoader().package(packageId);
     if (is<Folder>(pkg.file()))
     {
         findPartialPath(pkg.root(), path, found, FindInEntireIndex);

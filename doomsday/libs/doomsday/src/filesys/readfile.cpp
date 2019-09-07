@@ -61,7 +61,7 @@ size_t M_ReadFile(const char* name, char** buffer)
     return FileReader(name, buffer);
 }
 
-AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
+AutoStr *M_ReadFileIntoString(const ddstring_t *path, dd_bool *isCustom)
 {
     if (isCustom) *isCustom = false;
 
@@ -69,7 +69,7 @@ AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
     {
         bool isNumber;
         lumpnum_t const lumpNum    = String(Str_Text(path) + 10).toInt(&isNumber);
-        LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+        const LumpIndex &lumpIndex = App_FileSystem().nameIndex();
         if (isNumber && lumpIndex.hasLump(lumpNum))
         {
             File1 &lump = lumpIndex.lump(lumpNum);
@@ -83,7 +83,7 @@ AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
             if (!lump.size()) return 0;
 
             // Ensure the resulting string is terminated.
-            AutoStr *string = Str_PartAppend(AutoStr_NewStd(), (char const *)lump.cache(), 0, lump.size());
+            AutoStr *string = Str_PartAppend(AutoStr_NewStd(), (const char *)lump.cache(), 0, lump.size());
             lump.unlock();
 
             if (Str_IsEmpty(string))
@@ -97,8 +97,8 @@ AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
 
     if (Str_StartsWith(path, "Lumps:"))
     {
-        char const *lumpName       = Str_Text(path) + 6;
-        LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+        const char *lumpName       = Str_Text(path) + 6;
+        const LumpIndex &lumpIndex = App_FileSystem().nameIndex();
         if (!lumpIndex.contains(String(lumpName) + ".lmp"))
             return 0;
 
@@ -113,7 +113,7 @@ AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
         if (!lump.size()) return 0;
 
         // Ensure the resulting string is terminated.
-        AutoStr *string = Str_PartAppend(AutoStr_NewStd(), (char const *)lump.cache(), 0, lump.size());
+        AutoStr *string = Str_PartAppend(AutoStr_NewStd(), (const char *)lump.cache(), 0, lump.size());
         lump.unlock();
 
         if (Str_IsEmpty(string))
@@ -152,7 +152,7 @@ AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
 
         return string;
     }
-    catch (FS1::NotFoundError const &)
+    catch (const FS1::NotFoundError &)
     {} // Ignore this error.
 
 

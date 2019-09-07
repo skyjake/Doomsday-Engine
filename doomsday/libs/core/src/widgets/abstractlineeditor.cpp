@@ -169,7 +169,7 @@ DE_PIMPL(AbstractLineEditor)
         return true;
     }
 
-    void insert(String const &str)
+    void insert(const String &str)
     {
         acceptCompletion();
         text.insert(cursor, str);
@@ -495,12 +495,12 @@ DE_PIMPL(AbstractLineEditor)
 AbstractLineEditor::AbstractLineEditor(ILineWrapping *lineWraps) : d(new Impl(this, lineWraps))
 {}
 
-ILineWrapping const &AbstractLineEditor::lineWraps() const
+const ILineWrapping &AbstractLineEditor::lineWraps() const
 {
     return *d->wraps;
 }
 
-void AbstractLineEditor::setPrompt(String const &promptText)
+void AbstractLineEditor::setPrompt(const String &promptText)
 {
     d->prompt = promptText;
     d->rewrapLater();
@@ -511,7 +511,7 @@ String AbstractLineEditor::prompt() const
     return d->prompt;
 }
 
-void AbstractLineEditor::setText(String const &contents)
+void AbstractLineEditor::setText(const String &contents)
 {
     d->completion.reset();
     d->text = contents;
@@ -563,12 +563,12 @@ void AbstractLineEditor::acceptCompletion()
     d->acceptCompletion();
 }
 
-void AbstractLineEditor::setLexicon(Lexicon const &lexicon)
+void AbstractLineEditor::setLexicon(const Lexicon &lexicon)
 {
     d->lexicon = lexicon;
 }
 
-Lexicon const &AbstractLineEditor::lexicon() const
+const Lexicon &AbstractLineEditor::lexicon() const
 {
     return d->lexicon;
 }
@@ -583,7 +583,7 @@ AbstractLineEditor::EchoMode AbstractLineEditor::echoMode() const
     return d->echoMode;
 }
 
-bool AbstractLineEditor::handleControlKey(term::Key key, KeyModifiers const &mods)
+bool AbstractLineEditor::handleControlKey(term::Key key, const KeyModifiers &mods)
 {
 #ifdef MACOSX
 #  define WORD_JUMP_MODIFIER    Alt
@@ -690,7 +690,7 @@ bool AbstractLineEditor::handleControlKey(term::Key key, KeyModifiers const &mod
     return false;
 }
 
-void AbstractLineEditor::insert(String const &text)
+void AbstractLineEditor::insert(const String &text)
 {
     return d->insert(text);
 }
@@ -700,7 +700,7 @@ ILineWrapping &AbstractLineEditor::lineWraps()
     return *d->wraps;
 }
 
-void AbstractLineEditor::autoCompletionBegan(String const &)
+void AbstractLineEditor::autoCompletionBegan(const String &)
 {}
 
 void AbstractLineEditor::autoCompletionEnded(bool /*accepted*/)

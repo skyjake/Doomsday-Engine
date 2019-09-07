@@ -38,7 +38,7 @@ public:
     Value *duplicate() const;
     Text asText() const;
     bool isTrue() const;
-    dint compare(Value const &value) const;
+    dint compare(const Value &value) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

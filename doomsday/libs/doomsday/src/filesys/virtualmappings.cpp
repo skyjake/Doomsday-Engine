@@ -61,7 +61,7 @@ void FS_InitVirtualPathMappings()
 }
 
 /// Skip all whitespace except newlines.
-static inline char const *skipSpace(char const *ptr)
+static inline const char *skipSpace(const char *ptr)
 {
     DE_ASSERT(ptr != 0);
     while (*ptr && *ptr != '\n' && isspace(*ptr))
@@ -69,18 +69,18 @@ static inline char const *skipSpace(char const *ptr)
     return ptr;
 }
 
-static bool parsePathLumpMapping(char lumpName[9/*LUMPNAME_T_MAXLEN*/], ddstring_t *path, char const *buffer)
+static bool parsePathLumpMapping(char lumpName[9/*LUMPNAME_T_MAXLEN*/], ddstring_t *path, const char *buffer)
 {
     DE_ASSERT(lumpName != 0 && path != 0);
 
     // Find the start of the lump name.
-    char const *ptr = skipSpace(buffer);
+    const char *ptr = skipSpace(buffer);
 
     // Just whitespace?
     if (!*ptr || *ptr == '\n') return false;
 
     // Find the end of the lump name.
-    char const *end = M_FindWhite(ptr);
+    const char *end = M_FindWhite(ptr);
     if (!*end || *end == '\n') return false;
 
     size_t len = end - ptr;
@@ -108,7 +108,7 @@ static bool parsePathLumpMapping(char lumpName[9/*LUMPNAME_T_MAXLEN*/], ddstring
  * LUMPNAM1 Path\\In\\The\\RuntimeDir.ext
  *  :</pre>
  */
-static bool parsePathLumpMappings(char const *buffer)
+static bool parsePathLumpMappings(const char *buffer)
 {
     DE_ASSERT(buffer != 0);
 
@@ -116,7 +116,7 @@ static bool parsePathLumpMappings(char const *buffer)
     ddstring_t path; Str_Init(&path);
     ddstring_t line; Str_Init(&line);
 
-    char const *ch = buffer;
+    const char *ch = buffer;
     char lumpName[9/*LUMPNAME_T_MAXLEN*/];
     do
     {
@@ -155,13 +155,13 @@ void FS_InitPathLumpMappings()
 
     // Add the contents of all DD_DIREC lumps.
     /// @todo fixme: Enforce scope to the containing package!
-    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+    const LumpIndex &lumpIndex = App_FileSystem().nameIndex();
     LumpIndex::FoundIndices foundDirecs;
     lumpIndex.findAll("DD_DIREC.lmp", foundDirecs);
     DE_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDirecs) // in load order
     {
         File1 &lump = lumpIndex[*i];
-        FileInfo const &lumpInfo = lump.info();
+        const FileInfo &lumpInfo = lump.info();
 
         // Make a copy of it so we can ensure it ends in a null.
         if (!buf || bufSize < lumpInfo.size + 1)
@@ -172,7 +172,7 @@ void FS_InitPathLumpMappings()
 
         lump.read(buf, 0, lumpInfo.size);
         buf[lumpInfo.size] = 0;
-        parsePathLumpMappings(reinterpret_cast<char const *>(buf));
+        parsePathLumpMappings(reinterpret_cast<const char *>(buf));
     }
 
     M_Free(buf);

@@ -66,12 +66,12 @@ public:
     };
     using Semantics = Flags;
 
-    DE_AUDIENCE(Change, void itemChanged(Item const &item))
+    DE_AUDIENCE(Change, void itemChanged(const Item &item))
 
 public:
     Item(Semantics semantics = DefaultSemantics);
 
-    Item(Semantics semantics, String const &label);
+    Item(Semantics semantics, const String &label);
 
     virtual ~Item();
 
@@ -79,7 +79,7 @@ public:
 
     bool isSeparator() const;
 
-    void setLabel(String const &label);
+    void setLabel(const String &label);
 
     String label() const;
 

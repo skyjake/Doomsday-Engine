@@ -38,18 +38,18 @@ struct Range
     Type start;
     Type end;
 
-    Range(Type const &a = Type(0), Type const &b = Type(0)) : start(a), end(b) {}
-    static Range fromSize(Type const &a, Type const &size) { return Range(a, a + size); }
+    Range(const Type &a = Type(0), const Type &b = Type(0)) : start(a), end(b) {}
+    static Range fromSize(const Type &a, const Type &size) { return Range(a, a + size); }
     inline bool isEmpty() const { return end == start; }
     explicit inline operator bool() const { return !isEmpty(); }
     inline decltype(end - start) size() const { return end - start; }
-    inline bool contains(Type const &i) const { return i >= start && i < end; }
-    inline Type clamp(Type const &i) const {
+    inline bool contains(const Type &i) const { return i >= start && i < end; }
+    inline Type clamp(const Type &i) const {
         if (i < start) return start;
         if (i > end) return end;
         return i;
     }
-    inline Range intersection(Range const &other) {
+    inline Range intersection(const Range &other) {
         if (start > other.end || end < other.start) {
             return Range(); // Do not intersect.
         }
@@ -57,42 +57,42 @@ struct Range
         if (inter.end <= inter.start) return Range();
         return inter;
     }
-    inline Type wrap(Type const &i) const {
+    inline Type wrap(const Type &i) const {
         return de::wrap(i, start, end);
     }
     inline Type random() const {
         return start + randf() * size();
     }
-    inline Range &operator |= (Type const &value) {
+    inline Range &operator |= (const Type &value) {
         start = de::min(start, value);
         end   = de::max(end,   value);
         return *this;
     }
-    inline Range &operator &= (Range const &other) {
+    inline Range &operator &= (const Range &other) {
         start = de::max(start, other.start);
         end   = de::min(end,   other.end);
         if (start > end) end = start;
         return *this;
     }
-    inline bool operator == (Range const &other) const {
+    inline bool operator == (const Range &other) const {
         return start == other.start && end == other.end;
     }
-    inline bool operator != (Range const &other) const {
+    inline bool operator != (const Range &other) const {
         return !(*this == other);
     }
-    inline bool operator < (Range const &other) const {
+    inline bool operator < (const Range &other) const {
         return start < other.start;
     }
-    inline bool operator < (Type const &value) const {
+    inline bool operator < (const Type &value) const {
         return start < value && end < value;
     }
-    inline bool operator > (Type const &value) const {
+    inline bool operator > (const Type &value) const {
         return start > value && end > value;
     }
-    inline bool operator <= (Type const &value) const {
+    inline bool operator <= (const Type &value) const {
         return !(*this > value);
     }
-    inline bool operator >= (Type const &value) const {
+    inline bool operator >= (const Type &value) const {
         return !(*this < value);
     }
     inline Range<Type> operator + (Type offset) const {

@@ -104,31 +104,31 @@ static controlconfig_t controlConfig[] =
 #endif
 
 #ifdef __JHERETIC__
-    { /* (char const *) TXT_TXT_INV_INVULNERABILITY */ "Invincibility", 0, 0, "impulse invulnerability", 0 },
-    { (char const *) TXT_TXT_INV_INVISIBILITY, 0, 0, "impulse invisibility", 0 },
-    { (char const *) TXT_TXT_INV_HEALTH, 0, 0, "impulse health", 0 },
-    { (char const *) TXT_TXT_INV_SUPERHEALTH, 0, 0, "impulse superhealth", 0 },
-    { (char const *) TXT_TXT_INV_TOMEOFPOWER, 0, 0, "impulse tome", 0 },
-    { (char const *) TXT_TXT_INV_TORCH, 0, 0, "impulse torch", 0 },
-    { /* (char const *) TXT_TXT_INV_FIREBOMB */ "Time Bomb", 0, 0, "impulse firebomb", 0 },
-    { (char const *) TXT_TXT_INV_EGG, 0, 0, "impulse egg", 0 },
-    { (char const *) TXT_TXT_INV_FLY, 0, 0, "impulse fly", 0 },
-    { (char const *) TXT_TXT_INV_TELEPORT, 0, 0, "impulse teleport", 0 },
+    { /* (const char *) TXT_TXT_INV_INVULNERABILITY */ "Invincibility", 0, 0, "impulse invulnerability", 0 },
+    { (const char *) TXT_TXT_INV_INVISIBILITY, 0, 0, "impulse invisibility", 0 },
+    { (const char *) TXT_TXT_INV_HEALTH, 0, 0, "impulse health", 0 },
+    { (const char *) TXT_TXT_INV_SUPERHEALTH, 0, 0, "impulse superhealth", 0 },
+    { (const char *) TXT_TXT_INV_TOMEOFPOWER, 0, 0, "impulse tome", 0 },
+    { (const char *) TXT_TXT_INV_TORCH, 0, 0, "impulse torch", 0 },
+    { /* (const char *) TXT_TXT_INV_FIREBOMB */ "Time Bomb", 0, 0, "impulse firebomb", 0 },
+    { (const char *) TXT_TXT_INV_EGG, 0, 0, "impulse egg", 0 },
+    { (const char *) TXT_TXT_INV_FLY, 0, 0, "impulse fly", 0 },
+    { (const char *) TXT_TXT_INV_TELEPORT, 0, 0, "impulse teleport", 0 },
 #endif
 
 #ifdef __JHEXEN__
-    { (char const *) TXT_TXT_INV_TORCH, 0, 0, "impulse torch", 0 },
-    { (char const *) TXT_TXT_INV_HEALTH, 0, 0, "impulse health", 0 },
-    { (char const *) TXT_TXT_INV_SUPERHEALTH, 0, 0, "impulse mysticurn", 0 },
-    { (char const *) TXT_TXT_INV_BOOSTMANA, 0, 0, "impulse krater", 0 },
-    { (char const *) TXT_TXT_INV_SPEED, 0, 0, "impulse speedboots", 0 },
-    { (char const *) TXT_TXT_INV_BLASTRADIUS, 0, 0, "impulse blast", 0 },
-    { (char const *) TXT_TXT_INV_TELEPORT, 0, 0, "impulse teleport", 0 },
-    { (char const *) TXT_TXT_INV_TELEPORTOTHER, 0, 0, "impulse teleportother", 0 },
-    { (char const *) TXT_TXT_INV_POISONBAG, 0, 0, "impulse poisonbag", 0 },
-    { (char const *) TXT_TXT_INV_INVULNERABILITY, 0, 0, "impulse invulnerability", 0 },
-    { (char const *) TXT_TXT_INV_SUMMON, 0, 0, "impulse darkservant", 0 },
-    { (char const *) TXT_TXT_INV_EGG, 0, 0, "impulse egg", 0 },
+    { (const char *) TXT_TXT_INV_TORCH, 0, 0, "impulse torch", 0 },
+    { (const char *) TXT_TXT_INV_HEALTH, 0, 0, "impulse health", 0 },
+    { (const char *) TXT_TXT_INV_SUPERHEALTH, 0, 0, "impulse mysticurn", 0 },
+    { (const char *) TXT_TXT_INV_BOOSTMANA, 0, 0, "impulse krater", 0 },
+    { (const char *) TXT_TXT_INV_SPEED, 0, 0, "impulse speedboots", 0 },
+    { (const char *) TXT_TXT_INV_BLASTRADIUS, 0, 0, "impulse blast", 0 },
+    { (const char *) TXT_TXT_INV_TELEPORT, 0, 0, "impulse teleport", 0 },
+    { (const char *) TXT_TXT_INV_TELEPORTOTHER, 0, 0, "impulse teleportother", 0 },
+    { (const char *) TXT_TXT_INV_POISONBAG, 0, 0, "impulse poisonbag", 0 },
+    { (const char *) TXT_TXT_INV_INVULNERABILITY, 0, 0, "impulse invulnerability", 0 },
+    { (const char *) TXT_TXT_INV_SUMMON, 0, 0, "impulse darkservant", 0 },
+    { (const char *) TXT_TXT_INV_EGG, 0, 0, "impulse egg", 0 },
 #endif
 
     { "Chat", 0, 0, 0, 0 },
@@ -218,7 +218,7 @@ static controlconfig_t controlConfig[] =
 //    { "Reset Tracking", 0, 0, "resetriftpose", 0 }
 };
 
-static void Hu_MenuDrawControlsPage(Page const &page, Vec2i const &offset);
+static void Hu_MenuDrawControlsPage(const Page &page, const Vec2i &offset);
 
 void Hu_MenuActivateBindingsGrab(Widget &, Widget::Action)
 {
@@ -240,7 +240,7 @@ void Hu_MenuInitControlsPage()
     {
         controlconfig_t *binds = &controlConfig[i];
 
-        char const *labelText = binds->text;
+        const char *labelText = binds->text;
         if (labelText && (PTR2INT(labelText) > 0 && PTR2INT(labelText) < NUMTEXT))
         {
             labelText = GET_TXT(PTR2INT(labelText));
@@ -271,13 +271,13 @@ void Hu_MenuInitControlsPage()
     }
 }
 
-static void Hu_MenuDrawControlsPage(Page const & /*page*/, Vec2i const & /*offset*/)
+static void Hu_MenuDrawControlsPage(const Page & /*page*/, const Vec2i & /*offset*/)
 {
     Vec2i origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
     Hu_MenuDrawPageHelp("Select to assign new, [Del] to clear", origin);
 }
 
-void Hu_MenuControlGrabDrawer(char const *niceName, float alpha)
+void Hu_MenuControlGrabDrawer(const char *niceName, float alpha)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 

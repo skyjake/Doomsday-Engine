@@ -63,7 +63,7 @@ int AnimGroup::flags() const
     return d->flags;
 }
 
-bool AnimGroup::hasFrameFor(TextureManifest const &textureManifest) const
+bool AnimGroup::hasFrameFor(const TextureManifest &textureManifest) const
 {
     for (Frame *frame : d->frames)
     {
@@ -80,7 +80,7 @@ AnimGroup::Frame &AnimGroup::newFrame(TextureManifest &textureManifest,
     return *d->frames.last();
 }
 
-AnimGroup::Frames const &AnimGroup::allFrames() const
+const AnimGroup::Frames &AnimGroup::allFrames() const
 {
     return d->frames;
 }

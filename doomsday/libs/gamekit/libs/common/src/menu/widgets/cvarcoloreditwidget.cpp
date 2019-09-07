@@ -29,8 +29,8 @@ using namespace de;
 namespace common {
 namespace menu {
 
-CVarColorEditWidget::CVarColorEditWidget(char const *redCVarPath, char const *greenCVarPath,
-    char const *blueCVarPath, char const *alphaCVarPath, Vec4f const &color, bool rgbaMode)
+CVarColorEditWidget::CVarColorEditWidget(const char *redCVarPath, const char *greenCVarPath,
+    const char *blueCVarPath, const char *alphaCVarPath, const Vec4f &color, bool rgbaMode)
     : ColorEditWidget(color, rgbaMode)
 {
     setAction(Modified,    CVarColorEditWidget_UpdateCVar);
@@ -45,7 +45,7 @@ CVarColorEditWidget::CVarColorEditWidget(char const *redCVarPath, char const *gr
 CVarColorEditWidget::~CVarColorEditWidget()
 {}
 
-char const *CVarColorEditWidget::cvarPath(int component) const
+const char *CVarColorEditWidget::cvarPath(int component) const
 {
     if(component >= 0 && component < 4)
     {

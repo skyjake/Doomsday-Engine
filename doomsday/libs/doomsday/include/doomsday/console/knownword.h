@@ -72,8 +72,8 @@ LIBDOOMSDAY_PUBLIC void Con_AddKnownWord(knownwordtype_t type, void *ptr);
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-LIBDOOMSDAY_PUBLIC int Con_IterateKnownWords(char const *pattern, knownwordtype_t type,
-    int (*callback)(knownword_t const *word, void *parameters), void *parameters);
+LIBDOOMSDAY_PUBLIC int Con_IterateKnownWords(const char *pattern, knownwordtype_t type,
+    int (*callback)(const knownword_t *word, void *parameters), void *parameters);
 
 enum KnownWordMatchMode {
     KnownWordExactMatch,  // case insensitive
@@ -81,8 +81,8 @@ enum KnownWordMatchMode {
     KnownWordRegex        // case insensitive
 };
 
-LIBDOOMSDAY_PUBLIC int Con_IterateKnownWords(KnownWordMatchMode matchMode, char const *pattern,
-    knownwordtype_t type, int (*callback)(knownword_t const *word, void *parameters),
+LIBDOOMSDAY_PUBLIC int Con_IterateKnownWords(KnownWordMatchMode matchMode, const char *pattern,
+    knownwordtype_t type, int (*callback)(const knownword_t *word, void *parameters),
     void *parameters);
 
 /**
@@ -98,10 +98,10 @@ LIBDOOMSDAY_PUBLIC int Con_IterateKnownWords(KnownWordMatchMode matchMode, char 
  * @return  A NULL-terminated array of pointers to all the known words which
  *          match the search criteria.
  */
-LIBDOOMSDAY_PUBLIC knownword_t const **Con_CollectKnownWordsMatchingWord(char const *word,
+LIBDOOMSDAY_PUBLIC const knownword_t **Con_CollectKnownWordsMatchingWord(const char *word,
     knownwordtype_t type, uint *count);
 
-LIBDOOMSDAY_PUBLIC AutoStr *Con_KnownWordToString(knownword_t const *word);
+LIBDOOMSDAY_PUBLIC AutoStr *Con_KnownWordToString(const knownword_t *word);
 
 LIBDOOMSDAY_PUBLIC de::String Con_AnnotatedConsoleTerms(const de::StringList &terms);
 
@@ -110,7 +110,7 @@ LIBDOOMSDAY_PUBLIC de::String Con_AnnotatedConsoleTerms(const de::StringList &te
  */
 LIBDOOMSDAY_PUBLIC de::Lexicon Con_Lexicon();
 
-LIBDOOMSDAY_PUBLIC void Con_TermsRegex(de::StringList &terms, de::String const &pattern,
+LIBDOOMSDAY_PUBLIC void Con_TermsRegex(de::StringList &terms, const de::String &pattern,
                                        knownwordtype_t wordType);
 
 #endif // LIBDOOMSDAY_CONSOLE_KNOWNWORD_H

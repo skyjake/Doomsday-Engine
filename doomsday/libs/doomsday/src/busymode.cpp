@@ -121,7 +121,7 @@ BusyTask *BusyMode::currentTask() const
     return d->busyTask;
 }
 
-void BusyMode::abort(String const &message)
+void BusyMode::abort(const String &message)
 {
     DE_GUARD(d)
 
@@ -169,7 +169,7 @@ static void deleteTask(BusyTask *task)
     delete task;
 }
 
-int BusyMode::runNewTaskWithName(int mode, String const &taskName, const std::function<int (void *)>& worker)
+int BusyMode::runNewTaskWithName(int mode, const String &taskName, const std::function<int (void *)>& worker)
 {
     BusyTask *task = newTask(mode, worker, nullptr, taskName);
     int result = runTask(task);
@@ -178,7 +178,7 @@ int BusyMode::runNewTaskWithName(int mode, String const &taskName, const std::fu
 }
 
 int BusyMode::runNewTaskWithName(int mode, busyworkerfunc_t worker, void *workerData,
-                                 String const &taskName)
+                                 const String &taskName)
 {
     BusyTask *task = newTask(mode, worker, workerData, taskName);
     int result = runTask(task);
@@ -294,7 +294,7 @@ int BusyMode_RunNewTask(int flags, busyworkerfunc_t worker, void *workerData)
     return DoomsdayApp::app().busyMode().runNewTask(flags, worker, workerData);
 }
 
-int BusyMode_RunNewTaskWithName(int flags, busyworkerfunc_t worker, void *workerData, char const *taskName)
+int BusyMode_RunNewTaskWithName(int flags, busyworkerfunc_t worker, void *workerData, const char *taskName)
 {
     return DoomsdayApp::app().busyMode()
             .runNewTaskWithName(flags, worker, workerData, taskName? taskName : "");

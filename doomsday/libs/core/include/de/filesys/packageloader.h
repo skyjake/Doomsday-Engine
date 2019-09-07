@@ -48,10 +48,10 @@ public:
     DE_AUDIENCE(Activity, void setOfLoadedPackagesChanged())
 
     /// Notified when a package is loaded.
-    DE_AUDIENCE(Load, void packageLoaded(String const &packageId))
+    DE_AUDIENCE(Load, void packageLoaded(const String &packageId))
 
     /// Notified when a package is unloaded.
-    DE_AUDIENCE(Unload, void aboutToUnloadPackage(String const &packageId))
+    DE_AUDIENCE(Unload, void aboutToUnloadPackage(const String &packageId))
 
     /// Requested package was not found. @ingroup errors
     DE_ERROR(NotFoundError);
@@ -71,7 +71,7 @@ public:
     {
         StringList ids;
 
-        IdentifierList(String const &spaceSeparatedIds);
+        IdentifierList(const String &spaceSeparatedIds);
     };
 
     static PackageLoader &get();
@@ -88,7 +88,7 @@ public:
      * @return @c true, if the package is availalbe. Loading the package
      * should be successful.
      */
-    bool isAvailable(String const &packageId) const;
+    bool isAvailable(const String &packageId) const;
 
     /**
      * Finds the file that would be loaded when loading with @a packageId.
@@ -97,11 +97,11 @@ public:
      *
      * @return File representing the package, or @c nullptr if none found.
      */
-    File const *select(String const &packageId) const;
+    const File *select(const String &packageId) const;
 
-    Package const &load(String const &packageId);
+    const Package &load(const String &packageId);
 
-    void unload(String const &packageId);
+    void unload(const String &packageId);
 
     void unloadAll();
 
@@ -113,16 +113,16 @@ public:
      */
     void refresh();
 
-    bool isLoaded(String const &packageId) const;
+    bool isLoaded(const String &packageId) const;
 
-    bool isLoaded(File const &file) const;
+    bool isLoaded(const File &file) const;
 
-    Package const *tryFindLoaded(File const &file) const;
+    const Package *tryFindLoaded(const File &file) const;
 
     /**
      * Returns the set of all loaded packages.
      */
-    LoadedPackages const &loadedPackages() const;
+    const LoadedPackages &loadedPackages() const;
 
     List<Package *> loadedPackagesInOrder() const;
 
@@ -146,7 +146,7 @@ public:
      *
      * @return Package.
      */
-    Package const &package(String const &packageId) const;
+    const Package &package(const String &packageId) const;
 
     /**
      * Sorts the files in the provided list in package order: files from earlier-loaded
@@ -179,7 +179,7 @@ public:
      *
      * @return Expanded list of identifiers.
      */
-    StringList expandDependencies(StringList const &packageIdentifiers) const;
+    StringList expandDependencies(const StringList &packageIdentifiers) const;
 
 private:
     DE_PRIVATE(d)

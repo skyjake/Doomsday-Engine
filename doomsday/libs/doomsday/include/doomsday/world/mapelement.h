@@ -94,7 +94,7 @@ public:
         return *_parent;
     }
 
-    inline MapElement const &parent() const {
+    inline const MapElement &parent() const {
         DE_ASSERT(_parent);
         return *_parent;
     }
@@ -197,7 +197,7 @@ public:
 
      * @return  Always @c 0 (can be used as an iterator).
      */
-    virtual de::dint setProperty(world::DmuArgs const &args);
+    virtual de::dint setProperty(const world::DmuArgs &args);
 
 private:
     DE_PRIVATE(d)
@@ -208,6 +208,6 @@ private:
 } // namespace world
 
 #undef DMU_Str
-LIBDOOMSDAY_PUBLIC char const *DMU_Str(de::duint prop);
+LIBDOOMSDAY_PUBLIC const char *DMU_Str(de::duint prop);
 
 #endif  // LIBDOOMSDAY_WORLD_MAPELEMENT_H

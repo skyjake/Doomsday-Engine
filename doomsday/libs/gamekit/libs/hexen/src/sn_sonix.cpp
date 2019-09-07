@@ -125,7 +125,7 @@ static void verifySequencePtr(int *base, int *ptr)
     }
 }
 
-void SndSeqParser(Str const *path)
+void SndSeqParser(const Str *path)
 {
     initSequenceData();
 
@@ -312,7 +312,7 @@ void SN_StopSequenceInSec(Sector *sector)
     SN_StopSequence((mobj_t *)P_GetPtrp(sector, DMU_EMITTER));
 }
 
-void SN_StartSequenceName(mobj_t *mobj, char const *name)
+void SN_StartSequenceName(mobj_t *mobj, const char *name)
 {
     if(!mobj) return;
 

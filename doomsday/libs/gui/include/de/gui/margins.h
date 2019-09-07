@@ -39,44 +39,44 @@ public:
     DE_AUDIENCE(Change, void marginsChanged())
 
 public:
-    Margins(String const &defaultMargin = "gap");
+    Margins(const String &defaultMargin = "gap");
 
-    Margins &setLeft  (DotPath const &leftMarginId);
-    Margins &setRight (DotPath const &rightMarginId);
-    Margins &setTop   (DotPath const &topMarginId);
-    Margins &setBottom(DotPath const &bottomMarginId);
-    Margins &setLeftRight(DotPath const &marginId);
-    Margins &setTopBottom(DotPath const &marginId);
-    Margins &set      (ui::Direction dir, DotPath const &marginId);
-    Margins &set      (DotPath const &marginId);
+    Margins &setLeft  (const DotPath &leftMarginId);
+    Margins &setRight (const DotPath &rightMarginId);
+    Margins &setTop   (const DotPath &topMarginId);
+    Margins &setBottom(const DotPath &bottomMarginId);
+    Margins &setLeftRight(const DotPath &marginId);
+    Margins &setTopBottom(const DotPath &marginId);
+    Margins &set      (ui::Direction dir, const DotPath &marginId);
+    Margins &set      (const DotPath &marginId);
 
-    Margins &setLeft  (Rule const &rule);
-    Margins &setRight (Rule const &rule);
-    Margins &setTop   (Rule const &rule);
-    Margins &setBottom(Rule const &rule);
-    Margins &setTopBottom(Rule const &rule) { return setTop(rule).setBottom(rule); }
-    Margins &set      (ui::Direction dir, Rule const &rule);
-    Margins &set      (Rule const &rule);
-    Margins &setAll   (Margins const &margins);
+    Margins &setLeft  (const Rule &rule);
+    Margins &setRight (const Rule &rule);
+    Margins &setTop   (const Rule &rule);
+    Margins &setBottom(const Rule &rule);
+    Margins &setTopBottom(const Rule &rule) { return setTop(rule).setBottom(rule); }
+    Margins &set      (ui::Direction dir, const Rule &rule);
+    Margins &set      (const Rule &rule);
+    Margins &setAll   (const Margins &margins);
 
     Margins &setZero();
 
-    Rule const &left() const;
-    Rule const &right() const;
-    Rule const &top() const;
-    Rule const &bottom() const;
+    const Rule &left() const;
+    const Rule &right() const;
+    const Rule &top() const;
+    const Rule &bottom() const;
 
     /**
      * The "width" of the margins is the sum of the left and right margins.
      */
-    Rule const &width() const;
+    const Rule &width() const;
 
     /**
      * The "height" of the margins is the sim of the top and bottom margins.
      */
-    Rule const &height() const;
+    const Rule &height() const;
 
-    Rule const &margin(ui::Direction dir) const;
+    const Rule &margin(ui::Direction dir) const;
 
     /**
      * Returns all four margins as a vector. (x,y) is the left and top margins

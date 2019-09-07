@@ -82,7 +82,7 @@ void NetCl_DamageRequest(mobj_t *target, mobj_t *inflictor, mobj_t *source, int 
  * Send a GPT_CHEAT_REQUEST packet to the server. If the server is allowing netgame cheating,
  * the cheat will be executed on the server.
  */
-void NetCl_CheatRequest(char const *command);
+void NetCl_CheatRequest(const char *command);
 
 void NetCl_FloorHitRequest(player_t *player);
 

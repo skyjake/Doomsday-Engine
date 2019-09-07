@@ -29,7 +29,7 @@ using namespace de;
 static patchid_t pGreenManaIcon[2];  ///< [ dim, bright ]
 
 guidata_greenmanaicon_t::guidata_greenmanaicon_t(void (*updateGeometry) (HudWidget *wi),
-                                                 void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                                                 void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                                                  dint player)
     : HudWidget(updateGeometry,
                 drawer,
@@ -50,7 +50,7 @@ void guidata_greenmanaicon_t::tick(timespan_t /*elapsed*/)
 
     _iconIdx = 0;  // Dim icon.
 
-    player_t const &plr = ::players[player()];
+    const player_t &plr = ::players[player()];
     if(!VALID_WEAPONTYPE(plr.readyWeapon)) return;
 
     // If the player owns some of this ammo and the ready weapon consumes it - use the bright icon.
@@ -63,7 +63,7 @@ void guidata_greenmanaicon_t::tick(timespan_t /*elapsed*/)
     }
 }
 
-void GreenManaIconWidget_Draw(guidata_greenmanaicon_t *icon, Point2Raw const *offset)
+void GreenManaIconWidget_Draw(guidata_greenmanaicon_t *icon, const Point2Raw *offset)
 {
     DE_ASSERT(icon);
     dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
@@ -88,7 +88,7 @@ void GreenManaIconWidget_Draw(guidata_greenmanaicon_t *icon, Point2Raw const *of
     DGL_PopMatrix();
 }
 
-void SBarGreenManaIconWidget_Draw(guidata_greenmanaicon_t *icon, Point2Raw const *offset)
+void SBarGreenManaIconWidget_Draw(guidata_greenmanaicon_t *icon, const Point2Raw *offset)
 {
 #define X_OFFSET            ( 110 )
 #define Y_OFFSET            (   2 )

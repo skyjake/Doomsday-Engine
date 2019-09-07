@@ -43,9 +43,9 @@ class LIBDOOMSDAY_PUBLIC Sky : public Definition
 {
 public:
     Sky()                    : Definition() {}
-    Sky(Sky const &other)    : Definition(other) {}
+    Sky(const Sky &other)    : Definition(other) {}
     Sky(de::Record &d)       : Definition(d) {}
-    Sky(de::Record const &d) : Definition(d) {}
+    Sky(const de::Record &d) : Definition(d) {}
 
     void resetToDefaults();
 
@@ -53,13 +53,13 @@ public:
     int layerCount() const;
     bool hasLayer(int index) const;
     de::Record &layer(int index);
-    de::Record const &layer(int index) const;
+    const de::Record &layer(int index) const;
 
     de::Record &addModel();
     int modelCount() const;
     bool hasModel(int index) const;
     de::Record &model(int index);
-    de::Record const &model(int index) const;
+    const de::Record &model(int index) const;
 };
 
 } // namespace defn

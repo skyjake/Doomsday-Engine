@@ -42,8 +42,8 @@ public:
     DE_AUDIENCE(Deletion, void thinkerBeingDeleted(thinker_s &))
 
 public:
-    ThinkerData(de::Id const &id = de::Id::none());
-    ThinkerData(ThinkerData const &other);
+    ThinkerData(const de::Id &id = de::Id::none());
+    ThinkerData(const ThinkerData &other);
 
     /**
      * Returns the unique and persistent ID of the thinker.
@@ -55,16 +55,16 @@ public:
      *
      * @todo Use this for identifying all thinkers everywhere, including mobjs.
      */
-    de::Id const &id() const;
+    const de::Id &id() const;
 
-    void setId(de::Id const &id);
+    void setId(const de::Id &id);
 
     void setThinker(thinker_s *thinker) override;
     void think() override;
     IData *duplicate() const override;
 
     thinker_s &thinker();
-    thinker_s const &thinker() const;
+    const thinker_s &thinker() const;
 
     /**
      * Initializes Doomsday Script bindings for the thinker. This is called
@@ -75,7 +75,7 @@ public:
 
     // Implements IObject.
     de::Record &objectNamespace() override;
-    de::Record const &objectNamespace() const override;
+    const de::Record &objectNamespace() const override;
 
     // Implements ISerializable.
     void operator >> (de::Writer &to) const override;
@@ -90,7 +90,7 @@ public:
      * @param id  Identifier.
      * @return Thinker or @c nullptr.
      */
-    static ThinkerData *find(de::Id const &id);
+    static ThinkerData *find(const de::Id &id);
 
 private:
     DE_PRIVATE(d)
@@ -118,7 +118,7 @@ DE_SCRIPT_ARGUMENT_TYPE(ThinkerData *,
     return scriptArgumentAsText(arg->objectNamespace());
 )
 
-DE_SCRIPT_ARGUMENT_TYPE(ThinkerData const *,
+DE_SCRIPT_ARGUMENT_TYPE(const ThinkerData *,
     if (!arg) return ScriptLex::NONE;
     return scriptArgumentAsText(arg->objectNamespace());
 )

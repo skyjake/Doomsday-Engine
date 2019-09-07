@@ -47,14 +47,14 @@ public:
      * @param domain   Domain/IP address of the server.
      * @param timeout  Keep trying until this much time has passed.
      */
-    Link(String const &domain, TimeSpan timeout = 0.0);
+    Link(const String &domain, TimeSpan timeout = 0.0);
 
     /**
      * Opens a connection to a server over the network.
      *
      * @param address  Address of the server.
      */
-    Link(Address const &address);
+    Link(const Address &address);
 
     /**
      * Takes over an existing socket.
@@ -75,7 +75,7 @@ public:
     void connectLink();
 
 protected:
-    Packet *interpret(Message const &msg);
+    Packet *interpret(const Message &msg);
     void    initiateCommunications();
 
 private:

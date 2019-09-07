@@ -41,7 +41,7 @@ public:
      * @param archive    Archive where the contents of the file are located.
      * @param entryPath  Path of the file's entry within the archive.
      */
-    ArchiveEntryFile(String const &name, Archive &archive, String const &entryPath);
+    ArchiveEntryFile(const String &name, Archive &archive, const String &entryPath);
 
     ~ArchiveEntryFile() override;
 
@@ -70,7 +70,7 @@ public:
     Archive &archive();
 
     /// Returns the archive of the file (non-modifiable).
-    Archive const &archive() const;
+    const Archive &archive() const;
 
     void uncache() const;
 
@@ -87,7 +87,7 @@ public:
      * @param values  Data.
      * @param count   Length of data.
      */
-    void set(Offset at, Byte const *values, Size count) override;
+    void set(Offset at, const Byte *values, Size count) override;
 
 private:
     DE_PRIVATE(d)

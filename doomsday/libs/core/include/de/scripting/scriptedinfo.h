@@ -125,7 +125,7 @@ class DE_PUBLIC ScriptedInfo : public IObject
 public:
     typedef Set<String> Paths;
 
-    DE_AUDIENCE(NamedBlock, void parsedNamedBlock(String const &name, Record &block))
+    DE_AUDIENCE(NamedBlock, void parsedNamedBlock(const String &name, Record &block))
 
 public:
     /**
@@ -139,9 +139,9 @@ public:
 
     void clear();
 
-    void parse(String const &source);
+    void parse(const String &source);
 
-    void parse(File const &file);
+    void parse(const File &file);
 
     /**
      * Evaluates one or more statements and returns the result. All processing
@@ -153,7 +153,7 @@ public:
      *
      * @return  Result value. Caller gets ownership.
      */
-    Value *evaluate(String const &source);
+    Value *evaluate(const String &source);
 
     /**
      * Finds all the blocks of a given type in the processed namespace.
@@ -165,11 +165,11 @@ public:
      * @return Set of paths to all the located records of the correct type.
      * The records can be accessed via objectNamespace().
      */
-    Paths allBlocksOfType(String const &blockType) const;
+    Paths allBlocksOfType(const String &blockType) const;
 
     // Implements IObject.
     Record &objectNamespace();
-    Record const &objectNamespace() const;
+    const Record &objectNamespace() const;
 
 public:
     /**
@@ -181,7 +181,7 @@ public:
      *
      * @return Absolute path resolved using the context.
      */
-    static String absolutePathInContext(Record const &context, String const &relativePath);
+    static String absolutePathInContext(const Record &context, const String &relativePath);
 
     /**
      * Determines if a value should be considered False. Use this when
@@ -195,21 +195,21 @@ public:
      *
      * @return @c true, if the value should be considered False. Otherwise, @c false.
      */
-    static bool isFalse(Value const &value);
+    static bool isFalse(const Value &value);
 
-    static bool isFalse(RecordAccessor const &rec, String const &name,
+    static bool isFalse(const RecordAccessor &rec, const String &name,
                         bool defaultValue = true /* assume false if missing */);
 
-    static bool isFalse(String const &token);
+    static bool isFalse(const String &token);
 
-    static bool isTrue(Value const &value);
+    static bool isTrue(const Value &value);
 
-    static bool isTrue(RecordAccessor const &rec, String const &name,
+    static bool isTrue(const RecordAccessor &rec, const String &name,
                        bool defaultValue = false /* assume false if missing */);
 
-    static String blockType(Record const &block);
+    static String blockType(const Record &block);
 
-    static Paths allBlocksOfType(String const &blockType, Record const &root);
+    static Paths allBlocksOfType(const String &blockType, const Record &root);
 
     /**
      * Finds all the subrecords with a given __type__. Only the subrecords
@@ -220,7 +220,7 @@ public:
      *
      * @return Subrecords whose __type__ matches @a blockType.
      */
-    static Record::Subrecords subrecordsOfType(String const &blockType, Record const &record);
+    static Record::Subrecords subrecordsOfType(const String &blockType, const Record &record);
 
     /**
      * Gives a set of subrecords, sorts them by source path and line number
@@ -230,11 +230,11 @@ public:
      *
      * @return  Names of the subrecords in the sorted order.
      */
-    static StringList sortRecordsBySource(Record::Subrecords const &subrecs);
+    static StringList sortRecordsBySource(const Record::Subrecords &subrecs);
 
-    static String sourceLocation(RecordAccessor const &record);
+    static String sourceLocation(const RecordAccessor &record);
 
-    static SourceLineTable::PathAndLine sourcePathAndLine(RecordAccessor const &record);
+    static SourceLineTable::PathAndLine sourcePathAndLine(const RecordAccessor &record);
 
 public:
     static const char *SCRIPT;

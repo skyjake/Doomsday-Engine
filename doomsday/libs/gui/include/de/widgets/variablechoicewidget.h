@@ -40,7 +40,7 @@ public:
 
 public:
     VariableChoiceWidget(Variable &variable, VariableType variableType,
-                         String const &name = {});
+                         const String &name = {});
 
     Variable &variable() const;
 

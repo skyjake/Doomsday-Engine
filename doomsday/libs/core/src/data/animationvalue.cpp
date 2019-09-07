@@ -23,7 +23,7 @@
 
 namespace de {
 
-AnimationValue::AnimationValue(Animation const &anim)
+AnimationValue::AnimationValue(const Animation &anim)
     : _anim(new CountedAnimation(anim))
 {}
 
@@ -66,7 +66,7 @@ bool AnimationValue::isTrue() const
     return !_anim->done();
 }
 
-dint AnimationValue::compare(Value const &value) const
+dint AnimationValue::compare(const Value &value) const
 {
     // Compare using the current numerical value.
     Number const a = asNumber();
@@ -98,7 +98,7 @@ Value::Text AnimationValue::typeId() const
 
 //---------------------------------------------------------------------------------------
 
-AnimationValue::CountedAnimation::CountedAnimation(Animation const &anim)
+AnimationValue::CountedAnimation::CountedAnimation(const Animation &anim)
     : Animation(anim)
 {}
 

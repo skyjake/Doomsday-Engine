@@ -30,7 +30,7 @@ static void MaxAmmoWidget_UpdateGeometry(guidata_maxammo_t *wi)
     wi->updateGeometry();
 }
 
-static void MaxAmmoWidget_Draw(guidata_maxammo_t *wi, Point2Raw const *offset)
+static void MaxAmmoWidget_Draw(guidata_maxammo_t *wi, const Point2Raw *offset)
 {
     DE_ASSERT(wi);
     wi->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -60,11 +60,11 @@ void guidata_maxammo_t::tick(timespan_t /*elapsed*/)
 {
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
-    player_t const *plr = &::players[player()];
+    const player_t *plr = &::players[player()];
     _value = plr->ammo[_ammotype].max;
 }
 
-void guidata_maxammo_t::draw(Vec2i const &offset) const
+void guidata_maxammo_t::draw(const Vec2i &offset) const
 {
     static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
     static Vec2i const offsets[NUM_AMMO_TYPES] = {

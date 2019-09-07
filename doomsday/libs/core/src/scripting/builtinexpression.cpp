@@ -55,7 +55,7 @@ void BuiltInExpression::push(Evaluator &evaluator, Value *scope) const
 Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
 {
     std::unique_ptr<Value> value(evaluator.popResult());
-    ArrayValue const &args = value.get()->as<ArrayValue>();
+    const ArrayValue &args = value.get()->as<ArrayValue>();
 
     switch (_type)
     {
@@ -78,7 +78,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
                        "DICTIONARY_KEYS" : "DICTIONARY_VALUES"));
         }
 
-        DictionaryValue const *dict = dynamic_cast<DictionaryValue const *>(&args.at(1));
+        const DictionaryValue *dict = dynamic_cast<const DictionaryValue *>(&args.at(1));
         if (!dict)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
@@ -97,7 +97,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
                                       "Expected exactly at most one arguments for DIR");
         }
 
-        Record const *ns;
+        const Record *ns;
         if (args.size() == 1)
         {
             ns = evaluator.localNamespace();
@@ -129,7 +129,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
                 String(_type == RECORD_MEMBERS? "RECORD_MEMBERS" : "RECORD_SUBRECORDS"));
         }
 
-        RecordValue const *rec = dynamic_cast<RecordValue const *>(&args.at(1));
+        const RecordValue *rec = dynamic_cast<const RecordValue *>(&args.at(1));
         if (!rec)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
@@ -165,7 +165,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         if (args.size() == 2)
         {
             // One argument: make an owned copy of a referenced record.
-            RecordValue const *rec = dynamic_cast<RecordValue const *>(&args.at(1));
+            const RecordValue *rec = dynamic_cast<const RecordValue *>(&args.at(1));
             if (!rec)
             {
                 throw WrongArgumentsError("BuiltInExpression::evaluate",
@@ -230,12 +230,12 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                                       "Expected exactly two arguments for TIME_DELTA");
         }
-        TimeValue const *fromTime = dynamic_cast<TimeValue const *>(&args.at(1));
+        const TimeValue *fromTime = dynamic_cast<const TimeValue *>(&args.at(1));
         if (!fromTime)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate", "Argument 1 of TIME_DELTA must be a time");
         }
-        TimeValue const *toTime = dynamic_cast<TimeValue const *>(&args.at(2));
+        const TimeValue *toTime = dynamic_cast<const TimeValue *>(&args.at(2));
         if (!toTime)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate", "Argument 2 of TIME_DELTA must be a time");
@@ -282,7 +282,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for DESERIALIZE");
         }
-        BlockValue const *block = dynamic_cast<BlockValue const *>(&args.at(1));
+        const BlockValue *block = dynamic_cast<const BlockValue *>(&args.at(1));
         if (block)
         {
             Reader reader(*block);
@@ -290,7 +290,7 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         }
         /*
         // Alternatively allow deserializing from a text value.
-        TextValue const *text = dynamic_cast<TextValue const *>(&args.at(1));
+        const TextValue *text = dynamic_cast<const TextValue *>(&args.at(1));
         if (text)
         {
             return Value::constructFrom(Reader(Block(text->asText().toUtf8())));

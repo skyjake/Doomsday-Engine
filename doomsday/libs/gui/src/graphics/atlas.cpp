@@ -38,7 +38,7 @@ DE_PIMPL(Atlas)
     Time fullReportedAt;
 
     // Minimum backing size is 1x1 pixels.
-    Impl(Public *i, Flags const &flg, Size const &size)
+    Impl(Public *i, const Flags &flg, const Size &size)
         : Base(i)
         , flags(flg)
         , totalSize(size.max(Size(1, 1)))
@@ -70,7 +70,7 @@ DE_PIMPL(Atlas)
         return flags.testFlag(BackingStore);
     }
 
-    void markAsChanged(Rectanglei const &changedRect)
+    void markAsChanged(const Rectanglei &changedRect)
     {
         //if (needCommit)
         //{
@@ -108,7 +108,7 @@ DE_PIMPL(Atlas)
 
         duint const totalPx = totalSize.x * totalSize.y;
         duint changedPx = 0;
-        for (Rectanglei const &rect : changedAreas)
+        for (const Rectanglei &rect : changedAreas)
         {
             changedPx += rect.width() * rect.height();
         }
@@ -137,7 +137,7 @@ DE_PIMPL(Atlas)
      * @param image  Image.
      * @param rect   Rectangle for the image determined by an IAllocator.
      */
-    void submitImage(const Image &submittedImage, Rectanglei const &rect)
+    void submitImage(const Image &submittedImage, const Rectanglei &rect)
     {
         Image image = submittedImage.convertToFormat(hasBacking() ? backing.format()
                                                                   : submittedImage.format());
@@ -235,7 +235,7 @@ DE_PIMPL(Atlas)
                 allocator->rect(i->first, rect);
                 submitImage(*i->second, rect);
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_GL_ERROR("Allocation %s could not be submitted: %s")
                         << i->first << er.asText();
@@ -282,12 +282,12 @@ DE_PIMPL(Atlas)
         }
     }
 
-    Image::Size sizeWithBorders(Image::Size const &size)
+    Image::Size sizeWithBorders(const Image::Size &size)
     {
         return size + Image::Size(2 * border, 2 * border);
     }
 
-    Rectanglei rectWithoutBorder(Id const &id) const
+    Rectanglei rectWithoutBorder(const Id &id) const
     {
         Rectanglei rect;
         allocator->rect(id, rect);
@@ -301,7 +301,7 @@ DE_PIMPL(Atlas)
 DE_AUDIENCE_METHOD(Atlas, Reposition)
 DE_AUDIENCE_METHOD(Atlas, OutOfSpace)
 
-Atlas::Atlas(Flags const &flags, Size const &totalSize)
+Atlas::Atlas(const Flags &flags, const Size &totalSize)
     : d(new Impl(this, flags, totalSize))
 {}
 
@@ -359,7 +359,7 @@ void Atlas::clear()
     d->mayDefrag = false;
 }
 
-void Atlas::setTotalSize(Size const &totalSize)
+void Atlas::setTotalSize(const Size &totalSize)
 {
     DE_GUARD(this);
 
@@ -385,7 +385,7 @@ Atlas::Size Atlas::totalSize() const
     return d->totalSize;
 }
 
-Id Atlas::alloc(Image const &image, Id const &chosenId)
+Id Atlas::alloc(const Image &image, const Id &chosenId)
 {
     if (image.isNull())
     {
@@ -444,7 +444,7 @@ Id Atlas::alloc(Image const &image, Id const &chosenId)
     return id;
 }
 
-void Atlas::release(Id const &id)
+void Atlas::release(const Id &id)
 {
     if (id.isNone()) return;
 
@@ -457,7 +457,7 @@ void Atlas::release(Id const &id)
     d->mayDefrag = true;
 }
 
-bool Atlas::contains(Id const &id) const
+bool Atlas::contains(const Id &id) const
 {
     DE_GUARD(this);
 
@@ -484,14 +484,14 @@ Atlas::Ids Atlas::allImages() const
     return d->allocator->ids();
 }
 
-Rectanglei Atlas::imageRect(Id const &id) const
+Rectanglei Atlas::imageRect(const Id &id) const
 {
     DE_GUARD(this);
     DE_ASSERT(d->allocator.get());
     return d->rectWithoutBorder(id);
 }
 
-Rectanglef Atlas::imageRectf(Id const &id) const
+Rectanglef Atlas::imageRectf(const Id &id) const
 {
     DE_GUARD(this);
     DE_ASSERT(d->allocator.get());
@@ -505,7 +505,7 @@ Rectanglef Atlas::imageRectf(Id const &id) const
                       float(rect.height() ) / float(d->totalSize.y));
 }
 
-Image Atlas::image(Id const &id) const
+Image Atlas::image(const Id &id) const
 {
     DE_GUARD(this);
     if (d->deferred.contains(id))
@@ -536,7 +536,7 @@ void Atlas::commit() const
     }
     else
     {
-        for (Rectanglei const &rect : d->changedAreas)
+        for (const Rectanglei &rect : d->changedAreas)
         {
             commit(d->backing, rect);
         }

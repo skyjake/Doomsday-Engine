@@ -41,19 +41,19 @@ DE_PIMPL_NOREF(LocalServer)
 LocalServer::LocalServer() : d(new Impl)
 {}
 
-void LocalServer::setName(String const &name)
+void LocalServer::setName(const String &name)
 {
     d->name = name;
     d->name.replace("\"", "\\\""); // for use on command line
 }
 
-void LocalServer::setApplicationPath(NativePath const &path)
+void LocalServer::setApplicationPath(const NativePath &path)
 {
     d->appPath = path;
 }
 
 void LocalServer::start(duint16 port,
-                        String const &gameMode,
+                        const String &gameMode,
                         const StringList &additionalOptions,
                         const NativePath &runtimePath)
 {

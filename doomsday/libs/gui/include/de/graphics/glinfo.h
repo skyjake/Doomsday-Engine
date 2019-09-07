@@ -80,8 +80,8 @@ public:
 
     GLInfo();
 
-    static Extensions const &extensions();
-    static Limits const &limits();
+    static const Extensions &extensions();
+    static const Limits &limits();
 
     static bool isFramebufferMultisamplingSupported();
 
@@ -108,7 +108,7 @@ public:
 
     static void setSwapInterval(int interval);
 
-    static void checkError(char const *file, int line);
+    static void checkError(const char *file, int line);
 
 private:
     DE_PRIVATE(d)

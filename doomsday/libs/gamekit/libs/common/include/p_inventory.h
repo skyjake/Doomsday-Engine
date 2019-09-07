@@ -63,9 +63,9 @@ void P_InitInventory(void);
  */
 void P_ShutdownInventory(void);
 
-invitem_t const *P_GetInvItem(int id);
+const invitem_t *P_GetInvItem(int id);
 
-def_invitem_t const *P_GetInvItemDef(inventoryitemtype_t type);
+const def_invitem_t *P_GetInvItemDef(inventoryitemtype_t type);
 
 /**
  * Should be called only outside of normal play (e.g., when starting a new

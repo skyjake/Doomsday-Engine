@@ -33,7 +33,7 @@ namespace de {
 ArrayValue::ArrayValue() : Value(), _iteration(0)
 {}
 
-ArrayValue::ArrayValue(ArrayValue const &other) : Value(), _iteration(0)
+ArrayValue::ArrayValue(const ArrayValue &other) : Value(), _iteration(0)
 {
     for (auto i : other._elements)
     {
@@ -41,7 +41,7 @@ ArrayValue::ArrayValue(ArrayValue const &other) : Value(), _iteration(0)
     }
 }
 
-ArrayValue::ArrayValue(StringList const &strings)
+ArrayValue::ArrayValue(const StringList &strings)
 {
     for (const String &str : strings)
     {
@@ -99,9 +99,9 @@ dsize ArrayValue::size() const
     return _elements.size();
 }
 
-Value const &ArrayValue::element(Value const &indexValue) const
+const Value &ArrayValue::element(const Value &indexValue) const
 {
-    NumberValue const *v = dynamic_cast<NumberValue const *>(&indexValue);
+    const NumberValue *v = dynamic_cast<const NumberValue *>(&indexValue);
     if (!v)
     {
         /// @throw IllegalIndexError @a indexValue is not a NumberValue.
@@ -112,14 +112,14 @@ Value const &ArrayValue::element(Value const &indexValue) const
     return **elem;
 }
 
-Value &ArrayValue::element(Value const &index)
+Value &ArrayValue::element(const Value &index)
 {
-    return const_cast<Value &>(const_cast<ArrayValue const *>(this)->element(index));
+    return const_cast<Value &>(const_cast<const ArrayValue *>(this)->element(index));
 }
 
-void ArrayValue::setElement(Value const &indexValue, Value *value)
+void ArrayValue::setElement(const Value &indexValue, Value *value)
 {
-    NumberValue const *v = dynamic_cast<NumberValue const *>(&indexValue);
+    const NumberValue *v = dynamic_cast<const NumberValue *>(&indexValue);
     if (!v)
     {
         /// @throw IllegalIndexError @a indexValue is not a NumberValue.
@@ -128,7 +128,7 @@ void ArrayValue::setElement(Value const &indexValue, Value *value)
     replace(v->asInt(), value);
 }
 
-bool ArrayValue::contains(Value const &value) const
+bool ArrayValue::contains(const Value &value) const
 {
     for (Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
     {
@@ -160,9 +160,9 @@ bool ArrayValue::isTrue() const
     return _elements.size() > 0;
 }
 
-dint ArrayValue::compare(Value const &value) const
+dint ArrayValue::compare(const Value &value) const
 {
-    ArrayValue const *other = dynamic_cast<ArrayValue const *>(&value);
+    const ArrayValue *other = dynamic_cast<const ArrayValue *>(&value);
     if (other)
     {
         if (size() < other->size())
@@ -187,9 +187,9 @@ dint ArrayValue::compare(Value const &value) const
     return Value::compare(value);
 }
 
-void ArrayValue::sum(Value const &value)
+void ArrayValue::sum(const Value &value)
 {
-    ArrayValue const *array = dynamic_cast<ArrayValue const *>(&value);
+    const ArrayValue *array = dynamic_cast<const ArrayValue *>(&value);
     if (!array)
     {
         /// @throw ArithmeticError @a value was not an Array. ArrayValue can only be summed
@@ -216,7 +216,7 @@ void ArrayValue::addMany(duint count, Value::Number value)
     }
 }
 
-void ArrayValue::addMany(duint count, String const &value)
+void ArrayValue::addMany(duint count, const String &value)
 {
     while (count--)
     {
@@ -224,12 +224,12 @@ void ArrayValue::addMany(duint count, String const &value)
     }
 }
 
-void ArrayValue::add(String const &text)
+void ArrayValue::add(const String &text)
 {
     add(new TextValue(text));
 }
 
-Value const &ArrayValue::at(dint index) const
+const Value &ArrayValue::at(dint index) const
 {
     return **indexToIterator(index);
 }
@@ -312,7 +312,7 @@ ArrayValue &ArrayValue::operator << (Value *value)
     return *this;
 }
 
-ArrayValue &ArrayValue::operator << (Value const &value)
+ArrayValue &ArrayValue::operator << (const Value &value)
 {
     add(value.duplicate());
     return *this;
@@ -338,7 +338,7 @@ void ArrayValue::reverse()
 StringList ArrayValue::toStringList() const
 {
     StringList list;
-    for (Value const *v : _elements)
+    for (const Value *v : _elements)
     {
         list << v->asText();
     }
@@ -384,11 +384,11 @@ void ArrayValue::operator << (Reader &from)
     }
 }
 
-void ArrayValue::callElements(ArrayValue const &args)
+void ArrayValue::callElements(const ArrayValue &args)
 {
     for (duint i = 0; i < size(); ++i)
     {
-        Function const &func = at(i).as<FunctionValue>().function();
+        const Function &func = at(i).as<FunctionValue>().function();
         Process(func.globals()).call(func, args);
     }
 }
@@ -398,17 +398,17 @@ void ArrayValue::setElement(dint index, Number value)
     setElement(NumberValue(index), new NumberValue(value));
 }
 
-void ArrayValue::setElement(dint index, String const &value)
+void ArrayValue::setElement(dint index, const String &value)
 {
     setElement(NumberValue(index), new TextValue(value));
 }
 
-Value const &ArrayValue::element(dint index) const
+const Value &ArrayValue::element(dint index) const
 {
     return element(NumberValue(index));
 }
 
-Value const &ArrayValue::operator [] (dint index) const
+const Value &ArrayValue::operator [] (dint index) const
 {
     return element(index);
 }
@@ -416,7 +416,7 @@ Value const &ArrayValue::operator [] (dint index) const
 String ArrayValue::asInfo() const
 {
     StringList values;
-    for (Value const *value : elements())
+    for (const Value *value : elements())
     {
         String text = value->asText();
         text.replace("\"", "''"); // Double quote in Info syntax.

@@ -39,7 +39,7 @@ static bool inited;
 static List<HudWidget *> widgets;
 
 static ui_rendstate_t uiRS;
-ui_rendstate_t const *uiRendState = &uiRS;
+const ui_rendstate_t *uiRendState = &uiRS;
 
 static uiwidgetid_t nextUnusedId()
 {
@@ -150,7 +150,7 @@ static void drawWidgetAvailableSpace(HudWidget *wi)
 }
 #endif
 
-static void drawWidget2(HudWidget *wi, Point2Raw const *offset = nullptr)
+static void drawWidget2(HudWidget *wi, const Point2Raw *offset = nullptr)
 {
     DE_ASSERT(wi);
 
@@ -185,7 +185,7 @@ static void drawWidget2(HudWidget *wi, Point2Raw const *offset = nullptr)
 #endif
 }
 
-static void drawWidget(HudWidget *wi, Point2Raw const *origin = nullptr)
+static void drawWidget(HudWidget *wi, const Point2Raw *origin = nullptr)
 {
     DE_ASSERT(wi);
 
@@ -215,7 +215,7 @@ static void drawWidget(HudWidget *wi, Point2Raw const *origin = nullptr)
     }
 }
 
-void GUI_DrawWidget(HudWidget *wi, Point2Raw const *offset)
+void GUI_DrawWidget(HudWidget *wi, const Point2Raw *offset)
 {
     if(!wi) return;
     if(wi->maximumWidth() < 1 || wi->maximumHeight() < 1) return;

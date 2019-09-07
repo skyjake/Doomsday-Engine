@@ -101,7 +101,7 @@ public:
      *
      * @param file  The file object being deleted.
      */
-    DE_AUDIENCE(Deletion, void fileBeingDeleted(File const &file))
+    DE_AUDIENCE(Deletion, void fileBeingDeleted(const File &file))
 
     /**
      * Stores the status of a file (size, time of last modification).
@@ -109,19 +109,19 @@ public:
     class Status
     {
     public:
-        Status(dsize s = 0, Time const &modTime = Time::invalidTime())
+        Status(dsize s = 0, const Time &modTime = Time::invalidTime())
             : size(s), modifiedAt(modTime), _type(Type::File) {}
 
-        Status(Type t, dsize s = 0, Time const &modTime = Time::invalidTime())
+        Status(Type t, dsize s = 0, const Time &modTime = Time::invalidTime())
             : size(s), modifiedAt(modTime), _type(t) {}
 
         Type type() const { return _type; }
 
-        bool operator == (Status const &s) const {
+        bool operator == (const Status &s) const {
             return size == s.size && modifiedAt == s.modifiedAt;
         }
 
-        bool operator != (Status const &s) const { return !(*this == s); }
+        bool operator != (const Status &s) const { return !(*this == s); }
 
     public:
         dsize size;
@@ -228,7 +228,7 @@ public:
      * @return  Source file. Always returns a valid pointer.
      * @see setSource()
      */
-    File const *source() const;
+    const File *source() const;
 
     /**
      * Returns the source file.
@@ -249,19 +249,19 @@ public:
     virtual File &target();
 
     /// @copydoc target()
-    virtual File const &target() const;
+    virtual const File &target() const;
 
     /**
      * Updates the status of the file.
      *
      * @param status  New status.
      */
-    virtual void setStatus(Status const &status);
+    virtual void setStatus(const Status &status);
 
     /**
      * Returns the status of the file.
      */
-    Status const &status() const;
+    const Status &status() const;
 
     inline File::Type type() const { return status().type(); }
 
@@ -291,7 +291,7 @@ public:
      *
      * @param newMode  Mode.
      */
-    virtual void setMode(Flags const &newMode);
+    virtual void setMode(const Flags &newMode);
 
     void setMode(Flags flags, FlagOpArg op);
 
@@ -329,13 +329,13 @@ public:
     NativePath correspondingNativePath() const;
 
     // Implements IIOStream.
-    IOStream &operator << (IByteArray const &bytes);
+    IOStream &operator << (const IByteArray &bytes);
     IIStream &operator >> (IByteArray &bytes);
-    IIStream const &operator >> (IByteArray &bytes) const;
+    const IIStream &operator >> (IByteArray &bytes) const;
 
     // Implements IObject.
     Record &objectNamespace();
-    Record const &objectNamespace() const;
+    const Record &objectNamespace() const;
 
     // Standard casting methods.
     DE_CAST_METHODS()
@@ -349,7 +349,7 @@ public:
      *
      * @return Text preformatted for fixed-width printing (padded with spaces).
      */
-    static String fileListAsText(List<File const *> files);
+    static String fileListAsText(List<const File *> files);
 
 protected:
     /**
@@ -357,7 +357,7 @@ protected:
      *
      * @param name  Name of the file.
      */
-    explicit File(String const &name = String());
+    explicit File(const String &name = String());
 
 private:
     DE_PRIVATE(d)

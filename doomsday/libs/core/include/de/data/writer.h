@@ -64,7 +64,7 @@ public:
      * @param byteOrder    Byte order to use. The byte order defaults to little-endian byte order.
      * @param offset       Offset in @a destination where to start writing.
      */
-    Writer(IByteArray &destination, ByteOrder const &byteOrder = littleEndianByteOrder,
+    Writer(IByteArray &destination, const ByteOrder &byteOrder = littleEndianByteOrder,
            IByteArray::Offset offset = 0);
 
     /**
@@ -81,7 +81,7 @@ public:
      * @param stream     Stream to write to.
      * @param byteOrder  Byte order to use.
      */
-    Writer(IOStream &stream, ByteOrder const &byteOrder = littleEndianByteOrder);
+    Writer(IOStream &stream, const ByteOrder &byteOrder = littleEndianByteOrder);
 
     /**
      * Constructs a new writer for writing into a byte array file.
@@ -90,7 +90,7 @@ public:
      * @param byteOrder    Byte order to use.
      * @param offset       Offset in @a destination where to start writing.
      */
-    Writer(ByteArrayFile &destination, ByteOrder const &byteOrder = littleEndianByteOrder,
+    Writer(ByteArrayFile &destination, const ByteOrder &byteOrder = littleEndianByteOrder,
            IByteArray::Offset offset = 0);
 
     /**
@@ -98,7 +98,7 @@ public:
      *
      * @param other  Writer.
      */
-    Writer(Writer const &other);
+    Writer(const Writer &other);
 
     /**
      * Constructs a new writer that uses the current offset of @a other as its
@@ -107,7 +107,7 @@ public:
      * @param other      Writer.
      * @param byteOrder  Byte order.
      */
-    Writer(Writer const &other, ByteOrder const &byteOrder);
+    Writer(const Writer &other, const ByteOrder &byteOrder);
 
     /**
      * Writes the serialization protocol header to the destination. This should
@@ -126,17 +126,17 @@ public:
     duint version() const;
 
     //@{ Write a number to the destination buffer, in the chosen byte order.
-    Writer &operator << (char const &byte);
-    Writer &operator << (dchar const &byte);
-    Writer &operator << (duchar const &byte);
-    Writer &operator << (dint16 const &word);
-    Writer &operator << (duint16 const &word);
-    Writer &operator << (dint32 const &dword);
-    Writer &operator << (duint32 const &dword);
-    Writer &operator << (dint64 const &qword);
-    Writer &operator << (duint64 const &qword);
-    Writer &operator << (dfloat const &value);
-    Writer &operator << (ddouble const &value);
+    Writer &operator << (const char &byte);
+    Writer &operator << (const dchar &byte);
+    Writer &operator << (const duchar &byte);
+    Writer &operator << (const dint16 &word);
+    Writer &operator << (const duint16 &word);
+    Writer &operator << (const dint32 &dword);
+    Writer &operator << (const duint32 &dword);
+    Writer &operator << (const dint64 &qword);
+    Writer &operator << (const duint64 &qword);
+    Writer &operator << (const dfloat &value);
+    Writer &operator << (const ddouble &value);
     //@}
 
     /**
@@ -147,9 +147,9 @@ public:
      *
      * @param text  Text string.
      */
-    Writer &operator << (String const &text);
+    Writer &operator << (const String &text);
 
-    Writer &operator << (Block const &block);
+    Writer &operator << (const Block &block);
 
     /**
      * Writes a string to the destination buffer.
@@ -159,7 +159,7 @@ public:
      *
      * @param text  Text string.
      */
-    Writer &writeText(String const &text);
+    Writer &writeText(const String &text);
 
     /**
      * Writes a sequence bytes to the destination buffer. The size of the byte
@@ -167,7 +167,7 @@ public:
      *
      * @param byteArray  Array to write.
      */
-    Writer &operator << (IByteArray const &byteArray);
+    Writer &operator << (const IByteArray &byteArray);
 
     /**
      * Writes a fixed-size sequence of bytes to the destination buffer.
@@ -179,7 +179,7 @@ public:
      *
      * @return  Reference to the Writer.
      */
-    Writer &operator << (FixedByteArray const &fixedByteArray);
+    Writer &operator << (const FixedByteArray &fixedByteArray);
 
     /**
      * Writes a fixed-size sequence of bytes to the destination buffer.
@@ -191,7 +191,7 @@ public:
      *
      * @return  Reference to the Writer.
      */
-    Writer &writeBytes(dsize count, IByteArray const &array);
+    Writer &writeBytes(dsize count, const IByteArray &array);
 
     /**
      * Writes a fixed-size sequence of bytes to the destination buffer.
@@ -203,10 +203,10 @@ public:
      *
      * @return Reference to the Writer.
      */
-    Writer &writeBytes(IByteArray const &array);
+    Writer &writeBytes(const IByteArray &array);
 
     /// Writes a writable object into the destination buffer.
-    Writer &operator << (IWritable const &writable);
+    Writer &operator << (const IWritable &writable);
 
     /**
      * Begins or ends a span of data. The length of the span is written at the beginning
@@ -226,26 +226,26 @@ public:
      * @param list  List of objects.
      */
     template <typename ListType>
-    Writer &writeObjects(ListType const &list) {
+    Writer &writeObjects(const ListType &list) {
         *this << duint32(list.size());
         DE_FOR_EACH_CONST(typename ListType, i, list) *this << **i;
         return *this;
     }
 
     template <typename ListType>
-    Writer &writeElements(ListType const &list) {
+    Writer &writeElements(const ListType &list) {
         *this << duint32(list.size());
-        for (auto const &elem : list) *this << elem;
+        for (const auto &elem : list) *this << elem;
         return *this;
     }
 
     template <typename Type>
-    Writer &writeMultiple(Type const &value) {
+    Writer &writeMultiple(const Type &value) {
         return *this << value;
     }
 
     template <typename Type, typename... Args>
-    Writer &writeMultiple(Type const &value, Args... args) {
+    Writer &writeMultiple(const Type &value, Args... args) {
         *this << value;
         return writeMultiple(args...);
     }
@@ -253,7 +253,7 @@ public:
     /**
      * Returns the destination byte array used by the writer.
      */
-    IByteArray const *destination() const;
+    const IByteArray *destination() const;
 
     /**
      * Returns the destination byte array used by the writer.
@@ -294,7 +294,7 @@ public:
     /**
      * Returns the byte order of the writer.
      */
-    ByteOrder const &byteOrder() const;
+    const ByteOrder &byteOrder() const;
 
     /**
      * Moves the writer offset forward by a number of bytes.

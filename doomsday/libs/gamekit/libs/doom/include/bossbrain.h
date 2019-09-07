@@ -70,7 +70,7 @@ typedef void *BossBrain;
 
 void BossBrain_ClearTargets(BossBrain *brain);
 
-int BossBrain_TargetCount(BossBrain const *brain);
+int BossBrain_TargetCount(const BossBrain *brain);
 
 void BossBrain_AddTarget(BossBrain *brain, struct mobj_s *mo);
 

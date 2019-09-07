@@ -45,7 +45,7 @@ typedef struct {
 
 static char *lastPcxErrorMsg = 0; /// @todo potentially never free'd
 
-static void PCX_SetLastError(char const *msg)
+static void PCX_SetLastError(const char *msg)
 {
     size_t len;
     if (0 == msg || 0 == (len = strlen(msg)))
@@ -74,8 +74,8 @@ static bool load(FileHandle &file, int width, int height, uint8_t *dstBuf)
 
     file.read(raw, len);
 
-    uint8_t const *srcPos = raw;
-    uint8_t const *palette = srcPos + len - 768; // Palette is at the end.
+    const uint8_t *srcPos = raw;
+    const uint8_t *palette = srcPos + len - 768; // Palette is at the end.
 
     srcPos += sizeof(header_t);
     for (y = 0; y < height; ++y, dstBuf += width * 3)
@@ -115,7 +115,7 @@ static bool load(FileHandle &file, int width, int height, uint8_t *dstBuf)
     return result;
 }
 
-char const *PCX_LastError()
+const char *PCX_LastError()
 {
     if (lastPcxErrorMsg)
     {

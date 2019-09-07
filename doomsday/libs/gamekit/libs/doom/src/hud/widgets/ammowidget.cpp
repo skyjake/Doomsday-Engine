@@ -30,7 +30,7 @@ static void AmmoWidget_UpdateGeometry(guidata_ammo_t *ammo)
     ammo->updateGeometry();
 }
 
-static void AmmoWidget_Draw(guidata_ammo_t *wi, Point2Raw const *offset)
+static void AmmoWidget_Draw(guidata_ammo_t *wi, const Point2Raw *offset)
 {
     DE_ASSERT(wi);
     wi->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -60,11 +60,11 @@ void guidata_ammo_t::tick(timespan_t /*elapsed*/)
 {
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
-    player_t const *plr = &::players[player()];
+    const player_t *plr = &::players[player()];
     _value = plr->ammo[_ammotype].owned;
 }
 
-void guidata_ammo_t::draw(Vec2i const &offset) const
+void guidata_ammo_t::draw(const Vec2i &offset) const
 {
     static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
     static Vec2i const offsets[NUM_AMMO_TYPES] = {

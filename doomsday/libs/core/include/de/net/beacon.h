@@ -86,7 +86,7 @@ public:
     void discover(const TimeSpan& timeOut, const TimeSpan& interval = 1.0);
 
     List<Address> foundHosts() const;
-    Block messageFromHost(Address const &host) const;
+    Block messageFromHost(const Address &host) const;
 
 private:
     DE_PRIVATE(d)

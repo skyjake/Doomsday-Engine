@@ -84,7 +84,7 @@ DE_PIMPL(ArchiveFeed)
         file->audienceForDeletion() += this;
     }
 
-    Impl(Public *feed, ArchiveFeed &parentFeed, String const &path)
+    Impl(Public *feed, ArchiveFeed &parentFeed, const String &path)
         : Base(feed)
         , file(parentFeed.d->file)
         , arch(0)
@@ -139,7 +139,7 @@ DE_PIMPL(ArchiveFeed)
         }
     }
 
-    void fileBeingDeleted(File const &deleted)
+    void fileBeingDeleted(const File &deleted)
     {
         if (file == &deleted)
         {
@@ -177,7 +177,7 @@ DE_PIMPL(ArchiveFeed)
         file->audienceForDeletion() += this;
     }
 
-    PopulatedFiles populate(Folder const &folder)
+    PopulatedFiles populate(const Folder &folder)
     {
         PopulatedFiles populated;
 
@@ -228,7 +228,7 @@ ArchiveFeed::ArchiveFeed(File &archiveFile)
     : d(new Impl(this, archiveFile))
 {}
 
-ArchiveFeed::ArchiveFeed(ArchiveFeed &parentFeed, String const &basePath)
+ArchiveFeed::ArchiveFeed(ArchiveFeed &parentFeed, const String &basePath)
     : d(new Impl(this, parentFeed, basePath))
 {}
 
@@ -243,7 +243,7 @@ String ArchiveFeed::description() const
     return "archive in " + (d->file? d->file->description() : "(deleted file)");
 }
 
-Feed::PopulatedFiles ArchiveFeed::populate(Folder const &folder)
+Feed::PopulatedFiles ArchiveFeed::populate(const Folder &folder)
 {
     LOG_AS("ArchiveFeed::populate");
 
@@ -277,7 +277,7 @@ bool ArchiveFeed::prune(File &file) const
     return false;
 }
 
-File *ArchiveFeed::createFile(String const &name)
+File *ArchiveFeed::createFile(const String &name)
 {
     String newEntry = d->basePath / name;
     if (archive().hasEntry(newEntry))
@@ -293,12 +293,12 @@ File *ArchiveFeed::createFile(String const &name)
     return file;
 }
 
-void ArchiveFeed::destroyFile(String const &name)
+void ArchiveFeed::destroyFile(const String &name)
 {
     archive().remove(d->basePath / name);
 }
 
-Feed *ArchiveFeed::newSubFeed(String const &name)
+Feed *ArchiveFeed::newSubFeed(const String &name)
 {
     return new ArchiveFeed(*this, d->basePath / name);
 }
@@ -308,17 +308,17 @@ Archive &ArchiveFeed::archive()
     return d->archive();
 }
 
-Archive const &ArchiveFeed::archive() const
+const Archive &ArchiveFeed::archive() const
 {
     return d->archive();
 }
 
-String const &ArchiveFeed::basePath() const
+const String &ArchiveFeed::basePath() const
 {
     return d->basePath;
 }
 
-File const &ArchiveFeed::archiveSourceFile() const
+const File &ArchiveFeed::archiveSourceFile() const
 {
     if (d->file)
     {
@@ -355,7 +355,7 @@ void ArchiveFeed::uncacheAllEntries(StringList folderTypes) // static
 {
     if (Folder::isPopulatingAsync()) return; // Never mind.
 
-    for (String const &folderType : folderTypes)
+    for (const String &folderType : folderTypes)
     {
         for (File *file : FS::get().indexFor(folderType).files())
         {

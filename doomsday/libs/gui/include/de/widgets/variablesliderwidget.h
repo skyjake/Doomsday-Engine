@@ -39,12 +39,12 @@ public:
     enum ValueType { Number, Animation };
 
 public:
-    VariableSliderWidget(Variable &variable, Ranged const &range, ddouble step = 0,
-                         String const &name = String());
+    VariableSliderWidget(Variable &variable, const Ranged &range, ddouble step = 0,
+                         const String &name = String());
 
     VariableSliderWidget(ValueType valueType, Variable &variable,
-                         Ranged const &range, ddouble step = 0,
-                         String const &name = String());
+                         const Ranged &range, ddouble step = 0,
+                         const String &name = String());
 
     Variable &variable() const;
 

@@ -49,9 +49,9 @@ public:
     struct Item
     {
     public:
-        explicit Item(de::String const &text = "", int userValue = 0);
+        explicit Item(const de::String &text = "", int userValue = 0);
 
-        void setText(de::String const &newText);
+        void setText(const de::String &newText);
         de::String text() const;
 
         void setUserValue(int newUserValue);
@@ -80,9 +80,9 @@ public:
     /**
      * Add set of Items to the ListWidget in order. Ownership of the Items is given to ListWidget.
      */
-    ListWidget &addItems(Items const &itemsToAdd);
+    ListWidget &addItems(const Items &itemsToAdd);
 
-    Items const &items() const;
+    const Items &items() const;
 
     inline int itemCount() const { return items().count(); }
 

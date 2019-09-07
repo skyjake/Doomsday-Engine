@@ -35,7 +35,7 @@ const String UDMFLex::BRACKET_OPEN("{");
 const String UDMFLex::BRACKET_CLOSE("}");
 const String UDMFLex::SEMICOLON(";");
 
-UDMFLex::UDMFLex(String const &input)
+UDMFLex::UDMFLex(const String &input)
     : Lex(input, '/', '*', DoubleCharComment | NegativeNumbers)
 {}
 
@@ -125,7 +125,7 @@ void UDMFLex::parseString(TokenBuffer &output)
     }
 }
 
-bool UDMFLex::isKeyword(Token const &token)
+bool UDMFLex::isKeyword(const Token &token)
 {
     static const StringList keywords{
         NAMESPACE,

@@ -79,7 +79,7 @@ res::AnimGroup *AnimGroups::animGroup(dint uniqueId)
     return nullptr;
 }
 
-res::AnimGroup *AnimGroups::animGroupForTexture(res::TextureManifest const &textureManifest)
+res::AnimGroup *AnimGroups::animGroupForTexture(const res::TextureManifest &textureManifest)
 {
     // Group ids are 1-based.
     // Search backwards to allow patching.

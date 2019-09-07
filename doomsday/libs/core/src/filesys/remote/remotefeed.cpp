@@ -52,7 +52,7 @@ DE_PIMPL(RemoteFeed)
         {
             String const path = remotePath / i.first.value->asText();
 
-            if (RecordValue const *meta = maybeAs<RecordValue>(i.second))
+            if (const RecordValue *meta = maybeAs<RecordValue>(i.second))
             {
                 const Record &   md       = *meta->record();
                 const File::Type fileType = RemoteFeedMetadataPacket::toFileType(md.geti("type", 0));
@@ -84,7 +84,7 @@ DE_PIMPL(RemoteFeed)
         return populated;
     }
 
-    void remoteRepositoryStatusChanged(String const &address, filesys::RemoteFeedRelay::Status status) override
+    void remoteRepositoryStatusChanged(const String &address, filesys::RemoteFeedRelay::Status status) override
     {
         if (repository == address && status == filesys::RemoteFeedRelay::Connected)
         {
@@ -99,14 +99,14 @@ DE_PIMPL(RemoteFeed)
     }
 };
 
-RemoteFeed::RemoteFeed(String const &repository, String const &remotePath)
+RemoteFeed::RemoteFeed(const String &repository, const String &remotePath)
     : d(new Impl(this))
 {
     d->repository = repository;
     d->remotePath = remotePath;
 }
 
-RemoteFeed::RemoteFeed(RemoteFeed const &parentFeed, String const &remotePath)
+RemoteFeed::RemoteFeed(const RemoteFeed &parentFeed, const String &remotePath)
     : d(new Impl(this))
 {
     d->repository = parentFeed.d->repository;
@@ -123,7 +123,7 @@ String RemoteFeed::description() const
     return "remote repository \"" + d->repository / d->remotePath + "\"";
 }
 
-Feed::PopulatedFiles RemoteFeed::populate(Folder const &folder)
+Feed::PopulatedFiles RemoteFeed::populate(const Folder &folder)
 {
     LOG_AS("RemoteFeed");
     auto &relay = filesys::RemoteFeedRelay::get();

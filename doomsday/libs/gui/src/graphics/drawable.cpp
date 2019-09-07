@@ -29,10 +29,10 @@ DE_PIMPL(Drawable)
     typedef Map<String, Id>      Names;
 
     struct BufferConfig {
-        GLProgram const *program;
-        GLState const *state;
+        const GLProgram *program;
+        const GLState *state;
 
-        BufferConfig(GLProgram const *p = nullptr, GLState const *s = nullptr)
+        BufferConfig(const GLProgram *p = nullptr, const GLState *s = nullptr)
             : program(p), state(s) {}
     };
     typedef Map<Id, BufferConfig> BufferConfigs;
@@ -97,7 +97,7 @@ DE_PIMPL(Drawable)
         return next;
     }
 
-    void replaceProgram(GLProgram const *src, GLProgram const *dest)
+    void replaceProgram(const GLProgram *src, const GLProgram *dest)
     {
         DE_FOR_EACH(BufferConfigs, i, configs)
         {
@@ -108,7 +108,7 @@ DE_PIMPL(Drawable)
         }
     }
 
-    void replaceState(GLState const *src, GLState const *dest)
+    void replaceState(const GLState *src, const GLState *dest)
     {
         DE_FOR_EACH(BufferConfigs, i, configs)
         {
@@ -172,12 +172,12 @@ GLBuffer &Drawable::buffer(Id id) const
     return *d->buffers[id];
 }
 
-GLBuffer &Drawable::buffer(Name const &bufferName) const
+GLBuffer &Drawable::buffer(const Name &bufferName) const
 {
     return buffer(bufferId(bufferName));
 }
 
-Drawable::Id Drawable::bufferId(Name const &bufferName) const
+Drawable::Id Drawable::bufferId(const Name &bufferName) const
 {
     DE_ASSERT(d->bufferNames.contains(bufferName));
     return d->bufferNames[bufferName];
@@ -190,36 +190,36 @@ GLProgram &Drawable::program(Id id) const
     return *d->programs[id];
 }
 
-GLProgram &Drawable::program(Name const &programName) const
+GLProgram &Drawable::program(const Name &programName) const
 {
     return program(programId(programName));
 }
 
-Drawable::Id Drawable::programId(Name const &programName) const
+Drawable::Id Drawable::programId(const Name &programName) const
 {
     if (programName.isEmpty()) return 0; // Default program.
     DE_ASSERT(d->programNames.contains(programName));
     return d->programNames[programName];
 }
 
-GLProgram const &Drawable::programForBuffer(Id bufferId) const
+const GLProgram &Drawable::programForBuffer(Id bufferId) const
 {
     DE_ASSERT(d->configs.contains(bufferId));
     DE_ASSERT(d->configs[bufferId].program != nullptr);
     return *d->configs[bufferId].program;
 }
 
-GLProgram const &Drawable::programForBuffer(Name const &bufferName) const
+const GLProgram &Drawable::programForBuffer(const Name &bufferName) const
 {
     return programForBuffer(bufferId(bufferName));
 }
 
-GLState const *Drawable::stateForBuffer(Id bufferId) const
+const GLState *Drawable::stateForBuffer(Id bufferId) const
 {
     return d->configs[bufferId].state;
 }
 
-GLState const *Drawable::stateForBuffer(Name const &bufferName) const
+const GLState *Drawable::stateForBuffer(const Name &bufferName) const
 {
     return stateForBuffer(bufferId(bufferName));
 }
@@ -230,12 +230,12 @@ GLState &Drawable::state(Id id) const
     return *d->states[id];
 }
 
-GLState &Drawable::state(Name const &stateName) const
+GLState &Drawable::state(const Name &stateName) const
 {
     return state(stateId(stateName));
 }
 
-Drawable::Id Drawable::stateId(Name const &stateName) const
+Drawable::Id Drawable::stateId(const Name &stateName) const
 {
     DE_ASSERT(d->stateNames.contains(stateName));
     return d->stateNames[stateName];
@@ -255,7 +255,7 @@ void Drawable::addBuffer(Id id, const std::shared_ptr<GLBuffer>& buffer)
     insert(*buffer, Required);
 }
 
-Drawable::Id Drawable::addBuffer(Name const &bufferName, GLBuffer *buffer)
+Drawable::Id Drawable::addBuffer(const Name &bufferName, GLBuffer *buffer)
 {
     Id id = d->nextBufferId();
     d->bufferNames.insert(bufferName, id);
@@ -275,7 +275,7 @@ Drawable::Id Drawable::addBuffer(const std::shared_ptr<GLBuffer>& buffer)
     return id;
 }
 
-Drawable::Id Drawable::addBufferWithNewProgram(GLBuffer *buffer, Name const &programName)
+Drawable::Id Drawable::addBufferWithNewProgram(GLBuffer *buffer, const Name &programName)
 {
     // Take ownership of the buffer.
     Id const bufId = d->nextBufferId();
@@ -286,15 +286,15 @@ Drawable::Id Drawable::addBufferWithNewProgram(GLBuffer *buffer, Name const &pro
     return bufId;
 }
 
-void Drawable::addBufferWithNewProgram(Id id, GLBuffer *buffer, Name const &programName)
+void Drawable::addBufferWithNewProgram(Id id, GLBuffer *buffer, const Name &programName)
 {
     addBuffer(id, buffer);
     addProgram(programName);
     setProgram(id, programName);
 }
 
-Drawable::Id Drawable::addBufferWithNewProgram(Name const &bufferName, GLBuffer *buffer,
-                                               Name const &programName)
+Drawable::Id Drawable::addBufferWithNewProgram(const Name &bufferName, GLBuffer *buffer,
+                                               const Name &programName)
 {
     Id const progId = addProgram(programName);
     Id const bufId = addBuffer(bufferName, buffer);
@@ -315,7 +315,7 @@ GLProgram &Drawable::addProgram(Id id)
     return *p;
 }
 
-Drawable::Id Drawable::addProgram(Name const &programName)
+Drawable::Id Drawable::addProgram(const Name &programName)
 {
     Id const id = d->nextProgramId();
     addProgram(id);
@@ -326,7 +326,7 @@ Drawable::Id Drawable::addProgram(Name const &programName)
     return id;
 }
 
-GLState &Drawable::addState(Id id, GLState const &state)
+GLState &Drawable::addState(Id id, const GLState &state)
 {
     removeState(id);
     GLState *s = new GLState(state);
@@ -334,7 +334,7 @@ GLState &Drawable::addState(Id id, GLState const &state)
     return *s;
 }
 
-Drawable::Id Drawable::addState(Name const &stateName, GLState const &state)
+Drawable::Id Drawable::addState(const Name &stateName, const GLState &state)
 {
     Id const id = d->nextStateId();
     addState(id, state);
@@ -373,21 +373,21 @@ void Drawable::removeState(Id id)
     }
 }
 
-void Drawable::removeBuffer(Name const &bufferName)
+void Drawable::removeBuffer(const Name &bufferName)
 {
     Id const id = bufferId(bufferName);
     removeBuffer(id);
     d->removeName(d->bufferNames, id);
 }
 
-void Drawable::removeProgram(Name const &programName)
+void Drawable::removeProgram(const Name &programName)
 {
     Id const id = programId(programName);
     removeProgram(id);
     d->removeName(d->programNames, id);
 }
 
-void Drawable::removeState(Name const &stateName)
+void Drawable::removeState(const Name &stateName)
 {
     Id const id = stateId(stateName);
     removeState(id);
@@ -404,17 +404,17 @@ void Drawable::setProgram(Id bufferId, Id programId)
     d->configs[bufferId].program = &program(programId);
 }
 
-void Drawable::setProgram(Id bufferId, Name const &programName)
+void Drawable::setProgram(Id bufferId, const Name &programName)
 {
     setProgram(bufferId, program(programName));
 }
 
-void Drawable::setProgram(Name const &bufferName, GLProgram &program)
+void Drawable::setProgram(const Name &bufferName, GLProgram &program)
 {
     setProgram(bufferId(bufferName), program);
 }
 
-void Drawable::setProgram(Name const &bufferName, Name const &programName)
+void Drawable::setProgram(const Name &bufferName, const Name &programName)
 {
     setProgram(bufferId(bufferName), program(programName));
 }
@@ -432,7 +432,7 @@ void Drawable::setProgram(Id programId)
     setProgram(program(programId));
 }
 
-void Drawable::setProgram(Name const &programName)
+void Drawable::setProgram(const Name &programName)
 {
     setProgram(program(programName));
 }
@@ -442,17 +442,17 @@ void Drawable::setState(Id bufferId, GLState &state)
     d->configs[bufferId].state = &state;
 }
 
-void Drawable::setState(Id bufferId, Name const &stateName)
+void Drawable::setState(Id bufferId, const Name &stateName)
 {
     setState(bufferId, state(stateName));
 }
 
-void Drawable::setState(Name const &bufferName, GLState &state)
+void Drawable::setState(const Name &bufferName, GLState &state)
 {
     setState(bufferId(bufferName), state);
 }
 
-void Drawable::setState(Name const &bufferName, Name const &stateName)
+void Drawable::setState(const Name &bufferName, const Name &stateName)
 {
     setState(bufferId(bufferName), state(stateName));
 }
@@ -465,7 +465,7 @@ void Drawable::setState(GLState &state)
     }
 }
 
-void Drawable::setState(Name const &stateName)
+void Drawable::setState(const Name &stateName)
 {
     setState(state(stateName));
 }
@@ -475,7 +475,7 @@ void Drawable::unsetState(Id bufferId)
     d->configs[bufferId].state = nullptr;
 }
 
-void Drawable::unsetState(Name const &bufferName)
+void Drawable::unsetState(const Name &bufferName)
 {
     unsetState(bufferId(bufferName));
 }
@@ -493,8 +493,8 @@ void Drawable::draw() const
     // Ignore the draw request until everything is ready.
     if (!isReady()) return;
 
-    GLProgram const *currentProgram = nullptr;
-    GLState   const *currentState   = nullptr;
+    const GLProgram *currentProgram = nullptr;
+    const GLState *currentState   = nullptr;
 
     // Make sure the GL state on the top of the stack is in effect.
     GLState::current().apply();
@@ -504,7 +504,7 @@ void Drawable::draw() const
         const Id id = i.first;
 
         // Switch the program if necessary.
-        GLProgram const &bufProg = programForBuffer(id);
+        const GLProgram &bufProg = programForBuffer(id);
         if (currentProgram != &bufProg)
         {
             if (currentProgram) currentProgram->endUse();
@@ -514,7 +514,7 @@ void Drawable::draw() const
         }
 
         // If a state has been defined, use it.
-        GLState const *bufState = stateForBuffer(id);
+        const GLState *bufState = stateForBuffer(id);
         if (bufState && currentState != bufState)
         {
             currentState = bufState;

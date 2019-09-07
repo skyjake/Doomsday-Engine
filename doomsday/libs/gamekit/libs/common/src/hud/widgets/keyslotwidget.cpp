@@ -38,7 +38,7 @@ static void KeySlotWidget_UpdateGeometry(guidata_keyslot_t *kslt)
     kslt->updateGeometry();
 }
 
-static void KeySlotWidget_Draw(guidata_keyslot_t *kslt, Point2Raw const *offset)
+static void KeySlotWidget_Draw(guidata_keyslot_t *kslt, const Point2Raw *offset)
 {
     DE_ASSERT(kslt);
     kslt->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -91,7 +91,7 @@ void guidata_keyslot_t::tick(timespan_t /*elapsed*/)
 {
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
-    player_t const *plr = &players[player()];
+    const player_t *plr = &players[player()];
 
 #if __JDOOM__
     d->patchId = -1;
@@ -112,7 +112,7 @@ void guidata_keyslot_t::tick(timespan_t /*elapsed*/)
 #endif
 }
 
-void guidata_keyslot_t::draw(Vec2i const &offset) const
+void guidata_keyslot_t::draw(const Vec2i &offset) const
 {
     Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 

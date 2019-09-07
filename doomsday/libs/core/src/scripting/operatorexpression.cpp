@@ -316,7 +316,7 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
                 "Operator " + operatorToText(_op) + " not implemented");
         }
     }
-    catch (Error const &)
+    catch (const Error &)
     {
         delete rightValue;
         delete leftValue;
@@ -392,20 +392,20 @@ namespace internal {
             value = nullptr;
             return v;
         }
-        virtual void append(Value const &src, dint index) = 0;
+        virtual void append(const Value &src, dint index) = 0;
         Value *value;
     };
     struct ArraySliceTarget : public SliceTarget {
         ArraySliceTarget() : SliceTarget(new ArrayValue) {}
         ArrayValue &array() { return *static_cast<ArrayValue *>(value); }
-        void append(Value const &src, dint index) {
+        void append(const Value &src, dint index) {
             array().add(src.duplicateElement(NumberValue(index)));
         }
     };
     struct TextSliceTarget : public SliceTarget {
         TextSliceTarget() : SliceTarget(new TextValue) {}
         TextValue &text() { return *static_cast<TextValue *>(value); }
-        void append(Value const &src, dint index) {
+        void append(const Value &src, dint index) {
             text().sum(TextValue(src.asText().mid(CharPos(index), 1))); ///@todo Performance??
         }
     };
@@ -419,7 +419,7 @@ Value *OperatorExpression::performSlice(Value &leftValue, Value &rightValue) con
 
     DE_ASSERT(rightValue.size() >= 2);
 
-    ArrayValue const *args = dynamic_cast<ArrayValue *>(&rightValue);
+    const ArrayValue *args = dynamic_cast<ArrayValue *>(&rightValue);
     DE_ASSERT(args != nullptr); // Parser makes sure.
 
     // The resulting slice of leftValue's elements.
@@ -452,8 +452,8 @@ Value *OperatorExpression::performSlice(Value &leftValue, Value &rightValue) con
     bool unspecifiedEnd = false;
 
     // Check the start index of the slice.
-    Value const *startValue = args->elements()[0];
-    if (dynamic_cast<NoneValue const *>(startValue))
+    const Value *startValue = args->elements()[0];
+    if (dynamic_cast<const NoneValue *>(startValue))
     {
         unspecifiedStart = true;
     }
@@ -463,8 +463,8 @@ Value *OperatorExpression::performSlice(Value &leftValue, Value &rightValue) con
     }
 
     // Check the end index of the slice.
-    Value const *endValue = args->elements()[1];
-    if (dynamic_cast<NoneValue const *>(endValue))
+    const Value *endValue = args->elements()[1];
+    if (dynamic_cast<const NoneValue *>(endValue))
     {
         unspecifiedEnd = true;
     }

@@ -31,7 +31,7 @@ namespace de {
 class RelayWidget : public GuiWidget
 {
 public:
-    RelayWidget(GuiWidget *target = nullptr, String const &name = String());
+    RelayWidget(GuiWidget *target = nullptr, const String &name = String());
 
     /**
      * Sets the widget that will be drawn when the relay widget is supposed to be
@@ -49,8 +49,8 @@ public:
     void deinitialize();
     void viewResized();
     void update();
-    bool handleEvent(Event const &event);
-    bool hitTest(Vec2i const &pos) const;
+    bool handleEvent(const Event &event);
+    bool hitTest(const Vec2i &pos) const;
     void drawContent();
 
 public:

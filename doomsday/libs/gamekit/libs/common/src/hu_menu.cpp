@@ -116,20 +116,20 @@ void Hu_MenuPlayerClassPreviewTicker(Widget &wi);
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-void Hu_MenuDrawMainPage(Page const &page, Vec2i const &origin);
+void Hu_MenuDrawMainPage(const Page &page, const Vec2i &origin);
 #endif
 
-//void Hu_MenuDrawGameTypePage(Page const &page, Vec2i const &origin);
-void Hu_MenuDrawSkillPage(Page const &page, Vec2i const &origin);
+//void Hu_MenuDrawGameTypePage(const Page &page, const Vec2i &origin);
+void Hu_MenuDrawSkillPage(const Page &page, const Vec2i &origin);
 #if __JHEXEN__
-void Hu_MenuDrawPlayerClassPage(Page const &page, Vec2i const &origin);
+void Hu_MenuDrawPlayerClassPage(const Page &page, const Vec2i &origin);
 #endif
-void Hu_MenuDrawEpisodePage(Page const &page, Vec2i const &origin);
-void Hu_MenuDrawOptionsPage(Page const &page, Vec2i const &origin);
-void Hu_MenuDrawLoadGamePage(Page const &page, Vec2i const &origin);
-void Hu_MenuDrawSaveGamePage(Page const &page, Vec2i const &origin);
-void Hu_MenuDrawMultiplayerPage(Page const &page, Vec2i const &origin);
-void Hu_MenuDrawPlayerSetupPage(Page const &page, Vec2i const &origin);
+void Hu_MenuDrawEpisodePage(const Page &page, const Vec2i &origin);
+void Hu_MenuDrawOptionsPage(const Page &page, const Vec2i &origin);
+void Hu_MenuDrawLoadGamePage(const Page &page, const Vec2i &origin);
+void Hu_MenuDrawSaveGamePage(const Page &page, const Vec2i &origin);
+void Hu_MenuDrawMultiplayerPage(const Page &page, const Vec2i &origin);
+void Hu_MenuDrawPlayerSetupPage(const Page &page, const Vec2i &origin);
 
 int Hu_MenuColorWidgetCmdResponder(Page &page, menucommand_e cmd);
 int Hu_MenuSkipPreviousPageIfSkippingEpisodeSelection(Page &page, menucommand_e cmd);
@@ -1763,7 +1763,7 @@ void Hu_MenuInitAutomapOptionsPage()
             .setAction(Widget::Activated, Hu_MenuActivateColorWidget);
 }
 
-static bool compareWeaponPriority(ListWidgetItem const *a, ListWidgetItem const *b)
+static bool compareWeaponPriority(const ListWidgetItem *a, const ListWidgetItem *b)
 {
     int i = 0, aIndex = -1, bIndex = -1;
     do
@@ -1792,31 +1792,31 @@ void Hu_MenuInitWeaponsPage()
 #endif
 
     const struct {
-        char const *text;
+        const char *text;
         weapontype_t data;
     } weaponOrder[NUM_WEAPON_TYPES+1] = {
 #if __JDOOM__ || __JDOOM64__
-        { (char const *)TXT_WEAPON1,             WT_FIRST },
-        { (char const *)TXT_WEAPON2,             WT_SECOND },
-        { (char const *)TXT_WEAPON3,             WT_THIRD },
-        { (char const *)TXT_WEAPON4,             WT_FOURTH },
-        { (char const *)TXT_WEAPON5,             WT_FIFTH },
-        { (char const *)TXT_WEAPON6,             WT_SIXTH },
-        { (char const *)TXT_WEAPON7,             WT_SEVENTH },
-        { (char const *)TXT_WEAPON8,             WT_EIGHTH },
-        { (char const *)TXT_WEAPON9,             WT_NINETH },
+        { (const char *)TXT_WEAPON1,             WT_FIRST },
+        { (const char *)TXT_WEAPON2,             WT_SECOND },
+        { (const char *)TXT_WEAPON3,             WT_THIRD },
+        { (const char *)TXT_WEAPON4,             WT_FOURTH },
+        { (const char *)TXT_WEAPON5,             WT_FIFTH },
+        { (const char *)TXT_WEAPON6,             WT_SIXTH },
+        { (const char *)TXT_WEAPON7,             WT_SEVENTH },
+        { (const char *)TXT_WEAPON8,             WT_EIGHTH },
+        { (const char *)TXT_WEAPON9,             WT_NINETH },
 #  if __JDOOM64__
-        { (char const *)TXT_WEAPON10,            WT_TENTH },
+        { (const char *)TXT_WEAPON10,            WT_TENTH },
 #  endif
 #elif __JHERETIC__
-        { (char const *)TXT_TXT_WPNSTAFF,        WT_FIRST },
-        { (char const *)TXT_TXT_WPNWAND,         WT_SECOND },
-        { (char const *)TXT_TXT_WPNCROSSBOW,     WT_THIRD },
-        { (char const *)TXT_TXT_WPNBLASTER,      WT_FOURTH },
-        { (char const *)TXT_TXT_WPNSKULLROD,     WT_FIFTH },
-        { (char const *)TXT_TXT_WPNPHOENIXROD,   WT_SIXTH },
-        { (char const *)TXT_TXT_WPNMACE,         WT_SEVENTH },
-        { (char const *)TXT_TXT_WPNGAUNTLETS,    WT_EIGHTH },
+        { (const char *)TXT_TXT_WPNSTAFF,        WT_FIRST },
+        { (const char *)TXT_TXT_WPNWAND,         WT_SECOND },
+        { (const char *)TXT_TXT_WPNCROSSBOW,     WT_THIRD },
+        { (const char *)TXT_TXT_WPNBLASTER,      WT_FOURTH },
+        { (const char *)TXT_TXT_WPNSKULLROD,     WT_FIFTH },
+        { (const char *)TXT_TXT_WPNPHOENIXROD,   WT_SIXTH },
+        { (const char *)TXT_TXT_WPNMACE,         WT_SEVENTH },
+        { (const char *)TXT_TXT_WPNGAUNTLETS,    WT_EIGHTH },
 #elif __JHEXEN__
         /// @todo We should allow different weapon preferences per player-class.
         { "First",  WT_FIRST },
@@ -1839,7 +1839,7 @@ void Hu_MenuInitWeaponsPage()
     ListWidget::Items weapItems;
     for (int i = 0; weaponOrder[i].data < NUM_WEAPON_TYPES; ++i)
     {
-        char const *itemText = weaponOrder[i].text;
+        const char *itemText = weaponOrder[i].text;
         if(itemText && (PTR2INT(itemText) > 0 && PTR2INT(itemText) < NUMTEXT))
         {
             itemText = GET_TXT(PTR2INT(itemText));
@@ -2059,7 +2059,7 @@ void Hu_MenuInitEpisodePage()
 
     int y = 0;
     int n = 0;
-    for (auto const &pair : episodesById)
+    for (const auto &pair : episodesById)
     {
         const Record &episodeDef   = *pair.second->as<RecordValue>().record();
         const String  episodeId    = episodeDef.gets("id");
@@ -2427,7 +2427,7 @@ short Hu_MenuMergeEffectWithDrawTextFlags(short f)
     return ((~cfg.common.menuEffectFlags & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
 }
 
-void Hu_MenuDrawFocusCursor(Vec2i const &origin, float scale, float alpha)
+void Hu_MenuDrawFocusCursor(const Vec2i &origin, float scale, float alpha)
 {
 #if __JDOOM__ || __JDOOM64__
 # define OFFSET_X         (-22)
@@ -2470,7 +2470,7 @@ void Hu_MenuDrawFocusCursor(Vec2i const &origin, float scale, float alpha)
 #undef OFFSET_X
 }
 
-void Hu_MenuDrawPageTitle(String title, Vec2i const &origin)
+void Hu_MenuDrawPageTitle(String title, const Vec2i &origin)
 {
     title = Widget::labelText(title);
 
@@ -2486,7 +2486,7 @@ void Hu_MenuDrawPageTitle(String title, Vec2i const &origin)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void Hu_MenuDrawPageHelp(String helpText, Vec2i const &origin)
+void Hu_MenuDrawPageHelp(String helpText, const Vec2i &origin)
 {
     if(helpText.isEmpty()) return;
 
@@ -2907,7 +2907,7 @@ void Hu_MenuSelectLoadSlot(Widget &wi, Widget::Action action)
 }
 
 #if __JHERETIC__ || __JHEXEN__
-void Hu_MenuDrawMainPage(Page const & /*page*/, Vec2i const &origin)
+void Hu_MenuDrawMainPage(const Page & /*page*/, const Vec2i &origin)
 {
 #define TITLEOFFSET_X         (-22)
 #define TITLEOFFSET_Y         (-56)
@@ -2938,7 +2938,7 @@ void Hu_MenuDrawMainPage(Page const & /*page*/, Vec2i const &origin)
 }
 #endif
 
-void Hu_MenuDrawGameTypePage(Page const & /*page*/, Vec2i const &origin)
+void Hu_MenuDrawGameTypePage(const Page & /*page*/, const Vec2i &origin)
 {
     Hu_MenuDrawPageTitle(GET_TXT(TXT_PICKGAMETYPE), Vec2i(SCREENWIDTH / 2, origin.y - 28));
 }
@@ -3003,7 +3003,7 @@ void Hu_MenuPlayerClassPreviewTicker(Widget &wi)
     }
 }
 
-void Hu_MenuDrawPlayerClassPage(Page const & /*page*/, Vec2i const &origin)
+void Hu_MenuDrawPlayerClassPage(const Page & /*page*/, const Vec2i &origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTB));
@@ -3016,7 +3016,7 @@ void Hu_MenuDrawPlayerClassPage(Page const & /*page*/, Vec2i const &origin)
 }
 #endif
 
-void Hu_MenuDrawEpisodePage(Page const &page, Vec2i const &origin)
+void Hu_MenuDrawEpisodePage(const Page &page, const Vec2i &origin)
 {
 #if __JDOOM__
     DE_UNUSED(page);
@@ -3057,7 +3057,7 @@ void Hu_MenuDrawEpisodePage(Page const &page, Vec2i const &origin)
 #endif
 }
 
-void Hu_MenuDrawSkillPage(Page const & /*page*/, Vec2i const &origin)
+void Hu_MenuDrawSkillPage(const Page & /*page*/, const Vec2i &origin)
 {
 #if __JDOOM__ || __JDOOM64__
     DGL_Enable(DGL_TEXTURE_2D);
@@ -3160,7 +3160,7 @@ void Hu_MenuActivateColorWidget(Widget &wi, Widget::Action action)
     sldrAlpha. setFlags(Widget::Disabled | Widget::Hidden, (cbox.rgbaMode()? UnsetFlags : SetFlags));
 }
 
-void Hu_MenuDrawLoadGamePage(Page const & /*page*/, Vec2i const &origin)
+void Hu_MenuDrawLoadGamePage(const Page & /*page*/, const Vec2i &origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
@@ -3179,7 +3179,7 @@ void Hu_MenuDrawLoadGamePage(Page const & /*page*/, Vec2i const &origin)
     Hu_MenuDrawPageHelp("Select to load, [Del] to clear", helpOrigin);
 }
 
-void Hu_MenuDrawSaveGamePage(Page const & /*page*/, Vec2i const &origin)
+void Hu_MenuDrawSaveGamePage(const Page & /*page*/, const Vec2i &origin)
 {
 #if __JHERETIC__ || __JHEXEN__
     Hu_MenuDrawPageTitle("Save Game", Vec2i(SCREENWIDTH / 2, origin.y - 20));
@@ -3207,7 +3207,7 @@ void Hu_MenuSelectHelp(Widget & /*wi*/, Widget::Action action)
 }
 #endif
 
-void Hu_MenuDrawOptionsPage(Page const & /*page*/, Vec2i const &origin)
+void Hu_MenuDrawOptionsPage(const Page & /*page*/, const Vec2i &origin)
 {
 #if __JHERETIC__ || __JHEXEN__
     Hu_MenuDrawPageTitle("Options", Vec2i(origin.x + 42, origin.y - 30));
@@ -3224,12 +3224,12 @@ void Hu_MenuDrawOptionsPage(Page const & /*page*/, Vec2i const &origin)
 #endif
 }
 
-void Hu_MenuDrawMultiplayerPage(Page const & /*page*/, Vec2i const &origin)
+void Hu_MenuDrawMultiplayerPage(const Page & /*page*/, const Vec2i &origin)
 {
     Hu_MenuDrawPageTitle(GET_TXT(TXT_MULTIPLAYER), Vec2i(SCREENWIDTH / 2, origin.y - 28));
 }
 
-void Hu_MenuDrawPlayerSetupPage(Page const & /*page*/, Vec2i const &origin)
+void Hu_MenuDrawPlayerSetupPage(const Page & /*page*/, const Vec2i &origin)
 {
     Hu_MenuDrawPageTitle(GET_TXT(TXT_PLAYERSETUP), Vec2i(SCREENWIDTH / 2, origin.y - 28));
 }
@@ -3626,7 +3626,7 @@ static void Hu_MenuInitNewGame(bool confirmed)
     GameRules newRules{gfw_DefaultGameRules()};
     GameRules_Set(newRules, skill, mnSkillmode);
 
-    Record const &episodeDef = Defs().episodes.find("id", mnEpisode);
+    const Record &episodeDef = Defs().episodes.find("id", mnEpisode);
     G_SetGameActionNewSession(newRules, mnEpisode, res::makeUri(episodeDef.gets("startMap")));
 }
 
@@ -3640,7 +3640,7 @@ void Hu_MenuSelectControlPanelLink(Widget &wi, Widget::Action action)
 {
 #define NUM_PANEL_NAMES         1
 
-    static char const *panelNames[NUM_PANEL_NAMES] = {
+    static const char *panelNames[NUM_PANEL_NAMES] = {
         "taskbar" //,
         //"panel audio",
         //"panel input"
@@ -3676,7 +3676,7 @@ D_CMD(MenuOpen)
             return true;
         }
 
-        char const *pageName = argv[1];
+        const char *pageName = argv[1];
         if(Hu_MenuHasPage(pageName))
         {
             Hu_MenuCommand(MCMD_OPEN);
@@ -3699,7 +3699,7 @@ D_CMD(MenuCommand)
 
     if(menuActive)
     {
-        char const *cmd = argv[0] + 4;
+        const char *cmd = argv[0] + 4;
         if(!iCmpStrCase(cmd, "up"))
         {
             Hu_MenuCommand(MCMD_NAV_UP);

@@ -33,7 +33,7 @@ namespace de {
 class StyleProceduralImage : public ProceduralImage
 {
 public:
-    StyleProceduralImage(DotPath const &styleImageId, GuiWidget &owner, float angle = 0)
+    StyleProceduralImage(const DotPath &styleImageId, GuiWidget &owner, float angle = 0)
         : _owner(owner)
         , _imageId(styleImageId)
         , _id(Id::None)
@@ -68,7 +68,7 @@ public:
         _id = root().styleTexture(_imageId);
     }
 
-    Id const &allocId() const
+    const Id &allocId() const
     {
         return _id;
     }
@@ -86,7 +86,7 @@ public:
         _id = Id::None;
     }
 
-    void glMakeGeometry(GuiVertexBuilder &verts, Rectanglef const &rect)
+    void glMakeGeometry(GuiVertexBuilder &verts, const Rectanglef &rect)
     {
         if (!_id.isNone())
         {

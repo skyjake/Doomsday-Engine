@@ -30,17 +30,17 @@ ByteRefArray::ByteRefArray()
 
 ByteRefArray::ByteRefArray(void *base, Size size)
     : _writeBase(reinterpret_cast<Byte *>(base))
-    , _readBase(reinterpret_cast<Byte const *>(base))
+    , _readBase(reinterpret_cast<const Byte *>(base))
     , _size(size)
 {}
 
-ByteRefArray::ByteRefArray(void const *base, Size size)
+ByteRefArray::ByteRefArray(const void *base, Size size)
     : _writeBase(nullptr),
-      _readBase(reinterpret_cast<Byte const *>(base)),
+      _readBase(reinterpret_cast<const Byte *>(base)),
       _size(size)
 {}
 
-ByteRefArray ByteRefArray::fromCStr(char const *nullTerminatedCStr)
+ByteRefArray ByteRefArray::fromCStr(const char *nullTerminatedCStr)
 {
     return ByteRefArray(nullTerminatedCStr, std::strlen(nullTerminatedCStr));
 }
@@ -50,7 +50,7 @@ void *ByteRefArray::base()
     return _writeBase;
 }
 
-void const *ByteRefArray::base() const
+const void *ByteRefArray::base() const
 {
     return _readBase;
 }
@@ -86,7 +86,7 @@ void ByteRefArray::get(Offset at, Byte *values, Size count) const
     std::memmove(values, _readBase + at, count);
 }
 
-void ByteRefArray::set(Offset at, Byte const *values, Size count)
+void ByteRefArray::set(Offset at, const Byte *values, Size count)
 {
     if (!_writeBase)
     {

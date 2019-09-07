@@ -39,7 +39,7 @@ public:
     de::String describe() const override;
 
     // Stream access.
-    IIStream const &operator >> (IByteArray &bytes) const override;
+    const IIStream &operator >> (IByteArray &bytes) const override;
 };
 
 #endif // LIBDOOMSDAY_DATABUNDLE_H

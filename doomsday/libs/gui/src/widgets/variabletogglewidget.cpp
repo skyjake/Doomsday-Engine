@@ -66,7 +66,7 @@ DE_OBSERVES(ToggleWidget, Toggle  )
         setVariableFromWidget();
     }
 
-    void variableValueChanged(Variable &, Value const &)
+    void variableValueChanged(Variable &, const Value &)
     {
         updateFromVariable();
     }
@@ -78,12 +78,12 @@ DE_OBSERVES(ToggleWidget, Toggle  )
     }
 };
 
-VariableToggleWidget::VariableToggleWidget(Variable &variable, String const &name)
+VariableToggleWidget::VariableToggleWidget(Variable &variable, const String &name)
     : ToggleWidget(DefaultFlags, name)
     , d(new Impl(this, variable))
 {}
 
-VariableToggleWidget::VariableToggleWidget(String const &label, Variable &variable, String const &name)
+VariableToggleWidget::VariableToggleWidget(const String &label, Variable &variable, const String &name)
     : ToggleWidget(DefaultFlags, name)
     , d(new Impl(this, variable))
 {

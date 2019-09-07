@@ -99,7 +99,7 @@ public:
      *
      * @return Value as number.
      */
-    virtual Number asSafeNumber(Number const &defaultValue = 0.0) const;
+    virtual Number asSafeNumber(const Number &defaultValue = 0.0) const;
 
     /**
      * Convert the value to the nearest integer. Uses asNumber().
@@ -133,8 +133,8 @@ public:
     }
 
     template <typename ValueType>
-    ValueType const &as() const {
-        ValueType const *t = dynamic_cast<ValueType const *>(this);
+    const ValueType &as() const {
+        const ValueType *t = dynamic_cast<const ValueType *>(this);
         if (!t) {
             throw ConversionError("Value::as<>",
                                   stringf("Illegal const type conversion from %s to %s",
@@ -167,9 +167,9 @@ public:
      *
      * @return  Element value (non-modifiable).
      */
-    virtual Value const &element(Value const &index) const;
+    virtual const Value &element(const Value &index) const;
 
-    Value const &element(dint index) const;
+    const Value &element(dint index) const;
 
     /**
      * Get a specific element of the value.  This is meaningful with
@@ -179,7 +179,7 @@ public:
      *
      * @return  Element value (modifiable).
      */
-    virtual Value &element(Value const &index);
+    virtual Value &element(const Value &index);
 
     Value &element(dint index);
 
@@ -192,7 +192,7 @@ public:
      *
      * @return  Duplicate of the element value. Caller gets ownership.
      */
-    virtual Value *duplicateElement(Value const &index) const;
+    virtual Value *duplicateElement(const Value &index) const;
 
     /**
      * Set a specific element of the value. This is meaningful only with
@@ -203,7 +203,7 @@ public:
      * @param elementValue  New value for the element. This value will take
      *                      ownership of @a elementValue.
      */
-    virtual void setElement(Value const &index, Value *elementValue);
+    virtual void setElement(const Value &index, Value *elementValue);
 
     /**
      * Determines whether the value contains the equivalent of another
@@ -213,7 +213,7 @@ public:
      *
      * @return @c true, if the value is there, otherwise @c false.
      */
-    virtual bool contains(Value const &value) const;
+    virtual bool contains(const Value &value) const;
 
     /**
      * Begin iteration of contained values. This is only meaningful with
@@ -251,7 +251,7 @@ public:
      * @return 0, if the values are equal. 1, if @a value is greater than
      *      this value. -1, if @a value is less than this value.
      */
-    virtual dint compare(Value const &value) const;
+    virtual dint compare(const Value &value) const;
 
     /**
      * Negate the value of this value.
@@ -262,31 +262,31 @@ public:
      * Calculate the sum of this value and an another value, storing the
      * result in this value.
      */
-    virtual void sum(Value const &value);
+    virtual void sum(const Value &value);
 
     /**
      * Calculate the subtraction of this value and an another value,
      * storing the result in this value.
      */
-    virtual void subtract(Value const &subtrahend);
+    virtual void subtract(const Value &subtrahend);
 
     /**
      * Calculate the division of this value divided by @a divisor, storing
      * the result in this value.
      */
-    virtual void divide(Value const &divisor);
+    virtual void divide(const Value &divisor);
 
     /**
      * Calculate the multiplication of this value by @a value, storing
      * the result in this value.
      */
-    virtual void multiply(Value const &value);
+    virtual void multiply(const Value &value);
 
     /**
      * Calculate the modulo of this value divided by @a divisor, storing
      * the result in this value.
      */
-    virtual void modulo(Value const &divisor);
+    virtual void modulo(const Value &divisor);
 
     /**
      * Assign value. Only supported by reference values.
@@ -304,7 +304,7 @@ public:
      *                   variable in the called function's local namespace.
      *                   Ownership taken.
      */
-    virtual void call(Process &process, Value const &arguments, Value *self = nullptr) const;
+    virtual void call(Process &process, const Value &arguments, Value *self = nullptr) const;
 
 public:
     /**
@@ -319,7 +319,7 @@ public:
      * @param variant  Data for the value.
      * @return Value. Caller gets ownership.
      */
-//    static Value *constructFrom(QVariant const &variant);
+//    static Value *constructFrom(const QVariant &variant);
 
 protected:
     typedef dbyte SerialId;
@@ -349,7 +349,7 @@ protected:
  * @return Vector.
  */
 template <typename RangeType>
-RangeType rangeFromValue(Value const &value) {
+RangeType rangeFromValue(const Value &value) {
     return RangeType(value.element(0).asNumber(),
                      value.element(1).asNumber());
 }

@@ -50,7 +50,7 @@ public:
     DE_AUDIENCE(Close, void menuClosed())
 
 public:
-    MenuWidget(Preset preset, String const &name = {});
+    MenuWidget(Preset preset, const String &name = {});
 
     int itemCount() const;
 
@@ -60,7 +60,7 @@ public:
      * @param action  Action to add as a shortcut for triggering the item.
      * @param shortcutLabel  Label to show, representing the action shortcut to the user.
      */
-    void appendItem(RefArg<Action> action, String const &shortcutLabel = "");
+    void appendItem(RefArg<Action> action, const String &shortcutLabel = "");
 
     /**
      * Inserts an item into the menu.
@@ -69,7 +69,7 @@ public:
      * @param action  Action to add as a shortcut for triggering the item.
      * @param shortcutLabel  Label to show, representing the action shortcut to the user.
      */
-    void insertItem(int pos, RefArg<Action> action, String const &shortcutLabel = "");
+    void insertItem(int pos, RefArg<Action> action, const String &shortcutLabel = "");
 
     void appendSeparator();
 
@@ -81,13 +81,13 @@ public:
 
     Action &itemAction(int pos) const;
 
-    int findLabel(String const &label) const;
+    int findLabel(const String &label) const;
 
-    bool hasLabel(String const &label) const;
+    bool hasLabel(const String &label) const;
 
     void setCursor(int pos);
 
-    void setCursorByLabel(String const &label);
+    void setCursorByLabel(const String &label);
 
     int cursor() const;
 
@@ -99,19 +99,19 @@ public:
      */
     void setClosable(bool canBeClosed);
 
-    void setSelectionAttribs(TextCanvas::AttribChar::Attribs const &attribs);
+    void setSelectionAttribs(const TextCanvas::AttribChar::Attribs &attribs);
 
-    void setBackgroundAttribs(TextCanvas::AttribChar::Attribs const &attribs);
+    void setBackgroundAttribs(const TextCanvas::AttribChar::Attribs &attribs);
 
     void setBorder(BorderStyle style);
 
-    void setBorderAttribs(TextCanvas::AttribChar::Attribs const &attribs);
+    void setBorderAttribs(const TextCanvas::AttribChar::Attribs &attribs);
 
     Vec2i cursorPosition() const;
 
     // Events.
     void draw();
-    bool handleEvent(Event const &);
+    bool handleEvent(const Event &);
 
     void open();
     void close();

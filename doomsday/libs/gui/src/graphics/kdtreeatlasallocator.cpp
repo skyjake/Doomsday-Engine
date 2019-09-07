@@ -46,7 +46,7 @@ DE_PIMPL(KdTreeAtlasAllocator)
         rootNode.setUserData(full);
     }
 
-    Node *treeInsert(Node *parent, Atlas::Size const &allocSize)
+    Node *treeInsert(Node *parent, const Atlas::Size &allocSize)
     {
         if (!parent->isLeaf())
         {
@@ -123,7 +123,7 @@ DE_PIMPL(KdTreeAtlasAllocator)
      *
      * @return Allocated Id, if successful.
      */
-    Id allocate(Node &rootNode, Atlas::Size const &size, Rectanglei &rect, Id const &preallocId = 0)
+    Id allocate(Node &rootNode, const Atlas::Size &size, Rectanglei &rect, const Id &preallocId = 0)
     {
         // Margin is included only in the bottom/right edges.
         Atlas::Size const allocSize(size.x + margin, size.y + margin);
@@ -159,7 +159,7 @@ DE_PIMPL(KdTreeAtlasAllocator)
         return 0;
     }
 
-    void releaseAlloc(Id const &id)
+    void releaseAlloc(const Id &id)
     {
         allocs.remove(id);
 
@@ -172,11 +172,11 @@ DE_PIMPL(KdTreeAtlasAllocator)
         Id::Type id;
         duint64 area;
 
-        ContentSize(Id const &allocId, Vec2ui const &size)
+        ContentSize(const Id &allocId, const Vec2ui &size)
             : id(allocId), area(size.x * size.y) {}
 
         // Sort descending.
-        bool operator < (ContentSize const &other) const {
+        bool operator < (const ContentSize &other) const {
             return area > other.area;
         }
     };
@@ -222,7 +222,7 @@ DE_PIMPL(KdTreeAtlasAllocator)
 KdTreeAtlasAllocator::KdTreeAtlasAllocator() : d(new Impl(this))
 {}
 
-void KdTreeAtlasAllocator::setMetrics(Atlas::Size const &totalSize, int margin)
+void KdTreeAtlasAllocator::setMetrics(const Atlas::Size &totalSize, int margin)
 {
     DE_ASSERT(d->allocs.isEmpty());
 
@@ -238,8 +238,8 @@ void KdTreeAtlasAllocator::clear()
     d->root.clear();
 }
 
-Id KdTreeAtlasAllocator::allocate(Atlas::Size const &size, Rectanglei &rect,
-                                  Id const &knownId)
+Id KdTreeAtlasAllocator::allocate(const Atlas::Size &size, Rectanglei &rect,
+                                  const Id &knownId)
 {
     Id newId = d->allocate(d->root, size, rect, knownId);
     if (newId.isNone())
@@ -253,7 +253,7 @@ Id KdTreeAtlasAllocator::allocate(Atlas::Size const &size, Rectanglei &rect,
     return newId;
 }
 
-void KdTreeAtlasAllocator::release(Id const &id)
+void KdTreeAtlasAllocator::release(const Id &id)
 {
     DE_ASSERT(d->allocs.contains(id));
 
@@ -275,7 +275,7 @@ Atlas::Ids KdTreeAtlasAllocator::ids() const
     return ids;
 }
 
-void KdTreeAtlasAllocator::rect(Id const &id, Rectanglei &rect) const
+void KdTreeAtlasAllocator::rect(const Id &id, Rectanglei &rect) const
 {
     DE_ASSERT(d->allocs.contains(id));
     rect = d->allocs[id];

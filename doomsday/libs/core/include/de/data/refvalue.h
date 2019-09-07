@@ -57,7 +57,7 @@ public:
 
     Value &dereference();
 
-    Value const &dereference() const;
+    const Value &dereference() const;
 
     Text typeId() const;
     Value *duplicate() const;
@@ -65,23 +65,23 @@ public:
     Text asText() const;
     Record *memberScope() const;
     dsize size() const;
-    Value const &element(Value const &index) const;
-    Value &element(Value const &index);
-    void setElement(Value const &index, Value *elementValue);
-    bool contains(Value const &value) const;
+    const Value &element(const Value &index) const;
+    Value &element(const Value &index);
+    void setElement(const Value &index, Value *elementValue);
+    bool contains(const Value &value) const;
     Value *begin();
     Value *next();
     bool isTrue() const;
     bool isFalse() const;
-    dint compare(Value const &value) const;
+    dint compare(const Value &value) const;
     void negate();
-    void sum(Value const &value);
-    void subtract(Value const &subtrahend);
-    void divide(Value const &divisor);
-    void multiply(Value const &value);
-    void modulo(Value const &divisor);
+    void sum(const Value &value);
+    void subtract(const Value &subtrahend);
+    void divide(const Value &divisor);
+    void multiply(const Value &value);
+    void modulo(const Value &divisor);
     void assign(Value *value);
-    void call(Process &process, Value const &arguments, Value *self) const;
+    void call(Process &process, const Value &arguments, Value *self) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

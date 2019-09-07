@@ -32,14 +32,14 @@
 class LIBDOOMSDAY_PUBLIC MobjThinkerData : public ThinkerData
 {
 public:
-    MobjThinkerData(de::Id const &id = de::Id::none());
-    MobjThinkerData(MobjThinkerData const &other);
+    MobjThinkerData(const de::Id &id = de::Id::none());
+    MobjThinkerData(const MobjThinkerData &other);
 
     void think() override;
     IData *duplicate() const override;
 
     mobj_t *mobj();
-    mobj_t const *mobj() const;
+    const mobj_t *mobj() const;
 
     void initBindings() override;
 
@@ -48,7 +48,7 @@ public:
      *
      * @param previousState  Previous state of the object.
      */
-    virtual void stateChanged(state_t const *previousState);
+    virtual void stateChanged(const state_t *previousState);
 
     /**
      * Called whenever the mobj receives damage. This is a notification of
@@ -57,7 +57,7 @@ public:
      * @param points     Amount of damage.
      * @param direction  If not @c nullptr, identifies the source of the damage.
      */
-    virtual void damageReceived(int points, mobj_t const *inflictor);
+    virtual void damageReceived(int points, const mobj_t *inflictor);
 
     void operator << (de::Reader &from) override;
 

@@ -61,13 +61,13 @@ public:
 
     void setTexture(GLUniform &uTex);
 
-    void setModelViewProjection(Mat4f const &mvp);
+    void setModelViewProjection(const Mat4f &mvp);
 
-    void setNormalizedScissor(Rectanglef const &normScissorRect = Rectanglef(0, 0, 1, 1));
+    void setNormalizedScissor(const Rectanglef &normScissorRect = Rectanglef(0, 0, 1, 1));
 
     Rectanglef normalizedScissor() const;
 
-    void setColor(Vec4f const &color);
+    void setColor(const Vec4f &color);
 
     void setSaturation(float saturation);
 

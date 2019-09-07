@@ -111,12 +111,12 @@ DE_PIMPL(IdgamesPackageInfoFile)
                 StringList components;
                 for (String path : dataFiles)
                 {
-                    if (DataBundle const *bundle = FS::tryLocate<DataBundle const>(path))
+                    if (const DataBundle *bundle = FS::tryLocate<DataBundle const>(path))
                     {
                         //components << bundle->versionedPackageId();
                         components << bundle->asFile().path();
 
-                        Record const &compMeta = bundle->packageMetadata();
+                        const Record &compMeta = bundle->packageMetadata();
                         if (compMeta.has("notes"))
                         {
                             meta.set("notes", compMeta.gets("notes"));
@@ -202,13 +202,13 @@ DE_PIMPL(IdgamesPackageInfoFile)
     }
 };
 
-IdgamesPackageInfoFile::IdgamesPackageInfoFile(String const &name)
+IdgamesPackageInfoFile::IdgamesPackageInfoFile(const String &name)
     : File(name)
     , d(new Impl(this))
 {}
 
-void IdgamesPackageInfoFile::setSourceFiles(RemoteFile const &dataFile,
-                                            RemoteFile const &descriptionFile)
+void IdgamesPackageInfoFile::setSourceFiles(const RemoteFile &dataFile,
+                                            const RemoteFile &descriptionFile)
 {
     d->dataFile       .reset(&dataFile);
     d->descriptionFile.reset(&descriptionFile);
@@ -222,7 +222,7 @@ Asset &IdgamesPackageInfoFile::asset()
     return d->packageAsset;
 }
 
-Asset const &IdgamesPackageInfoFile::asset() const
+const Asset &IdgamesPackageInfoFile::asset() const
 {
     return d->packageAsset;
 }
@@ -239,7 +239,7 @@ void IdgamesPackageInfoFile::download()
 void IdgamesPackageInfoFile::cancelDownload()
 {}
 
-IIStream const &IdgamesPackageInfoFile::operator>>(IByteArray &bytes) const
+const IIStream &IdgamesPackageInfoFile::operator>>(IByteArray &bytes) const
 {
     bytes.set(0, d->serializedContent.data(), d->serializedContent.size());
     return *this;

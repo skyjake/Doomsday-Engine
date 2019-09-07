@@ -68,7 +68,7 @@ public:
      * @param keyName  Name of the key variable.
      * @param flags    Indexing behavior for the lookup.
      */
-    void addLookupKey(de::String const &variableName, LookupFlags const &flags = DefaultLookup);
+    void addLookupKey(const de::String &variableName, const LookupFlags &flags = DefaultLookup);
 
     /**
      * Clears the existing definitions. The existing lookup keys are not removed.
@@ -98,21 +98,21 @@ public:
     de::Record &copy(int fromIndex, de::Record &to);
 
     int size() const;
-    bool has(de::String const &key, de::String const &value) const;
+    bool has(const de::String &key, const de::String &value) const;
 
     de::Record &       operator [] (int index);
-    de::Record const & operator [] (int index) const;
+    const de::Record & operator [] (int index) const;
 
-    de::Record *       tryFind(de::String const &key, de::String const &value);
-    de::Record const * tryFind(de::String const &key, de::String const &value) const;
+    de::Record *       tryFind(const de::String &key, const de::String &value);
+    const de::Record * tryFind(const de::String &key, const de::String &value) const;
 
-    de::Record &       find(de::String const &key, de::String const &value);
-    de::Record const & find(de::String const &key, de::String const &value) const;
+    de::Record &       find(const de::String &key, const de::String &value);
+    const de::Record & find(const de::String &key, const de::String &value) const;
 
     /**
      * Provides immutable access to the register's dictionary, for efficient traversal.
      */
-    de::DictionaryValue const &lookup(de::String const &key) const;
+    const de::DictionaryValue &lookup(const de::String &key) const;
 
 private:
     DE_PRIVATE(d)

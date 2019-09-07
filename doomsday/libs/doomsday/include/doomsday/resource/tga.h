@@ -42,7 +42,7 @@ LIBDOOMSDAY_PUBLIC uint8_t *TGA_Load(res::FileHandle &file, de::Vec2ui &outSize,
 /**
  * @return  Textual message detailing the last error encountered else @c 0.
  */
-LIBDOOMSDAY_PUBLIC char const *TGA_LastError();
+LIBDOOMSDAY_PUBLIC const char *TGA_LastError();
 
 ///@}
 

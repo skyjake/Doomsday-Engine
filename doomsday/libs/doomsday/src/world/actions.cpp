@@ -87,8 +87,8 @@ void P_GetGameActions()
     // Action links are provided by the game (which owns the actual action functions).
     if (auto getVar = DoomsdayApp::plugins().gameExports().GetPointer)
     {
-        auto const *links = (actionlink_t const *) getVar(DD_ACTION_LINK);
-        for (actionlink_t const *link = links; link && link->name; link++)
+        const auto *links = (const actionlink_t *) getVar(DD_ACTION_LINK);
+        for (const actionlink_t *link = links; link && link->name; link++)
         {
             actions.insert(String(link->name).lower(), link->func);
         }

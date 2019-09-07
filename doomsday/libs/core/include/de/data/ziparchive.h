@@ -75,7 +75,7 @@ public:
      *              of the Archive instance.
      * @param dirCacheId  ID of cached ZIP directory data.
      */
-    ZipArchive(IByteArray const &data, Block const &dirCacheId = Block());
+    ZipArchive(const IByteArray &data, const Block &dirCacheId = Block());
 
     void operator >> (Writer &to) const;
 
@@ -87,7 +87,7 @@ public:
      *
      * @return @c true, if the file looks like an archive.
      */
-    static bool recognize(File const &file);
+    static bool recognize(const File &file);
 
     /**
      * Determines whether a native file looks like it could be in ZIP format.
@@ -96,14 +96,14 @@ public:
      *
      * @return @c true, if the file looks like an archive.
      */
-    static bool recognize(NativePath const &path);
+    static bool recognize(const NativePath &path);
 
     struct DE_PUBLIC Interpreter : public filesys::IInterpreter {
         File *interpretFile(File *sourceData) const override;
     };
 
 protected:
-    void readFromSource(Entry const &entry, Path const &path, IBlock &uncompressedData) const;
+    void readFromSource(const Entry &entry, const Path &path, IBlock &uncompressedData) const;
 
     struct ZipEntry : public Entry
     {
@@ -111,7 +111,7 @@ protected:
         duint32 crc32;              ///< CRC32 checksum.
         dsize localHeaderOffset;    ///< Offset of the local file header.
 
-        ZipEntry(PathTree::NodeArgs const &args) : Entry(args),
+        ZipEntry(const PathTree::NodeArgs &args) : Entry(args),
               compression(0), crc32(0), localHeaderOffset(0) {}
 
         /// Recalculates CRC32 of the entry.
@@ -120,7 +120,7 @@ protected:
 
     typedef PathTreeT<ZipEntry> Index;
 
-    Index const &index() const;
+    const Index &index() const;
 
 private:
     DE_PRIVATE(d)

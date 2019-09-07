@@ -68,9 +68,9 @@ struct IndexEntry
         if (readBytes != 16) throw ReadError("IndexEntry::operator << (FileHandle &)", "Source file is truncated");
 
         name   = Block(buf + 8, 8);
-        dint32 const *off = reinterpret_cast<dint32 const *>(buf);
+        const dint32 *off = reinterpret_cast<const dint32 *>(buf);
         offset = littleEndianByteOrder.toHost(*off);
-        size   = littleEndianByteOrder.toHost(*reinterpret_cast<dint32 const *>(buf + 4));
+        size   = littleEndianByteOrder.toHost(*reinterpret_cast<const dint32 *>(buf + 4));
     }
 
     /// Perform all translations and encodings to the actual lump name.
@@ -127,12 +127,12 @@ static String Wad_invalidIndexMessage(int invalidIdx, int lastValidIdx)
 using namespace internal;
 
 Wad::LumpFile::LumpFile(Entry &entry, FileHandle *hndl, String path,
-    FileInfo const &info, File1 *container)
+    const FileInfo &info, File1 *container)
     : File1(hndl, path, info, container)
     , entry(entry)
 {}
 
-String const &Wad::LumpFile::name() const
+const String &Wad::LumpFile::name() const
 {
     return directoryNode().name();
 }
@@ -157,7 +157,7 @@ size_t Wad::LumpFile::read(uint8_t *buffer, size_t startOffset, size_t length, b
     return wad().readLump(info_.lumpIdx, buffer, startOffset, length, tryCache);
 }
 
-uint8_t const *Wad::LumpFile::cache()
+const uint8_t *Wad::LumpFile::cache()
 {
     return wad().cacheLump(info_.lumpIdx);
 }
@@ -181,7 +181,7 @@ DE_PIMPL_NOREF(Wad)
     Impl() : entries(PathTree::MultiLeaf) {}
 };
 
-Wad::Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
+Wad::Wad(FileHandle &hndl, String path, const FileInfo &info, File1 *container)
     : File1(&hndl, path, info, container)
     , LumpIndex()
     , d(new Impl)
@@ -253,11 +253,11 @@ void Wad::clearLumpCache()
     }
 }
 
-uint8_t const *Wad::cacheLump(int lumpIndex)
+const uint8_t *Wad::cacheLump(int lumpIndex)
 {
     LOG_AS("Wad::cacheLump");
 
-    LumpFile const &lumpFile = static_cast<LumpFile &>(lump(lumpIndex));
+    const LumpFile &lumpFile = static_cast<LumpFile &>(lump(lumpIndex));
     LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s)",
                NativePath(composePath()).pretty()
             << NativePath(lumpFile.composePath()).pretty()
@@ -270,7 +270,7 @@ uint8_t const *Wad::cacheLump(int lumpIndex)
         d->dataCache.reset(new LumpCache(LumpIndex::size()));
     }
 
-    uint8_t const *data = d->dataCache->data(lumpIndex);
+    const uint8_t *data = d->dataCache->data(lumpIndex);
     if (data) return data;
 
     uint8_t *region = (uint8_t *) Z_Malloc(lumpFile.info().size, PU_APPSTATIC, 0);
@@ -317,7 +317,7 @@ size_t Wad::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
 {
     LOG_AS("Wad::readLump");
 
-    LumpFile const &lumpFile = static_cast<LumpFile &>(lump(lumpIndex));
+    const LumpFile &lumpFile = static_cast<LumpFile &>(lump(lumpIndex));
     LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s) [%u +%u]",
                         NativePath(composePath()).pretty()
                         << NativePath(lumpFile.composePath()).pretty()
@@ -329,7 +329,7 @@ size_t Wad::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
     // Try to avoid a file system read by checking for a cached copy.
     if (tryCache)
     {
-        uint8_t const *data = (d->dataCache ? d->dataCache->data(lumpIndex) : 0);
+        const uint8_t *data = (d->dataCache ? d->dataCache->data(lumpIndex) : 0);
         LOGDEV_RES_XVERBOSE("Cache %s on #%i", (data? "hit" : "miss") << lumpIndex);
         if (data)
         {
@@ -377,7 +377,7 @@ bool Wad::recognise(FileHandle &file)
         hdr << file;
         readOk = true;
     }
-    catch (FileHeader::ReadError const &)
+    catch (const FileHeader::ReadError &)
     {} // Ignore
 
     // Return the stream to its original position.
@@ -388,7 +388,7 @@ bool Wad::recognise(FileHandle &file)
     return (hdr.identification == "IWAD" || hdr.identification == "PWAD");
 }
 
-Wad::LumpTree const &Wad::lumpTree() const
+const Wad::LumpTree &Wad::lumpTree() const
 {
     return d->entries;
 }

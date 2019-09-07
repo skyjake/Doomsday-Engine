@@ -118,7 +118,7 @@ public:
         return root().shaders();
     }
 
-    Style const &style() const
+    const Style &style() const
     {
         return Base::self().style();
     }

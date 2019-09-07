@@ -208,7 +208,7 @@ DE_GUI_PIMPL(PanelWidget)
 
 DE_AUDIENCE_METHODS(PanelWidget, AboutToOpen, Open, Close, Dismiss)
 
-PanelWidget::PanelWidget(String const &name) : GuiWidget(name), d(new Impl(this))
+PanelWidget::PanelWidget(const String &name) : GuiWidget(name), d(new Impl(this))
 {
     setBehavior(ChildHitClipping);
     setBehavior(ChildVisibilityClipping);
@@ -314,11 +314,11 @@ void PanelWidget::update()
     GuiWidget::update();
 }
 
-bool PanelWidget::handleEvent(Event const &event)
+bool PanelWidget::handleEvent(const Event &event)
 {
     if (d->eatMouseEvents && event.type() == Event::MouseButton)
     {
-        MouseEvent const &mouse = event.as<MouseEvent>();
+        const MouseEvent &mouse = event.as<MouseEvent>();
 
         // Eat buttons that land on the panel.
         if (hitTest(mouse.pos()))

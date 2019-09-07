@@ -83,7 +83,7 @@ DE_PIMPL_NOREF(Uri)
     Impl() : resolvedForGame(nullptr)
     {}
 
-    Impl(Impl const &other)
+    Impl(const Impl &other)
         : de::IPrivate(),
           path           (other.path),
           strPath        (other.strPath),
@@ -216,7 +216,7 @@ DE_PIMPL_NOREF(Uri)
 Uri::Uri() : d(new Impl)
 {}
 
-Uri::Uri(String const &percentEncoded) : d(new Impl)
+Uri::Uri(const String &percentEncoded) : d(new Impl)
 {
     if (!percentEncoded.isEmpty())
     {
@@ -224,7 +224,7 @@ Uri::Uri(String const &percentEncoded) : d(new Impl)
     }
 }
 
-Uri::Uri(String const &percentEncoded, resourceclassid_t defaultResourceClass, Char sep)
+Uri::Uri(const String &percentEncoded, resourceclassid_t defaultResourceClass, Char sep)
     : d(new Impl)
 {
     if (!percentEncoded.isEmpty())
@@ -233,23 +233,23 @@ Uri::Uri(String const &percentEncoded, resourceclassid_t defaultResourceClass, C
     }
 }
 
-Uri::Uri(String const &scheme, Path const &path) : d(new Impl)
+Uri::Uri(const String &scheme, const Path &path) : d(new Impl)
 {
     setScheme(scheme);
     setPath(path);
 }
 
-Uri::Uri(resourceclassid_t resClass, Path const &path) : d(new Impl)
+Uri::Uri(resourceclassid_t resClass, const Path &path) : d(new Impl)
 {
     setUri(path.toString(), resClass, path.separator());
 }
 
-Uri::Uri(Path const &path) : d(new Impl)
+Uri::Uri(const Path &path) : d(new Impl)
 {
     setPath(path);
 }
 
-Uri::Uri(char const *nullTerminatedCStr) : d(new Impl)
+Uri::Uri(const char *nullTerminatedCStr) : d(new Impl)
 {
     setUri(nullTerminatedCStr);
 }
@@ -301,15 +301,15 @@ Uri Uri::fromUserInput(const StringList &args, bool (*knownScheme)(const String 
     return output;
 }
 
-Uri::Uri(Uri const &other) : d(new Impl(*other.d))
+Uri::Uri(const Uri &other) : d(new Impl(*other.d))
 {}
 
-Uri Uri::fromNativePath(NativePath const &path, resourceclassid_t defaultResourceClass)
+Uri Uri::fromNativePath(const NativePath &path, resourceclassid_t defaultResourceClass)
 {
     return Uri(path.expand().withSeparators('/'), defaultResourceClass);
 }
 
-Uri Uri::fromNativeDirPath(NativePath const &nativeDirPath, resourceclassid_t defaultResourceClass)
+Uri Uri::fromNativeDirPath(const NativePath &nativeDirPath, resourceclassid_t defaultResourceClass)
 {
     // Uri follows the convention of having a slash at the end for directories.
     return Uri(nativeDirPath.expand().withSeparators('/') + "/", defaultResourceClass);
@@ -320,7 +320,7 @@ bool Uri::isEmpty() const
     return d->path.isEmpty();
 }
 
-bool Uri::operator == (Uri const &other) const
+bool Uri::operator == (const Uri &other) const
 {
     if (this == &other) return true;
 
@@ -338,7 +338,7 @@ bool Uri::operator == (Uri const &other) const
 
         return resolved().compareWithoutCase(other.resolved()) == 0;
     }
-    catch (ResolveError const &)
+    catch (const ResolveError &)
     {
         // Ignore the error.
     }
@@ -354,32 +354,32 @@ Uri &Uri::clear()
     return *this;
 }
 
-String const &Uri::scheme() const
+const String &Uri::scheme() const
 {
     return d->scheme;
 }
 
-Path const &Uri::path() const
+const Path &Uri::path() const
 {
     return d->path;
 }
 
-char const *Uri::schemeCStr() const
+const char *Uri::schemeCStr() const
 {
     return d->scheme;
 }
 
-char const *Uri::pathCStr() const
+const char *Uri::pathCStr() const
 {
     return d->strPath;
 }
 
-/*ddstring_s const *Uri::schemeStr() const
+/*const ddstring_s *Uri::schemeStr() const
 {
     return d->scheme.toStr();
 }
 
-ddstring_s const *Uri::pathStr() const
+const ddstring_s *Uri::pathStr() const
 {
     return d->strPath.toStr();
 }*/
@@ -416,7 +416,7 @@ Uri &Uri::setScheme(String newScheme)
     return *this;
 }
 
-Uri &Uri::setPath(Path const &newPath)
+Uri &Uri::setPath(const Path &newPath)
 {
     // Force to slashes.
     d->path = newPath.withSeparators('/');
@@ -436,7 +436,7 @@ Uri &Uri::setPath(const CString &newPath, Char sep)
     return setPath(newPath.toString(), sep);
 }
 
-Uri &Uri::setPath(char const *newPathUtf8, char sep)
+Uri &Uri::setPath(const char *newPathUtf8, char sep)
 {
     return setPath(Path(String(newPathUtf8).strip(), sep));
 }
@@ -623,7 +623,7 @@ DE_DEFINE_UNITTEST(Uri)
             DE_ASSERT(u.path().reverseSegment(2).toLowercaseString() == "some");
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         er.warnPlainText();
         return false;

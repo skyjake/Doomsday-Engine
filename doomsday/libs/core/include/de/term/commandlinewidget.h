@@ -34,11 +34,11 @@ public:
     DE_AUDIENCE(Command, void commandEntered(const String &command))
 
 public:
-    CommandLineWidget(String const &name = {});
-    bool handleEvent(Event const &event);
+    CommandLineWidget(const String &name = {});
+    bool handleEvent(const Event &event);
 
 protected:
-    void autoCompletionBegan(String const &wordBase);
+    void autoCompletionBegan(const String &wordBase);
 
 private:
     DE_PRIVATE(d)

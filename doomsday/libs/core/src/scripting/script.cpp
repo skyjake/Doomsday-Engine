@@ -35,34 +35,34 @@ DE_PIMPL_NOREF(Script)
 Script::Script() : d(new Impl)
 {}
 
-Script::Script(String const &source) : d(new Impl)
+Script::Script(const String &source) : d(new Impl)
 {
     Parser().parse(source, *this);
 }
 
-Script::Script(File const &file) : d(new Impl)
+Script::Script(const File &file) : d(new Impl)
 {
     d->path = file.path();
     Parser().parse(String::fromUtf8(Block(file)), *this);
 }
 
-void Script::parse(String const &source)
+void Script::parse(const String &source)
 {
     d->compound.clear();
     Parser().parse(source, *this);
 }
 
-void Script::setPath(String const &path)
+void Script::setPath(const String &path)
 {
     d->path = path;
 }
 
-String const &Script::path() const
+const String &Script::path() const
 {
     return d->path;
 }
 
-Statement const *Script::firstStatement() const
+const Statement *Script::firstStatement() const
 {
     return d->compound.firstStatement();
 }

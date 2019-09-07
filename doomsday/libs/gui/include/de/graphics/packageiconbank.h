@@ -45,7 +45,7 @@ public:
      *
      * @param iconDisplaySize  Display size for icons.
      */
-    void setDisplaySize(Size const &displaySize);
+    void setDisplaySize(const Size &displaySize);
 
     bool packageContainsIcon(const File &packageFile) const;
 

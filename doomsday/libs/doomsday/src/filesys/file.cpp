@@ -28,7 +28,7 @@
 
 namespace res {
 
-File1::File1(FileHandle *hndl, String _path, FileInfo const &_info, File1 *_container)
+File1::File1(FileHandle *hndl, String _path, const FileInfo &_info, File1 *_container)
     : handle_(hndl)
     , info_(_info)
     , container_(_container)
@@ -49,7 +49,7 @@ File1::~File1()
     if (handle_) delete handle_;
 }
 
-FileInfo const &File1::info() const
+const FileInfo &File1::info() const
 {
     return info_;
 }
@@ -109,7 +109,7 @@ File1 &File1::setCustom(bool yes)
     return *this;
 }
 
-String const &File1::name() const
+const String &File1::name() const
 {
     return name_;
 }
@@ -127,7 +127,7 @@ size_t File1::read(uint8_t* /*buffer*/, size_t /*startOffset*/, size_t /*length*
     throw Error("File1::read", "Not yet implemented");
 }
 
-uint8_t const *File1::cache()
+const uint8_t *File1::cache()
 {
     /// @todo writeme
     throw Error("File1::cache", "Not yet implemented");

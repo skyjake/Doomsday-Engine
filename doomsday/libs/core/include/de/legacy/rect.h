@@ -48,59 +48,59 @@ struct rect_s; // The Rect instance (opaque).
 typedef struct rect_s Rect;
 
 DE_PUBLIC Rect *Rect_New(void);
-DE_PUBLIC Rect *Rect_NewWithOriginSize(Point2 const *origin, Size2 const *size);
+DE_PUBLIC Rect *Rect_NewWithOriginSize(const Point2 *origin, const Size2 *size);
 DE_PUBLIC Rect *Rect_NewWithOriginSize2(int x, int y, int width, int height);
-DE_PUBLIC Rect *Rect_NewFromRaw(RectRaw const *rawRect);
+DE_PUBLIC Rect *Rect_NewFromRaw(const RectRaw *rawRect);
 
 DE_PUBLIC void Rect_Delete(Rect *rect);
 
-DE_PUBLIC void Rect_Copy(Rect *rect, Rect const *other);
-DE_PUBLIC Rect *Rect_CopyRaw(Rect *rect, RectRaw const *rawRect);
+DE_PUBLIC void Rect_Copy(Rect *rect, const Rect *other);
+DE_PUBLIC Rect *Rect_CopyRaw(Rect *rect, const RectRaw *rawRect);
 
-DE_PUBLIC RectRaw *Rect_Raw(Rect const *rect, RectRaw *rawRect);
+DE_PUBLIC RectRaw *Rect_Raw(const Rect *rect, RectRaw *rawRect);
 
-DE_PUBLIC dd_bool Rect_IsNull(Rect const *rect);
+DE_PUBLIC dd_bool Rect_IsNull(const Rect *rect);
 
-DE_PUBLIC Point2 const *Rect_Origin(Rect const *rect);
-DE_PUBLIC int Rect_X(Rect const *rect);
-DE_PUBLIC int Rect_Y(Rect const *rect);
+DE_PUBLIC const Point2 *Rect_Origin(const Rect *rect);
+DE_PUBLIC int Rect_X(const Rect *rect);
+DE_PUBLIC int Rect_Y(const Rect *rect);
 
-DE_PUBLIC void Rect_SetOrigin(Rect *rect, Point2 const *origin);
+DE_PUBLIC void Rect_SetOrigin(Rect *rect, const Point2 *origin);
 DE_PUBLIC void Rect_SetX(Rect *rect, int x);
 DE_PUBLIC void Rect_SetY(Rect *rect, int y);
 DE_PUBLIC void Rect_SetXY(Rect *rect, int x, int y);
 
-DE_PUBLIC void Rect_Translate(Rect *r, Point2Raw const *delta);
+DE_PUBLIC void Rect_Translate(Rect *r, const Point2Raw *delta);
 DE_PUBLIC void Rect_TranslateX(Rect *rect, int x);
 DE_PUBLIC void Rect_TranslateY(Rect *rect, int y);
 DE_PUBLIC void Rect_TranslateXY(Rect *rect, int x, int y);
 
-DE_PUBLIC Size2 const *Rect_Size(Rect const *rect);
-DE_PUBLIC int Rect_Width(Rect const *rect);
-DE_PUBLIC int Rect_Height(Rect const *rect);
+DE_PUBLIC const Size2 *Rect_Size(const Rect *rect);
+DE_PUBLIC int Rect_Width(const Rect *rect);
+DE_PUBLIC int Rect_Height(const Rect *rect);
 
-DE_PUBLIC void Rect_SetSize(Rect *rect, Size2 const *size);
+DE_PUBLIC void Rect_SetSize(Rect *rect, const Size2 *size);
 DE_PUBLIC void Rect_SetWidth(Rect *rect, int width);
 DE_PUBLIC void Rect_SetHeight(Rect *rect, int height);
 
 DE_PUBLIC void Rect_SetWidthHeight(Rect *rect, int width, int height);
 
-DE_PUBLIC Point2Raw *Rect_TopLeft(Rect const *rect, Point2Raw *point);
-DE_PUBLIC Point2Raw *Rect_TopRight(Rect const *rect, Point2Raw *point);
-DE_PUBLIC Point2Raw *Rect_BottomLeft(Rect const *rect, Point2Raw *point);
-DE_PUBLIC Point2Raw *Rect_BottomRight(Rect const *rect, Point2Raw *point);
+DE_PUBLIC Point2Raw *Rect_TopLeft(const Rect *rect, Point2Raw *point);
+DE_PUBLIC Point2Raw *Rect_TopRight(const Rect *rect, Point2Raw *point);
+DE_PUBLIC Point2Raw *Rect_BottomLeft(const Rect *rect, Point2Raw *point);
+DE_PUBLIC Point2Raw *Rect_BottomRight(const Rect *rect, Point2Raw *point);
 
 DE_PUBLIC Rect *Rect_Normalize(Rect *rect);
-DE_PUBLIC Rect *Rect_Unite(Rect *rect, Rect const *other);
-DE_PUBLIC Rect *Rect_UniteRaw(Rect *rect, RectRaw const *other);
+DE_PUBLIC Rect *Rect_Unite(Rect *rect, const Rect *other);
+DE_PUBLIC Rect *Rect_UniteRaw(Rect *rect, const RectRaw *other);
 
-DE_PUBLIC dd_bool Rect_Equality(Rect const *rect, Rect const *other);
+DE_PUBLIC dd_bool Rect_Equality(const Rect *rect, const Rect *other);
 
 /**
  * Static non-members.
  */
-DE_PUBLIC RectRaw *Rect_Normalized(Rect const *rect, RectRaw *normalized);
-DE_PUBLIC RectRaw *Rect_United(Rect const *rect, Rect const *other, RectRaw *united);
+DE_PUBLIC RectRaw *Rect_Normalized(const Rect *rect, RectRaw *normalized);
+DE_PUBLIC RectRaw *Rect_United(const Rect *rect, const Rect *other, RectRaw *united);
 
 /**
  * Floating-point rectangle. Intended as a handy POD structure for
@@ -118,23 +118,23 @@ struct rectf_s; // The Rectf instance (opaque).
 typedef struct rectf_s Rectf;
 
 DE_PUBLIC Rectf *Rectf_New(void);
-DE_PUBLIC Rectf *Rectf_NewWithOriginSize(Point2f const *origin, Size2f const *size);
-DE_PUBLIC Rectf *Rectf_NewFromRaw(RectRawf const *rawRect);
+DE_PUBLIC Rectf *Rectf_NewWithOriginSize(const Point2f *origin, const Size2f *size);
+DE_PUBLIC Rectf *Rectf_NewFromRaw(const RectRawf *rawRect);
 
 DE_PUBLIC void Rectf_Delete(Rectf *rect);
 
-DE_PUBLIC void Rectf_Copy(Rectf *rect, Rectf const *other);
-DE_PUBLIC Rectf *Rectf_CopyRaw(Rectf *r, RectRawf const *rawRect);
+DE_PUBLIC void Rectf_Copy(Rectf *rect, const Rectf *other);
+DE_PUBLIC Rectf *Rectf_CopyRaw(Rectf *r, const RectRawf *rawRect);
 
-DE_PUBLIC RectRawf *Rectf_Raw(Rectf const *rect, RectRawf *rawRect);
+DE_PUBLIC RectRawf *Rectf_Raw(const Rectf *rect, RectRawf *rawRect);
 
-DE_PUBLIC dd_bool Rectf_IsNull(Rectf const *rect);
+DE_PUBLIC dd_bool Rectf_IsNull(const Rectf *rect);
 
-DE_PUBLIC Point2f const *Rectf_Origin(Rectf const *rect);
-DE_PUBLIC double Rectf_X(Rectf const *rect);
-DE_PUBLIC double Rectf_Y(Rectf const *rect);
+DE_PUBLIC const Point2f *Rectf_Origin(const Rectf *rect);
+DE_PUBLIC double Rectf_X(const Rectf *rect);
+DE_PUBLIC double Rectf_Y(const Rectf *rect);
 
-DE_PUBLIC void Rectf_SetOrigin(Rectf *rect, Point2f const *origin);
+DE_PUBLIC void Rectf_SetOrigin(Rectf *rect, const Point2f *origin);
 DE_PUBLIC void Rectf_SetX(Rectf *rect, double x);
 DE_PUBLIC void Rectf_SetY(Rectf *rect, double y);
 DE_PUBLIC void Rectf_SetXY(Rectf *rect, double x, double y);
@@ -143,32 +143,32 @@ DE_PUBLIC void Rectf_TranslateX(Rectf *rect, double x);
 DE_PUBLIC void Rectf_TranslateY(Rectf *rect, double y);
 DE_PUBLIC void Rectf_TranslateXY(Rectf *rect, double x, double y);
 
-DE_PUBLIC Size2f const *Rectf_Size(Rectf const *rect);
-DE_PUBLIC double Rectf_Width(Rectf const *rect);
-DE_PUBLIC double Rectf_Height(Rectf const *rect);
+DE_PUBLIC const Size2f *Rectf_Size(const Rectf *rect);
+DE_PUBLIC double Rectf_Width(const Rectf *rect);
+DE_PUBLIC double Rectf_Height(const Rectf *rect);
 
-DE_PUBLIC void Rectf_SetSize(Rectf *rect, Size2f const *size);
+DE_PUBLIC void Rectf_SetSize(Rectf *rect, const Size2f *size);
 DE_PUBLIC void Rectf_SetWidth(Rectf *rect, double width);
 DE_PUBLIC void Rectf_SetHeight(Rectf *rect, double height);
 
 DE_PUBLIC void Rectf_SetWidthHeight(Rectf *rect, double width, double height);
 
-DE_PUBLIC Point2Rawf *Rectf_TopLeft(Rectf const *rect, Point2Rawf *point);
-DE_PUBLIC Point2Rawf *Rectf_TopRight(Rectf const *rect, Point2Rawf *point);
-DE_PUBLIC Point2Rawf *Rectf_BottomLeft(Rectf const *rect, Point2Rawf *point);
-DE_PUBLIC Point2Rawf *Rectf_BottomRight(Rectf const *rect, Point2Rawf *point);
+DE_PUBLIC Point2Rawf *Rectf_TopLeft(const Rectf *rect, Point2Rawf *point);
+DE_PUBLIC Point2Rawf *Rectf_TopRight(const Rectf *rect, Point2Rawf *point);
+DE_PUBLIC Point2Rawf *Rectf_BottomLeft(const Rectf *rect, Point2Rawf *point);
+DE_PUBLIC Point2Rawf *Rectf_BottomRight(const Rectf *rect, Point2Rawf *point);
 
 DE_PUBLIC Rectf *Rectf_Normalize(Rectf *rect);
-DE_PUBLIC Rectf *Rectf_Unite(Rectf *rect, Rectf const *other);
-DE_PUBLIC Rectf *Rectf_UniteRaw(Rectf *rect, RectRawf const *other);
+DE_PUBLIC Rectf *Rectf_Unite(Rectf *rect, const Rectf *other);
+DE_PUBLIC Rectf *Rectf_UniteRaw(Rectf *rect, const RectRawf *other);
 
-DE_PUBLIC dd_bool Rectf_Equality(Rectf const *rect, Rectf const *other);
+DE_PUBLIC dd_bool Rectf_Equality(const Rectf *rect, const Rectf *other);
 
 /**
  * Static non-members:
  */
-DE_PUBLIC RectRawf *Rectf_Normalized(Rectf const *rect, RectRawf *normalized);
-DE_PUBLIC RectRawf *Rectf_United(Rectf const *rect, Rectf const *other, RectRawf *united);
+DE_PUBLIC RectRawf *Rectf_Normalized(const Rectf *rect, RectRawf *normalized);
+DE_PUBLIC RectRawf *Rectf_United(const Rectf *rect, const Rectf *other, RectRawf *united);
 
 /// @}
 

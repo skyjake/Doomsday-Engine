@@ -36,9 +36,9 @@ public:
     enum State { Up, Down };
 
 public:
-    CVarToggleWidget(char const *cvarPath, int cvarValueMask = 0,
-                     de::String const &downText = "Yes",
-                     de::String const &upText   = "No");
+    CVarToggleWidget(const char *cvarPath, int cvarValueMask = 0,
+                     const de::String &downText = "Yes",
+                     const de::String &upText   = "No");
     virtual ~CVarToggleWidget() override;
 
     int handleCommand(menucommand_e command) override;
@@ -49,13 +49,13 @@ public:
     inline bool isUp()   const { return state() == Up; }
     inline bool isDown() const { return state() == Down; }
 
-    char const *cvarPath() const;
+    const char *cvarPath() const;
     int cvarValueMask() const;
 
-    void setDownText(de::String const &newDownText);
+    void setDownText(const de::String &newDownText);
     de::String downText() const;
 
-    void setUpText(de::String const &newUpText);
+    void setUpText(const de::String &newUpText);
     de::String upText() const;
 
     void setStateChangeCallback(const std::function<void(State)> &stateChanged);

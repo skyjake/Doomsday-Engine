@@ -64,7 +64,7 @@ typedef struct ccmd_s {
     int (*execFunc) (byte src, int argc, char **argv);
 
     /// Name of the command.
-    char const *name;
+    const char *name;
 
     /// @ref consoleCommandFlags
     int flags;
@@ -144,9 +144,9 @@ void Con_InitCommands();
 void Con_ClearCommands(void);
 void Con_AddKnownWordsForCommands();
 
-LIBDOOMSDAY_PUBLIC void Con_AddCommand(ccmdtemplate_t const *cmd);
+LIBDOOMSDAY_PUBLIC void Con_AddCommand(const ccmdtemplate_t *cmd);
 
-LIBDOOMSDAY_PUBLIC void Con_AddCommandList(ccmdtemplate_t const *cmdList);
+LIBDOOMSDAY_PUBLIC void Con_AddCommandList(const ccmdtemplate_t *cmdList);
 
 /**
  * Search the console database for a named command. If one or more overloaded
@@ -155,7 +155,7 @@ LIBDOOMSDAY_PUBLIC void Con_AddCommandList(ccmdtemplate_t const *cmdList);
  * @param name  Name of the command to search for.
  * @return  Found command else @c 0
  */
-LIBDOOMSDAY_PUBLIC ccmd_t *Con_FindCommand(char const *name);
+LIBDOOMSDAY_PUBLIC ccmd_t *Con_FindCommand(const char *name);
 
 /**
  * Search the console database for a command. If one or more overloaded variants
@@ -169,11 +169,11 @@ LIBDOOMSDAY_PUBLIC ccmd_t *Con_FindCommandMatchArgs(cmdargs_t *args);
 /**
  * @return  @c true iff @a name matches a known command or alias name.
  */
-LIBDOOMSDAY_PUBLIC dd_bool Con_IsValidCommand(char const *name);
+LIBDOOMSDAY_PUBLIC dd_bool Con_IsValidCommand(const char *name);
 
 LIBDOOMSDAY_PUBLIC de::String Con_CmdAsStyledText(ccmd_t *cmd);
 
-LIBDOOMSDAY_PUBLIC void Con_PrintCommandUsage(ccmd_t const *ccmd, bool allOverloads = true);
+LIBDOOMSDAY_PUBLIC void Con_PrintCommandUsage(const ccmd_t *ccmd, bool allOverloads = true);
 
 /**
  * Returns a rich formatted, textual representation of the specified console
@@ -181,7 +181,7 @@ LIBDOOMSDAY_PUBLIC void Con_PrintCommandUsage(ccmd_t const *ccmd, bool allOverlo
  *
  * @param ccmd  The console command to format usage info for.
  */
-LIBDOOMSDAY_PUBLIC de::String Con_CmdUsageAsStyledText(ccmd_t const *ccmd);
+LIBDOOMSDAY_PUBLIC de::String Con_CmdUsageAsStyledText(const ccmd_t *ccmd);
 
 /**
  * Defines a console command that behaves like a console variable but accesses
@@ -199,9 +199,9 @@ LIBDOOMSDAY_PUBLIC de::String Con_CmdUsageAsStyledText(ccmd_t const *ccmd);
  *                        ccmdtemplate_t argument template format).
  * @param configVariable  Name of the de::Config variable.
  */
-LIBDOOMSDAY_PUBLIC void Con_AddMappedConfigVariable(char const *consoleName,
-                                                    char const *opts,
-                                                    de::String const &configVariable);
+LIBDOOMSDAY_PUBLIC void Con_AddMappedConfigVariable(const char *consoleName,
+                                                    const char *opts,
+                                                    const de::String &configVariable);
 
 #endif // __cplusplus
 

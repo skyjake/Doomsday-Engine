@@ -66,7 +66,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
     Lines                lines;
     List<RasterizedLine> rasterized;
 
-    Font const *     font     = nullptr;
+    const Font *     font     = nullptr;
     int              maxWidth = 0;
     String           text; ///< Plain text.
     Font::RichFormat format;
@@ -425,7 +425,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
             Line *line = lines[i];
             for (int k = 0; k < line->info.segs.sizei(); ++k)
             {
-                LineInfo::Segment const &seg = line->info.segs[k];
+                const LineInfo::Segment &seg = line->info.segs[k];
                 if (seg.tabStop < 0) continue;
                 int sw = seg.width;
 
@@ -445,7 +445,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
 
             for (int k = 0; k < line->info.segs.sizei(); ++k)
             {
-                LineInfo::Segment const &seg = line->info.segs[k];
+                const LineInfo::Segment &seg = line->info.segs[k];
                 int const tab = seg.tabStop;
                 int const stopWidth = (tab >= 0? stopMaxWidths[tab] : seg.width);
 
@@ -490,7 +490,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
         return lineRange.end + extraLinesProduced;
     }
 
-    Image rasterizeSegment(LineInfo::Segment const &segment)
+    Image rasterizeSegment(const LineInfo::Segment &segment)
     {
         return font->rasterize(format.subRange(segment.range));
     }
@@ -499,13 +499,13 @@ DE_PIMPL_NOREF(FontLineWrapping)
 FontLineWrapping::FontLineWrapping() : d(new Impl)
 {}
 
-void FontLineWrapping::setFont(Font const &font)
+void FontLineWrapping::setFont(const Font &font)
 {
     DE_GUARD(this);
     d->font = &font;
 }
 
-Font const &FontLineWrapping::font() const
+const Font &FontLineWrapping::font() const
 {
     DE_GUARD(this);
     DE_ASSERT(hasFont());
@@ -619,14 +619,14 @@ void FontLineWrapping::wrapTextToWidth(const String &text, const Font::RichForma
 
 #if 0
     debug("Wrapped: %s", d->text.c_str());
-    for (Impl::Line const *ln : d->lines)
+    for (const Impl::Line *ln : d->lines)
     {
         debug("  range:[%s](%zu) indent:%i #segments:%i",
               ln->line.range.toString().c_str(),
               ln->line.range.size(),
               ln->info.indent,
               ln->info.segs.size());
-        for (LineInfo::Segment const &s : ln->info.segs)
+        for (const LineInfo::Segment &s : ln->info.segs)
         {
             debug("  - seg [%s](%zu) tab:%i width:%i",
                   s.range.toString().c_str(),
@@ -643,7 +643,7 @@ void FontLineWrapping::cancel()
     d->cancelled = true;
 }
 
-String const &FontLineWrapping::text() const
+const String &FontLineWrapping::text() const
 {
     DE_GUARD(this);
 
@@ -753,14 +753,14 @@ Vec2i FontLineWrapping::charTopLeftInPixels(int line, BytePos charIndex)
     return cp;
 }
 
-FontLineWrapping::LineInfo const &FontLineWrapping::lineInfo(int index) const
+const FontLineWrapping::LineInfo &FontLineWrapping::lineInfo(int index) const
 {
     DE_GUARD(this);
     DE_ASSERT(index >= 0 && index < d->lines.sizei());
     return d->lines[index]->info;
 }
 
-void FontLineWrapping::rasterizeLines(Rangei const &lineRange)
+void FontLineWrapping::rasterizeLines(const Rangei &lineRange)
 {
     DE_GUARD(this);
 
@@ -771,7 +771,7 @@ void FontLineWrapping::rasterizeLines(Rangei const &lineRange)
         Impl::RasterizedLine rasterLine;
         if (lineRange.contains(i))
         {
-            LineInfo const &line = lineInfo(i);
+            const LineInfo &line = lineInfo(i);
             for (int k = 0; k < line.segs.sizei(); ++k)
             {
                 rasterLine.segmentImages << d->rasterizeSegment(line.segs.at(k));
@@ -795,7 +795,7 @@ Image FontLineWrapping::rasterizedSegment(int line, int segment) const
         DE_ASSERT(line >= 0);
         if (line >= 0 && line < d->rasterized.sizei())
         {
-            auto const &rasterLine = d->rasterized.at(line);
+            const auto &rasterLine = d->rasterized.at(line);
             if (!rasterLine.segmentImages.isEmpty())
             {
                 DE_ASSERT(segment >= 0 && segment < rasterLine.segmentImages.sizei());

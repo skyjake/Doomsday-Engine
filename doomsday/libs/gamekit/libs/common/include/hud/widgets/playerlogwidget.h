@@ -80,11 +80,11 @@ public:
      * @param message  Text to be posted. The message may contain encoded parameters
      * intended for Doomsday's @em FR text rendering API.
      */
-    void post(de::dint flags, de::String const &mesage);
+    void post(de::dint flags, const de::String &mesage);
 
     void tick(timespan_t elapsed);
     void updateGeometry();
-    void draw(de::Vec2i const &offset = de::Vec2i());
+    void draw(const de::Vec2i &offset = de::Vec2i());
 
     /**
      * Register the console commands and variables of this module.

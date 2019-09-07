@@ -242,7 +242,7 @@ void Con_AddCommandList(ccmdtemplate_t const* cmdList)
     }
 }
 
-ccmd_t *Con_FindCommand(char const *name)
+ccmd_t *Con_FindCommand(const char *name)
 {
     /// @todo Use a faster than O(n) linear search.
     if (name && name[0])
@@ -266,7 +266,7 @@ ccmd_t *Con_FindCommand(char const *name)
  * @param allOverloads  @c true= print usage info for all overloaded variants.
  *                      Otherwise only the info for @a ccmd.
  */
-void Con_PrintCommandUsage(ccmd_t const *ccmd, bool allOverloads)
+void Con_PrintCommandUsage(const ccmd_t *ccmd, bool allOverloads)
 {
     if (!ccmd) return;
 
@@ -363,7 +363,7 @@ dd_bool Con_IsValidCommand(char const* name)
     return (Con_FindAlias(name) != 0);
 }
 
-String Con_CmdUsageAsStyledText(ccmd_t const *ccmd)
+String Con_CmdUsageAsStyledText(const ccmd_t *ccmd)
 {
     DE_ASSERT(ccmd != 0);
 
@@ -394,7 +394,7 @@ String Con_CmdUsageAsStyledText(ccmd_t const *ccmd)
 
 String Con_CmdAsStyledText(ccmd_t *cmd)
 {
-    char const *str;
+    const char *str;
     if ((str = DH_GetString(DH_Find(cmd->name), HST_DESCRIPTION)))
     {
         return Stringf(_E(b) "%s " _E(.) _E(>) _E(2) "%s" _E(.) _E(<), cmd->name, str);
@@ -438,7 +438,7 @@ D_CMD(MappedConfigVariable)
     return true;
 }
 
-void Con_AddMappedConfigVariable(char const *consoleName, char const *opts, String const &configVariable)
+void Con_AddMappedConfigVariable(const char *consoleName, const char *opts, const String &configVariable)
 {
     DE_ASSERT(!mappedConfigVariables.contains(consoleName)); // redefining not handled
 

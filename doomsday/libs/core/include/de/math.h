@@ -125,7 +125,7 @@ inline dint   roundi(dfloat value) { return round<int>(value);   }
 inline dfloat roundf(dfloat value) { return round<float>(value); }
 
 template <typename Type>
-inline Type round(ddouble const &value) {
+inline Type round(const ddouble &value) {
     return Type(std::round(value));
 }
 
@@ -179,7 +179,7 @@ inline bool fequal(ddouble a, ddouble b, ddouble precision) {
 enum class Sign { Positive, Zero, Negative };
 
 template <typename Type>
-inline Sign sign(Type const &a) {
+inline Sign sign(const Type &a) {
     if (a < Type(0)) return Sign::Negative;
     if (a > Type(0)) return Sign::Positive;
     return Sign::Zero;

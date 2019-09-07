@@ -35,7 +35,7 @@ using namespace de;
 
 namespace res {
 
-//uint qHash(TextureSchemeHashKey const &key)
+//uint qHash(const TextureSchemeHashKey &key)
 //{
 //    return key.scheme.at(2).toLower().unicode();
 //}
@@ -100,7 +100,7 @@ DE_PIMPL(Textures)
         }
     }
 
-    void createTextureScheme(String const &name)
+    void createTextureScheme(const String &name)
     {
         DE_ASSERT(name.size() >= TextureScheme::min_name_length);
 
@@ -128,7 +128,7 @@ DE_PIMPL(Textures)
         texture.audienceForDeletion += this;
     }
 
-    void textureBeingDeleted(Texture const &texture) override
+    void textureBeingDeleted(const Texture &texture) override
     {
         textures.remove(const_cast<Texture *>(&texture));
     }
@@ -143,7 +143,7 @@ DE_PIMPL(Textures)
         // the TEXTURE1/2 lumps in the following order:
         //
         // (last)TEXTURE2 > (last)TEXTURE1
-        LumpIndex const &index  = App_FileSystem().nameIndex();
+        const LumpIndex &index  = App_FileSystem().nameIndex();
         lumpnum_t firstTexLump  = App_FileSystem().lumpNumForName("TEXTURE1");
         lumpnum_t secondTexLump = App_FileSystem().lumpNumForName("TEXTURE2");
 
@@ -239,7 +239,7 @@ DE_PIMPL(Textures)
      *                       number of definitions which are actually read).
      */
     Composites readCompositeTextureDefs(File1 &file,
-                                        PatchNames const &patchNames,
+                                        const PatchNames &patchNames,
                                         int origIndexBase,
                                         int &archiveCount) const
     {
@@ -323,7 +323,7 @@ DE_PIMPL(Textures)
             auto &fs1 = App_FileSystem();
             pnames = readPatchNames(fs1.lump(fs1.lumpNumForName("PNAMES")));
         }
-        catch (LumpIndex::NotFoundError const &er)
+        catch (const LumpIndex::NotFoundError &er)
         {
             if (DoomsdayApp::isGameLoaded())
             {
@@ -501,7 +501,7 @@ DE_PIMPL(Textures)
                     continue;
                 }
             }
-            catch (TextureScheme::InvalidPathError const &er)
+            catch (const TextureScheme::InvalidPathError &er)
             {
                 LOG_RES_WARNING("Failed declaring texture \"%s\": %s")
                         << uri << er.asText();
@@ -521,7 +521,7 @@ DE_PIMPL(Textures)
 
         //self().textures().textureScheme("Flats").clear();
 
-        LumpIndex const &index = App_FileSystem().nameIndex();
+        const LumpIndex &index = App_FileSystem().nameIndex();
         lumpnum_t firstFlatMarkerLumpNum = index.findFirst(Path("F_START.lmp"));
         if (firstFlatMarkerLumpNum >= 0)
         {
@@ -600,7 +600,7 @@ DE_PIMPL(Textures)
         /// @todo fixme: Order here does not respect id Tech 1 logic.
         ddstack_t *stack = Stack_New();
 
-        LumpIndex const &index = App_FileSystem().nameIndex();
+        const LumpIndex &index = App_FileSystem().nameIndex();
         for (dint i = 0; i < index.size(); ++i)
         {
             File1 &file = index[i];
@@ -657,7 +657,7 @@ DE_PIMPL(Textures)
                         dimensions = info.logicalDimensions;
                         origin     = -info.origin;
                     }
-                    catch (IByteArray::OffsetError const &)
+                    catch (const IByteArray::OffsetError &)
                     {
                         LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch. "
                                         "World dimension and origin offset not set for sprite \"%s\".")
@@ -675,7 +675,7 @@ DE_PIMPL(Textures)
                 self().declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
                 uniqueId++;
             }
-            catch (TextureScheme::InvalidPathError const &er)
+            catch (const TextureScheme::InvalidPathError &er)
             {
                 LOG_RES_WARNING("Failed declaring texture \"%s\": %s") << uri << er.asText();
             }
@@ -740,7 +740,7 @@ Textures &Textures::get() // static
     return Resources::get().textures();
 }
 
-TextureScheme &Textures::textureScheme(String const &name) const
+TextureScheme &Textures::textureScheme(const String &name) const
 {
     if (auto *ts = textureSchemePtr(name))
     {
@@ -750,7 +750,7 @@ TextureScheme &Textures::textureScheme(String const &name) const
     throw Resources::UnknownSchemeError("Textures::textureScheme", "No scheme found matching '" + name + "'");
 }
 
-TextureScheme *Textures::textureSchemePtr(String const &name) const
+TextureScheme *Textures::textureSchemePtr(const String &name) const
 {
     if (!name.isEmpty())
     {
@@ -763,7 +763,7 @@ TextureScheme *Textures::textureSchemePtr(String const &name) const
     return nullptr;
 }
 
-bool Textures::isKnownTextureScheme(String const &name) const
+bool Textures::isKnownTextureScheme(const String &name) const
 {
     if (!name.isEmpty())
     {
@@ -783,20 +783,20 @@ void Textures::clearAllTextureSchemes()
 }
 
 #if 0
-bool Textures::hasTextureManifest(res::Uri const &path) const
+bool Textures::hasTextureManifest(const res::Uri &path) const
 {
     try
     {
         textureManifest(path);
         return true;
     }
-    catch (Resources::MissingResourceManifestError const &)
+    catch (const Resources::MissingResourceManifestError &)
     {}  // Ignore this error.
     return false;
 }
 #endif
 
-TextureManifest &Textures::textureManifest(res::Uri const &uri) const
+TextureManifest &Textures::textureManifest(const res::Uri &uri) const
 {
     if (auto *mft = textureManifestPtr(uri))
     {
@@ -808,7 +808,7 @@ TextureManifest &Textures::textureManifest(res::Uri const &uri) const
              "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
-TextureManifest *Textures::textureManifestPtr(res::Uri const &uri) const
+TextureManifest *Textures::textureManifestPtr(const res::Uri &uri) const
 {
     // Perform the search.
     // Is this a URN? (of the form "urn:schemename:uniqueid")
@@ -840,7 +840,7 @@ TextureManifest *Textures::textureManifestPtr(res::Uri const &uri) const
         else
         {
             // No, check each scheme in priority order.
-            for (TextureScheme const *scheme : d->textureSchemeCreationOrder)
+            for (const TextureScheme *scheme : d->textureSchemeCreationOrder)
             {
                 if (auto *tex = scheme->tryFind(uri.path()))
                 {
@@ -852,12 +852,12 @@ TextureManifest *Textures::textureManifestPtr(res::Uri const &uri) const
     return nullptr;
 }
 
-Textures::AllTextures const &Textures::allTextures() const
+const Textures::AllTextures &Textures::allTextures() const
 {
     return d->textures;
 }
 
-TextureManifest &Textures::declareSystemTexture(Path const &texturePath, res::Uri const &resourceUri)
+TextureManifest &Textures::declareSystemTexture(const Path &texturePath, const res::Uri &resourceUri)
 {
     auto &scheme = textureScheme(DE_STR("System"));
     dint const uniqueId = scheme.count() + 1;
@@ -869,7 +869,7 @@ TextureManifest &Textures::declareSystemTexture(Path const &texturePath, res::Ur
                           &resourceUri);
 }
 
-Texture *Textures::tryFindTextureByResourceUri(String const &schemeName, res::Uri const &resourceUri)
+Texture *Textures::tryFindTextureByResourceUri(const String &schemeName, const res::Uri &resourceUri)
 {
     if (!resourceUri.isEmpty())
     {
@@ -888,9 +888,9 @@ Texture *Textures::tryFindTextureByResourceUri(String const &schemeName, res::Ur
     return nullptr;
 }
 
-Texture *Textures::defineTexture(String const &schemeName,
-                                 res::Uri const &resourceUri,
-                                 Vec2ui const &dimensions)
+Texture *Textures::defineTexture(const String &schemeName,
+                                 const res::Uri &resourceUri,
+                                 const Vec2ui &dimensions)
 {
     LOG_AS("Textures::defineTexture");
 
@@ -920,7 +920,7 @@ Texture *Textures::defineTexture(String const &schemeName,
         /// @todo Defer until necessary (manifest texture is first referenced).
         return deriveTexture(manifest);
     }
-    catch (TextureScheme::InvalidPathError const &er)
+    catch (const TextureScheme::InvalidPathError &er)
     {
         LOG_RES_WARNING("Failed declaring texture \"%s\": %s") << uri << er.asText();
     }
@@ -951,7 +951,7 @@ void Textures::deriveAllTexturesInScheme(String schemeName)
     }
 }
 
-patchid_t Textures::declarePatch(String const &encodedName)
+patchid_t Textures::declarePatch(const String &encodedName)
 {
     LOG_AS("Textures::declarePatch");
 
@@ -996,7 +996,7 @@ patchid_t Textures::declarePatch(String const &encodedName)
             dimensions = info.logicalDimensions;
             origin     = Vec2i(-info.origin.x, -info.origin.y);
         }
-        catch (IByteArray::OffsetError const &)
+        catch (const IByteArray::OffsetError &)
         {
             LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch. "
                             "World dimension and origin offset not set for patch \"%s\".")
@@ -1020,7 +1020,7 @@ patchid_t Textures::declarePatch(String const &encodedName)
 
         return uniqueId;
     }
-    catch (TextureScheme::InvalidPathError const &er)
+    catch (const TextureScheme::InvalidPathError &er)
     {
         LOG_RES_WARNING("Failed declaring texture \"%s\": %s") << uri << er.asText();
     }

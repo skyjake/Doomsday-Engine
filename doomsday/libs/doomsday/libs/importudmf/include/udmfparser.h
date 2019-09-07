@@ -35,8 +35,8 @@ class UDMFParser
 {
 public:
     typedef de::Hash<de::String, std::shared_ptr<de::Value>> Block;
-    typedef std::function<void (de::String const &, de::Value const &)> AssignmentFunc;
-    typedef std::function<void (de::String const &, Block const &)> BlockFunc;
+    typedef std::function<void (const de::String &, const de::Value &)> AssignmentFunc;
+    typedef std::function<void (const de::String &, const Block &)> BlockFunc;
 
     DE_ERROR(SyntaxError);
 
@@ -46,7 +46,7 @@ public:
     void setGlobalAssignmentHandler(AssignmentFunc func);
     void setBlockHandler(BlockFunc func);
 
-    Block const &globals() const;
+    const Block &globals() const;
 
     /**
      * Parse UDMF source and make callbacks for global assignments and blocks while
@@ -56,7 +56,7 @@ public:
      *
      * @throws SyntaxError  UDMF source text has a syntax error.
      */
-    void parse(de::String const &input);
+    void parse(const de::String &input);
 
 protected:
     de::dsize nextFragment();

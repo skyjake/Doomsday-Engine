@@ -46,14 +46,14 @@ class ProgressWidget;
 class LIBGUI_PUBLIC DocumentWidget : public ScrollAreaWidget
 {
 public:
-    DocumentWidget(String const &name = String());
+    DocumentWidget(const String &name = String());
 
     /**
      * Sets the text content of the widget. Style escapes can be used.
      *
      * @param styledText  Text content.
      */
-    void setText(String const &styledText);
+    void setText(const String &styledText);
 
     String text() const;
 
@@ -84,7 +84,7 @@ public:
      * @param id         Color identifier.
      * @param colorName  Name of the color.
      */
-    void setStyleColor(Font::RichFormat::Color id, DotPath const &colorName);
+    void setStyleColor(Font::RichFormat::Color id, const DotPath &colorName);
 
     ProgressWidget &progress();
 

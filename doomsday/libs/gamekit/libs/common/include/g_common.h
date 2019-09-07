@@ -47,8 +47,8 @@ extern uint    nextMapEntryPoint;
  * @param mapUri       Map identifier.
  * @param mapEntrance  Logical map entry point number.
  */
-void G_SetGameActionNewSession(GameRules const &rules, de::String episodeId,
-                               res::Uri const &mapUri, uint mapEntrance = 0);
+void G_SetGameActionNewSession(const GameRules &rules, de::String episodeId,
+                               const res::Uri &mapUri, uint mapEntrance = 0);
 
 /**
  * Schedule a game session save (deferred).
@@ -80,7 +80,7 @@ bool G_SetGameActionLoadSession(de::String slotId);
  * @param nextMapEntryPoint  Logical map entry point on the new map.
  * @param secretExit         @c true if the exit taken was marked as 'secret'.
  */
-void G_SetGameActionMapCompleted(res::Uri const &nextMapUri, uint nextMapEntryPoint = 0,
+void G_SetGameActionMapCompleted(const res::Uri &nextMapUri, uint nextMapEntryPoint = 0,
                                  bool secretExit = false);
 
 /**
@@ -96,22 +96,22 @@ de::String G_EpisodeTitle(const de::String& episodeId);
  *
  * @todo: Should use WorldSystem::mapInfoForMapUri() instead.
  */
-de::Record &G_MapInfoForMapUri(res::Uri const &mapUri);
+de::Record &G_MapInfoForMapUri(const res::Uri &mapUri);
 
 /**
  * @param mapUri  Identifier of the map to lookup the author of.
  */
-de::String G_MapAuthor(res::Uri const &mapUri, bool supressGameAuthor = false);
+de::String G_MapAuthor(const res::Uri &mapUri, bool supressGameAuthor = false);
 
 /**
  * @param mapUri  Identifier of the map to lookup the title of.
  */
-de::String G_MapTitle(res::Uri const &mapUri);
+de::String G_MapTitle(const res::Uri &mapUri);
 
 /**
  * @param mapUri  Identifier of the map to lookup the title of.
  */
-res::Uri G_MapTitleImage(res::Uri const &mapUri);
+res::Uri G_MapTitleImage(const res::Uri &mapUri);
 
 /**
  * Compose a textual, rich-formatted description of the the referenced map, containing
@@ -122,7 +122,7 @@ res::Uri G_MapTitleImage(res::Uri const &mapUri);
  *
  * @return  Rich-formatted description of the map.
  */
-de::String G_MapDescription(const de::String& episodeId, res::Uri const &mapUri);
+de::String G_MapDescription(const de::String& episodeId, const res::Uri &mapUri);
 
 /**
  * Attempt to extract the logical map number encoded in the @a mapUri. Assumes the default
@@ -134,7 +134,7 @@ de::String G_MapDescription(const de::String& episodeId, res::Uri const &mapUri)
  *
  * @deprecated  Should use map URIs instead.
  */
-uint G_MapNumberFor(res::Uri const &mapUri);
+uint G_MapNumberFor(const res::Uri &mapUri);
 
 /**
  * Compose a Uri for the identified @a episode and @a map combination using the default
@@ -159,7 +159,7 @@ res::Uri G_ComposeMapUri(uint episode, uint map);
  * @param autogenerate  @c true to generate a useful description (map name, map time, etc...)
  *                      if none exists for the @a saveName referenced.
  */
-de::String G_DefaultGameStateFolderUserDescription(de::String const &saveName, bool autogenerate = true);
+de::String G_DefaultGameStateFolderUserDescription(const de::String &saveName, bool autogenerate = true);
 
 /**
  * Returns the game's SaveSlots.
@@ -206,7 +206,7 @@ void G_SetGameAction(gameaction_t newAction);
 void G_StartHelp(void);
 
 /// @todo Should not be a global function; mode breaks game session separation.
-dd_bool G_StartFinale(char const *script, int flags, finale_mode_t mode, char const *defId);
+dd_bool G_StartFinale(const char *script, int flags, finale_mode_t mode, const char *defId);
 
 /**
  * Signal that play on the current map may now begin.

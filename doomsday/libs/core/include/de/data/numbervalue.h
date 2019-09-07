@@ -83,13 +83,13 @@ public:
     Number asNumber() const;
     Text   asText() const;
     bool   isTrue() const;
-    dint   compare(Value const &value) const;
+    dint   compare(const Value &value) const;
     void   negate();
-    void   sum(Value const &value);
-    void   subtract(Value const &value);
-    void   divide(Value const &divisor);
-    void   multiply(Value const &value);
-    void   modulo(Value const &divisor);
+    void   sum(const Value &value);
+    void   subtract(const Value &value);
+    void   divide(const Value &divisor);
+    void   multiply(const Value &value);
+    void   modulo(const Value &divisor);
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

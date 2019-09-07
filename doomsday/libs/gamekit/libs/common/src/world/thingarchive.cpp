@@ -34,7 +34,7 @@ DE_PIMPL(ThingArchive)
 {
     int version;
     uint size;
-    mobj_t const **things;
+    const mobj_t **things;
     bool excludePlayers;
 
     Impl(Public *i)
@@ -59,7 +59,7 @@ DE_PIMPL(ThingArchive)
     static int countMobjThinkersToArchive(thinker_t *th, void *context)
     {
         countmobjthinkerstoarchive_params_t &p = *(countmobjthinkerstoarchive_params_t *) context;
-        if (!(Mobj_IsPlayer(reinterpret_cast<mobj_t const *>(th)) && p.excludePlayers))
+        if (!(Mobj_IsPlayer(reinterpret_cast<const mobj_t *>(th)) && p.excludePlayers))
         {
             p.count++;
         }
@@ -96,7 +96,7 @@ void ThingArchive::clear()
 void ThingArchive::initForLoad(uint size)
 {
     d->size   = size;
-    d->things = reinterpret_cast<mobj_t const **>(M_Calloc(d->size * sizeof(*d->things)));
+    d->things = reinterpret_cast<const mobj_t **>(M_Calloc(d->size * sizeof(*d->things)));
 }
 
 void ThingArchive::initForSave(bool excludePlayers)
@@ -108,11 +108,11 @@ void ThingArchive::initForSave(bool excludePlayers)
     Thinker_Iterate(P_MobjThinker, Impl::countMobjThinkersToArchive, &parm);
 
     d->size           = parm.count;
-    d->things         = reinterpret_cast<mobj_t const **>(M_Calloc(d->size * sizeof(*d->things)));
+    d->things         = reinterpret_cast<const mobj_t **>(M_Calloc(d->size * sizeof(*d->things)));
     d->excludePlayers = excludePlayers;
 }
 
-void ThingArchive::insert(mobj_t const *mo, SerialId serialId)
+void ThingArchive::insert(const mobj_t *mo, SerialId serialId)
 {
     DE_ASSERT(mo != 0);
 
@@ -134,7 +134,7 @@ void ThingArchive::insert(mobj_t const *mo, SerialId serialId)
     d->things[serialId] = const_cast<mobj_t *>(mo);
 }
 
-ThingArchive::SerialId ThingArchive::serialIdFor(mobj_t const *mo)
+ThingArchive::SerialId ThingArchive::serialIdFor(const mobj_t *mo)
 {
     DE_ASSERT(d->things != 0);
 

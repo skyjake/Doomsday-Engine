@@ -57,7 +57,7 @@ public:
      * Notified when an item in the menu is triggered. The corresponding UI item is
      * passed as argument.
      */
-    DE_AUDIENCE(ItemTriggered, void menuItemTriggered(ui::Item const &))
+    DE_AUDIENCE(ItemTriggered, void menuItemTriggered(const ui::Item &))
 
     /**
      * Called when a submenu/widget is opened by one of the items.
@@ -67,7 +67,7 @@ public:
     DE_AUDIENCE(SubWidgetOpened, void subWidgetOpened(MenuWidget &, PanelWidget *subwidget))
 
 public:
-    MenuWidget(String const &name = String());
+    MenuWidget(const String &name = String());
 
     AssetGroup &assets() override;
 
@@ -100,7 +100,7 @@ public:
 
     ui::Data &items();
 
-    ui::Data const &items() const;
+    const ui::Data &items() const;
 
     /**
      * Sets the data context of the menu to some existing context. The context
@@ -108,14 +108,14 @@ public:
      *
      * @param items  Ownership not taken.
      */
-    void setItems(ui::Data const &items);
+    void setItems(const ui::Data &items);
 
     void useDefaultItems();
 
     bool isUsingDefaultItems() const;
 
     ChildWidgetOrganizer &organizer();
-    ChildWidgetOrganizer const &organizer() const;
+    const ChildWidgetOrganizer &organizer() const;
 
     void setVirtualizationEnabled(bool enabled, int averageItemHeight = 0);
 
@@ -130,7 +130,7 @@ public:
     bool variantItemsEnabled() const;
 
     template <typename WidgetType>
-    WidgetType &itemWidget(ui::Item const &item) const {
+    WidgetType &itemWidget(const ui::Item &item) const {
         return organizer().itemWidget(item)->as<WidgetType>();
     }
 
@@ -144,7 +144,7 @@ public:
         return nullptr;
     }
 
-    ui::DataPos findItem(GuiWidget const &widget) const;
+    ui::DataPos findItem(const GuiWidget &widget) const;
 
     /**
      * Returns the number of visible items in the menu. Hidden items are not
@@ -160,7 +160,7 @@ public:
      *
      * @return @c true, if the widget is laid out as part of the menu.
      */
-    bool isWidgetPartOfMenu(GuiWidget const &widget) const;
+    bool isWidgetPartOfMenu(const GuiWidget &widget) const;
 
     /**
      * Lays out children of the menu according to the grid setup. This should
@@ -171,16 +171,16 @@ public:
     /**
      * Provides read-only access to the layout metrics.
      */
-    GridLayout const &layout() const;
+    const GridLayout &layout() const;
 
     GridLayout &layout();
 
-    Rule const &contentHeight() const;
+    const Rule &contentHeight() const;
 
     // Events.
     void offerFocus() override;
     void update() override;
-    bool handleEvent(Event const &event) override;
+    bool handleEvent(const Event &event) override;
 
     void dismissPopups();
 

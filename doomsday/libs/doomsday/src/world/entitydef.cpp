@@ -73,7 +73,7 @@ MapEntityDef *P_MapEntityDef(int id)
     return nullptr;  // Not found.
 }
 
-MapEntityDef *P_MapEntityDefByName(char const *name)
+MapEntityDef *P_MapEntityDefByName(const char *name)
 {
     if (name && entityDefs)
     {
@@ -83,7 +83,7 @@ MapEntityDef *P_MapEntityDefByName(char const *name)
     return nullptr;  // Not found.
 }
 
-AutoStr *P_NameForMapEntityDef(MapEntityDef const *def)
+AutoStr *P_NameForMapEntityDef(const MapEntityDef *def)
 {
     String name;  // Not found.
     if (def)
@@ -119,7 +119,7 @@ int MapEntityDef_Property(MapEntityDef *def, int propertyId,
     return found? found - def->props : -1/* not found */;
 }
 
-int MapEntityDef_PropertyByName(MapEntityDef *def, char const *propertyName,
+int MapEntityDef_PropertyByName(MapEntityDef *def, const char *propertyName,
                                 MapEntityPropertyDef **retDef)
 {
     DE_ASSERT(def);
@@ -197,7 +197,7 @@ void MapEntityDef_AddProperty(MapEntityDef* def, int propertyId, const char* pro
  * @param entityName  If not @c NULL, compare using this unique name.
  * @param canCreate   @c true= create a new definition if not found.
  */
-static MapEntityDef *findMapEntityDef(int identifier, char const *entityName,
+static MapEntityDef *findMapEntityDef(int identifier, const char *entityName,
                                       bool canCreate)
 {
     if (identifier == 0 && (!entityName || !entityName[0])) return 0;
@@ -238,14 +238,14 @@ static MapEntityDef *findMapEntityDef(int identifier, char const *entityName,
     return def;
 }
 
-DE_EXTERN_C dd_bool P_RegisterMapObj(int identifier, char const *name)
+DE_EXTERN_C dd_bool P_RegisterMapObj(int identifier, const char *name)
 {
     return findMapEntityDef(identifier, name, true /*do create*/) != 0;
 }
 
 DE_EXTERN_C dd_bool P_RegisterMapObjProperty(int         entityId,
                                              int         propertyId,
-                                             char const *propertyName,
+                                             const char *propertyName,
                                              valuetype_t type)
 {
     try
@@ -256,7 +256,7 @@ DE_EXTERN_C dd_bool P_RegisterMapObjProperty(int         entityId,
         MapEntityDef_AddProperty(def, propertyId, propertyName, type);
         return true; // Success!
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_WARNING("%s. Ignoring.") << er.asText();
     }
@@ -290,7 +290,7 @@ static MapEntityPropertyDef *entityPropertyDef(int entityId, int propertyId)
     return property; // Found it.
 }
 
-static void setValue(void *dst, valuetype_t dstType, PropertyValue const &pvalue)
+static void setValue(void *dst, valuetype_t dstType, const PropertyValue &pvalue)
 {
     switch (dstType)
     {
@@ -324,13 +324,13 @@ Type getEntityValue(int entityId, int elementIndex, int propertyId)
         Type returnVal = 0;
         if (World::get().hasMap())
         {
-            EntityDatabase const &db = World::get().map().entityDatabase();
-            MapEntityPropertyDef const *propDef = entityPropertyDef(entityId, propertyId);
+            const EntityDatabase &db = World::get().map().entityDatabase();
+            const MapEntityPropertyDef *propDef = entityPropertyDef(entityId, propertyId);
             setValue(&returnVal, returnValueType, db.property(propDef, elementIndex));
         }
         return returnVal;
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_WARNING("%s. Returning 0.") << er.asText();
         return 0;

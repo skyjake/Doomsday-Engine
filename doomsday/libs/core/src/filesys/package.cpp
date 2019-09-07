@@ -53,15 +53,15 @@ static String const VAR_ID  ("ID");
 static String const VAR_PATH("path");
 static String const VAR_TAGS("tags");
 
-Package::Asset::Asset(Record const &rec) : RecordAccessor(rec) {}
+Package::Asset::Asset(const Record &rec) : RecordAccessor(rec) {}
 
-Package::Asset::Asset(Record const *rec) : RecordAccessor(rec) {}
+Package::Asset::Asset(const Record *rec) : RecordAccessor(rec) {}
 
-String Package::Asset::absolutePath(String const &name) const
+String Package::Asset::absolutePath(const String &name) const
 {
     // For the context, we'll accept either the variable's own record or the package
     // metadata.
-    Record const *context = &accessedRecord().parentRecordForMember(name);
+    const Record *context = &accessedRecord().parentRecordForMember(name);
     if (!context->has(ScriptedInfo::VAR_SOURCE))
     {
         context = &accessedRecord();
@@ -74,7 +74,7 @@ DE_PIMPL(Package)
     SafePtr<const File> file;
     Version version; // version of the loaded package
 
-    Impl(Public *i, File const *f)
+    Impl(Public *i, const File *f)
         : Base(i)
         , file(f)
     {
@@ -102,7 +102,7 @@ DE_PIMPL(Package)
         StringList paths;
         if (self().objectNamespace().has(PACKAGE_IMPORT_PATH))
         {
-            ArrayValue const &imp = self().objectNamespace().geta(PACKAGE_IMPORT_PATH);
+            const ArrayValue &imp = self().objectNamespace().geta(PACKAGE_IMPORT_PATH);
             DE_FOR_EACH_CONST(ArrayValue::Elements, i, imp.elements())
             {
                 Path importPath = (*i)->asText();
@@ -123,19 +123,19 @@ DE_PIMPL(Package)
     }
 };
 
-Package::Package(File const &file) : d(new Impl(this, &file))
+Package::Package(const File &file) : d(new Impl(this, &file))
 {}
 
 Package::~Package()
 {}
 
-File const &Package::file() const
+const File &Package::file() const
 {
     d->verifyFile();
     return *d->file;
 }
 
-File const &Package::sourceFile() const
+const File &Package::sourceFile() const
 {
     return FS::locate<const File>(objectNamespace().gets(PACKAGE_PATH));
 }
@@ -145,7 +145,7 @@ bool Package::sourceFileExists() const
     return d->file && FS::tryLocate<const File>(objectNamespace().gets(PACKAGE_PATH));
 }
 
-Folder const &Package::root() const
+const Folder &Package::root() const
 {
     d->verifyFile();
     if (const Folder *f = maybeAs<Folder>(&d->file->target()))
@@ -161,7 +161,7 @@ Record &Package::objectNamespace()
     return const_cast<File *>(d->file.get())->objectNamespace();
 }
 
-Record const &Package::objectNamespace() const
+const Record &Package::objectNamespace() const
 {
     return const_cast<Package *>(this)->objectNamespace();
 }
@@ -182,7 +182,7 @@ Package::Assets Package::assets() const
     return ScriptedInfo::allBlocksOfType(DE_STR("asset"), d->packageInfo());
 }
 
-bool Package::executeFunction(String const &name)
+bool Package::executeFunction(const String &name)
 {
     Record &pkgInfo = d->packageInfo();
     if (pkgInfo.has(name))
@@ -204,7 +204,7 @@ int Package::order() const
     return objectNamespace().geti(PACKAGE_ORDER);
 }
 
-void Package::findPartialPath(String const &path, FileIndex::FoundFiles &found) const
+void Package::findPartialPath(const String &path, FileIndex::FoundFiles &found) const
 {
     App::fileSystem().nameIndex().findPartialPath(identifier(), path, found);
 }
@@ -259,7 +259,7 @@ void Package::parseMetadata(File &packageFile) // static
                 needParse = false;
 
                 // Only parse if the source has changed.
-                if (auto const *time = maybeAs<TimeValue>(metadata.get(TIMESTAMP)))
+                if (const auto *time = maybeAs<TimeValue>(metadata.get(TIMESTAMP)))
                 {
                     needParse =
                             (metadataInfo      && metadataInfo->status().modifiedAt      > time->time()) ||
@@ -306,7 +306,7 @@ void Package::parseMetadata(File &packageFile) // static
     }
 }
 
-void Package::validateMetadata(Record const &packageInfo)
+void Package::validateMetadata(const Record &packageInfo)
 {
     if (!packageInfo.has(VAR_ID))
     {
@@ -335,7 +335,7 @@ void Package::validateMetadata(Record const &packageInfo)
     }
 
     static const String required[] = { "title", "version", "license", VAR_TAGS };
-    for (auto const &req : required)
+    for (const auto &req : required)
     {
         if (!packageInfo.has(req))
         {
@@ -361,7 +361,7 @@ void Package::validateMetadata(Record const &packageInfo)
     }
 }
 
-Record &Package::initializeMetadata(File &packageFile, String const &id)
+Record &Package::initializeMetadata(File &packageFile, const String &id)
 {
     if (!packageFile.objectNamespace().has(VAR_PACKAGE))
     {
@@ -374,48 +374,48 @@ Record &Package::initializeMetadata(File &packageFile, String const &id)
     return metadata;
 }
 
-Record const &Package::metadata(File const &packageFile)
+const Record &Package::metadata(const File &packageFile)
 {
     return packageFile.objectNamespace().subrecord(VAR_PACKAGE);
 }
 
-StringList Package::tags(File const &packageFile)
+StringList Package::tags(const File &packageFile)
 {
     return tags(packageFile.objectNamespace().gets(PACKAGE_TAGS));
 }
 
-bool Package::matchTags(File const &packageFile, String const &tagRegExp)
+bool Package::matchTags(const File &packageFile, const String &tagRegExp)
 {
     return RegExp(tagRegExp).hasMatch(packageFile.objectNamespace().gets(PACKAGE_TAGS, ""));
 }
 
-StringList Package::tags(String const &tagsString)
+StringList Package::tags(const String &tagsString)
 {
     return filter(tagsString.split(" "), [](const String &s) { return bool(s); });
 }
 
-StringList Package::requiredPackages(File const &packageFile)
+StringList Package::requiredPackages(const File &packageFile)
 {
     return packageFile.objectNamespace().getStringList(PACKAGE_REQUIRES);
 }
 
-void Package::addRequiredPackage(File &packageFile, String const &id)
+void Package::addRequiredPackage(File &packageFile, const String &id)
 {
     packageFile.objectNamespace().appendToArray(PACKAGE_REQUIRES, new TextValue(id));
 }
 
-bool Package::hasOptionalContent(String const &packageId)
+bool Package::hasOptionalContent(const String &packageId)
 {
-    if (File const *file = PackageLoader::get().select(packageId))
+    if (const File *file = PackageLoader::get().select(packageId))
     {
         return hasOptionalContent(*file);
     }
     return false;
 }
 
-bool Package::hasOptionalContent(File const &packageFile)
+bool Package::hasOptionalContent(const File &packageFile)
 {
-    Record const &meta = packageFile.objectNamespace();
+    const Record &meta = packageFile.objectNamespace();
     return meta.has(PACKAGE_RECOMMENDS) || meta.has(PACKAGE_EXTRAS);
 }
 
@@ -431,7 +431,7 @@ static String extractIdentifier(String str)
     return stripAfterFirstUnderscore(str.fileNameWithoutExtension());
 }
 
-std::pair<String, Version> Package::split(String const &identifier_version)
+std::pair<String, Version> Package::split(const String &identifier_version)
 {
     std::pair<String, Version> idVer;
     if (identifier_version.contains("_"))
@@ -446,7 +446,7 @@ std::pair<String, Version> Package::split(String const &identifier_version)
     return idVer;
 }
 
-String Package::splitToHumanReadable(String const &identifier_version)
+String Package::splitToHumanReadable(const String &identifier_version)
 {
     auto const id_ver = split(identifier_version);
     return Stringf("%s " _E(C) "(%s)" _E(.),
@@ -456,22 +456,22 @@ String Package::splitToHumanReadable(String const &identifier_version)
                               : "any version");
 }
 
-bool Package::equals(String const &id1, String const &id2)
+bool Package::equals(const String &id1, const String &id2)
 {
     return split(id1).first == split(id2).first;
 }
 
-String Package::identifierForFile(File const &file)
+String Package::identifierForFile(const File &file)
 {
     // The ID may be specified in the metadata.
-    if (auto const *pkgId = file.objectNamespace().tryFind(VAR_PACKAGE_ID))
+    if (const auto *pkgId = file.objectNamespace().tryFind(VAR_PACKAGE_ID))
     {
         return pkgId->value().asText();
     }
 
     // Form the prefix if there are enclosing packs as parents.
     String prefix;
-    Folder const *parent = file.parent();
+    const Folder *parent = file.parent();
     while (parent && parent->extension() == ".pack")
     {
         prefix = extractIdentifier(parent->name()) + "." + prefix;
@@ -480,7 +480,7 @@ String Package::identifierForFile(File const &file)
     return prefix + extractIdentifier(file.name());
 }
 
-String Package::versionedIdentifierForFile(File const &file)
+String Package::versionedIdentifierForFile(const File &file)
 {
     String id = identifierForFile(file);
     if (id.isEmpty()) return String();
@@ -490,22 +490,22 @@ String Package::versionedIdentifierForFile(File const &file)
         return Stringf("%s_%s", id.c_str(), id_ver.second.fullNumber().c_str());
     }
     // The version may be specified in metadata.
-    if (auto const *pkgVer = file.objectNamespace().tryFind(PACKAGE_VERSION))
+    if (const auto *pkgVer = file.objectNamespace().tryFind(PACKAGE_VERSION))
     {
         return Stringf("%s_%s", id.c_str(), Version(pkgVer->value().asText()).fullNumber().c_str());
     }
     return id;
 }
 
-Version Package::versionForFile(File const &file)
+Version Package::versionForFile(const File &file)
 {
     return split(versionedIdentifierForFile(file)).second;
 }
 
-File const *Package::containerOfFile(File const &file)
+const File *Package::containerOfFile(const File &file)
 {
     // Find the containing package.
-    File const *i = file.parent();
+    const File *i = file.parent();
     while (i && i->extension() != ".pack")
     {
         i = i->parent();
@@ -513,16 +513,16 @@ File const *Package::containerOfFile(File const &file)
     return i;
 }
 
-String Package::identifierForContainerOfFile(File const &file)
+String Package::identifierForContainerOfFile(const File &file)
 {
     // Find the containing package.
-    File const *c = containerOfFile(file);
+    const File *c = containerOfFile(file);
     return c? identifierForFile(*c) : "";
 }
 
-Time Package::containerOfFileModifiedAt(File const &file)
+Time Package::containerOfFileModifiedAt(const File &file)
 {
-    File const *c = containerOfFile(file);
+    const File *c = containerOfFile(file);
     if (!c) return file.status().modifiedAt;
     return c->status().modifiedAt;
 }

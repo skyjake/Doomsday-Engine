@@ -46,7 +46,7 @@ namespace de {
 class LIBGUI_PUBLIC NotificationAreaWidget : public GuiWidget
 {
 public:
-    NotificationAreaWidget(String const &name = {});
+    NotificationAreaWidget(const String &name = {});
 
     /**
      * Places the notification widget in the top right corner of @a area.
@@ -54,10 +54,10 @@ public:
      * @param area              Reference area.
      * @param horizontalOffset  Additional horizontal offset.
      */
-    void useDefaultPlacement(RuleRectangle const &area,
-                             Rule const &horizontalOffset);
+    void useDefaultPlacement(const RuleRectangle &area,
+                             const Rule &horizontalOffset);
 
-    Rule const &shift();
+    const Rule &shift();
 
     /**
      * Adds a notification to the notification area. If the notification widget is

@@ -29,7 +29,7 @@ using namespace de;
 
 static patchid_t pServantIcon[FRAME_COUNT];
 
-static void ServantWidget_Draw(guidata_servant_t *svnt, Point2Raw const *offset)
+static void ServantWidget_Draw(guidata_servant_t *svnt, const Point2Raw *offset)
 {
     DE_ASSERT(svnt);
     svnt->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -61,7 +61,7 @@ void guidata_servant_t::tick(timespan_t /*elapsed*/)
 
     _patchId = 0;
 
-    player_t const &plr = ::players[player()];
+    const player_t &plr = ::players[player()];
     if(plr.powers[PT_MINOTAUR] &&
        (plr.powers[PT_MINOTAUR] > BLINKTHRESHOLD || !(plr.powers[PT_MINOTAUR] & 16)))
     {
@@ -69,7 +69,7 @@ void guidata_servant_t::tick(timespan_t /*elapsed*/)
     }
 }
 
-void guidata_servant_t::draw(Vec2i const &offset) const
+void guidata_servant_t::draw(const Vec2i &offset) const
 {
     dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
@@ -94,7 +94,7 @@ void guidata_servant_t::draw(Vec2i const &offset) const
 
 void guidata_servant_t::updateGeometry()
 {
-    player_t const &plr = ::players[player()];
+    const player_t &plr = ::players[player()];
 
     Rect_SetWidthHeight(&geometry(), 0, 0);
 

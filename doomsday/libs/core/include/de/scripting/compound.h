@@ -42,7 +42,7 @@ public:
 
     virtual ~Compound();
 
-    Statement const *firstStatement() const;
+    const Statement *firstStatement() const;
 
     /// Determines the size of the compound.
     /// @return Number of statements in the compound.

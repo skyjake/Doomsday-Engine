@@ -130,14 +130,14 @@ String::String(const char *nullTerminatedCStr)
 //    initWide_String(&_str, nullTerminatedWideStr ? nullTerminatedWideStr : L"");
 //}
 
-String::String(char const *cStr, int length)
+String::String(const char *cStr, int length)
 {
     DE_ASSERT(cStr != nullptr);
     initCStrN_String(&_str, cStr, length);
     DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
 }
 
-String::String(char const *cStr, dsize length)
+String::String(const char *cStr, dsize length)
 {
     initCStrN_String(&_str, cStr, length);
     DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
@@ -1135,7 +1135,7 @@ String String::fromUtf8(const Block &block)
     return s;
 }
 
-String String::fromUtf8(char const *nullTerminatedCStr)
+String String::fromUtf8(const char *nullTerminatedCStr)
 {
     return String(nullTerminatedCStr);
 }

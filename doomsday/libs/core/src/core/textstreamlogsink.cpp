@@ -30,7 +30,7 @@ TextStreamLogSink::TextStreamLogSink(std::ostream &ts)
 TextStreamLogSink::~TextStreamLogSink()
 {}
 
-LogSink &TextStreamLogSink::operator << (String const &plainText)
+LogSink &TextStreamLogSink::operator << (const String &plainText)
 {
     _ts << plainText << "\n";
     return *this;

@@ -41,7 +41,7 @@ void Compound::clear()
     _statements.clear();
 }
 
-Statement const *Compound::firstStatement() const
+const Statement *Compound::firstStatement() const
 {
     if (_statements.empty())
     {

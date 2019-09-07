@@ -36,7 +36,7 @@ class BaseProperty
 {
 public:
     BaseProperty() = default;
-    BaseProperty(ValueType const &value) : _value(value) {}
+    BaseProperty(const ValueType &value) : _value(value) {}
 
     inline ValueType value() const { return _value; }
     inline operator ValueType() const { return value(); }
@@ -64,16 +64,16 @@ protected:
     public: \
         typedef de::BaseProperty<ValueType> Base; \
         PropName() : Base() {} \
-        PropName(ValueType const &value) : Base(value) {} \
-        PropName(PropName const &other) : Base(other._value) {} \
-        void setValue(ValueType const &v) { \
+        PropName(const ValueType &value) : Base(value) {} \
+        PropName(const PropName &other) : Base(other._value) {} \
+        void setValue(const ValueType &v) { \
             if (_value == v) return; \
             _value = v; \
             DE_NOTIFY(Change, i) i->valueOf ## PropName ## Changed(); \
         } \
-        PropName &operator = (ValueType const &v) { setValue(v); return *this; } \
-        PropName &operator += (ValueType const &v) { setValue(_value + v); return *this; } \
-        PropName &operator -= (ValueType const &v) { setValue(_value - v); return *this; } \
+        PropName &operator = (const ValueType &v) { setValue(v); return *this; } \
+        PropName &operator += (const ValueType &v) { setValue(_value + v); return *this; } \
+        PropName &operator -= (const ValueType &v) { setValue(_value - v); return *this; } \
         DE_AUDIENCE_INLINE(Change, void valueOf ## PropName ## Changed()) \
     };
 

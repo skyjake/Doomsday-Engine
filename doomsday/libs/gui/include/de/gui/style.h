@@ -52,12 +52,12 @@ public:
      *
      * @param pack  Package containing the style.
      */
-    void load(Package const &pack);
+    void load(const Package &pack);
 
-    RuleBank const &rules() const;
-    FontBank const &fonts() const;
-    ColorBank const &colors() const;
-    ImageBank const &images() const;
+    const RuleBank &rules() const;
+    const FontBank &fonts() const;
+    const ColorBank &colors() const;
+    const ImageBank &images() const;
 
     RuleBank &rules();
     FontBank &fonts();
@@ -71,7 +71,7 @@ public:
                          Font::RichFormat::Style &fontStyle,
                          int &colorIndex) const;
 
-    Font const *richStyleFont(Font::RichFormat::Style fontStyle) const;
+    const Font *richStyleFont(Font::RichFormat::Style fontStyle) const;
 
     virtual const ui::Stylist &emptyContentLabelStylist() const;
 

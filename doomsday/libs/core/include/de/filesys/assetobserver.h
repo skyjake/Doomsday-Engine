@@ -43,10 +43,10 @@ public:
      *
      * @param regexPattern  Pattern for asset identifier without the "asset." prefix.
      */
-    AssetObserver(String const &regexPattern);
+    AssetObserver(const String &regexPattern);
 
     /// Notified when an asset matching the provided regular expression is added or removed.
-    DE_AUDIENCE(Availability, void assetAvailabilityChanged(String const &identifier, Event event))
+    DE_AUDIENCE(Availability, void assetAvailabilityChanged(const String &identifier, Event event))
 
 private:
     DE_PRIVATE(d)

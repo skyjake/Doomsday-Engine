@@ -34,7 +34,7 @@ void Task::run()
     {
         runTask();
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_AS("Task");
         LOG_WARNING("Aborted due to exception: ") << er.asText();

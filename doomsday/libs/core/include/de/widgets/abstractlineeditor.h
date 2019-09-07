@@ -49,17 +49,17 @@ public:
 public:
     AbstractLineEditor(ILineWrapping *lineWraps);
 
-    ILineWrapping const &lineWraps() const;
+    const ILineWrapping &lineWraps() const;
 
     /**
      * Sets the prompt that is displayed in front of the edited text.
      *
      * @param promptText  Text for the prompt.
      */
-    void   setPrompt(String const &promptText);
+    void   setPrompt(const String &promptText);
     String prompt() const;
 
-    void   setText(String const &lineText);
+    void   setText(const String &lineText);
     String text() const;
 
     void    setCursor(BytePos index);
@@ -84,9 +84,9 @@ public:
      *
      * @param lexicon  Lexicon.
      */
-    void setLexicon(Lexicon const &lexicon);
+    void setLexicon(const Lexicon &lexicon);
 
-    Lexicon const &lexicon() const;
+    const Lexicon &lexicon() const;
 
     enum EchoMode { NormalEchoMode, PasswordEchoMode };
 
@@ -102,7 +102,7 @@ public:
     enum KeyModifier { Unmodified = 0, Shift = 0x1, Control = 0x2, Alt = 0x4, Meta = 0x8 };
     using KeyModifiers = Flags;
 
-    virtual bool handleControlKey(term::Key key, KeyModifiers const &mods = Unmodified);
+    virtual bool handleControlKey(term::Key key, const KeyModifiers &mods = Unmodified);
 
     /**
      * Inserts a fragment of text at the cursor position. The cursor moves
@@ -110,7 +110,7 @@ public:
      *
      * @param text  Text to insert.
      */
-    void insert(String const &text);
+    void insert(const String &text);
 
 protected:
     ILineWrapping &lineWraps();
@@ -122,7 +122,7 @@ protected:
     virtual void numberOfLinesChanged(int lineCount) = 0;
     virtual void cursorMoved()                       = 0;
     virtual void contentChanged()                    = 0;
-    virtual void autoCompletionBegan(String const &wordBase);
+    virtual void autoCompletionBegan(const String &wordBase);
     virtual void autoCompletionEnded(bool accepted);
 
     enum LineWrapUpdateBehavior { RewrapNow, WrapUnlessWrappedAlready };

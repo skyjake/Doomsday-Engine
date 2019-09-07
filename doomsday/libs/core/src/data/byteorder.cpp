@@ -201,7 +201,7 @@ void LittleEndianByteOrder::hostToNetwork(duint64 hostValue, duint64 &networkVal
 duint64 swap64(duint64 n)
 {
     duint64 result;
-    dbyte const *in = reinterpret_cast<dbyte const *>(&n);
+    const dbyte *in = reinterpret_cast<const dbyte *>(&n);
     dbyte *out = reinterpret_cast<dbyte *>(&result);
 
     out[0] = in[7];

@@ -51,9 +51,9 @@ public:
      *
      * @param path  Additional module import path.
      */
-    void addModuleImportPath(Path const &path);
+    void addModuleImportPath(const Path &path);
 
-    void removeModuleImportPath(Path const &path);
+    void removeModuleImportPath(const Path &path);
 
     /**
      * Adds a native module to the set of modules that can be imported in
@@ -62,13 +62,13 @@ public:
      * @param name    Name of the module.
      * @param module  Module namespace. App will observe this for deletion.
      */
-    void addNativeModule(String const &name, Record &module);
+    void addNativeModule(const String &name, Record &module);
 
-    void removeNativeModule(String const &name);
+    void removeNativeModule(const String &name);
 
     bool nativeModuleExists(const String &name) const;
 
-    Record &nativeModule(String const &name);
+    Record &nativeModule(const String &name);
 
     /**
      * Returns a native or an imported module.
@@ -94,7 +94,7 @@ public:
      *
      * @return  The imported module.
      */
-    Record &importModule(String const &name, String const &importedFromPath = "");
+    Record &importModule(const String &name, const String &importedFromPath = "");
 
     /**
      * Looks for the source file of a module.
@@ -104,7 +104,7 @@ public:
      *
      * @return Found source file, or @c NULL.
      */
-    File const *tryFindModuleSource(String const &name, String const &localPath = "");
+    const File *tryFindModuleSource(const String &name, const String &localPath = "");
 
     /**
      * Looks for the source file of a module.
@@ -114,9 +114,9 @@ public:
      *
      * @return Found source file.
      */
-    File const &findModuleSource(String const &name, String const &localPath = "");
+    const File &findModuleSource(const String &name, const String &localPath = "");
 
-    void timeChanged(Clock const &);
+    void timeChanged(const Clock &);
 
 public:
     /**
@@ -124,7 +124,7 @@ public:
      * @param name  Name of the class.
      * @return Class record.
      */
-    static Record &builtInClass(String const &name);
+    static Record &builtInClass(const String &name);
 
     /**
      * Returns a built-in Doomsday Script class from the specified module.
@@ -132,8 +132,8 @@ public:
      * @param className         Name of the class.
      * @return Class record.
      */
-    static Record &builtInClass(String const &nativeModuleName,
-                                String const &className);
+    static Record &builtInClass(const String &nativeModuleName,
+                                const String &className);
 
     static ScriptSystem &get();
 

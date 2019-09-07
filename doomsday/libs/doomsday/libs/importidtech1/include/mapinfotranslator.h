@@ -35,7 +35,7 @@ public:
     MapInfoTranslator();
 
     void reset();
-    void merge(ddstring_s const &definitions, const de::String& sourcePath, bool sourceIsCustom);
+    void merge(const ddstring_s &definitions, const de::String& sourcePath, bool sourceIsCustom);
 
     /**
      * Translate the current MAPINFO data set into DED syntax. Note that the internal

@@ -78,7 +78,7 @@ public:
         }
     }
 
-    void setImage(Image const &image)
+    void setImage(const Image &image)
     {
         _image = image;
         _needUpdate = true;
@@ -86,7 +86,7 @@ public:
         setPointSize(image.size() * image.pointRatio());
     }
 
-    void setPreallocatedImage(Id const &id, float pointRatio = 1.f)
+    void setPreallocatedImage(const Id &id, float pointRatio = 1.f)
     {
         _image = Image();
         _needUpdate = false;
@@ -120,7 +120,7 @@ public:
         release();
     }
 
-    void glMakeGeometry(GuiVertexBuilder &verts, Rectanglef const &rect)
+    void glMakeGeometry(GuiVertexBuilder &verts, const Rectanglef &rect)
     {
         if (_atlas)
         {

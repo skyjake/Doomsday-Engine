@@ -84,7 +84,7 @@ DE_GUI_PIMPL(MapOutlineWidget)
 
         for (int i = 0; i < mapOutline.lineCount(); ++i)
         {
-            auto const &line = mapOutline.line(i);
+            const auto &line = mapOutline.line(i);
 
             vtx.rgba = (line.type == network::MapOutlinePacket::OneSidedLine? oneSidedColor : twoSidedColor);
 
@@ -127,7 +127,7 @@ DE_GUI_PIMPL(MapOutlineWidget)
     }
 };
 
-MapOutlineWidget::MapOutlineWidget(String const &name)
+MapOutlineWidget::MapOutlineWidget(const String &name)
     : GuiWidget(name)
     , d(new Impl(this))
 {}
@@ -138,7 +138,7 @@ void MapOutlineWidget::setColors(const DotPath &oneSidedLine, const DotPath &two
     d->twoSidedColorId = twoSidedLine;
 }
 
-void MapOutlineWidget::setOutline(network::MapOutlinePacket const &mapOutline)
+void MapOutlineWidget::setOutline(const network::MapOutlinePacket &mapOutline)
 {
     d->makeOutline(mapOutline);
 }

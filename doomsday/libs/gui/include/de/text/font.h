@@ -157,7 +157,7 @@ public:
              * @param fontStyle  Style.
              * @return @c NULL to use the default font.
              */
-            virtual Font const *richStyleFont(Style fontStyle) const {
+            virtual const Font *richStyleFont(Style fontStyle) const {
                 DE_UNUSED(fontStyle);
                 return nullptr; // Use default.
             }
@@ -169,10 +169,10 @@ public:
         class LIBGUI_PUBLIC Ref
         {
         public:
-            Ref(Ref const &ref);
-            Ref(Ref const &ref, const CString &subSpan);
-            Ref(RichFormat const &richFormat);
-            Ref(RichFormat const &richFormat, const CString &subSpan);
+            Ref(const Ref &ref);
+            Ref(const Ref &ref, const CString &subSpan);
+            Ref(const RichFormat &richFormat);
+            Ref(const RichFormat &richFormat, const CString &subSpan);
 
             Ref subRef(const CString &subSpan) const;
 
@@ -186,23 +186,23 @@ public:
         private:
             void updateIndices();
 
-            RichFormat const &_ref;
+            const RichFormat &_ref;
             CString _span;
             Rangei _indices; ///< Applicable indices in the referred format's ranges list.
         };
 
     public:
         RichFormat();
-        RichFormat(IStyle const &style);
-        RichFormat(RichFormat const &other);
+        RichFormat(const IStyle &style);
+        RichFormat(const RichFormat &other);
 
-        RichFormat &operator=(RichFormat const &other);
+        RichFormat &operator=(const RichFormat &other);
 
         void clear();
 
         bool hasStyle() const;
-        void setStyle(IStyle const &style);
-        IStyle const &style() const;
+        void setStyle(const IStyle &style);
+        const IStyle &style() const;
 
         /**
          * Constructs a RichFormat that specifies no formatting instructions.
@@ -232,7 +232,7 @@ public:
          */
         Ref subRange(const CString &range) const;
 
-        TabStops const &tabStops() const;
+        const TabStops &tabStops() const;
 
         int tabStopXWidth(int stop) const;
 
@@ -314,9 +314,9 @@ public:
      * @return Width of the line of text (including non-visible parts like
      * whitespace).
      */
-    int advanceWidth(String const &textLine) const;
+    int advanceWidth(const String &textLine) const;
 
-    int advanceWidth(RichFormatRef const &format) const;
+    int advanceWidth(const RichFormatRef &format) const;
 
     /**
      * Rasterizes a line of text onto a 32-bit RGBA image.
@@ -330,13 +330,13 @@ public:
      * If there are multiple font heights present on the line, the tallest ascent is used
      * for setting the image origin.
      */
-    Image rasterize(String const &textLine,
-                    Vec4ub const &foreground = Image::Color(255, 255, 255, 255),
-                    Vec4ub const &background = Image::Color(255, 255, 255, 0)) const;
+    Image rasterize(const String &textLine,
+                    const Vec4ub &foreground = Image::Color(255, 255, 255, 255),
+                    const Vec4ub &background = Image::Color(255, 255, 255, 0)) const;
 
-    Image rasterize(RichFormatRef const &format,
-                    Vec4ub const &       foreground = Image::Color(255, 255, 255, 255),
-                    Vec4ub const &       background = Image::Color(255, 255, 255, 0)) const;
+    Image rasterize(const RichFormatRef &format,
+                    const Vec4ub &       foreground = Image::Color(255, 255, 255, 255),
+                    const Vec4ub &       background = Image::Color(255, 255, 255, 0)) const;
 
     const Rule &height() const;
     const Rule &ascent() const;

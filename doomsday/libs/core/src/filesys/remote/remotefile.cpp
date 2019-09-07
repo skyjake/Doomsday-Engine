@@ -79,7 +79,7 @@ DE_PIMPL(RemoteFile)
         }
     }
 
-    void setTarget(File const &cachedFile)
+    void setTarget(const File &cachedFile)
     {
         self().setTarget(cachedFile);
 
@@ -92,7 +92,7 @@ DE_PIMPL(RemoteFile)
 
     bool checkExistingCache()
     {
-        if (File const *cached = FS::tryLocate<File const>(cachePath()))
+        if (const File *cached = FS::tryLocate<File const>(cachePath()))
         {
             if (cached->status() == self().status())
             {
@@ -116,8 +116,8 @@ DE_PIMPL(RemoteFile)
     }
 };
 
-RemoteFile::RemoteFile(String const &name, String const &remotePath, Block const &remoteMetaId,
-                       String const &repositoryAddress)
+RemoteFile::RemoteFile(const String &name, const String &remotePath, const Block &remoteMetaId,
+                       const String &repositoryAddress)
     : LinkFile(name)
     , d(new Impl(this))
 {
@@ -152,7 +152,7 @@ void RemoteFile::download()
     d->fetching = filesys::RemoteFeedRelay::get().fetchFileContents
             (d->repository(),
              d->remotePath,
-             [this] (duint64 startOffset, Block const &chunk, duint64 remainingBytes)
+             [this] (duint64 startOffset, const Block &chunk, duint64 remainingBytes)
     {
         DE_ASSERT_IN_MAIN_THREAD();
         DE_NOTIFY_VAR(Download, i)
@@ -224,7 +224,7 @@ void RemoteFile::deleteCache()
     FS::get().root().tryDestroyFile(d->cachePath());
 }
 
-IIStream const &RemoteFile::operator >> (IByteArray &bytes) const
+const IIStream &RemoteFile::operator >> (IByteArray &bytes) const
 {
     if (state() != Ready)
     {
@@ -264,7 +264,7 @@ Asset &RemoteFile::asset()
     return *this;
 }
 
-Asset const &RemoteFile::asset() const
+const Asset &RemoteFile::asset() const
 {
     return *this;
 }

@@ -69,7 +69,7 @@ DE_PIMPL(Game), public Lockable
 
     Manifests manifests; ///< Required resource files (e.g., doomu.wad).
 
-    Impl(Public *i, Record const &parms)
+    Impl(Public *i, const Record &parms)
         : Base(i)
         , params(parms)
     {
@@ -111,7 +111,7 @@ DE_PIMPL(Game), public Lockable
     }
 };
 
-Game::Game(String const &id, Record const &params)
+Game::Game(const String &id, const Record &params)
     : d(new Impl(this, params))
 {
     d->params.set(DEF_ID, id);
@@ -182,13 +182,13 @@ bool Game::isLocalPackagesEnabled() // static
     return Config::get().getb(VAR_RESOURCE_LOCAL_PACKAGES, false);
 }
 
-StringList Game::localMultiplayerPackages(String const &gameId) // static
+StringList Game::localMultiplayerPackages(const String &gameId) // static
 {
     try
     {
         if (isLocalPackagesEnabled())
         {
-            auto const &pkgDict = Config::get().getdt(VAR_RESOURCE_LOCAL_PACKAGES_FOR_GAME);
+            const auto &pkgDict = Config::get().getdt(VAR_RESOURCE_LOCAL_PACKAGES_FOR_GAME);
             TextValue const key(gameId);
             if (pkgDict.contains(key))
             {
@@ -197,16 +197,16 @@ StringList Game::localMultiplayerPackages(String const &gameId) // static
         }
         return StringList();
     }
-    catch (Error const &)
+    catch (const Error &)
     {
         return StringList();
     }
 }
 
-void Game::setLocalMultiplayerPackages(String const &gameId, StringList packages) // static
+void Game::setLocalMultiplayerPackages(const String &gameId, StringList packages) // static
 {
     std::unique_ptr<ArrayValue> ids(new ArrayValue);
-    for (String const &pkg : packages)
+    for (const String &pkg : packages)
     {
         ids->add(pkg);
     }
@@ -231,7 +231,7 @@ bool Game::allStartupFilesFound() const
 {
     DE_GUARD(d);
 
-    for (String const &pkg : d->requiredPackages + d->packagesFromProfile())
+    for (const String &pkg : d->requiredPackages + d->packagesFromProfile())
     {
         if (!App::packageLoader().isAvailable(pkg))
             return false;
@@ -255,7 +255,7 @@ bool Game::isPlayable() const
 bool Game::isPlayableWithDefaultPackages() const
 {
     DE_GUARD(d);
-    for (String const &pkg : d->requiredPackages)
+    for (const String &pkg : d->requiredPackages)
     {
         if (!App::packageLoader().isAvailable(pkg))
             return false;
@@ -277,7 +277,7 @@ Game::Status Game::status() const
     return Incomplete;
 }
 
-String const &Game::statusAsText() const
+const String &Game::statusAsText() const
 {
     DE_GUARD(d);
     static String const statusTexts[] = {
@@ -326,7 +326,7 @@ String Game::logoImageId() const
     return logoImageForId(id());
 }
 
-String Game::logoImageForId(String const &id)
+String Game::logoImageForId(const String &id)
 {
     /// @todo The name of the plugin should be accessible via the plugin loader.
     String plugName;
@@ -410,7 +410,7 @@ Date Game::releaseDate() const
     return Date::fromText(d->params.gets(DEF_RELEASE_DATE, ""));
 }
 
-Game::Manifests const &Game::manifests() const
+const Game::Manifests &Game::manifests() const
 {
     DE_GUARD(d);
     return d->manifests;
@@ -446,7 +446,7 @@ bool Game::isRequiredFile(File1 &file) const
 }
 
 void Game::addResource(resourceclassid_t classId, dint rflags,
-                       char const *names, void const *params)
+                       const char *names, const void *params)
 {
     DE_GUARD(d);
 
@@ -467,7 +467,7 @@ void Game::addResource(resourceclassid_t classId, dint rflags,
 
     // Add the name list to the resource record.
     StringList nameList = String(names).split(";");
-    for (String const &nameRef : nameList)
+    for (const String &nameRef : nameList)
     {
         manifest->addName(nameRef);
     }
@@ -475,8 +475,8 @@ void Game::addResource(resourceclassid_t classId, dint rflags,
     if (params && classId == RC_PACKAGE)
     {
         // Add the identityKey list to the resource record.
-        StringList idKeys = String((char const *) params).split(";");
-        for (String const &idKeyRef : idKeys)
+        StringList idKeys = String((const char *) params).split(";");
+        for (const String &idKeyRef : idKeys)
         {
             manifest->addIdentityKey(idKeyRef);
         }
@@ -490,7 +490,7 @@ GameProfile &Game::profile() const
     return *d->profile();
 }
 
-Record const &Game::objectNamespace() const
+const Record &Game::objectNamespace() const
 {
     return d->params;
 }
@@ -500,7 +500,7 @@ Record &Game::objectNamespace()
     return d->params;
 }
 
-void Game::printBanner(Game const &game)
+void Game::printBanner(const Game &game)
 {
     LOG_MSG(_E(R) "\n");
     LOG_MSG(_E(1)) << game.title();
@@ -512,7 +512,7 @@ String Game::filesAsText(int rflags, bool withStatus) const
     String text;
 
     // Group output by resource class.
-    Manifests const &manifs = manifests();
+    const Manifests &manifs = manifests();
     for (uint i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
         resourceclassid_t const classId = resourceclassid_t(i);
@@ -561,7 +561,7 @@ String Game::filesAsText(int rflags, bool withStatus) const
     return text;
 }
 
-void Game::printFiles(Game const &game, int rflags, bool printStatus)
+void Game::printFiles(const Game &game, int rflags, bool printStatus)
 {
     LOG_RES_MSG("") << game.filesAsText(rflags, printStatus);
 }
@@ -570,7 +570,7 @@ D_CMD(InspectGame)
 {
     DE_UNUSED(src);
 
-    Game const *game = nullptr;
+    const Game *game = nullptr;
     if (argc < 2)
     {
         // No game identity key was specified - assume the current game.
@@ -588,7 +588,7 @@ D_CMD(InspectGame)
         {
             game = &DoomsdayApp::games()[idKey];
         }
-        catch (Games::NotFoundError const &)
+        catch (const Games::NotFoundError &)
         {
             LOG_WARNING("Unknown game '%s'") << idKey;
             return false;

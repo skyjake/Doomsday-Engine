@@ -34,7 +34,7 @@ int        GLDrawQueue_queuedElems = 0;
 DE_PIMPL_NOREF(GLDrawQueue)
 {
     GLProgram *       currentProgram = nullptr;
-    GLBuffer const *  currentBuffer  = nullptr;
+    const GLBuffer *  currentBuffer  = nullptr;
     GLBuffer::Indices indices;
     List<GLBuffer *>  indexBuffers;
     int               indexBufferPos = 0;
@@ -100,7 +100,7 @@ GLDrawQueue::GLDrawQueue()
 {}
 
 void GLDrawQueue::setProgram(GLProgram &program,
-                             Block const &batchUniformName,
+                             const Block &batchUniformName,
                              GLUniform::Type batchUniformType)
 {
     if (d->currentProgram && d->currentProgram != &program)
@@ -128,7 +128,7 @@ int GLDrawQueue::batchIndex() const
     return int(d->batchIndex);
 }
 
-void GLDrawQueue::setBatchColor(Vec4f const &color)
+void GLDrawQueue::setBatchColor(const Vec4f &color)
 {
     if (d->uBatchColors)
     {
@@ -143,13 +143,13 @@ void GLDrawQueue::setBatchSaturation(float saturation)
     d->defaultSaturation = saturation;
 }
 
-void GLDrawQueue::setBatchScissorRect(Vec4f const &scissor)
+void GLDrawQueue::setBatchScissorRect(const Vec4f &scissor)
 {
     d->uBatchScissors.set(d->batchIndex, scissor);
     d->defaultScissor = scissor;
 }
 
-void GLDrawQueue::setBuffer(GLBuffer const &buffer)
+void GLDrawQueue::setBuffer(const GLBuffer &buffer)
 {
     if (d->currentBuffer && &buffer != d->currentBuffer)
     {
@@ -158,7 +158,7 @@ void GLDrawQueue::setBuffer(GLBuffer const &buffer)
     d->currentBuffer = &buffer;
 }
 
-void GLDrawQueue::enqueueDraw(GLSubBuffer const &buffer)
+void GLDrawQueue::enqueueDraw(const GLSubBuffer &buffer)
 {
     DE_ASSERT(&buffer.hostBuffer() == d->currentBuffer);
     DE_ASSERT(d->currentProgram);

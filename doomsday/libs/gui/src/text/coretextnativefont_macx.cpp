@@ -39,7 +39,7 @@ struct CoreTextFontCache : public Lockable
             , pointSize(s)
         {}
 
-        bool operator<(Key const &other) const
+        bool operator<(const Key &other) const
         {
             if (name == other.name) {
                 return pointSize < other.pointSize && !fequal(pointSize, other.pointSize);
@@ -206,7 +206,7 @@ DE_PIMPL(CoreTextNativeFont)
         , lineSpacing(0)
     {}
 
-    Impl(Public *i, Impl const &other)
+    Impl(Public *i, const Impl &other)
         : Base(i)
         , font(other.font)
         , ascent(other.ascent)
@@ -220,7 +220,7 @@ DE_PIMPL(CoreTextNativeFont)
         release();
     }
 
-    String applyTransformation(String const &str) const
+    String applyTransformation(const String &str) const
     {
         switch (self().transform())
         {
@@ -256,7 +256,7 @@ DE_PIMPL(CoreTextNativeFont)
         lineSpacing = height + float(CTFontGetLeading(font));
     }
 
-    CachedLine &makeLine(String const &text, CGColorRef color = nullptr)
+    CachedLine &makeLine(const String &text, CGColorRef color = nullptr)
     {
         if (cache.lineText == text)
         {
@@ -266,8 +266,8 @@ DE_PIMPL(CoreTextNativeFont)
         cache.release();
         cache.lineText = text;
 
-        void const *keys[]   = { kCTFontAttributeName, kCTForegroundColorAttributeName };
-        void const *values[] = { font, color };
+        const void *keys[]   = { kCTFontAttributeName, kCTForegroundColorAttributeName };
+        const void *values[] = { font, color };
         CFDictionaryRef attribs = CFDictionaryCreate(nil, keys, values,
                                                      color? 2 : 1, nil, nil);
 
@@ -287,11 +287,11 @@ DE_PIMPL(CoreTextNativeFont)
 
 namespace de {
 
-CoreTextNativeFont::CoreTextNativeFont(String const &family)
+CoreTextNativeFont::CoreTextNativeFont(const String &family)
     : NativeFont(family), d(new Impl(this))
 {}
 
-CoreTextNativeFont::CoreTextNativeFont(CoreTextNativeFont const &other)
+CoreTextNativeFont::CoreTextNativeFont(const CoreTextNativeFont &other)
     : NativeFont(other)
     , d(new Impl(this, *other.d))
 {
@@ -299,7 +299,7 @@ CoreTextNativeFont::CoreTextNativeFont(CoreTextNativeFont const &other)
     setState(other.state());
 }
 
-CoreTextNativeFont &CoreTextNativeFont::operator=(CoreTextNativeFont const &other)
+CoreTextNativeFont &CoreTextNativeFont::operator=(const CoreTextNativeFont &other)
 {
     NativeFont::operator=(other);
     d.reset(new Impl(this, *other.d));
@@ -333,7 +333,7 @@ int CoreTextNativeFont::nativeFontLineSpacing() const
     return roundi(d->lineSpacing * pixelRatio());
 }
 
-Rectanglei CoreTextNativeFont::nativeFontMeasure(String const &text) const
+Rectanglei CoreTextNativeFont::nativeFontMeasure(const String &text) const
 {
     d->makeLine(d->applyTransformation(text));
 
@@ -347,7 +347,7 @@ Rectanglei CoreTextNativeFont::nativeFontMeasure(String const &text) const
     return rect;
 }
 
-int CoreTextNativeFont::nativeFontAdvanceWidth(String const &text) const
+int CoreTextNativeFont::nativeFontAdvanceWidth(const String &text) const
 {
     auto &cachedLine = d->makeLine(d->applyTransformation(text));
     return roundi(CTLineGetTypographicBounds(cachedLine.line, NULL, NULL, NULL) * pixelRatio());

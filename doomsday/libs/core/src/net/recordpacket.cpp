@@ -27,7 +27,7 @@ namespace de {
 
 static Packet::Type const RECORD_PACKET_TYPE = Packet::typeFromString("RECO");
 
-RecordPacket::RecordPacket(String const &name, Id i)
+RecordPacket::RecordPacket(const String &name, Id i)
     : IdentifiedPacket(RECORD_PACKET_TYPE, i), _name(name), _record(0)
 {
     _record = new Record();
@@ -51,12 +51,12 @@ Record *RecordPacket::give()
     return detached;
 }
 
-Variable const &RecordPacket::operator [] (String const &variableName) const
+const Variable &RecordPacket::operator [] (const String &variableName) const
 {
     return (*_record)[variableName];
 }
 
-String RecordPacket::valueAsText(String const &variableName) const
+String RecordPacket::valueAsText(const String &variableName) const
 {
     return (*_record)[variableName].value().asText();
 }
@@ -73,7 +73,7 @@ void RecordPacket::operator << (Reader &from)
     from >> _name >> *_record;
 }
 
-Packet *RecordPacket::fromBlock(Block const &block)
+Packet *RecordPacket::fromBlock(const Block &block)
 {
     return constructFromBlock<RecordPacket>(block, RECORD_PACKET_TYPE);
 }

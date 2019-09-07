@@ -53,7 +53,7 @@ public:
 public:
     GLShader();
 
-    GLShader(Type shaderType, IByteArray const &source);
+    GLShader(Type shaderType, const IByteArray &source);
 
     Type type() const;
 
@@ -61,7 +61,7 @@ public:
 
     void clear();
 
-    void compile(Type shaderType, IByteArray const &source);
+    void compile(Type shaderType, const IByteArray &source);
 
 //    void recompile();
 

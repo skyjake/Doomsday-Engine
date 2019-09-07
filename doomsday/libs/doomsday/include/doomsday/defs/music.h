@@ -31,9 +31,9 @@ class LIBDOOMSDAY_PUBLIC Music : public Definition
 {
 public:
     Music()                    : Definition() {}
-    Music(Music const &other)  : Definition(other) {}
+    Music(const Music &other)  : Definition(other) {}
     Music(de::Record &d)       : Definition(d) {}
-    Music(de::Record const &d) : Definition(d) {}
+    Music(const de::Record &d) : Definition(d) {}
 
     void resetToDefaults();
 

@@ -29,7 +29,7 @@ using namespace de;
 
 static patchid_t pBootsIcon[FRAME_COUNT];
 
-static void BootsWidget_Draw(guidata_boots_t *boots, Point2Raw const *offset)
+static void BootsWidget_Draw(guidata_boots_t *boots, const Point2Raw *offset)
 {
     DE_ASSERT(boots);
     boots->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -61,7 +61,7 @@ void guidata_boots_t::tick(timespan_t /*elapsed*/)
 
     _patchId = 0;
 
-    player_t const &plr = ::players[player()];
+    const player_t &plr = ::players[player()];
     if(plr.powers[PT_SPEED] &&
        (plr.powers[PT_SPEED] > BLINKTHRESHOLD || !(plr.powers[PT_SPEED] & 16)))
     {
@@ -69,9 +69,9 @@ void guidata_boots_t::tick(timespan_t /*elapsed*/)
     }
 }
 
-void guidata_boots_t::draw(Vec2i const &offset) const
+void guidata_boots_t::draw(const Vec2i &offset) const
 {
-    player_t const &plr      = ::players[player()];
+    const player_t &plr      = ::players[player()];
     dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
     if(_patchId == 0) return;
@@ -95,7 +95,7 @@ void guidata_boots_t::draw(Vec2i const &offset) const
 
 void guidata_boots_t::updateGeometry()
 {
-    player_t const &plr = ::players[player()];
+    const player_t &plr = ::players[player()];
 
     Rect_SetWidthHeight(&geometry(), 0, 0);
 

@@ -48,11 +48,11 @@ public:
      */
     void setWidth(int width);
 
-    void setDescription(String const &desc);
-    void setPrompt(String const &prompt);
-    void setText(String const &text);
-    void setAcceptLabel(String const &label);
-    void setRejectLabel(String const &label);
+    void setDescription(const String &desc);
+    void setPrompt(const String &prompt);
+    void setText(const String &text);
+    void setAcceptLabel(const String &label);
+    void setRejectLabel(const String &label);
 
     void prepare();
     void finish(int result);

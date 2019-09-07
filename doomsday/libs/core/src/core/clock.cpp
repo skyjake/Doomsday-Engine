@@ -40,7 +40,7 @@ Clock::Clock() : d(new Impl)
 Clock::~Clock()
 {}
 
-void Clock::setTime(Time const &currentTime)
+void Clock::setTime(const Time &currentTime)
 {
     bool changed = (d->time != currentTime);
 
@@ -68,7 +68,7 @@ TimeSpan Clock::elapsed() const
     return d->time - d->startedAt;
 }
 
-Time const &Clock::time() const
+const Time &Clock::time() const
 {
     return d->time;
 }
@@ -89,7 +89,7 @@ Clock &Clock::get()
     return *_appClock;
 }
 
-Time const &Clock::appTime()
+const Time &Clock::appTime()
 {
     return get().time();
 }

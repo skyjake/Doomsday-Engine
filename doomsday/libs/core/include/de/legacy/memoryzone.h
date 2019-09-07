@@ -135,9 +135,9 @@ DE_PUBLIC dd_bool Z_Contains(void *ptr);
  *
  * @return  Copy of the string (in the zone).
  */
-DE_PUBLIC char *Z_StrDup(char const *text);
+DE_PUBLIC char *Z_StrDup(const char *text);
 
-DE_PUBLIC void *Z_MemDup(void const *ptr, size_t size);
+DE_PUBLIC void *Z_MemDup(const void *ptr, size_t size);
 
 struct zblockset_s;
 typedef struct zblockset_s zblockset_t;

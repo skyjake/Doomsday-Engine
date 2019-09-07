@@ -69,7 +69,7 @@ void LineEditWidget::loadResources() // static
     pEditMiddle = R_DeclarePatch(MNDATA_EDIT_BACKGROUND_PATCH_MIDDLE);
 }
 
-static void drawEditBackground(Vec2i const &origin, int width, float alpha)
+static void drawEditBackground(const Vec2i &origin, int width, float alpha)
 {
     DGL_Color4f(1, 1, 1, alpha);
 
@@ -198,7 +198,7 @@ String LineEditWidget::text() const
     return d->text;
 }
 
-LineEditWidget &LineEditWidget::setText(String const &newText, int flags)
+LineEditWidget &LineEditWidget::setText(const String &newText, int flags)
 {
     d->text = newText;
     if(d->maxLength) d->text.truncate(CharPos(d->maxLength));
@@ -215,7 +215,7 @@ LineEditWidget &LineEditWidget::setText(String const &newText, int flags)
     return *this;
 }
 
-LineEditWidget &LineEditWidget::setEmptyText(String const &newEmptyText)
+LineEditWidget &LineEditWidget::setEmptyText(const String &newEmptyText)
 {
     d->emptyText = newEmptyText;
     return *this;
@@ -229,7 +229,7 @@ String LineEditWidget::emptyText() const
 /**
  * Responds to alphanumeric input for edit fields.
  */
-int LineEditWidget::handleEvent(event_t const &ev)
+int LineEditWidget::handleEvent(const event_t &ev)
 {
     if(!isActive() || ev.type != EV_KEY)
         return false;

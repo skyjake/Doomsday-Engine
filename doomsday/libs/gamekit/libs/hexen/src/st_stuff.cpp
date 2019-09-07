@@ -158,7 +158,7 @@ static patchid_t pWeaponSlot[3]; // [Fighter, Cleric, Mage]
  * @todo There is a whole lot of constants in here. What if someone wants to
  * replace the statusbar with new patches?
  */
-void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
+void SBarBackground_Drawer(HudWidget *wi, const Point2Raw *offset)
 {
 #define WIDTH       (ST_WIDTH)
 #define HEIGHT      (ST_HEIGHT)
@@ -166,7 +166,7 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
 #define ORIGINY     int(-HEIGHT * hud->showBar)
 
     DE_ASSERT(wi);
-    hudstate_t const *hud   = &hudStates[wi->player()];
+    const hudstate_t *hud   = &hudStates[wi->player()];
     int const pClass        = cfg.playerClass[wi->player()]; // Original class (i.e. not pig).
     int const activeHud     = ST_ActiveHud(wi->player());
     float const iconOpacity = (activeHud == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarOpacity);
@@ -376,13 +376,13 @@ void SBarBackground_UpdateGeometry(HudWidget *wi)
                                          ST_HEIGHT * cfg.common.statusbarScale);
 }
 
-void SBarInventory_Drawer(HudWidget *wi, Point2Raw const *offset)
+void SBarInventory_Drawer(HudWidget *wi, const Point2Raw *offset)
 {
 #define X_OFFSET            ( 50 )
 #define Y_OFFSET            (  1 )
 
     DE_ASSERT(wi);
-    hudstate_t const *hud   = &hudStates[wi->player()];
+    const hudstate_t *hud   = &hudStates[wi->player()];
     int const activeHud     = ST_ActiveHud(wi->player());
     float const yOffset     = ST_HEIGHT*(1-hud->showBar);
     //float const textOpacity = (activeHud == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarCounterAlpha);
@@ -421,7 +421,7 @@ void SBarInventory_UpdateGeometry(HudWidget *wi)
                                          41 * cfg.common.statusbarScale);
 }
 
-void Inventory_Drawer(HudWidget *wi, Point2Raw const *offset)
+void Inventory_Drawer(HudWidget *wi, const Point2Raw *offset)
 {
 #define INVENTORY_HEIGHT    ( 29 )
 #define EXTRA_SCALE         ( 0.75 )
@@ -597,7 +597,7 @@ static void initAutomapForCurrentMap(AutomapWidget &automap)
 
     automap.reset();
 
-    AABoxd const *mapBounds = reinterpret_cast<AABoxd *>(DD_GetVariable(DD_MAP_BOUNDING_BOX));
+    const AABoxd *mapBounds = reinterpret_cast<AABoxd *>(DD_GetVariable(DD_MAP_BOUNDING_BOX));
     automap.setMapBounds(mapBounds->minX, mapBounds->maxX, mapBounds->minY, mapBounds->maxY);
 
 #if __JDOOM__
@@ -722,7 +722,7 @@ struct uiwidgetdef_t
     int group;
     gamefontid_t fontIdx;
     void (*updateGeometry) (HudWidget *wi);
-    void (*drawer) (HudWidget *wi, Point2Raw const *offset);
+    void (*drawer) (HudWidget *wi, const Point2Raw *offset);
     uiwidgetid_t *id;
 };
 
@@ -780,14 +780,14 @@ struct uiwidgetdef_t
         exit(1); // Unreachable.
     }
 
-    for(uiwidgetgroupdef_t const &def : widgetGroupDefs)
+    for(const uiwidgetgroupdef_t &def : widgetGroupDefs)
     {
         HudWidget *grp = makeGroupWidget(def.groupFlags, localPlayer, def.alignFlags, def.order, def.padding);
         GUI_AddWidget(grp);
         hud->groupIds[def.group] = grp->id();
     }
 
-    for(uiwidgetdef_t const &def : widgetDefs)
+    for(const uiwidgetdef_t &def : widgetDefs)
     {
         HudWidget *wi = nullptr;
         switch(def.type)
@@ -961,7 +961,7 @@ dd_bool ST_ChatIsActive(int localPlayer)
     return false;
 }
 
-void ST_LogPost(int localPlayer, byte flags, char const *msg)
+void ST_LogPost(int localPlayer, byte flags, const char *msg)
 {
     if(auto *log = ST_TryFindPlayerLogWidget(localPlayer))
     {
@@ -1020,7 +1020,7 @@ dd_bool ST_AutomapIsOpen(int localPlayer)
     return false;
 }
 
-dd_bool ST_AutomapObscures2(int localPlayer, RectRaw const * /*region*/)
+dd_bool ST_AutomapObscures2(int localPlayer, const RectRaw * /*region*/)
 {
     AutomapWidget *automap = ST_TryFindAutomapWidget(localPlayer);
     if(!automap) return false;
@@ -1039,7 +1039,7 @@ dd_bool ST_AutomapObscures2(int localPlayer, RectRaw const * /*region*/)
                 int const scrwidth  = Get(DD_WINDOW_WIDTH);
                 int const scrheight = Get(DD_WINDOW_HEIGHT);
 
-                Rect const *rect = UIWidget_Geometry(automap);
+                const Rect *rect = UIWidget_Geometry(automap);
                 float fx = FIXXTOSCREENX(region->origin.x);
                 float fy = FIXYTOSCREENY(region->origin.y);
                 float fw = FIXXTOSCREENX(region->size.width);
@@ -1170,7 +1170,7 @@ void ST_FlashCurrentItem(int localPlayer)
 int ST_ReadyItemFlashCounter(int localPlayer)
 {
     if(localPlayer < 0 || localPlayer >= MAXPLAYERS) return 0;
-    hudstate_t const *hud = &hudStates[localPlayer];
+    const hudstate_t *hud = &hudStates[localPlayer];
     return hud->readyItemFlashCounter;
 }
 
@@ -1461,7 +1461,7 @@ static void unhideHUD()
 /**
  * @return  Parsed chat macro identifier or @c -1 if invalid.
  */
-static int parseMacroId(String const &str) // static
+static int parseMacroId(const String &str) // static
 {
     if(!str.isEmpty())
     {
@@ -1478,7 +1478,7 @@ static int parseMacroId(String const &str) // static
 /**
  * @return  Parsed chat destination number from or @c -1 if invalid.
  */
-static int parseTeamNumber(String const &str)
+static int parseTeamNumber(const String &str)
 {
     if(!str.isEmpty())
     {

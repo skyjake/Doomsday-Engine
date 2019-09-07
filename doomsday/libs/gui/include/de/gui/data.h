@@ -53,7 +53,7 @@ public:
     /**
      * Notified when a new item is added to the data context.
      */
-    DE_AUDIENCE(Addition, void dataItemAdded(Pos id, Item const &item))
+    DE_AUDIENCE(Addition, void dataItemAdded(Pos id, const Item &item))
 
     /**
      * Notified when an item has been removed from the data context. When this
@@ -93,7 +93,7 @@ public:
 
     virtual Item &at(Pos pos) = 0;
 
-    virtual Item const &at(Pos pos) const = 0;
+    virtual const Item &at(Pos pos) const = 0;
 
     /**
      * Finds the position of a specific item.
@@ -102,9 +102,9 @@ public:
      *
      * @return The items' position, or Data::InvalidPos if not found.
      */
-    virtual Pos find(Item const &item) const = 0;
+    virtual Pos find(const Item &item) const = 0;
 
-    virtual Pos findLabel(String const &label) const = 0;
+    virtual Pos findLabel(const String &label) const = 0;
 
     /**
      * Finds the position of an item with a specific data.
@@ -119,7 +119,7 @@ public:
 
     virtual void sort(SortMethod method = Ascending);
 
-    typedef std::function<bool (Item const &, Item const &)> LessThanFunc;
+    typedef std::function<bool (const Item &, const Item &)> LessThanFunc;
 
     virtual void sort(LessThanFunc func) = 0;
 
@@ -132,7 +132,7 @@ public:
 
     LoopResult forAll(const std::function<LoopResult (Item &)>& func);
 
-    LoopResult forAll(const std::function<LoopResult (Item const &)> &func) const;
+    LoopResult forAll(const std::function<LoopResult (const Item &)> &func) const;
 
 private:
     DE_PRIVATE(d)

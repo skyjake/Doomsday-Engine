@@ -48,7 +48,7 @@ lumpnum_t PatchName::lumpNum() const
         {
             _lumpNum = App_FileSystem().lumpNumForName(_name);
         }
-        catch (FS1::NotFoundError const &er)
+        catch (const FS1::NotFoundError &er)
         {
             // Log but otherwise ignore this error.
             LOG_RES_WARNING(er.asText() + ", ignoring.");
@@ -77,7 +77,7 @@ String PatchName::percentEncodedName() const
     return _name;
 }
 
-String const &PatchName::percentEncodedNameRef() const
+const String &PatchName::percentEncodedNameRef() const
 {
     return _name;
 }

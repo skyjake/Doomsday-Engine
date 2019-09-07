@@ -32,8 +32,8 @@ namespace de {
 class LIBGUI_PUBLIC AtlasTexture : public Atlas, public GLTexture
 {
 public:
-    AtlasTexture(Flags const &flags = DefaultFlags,
-                 Atlas::Size const &totalSize = Atlas::Size());
+    AtlasTexture(const Flags &flags = DefaultFlags,
+                 const Atlas::Size &totalSize = Atlas::Size());
 
     /**
      * Constructs an AtlasTexture with a RowAtlasAllocator.
@@ -43,11 +43,11 @@ public:
      *
      * @return AtlasTexture instance.
      */
-    static AtlasTexture *newWithRowAllocator(Flags const &flags = DefaultFlags,
-                                             Atlas::Size const &totalSize = Atlas::Size());
+    static AtlasTexture *newWithRowAllocator(const Flags &flags = DefaultFlags,
+                                             const Atlas::Size &totalSize = Atlas::Size());
 
-    static AtlasTexture *newWithKdTreeAllocator(Flags const &flags = DefaultFlags,
-                                                Atlas::Size const &totalSize = Atlas::Size());
+    static AtlasTexture *newWithKdTreeAllocator(const Flags &flags = DefaultFlags,
+                                                const Atlas::Size &totalSize = Atlas::Size());
 
     void clear();
 
@@ -63,10 +63,10 @@ protected:
      *
      * @param fullImage  Full atlas content image.
      */
-    void commitFull(Image const &fullImage) const;
+    void commitFull(const Image &fullImage) const;
 
-    void commit(Image const &image, Vec2i const &topLeft) const;
-    void commit(Image const &fullImage, Rectanglei const &subregion) const;
+    void commit(const Image &image, const Vec2i &topLeft) const;
+    void commit(const Image &fullImage, const Rectanglei &subregion) const;
 };
 
 } // namespace de

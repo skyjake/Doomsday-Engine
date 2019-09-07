@@ -41,7 +41,7 @@ struct wbstartstruct_t
  *                       this structure is @em not modified while the intermission
  *                       is in progress.
  */
-void IN_Begin(wbstartstruct_t const &wbstartstruct);
+void IN_Begin(const wbstartstruct_t &wbstartstruct);
 
 extern "C" {
 #endif

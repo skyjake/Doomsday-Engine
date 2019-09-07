@@ -171,8 +171,8 @@ DE_PIMPL(DEDParser)
 
     struct dedsource_s
     {
-        char const *buffer;
-        char const *pos;
+        const char *buffer;
+        const char *pos;
         dd_bool     atEnd;
         int         lineNumber;
         String      fileName;
@@ -194,7 +194,7 @@ DE_PIMPL(DEDParser)
         zap(unreadToken);
     }
 
-    void DED_InitReader(char const *buffer, String fileName, bool sourceIsCustom)
+    void DED_InitReader(const char *buffer, String fileName, bool sourceIsCustom)
     {
         if (source && source - sourceStack >= MAX_RECUR_DEPTH)
         {
@@ -239,7 +239,7 @@ DE_PIMPL(DEDParser)
                " on line #" + String::asText(source? source->lineNumber : 0);
     }
 
-    void setError(String const &message)
+    void setError(const String &message)
     {
         DED_SetError("In " + readPosAsText() + "\n  " + message);
     }
@@ -474,7 +474,7 @@ DE_PIMPL(DEDParser)
         return true;
     }
 
-    int ReadUri(res::Uri **dest, char const *defaultScheme)
+    int ReadUri(res::Uri **dest, const char *defaultScheme)
     {
         String buffer;
 
@@ -495,7 +495,7 @@ DE_PIMPL(DEDParser)
         return true;
     }
 
-    int ReadUri(Variable &var, char const *defaultScheme)
+    int ReadUri(Variable &var, const char *defaultScheme)
     {
         res::Uri *uri = 0;
         if (!ReadUri(&uri, defaultScheme)) return false;
@@ -601,7 +601,7 @@ DE_PIMPL(DEDParser)
         return true;
     }
 
-    int ReadFlags(int *dest, char const *prefix)
+    int ReadFlags(int *dest, const char *prefix)
     {
         DE_ASSERT(dest);
 
@@ -670,7 +670,7 @@ DE_PIMPL(DEDParser)
         return true;
     }
 
-    int ReadFlags(Variable *dest, char const *prefix, int elementIndex = -1)
+    int ReadFlags(Variable *dest, const char *prefix, int elementIndex = -1)
     {
         int value = 0;
         if (ReadFlags(&value, prefix))
@@ -780,7 +780,7 @@ DE_PIMPL(DEDParser)
      *                      or a game mode.
      * @return              @c true if the condition passes.
      */
-    dd_bool DED_CheckCondition(char const *cond, dd_bool expected)
+    dd_bool DED_CheckCondition(const char *cond, dd_bool expected)
     {
         dd_bool value = false;
 
@@ -798,7 +798,7 @@ DE_PIMPL(DEDParser)
         return value == expected;
     }
 
-    int readData(char const *buffer, String sourceFile, bool sourceIsCustom)
+    int readData(const char *buffer, String sourceFile, bool sourceIsCustom)
     {
         const String &VAR_ID = defn::Definition::VAR_ID;
 
@@ -3050,7 +3050,7 @@ DE_PIMPL(DEDParser)
         return retVal;
     }
 
-    void DED_Include(char const *fileName, String parentDirectory)
+    void DED_Include(const char *fileName, String parentDirectory)
     {
         ddstring_t tmp;
 
@@ -3076,7 +3076,7 @@ DEDParser::DEDParser(ded_t *ded) : d(new Impl(this))
     d->ded = ded;
 }
 
-int DEDParser::parse(char const *buffer, String sourceFile, bool sourceIsCustom)
+int DEDParser::parse(const char *buffer, String sourceFile, bool sourceIsCustom)
 {
     return d->readData(buffer, sourceFile, sourceIsCustom);
 }

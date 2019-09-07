@@ -65,7 +65,7 @@ public:
      *
      * @see hasMaterialManifest(), MaterialManifest::hasMaterial()
      */
-    inline bool hasMaterial(res::Uri const &path) const {
+    inline bool hasMaterial(const res::Uri &path) const {
         if (hasMaterialManifest(path)) return materialManifest(path).hasMaterial();
         return false;
     }
@@ -77,7 +77,7 @@ public:
      *
      * @see MaterialManifest::material()
      */
-    inline Material &material(res::Uri const &path) const {
+    inline Material &material(const res::Uri &path) const {
         return materialManifest(path).material();
     }
 
@@ -86,14 +86,14 @@ public:
      *
      * @see hasMaterialManifest(), MaterialManifest::materialPtr()
      */
-    Material *materialPtr(res::Uri const &path);
+    Material *materialPtr(const res::Uri &path);
 
     /**
      * Determines if a manifest exists for a material on @a path.
      *
      * @return @c true if a manifest exists; otherwise @a false.
      */
-    bool hasMaterialManifest(res::Uri const &path) const;
+    bool hasMaterialManifest(const res::Uri &path) const;
 
     /**
      * Look up a material manifest by its unique resource @a path.
@@ -101,7 +101,7 @@ public:
      * @param path  The path to search for.
      * @return  Found material manifest.
      */
-    MaterialManifest &materialManifest(res::Uri const &path) const;
+    MaterialManifest &materialManifest(const res::Uri &path) const;
 
     /**
      * Look up a material manifest by its unique resource @a path.
@@ -109,7 +109,7 @@ public:
      * @param path  The path to search for.
      * @return  Found material manifest, or nullptr if not found.
      */
-    MaterialManifest *materialManifestPtr(res::Uri const &path) const;
+    MaterialManifest *materialManifestPtr(const res::Uri &path) const;
 
     /**
      * Lookup a manifest by unique identifier.
@@ -168,7 +168,7 @@ public:
     /**
      * Provides a list of all material manifest groups, for efficient traversal.
      */
-    MaterialManifestGroups const &allMaterialGroups() const;
+    const MaterialManifestGroups &allMaterialGroups() const;
 
     /**
      * Returns the total number of material manifest groups in the collection.
@@ -184,7 +184,7 @@ public:
      *
      * @return  Manifest for this URI.
      */
-    inline MaterialManifest &declareMaterial(res::Uri const &uri) {
+    inline MaterialManifest &declareMaterial(const res::Uri &uri) {
         return materialScheme(uri.scheme()).declare(uri.path());
     }
 

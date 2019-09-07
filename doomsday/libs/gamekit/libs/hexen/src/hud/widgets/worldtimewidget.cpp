@@ -24,7 +24,7 @@
 
 using namespace de;
 
-static void WorldTimeWidget_Draw(guidata_worldtime_t *time, Point2Raw const *offset)
+static void WorldTimeWidget_Draw(guidata_worldtime_t *time, const Point2Raw *offset)
 {
     DE_ASSERT(time);
     time->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -63,7 +63,7 @@ void guidata_worldtime_t::tick(timespan_t /*elapsed*/)
 {
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
-    player_t const &plr = ::players[player()];
+    const player_t &plr = ::players[player()];
 
     dint wt = plr.worldTimer / TICRATE;
     d->days    = wt / 86400; wt -= d->days * 86400;
@@ -72,7 +72,7 @@ void guidata_worldtime_t::tick(timespan_t /*elapsed*/)
     d->seconds = wt;
 }
 
-void guidata_worldtime_t::draw(Vec2i const &offset) const
+void guidata_worldtime_t::draw(const Vec2i &offset) const
 {
 #define LEADING         ( 0.5 )
 

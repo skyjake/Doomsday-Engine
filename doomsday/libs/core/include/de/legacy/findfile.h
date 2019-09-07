@@ -62,7 +62,7 @@ typedef struct finddata_s {
  * @return  @c 0, if successful. If non-zero is returned, there were no
  * matching files.
  */
-DE_PUBLIC int FindFile_FindFirst(FindData *findData, char const *pattern);
+DE_PUBLIC int FindFile_FindFirst(FindData *findData, const char *pattern);
 
 /**
  * Finds the next matching file. Directory names end in a directory

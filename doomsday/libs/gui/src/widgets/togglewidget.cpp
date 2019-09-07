@@ -68,7 +68,7 @@ DE_PIMPL(ToggleWidget)
             return false;
         }
 
-        void glMakeGeometry(GuiVertexBuilder &verts, Rectanglef const &rect) override
+        void glMakeGeometry(GuiVertexBuilder &verts, const Rectanglef &rect) override
         {
             float p = _pos;
 
@@ -115,7 +115,7 @@ DE_PIMPL(ToggleWidget)
     ToggleProceduralImage *procImage; // not owned
     bool hasBeenUpdated = false;
 
-    Impl(Public *i, Flags const &flags)
+    Impl(Public *i, const Flags &flags)
         : Base(i)
         , state(Inactive)
         , procImage(!(flags & WithoutIndicator)? new ToggleProceduralImage(*i) : nullptr)
@@ -140,7 +140,7 @@ DE_PIMPL(ToggleWidget)
 
 DE_AUDIENCE_METHODS(ToggleWidget, Toggle, UserToggle)
 
-ToggleWidget::ToggleWidget(Flags const &flags, String const &name)
+ToggleWidget::ToggleWidget(const Flags &flags, const String &name)
     : ButtonWidget(name)
     , d(new Impl(this, flags))
 {

@@ -35,7 +35,7 @@ static void PlayerLogWidget_UpdateGeometry(PlayerLogWidget *log)
     log->updateGeometry();
 }
 
-static void PlayerLogWidget_Draw(PlayerLogWidget *log, Point2Raw const *offset)
+static void PlayerLogWidget_Draw(PlayerLogWidget *log, const Point2Raw *offset)
 {
     DE_ASSERT(log);
     log->draw(offset? Vec2i(offset->xy) : Vec2i());
@@ -96,7 +96,7 @@ DE_PIMPL(PlayerLogWidget)
      * @param tics      Length of time the message should be visible.
      * @param dontHide  @c true= do not hide this message.
      */
-    LogEntry *pushEntry(String const &message, dint tics, bool dontHide)
+    LogEntry *pushEntry(const String &message, dint tics, bool dontHide)
     {
         DE_ASSERT(!message.isEmpty());
 
@@ -152,7 +152,7 @@ void PlayerLogWidget::clear()
     }
 }
 
-void PlayerLogWidget::post(dint flags, String const &message)
+void PlayerLogWidget::post(dint flags, const String &message)
 {
     if(message.isEmpty()) return;
 
@@ -200,7 +200,7 @@ void PlayerLogWidget::tick(timespan_t /*tickLength*/)
     }
 }
 
-void PlayerLogWidget::draw(Vec2i const &offset)
+void PlayerLogWidget::draw(const Vec2i &offset)
 {
     dint pvisEntryCount = de::min(d->pvisEntryCount, de::max(0, cfg.common.msgCount));
     dint firstEntry     = d->firstPVisEntryIdx();

@@ -41,7 +41,7 @@ DE_PIMPL_NOREF(GLFramebuffer::AlternativeBuffer)
     {}
 };
 
-GLFramebuffer::AlternativeBuffer::AlternativeBuffer(GLFramebuffer &target, GLTexture &texture, Flags const &attachment)
+GLFramebuffer::AlternativeBuffer::AlternativeBuffer(GLFramebuffer &target, GLTexture &texture, const Flags &attachment)
     : d(new Impl)
 {
     d->target = &target;
@@ -49,7 +49,7 @@ GLFramebuffer::AlternativeBuffer::AlternativeBuffer(GLFramebuffer &target, GLTex
     d->attachment = attachment;
 }
 
-GLFramebuffer::AlternativeBuffer::AlternativeBuffer(GLFramebuffer &target, Flags const &attachment)
+GLFramebuffer::AlternativeBuffer::AlternativeBuffer(GLFramebuffer &target, const Flags &attachment)
     : d(new Impl)
 {
     d->target = &target;

@@ -46,7 +46,7 @@ public:
      * @return List of positions in @a text where to break the lines. Total number
      * of word-wrapped lines is equal to the size of the returned list.
      */
-    void wrapTextToWidth(String const &text, WrapWidth maxWidth) override;
+    void wrapTextToWidth(const String &text, WrapWidth maxWidth) override;
 
     WrappedLine line(int index) const override { return _lines[index]; }
     WrapWidth   width() const override;

@@ -76,7 +76,7 @@ LoopResult Players::forAll(const std::function<LoopResult (Player &)>& func) con
     return LoopContinue;
 }
 
-int Players::indexOf(Player const *player) const
+int Players::indexOf(const Player *player) const
 {
     for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
@@ -88,7 +88,7 @@ int Players::indexOf(Player const *player) const
     return -1;
 }
 
-int Players::indexOf(ddplayer_s const *publicData) const
+int Players::indexOf(const ddplayer_s *publicData) const
 {
     for (int i = 0; i < DDMAXPLAYERS; ++i)
     {

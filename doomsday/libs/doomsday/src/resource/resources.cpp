@@ -42,7 +42,7 @@ using namespace res;
 
 static Resources *theResources = nullptr;
 
-static String resolveUriSymbol(String const &symbol)
+static String resolveUriSymbol(const String &symbol)
 {
     if (!symbol.compare("App.DataPath", CaseInsensitive))
     {
@@ -71,7 +71,7 @@ static String resolveUriSymbol(String const &symbol)
             throw res::Uri::ResolveSymbolError("Resources::resolveUriSymbol",
                                               "Symbol 'GamePlugin' did not resolve (no game plugin loaded)");
         }
-        return String(reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_NAME)));
+        return String(reinterpret_cast<const char *>(gx.GetPointer(DD_PLUGIN_NAME)));
     }
     else
     {
@@ -140,12 +140,12 @@ DE_PIMPL(Resources)
         theResources = nullptr;
     }
 
-    void packageLoaded(String const &packageId)
+    void packageLoaded(const String &packageId)
     {
         maybeScheduleResourceReset(App::packageLoader().package(packageId), true);
     }
 
-    void aboutToUnloadPackage(String const &packageId)
+    void aboutToUnloadPackage(const String &packageId)
     {
         maybeScheduleResourceReset(App::packageLoader().package(packageId), false);
     }
@@ -160,9 +160,9 @@ DE_PIMPL(Resources)
         }
 
         bool needReset = ddPkg.hasDefinitions();
-        File const &sourceFile = ddPkg.sourceFile();
+        const File &sourceFile = ddPkg.sourceFile();
 
-        if (DataBundle const *bundle = maybeAs<DataBundle>(sourceFile))
+        if (const DataBundle *bundle = maybeAs<DataBundle>(sourceFile))
         {
             // DEH patches cannot be loaded/unloaded as such; they are simply
             // marked as loaded and applied all at once during a reset.
@@ -189,7 +189,7 @@ DE_PIMPL(Resources)
 Resources::Resources() : d(new Impl(this))
 {}
 
-void Resources::timeChanged(Clock const &)
+void Resources::timeChanged(const Clock &)
 {
     // Nothing to do.
 }
@@ -269,7 +269,7 @@ res::MapManifests &Resources::mapManifests()
     return d->mapManifests;
 }
 
-res::MapManifests const &Resources::mapManifests() const
+const res::MapManifests &Resources::mapManifests() const
 {
     return d->mapManifests;
 }
@@ -289,7 +289,7 @@ res::Textures &Resources::textures()
     return d->textures;
 }
 
-res::Textures const &Resources::textures() const
+const res::Textures &Resources::textures() const
 {
     return d->textures;
 }
@@ -299,7 +299,7 @@ res::AnimGroups &Resources::animGroups()
     return d->animGroups;
 }
 
-res::AnimGroups const &Resources::animGroups() const
+const res::AnimGroups &Resources::animGroups() const
 {
     return d->animGroups;
 }
@@ -309,12 +309,12 @@ res::Sprites &Resources::sprites()
     return d->sprites;
 }
 
-res::Sprites const &Resources::sprites() const
+const res::Sprites &Resources::sprites() const
 {
     return d->sprites;
 }
 
-String Resources::tryFindMusicFile(Record const &definition)
+String Resources::tryFindMusicFile(const Record &definition)
 {
     LOG_AS("Resources::tryFindMusicFile");
 
@@ -344,7 +344,7 @@ String Resources::tryFindMusicFile(Record const &definition)
                                                                App_ResourceClass(RC_MUSIC));
             return App_BasePath() / foundPath;  // Ensure the path is absolute.
         }
-        catch (FS1::NotFoundError const &)
+        catch (const FS1::NotFoundError &)
         {}  // Ignore this error.
     }
     return "";  // None found.
@@ -364,7 +364,7 @@ ResourceClass &App_ResourceClass(resourceclassid_t classId)
  * @param like             Map path search term.
  * @param composeUriFlags  Flags governing how URIs should be composed.
  */
-static dint printMapsIndex2(Path const &like, res::Uri::ComposeAsTextFlags composeUriFlags)
+static dint printMapsIndex2(const Path &like, res::Uri::ComposeAsTextFlags composeUriFlags)
 {
     res::MapManifests::Tree::FoundNodes found;
     Resources::get().mapManifests().allMapManifests()
@@ -403,7 +403,7 @@ static dint printMapsIndex2(Path const &like, res::Uri::ComposeAsTextFlags compo
  * @param like      Material path search term.
  * @param composeUriFlags  Flags governing how URIs should be composed.
  */
-static int printMaterialIndex2(world::MaterialScheme *scheme, Path const &like,
+static int printMaterialIndex2(world::MaterialScheme *scheme, const Path &like,
     res::Uri::ComposeAsTextFlags composeUriFlags)
 {
     world::MaterialScheme::Index::FoundNodes found;
@@ -455,7 +455,7 @@ static int printMaterialIndex2(world::MaterialScheme *scheme, Path const &like,
  * @param like      Texture path search term.
  * @param composeUriFlags  Flags governing how URIs should be composed.
  */
-static int printTextureIndex2(res::TextureScheme *scheme, Path const &like,
+static int printTextureIndex2(res::TextureScheme *scheme, const Path &like,
                               res::Uri::ComposeAsTextFlags composeUriFlags)
 {
     res::TextureScheme::Index::FoundNodes found;
@@ -500,7 +500,7 @@ static int printTextureIndex2(res::TextureScheme *scheme, Path const &like,
     return found.count();
 }
 
-static void printMaterialIndex(res::Uri const &search,
+static void printMaterialIndex(const res::Uri &search,
     res::Uri::ComposeAsTextFlags flags = res::Uri::DefaultComposeAsTextFlags)
 {
     int printTotal = 0;
@@ -535,7 +535,7 @@ static void printMaterialIndex(res::Uri const &search,
     LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "material" : "materials in total");
 }
 
-static void printMapsIndex(res::Uri const &search,
+static void printMapsIndex(const res::Uri &search,
     res::Uri::ComposeAsTextFlags flags = res::Uri::DefaultComposeAsTextFlags)
 {
     int printTotal = printMapsIndex2(search.path(), flags | res::Uri::OmitScheme);
@@ -543,7 +543,7 @@ static void printMapsIndex(res::Uri const &search,
     LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "map" : "maps in total");
 }
 
-static void printTextureIndex(res::Uri const &search,
+static void printTextureIndex(const res::Uri &search,
     res::Uri::ComposeAsTextFlags flags = res::Uri::DefaultComposeAsTextFlags)
 {
     auto &textures = res::Textures::get();
@@ -657,7 +657,7 @@ D_CMD(PrintMaterialStats)
     LOG_MSG(_E(b) "Material Statistics:");
     world::Materials::get().forAllMaterialSchemes([] (world::MaterialScheme &scheme)
     {
-        world::MaterialScheme::Index const &index = scheme.index();
+        const world::MaterialScheme::Index &index = scheme.index();
 
         uint count = index.count();
         LOG_MSG("Scheme: %s (%u %s)")
@@ -676,7 +676,7 @@ D_CMD(PrintTextureStats)
     LOG_MSG(_E(b) "Texture Statistics:");
     for (const auto &s : res::Textures::get().allTextureSchemes())
     {
-        res::TextureScheme::Index const &index = s.second->index();
+        const res::TextureScheme::Index &index = s.second->index();
 
         uint const count = index.count();
         LOG_MSG("Scheme: %s (%u %s)")

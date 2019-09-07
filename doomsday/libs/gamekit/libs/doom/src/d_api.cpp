@@ -55,7 +55,7 @@
 using namespace de;
 
 // Identifiers given to the games we register during startup.
-static char const *gameIds[NUM_GAME_MODES] =
+static const char *gameIds[NUM_GAME_MODES] =
 {
     "doom1-share",
     "doom1",
@@ -351,7 +351,7 @@ static void DP_Unload(void)
     Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
 
-static void G_PreInit(char const *gameId)
+static void G_PreInit(const char *gameId)
 {
     /// \todo Refactor me away.
     { size_t i;
@@ -378,7 +378,7 @@ static dd_bool G_TryShutdown(void)
     return true;
 }
 
-static void *GetGameAPI(char const *name)
+static void *GetGameAPI(const char *name)
 {
     if (auto *ptr = Common_GetGameAPI(name))
     {

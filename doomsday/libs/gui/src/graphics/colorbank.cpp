@@ -29,13 +29,13 @@ DE_PIMPL(ColorBank)
         ColorBank &bank;
         String id;
 
-        ColorSource(ColorBank &b, String const &colorId) : bank(b), id(colorId) {}
+        ColorSource(ColorBank &b, const String &colorId) : bank(b), id(colorId) {}
         Time modifiedAt() const { return bank.sourceModifiedAt(); }
 
         Vec4d load() const
         {
-            Record const &def = bank[id];
-            ArrayValue const *colorDef = nullptr;
+            const Record &def = bank[id];
+            const ArrayValue *colorDef = nullptr;
             if (def.has("rgb"))
             {
                 colorDef = &def.geta("rgb");
@@ -62,7 +62,7 @@ DE_PIMPL(ColorBank)
     {
         Vec4d color;
 
-        ColorData(Vec4d const &c = Vec4d()) : color(c) {}
+        ColorData(const Vec4d &c = Vec4d()) : color(c) {}
     };
 
     Impl(Public *i) : Base(i)
@@ -72,14 +72,14 @@ DE_PIMPL(ColorBank)
 ColorBank::ColorBank() : InfoBank("ColorBank", DisableHotStorage), d(new Impl(this))
 {}
 
-void ColorBank::addFromInfo(File const &file)
+void ColorBank::addFromInfo(const File &file)
 {
     LOG_AS("ColorBank");
     parse(file);
     addFromInfoBlocks("color");
 }
 
-ColorBank::Color ColorBank::color(DotPath const &path) const
+ColorBank::Color ColorBank::color(const DotPath &path) const
 {
     if (path.isEmpty()) return Color();
     Colorf col = colorf(path);
@@ -89,7 +89,7 @@ ColorBank::Color ColorBank::color(DotPath const &path) const
                  round<dbyte>(col.w * 255));
 }
 
-ColorBank::Colorf ColorBank::colorf(DotPath const &path) const
+ColorBank::Colorf ColorBank::colorf(const DotPath &path) const
 {
     if (path.isEmpty()) return Colorf();
     Vec4d clamped = data(path).as<Impl::ColorData>().color;
@@ -97,7 +97,7 @@ ColorBank::Colorf ColorBank::colorf(DotPath const &path) const
     return Colorf(float(clamped.x), float(clamped.y), float(clamped.z), float(clamped.w));
 }
 
-Bank::ISource *ColorBank::newSourceFromInfo(String const &id)
+Bank::ISource *ColorBank::newSourceFromInfo(const String &id)
 {
     return new Impl::ColorSource(*this, id);
 }

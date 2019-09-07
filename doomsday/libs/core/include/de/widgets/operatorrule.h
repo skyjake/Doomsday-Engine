@@ -49,45 +49,45 @@ public:
     };
 
 public:
-    OperatorRule(Operator op, Rule const &unary);
+    OperatorRule(Operator op, const Rule &unary);
 
-    OperatorRule(Operator op, Rule const &left, Rule const &right);
+    OperatorRule(Operator op, const Rule &left, const Rule &right);
 
-    OperatorRule(Operator op, Rule const &left, Rule const &right, Rule const &condition);       
+    OperatorRule(Operator op, const Rule &left, const Rule &right, const Rule &condition);       
 
 public:
-    static OperatorRule &maximum(Rule const &left, Rule const &right) {
+    static OperatorRule &maximum(const Rule &left, const Rule &right) {
         return *refless(new OperatorRule(Maximum, left, right));
     }
 
-    static OperatorRule &maximum(Rule const &a, Rule const &b, Rule const &c) {
+    static OperatorRule &maximum(const Rule &a, const Rule &b, const Rule &c) {
         return maximum(a, maximum(b, c));
     }
 
-    static Rule const &maximum(Rule const &left, Rule const *rightOrNull) {
+    static const Rule &maximum(const Rule &left, const Rule *rightOrNull) {
         if (rightOrNull) return *refless(new OperatorRule(Maximum, left, *rightOrNull));
         return left;
     }
 
-    static OperatorRule &minimum(Rule const &left, Rule const &right) {
+    static OperatorRule &minimum(const Rule &left, const Rule &right) {
         return *refless(new OperatorRule(Minimum, left, right));
     }
 
-    static OperatorRule &minimum(Rule const &a, Rule const &b, Rule const &c) {
+    static OperatorRule &minimum(const Rule &a, const Rule &b, const Rule &c) {
         return minimum(a, minimum(b, c));
     }
 
-    static OperatorRule &floor(Rule const &unary) {
+    static OperatorRule &floor(const Rule &unary) {
         return *refless(new OperatorRule(Floor, unary));
     }
 
-    static OperatorRule &clamped(Rule const &value, Rule const &low, Rule const &high) {
+    static OperatorRule &clamped(const Rule &value, const Rule &low, const Rule &high) {
         return OperatorRule::minimum(OperatorRule::maximum(value, low), high);
     }
 
-    static OperatorRule &select(Rule const &ifLessThanZero,
-                                Rule const &ifGreaterThanOrEqualToZero,
-                                Rule const &selection) {
+    static OperatorRule &select(const Rule &ifLessThanZero,
+                                const Rule &ifGreaterThanOrEqualToZero,
+                                const Rule &selection) {
         return *refless(new OperatorRule(Select,
                                          ifLessThanZero,
                                          ifGreaterThanOrEqualToZero,
@@ -103,95 +103,95 @@ protected:
     String description() const override;
 
 private:
-    Rule const *_leftOperand;
-    Rule const *_rightOperand;
-    Rule const *_condition;
+    const Rule *_leftOperand;
+    const Rule *_rightOperand;
+    const Rule *_condition;
 };
 
-inline OperatorRule &operator + (Rule const &left, int right) {
+inline OperatorRule &operator + (const Rule &left, int right) {
     return *refless(new OperatorRule(OperatorRule::Sum, left, Const(right)));
 }
 
-inline OperatorRule &operator + (Rule const &left, float right) {
+inline OperatorRule &operator + (const Rule &left, float right) {
     return *refless(new OperatorRule(OperatorRule::Sum, left, Constf(right)));
 }
 
-inline OperatorRule &operator + (Rule const &left, Rule const &right) {
+inline OperatorRule &operator + (const Rule &left, const Rule &right) {
     return *refless(new OperatorRule(OperatorRule::Sum, left, right));
 }
 
-inline OperatorRule &operator - (Rule const &unary) {
+inline OperatorRule &operator - (const Rule &unary) {
     return *refless(new OperatorRule(OperatorRule::Negate, unary));
 }
 
-inline OperatorRule &operator - (Rule const &left, int right) {
+inline OperatorRule &operator - (const Rule &left, int right) {
     return *refless(new OperatorRule(OperatorRule::Subtract, left, Const(right)));
 }
 
-inline OperatorRule &operator - (Rule const &left, float right) {
+inline OperatorRule &operator - (const Rule &left, float right) {
     return *refless(new OperatorRule(OperatorRule::Subtract, left, Constf(right)));
 }
 
-inline OperatorRule &operator - (Rule const &left, Rule const &right) {
+inline OperatorRule &operator - (const Rule &left, const Rule &right) {
     return *refless(new OperatorRule(OperatorRule::Subtract, left, right));
 }
 
-inline OperatorRule &operator * (int left, Rule const &right) {
+inline OperatorRule &operator * (int left, const Rule &right) {
     if (left == 2) {
         return *refless(new OperatorRule(OperatorRule::Double, right));
     }
     return *refless(new OperatorRule(OperatorRule::Multiply, Const(left), right));
 }
 
-inline OperatorRule &operator * (Rule const &left, int right) {
+inline OperatorRule &operator * (const Rule &left, int right) {
     if (right == 2) {
         return *refless(new OperatorRule(OperatorRule::Double, left));
     }
     return *refless(new OperatorRule(OperatorRule::Multiply, left, Constf(right)));
 }
 
-inline OperatorRule &operator * (float left, Rule const &right) {
+inline OperatorRule &operator * (float left, const Rule &right) {
     return *refless(new OperatorRule(OperatorRule::Multiply, Constf(left), right));
 }
 
-inline OperatorRule &operator * (Rule const &left, float right) {
+inline OperatorRule &operator * (const Rule &left, float right) {
     return *refless(new OperatorRule(OperatorRule::Multiply, left, Constf(right)));
 }
 
-inline OperatorRule &operator * (Rule const &left, Rule const &right) {
+inline OperatorRule &operator * (const Rule &left, const Rule &right) {
     return *refless(new OperatorRule(OperatorRule::Multiply, left, right));
 }
 
-inline OperatorRule &operator / (Rule const &left, int right) {
+inline OperatorRule &operator / (const Rule &left, int right) {
     if (right == 2) {
         return OperatorRule::floor(*refless(new OperatorRule(OperatorRule::Half, left)));
     }
     return OperatorRule::floor(*refless(new OperatorRule(OperatorRule::Divide, left, Const(right))));
 }
 
-inline OperatorRule &operator / (Rule const &left, dsize right) {
+inline OperatorRule &operator / (const Rule &left, dsize right) {
     if (right == 2) {
         return OperatorRule::floor(*refless(new OperatorRule(OperatorRule::Half, left)));
     }
     return OperatorRule::floor(*refless(new OperatorRule(OperatorRule::Divide, left, Constu(right))));
 }
 
-inline OperatorRule &operator / (Rule const &left, float right) {
+inline OperatorRule &operator / (const Rule &left, float right) {
     return *refless(new OperatorRule(OperatorRule::Divide, left, Constf(right)));
 }
 
-inline OperatorRule &operator / (Rule const &left, Rule const &right) {
+inline OperatorRule &operator / (const Rule &left, const Rule &right) {
     return *refless(new OperatorRule(OperatorRule::Divide, left, right));
 }
 
 template <typename RuleType>
-inline void sumInto(RuleType const *&sum, Rule const &value) {
+inline void sumInto(const RuleType *&sum, const Rule &value) {
     if (!sum) { sum = holdRef(value); }
     else { changeRef(sum, *sum + value); }
 }
 
 template <typename RuleType>
-inline void maxInto(RuleType const *&maximum, Rule const &value) {
+inline void maxInto(const RuleType *&maximum, const Rule &value) {
     if (!maximum) { maximum = holdRef(value); }
     else { changeRef(maximum, OperatorRule::maximum(*maximum, value)); }
 }

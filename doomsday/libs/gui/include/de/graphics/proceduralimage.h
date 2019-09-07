@@ -42,14 +42,14 @@ public:
     typedef Vec4f Color;
 
 public:
-    ProceduralImage(Size const &pointSize = Size());
+    ProceduralImage(const Size &pointSize = Size());
     virtual ~ProceduralImage();
 
     Size pointSize() const; // in points
     Color color() const;
 
-    void setPointSize(Size const &pointSize);
-    void setColor(Color const &color);
+    void setPointSize(const Size &pointSize);
+    void setColor(const Color &color);
 
     /**
      * Updates the image.
@@ -61,7 +61,7 @@ public:
 
     virtual void glInit(); // called repeatedly
     virtual void glDeinit();
-    virtual void glMakeGeometry(GuiVertexBuilder &verts, Rectanglef const &rect) = 0;
+    virtual void glMakeGeometry(GuiVertexBuilder &verts, const Rectanglef &rect) = 0;
 
     DE_CAST_METHODS()
 

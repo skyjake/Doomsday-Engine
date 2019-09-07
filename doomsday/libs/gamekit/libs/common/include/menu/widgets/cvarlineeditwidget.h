@@ -32,13 +32,13 @@ namespace menu {
 class CVarLineEditWidget : public LineEditWidget
 {
 public:
-    CVarLineEditWidget(char const *cvarPath);
+    CVarLineEditWidget(const char *cvarPath);
     virtual ~CVarLineEditWidget();
 
-    char const *cvarPath() const;
+    const char *cvarPath() const;
 
 private:
-    char const *_cvarPath;
+    const char *_cvarPath;
 };
 
 void CVarLineEditWidget_UpdateCVar(Widget &wi, Widget::Action action);

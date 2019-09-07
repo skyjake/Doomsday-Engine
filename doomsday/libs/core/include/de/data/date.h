@@ -83,7 +83,7 @@ private:
     DE_PRIVATE(d)
 };
 
-DE_PUBLIC std::ostream &operator << (std::ostream &os, Date const &date);
+DE_PUBLIC std::ostream &operator << (std::ostream &os, const Date &date);
 
 } // namespace de
 

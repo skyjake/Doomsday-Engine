@@ -47,7 +47,7 @@ class WindowTransform;
 class LIBGUI_PUBLIC BaseWindow : public LIBAPPFW_BASEWINDOW_SUPER
 {
 public:
-    BaseWindow(String const &id);
+    BaseWindow(const String &id);
 
     /**
      * Sets a new content transformation being applied in the window. The provided
@@ -89,7 +89,7 @@ public:
     virtual void drawWindowContent() = 0;
 
 #if defined (DE_MOBILE)
-    String configName(String const &key) const;
+    String configName(const String &key) const;
 #endif
 
 protected:

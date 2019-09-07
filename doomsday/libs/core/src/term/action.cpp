@@ -20,16 +20,16 @@
 
 namespace de { namespace term {
 
-Action::Action(String const &label) : _event(KeyEvent("")), _label(label)
+Action::Action(const String &label) : _event(KeyEvent("")), _label(label)
 {}
 
-Action::Action(String const &label, const Func &func)
+Action::Action(const String &label, const Func &func)
     : _event(KeyEvent("")), _label(label)
 {
     audienceForTriggered() += func;
 }
 
-Action::Action(String const &label, KeyEvent const &event, const Func &func)
+Action::Action(const String &label, const KeyEvent &event, const Func &func)
     : _event(event), _label(label)
 {
     audienceForTriggered() += func;
@@ -44,7 +44,7 @@ Action::Action(const KeyEvent &event, const Action::Func &func)
 Action::~Action()
 {}
 
-void Action::setLabel(String const &label)
+void Action::setLabel(const String &label)
 {
     _label = label;
 }
@@ -54,7 +54,7 @@ String Action::label() const
     return _label;
 }
 
-bool Action::tryTrigger(KeyEvent const &ev)
+bool Action::tryTrigger(const KeyEvent &ev)
 {
     if (ev == _event)
     {

@@ -39,7 +39,7 @@ public:
 
     enum Status { Disconnected, Connected };
 
-    DE_AUDIENCE(Status, void remoteRepositoryStatusChanged(String const &address, Status))
+    DE_AUDIENCE(Status, void remoteRepositoryStatusChanged(const String &address, Status))
 
 public:
     RemoteFeedRelay();
@@ -53,12 +53,12 @@ public:
      */
     void defineLink(const Link::Constructor &linkConstructor);
 
-    void       addRepository    (String const &address, String const &localRootPath);
-    void       removeRepository (String const &address);
-    Link *     repository       (String const &address) const;
+    void       addRepository    (const String &address, const String &localRootPath);
+    void       removeRepository (const String &address);
+    Link *     repository       (const String &address) const;
     StringList repositories     () const;
 
-    bool isConnected(String const &address) const;
+    bool isConnected(const String &address) const;
 
     /**
      * Queries all the connected repositories for a set of packages. The local paths
@@ -68,7 +68,7 @@ public:
      *
      * @return Hash of [packageId -> local path].
      */
-    PackagePaths locatePackages(StringList const &packageIds) const;
+    PackagePaths locatePackages(const StringList &packageIds) const;
 
     Request<FileMetadata> fetchFileList(const String &repository,
                                         String        folderPath,

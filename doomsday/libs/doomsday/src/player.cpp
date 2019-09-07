@@ -68,7 +68,7 @@ ddplayer_t &Player::publicData()
     return d->publicData;
 }
 
-ddplayer_t const &Player::publicData() const
+const ddplayer_t &Player::publicData() const
 {
     return d->publicData;
 }
@@ -78,7 +78,7 @@ bool Player::isInGame() const
     return d->publicData.inGame && d->publicData.mo != nullptr;
 }
 
-Record const &Player::info() const
+const Record &Player::info() const
 {
     return d->info;
 }
@@ -98,7 +98,7 @@ Pinger &Player::pinger()
     return d->pinger;
 }
 
-Pinger const &Player::pinger() const
+const Pinger &Player::pinger() const
 {
     return d->pinger;
 }

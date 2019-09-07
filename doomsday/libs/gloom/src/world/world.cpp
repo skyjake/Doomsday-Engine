@@ -37,7 +37,7 @@ void World::glDeinit()
 void World::update(TimeSpan)
 {}
 
-void World::render(ICamera const &)
+void World::render(const ICamera &)
 {}
 
 World::POI World::initialViewPosition() const

@@ -31,10 +31,10 @@ DE_PIMPL(Evaluator)
     Context &context;
 
     struct ScopedExpression {
-        Expression const *expression;
+        const Expression *expression;
         Value *           scope; // owned
 
-        ScopedExpression(Expression const *e = nullptr, Value *s = nullptr)
+        ScopedExpression(const Expression *e = nullptr, Value *s = nullptr)
             : expression(e)
             , scope(s)
         {}
@@ -55,7 +55,7 @@ DE_PIMPL(Evaluator)
     typedef List<ScopedResult> Results;
 
     /// The expression that is currently being evaluated.
-    Expression const *current;
+    const Expression *current;
 
     /// Namespace for the current expression.
     Record *names;
@@ -135,7 +135,7 @@ DE_PIMPL(Evaluator)
         return *results.first().result;
     }
 
-    Value &evaluate(Expression const *expression)
+    Value &evaluate(const Expression *expression)
     {
         DE_ASSERT(names == nullptr);
         DE_ASSERT(expressions.empty());
@@ -191,7 +191,7 @@ Process &Evaluator::process()
     return d->context.process();
 }
 
-Process const &Evaluator::process() const
+const Process &Evaluator::process() const
 {
     return d->context.process();
 }
@@ -204,7 +204,7 @@ void Evaluator::reset()
     d->clearNames();
 }
 
-Value &Evaluator::evaluate(Expression const *expression)
+Value &Evaluator::evaluate(const Expression *expression)
 {
     return d->evaluate(expression);
 }
@@ -243,7 +243,7 @@ Value &Evaluator::result()
     return d->result();
 }
 
-void Evaluator::push(Expression const *expression, Value *scope)
+void Evaluator::push(const Expression *expression, Value *scope)
 {
     d->expressions.push_back(Impl::ScopedExpression(expression, scope));
 }

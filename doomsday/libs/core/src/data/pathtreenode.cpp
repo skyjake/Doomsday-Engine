@@ -39,7 +39,7 @@ DE_PIMPL_NOREF(PathTree::Node)
     /// in the owning PathTree.
 //    SegmentId segmentId;
 
-//    String const *segmentText = nullptr; // owned by the PathTree
+//    const String *segmentText = nullptr; // owned by the PathTree
 
     Impl(PathTree & _tree, bool isLeaf, const LowercaseHashString &segment, Node *_parent)
         : tree(_tree)
@@ -61,7 +61,7 @@ DE_PIMPL_NOREF(PathTree::Node)
 //    }
 };
 
-PathTree::Node::Node(NodeArgs const &args) : d(nullptr)
+PathTree::Node::Node(const NodeArgs &args) : d(nullptr)
 {
     d.reset(new Impl(args.tree, args.type == Leaf, args.segment, args.parent));
 
@@ -93,7 +93,7 @@ const PathTree::Node::Children &PathTree::Node::children() const
     return *d->children;
 }
 
-PathTree::Nodes const &PathTree::Node::childNodes(NodeType type) const
+const PathTree::Nodes &PathTree::Node::childNodes(NodeType type) const
 {
     DE_ASSERT(d->children != 0);
     return (type == Leaf? d->children->leaves : d->children->branches);
@@ -203,7 +203,7 @@ static int matchName(const CString &string, const CString &pattern)
     return pat == pattern.end();
 }
 
-int PathTree::Node::comparePath(Path const &searchPattern, ComparisonFlags flags) const
+int PathTree::Node::comparePath(const Path &searchPattern, ComparisonFlags flags) const
 {
     if (((flags & NoLeaf)   && isLeaf()) ||
         ((flags & NoBranch) && isBranch()))
@@ -287,9 +287,9 @@ namespace internal {
  * path (when descending), then allocates memory for the string, and finally
  * copies each segment with the separators (on the way out).
  */
-static void pathConstructor(internal::PathConstructorArgs &args, PathTree::Node const &trav)
+static void pathConstructor(internal::PathConstructorArgs &args, const PathTree::Node &trav)
 {
-    String const &segment = trav.name();
+    const String &segment = trav.name();
 
 #ifdef DE_STACK_MONITOR
     maxStackDepth = MAX_OF(maxStackDepth, stackStart - (void *)&fragment);
@@ -376,7 +376,7 @@ Path PathTree::Node::path(Char sep) const
     return Path(args.composedPath, sep);
 }
 
-UserDataNode::UserDataNode(PathTree::NodeArgs const &args, void *userPointer, int userValue)
+UserDataNode::UserDataNode(const PathTree::NodeArgs &args, void *userPointer, int userValue)
     : Node(args)
     , _pointer(userPointer)
     , _value(userValue)

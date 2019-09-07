@@ -32,13 +32,13 @@ DE_PIMPL_NOREF(GLAtlasBuffer)
         GLBuffer buffer;
         List<Rangeui16> availableRanges;
 
-        void addAvailable(Rangeui16 const &range)
+        void addAvailable(const Rangeui16 &range)
         {
             DE_ASSERT(dsize(range.size()) >= MIN_RANGE_SIZE);
             availableRanges.append(range);
             std::sort(availableRanges.begin(),
                       availableRanges.end(),
-                      [](Rangeui16 const &a, Rangeui16 const &b) { return a.size() < b.size(); });
+                      [](const Rangeui16 &a, const Rangeui16 &b) { return a.size() < b.size(); });
         }
 
         Rangeui16 findBestAvailable(dsize forSize)
@@ -128,7 +128,7 @@ DE_PIMPL_NOREF(GLAtlasBuffer)
     }
 };
 
-GLAtlasBuffer::GLAtlasBuffer(internal::AttribSpecs const &vertexFormat)
+GLAtlasBuffer::GLAtlasBuffer(const internal::AttribSpecs &vertexFormat)
     : d(new Impl)
 {
     d->format = vertexFormat;

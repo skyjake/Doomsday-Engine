@@ -190,13 +190,13 @@ public:
      * Notified when a data item has been loaded to memory (cache level
      * InMemory). Notification are always called in the main thread.
      */
-    DE_AUDIENCE(Load, void bankLoaded(DotPath const &path))
+    DE_AUDIENCE(Load, void bankLoaded(const DotPath &path))
 
     /**
      * Notified when a data item's cache level changes (in addition to the Load
      * notification). Notification are always called in the main thread.
      */
-    DE_AUDIENCE(CacheLevel, void bankCacheLevelChanged(DotPath const &path, CacheLevel level))
+    DE_AUDIENCE(CacheLevel, void bankCacheLevelChanged(const DotPath &path, CacheLevel level))
 
 public:
     /**
@@ -206,13 +206,13 @@ public:
      * @param flags  Flags that determine the behavior of the bank.
      * @param hotStorageLocation  Location where the hot storage files are kept.
      */
-    Bank(char const *nameForLog = "Bank",
-         Flags const &flags = DefaultFlags,
-         String const &hotStorageLocation = "/home/cache");
+    Bank(const char *nameForLog = "Bank",
+         const Flags &flags = DefaultFlags,
+         const String &hotStorageLocation = "/home/cache");
 
     virtual ~Bank();
 
-    char const *nameForLog() const;
+    const char *nameForLog() const;
     Flags flags() const;
 
     /**
@@ -231,7 +231,7 @@ public:
      *
      * @param location  Hot storage location.
      */
-    void setHotStorageCacheLocation(String const &location);
+    void setHotStorageCacheLocation(const String &location);
 
     /**
      * Sets the maximum amount of data to keep in the hot storage.
@@ -271,9 +271,9 @@ public:
      * @param source  Source information that is required for loading the data to
      *                memory. Bank takes ownership.
      */
-    void add(DotPath const &path, ISource *source);
+    void add(const DotPath &path, ISource *source);
 
-    void remove(DotPath const &path);
+    void remove(const DotPath &path);
 
     /**
      * Determines whether the Bank contains an item (not a folder).
@@ -282,7 +282,7 @@ public:
      *
      * @return  @c true or @c false.
      */
-    bool has(DotPath const &path) const;
+    bool has(const DotPath &path) const;
 
     /**
      * Returns the source of an item.
@@ -298,7 +298,7 @@ public:
      *
      * @param func  Function that gets called with the path of each item.
      */
-    void iterate(const std::function<void (DotPath const &)> &func) const;
+    void iterate(const std::function<void (const DotPath &)> &func) const;
 
     /**
      * Collects a list of the paths of all items in the bank.
@@ -309,7 +309,7 @@ public:
      */
     dint allItems(Names &names) const;
 
-    PathTree const &index() const;
+    const PathTree &index() const;
 
     /**
      * Requests a data item to be loaded. When using BackgroundThread, this is
@@ -320,7 +320,7 @@ public:
      * @param path        Identifier of the data.
      * @param importance  When/how to carry out the load request (with BackgroundThread).
      */
-    void load(DotPath const &path, Importance importance = BeforeQueued);
+    void load(const DotPath &path, Importance importance = BeforeQueued);
 
     void loadAll();
 
@@ -340,7 +340,7 @@ public:
      *
      * @return IData instance. Ownership kept by the Bank.
      */
-    IData &data(DotPath const &path) const;
+    IData &data(const DotPath &path) const;
 
     /**
      * Determines if an item is currently loaded (InMemory).
@@ -349,7 +349,7 @@ public:
      *
      * @return @c true if the item is in memory, @c false otherwise.
      */
-    bool isLoaded(DotPath const &path) const;
+    bool isLoaded(const DotPath &path) const;
 
     /**
      * Moves a data item to a lower cache level. When using BackgroundThread,
@@ -360,7 +360,7 @@ public:
      * @param toLevel     Destination level for the data.
      * @param importance  Priority for choosing appropriate queued behavior.
      */
-    void unload(DotPath const &path, CacheLevel toLevel = InHotStorage,
+    void unload(const DotPath &path, CacheLevel toLevel = InHotStorage,
                 Importance importance = AfterQueued);
 
     /**
@@ -378,7 +378,7 @@ public:
      *
      * @param path  Identifier of the data.
      */
-    void clearFromCache(DotPath const &path);
+    void clearFromCache(const DotPath &path);
 
     /**
      * Moves excess items on each cache level to lower level(s).

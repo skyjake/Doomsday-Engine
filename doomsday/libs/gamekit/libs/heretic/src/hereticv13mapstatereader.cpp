@@ -86,7 +86,7 @@ static reader_s *SV_NewReader_Hr_v13()
     return Reader_NewWithCallbacks(sri8, sri16, sri32, NULL, srd);
 }
 
-static uri_s *readTextureUrn(reader_s *reader, char const *schemeName)
+static uri_s *readTextureUrn(reader_s *reader, const char *schemeName)
 {
     DE_ASSERT(reader != 0 && schemeName != 0);
     return Uri_NewWithPath2(Str_Text(Str_Appendf(AutoStr_NewStd(), "urn:%s:%i", schemeName, Reader_ReadInt16(reader))), RC_NULL);
@@ -809,7 +809,7 @@ DE_PIMPL(HereticV13MapStateReader)
     }
 };
 
-HereticV13MapStateReader::HereticV13MapStateReader(GameStateFolder const &session)
+HereticV13MapStateReader::HereticV13MapStateReader(const GameStateFolder &session)
     : GameStateFolder::MapStateReader(session)
     , d(new Impl(this))
 {}
@@ -817,7 +817,7 @@ HereticV13MapStateReader::HereticV13MapStateReader(GameStateFolder const &sessio
 HereticV13MapStateReader::~HereticV13MapStateReader()
 {}
 
-void HereticV13MapStateReader::read(String const & /*mapUriStr*/)
+void HereticV13MapStateReader::read(const String & /*mapUriStr*/)
 {
     d->reader = SV_NewReader_Hr_v13();
 

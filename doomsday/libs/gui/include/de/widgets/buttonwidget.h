@@ -57,7 +57,7 @@ public:
     DE_AUDIENCE(Triggered, void buttonActionTriggered(ButtonWidget &button))
 
 public:
-    ButtonWidget(String const &name = String());
+    ButtonWidget(const String &name = String());
 
     void useInfoStyle(bool yes = true);
     void useNormalStyle() { useInfoStyle(false); }
@@ -66,7 +66,7 @@ public:
     void       setColorTheme(ColorTheme theme);
     ColorTheme colorTheme() const;
 
-    void setTextColor(DotPath const &colorId) override;
+    void setTextColor(const DotPath &colorId) override;
 
     /**
      * Text color to use in the Hover state. The default is to use the normal text
@@ -75,11 +75,11 @@ public:
      * @param hoverTextId  Style color identifier.
      * @param mode         Color hover behavior.
      */
-    void setHoverTextColor(DotPath const &hoverTextId, HoverColorMode mode = ModulateColor);
+    void setHoverTextColor(const DotPath &hoverTextId, HoverColorMode mode = ModulateColor);
 
-    void setBackgroundColor(DotPath const &bgColorId);
+    void setBackgroundColor(const DotPath &bgColorId);
 
-    void setBorderColor(DotPath const &borderColorId);
+    void setBorderColor(const DotPath &borderColorId);
 
     /**
      * Sets the action of the button. It gets triggered when the button is
@@ -100,7 +100,7 @@ public:
      */
     void setActionFn(std::function<void ()> callback);
 
-    Action const *action() const;
+    const Action *action() const;
 
     State state() const;
     void  setState(State state);
@@ -111,7 +111,7 @@ public:
 
     // Events.
     void update() override;
-    bool handleEvent(Event const &event) override;
+    bool handleEvent(const Event &event) override;
 
     /**
      * Triggers the action of the button.

@@ -43,7 +43,7 @@ extern "C" {
  * @return  Number of characters written to the output buffer if lower than or
  * equal to @c size, else @c -1.
  */
-DE_PUBLIC int dd_vsnprintf(char *str, size_t size, char const *format, va_list ap);
+DE_PUBLIC int dd_vsnprintf(char *str, size_t size, const char *format, va_list ap);
 
 /**
  * Prints a formatted string into a fixed-size buffer. At most @c size
@@ -57,13 +57,13 @@ DE_PUBLIC int dd_vsnprintf(char *str, size_t size, char const *format, va_list a
  * @return        Number of characters written to the output buffer
  *                if lower than or equal to @c size, else @c -1.
  */
-DE_PUBLIC int dd_snprintf(char *str, size_t size, char const *format, ...);
+DE_PUBLIC int dd_snprintf(char *str, size_t size, const char *format, ...);
 
 #ifdef WIN32
 /**
  * Windows implementation for the Unix strcasestr() function.
  */
-DE_PUBLIC char const *strcasestr(char const *text, char const *sub);
+DE_PUBLIC const char *strcasestr(const char *text, const char *sub);
 #endif
 
 #ifdef UNIX

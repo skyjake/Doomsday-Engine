@@ -196,14 +196,14 @@ void P_Update()
     P_InitTerrainTypes();
 
     ::maxHealth = 100;
-    if(ded_value_t const *maxHealth = Defs().getValueById("Player|Max Health"))
+    if(const ded_value_t *maxHealth = Defs().getValueById("Player|Max Health"))
     {
         ::maxHealth = String(maxHealth->text).toInt();
     }
 
 #if __JDOOM__ || __JDOOM64__
     ::healthLimit = 200;
-    if(ded_value_t const *healthLimit = Defs().getValueById("Player|Health Limit"))
+    if(const ded_value_t *healthLimit = Defs().getValueById("Player|Health Limit"))
     {
         ::healthLimit = String(healthLimit->text).toInt();
     }
@@ -211,73 +211,73 @@ void P_Update()
     // Previous versions did not feature a separate value for God Health,
     // so if its not found, default to the value of Max Health.
     ::godModeHealth = ::maxHealth;
-    if(ded_value_t const *godHealth = Defs().getValueById("Player|God Health"))
+    if(const ded_value_t *godHealth = Defs().getValueById("Player|God Health"))
     {
         ::godModeHealth = String(godHealth->text).toInt();
     }
 
     ::armorPoints[0] = 100;
-    if(ded_value_t const *armor = Defs().getValueById("Player|Green Armor"))
+    if(const ded_value_t *armor = Defs().getValueById("Player|Green Armor"))
     {
         ::armorPoints[0] = String(armor->text).toInt();
     }
 
     ::armorPoints[1] = 200;
-    if(ded_value_t const *armor = Defs().getValueById("Player|Blue Armor"))
+    if(const ded_value_t *armor = Defs().getValueById("Player|Blue Armor"))
     {
         ::armorPoints[1] = String(armor->text).toInt();
     }
 
     ::armorPoints[2] = 200;
-    if(ded_value_t const *armor = Defs().getValueById("Player|IDFA Armor"))
+    if(const ded_value_t *armor = Defs().getValueById("Player|IDFA Armor"))
     {
         ::armorPoints[2] = String(armor->text).toInt();
     }
 
     ::armorPoints[3] = 200;
-    if(ded_value_t const *armor = Defs().getValueById("Player|IDKFA Armor"))
+    if(const ded_value_t *armor = Defs().getValueById("Player|IDKFA Armor"))
     {
         ::armorPoints[3] = String(armor->text).toInt();
     }
 
     ::armorClass[0] = 1;
-    if(ded_value_t const *aclass = Defs().getValueById("Player|Green Armor Class"))
+    if(const ded_value_t *aclass = Defs().getValueById("Player|Green Armor Class"))
     {
         ::armorClass[0] = String(aclass->text).toInt();
     }
 
     ::armorClass[1] = 2;
-    if(ded_value_t const *aclass = Defs().getValueById("Player|Blue Armor Class"))
+    if(const ded_value_t *aclass = Defs().getValueById("Player|Blue Armor Class"))
     {
         ::armorClass[1] = String(aclass->text).toInt();
     }
 
     ::armorClass[2] = 2;
-    if(ded_value_t const *aclass = Defs().getValueById("Player|IDFA Armor Class"))
+    if(const ded_value_t *aclass = Defs().getValueById("Player|IDFA Armor Class"))
     {
         ::armorClass[2] = String(aclass->text).toInt();
     }
 
     ::armorClass[3] = 2;
-    if(ded_value_t const *aclass = Defs().getValueById("Player|IDKFA Armor Class"))
+    if(const ded_value_t *aclass = Defs().getValueById("Player|IDKFA Armor Class"))
     {
         ::armorClass[3] = String(aclass->text).toInt();
     }
 
     ::megaSphereHealth = 200;
-    if(ded_value_t const *health = Defs().getValueById("MegaSphere|Give|Health"))
+    if(const ded_value_t *health = Defs().getValueById("MegaSphere|Give|Health"))
     {
         ::megaSphereHealth = String(health->text).toInt();
     }
 
     ::soulSphereHealth = 100;
-    if(ded_value_t const *health = Defs().getValueById("SoulSphere|Give|Health"))
+    if(const ded_value_t *health = Defs().getValueById("SoulSphere|Give|Health"))
     {
         ::soulSphereHealth = String(health->text).toInt();
     }
 
     ::soulSphereLimit = 200;
-    if(ded_value_t const *healthLimit = Defs().getValueById("SoulSphere|Give|Health Limit"))
+    if(const ded_value_t *healthLimit = Defs().getValueById("SoulSphere|Give|Health Limit"))
     {
         ::soulSphereLimit = String(healthLimit->text).toInt();
     }
@@ -337,7 +337,7 @@ void P_DestroyPlayerStarts()
     numPlayerDMStarts = 0;
 }
 
-playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, dd_bool deathmatch)
+const playerstart_t *P_GetPlayerStart(uint entryPoint, int pnum, dd_bool deathmatch)
 {
     DE_UNUSED(entryPoint);
 
@@ -360,10 +360,10 @@ playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, dd_bool deathma
     if(IS_NETWORK_SERVER)
         pnum--;
 
-    playerstart_t const *def = 0;
+    const playerstart_t *def = 0;
     for(int i = 0; i < numPlayerStarts; ++i)
     {
-        playerstart_t const *start = &playerStarts[i];
+        const playerstart_t *start = &playerStarts[i];
 
         if(start->entryPoint == gfw_Session()->mapEntryPoint() && start->plrNum - 1 == pnum)
             return start;
@@ -411,7 +411,7 @@ void P_DealPlayerStarts(uint entryPoint)
 
         for(int k = 0; k < numPlayerStarts; ++k)
         {
-            playerstart_t const *start = &playerStarts[k];
+            const playerstart_t *start = &playerStarts[k];
 
             if(spotNumber == start->plrNum - 1 &&
                start->entryPoint == entryPoint)
@@ -677,7 +677,7 @@ void P_SpawnClient(int plrNum)
 }
 
 #if __JHEXEN__
-static String const &ammoTypeName(int ammoType)
+static const String &ammoTypeName(int ammoType)
 {
     static String const names[NUM_AMMO_TYPES] = {
         /*AT_BLUEMANA*/  "Blue mana",
@@ -754,11 +754,11 @@ void P_RebornPlayerInMultiplayer(int plrNum)
 
     uint entryPoint = gfw_Session()->mapEntryPoint();
     dd_bool foundSpot = false;
-    playerstart_t const *assigned = P_GetPlayerStart(entryPoint, plrNum, false);
+    const playerstart_t *assigned = P_GetPlayerStart(entryPoint, plrNum, false);
 
     if(assigned)
     {
-        mapspot_t const *spot = &mapSpots[assigned->spot];
+        const mapspot_t *spot = &mapSpots[assigned->spot];
 
         if(P_CheckSpot(spot->origin[VX], spot->origin[VY]))
         {
@@ -782,7 +782,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
 
         if(assigned)
         {
-            mapspot_t const *spot = &mapSpots[assigned->spot];
+            const mapspot_t *spot = &mapSpots[assigned->spot];
 
             pos[VX]    = spot->origin[VX];
             pos[VY]    = spot->origin[VY];
@@ -810,9 +810,9 @@ void P_RebornPlayerInMultiplayer(int plrNum)
         // Try to spawn at one of the other player start spots.
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            if(playerstart_t const *start = P_GetPlayerStart(entryPoint, i, false))
+            if(const playerstart_t *start = P_GetPlayerStart(entryPoint, i, false))
             {
-                mapspot_t const *spot = &mapSpots[start->spot];
+                const mapspot_t *spot = &mapSpots[start->spot];
 
                 if(P_CheckSpot(spot->origin[VX], spot->origin[VY]))
                 {
@@ -839,9 +839,9 @@ void P_RebornPlayerInMultiplayer(int plrNum)
     if(!foundSpot)
     {
         // Player's going to be inside something.
-        if(playerstart_t const *start = P_GetPlayerStart(entryPoint, plrNum, false))
+        if(const playerstart_t *start = P_GetPlayerStart(entryPoint, plrNum, false))
         {
-            mapspot_t const *spot = &mapSpots[start->spot];
+            const mapspot_t *spot = &mapSpots[start->spot];
 
             pos[VX]    = spot->origin[VX];
             pos[VY]    = spot->origin[VY];
@@ -883,7 +883,7 @@ void P_RebornPlayerInMultiplayer(int plrNum)
 
     for(auto i = int( AT_FIRST ); i < NUM_AMMO_TYPES; ++i)
     {
-        if(ded_value_t const *ammo = Defs().getValueById("Multiplayer|Reborn|" + ammoTypeName(i)))
+        if(const ded_value_t *ammo = Defs().getValueById("Multiplayer|Reborn|" + ammoTypeName(i)))
         {
             p->ammo[i].owned = String(ammo->text).toInt();
         }
@@ -980,7 +980,7 @@ void P_SpawnPlayers()
             {
                 if(players[0].startSpot != i && playerStarts[i].plrNum == 1)
                 {
-                    mapspot_t const *spot = &mapSpots[playerStarts[i].spot];
+                    const mapspot_t *spot = &mapSpots[playerStarts[i].spot];
 
                     spawnPlayer(-1, PCLASS_PLAYER, spot->origin[VX],
                                 spot->origin[VY], spot->origin[VZ],
@@ -999,7 +999,7 @@ void P_SpawnPlayers()
             if(!plr->plr->inGame)
                 continue;
 
-            playerstart_t const *start =
+            const playerstart_t *start =
                 plr->startSpot < numPlayerStarts? &playerStarts[plr->startSpot] : 0;
 
             coord_t pos[3];
@@ -1009,7 +1009,7 @@ void P_SpawnPlayers()
 
             if(start)
             {
-                mapspot_t const *spot = &mapSpots[start->spot];
+                const mapspot_t *spot = &mapSpots[start->spot];
 
                 pos[VX]    = spot->origin[VX];
                 pos[VY]    = spot->origin[VY];
@@ -1089,7 +1089,7 @@ void G_DeathMatchSpawnPlayer(int playerNum)
 #define NUM_TRIES 20
     for(int i = 0; i < NUM_TRIES; ++i)
     {
-        mapspot_t const *spot = &mapSpots[deathmatchStarts[P_Random() % numPlayerDMStarts].spot];
+        const mapspot_t *spot = &mapSpots[deathmatchStarts[P_Random() % numPlayerDMStarts].spot];
 
         // Last attempt will succeed even though blocked.
         if(P_CheckSpot(spot->origin[VX], spot->origin[VY]) || i == NUM_TRIES-1)

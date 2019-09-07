@@ -35,13 +35,13 @@ namespace world {
 //{
 //    String scheme;
 
-//    SchemeHashKey(String const &s) : scheme(s) {}
-//    bool operator == (SchemeHashKey const &other) const {
+//    SchemeHashKey(const String &s) : scheme(s) {}
+//    bool operator == (const SchemeHashKey &other) const {
 //        return !scheme.compare(other.scheme, Qt::CaseInsensitive);
 //    }
 //};
 
-//uint qHash(SchemeHashKey const &key)
+//uint qHash(const SchemeHashKey &key)
 //{
 //    return key.scheme.at(1).toLower().unicode();
 //}
@@ -148,7 +148,7 @@ DE_PIMPL(Materials)
     }
 
     /// Observes MaterialManifest Deletion.
-    void materialManifestBeingDeleted(MaterialManifest const &manifest)
+    void materialManifestBeingDeleted(const MaterialManifest &manifest)
     {
         for (MaterialManifestGroup *group : materialGroups)
         {
@@ -161,7 +161,7 @@ DE_PIMPL(Materials)
     }
 
     /// Observes Material Deletion.
-    void materialBeingDeleted(Material const &material)
+    void materialBeingDeleted(const Material &material)
     {
         Material *pMat = const_cast<Material *>(&material);
         materials.removeOne(pMat);
@@ -227,18 +227,18 @@ MaterialManifest &Materials::toMaterialManifest(materialid_t id) const
                                  Rangei(1, d->materialManifestCount + 1).asText());
 }
 
-Material *Materials::materialPtr(res::Uri const &path)
+Material *Materials::materialPtr(const res::Uri &path)
 {
     if (auto *manifest = materialManifestPtr(path)) return manifest->materialPtr();
     return nullptr;
 }
 
-bool Materials::hasMaterialManifest(res::Uri const &path) const
+bool Materials::hasMaterialManifest(const res::Uri &path) const
 {
     return materialManifestPtr(path) != nullptr;
 }
 
-MaterialManifest &Materials::materialManifest(res::Uri const &uri) const
+MaterialManifest &Materials::materialManifest(const res::Uri &uri) const
 {
     if (auto *mm = materialManifestPtr(uri))
     {
@@ -249,7 +249,7 @@ MaterialManifest &Materials::materialManifest(res::Uri const &uri) const
                                                   "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
-MaterialManifest *Materials::materialManifestPtr(res::Uri const &uri) const
+MaterialManifest *Materials::materialManifestPtr(const res::Uri &uri) const
 {
     // Does the user want a manifest in a specific scheme?
     if (!uri.scheme().isEmpty())
@@ -333,7 +333,7 @@ Materials::MaterialManifestGroup &Materials::materialGroup(dint groupIdx) const
                                     Rangeui(1, d->materialGroups.count() + 1).asText());
 }
 
-Materials::MaterialManifestGroups const &Materials::allMaterialGroups() const
+const Materials::MaterialManifestGroups &Materials::allMaterialGroups() const
 {
     return d->materialGroups;
 }

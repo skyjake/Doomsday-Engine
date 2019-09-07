@@ -80,7 +80,7 @@ dd_bool Hu_IsMessageActiveWithCallback(msgfunc_t callback);
 /**
  * Begin a new game state message/question.
  */
-void Hu_MsgStart(msgtype_t type, char const *msg, msgfunc_t callback, int userValue, void *userPointer);
+void Hu_MsgStart(msgtype_t type, const char *msg, msgfunc_t callback, int userValue, void *userPointer);
 
 #ifdef __cplusplus
 } // extern "C"

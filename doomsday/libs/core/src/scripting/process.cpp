@@ -90,7 +90,7 @@ DE_PIMPL(Process)
         }
     }
 
-    void run(Statement const *firstStatement)
+    void run(const Statement *firstStatement)
     {
         if (state != Stopped)
         {
@@ -106,22 +106,22 @@ DE_PIMPL(Process)
 
     /// Fast forward to a suitable catch statement for @a err.
     /// @return  @c true, if suitable catch statement found.
-    bool jumpIntoCatch(Error const &err)
+    bool jumpIntoCatch(const Error &err)
     {
         dint level = 0;
 
         // Proceed along default flow.
         for (context().proceed(); context().current(); context().proceed())
         {
-            Statement const *statement = context().current();
-            TryStatement const *tryStatement = dynamic_cast<TryStatement const *>(statement);
+            const Statement *statement = context().current();
+            const TryStatement *tryStatement = dynamic_cast<const TryStatement *>(statement);
             if (tryStatement)
             {
                 // Encountered a nested try statement.
                 ++level;
                 continue;
             }
-            CatchStatement const *catchStatement = dynamic_cast<CatchStatement const *>(statement);
+            const CatchStatement *catchStatement = dynamic_cast<const CatchStatement *>(statement);
             if (catchStatement)
             {
                 if (!level)
@@ -157,7 +157,7 @@ Process::Process(Record *externalGlobalNamespace) : d(new Impl(this))
     pushContext(new Context(Context::BaseProcess, this, externalGlobalNamespace));
 }
 
-Process::Process(Script const &script) : d(new Impl(this))
+Process::Process(const Script &script) : d(new Impl(this))
 {
     clear();
 
@@ -180,7 +180,7 @@ dsize Process::depth() const
     return d->depth();
 }
 
-void Process::run(Script const &script)
+void Process::run(const Script &script)
 {
     d->run(script.firstStatement());
 
@@ -256,7 +256,7 @@ void Process::execute()
                     "Script execution takes too long, or is stuck in an infinite loop");
             }
         }
-        catch (Error const &err)
+        catch (const Error &err)
         {
             //qDebug() << "Caught " << err.asText() << " at depth " << depth() << "\n";
 
@@ -340,17 +340,17 @@ void Process::finish(Value *returnValue)
     }
 }
 
-String const &Process::workingPath() const
+const String &Process::workingPath() const
 {
     return d->workingPath;
 }
 
-void Process::setWorkingPath(String const &newWorkingPath)
+void Process::setWorkingPath(const String &newWorkingPath)
 {
     d->workingPath = newWorkingPath;
 }
 
-void Process::call(Function const &function, ArrayValue const &arguments, Value *self)
+void Process::call(const Function &function, const ArrayValue &arguments, Value *self)
 {
     // First map the argument values.
     Function::ArgumentValues argValues;

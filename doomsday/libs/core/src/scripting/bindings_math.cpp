@@ -23,12 +23,12 @@
 
 namespace de {
 
-static Value *Function_Math_Random(Context &, Function::ArgumentValues const &)
+static Value *Function_Math_Random(Context &, const Function::ArgumentValues &)
 {
     return new NumberValue(randf());
 }
 
-static Value *Function_Math_RandInt(Context &, Function::ArgumentValues const &args)
+static Value *Function_Math_RandInt(Context &, const Function::ArgumentValues &args)
 {
     Rangei range(args.at(0)->asInt(), args.at(1)->asInt() + 1);
     return new NumberValue(range.random());

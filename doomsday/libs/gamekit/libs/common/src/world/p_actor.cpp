@@ -194,7 +194,7 @@ void P_MobjClearSRVO(mobj_t *mo)
     std::memset(mo->srvo, 0, sizeof(mo->srvo));
 }
 
-dd_bool P_MobjIsCamera(mobj_t const *mo)
+dd_bool P_MobjIsCamera(const mobj_t *mo)
 {
     // Client mobjs do not have thinkers and thus cannot be cameras.
     return (mo && mo->thinker.function && mo->player &&
@@ -224,7 +224,7 @@ dd_bool Mobj_IsDroppedItem(mobj_t *mobj)
 #endif
 }
 
-terraintype_t const *P_MobjFloorTerrain(mobj_t const *mobj)
+const terraintype_t *P_MobjFloorTerrain(const mobj_t *mobj)
 {
     return P_PlaneMaterialTerrainType(Mobj_Sector(mobj), PLN_FLOOR);
 }

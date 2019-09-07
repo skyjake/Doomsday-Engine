@@ -51,7 +51,7 @@ public:
      */
     NativePath();
 
-    NativePath(NativePath const &other);
+    NativePath(const NativePath &other);
     NativePath(NativePath &&moved);
 
     /**
@@ -66,8 +66,8 @@ public:
 
     NativePath(const Path &path);
 
-    NativePath(char const *nullTerminatedCStr);
-    NativePath(char const *cStr, dsize length);
+    NativePath(const char *nullTerminatedCStr);
+    NativePath(const char *cStr, dsize length);
 
     /**
      * Assignment.
@@ -75,11 +75,11 @@ public:
      * @param str Path. Any directory separators in the path are converted to
      * native ones.
      */
-    NativePath &operator=(String const &str);
+    NativePath &operator=(const String &str);
 
     NativePath &operator=(NativePath &&moved);
-    NativePath &operator=(NativePath const &other);
-    NativePath &operator=(char const *nullTerminatedCStr);
+    NativePath &operator=(const NativePath &other);
+    NativePath &operator=(const char *nullTerminatedCStr);
 
     /**
      * Does a path concatenation on a native path. The directory separator
@@ -88,21 +88,21 @@ public:
      *
      * @param nativePath  Native path to concatenate.
      */
-    NativePath concatenatePath(NativePath const &nativePath) const;
+    NativePath concatenatePath(const NativePath &nativePath) const;
 
-    NativePath concatenatePath(String const &nativePath) const;
+    NativePath concatenatePath(const String &nativePath) const;
 
     /// A more convenient way to invoke concatenatePath().
-    NativePath operator / (NativePath const &nativePath) const;
+    NativePath operator / (const NativePath &nativePath) const;
 
     /**
      * Native path concatenation.
      * @param str  Path that is converted to a native path.
      * @return Concatenated path.
      */
-    NativePath operator / (String const &str) const;
+    NativePath operator / (const String &str) const;
 
-    NativePath operator / (char const *nullTerminatedCStr) const;
+    NativePath operator / (const char *nullTerminatedCStr) const;
 
     /// Extracts the path of the string, using native directory separators.
     NativePath fileNamePath() const;
@@ -182,7 +182,7 @@ public:
      *
      * @return  @c true iff successfully changed the current working path.
      */
-    static bool setWorkPath(NativePath const &cwd);
+    static bool setWorkPath(const NativePath &cwd);
 
     static NativePath homePath();
 
@@ -193,7 +193,7 @@ public:
      *
      * @return @c true if the path exists, @c false otherwise.
      */
-    static bool exists(NativePath const &nativePath);
+    static bool exists(const NativePath &nativePath);
 
     /**
      * Creates a native directory relative to the current working directory.

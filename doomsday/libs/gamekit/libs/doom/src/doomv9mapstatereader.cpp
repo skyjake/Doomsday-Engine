@@ -85,7 +85,7 @@ static reader_s *SV_NewReader_Dm_v19()
     return Reader_NewWithCallbacks(sri8, sri16, sri32, 0, srd);
 }
 
-static uri_s *readTextureUrn(reader_s *reader, char const *schemeName)
+static uri_s *readTextureUrn(reader_s *reader, const char *schemeName)
 {
     DE_ASSERT(reader != 0 && schemeName != 0);
     return Uri_NewWithPath2(Str_Text(Str_Appendf(AutoStr_NewStd(), "urn:%s:%i", schemeName, Reader_ReadInt16(reader))), RC_NULL);
@@ -801,7 +801,7 @@ DE_PIMPL(DoomV9MapStateReader)
     }
 };
 
-DoomV9MapStateReader::DoomV9MapStateReader(GameStateFolder const &session)
+DoomV9MapStateReader::DoomV9MapStateReader(const GameStateFolder &session)
     : GameStateFolder::MapStateReader(session)
     , d(new Impl(this))
 {}
@@ -809,7 +809,7 @@ DoomV9MapStateReader::DoomV9MapStateReader(GameStateFolder const &session)
 DoomV9MapStateReader::~DoomV9MapStateReader()
 {}
 
-void DoomV9MapStateReader::read(String const & /*mapUriStr*/)
+void DoomV9MapStateReader::read(const String & /*mapUriStr*/)
 {
     d->reader = SV_NewReader_Dm_v19();
 

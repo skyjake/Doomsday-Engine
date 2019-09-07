@@ -59,7 +59,7 @@ public:
      *
      * @param file  File to load from.
      */
-    void load(File const &file);
+    void load(const File &file);
 
     audio::Format format() const;
 
@@ -76,7 +76,7 @@ public:
      *
      * @return File with source data.
      */
-    File const *sourceFile() const;
+    const File *sourceFile() const;
 
     duint channelCount() const;
 

@@ -39,14 +39,14 @@ class GridLayout;
 class LIBGUI_PUBLIC GridPopupWidget : public PopupWidget
 {
 public:
-    GridPopupWidget(String const &name = String());
+    GridPopupWidget(const String &name = String());
 
     /**
      * Returns the layout used by the popup's contents.
      */
     GridLayout &layout();
 
-    LabelWidget &addSeparatorLabel(String const &labelText);
+    LabelWidget &addSeparatorLabel(const String &labelText);
 
     /**
      * Adds a widget to the popup grid. The widget becomes a child of the
@@ -65,7 +65,7 @@ public:
      *
      * @return Reference to this widget (fluent interface).
      */
-    GridPopupWidget &operator << (Rule const &rule);
+    GridPopupWidget &operator << (const Rule &rule);
 
     /**
      * Adds a widget to the popup grid, spanning more than one columns.

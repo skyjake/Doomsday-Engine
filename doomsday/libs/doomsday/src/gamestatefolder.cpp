@@ -41,7 +41,7 @@ static String const BLOCK_GAMERULE = "gamerule";
 
 /// @todo Refactor this to use ScriptedInfo. -jk
 
-static Value *makeValueFromInfoValue(de::Info::Element::Value const &v)
+static Value *makeValueFromInfoValue(const de::Info::Element::Value &v)
 {
     String const text = v;
     if (!text.compareWithoutCase("True"))
@@ -80,19 +80,19 @@ DE_PIMPL(GameStateFolder)
             // So far so good.
             return true;
         }
-        catch (IByteArray::OffsetError const &)
+        catch (const IByteArray::OffsetError &)
         {
             LOG_RES_WARNING("Archive in %s is truncated") << self().description();
         }
-        catch (IIStream::InputError const &)
+        catch (const IIStream::InputError &)
         {
             LOG_RES_WARNING("%s cannot be read") << self().description();
         }
-        catch (Archive::FormatError const &)
+        catch (const Archive::FormatError &)
         {
             LOG_RES_WARNING("Archive in %s is invalid") << self().description();
         }
-        catch (Folder::NotFoundError const &)
+        catch (const Folder::NotFoundError &)
         {
             LOG_RES_WARNING("%s does not appear to be a .save package") << self().description();
         }
@@ -104,7 +104,7 @@ DE_PIMPL(GameStateFolder)
 
 DE_AUDIENCE_METHOD(GameStateFolder, MetadataChange)
 
-GameStateFolder::GameStateFolder(File &sourceArchiveFile, String const &name)
+GameStateFolder::GameStateFolder(File &sourceArchiveFile, const String &name)
     : ArchiveFolder(sourceArchiveFile, name)
     , d(new Impl(this))
 {}
@@ -140,7 +140,7 @@ void GameStateFolder::readMetadata()
     cacheMetadata(newMetadata);
 }
 
-GameStateFolder::Metadata const &GameStateFolder::metadata() const
+const GameStateFolder::Metadata &GameStateFolder::metadata() const
 {
     if (d->needCacheMetadata)
     {
@@ -149,7 +149,7 @@ GameStateFolder::Metadata const &GameStateFolder::metadata() const
     return d->metadata;
 }
 
-void GameStateFolder::cacheMetadata(Metadata const &copied)
+void GameStateFolder::cacheMetadata(const Metadata &copied)
 {
     d->metadata          = copied;
     d->needCacheMetadata = false;
@@ -159,7 +159,7 @@ void GameStateFolder::cacheMetadata(Metadata const &copied)
     }
 }
 
-String GameStateFolder::stateFilePath(String const &path) //static
+String GameStateFolder::stateFilePath(const String &path) //static
 {
     if (!path.fileName().isEmpty())
     {
@@ -168,23 +168,23 @@ String GameStateFolder::stateFilePath(String const &path) //static
     return "";
 }
 
-bool GameStateFolder::isPackageAffectingGameplay(String const &packageId) // static
+bool GameStateFolder::isPackageAffectingGameplay(const String &packageId) // static
 {
     /**
      * @todo The rules here could be more sophisticated when it comes to checking what
      * exactly do the data bundles contain. Also, packages should be checked for any
      * gameplay-affecting assets. (2016-07-06: Currently there are none.)
      */
-    if (auto const *bundle = DataBundle::bundleForPackage(packageId))
+    if (const auto *bundle = DataBundle::bundleForPackage(packageId))
     {
         // Collections can be configured, so we need to list the actual files in use
         // rather than just the collection itself.
         return bundle->format() != DataBundle::Collection;
     }
 
-    if (File const *selected = PackageLoader::get().select(packageId))
+    if (const File *selected = PackageLoader::get().select(packageId))
     {
-        auto const &meta = Package::metadata(*selected);
+        const auto &meta = Package::metadata(*selected);
         if (meta.has("dataFiles") && meta.geta("dataFiles").size() > 0)
         {
             // Data files are assumed to affect gameplay.
@@ -214,7 +214,7 @@ File *GameStateFolder::Interpreter::interpretFile(File *sourceData) const
             }
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         // Even though it was recognized as an archive, the file
         // contents may still prove to be corrupted.
@@ -229,32 +229,32 @@ File *GameStateFolder::Interpreter::interpretFile(File *sourceData) const
 
 DE_PIMPL_NOREF(GameStateFolder::MapStateReader)
 {
-    GameStateFolder const *session; ///< Saved session being read. Not owned.
+    const GameStateFolder *session; ///< Saved session being read. Not owned.
 
-    Impl(GameStateFolder const &session) : session(&session)
+    Impl(const GameStateFolder &session) : session(&session)
     {}
 };
 
-GameStateFolder::MapStateReader::MapStateReader(GameStateFolder const &session)
+GameStateFolder::MapStateReader::MapStateReader(const GameStateFolder &session)
     : d(new Impl(session))
 {}
 
 GameStateFolder::MapStateReader::~MapStateReader()
 {}
 
-GameStateFolder::Metadata const &GameStateFolder::MapStateReader::metadata() const
+const GameStateFolder::Metadata &GameStateFolder::MapStateReader::metadata() const
 {
     return d->session->metadata();
 }
 
-Folder const &GameStateFolder::MapStateReader::folder() const
+const Folder &GameStateFolder::MapStateReader::folder() const
 {
     return *d->session;
 }
 
 //---------------------------------------------------------------------------------------
 
-void GameStateFolder::Metadata::parse(String const &source)
+void GameStateFolder::Metadata::parse(const String &source)
 {
     try
     {
@@ -268,33 +268,33 @@ void GameStateFolder::Metadata::parse(String const &source)
         Record &rules = addSubrecord("gameRules");
         for (const auto *elem : info.root().contentsInOrder())
         {
-            if (Info::KeyElement const *key = maybeAs<Info::KeyElement>(elem))
+            if (const Info::KeyElement *key = maybeAs<Info::KeyElement>(elem))
             {
                 std::unique_ptr<Value> v(makeValueFromInfoValue(key->value()));
                 add(key->name()) = v.release();
                 continue;
             }
-            if (Info::ListElement const *list = maybeAs<Info::ListElement>(elem))
+            if (const Info::ListElement *list = maybeAs<Info::ListElement>(elem))
             {
                 std::unique_ptr<ArrayValue> arr(new ArrayValue);
-                for (Info::Element::Value const &v : list->values())
+                for (const Info::Element::Value &v : list->values())
                 {
                     *arr << makeValueFromInfoValue(v);
                 }
                 addArray(list->name(), arr.release());
                 continue;
             }
-            if (Info::BlockElement const *block = maybeAs<Info::BlockElement>(elem))
+            if (const Info::BlockElement *block = maybeAs<Info::BlockElement>(elem))
             {
                 // Perhaps a ruleset group?
                 if (block->blockType() == BLOCK_GROUP)
                 {
-                    for (Info::Element const *grpElem : block->contentsInOrder())
+                    for (const Info::Element *grpElem : block->contentsInOrder())
                     {
                         if (!grpElem->isBlock()) continue;
 
                         // Perhaps a gamerule?
-                        Info::BlockElement const &ruleBlock = grpElem->as<Info::BlockElement>();
+                        const Info::BlockElement &ruleBlock = grpElem->as<Info::BlockElement>();
                         if (ruleBlock.blockType() == BLOCK_GAMERULE)
                         {
                             std::unique_ptr<Value> v(makeValueFromInfoValue(ruleBlock.keyValue("value")));
@@ -337,9 +337,9 @@ void GameStateFolder::Metadata::parse(String const &source)
 
         if (info.root().contains("packages"))
         {
-            Info::ListElement const &list = info.root().find("packages")->as<Info::ListElement>();
+            const Info::ListElement &list = info.root().find("packages")->as<Info::ListElement>();
             auto *pkgs = new ArrayValue;
-            for (auto const &value : list.values())
+            for (const auto &value : list.values())
             {
                 *pkgs << new TextValue(value.text);
             }
@@ -358,7 +358,7 @@ void GameStateFolder::Metadata::parse(String const &source)
 
         //qDebug() << "Parsed save metadata:\n" << asText();
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_WARNING(er.asText());
     }
@@ -390,9 +390,9 @@ String GameStateFolder::Metadata::asStyledText() const
     }
     String gameRulesText = String::join(rules, "\n - ");
 
-    auto const &pkgs = geta("packages");
+    const auto &pkgs = geta("packages");
     StringList pkgIds;
-    for (auto const *val : pkgs.elements())
+    for (const auto *val : pkgs.elements())
     {
         pkgIds << Package::splitToHumanReadable(val->asText());
     }
@@ -432,10 +432,10 @@ String GameStateFolder::Metadata::asInfo() const
     if (has("players"))
     {
         os << "\nplayers <";
-        ArrayValue const &playersArray = geta("players");
+        const ArrayValue &playersArray = geta("players");
         DE_FOR_EACH_CONST(ArrayValue::Elements, i, playersArray.elements())
         {
-            Value const *value = *i;
+            const Value *value = *i;
             if (i != playersArray.elements().begin()) os << ", ";
             os << (value->as<NumberValue>().isTrue()? "True" : "False");
         }
@@ -452,7 +452,7 @@ String GameStateFolder::Metadata::asInfo() const
     {
         os << "\n" << BLOCK_GROUP << " ruleset {";
 
-        Record const &rules = subrecord("gameRules");
+        const Record &rules = subrecord("gameRules");
         DE_FOR_EACH_CONST(Record::Members, i, rules.members())
         {
             const Value &value = i->second->value();

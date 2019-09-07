@@ -43,11 +43,11 @@ public:
     class LIBGUI_PUBLIC ImageSource : public ISource
     {
     public:
-        ImageSource(DotPath const &sourcePath = "");
-        ImageSource(AtlasId atlasId, DotPath const &sourcePath);
+        ImageSource(const DotPath &sourcePath = "");
+        ImageSource(AtlasId atlasId, const DotPath &sourcePath);
 
         AtlasId atlasId() const;
-        DotPath const &sourcePath() const;
+        const DotPath &sourcePath() const;
 
         virtual Image load() const = 0;
 
@@ -60,12 +60,12 @@ public:
         Id id;
         AtlasId atlas;
 
-        operator Id const &() const { return id; }
+        operator const Id &() const { return id; }
     };
 
 public:
-    TextureBank(char const *nameForLog = "TextureBank",
-                Flags const &flags = DefaultFlags);
+    TextureBank(const char *nameForLog = "TextureBank",
+                const Flags &flags = DefaultFlags);
 
     /**
      * Sets the atlas where the images are to be allocated from.
@@ -85,7 +85,7 @@ public:
 
     IAtlas *atlas(AtlasId atlasId = 0);
 
-    Allocation texture(DotPath const &id);
+    Allocation texture(const DotPath &id);
 
     /**
      * Returns the source path of an image that has been loaded into the atlas.
@@ -94,7 +94,7 @@ public:
      *
      * @return  ImageSource path.
      */
-    Path sourcePathForAtlasId(Id const &id) const;
+    Path sourcePathForAtlasId(const Id &id) const;
 
 protected:
     IData *loadFromSource(ISource &source);

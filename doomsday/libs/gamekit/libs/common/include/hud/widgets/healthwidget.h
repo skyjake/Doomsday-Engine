@@ -30,7 +30,7 @@ class guidata_health_t : public HudWidget
 {
 public:
     guidata_health_t(void (*updateGeometry) (HudWidget *wi),
-                     void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                     void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                      de::dint player);
     virtual ~guidata_health_t();
 
@@ -38,14 +38,14 @@ public:
 
     void tick(timespan_t elapsed);
     //void updateGeometry();
-    //void draw(de::Vec2i const &offset = de::Vec2i()) const;
+    //void draw(const de::Vec2i &offset = de::Vec2i()) const;
 
 //private:
     de::dint _value = 0;
 };
 
-void HealthWidget_Draw    (guidata_health_t *hlth, Point2Raw const *offset);
-void SBarHealthWidget_Draw(guidata_health_t *hlth, Point2Raw const *offset);
+void HealthWidget_Draw    (guidata_health_t *hlth, const Point2Raw *offset);
+void SBarHealthWidget_Draw(guidata_health_t *hlth, const Point2Raw *offset);
 
 void HealthWidget_UpdateGeometry    (guidata_health_t *hlth);
 void SBarHealthWidget_UpdateGeometry(guidata_health_t *hlth);

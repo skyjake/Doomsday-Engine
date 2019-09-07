@@ -129,7 +129,7 @@ DE_AUDIENCE_METHODS(AbstractLink, Connected, Disconnected, PacketsReady, Address
 AbstractLink::AbstractLink() : d(new Impl(this))
 {}
 
-void AbstractLink::connectDomain(String const &domain, TimeSpan timeout)
+void AbstractLink::connectDomain(const String &domain, TimeSpan timeout)
 {
     disconnect();
 
@@ -149,7 +149,7 @@ void AbstractLink::connectDomain(String const &domain, TimeSpan timeout)
     d->timeout         = timeout;
 }
 
-void AbstractLink::connectHost(Address const &address)
+void AbstractLink::connectHost(const Address &address)
 {
     disconnect();
 
@@ -238,7 +238,7 @@ Packet *AbstractLink::nextPacket()
     return packet;
 }
 
-void AbstractLink::send(IByteArray const &data)
+void AbstractLink::send(const IByteArray &data)
 {
     d->socket->send(data);
 }

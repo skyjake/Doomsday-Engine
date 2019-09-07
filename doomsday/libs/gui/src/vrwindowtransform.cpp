@@ -378,7 +378,7 @@ void VRWindowTransform::glDeinit()
     //d->deinit();
 }
 
-Vec2ui VRWindowTransform::logicalRootSize(Vec2ui const &physicalWindowSize) const
+Vec2ui VRWindowTransform::logicalRootSize(const Vec2ui &physicalWindowSize) const
 {
     GLWindow::Size size = physicalWindowSize;
 
@@ -411,7 +411,7 @@ Vec2ui VRWindowTransform::logicalRootSize(Vec2ui const &physicalWindowSize) cons
     return size;
 }
 
-Vec2f VRWindowTransform::windowToLogicalCoords(Vec2i const &winPos) const
+Vec2f VRWindowTransform::windowToLogicalCoords(const Vec2i &winPos) const
 {
     // We need to map the real window coordinates to logical root view
     // coordinates according to the used transformation.
@@ -457,7 +457,7 @@ Vec2f VRWindowTransform::windowToLogicalCoords(Vec2i const &winPos) const
     return pos;
 }
 
-Vec2f VRWindowTransform::logicalToWindowCoords(Vec2i const &logicalPos) const
+Vec2f VRWindowTransform::logicalToWindowCoords(const Vec2i &logicalPos) const
 {
     Vec2f pos = logicalPos;
 

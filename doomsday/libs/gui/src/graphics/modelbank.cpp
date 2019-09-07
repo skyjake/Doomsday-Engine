@@ -31,7 +31,7 @@ DE_PIMPL(ModelBank)
     {
         String path; ///< Path to a model file.
 
-        Source(String const &sourcePath) : path(sourcePath) {}
+        Source(const String &sourcePath) : path(sourcePath) {}
     };
 
     /// Loaded model instance.
@@ -40,7 +40,7 @@ DE_PIMPL(ModelBank)
         std::unique_ptr<ModelDrawable> model;
         std::unique_ptr<IUserData> userData;
 
-        Data(ModelDrawable *model, String const &path)
+        Data(ModelDrawable *model, const String &path)
             : model(model)
         {
             model->load(App::rootFolder().locate<File>(path));
@@ -58,27 +58,27 @@ ModelBank::ModelBank(const Constructor& modelConstructor)
     , d(new Impl(this, modelConstructor))
 {}
 
-void ModelBank::add(DotPath const &id, String const &sourcePath)
+void ModelBank::add(const DotPath &id, const String &sourcePath)
 {
     return Bank::add(id, new Impl::Source(sourcePath));
 }
 
-ModelDrawable &ModelBank::model(DotPath const &id)
+ModelDrawable &ModelBank::model(const DotPath &id)
 {
     return *data(id).as<Impl::Data>().model;
 }
 
-void ModelBank::setUserData(DotPath const &id, IUserData *anim)
+void ModelBank::setUserData(const DotPath &id, IUserData *anim)
 {
     data(id).as<Impl::Data>().userData.reset(anim);
 }
 
-ModelBank::IUserData const *ModelBank::userData(DotPath const &id) const
+const ModelBank::IUserData *ModelBank::userData(const DotPath &id) const
 {
     return data(id).as<Impl::Data>().userData.get();
 }
 
-ModelBank::ModelWithData ModelBank::modelAndData(DotPath const &id) const
+ModelBank::ModelWithData ModelBank::modelAndData(const DotPath &id) const
 {
     auto &item = data(id).as<Impl::Data>();
     return ModelWithData(item.model.get(), item.userData.get());

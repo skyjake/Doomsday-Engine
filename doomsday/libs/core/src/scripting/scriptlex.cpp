@@ -57,10 +57,10 @@ const char *ScriptLex::ASSIGN("=");
 const char *ScriptLex::SCOPE_ASSIGN(":=");
 const char *ScriptLex::WEAK_ASSIGN("?=");
 
-ScriptLex::ScriptLex(String const &input) : Lex(input)
+ScriptLex::ScriptLex(const String &input) : Lex(input)
 {}
 
-duint ScriptLex::getStatement(TokenBuffer &output, Behaviors const &behavior)
+duint ScriptLex::getStatement(TokenBuffer &output, const Behaviors &behavior)
 {
     // Get rid of the previous contents of the token buffer.
     output.clear();
@@ -359,7 +359,7 @@ const Set<CString> ScriptLex::KEYWORDS = {
     RETURN, SCOPE, THROW,  TRY,    WHILE,    NONE, T_FALSE, T_TRUE, PI,
 };
 
-bool ScriptLex::isKeyword(Token const &token) // static
+bool ScriptLex::isKeyword(const Token &token) // static
 {
     return KEYWORDS.contains(token.cStr());
 }

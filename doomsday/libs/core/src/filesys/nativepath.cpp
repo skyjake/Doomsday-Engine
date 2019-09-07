@@ -57,7 +57,7 @@
 
 namespace de {
 
-static String toNative(String const &s)
+static String toNative(const String &s)
 {
     // This will resolve parent references (".."), multiple separators
     // (hello//world), and self-references (".").
@@ -70,7 +70,7 @@ static String toNative(String const &s)
 NativePath::NativePath() : Path()
 {}
 
-NativePath::NativePath(NativePath const &other)
+NativePath::NativePath(const NativePath &other)
     : Path(other)
 {}
 
@@ -88,15 +88,15 @@ NativePath::NativePath(const Path &path)
     : Path(toNative(path.toString()), DIR_SEPARATOR)
 {}
 
-NativePath::NativePath(char const *nullTerminatedCStr)
+NativePath::NativePath(const char *nullTerminatedCStr)
     : Path(toNative(nullTerminatedCStr), DIR_SEPARATOR)
 {}
 
-NativePath::NativePath(char const *cStr, dsize length)
+NativePath::NativePath(const char *cStr, dsize length)
     : Path(toNative(String(cStr, length)), DIR_SEPARATOR)
 {}
 
-NativePath &NativePath::operator=(String const &str)
+NativePath &NativePath::operator=(const String &str)
 {
     set(toNative(str), DIR_SEPARATOR);
     return *this;
@@ -108,39 +108,39 @@ NativePath &NativePath::operator=(NativePath &&moved)
     return *this;
 }
 
-NativePath &NativePath::operator=(NativePath const &other)
+NativePath &NativePath::operator=(const NativePath &other)
 {
     Path::operator = (other);
     return *this;
 }
 
-NativePath &NativePath::operator=(char const *nullTerminatedCStr)
+NativePath &NativePath::operator=(const char *nullTerminatedCStr)
 {
     return (*this) = String(nullTerminatedCStr);
 }
 
-NativePath NativePath::concatenatePath(NativePath const &nativePath) const
+NativePath NativePath::concatenatePath(const NativePath &nativePath) const
 {
     if (nativePath.isAbsolute()) return nativePath;
     return toString().concatenatePath(nativePath, Char(DIR_SEPARATOR));
 }
 
-NativePath NativePath::concatenatePath(String const &nativePath) const
+NativePath NativePath::concatenatePath(const String &nativePath) const
 {
     return concatenatePath(NativePath(nativePath));
 }
 
-NativePath NativePath::operator/(NativePath const &nativePath) const
+NativePath NativePath::operator/(const NativePath &nativePath) const
 {
     return concatenatePath(nativePath);
 }
 
-NativePath NativePath::operator/(String const &str) const
+NativePath NativePath::operator/(const String &str) const
 {
     return *this / NativePath(str);
 }
 
-NativePath NativePath::operator/(char const *nullTerminatedCStr) const
+NativePath NativePath::operator/(const char *nullTerminatedCStr) const
 {
     return *this / NativePath(nullTerminatedCStr);
 }
@@ -301,7 +301,7 @@ NativePath NativePath::homePath()
 #endif
 }
 
-bool NativePath::exists(NativePath const &nativePath)
+bool NativePath::exists(const NativePath &nativePath)
 {
 //    DE_ASSERT(!nativePath.fileName().isEmpty());
 //    if (nativePath.fileName().isEmpty())
@@ -311,7 +311,7 @@ bool NativePath::exists(NativePath const &nativePath)
     return fileExistsCStr_FileInfo(nativePath);
 }
 
-void NativePath::createPath(NativePath const &nativePath) // static
+void NativePath::createPath(const NativePath &nativePath) // static
 {
     DE_ASSERT(!nativePath.fileName().isEmpty());
 

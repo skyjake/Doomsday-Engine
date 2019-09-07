@@ -47,7 +47,7 @@ typedef eventsequencehandler_t cheatfunc_t;
 #define CHEAT(x) G_Cheat##x
 
 /// Helper macro for declaring cheat callback functions.
-#define CHEAT_FUNC(x) int G_Cheat##x(int player, EventSequenceArg const *args, int numArgs)
+#define CHEAT_FUNC(x) int G_Cheat##x(int player, const EventSequenceArg *args, int numArgs)
 
 CHEAT_FUNC(Music)
 {
@@ -159,7 +159,7 @@ CHEAT_FUNC(MyPos)
     if(player < 0 || player >= MAXPLAYERS)
         return false;
 
-    mobj_t const *mob = players[CONSOLEPLAYER].plr->mo;
+    const mobj_t *mob = players[CONSOLEPLAYER].plr->mo;
     String const  text =
         Stringf("angle:0x%x position:%s", mob->angle, Vec3d(mob->origin).asText().c_str());
     P_SetMessageWithFlags(&players[player], text, LMF_NO_HIDE);

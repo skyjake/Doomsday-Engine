@@ -115,21 +115,21 @@ public:
      * @param varMode  Mode flags.
      */
     Variable(const String &name = {}, Value *initial = nullptr,
-             Flags const &varMode = DefaultMode);
+             const Flags &varMode = DefaultMode);
 
     /**
      * Constructs a copy of another variable.
      *
      * @param other  Variable to copy.
      */
-    Variable(Variable const &other);
+    Variable(const Variable &other);
 
     virtual ~Variable();
 
     /**
      * Returns the name of the variable.
      */
-    String const &name() const;
+    const String &name() const;
 
     /**
      * Sets the value of the variable.
@@ -150,19 +150,19 @@ public:
      *
      * @param textValue  Text string. A new TextValue is created.
      */
-    Variable &operator=(String const &textValue);
+    Variable &operator=(const String &textValue);
 
     /**
      * Sets the value of the variable.
      *
      * @param v  New value. Variable takes a copy of this.
      */
-    Variable &set(Value const &v);
+    Variable &set(const Value &v);
 
     /**
      * Returns the value of the variable (non-modifiable).
      */
-    Value const &value() const;
+    const Value &value() const;
 
     /**
      * Returns the value of the variable.
@@ -170,7 +170,7 @@ public:
     Value &value();
 
     Value *valuePtr();
-    Value const *valuePtr() const;
+    const Value *valuePtr() const;
 
     bool operator==(const String &text) const;
 
@@ -192,8 +192,8 @@ public:
      * Returns the value of the variable.
      */
     template <typename Type>
-    Type const &value() const {
-        Type const *v = dynamic_cast<Type const *>(valuePtr());
+    const Type &value() const {
+        const Type *v = dynamic_cast<const Type *>(valuePtr());
         if (!v) {
             /// @throw TypeError Casting to Type failed.
             throw TypeError("Variable::value",
@@ -208,19 +208,19 @@ public:
      *
      * @return Referenced Record.
      */
-    Record const &valueAsRecord() const;
+    const Record &valueAsRecord() const;
 
     Record &valueAsRecord();
 
     /**
      * Returns the value of the variable as an ArrayValue.
      */
-    ArrayValue const &array() const;
+    const ArrayValue &array() const;
 
     ArrayValue &array();
 
     operator Record & ();
-    operator Record const & () const;
+    operator const Record & () const;
 
     // Automatic conversion to native primitive types.
     operator String () const;
@@ -237,7 +237,7 @@ public:
      * @param flags      New mode flags.
      * @param operation  What to do with @a flags.
      */
-    void setFlags(Flags const &flags, FlagOpArg operation = ReplaceFlags);
+    void setFlags(const Flags &flags, FlagOpArg operation = ReplaceFlags);
 
     /**
      * Makes the variable read-only.
@@ -254,7 +254,7 @@ public:
      *
      * @return @c true, if the value is valid. @c false otherwise.
      */
-    bool isValid(Value const &v) const;
+    bool isValid(const Value &v) const;
 
     /**
      * Verifies that a value is valid, checking against what is allowed in the
@@ -262,14 +262,14 @@ public:
      *
      * @param v  Value to test.
      */
-    void verifyValid(Value const &v) const;
+    void verifyValid(const Value &v) const;
 
     /**
      * Verifies that the variable can be assigned a new value.
      *
      * @param attemptedNewValue  The new value that is being assigned.
      */
-    void verifyWritable(Value const &attemptedNewValue);
+    void verifyWritable(const Value &attemptedNewValue);
 
     /**
      * Verifies that a string is a valid name for the variable. If not,
@@ -277,7 +277,7 @@ public:
      *
      * @param s  Name to test.
      */
-    static void verifyName(String const &s);
+    static void verifyName(const String &s);
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;
@@ -297,10 +297,10 @@ public:
      * @param variable  Variable.
      * @param newValue  New value of the variable.
      */
-    DE_AUDIENCE(Change, void variableValueChanged(Variable &variable, Value const &newValue))
+    DE_AUDIENCE(Change, void variableValueChanged(Variable &variable, const Value &newValue))
 
-    DE_AUDIENCE(ChangeFrom, void variableValueChangedFrom(Variable &variable, Value const &oldValue,
-                                                                     Value const &newValue))
+    DE_AUDIENCE(ChangeFrom, void variableValueChangedFrom(Variable &variable, const Value &oldValue,
+                                                                     const Value &newValue))
 
 private:
     DE_PRIVATE(d)

@@ -99,7 +99,7 @@ public:
         Unknown
     };
 
-    static TextureMap textToTextureMap(String const &text);
+    static TextureMap textToTextureMap(const String &text);
     static String     textureMapToText(TextureMap map);
 
     /**
@@ -171,19 +171,19 @@ public:
 
     public:
         Animator(Constructor sequenceConstructor = OngoingSequence::make);
-        Animator(ModelDrawable const &model,
+        Animator(const ModelDrawable &model,
                  Constructor sequenceConstructor = OngoingSequence::make);
 
-        void setModel(ModelDrawable const &model);
+        void setModel(const ModelDrawable &model);
 
-        void setFlags(Flags const &flags, FlagOp op = SetFlags);
+        void setFlags(const Flags &flags, FlagOp op = SetFlags);
 
         Flags flags() const;
 
         /**
          * Returns the model with which this animation is being used.
          */
-        ModelDrawable const &model() const;
+        const ModelDrawable &model() const;
 
         /**
          * Returns the number of ongoing animations.
@@ -192,15 +192,15 @@ public:
 
         inline bool isEmpty() const { return !count(); }
 
-        OngoingSequence const &at(int index) const;
+        const OngoingSequence &at(int index) const;
 
         OngoingSequence &at(int index);
 
-        bool isRunning(String const &animName, String const &rootNode = "") const;
-        bool isRunning(int animId, String const &rootNode = "") const;
+        bool isRunning(const String &animName, const String &rootNode = "") const;
+        bool isRunning(int animId, const String &rootNode = "") const;
 
-        OngoingSequence *find(String const &rootNode = "") const;
-        OngoingSequence *find(int animId, String const &rootNode = "") const;
+        OngoingSequence *find(const String &rootNode = "") const;
+        OngoingSequence *find(int animId, const String &rootNode = "") const;
 
         /**
          * Starts an animation sequence. A previous sequence running on this node will
@@ -211,7 +211,7 @@ public:
          *
          * @return OngoingSequence.
          */
-        OngoingSequence &start(String const &animName, String const &rootNode = "");
+        OngoingSequence &start(const String &animName, const String &rootNode = "");
 
         /**
          * Starts an animation sequence. A previous sequence running on this node will
@@ -222,7 +222,7 @@ public:
          *
          * @return OngoingSequence.
          */
-        OngoingSequence &start(int animId, String const &rootNode = "");
+        OngoingSequence &start(int animId, const String &rootNode = "");
 
         void stop(int index);
 
@@ -253,7 +253,7 @@ public:
          *
          * @return Rotation axis (xyz) and angle (w; degrees).
          */
-        virtual Vec4f extraRotationForNode(String const &nodeName) const;
+        virtual Vec4f extraRotationForNode(const String &nodeName) const;
 
         // ISerializable.
         void operator>>(Writer &to) const override;
@@ -283,7 +283,7 @@ public:
          *
          * @return Loaded image.
          */
-        virtual Image loadImage(String const &path) = 0;
+        virtual Image loadImage(const String &path) = 0;
     };
 
     /**
@@ -302,7 +302,7 @@ public:
         bool            depthWrite = true;
         gfx::Comparison depthFunc  = gfx::Less;
 
-        bool operator==(Pass const &other) const
+        bool operator==(const Pass &other) const
         {
             return name == other.name; // Passes are uniquely identified by names.
         }
@@ -318,14 +318,14 @@ public:
          *
          * @return Index of the pass. If not found, returns -1.
          */
-        int findName(String const &name) const;
+        int findName(const String &name) const;
     };
 
     enum ProgramBinding { AboutToBind, Unbound };
     typedef std::function<void (GLProgram &, ProgramBinding)> ProgramBindingFunc;
 
     enum PassState { PassBegun, PassEnded };
-    typedef std::function<void (Pass const &, PassState)> RenderingPassFunc;
+    typedef std::function<void (const Pass &, PassState)> RenderingPassFunc;
 
     /**
      * Per-instance appearance parameters.
@@ -340,7 +340,7 @@ public:
          * Rendering passes. If omitted, all meshes are drawn with normal
          * alpha blending.
          */
-        Passes const *drawPasses = nullptr;
+        const Passes *drawPasses = nullptr;
 
         /**
          * Specifies the material used for each rendering pass. Size of the
@@ -410,7 +410,7 @@ public:
      *
      * @param file  Model file to load.
      */
-    void load(File const &file);
+    void load(const File &file);
 
     /**
      * Finds the id of an animation that has the name @a name. Note that
@@ -420,7 +420,7 @@ public:
      *
      * @return Animation id, or -1 if not found.
      */
-    int animationIdForName(String const &name) const;
+    int animationIdForName(const String &name) const;
 
     String animationName(int id) const;
 
@@ -435,7 +435,7 @@ public:
      *
      * @return Mesh id, or -1 if no mesh with that name exists.
      */
-    int meshId(String const &name) const;
+    int meshId(const String &name) const;
 
     String meshName(int id) const;
 
@@ -446,9 +446,9 @@ public:
      *
      * @return Material id.
      */
-    int materialId(String const &name) const;
+    int materialId(const String &name) const;
 
-    bool nodeExists(String const &name) const;
+    bool nodeExists(const String &name) const;
 
     /**
      * Atlas to use for any textures needed by the model. This is needed for
@@ -501,7 +501,7 @@ public:
      * @param textureType  Type of the texture.
      * @param atlasId      Identifier in the atlas.
      */
-    void setDefaultTexture(TextureMap textureType, Id const &atlasId);
+    void setDefaultTexture(TextureMap textureType, const Id &atlasId);
 
     /**
      * Sets or changes one of the texture maps used by a mesh. This can be
@@ -512,8 +512,8 @@ public:
      * @param textureMap  Texture to set.
      * @param path        Path of the texture image.
      */
-    void setTexturePath(MeshId const &mesh, TextureMap textureMap,
-                        String const &path);
+    void setTexturePath(const MeshId &mesh, TextureMap textureMap,
+                        const String &path);
 
     /**
      * Prepares a loaded model for drawing by constructing all the required GL
@@ -546,21 +546,21 @@ public:
      * @param appearance  Appearance parameters.
      * @param animation   Animation state.
      */
-    void draw(Appearance const *appearance = nullptr,
-              Animator const *animation = nullptr) const;
+    void draw(const Appearance *appearance = nullptr,
+              const Animator *animation = nullptr) const;
 
-    void draw(Animator const *animation) const {
+    void draw(const Animator *animation) const {
         draw(nullptr, animation);
     }
 
-    void drawInstanced(GLBuffer const &instanceAttribs,
-                       Animator const *animation = nullptr) const;
+    void drawInstanced(const GLBuffer &instanceAttribs,
+                       const Animator *animation = nullptr) const;
 
     /**
      * When a draw operation is ongoing, returns the current rendering pass.
      * Otherwise returns nullptr.
      */
-    Pass const *currentPass() const;
+    const Pass *currentPass() const;
 
     /**
      * When a draw operation is ongoing, returns the current GL program.
@@ -584,6 +584,6 @@ private:
 
 } // namespace de
 
-//LIBGUI_PUBLIC uint qHash(de::ModelDrawable::Pass const &pass);
+//LIBGUI_PUBLIC uint qHash(const de::ModelDrawable::Pass &pass);
 
 #endif // LIBGUI_MODELDRAWABLE_H

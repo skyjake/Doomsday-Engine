@@ -76,7 +76,7 @@ public:
             Value(String txt = "", Flags f = DefaultFlags)
                 : text(std::move(txt)), flags(f) {}
 
-            operator String const & () const { return text; }
+            operator const String & () const { return text; }
         };
         using ValueList = de::List<Value>;
 
@@ -84,13 +84,13 @@ public:
          * @param type  Type of the element.
          * @param name  Case-independent name of the element.
          */
-        Element(Type type = None, String const &name = String());
+        Element(Type type = None, const String &name = String());
         virtual ~Element() = default;
 
         void setParent(BlockElement *parent);
         BlockElement *parent() const;
 
-        void setSourceLocation(String const &sourcePath, int line);
+        void setSourceLocation(const String &sourcePath, int line);
         String sourceLocation() const;
         duint32 sourceLineId() const;
 
@@ -100,10 +100,10 @@ public:
         bool isBlock() const { return type() == Block; }
         const String &name() const;
 
-        void setName(String const &name);
+        void setName(const String &name);
 
         /// Convenience for case-insensitively checking if the name matches @a name.
-        inline bool isName(String const &str) const {
+        inline bool isName(const String &str) const {
             return !name().compareWithoutCase(str);
         }
 
@@ -124,7 +124,7 @@ public:
         enum Flag { Attribute = 0x1, DefaultFlags = 0 };
 
     public:
-        KeyElement(String const &name, Value value, Flags f = DefaultFlags)
+        KeyElement(const String &name, Value value, Flags f = DefaultFlags)
             : Element(Key, name)
             , _value(std::move(value))
             , _flags(f)
@@ -132,7 +132,7 @@ public:
 
         Flags flags() const { return _flags; }
 
-        void         setValue(Value const &v) { _value = v; }
+        void         setValue(const Value &v) { _value = v; }
         const Value &value() const { return _value; }
         ValueList    values() const override { return ValueList() << _value; }
 
@@ -147,8 +147,8 @@ public:
     class DE_PUBLIC ListElement : public Element
     {
     public:
-        ListElement(String const &name) : Element(List, name) {}
-        void add(Value const &v) { _values << v; }
+        ListElement(const String &name) : Element(List, name) {}
+        void add(const Value &v) { _values << v; }
         ValueList values() const override { return _values; }
 
     private:
@@ -169,7 +169,7 @@ public:
         using ContentsInOrder = de::List<Element *>;
 
     public:
-        BlockElement(String const &bType, String const &name, Info &document)
+        BlockElement(const String &bType, const String &name, Info &document)
             : Element(Block, name), _info(document)
         {
             setBlockType(bType);
@@ -185,11 +185,11 @@ public:
 
         Info &info() const { return _info; }
 
-        String const &blockType() const { return _blockType; }
+        const String &blockType() const { return _blockType; }
 
-        ContentsInOrder const &contentsInOrder() const { return _contentsInOrder; }
+        const ContentsInOrder &contentsInOrder() const { return _contentsInOrder; }
 
-        Contents const &contents() const { return _contents; }
+        const Contents &contents() const { return _contents; }
 
         ValueList values() const override {
             throw ValuesError("Info::BlockElement::values",
@@ -198,18 +198,18 @@ public:
 
         dsize size() const { return _contents.size(); }
 
-        bool contains(String const &name) const { return _contents.contains(name.lower()); }
+        bool contains(const String &name) const { return _contents.contains(name.lower()); }
 
-        void setBlockType(String const &bType) { _blockType = bType.lower(); }
+        void setBlockType(const String &bType) { _blockType = bType.lower(); }
 
         void clear();
 
         void add(Element *elem);
 
-        Element *find(String const &name) const;
+        Element *find(const String &name) const;
 
         template <typename T>
-        T *findAs(String const &name) const {
+        T *findAs(const String &name) const {
             return dynamic_cast<T *>(find(name));
         }
 
@@ -224,7 +224,7 @@ public:
          * @return Value of the key element. If the located element is not a
          * key element, returns @a defaultValue.
          */
-        Value keyValue(String const &name, String const &defaultValue = String()) const;
+        Value keyValue(const String &name, const String &defaultValue = String()) const;
 
         String operator[](const String &name) const;
 
@@ -237,7 +237,7 @@ public:
          *
          * @return  The located element, or @c NULL.
          */
-        Element *findByPath(String const &path) const;
+        Element *findByPath(const String &path) const;
 
         /**
          * Moves all elements in this block to the destination block. This block
@@ -280,7 +280,7 @@ public:
          *
          * @return Content of the included document.
          */
-        virtual String findIncludedInfoSource(String const &includeName, Info const &from,
+        virtual String findIncludedInfoSource(const String &includeName, const Info &from,
                                               String *sourcePath) const = 0;
 
         /// The included document could not be found. @ingroup errors
@@ -295,16 +295,16 @@ public:
      *
      * @param source  Info source text.
      */
-    Info(String const &source);
+    Info(const String &source);
 
     /**
      * Parses a file containing Info source.
      *
      * @param file  Info source text.
      */
-    Info(File const &file);
+    Info(const File &file);
 
-    Info(String const &source, IIncludeFinder const &finder);
+    Info(const String &source, const IIncludeFinder &finder);
 
     /**
      * Sets the finder for included documents. By default, attempts to locate Info files
@@ -312,7 +312,7 @@ public:
      *
      * @param finder  Include finder object. Info does not take ownership.
      */
-    void setFinder(IIncludeFinder const &finder);
+    void setFinder(const IIncludeFinder &finder);
 
     void useDefaultFinder();
 
@@ -344,32 +344,32 @@ public:
      *
      * @param implicitBlock  Block type for anonymous/untyped blocks.
      */
-    void setImplicitBlockType(String const &implicitBlock);
+    void setImplicitBlockType(const String &implicitBlock);
 
     /**
      * Parses the Info contents from a text string.
      *
      * @param infoSource  Info text.
      */
-    void parse(String const &infoSource);
+    void parse(const String &infoSource);
 
     /**
      * Parses the Info source read from a file.
      *
      * @param file  File containing an Info document.
      */
-    void parse(File const &file);
+    void parse(const File &file);
 
     /**
      * Parses the Info contents from a native text file.
      *
      * @param nativePath  Path of a native file containing the Info source.
      */
-    void parseNativeFile(NativePath const &nativePath);
+    void parseNativeFile(const NativePath &nativePath);
 
     void clear();
 
-    void setSourcePath(String const &path);
+    void setSourcePath(const String &path);
 
     /**
      * Path of the source, if it has been read from a file.
@@ -378,7 +378,7 @@ public:
      */
     String sourcePath() const;
 
-    BlockElement const &root() const;
+    const BlockElement &root() const;
 
     /**
      * Finds an element by its path. Info paths use a colon ':' as separator.
@@ -387,7 +387,7 @@ public:
      *
      * @return Element, or @c nullptr.
      */
-    const Element *findByPath(String const &path) const;
+    const Element *findByPath(const String &path) const;
 
     /**
      * Finds the value of a key.
@@ -398,7 +398,7 @@ public:
      * @return @c true, if the key was found and @a value is valid. If @c
      * false, the key was not found and @a value is not changed.
      */
-    bool findValueForKey(String const &key, String &value) const;
+    bool findValueForKey(const String &key, String &value) const;
 
     /**
      * Finds the value of a key.
@@ -412,7 +412,7 @@ public:
     bool isEmpty() const;
 
 public:
-    static String quoteString(String const &text);
+    static String quoteString(const String &text);
     static String sourceLocation(duint32 lineId);
     static const SourceLineTable &sourceLineTable();
 

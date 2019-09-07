@@ -26,18 +26,18 @@
 
 using namespace de;
 
-Module::Module(String const &sourcePath) : _sourcePath(sourcePath), _process(0)
+Module::Module(const String &sourcePath) : _sourcePath(sourcePath), _process(0)
 {
     // Load the script.
     initialize(Script(App::rootFolder().locate<File>(sourcePath)));
 }
 
-Module::Module(File const &sourceFile) : _sourcePath(sourceFile.path()), _process(0)
+Module::Module(const File &sourceFile) : _sourcePath(sourceFile.path()), _process(0)
 {
     initialize(Script(sourceFile));
 }
 
-void Module::initialize(Script const &script)
+void Module::initialize(const Script &script)
 {
     // Execute the script.
     std::unique_ptr<Process> proc(new Process(script));

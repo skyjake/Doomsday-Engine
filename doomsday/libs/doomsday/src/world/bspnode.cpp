@@ -23,7 +23,7 @@ using namespace de;
 
 namespace world {
 
-BspNode::BspNode(Partition const &partition) : Partition(partition)
+BspNode::BspNode(const Partition &partition) : Partition(partition)
 {}
 
 }  // namespace world

@@ -39,8 +39,8 @@ DE_PIMPL_NOREF(CVarToggleWidget)
     std::function<void(State)> stateChangeCallback;
 };
 
-CVarToggleWidget::CVarToggleWidget(char const *cvarPath, int cvarValueMask,
-                                   String const &downText, String const &upText)
+CVarToggleWidget::CVarToggleWidget(const char *cvarPath, int cvarValueMask,
+                                   const String &downText, const String &upText)
     : ButtonWidget()
     , d(new Impl)
 {
@@ -144,7 +144,7 @@ CVarToggleWidget::State CVarToggleWidget::state() const
     return d->state;
 }
 
-char const *CVarToggleWidget::cvarPath() const
+const char *CVarToggleWidget::cvarPath() const
 {
     return d->cvarPath;
 }
@@ -154,7 +154,7 @@ int CVarToggleWidget::cvarValueMask() const
     return d->cvarValueMask;
 }
 
-void CVarToggleWidget::setDownText(String const &newDownText)
+void CVarToggleWidget::setDownText(const String &newDownText)
 {
     d->downText = newDownText;
 }
@@ -164,7 +164,7 @@ String CVarToggleWidget::downText() const
     return d->downText;
 }
 
-void CVarToggleWidget::setUpText(String const &newUpText)
+void CVarToggleWidget::setUpText(const String &newUpText)
 {
     d->upText = newUpText;
 }

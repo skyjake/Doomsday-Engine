@@ -34,7 +34,7 @@ using namespace res;
 
 static char dedReadError[512];
 
-void DED_SetError(String const &message)
+void DED_SetError(const String &message)
 {
     String msg = "Error: " + message + ".";
     strncpy(dedReadError, msg, sizeof(dedReadError));
@@ -90,10 +90,10 @@ int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum)
         File1 &lump = App_FileSystem().lump(lumpNum);
         if (lump.size() > 0)
         {
-            uint8_t const *data = lump.cache();
+            const uint8_t *data = lump.cache();
             String sourcePath = lump.container().composePath();
             bool custom       = (lump.isContained()? lump.container().hasCustom() : lump.hasCustom());
-            DED_ReadData(ded, (char const *)data, sourcePath, custom);
+            DED_ReadData(ded, (const char *)data, sourcePath, custom);
             lump.unlock();
         }
         return true;
@@ -132,19 +132,19 @@ int DED_Read(ded_t *ded, const String& path)
         M_Free(bufferedDef);
         return result;
     }
-    catch (FS1::NotFoundError const &)
+    catch (const FS1::NotFoundError &)
     {} // Ignore.
 
     DED_SetError("File could not be opened for reading");
     return false;
 }
 
-int DED_ReadData(ded_t *ded, char const *buffer, String sourceFile, bool sourceIsCustom)
+int DED_ReadData(ded_t *ded, const char *buffer, String sourceFile, bool sourceIsCustom)
 {
     return DEDParser(ded).parse(buffer, sourceFile, sourceIsCustom);
 }
 
-char const *DED_Error()
+const char *DED_Error()
 {
     return dedReadError;
 }

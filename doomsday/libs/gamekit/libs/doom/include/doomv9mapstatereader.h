@@ -36,10 +36,10 @@
 class DoomV9MapStateReader : public GameStateFolder::MapStateReader
 {
 public:
-    DoomV9MapStateReader(GameStateFolder const &session);
+    DoomV9MapStateReader(const GameStateFolder &session);
     ~DoomV9MapStateReader();
 
-    void read(de::String const &mapUriStr);
+    void read(const de::String &mapUriStr);
 
     thinker_t *thinkerForPrivateId(de::Id::Type id) const override;
 

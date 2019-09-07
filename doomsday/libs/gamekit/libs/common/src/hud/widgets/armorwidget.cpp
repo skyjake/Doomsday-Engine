@@ -30,7 +30,7 @@
 using namespace de;
 
 guidata_armor_t::guidata_armor_t(void (*updateGeometry) (HudWidget *wi),
-                                 void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                                 void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                                  dint player)
     : HudWidget(updateGeometry,
                 drawer,
@@ -50,7 +50,7 @@ void guidata_armor_t::tick(timespan_t /*elapsed*/)
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
 #if __JHEXEN__
-    player_t const *plr = &::players[player()];
+    const player_t *plr = &::players[player()];
     dint const pClass   = ::cfg.playerClass[player()];  // Original player class (i.e. not pig).
     _value = FixedDiv(PCLASS_INFO(pClass)->autoArmorSave
                       + plr->armorPoints[ARMOR_ARMOR ]
@@ -58,12 +58,12 @@ void guidata_armor_t::tick(timespan_t /*elapsed*/)
                       + plr->armorPoints[ARMOR_HELMET]
                       + plr->armorPoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
 #else
-    player_t const *plr = &::players[player()];
+    const player_t *plr = &::players[player()];
     _value = plr->armorPoints;
 #endif
 }
 
-void ArmorWidget_Draw(guidata_armor_t *armor, Point2Raw const *offset)
+void ArmorWidget_Draw(guidata_armor_t *armor, const Point2Raw *offset)
 {
 #if __JDOOM__
 #  define SUFFIX                ( "%" )
@@ -115,7 +115,7 @@ void ArmorWidget_Draw(guidata_armor_t *armor, Point2Raw const *offset)
 }
 
 
-void SBarArmorWidget_Draw(guidata_armor_t *armor, Point2Raw const *offset)
+void SBarArmorWidget_Draw(guidata_armor_t *armor, const Point2Raw *offset)
 {
 #if __JDOOM__
 #  define X_OFFSET              ( 221 )

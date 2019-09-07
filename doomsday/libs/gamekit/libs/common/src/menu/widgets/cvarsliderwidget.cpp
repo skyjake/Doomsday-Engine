@@ -28,7 +28,7 @@ using namespace de;
 namespace common {
 namespace menu {
 
-CVarSliderWidget::CVarSliderWidget(char const *cvarPath, float min, float max, float step, bool floatMode)
+CVarSliderWidget::CVarSliderWidget(const char *cvarPath, float min, float max, float step, bool floatMode)
     : SliderWidget(min, max, step, floatMode)
     , _cvarPath(cvarPath)
 {
@@ -39,7 +39,7 @@ CVarSliderWidget::CVarSliderWidget(char const *cvarPath, float min, float max, f
 CVarSliderWidget::~CVarSliderWidget()
 {}
 
-char const *CVarSliderWidget::cvarPath() const
+const char *CVarSliderWidget::cvarPath() const
 {
     return _cvarPath;
 }

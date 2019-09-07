@@ -217,7 +217,7 @@ static void prepareFogTexture()
     if(CentralLumpIndex().contains("menufog.lmp"))
     {
         res::File1 &lump       = CentralLumpIndex()[CentralLumpIndex().findLast("menufog.lmp")];
-        uint8_t const *pixels = lump.cache();
+        const uint8_t *pixels = lump.cache();
         /// @todo fixme: Do not assume dimensions.
         fogEffectData.texture = DGL_NewTextureWithParams(DGL_LUMINANCE, 64, 64,
             pixels, 0, DGL_NEAREST, DGL_LINEAR, -1 /*best anisotropy*/, DGL_REPEAT, DGL_REPEAT);
@@ -341,10 +341,10 @@ void HU_DrawText(const char* str, float x, float y, float scale,
 }
 
 /// Predicate for sorting score infos.
-static int scoreInfoCompare(void const *a_, void const *b_)
+static int scoreInfoCompare(const void *a_, const void *b_)
 {
-    scoreinfo_t const *a = (scoreinfo_t *) a_;
-    scoreinfo_t const *b = (scoreinfo_t *) b_;
+    const scoreinfo_t *a = (scoreinfo_t *) a_;
+    const scoreinfo_t *b = (scoreinfo_t *) b_;
 
     if(a->kills > b->kills) return -1;
     if(b->kills > a->kills) return 1;
@@ -1047,7 +1047,7 @@ void M_DrawTextFragmentShadowed(const char* string, int x, int y, int alignFlags
     FR_DrawTextXY3(string, x, y, alignFlags, textFlags);
 }
 
-static char const *patchReplacement(patchid_t patchId)
+static const char *patchReplacement(patchid_t patchId)
 {
     dint idx = patchReplacementValueIndex(patchId);
     if(idx == -1) return nullptr;
@@ -1055,9 +1055,9 @@ static char const *patchReplacement(patchid_t patchId)
     throw Error("Hu_FindPatchReplacementString", "Failed retrieving text value #" + String::asText(idx));
 }
 
-char const *Hu_FindPatchReplacementString(patchid_t patchId, int flags)
+const char *Hu_FindPatchReplacementString(patchid_t patchId, int flags)
 {
-    char const *replacement = patchReplacement(patchId);
+    const char *replacement = patchReplacement(patchId);
     if(flags & (PRF_NO_IWAD | PRF_NO_PWAD))
     {
         patchinfo_t info;
@@ -1076,7 +1076,7 @@ char const *Hu_FindPatchReplacementString(patchid_t patchId, int flags)
     return replacement;
 }
 
-de::String Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId, de::String const &text)
+de::String Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId, const de::String &text)
 {
     if(mode != PRM_NONE)
     {
@@ -1105,7 +1105,7 @@ de::String Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId,
     return ""; // No replacement available/wanted.
 }
 
-void WI_DrawPatch(patchid_t patchId, de::String const &replacement, de::Vec2i const &origin,
+void WI_DrawPatch(patchid_t patchId, const de::String &replacement, const de::Vec2i &origin,
     int alignFlags, int patchFlags, short textFlags)
 {
     if(!replacement.isEmpty())

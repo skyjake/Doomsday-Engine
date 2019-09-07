@@ -32,7 +32,7 @@
  */
 
 void SV_CloseFile();
-bool SV_OpenFileForRead(de::File const &file);
+bool SV_OpenFileForRead(const de::File &file);
 bool SV_OpenFileForWrite(de::IByteArray &block);
 
 Writer1 *SV_NewWriter();

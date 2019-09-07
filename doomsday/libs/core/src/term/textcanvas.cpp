@@ -31,7 +31,7 @@ DE_PIMPL_NOREF(TextCanvas)
     };
     List<RichFormat> richFormats;
 
-    Impl(Size const &initialSize) : size(initialSize)
+    Impl(const Size &initialSize) : size(initialSize)
     {
         // Allocate lines based on supplied initial size.
         for (duint row = 0; row < size.y; ++row)
@@ -58,7 +58,7 @@ DE_PIMPL_NOREF(TextCanvas)
         return new AttribChar[size.x];
     }
 
-    void resize(Size const &newSize)
+    void resize(const Size &newSize)
     {
         if (newSize == size) return;
 
@@ -113,7 +113,7 @@ DE_PIMPL_NOREF(TextCanvas)
     }
 };
 
-TextCanvas::TextCanvas(Size const &size) : d(new Impl(size))
+TextCanvas::TextCanvas(const Size &size) : d(new Impl(size))
 {
     d->size = size;
 }
@@ -141,24 +141,24 @@ Rectanglei TextCanvas::rect() const
     return Rectanglei(0, 0, size().x, size().y);
 }
 
-void TextCanvas::resize(Size const &newSize)
+void TextCanvas::resize(const Size &newSize)
 {
     d->resize(newSize);
 }
 
-TextCanvas::AttribChar &TextCanvas::at(Coord const &pos)
+TextCanvas::AttribChar &TextCanvas::at(const Coord &pos)
 {
     DE_ASSERT(isValid(pos));
     return d->lines[pos.y][pos.x];
 }
 
-TextCanvas::AttribChar const &TextCanvas::at(Coord const &pos) const
+const TextCanvas::AttribChar &TextCanvas::at(const Coord &pos) const
 {
     DE_ASSERT(isValid(pos));
     return d->lines[pos.y][pos.x];
 }
 
-bool TextCanvas::isValid(Coord const &pos) const
+bool TextCanvas::isValid(const Coord &pos) const
 {
     return (pos.x >= 0 && pos.y >= 0 && pos.x < int(d->size.x) && pos.y < int(d->size.y));
 }
@@ -168,12 +168,12 @@ void TextCanvas::markDirty()
     d->markAllAsDirty(true);
 }
 
-void TextCanvas::clear(AttribChar const &ch)
+void TextCanvas::clear(const AttribChar &ch)
 {
     fill(Rectanglei(0, 0, d->size.x, d->size.y), ch);
 }
 
-void TextCanvas::fill(Rectanglei const &rect, AttribChar const &ch)
+void TextCanvas::fill(const Rectanglei &rect, const AttribChar &ch)
 {
     for (int y = rect.top(); y < rect.bottom(); ++y)
     {
@@ -185,7 +185,7 @@ void TextCanvas::fill(Rectanglei const &rect, AttribChar const &ch)
     }
 }
 
-void TextCanvas::put(Vec2i const &pos, AttribChar const &ch)
+void TextCanvas::put(const Vec2i &pos, const AttribChar &ch)
 {
     if (isValid(pos))
     {
@@ -198,7 +198,7 @@ void TextCanvas::clearRichFormat()
     d->richFormats.clear();
 }
 
-void TextCanvas::setRichFormatRange(AttribChar::Attribs const &attribs, const String::ByteRange &range)
+void TextCanvas::setRichFormatRange(const AttribChar::Attribs &attribs, const String::ByteRange &range)
 {
     Impl::RichFormat rf;
     rf.attrib = attribs;
@@ -206,9 +206,9 @@ void TextCanvas::setRichFormatRange(AttribChar::Attribs const &attribs, const St
     d->richFormats.append(rf);
 }
 
-void TextCanvas::drawText(Vec2i const &              pos,
-                          String const &             text,
-                          AttribChar::Attribs const &attribs,
+void TextCanvas::drawText(const Vec2i &              pos,
+                          const String &             text,
+                          const AttribChar::Attribs &attribs,
                           BytePos                    richOffset)
 {
     Vec2i p = pos;
@@ -249,7 +249,7 @@ void TextCanvas::drawWrappedText(const Vec2i &              pos,
     }
 }
 
-void TextCanvas::drawLineRect(Rectanglei const &rect, AttribChar::Attribs const &attribs)
+void TextCanvas::drawLineRect(const Rectanglei &rect, const AttribChar::Attribs &attribs)
 {
     AttribChar const corner('+', attribs);
     AttribChar const hEdge ('-', attribs);
@@ -275,7 +275,7 @@ void TextCanvas::drawLineRect(Rectanglei const &rect, AttribChar::Attribs const 
     put(rect.bottomLeft() - Vec2i(0, 1), corner);
 }
 
-void TextCanvas::draw(TextCanvas const &canvas, Coord const &topLeft)
+void TextCanvas::draw(const TextCanvas &canvas, const Coord &topLeft)
 {
     for (duint y = 0; y < canvas.d->size.y; ++y)
     {
@@ -296,6 +296,6 @@ void TextCanvas::show()
     d->markAllAsDirty(false);
 }
 
-void TextCanvas::setCursorPosition(Vec2i const &) {}
+void TextCanvas::setCursorPosition(const Vec2i &) {}
 
 }} // namespace de::term

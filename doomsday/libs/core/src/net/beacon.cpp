@@ -187,7 +187,7 @@ void Beacon::start()
         stringf("Could not bind to UDP ports %u...%u", d->udpPorts.start, d->udpPorts.end));
 }
 
-void Beacon::setMessage(IByteArray const &advertisedMessage)
+void Beacon::setMessage(const IByteArray &advertisedMessage)
 {
     d->message = Block(advertisedMessage).compressed();
 }
@@ -257,7 +257,7 @@ List<Address> Beacon::foundHosts() const
     });
 }
 
-Block Beacon::messageFromHost(Address const &host) const
+Block Beacon::messageFromHost(const Address &host) const
 {
     if (!d->found.contains(host)) return Block();
     return d->found[host];

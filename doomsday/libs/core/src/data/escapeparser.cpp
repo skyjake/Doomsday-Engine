@@ -36,7 +36,7 @@ DE_AUDIENCE_METHOD(EscapeParser, EscapeSequence)
 EscapeParser::EscapeParser() : d(new Impl)
 {}
 
-void EscapeParser::parse(String const &textWithEscapes)
+void EscapeParser::parse(const String &textWithEscapes)
 {
 #if defined (DE_DEBUG)
     {

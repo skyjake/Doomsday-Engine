@@ -38,7 +38,7 @@ public:
     RemoteFeedQueryPacket();
 
     void setQuery(Query query);
-    void setPath(String const &path);
+    void setPath(const String &path);
 
     Query query() const;
     String path() const;
@@ -47,7 +47,7 @@ public:
     void operator >> (Writer &to) const;
     void operator << (Reader &from);
 
-    static Packet *fromBlock(Block const &block);
+    static Packet *fromBlock(const Block &block);
 
 private:
     Query _query;
@@ -63,10 +63,10 @@ class DE_PUBLIC RemoteFeedMetadataPacket : public IdentifiedPacket
 public:
     RemoteFeedMetadataPacket();
 
-    void addFile(File const &file, String const &prefix = String());
-    void addFolder(Folder const &folder, String prefix = String());
+    void addFile(const File &file, const String &prefix = String());
+    void addFolder(const Folder &folder, String prefix = String());
 
-    DictionaryValue const &metadata() const;
+    const DictionaryValue &metadata() const;
 
     static File::Type toFileType(int value);
 
@@ -74,7 +74,7 @@ public:
     void operator >> (Writer &to) const;
     void operator << (Reader &from);
 
-    static Packet *fromBlock(Block const &block);
+    static Packet *fromBlock(const Block &block);
 
 private:
     DictionaryValue _metadata;
@@ -89,11 +89,11 @@ class DE_PUBLIC RemoteFeedFileContentsPacket : public IdentifiedPacket
 public:
     RemoteFeedFileContentsPacket();
 
-    void setData(Block const &data);
+    void setData(const Block &data);
     void setStartOffset(dsize offset);
     void setFileSize(dsize size);
 
-    Block const &data() const;
+    const Block &data() const;
     dsize startOffset() const;
     dsize fileSize() const;
 
@@ -101,7 +101,7 @@ public:
     void operator >> (Writer &to) const;
     void operator << (Reader &from);
 
-    static Packet *fromBlock(Block const &block);
+    static Packet *fromBlock(const Block &block);
 
 private:
     dsize _startOffset;
@@ -128,7 +128,7 @@ public:
 public:
     RemoteFeedProtocol();
 
-    static PacketType recognize(Packet const &packet);
+    static PacketType recognize(const Packet &packet);
 };
 
 } // namespace de

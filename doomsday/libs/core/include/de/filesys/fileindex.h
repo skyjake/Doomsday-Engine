@@ -54,11 +54,11 @@ public:
          *
          * @return @c true to index file, @c false to ignore.
          */
-        virtual bool shouldIncludeInIndex(File const &file) const = 0;
+        virtual bool shouldIncludeInIndex(const File &file) const = 0;
     };
 
-    DE_AUDIENCE(Addition, void fileAdded  (File const &, FileIndex const &))
-    DE_AUDIENCE(Removal,  void fileRemoved(File const &, FileIndex const &))
+    DE_AUDIENCE(Addition, void fileAdded  (const File &, const FileIndex &))
+    DE_AUDIENCE(Removal,  void fileRemoved(const File &, const FileIndex &))
 
 public:
     FileIndex();
@@ -70,7 +70,7 @@ public:
      * @param predicate  Predicate for inclusion. Must exist while the index is being
      *                   used.
      */
-    void setPredicate(IPredicate const &predicate);
+    void setPredicate(const IPredicate &predicate);
 
     /**
      * Adds a file to the index if the predicate permits.
@@ -79,14 +79,14 @@ public:
      *
      * @return @c true, if the file was added to the index.
      */
-    bool maybeAdd(File const &file);
+    bool maybeAdd(const File &file);
 
     /**
      * Removes a file from the index, if it has been indexed. If not, nothing is done.
      *
      * @param file  File.
      */
-    void remove(File const &file);
+    void remove(const File &file);
 
     int size() const;
 
@@ -104,7 +104,7 @@ public:
      * @param found       All matching files.
      * @param behavior    Search behavior.
      */
-    void findPartialPath(Folder const &rootFolder,
+    void findPartialPath(const Folder &rootFolder,
                          const String &path,
                          FoundFiles &found,
                          Behavior behavior = FindInEntireIndex) const;

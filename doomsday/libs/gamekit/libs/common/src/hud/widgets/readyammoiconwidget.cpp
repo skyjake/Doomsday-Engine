@@ -34,7 +34,7 @@ static patchid_t pAmmoIcons[11];
 #endif
 
 guidata_readyammoicon_t::guidata_readyammoicon_t(void (*updateGeometry) (HudWidget *wi),
-                                                 void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                                                 void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                                                  dint player)
     : HudWidget(updateGeometry,
                 drawer,
@@ -63,7 +63,7 @@ void guidata_readyammoicon_t::tick(timespan_t /*elapsed*/)
 
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
-    player_t const *plr = &::players[player()];
+    const player_t *plr = &::players[player()];
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)) return;
 
 #if __JDOOM__
@@ -95,7 +95,7 @@ void guidata_readyammoicon_t::tick(timespan_t /*elapsed*/)
     }
 }
 
-void ReadyAmmoIconWidget_Drawer(guidata_readyammoicon_t *icon, Point2Raw const *offset)
+void ReadyAmmoIconWidget_Drawer(guidata_readyammoicon_t *icon, const Point2Raw *offset)
 {
     DE_ASSERT(icon);
 
@@ -138,7 +138,7 @@ void ReadyAmmoIconWidget_Drawer(guidata_readyammoicon_t *icon, Point2Raw const *
 }
 
 #if __JHERETIC__
-void SBarReadyAmmoIconWidget_Drawer(guidata_readyammoicon_t *icon, Point2Raw const *offset)
+void SBarReadyAmmoIconWidget_Drawer(guidata_readyammoicon_t *icon, const Point2Raw *offset)
 {
 #define ORIGINX             (-ST_WIDTH / 2 )
 #define ORIGINY             (-ST_HEIGHT )
@@ -245,7 +245,7 @@ void guidata_readyammoicon_t::prepareAssets()
     de::zap(::pAmmoIcons);
     for(dint i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        AmmoDef const *def = P_AmmoDef(ammotype_t( i ));
+        const AmmoDef *def = P_AmmoDef(ammotype_t( i ));
         // Available in the current game mode?
         if(def->gameModeBits & ::gameModeBits)
         {

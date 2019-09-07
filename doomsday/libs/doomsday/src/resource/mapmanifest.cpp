@@ -24,7 +24,7 @@ using namespace de;
 
 namespace res {
 
-MapManifest::MapManifest(PathTree::NodeArgs const &args)
+MapManifest::MapManifest(const PathTree::NodeArgs &args)
     : Node(args), Record(), _sourceFile(nullptr)
 {}
 
@@ -41,7 +41,7 @@ String MapManifest::description(res::Uri::ComposeAsTextFlags uriCompositionFlags
     return info;
 }
 
-String MapManifest::composeUniqueId(Game const &currentGame) const
+String MapManifest::composeUniqueId(const Game &currentGame) const
 {
     return (gets("id").fileNameWithoutExtension() + "|" +
             sourceFile()->name().fileNameWithoutExtension() + "|" +
@@ -66,7 +66,7 @@ MapManifest &MapManifest::setRecognizer(Id1MapRecognizer *newRecognizer)
     return *this;
 }
 
-Id1MapRecognizer const &MapManifest::recognizer() const
+const Id1MapRecognizer &MapManifest::recognizer() const
 {
     DE_ASSERT(_recognized);
     return *_recognized;

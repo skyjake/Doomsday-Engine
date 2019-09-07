@@ -69,7 +69,7 @@ DE_PIMPL(GLShader)
 GLShader::GLShader() : d(new Impl(this))
 {}
 
-GLShader::GLShader(Type shaderType, IByteArray const &source) : d(new Impl(this))
+GLShader::GLShader(Type shaderType, const IByteArray &source) : d(new Impl(this))
 {
     try
     {
@@ -114,7 +114,7 @@ String GLShader::prefixToSource(const String &source, const String &prefix)
     return src;
 }
 
-void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
+void GLShader::compile(Type shaderType, const IByteArray &shaderSource)
 {
 #if defined (DE_OPENGL)
     static const String DEFAULT_VERSION("#version 330 core\n");

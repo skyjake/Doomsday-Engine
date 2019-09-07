@@ -42,7 +42,7 @@ DE_GUI_PIMPL(PopupWidget)
     ColorBank::Colorf     outlineColor;
     SafeWidgetPtr<Widget> realParent;
     RuleRectangle         anchor;
-    Rule const *          marker;
+    const Rule *          marker;
     ButtonWidget *        close = nullptr;
 
     Impl(Public *i) : Base(i)
@@ -94,7 +94,7 @@ DE_GUI_PIMPL(PopupWidget)
         self().setOpeningDirection(openDir);
     }
 
-    using Vector2R = Vector2<Rule const *>;
+    using Vector2R = Vector2<const Rule *>;
 
     Vector2R anchorRule() const
     {
@@ -193,7 +193,7 @@ DE_GUI_PIMPL(PopupWidget)
 
     void updateStyle()
     {
-        Style const &st = style();
+        const Style &st = style();
         bool const opaqueBackground = (self().levelOfNesting() > 0);
 
         outlineColor = st.colors().colorf(outlineColorId);
@@ -223,7 +223,7 @@ DE_GUI_PIMPL(PopupWidget)
     }
 };
 
-PopupWidget::PopupWidget(String const &name) : PanelWidget(name), d(new Impl(this))
+PopupWidget::PopupWidget(const String &name) : PanelWidget(name), d(new Impl(this))
 {
     setOpeningDirection(ui::Up);
     d->updateStyle();
@@ -233,8 +233,8 @@ int PopupWidget::levelOfNesting() const
 {
     int nesting = 0;
     // GuiRootWidget is not a GuiWidget; root widget never has a parent.
-    for (GuiWidget const *p = d->realParent && d->realParent->parent()?
-                static_cast<GuiWidget const *>(d->realParent.get()) : parentGuiWidget();
+    for (const GuiWidget *p = d->realParent && d->realParent->parent()?
+                static_cast<const GuiWidget *>(d->realParent.get()) : parentGuiWidget();
          p; p = p->parentGuiWidget())
     {
         if (is<PopupWidget>(p))
@@ -245,7 +245,7 @@ int PopupWidget::levelOfNesting() const
     return nesting;
 }
 
-void PopupWidget::setAnchorAndOpeningDirection(RuleRectangle const &rule, ui::Direction dir)
+void PopupWidget::setAnchorAndOpeningDirection(const RuleRectangle &rule, ui::Direction dir)
 {
     d->anchor.setRect(rule);
     setOpeningDirection(dir);
@@ -256,7 +256,7 @@ void PopupWidget::setAllowDirectionFlip(bool flex)
     d->flexibleDir = flex;
 }
 
-void PopupWidget::setAnchor(Vec2i const &pos)
+void PopupWidget::setAnchor(const Vec2i &pos)
 {
     d->anchor.setLeftTop(Const(pos.x), Const(pos.y));
     d->anchor.setRightBottom(d->anchor.left(), d->anchor.top());
@@ -274,25 +274,25 @@ void PopupWidget::setAnchorY(int yPos)
              .setInput(Rule::Bottom, Const(yPos));
 }
 
-void PopupWidget::setAnchor(Rule const &x, Rule const &y)
+void PopupWidget::setAnchor(const Rule &x, const Rule &y)
 {
     setAnchorX(x);
     setAnchorY(y);
 }
 
-void PopupWidget::setAnchorX(Rule const &x)
+void PopupWidget::setAnchorX(const Rule &x)
 {
     d->anchor.setInput(Rule::Left,   x)
              .setInput(Rule::Right,  x);
 }
 
-void PopupWidget::setAnchorY(Rule const &y)
+void PopupWidget::setAnchorY(const Rule &y)
 {
     d->anchor.setInput(Rule::Top,    y)
              .setInput(Rule::Bottom, y);
 }
 
-RuleRectangle const &PopupWidget::anchor() const
+const RuleRectangle &PopupWidget::anchor() const
 {
     return d->anchor;
 }
@@ -386,14 +386,14 @@ GuiWidget::Background PopupWidget::infoStyleBackground() const
                       rule("glow").valuei());
 }
 
-bool PopupWidget::handleEvent(Event const &event)
+bool PopupWidget::handleEvent(const Event &event)
 {
     if (!isOpen()) return false;
 
     // Popups eat all mouse button events.
     if (event.type() == Event::MouseButton)
     {
-        //MouseEvent const &mouse = event.as<MouseEvent>();
+        //const MouseEvent &mouse = event.as<MouseEvent>();
         bool const inside = hitTest(event);
 
         if (!inside && d->clickToClose)
@@ -406,7 +406,7 @@ bool PopupWidget::handleEvent(Event const &event)
         event.type() == Event::KeyRepeat ||
         event.type() == Event::KeyRelease)
     {
-        KeyEvent const &key = event.as<KeyEvent>();
+        const KeyEvent &key = event.as<KeyEvent>();
         if (event.isKeyDown() &&
             (key.ddKey() == DDKEY_ESCAPE ||
              key.ddKey() == DDKEY_ENTER  ||

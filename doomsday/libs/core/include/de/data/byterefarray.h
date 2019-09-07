@@ -55,7 +55,7 @@ public:
      * @param base  Pointer to the start of the array.
      * @param size  Total size of the array.
      */
-    ByteRefArray(void const *base, Size size);
+    ByteRefArray(const void *base, Size size);
 
     /**
      * Constructs a non-modifiable byte reference array from a null terminated C
@@ -63,7 +63,7 @@ public:
      *
      * @param nullTerminatedCStr  Pointer to the start of the string.
      */
-    static ByteRefArray fromCStr(char const *nullTerminatedCStr);
+    static ByteRefArray fromCStr(const char *nullTerminatedCStr);
 
     /**
      * Returns a pointer to the start of the array.
@@ -71,17 +71,17 @@ public:
     void *base();
 
     template <typename Type>
-    Type const *baseAs() const { return reinterpret_cast<Type const *>(base()); }
+    const Type *baseAs() const { return reinterpret_cast<const Type *>(base()); }
 
     /**
      * Returns a non-modifiable pointer to the start of the array.
      */
-    void const *base() const;
+    const void *base() const;
 
     /**
      * Returns a non-modifiable pointer to the start of the array.
      */
-    void const *readBase() const { return base(); }
+    const void *readBase() const { return base(); }
 
     /**
      * Sets the contents of the array to zero.
@@ -98,11 +98,11 @@ public:
     // Implements IByteArray.
     Size size() const;
     void get(Offset at, Byte *values, Size count) const;
-    void set(Offset at, Byte const *values, Size count);
+    void set(Offset at, const Byte *values, Size count);
 
 private:
     Byte *_writeBase;
-    Byte const *_readBase;
+    const Byte *_readBase;
     Size _size;
 };
 

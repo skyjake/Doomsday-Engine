@@ -65,7 +65,7 @@ Record &MapGraphNode::exit(int index)
     return *def().geta("exit")[index].as<RecordValue>().record();
 }
 
-Record const &MapGraphNode::exit(int index) const
+const Record &MapGraphNode::exit(int index) const
 {
     return *geta("exit")[index].as<RecordValue>().record();
 }

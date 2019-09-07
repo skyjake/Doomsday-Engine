@@ -60,6 +60,6 @@ de::String FirstPlayableEpisodeId();
  * @return The unique identifier of the map. If no game session is in progress or the
  * warp number is not found, the URI "Maps:" is returned.
  */
-res::Uri TranslateMapWarpNumber(de::String const &episodeId, int warpNumber);
+res::Uri TranslateMapWarpNumber(const de::String &episodeId, int warpNumber);
 
 #endif  // LIBCOMMON_DEFINITION_UTILS_H

@@ -41,7 +41,7 @@ enum xgsegenum_t
 
 dd_bool xgDataLumps;
 
-static byte const *readptr;
+static const byte *readptr;
 
 static linetype_t *linetypes;
 static int num_linetypes;
@@ -117,7 +117,7 @@ void XG_ReadXGLump(lumpnum_t lumpNum)
 
     App_Log(DE2_RES_MSG, "Reading XG types from DDXGDATA");
 
-    LumpIndex const &lumps = CentralLumpIndex();
+    const LumpIndex &lumps = CentralLumpIndex();
     File1 &lump = lumps[lumpNum];
 
     readptr = (byte *)lump.cache();

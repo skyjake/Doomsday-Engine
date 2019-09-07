@@ -34,15 +34,15 @@ namespace internal {
 
 struct LumpSortInfo
 {
-    File1 const *lump;
+    const File1 *lump;
     String path;
     int origIndex;
 };
 
-static int lumpSorter(void const *a, void const *b)
+static int lumpSorter(const void *a, const void *b)
 {
-    LumpSortInfo const *infoA = (LumpSortInfo const *)a;
-    LumpSortInfo const *infoB = (LumpSortInfo const *)b;
+    const LumpSortInfo *infoA = (const LumpSortInfo *)a;
+    const LumpSortInfo *infoB = (const LumpSortInfo *)b;
 
     if (int delta = infoA->path.compare(infoB->path, CaseInsensitive))
         return delta;
@@ -69,7 +69,7 @@ DE_PIMPL_NOREF(LumpIndex::Id1MapRecognizer)
     Format format = UnknownFormat;
 };
 
-LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnum_t lumpIndexOffset)
+LumpIndex::Id1MapRecognizer::Id1MapRecognizer(const LumpIndex &lumpIndex, lumpnum_t lumpIndexOffset)
     : d(new Impl)
 {
     LOG_AS("LumpIndex::Id1MapRecognizer");
@@ -154,7 +154,7 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnu
         DE_FOR_EACH_CONST(Lumps, i, d->lumps)
         {
             DataType const dataType = i->first;
-            File1 const &lump       = *i->second;
+            const File1 &lump       = *i->second;
 
             // Determine the number of map data objects of each data type.
             duint *elemCountAddr = 0;
@@ -199,7 +199,7 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnu
     LOG_RES_VERBOSE("Recognized %s format map") << formatName(d->format);
 }
 
-String const &LumpIndex::Id1MapRecognizer::id() const
+const String &LumpIndex::Id1MapRecognizer::id() const
 {
     return d->id;
 }
@@ -209,7 +209,7 @@ LumpIndex::Id1MapRecognizer::Format LumpIndex::Id1MapRecognizer::format() const
     return d->format;
 }
 
-LumpIndex::Id1MapRecognizer::Lumps const &LumpIndex::Id1MapRecognizer::lumps() const
+const LumpIndex::Id1MapRecognizer::Lumps &LumpIndex::Id1MapRecognizer::lumps() const
 {
     return d->lumps;
 }
@@ -225,7 +225,7 @@ lumpnum_t LumpIndex::Id1MapRecognizer::lastLump() const
     return d->lastLump;
 }
 
-String const &LumpIndex::Id1MapRecognizer::formatName(Format id) // static
+const String &LumpIndex::Id1MapRecognizer::formatName(Format id) // static
 {
     static String const names[1 + KnownFormatCount] = {
         "Unknown",
@@ -366,8 +366,8 @@ DE_PIMPL(LumpIndex)
         // the last lump with a given name appears first in the chain.
         for (int i = 0; i < numElements; ++i)
         {
-            File1 const &lump          = *(lumps[i]);
-            PathTree::Node const &node = lump.directoryNode();
+            const File1 &lump          = *(lumps[i]);
+            const PathTree::Node &node = lump.directoryNode();
             ushort k = segmentHash(node.name()) % (unsigned)numElements;
 
             (*lumpsByPath)[i].nextInLoadOrder = (*lumpsByPath)[k].head;
@@ -420,7 +420,7 @@ DE_PIMPL(LumpIndex)
         for (int i = 0; i < numRecords; ++i)
         {
             LumpSortInfo &sortInfo = sortInfos[i];
-            File1 const *lump      = lumps[i];
+            const File1 *lump      = lumps[i];
 
             sortInfo.lump      = lump;
             sortInfo.path      = lump->composePath();
@@ -526,7 +526,7 @@ File1 &LumpIndex::lump(lumpnum_t lumpNum) const
     return *d->lumps[lumpNum];
 }
 
-LumpIndex::Lumps const &LumpIndex::allLumps() const
+const LumpIndex::Lumps &LumpIndex::allLumps() const
 {
     d->pruneDuplicatesIfNeeded();
     return d->lumps;
@@ -605,7 +605,7 @@ bool LumpIndex::catalogues(File1 &file)
 
     DE_FOR_EACH(Lumps, i, d->lumps)
     {
-        File1 const &lump = **i;
+        const File1 &lump = **i;
         if (&lump.container() == &file)
             return true;
     }
@@ -613,12 +613,12 @@ bool LumpIndex::catalogues(File1 &file)
     return false;
 }
 
-bool LumpIndex::contains(Path const &path) const
+bool LumpIndex::contains(const Path &path) const
 {
     return findFirst(path) >= 0;
 }
 
-int LumpIndex::findAll(Path const &path, FoundIndices &found) const
+int LumpIndex::findAll(const Path &path, FoundIndices &found) const
 {
     LOG_AS("LumpIndex::findAll");
 
@@ -635,8 +635,8 @@ int LumpIndex::findAll(Path const &path, FoundIndices &found) const
     for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
         idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
     {
-        File1 const &lump          = *d->lumps[idx];
-        PathTree::Node const &node = lump.directoryNode();
+        const File1 &lump          = *d->lumps[idx];
+        const PathTree::Node &node = lump.directoryNode();
 
         if (!node.comparePath(path, 0))
         {
@@ -647,7 +647,7 @@ int LumpIndex::findAll(Path const &path, FoundIndices &found) const
     return int(found.size());
 }
 
-lumpnum_t LumpIndex::findLast(Path const &path) const
+lumpnum_t LumpIndex::findLast(const Path &path) const
 {
     if (path.isEmpty() || d->lumps.empty()) return -1;
 
@@ -660,8 +660,8 @@ lumpnum_t LumpIndex::findLast(Path const &path) const
     for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
         idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
     {
-        File1 const &lump          = *d->lumps[idx];
-        PathTree::Node const &node = lump.directoryNode();
+        const File1 &lump          = *d->lumps[idx];
+        const PathTree::Node &node = lump.directoryNode();
 
         if (!node.comparePath(path, 0))
         {
@@ -672,7 +672,7 @@ lumpnum_t LumpIndex::findLast(Path const &path) const
     return -1; // Not found.
 }
 
-lumpnum_t LumpIndex::findFirst(Path const &path) const
+lumpnum_t LumpIndex::findFirst(const Path &path) const
 {
     if (path.isEmpty() || d->lumps.empty()) return -1;
 
@@ -687,8 +687,8 @@ lumpnum_t LumpIndex::findFirst(Path const &path) const
     for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
          idx     = (*d->lumpsByPath)[idx].nextInLoadOrder)
     {
-        File1 const &lump          = *d->lumps[idx];
-        PathTree::Node const &node = lump.directoryNode();
+        const File1 &lump          = *d->lumps[idx];
+        const PathTree::Node &node = lump.directoryNode();
 
         if (!node.comparePath(path, 0))
         {

@@ -37,16 +37,16 @@ public:
 
 public:
     Lexicon();
-    Lexicon(Lexicon const &other);
-    Lexicon &operator=(Lexicon const &other);
+    Lexicon(const Lexicon &other);
+    Lexicon &operator=(const Lexicon &other);
 
     Terms  terms() const;
     String additionalWordChars() const;
     bool   isWordChar(Char ch) const;
     bool   isCaseSensitive() const;
 
-    void addTerm(String const &term);
-    void setAdditionalWordChars(String const &chars);
+    void addTerm(const String &term);
+    void setAdditionalWordChars(const String &chars);
     void setCaseSensitive(bool sensitive);
 
 private:

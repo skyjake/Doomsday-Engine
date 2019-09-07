@@ -34,25 +34,25 @@ namespace ui {
 class LIBGUI_PUBLIC ImageItem : public Item
 {
 public:
-    ImageItem(Semantics semantics, String const &label = "")
+    ImageItem(Semantics semantics, const String &label = "")
         : Item(semantics, label)
     {}
 
-    ImageItem(Semantics semantics, Image const &image, String const &label = "")
+    ImageItem(Semantics semantics, const Image &image, const String &label = "")
         : Item(semantics, label)
         , _image(image)
     {}
 
-    ImageItem(Semantics semantics, DotPath const &styleImageId, String const &label = "")
+    ImageItem(Semantics semantics, const DotPath &styleImageId, const String &label = "")
         : Item(semantics, label)
         , _styleId(styleImageId)
     {}
 
-    Image const &image() const;
-    DotPath const &styleImageId() const;
+    const Image &image() const;
+    const DotPath &styleImageId() const;
 
-    void setImage(Image const &image);
-    void setImage(DotPath const &styleImageId);
+    void setImage(const Image &image);
+    void setImage(const DotPath &styleImageId);
 
 private:
     Image _image;

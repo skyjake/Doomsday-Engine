@@ -30,7 +30,7 @@
 DE_EXTERN_C gamemode_t gameMode;
 DE_EXTERN_C int gameModeBits;
 
-DE_EXTERN_C char const *borderGraphics[];
+DE_EXTERN_C const char *borderGraphics[];
 
 // Default font colors.
 DE_EXTERN_C float const defFontRGB[];

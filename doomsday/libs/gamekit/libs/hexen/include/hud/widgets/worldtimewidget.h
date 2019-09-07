@@ -36,7 +36,7 @@ public:
 
     void tick(timespan_t elapsed);
     void updateGeometry();
-    void draw(de::Vec2i const &offset = de::Vec2i()) const;
+    void draw(const de::Vec2i &offset = de::Vec2i()) const;
 
 private:
     DE_PRIVATE(d)

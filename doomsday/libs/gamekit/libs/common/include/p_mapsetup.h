@@ -36,7 +36,7 @@ DE_EXTERN_C dd_bool mapSetup;
 /**
  * Change the current map to that referenced by @a mapUri.
  */
-void P_SetupMap(res::Uri const &mapUri);
+void P_SetupMap(const res::Uri &mapUri);
 
 extern "C" {
 #endif
@@ -46,7 +46,7 @@ extern "C" {
  * to do any finalization we need (such as spawning thinkers or cataloguing
  * secret areas).
  */
-void P_FinalizeMapChange(Uri const *uri);
+void P_FinalizeMapChange(const Uri *uri);
 
 /**
  * To be called to reset the local world state (e.g., when leaving a networked game).
@@ -83,7 +83,7 @@ struct xsector_s *P_GetXSector(int index);
  */
 struct xsector_s *P_ToXSector(Sector *sector);
 
-struct xsector_s const *P_ToXSector_const(Sector const *sector);
+const struct xsector_s *P_ToXSector_const(const Sector *sector);
 
 #ifdef __cplusplus
 } // extern "C"

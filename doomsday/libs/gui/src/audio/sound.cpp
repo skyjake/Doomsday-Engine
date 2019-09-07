@@ -85,7 +85,7 @@ Sound &Sound::setFrequency(dfloat factor)
     return *this;
 }
 
-Sound &Sound::setPosition(Vec3f const &position, Positioning positioning)
+Sound &Sound::setPosition(const Vec3f &position, Positioning positioning)
 {
     d->position = position;
     d->positioning = positioning;
@@ -93,7 +93,7 @@ Sound &Sound::setPosition(Vec3f const &position, Positioning positioning)
     return *this;
 }
 
-Sound &Sound::setVelocity(Vec3f const &velocity)
+Sound &Sound::setVelocity(const Vec3f &velocity)
 {
     d->velocity = velocity;
     d->update();

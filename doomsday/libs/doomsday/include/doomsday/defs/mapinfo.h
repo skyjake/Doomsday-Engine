@@ -39,9 +39,9 @@ class LIBDOOMSDAY_PUBLIC MapInfo : public Definition
 {
 public:
     MapInfo()                     : Definition() {}
-    MapInfo(MapInfo const &other) : Definition(other) {}
+    MapInfo(const MapInfo &other) : Definition(other) {}
     MapInfo(de::Record &d)        : Definition(d) {}
-    MapInfo(de::Record const &d)  : Definition(d) {}
+    MapInfo(const de::Record &d)  : Definition(d) {}
 
     void resetToDefaults();
 };

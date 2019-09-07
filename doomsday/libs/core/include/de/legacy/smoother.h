@@ -109,7 +109,7 @@ DE_PUBLIC void Smoother_AddPosXY(Smoother *sm, float time, coord_t x, coord_t y)
  *
  * @see Smoother_Advance()
  */
-DE_PUBLIC dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz);
+DE_PUBLIC dd_bool Smoother_Evaluate(const Smoother *sm, coord_t *xyz);
 
 /**
  * Calculates a coordinate for the current point in time.
@@ -123,19 +123,19 @@ DE_PUBLIC dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz);
  *
  * @see Smoother_Advance()
  */
-DE_PUBLIC dd_bool Smoother_EvaluateComponent(Smoother const *sm, int component, coord_t *v);
+DE_PUBLIC dd_bool Smoother_EvaluateComponent(const Smoother *sm, int component, coord_t *v);
 
 /**
  * Determines whether the smoother's Z coordinate is currently on the floor plane.
  * @param sm    Smoother instance.
  */
-DE_PUBLIC dd_bool Smoother_IsOnFloor(Smoother const *sm);
+DE_PUBLIC dd_bool Smoother_IsOnFloor(const Smoother *sm);
 
 /**
  * Determines whether the smoother is currently undergoing movement.
  * @param sm    Smoother instance.
  */
-DE_PUBLIC dd_bool Smoother_IsMoving(Smoother const *sm);
+DE_PUBLIC dd_bool Smoother_IsMoving(const Smoother *sm);
 
 /**
  * Advances the smoother @a sm by @a period amount of time.
@@ -144,7 +144,7 @@ DE_PUBLIC dd_bool Smoother_IsMoving(Smoother const *sm);
  */
 DE_PUBLIC void Smoother_Advance(Smoother *sm, float period);
 
-void Smoother_Debug(Smoother const *sm);
+void Smoother_Debug(const Smoother *sm);
 
 /// @}
 

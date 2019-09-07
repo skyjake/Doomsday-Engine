@@ -66,7 +66,7 @@ struct DE_PUBLIC ScriptArgumentComposer
     }
 
     template <typename Type>
-    String scriptArgumentAsText(Type const &arg)
+    String scriptArgumentAsText(const Type &arg)
     {
         return String::asText(arg); // basic types
     }
@@ -74,7 +74,7 @@ struct DE_PUBLIC ScriptArgumentComposer
     inline void convertScriptArguments(StringList &) {}
 
     template <typename FirstArg, typename... Args>
-    void convertScriptArguments(StringList &list, FirstArg const &firstArg, Args... args)
+    void convertScriptArguments(StringList &list, const FirstArg &firstArg, Args... args)
     {
         list << scriptArgumentAsText(firstArg);
         convertScriptArguments(list, args...);
@@ -94,20 +94,20 @@ inline String ScriptArgumentComposer::scriptArgumentAsText(const String &arg)
 }
 
 template <>
-inline String ScriptArgumentComposer::scriptArgumentAsText(std::nullptr_t const &)
+inline String ScriptArgumentComposer::scriptArgumentAsText(const std::nullptr_t &)
 {
     return ScriptLex::NONE;
 }
 
 template <>
-inline String ScriptArgumentComposer::scriptArgumentAsText(char const * const &utf8)
+inline String ScriptArgumentComposer::scriptArgumentAsText(const char * const &utf8)
 {
     if (!utf8) return ScriptLex::NONE;
     return scriptArgumentAsText(String::fromUtf8(utf8));
 }
 
 template <>
-inline String ScriptArgumentComposer::scriptArgumentAsText(Record const &record)
+inline String ScriptArgumentComposer::scriptArgumentAsText(const Record &record)
 {
     Variable &arg = addArgument();
     arg.set(new RecordValue(record));
@@ -115,21 +115,21 @@ inline String ScriptArgumentComposer::scriptArgumentAsText(Record const &record)
 }
 
 template <>
-inline String ScriptArgumentComposer::scriptArgumentAsText(Record const * const &record)
+inline String ScriptArgumentComposer::scriptArgumentAsText(const Record * const &record)
 {
     if (!record) return ScriptLex::NONE;
     return scriptArgumentAsText(*record);
 }
 
 template <>
-inline String ScriptArgumentComposer::scriptArgumentAsText(IObject const * const &object)
+inline String ScriptArgumentComposer::scriptArgumentAsText(const IObject * const &object)
 {
     if (!object) return ScriptLex::NONE;
     return scriptArgumentAsText(object->objectNamespace());
 }
 
 template <>
-inline String ScriptArgumentComposer::scriptArgumentAsText(IObject const &object)
+inline String ScriptArgumentComposer::scriptArgumentAsText(const IObject &object)
 {
     return scriptArgumentAsText(object.objectNamespace());
 }
@@ -191,7 +191,7 @@ public:
      *                must remain in existence while the process is running,
      *                as it is the owner of the statements.
      */
-    Process(Script const &script);
+    Process(const Script &script);
 
     State state() const;
 
@@ -214,7 +214,7 @@ public:
       *               must remain in existence while the process is running,
       *               as it is the owner of the statements.
      */
-    void run(Script const &script);
+    void run(const Script &script);
 
     /**
      * Suspends or resumes execution of the script.
@@ -248,12 +248,12 @@ public:
      *
      * @param newWorkingPath  New working path for the process.
      */
-    void setWorkingPath(String const &newWorkingPath);
+    void setWorkingPath(const String &newWorkingPath);
 
     /**
      * Returns the current working path.
      */
-    String const &workingPath() const;
+    const String &workingPath() const;
 
     /**
      * Return an execution context. By default returns the topmost context.
@@ -292,7 +292,7 @@ public:
      * @param self  Optional scope that becomes the value of the "self"
      *                   variable. Ownership given to Process.
      */
-    void call(Function const &function, ArrayValue const &arguments,
+    void call(const Function &function, const ArrayValue &arguments,
               Value *self = 0);
 
     /**
@@ -342,7 +342,7 @@ public:
      */
     template <typename... Args>
     static Value *scriptCall(CallResult result, Record &globals,
-                             String const &function, Args... args)
+                             const String &function, Args... args)
     {
         internal::ScriptArgumentComposer composer(globals);
         composer.convertScriptArguments(composer.args, args...);
@@ -356,7 +356,7 @@ public:
     }
 
     template <typename ReturnValueType, typename... Args>
-    static ReturnValueType *scriptCall(Record &globals, String const &function, Args... args)
+    static ReturnValueType *scriptCall(Record &globals, const String &function, Args... args)
     {
         return static_cast<ReturnValueType *>(scriptCall(TakeResult, globals, function, args...));
     }

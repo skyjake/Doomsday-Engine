@@ -40,14 +40,14 @@ DE_PIMPL_NOREF(NameExpression)
     String identifier;
     String scopeIdentifier;
 
-    Impl(String const &id      = "",
-             String const &scopeId = "")
+    Impl(const String &id      = "",
+             const String &scopeId = "")
         : identifier(id)
         , scopeIdentifier(scopeId)
     {}
 
-    Variable *findInRecord(String const & name,
-                           Record const & where,
+    Variable *findInRecord(const String & name,
+                           const Record & where,
                            Record *&      foundIn,
                            bool           lookInClass = true) const
     {
@@ -63,7 +63,7 @@ DE_PIMPL_NOREF(NameExpression)
             // The namespace is derived from another record. Let's look into each
             // super-record in turn. Check in reverse order; the superclass added last
             // overrides earlier ones.
-            ArrayValue const &supers = where.geta(Record::VAR_SUPER);
+            const ArrayValue &supers = where.geta(Record::VAR_SUPER);
             for (int i = int(supers.size() - 1); i >= 0; --i)
             {
                 if (Variable *found = findInRecord(
@@ -76,8 +76,8 @@ DE_PIMPL_NOREF(NameExpression)
         return 0;
     }
 
-    Variable *findInNamespaces(String const & name,
-                               Evaluator::Namespaces const &spaces,
+    Variable *findInNamespaces(const String & name,
+                               const Evaluator::Namespaces &spaces,
                                bool           localOnly,
                                Record *&      foundInNamespace,
                                Record **      higherNamespace = 0)
@@ -116,14 +116,14 @@ namespace de {
 NameExpression::NameExpression() : d(new Impl)
 {}
 
-NameExpression::NameExpression(String const &identifier, Flags const &flags,
-                               String const &scopeIdentifier)
+NameExpression::NameExpression(const String &identifier, const Flags &flags,
+                               const String &scopeIdentifier)
     : d(new Impl(identifier, scopeIdentifier))
 {
     setFlags(flags);
 }
 
-String const &NameExpression::identifier() const
+const String &NameExpression::identifier() const
 {
     return d->identifier;
 }

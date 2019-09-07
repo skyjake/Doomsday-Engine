@@ -30,7 +30,7 @@ class guidata_armor_t : public HudWidget
 {
 public:
     guidata_armor_t(void (*updateGeometry) (HudWidget *wi),
-                    void (*drawer) (HudWidget *wi, Point2Raw const *offset),
+                    void (*drawer) (HudWidget *wi, const Point2Raw *offset),
                     de::dint player);
     virtual ~guidata_armor_t();
 
@@ -38,14 +38,14 @@ public:
 
     void tick(timespan_t elapsed);
     //void updateGeometry();
-    //void draw(de::Vec2i const &offset = de::Vec2i()) const;
+    //void draw(const de::Vec2i &offset = de::Vec2i()) const;
 
 //private:
     de::dint _value = 0;
 };
 
-void ArmorWidget_Draw    (guidata_armor_t *armor, Point2Raw const *offset);
-void SBarArmorWidget_Draw(guidata_armor_t *armor, Point2Raw const *offset);
+void ArmorWidget_Draw    (guidata_armor_t *armor, const Point2Raw *offset);
+void SBarArmorWidget_Draw(guidata_armor_t *armor, const Point2Raw *offset);
 
 void Armor_UpdateGeometry    (guidata_armor_t *armor);
 void SBarArmor_UpdateGeometry(guidata_armor_t *armor);
