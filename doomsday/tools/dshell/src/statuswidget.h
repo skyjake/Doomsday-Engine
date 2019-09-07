@@ -25,7 +25,7 @@
 class StatusWidget : public de::term::Widget
 {
 public:
-    StatusWidget(de::String const &name = de::String());
+    StatusWidget(const de::String &name = de::String());
 
     /**
      * Sets the shell Link whose status is to be shown on screen.
@@ -34,7 +34,7 @@ public:
      */
     void setShellLink(network::Link *link);
 
-    void setGameState(de::String const &mode, de::String const &rules, de::String const &mapId);
+    void setGameState(const de::String &mode, const de::String &rules, const de::String &mapId);
 
     void draw();
 

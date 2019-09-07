@@ -167,7 +167,7 @@ ShellApp::~ShellApp()
     LogBuffer::get().removeSink(d->log->logSink());
 }
 
-void ShellApp::openConnection(String const &address)
+void ShellApp::openConnection(const String &address)
 {
     closeConnection();
 

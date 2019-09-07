@@ -26,12 +26,12 @@ DE_PIMPL_NOREF(CursesTextCanvas)
     Coord   origin;
     Vec2i   cursorPos;
 
-    Impl(WINDOW *window, Coord const &originInWindow)
+    Impl(WINDOW *window, const Coord &originInWindow)
         : window(window), origin(originInWindow)
     {}
 };
 
-CursesTextCanvas::CursesTextCanvas(Size const &size, WINDOW *window, Coord const &originInWindow)
+CursesTextCanvas::CursesTextCanvas(const Size &size, WINDOW *window, const Coord &originInWindow)
     : TextCanvas(size), d(new Impl(window, originInWindow))
 {}
 

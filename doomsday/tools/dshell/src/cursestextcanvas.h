@@ -25,9 +25,9 @@
 class CursesTextCanvas : public de::term::TextCanvas
 {
 public:
-    CursesTextCanvas(Size const &size, WINDOW *window, Coord const &originInWindow = Coord(0, 0));
+    CursesTextCanvas(const Size &size, WINDOW *window, const Coord &originInWindow = Coord(0, 0));
 
-    void setCursorPosition(de::Vec2i const &pos);
+    void setCursorPosition(const de::Vec2i &pos);
 
     void show();
 

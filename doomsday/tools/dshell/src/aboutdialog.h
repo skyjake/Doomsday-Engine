@@ -29,7 +29,7 @@ class AboutDialog : public de::term::DialogWidget
 public:
     AboutDialog();
 
-    bool handleEvent(de::Event const &event);
+    bool handleEvent(const de::Event &event);
 };
 
 #endif // ABOUTDIALOG_H

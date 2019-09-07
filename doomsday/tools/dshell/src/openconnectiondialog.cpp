@@ -22,7 +22,7 @@
 
 using namespace de;
 
-OpenConnectionDialog::OpenConnectionDialog(String const &name) : term::InputDialogWidget(name)
+OpenConnectionDialog::OpenConnectionDialog(const String &name) : term::InputDialogWidget(name)
 {
     setDescription("Enter the address of the server you want to connect to. "
                    "The address can be a domain name or an IP address. "

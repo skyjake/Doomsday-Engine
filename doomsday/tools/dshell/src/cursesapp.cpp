@@ -41,7 +41,7 @@ static void windowResized(int)
     ungetch(KEY_RESIZE);
 }
 
-static String runSystemCommand(char const *cmd)
+static String runSystemCommand(const char *cmd)
 {
     String result;
     FILE *p = popen(cmd, "r");
@@ -63,7 +63,7 @@ static String runSystemCommand(char const *cmd)
  *
  * @return Terminal columns and rows.
  */
-static Vec2ui actualTerminalSize(Vec2ui const &oldSize)
+static Vec2ui actualTerminalSize(const Vec2ui &oldSize)
 {
     Vec2ui size = oldSize;
     const auto result = runSystemCommand("stty size");

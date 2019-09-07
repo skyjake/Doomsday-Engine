@@ -41,7 +41,7 @@ AboutDialog::AboutDialog()
     rule().setSize(Const(40), label->rule().height());
 }
 
-bool AboutDialog::handleEvent(Event const &event)
+bool AboutDialog::handleEvent(const Event &event)
 {
     if (event.type() == Event::KeyPress)
     {

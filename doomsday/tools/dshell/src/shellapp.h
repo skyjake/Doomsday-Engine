@@ -29,7 +29,7 @@ public:
 
     ~ShellApp();
 
-    void openConnection(de::String const &address);
+    void openConnection(const de::String &address);
 
     void showAbout();
     void askToOpenConnection();

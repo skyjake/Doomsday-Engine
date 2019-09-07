@@ -27,7 +27,7 @@
 class OpenConnectionDialog : public de::term::InputDialogWidget
 {
 public:
-    OpenConnectionDialog(de::String const &name = {});
+    OpenConnectionDialog(const de::String &name = {});
 
     /**
      * Returns the address that the user entered in the dialog. If the dialog

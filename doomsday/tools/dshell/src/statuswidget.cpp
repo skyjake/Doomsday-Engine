@@ -47,7 +47,7 @@ DE_PIMPL(StatusWidget)
     }
 };
 
-StatusWidget::StatusWidget(String const &name)
+StatusWidget::StatusWidget(const String &name)
     : Widget(name), d(new Impl(this))
 {
     d->updateTimer += [this]() { d->refresh(); };
@@ -68,7 +68,7 @@ void StatusWidget::setShellLink(network::Link *link)
     root().requestDraw();
 }
 
-void StatusWidget::setGameState(String const &mode, String const &rules, String const &mapId)
+void StatusWidget::setGameState(const String &mode, const String &rules, const String &mapId)
 {
     d->gameMode = mode;
     d->rules    = rules;
