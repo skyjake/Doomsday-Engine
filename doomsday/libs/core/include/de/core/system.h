@@ -40,7 +40,7 @@ public:
     enum Flag
     {
         ObservesTime = 0x1,         ///< System will observe clock time.
-        ReceivesInputEvents = 0x2,  ///< System will be given input events.
+        // ReceivesInputEvents = 0x2,  ///< System will be given input events.
 
         DefaultBehavior = ObservesTime
     };
@@ -52,7 +52,7 @@ public:
 
     Flags behavior() const;
 
-    /**
+    /*
      * Offers an event to be processed by the system. If the event is eaten
      * by the system, it will not be offered to any other systems.
      *
@@ -61,7 +61,7 @@ public:
      * @return @c true, if the event was eaten and should not be processed by
      * others. @c false, if event was not eaten.
      */
-    virtual bool processEvent(const Event &ev);
+//    virtual bool processEvent(const Event &ev);
 
     // Observes TimeChange.
     virtual void timeChanged(const Clock &);

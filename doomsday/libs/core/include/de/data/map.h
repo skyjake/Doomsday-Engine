@@ -97,7 +97,7 @@ public:
 
     void deleteAll()
     {
-        for (const auto &i : *this) { delete i.second; }
+        for (auto &i : *this) { delete i.second; }
     }
 };
 

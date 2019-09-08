@@ -506,6 +506,7 @@ void App::handleUncaughtException(const String& message)
     if (d->terminateFunc) d->terminateFunc(esc.plainText());
 }
 
+#if 0
 bool App::processEvent(const Event &ev)
 {
     for (System *sys : d->systems)
@@ -518,6 +519,7 @@ bool App::processEvent(const Event &ev)
     }
     return false;
 }
+#endif
 
 void App::timeChanged(const Clock &clock)
 {

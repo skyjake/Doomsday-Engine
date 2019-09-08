@@ -411,11 +411,11 @@ public:
      */
     void handleUncaughtException(const String& message);
 
-    /**
+    /*
      * Events received from the operating system should be passed here; the
      * application will make sure all subsystems get a chance to process them.
      */
-    virtual bool processEvent(const Event &);
+//    virtual bool processEvent(const Event &);
 
     /**
      * Informs all the subsystems about advancement of time. Subsystems will be

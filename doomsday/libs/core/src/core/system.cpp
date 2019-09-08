@@ -43,10 +43,12 @@ Flags System::behavior() const
     return d->behavior;
 }
 
+#if 0
 bool System::processEvent(const Event &)
 {
     return false;
 }
+#endif
 
 void System::timeChanged(const Clock &)
 {}
