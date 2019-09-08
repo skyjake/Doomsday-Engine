@@ -93,14 +93,13 @@ DE_PIMPL(WindowSystem)
                 return w.second.window;
             }
         }
-        DE_ASSERT_FAIL("cannot find window -- invalid window ID")
+        // DE_ASSERT_FAIL("cannot find window -- invalid window ID")
         return nullptr;
     }
 
     void handleSDLEvent(GLWindow &window, const SDL_Event &event)
     {
         /// @todo Handle game controller events, too.
-        ///
 
         window.glActivate();
 
