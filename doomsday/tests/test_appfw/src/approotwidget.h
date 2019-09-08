@@ -35,7 +35,6 @@ public:
     MainWindow &window();
 
     void addOnTop(de::GuiWidget *widget);
-    void dispatchLatestMousePosition();
     void handleEventAsFallback(const de::Event &event);
 
 private:

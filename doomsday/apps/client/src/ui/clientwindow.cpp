@@ -769,7 +769,7 @@ DE_PIMPL(ClientWindow)
                 cursorHasBeenHidden = true;
             }
 
-            Vec2i cp = ClientApp::windowSystem().latestMousePosition();
+            const Vec2i cp = self().latestMousePosition();
             cursorX->set(cp.x);
             cursorY->set(cp.y);
         }

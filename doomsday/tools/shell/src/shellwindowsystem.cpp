@@ -49,14 +49,3 @@ bool ShellWindowSystem::rootProcessEvent(const Event &event)
     }
     return false;
 }
-
-void ShellWindowSystem::rootUpdate()
-{
-    forAll([](BaseWindow *win) {
-        if (auto *linkWindow = maybeAs<LinkWindow>(win))
-        {
-            linkWindow->root().update();
-        }
-        return LoopContinue;
-    });
-}

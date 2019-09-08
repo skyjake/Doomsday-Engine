@@ -84,14 +84,8 @@ void ClientWindowSystem::closingAllWindows()
     WindowSystem::closingAllWindows();
 }
 
-bool ClientWindowSystem::rootProcessEvent(const Event &event)
-{
-    /// @todo Multiwindow? -jk
-    return main().root().processEvent(event);
-}
-
-void ClientWindowSystem::rootUpdate()
-{
-    /// @todo Multiwindow? -jk
-    main().root().update();
-}
+//bool ClientWindowSystem::rootProcessEvent(const Event &event)
+//{
+//    /// @todo Multiwindow? -jk
+//    return main().root().processEvent(event);
+//}

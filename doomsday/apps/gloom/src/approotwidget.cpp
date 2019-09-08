@@ -37,10 +37,10 @@ MainWindow &AppRootWidget::window()
     return GuiRootWidget::window().as<MainWindow>();
 }
 
-void AppRootWidget::dispatchLatestMousePosition()
-{
-    GloomApp::windowSystem().dispatchLatestMousePosition();
-}
+//void AppRootWidget::dispatchLatestMousePosition()
+//{
+//    GloomApp::windowSystem().dispatchLatestMousePosition();
+//}
 
 void AppRootWidget::handleEventAsFallback(const Event & /*event*/)
 {

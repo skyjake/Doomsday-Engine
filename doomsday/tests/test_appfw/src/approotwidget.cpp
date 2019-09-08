@@ -42,11 +42,6 @@ void AppRootWidget::addOnTop(GuiWidget *widget)
     window().addOnTop(widget);
 }
 
-void AppRootWidget::dispatchLatestMousePosition()
-{
-    TestApp::windowSystem().dispatchLatestMousePosition();
-}
-
 void AppRootWidget::handleEventAsFallback(const Event &/*event*/)
 {
     // Handle event at global level, if applicable.

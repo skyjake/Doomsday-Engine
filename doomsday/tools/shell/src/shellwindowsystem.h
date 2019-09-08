@@ -35,7 +35,6 @@ public:
     }
 
     bool rootProcessEvent(const de::Event &event);
-    void rootUpdate();
 
 private:
     DE_PRIVATE(d)

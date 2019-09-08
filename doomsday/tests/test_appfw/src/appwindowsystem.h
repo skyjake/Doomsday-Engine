@@ -31,7 +31,6 @@ public:
     static MainWindow &main();
 
     bool rootProcessEvent(const de::Event &event);
-    void rootUpdate();
 
 private:
     DE_PRIVATE(d)

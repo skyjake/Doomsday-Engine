@@ -177,7 +177,7 @@ DE_PIMPL(MainWindow)
 
     void updateMouseCursor()
     {
-        Vec2i cp = TestApp::windowSystem().latestMousePosition();
+        const Vec2i cp = self().latestMousePosition();
         if (cp.x < 0 || cp.y < 0) return;
         cursorX->set(cp.x);
         cursorY->set(cp.y);

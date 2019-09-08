@@ -65,10 +65,10 @@ void ClientRootWidget::addOnTop(GuiWidget *widget)
     window().addOnTop(widget);
 }
 
-void ClientRootWidget::dispatchLatestMousePosition()
-{
-    ClientApp::windowSystem().dispatchLatestMousePosition();
-}
+//void ClientRootWidget::dispatchLatestMousePosition()
+//{
+//    ClientApp::windowSystem().dispatchLatestMousePosition();
+//}
 
 void ClientRootWidget::handleEventAsFallback(const Event &event)
 {

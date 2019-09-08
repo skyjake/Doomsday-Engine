@@ -44,8 +44,3 @@ bool AppWindowSystem::rootProcessEvent(const Event &event)
 {
     return main().root().processEvent(event);
 }
-
-void AppWindowSystem::rootUpdate()
-{
-    main().root().update();
-}
