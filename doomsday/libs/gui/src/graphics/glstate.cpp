@@ -412,8 +412,6 @@ DE_PIMPL(GLState)
         case internal::ViewportHeight:
         {
             const Rectangleui vp = self().target().scaleToActiveRect(self().viewport());
-            debug("glViewport target=%p sizeY=%d vpbot=%d", &self().target(), self().target().size().y,
-                  vp.bottom());
             glViewport(vp.left(), self().target().size().y - vp.bottom(),
                                  vp.width(), vp.height());
             break;
