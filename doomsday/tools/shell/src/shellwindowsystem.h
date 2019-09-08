@@ -28,13 +28,13 @@ class ShellWindowSystem : public de::WindowSystem
 public:
     ShellWindowSystem();
 
-    static LinkWindow &main();
+//    static LinkWindow &main();
 
     static LinkWindow *focusedWindow() {
         return de::maybeAs<LinkWindow>(WindowSystem::focusedWindow());
     }
 
-    bool rootProcessEvent(const de::Event &event);
+//    bool rootProcessEvent(const de::Event &event);
 
 private:
     DE_PRIVATE(d)

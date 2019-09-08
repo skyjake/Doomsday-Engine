@@ -30,7 +30,7 @@ public:
 
     static MainWindow &main();
 
-    bool rootProcessEvent(const de::Event &event);
+//    bool rootProcessEvent(const de::Event &event);
 
 private:
     DE_PRIVATE(d)

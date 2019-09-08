@@ -36,16 +36,16 @@ ShellWindowSystem::ShellWindowSystem() : d(new Impl(this))
     setAppWindowSystem(*this);
 }
 
-LinkWindow &ShellWindowSystem::main() // static
-{
-    return WindowSystem::main().as<LinkWindow>();
-}
+//LinkWindow &ShellWindowSystem::main() // static
+//{
+//    return WindowSystem::main().as<LinkWindow>();
+//}
 
-bool ShellWindowSystem::rootProcessEvent(const Event &event)
-{
-    if (auto *win = focusedWindow())
-    {
-        return win->root().processEvent(event);
-    }
-    return false;
-}
+//bool ShellWindowSystem::rootProcessEvent(const Event &event)
+//{
+//    if (auto *win = focusedWindow())
+//    {
+//        return win->root().processEvent(event);
+//    }
+//    return false;
+//}
