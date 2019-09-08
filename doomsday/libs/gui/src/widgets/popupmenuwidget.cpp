@@ -25,6 +25,7 @@
 #include "de/ui/Item"
 
 #include <de/App>
+#include <de/BaseWindow>
 #include <de/Config>
 #include <de/IndirectRule>
 #include <de/OperatorRule>
@@ -379,7 +380,7 @@ DE_GUI_PIMPL(PopupMenuWidget)
         //qDebug() << "menu scrolling" << scrollY;
 
         // Resend the mouse position so the buttons realize they've moved.
-        root().dispatchLatestMousePosition();
+        root().window().as<BaseWindow>().processLatestMousePosition(true);
 
         self().requestGeometry();
     }

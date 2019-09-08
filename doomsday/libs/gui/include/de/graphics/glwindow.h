@@ -261,10 +261,11 @@ public:
     virtual void draw() = 0;
 
 public:
-    static void         setMain(GLWindow *window);
-    static bool         mainExists();
-    static GLWindow &   getMain();
-    static void         glActivateMain();
+    static void      setMain(GLWindow *window);
+    static bool      mainExists();
+    static GLWindow &getMain();
+    static void      glActivateMain();
+    static GLWindow &current(); // current glActivated window
 
     /**
      * Enumerates the available display modes of a display.

@@ -945,7 +945,7 @@ GLFramebuffer::Size GLFramebuffer::size() const
         return d->size;
     }
     //qDebug() << "FBO" << d->fbo << "size" << GLWindow::main().canvas().size().asText();
-    return GLWindow::getMain().pixelSize();
+    return GLWindow::current().pixelSize();
 }
 
 void GLFramebuffer::setActiveRect(const Rectangleui &rect, bool applyGLState)

@@ -141,12 +141,6 @@ public:
     void moveToTop(GuiWidget &widget);
 
     /**
-     * Sends the current mouse position as a mouse event, just like the mouse would've
-     * been moved.
-     */
-    virtual void dispatchLatestMousePosition();
-
-    /**
      * If the event is not used by any widget, this will be called so the application may
      * still handle the event for other, non-widget-related purposes. No widget will be
      * offered the event after this is called.

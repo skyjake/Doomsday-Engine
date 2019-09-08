@@ -32,6 +32,7 @@
 
 namespace de {
 
+class GuiRootWidget;
 class WindowTransform;
 
 /**
@@ -75,9 +76,9 @@ public:
     virtual Vec2f windowContentSize() const = 0;
 
     /**
-     * Request drawing the contents of the window as soon as possible.
+     * Returns the window root widget.
      */
-//    virtual void requestDraw();
+    virtual GuiRootWidget &root() = 0;
 
     void draw() override;
 
@@ -91,6 +92,13 @@ public:
 #if defined (DE_MOBILE)
     String configName(const String &key) const;
 #endif
+
+    /**
+     * If the mouse has been moved, process an event with the mouse coordinates.
+     */
+    void processLatestMousePosition(bool evenIfUnchanged = false);
+
+    Vec2i latestMousePosition() const;
 
 protected:
     virtual void preDraw();

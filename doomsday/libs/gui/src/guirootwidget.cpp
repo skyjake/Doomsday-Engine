@@ -342,9 +342,6 @@ void GuiRootWidget::routeMouse(Widget *routeTo)
         {Event::MouseButton, Event::MouseMotion, Event::MousePosition, Event::MouseWheel}, routeTo);
 }
 
-void GuiRootWidget::dispatchLatestMousePosition()
-{}
-
 bool GuiRootWidget::processEvent(const Event &event)
 {
     window().glActivate();

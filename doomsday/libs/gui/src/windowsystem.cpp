@@ -17,8 +17,10 @@
  */
 
 #include "de/WindowSystem"
-#include <de/Style>
-#include <de/BaseGuiApp> // for updating pixel ratio
+#include "de/GuiRootWidget"
+#include "de/Style"
+#include "de/BaseGuiApp" // for updating pixel ratio
+
 #include <de/Map>
 
 #include <SDL_events.h>
@@ -28,19 +30,23 @@ namespace de {
 DE_PIMPL(WindowSystem)
 , DE_OBSERVES(GLWindow, PixelRatio)
 {
-    typedef Map<String, BaseWindow *> Windows;
-    Windows windows;
-    String focused; // name of focused window (receives gesture input)
-    std::unique_ptr<Style> style;
+    struct WindowData {
+        BaseWindow *window;
+        duint32     nativeId = ~0u;
 
-    // Mouse motion.
-    /// TODO: per window!
-    bool mouseMoved;
-    Vec2i latestMousePos;
+        WindowData(BaseWindow *win)
+            : window(win)
+        {
+            nativeId = SDL_GetWindowID(reinterpret_cast<SDL_Window *>(window->sdlWindow()));
+        }
+    };
+
+    Map<String, WindowData> windows;
+    String                  focusedId; // name of focused window (receives gesture input)
+    std::unique_ptr<Style>  style;
 
     Impl(Public *i)
         : Base(i)
-        , mouseMoved(false)
     {
         // Create a blank style by default.
         setStyle(new Style);
@@ -57,23 +63,24 @@ DE_PIMPL(WindowSystem)
         Style::setAppStyle(*s); // use as global style
     }
 
-    void processLatestMousePosition()
+#if 0
+    void processLatestMousePositionsIfMoved()
     {
-        self().rootProcessEvent(MouseEvent(MouseEvent::Absolute, latestMousePos));
-    }
-
-    void processLatestMousePositionIfMoved()
-    {
-        if (mouseMoved)
+        for (auto &entry : windows)
         {
-            mouseMoved = false;
-            processLatestMousePosition();
+            auto &winData = entry.second;
+            if (winData.mouseMoved)
+            {
+                winData.mouseMoved = false;
+                winData.processLatestMousePosition();
+            }
         }
     }
+#endif
 
     void windowPixelRatioChanged(GLWindow &win)
     {
-        // TODO: Different windows may have different pixel ratios.
+        /// @todo Different windows may have different pixel ratios.
         DE_BASE_GUI_APP->setPixelRatio(float(win.pixelRatio()));
     }
 
@@ -81,9 +88,9 @@ DE_PIMPL(WindowSystem)
     {
         for (const auto &w : windows)
         {
-            if (SDL_GetWindowID(reinterpret_cast<SDL_Window *>(w.second->sdlWindow())) == sdlId)
+            if (w.second.nativeId == sdlId)
             {
-                return w.second;
+                return w.second.window;
             }
         }
         DE_ASSERT_FAIL("cannot find window -- invalid window ID")
@@ -92,6 +99,11 @@ DE_PIMPL(WindowSystem)
 
     void handleSDLEvent(GLWindow &window, const SDL_Event &event)
     {
+        /// @todo Handle game controller events, too.
+        ///
+
+        window.glActivate();
+
         switch (event.type)
         {
             case SDL_KEYDOWN:
@@ -103,7 +115,9 @@ DE_PIMPL(WindowSystem)
             case SDL_MOUSEWHEEL:
             case SDL_FINGERUP:
             case SDL_FINGERDOWN:
-            case SDL_MULTIGESTURE: window.eventHandler().handleSDLEvent(&event); break;
+            case SDL_MULTIGESTURE:
+                window.eventHandler().handleSDLEvent(&event);
+                break;
 
             case SDL_WINDOWEVENT:
                 window.handleWindowEvent(&event);
@@ -112,10 +126,20 @@ DE_PIMPL(WindowSystem)
             default: break;
         }
     }
+
+    WindowData *findData(const BaseWindow &window)
+    {
+        auto found = windows.find(window.id());
+        if (found == windows.end())
+        {
+            return nullptr;
+        }
+        return &found->second;
+    }
 };
 
 WindowSystem::WindowSystem()
-    : System(ObservesTime | ReceivesInputEvents)
+    : System(ObservesTime /*| ReceivesInputEvents*/)
     , d(new Impl(this))
 {}
 
@@ -127,30 +151,29 @@ void WindowSystem::setStyle(Style *style)
 void WindowSystem::addWindow(const String &id, BaseWindow *window)
 {
     window->audienceForPixelRatio() += d;
-    d->windows.insert(id, window);
+    d->windows.insert(id, {window});
+    setFocusedWindow(id); // autofocus latest
 }
 
 bool WindowSystem::mainExists() // static
 {
-    //    return get().d->windows.contains(DE_STR("main"));
     return BaseWindow::mainExists();
 }
 
 BaseWindow &WindowSystem::main() // static
 {
     DE_ASSERT(mainExists());
-//    return *get().d->windows.find(DE_STR("main"))->second;
     return static_cast<BaseWindow &>(GLWindow::getMain());
 }
 
 void WindowSystem::setFocusedWindow(const String &id)
 {
-    d->focused = id;
+    d->focusedId = id;
 }
 
 BaseWindow *WindowSystem::focusedWindow() // static
 {
-    return get().find(get().d->focused);
+    return get().find(get().d->focusedId);
 }
 
 dsize WindowSystem::count() const
@@ -160,19 +183,20 @@ dsize WindowSystem::count() const
 
 BaseWindow *WindowSystem::find(const String &id) const
 {
-    Impl::Windows::const_iterator found = d->windows.find(id);
+    auto found = d->windows.find(id);
     if (found != d->windows.end())
     {
-        return found->second;
+        return found->second.window;
     }
     return nullptr;
 }
 
 LoopResult WindowSystem::forAll(const std::function<LoopResult (BaseWindow *)>& func)
 {
-    for (auto &win : d->windows)
+    for (const auto &win : d->windows)
     {
-        if (auto result = func(win.second))
+        win.second.window->glActivate();
+        if (auto result = func(win.second.window))
         {
             return result;
         }
@@ -184,7 +208,10 @@ void WindowSystem::closeAll()
 {
     closingAllWindows();
 
-    d->windows.deleteAll();
+    for (const auto &w : d->windows)
+    {
+        delete w.second.window;
+    }
     d->windows.clear();
 }
 
@@ -193,16 +220,26 @@ Style &WindowSystem::style()
     return *d->style;
 }
 
-void WindowSystem::dispatchLatestMousePosition()
+#if 0
+void WindowSystem::dispatchLatestMousePosition(BaseWindow &window)
 {
-    d->processLatestMousePosition();
+    if (auto *wd = d->findData(window))
+    {
+        wd->processLatestMousePosition();
+    }
 }
 
-Vec2i WindowSystem::latestMousePosition() const
+Vec2i WindowSystem::latestMousePosition(const BaseWindow &window) const
 {
-    return d->latestMousePos;
+    if (auto *wd = d->findData(window))
+    {
+        return wd->latestMousePos;
+    }
+    return {};
 }
+#endif
 
+#if 0
 bool WindowSystem::processEvent(const Event &event)
 {
     /*
@@ -228,10 +265,11 @@ bool WindowSystem::processEvent(const Event &event)
     // Dispatch the event to the main window's widget tree.
     return rootProcessEvent(event);
 }
+#endif
 
 void WindowSystem::timeChanged(const Clock &/*clock*/)
 {
-    d->processLatestMousePositionIfMoved();
+//    d->processLatestMousePositionsIfMoved();
 
     // Update periodically.
     rootUpdate();
@@ -265,6 +303,8 @@ void WindowSystem::pollAndDispatchEvents()
                 case SDL_QUIT:
                     DE_GUI_APP->quit(0);
                     break;
+
+                /// @todo Handle game controller events, too.
 
                 case SDL_WINDOWEVENT:
                 case SDL_MOUSEMOTION:
@@ -301,6 +341,26 @@ void WindowSystem::pollAndDispatchEvents()
 
 void WindowSystem::closingAllWindows()
 {}
+
+//bool WindowSystem::rootProcessEvent(const Event &event)
+//{
+//    if (auto *win = focusedWindow())
+//    {
+//        return win->root().processEvent(event);
+//    }
+//    return false;
+//}
+
+void WindowSystem::rootUpdate()
+{
+    for (const auto &win : d->windows)
+    {
+        auto *window = win.second.window;
+        window->glActivate();
+        window->processLatestMousePosition();
+        window->root().update();
+    }
+}
 
 static WindowSystem *theAppWindowSystem = nullptr;
 

@@ -264,6 +264,22 @@ private:
     DE_PRIVATE(d)
 };
 
+/// State stack. Each GL context has its own state stack that is activated together with
+/// the context.
+struct GLStateStack : public List<GLState *> {
+    GLStateStack()
+    {
+        // Initialize with a default state.
+        append(new GLState);
+    }
+    ~GLStateStack() { deleteAll(*this); }
+
+    /**
+     * Specifies a state stack to be operated on with the static GLState push/pop methods.
+     */
+    static void activate(GLStateStack &stack);
+};
+
 } // namespace de
 
 #endif // LIBGUI_GLSTATE_H

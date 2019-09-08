@@ -121,16 +121,16 @@ public:
      */
     void pollAndDispatchEvents();
 
-    /**
+    /*
      * Dispatches a mouse position event with the latest mouse position. This
      * happens automatically whenever the mouse has moved and time advances.
      */
-    void dispatchLatestMousePosition();
+//    void dispatchLatestMousePosition(BaseWindow &window);
 
-    Vec2i latestMousePosition() const;
+//    Vec2i latestMousePosition(const BaseWindow &window) const;
 
     // System.
-    bool processEvent(const Event &);
+//    bool processEvent(const Event &);
     void timeChanged(const Clock &);
 
 public:
@@ -139,9 +139,8 @@ public:
 
 protected:
     virtual void closingAllWindows();
-
-    virtual bool rootProcessEvent(const Event &event) = 0;
-    virtual void rootUpdate() = 0;
+//    virtual bool rootProcessEvent(const Event &event);
+    virtual void rootUpdate(); // all windows
 
 private:
     DE_PRIVATE(d)

@@ -17,13 +17,15 @@
  */
 
 #include "de/BaseWindow"
-#include "de/WindowTransform"
-#include "de/WindowSystem"
-#include "de/BaseGuiApp"
-#include "de/VRConfig"
 
-#include <de/GLBuffer>
-#include <de/GLState>
+#include "de/BaseGuiApp"
+#include "de/GLBuffer"
+#include "de/GLState"
+#include "de/GuiRootWidget"
+#include "de/VRConfig"
+#include "de/WindowSystem"
+#include "de/WindowTransform"
+
 #include <de/LogBuffer>
 
 namespace de {
@@ -32,8 +34,11 @@ DE_PIMPL(BaseWindow)
 , DE_OBSERVES(GLWindow,         Init)
 , DE_OBSERVES(KeyEventSource,   KeyEvent)
 , DE_OBSERVES(MouseEventSource, MouseEvent)
-//, DE_OBSERVES(MouseEventSource, MouseStateChange)
 {
+    // Mouse motion: collect excessive mouse move events into one.
+    bool  mouseMoved = false;
+    Vec2i latestMousePos;
+
     WindowTransform defaultXf; ///< Used by default (doesn't apply any transformation).
     WindowTransform *xf;
 
@@ -45,9 +50,8 @@ DE_PIMPL(BaseWindow)
         self().audienceForInit() += this;
 
         // Listen to input.
-        self().eventHandler().audienceForKeyEvent()         += this;
-        self().eventHandler().audienceForMouseEvent()       += this;
-//        self().eventHandler().audienceForMouseStateChange() += this;
+        self().eventHandler().audienceForKeyEvent() += this;
+        self().eventHandler().audienceForMouseEvent() += this;
     }
 
     void windowInit(GLWindow &) override
@@ -60,19 +64,8 @@ DE_PIMPL(BaseWindow)
 
     void keyEvent(const KeyEvent &ev) override
     {
-        /// @todo Input drivers should observe the notification instead, input
-        /// subsystem passes it to window system. -jk
-
         LOGDEV_INPUT_XVERBOSE("keyEvent ev:%i", ev.type());
-
-        // Pass the event onto the window system.
-//        if (!
-        WindowSystem::get().processEvent(ev);
-//                )
-//        {
-//            // Maybe the fallback handler has use for this.
-//            self().handleFallbackEvent(ev);
-//        }
+        self().root().processEvent(ev);
     }
 
     void mouseEvent(const MouseEvent &event) override
@@ -87,18 +80,24 @@ DE_PIMPL(BaseWindow)
             ev.setPos(xf->windowToLogicalCoords(event.pos()).toVec2i());
         }
 
-//        if (!
-        WindowSystem::get().processEvent(ev);
-//        {
-//            // Maybe the fallback handler has use for this.
-//            self().handleFallbackEvent(ev);
-//        }
-    }
+        /*
+         * Mouse motion is filtered as it may be produced needlessly often with
+         * high-frequency mice. Note that this does not affect relative mouse
+         * events, just the absolute positions that interact with UI widgets.
+         */
+        if (ev.type() == Event::MousePosition)
+        {
+            if (ev.pos() != latestMousePos)
+            {
+                // This event will be emitted later, before widget tree update.
+                latestMousePos = ev.pos();
+                mouseMoved = true;
+            }
+            return;
+        }
 
-//    void mouseStateChanged(MouseEventSource::State state) override
-//    {
-//        self().grabInput(state == MouseEventSource::Trapped);
-//    }
+        self().root().processEvent(ev);
+    }
 };
 
 BaseWindow::BaseWindow(const String &id)
@@ -157,6 +156,20 @@ void BaseWindow::draw()
     preDraw();
     d->xf->drawTransformed();
     postDraw();
+}
+
+void BaseWindow::processLatestMousePosition(bool evenIfUnchanged)
+{
+    if (d->mouseMoved || evenIfUnchanged)
+    {
+        d->mouseMoved = false;
+        root().processEvent(MouseEvent(MouseEvent::Absolute, d->latestMousePos));
+    }
+}
+
+Vec2i BaseWindow::latestMousePosition() const
+{
+    return d->latestMousePos;
 }
 
 void BaseWindow::preDraw()

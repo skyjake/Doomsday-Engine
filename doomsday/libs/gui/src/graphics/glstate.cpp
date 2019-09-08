@@ -22,7 +22,6 @@
 
 #include "de/GLState"
 #include "de/GLFramebuffer"
-#include "de/GLWindow"
 #include "de/graphics/opengl.h"
 #include <de/GLInfo>
 #include <de/BitField>
@@ -114,16 +113,7 @@ static BitField::Spec const propSpecs[MAX_PROPERTIES] = {
 };
 static BitField::Elements const glStateProperties(propSpecs, MAX_PROPERTIES);
 
-/// The GL state stack.
-struct GLStateStack : public List<GLState *> {
-    GLStateStack()
-    {
-        // Initialize with a default state.
-        append(new GLState);
-    }
-    ~GLStateStack() { deleteAll(*this); }
-};
-static GLStateStack stack;
+static GLStateStack *currentStateStack;
 
 /// Currently applied GL state properties.
 static BitField currentProps;
@@ -422,6 +412,8 @@ DE_PIMPL(GLState)
         case internal::ViewportHeight:
         {
             const Rectangleui vp = self().target().scaleToActiveRect(self().viewport());
+            debug("glViewport target=%p sizeY=%d vpbot=%d", &self().target(), self().target().size().y,
+                  vp.bottom());
             glViewport(vp.left(), self().target().size().y - vp.bottom(),
                                  vp.width(), vp.height());
             break;
@@ -790,11 +782,8 @@ gfx::StencilFunc GLState::stencilFunc(gfx::Face face) const
 
 GLFramebuffer &GLState::target() const
 {
-    if (d->target)
-    {
-        return *d->target;
-    }
-    return GLWindow::getMain().framebuffer();
+    DE_ASSERT(d->target != nullptr);
+    return *d->target;
 }
 
 Rectangleui GLState::viewport() const
@@ -946,8 +935,9 @@ GLFramebuffer *GLState::currentTarget()
 
 GLState &GLState::current()
 {
-    DE_ASSERT(!internal::stack.isEmpty());
-    return *internal::stack.last();
+    DE_ASSERT(internal::currentStateStack);
+    DE_ASSERT(!internal::currentStateStack->isEmpty());
+    return *internal::currentStateStack->last();
 }
 
 GLState &GLState::push()
@@ -965,18 +955,27 @@ GLState &GLState::pop()
 
 void GLState::push(GLState *state)
 {
-    internal::stack.append(state);
+    DE_ASSERT(internal::currentStateStack);
+    internal::currentStateStack->append(state);
 }
 
 GLState *GLState::take()
 {
-    DE_ASSERT(internal::stack.size() > 1);
-    return internal::stack.takeLast();
+    DE_ASSERT(internal::currentStateStack);
+    DE_ASSERT(internal::currentStateStack->size() > 1);
+    return internal::currentStateStack->takeLast();
 }
 
 dsize GLState::stackDepth()
 {
-    return internal::stack.size();
+    DE_ASSERT(internal::currentStateStack);
+    return internal::currentStateStack->size();
+}
+
+void GLStateStack::activate(GLStateStack &stack) // static
+{
+    internal::currentStateStack = &stack;
+    GLState::considerNativeStateUndefined();
 }
 
 } // namespace de

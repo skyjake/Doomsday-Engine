@@ -26,6 +26,7 @@
 #include "de/CoreEvent"
 #include "de/Image"
 
+#include <de/Garbage>
 #include <de/GLBuffer>
 #include <de/GLState>
 #include <de/GLFramebuffer>
@@ -39,11 +40,13 @@
 namespace de {
 
 static GLWindow *mainWindow = nullptr;
+static GLWindow *currentWindow = nullptr;
 
 DE_PIMPL(GLWindow)
 {
     SDL_Window *  window    = nullptr;
     SDL_GLContext glContext = nullptr;
+    GLStateStack  glStack;
 
     Dispatch            mainCall;
     GLFramebuffer       backing;
@@ -56,8 +59,8 @@ DE_PIMPL(GLWindow)
     double              pixelRatio = 0.0;
     int                 displayIndex;
 
-    uint  frameCount   = 0;
-    float fps          = 0;
+    uint  frameCount = 0;
+    float fps        = 0;
 
     std::unique_ptr<GLTimer> timer;
     Id totalFrameTimeQueryId;
@@ -94,6 +97,9 @@ DE_PIMPL(GLWindow)
         glContext = SDL_GL_CreateContext(window);
         displayIndex = SDL_GetWindowDisplayIndex(window);
         debug("[GLWindow] created context %p", glContext);
+
+        // Initialize the state stack.
+        glStack.at(0)->setTarget(backing);
     }
 
     ~Impl()
@@ -239,7 +245,7 @@ DE_PIMPL(GLWindow)
     {
         updateFrameRateStatistics();
 
-        LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
+        LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();        
         DE_NOTIFY_PUBLIC(Swap, i) { i->windowSwapped(self()); }
     }
 
@@ -297,12 +303,15 @@ void GLWindow::setMinimumSize(const Size &minSize)
 void GLWindow::makeCurrent()
 {
     DE_ASSERT(d->glContext);
+    currentWindow = this;
     SDL_GL_MakeCurrent(d->window, d->glContext);
+    GLStateStack::activate(d->glStack);
     LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 }
 
 void GLWindow::doneCurrent()
 {
+    currentWindow = nullptr;
     SDL_GL_MakeCurrent(d->window, nullptr);
 }
 
@@ -354,6 +363,7 @@ void GLWindow::setGeometry(const Rectanglei &rect)
     if (d->currentSize != pixels.toVec2ui())
     {
         d->currentSize = pixels.toVec2ui();
+        glActivate();
         DE_NOTIFY(Resize, i) { i->windowResized(*this); }
     }
 }
@@ -535,6 +545,7 @@ void GLWindow::handleWindowEvent(const void *ptr)
 {
     const SDL_Event &event = *reinterpret_cast<const SDL_Event *>(ptr);
 
+    glActivate();
     switch (event.window.event)
     {
         case SDL_WINDOWEVENT_EXPOSED:
@@ -561,7 +572,9 @@ void GLWindow::handleWindowEvent(const void *ptr)
             d->checkWhichDisplay();
             break;
 
-        case SDL_WINDOWEVENT_CLOSE: break;
+        case SDL_WINDOWEVENT_CLOSE:
+            windowAboutToClose();
+            break;
 
         case SDL_WINDOWEVENT_FOCUS_GAINED:
         case SDL_WINDOWEVENT_FOCUS_LOST: d->handler->handleSDLEvent(&event); break;
@@ -658,8 +671,6 @@ void GLWindow::paintGL()
 {
     DE_ASSERT(SDL_GL_GetCurrentContext() == d->glContext);
 
-    debug("[GLWindow] paintGL %p", this);
-
     GLFramebuffer::setDefaultFramebuffer(0);
 
     // Repainting of the window should continue in an indefinite loop.
@@ -725,7 +736,9 @@ void GLWindow::paintGL()
 }
 
 void GLWindow::windowAboutToClose()
-{}
+{
+    /// @todo What to do about pending (already submitted) update/paint events?
+}
 
 bool GLWindow::mainExists() // static
 {
@@ -741,6 +754,12 @@ GLWindow &GLWindow::getMain() // static
 void GLWindow::glActivateMain()
 {
     if (mainExists()) getMain().glActivate();
+}
+
+GLWindow &GLWindow::current() // static
+{
+    DE_ASSERT(currentWindow != nullptr);
+    return *currentWindow;
 }
 
 void GLWindow::setMain(GLWindow *window) // static
