@@ -521,7 +521,7 @@ DE_PIMPL(GuiWidget)
 
         walkRoot->walkChildren(Forward, [this, &dir, &bestScore, &bestWidget] (Widget &widget)
         {
-            GuiWidget *gui = &widget.as<GuiWidget>();
+            if (GuiWidget *gui = maybeAs<GuiWidget>(widget))
             {
                 float score = scoreForWidget(*gui, dir);
                 if (score >= 0)

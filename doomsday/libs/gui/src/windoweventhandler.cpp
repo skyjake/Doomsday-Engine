@@ -183,7 +183,7 @@ DE_PIMPL(WindowEventHandler)
 
     void handleTextInput(const SDL_TextInputEvent &ev)
     {
-        KeyEvent keyEvent(KeyEvent::Pressed, 0, 0, 0, ev.text);
+        KeyEvent keyEvent(ev.text);
         DE_NOTIFY_PUBLIC(KeyEvent, i)
         {
             i->keyEvent(keyEvent);
@@ -194,14 +194,11 @@ DE_PIMPL(WindowEventHandler)
     {
         LOGDEV_INPUT_XVERBOSE("text input active: %i", SDL_IsTextInputActive());
 
-        const int ddKey = KeyEvent::ddKeyFromSDL(ev.keysym.sym, ev.keysym.scancode);
         KeyEvent keyEvent(ev.state == SDL_PRESSED
                               ? (ev.repeat ? KeyEvent::Repeat : KeyEvent::Pressed)
                               : KeyEvent::Released,
-                          ddKey,
                           ev.keysym.sym,
                           ev.keysym.scancode,
-                          String(),
                           KeyEvent::modifiersFromSDL(ev.keysym.mod));
 
         DE_NOTIFY_PUBLIC(KeyEvent, i)

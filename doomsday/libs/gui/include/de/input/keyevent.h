@@ -56,17 +56,17 @@ public:
     KeyEvent();
 
     KeyEvent(State         keyState,
-             int           ddKey,
              int           sdlKey,
              int           scancode,
-             const String &keyText,
              Modifiers     mods = NoModifiers);
+
+    KeyEvent(const String &insertText);
 
     State                state()      const;
     bool                 isModifier() const;
     inline int           sdlKey()     const { return _sdlKey; }
-    inline int           ddKey()      const { return _ddKey; }
     inline int           scancode()   const { return _scancode; }
+    inline int           ddKey()      const { return _ddKey; }
     inline const String &text()       const { return _text; }
     inline Modifiers     modifiers()  const { return _mods; }
 
@@ -87,12 +87,12 @@ public:
     /**
      * Constructs a key press event for UI actions. Use with de::KeyActions.
      */
-    static KeyEvent press(int ddKey, Modifiers mods = NoModifiers);
+    static KeyEvent press(int sdlKey, Modifiers mods = NoModifiers);
 
 private:
-    int       _ddKey;
     int       _sdlKey;
     int       _scancode;
+    int       _ddKey;
     String    _text;
     Modifiers _mods;
 };

@@ -39,12 +39,16 @@ bool KeyActions::handleEvent(const Event &ev)
 {
     if (ev.type() == Event::KeyPress)
     {
-        const auto &m = *d.getConst();
-        auto found = m.actions.find(ev.as<KeyEvent>());
-        if (found != m.actions.end())
+        const auto &key = ev.as<KeyEvent>();
+        if (!key.isModifier()) // Don't do anything when modifier is pressed on its own.
         {
-            found->second();
-            return true;
+            const auto &m = *d.getConst();
+            auto found = m.actions.find(key);
+            if (found != m.actions.end())
+            {
+                found->second();
+                return true;
+            }
         }
     }
     return false;
