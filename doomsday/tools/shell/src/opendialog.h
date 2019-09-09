@@ -20,6 +20,7 @@ public:
 protected:
     void saveState();
     void textEdited(const de::String &);
+    void prepare() override;
 
 private:
     DE_PRIVATE(d)

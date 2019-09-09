@@ -263,3 +263,9 @@ void OpenDialog::saveState()
 
     Config::get().set("OpenDialog.history", new ArrayValue(d->history));
 }
+
+void OpenDialog::prepare()
+{
+    DialogWidget::prepare();
+    root().setFocus(d->address);
+}

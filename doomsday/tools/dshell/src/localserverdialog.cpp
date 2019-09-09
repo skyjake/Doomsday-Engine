@@ -101,7 +101,6 @@ String LocalServerDialog::gameMode() const
 void LocalServerDialog::prepare()
 {
     InputDialogWidget::prepare();
-
     root().setFocus(d->choice);
 }
 

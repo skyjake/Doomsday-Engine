@@ -31,8 +31,8 @@ public:
     de::String  gameMode() const;
 
 protected:
-    void prepare();
-    void finish(int result);
+    void prepare() override;
+    void finish(int result) override;
 
 private:
     DE_PRIVATE(d)
