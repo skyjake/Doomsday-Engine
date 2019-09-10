@@ -365,7 +365,12 @@ void GuiApp::revealFile(const NativePath &fileOrFolder) // static
     {
         DE_ASSERT_FAIL("File revealing not implemented on this platform");
     }
-    #endif
+#endif
+}
+
+void GuiApp::quitRequested()
+{
+    quit(0);
 }
 
 } // namespace de

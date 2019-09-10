@@ -88,9 +88,7 @@ GuiShellApp::GuiShellApp(const StringList &args)
     : BaseGuiApp(args)
     , d(new Impl(this))
 {
-//    setAttribute(Qt::AA_UseHighDpiPixmaps);
-
-    // Applicatio metadata.
+    // Application metadata.
     {
         auto &md = metadata();
         md.set(ORG_DOMAIN, "dengine.net");
@@ -152,6 +150,17 @@ void GuiShellApp::initialize()
     d->loadAllShaders();
 }
 
+void GuiShellApp::quitRequested()
+{
+    if (countOpenConnections() == 1)
+    {
+        // The window will ask for confirmation when receiving a close event.
+        return;
+    }
+    // Too many or no open connections, so just quit without asking.
+    GuiApp::quitRequested();
+}
+
 LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
 {
     LinkWindow *found = nullptr;
@@ -189,6 +198,19 @@ LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
 //    d->windows.prepend(found);
 //    found->show();
     return found;
+}
+
+int GuiShellApp::countOpenConnections() const
+{
+    int count = 0;
+    windowSystem().forAll([&count](GLWindow &w) {
+        if (auto *win = maybeAs<LinkWindow>(&w))
+        {
+            if (win->isConnected()) ++count;
+        }
+        return LoopContinue;
+    });
+    return count;
 }
 
 GuiShellApp &GuiShellApp::app()

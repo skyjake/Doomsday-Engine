@@ -60,7 +60,6 @@ public:
     void switchToStatus();
     void switchToOptions();
     void switchToConsole();
-    void updateWhenConnected();
     //void updateConsoleFontFromPreferences();
 
 protected:

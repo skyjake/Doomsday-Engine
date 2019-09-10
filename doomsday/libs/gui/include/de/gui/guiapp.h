@@ -98,6 +98,11 @@ public:
      */
     void notifyDisplayModeChanged();
 
+    /**
+     * Called upon receiving a Quit event from the operating system.
+     */
+    virtual void quitRequested();
+
 public:
     static WindowSystem &windowSystem();
     static bool hasWindowSystem();

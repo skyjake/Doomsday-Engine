@@ -99,6 +99,7 @@ int EventLoop::exec(const std::function<void ()> &postExec)
         {
             // Wait until an event is posted.
             std::unique_ptr<Event> event(internal::eventQueue.take());
+            if (!event) continue;
 
             // Notify observers and/or the subclass.
             processEvent(*event);

@@ -32,8 +32,10 @@ public:
     GuiShellApp(const de::StringList &args);
 
     void initialize();
+    void quitRequested() override;
 
     LinkWindow *newOrReusedConnectionWindow();
+    int countOpenConnections() const;
     de::ServerFinder &serverFinder();
 
     static GuiShellApp &app();

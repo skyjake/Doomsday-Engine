@@ -204,6 +204,8 @@ void WindowSystem::removeWindow(GLWindow &window)
         {
             setFocusedWindow({});
             setMainWindow({});
+            // No more windows, ensure that the app quits.
+            DE_GUI_APP->quit(0);
         }
     }
 }
@@ -352,7 +354,7 @@ void WindowSystem::pollAndDispatchEvents()
             switch (event.type)
             {
                 case SDL_QUIT:
-                    DE_GUI_APP->quit(0);
+                    DE_GUI_APP->quitRequested();
                     break;
 
                 /// @todo Handle game controller events, too.
