@@ -229,6 +229,7 @@ void OpenDialog::updateLocalList(bool autoselect)
                 if (autoselect && !selected)
                 {
                     d->localServers->setSelected(items.size() - 1);
+                    d->address->setText(sv.first);
                     selected = true;
                 }
             }

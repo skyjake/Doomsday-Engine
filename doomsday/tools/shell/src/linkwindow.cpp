@@ -325,6 +325,8 @@ DE_PIMPL(LinkWindow)
                       []() { GuiShellApp::app().connectToServer(); });
             keys->add(KeyEvent::press('d', KeyEvent::Command),
                       [this]() { self().closeConnection(); });
+            keys->add(KeyEvent::press('w', KeyEvent::Command),
+                      [this]() { self().windowAboutToClose(); });
             keys->add(KeyEvent::press('1', KeyEvent::Command), [this]() { self().switchToStatus(); });
             keys->add(KeyEvent::press('2', KeyEvent::Command), [this]() { self().switchToOptions(); });
             keys->add(KeyEvent::press('3', KeyEvent::Command), [this]() { self().switchToConsole(); });
@@ -1036,7 +1038,7 @@ void LinkWindow::windowAboutToClose()
     dlg->buttons()
         << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default,
                                 "Keep Running")
-        << new DialogButtonItem(DialogWidget::Accept, "Stop Server",
+        << new DialogButtonItem(DialogWidget::Action, "Stop Server",
                                 [dlg]() { dlg->accept(2); })
         << new DialogButtonItem(DialogWidget::Reject, "Cancel");
 
@@ -1046,6 +1048,7 @@ void LinkWindow::windowAboutToClose()
         {
             sendCommandToServer("quit");
         }
+        closeConnection();
         close();
     }
 }
@@ -1057,7 +1060,6 @@ void LinkWindow::checkFoundServers()
     const auto &finder = GuiShellApp::app().serverFinder();
     for (const auto &addr : finder.foundServers())
     {
-//        debug("found: %s   isLocal: %d   port: %d", addr.asText().c_str(), addr.isLocal(), addr.port());
         if (addr.isLocal() && addr.port() == d->waitingForLocalPort)
         {
             // This is the one!
