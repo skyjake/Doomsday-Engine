@@ -227,6 +227,7 @@ DE_PIMPL_NOREF(Socket)
     dint64 totalBytesWritten = 0;
 
     TaskPool tasks;
+    Dispatch dispatch;
 
     ~Impl()
     {
@@ -517,13 +518,13 @@ DE_PIMPL_NOREF(Socket)
 
     static void handleWriteFinished(iAny *, iSocket *sock)
     {
-        Loop::mainCall([sock]() {
-            Socket *self = static_cast<Socket *>(userData_Object(sock));
+        Socket *self = static_cast<Socket *>(userData_Object(sock));
+        self->d->dispatch += [self]() {
             DE_FOR_OBSERVERS(i, self->audienceForAllSent())
             {
                 i->allSent(*self);
             }
-        });
+        };
     }
 
     DE_PIMPL_AUDIENCE(StateChange)
