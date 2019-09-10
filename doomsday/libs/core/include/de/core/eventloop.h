@@ -68,8 +68,6 @@ public:
      */
     bool isRunning() const;
 
-//    void postEvent(Event *event);
-
     virtual void processEvent(const Event &event);
 
 public:

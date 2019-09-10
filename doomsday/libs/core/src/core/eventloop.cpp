@@ -35,8 +35,6 @@ struct StackPusher {
     ~StackPusher()               { DE_GUARD(loopStack); loopStack.value.pop_back(); }
 };
 
-//static FIFO<Event> outOfLoopEvents; // events posted when no event loops were running
-
 static WaitableFIFO<Event> eventQueue; // shared event queue for all event loops
 
 } // namespace internal
@@ -44,7 +42,6 @@ static WaitableFIFO<Event> eventQueue; // shared event queue for all event loops
 DE_PIMPL_NOREF(EventLoop)
 {
     RunMode runMode;
-//    std::shared_ptr<WaitableFIFO<Event>> queue;
     DE_PIMPL_AUDIENCE(Event)
 };
 DE_AUDIENCE_METHOD(EventLoop, Event)
@@ -56,14 +53,6 @@ EventLoop::EventLoop(RunMode runMode) : d(new Impl)
     {
         using namespace internal;
         DE_GUARD(loopStack);
-//        if (loopStack.value.isEmpty())
-//        {
-//            d->queue.reset(new WaitableFIFO<Event>());
-//        }
-//        else
-//        {
-//            d->queue = loopStack.value.back()->d->queue;
-//        }
         if (d->runMode == Manual)
         {
             loopStack.value.push_back(this);
@@ -88,12 +77,6 @@ int EventLoop::exec(const std::function<void ()> &postExec)
     {
         internal::StackPusher sp(this);
         if (postExec) postExec();
-
-//        // Queue up any events posted outside running event loops.
-//        while (auto *event = internal::outOfLoopEvents.take())
-//        {
-//            postEvent(event);
-//        }
 
         for (;;)
         {
@@ -122,7 +105,6 @@ int EventLoop::exec(const std::function<void ()> &postExec)
         LOG_WARNING("Event loop stopped: %s") << er.asText();
         return 0;
     }
-//    DE_ASSERT(internal::eventQueue.isEmpty());
 }
 
 void EventLoop::quit(int exitCode)
@@ -137,6 +119,7 @@ void EventLoop::processQueuedEvents()
         while (!internal::eventQueue.isEmpty())
         {
             std::unique_ptr<Event> event{internal::eventQueue.tryTake(0.001)};
+            if (!event) continue;
             if (event->type() == Event::Quit)
             {
                 // We can't handle this.
@@ -162,11 +145,6 @@ bool EventLoop::isRunning() const
     return loopStack.value.back() == this;
 }
 
-//void EventLoop::postEvent(Event *event)
-//{
-//    internal::eventQueue.put(event);
-//}
-
 void EventLoop::processEvent(const Event &event)
 {
     DE_NOTIFY(Event, i) { i->eventPosted(event); }
@@ -184,14 +162,6 @@ void EventLoop::processEvent(const Event &event)
 void EventLoop::post(Event *event) // static
 {
     internal::eventQueue.put(event);
-//    if (auto *evloop = get())
-//    {
-//        evloop->postEvent(event);
-//    }
-//    else
-//    {
-//        internal::outOfLoopEvents.put(event);
-//    }
 }
 
 void EventLoop::callback(const std::function<void()> &func) // static
