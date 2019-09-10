@@ -57,7 +57,7 @@ public:
      *
      * @param callback  Function to call when the timer is triggered.
      */
-    Timer &operator+=(const std::function<void ()> &callback);
+    Timer &operator+=(const std::function<void()> &callback);
 
     DE_AUDIENCE(Trigger, void triggered(Timer &))
 

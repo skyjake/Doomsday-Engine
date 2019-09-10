@@ -39,29 +39,6 @@
 
 namespace de {
 
-namespace internal {
-
-/**
- * Event specific to a window. Storing the window pointer allows cancelling the event
- * when the window is deleted.
- */
-class WindowEvent : public CoreEvent
-{
-public:
-    WindowEvent(GLWindow *window, const std::function<void()> &callback)
-        : CoreEvent(callback)
-        , _window(window)
-    {}
-
-    GLWindow *window() const { return _window; }
-
-private:
-    GLWindow *_window;
-};
-
-} // namespace internal
-
-//static GLWindow *mainWindow = nullptr;
 static GLWindow *currentWindow = nullptr;
 
 DE_PIMPL(GLWindow)
@@ -87,9 +64,11 @@ DE_PIMPL(GLWindow)
     float fps        = 0;
 
     std::unique_ptr<GLTimer> timer;
-    Id totalFrameTimeQueryId;
+    Id                       totalFrameTimeQueryId;
 
-    Impl(Public *i, const String &id) : Base(i), id(id)
+    Impl(Public * i, const String &id)
+        : Base(i)
+        , id(id)
     {
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -130,11 +109,7 @@ DE_PIMPL(GLWindow)
     {
         // Cancel all pending events concerning this window.
         EventLoop::cancel([this](Event *ev) {
-            if (auto *winEvent = maybeAs<internal::WindowEvent>(ev))
-            {
-                return winEvent->window() == thisPublic;
-            }
-            return false;
+            return ev->as<CoreEvent>().context() == this;
         });
 
         self().makeCurrent();
@@ -685,7 +660,7 @@ void GLWindow::update()
     if (!d->paintPending)
     {
         d->paintPending = true;
-        EventLoop::post(new internal::WindowEvent(this, [this]() {
+        EventLoop::post(new CoreEvent(this, [this]() {
             if (d->isClosing)
             {
                 delete this;
@@ -731,7 +706,7 @@ void GLWindow::paintGL()
     // If changing the current UI/frame/world time causes side effects
     // such as another event loop running busy mode, we'll still get uninterrupted
     // window content refresh.
-    EventLoop::post(new internal::WindowEvent(this, [this]() {
+    EventLoop::post(new CoreEvent(this, [this]() {
         update();
         WindowSystem::get().pollAndDispatchEvents(); // process new input/window events
     }));

@@ -153,20 +153,6 @@ static std::atomic_int timerCount; // Number of timers in existence.
 
 DE_PIMPL_NOREF(Timer)
 {
-    // Specialized event that is cancellable when the timer stops.
-    struct TimerTriggerEvent : public CoreEvent
-    {
-        TimerTriggerEvent(de::Timer &tm)
-            : CoreEvent(CoreEvent::Timer, [this]() {
-                timer.d->isPending = false;
-                timer.trigger();
-            })
-            , timer(tm)
-        {}
-
-        de::Timer &timer;
-    };
-
     TimeSpan interval     = 1.0;
     bool     isSingleShot = false;
     bool     isActive     = false;
@@ -252,16 +238,11 @@ void Timer::post()
 {
     if (!d->isPending)
     {
-        //if (auto *loop = EventLoop::get())
-        //{
         d->isPending = true; // not reposted before triggered
-          //  debug("[TimerScheduler] Timer %p now pending with trigger event posted", this);
-        EventLoop::post(new Impl::TimerTriggerEvent(*this));
-//        else
-//        {
-//            debug("[TimerScheduler] Pending timer %p triggered with no event loop running (event "
-//                  "not posted)", this);
-//        }
+        EventLoop::post(new CoreEvent(this, [this]() {
+            d->isPending = false;
+            trigger();
+        }));
     }
 }
 
@@ -283,11 +264,7 @@ void Timer::stop()
 
     // Also cancel any already posted timer events.
     EventLoop::cancel([this](Event *event) {
-        if (auto *trig = maybeAs<Impl::TimerTriggerEvent>(event))
-        {
-            if (this == &trig->timer) return true;
-        }
-        return false;
+        return event->as<CoreEvent>().context() == this;
     });
 }
 

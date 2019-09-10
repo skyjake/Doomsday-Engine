@@ -40,6 +40,17 @@ CoreEvent::CoreEvent(const std::function<void()> &callback)
     , _callback(callback)
 {}
 
+CoreEvent::CoreEvent(void *context, const std::function<void()> &callback)
+    : Event(Callback)
+    , _callback(callback)
+    , _context(context)
+{}
+
+void CoreEvent::setContent(void *context)
+{
+    _context = context;
+}
+
 const Value &CoreEvent::value() const
 {
     if (!_value)

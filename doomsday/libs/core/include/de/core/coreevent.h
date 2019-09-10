@@ -35,6 +35,10 @@ public:
     CoreEvent(int type, const Value &value);
     CoreEvent(int type, const std::function<void()> &callback);
     CoreEvent(const std::function<void()> &callback);
+    CoreEvent(void *context, const std::function<void()> &callback);
+
+    void setContent(void *context);
+    void *context() const { return _context; }
 
     const Value &value() const;
     inline int   valuei() const { return value().asInt(); }
@@ -44,6 +48,7 @@ public:
 private:
     std::unique_ptr<Value> _value;
     std::function<void()>  _callback;
+    void *                 _context = nullptr;
 };
 
 } // namespace de
