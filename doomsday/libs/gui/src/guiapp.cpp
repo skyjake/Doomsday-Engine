@@ -99,6 +99,7 @@ DE_PIMPL(GuiApp)
 
     ~Impl() override
     {
+        windowSystem->closeAll();
         windowSystem.reset();
         releaseRef(pixelRatio);
         SDL_FreeCursor(arrowCursor);

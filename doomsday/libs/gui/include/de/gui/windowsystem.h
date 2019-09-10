@@ -63,11 +63,11 @@ public:
     WindowType *newWindow(const String &id = "main") {
         DE_ASSERT(!findWindow(id));
         WindowType *win = new WindowType(id);
-        addWindow(id, win);
+        addWindow(win);
         return win;
     }
 
-    void addWindow(const String &id, GLWindow *window);
+    void addWindow(GLWindow *window);
 
     /**
      * Removes a window from the window system and returns the new main window.

@@ -172,15 +172,15 @@ void WindowSystem::setMainWindow(const de::String &id)
     GuiLoop::get().setWindow(findWindow(id));
 }
 
-void WindowSystem::addWindow(const String &id, GLWindow *window)
+void WindowSystem::addWindow(GLWindow *window)
 {
     window->audienceForPixelRatio() += d;
     if (d->windows.empty())
     {
         setMainWindow(window->id());
     }
-    d->windows.insert(id, {window});
-    setFocusedWindow(id); // autofocus latest
+    d->windows.insert(window->id(), {window});
+    setFocusedWindow(window->id()); // autofocus latest
 }
 
 void WindowSystem::removeWindow(GLWindow &window)

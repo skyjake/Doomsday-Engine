@@ -21,6 +21,7 @@
 
 #include <de/GuiApp>
 #include <de/LogBuffer>
+#include <de/WindowSystem>
 
 #define SDL_MAIN_HANDLED
 #include <SDL_main.h>
@@ -40,8 +41,9 @@ DE_EXTERN_C int main(int argc, char **argv)
         app.addInitPackage("net.dengine.test.glsandbox");
         app.initSubsystems();
 
-        TestWindow win;
-        win.show();
+        auto *win = new TestWindow;
+        app.windowSystem().addWindow(win);
+        win->show();
 
         exitCode = app.exec();
     }
