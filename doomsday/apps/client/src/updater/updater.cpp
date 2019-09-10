@@ -42,7 +42,6 @@
 #include "network/net_main.h"
 #include "clientapp.h"
 #include "ui/nativeui.h"
-#include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "updater.h"
@@ -98,7 +97,7 @@ public:
         setSizePolicy(ui::Expand, ui::Expand);
 
         _icon = new LabelWidget;
-        _icon->setImage(ClientApp::windowSystem().style().images().image("updater"));
+        _icon->setImage(style().images().image("updater"));
         _icon->setOverrideImageSize(overrideImageSize());
         _icon->rule().setRect(rule());
         add(_icon);
@@ -118,7 +117,7 @@ public:
 
     void showIcon(const DotPath &path)
     {
-        _icon->setImageColor(ClientApp::windowSystem().style().colors().colorf(path));
+        _icon->setImageColor(style().colors().colorf(path));
     }
 
     void hideIcon()

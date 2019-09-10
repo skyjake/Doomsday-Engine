@@ -35,6 +35,7 @@ namespace de {
 class NativePath;
 class Rule;
 class Thread;
+class WindowSystem;
 
 /**
  * Application with GUI support.
@@ -98,6 +99,9 @@ public:
     void notifyDisplayModeChanged();
 
 public:
+    static WindowSystem &windowSystem();
+    static bool hasWindowSystem();
+
     /**
      * Determines if the currently executing thread is the rendering thread.
      * This may be the same thread as the main thread.

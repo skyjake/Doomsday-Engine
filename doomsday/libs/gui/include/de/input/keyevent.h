@@ -43,7 +43,7 @@ public:
         Shift       = 1,
         Control     = 2,
         Alt         = 4,
-        Meta        = 8,
+        Meta        = 8, // Windows key; or Command key on Mac
 #if defined (MACOSX)
         Command     = Meta,
 #else

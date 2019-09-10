@@ -27,7 +27,7 @@ class AudioSystem;
 class ClientPlayer;
 class ClientResources;
 class ClientServerWorld;
-class ClientWindowSystem;
+class ClientWindow;
 class ConfigProfiles;
 class InFineSystem;
 class InputSystem;
@@ -82,11 +82,11 @@ public:
     static ConfigProfiles &     logSettings();
     static ConfigProfiles &     networkSettings();
     static ConfigProfiles &     audioSettings();    ///< @todo Belongs in AudioSystem.
+    static ConfigProfiles &     windowSettings();
     static ConfigProfiles &     uiSettings();
     static ServerLink &         serverLink();
     static InFineSystem &       infineSystem();
     static InputSystem &        inputSystem();
-    static ClientWindowSystem & windowSystem();
     static AudioSystem &        audioSystem();
     static RenderSystem &       renderSystem();
     static ClientResources &    resources();
@@ -95,6 +95,8 @@ public:
 #if defined (DE_HAVE_BUSYRUNNER)
     static BusyRunner &         busyRunner();
 #endif
+
+    static ClientWindow *mainWindow();
 
     static bool hasInputSystem();
     static bool hasRenderSystem();

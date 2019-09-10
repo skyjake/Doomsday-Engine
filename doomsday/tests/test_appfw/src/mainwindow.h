@@ -28,8 +28,7 @@ class MainWindow : public de::BaseWindow
 public:
     MainWindow(const de::String &id = "main");
 
-    AppRootWidget &root();
-
+    de::GuiRootWidget &root() override;
     de::Vec2f windowContentSize() const override;
 
     void addOnTop(de::GuiWidget *widget);
@@ -38,7 +37,7 @@ public:
     void postDraw() override;
 
 protected:
-//    bool handleFallbackEvent(const de::Event &event) override;
+    void windowAboutToClose() override;
 
 private:
     DE_PRIVATE(d)

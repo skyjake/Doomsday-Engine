@@ -62,6 +62,7 @@ public:
     void enableBlur(bool yes = true);
 
     // Events.
+    void initialize();
     void viewResized();
     void update();
     bool handleEvent(const de::Event &event);

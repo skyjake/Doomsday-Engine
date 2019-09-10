@@ -207,6 +207,13 @@ void BaseWindow::postDraw()
 #endif
 }
 
+void BaseWindow::rootUpdate()
+{
+    glActivate();
+    processLatestMousePosition();
+    root().update();
+}
+
 #if defined (DE_MOBILE)
 
 String BaseWindow::configName(const String &key) const

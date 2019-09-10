@@ -375,14 +375,8 @@ ConsoleWidget::ConsoleWidget()
             .setInput(Rule::Top,    OperatorRule::maximum(rule().top(), Const(0)));
     add(d->log);
 
-    // Blur the log background.
-    enableBlur();
-
     // Width of the console is defined by the style.
-    rule()
-        .setInput(Rule::Height, *d->height)
-        .setInput(Rule::Width, OperatorRule::minimum(ClientWindow::main().root().viewWidth(),
-                                                     OperatorRule::maximum(*d->width, Const(320))));
+    rule().setInput(Rule::Height, *d->height);
 
     closeLog();
 
@@ -468,13 +462,25 @@ void ConsoleWidget::enableBlur(bool yes)
     if (yes)
     {
         logBg.type = Background::SharedBlur;
-        logBg.blur = &ClientWindow::main().taskBarBlur();
+        logBg.blur = &root().window().as<ClientWindow>().taskBarBlur();
     }
     else
     {
         logBg.type = Background::None;
     }
     d->log->set(logBg);
+}
+
+void ConsoleWidget::initialize()
+{
+    GuiWidget::initialize();
+
+    rule().setInput(Rule::Width,
+                    OperatorRule::minimum(root().viewWidth(),
+                                          OperatorRule::maximum(*d->width, Const(320))));
+
+    // Blur the log background.
+    enableBlur();
 }
 
 void ConsoleWidget::viewResized()

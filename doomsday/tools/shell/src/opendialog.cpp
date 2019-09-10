@@ -78,6 +78,7 @@ DE_GUI_PIMPL(OpenDialog)
         }
 
         localServers = &area.addNew<ChoiceWidget>("local");
+        localServers->setOpeningDirection(ui::Down);
         localServers->setNoSelectionHint("No servers on local network");
         localServers->setSelected(ui::Data::InvalidPos);
         localServers->audienceForUserSelection() += [this]() {

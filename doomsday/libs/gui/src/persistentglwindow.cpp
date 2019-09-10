@@ -35,7 +35,7 @@
 
 namespace de {
 
-static const char *MAIN_WINDOW_ID            = "main";
+//static const char *MAIN_WINDOW_ID            = "main";
 static const int   BREAK_CENTERING_THRESHOLD = 5;
 
 const int PersistentGLWindow::MIN_WIDTH  = 320;
@@ -470,8 +470,6 @@ DE_PIMPL(PersistentGLWindow)
         {}
     };
 
-    String id;
-
     // Window state.
     State state;
     State savedState; // used by saveState(), restoreState()
@@ -480,19 +478,18 @@ DE_PIMPL(PersistentGLWindow)
     typedef List<Task> Tasks;
     Tasks queue;
 
-    Impl(Public *i, const String &windowId)
+    Impl(Public *i)
         : Base(i)
-        , id(windowId)
-        , state(windowId)
-        , savedState(windowId)
+        , state(i->id())
+        , savedState(i->id())
         , neverShown(true)
     {
         // Keep a global pointer to the main window.
-        if (id == MAIN_WINDOW_ID)
-        {
-            DE_ASSERT(!mainExists());
-            setMain(thisPublic);
-        }
+//        if (i->id() == MAIN_WINDOW_ID)
+//        {
+//            DE_ASSERT(!mainExists());
+//            setMain(thisPublic);
+//        }
 
         self().setMinimumSize(Size(MIN_WIDTH, MIN_HEIGHT));
     }
@@ -787,7 +784,7 @@ DE_PIMPL(PersistentGLWindow)
      */
     State currentState() const
     {
-        State st(id);
+        State st(self().id());
 
         st.windowRect     = self().windowRect();
         st.fullSize       = state.fullSize;
@@ -826,7 +823,8 @@ DE_PIMPL(PersistentGLWindow)
 DE_AUDIENCE_METHOD(PersistentGLWindow, AttributeChange)
 
 PersistentGLWindow::PersistentGLWindow(const String &id)
-    : d(new Impl(this, id))
+    : GLWindow(id)
+    , d(new Impl(this))
 {
     try
     {
@@ -860,11 +858,6 @@ PersistentGLWindow::PersistentGLWindow(const String &id)
     {
         LOG_WARNING("Failed to restore window state: %s") << er.asText();
     }
-}
-
-String PersistentGLWindow::id() const
-{
-    return d->id;
 }
 
 void PersistentGLWindow::saveToConfig()
@@ -972,17 +965,6 @@ bool PersistentGLWindow::changeAttributes(const int *attribs)
 String PersistentGLWindow::configName(const String &key) const
 {
     return d->state.configName(key);
-}
-
-PersistentGLWindow &PersistentGLWindow::getMain()
-{
-    DE_ASSERT(mainExists());
-    if (!mainExists())
-    {
-        throw InvalidIdError("PersistentGLWindow::main",
-                             stringf("No window found with id \"%s\"", MAIN_WINDOW_ID));
-    }
-    return static_cast<PersistentGLWindow &>(GLWindow::getMain());
 }
 
 #if 0

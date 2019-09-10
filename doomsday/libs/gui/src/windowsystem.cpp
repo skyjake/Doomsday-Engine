@@ -31,10 +31,10 @@ DE_PIMPL(WindowSystem)
 , DE_OBSERVES(GLWindow, PixelRatio)
 {
     struct WindowData {
-        BaseWindow *window;
-        duint32     nativeId = ~0u;
+        GLWindow *window;
+        duint32   nativeId = ~0u;
 
-        WindowData(BaseWindow *win)
+        WindowData(GLWindow *win)
             : window(win)
         {
             nativeId = SDL_GetWindowID(reinterpret_cast<SDL_Window *>(window->sdlWindow()));
@@ -42,6 +42,7 @@ DE_PIMPL(WindowSystem)
     };
 
     Map<String, WindowData> windows;
+    String                  mainId;
     String                  focusedId; // name of focused window (receives gesture input)
     std::unique_ptr<Style>  style;
 
@@ -84,7 +85,7 @@ DE_PIMPL(WindowSystem)
         DE_BASE_GUI_APP->setPixelRatio(float(win.pixelRatio()));
     }
 
-    BaseWindow *findWindow(duint32 sdlId) const
+    GLWindow *findWindow(duint32 sdlId) const
     {
         for (const auto &w : windows)
         {
@@ -135,7 +136,19 @@ DE_PIMPL(WindowSystem)
         }
         return &found->second;
     }
+
+    void rootUpdate()
+    {
+        for (const auto &win : windows)
+        {
+            win.second.window->rootUpdate();
+        }
+    }
+
+    DE_PIMPL_AUDIENCE(AllClosing)
 };
+
+DE_AUDIENCE_METHOD(WindowSystem, AllClosing)
 
 WindowSystem::WindowSystem()
     : System(ObservesTime /*| ReceivesInputEvents*/)
@@ -147,32 +160,72 @@ void WindowSystem::setStyle(Style *style)
     d->setStyle(style);
 }
 
-void WindowSystem::addWindow(const String &id, BaseWindow *window)
-{
-    window->audienceForPixelRatio() += d;
-    d->windows.insert(id, {window});
-    setFocusedWindow(id); // autofocus latest
-}
-
-bool WindowSystem::mainExists() // static
-{
-    return BaseWindow::mainExists();
-}
-
-BaseWindow &WindowSystem::main() // static
-{
-    DE_ASSERT(mainExists());
-    return static_cast<BaseWindow &>(GLWindow::getMain());
-}
-
 void WindowSystem::setFocusedWindow(const String &id)
 {
     d->focusedId = id;
 }
 
-BaseWindow *WindowSystem::focusedWindow() // static
+void WindowSystem::setMainWindow(const de::String &id)
 {
-    return get().find(get().d->focusedId);
+    d->mainId = id;
+    // The main window's swapping triggers the loop iterations.
+    GuiLoop::get().setWindow(findWindow(id));
+}
+
+void WindowSystem::addWindow(const String &id, GLWindow *window)
+{
+    window->audienceForPixelRatio() += d;
+    if (d->windows.empty())
+    {
+        setMainWindow(window->id());
+    }
+    d->windows.insert(id, {window});
+    setFocusedWindow(id); // autofocus latest
+}
+
+void WindowSystem::removeWindow(GLWindow &window)
+{
+    if (d->windows.contains(window.id()))
+    {
+        window.audienceForPixelRatio() -= d;
+        d->windows.remove(window.id());
+        if (!d->windows.empty())
+        {
+            if (d->focusedId == window.id())
+            {
+                setFocusedWindow(d->windows.begin()->second.window->id());
+            }
+            if (d->mainId == window.id())
+            {
+                setMainWindow(d->windows.begin()->second.window->id());
+            }
+        }
+        else
+        {
+            setFocusedWindow({});
+            setMainWindow({});
+        }
+    }
+}
+
+bool WindowSystem::mainExists() // static
+{
+    if (GuiApp::hasWindowSystem())
+    {
+        return get().findWindow(get().d->mainId) != nullptr;
+    }
+    return false;
+}
+
+GLWindow &WindowSystem::getMain() // static
+{
+    DE_ASSERT(mainExists());
+    return *get().findWindow(get().d->mainId);
+}
+
+GLWindow *WindowSystem::focusedWindow() // static
+{
+    return get().findWindow(get().d->focusedId);
 }
 
 dsize WindowSystem::count() const
@@ -180,7 +233,7 @@ dsize WindowSystem::count() const
     return d->windows.size();
 }
 
-BaseWindow *WindowSystem::find(const String &id) const
+GLWindow *WindowSystem::findWindow(const String &id) const
 {
     auto found = d->windows.find(id);
     if (found != d->windows.end())
@@ -190,12 +243,12 @@ BaseWindow *WindowSystem::find(const String &id) const
     return nullptr;
 }
 
-LoopResult WindowSystem::forAll(const std::function<LoopResult (BaseWindow *)>& func)
+LoopResult WindowSystem::forAll(const std::function<LoopResult (GLWindow &)>& func)
 {
     for (const auto &win : d->windows)
     {
         win.second.window->glActivate();
-        if (auto result = func(win.second.window))
+        if (auto result = func(*win.second.window))
         {
             return result;
         }
@@ -205,13 +258,12 @@ LoopResult WindowSystem::forAll(const std::function<LoopResult (BaseWindow *)>& 
 
 void WindowSystem::closeAll()
 {
-    closingAllWindows();
+    DE_NOTIFY(AllClosing, i) { i->allWindowsClosing(); }
 
-    for (const auto &w : d->windows)
-    {
-        delete w.second.window;
+    while (!d->windows.empty())
+    {        
+        delete d->windows.begin()->second.window; // Removes itself from the window system.
     }
-    d->windows.clear();
 }
 
 Style &WindowSystem::style()
@@ -271,7 +323,7 @@ void WindowSystem::timeChanged(const Clock &/*clock*/)
 //    d->processLatestMousePositionsIfMoved();
 
     // Update periodically.
-    rootUpdate();
+    d->rootUpdate();
 }
 
 static uint32_t getWindowId(const SDL_Event &event)
@@ -338,8 +390,9 @@ void WindowSystem::pollAndDispatchEvents()
     }
 }
 
-void WindowSystem::closingAllWindows()
-{}
+//void WindowSystem::closingAllWindows()
+//{
+//}
 
 //bool WindowSystem::rootProcessEvent(const Event &event)
 //{
@@ -350,28 +403,19 @@ void WindowSystem::closingAllWindows()
 //    return false;
 //}
 
-void WindowSystem::rootUpdate()
-{
-    for (const auto &win : d->windows)
-    {
-        auto *window = win.second.window;
-        window->glActivate();
-        window->processLatestMousePosition();
-        window->root().update();
-    }
-}
 
-static WindowSystem *theAppWindowSystem = nullptr;
+//static WindowSystem *theWindowSystem = nullptr;
 
-void WindowSystem::setAppWindowSystem(WindowSystem &winSys)
-{
-    theAppWindowSystem = &winSys;
-}
+//void WindowSystem::setAppWindowSystem(WindowSystem &winSys)
+//{
+//    theAppWindowSystem = &winSys;
+//}
 
 WindowSystem &WindowSystem::get() // static
 {
-    DE_ASSERT(theAppWindowSystem != nullptr);
-    return *theAppWindowSystem;
+//    DE_ASSERT(theAppWindowSystem != nullptr);
+//    return *theAppWindowSystem;
+    return GuiApp::windowSystem();
 }
 
 } // namespace de

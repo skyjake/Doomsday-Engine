@@ -38,8 +38,8 @@ namespace de {
 /**
  * Window management subsystem.
  *
- * The window system processes events produced by the input drivers. In
- * practice, the events are passed to the widgets in the windows.
+ * The window system processes events produced by the input drivers. In practice,
+ * the events are passed to the root widgets of the windows.
  *
  * @ingroup appfw
  */
@@ -60,35 +60,33 @@ public:
     void setStyle(Style *style);
 
     template <typename WindowType>
-    WindowType *newWindow(const String &id) {
-        DE_ASSERT(!find(id));
+    WindowType *newWindow(const String &id = "main") {
+        DE_ASSERT(!findWindow(id));
         WindowType *win = new WindowType(id);
         addWindow(id, win);
         return win;
     }
 
-    void addWindow(const String &id, BaseWindow *window);
+    void addWindow(const String &id, GLWindow *window);
 
     /**
-     * Returns @c true iff a main window is available.
+     * Removes a window from the window system and returns the new main window.
+     * The main window changes only when removing the main window itself.
+     *
+     * @param window  Window to remove.
+     * @return New main window.
      */
-    static bool mainExists();
+    void removeWindow(GLWindow &window);
 
     /**
-     * Returns the main window.
+     * Sets or changes the main window. The first window that is added to the window
+     * system automatically becomes the main window.
+     *
+     * @param id  Window ID.
      */
-    static BaseWindow &main();
+    void setMainWindow(const String &id);
 
     void setFocusedWindow(const String &id);
-
-    static BaseWindow *focusedWindow();
-
-    /**
-     * Returns a pointer to the @em main window.
-     *0
-     * @see hasMain()
-     */
-    inline static BaseWindow *mainPtr() { return mainExists() ? &main() : nullptr; }
 
     /**
      * @return Number of windows.
@@ -102,9 +100,15 @@ public:
      *
      * @return Window instance or @c NULL if not found.
      */
-    BaseWindow *find(const String &id) const;
+    GLWindow *findWindow(const String &id) const;
 
-    LoopResult forAll(const std::function<LoopResult(BaseWindow *)> &func);
+    template <typename WindowType>
+    WindowType *find(const String &id) const
+    {
+        return maybeAs<WindowType>(findWindow(id));
+    }
+
+    LoopResult forAll(const std::function<LoopResult(GLWindow &)> &func);
 
     /**
      * Closes all windows, including the main window.
@@ -121,26 +125,31 @@ public:
      */
     void pollAndDispatchEvents();
 
-    /*
-     * Dispatches a mouse position event with the latest mouse position. This
-     * happens automatically whenever the mouse has moved and time advances.
-     */
-//    void dispatchLatestMousePosition(BaseWindow &window);
-
-//    Vec2i latestMousePosition(const BaseWindow &window) const;
-
     // System.
-//    bool processEvent(const Event &);
     void timeChanged(const Clock &);
 
+    DE_AUDIENCE(AllClosing, void allWindowsClosing())
+
 public:
-    static void setAppWindowSystem(WindowSystem &winSys);
+//    static void setAppWindowSystem(WindowSystem &winSys);
     static WindowSystem &get();
 
-protected:
-    virtual void closingAllWindows();
-//    virtual bool rootProcessEvent(const Event &event);
-    virtual void rootUpdate(); // all windows
+    /**
+     * Returns @c true if a main window is available.
+     */
+    static bool mainExists();
+
+    /**
+     * Returns the main window.
+     */
+    static GLWindow &getMain();
+
+    static GLWindow *focusedWindow();
+
+    /**
+     * Returns a pointer to the @em main window.
+     */
+    inline static GLWindow *mainPtr() { return mainExists() ? &getMain() : nullptr; }
 
 private:
     DE_PRIVATE(d)

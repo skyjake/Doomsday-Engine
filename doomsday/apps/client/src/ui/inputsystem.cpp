@@ -31,6 +31,7 @@
 #include <de/NumberValue>
 #include <de/Record>
 #include <de/ScriptSystem>
+#include <de/WindowSystem>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <doomsday/console/exec.h>
@@ -49,7 +50,6 @@
 #include "ui/ddevent.h"
 #include "ui/b_util.h"
 #include "ui/clientwindow.h"
-#include "ui/clientwindowsystem.h"
 #include "ui/inputdebug.h"  // Debug visualization.
 #include "ui/inputdevice.h"
 #include "ui/axisinputcontrol.h"
@@ -1705,7 +1705,7 @@ D_CMD(ReleaseMouse)
     DE_UNUSED(src, argc, argv);
     if (WindowSystem::mainExists())
     {
-        ClientWindowSystem::main().eventHandler().trapMouse(false);
+        WindowSystem::getMain().eventHandler().trapMouse(false);
         return true;
     }
     return false;

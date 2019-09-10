@@ -66,7 +66,6 @@
 
 #include "clientapp.h"
 #include "ui/progress.h"
-#include "ui/clientwindowsystem.h"
 #include "sys_system.h"  // novideo
 #include "gl/gl_tex.h"
 #include "gl/gl_texmanager.h"

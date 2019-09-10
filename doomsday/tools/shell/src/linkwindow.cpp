@@ -104,7 +104,7 @@ DE_PIMPL(LinkWindow)
 //    QAction *disconnectAction;
 #endif
 
-    enum Tab { NewServer, Status, Options, Console };
+    enum Tab { /*NewServer,*/ Status, Options, Console };
 
     Impl(Public &i)
         : Base(i)
@@ -116,15 +116,6 @@ DE_PIMPL(LinkWindow)
 
         waitTimeout.setSingleShot(false);
         waitTimeout.setInterval(1.0_s);
-
-        auto *keys = new KeyActions;
-        keys->add(KeyEvent::press(',', KeyEvent::Command),
-                  []() { GuiShellApp::app().showPreferences(); });
-        keys->add(KeyEvent::press('n', KeyEvent::Command),
-                  []() { GuiShellApp::app().startLocalServer(); });
-        keys->add(KeyEvent::press('o', KeyEvent::Command),
-                  []() { GuiShellApp::app().connectToServer(); });
-        root.add(keys);
     }
 
     ~Impl() override
@@ -158,23 +149,25 @@ DE_PIMPL(LinkWindow)
 
             pageTabs->rule().setRect(tools->rule());
 
-            pageTabs->items() << new TabItem(style.images().image("create"), "New Server")
-                              << new TabItem(style.images().image("refresh"), "Status")
-                              << new TabItem(style.images().image("gear"), "Options")
-                              << new TabItem(style.images().image("gauge"), "Console");
+            auto &appImages = GuiShellApp::app().imageBank();
+
+            pageTabs->items() //<< new TabItem(appImages.image("create"), "New Server")
+                              << new TabItem(appImages.image("toolbar.status"), "Status")
+                              << new TabItem(appImages.image("toolbar.options"), "Options")
+                              << new TabItem(appImages.image("toolbar.console"), "Console");
             pageTabs->setCurrent(0);
             pageTabs->audienceForTab() += [this]() {
                 GuiWidget *page = nullptr;
                 switch (pageTabs->current())
                 {
-                    case Tab::NewServer: page = newLocalServerPage; break;
-                    case Tab::Status: page = statusPage; break;
+                    case Tab::Status:  page = statusPage; break;
                     case Tab::Options: page = optionsPage; break;
                     case Tab::Console: page = consolePage; break;
                     default: break;
                 }
                 setCurrentPage(page);
             };
+            pageTabs->disable();
 
             tools->rule()
                     .setInput(Rule::Left, root.viewLeft())
@@ -252,7 +245,10 @@ DE_PIMPL(LinkWindow)
         {
             menu = &root.addNew<PopupMenuWidget>();
             menu->items()
-                << new ui::ActionItem("About Doomsday Shell", [](){ GuiShellApp::app().aboutShell(); });
+                << new ui::ActionItem("Connect...", []() { GuiShellApp::app().connectToServer(); })
+                << new ui::ActionItem("Disconnect", [this]() { self().closeConnection(); })
+                << new ui::ActionItem("About Doomsday Shell", [](){ GuiShellApp::app().aboutShell(); })
+                << new ui::ActionItem("Quit", []() { GuiShellApp::app().quit(0); });
             auto *menuButton = &root.addNew<PopupButtonWidget>();
             menuButton->setSizePolicy(ui::Expand, ui::Expand);
             menuButton->setText("Menu");
@@ -312,6 +308,23 @@ DE_PIMPL(LinkWindow)
         }
 
         setCurrentPage(newLocalServerPage);
+
+        // Keyboard shortcuts.
+        {
+            auto *keys = new KeyActions;
+            keys->add(KeyEvent::press(',', KeyEvent::Command),
+                      []() { GuiShellApp::app().showPreferences(); });
+            keys->add(KeyEvent::press('n', KeyEvent::Command),
+                      []() { GuiShellApp::app().startLocalServer(); });
+            keys->add(KeyEvent::press('o', KeyEvent::Command),
+                      []() { GuiShellApp::app().connectToServer(); });
+            keys->add(KeyEvent::press('d', KeyEvent::Command),
+                      [this]() { self().closeConnection(); });
+            keys->add(KeyEvent::press('1', KeyEvent::Command), [this]() { self().switchToStatus(); });
+            keys->add(KeyEvent::press('2', KeyEvent::Command), [this]() { self().switchToOptions(); });
+            keys->add(KeyEvent::press('3', KeyEvent::Command), [this]() { self().switchToConsole(); });
+            root.add(keys);
+        }
     }
 
     void commandSubmitted(const String &command) override
@@ -388,9 +401,12 @@ DE_PIMPL(LinkWindow)
 //#endif
 
         gameStatus->setText("");
-//        status->linkDisconnected();
+        statusPage->linkDisconnected();
         updateCurrentHost();
         updateStyle();
+
+        pageTabs->disable();
+        setCurrentPage(newLocalServerPage);
 
 //        checkCurrentTab(false);
     }
@@ -758,7 +774,7 @@ void LinkWindow::openConnection(const String &address)
 
     // Keep trying to connect to 30 seconds.
     const String addr{address};
-    openConnection(new network::Link(addr, 30.0), addr);
+    openConnection(new network::Link(addr, 30.0_s), addr);
 }
 
 void LinkWindow::closeConnection()
@@ -785,7 +801,11 @@ void LinkWindow::closeConnection()
 
 void LinkWindow::switchToStatus()
 {
-    d->pageTabs->setCurrent(Impl::Tab::Status);
+    if (d->link)
+    {
+        d->pageTabs->setCurrent(Impl::Tab::Status);
+        d->setCurrentPage(d->statusPage);
+    }
 
 //    d->optionsButton->setChecked(false);
 //    d->consoleButton->setChecked(false);
@@ -793,8 +813,11 @@ void LinkWindow::switchToStatus()
 }
 
 void LinkWindow::switchToOptions()
-{    
-    d->pageTabs->setCurrent(Impl::Tab::Options);
+{
+    if (d->link)
+    {
+        d->pageTabs->setCurrent(Impl::Tab::Options);
+    }
 
 //    d->statusButton->setChecked(false);
 //    d->consoleButton->setChecked(false);
@@ -803,7 +826,10 @@ void LinkWindow::switchToOptions()
 
 void LinkWindow::switchToConsole()
 {
-    d->pageTabs->setCurrent(Impl::Tab::Console);
+    if (d->link)
+    {
+        d->pageTabs->setCurrent(Impl::Tab::Console);
+    }
 
 //    d->statusButton->setChecked(false);
 //    d->optionsButton->setChecked(false);
@@ -844,55 +870,52 @@ void LinkWindow::handleIncomingPackets()
         Protocol &protocol = d->link->protocol();
         switch (protocol.recognize(packet.get()))
         {
-        case Protocol::PasswordChallenge:
-            askForPassword();
-            break;
+            case Protocol::PasswordChallenge: askForPassword(); break;
 
-        case Protocol::LogEntries: {
-            // Add the entries into the local log buffer.
-            LogEntryPacket *pkt = static_cast<LogEntryPacket *>(packet.get());
-            for (const LogEntry *e : pkt->entries())
+            case Protocol::LogEntries:
             {
-                d->serverLogBuffer.add(new LogEntry(*e, LogEntry::Remote));
+                // Add the entries into the local log buffer.
+                LogEntryPacket *pkt = static_cast<LogEntryPacket *>(packet.get());
+                for (const LogEntry *e : pkt->entries())
+                {
+                    d->serverLogBuffer.add(new LogEntry(*e, LogEntry::Remote));
+                }
+                // Flush immediately so we don't have to wait for the autoflush
+                // to occur a bit later.
+                d->serverLogBuffer.flush();
+                break;
             }
-            // Flush immediately so we don't have to wait for the autoflush
-            // to occur a bit later.
-            d->serverLogBuffer.flush();
-            break; }
 
-        case Protocol::ConsoleLexicon:
-            // Terms for auto-completion.
-            d->commandWidget->setLexicon(protocol.lexicon(*packet));
-            debug("TODO: received console lexicon");
-            break;
+            case Protocol::ConsoleLexicon:
+                // Terms for auto-completion.
+                d->commandWidget->setLexicon(protocol.lexicon(*packet));
+                break;
 
-        case Protocol::GameState:
-        {
-            Record &     rec      = static_cast<RecordPacket *>(packet.get())->record();
-            const String rules    = rec["rules"];
-            String       gameType = rules.containsWord("dm") ? "Deathmatch"
-                                  : rules.containsWord("dm2") ? "Deathmatch II" : "Co-op";
+            case Protocol::GameState:
+            {
+                Record &     rec      = static_cast<RecordPacket *>(packet.get())->record();
+                const String rules    = rec["rules"];
+                String       gameType = rules.containsWord("dm") ? "Deathmatch"
+                                      : rules.containsWord("dm2") ? "Deathmatch II" : "Co-op";
 
-            d->statusPage->setGameState(rec["mode"].value().asText(),
-                                        gameType,
-                                        rec["mapId"].value().asText(),
-                                        rec["mapTitle"].value().asText());
+                d->statusPage->setGameState(rec["mode"].value().asText(),
+                                            gameType,
+                                            rec["mapId"].value().asText(),
+                                            rec["mapTitle"].value().asText());
 
-            d->updateStatusBarWithGameState(rec);
-            d->optionsPage->updateWithGameState(rec);
-            break;
-        }
+                d->updateStatusBarWithGameState(rec);
+                d->optionsPage->updateWithGameState(rec);
+                break;
+            }
+            case Protocol::MapOutline:
+                d->statusPage->setMapOutline(*static_cast<MapOutlinePacket *>(packet.get()));
+                break;
 
-        case Protocol::MapOutline:
-            d->statusPage->setMapOutline(*static_cast<MapOutlinePacket *>(packet.get()));
-            break;
+            case Protocol::PlayerInfo:
+                d->statusPage->setPlayerInfo(*static_cast<PlayerInfoPacket *>(packet.get()));
+                break;
 
-        case Protocol::PlayerInfo:
-            d->statusPage->setPlayerInfo(*static_cast<PlayerInfoPacket *>(packet.get()));
-            break;
-
-        default:
-            break;
+            default: break;
         }
     }
 }
@@ -945,6 +968,7 @@ void LinkWindow::connected()
 //    d->disconnectAction->setEnabled(true);
 //#endif
 //    d->checkCurrentTab(true);
+    d->pageTabs->enable();
     switchToStatus();
 //    emit linkOpened(this);
 }
@@ -986,6 +1010,14 @@ void LinkWindow::askForPassword()
 //    }
 
     EventLoop::callback([this]() { closeConnection(); });
+}
+
+void LinkWindow::windowAboutToClose()
+{
+    if (!d->link)
+    {
+
+    }
 }
 
 void LinkWindow::checkFoundServers()

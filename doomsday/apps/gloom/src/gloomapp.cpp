@@ -18,7 +18,7 @@
  */
 
 #include "gloomapp.h"
-#include "appwindowsystem.h"
+#include "mainwindow.h"
 #include "gloomwidget.h"
 
 #include <gloom/gloomworld.h>
@@ -33,6 +33,7 @@
 #include <de/Info>
 #include <de/PackageLoader>
 #include <de/ScriptSystem>
+#include <de/WindowSystem>
 
 #include <the_Foundation/datagram.h>
 
@@ -46,7 +47,6 @@ DE_PIMPL(GloomApp)
     ImageBank                        images;
     tF::ref<iDatagram>               commandSocket;
     Beacon                           beacon{{COMMAND_PORT, COMMAND_PORT + 4}};
-    std::unique_ptr<AppWindowSystem> winSys;
     std::unique_ptr<AudioSystem>     audioSys;
     std::unique_ptr<GloomWorld>      world;
     String                           currentMap;
@@ -83,9 +83,9 @@ DE_PIMPL(GloomApp)
     ~Impl()
     {
         // Windows will be closed; OpenGL context will be gone. Deinitialize everything.
-        if (winSys->mainExists())
+        if (auto *win = self().windowSystem().mainPtr())
         {
-            winSys->main().glActivate();
+            win->glActivate();
             world->glDeinit();
         }
         world.reset();
@@ -222,12 +222,12 @@ void GloomApp::initialize()
 
     addInitPackage("net.dengine.gloom");
     addInitPackage("net.dengine.gloom.test");
+
     initSubsystems();
 
     // Create subsystems.
     {
-        d->winSys.reset(new AppWindowSystem);
-        addSystem(*d->winSys);
+        windowSystem().style().load(packageLoader().load("net.dengine.gloom.test.defaultstyle"));
 
         d->audioSys.reset(new AudioSystem);
         addSystem(*d->audioSys);
@@ -243,7 +243,7 @@ void GloomApp::initialize()
     }
 
     // Create the window.
-    MainWindow *win = d->winSys->newWindow<MainWindow>("main");
+    MainWindow *win = windowSystem().newWindow<MainWindow>("main");
 
     win->root().find("gloomwidget")->as<GloomWidget>().setWorld(d->world.get());
 
@@ -266,19 +266,14 @@ GloomApp &GloomApp::app()
     return *static_cast<GloomApp *>(DE_APP);
 }
 
-AppWindowSystem &GloomApp::windowSystem()
-{
-    return *app().d->winSys;
-}
-
 AudioSystem &GloomApp::audioSystem()
 {
     return *app().d->audioSys;
 }
 
-MainWindow &GloomApp::main()
+MainWindow &GloomApp::mainWindow()
 {
-    return windowSystem().main();
+    return windowSystem().getMain().as<MainWindow>();
 }
 
 ImageBank &GloomApp::images()

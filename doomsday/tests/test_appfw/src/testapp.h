@@ -21,11 +21,12 @@
 
 #include <de/BaseGuiApp>
 #include <de/ImageBank>
-#include "appwindowsystem.h"
 
 #define OVR_FOV         122.f
 #define OVR_NEAR_CLIP   .1f
 #define OVR_FAR_CLIP    1300.f
+
+class MainWindow;
 
 class TestApp : public de::BaseGuiApp
 {
@@ -36,8 +37,7 @@ public:
     void createAnotherWindow();
 
     static TestApp &        app();
-    static AppWindowSystem &windowSystem();
-    static MainWindow &     main();
+    static MainWindow &     mainWindow();
     static de::ImageBank &  images();
 
 private:

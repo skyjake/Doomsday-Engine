@@ -69,7 +69,6 @@
 #include "misc/r_util.h"
 
 #include "ui/ui_main.h"
-#include "ui/clientwindowsystem.h"
 
 #include <SDL_video.h>
 
@@ -1236,7 +1235,7 @@ D_CMD(SetRes)
 {
     DE_UNUSED(src, argc, argv);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     bool isFull = win->isFullScreen();
@@ -1253,7 +1252,7 @@ D_CMD(SetFullRes)
 {
     DE_UNUSED(src, argc);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     dint attribs[] = {
@@ -1269,7 +1268,7 @@ D_CMD(SetWinRes)
 {
     DE_UNUSED(src, argc);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     dint attribs[] = {
@@ -1286,7 +1285,7 @@ D_CMD(ToggleFullscreen)
 {
     DE_UNUSED(src, argc, argv);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     dint attribs[] = {
@@ -1300,7 +1299,7 @@ D_CMD(ToggleMaximized)
 {
     DE_UNUSED(src, argc, argv);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     dint attribs[] = {
@@ -1314,7 +1313,7 @@ D_CMD(ToggleCentered)
 {
     DE_UNUSED(src, argc, argv);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     dint attribs[] = {
@@ -1328,7 +1327,7 @@ D_CMD(CenterWindow)
 {
     DE_UNUSED(src, argc, argv);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     dint attribs[] = {
@@ -1342,7 +1341,7 @@ D_CMD(SetBPP)
 {
     DE_UNUSED(src, argc);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     dint attribs[] = {
@@ -1358,7 +1357,7 @@ D_CMD(DisplayModeInfo)
 {
     DE_UNUSED(src, argc, argv);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     SDL_DisplayMode disp;

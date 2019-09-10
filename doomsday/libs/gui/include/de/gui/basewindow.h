@@ -103,6 +103,7 @@ public:
 protected:
     virtual void preDraw();
     virtual void postDraw();
+    void rootUpdate() override;
 
 private:
     DE_PRIVATE(d)

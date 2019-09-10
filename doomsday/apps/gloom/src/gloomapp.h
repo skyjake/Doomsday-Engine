@@ -22,7 +22,8 @@
 #include <de/BaseGuiApp>
 #include <de/ImageBank>
 #include <gloom/audio/audiosystem.h>
-#include "appwindowsystem.h"
+
+class MainWindow;
 
 class GloomApp : public de::BaseGuiApp
 {
@@ -34,9 +35,8 @@ public:
     de::NativePath userDir() const;
 
     static GloomApp &          app();
-    static AppWindowSystem &   windowSystem();
     static gloom::AudioSystem &audioSystem();
-    static MainWindow &        main();
+    static MainWindow &        mainWindow();
     static de::ImageBank &     images();
 
 private:

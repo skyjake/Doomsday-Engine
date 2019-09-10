@@ -26,7 +26,6 @@
 #include "ui/ui_main.h"
 #include "ui/sys_input.h"
 #include "ui/busyvisual.h"
-#include "ui/clientwindowsystem.h"
 #include "ui/inputsystem.h"
 #include "ui/viewcompositor.h"
 #include "ui/widgets/taskbarwidget.h"

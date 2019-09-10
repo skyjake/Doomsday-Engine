@@ -557,6 +557,12 @@ bool LineEditWidget::handleEvent(const Event &event)
             return GuiWidget::handleEvent(event);
         }
 
+        // Other command keys are probably app shortcuts, so leave those alone.
+        if (key.modifiers() & KeyEvent::Command)
+        {
+            return GuiWidget::handleEvent(event);
+        }
+
         // Insert text?
         if (key.text())
         {
@@ -574,6 +580,17 @@ bool LineEditWidget::handleEvent(const Event &event)
 term::Key LineEditWidget::termKey(const KeyEvent &keyEvent) // static
 {
     using term::Key;
+
+#if defined (MACOSX)
+    if (keyEvent.modifiers() == KeyEvent::Meta)
+    {
+        switch (keyEvent.ddKey())
+        {
+            case DDKEY_LEFTARROW: return Key::Home;
+            case DDKEY_RIGHTARROW: return Key::End;
+        }
+    }
+#endif
 
     if (keyEvent.modifiers() == KeyEvent::Control)
     {

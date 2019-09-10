@@ -68,19 +68,26 @@ public:
      */
     bool isRunning() const;
 
-    /**
-     * Posts a new event into the event loop.
-     *
-     * @param event  Event to post. Ownership taken by EventLoop. The event will be deleted
-     *               once it has been processed.
-     */
-    void postEvent(Event *event);
+//    void postEvent(Event *event);
 
     virtual void processEvent(const Event &event);
 
 public:
+    /**
+     * Posts a new event into the event queue.
+     *
+     * @param event  Event to post. Ownership taken. The event will be deleted
+     *               once it has been processed.
+     */
     static void post(Event *event);
+
     static void callback(const std::function<void()> &);
+
+    /**
+     * Cancel pending events for which @a condition returns true.
+     * @param condition  Filter condition.
+     */
+    static void cancel(const std::function<bool(Event *)> &cancelCondition);
 
 private:
     DE_PRIVATE(d)

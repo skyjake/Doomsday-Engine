@@ -258,7 +258,7 @@ MainWindow::MainWindow(const String &id)
     d->setupUI();
 }
 
-AppRootWidget &MainWindow::root()
+GuiRootWidget &MainWindow::root()
 {
     return d->root;
 }
@@ -300,6 +300,12 @@ void MainWindow::postDraw()
     BaseWindow::postDraw();
 
     Garbage_Recycle();
+}
+
+void MainWindow::windowAboutToClose()
+{
+    BaseWindow::windowAboutToClose();
+    close();
 }
 
 void MainWindow::addOnTop(de::GuiWidget *widget)

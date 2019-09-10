@@ -130,7 +130,7 @@ DE_PIMPL(GuiWidget)
     }
 
 #if defined (DE_DEBUG)
-    void widgetParentChanged(Widget &, Widget *, Widget *)
+    void widgetParentChanged(Widget &, Widget *, Widget *) override
     {
         rule.setDebugName(self().path());
     }

@@ -98,8 +98,6 @@ public:
      */
     PersistentGLWindow(const String &id);
 
-    String id() const;
-
     /**
      * Returns @c true iff the window is currently centered.
      */
@@ -158,8 +156,6 @@ public:
      * Restores the attribuets of the window from previously saved state.
      */
     void restoreState();
-
-    static PersistentGLWindow &getMain();
 
     // Events.
 //    void moveEvent(QMoveEvent *) override;

@@ -71,6 +71,8 @@ protected:
     void disconnected();
     void askForPassword();
 
+    void windowAboutToClose() override;
+
 private:
     DE_PRIVATE(d)
 };

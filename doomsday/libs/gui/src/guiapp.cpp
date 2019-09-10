@@ -34,6 +34,7 @@
 #include <de/ScriptSystem>
 #include <de/TextValue>
 #include <de/Thread>
+#include <de/WindowSystem>
 
 #include <SDL.h>
 
@@ -77,6 +78,8 @@ DE_PIMPL(GuiApp)
     SDL_Cursor *  vsizeCursor;
     SDL_Cursor *  hsizeCursor;
 
+    std::unique_ptr<WindowSystem> windowSystem;
+
     Impl(Public *i) : Base(i)
     {
         // The default render thread is the main thread.
@@ -96,6 +99,7 @@ DE_PIMPL(GuiApp)
 
     ~Impl() override
     {
+        windowSystem.reset();
         releaseRef(pixelRatio);
         SDL_FreeCursor(arrowCursor);
         SDL_FreeCursor(vsizeCursor);
@@ -200,6 +204,9 @@ void GuiApp::initSubsystems(SubsystemInitFlags subsystemInitFlags)
     setPixelRatio(d->windowPixelRatio);
 
     Config::get(VAR_UI_SCALE_FACTOR()).audienceForChange() += d;
+
+    d->windowSystem.reset(new WindowSystem);
+    addSystem(*d->windowSystem);
 }
 
 const Rule &GuiApp::pixelRatio() const
@@ -302,6 +309,17 @@ bool GuiApp::inRenderThread()
 void GuiApp::setRenderThread()
 {
     DE_GUI_APP->d->renderThread = thrd_current();
+}
+
+WindowSystem &GuiApp::windowSystem()
+{
+    DE_ASSERT(DE_GUI_APP->d->windowSystem);
+    return *DE_GUI_APP->d->windowSystem;
+}
+
+bool GuiApp::hasWindowSystem()
+{
+    return bool(DE_GUI_APP->d->windowSystem);
 }
 
 NativePath GuiApp::appDataPath() const

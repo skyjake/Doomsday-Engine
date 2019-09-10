@@ -56,6 +56,7 @@
 #ifdef __CLIENT__
 #  include <de/legacy/texgamma.h>
 #  include <de/GLWindow>
+#  include <de/WindowSystem>
 #endif
 #include <doomsday/AbstractSession>
 #include <doomsday/console/alias.h>
@@ -101,7 +102,6 @@
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
-#  include "ui/clientwindowsystem.h"
 
 #  include "client/cledgeloop.h"
 #  include "client/clientsubsector.h"
@@ -577,8 +577,8 @@ void App_AbnormalShutdown(const char *message)
     // that the app's event loop is running normally while we show the native
     // message box below -- if the app windows are not hidden/closed, they might
     // receive draw events.
-    ClientApp::windowSystem().forAll([] (BaseWindow *win) {
-        win->hide();
+    ClientApp::windowSystem().forAll([] (GLWindow &win) {
+        win.hide();
         return LoopContinue;
     });
 #endif
@@ -2325,9 +2325,7 @@ D_CMD(Quit)
 D_CMD(DebugError)
 {
     DE_UNUSED(src, argv, argc);
-
     App_Error("Fatal error!\n");
-    return true;
 }
 #endif
 

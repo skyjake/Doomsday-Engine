@@ -20,15 +20,16 @@
 #include "de/VRConfig"
 
 #include <de/ArrayValue>
+#include <de/BaseWindow>
 #include <de/CommandLine>
 #include <de/Config>
 #include <de/DictionaryValue>
 #include <de/FileSystem>
+#include <de/Font>
 #include <de/Function>
 #include <de/NativeFont>
-#include <de/BaseWindow>
 #include <de/ScriptSystem>
-#include <de/Font>
+#include <de/WindowSystem>
 
 namespace de {
 
@@ -103,6 +104,7 @@ void BaseGuiApp::glDeinit()
 
     d->vr.oculusRift().deinit();
     d->shaders.clear();
+    windowSystem().closeAll();
 }
 
 void BaseGuiApp::initSubsystems(SubsystemInitFlags flags)

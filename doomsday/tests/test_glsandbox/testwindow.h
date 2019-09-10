@@ -28,6 +28,7 @@ public:
     TestWindow();
 
     void draw() override;
+    void rootUpdate() override;
 //    void keyPressEvent(QKeyEvent *ev) override;
 
     void testRenderToTexture();

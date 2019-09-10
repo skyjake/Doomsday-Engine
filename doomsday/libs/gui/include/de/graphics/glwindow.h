@@ -111,7 +111,9 @@ public:
     DE_CAST_METHODS()
 
 public:
-    GLWindow();
+    GLWindow(const String &id = "main");
+
+    const String &id() const;
 
     void        setTitle(const String &title);
     void        setIcon(const Image &image);
@@ -131,6 +133,7 @@ public:
     void showFullScreen();
     void hide();
     void raise();
+    void close();
 
     bool isGLReady() const;
     bool isFullScreen() const;
@@ -259,6 +262,7 @@ public:
     void handleWindowEvent(const void *ptr);
 
     virtual void draw() = 0;
+    virtual void rootUpdate() = 0;
 
 public:
     static void      setMain(GLWindow *window);

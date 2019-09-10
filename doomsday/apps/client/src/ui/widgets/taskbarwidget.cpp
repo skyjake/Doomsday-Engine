@@ -368,14 +368,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
             .setInput(Rule::Bottom, rule().bottom())
             .setInput(Rule::Right,  rule().right())
             .setInput(Rule::Top,    rule().top());
-    if (style().isBlurringAllowed())
-    {
-        d->backBlur->set(Background(ClientWindow::main().taskBarBlur(), Vec4f(1)));
-    }
-    else
-    {
-        d->backBlur->set(Background(Vec4f(0, 0, 0, 1)));
-    }
     add(d->backBlur);
 
     d->console = new ConsoleWidget;
@@ -542,6 +534,20 @@ bool TaskBarWidget::isOpen() const
 const Rule &TaskBarWidget::shift()
 {
     return *d->vertShift;
+}
+
+void TaskBarWidget::initialize()
+{
+    GuiWidget::initialize();
+
+    if (style().isBlurringAllowed())
+    {
+        d->backBlur->set(Background(root().window().as<ClientWindow>().taskBarBlur(), Vec4f(1)));
+    }
+    else
+    {
+        d->backBlur->set(Background(Vec4f(0, 0, 0, 1)));
+    }
 }
 
 void TaskBarWidget::glInit()

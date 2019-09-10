@@ -23,6 +23,8 @@
 #include "../Lockable"
 #include "../Guard"
 
+#include <algorithm>
+#include <functional>
 #include <list>
 
 namespace de {
@@ -38,17 +40,18 @@ template <typename Type>
 class FIFO : public Lockable
 {
 public:
-    enum PutMode {
-        PutHead,
-        PutTail
-    };
+    enum PutMode { PutHead, PutTail };
 
 public:
-    FIFO() : Lockable() {}
+    FIFO()
+        : Lockable()
+    {}
 
-    virtual ~FIFO() {
+    virtual ~FIFO()
+    {
         DE_GUARD(this);
-        for (typename Objects::iterator i = _objects.begin(); i != _objects.end(); ++i) {
+        for (typename Objects::iterator i = _objects.begin(); i != _objects.end(); ++i)
+        {
             delete *i;
         }
     }
@@ -62,12 +65,15 @@ public:
      *  - PutTail: object is put to the tail, meaning it will be the
      *    next one to come out.
      */
-    void put(Type *object, PutMode mode = PutHead) {
+    void put(Type *object, PutMode mode = PutHead)
+    {
         DE_GUARD(this);
-        if (mode == PutHead) {
+        if (mode == PutHead)
+        {
             _objects.push_front(object);
         }
-        else {
+        else
+        {
             _objects.push_back(object);
         }
     }
@@ -78,7 +84,8 @@ public:
      * @return The oldest object in the buffer, or nullptr if the buffer is empty.
      * Caller gets ownership of the returned object.
      */
-    Type *take() {
+    Type *take()
+    {
         DE_GUARD(this);
         if (_objects.empty()) return nullptr;
         Type *last = _objects.back();
@@ -92,7 +99,8 @@ public:
      * @return The oldest object in the buffer, or nullptr if the buffer is empty.
      * The object is not removed from the buffer.
      */
-    Type* tail() const {
+    Type *tail() const
+    {
         DE_GUARD(this);
         if (_objects.empty()) return nullptr;
         return _objects.back();
@@ -101,14 +109,25 @@ public:
     /**
      * Determines whether the buffer is empty.
      */
-    bool isEmpty() const {
+    bool isEmpty() const
+    {
         DE_GUARD(this);
         return _objects.empty();
     }
 
-    void clear() {
+    void clear()
+    {
         DE_GUARD(this);
-        while (!isEmpty()) delete take();
+        while (!isEmpty())
+        {
+            delete take();
+        }
+    }
+
+    void filter(const std::function<bool(Type *)> &cond)
+    {
+        DE_GUARD(this);
+        _objects.remove_if(cond);
     }
 
 private:

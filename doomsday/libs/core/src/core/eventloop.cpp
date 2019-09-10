@@ -35,14 +35,16 @@ struct StackPusher {
     ~StackPusher()               { DE_GUARD(loopStack); loopStack.value.pop_back(); }
 };
 
-static FIFO<Event> outOfLoopEvents; // events posted when no event loops were running
+//static FIFO<Event> outOfLoopEvents; // events posted when no event loops were running
+
+static WaitableFIFO<Event> eventQueue; // shared event queue for all event loops
 
 } // namespace internal
 
 DE_PIMPL_NOREF(EventLoop)
 {
     RunMode runMode;
-    std::shared_ptr<WaitableFIFO<Event>> queue;
+//    std::shared_ptr<WaitableFIFO<Event>> queue;
     DE_PIMPL_AUDIENCE(Event)
 };
 DE_AUDIENCE_METHOD(EventLoop, Event)
@@ -54,14 +56,14 @@ EventLoop::EventLoop(RunMode runMode) : d(new Impl)
     {
         using namespace internal;
         DE_GUARD(loopStack);
-        if (loopStack.value.isEmpty())
-        {
-            d->queue.reset(new WaitableFIFO<Event>());
-        }
-        else
-        {
-            d->queue = loopStack.value.back()->d->queue;
-        }
+//        if (loopStack.value.isEmpty())
+//        {
+//            d->queue.reset(new WaitableFIFO<Event>());
+//        }
+//        else
+//        {
+//            d->queue = loopStack.value.back()->d->queue;
+//        }
         if (d->runMode == Manual)
         {
             loopStack.value.push_back(this);
@@ -87,16 +89,16 @@ int EventLoop::exec(const std::function<void ()> &postExec)
         internal::StackPusher sp(this);
         if (postExec) postExec();
 
-        // Queue up any events posted outside running event loops.
-        while (auto *event = internal::outOfLoopEvents.take())
-        {
-            postEvent(event);
-        }
+//        // Queue up any events posted outside running event loops.
+//        while (auto *event = internal::outOfLoopEvents.take())
+//        {
+//            postEvent(event);
+//        }
 
         for (;;)
         {
             // Wait until an event is posted.
-            std::unique_ptr<Event> event(d->queue->take());
+            std::unique_ptr<Event> event(internal::eventQueue.take());
 
             // Notify observers and/or the subclass.
             processEvent(*event);
@@ -105,7 +107,7 @@ int EventLoop::exec(const std::function<void ()> &postExec)
             {
                 return event->as<CoreEvent>().valuei();
             }
-            if (d->queue->isEmpty())
+            if (internal::eventQueue.isEmpty())
             {
                 // Nothing to do immediately, so take out the trash.
                 Garbage_Recycle();
@@ -119,25 +121,25 @@ int EventLoop::exec(const std::function<void ()> &postExec)
         LOG_WARNING("Event loop stopped: %s") << er.asText();
         return 0;
     }
-    DE_ASSERT(d->queue->isEmpty());
+//    DE_ASSERT(internal::eventQueue.isEmpty());
 }
 
 void EventLoop::quit(int exitCode)
 {
-    postEvent(new CoreEvent(Event::Quit, NumberValue(exitCode)));
+    post(new CoreEvent(Event::Quit, NumberValue(exitCode)));
 }
 
 void EventLoop::processQueuedEvents()
 {
     try
     {
-        while (!d->queue->isEmpty())
+        while (!internal::eventQueue.isEmpty())
         {
-            std::unique_ptr<Event> event{d->queue->tryTake(0.001)};
+            std::unique_ptr<Event> event{internal::eventQueue.tryTake(0.001)};
             if (event->type() == Event::Quit)
             {
                 // We can't handle this.
-                d->queue->put(event.release());
+                internal::eventQueue.put(event.release());
                 break;
             }
             processEvent(*event);
@@ -159,10 +161,10 @@ bool EventLoop::isRunning() const
     return loopStack.value.back() == this;
 }
 
-void EventLoop::postEvent(Event *event)
-{
-    d->queue->put(event);
-}
+//void EventLoop::postEvent(Event *event)
+//{
+//    internal::eventQueue.put(event);
+//}
 
 void EventLoop::processEvent(const Event &event)
 {
@@ -180,19 +182,25 @@ void EventLoop::processEvent(const Event &event)
 
 void EventLoop::post(Event *event) // static
 {
-    if (auto *evloop = get())
-    {
-        evloop->postEvent(event);
-    }
-    else
-    {
-        internal::outOfLoopEvents.put(event);
-    }
+    internal::eventQueue.put(event);
+//    if (auto *evloop = get())
+//    {
+//        evloop->postEvent(event);
+//    }
+//    else
+//    {
+//        internal::outOfLoopEvents.put(event);
+//    }
 }
 
 void EventLoop::callback(const std::function<void()> &func) // static
 {
     post(new CoreEvent(func));
+}
+
+void EventLoop::cancel(const std::function<bool(Event *)> &cancelCondition)
+{
+    internal::eventQueue.filter(cancelCondition);
 }
 
 EventLoop *EventLoop::get()

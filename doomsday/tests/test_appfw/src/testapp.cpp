@@ -17,16 +17,17 @@
  */
 
 #include "testapp.h"
-#include "appwindowsystem.h"
+#include "mainwindow.h"
 
 #include <de/FileSystem>
+#include <de/PackageLoader>
 #include <de/ScriptSystem>
+#include <de/WindowSystem>
 
 using namespace de;
 
 DE_PIMPL(TestApp)
 {
-    std::unique_ptr<AppWindowSystem> winSys;
     ImageBank images;
 
     Impl(Public *i) : Base(i) {}
@@ -64,8 +65,7 @@ void TestApp::initialize()
     initSubsystems();
 
     // Create subsystems.
-    d->winSys.reset(new AppWindowSystem);
-    addSystem(*d->winSys);
+    windowSystem().style().load(packageLoader().package("net.dengine.stdlib.gui"));
 
     d->loadAllShaders();
 
@@ -73,7 +73,7 @@ void TestApp::initialize()
     d->images.addFromInfo(rootFolder().locate<File>("/packs/net.dengine.test.appfw/images.dei"));
 
     // Create the window.
-    auto *win = d->winSys->newWindow<MainWindow>("main");
+    auto *win = windowSystem().newWindow<MainWindow>("main");
 
     scriptSystem().importModule("bootstrap");
 
@@ -82,10 +82,9 @@ void TestApp::initialize()
 
 void TestApp::createAnotherWindow()
 {
-    if (d->winSys->count() == 1)
+    if (!windowSystem().findWindow("extra"))
     {
-        auto *win = d->winSys->newWindow<MainWindow>("extra");
-        win->show();
+        windowSystem().newWindow<MainWindow>("extra")->show();
     }
 }
 
@@ -94,14 +93,9 @@ TestApp &TestApp::app()
     return *static_cast<TestApp *>(DE_APP);
 }
 
-AppWindowSystem &TestApp::windowSystem()
+MainWindow &TestApp::mainWindow()
 {
-    return *app().d->winSys;
-}
-
-MainWindow &TestApp::main()
-{
-    return windowSystem().main();
+    return windowSystem().getMain().as<MainWindow>();
 }
 
 ImageBank &TestApp::images()

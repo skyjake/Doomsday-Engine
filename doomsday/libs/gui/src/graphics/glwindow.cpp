@@ -39,11 +39,34 @@
 
 namespace de {
 
-static GLWindow *mainWindow = nullptr;
+namespace internal {
+
+/**
+ * Event specific to a window. Storing the window pointer allows cancelling the event
+ * when the window is deleted.
+ */
+class WindowEvent : public CoreEvent
+{
+public:
+    WindowEvent(GLWindow *window, const std::function<void()> &callback)
+        : CoreEvent(callback)
+        , _window(window)
+    {}
+
+    GLWindow *window() const { return _window; }
+
+private:
+    GLWindow *_window;
+};
+
+} // namespace internal
+
+//static GLWindow *mainWindow = nullptr;
 static GLWindow *currentWindow = nullptr;
 
 DE_PIMPL(GLWindow)
 {
+    String        id;
     SDL_Window *  window    = nullptr;
     SDL_GLContext glContext = nullptr;
     GLStateStack  glStack;
@@ -55,6 +78,7 @@ DE_PIMPL(GLWindow)
     bool                readyPending  = false;
     bool                readyNotified = false;
     bool                paintPending  = false;
+    bool                isClosing     = false;
     Size                currentSize;
     double              pixelRatio = 0.0;
     int                 displayIndex;
@@ -65,7 +89,7 @@ DE_PIMPL(GLWindow)
     std::unique_ptr<GLTimer> timer;
     Id totalFrameTimeQueryId;
 
-    Impl(Public *i) : Base(i)
+    Impl(Public *i, const String &id) : Base(i), id(id)
     {
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -80,10 +104,10 @@ DE_PIMPL(GLWindow)
         SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,  5);
         SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
 
-        if (mainWindow)
+        if (auto *mainWin = WindowSystem::get().mainPtr())
         {
             SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, SDL_TRUE);
-            mainWindow->glActivate();
+            mainWin->glActivate();
         }
 
         window = SDL_CreateWindow("GLWindow",
@@ -104,6 +128,15 @@ DE_PIMPL(GLWindow)
 
     ~Impl()
     {
+        // Cancel all pending events concerning this window.
+        EventLoop::cancel([this](Event *ev) {
+            if (auto *winEvent = maybeAs<internal::WindowEvent>(ev))
+            {
+                return winEvent->window() == thisPublic;
+            }
+            return false;
+        });
+
         self().makeCurrent();
         {
             // Perform cleanup of GL objects.
@@ -114,11 +147,7 @@ DE_PIMPL(GLWindow)
         SDL_GL_DeleteContext(glContext);
         SDL_DestroyWindow(window);
 
-        if (thisPublic == mainWindow)
-        {
-            GuiLoop::get().setWindow(nullptr); // triggers GuiLoop iterations
-            mainWindow = nullptr;
-        }
+        WindowSystem::get().removeWindow(self());
     }
 
     void updatePixelRatio()
@@ -152,7 +181,12 @@ DE_PIMPL(GLWindow)
         readyNotified = false;
         readyPending = false;
         timer.reset();
-        GLInfo::glDeinit();
+
+        // All windows going away?
+        if (WindowSystem::get().count() == 1)
+        {
+            GLInfo::glDeinit();
+        }
     }
 
     void notifyReady()
@@ -266,8 +300,8 @@ DE_PIMPL(GLWindow)
 
 DE_AUDIENCE_METHODS(GLWindow, Init, Resize, Display, PixelRatio, Swap, Move, Visibility)
 
-GLWindow::GLWindow()
-    : d(new Impl(this))
+GLWindow::GLWindow(const String &id)
+    : d(new Impl(this, id))
 {
     d->handler = new WindowEventHandler(this);
     d->handler->setKeyboardMode(WindowEventHandler::RawKeys);
@@ -277,6 +311,11 @@ GLWindow::GLWindow()
         SDL_SetWindowGrab(d->window, trap ? SDL_TRUE : SDL_FALSE);
         SDL_SetRelativeMouseMode(trap ? SDL_TRUE : SDL_FALSE);
     };
+}
+
+const String &GLWindow::id() const
+{
+    return d->id;
 }
 
 void GLWindow::setTitle(const String &title)
@@ -350,6 +389,13 @@ void GLWindow::hide()
 void GLWindow::raise()
 {
     SDL_RaiseWindow(d->window);
+}
+
+void GLWindow::close()
+{
+    // Prevent further updates, instead destroying the window on the next update.
+    d->isClosing = true;
+    update();
 }
 
 void GLWindow::setGeometry(const Rectanglei &rect)
@@ -639,7 +685,12 @@ void GLWindow::update()
     if (!d->paintPending)
     {
         d->paintPending = true;
-        EventLoop::post(new CoreEvent([this]() {
+        EventLoop::post(new internal::WindowEvent(this, [this]() {
+            if (d->isClosing)
+            {
+                delete this;
+                return;
+            }
             d->paintPending = false;
             makeCurrent();
             LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
@@ -671,6 +722,8 @@ void GLWindow::paintGL()
 {
     DE_ASSERT(SDL_GL_GetCurrentContext() == d->glContext);
 
+    if (d->isClosing) return;
+
     GLFramebuffer::setDefaultFramebuffer(0);
 
     // Repainting of the window should continue in an indefinite loop.
@@ -678,7 +731,7 @@ void GLWindow::paintGL()
     // If changing the current UI/frame/world time causes side effects
     // such as another event loop running busy mode, we'll still get uninterrupted
     // window content refresh.
-    EventLoop::post(new CoreEvent([this]() {
+    EventLoop::post(new internal::WindowEvent(this, [this]() {
         update();
         WindowSystem::get().pollAndDispatchEvents(); // process new input/window events
     }));
@@ -737,18 +790,19 @@ void GLWindow::paintGL()
 
 void GLWindow::windowAboutToClose()
 {
-    /// @todo What to do about pending (already submitted) update/paint events?
+    // Derived classes should take this as a request to close the window now.
 }
 
 bool GLWindow::mainExists() // static
 {
-    return mainWindow != nullptr;
+    return WindowSystem::mainExists();
 }
 
 GLWindow &GLWindow::getMain() // static
 {
-    DE_ASSERT(mainWindow != nullptr);
-    return *mainWindow;
+    //    DE_ASSERT(mainWindow != nullptr);
+    //    return *mainWindow;
+    return WindowSystem::getMain();
 }
 
 void GLWindow::glActivateMain()
@@ -764,8 +818,9 @@ GLWindow &GLWindow::current() // static
 
 void GLWindow::setMain(GLWindow *window) // static
 {
-    mainWindow = window;
-    GuiLoop::get().setWindow(window);
+//    mainWindow = window;
+//    GuiLoop::get().setWindow(window);
+    WindowSystem::get().setMainWindow(window->id());
 }
 
 void *GLWindow::sdlWindow() const

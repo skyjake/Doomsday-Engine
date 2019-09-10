@@ -72,6 +72,8 @@ DE_GUI_PIMPL(StatusWidget)
     {        
         gameMode.clear();
         map.clear();
+        stateLabel->setText({});
+        titleLabel->setText({});
         mapBounds = {};
         mapOutline->setOutline({});
         oldPlayerPositions.clear();

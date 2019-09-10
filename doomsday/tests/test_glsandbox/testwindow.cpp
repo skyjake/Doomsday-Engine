@@ -582,6 +582,11 @@ void TestWindow::draw()
     LIBGUI_ASSERT_GL_OK();
 }
 
+void TestWindow::rootUpdate()
+{
+    // no widgets to update
+}
+
 /*
 void TestWindow::keyPressEvent(QKeyEvent *ev)
 {

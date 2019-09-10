@@ -43,6 +43,7 @@
 #include <de/NotificationAreaWidget>
 #include <de/NumberValue>
 #include <de/VRWindowTransform>
+#include <de/WindowSystem>
 #include <de/legacy/concurrency.h>
 #include <doomsday/console/exec.h>
 #include "api_console.h"
@@ -58,7 +59,6 @@
 #include "ui/dialogs/alertdialog.h"
 #include "ui/inputdevice.h"
 #include "ui/inputsystem.h"
-#include "ui/clientwindowsystem.h"
 #include "CommandAction"
 #include "dd_main.h"
 #include "render/vr.h"
@@ -167,7 +167,7 @@ DE_PIMPL(ClientWindow)
 
     void setupUI()
     {
-        Style &style = ClientApp::windowSystem().style();
+        Style &style = Style::get();
 
         // This is a shared widget so it may be accessed during initialization of other widgets;
         // create it first.

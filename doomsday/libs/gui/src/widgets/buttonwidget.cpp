@@ -337,7 +337,7 @@ bool ButtonWidget::handleShortcut(const KeyEvent &keyEvent)
     if (!keyEvent.text() &&
         root().window().eventHandler().keyboardMode() == WindowEventHandler::RawKeys)
     {
-        if (d->shortcutDDKey == keyEvent.ddKey())
+        if (d->shortcutDDKey && d->shortcutDDKey == keyEvent.ddKey())
         {
             trigger();
             return true;

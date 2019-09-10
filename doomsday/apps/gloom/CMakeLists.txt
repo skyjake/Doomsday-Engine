@@ -17,8 +17,6 @@ deng_add_package (net.dengine.gloom.test)
 set (SOURCES
     src/approotwidget.cpp
     src/approotwidget.h
-    src/appwindowsystem.cpp
-    src/appwindowsystem.h
     src/globalshortcuts.cpp
     src/globalshortcuts.h
     src/gloomapp.cpp

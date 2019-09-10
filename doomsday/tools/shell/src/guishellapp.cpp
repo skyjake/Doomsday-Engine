@@ -23,14 +23,15 @@
 #include "localserverdialog.h"
 #include "opendialog.h"
 #include "preferences.h"
-#include "shellwindowsystem.h"
 
+#include <de/Config>
 #include <de/EscapeParser>
 #include <de/FileSystem>
 #include <de/Id>
-#include <de/Config>
+#include <de/PackageLoader>
 #include <de/ServerFinder>
 #include <de/Timer>
+#include <de/WindowSystem>
 #include <doomsday/network/LocalServer>
 #include <SDL_messagebox.h>
 
@@ -39,7 +40,6 @@ using namespace network;
 
 DE_PIMPL(GuiShellApp)
 {
-    std::unique_ptr<ShellWindowSystem> winSys;
     ServerFinder finder;
 
     ImageBank imageBank;
@@ -64,10 +64,7 @@ DE_PIMPL(GuiShellApp)
 
     ~Impl()
     {
-//        foreach (LinkWindow *win, windows)
-//        {
-//            delete win;
-//        }
+        self().glDeinit();
     }
 
     void loadAllShaders()
@@ -149,8 +146,7 @@ void GuiShellApp::initialize()
     addInitPackage("net.dengine.shell");
 
     initSubsystems();
-    d->winSys.reset(new ShellWindowSystem);
-    addSystem(*d->winSys);
+    windowSystem().style().load(packageLoader().package("net.dengine.stdlib.gui"));
 
     d->imageBank.addFromInfo(FS::locate<const File>("/packs/net.dengine.shell/images.dei"));
     d->loadAllShaders();
@@ -161,8 +157,8 @@ LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
     LinkWindow *found = nullptr;
 
     // Look for a window with a closed connection.
-    d->winSys->forAll([&found](BaseWindow *w) {
-        auto &win = w->as<LinkWindow>();
+    windowSystem().forAll([&found](GLWindow &w) {
+        auto &win = w.as<LinkWindow>();
         if (!win.isConnected())
         {
             found = &win;
@@ -174,7 +170,7 @@ LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
 
     if (!found)
     {
-        found = d->winSys->newWindow<LinkWindow>(Stringf("link%04u", d->winSys->count()));
+        found = windowSystem().newWindow<LinkWindow>(Stringf("link%04u", windowSystem().count()));
 //        connect(found, SIGNAL(linkOpened(LinkWindow*)),this, SLOT(updateMenu()));
 //        connect(found, SIGNAL(linkClosed(LinkWindow*)), this, SLOT(updateMenu()));
 //        connect(found, SIGNAL(closed(LinkWindow *)), this, SLOT(windowClosed(LinkWindow *)));
@@ -188,7 +184,7 @@ LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
 //        }
     }
 
-    d->winSys->setFocusedWindow(found->id());    
+    windowSystem().setFocusedWindow(found->id());
 
 //    d->windows.prepend(found);
 //    found->show();
@@ -264,7 +260,7 @@ void GuiShellApp::startLocalServer()
             return;
         }
 #endif
-        auto *win = d->winSys->focusedWindow();
+        auto *win = &windowSystem().focusedWindow()->as<LinkWindow>();
         auto *dlg = new LocalServerDialog;
         dlg->setDeleteAfterDismissed(true);
         if (dlg->exec(win->root()))
@@ -340,10 +336,10 @@ void GuiShellApp::updateLocalServerMenu()
 
 void GuiShellApp::aboutShell()
 {
-    auto *win = d->winSys->focusedWindow();
+    auto &win = windowSystem().focusedWindow()->as<LinkWindow>();
     auto *about = new AboutDialog;
     about->setDeleteAfterDismissed(true);
-    about->exec(win->root());
+    about->exec(win.root());
 }
 
 void GuiShellApp::showHelp()
@@ -358,11 +354,11 @@ void GuiShellApp::openWebAddress(const String &url)
 
 void GuiShellApp::showPreferences()
 {
-    LinkWindow *win = d->winSys->focusedWindow();
+    LinkWindow &win = windowSystem().focusedWindow()->as<LinkWindow>();
 
     auto *prefs = new Preferences;
     prefs->setDeleteAfterDismissed(true);
-    prefs->exec(win->root());
+    prefs->exec(win.root());
 
 //    if (!d->prefs)
 //    {

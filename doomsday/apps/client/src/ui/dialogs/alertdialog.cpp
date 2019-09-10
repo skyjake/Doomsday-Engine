@@ -19,7 +19,6 @@
 #include "ui/dialogs/alertdialog.h"
 #include "ui/dialogs/logsettingsdialog.h"
 #include "ui/clientwindow.h"
-#include "ui/clientwindowsystem.h"
 #include "clientapp.h"
 
 #include <de/App>
@@ -32,6 +31,7 @@
 #include <de/Timer>
 #include <de/ui/ActionItem>
 #include <de/ui/ListData>
+#include <de/WindowSystem>
 
 using namespace de;
 
@@ -70,8 +70,7 @@ DE_GUI_PIMPL(AlertDialog)
                              Font::RichFormat::Style &fontStyle,
                              int &colorIndex) const
         {
-            ClientApp::windowSystem().style()
-                    .richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
+            Style::get().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
 
             if (contentStyle == Font::RichFormat::MajorStyle ||
                contentStyle == Font::RichFormat::MajorMetaStyle)

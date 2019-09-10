@@ -51,7 +51,8 @@
 #include "ui/alertmask.h"
 #include "ui/b_main.h"
 #include "ui/clientwindow.h"
-#include "ui/clientwindowsystem.h"
+#include "ui/clientstyle.h"
+//#include "ui/clientwindowsystem.h"
 #include "ui/dialogs/alertdialog.h"
 #include "ui/dialogs/packagecompatibilitydialog.h"
 #include "ui/inputsystem.h"
@@ -85,10 +86,12 @@
 #include <de/Log>
 #include <de/LogSink>
 #include <de/NativeFont>
+#include <de/PackageLoader>
 #include <de/ScriptSystem>
 #include <de/StyledLogSinkFormatter>
 #include <de/TextValue>
 #include <de/VRConfig>
+#include <de/WindowSystem>
 
 #include <SDL_events.h>
 #include <SDL_surface.h>
@@ -128,12 +131,12 @@ DE_NORETURN static void handleLegacyCoreTerminate(const char *msg)
 
 static void continueInitWithEventLoopRunning()
 {
-    if (!ClientWindowSystem::mainExists()) return;
+    if (!ClientWindow::mainExists()) return;
 
 #if !defined (DE_MOBILE)
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
-    ClientWindowSystem::main().show();
+    ClientWindow::getMain().show();
 #endif
 
 #if defined (DE_HAVE_UPDATER)
@@ -180,12 +183,13 @@ DE_PIMPL(ClientApp)
     ConfigProfiles              audioSettings;
     ConfigProfiles              networkSettings;
     ConfigProfiles              logSettings;
+    ConfigProfiles              windowSettings;
     ConfigProfiles              uiSettings;
     InputSystem *               inputSys  = nullptr;
     AudioSystem *               audioSys  = nullptr;
     RenderSystem *              rendSys   = nullptr;
     ClientResources *           resources = nullptr;
-    ClientWindowSystem *        winSys    = nullptr;
+//    ClientWindowSystem *        winSys    = nullptr;
     InFineSystem                infineSys; // instantiated at construction time
     ServerLink *                svLink = nullptr;
     ClientServerWorld *         world  = nullptr;
@@ -271,13 +275,11 @@ DE_PIMPL(ClientApp)
         try
         {
             ClientWindow::glActivateMain(); // for GL deinit
-
-            LogBuffer::get().removeSink(logAlarm);
-
             self().players().forAll([](Player &p) {
                 p.as<ClientPlayer>().viewCompositor().glDeinit();
                 return LoopContinue;
             });
+            LogBuffer::get().removeSink(logAlarm);
             self().glDeinit();
 
             Sys_Shutdown();
@@ -294,7 +296,6 @@ DE_PIMPL(ClientApp)
 #endif
         delete inputSys;
         delete resources;
-        delete winSys;
         delete audioSys;
         delete rendSys;
         delete world;
@@ -467,6 +468,16 @@ DE_PIMPL(ClientApp)
                     .define(Prof::ConfigVariable, Stringf("log.filter.%s.allowDev", name.c_str()))
                     .define(Prof::ConfigVariable, "alert." + name);
         }
+
+        windowSettings
+                .define(Prof::ConfigVariable, "window.main.showFps")
+                .define(Prof::ConfigVariable, "window.main.fsaa")
+                .define(Prof::ConfigVariable, "window.main.vsync")
+                .define(Prof::IntCVar,        "refresh-rate-maximum", 0)
+                .define(Prof::IntCVar,        "rend-finale-stretch", SCALEMODE_SMART_STRETCH)
+                .define(Prof::IntCVar,        "rend-hud-stretch", SCALEMODE_SMART_STRETCH)
+                .define(Prof::IntCVar,        "inlude-stretch", SCALEMODE_SMART_STRETCH)
+                .define(Prof::IntCVar,        "menu-stretch", SCALEMODE_SMART_STRETCH);
 
         uiSettings
                 .define(Prof::ConfigVariable, "ui.scaleFactor")
@@ -677,10 +688,18 @@ void ClientApp::initialize()
     d->audioSys = new AudioSystem;
     addSystem(*d->audioSys);
 
-    // Create the window system.
-    d->winSys = new ClientWindowSystem;
-    WindowSystem::setAppWindowSystem(*d->winSys);
-    addSystem(*d->winSys);
+    // Set up the window system.
+    {
+        ClientWindow::setDefaultGLFormat();
+
+        auto &ws = windowSystem();
+        ws.setStyle(new ClientStyle);
+        ws.style().load(packageLoader().load("net.dengine.client.defaultstyle"));
+        ws.audienceForAllClosing() += []() {
+            // We can't get rid of the windows without tearing down GL stuff first.
+            GL_Shutdown();
+        };
+    }
 
 #if defined (DE_HAVE_UPDATER)
     // Check for updates automatically.
@@ -693,10 +712,7 @@ void ClientApp::initialize()
 
     plugins().loadAll();
 
-    // On mobile, the window is instantiated via QML.
-#if !defined (DE_MOBILE)
-    d->winSys->createWindow()->setTitle(DD_ComposeMainWindowTitle());
-#endif
+    windowSystem().newWindow<ClientWindow>()->setTitle(DD_ComposeMainWindowTitle());
 
     // Create the input system.
     d->inputSys = new InputSystem;
@@ -914,6 +930,11 @@ BusyRunner &ClientApp::busyRunner()
 }
 #endif
 
+ClientWindow *ClientApp::mainWindow()
+{
+    return static_cast<ClientWindow *>(WindowSystem::get().mainPtr());
+}
+
 ConfigProfiles &ClientApp::logSettings()
 {
     return app().d->logSettings;
@@ -927,6 +948,11 @@ ConfigProfiles &ClientApp::networkSettings()
 ConfigProfiles &ClientApp::audioSettings()
 {
     return app().d->audioSettings;
+}
+
+ConfigProfiles &ClientApp::windowSettings()
+{
+    return app().d->windowSettings;
 }
 
 ConfigProfiles &ClientApp::uiSettings()
@@ -989,13 +1015,6 @@ ClientResources &ClientApp::resources()
     ClientApp &a = ClientApp::app();
     DE_ASSERT(a.d->resources != 0);
     return *a.d->resources;
-}
-
-ClientWindowSystem &ClientApp::windowSystem()
-{
-    ClientApp &a = ClientApp::app();
-    DE_ASSERT(a.d->winSys != 0);
-    return *a.d->winSys;
 }
 
 ClientServerWorld &ClientApp::world()
