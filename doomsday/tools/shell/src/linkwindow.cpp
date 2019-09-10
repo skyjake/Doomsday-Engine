@@ -83,6 +83,7 @@ DE_PIMPL(LinkWindow)
     duint16 waitingForLocalPort = 0;
     Time startedWaitingAt;
     Timer waitTimeout;
+    Timer updateTimer;
     String linkName;
     NativePath errorLog;
     GuiWidget *tools = nullptr;
@@ -116,12 +117,16 @@ DE_PIMPL(LinkWindow)
 
         waitTimeout.setSingleShot(false);
         waitTimeout.setInterval(1.0_s);
+
+        updateTimer.setSingleShot(false);
+        updateTimer.setInterval(1.0_s);
+        updateTimer.audienceForTrigger() += [this](){ updateWhenConnected(); };
     }
 
     ~Impl() override
     {
-        // Make sure the local sink is removed.
-        LogBuffer::get().removeSink(logWidget->logSink());
+        serverLogBuffer.removeSink(logWidget->logSink());
+        LogBuffer::get().removeSink(logWidget->logSink());     
     }
 
     ButtonWidget *createToolbarButton(const String &label)
@@ -458,6 +463,18 @@ DE_PIMPL(LinkWindow)
 //        tools->addWidget(tb);
 //        return tb;
 //    }
+
+    void updateWhenConnected()
+    {
+        if (self().isConnected())
+        {
+            TimeSpan elapsed = link->connectedAt().since();
+            String time = Stringf("%d:%02d:%02d", int(elapsed.asHours()),
+                                  int(elapsed.asMinutes()) % 60,
+                                  int(elapsed) % 60);
+            timeCounter->setText(time);
+        }
+    }
 
     void updateStatusBarWithGameState(Record &rec)
     {
@@ -801,7 +818,7 @@ void LinkWindow::closeConnection()
 
 void LinkWindow::switchToStatus()
 {
-    if (d->link)
+    if (isConnected())
     {
         d->pageTabs->setCurrent(Impl::Tab::Status);
         d->setCurrentPage(d->statusPage);
@@ -814,7 +831,7 @@ void LinkWindow::switchToStatus()
 
 void LinkWindow::switchToOptions()
 {
-    if (d->link)
+    if (isConnected())
     {
         d->pageTabs->setCurrent(Impl::Tab::Options);
     }
@@ -826,7 +843,7 @@ void LinkWindow::switchToOptions()
 
 void LinkWindow::switchToConsole()
 {
-    if (d->link)
+    if (isConnected())
     {
         d->pageTabs->setCurrent(Impl::Tab::Console);
     }
@@ -835,20 +852,6 @@ void LinkWindow::switchToConsole()
 //    d->optionsButton->setChecked(false);
 //    d->stack->setCurrentWidget(d->console);
 //    d->console->root().setFocus();
-}
-
-void LinkWindow::updateWhenConnected()
-{
-    if (d->link)
-    {
-        TimeSpan elapsed = d->link->connectedAt().since();
-        String time = Stringf("%d:%02d:%02d", int(elapsed.asHours()),
-                int(elapsed.asMinutes()) % 60,
-                int(elapsed) % 60);
-        d->timeCounter->setText(time);
-
-        Loop::get().timer(1000_ms, [this](){ updateWhenConnected(); });
-    }
 }
 
 void LinkWindow::handleIncomingPackets()
@@ -922,7 +925,7 @@ void LinkWindow::handleIncomingPackets()
 
 void LinkWindow::sendCommandToServer(const String &command)
 {
-    if (d->link)
+    if (isConnected())
     {
         // Echo the command locally.
         LogEntry *e = new LogEntry(LogEntry::Generic | LogEntry::Note, "", 0, ">",
@@ -962,7 +965,8 @@ void LinkWindow::connected()
     d->statusPage->linkConnected(d->link);
     d->statusMessage->setText("");
 
-    updateWhenConnected();
+    d->updateWhenConnected();
+    d->updateTimer.start();
 //    d->stopAction->setEnabled(true);
 //#ifdef MENU_IN_LINK_WINDOW
 //    d->disconnectAction->setEnabled(true);
@@ -976,6 +980,8 @@ void LinkWindow::connected()
 void LinkWindow::disconnected()
 {
     if (!d->link) return;
+
+    d->updateTimer.stop();
 
     // The link was disconnected.
     d->link->audienceForPacketsReady() += [this](){ handleIncomingPackets(); };
@@ -1014,9 +1020,33 @@ void LinkWindow::askForPassword()
 
 void LinkWindow::windowAboutToClose()
 {
-    if (!d->link)
-    {
+    BaseWindow::windowAboutToClose();
 
+    if (!isConnected())
+    {
+        close();
+        return;
+    }
+
+    auto *dlg = new MessageDialog;
+    dlg->setDeleteAfterDismissed(true);
+    dlg->title().setText("Closing?");
+    dlg->message().setText("You are still connected to a server. Do you want to keep the server "
+                           "running after disconnecting?");
+    dlg->buttons()
+        << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default,
+                                "Keep Running")
+        << new DialogButtonItem(DialogWidget::Accept, "Stop Server",
+                                [dlg]() { dlg->accept(2); })
+        << new DialogButtonItem(DialogWidget::Reject, "Cancel");
+
+    if (int result = dlg->exec(root()))
+    {
+        if (result == 2)
+        {
+            sendCommandToServer("quit");
+        }
+        close();
     }
 }
 
