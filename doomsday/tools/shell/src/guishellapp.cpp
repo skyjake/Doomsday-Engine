@@ -324,20 +324,6 @@ void GuiShellApp::startLocalServer()
     }
 }
 
-void GuiShellApp::stopServer()
-{
-//    LinkWindow *win = dynamic_cast<LinkWindow *>(activeWindow());
-//    if (win && win->isConnected())
-//    {
-//        if (QMessageBox::question(win, tr("Stop Server?"),
-//                                 tr("Are you sure you want to stop this server?"),
-//                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
-//        {
-//            win->sendCommandToServer("quit");
-//        }
-//    }
-}
-
 void GuiShellApp::updateLocalServerMenu()
 {
 //    d->localMenu->setDisabled(d->finder.foundServers().isEmpty());

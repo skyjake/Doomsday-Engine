@@ -60,10 +60,9 @@ public:
     void switchToStatus();
     void switchToOptions();
     void switchToConsole();
-    //void updateConsoleFontFromPreferences();
+    void stopServer();
 
 protected:
-    void checkFoundServers();
     void handleIncomingPackets();
     void addressResolved();
     void connected();

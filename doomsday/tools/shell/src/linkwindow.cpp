@@ -25,6 +25,7 @@
 #include <de/CommandWidget>
 #include <de/EventLoop>
 #include <de/Garbage>
+#include <de/InputDialog>
 #include <de/KeyActions>
 #include <de/LogBuffer>
 #include <de/LogWidget>
@@ -252,6 +253,9 @@ DE_PIMPL(LinkWindow)
             menu->items()
                 << new ui::ActionItem("Connect...", []() { GuiShellApp::app().connectToServer(); })
                 << new ui::ActionItem("Disconnect", [this]() { self().closeConnection(); })
+                << new ui::ActionItem("New Local Server...", []() { GuiShellApp::app().startLocalServer(); })
+                << new ui::ActionItem("Stop Server", [this]() { self().stopServer(); })
+                << new ui::ActionItem("Preferences...", []() { GuiShellApp::app().showPreferences(); })
                 << new ui::ActionItem("About Doomsday Shell", [](){ GuiShellApp::app().aboutShell(); })
                 << new ui::ActionItem("Quit", []() { GuiShellApp::app().quit(0); });
             auto *menuButton = &root.addNew<PopupButtonWidget>();
@@ -450,22 +454,6 @@ DE_PIMPL(LinkWindow)
         }
     }
 
-//    QToolButton *addToolButton(const QString &label, const QIcon &icon)
-//    {
-//        QToolButton *tb = new QToolButton;
-//        tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-//        tb->setFocusPolicy(Qt::NoFocus);
-//        tb->setText(label);
-//        tb->setIcon(icon);
-//        tb->setCheckable(true);
-//#ifdef MACOSX
-//        // Tighter spacing, please.
-//        tb->setStyleSheet("padding-bottom:-1px");
-//#endif
-//        tools->addWidget(tb);
-//        return tb;
-//    }
-
     void updateWhenConnected()
     {
         if (self().isConnected())
@@ -491,18 +479,6 @@ DE_PIMPL(LinkWindow)
         gameStatus->setText(msg);
     }
 
-//    void checkCurrentTab(bool connected)
-//    {
-//        if (stack->currentWidget() == newLocalServerPage && connected)
-//        {
-//            stack->setCurrentWidget(status);
-//        }
-//        else if (stack->currentWidget() == status && !connected)
-//        {
-//            stack->setCurrentWidget(newLocalServerPage);
-//        }
-//    }
-
     void commandEntered(const String &command) override
     {
         self().sendCommandToServer(command);
@@ -510,7 +486,24 @@ DE_PIMPL(LinkWindow)
 
     void foundServersUpdated() override
     {
-        self().checkFoundServers();
+        checkFoundServers();
+    }
+
+    void checkFoundServers()
+    {
+        if (!waitingForLocalPort) return;
+
+        const auto &finder = GuiShellApp::app().serverFinder();
+        for (const auto &addr : finder.foundServers())
+        {
+            if (addr.isLocal() && addr.port() == waitingForLocalPort)
+            {
+                // This is the one!
+                const Address dest = addr;
+                Loop::timer(100_ms, [this, dest]() { self().openConnection(new network::Link(dest)); });
+                waitingForLocalPort = 0;
+            }
+        }
     }
 
     void localServerStopped(int port) override
@@ -657,7 +650,7 @@ LinkWindow::LinkWindow(const String &id)
     // Observer local servers.
     GuiShellApp::app().serverFinder().audienceForUpdate() += d;
     GuiShellApp::app().audienceForLocalServerStop() += d;
-    d->waitTimeout.audienceForTrigger() += [this]() { checkFoundServers(); };
+    d->waitTimeout.audienceForTrigger() += [this]() { d->checkFoundServers(); };
     d->waitTimeout.start();
 
     setTitle("Disconnected");
@@ -860,10 +853,8 @@ void LinkWindow::handleIncomingPackets()
 {
     using namespace network;
 
-    for (;;)
+    while (isConnected())
     {
-        DE_ASSERT(d->link != 0);
-
         std::unique_ptr<Packet> packet(d->link->nextPacket());
         if (!packet) break;
 
@@ -998,26 +989,21 @@ void LinkWindow::disconnected()
 
 void LinkWindow::askForPassword()
 {
-//    QInputDialog dlg(this);
-//    dlg.setWindowTitle(tr("Password Required"));
-//#ifdef WIN32
-//    dlg.setWindowFlags(dlg.windowFlags() & ~Qt::WindowContextHelpButtonHint);
-//#endif
-//    dlg.setWindowModality(Qt::WindowModal);
-//    dlg.setInputMode(QInputDialog::TextInput);
-//    dlg.setTextEchoMode(QLineEdit::Password);
-//    dlg.setLabelText(tr("Server password:"));
-
-//    if (dlg.exec() == QDialog::Accepted)
-//    {
-//        if (d->link)
-//        {
-//            *d->link << d->link->protocol().passwordResponse(convert(dlg.textValue()));
-//        }
-//        return;
-//    }
-
-    EventLoop::callback([this]() { closeConnection(); });
+    auto *dlg = new InputDialog;
+    dlg->setDeleteAfterDismissed(true);
+    dlg->title().setText("Password Required");
+    dlg->message().setText("Enter the server shell login password:");
+    if (dlg->exec(root()))
+    {
+        if (isConnected())
+        {
+            *d->link << d->link->protocol().passwordResponse(dlg->editor().text());
+        }
+    }
+    else
+    {
+        /*EventLoop::callback([this]() { */ closeConnection(); //});
+    }
 }
 
 void LinkWindow::windowAboutToClose()
@@ -1053,19 +1039,20 @@ void LinkWindow::windowAboutToClose()
     }
 }
 
-void LinkWindow::checkFoundServers()
+void LinkWindow::stopServer()
 {
-    if (!d->waitingForLocalPort) return;
-
-    const auto &finder = GuiShellApp::app().serverFinder();
-    for (const auto &addr : finder.foundServers())
+    if (isConnected())
     {
-        if (addr.isLocal() && addr.port() == d->waitingForLocalPort)
+        auto *dlg = new MessageDialog;
+        dlg->setDeleteAfterDismissed(true);
+        dlg->title().setText("Stop Server?");
+        dlg->message().setText("Are you sure you want to stop this server?");
+        dlg->buttons() << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept,
+                                               "Stop Server")
+                       << new DialogButtonItem(DialogWidget::Reject, "Cancel");
+        if (dlg->exec(root()))
         {
-            // This is the one!
-            const Address dest = addr;
-            Loop::timer(100_ms, [this, dest]() { openConnection(new network::Link(dest)); });
-            d->waitingForLocalPort = 0;
+            sendCommandToServer("quit");
         }
     }
 }

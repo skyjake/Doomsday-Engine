@@ -48,7 +48,6 @@ public:
     void disconnectFromServer();
     void closeActiveWindow();
     void startLocalServer();
-    void stopServer();
     void updateLocalServerMenu();
     void aboutShell();
     void showHelp();
