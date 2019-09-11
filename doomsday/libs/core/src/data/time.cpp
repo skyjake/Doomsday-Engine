@@ -256,6 +256,7 @@ Time::Time(int year, int month, int day, int hour, int minute, int second)
     t.tm_hour  = hour;
     t.tm_min   = minute;
     t.tm_sec   = second;
+    t.tm_isdst = -1; // determine if Daylight Saving Time was in effect then
     d->sysTime = chrono::system_clock::from_time_t(mktime(&t));
     d->flags |= Impl::SysTime;
 }
