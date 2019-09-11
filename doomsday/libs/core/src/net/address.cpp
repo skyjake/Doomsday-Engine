@@ -207,10 +207,10 @@ String Address::asText() const
     {
         d->textRepr = (d->special == Impl::LocalHost ? String("localhost")
                                                      : String::take(toString_Address(d->get())));
-        if (d->port)
-        {
-            d->textRepr += Stringf(":%u", d->port);
-        }
+//        if (d->port)
+//        {
+//            d->textRepr += Stringf(":%u", d->port);
+//        }
     }
     return d->textRepr;
 }
@@ -244,6 +244,15 @@ std::ostream &operator<<(std::ostream &os, const Address &address)
     return os;
 }
 
+static String cleanIpv4IPAddress(const String &text)
+{
+    if (text.beginsWith("::ffff:"))
+    {
+        return text.substr(BytePos(7));
+    }
+    return text;
+}
+
 bool Address::isHostLocal(const Address &host) // static
 {
     if (host.d->special == Impl::LocalHost)
@@ -261,10 +270,11 @@ bool Address::isHostLocal(const Address &host) // static
         host.d->get();
     }
 //    debug("isHostLocal %s?", host.d->dbgstr().c_str());
+    const String test = cleanIpv4IPAddress(host.hostName());
     for (const Address &addr : internal::NetworkInterfaces::get().allAddresses())
     {
 //        debug("- checking: %s", addr.d->dbgstr().c_str());
-        if (addr.hostName().compareWithoutCase(host.hostName()) == 0)
+        if (cleanIpv4IPAddress(addr.hostName()).compareWithoutCase(test) == 0)
         {
             if (host.d->special == Impl::Undefined)
             {
