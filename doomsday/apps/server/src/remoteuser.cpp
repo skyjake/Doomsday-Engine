@@ -129,7 +129,7 @@ DE_PIMPL(RemoteUser)
         // If the command is too long, it'll be considered invalid.
         if (length >= 256)
         {
-            trash(thisPublic);
+            disconnect();
             return false;
         }
 
@@ -182,7 +182,7 @@ DE_PIMPL(RemoteUser)
                 if (supplied != pwd.md5Hash())
                 {
                     // Wrong!
-                    trash(thisPublic);
+                    disconnect();
                     return false;
                 }
             }
@@ -217,7 +217,7 @@ DE_PIMPL(RemoteUser)
             else
             {
                 // Couldn't join the game, so close the connection.
-                trash(thisPublic);
+                disconnect();
                 return false;
             }
         }
@@ -225,7 +225,7 @@ DE_PIMPL(RemoteUser)
         {
             // Too bad, scoundrel! Goodbye.
             LOG_NET_WARNING("Received an invalid request from %s") << id;
-            trash(thisPublic);
+            disconnect();
             return false;
         }
 
@@ -319,7 +319,6 @@ void RemoteUser::socketDisconnected()
 {
     d->state = Disconnected;
     d->notifyClientExit();
-
     trash(this);
 }
 
