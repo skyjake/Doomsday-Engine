@@ -23,6 +23,7 @@
 #include <de/LogBuffer>
 #include <de/Loop>
 #include <de/Rule>
+#include <de/WindowSystem>
 
 #include <SDL_events.h>
 
@@ -222,6 +223,11 @@ DE_PIMPL(WindowEventHandler)
 
     void handleFocus(bool focusGained)
     {
+        if (focusGained)
+        {
+            WindowSystem::get().setFocusedWindow(window->id());
+        }
+
         //debug("focus: %i", focusGained);
         DE_NOTIFY_PUBLIC(FocusChange, i)
         {
