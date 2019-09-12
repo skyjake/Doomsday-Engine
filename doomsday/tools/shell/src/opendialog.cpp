@@ -215,7 +215,7 @@ void OpenDialog::updateLocalList(bool autoselect)
         // Update the list of servers.
         for (const auto &sv : found)
         {
-            String label = Stringf("%s (%s; %d/%d)",
+            String label = Stringf("%s - %s (%d/%d)",
                                    sv.first.c_str(),
                                    finder.name(sv.second).left(CharPos(20)).c_str(),
                                    finder.playerCount(sv.second),

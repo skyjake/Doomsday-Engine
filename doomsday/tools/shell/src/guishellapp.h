@@ -53,7 +53,6 @@ public:
     void showHelp();
     void openWebAddress(const de::String &address);
     void showPreferences();
-    void preferencesDone();
     void updateMenu();
 
     DE_AUDIENCE(LocalServerStop, void localServerStopped(int port))

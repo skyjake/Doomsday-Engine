@@ -256,6 +256,7 @@ DE_PIMPL(LinkWindow)
                 << new ui::ActionItem("New Local Server...", []() { GuiShellApp::app().startLocalServer(); })
                 << new ui::ActionItem("Stop Server", [this]() { self().stopServer(); })
                 << new ui::ActionItem("Preferences...", []() { GuiShellApp::app().showPreferences(); })
+                << new ui::ActionItem("Help...", [](){ GuiShellApp::app().showHelp(); })
                 << new ui::ActionItem("About Doomsday Shell", [](){ GuiShellApp::app().aboutShell(); })
                 << new ui::ActionItem("Quit", []() { GuiShellApp::app().quit(0); });
             auto *menuButton = &root.addNew<PopupButtonWidget>();
@@ -281,20 +282,22 @@ DE_PIMPL(LinkWindow)
                                           style.fonts().font("monospace").ascent());
             timeCounter->set(GuiWidget::Background(Vec4f(1, 0, 0, 1)));
 
-            statusMessage->setText("Status message");
+            //statusMessage->setText("Status message");
             statusMessage->set(GuiWidget::Background(Vec4f(0, 0, 1, 1)));
-            gameStatus->setText("game");
-            currentHost->setText("localhost");
+            //gameStatus->setText("");
+            //currentHost->setText("localhost");
 
-            SequentialLayout layout(statusBar->rule().left(), statusBar->rule().top(), ui::Right);
+            SequentialLayout layout(menuButton->rule().left(), statusBar->rule().top(), ui::Left);
 
-            for (auto *label : {statusMessage, gameStatus, timeCounter, currentHost})
+            for (auto *label : {timeCounter, currentHost, gameStatus, statusMessage})
             {
                 label->setSizePolicy(ui::Expand, ui::Fixed);
                 label->rule().setInput(Rule::Height, statusHeight);
                 statusBar->add(label);
                 layout << *label;
             }
+            statusMessage->setSizePolicy(ui::Fixed, ui::Fixed);
+            statusMessage->rule().setInput(Rule::Left, statusBar->rule().left());
 
             statusBar->rule()
                     .setInput(Rule::Left, root.viewLeft())
@@ -809,7 +812,7 @@ void LinkWindow::closeConnection()
         d->link->audienceForDisconnected() += [this](){ disconnected(); };
 
         delete d->link;
-        d->link = 0;
+        d->link = nullptr;
 
 //        emit linkClosed(this);
     }

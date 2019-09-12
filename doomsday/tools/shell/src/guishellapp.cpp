@@ -39,6 +39,7 @@ using namespace de;
 using namespace network;
 
 DE_PIMPL(GuiShellApp)
+, DE_OBSERVES(ServerFinder, Update)
 {
     ServerFinder finder;
 
@@ -53,6 +54,7 @@ DE_PIMPL(GuiShellApp)
 //    QList<LinkWindow *> windows;
     Hash<int, LocalServer *> localServers; // port as key
     Timer localCheckTimer;
+    ui::ListDataT<ui::ActionItem> localServerMenuItems;
 
     Preferences *prefs;
 
@@ -60,11 +62,28 @@ DE_PIMPL(GuiShellApp)
     {
         localCheckTimer.setInterval(1.0_s);
         localCheckTimer.setSingleShot(false);
+
+        finder.audienceForUpdate() += this;
     }
 
-    ~Impl()
+    ~Impl() override
     {
         self().glDeinit();
+    }
+
+    void foundServersUpdated() override
+    {
+        DE_ASSERT(inMainThread());
+
+        const auto found = finder.foundServers();
+
+        // Add new servers.
+        for (const auto &sv : found)
+        {
+
+        }
+
+        // Remove servers that are not present.
     }
 
     void loadAllShaders()
@@ -352,12 +371,12 @@ void GuiShellApp::aboutShell()
 
 void GuiShellApp::showHelp()
 {
-//    QDesktopServices::openUrl(QUrl(tr("http://wiki.dengine.net/w/Shell_Help")));
+    openBrowserUrl("https://manual.dengine.net/multiplayer/shell_help");
 }
 
 void GuiShellApp::openWebAddress(const String &url)
 {
-//    QDesktopServices::openUrl(QUrl(url));
+    openBrowserUrl(url);
 }
 
 void GuiShellApp::showPreferences()
@@ -382,12 +401,6 @@ void GuiShellApp::showPreferences()
 //    {
 //        d->prefs->activateWindow();
 //    }
-}
-
-void GuiShellApp::preferencesDone()
-{
-//    d->prefs->deleteLater();
-//    d->prefs = 0;
 }
 
 void GuiShellApp::updateMenu()
