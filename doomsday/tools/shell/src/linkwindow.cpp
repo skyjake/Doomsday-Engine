@@ -424,12 +424,18 @@ DE_PIMPL(LinkWindow)
 
     String readErrorLogContents() const
     {
-        using namespace std;
-
-        std::unique_ptr<const NativeFile> file(NativeFile::newStandalone(errorLog));
-        Block text;
-        *file >> text;
-        return String::fromUtf8(text);
+        try
+        {
+            std::unique_ptr<const NativeFile> file(NativeFile::newStandalone(errorLog));
+            Block text;
+            *file >> text;
+            return String::fromUtf8(text);
+        }
+        catch (const Error &er)
+        {
+            LOG_WARNING("%s") << er.asText();
+            return {};
+        }
     }
 
     bool checkForErrors()

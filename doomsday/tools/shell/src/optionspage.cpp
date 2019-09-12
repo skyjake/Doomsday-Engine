@@ -35,7 +35,7 @@ DE_GUI_PIMPL(OptionsPage)
 
     DialogContentStylist stylist;
     String               game;
-    ButtonWidget *       acceptButton;
+    ButtonWidget *       acceptButton = nullptr;
     List<GameOption>     gameOptions;
     OptionWidgets        widgets;
     Record               gameState;
@@ -60,7 +60,7 @@ DE_GUI_PIMPL(OptionsPage)
         }
         widgets.clear();
 
-        delete acceptButton;
+        GuiWidget::destroy(acceptButton);
         acceptButton = nullptr;
     }
 
