@@ -362,11 +362,30 @@ void GuiApp::revealFile(const NativePath &fileOrFolder) // static
             CommandLine{{"/usr/bin/osascript", scriptPath, fileOrFolder}}.execute();
         }
     }
+    #elif defined (DE_X11)
+    {
+        String path = (fileOrFolder.isDirectory() ? fileOrFolder.toString()
+                                                  : fileOrFolder.fileNamePath().toString());
+        CommandLine({"/usr/bin/xdg-open", path}).execute();
+    }
     #else
     {
         DE_ASSERT_FAIL("File revealing not implemented on this platform");
     }
 #endif
+}
+
+void GuiApp::openBrowserUrl(const String &url)
+{
+    #if defined (DE_X11)
+    {
+        CommandLine({"/usr/bin/x-www-browser", url}).execute();
+    }
+#else
+    {
+        DE_ASSERT_FAIL("Browser URL opening not implemented on this platform");
+    }
+    #endif
 }
 
 void GuiApp::quitRequested()

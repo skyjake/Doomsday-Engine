@@ -124,6 +124,13 @@ public:
      */
     static void revealFile(const NativePath &fileOrFolder);
 
+    /**
+     * Opens an URL in the operating system's default web browser.
+     *
+     * @param url  URL to open.
+     */
+    static void openBrowserUrl(const String &url);
+
 protected:
     NativePath appDataPath() const override;
 
