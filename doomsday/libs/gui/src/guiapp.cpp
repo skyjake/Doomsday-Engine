@@ -372,7 +372,7 @@ void GuiApp::revealFile(const NativePath &fileOrFolder) // static
     {
         DE_ASSERT_FAIL("File revealing not implemented on this platform");
     }
-#endif
+    #endif
 }
 
 void GuiApp::openBrowserUrl(const String &url)
@@ -381,7 +381,11 @@ void GuiApp::openBrowserUrl(const String &url)
     {
         CommandLine({"/usr/bin/x-www-browser", url}).execute();
     }
-#else
+    #elif defined (MACOSX)
+    {
+        CommandLine({"/usr/bin/open", url}).execute();
+    }
+    #else
     {
         DE_ASSERT_FAIL("Browser URL opening not implemented on this platform");
     }
