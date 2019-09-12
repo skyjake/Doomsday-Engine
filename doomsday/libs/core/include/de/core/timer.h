@@ -26,6 +26,8 @@ namespace de {
 
 /**
  * Simple timer.
+ *
+ * The default timer has an interval of 1.0 seconds and is not single-shot.
  */
 class DE_PUBLIC Timer
 {

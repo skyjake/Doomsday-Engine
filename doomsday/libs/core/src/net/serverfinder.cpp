@@ -27,6 +27,7 @@
 #include "de/NumberValue"
 #include "de/Reader"
 #include "de/TextValue"
+#include "de/Timer"
 
 namespace de {
 
@@ -42,11 +43,15 @@ DE_PIMPL(ServerFinder)
 
     Beacon beacon;
     Map<Address, Found> servers;
+    Timer expiration;
 
     Impl(Public * i)
         : Base(i)
         , beacon({DEFAULT_PORT, DEFAULT_PORT + 16})
-    {}
+    {
+        expiration.setInterval(1.0_s);
+        expiration.audienceForTrigger() += [this]() { expire(); };
+    }
 
     void beaconFoundHost(const Address &host, const Block &block) override
     {
@@ -122,7 +127,6 @@ DE_PIMPL(ServerFinder)
         {
             DE_NOTIFY_PUBLIC(Update, i) { i->foundServersUpdated(); }
         }
-        Loop::timer(1.0, [this]() { expire(); });
     }
 
     DE_PIMPL_AUDIENCE(Update)
@@ -135,7 +139,7 @@ ServerFinder::ServerFinder() : d(new Impl(this))
     try
     {
         d->beacon.audienceForDiscovery() += d;
-        Loop::timer(1.0, [this]() { d->expire(); });
+        d->expiration.start();
 
         if (!App::appExists() || !App::commandLine().has("-nodiscovery"))
         {

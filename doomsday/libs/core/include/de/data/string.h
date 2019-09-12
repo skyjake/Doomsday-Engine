@@ -231,7 +231,6 @@ public:
     String(const std::string &text);
     String(const std::wstring &text);
     String(const char *nullTerminatedCStr);
-//    String(const wchar_t *nullTerminatedWideStr);
     String(const char *cStr, int length);
     String(const char *cStr, dsize length);
     String(dsize length, char ch);
