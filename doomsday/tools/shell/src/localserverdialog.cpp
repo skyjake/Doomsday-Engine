@@ -71,8 +71,12 @@ DE_GUI_PIMPL(LocalServerDialog)
         {
             games->items() << new ChoiceItem(mode.title, TextValue(mode.option));
         }
-        games->setSelected(
-            games->items().findData(TextValue(cfg.gets("LocalServer.gameMode", "doom1-share"))));
+        /*auto sel = games->items().findData(TextValue(cfg.gets("LocalServer.gameMode", "doom1-share")));
+        if (sel == ui::Data::InvalidPos)
+        {
+            sel = games->items().findData(TextValue("doom1-share"));
+        }*/
+        games->setSelected(cfg.getui("LocalServer.gameMode", 0));
         layout << *LabelWidget::newWithText("Game Mode:", &area)
                << *games;
 
@@ -269,7 +273,7 @@ void LocalServerDialog::saveState()
     auto &cfg = Config::get();
 
     cfg.set("LocalServer.name", d->name->text());
-    cfg.set("LocalServer.gameMode", d->games->selectedItem().data().asText());
+    cfg.set("LocalServer.gameMode", int(d->games->selected())); //Item().data().asText());
     if (d->portChanged)
     {
         cfg.set("LocalServer.port", d->port->text().toInt());
