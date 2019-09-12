@@ -71,12 +71,15 @@ DE_GUI_PIMPL(LocalServerDialog)
         {
             games->items() << new ChoiceItem(mode.title, TextValue(mode.option));
         }
-        /*auto sel = games->items().findData(TextValue(cfg.gets("LocalServer.gameMode", "doom1-share")));
+
+        // Restore previous selection.
+        auto sel = games->items().findData(TextValue(cfg.gets("LocalServer.gameMode", "doom1-share")));
         if (sel == ui::Data::InvalidPos)
         {
             sel = games->items().findData(TextValue("doom1-share"));
-        }*/
-        games->setSelected(cfg.getui("LocalServer.gameMode", 0));
+        }
+        games->setSelected(sel);
+
         layout << *LabelWidget::newWithText("Game Mode:", &area)
                << *games;
 
@@ -270,18 +273,16 @@ void LocalServerDialog::configureGameOptions()
 
 void LocalServerDialog::saveState()
 {
-    auto &cfg = Config::get();
+    // Replace previous state completely.
+    Record &vars = Config::get().objectNamespace().addSubrecord("LocalServer");
 
-    cfg.set("LocalServer.name", d->name->text());
-    cfg.set("LocalServer.gameMode", int(d->games->selected())); //Item().data().asText());
-    if (d->portChanged)
-    {
-        cfg.set("LocalServer.port", d->port->text().toInt());
-    }
-    cfg.set("LocalServer.announce", d->announce->isActive());
-    cfg.set("LocalServer.password", d->password->text());
-    cfg.set("LocalServer.runtime", d->runtime->path().toString());
-    cfg.set("LocalServer.options", d->options->text());
+    vars.set("name", d->name->text());
+    vars.set("gameMode", d->games->selectedItem().data().asText());
+    vars.set("port", d->port->text().toInt());
+    vars.set("announce", d->announce->isActive());
+    vars.set("password", d->password->text());
+    vars.set("runtime", d->runtime->path().toString());
+    vars.set("options", d->options->text());
 }
 
 void LocalServerDialog::validate()

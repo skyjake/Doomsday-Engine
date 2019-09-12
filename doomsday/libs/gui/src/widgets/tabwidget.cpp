@@ -233,6 +233,16 @@ void TabWidget::update()
 {
     GuiWidget::update();
 
+    // Show or hide the selection highlight when enabled/disabled.
+    if (isEnabled() && fequal(d->selected->opacity().target(), 0.0f))
+    {
+        d->selected->setOpacity(1.0f, 300_ms);
+    }
+    else if (isDisabled() && !fequal(d->selected->opacity().target(), 0.0f))
+    {
+        d->selected->setOpacity(0.0f, 300_ms);
+    }
+
     if (d->needUpdate)
     {
         d->updateSelected();

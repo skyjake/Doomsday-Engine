@@ -144,6 +144,10 @@ DE_PIMPL(LinkWindow)
     {
         auto &style = Style::get();
 
+        LabelWidget *background = &root.addNew<LabelWidget>();
+        background->set(GuiWidget::Background(Vec4f(0.15f, 0.15f, 0.15f, 1.0f)));
+        background->rule().setRect(root.viewRule());
+
         // Toolbar + menu bar.
         {
             tools = new GuiWidget;
@@ -230,6 +234,8 @@ DE_PIMPL(LinkWindow)
             serverLogBuffer.addSink(logWidget->logSink());
         }
 
+        root.moveToTop(*pageTabs);
+
         // Page for quickly starting a new local server.
         {
             newLocalServerPage = new GuiWidget;
@@ -246,6 +252,7 @@ DE_PIMPL(LinkWindow)
         }
 
         auto *statusBar = new GuiWidget;
+        statusBar->set(GuiWidget::Background(Style::get().colors().colorf("background")));
 
         // Status bar.
         {
@@ -263,6 +270,7 @@ DE_PIMPL(LinkWindow)
             menuButton->setSizePolicy(ui::Expand, ui::Expand);
             menuButton->setText("Menu");
             menuButton->setPopup(*menu, ui::Up);
+            menuButton->setFont("small");
             // menuButton->setStyleImage("", menuButton->fontId());
 
             root.add(statusBar);
@@ -272,32 +280,37 @@ DE_PIMPL(LinkWindow)
             timeCounter   = new LabelWidget;
             currentHost   = new LabelWidget;
 
-            AutoRef<Rule> statusHeight{style.fonts().font("default").height() +
+            statusMessage->setText(Stringf("Doomsday Shell %s", SHELL_VERSION));
+
+            AutoRef<Rule> statusHeight{style.fonts().font("small").height() +
                                       statusMessage->margins().height()};
 
             timeCounter->setFont("monospace");
             timeCounter->setText("0:00:00");
             timeCounter->margins().setTop(style.rules().rule("gap") +
-                                          style.fonts().font("default").ascent() -
+                                          style.fonts().font("small").ascent() -
                                           style.fonts().font("monospace").ascent());
-            timeCounter->set(GuiWidget::Background(Vec4f(1, 0, 0, 1)));
+//            timeCounter->set(GuiWidget::Background(Vec4f(1, 0, 0, 1)));
 
             //statusMessage->setText("Status message");
-            statusMessage->set(GuiWidget::Background(Vec4f(0, 0, 1, 1)));
+            statusMessage->setAlignment(ui::AlignLeft);
+//            statusMessage->set(GuiWidget::Background(Vec4f(0, 0, 1, 1)));
             //gameStatus->setText("");
+            gameStatus->setOpacity(0.6f);
             //currentHost->setText("localhost");
 
             SequentialLayout layout(menuButton->rule().left(), statusBar->rule().top(), ui::Left);
 
             for (auto *label : {timeCounter, currentHost, gameStatus, statusMessage})
             {
-                label->setSizePolicy(ui::Expand, ui::Fixed);
+                if (label != statusMessage) label->setSizePolicy(ui::Expand, ui::Fixed);
+                if (label != timeCounter) label->setFont("small");
                 label->rule().setInput(Rule::Height, statusHeight);
                 statusBar->add(label);
                 layout << *label;
             }
-            statusMessage->setSizePolicy(ui::Fixed, ui::Fixed);
-            statusMessage->rule().setInput(Rule::Left, statusBar->rule().left());
+            statusMessage->rule()
+                .setInput(Rule::Left, statusBar->rule().left());
 
             statusBar->rule()
                     .setInput(Rule::Left, root.viewLeft())
@@ -481,9 +494,12 @@ DE_PIMPL(LinkWindow)
         String mapId    = rec["mapId"].value().asText();
         String rules    = rec["rules"].value().asText();
 
-        String msg = gameMode;
-        if (!mapId.isEmpty()) msg += " " + mapId;
-        if (!rules.isEmpty()) msg += " (" + rules + ")";
+        String msg; // = gameMode;
+        //if (!mapId.isEmpty()) msg += " " + mapId;
+        //if (!rules.isEmpty()) msg += " (" + rules + ")";
+        msg = mapId;
+        msg += " ";
+        msg += rules;
 
         gameStatus->setText(msg);
     }

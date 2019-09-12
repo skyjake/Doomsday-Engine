@@ -52,6 +52,7 @@ DE_GUI_PIMPL(StatusWidget)
             .setInput(Rule::Bottom, rect.bottom() - i.margins().bottom());
 
         stateLabel = &i.addNew<LabelWidget>("gamestate");
+        stateLabel->setOpacity(0.6f);
         stateLabel->setSizePolicy(ui::Expand, ui::Expand);
         //stateLabel->setFont("heading");
         stateLabel->margins().setTop(rule("gap") * 2).setBottom(Const(0));
