@@ -143,6 +143,8 @@ public:
     };
 
     MapOutlinePacket();
+    MapOutlinePacket(const MapOutlinePacket &);
+    MapOutlinePacket &operator=(const MapOutlinePacket &);
 
     void clear();
 

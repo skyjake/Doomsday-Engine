@@ -184,6 +184,18 @@ MapOutlinePacket::MapOutlinePacket()
     : Packet(MAP_OUTLINE_PACKET_TYPE), d(new Impl)
 {}
 
+MapOutlinePacket::MapOutlinePacket(const MapOutlinePacket &other)
+    : Packet(MAP_OUTLINE_PACKET_TYPE), d(new Impl)
+{
+    d->lines = other.d->lines;
+}
+
+MapOutlinePacket &MapOutlinePacket::operator=(const MapOutlinePacket &other)
+{
+    d->lines = other.d->lines;
+    return *this;
+}
+
 void MapOutlinePacket::clear()
 {
     d->lines.clear();
