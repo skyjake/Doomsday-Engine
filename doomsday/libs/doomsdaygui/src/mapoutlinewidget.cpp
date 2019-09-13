@@ -25,15 +25,23 @@ using namespace de;
 
 DE_GUI_PIMPL(MapOutlineWidget)
 {
+    using Player  = network::PlayerInfoPacket::Player;
+    using Players = network::PlayerInfoPacket::Players;
+
+    network::MapOutlinePacket outlinePacket;
+
     ProgressWidget *progress; // shown initially, before outline received
     DotPath oneSidedColorId{"inverted.altaccent"};
     DotPath twoSidedColorId{"altaccent"};
 
     // Outline.
-    Rectanglei mapBounds;
+    Rectanglei      mapBounds;
+    Players         players;
+    Map<int, Vec2i> oldPlayerPositions;
 
     // Drawing.
     DefaultVertexBuf *vbuf = nullptr;
+    DefaultVertexBuf *plrVbuf = nullptr;
     Drawable drawable;
     GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
     GLUniform uColor     { "uColor",     GLUniform::Vec4 };
@@ -50,26 +58,23 @@ DE_GUI_PIMPL(MapOutlineWidget)
 
     void glInit()
     {
-        vbuf = new DefaultVertexBuf;
-        drawable.addBuffer(vbuf);
+        drawable.addBuffer(vbuf    = new DefaultVertexBuf);
+        drawable.addBuffer(plrVbuf = new DefaultVertexBuf);
 
-        shaders().build(drawable.program(), "generic.color_ucolor")
-                << uMvpMatrix << uColor;
+        shaders().build(drawable.program(), "generic.textured.color_ucolor")
+            << uMvpMatrix << uColor << uAtlas();
     }
 
     void glDeinit()
     {
         drawable.clear();
-        vbuf = nullptr;
+        vbuf    = nullptr;
+        plrVbuf = nullptr;
     }
 
     void makeOutline(const network::MapOutlinePacket &mapOutline)
     {
         if (!vbuf) return;
-
-        // This is likely called wherever incoming network packets are being processed,
-        // and thus there should currently be no active OpenGL context.
-        root().window().glActivate();
 
         progress->setOpacity(0, 0.5);
         mapOpacity.setValue(1, 0.5);
@@ -79,8 +84,10 @@ DE_GUI_PIMPL(MapOutlineWidget)
         const Vec4f oneSidedColor = style().colors().colorf(oneSidedColorId);
         const Vec4f twoSidedColor = style().colors().colorf(twoSidedColorId);
 
-        DefaultVertexBuf::Builder verts;
+        DefaultVertexBuf::Vertices verts;
         DefaultVertexBuf::Type vtx;
+
+        vtx.texCoord = atlas().imageRectf(root().solidWhitePixel()).middle();
 
         for (int i = 0; i < mapOutline.lineCount(); ++i)
         {
@@ -108,6 +115,28 @@ DE_GUI_PIMPL(MapOutlineWidget)
 //        vtx.pos = mapBounds.bottomRight; verts << vtx;
 
         vbuf->setVertices(gfx::Lines, verts, gfx::Static);
+    }
+
+    void makePlayers()
+    {
+        if (!plrVbuf) return;
+
+        root().window().glActivate();
+
+        DefaultVertexBuf::Builder verts;
+        for (const auto &plrPos : players)
+        {
+            // Position dot.
+
+            // Gradient line to previous position.
+
+            // Line to label.
+
+            // Label background.
+
+            // Number and name label.
+        }
+        plrVbuf->setVertices(gfx::TriangleStrip, verts, gfx::Static);
 
         root().window().glDone();
     }
@@ -125,6 +154,12 @@ DE_GUI_PIMPL(MapOutlineWidget)
                Mat4f::scale    (Vec3f(scale, -scale, 1)) *
                Mat4f::translate(Vec2f(-mapBounds.middle()));
     }
+
+    void clearPlayers()
+    {
+        oldPlayerPositions.clear();
+        players.clear();
+    }
 };
 
 MapOutlineWidget::MapOutlineWidget(const String &name)
@@ -140,7 +175,26 @@ void MapOutlineWidget::setColors(const DotPath &oneSidedLine, const DotPath &two
 
 void MapOutlineWidget::setOutline(const network::MapOutlinePacket &mapOutline)
 {
+    // This is likely called wherever incoming network packets are being processed,
+    // and thus there should currently be no active OpenGL context.
+    root().window().glActivate();
+
+    d->outlinePacket = mapOutline;
     d->makeOutline(mapOutline);
+    d->clearPlayers();
+
+    root().window().glDone();
+}
+
+void MapOutlineWidget::setPlayerInfo(const network::PlayerInfoPacket &plrInfo)
+{
+    for (const auto &plr : d->players)
+    {
+        d->oldPlayerPositions[plr.second.number] =
+            Vec2i(plr.second.position.x, -plr.second.position.y);
+    }
+    d->players = plrInfo.players();
+    d->makePlayers();
 }
 
 void MapOutlineWidget::drawContent()
@@ -155,6 +209,17 @@ void MapOutlineWidget::drawContent()
         d->uColor = Vec4f(1, 1, 1, d->mapOpacity * visibleOpacity());
         d->drawable.draw();
         GLState::pop();
+    }
+}
+
+void MapOutlineWidget::update()
+{
+    GuiWidget::update();
+
+    if (geometryRequested())
+    {
+        d->makeOutline(d->outlinePacket);
+        requestGeometry(false);
     }
 }
 

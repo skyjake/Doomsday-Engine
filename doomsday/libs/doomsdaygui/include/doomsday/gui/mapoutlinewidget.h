@@ -31,9 +31,11 @@ public:
 
     void setColors(const de::DotPath &oneSidedLine, const de::DotPath &twoSidedLine);
     void setOutline(const network::MapOutlinePacket &mapOutline);
+    void setPlayerInfo(const network::PlayerInfoPacket &plrInfo);
 
     // Events.
     void drawContent() override;
+    void update() override;
 
 protected:
     void glInit() override;

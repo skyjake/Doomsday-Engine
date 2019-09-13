@@ -27,9 +27,6 @@ using namespace de;
 
 DE_GUI_PIMPL(StatusWidget)
 {
-    using Player  = network::PlayerInfoPacket::Player;
-    using Players = network::PlayerInfoPacket::Players;
-
     network::Link *   link;
     String            gameMode;
     String            map;
@@ -37,8 +34,6 @@ DE_GUI_PIMPL(StatusWidget)
     LabelWidget *     stateLabel;
     LabelWidget *     titleLabel;
     Rectangled        mapBounds;
-    Players           players;
-    Map<int, Vec2i>   oldPlayerPositions;
 
     Impl(Public &i) : Base(i), link(0)
     {
@@ -77,8 +72,6 @@ DE_GUI_PIMPL(StatusWidget)
         titleLabel->setText({});
         mapBounds = {};
         mapOutline->setOutline({});
-        oldPlayerPositions.clear();
-        players.clear();
     }
 };
 
@@ -144,13 +137,7 @@ void StatusWidget::setMapOutline(const network::MapOutlinePacket &outline)
 
 void StatusWidget::setPlayerInfo(const network::PlayerInfoPacket &plrInfo)
 {
-    for (const auto &plr : d->players)
-    {
-        d->oldPlayerPositions[plr.second.number] =
-            Vec2i(plr.second.position.x, -plr.second.position.y);
-    }
-
-    d->players = plrInfo.players();
+    d->mapOutline->setPlayerInfo(plrInfo);
 }
 
 #if 0
