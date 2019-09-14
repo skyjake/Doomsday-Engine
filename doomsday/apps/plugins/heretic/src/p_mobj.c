@@ -303,10 +303,16 @@ void P_MobjMoveXY(mobj_t *mo)
             }
             else if(mo->flags & MF_MISSILE)
             {
+                if (mo->flags3 & MF3_WALLBOUNCE)
+                {
+                    P_BounceWall(mo);
+                    return;
+                }
+
                 // Explode a missile
                 Sector* backSec;
 
-                /// @kludge: Prevent missiles exploding against the sky.
+                // @kludge: Prevent missiles exploding against the sky.
                 if(tmCeilingLine && (backSec = P_GetPtrp(tmCeilingLine, DMU_BACK_SECTOR)))
                 {
                     if((P_GetIntp(P_GetPtrp(backSec, DMU_CEILING_MATERIAL), DMU_FLAGS) & MATF_SKYMASK) &&
@@ -321,11 +327,9 @@ void P_MobjMoveXY(mobj_t *mo)
                         {
                             P_MobjRemove(mo, false);
                         }
-
                         return;
                     }
                 }
-
                 if(tmFloorLine && (backSec = P_GetPtrp(tmFloorLine, DMU_BACK_SECTOR)))
                 {
                     if((P_GetIntp(P_GetPtrp(backSec, DMU_FLOOR_MATERIAL), DMU_FLAGS) & MATF_SKYMASK) &&
@@ -340,7 +344,6 @@ void P_MobjMoveXY(mobj_t *mo)
                         {
                             P_MobjRemove(mo, false);
                         }
-
                         return;
                     }
                 }
@@ -527,9 +530,9 @@ void P_MobjMoveZ(mobj_t *mo)
                 // Squat down. Decrease viewheight for a moment after
                 // hitting the ground hard and utter appropriate sound.
                 mo->player->viewHeightDelta = mo->mom[MZ] / 8;
-#if __JHERETIC__
+//#if __JHERETIC__
                 mo->player->jumpTics = 12; // Can't jump in a while.
-#endif
+//#endif
                 // Fix DOOM bug - dead players grunting when hitting the ground
                 // (e.g., after an archvile attack)
                 if(mo->player->health > 0)
@@ -557,13 +560,12 @@ void P_MobjMoveZ(mobj_t *mo)
                 P_FloorBounceMissile(mo);
                 return;
             }
-#if __JHERETIC__
             else if(mo->type == MT_MNTRFX2)
-            {   // Minotaur floor fire can go up steps
+            {
+                // Minotaur floor fire can go up steps
                 return;
             }
             else
-#endif
             {
                 P_ExplodeMissile(mo);
                 return;
@@ -571,20 +573,20 @@ void P_MobjMoveZ(mobj_t *mo)
         }
 
         if(movingDown && mo->mom[MZ] < 0)
+        {
             mo->mom[MZ] = 0;
-
-#if __JHERETIC__
-        {
-        statenum_t              state;
-
-        if((state = P_GetState(mo->type, SN_CRASH)) != S_NULL &&
-           (mo->flags & MF_CORPSE))
-        {
-            P_MobjChangeState(mo, state);
-            return;
         }
+
+        // Set corpses to CRASH state.
+        {
+            statenum_t state;
+            if((state = P_GetState(mo->type, SN_CRASH)) != S_NULL &&
+               (mo->flags & MF_CORPSE))
+            {
+                P_MobjChangeState(mo, state);
+                return;
+            }
         }
-#endif
     }
     else if(mo->flags2 & MF2_LOGRAV)
     {
@@ -619,16 +621,14 @@ void P_MobjMoveZ(mobj_t *mo)
             if(P_GetIntp(P_GetPtrp(Mobj_Sector(mo), DMU_CEILING_MATERIAL),
                          DMU_FLAGS) & MATF_SKYMASK)
             {
-#if __JHERETIC__
                 if(mo->type == MT_BLOODYSKULL)
                 {
                     mo->mom[MX] = mo->mom[MY] = 0;
                     mo->mom[MZ] = -1;
                 }
                 else
-#endif
-                // Don't explode against sky.
                 {
+                    // Don't explode against sky.
                     P_MobjRemove(mo, false);
                 }
                 return;
@@ -1581,12 +1581,12 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest, dd_bool ch
     th->mom[MY] *= dist;
     th->mom[MZ] *= dist;
 
-#if __JHERETIC__
+//#if __JHERETIC__
     /// @kludge Set this global ptr as we need access to the mobj even if it
     ///         explodes instantly in order to assign values to it.
     missileMobj = th;
     // kludge end.
-#endif
+//#endif
 
     if(checkSpawn)
         return (P_CheckMissileSpawn(th)? th : NULL);
@@ -1749,12 +1749,12 @@ mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t mangle, coo
         th->mom[MZ] = momZ;
     }
 
-#if __JHERETIC__
+//#if __JHERETIC__
     /// @kludge Set this global ptr as we need access to the mobj even if it
     ///         explodes instantly in order to assign values to it.
     missileMobj = th;
     // kludge end.
-#endif
+//#endif
 
     if(P_CheckMissileSpawn(th))
         return th;

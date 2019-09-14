@@ -198,10 +198,12 @@ dd_bool P_CheckSides(mobj_t *actor, coord_t x, coord_t y);
  * @return dd_bool  @c true iff the mobj is not blocked by anything.
  */
 dd_bool P_TestMobjLocation(mobj_t *mobj);
+
+void P_BounceWall(mobj_t *mobj);
+
 #endif
 
 #if __JHEXEN__
-void P_BounceWall(mobj_t *mobj);
 
 mobj_t *P_CheckOnMobj(mobj_t *mobj);
 

@@ -2859,7 +2859,8 @@ void P_HandleSectorHeightChange(int sectorIdx)
     P_ChangeSector((Sector *)P_ToPtr(DMU_SECTOR, sectorIdx), false /*don't crush*/);
 }
 
-#if __JHERETIC__ || __JHEXEN__
+#if defined (__JHERETIC__) || defined(__JHEXEN__)
+
 dd_bool P_TestMobjLocation(mobj_t *mo)
 {
     int const oldFlags = mo->flags;
@@ -2875,6 +2876,97 @@ dd_bool P_TestMobjLocation(mobj_t *mo)
     // XY is ok, now check Z
     return mo->origin[VZ] >= mo->floorZ && (mo->origin[VZ] + mo->height) <= mo->ceilingZ;
 }
+
+struct ptr_boucetraverse_params_t {
+    mobj_t *bounceMobj;
+    Line *  bestLine;
+    coord_t bestDistance;
+};
+
+static int PTR_BounceTraverse(Intercept const *icpt, void *context)
+{
+    DENG_ASSERT(icpt->type == ICPT_LINE);
+
+    ptr_boucetraverse_params_t &parm = *static_cast<ptr_boucetraverse_params_t *>(context);
+
+    Line *line = icpt->line;
+    if (!P_GetPtrp(line, DMU_FRONT_SECTOR) || !P_GetPtrp(line, DMU_BACK_SECTOR))
+    {
+        if (Line_PointOnSide(line, parm.bounceMobj->origin) < 0)
+        {
+            return false; // Don't hit the back side.
+        }
+        goto bounceblocking;
+    }
+
+    Interceptor_AdjustOpening(icpt->trace, line);
+
+    if (Interceptor_Opening(icpt->trace)->range < parm.bounceMobj->height)
+    {
+        goto bounceblocking; // Doesn't fit.
+    }
+    if (Interceptor_Opening(icpt->trace)->top - parm.bounceMobj->origin[VZ] <
+        parm.bounceMobj->height)
+    {
+        goto bounceblocking; // Mobj is too high...
+    }
+//    if (parm.bounceMobj->origin[VZ] - Interceptor_Opening(icpt->trace)->bottom < 0)
+//    {
+//        goto bounceblocking; // Mobj is too low...
+//    }
+    // This line doesn't block movement...
+    return false;
+
+    // The line does block movement, see if it is closer than best so far.
+bounceblocking:
+    if (icpt->distance < parm.bestDistance)
+    {
+        parm.bestDistance = icpt->distance;
+        parm.bestLine     = line;
+    }
+    return false;
+}
+
+void P_BounceWall(mobj_t *mo)
+{
+    if (!mo) return;
+
+    // Trace a line from the origin to the would be destination point (which is
+    // apparently not reachable) to find a line from which we'll calculate the
+    // inverse "bounce" vector.
+    vec2d_t leadPos = {mo->origin[VX] + (mo->mom[MX] > 0 ? mo->radius : -mo->radius),
+                       mo->origin[VY] + (mo->mom[MY] > 0 ? mo->radius : -mo->radius)};
+    vec2d_t destPos;
+    V2d_Sum(destPos, leadPos, mo->mom);
+
+    ptr_boucetraverse_params_t parm;
+    parm.bounceMobj   = mo;
+    parm.bestLine     = 0;
+    parm.bestDistance = 1; // Intercept distances are normalized [0..1]
+
+    P_PathTraverse2(leadPos, destPos, PTF_LINE, PTR_BounceTraverse, &parm);
+
+    if (parm.bestLine)
+    {
+//        fprintf(stderr, "mo %p: bouncing off line %p, dist=%f\n",
+//                mo, parm.bestLine, parm.bestDistance);
+
+        int const side = Line_PointOnSide(parm.bestLine, mo->origin) < 0;
+        vec2d_t   lineDirection;
+        P_GetDoublepv(parm.bestLine, DMU_DXY, lineDirection);
+
+        angle_t lineAngle  = M_PointToAngle(lineDirection) + (side ? ANG180 : 0);
+        angle_t moveAngle  = M_PointToAngle(mo->mom);
+        angle_t deltaAngle = (2 * lineAngle) - moveAngle;
+
+        coord_t moveLen = M_ApproxDistance(mo->mom[MX], mo->mom[MY]) * 0.75f /*Friction*/;
+        if (moveLen < 1) moveLen = 2;
+
+        uint an = deltaAngle >> ANGLETOFINESHIFT;
+        V2d_Set(mo->mom, moveLen * FIX2FLT(finecosine[an]), moveLen * FIX2FLT(finesine[an]));
+    }
+}
+
 #endif
 
 #if __JHEXEN__
@@ -3131,90 +3223,6 @@ mobj_t *P_CheckOnMobj(mobj_t *mo)
 
     savedState.restore(mo);
     return 0;
-}
-
-struct ptr_boucetraverse_params_t
-{
-    mobj_t *bounceMobj;
-    Line *bestLine;
-    coord_t bestDistance;
-};
-
-static int PTR_BounceTraverse(Intercept const *icpt, void *context)
-{
-    DENG_ASSERT(icpt->type == ICPT_LINE);
-
-    ptr_boucetraverse_params_t &parm = *static_cast<ptr_boucetraverse_params_t *>(context);
-
-    Line *line = icpt->line;
-    if(!P_GetPtrp(line, DMU_FRONT_SECTOR) || !P_GetPtrp(line, DMU_BACK_SECTOR))
-    {
-        if(Line_PointOnSide(line, parm.bounceMobj->origin) < 0)
-        {
-            return false; // Don't hit the back side.
-        }
-
-        goto bounceblocking;
-    }
-
-    Interceptor_AdjustOpening(icpt->trace, line);
-
-    if(Interceptor_Opening(icpt->trace)->range < parm.bounceMobj->height)
-    {
-        goto bounceblocking; // Doesn't fit.
-    }
-    if(Interceptor_Opening(icpt->trace)->top - parm.bounceMobj->origin[VZ] < parm.bounceMobj->height)
-    {
-        goto bounceblocking; // Mobj is too high...
-    }
-
-    return false; // This line doesn't block movement...
-
-    // the line does block movement, see if it is closer than best so far.
-  bounceblocking:
-    if(icpt->distance < parm.bestDistance)
-    {
-        parm.bestDistance = icpt->distance;
-        parm.bestLine     = line;
-    }
-
-    return true; // Stop.
-}
-
-void P_BounceWall(mobj_t *mo)
-{
-    if(!mo) return;
-
-    // Trace a line from the origin to the would be destination point (which is
-    // apparently not reachable) to find a line from which we'll calculate the
-    // inverse "bounce" vector.
-    vec2d_t leadPos = { mo->origin[VX] + (mo->mom[MX] > 0? mo->radius : -mo->radius),
-                        mo->origin[VY] + (mo->mom[MY] > 0? mo->radius : -mo->radius) };
-    vec2d_t destPos; V2d_Sum(destPos, leadPos, mo->mom);
-
-    ptr_boucetraverse_params_t parm;
-    parm.bounceMobj   = mo;
-    parm.bestLine     = 0;
-    parm.bestDistance = 1; // Intercept distances are normalized [0..1]
-
-    P_PathTraverse2(leadPos, destPos, PTF_LINE, PTR_BounceTraverse, &parm);
-
-    if(parm.bestLine)
-    {
-        int const side = Line_PointOnSide(parm.bestLine, mo->origin) < 0;
-        vec2d_t lineDirection; P_GetDoublepv(parm.bestLine, DMU_DXY, lineDirection);
-
-        angle_t lineAngle  = M_PointToAngle(lineDirection) + (side? ANG180 : 0);
-        angle_t moveAngle  = M_PointToAngle(mo->mom);
-        angle_t deltaAngle = (2 * lineAngle) - moveAngle;
-
-        coord_t moveLen = M_ApproxDistance(mo->mom[MX], mo->mom[MY]) * 0.75f /*Friction*/;
-        if(moveLen < 1) moveLen = 2;
-
-        uint an = deltaAngle >> ANGLETOFINESHIFT;
-        V2d_Set(mo->mom, moveLen * FIX2FLT(finecosine[an]),
-                         moveLen * FIX2FLT(finesine  [an]));
-    }
 }
 
 static sfxenum_t usePuzzleItemFailSound(mobj_t *user)
