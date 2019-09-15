@@ -28,6 +28,11 @@ DE_GUI_PIMPL(MapOutlineWidget)
     using Player  = network::PlayerInfoPacket::Player;
     using Players = network::PlayerInfoPacket::Players;
 
+    struct Marker {
+        LabelWidget *  label;
+        AnimationRule *pos[2];
+    };
+
     network::MapOutlinePacket outlinePacket;
 
     ProgressWidget *progress; // shown initially, before outline received
@@ -35,14 +40,17 @@ DE_GUI_PIMPL(MapOutlineWidget)
     DotPath twoSidedColorId{"altaccent"};
 
     // Outline.
-    Rectanglei      mapBounds;
-    Players         players;
-    Map<int, Vec2i> oldPlayerPositions;
+    Rectanglei        mapBounds;
+    DefaultVertexBuf *outlineVBuf = nullptr;
+
+    // Player markers.
+    Players           players;
+    Map<int, Vec2i>   oldPlayerPositions;
+    Map<int, Marker>  playerLabels;      // number and name on a round rect background
+    DefaultVertexBuf *plrVBuf = nullptr; // tick marks
 
     // Drawing.
-    DefaultVertexBuf *vbuf = nullptr;
-    DefaultVertexBuf *plrVbuf = nullptr;
-    Drawable drawable;
+    Drawable  drawable;
     GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
     GLUniform uColor     { "uColor",     GLUniform::Vec4 };
     Animation mapOpacity { 0, Animation::Linear };
@@ -58,8 +66,8 @@ DE_GUI_PIMPL(MapOutlineWidget)
 
     void glInit()
     {
-        drawable.addBuffer(vbuf    = new DefaultVertexBuf);
-        drawable.addBuffer(plrVbuf = new DefaultVertexBuf);
+        drawable.addBuffer(outlineVBuf = new DefaultVertexBuf);
+//        drawable.addBuffer(plrVBuf     = new DefaultVertexBuf);
 
         shaders().build(drawable.program(), "generic.textured.color_ucolor")
             << uMvpMatrix << uColor << uAtlas();
@@ -68,13 +76,13 @@ DE_GUI_PIMPL(MapOutlineWidget)
     void glDeinit()
     {
         drawable.clear();
-        vbuf    = nullptr;
-        plrVbuf = nullptr;
+        outlineVBuf = nullptr;
+        plrVBuf     = nullptr;
     }
 
     void makeOutline(const network::MapOutlinePacket &mapOutline)
     {
-        if (!vbuf) return;
+        if (!outlineVBuf) return;
 
         progress->setOpacity(0, 0.5);
         mapOpacity.setValue(1, 0.5);
@@ -114,17 +122,93 @@ DE_GUI_PIMPL(MapOutlineWidget)
 //        vtx.pos = mapBounds.topLeft; verts << vtx;
 //        vtx.pos = mapBounds.bottomRight; verts << vtx;
 
-        vbuf->setVertices(gfx::Lines, verts, gfx::Static);
+        outlineVBuf->setVertices(gfx::Lines, verts, gfx::Static);
+    }
+
+    Vec2f playerViewPosition(int plrNum) const
+    {
+        if (players.contains(plrNum))
+        {
+            const auto &plr = players[plrNum];
+            Vec3f pos = (modelMatrix() * Vec4f(plr.position.x, plr.position.y, 0.0f, 1.0f))
+                            .toEuclidean();
+            return pos;
+        }
+        return {};
+    }
+
+    void updatePlayerPositions()
+    {
+        for (const auto &plr : players)
+        {
+            auto mark = playerLabels.find(plr.first);
+            if (mark != playerLabels.end())
+            {
+                const auto pos = playerViewPosition(plr.first);
+                mark->second.pos[0]->set(pos.x);
+                mark->second.pos[1]->set(pos.y);
+            }
+        }
     }
 
     void makePlayers()
     {
-        if (!plrVbuf) return;
+        // Create the player labels.
+        {
+            // Add new labels.
+            for (const auto &plr : players)
+            {
+                const int plrNum = plr.first;
+                const Vec2f pos  = playerViewPosition(plrNum);
+                if (!playerLabels.contains(plrNum))
+                {
+                    Marker mark;
+                    mark.label = &self().addNew<LabelWidget>();
+                    mark.pos[0] = new AnimationRule(pos.x);
+                    mark.pos[1] = new AnimationRule(pos.y);
+                    mark.label->setSizePolicy(ui::Expand, ui::Expand);
+                    mark.label->set(Background(style().colors().colorf("background"),
+                                               Background::GradientFrameWithRoundedFill));
+                    mark.label->setFont("small");
+                    mark.label->setText(Stringf("%d: %s", plr.second.number, plr.second.name.c_str()));
+                    mark.label->margins().set("unit");
+                    mark.label->rule().setAnchorPoint({0.5f, 0.0f});
+                    mark.label->rule()
+                        .setInput(Rule::AnchorX, *mark.pos[0])
+                        .setInput(Rule::AnchorY, *mark.pos[1]);
+                    playerLabels.insert(plrNum, mark);
+                }
+                else
+                {
+                    // Update positions.
+                    auto &mark = playerLabels[plrNum];
+                    mark.pos[0]->set(pos.x, 500_ms);
+                    mark.pos[1]->set(pos.y, 500_ms);
+                }
+            }
+            // Remove old labels.
+            for (auto i = playerLabels.begin(); i != playerLabels.end(); )
+            {
+                if (!players.contains(i->first))
+                {
+                    GuiWidget::destroy(i->second.label);
+                    releaseRef(i->second.pos[0]);
+                    releaseRef(i->second.pos[1]);
+                    i = playerLabels.erase(i);
+                }
+                else
+                {
+                    ++i;
+                }
+            }
+        }
+
+        if (!plrVBuf) return;
 
         root().window().glActivate();
 
         DefaultVertexBuf::Builder verts;
-        for (const auto &plrPos : players)
+        for (const auto &plr : players)
         {
             // Position dot.
 
@@ -132,18 +216,15 @@ DE_GUI_PIMPL(MapOutlineWidget)
 
             // Line to label.
 
-            // Label background.
-
-            // Number and name label.
         }
-        plrVbuf->setVertices(gfx::TriangleStrip, verts, gfx::Static);
+        plrVBuf->setVertices(gfx::TriangleStrip, verts, gfx::Static);
 
         root().window().glDone();
     }
 
     Mat4f modelMatrix() const
     {
-        DE_ASSERT(vbuf);
+        DE_ASSERT(outlineVBuf);
 
         if (mapBounds.isNull()) return Mat4f();
 
@@ -200,7 +281,7 @@ void MapOutlineWidget::setPlayerInfo(const network::PlayerInfoPacket &plrInfo)
 void MapOutlineWidget::drawContent()
 {
     GuiWidget::drawContent();
-    if (d->vbuf && d->vbuf->count())
+    if (d->outlineVBuf && d->outlineVBuf->count())
     {
         auto &painter = root().painter();
         painter.flush();
@@ -215,12 +296,17 @@ void MapOutlineWidget::drawContent()
 void MapOutlineWidget::update()
 {
     GuiWidget::update();
-
     if (geometryRequested())
     {
         d->makeOutline(d->outlinePacket);
         requestGeometry(false);
     }
+}
+
+void MapOutlineWidget::viewResized()
+{
+    GuiWidget::viewResized();
+    d->updatePlayerPositions();
 }
 
 void MapOutlineWidget::glInit()

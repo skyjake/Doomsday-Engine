@@ -36,6 +36,7 @@ public:
     // Events.
     void drawContent() override;
     void update() override;
+    void viewResized() override;
 
 protected:
     void glInit() override;
