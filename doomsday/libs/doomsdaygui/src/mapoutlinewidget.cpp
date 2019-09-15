@@ -20,6 +20,7 @@
 
 #include <de/ProgressWidget>
 #include <de/Drawable>
+#include <de/Image>
 
 using namespace de;
 
@@ -29,6 +30,7 @@ DE_GUI_PIMPL(MapOutlineWidget)
     using Players = network::PlayerInfoPacket::Players;
 
     struct Marker {
+        LabelWidget *  pin;
         LabelWidget *  label;
         AnimationRule *pos[2];
     };
@@ -155,36 +157,61 @@ DE_GUI_PIMPL(MapOutlineWidget)
     {
         // Create the player labels.
         {
+            AutoRef<Rule> markerOffset = new ConstantRule(style().images().image("widget.pin").height());
+
             // Add new labels.
             for (const auto &plr : players)
             {
-                const int plrNum = plr.first;
-                const Vec2f pos  = playerViewPosition(plrNum);
+                const int   plrNum     = plr.first;
+                const Vec2f pos        = playerViewPosition(plrNum);
+                const Vec4f plrColor   = Vec4f(plr.second.color.toVec3f() / 255.0f, 1.0f);
+                const float brightness = Image::hsv(plr.second.color).z;
+                Marker *    mark;
+
                 if (!playerLabels.contains(plrNum))
                 {
-                    Marker mark;
-                    mark.label = &self().addNew<LabelWidget>();
-                    mark.pos[0] = new AnimationRule(pos.x);
-                    mark.pos[1] = new AnimationRule(pos.y);
-                    mark.label->setSizePolicy(ui::Expand, ui::Expand);
-                    mark.label->set(Background(style().colors().colorf("background"),
-                                               Background::GradientFrameWithRoundedFill));
-                    mark.label->setFont("small");
-                    mark.label->setText(Stringf("%d: %s", plr.second.number, plr.second.name.c_str()));
-                    mark.label->margins().set("unit");
-                    mark.label->rule().setAnchorPoint({0.5f, 0.0f});
-                    mark.label->rule()
-                        .setInput(Rule::AnchorX, *mark.pos[0])
-                        .setInput(Rule::AnchorY, *mark.pos[1]);
-                    playerLabels.insert(plrNum, mark);
+                    playerLabels.insert(plrNum, {});
+
+                    mark = &playerLabels[plrNum];
+                    mark->pos[0] = new AnimationRule(pos.x);
+                    mark->pos[1] = new AnimationRule(pos.y);
+
+                    mark->pin = &self().addNew<LabelWidget>();
+                    mark->pin->setStyleImage("widget.pin");
+                    mark->pin->setImageFit(ui::OriginalSize);
+                    mark->pin->setAlignment(ui::AlignBottom);
+                    mark->pin->margins().setZero();
+                    mark->pin->rule()
+                        .setInput(Rule::Width, Const(3))
+                        .setInput(Rule::Height, mark->pin->rule().width())
+                        .setInput(Rule::Bottom, *mark->pos[1] + *markerOffset + rule("halfunit"))
+                        .setMidAnchorX(*mark->pos[0]);
+
+                    mark->label = &self().addNew<LabelWidget>();
+                    mark->label->setSizePolicy(ui::Expand, ui::Expand);
+                    mark->label->setFont("small");
+                    mark->label->margins().set(rule("unit"));
+                    mark->label->rule().setAnchorPoint({0.5f, 0.0f});
+                    mark->label->rule()
+                        .setInput(Rule::AnchorX, *mark->pos[0])
+                        .setInput(Rule::AnchorY, *mark->pos[1] + *markerOffset);
                 }
                 else
                 {
+                    mark = &playerLabels[plrNum];
+
                     // Update positions.
-                    auto &mark = playerLabels[plrNum];
-                    mark.pos[0]->set(pos.x, 500_ms);
-                    mark.pos[1]->set(pos.y, 500_ms);
+                    mark->pos[0]->set(pos.x, 500_ms);
+                    mark->pos[1]->set(pos.y, 500_ms);
                 }
+
+                mark->pin->setImageColor(plrColor);
+                mark->label->set(Background(Vec4f(plrColor, 0.85f),
+                                            Background::GradientFrameWithRoundedFill,
+                                            Vec4f(0.0f),
+                                            rule("halfunit").valuei()));
+                mark->label->setTextColor(brightness < 0.5f ? "text" : "inverted.text");
+                mark->label->setText(Stringf("%d: %s", plr.second.number, plr.second.name.c_str()));
             }
             // Remove old labels.
             for (auto i = playerLabels.begin(); i != playerLabels.end(); )
@@ -192,6 +219,7 @@ DE_GUI_PIMPL(MapOutlineWidget)
                 if (!players.contains(i->first))
                 {
                     GuiWidget::destroy(i->second.label);
+                    GuiWidget::destroy(i->second.pin);
                     releaseRef(i->second.pos[0]);
                     releaseRef(i->second.pos[1]);
                     i = playerLabels.erase(i);
