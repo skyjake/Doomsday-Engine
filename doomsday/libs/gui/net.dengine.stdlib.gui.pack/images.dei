@@ -13,6 +13,7 @@ window {
 
 widget {
     image dot           { path $= gui.dpiScaledImagePath("graphics/dot.png") }
+    image pin           { path $= gui.dpiScaledImagePath("graphics/pin.png") }
 
     image corners.thin  { path $= gui.dpiScaledImagePath("graphics/corners-thin.png") }
     image corners.bold  { path $= gui.dpiScaledImagePath("graphics/corners-bold.png") }
