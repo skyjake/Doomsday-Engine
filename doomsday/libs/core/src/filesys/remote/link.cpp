@@ -183,7 +183,7 @@ void Link::wasDisconnected()
     // Remove the local root folder.
     if (Folder *root = FS::tryLocate<Folder>(d->localRootPath))
     {
-        trash(root);
+        delete root; //trash(root);
     }
 }
 

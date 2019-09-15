@@ -48,7 +48,7 @@ DE_PIMPL(PackageDownloader)
     AssetGroup                      downloads;
     Hash<IDownloadable *, Rangei64> downloadBytes;
     std::function<void()>           postDownloadCallback;
-    Dispatch                    deferred;
+    Dispatch                        deferred;
 
     Impl(Public *i) : Base(i) {}
 
@@ -302,7 +302,8 @@ void PackageDownloader::unmountServerRepository()
     
     if (Folder *remoteFiles = FS::tryLocate<Folder>(PATH_REMOTE_SERVER))
     {
-        trash(remoteFiles);
+//        trash(remoteFiles);
+        delete remoteFiles;
     }
 }
 
