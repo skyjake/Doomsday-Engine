@@ -880,6 +880,8 @@ void LinkWindow::handleIncomingPackets()
 {
     using namespace network;
 
+    glActivate();
+
     while (isConnected())
     {
         std::unique_ptr<Packet> packet(d->link->nextPacket());
