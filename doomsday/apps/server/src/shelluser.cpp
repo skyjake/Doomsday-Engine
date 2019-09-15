@@ -170,8 +170,8 @@ void ShellUser::sendPlayerInfo()
 
         info.number   = i;
         info.name     = plr->name;
-        info.position = de::Vec2i(plr->publicData().mo->origin[VX],
-                                  plr->publicData().mo->origin[VY]);
+        info.position = Vec2i(plr->publicData().mo->origin[VX],
+                              plr->publicData().mo->origin[VY]);
 
         /**
          * @todo Player color is presently game-side data. Therefore, this
