@@ -364,6 +364,7 @@ DE_PIMPL(ClientWindow)
 
     void fileSystemBusyStatusChanged(FS::BusyStatus bs) override
     {
+        self().glActivate();
         notifications->showOrHide(*fsBusy, bs == FS::Busy);
     }
 

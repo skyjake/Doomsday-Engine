@@ -280,10 +280,11 @@ DE_PIMPL(ClientApp)
                 return LoopContinue;
             });
             LogBuffer::get().removeSink(logAlarm);
-            self().glDeinit();
 
             Sys_Shutdown();
             DD_Shutdown();
+
+            self().glDeinit();
         }
         catch (const Error &er)
         {

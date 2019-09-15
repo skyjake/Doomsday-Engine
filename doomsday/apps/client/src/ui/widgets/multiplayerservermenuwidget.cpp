@@ -110,6 +110,9 @@ DE_PIMPL(MultiplayerServerMenuWidget)
 
     void serversDiscovered(const ServerLink &link) override
     {
+        DE_ASSERT_IN_MAIN_THREAD()
+        self().root().window().glActivate();
+
         ui::Data &items = self().items();
 
         Set<String> foundHosts;

@@ -2009,7 +2009,8 @@ dint Map::clMobjIterator(dint (*callback)(mobj_t *, void *), void *context)
     ClMobjHash::const_iterator next;
     for (auto i = d->clMobjHash.cbegin(); i != d->clMobjHash.cend(); i = next)
     {
-        next++ = i;
+        next = i;
+        ++next;
 
         DE_ASSERT(THINKER_DATA(i->second->thinker, ClientMobjThinkerData).hasRemoteSync());
 
