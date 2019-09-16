@@ -53,6 +53,15 @@ public:
     void  sort(LessThanFunc lessThan) override;
     void  stableSort(LessThanFunc lessThan) override;
 
+    using iterator       = List<Item *>::iterator;
+    using const_iterator = List<Item *>::const_iterator;
+
+    iterator       begin() { return _items.begin(); }
+    iterator       end() { return _items.end(); }
+    const_iterator begin() const { return _items.begin(); }
+    const_iterator end() const { return _items.end(); }
+    iterator       erase(iterator i) { return _items.erase(i); }
+
 private:
     typedef List<Item *> Items;
     Items _items;

@@ -47,6 +47,12 @@ public:
         , _action(new CallbackAction(actionFunc)) {}
 
     ActionItem(Semantics semantics,
+               const String &label,
+               const std::function<void ()> &actionFunc)
+        : ImageItem(semantics, label)
+        , _action(new CallbackAction(actionFunc)) {}
+
+    ActionItem(Semantics semantics,
                const String &label   = "",
                RefArg<Action> action = RefArg<Action>())
         : ImageItem(semantics, label)

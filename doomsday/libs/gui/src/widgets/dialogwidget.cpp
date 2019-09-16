@@ -798,7 +798,7 @@ void DialogWidget::finish(int result)
 }
 
 DialogWidget::ButtonItem::ButtonItem(RoleFlags flags, const String &label)
-    : ui::ActionItem(itemSemantics(flags), label, nullptr)
+    : ui::ActionItem(itemSemantics(flags), label, RefArg<de::Action>())
     , _role(flags)
 {}
 

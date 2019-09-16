@@ -39,7 +39,7 @@ namespace ui {
 class LIBGUI_PUBLIC SubwidgetItem : public ImageItem
 {
 public:
-    typedef std::function<PopupWidget * ()> WidgetConstructor;
+    typedef std::function<PopupWidget *()> WidgetConstructor;
 
 public:
     SubwidgetItem(const String &label, ui::Direction openingDirection,
