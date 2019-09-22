@@ -19,6 +19,7 @@
 #ifndef GUILOOP_H
 #define GUILOOP_H
 
+#include "../libgui.h"
 #include <de/Loop>
 
 namespace de {
@@ -28,7 +29,7 @@ class GLWindow;
 /**
  * Loop that gets triggered after each time GLWindow contents have been refreshed.
  */
-class GuiLoop : public Loop
+class LIBGUI_PUBLIC GuiLoop : public Loop
 {
 public:
     static GuiLoop &get();
