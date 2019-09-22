@@ -23,11 +23,16 @@
 #include <de/ImageBank>
 #include <de/PopupMenuWidget>
 #include <de/ServerFinder>
+#include <de/ui/ListData>
+#include <de/ui/ActionItem>
 
 class LinkWindow;
 
 class GuiShellApp : public de::BaseGuiApp
 {
+public:
+    using MenuItems = de::ui::ListDataT<de::ui::ActionItem>;
+
 public:
     GuiShellApp(const de::StringList &args);
 
@@ -40,20 +45,20 @@ public:
 
     static GuiShellApp &app();
     static de::ImageBank &imageBank();
-    de::PopupMenuWidget &localServersMenu();
+//    de::PopupMenuWidget &localServersMenu();
 //    de::PopupMenuWidget *makeHelpMenu();
+    const MenuItems &localServerMenuItems() const;
 
     void connectToServer();
     void connectToLocalServer();
     void disconnectFromServer();
     void closeActiveWindow();
     void startLocalServer();
-    void updateLocalServerMenu();
     void aboutShell();
     void showHelp();
     void openWebAddress(const de::String &address);
     void showPreferences();
-    void updateMenu();
+//    void updateMenu();
 
     DE_AUDIENCE(LocalServerStop, void localServerStopped(int port))
 

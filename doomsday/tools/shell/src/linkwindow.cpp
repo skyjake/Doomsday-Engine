@@ -34,6 +34,7 @@
 #include <de/PopupMenuWidget>
 #include <de/SequentialLayout>
 #include <de/StyledLogSinkFormatter>
+#include <de/ui/SubwidgetItem>
 #include <de/TabWidget>
 #include <de/Timer>
 #include <de/term/CommandLineWidget>
@@ -263,6 +264,11 @@ DE_PIMPL(LinkWindow)
                 << new ui::Item(ui::Item::Separator)
                 << new ui::ActionItem("New Local Server...", []() { GuiShellApp::app().startLocalServer(); })
                 << new ui::ActionItem("Stop Server", [this]() { self().stopServer(); })
+                << new ui::SubwidgetItem("Local Servers", ui::Left, []() -> PopupWidget * {
+                       auto *pop = new PopupMenuWidget;
+                       pop->menu().setItems(GuiShellApp::app().localServerMenuItems());
+                       return pop;
+                   })
                 << new ui::Item(ui::Item::Separator)
                 << new ui::ActionItem("Preferences...", []() { GuiShellApp::app().showPreferences(); })
                 << new ui::ActionItem("Help...", [](){ GuiShellApp::app().showHelp(); })
@@ -812,8 +818,8 @@ void LinkWindow::openConnection(const String &address)
     debug("Opening connection to %s", address.c_str());
 
     // Keep trying to connect to 30 seconds.
-    const String addr{address};
-    openConnection(new network::Link(addr, 30.0_s), addr);
+//    const String addr{address};
+    openConnection(new network::Link(address, 30.0_s), address);
 }
 
 void LinkWindow::closeConnection()

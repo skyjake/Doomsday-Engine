@@ -27,9 +27,11 @@
 #include <de/Config>
 #include <de/EscapeParser>
 #include <de/FileSystem>
+#include <de/Garbage>
 #include <de/Id>
 #include <de/PackageLoader>
 #include <de/ServerFinder>
+#include <de/TextValue>
 #include <de/Timer>
 #include <de/WindowSystem>
 #include <doomsday/network/LocalServer>
@@ -40,13 +42,14 @@ using namespace network;
 
 DE_PIMPL(GuiShellApp)
 , DE_OBSERVES(ServerFinder, Update)
+, DE_OBSERVES(GuiLoop, Iteration)
 {
     ServerFinder finder;
 
     ImageBank imageBank;
 //    QMenuBar *menuBar;
 //    QMenu *localMenu;
-    PopupMenuWidget *localMenu;
+//    PopupMenuWidget *localMenu;
 #ifdef MACOSX
 //    QAction *stopAction;
 //    QAction *disconnectAction;
@@ -64,6 +67,8 @@ DE_PIMPL(GuiShellApp)
         localCheckTimer.setSingleShot(false);
 
         finder.audienceForUpdate() += this;
+
+        GuiLoop::get().audienceForIteration() += this;
     }
 
     ~Impl() override
@@ -71,19 +76,53 @@ DE_PIMPL(GuiShellApp)
         self().glDeinit();
     }
 
+    void loopIteration() override
+    {
+        Garbage_Recycle();
+    }
+
     void foundServersUpdated() override
     {
         DE_ASSERT(inMainThread());
 
-        const auto found = finder.foundServers();
+        const auto found =
+            map<StringList>(finder.foundServers(), [](const Address &a) { return a.asText(); });
 
         // Add new servers.
         for (const auto &sv : found)
         {
+            if (localServerMenuItems.findData(TextValue(sv)) == ui::Data::InvalidPos)
+            {
+                const String address = sv;
 
+                auto *item = new ui::ActionItem(
+                    ui::Item::ShownAsButton | ui::Item::ActivationClosesPopup |
+                        ui::Item::ClosesParentPopup,
+                    sv,
+                    [address]() {
+                        if (auto *win = GuiShellApp::app().newOrReusedConnectionWindow())
+                        {
+                            win->openConnection(address);
+                        }
+                    });
+
+                item->setData(TextValue(sv));
+                localServerMenuItems << item;
+            }
         }
 
         // Remove servers that are not present.
+        for (auto i = localServerMenuItems.begin(); i != localServerMenuItems.end(); )
+        {
+            if (found.indexOf((*i)->data().asText()) < 0)
+            {
+                auto *item = *i;
+                i = localServerMenuItems.erase(i);
+                delete item;
+                continue;
+            }
+            i++;
+        }
     }
 
     void loadAllShaders()
@@ -237,10 +276,10 @@ GuiShellApp &GuiShellApp::app()
     return *static_cast<GuiShellApp *>(DE_BASE_GUI_APP);
 }
 
-PopupMenuWidget &GuiShellApp::localServersMenu()
-{
-    return *d->localMenu;
-}
+//PopupMenuWidget &GuiShellApp::localServersMenu()
+//{
+//    return *d->localMenu;
+//}
 
 //QMenu *GuiShellApp::makeHelpMenu()
 //{
@@ -343,8 +382,8 @@ void GuiShellApp::startLocalServer()
     }
 }
 
-void GuiShellApp::updateLocalServerMenu()
-{
+//void GuiShellApp::updateLocalServerMenu()
+//{
 //    d->localMenu->setDisabled(d->finder.foundServers().isEmpty());
 //    d->localMenu->clear();
 
@@ -359,7 +398,7 @@ void GuiShellApp::updateLocalServerMenu()
 //        QAction *act = d->localMenu->addAction(label, this, SLOT(connectToLocalServer()));
 //        act->setData(QVariant::fromValue(host));
 //    }
-}
+//}
 
 void GuiShellApp::aboutShell()
 {
@@ -403,15 +442,15 @@ void GuiShellApp::showPreferences()
 //    }
 }
 
-void GuiShellApp::updateMenu()
-{
-#ifdef MACOSX
+//void GuiShellApp::updateMenu()
+//{
+//#ifdef MACOSX
 //    LinkWindow *win = dynamic_cast<LinkWindow *>(activeWindow());
 //    d->stopAction->setEnabled(win && win->isConnected());
 //    d->disconnectAction->setEnabled(win && win->isConnected());
-#endif
-    updateLocalServerMenu();
-}
+//#endif
+//    updateLocalServerMenu();
+//}
 
 void GuiShellApp::checkLocalServers()
 {
@@ -442,4 +481,9 @@ void GuiShellApp::checkLocalServers()
 ImageBank &GuiShellApp::imageBank()
 {
     return app().d->imageBank;
+}
+
+const GuiShellApp::MenuItems &GuiShellApp::localServerMenuItems() const
+{
+    return d->localServerMenuItems;
 }
