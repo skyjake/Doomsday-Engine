@@ -4476,7 +4476,7 @@ static void drawMasked()
                 Rend_DrawModel(*spr);
                 break;
 
-            case VSPR_MODEL_GL2:
+            case VSPR_MODELDRAWABLE:
                 ClientApp::renderSystem().modelRenderer().render(*spr);
                 break;
 

@@ -148,6 +148,7 @@ DENG2_PIMPL(ModelRenderer)
                    Vector3f const &modelOffset,
                    float yawAngle,
                    float pitchAngle,
+                   bool useFixedFov,
                    Matrix4f const *preModelToLocal = nullptr)
     {
         Vector3f const aspectCorrect(1.0f, 1.0f/1.2f, 1.0f);
@@ -172,7 +173,7 @@ DENG2_PIMPL(ModelRenderer)
         const Matrix4f localToWorld = Matrix4f::translate(origin) *
                                       Matrix4f::scale(aspectCorrect); // Inverse aspect correction.
 
-        const Matrix4f viewProj = Rend_GetProjectionMatrix(weaponFixedFOV) *
+        const Matrix4f viewProj = Rend_GetProjectionMatrix(useFixedFov ? weaponFixedFOV : 0.0f) *
                                   ClientApp::renderSystem().uViewMatrix().toMatrix4f();
 
         const Matrix4f localToScreen = viewProj * localToWorld;
@@ -291,9 +292,10 @@ void ModelRenderer::render(vissprite_t const &spr)
 
     d->setupPose((spr.pose.origin + spr.pose.srvo).xzy(),
                  p.model->offset,
-                 spr.pose.yaw   + spr.pose.yawAngleOffset,
+                 spr.pose.yaw + spr.pose.yawAngleOffset,
                  spr.pose.pitch + spr.pose.pitchAngleOffset,
-                 mobjData? &mobjData->modelTransformation() : nullptr);
+                 false, /* regular FOV */
+                 mobjData ? &mobjData->modelTransformation() : nullptr);
 
     // Ambient color and lighting vectors.
     d->setupLighting(spr.light, nullptr);
@@ -320,8 +322,11 @@ void ModelRenderer::render(vispsprite_t const &pspr, mobj_t const *playerMobj)
 
     Matrix4f xform = p.model->transformation;
 
-    d->setupPose(Rend_EyeOrigin(), eyeSpace * p.model->offset,
-                 -90 - yaw, pitch,
+    d->setupPose(Rend_EyeOrigin(),
+                 eyeSpace * p.model->offset,
+                 -90 - yaw,
+                 pitch,
+                 true, /* fixed FOV for psprites */
                  &xform);
 
     d->setupLighting(pspr.light, playerMobj /* player holding weapon is excluded */);

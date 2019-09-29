@@ -277,9 +277,9 @@ void R_ProjectSprite(mobj_t &mob)
     }
 
     // Store information in a vissprite.
-    vissprite_t *vis = R_NewVisSprite(animator? VSPR_MODEL_GL2 :
-                                            mf? VSPR_MODEL :
-                                                VSPR_SPRITE);
+    vissprite_t *vis = R_NewVisSprite(animator ? VSPR_MODELDRAWABLE :
+                                            mf ? VSPR_MODEL :
+                                                 VSPR_SPRITE);
 
     vis->pose.origin   = moPos;
     vis->pose.distance = distFromEye;

@@ -41,7 +41,7 @@ enum visspritetype_t
     VSPR_SPRITE,
     VSPR_MASKED_WALL,
     VSPR_MODEL,
-    VSPR_MODEL_GL2,    ///< GL2 model (de::ModelDrawable)
+    VSPR_MODELDRAWABLE,    // GL2 model (de::ModelDrawable)
     VSPR_FLARE
 };
 
