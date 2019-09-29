@@ -2910,10 +2910,10 @@ static int PTR_BounceTraverse(Intercept const *icpt, void *context)
     {
         goto bounceblocking; // Mobj is too high...
     }
-//    if (parm.bounceMobj->origin[VZ] - Interceptor_Opening(icpt->trace)->bottom < 0)
-//    {
-//        goto bounceblocking; // Mobj is too low...
-//    }
+    if (parm.bounceMobj->origin[VZ] - Interceptor_Opening(icpt->trace)->bottom < 0)
+    {
+        goto bounceblocking; // Mobj is too low...
+    }
     // This line doesn't block movement...
     return false;
 
@@ -2927,9 +2927,9 @@ bounceblocking:
     return false;
 }
 
-void P_BounceWall(mobj_t *mo)
+dd_bool P_BounceWall(mobj_t *mo)
 {
-    if (!mo) return;
+    if (!mo) return false;
 
     // Trace a line from the origin to the would be destination point (which is
     // apparently not reachable) to find a line from which we'll calculate the
@@ -2964,7 +2964,15 @@ void P_BounceWall(mobj_t *mo)
 
         uint an = deltaAngle >> ANGLETOFINESHIFT;
         V2d_Set(mo->mom, moveLen * FIX2FLT(finecosine[an]), moveLen * FIX2FLT(finesine[an]));
+
+#if defined (__JHERETIC__)
+        // The same sound for all wall-bouncing things... Using an action function might be
+        // a better idea.
+        S_StartSound(SFX_BOUNCE, mo);
+#endif
+        return true;
     }
+    return false;
 }
 
 #endif

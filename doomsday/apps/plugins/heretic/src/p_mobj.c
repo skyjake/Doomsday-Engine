@@ -305,8 +305,10 @@ void P_MobjMoveXY(mobj_t *mo)
             {
                 if (mo->flags3 & MF3_WALLBOUNCE)
                 {
-                    P_BounceWall(mo);
-                    return;
+                    if (P_BounceWall(mo))
+                    {
+                        return;
+                    }
                 }
 
                 // Explode a missile

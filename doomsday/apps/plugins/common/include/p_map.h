@@ -199,7 +199,7 @@ dd_bool P_CheckSides(mobj_t *actor, coord_t x, coord_t y);
  */
 dd_bool P_TestMobjLocation(mobj_t *mobj);
 
-void P_BounceWall(mobj_t *mobj);
+dd_bool P_BounceWall(mobj_t *mobj);
 
 #endif
 
