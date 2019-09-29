@@ -4477,6 +4477,7 @@ static void drawMasked()
                 break;
 
             case VSPR_MODELDRAWABLE:
+                DGL_Flush();
                 ClientApp::renderSystem().modelRenderer().render(*spr);
                 break;
 
