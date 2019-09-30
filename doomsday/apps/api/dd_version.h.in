@@ -63,7 +63,7 @@ extern "C" {
 /**
  * Copyright string is used in WIN32 binary metadata markup.
  */
-#define DOOMSDAY_COPYRIGHT      "2003-2017, " DENGPROJECT_NICEAUTHOR
+#define DOOMSDAY_COPYRIGHT      "2003-2019, " DENGPROJECT_NICEAUTHOR
 
 /**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
