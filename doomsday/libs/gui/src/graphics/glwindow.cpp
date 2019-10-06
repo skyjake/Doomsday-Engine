@@ -625,23 +625,17 @@ Image GLWindow::grabImage(const Size &outputSize) const
 
 Image GLWindow::grabImage(const Rectanglei &area, const Size &outputSize) const
 {
-    Image grabbed;
-    DE_ASSERT_FAIL("[GLWindow] grabImage not implemented");
-#if 0
     // We will be grabbing the visible, latest complete frame.
-    //glReadBuffer(GL_FRONT);
-    Image grabbed = const_cast<GLWindow *>(this)->grabFramebuffer(); // no alpha
+    Image grabbed = framebuffer().toImage();
     if (area.size() != grabbed.size())
     {
         // Just take a portion of the full image.
-        grabbed = grabbed.copy(area);
+        grabbed = grabbed.subImage(area);
     }
-    //glReadBuffer(GL_BACK);
-    if (outputSize.isValid())
+    if (outputSize != Size())
     {
-        grabbed = grabbed.scaled(outputSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+        grabbed.resize(outputSize);
     }
-#endif
     return grabbed;
 }
 

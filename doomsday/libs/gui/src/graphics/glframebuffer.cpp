@@ -718,11 +718,7 @@ void GLFramebuffer::glRelease() const
 
 Image GLFramebuffer::toImage() const
 {
-    if (!d->fbo)
-    {
-        return GLWindow::getMain().grabImage();
-    }
-    else if (d->flags & Color0)
+    if (d->flags & Color0)
     {
         // Read the contents of the color attachment.
         Size imgSize = size();
@@ -731,8 +727,6 @@ Image GLFramebuffer::toImage() const
         glPixelStorei(GL_PACK_ALIGNMENT, 4);
         glReadPixels(0, 0, imgSize.x, imgSize.y, GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-        // Restore the stack's target.
-//        GLState::current().target().glBind();
         return img.flipped();
     }
     return Image();
