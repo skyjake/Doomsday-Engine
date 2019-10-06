@@ -119,24 +119,6 @@ public:
 
     bool isGameMinimized() const;
 
-    /**
-     * Must be called before any canvas windows are created. Defines the
-     * default OpenGL format settings for the contained canvases.
-     *
-     * @return @c true, if the new format was applied. @c false, if the new
-     * format remains the same because none of the settings have changed.
-     */
-    static bool setDefaultGLFormat();
-
-    /**
-     * Grab the contents of the window into the supplied @a image. Ownership of
-     * the image passes to the window for the duration of this call.
-     *
-     * @param image      Image to fill with the grabbed frame contents.
-     * @param halfSized  If @c true, scales the image to half the full size.
-     */
-    void grab(image_t &image, bool halfSized = false) const;
-
     void fadeContent(FadeDirection fadeDirection, de::TimeSpan duration);
 
     de::FadeToBlackWidget *contentFade();
@@ -157,8 +139,8 @@ public:
     void drawWindowContent() override;
     void preDraw() override;
     void postDraw() override;
-//    bool handleFallbackEvent(const de::Event &event) override;
 
+public:
     static ClientWindow &main();
     static bool mainExists();
 

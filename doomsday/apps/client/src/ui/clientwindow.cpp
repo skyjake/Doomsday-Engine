@@ -957,12 +957,6 @@ Vec2f ClientWindow::windowContentSize() const
 
 void ClientWindow::drawWindowContent()
 {
-#if defined (DE_MOBILE)
-    {
-
-    }
-#endif
-
     DE_ASSERT_IN_RENDER_THREAD();
     root().draw();
     LIBGUI_ASSERT_GL_OK();
@@ -982,63 +976,6 @@ void ClientWindow::postDraw()
         // swapped.
         GL_FinishFrame();
     }
-}
-
-bool ClientWindow::setDefaultGLFormat() // static
-{
-    LOG_AS("DefaultGLFormat");
-
-#if 0
-    QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
-
-    if (CommandLine_Exists("-novsync") || !App::config().getb("window.main.vsync"))
-    {
-        fmt.setSwapInterval(0);
-    }
-    else
-    {
-        fmt.setSwapInterval(1);
-    }
-
-    /// @todo Multisampling should only be enabled on the game view FBO. The rest of
-    /// the UI is always single-sampled.
-
-    if (fmt != QSurfaceFormat::defaultFormat())
-    {
-        LOG_GL_VERBOSE("Applying new format...");
-        QSurfaceFormat::setDefaultFormat(fmt);
-        return true;
-    }
-    else
-    {
-        LOG_GL_XVERBOSE("New format is the same as before", "");
-        return false;
-    }
-#endif
-    return false;
-}
-
-void ClientWindow::grab(image_t &img, bool halfSized) const
-{
-    /// @todo This method should be removed, just use grabImage() directly.
-
-    DE_ASSERT_IN_MAIN_THREAD();
-
-    Vec2ui outputSize = (halfSized? Vec2ui(pixelWidth()/2, pixelHeight()/2) : Vec2ui());
-    const Image grabbed = grabImage(outputSize);
-
-    Image_Init(img);
-    img.size      = Vec2ui(grabbed.width(), grabbed.height());
-    img.pixelSize = grabbed.depth()/8;
-
-    img.pixels = reinterpret_cast<uint8_t *>(malloc(grabbed.byteCount()));
-    std::memcpy(img.pixels, grabbed.bits(), grabbed.byteCount());
-
-    LOGDEV_GL_MSG("Grabbed Canvas contents %i x %i, byteCount:%i depth:%i format:%i")
-            << grabbed.width() << grabbed.height()
-            << grabbed.byteCount() << grabbed.depth() << grabbed.format();
-
-    DE_ASSERT(img.pixelSize != 0);
 }
 
 void ClientWindow::fadeInTaskBarBlur(TimeSpan span)
@@ -1124,11 +1061,6 @@ GuiWidget &ClientWindow::sidebar(SidebarLocation location) const
 
     return *d->sidebar;
 }
-
-//bool ClientWindow::handleFallbackEvent(const Event &event)
-//{
-//    return d->handleFallbackEvent(event);
-//}
 
 void ClientWindow::fadeContent(FadeDirection fadeDirection, TimeSpan duration)
 {
