@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "libcore.h"
-#include "String"
+#include "../libcore.h"
+#include "../String"
 
 #if defined (DE_WINDOWS)
 

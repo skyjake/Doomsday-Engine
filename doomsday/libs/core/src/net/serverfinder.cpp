@@ -68,7 +68,17 @@ DE_PIMPL(ServerFinder)
             ServerInfo receivedInfo(inf);
 
             // We don't need to know the sender's Beacon UDP port.
-            receivedInfo.setAddress(Address(host.hostName(), receivedInfo.port()));
+            if (host.isLocal())
+            {
+                // This gives us a network address with the widest available scope 
+                // instead of some internal IP address where the packet may have been
+                // received from.
+                receivedInfo.setAddress(Address::localNetworkInterface(receivedInfo.port()));
+            }
+            else
+            {
+                receivedInfo.setAddress(Address(host.hostName(), receivedInfo.port()));
+            }
 
             const Address from = receivedInfo.address(); // port validated
 

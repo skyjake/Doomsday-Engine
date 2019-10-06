@@ -150,6 +150,10 @@ public:
     }
 
     void sort() { std::sort(begin(), end()); }
+    void sort(const std::function<bool(const T &, const T &)> &lessThan)
+    { 
+        std::sort(begin(), end(), lessThan); 
+    }
 };
 
 } // namespace de

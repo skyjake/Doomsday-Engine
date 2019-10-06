@@ -79,14 +79,45 @@ DE_PIMPL_NOREF(NetworkInterfaces), public Lockable
     }
 #endif
 
+    static int scope(const Address &addr)
+    {
+        if (addr.isLoopback()) return 0;
+        const String hostName = addr.hostName();
+#if defined (DE_WINDOWS)
+        if (hostName.beginsWith("169.254."))
+        {
+            // Self-assigned IP.
+            return 1;
+        }
+#endif
+        if (hostName.beginsWith("192.168.")) return 2;
+        /// @todo Could also check for 172.16.0.0 ... 172.32.255.255.
+        if (hostName.beginsWith("10.")) return 3;
+        return 4;
+    }
+
     void update()
     {
         interfaces.clear();
         auto infs = tF::make_ref(networkInterfaces_Address());
         iConstForEach(ObjectList, i, infs)
         {
-            interfaces << Address(reinterpret_cast<const iAddress *>(i.object));
+            const iAddress *addr = reinterpret_cast<const iAddress *>(i.object);
+            if (iCmpStr(cstr_String(hostName_Address(addr)), "0.0.0.0"))
+            {
+                interfaces << Address(addr);
+            }
         }
+        interfaces.sort([](const Address &a, const Address &b) {
+                            const int aScope = scope(a);                            
+                            const int bScope = scope(b);
+                            if (aScope == bScope)
+                            {
+                                return iCmpStr(a.hostName(), b.hostName()) < 0;
+                            }
+                            // Prefer non-internal IP addresses.
+                            return aScope > bScope;
+                        });
         lastUpdatedAt = Time();
     }
 };
