@@ -20,9 +20,3 @@ if (UNIX)
 endif ()
 add_subdirectory (texc)
 add_subdirectory (wadtool)
-
-if (APPLE AND TARGET client)
-    # Tools install files into the Doomsday.app bundle, so it must now be
-    # signed again.
-    deng_codesign(client)
-endif ()

@@ -18,7 +18,7 @@ add_definitions (
 )
 
 file (GLOB SOURCES src/*.cpp src/*.h res/shell.qrc)
-set (MAC_RES 
+set (MAC_RES
     res/macx/shell.icns,Resources
     res/macx/English.lproj,Resources
 )
@@ -45,7 +45,6 @@ deng_target_link_qt (shell PUBLIC Widgets)
 # Deployment.
 deng_install_bundle_deps (shell Deng::libcore Deng::libshell)
 deng_install_deployqt (shell)
-deng_codesign (shell)
 
 if (UNIX AND NOT APPLE)
     configure_file (doomsday-shell.desktop.in net.dengine.Shell.desktop)

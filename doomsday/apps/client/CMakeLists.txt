@@ -321,5 +321,4 @@ if (MSVC)
     add_custom_command (TARGET client POST_BUILD COMMAND ${fn} ${_intDir})
 endif ()
 
-deng_codesign (client)
 deng_cotire (client include/precompiled.h)
