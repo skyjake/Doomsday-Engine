@@ -2966,6 +2966,10 @@ dd_bool P_BounceWall(mobj_t *mo)
         V2d_Set(mo->mom, moveLen * FIX2FLT(finecosine[an]), moveLen * FIX2FLT(finesine[an]));
 
 #if defined (__JHERETIC__)
+        // Reduce momentum.
+        mo->mom[MX] *= 0.9;
+        mo->mom[MY] *= 0.9;
+
         // The same sound for all wall-bouncing things... Using an action function might be
         // a better idea.
         S_StartSound(SFX_BOUNCE, mo);
