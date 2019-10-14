@@ -27,7 +27,7 @@ def parse_dict(root):
     key = None
     for child in root:
         if key:
-            if child.tag == 'string':
+            if child.tag == 'string' or child.tag == 'date':
                 res[key] = child.text
             elif child.tag == 'integer':
                 res[key] = int(child.text)
