@@ -1410,36 +1410,44 @@ static dd_bool P_TryMove2(mobj_t *thing, coord_t x, coord_t y, dd_bool dropoff)
          * Allow dropoffs in controlled circumstances.
          * Improve symmetry of clipping on stairs.
          */
-        if(!(thing->flags & (MF_DROPOFF | MF_FLOAT)))
         {
-            // Dropoff height limit.
-            if(cfg.avoidDropoffs)
+            if (!(thing->flags & (MF_DROPOFF | MF_FLOAT)))
             {
-                if(tmFloorZ - tmDropoffZ > 24)
+                // Dropoff height limit.
+                if (cfg.avoidDropoffs)
                 {
-                    return false; // Don't stand over dropoff.
-                }
-            }
-            else
-            {
-                coord_t floorZ = tmFloorZ;
-
-                if(thing->onMobj)
-                {
-                    // Thing is stood on something so use our z position as the floor.
-                    floorZ = (thing->origin[VZ] > tmFloorZ? thing->origin[VZ] : tmFloorZ);
-                }
-
-                if(!dropoff)
-                {
-                    if(thing->floorZ - floorZ > 24 || thing->dropOffZ - tmDropoffZ > 24)
-                        return false;
+                    if (tmFloorZ - tmDropoffZ > 24)
+                    {
+                        return false; // Don't stand over dropoff.
+                    }
                 }
                 else
                 {
-                    tmFellDown = !(thing->flags & MF_NOGRAVITY) && thing->origin[VZ] - floorZ > 24;
+                    coord_t floorZ = tmFloorZ;
+                    if (thing->onMobj)
+                    {
+                        // Thing is stood on something so use our z position as the floor.
+                        floorZ = (thing->origin[VZ] > tmFloorZ ? thing->origin[VZ] : tmFloorZ);
+                    }
+
+                    if (!dropoff)
+                    {
+                        if (thing->floorZ - floorZ > 24 || thing->dropOffZ - tmDropoffZ > 24)
+                            return false;
+                    }
+                    else
+                    {
+                        tmFellDown = !(thing->flags & MF_NOGRAVITY) && thing->origin[VZ] - floorZ > 24;
+                    }
                 }
             }
+#if defined (__JHERETIC__)
+            else if (!thing->onMobj && (thing->flags & MF_DROPOFF) && !(thing->flags & MF_NOGRAVITY))
+            {
+                // Allow gentle dropoff from great heights.
+                tmFellDown = (thing->origin[VZ] - tmFloorZ > 24);
+            }
+#endif
         }
 #endif
 
@@ -2710,9 +2718,9 @@ static int PIT_ChangeSector(mobj_t *thing, void *context)
 
     // Update the Z position of the mobj and determine whether it physically
     // fits in the opening between floor and ceiling.
-    if(!P_MobjIsCamera(thing))
+    if (!P_MobjIsCamera(thing))
     {
-        bool const onfloor = (thing->origin[VZ] == thing->floorZ);
+        const bool onfloor = de::fequal(thing->origin[VZ], thing->floorZ);
 
         P_CheckPosition(thing, thing->origin);
         thing->floorZ   = tmFloorZ;
@@ -2721,7 +2729,7 @@ static int PIT_ChangeSector(mobj_t *thing, void *context)
         thing->dropOffZ = tmDropoffZ; // $dropoff_fix: remember dropoffs.
 #endif
 
-        if(onfloor)
+        if (onfloor)
         {
 #if __JHEXEN__
             if((thing->origin[VZ] - thing->floorZ < 9) ||
