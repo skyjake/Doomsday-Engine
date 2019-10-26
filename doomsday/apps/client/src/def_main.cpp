@@ -542,7 +542,7 @@ static void readAllDefinitions()
     {
         Game const &game = App_CurrentGame();
 
-        // Some games use definitions that are translated to DED.
+        // Some games use definitions (MAPINFO lumps) that are translated to DED.
         QStringList mapInfoUrns = allMapInfoUrns();
         if (!mapInfoUrns.isEmpty())
         {
