@@ -270,9 +270,9 @@ static void drawBackground()
 
 static void drawFinishedTitle()
 {
-    if(!haveLocationMap) return;
+    if (!haveLocationMap) return;
 
-    DENG2_ASSERT(!wbs->currentMap.isEmpty());
+    if (wbs->currentMap.isEmpty()) return;
 
     DGL_Enable(DGL_TEXTURE_2D);
 
