@@ -500,11 +500,6 @@ DE_GUI_PIMPL(GameColumnWidget)
                         }
                     });
             }
-            else
-            {
-                popup->items() << new ui::ActionItem("Select Mods...",
-                                                     [button]() { button->selectPackages(); });
-            }
 
             // Items suitable for all types of profiles.
             popup->items()

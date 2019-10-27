@@ -928,6 +928,7 @@ void Hu_MenuInitOptionsPage()
             .setShortcut('t')
             .setFont(MENU_FONT1)
             .setGroup(1)
+            .setUserValue2(NumberValue(0))
             .setAction(Widget::Deactivated, Hu_MenuSelectControlPanelLink)
             .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 

@@ -49,7 +49,7 @@ struct Flywheel
     };
 
     float        pos        = 0;
-    float        friction   = 1;
+    float        friction   = 2.0f;
     float        momentum   = 0;
     bool         isReleased = true;
     List<Sample> samples;
