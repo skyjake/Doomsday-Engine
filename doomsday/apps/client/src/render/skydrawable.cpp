@@ -445,6 +445,8 @@ DENG2_PIMPL(SkyDrawable)
     {
         if(!haveModels) return;
 
+        DGL_Flush();
+
         // Sky models use depth testing, but they won't interfere with world geometry.
         //glEnable(GL_DEPTH_TEST);
         //glDepthMask(GL_TRUE);
@@ -478,7 +480,7 @@ DENG2_PIMPL(SkyDrawable)
             Animator::ModelState const &mstate = animator->model(i);
 
             // Prepare a vissprite for ordered drawing.
-            vissprite_t vis;
+            vissprite_t vis{};
 
             vis.pose.origin          = vOrigin.xzy() * -Vector3f(skyModelDef.get("originOffset")).xzy();
             vis.pose.topZ            = vis.pose.origin.z;
@@ -500,6 +502,8 @@ DENG2_PIMPL(SkyDrawable)
 
             Rend_DrawModel(vis);
         }
+
+        DGL_Flush();
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();
