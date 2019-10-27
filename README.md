@@ -2,7 +2,7 @@
 
 This is the source code for Doomsday Engine: a portable, enhanced source port of id Software's Doom I/II and Raven Software's Heretic and Hexen. The sources are under the GNU General Public license (see doomsday/gpl-3.0.txt), with the exception of the Doomsday 2 libraries that are under the GNU Lesser General Public License (see doomsday/lgpl-3.0.txt).
 
-For [compilation instructions](http://wiki.dengine.net/w/Compilation) and other details, see the documentation wiki: http://wiki.dengine.net/
+For [compilation instructions](https://manual.dengine.net/devel/compilation) and other details, see the documentation wiki: https://manual.dengine.net/
 
 Linux 64-bit [![Linux Build Status](https://travis-ci.org/skyjake/Doomsday-Engine.svg)](https://travis-ci.org/skyjake/Doomsday-Engine) Windows 32-bit [![Windows Build Status](https://ci.appveyor.com/api/projects/status/79h7egw7q225gj2h?svg=true)](https://ci.appveyor.com/project/skyjake/doomsday-engine)
 
