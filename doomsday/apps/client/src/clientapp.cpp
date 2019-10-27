@@ -606,7 +606,8 @@ ClientApp::ClientApp(const StringList &args)
                              SDL_WINDOWPOS_CENTERED,
                              imageWidth,
                              imageHeight,
-                             SDL_WINDOW_BORDERLESS | SDL_WINDOW_SHOWN | SDL_WINDOW_ALWAYS_ON_TOP);
+                             SDL_WINDOW_BORDERLESS | SDL_WINDOW_SHOWN | SDL_WINDOW_ALWAYS_ON_TOP |
+                             SDL_WINDOW_ALLOW_HIGHDPI);
 
         SDL_BlitSurface(splashSurface, nullptr, SDL_GetWindowSurface(d->splashWindow), nullptr);
         SDL_UpdateWindowSurface(d->splashWindow);
@@ -691,8 +692,6 @@ void ClientApp::initialize()
 
     // Set up the window system.
     {
-        ClientWindow::setDefaultGLFormat();
-
         auto &ws = windowSystem();
         ws.setStyle(new ClientStyle);
         ws.style().load(packageLoader().load("net.dengine.client.defaultstyle"));
