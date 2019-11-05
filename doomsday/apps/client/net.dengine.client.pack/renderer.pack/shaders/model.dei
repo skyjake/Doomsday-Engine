@@ -12,12 +12,12 @@ model.skeletal {
         variable uGlossiness     { value = 100 }
         variable uReflection     { value = 1 }
         variable uReflectionBlur { value = 10 }
-        
+
         variable uMapTime {}
-        
+
         # Mapping when used with ModelDrawable.
         textureMapping <diffuse, normals, specular, emission>
-        
+
         include.vertex <include/tangentspace.glsl,
                         include/skeletal.glsl,
                         include/lighting.glsl>
@@ -36,30 +36,30 @@ model.skeletal {
             out vec2 vUV;
             out vec4 vUVBounds[4];
 
-            void main(void) 
+            void main(void)
             {
                 mat4 bone = vertexBoneTransform();
                 setTangentSpace(bone);
-                    
+
                 // Vertex position.
                 vec4 modelPos = bone * aVertex;
                 calculateEyeDirection(modelPos);
-                
+
                 gl_Position = uMvpMatrix * modelPos;
-                          
+
                 vColor = aColor;
                 vUV = aUV;
                 vUVBounds[0] = aBounds;
                 vUVBounds[1] = aBounds2;
                 vUVBounds[2] = aBounds3;
-                vUVBounds[3] = aBounds4;                
+                vUVBounds[3] = aBounds4;
             }"
 
-        defines $= {'PREDEF_TRANSFORM_UV(uv)'          : '',                    
+        defines $= {'PREDEF_TRANSFORM_UV(uv)'          : '',
                     'PREDEF_TRANSFORM_EMISSION(color)' : '',
                     'PREDEF_TRANSFORM_ALPHA(alpha)'    : ''}
-        
-        include.fragment <include/texture.glsl, 
+
+        include.fragment <include/texture.glsl,
                           include/tangentspace.glsl,
                           include/lighting.glsl,
                           include/reflection.glsl,
@@ -70,12 +70,12 @@ model.skeletal {
             uniform float uAlphaLimit; // alpha test to discard fragments
             uniform vec2 uOffsetUV;
             uniform float uMapTime;
-            
+
             in vec4 vColor;
             in vec2 vUV;
             in vec4 vUVBounds[4];
-                        
-            void main(void) 
+
+            void main(void)
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
                 vec2 wrappedUV = vUV + uOffsetUV;
@@ -83,16 +83,16 @@ model.skeletal {
                 PREDEF_TRANSFORM_UV(wrappedUV);
             #endif
                 wrappedUV = fract(wrappedUV);
-                
+
                 vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
                 vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
                 vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
                 vec2 emissiveUV = mapToBounds(wrappedUV, vUVBounds[3]);
-            
+
                 vec3 msNormal = modelSpaceNormalVector(normalUV);
                 vec4 specGloss = specularGloss(specularUV);
-                
-                float alphaFactor = uAlpha;
+
+                float alphaFactor = uAlpha * uAmbientLight.a;
             #if defined (PREDEF_TRANSFORM_ALPHA)
                 PREDEF_TRANSFORM_ALPHA(alphaFactor);
             #endif
@@ -109,13 +109,13 @@ model.skeletal {
                 PREDEF_TRANSFORM_EMISSION(emitted);
             #endif
                 out_FragColor += emitted;
-                    
+
                 applyFog();
             }"
     }
-    
-    # Variant of the generic shader that is suitable for opaque objects 
-    # with no transparency.    
+
+    # Variant of the generic shader that is suitable for opaque objects
+    # with no transparency.
     shader opaque.generic inherits model.skeletal.generic {
         variable uAlphaLimit { value = 0.5 }
         fragment = "
@@ -124,12 +124,12 @@ model.skeletal {
             uniform float uAlphaLimit; // alpha test to discard fragments
             uniform vec2 uOffsetUV;
             uniform float uMapTime;
-        
+
             in vec4 vColor;
             in vec2 vUV;
             in vec4 vUVBounds[4];
-        
-            void main(void) 
+
+            void main(void)
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
                 vec2 wrappedUV = vUV + uOffsetUV;
@@ -141,24 +141,24 @@ model.skeletal {
                 vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
                 vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
                 vec2 emissiveUV = mapToBounds(wrappedUV, vUVBounds[3]);
-        
+
                 vec3 msNormal = modelSpaceNormalVector(normalUV);
                 vec4 specGloss = specularGloss(specularUV);
-                
+
                 out_FragColor = diffuseAndReflectedLight(
-                    vColor * vec4(uColor, uAlpha), uv, specGloss, msNormal);
+                    vColor * vec4(uColor, uAlpha * uAmbientLight.a), uv, specGloss, msNormal);
 
                 if (out_FragColor.a < uAlphaLimit) discard;
-            
+
                 out_FragColor.rgb += specularLight(specGloss, msNormal);
                 out_FragColor += emittedLight(emissiveUV);
-                
+
                 applyFog();
             }"
     }
-    
-    # Shader for damage/blood effects. No emissive map, and alpha 
-    # output is either opaque or fully transparent. Alpha limit can 
+
+    # Shader for damage/blood effects. No emissive map, and alpha
+    # output is either opaque or fully transparent. Alpha limit can
     # be used to control how much of the effect is visible.
     shader opaque.nonemissive {
         variable uAlphaLimit     { value = 0.5 }
@@ -175,7 +175,7 @@ model.skeletal {
         textureMapping <diffuse, normals, specular>
 
         defines $= {'PREDEF_TRANSFORM_UV(uv)': ''}
-        
+
         include.vertex <include/tangentspace.glsl,
                         include/skeletal.glsl,
                         include/lighting.glsl>
@@ -193,25 +193,25 @@ model.skeletal {
             out vec2 vUV;
             out vec4 vUVBounds[3];
 
-            void main(void) 
+            void main(void)
             {
                 mat4 bone = vertexBoneTransform();
                 setTangentSpace(bone);
-                    
+
                 // Vertex position.
                 vec4 modelPos = bone * aVertex;
                 calculateEyeDirection(modelPos);
 
                 gl_Position = uMvpMatrix * modelPos;
-                          
+
                 vColor = aColor;
                 vUV = aUV;
                 vUVBounds[0] = aBounds;
                 vUVBounds[1] = aBounds2;
-                vUVBounds[2] = aBounds3;                
+                vUVBounds[2] = aBounds3;
             }"
 
-        include.fragment <include/texture.glsl, 
+        include.fragment <include/texture.glsl,
                           include/tangentspace.glsl,
                           include/lighting.glsl,
                           include/reflection.glsl,
@@ -222,12 +222,12 @@ model.skeletal {
             uniform vec3 uColor;       // diffuse color multiplier
             uniform vec2 uOffsetUV;
             uniform float uMapTime;
-            
+
             in vec4 vColor;
             in vec2 vUV;
             in vec4 vUVBounds[3];
-            
-            void main(void) 
+
+            void main(void)
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
                 vec2 wrappedUV = vUV + uOffsetUV;
@@ -238,22 +238,22 @@ model.skeletal {
                 vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
                 vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
                 vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
-            
+
                 vec3 msNormal = modelSpaceNormalVector(normalUV);
                 vec4 specGloss = specularGloss(specularUV);
-                
+
                 out_FragColor = diffuseAndReflectedLight(
-                    vColor * vec4(uColor, uAlpha), uv, specGloss, msNormal);
+                    vColor * vec4(uColor, uAlpha * uAmbientLight.a), uv, specGloss, msNormal);
                 if (out_FragColor.a < uAlphaLimit) discard;
 
                 out_FragColor.rgb += specularLight(specGloss, msNormal);
 
                 out_FragColor.a = uAlpha;
-                
+
                 applyFog();
-            }"        
+            }"
     }
-    
+
     shader opaque.matte {
         variable uAlphaLimit     { value = 0.5 }
         variable uAlpha          { value = 1.0 }
@@ -266,7 +266,7 @@ model.skeletal {
         textureMapping <diffuse, normals>
 
         defines $= {'PREDEF_TRANSFORM_UV(uv)': ''}
-        
+
         include.vertex <include/tangentspace.glsl,
                         include/skeletal.glsl,
                         include/lighting.glsl>
@@ -283,24 +283,24 @@ model.skeletal {
             out vec2 vUV;
             out vec4 vUVBounds[2];
 
-            void main(void) 
+            void main(void)
             {
                 mat4 bone = vertexBoneTransform();
                 setTangentSpace(bone);
-                    
+
                 // Vertex position.
                 vec4 modelPos = bone * aVertex;
                 calculateEyeDirection(modelPos);
 
                 gl_Position = uMvpMatrix * modelPos;
-                          
+
                 vColor = aColor;
                 vUV = aUV;
                 vUVBounds[0] = aBounds;
                 vUVBounds[1] = aBounds2;
             }"
 
-        include.fragment <include/texture.glsl, 
+        include.fragment <include/texture.glsl,
                           include/tangentspace.glsl,
                           include/lighting.glsl,
                           include/fog.glsl>
@@ -310,12 +310,12 @@ model.skeletal {
             uniform vec3 uColor;       // diffuse color multiplier
             uniform vec2 uOffsetUV;
             uniform float uMapTime;
-            
+
             in vec4 vColor;
             in vec2 vUV;
             in vec4 vUVBounds[2];
-            
-            void main(void) 
+
+            void main(void)
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
                 vec2 wrappedUV = vUV + uOffsetUV;
@@ -325,18 +325,18 @@ model.skeletal {
                 wrappedUV = fract(wrappedUV);
                 vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
                 vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
-            
-                vec3 msNormal = modelSpaceNormalVector(normalUV);                
+
+                vec3 msNormal = modelSpaceNormalVector(normalUV);
                 out_FragColor = vColor * vec4(uColor * diffuseLight(msNormal), 1.0)
                              * texture(uTex, uv);
                 if (out_FragColor.a < uAlphaLimit) discard;
 
-                out_FragColor.a = uAlpha;
-                
+                out_FragColor.a = uAlpha * uAmbientLight.a;
+
                 applyFog();
-            }"        
+            }"
     }
-    
+
     # Shader for special effects. Only uses a diffuse texture map.
     # No external lighting.
     shader unlit.diffuse {
@@ -352,7 +352,7 @@ model.skeletal {
 
         defines $= {'PREDEF_TRANSFORM_UV(uv)'       : '',
                     'PREDEF_TRANSFORM_ALPHA(alpha)' : ''}
-        
+
         include.vertex <include/skeletal.glsl>
         vertex = "
             uniform mat4 uMvpMatrix;
@@ -366,14 +366,14 @@ model.skeletal {
             out vec2 vUV;
             out vec4 vUVBounds;
 
-            void main(void) 
+            void main(void)
             {
                 mat4 bone = vertexBoneTransform();
-                    
+
                 // Vertex position.
                 vec4 modelPos = bone * aVertex;
                 gl_Position = uMvpMatrix * modelPos;
-                                                          
+
                 vColor = aColor;
                 vUV = aUV;
                 vUVBounds = aBounds;
@@ -386,12 +386,12 @@ model.skeletal {
             uniform vec3 uColor;       // diffuse color multiplier
             uniform vec2 uOffsetUV;
             uniform float uMapTime;
-            
+
             in vec4 vColor;
             in vec2 vUV;
             in vec4 vUVBounds;
-            
-            void main(void) 
+
+            void main(void)
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
                 vec2 wrappedUV = vUV + uOffsetUV;
@@ -400,15 +400,15 @@ model.skeletal {
             #endif
                 wrappedUV = fract(wrappedUV);
                 vec2 uv = mapToBounds(wrappedUV, vUVBounds);
-            
+
                 vec4 diffuse = vColor * texture(uTex, uv);
                 if (diffuse.a < uAlphaLimit) discard;
-                
+
                 float alphaFactor = uAlpha;
             #if defined (PREDEF_TRANSFORM_ALPHA)
                 PREDEF_TRANSFORM_ALPHA(alphaFactor);
             #endif
                 out_FragColor = diffuse * vec4(uColor, alphaFactor);
-            }"        
-    }        
+            }"
+    }
 }

@@ -55,6 +55,8 @@ static String const DEF_STATE           ("state");
 static String const DEF_TEXTURE_MAPPING ("textureMapping");
 static String const DEF_TIMELINE        ("timeline");
 static String const DEF_UP_VECTOR       ("up");
+static String const DEF_WEAPON_OPACITY   ("opacityFromWeapon");
+static String const DEF_WEAPON_FULLBRIGHT("fullbrightFromWeapon");
 static String const DEF_VARIANT         ("variant");
 
 static String const SHADER_DEFAULT      ("model.skeletal.generic");
@@ -78,7 +80,7 @@ DENG2_PIMPL(ModelLoader)
     filesys::AssetObserver observer { "model\\..*" };
     ModelBank bank {
         // Using render::Model instances.
-        [] () -> ModelDrawable * { return new render::Model; }
+        []() -> ModelDrawable * { return new render::Model; }
     };
     LockableT<QSet<String>> pendingModels;
 
@@ -452,6 +454,10 @@ DENG2_PIMPL(ModelLoader)
         }
         applyFlagOperation(model.flags, render::Model::AutoscaleToThingHeight,
                            ScriptedInfo::isTrue(asset, DEF_AUTOSCALE)? SetFlags : UnsetFlags);
+        applyFlagOperation(model.flags, render::Model::ThingOpacityAsAmbientLightAlpha,
+                           ScriptedInfo::isTrue(asset, DEF_WEAPON_OPACITY, true)? SetFlags : UnsetFlags);
+        applyFlagOperation(model.flags, render::Model::ThingFullBrightAsAmbientLight,
+                           ScriptedInfo::isTrue(asset, DEF_WEAPON_FULLBRIGHT)? SetFlags : UnsetFlags);
 
         // Alignment modes.
         model.alignYaw   = parseAlignment(asset, DEF_ALIGNMENT_YAW);

@@ -103,13 +103,11 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
     parm.texFlip[1] = false;
     parm.mat        = &matAnimator.material();
 
-    parm.ambientColor[3] = vs.data.sprite.alpha;
+    parm.ambientColor[3] = vs.alpha;
 
-    if (vs.data.sprite.isFullBright)
+    if (vs.light.isFullBright)
     {
-        parm.ambientColor[0] =
-            parm.ambientColor[1] =
-                parm.ambientColor[2] = 1;
+        parm.ambientColor[0] = parm.ambientColor[1] = parm.ambientColor[2] = 1;
         parm.vLightListIdx = 0;
     }
     else
@@ -235,9 +233,9 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const &
     params->shinePitchOffset = vpitch + 90;
     params->shineTranslateWithViewerPos = false;
     params->shinepspriteCoordSpace = true;
-    vis.light.ambientColor[3] = spr.data.model.alpha;
+    vis.light.ambientColor[3] = spr.alpha;
 
-    if ((levelFullBright || spr.data.model.stateFullBright) &&
+    if ((levelFullBright || spr.light.isFullBright) &&
        !spr.data.model.mf->testSubFlag(0, MFF_DIM))
     {
         vis.light.ambientColor[0] = vis.light.ambientColor[1] = vis.light.ambientColor[2] = 1;

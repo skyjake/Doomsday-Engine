@@ -62,6 +62,8 @@ struct Model : public de::ModelDrawable
     enum Flag
     {
         AutoscaleToThingHeight = 0x1,
+        ThingOpacityAsAmbientLightAlpha = 0x2,
+        ThingFullBrightAsAmbientLight = 0x4,
         DefaultFlags = AutoscaleToThingHeight
     };
     Q_DECLARE_FLAGS(Flags, Flag)

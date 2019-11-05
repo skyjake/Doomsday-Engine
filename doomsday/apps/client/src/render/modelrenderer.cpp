@@ -96,11 +96,12 @@ DENG2_PIMPL(ModelRenderer)
                 << uFogColor;
     }
 
-    void setupLighting(VisEntityLighting const &lighting,
-                       mobj_t const *excludeSourceMobj)
+    void setupLighting(const VisEntityLighting &lighting,
+                       const mobj_t *excludeSourceMobj,
+                       float alpha = 1.0f)
     {
         // Ambient color and lighting vectors.
-        setAmbientLight(lighting.ambientColor * .6f);
+        setAmbientLight(lighting.ambientColor * .6f, alpha);
         clearLights();
         ClientApp::renderSystem().forAllVectorLights(lighting.vLightListIdx,
                                                      [this, excludeSourceMobj]
@@ -115,11 +116,27 @@ DENG2_PIMPL(ModelRenderer)
             addLight(vlight.direction.xzy(), vlight.color);
             return LoopContinue;
         });
+
+        // Modify the ambient light according to model configuration.
+        /*
+        {
+            Vector4f ambient = uAmbientLight;
+            if (model.flags & render::Model::ThingAlphaAsAmbientLightAlpha)
+            {
+                ambient.w = p.alpha;
+            }
+            if (model.flags & render::Model::ThingFullBrightAsAmbientLight)
+            {
+                ambient = {1.0f, 1.0f, 1.0f, ambient.w};
+            }
+            uAmbientLight = ambient;
+        }
+*/
     }
 
-    void setAmbientLight(Vector3f const &ambientIntensity)
+    void setAmbientLight(Vector3f const &ambientIntensity, float alpha)
     {
-        uAmbientLight = Vector4f(ambientIntensity, 1.f);
+        uAmbientLight = Vector4f(ambientIntensity, alpha);
     }
 
     void clearLights()
@@ -329,7 +346,18 @@ void ModelRenderer::render(vispsprite_t const &pspr, mobj_t const *playerMobj)
                  true, /* fixed FOV for psprites */
                  &xform);
 
-    d->setupLighting(pspr.light, playerMobj /* player holding weapon is excluded */);
+    float opacity = 1.0f;
+    if (p.model->flags & render::Model::ThingOpacityAsAmbientLightAlpha)
+    {
+        opacity = pspr.alpha;
+    }
+
+    d->setupLighting(pspr.light, playerMobj /* player holding weapon is excluded */, opacity);
+
+    if (p.model->flags & render::Model::ThingFullBrightAsAmbientLight)
+    {
+        d->setAmbientLight({1.0f, 1.0f, 1.0f}, opacity);
+    }
 
     GLState::push().setCull(p.model->cull);
     d->draw(p);
