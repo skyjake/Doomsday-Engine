@@ -511,6 +511,7 @@ typedef enum {
     IT_ITEM_TORCH,
     IT_ITEM_FIREBOMB,
     IT_ITEM_TELEPORT,
+    IT_ITEM_CUSTOM, // scripted
     IT_AMMO_WAND,
     IT_AMMO_WAND_LARGE,
     IT_AMMO_MACE,
@@ -953,6 +954,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     player_t *player;
     coord_t delta;
     itemtype_t item;
+    enum mobjtouchresult_e touchResult = MTR_UNDEFINED;
 
     DENG_ASSERT(special != 0);
     DENG_ASSERT(toucher != 0);
@@ -969,8 +971,24 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 
     player = toucher->player;
 
+    if (Mobj_TouchSpecialScriptedThing(toucher, special, &touchResult))
+    {
+        switch (touchResult)
+        {
+            case MTR_MAKE_DORMANT:
+                item = IT_ITEM_CUSTOM;
+                break;
+
+            case MTR_KEEP:
+                return; // Nothing further to do.
+
+            default:
+                item = IT_NONE;
+                break;
+        }
+    }
     // Identify by sprite.
-    if((item = getItemTypeBySprite(special->sprite)) != IT_NONE)
+    else if ((item = getItemTypeBySprite(special->sprite)) != IT_NONE)
     {
         // In Heretic the number of rounds to give for an ammo type is defined
         // by the 'health' of the mobj.
@@ -1003,11 +1021,13 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
     case IT_ITEM_TORCH:
     case IT_ITEM_FIREBOMB:
     case IT_ITEM_TELEPORT:
+    case IT_ITEM_CUSTOM:
         setDormantItem(special);
         break;
 
     default:
-        if(gfw_Rule(deathmatch) && !(special->flags & MF_DROPPED))
+        if(touchResult == MTR_HIDE ||
+            (gfw_Rule(deathmatch) && !(special->flags & MF_DROPPED)))
         {
             special->flags &= ~MF_SPECIAL;
             special->flags2 |= MF2_DONTDRAW;
@@ -1019,7 +1039,9 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
         }
 
         if(!mapSetup)
+        {
             player->bonusCount += BONUSADD;
+        }
         break;
     }
 }

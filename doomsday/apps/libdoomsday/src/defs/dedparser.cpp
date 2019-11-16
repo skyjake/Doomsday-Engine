@@ -1262,6 +1262,9 @@ DENG2_PIMPL(DEDParser)
                     RV_INT_ELEM("Misc2", (*mo)["misc"], 1)
                     RV_INT_ELEM("Misc3", (*mo)["misc"], 2)
                     RV_INT_ELEM("Misc4", (*mo)["misc"], 3)
+
+                    RV_STR("On touch", (*mo)["onTouch"]) // script function (MF_SPECIAL)
+
                     RV_END
                     CHECKSC;
                 }

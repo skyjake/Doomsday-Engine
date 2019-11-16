@@ -28,6 +28,7 @@
 #include <doomsday/world/mobjthinkerdata.h>
 #include <de/String>
 #include <de/mathutil.h>
+#include <de/Log>
 #include <QTextStream>
 
 #include "dmu_lib.h"
@@ -1151,4 +1152,66 @@ void Mobj_RestoreObjectState(mobj_t *mob, de::Info::BlockElement const &state)
         }
     }
     #endif
+}
+
+dd_bool Mobj_TouchSpecialScriptedThing(mobj_t *mob, mobj_t *special, enum mobjtouchresult_e *result)
+{
+    using namespace de;
+
+    // Check Thing definition for an onTouch script.
+    const auto &thingDef = DED_Definitions()->things[special->type];
+    if (const String onTouchSrc = thingDef.gets(QStringLiteral("onTouch")))
+    {
+        LOG_AS("Mobj_TouchSpecialScriptedThing");
+
+        const auto &self = THINKER_DATA(special->thinker, ThinkerData).objectNamespace();
+
+        // We will make it seem like the special thing has a script function
+        // called "onTouch", even though we are only now parsing the script from
+        // the DEDs. In the future, there might be an actual "onTouch" function in
+        // some Thing class that gets called instead (in this case, the Thing
+        // definition would be created in a script and not via DED).
+        //
+        // The function will perform any actions required for the touch interaction.
+        // "self" points to the special thing, "toucher" is given as argument to
+        // the function. The function returns a code that tells what to do with the
+        // special item afterwards: "keep", "dormant", "hide", "destroy".
+
+        String src = "def onTouch(toucher)\n";
+        src += onTouchSrc;
+        src += "\nend";
+
+        Record ns;
+        Script script(src);
+        Process proc(&ns);
+        proc.run(script);
+        proc.execute();
+
+        // Function is ready, call it now with the mobjs.
+        ns.add(QStringLiteral("self")).set(new RecordValue(self));
+        std::unique_ptr<Value> resultValue(
+            Process::scriptCall(Process::TakeResult,
+                                ns,
+                                QStringLiteral("onTouch"),
+                                &THINKER_DATA(mob->thinker, ThinkerData)));
+        if (result)
+        {
+            *result = MTR_KEEP;
+            if (resultValue && !is<NoneValue>(resultValue.get()))
+            {
+                const String val = resultValue->asText();
+                if      (val == "keep")    *result = MTR_KEEP;
+                else if (val == "dormant") *result = MTR_MAKE_DORMANT;
+                else if (val == "hide")    *result = MTR_HIDE;
+                else if (val == "destroy") *result = MTR_DESTROY;
+                else
+                {
+                    LOG_SCR_ERROR("Invalid return value from function: \"%s\"")
+                        << resultValue->asText();
+                }
+            }
+        }
+        return true;
+    }
+    return false;
 }
