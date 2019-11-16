@@ -20,6 +20,7 @@
 #include "world/clientserverworld.h"
 #include "world/map.h"
 #include "world/thinkers.h"
+#include "world/p_players.h"
 #include "audio/audiosystem.h"
 #include "dd_main.h"
 
@@ -30,6 +31,16 @@
 using namespace de;
 
 namespace world {
+
+static Value *Function_World_ConsolePlayer(Context &, const Function::ArgumentValues &)
+{
+    return new NumberValue(consolePlayer);
+}
+
+static Value *Function_Thing_Id(Context &ctx, const Function::ArgumentValues &)
+{
+    return new NumberValue(ClientServerWorld::contextMobj(ctx).thinker.id);
+}
 
 static Value *Function_Thing_Health(Context &ctx, const Function::ArgumentValues &)
 {
@@ -54,6 +65,12 @@ static Value *Function_Thing_StartSound(Context &ctx, const Function::ArgumentVa
 
 void initBindings(Binder &binder, Record &worldModule)
 {
+    // Global functions.
+    {
+        binder.init(worldModule)
+            << DENG2_FUNC_NOARG(World_ConsolePlayer, "consolePlayer");
+    }
+
     // Thing
     {
         Record &thing = worldModule.addSubrecord("Thing");
@@ -62,6 +79,7 @@ void initBindings(Binder &binder, Record &worldModule)
         startSoundArgs["volume"] = new NumberValue(1.0);
 
         binder.init(thing)
+                << DENG2_FUNC_NOARG(Thing_Id,         "id")
                 << DENG2_FUNC_NOARG(Thing_Health,     "health")
                 << DENG2_FUNC_DEFS (Thing_StartSound, "startSound", "id" << "volume", startSoundArgs);
 

@@ -30,7 +30,9 @@
 #include <de/Context>
 #include <de/NoneValue>
 #include <de/ScriptSystem>
+#include <doomsday/DoomsdayApp>
 #include <doomsday/defs/definition.h>
+#include <doomsday/players.h>
 #include <doomsday/world/map.h>
 
 int Common_GetInteger(int id)
@@ -129,6 +131,7 @@ void Common_Register()
 //-------------------------------------------------------------------------------------------------
 
 static de::Binder *gameBindings;
+static de::Record *gameModule;
 
 static mobj_t &instanceMobj(const de::Context &ctx)
 {
@@ -198,9 +201,41 @@ static de::Value *Function_Thing_Attack(de::Context &ctx, const de::Function::Ar
 }
 #endif
 
+static int playerNumberArgument(const de::Value &arg)
+{
+    if (de::is<de::NoneValue>(arg))
+    {
+        return CONSOLEPLAYER;
+    }
+    const int plrNum = arg.asInt();
+    if (plrNum < 0 || plrNum >= MAXPLAYERS)
+    {
+        throw de::Error("playerNumberArgument", "Player index out of bounds");
+    }
+    return plrNum;
+}
+
+static de::Value *Function_SetMessage(de::Context &, const de::Function::ArgumentValues &args)
+{
+    const int plrNum = playerNumberArgument(*args.at(1));
+    P_SetMessage(&players[plrNum], args.at(0)->asText().toLatin1());
+    return nullptr;
+}
+
+#if defined (__JHEXEN__)
+static de::Value *Function_SetYellowMessage(de::Context &, const de::Function::ArgumentValues &args)
+{
+    const int plrNum = playerNumberArgument(*args.at(1));
+    P_SetYellowMessage(&players[plrNum], args.at(0)->asText().toLatin1());
+    return nullptr;
+}
+#endif
+
 void Common_Load()
 {
     using namespace de;
+
+    gameModule = new Record;
 
     Function::Defaults spawnMissileArgs;
     spawnMissileArgs["angle"] = new NoneValue;
@@ -210,18 +245,38 @@ void Common_Load()
     attackArgs["damage"] = new NumberValue(0.0);
     attackArgs["missile"] = new NoneValue;
 
+    Function::Defaults setMessageArgs;
+    setMessageArgs["player"] = new NoneValue;
+
     DENG2_ASSERT(gameBindings == nullptr);
     gameBindings = new Binder(nullptr, Binder::FunctionsOwned); // must delete when plugin unloaded
     gameBindings->init(ScriptSystem::get().builtInClass("World", "Thing"))
 #if defined(__JHERETIC__)
-            << DENG2_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs)
+        << DENG2_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs)
 #endif
-            << DENG2_FUNC_DEFS(Thing_SpawnMissile, "spawnMissile", "id" << "angle" << "momz", spawnMissileArgs);
+        << DENG2_FUNC_DEFS(Thing_SpawnMissile, "spawnMissile", "id" << "angle" << "momz", spawnMissileArgs);
+
+    gameBindings->init(*gameModule)
+        << DENG2_FUNC_DEFS(SetMessage, "setMessage", "message" << "player", setMessageArgs);
+
+    #if defined(__JHEXEN__)
+    {
+        Function::Defaults setYellowMessageArgs;
+        setYellowMessageArgs["player"] = new NoneValue;
+        *gameBindings
+            << DENG2_FUNC_DEFS(SetYellowMessage, "setYellowMessage", "message" << "player", setYellowMessageArgs);
+    }
+    #endif
+
+    ScriptSystem::get().addNativeModule("Game", *gameModule);
 }
 
 void Common_Unload()
 {
     DENG2_ASSERT(gameBindings != nullptr);
+    de::ScriptSystem::get().removeNativeModule("Game");
     delete gameBindings;
     gameBindings = nullptr;
+    delete gameModule;
+    gameModule = nullptr;
 }
