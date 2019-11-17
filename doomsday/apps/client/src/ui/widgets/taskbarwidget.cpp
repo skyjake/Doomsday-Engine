@@ -475,6 +475,10 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
 
     auto *helpMenu = new ui::SubmenuItem(tr("Help"), ui::Left);
     helpMenu->items()
+            << new ui::ActionItem(tr("Doomsday Manual..."),
+                              new CallbackAction([]() {
+                                  ClientApp::app().openInBrowser(QUrl("https://manual.dengine.net/"));
+                              }))
             << new ui::ActionItem(tr("Show Tutorial"), new SignalAction(this, SLOT(showTutorial())));
             //<< new ui::VariableToggleItem(tr("Menu Annotations"), App::config("ui.showAnnotations"))
 
