@@ -43,10 +43,14 @@ int main(int argc, char **argv)
 
         app.commandLine().makeAbsolutePath(1);
         NativePath inputFn = app.commandLine().at(1);
-        NativeFile inputFile(inputFn.fileName(), inputFn);
-        inputFile.setStatus(DirectoryFeed::fileStatus(inputFn));
 
-        Script testScript(inputFile);
+        // Allow access to all files in the same folder in case the script does imports of
+        // files from the same directory.
+        FS::get().makeFolderWithFeed(
+            "/src", new DirectoryFeed(inputFn.fileNamePath(), DirectoryFeed::OnlyThisFolder));
+        FS::waitForIdle();
+
+        Script testScript(FS::locate<const File>("/src" / inputFn.fileName()));
         Process proc(testScript);
         LOG_MSG("Script parsing is complete! Executing...");
         LOG_MSG("------------------------------------------------------------------------------");
