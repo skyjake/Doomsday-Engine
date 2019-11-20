@@ -83,7 +83,7 @@ void FlowStatement::execute(Context &context) const
     case THROW:
         if (_arg)
         {
-            throw Error("thrown in script", eval.evaluate(_arg).asText());
+            throw Error("script", eval.evaluate(_arg).asText());
         }
         else
         {
