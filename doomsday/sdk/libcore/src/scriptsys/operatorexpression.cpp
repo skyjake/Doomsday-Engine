@@ -495,7 +495,7 @@ Value *OperatorExpression::performSlice(Value &leftValue, Value &rightValue) con
         end = -1;
     }
 
-    begin = clamp(0, begin, leftSize - 1);
+    begin = clamp(0, begin, leftSize);
     end = clamp(-1, end, leftSize);
 
     for (dint i = begin; (end >= begin && i < end) || (begin > end && i > end); i += step)

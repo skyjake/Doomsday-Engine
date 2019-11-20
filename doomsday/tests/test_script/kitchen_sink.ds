@@ -28,12 +28,13 @@ sections.begin('BASIC EXPRESSIONS')
 sections.subsection('Basic types (number, text, array, dictionary, time).')
 print 5, 5.5, -3.141592657
 print 0x100, 0X123
-print 'Using underscores for readability:', 0x0012_3456
+print 'Using underscores for readability: %x' % 0x0012_3456
 print "Hello", 'World'
 print """I can span
 newlines."""
 print [1, 2, 3]
 print [1, [2, 3], 4]
+print {'a': 10, 'b': Pi}
 print {'a': 'b', 1: ['b', {5:6, 6:7}], ['array', 'as', 'key']: 'oh my'}
 print 'The time is now:', Time()
 
@@ -110,6 +111,7 @@ print 'a =', a
 path = '/some/path/'
 print 'path =', path
 print 'path =', path /= 'filename.ext'
+print 'path =', path
 
 sections.subsection('Operators: []')
 transports = ['planes', 'trains', 'automobiles', 'bicycles']

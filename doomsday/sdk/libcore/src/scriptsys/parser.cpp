@@ -431,7 +431,8 @@ void Parser::parseTryCatchSequence(Compound &compound)
     }
     CatchStatement *finalCatch = nullptr;
     bool expectEnd = false;
-    while (_statementRange.firstToken().equals(ScriptLex::CATCH))
+    while (!_statementRange.isEmpty() &&
+           _statementRange.firstToken().equals(ScriptLex::CATCH))
     {
         dint colon = _statementRange.find(Token::COLON);
         expectEnd = (colon < 0);
