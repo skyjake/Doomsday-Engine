@@ -387,9 +387,7 @@ void Process::call(Function const &function, ArrayValue const &arguments, Value 
         for (; b != argValues.end() && a != function.arguments().end(); ++b, ++a)
         {
             // Records must only be passed as unowned references.
-            DENG2_ASSERT(!is<RecordValue>(*b) || !(*b)->as<RecordValue>().hasOwnership());
-
-            context().names().add(new Variable(*a, (*b)->duplicate()));
+            context().names().add(new Variable(*a, (*b)->duplicateAsReference()));
         }
 
         // This should never be called if the process is suspended.
