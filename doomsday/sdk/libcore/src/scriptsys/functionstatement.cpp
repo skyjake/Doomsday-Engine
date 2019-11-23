@@ -20,7 +20,6 @@
 #include "de/FunctionStatement"
 #include "de/Function"
 #include "de/Context"
-#include "de/NameExpression"
 #include "de/ConstantExpression"
 #include "de/TextValue"
 #include "de/ArrayValue"

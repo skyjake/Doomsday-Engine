@@ -889,12 +889,12 @@ Expression *Parser::parseTokenExpression(TokenRange const &range, Expression::Fl
             return ConstantExpression::Pi();
         }
         else if (token.equals(ScriptLex::SCOPE) &&
-                range.size() == 2 &&
-                range.token(1).type() == Token::IDENTIFIER)
+                 range.size() == 2 &&
+                 range.token(1).type() == Token::IDENTIFIER)
         {
             // Explicit local scope.
-            return new NameExpression(range.token(1).str(), flags,
-                                      NameExpression::LOCAL_SCOPE);
+            return new NameExpression(StringList{NameExpression::LOCAL_SCOPE, range.token(1).str()},
+                                      flags);
         }
     }
 
@@ -905,14 +905,30 @@ Expression *Parser::parseTokenExpression(TokenRange const &range, Expression::Fl
         {
             return new NameExpression(range.token(0).str(), flags);
         }
-        else if (range.size() == 3 &&
-                range.token(1).equals(ScriptLex::SCOPE) &&
-                range.token(2).type() == Token::IDENTIFIER)
+        else if (range.size() >= 3 &&
+                 range.token(1).equals(ScriptLex::SCOPE) &&
+                 range.token(2).type() == Token::IDENTIFIER)
         {
+            StringList identifierSequence;
+            identifierSequence << range.token(0).str()
+                               << range.token(2).str();
+            for (duint i = 3; i < range.size() - 1; i += 2)
+            {
+                if (range.token(i).equals(ScriptLex::SCOPE) &&
+                    range.token(i + 1).type() == Token::IDENTIFIER)
+                {
+                    identifierSequence << range.token(i + 1).str();
+                }
+                else
+                {
+                    throw UnexpectedTokenError("Parser::parseTokenExpression",
+                                               "Unexpected tokens: " + range.token(i).asText() +
+                                                   " followed by " + range.token(i + 1).asText());
+                }
+            }
             // Scoped name. This is intended for allowing access to shadowed
             // identifiers from super records.
-            return new NameExpression(range.token(2).str(), flags,
-                                      range.token(0).str());
+            return new NameExpression(identifierSequence, flags);
         }
         else
         {

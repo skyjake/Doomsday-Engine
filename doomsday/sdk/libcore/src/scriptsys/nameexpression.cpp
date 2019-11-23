@@ -37,14 +37,14 @@ String const NameExpression::LOCAL_SCOPE = "-";
 
 DENG2_PIMPL_NOREF(NameExpression)
 {
-    String identifier;
-    String scopeIdentifier;
+    StringList identifierSequence;
+    //String scopeIdentifier;
 
-    Impl(String const &id      = "",
-             String const &scopeId = "")
-        : identifier(id)
-        , scopeIdentifier(scopeId)
-    {}
+//    Impl(String const &id      = "",
+//             String const &scopeId = "")
+//        : identifier(id)
+//        , scopeIdentifier(scopeId)
+//    {}
 
     Variable *findInRecord(String const & name,
                            Record const & where,
@@ -116,16 +116,23 @@ namespace de {
 NameExpression::NameExpression() : d(new Impl)
 {}
 
-NameExpression::NameExpression(String const &identifier, Flags const &flags,
-                               String const &scopeIdentifier)
-    : d(new Impl(identifier, scopeIdentifier))
+NameExpression::NameExpression(const String &identifier, Flags flags)
+    : d(new Impl)
 {
+    d->identifierSequence << "" << identifier;
     setFlags(flags);
 }
 
-String const &NameExpression::identifier() const
+NameExpression::NameExpression(const StringList &identifierSequence, Flags flags)
+    : d(new Impl)
 {
-    return d->identifier;
+    d->identifierSequence = identifierSequence;
+    setFlags(flags);
+}
+
+const String &NameExpression::identifier() const
+{
+    return d->identifierSequence.back();
 }
 
 Value *NameExpression::evaluate(Evaluator &evaluator) const
@@ -136,13 +143,16 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     // Collect the namespaces to search.
     Evaluator::Namespaces spaces;
 
-    Record *foundInNamespace = 0;
-    Record *higherNamespace = 0;
-    Variable *variable = 0;
+    Record *foundInNamespace = nullptr;
+    Record *higherNamespace = nullptr;
+    Variable *variable = nullptr;
 
-    if (d->scopeIdentifier.isEmpty() || d->scopeIdentifier == LOCAL_SCOPE)
+    const String scopeIdentifier = d->identifierSequence.front();
+    String identifier = d->identifierSequence.at(1);
+
+    if (!scopeIdentifier || scopeIdentifier == LOCAL_SCOPE)
     {
-        if (d->scopeIdentifier != LOCAL_SCOPE)
+        if (!scopeIdentifier)
         {
             // This is the usual case: scope defined by the left side of the member
             // operator, or if that is not specified, the context's namespace stack.
@@ -153,7 +163,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
             // Start with the context's local namespace.
             evaluator.process().namespaces(spaces);
         }
-        variable = d->findInNamespaces(d->identifier, spaces, flags().testFlag(LocalOnly),
+        variable = d->findInNamespaces(identifier, spaces, flags().testFlag(LocalOnly),
                                        foundInNamespace, &higherNamespace);
     }
     else
@@ -161,21 +171,33 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
         // An explicit scope has been defined; try to find it first. Look in the current
         // context of the process, ignoring any narrower scopes that may apply here.
         evaluator.process().namespaces(spaces);
-        Variable *scope = d->findInNamespaces(d->scopeIdentifier, spaces, false, foundInNamespace);
+        Variable *scope = d->findInNamespaces(scopeIdentifier, spaces, false, foundInNamespace);
         if (!scope)
         {
             throw NotFoundError("NameExpression::evaluate",
-                                "Scope '" + d->scopeIdentifier + "' not found");
+                                "Scope '" + scopeIdentifier + "' not found");
         }
         // Locate the identifier from this scope, disregarding the regular
         // namespace context.
-        variable = d->findInRecord(d->identifier, scope->valueAsRecord(),
+        variable = d->findInRecord(identifier, scope->valueAsRecord(),
                                    foundInNamespace);
+    }
+
+    // Look up the rest in relation to what was already found.
+    for (int i = 2; i < d->identifierSequence.size(); ++i)
+    {
+        if (!variable)
+        {
+            throw NotFoundError("NameExpression::evaluate",
+                                "Scope '" + identifier + "' not found");
+        }
+        identifier = d->identifierSequence.at(i);
+        variable = d->findInRecord(identifier, variable->valueAsRecord(), foundInNamespace);
     }
 
     if (flags().testFlag(ThrowawayIfInScope) && variable)
     {
-        foundInNamespace = 0;
+        foundInNamespace = nullptr;
         variable = &evaluator.context().throwaway();
     }
 
@@ -183,7 +205,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     if (flags().testFlag(NotInScope) && variable)
     {
         throw AlreadyExistsError("NameExpression::evaluate",
-            "Identifier '" + d->identifier + "' already exists");
+                                 "Identifier '" + identifier + "' already exists");
     }
 
     // Create a new subrecord in the namespace? ("record xyz")
@@ -191,7 +213,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
        (flags().testFlag(NewSubrecordIfNotInScope) && !variable))
     {
         // Replaces existing member with this identifier.
-        Record &record = spaces.front()->addSubrecord(d->identifier);
+        Record &record = spaces.front()->addSubrecord(identifier);
         return new RecordValue(record);
     }
 
@@ -199,7 +221,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     // Occurs when assigning into new variables.
     if (!variable && flags().testFlag(NewVariable))
     {
-        variable = new Variable(d->identifier);
+        variable = new Variable(identifier);
 
         // Add it to the local namespace.
         spaces.front()->add(variable);
@@ -221,12 +243,12 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
         if (!variable)
         {
             throw NotFoundError("NameExpression::evaluate",
-                                "Cannot export nonexistent identifier '" + d->identifier + "'");
+                                "Cannot export nonexistent identifier '" + identifier + "'");
         }
         if (!higherNamespace)
         {
             throw NotFoundError("NameExpression::evaluate",
-                                "No higher namespace for exporting '" + d->identifier + "' into");
+                                "No higher namespace for exporting '" + identifier + "' into");
         }
         if (higherNamespace != foundInNamespace && foundInNamespace)
         {
@@ -238,11 +260,11 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     // Should we import a namespace?
     if (flags() & Import)
     {
-        Record *record = &App::scriptSystem().importModule(d->identifier,
+        Record *record = &App::scriptSystem().importModule(identifier,
             evaluator.process().globals()[Record::VAR_FILE].value().asText());
 
         // Overwrite any existing member with this identifier.
-        spaces.front()->add(variable = new Variable(d->identifier));
+        spaces.front()->add(variable = new Variable(identifier));
 
         if (flags().testFlag(ByValue))
         {
@@ -275,7 +297,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
         }
     }
 
-    throw NotFoundError("NameExpression::evaluate", "Identifier '" + d->identifier +
+    throw NotFoundError("NameExpression::evaluate", "Identifier '" + identifier +
                         "' does not exist");
 }
 
@@ -285,7 +307,11 @@ void NameExpression::operator >> (Writer &to) const
 
     Expression::operator >> (to);
 
-    to << d->identifier << d->scopeIdentifier;
+    to << uint8_t(d->identifierSequence.size());
+    for (const auto &i : d->identifierSequence)
+    {
+        to << i;
+    }
 }
 
 void NameExpression::operator << (Reader &from)
@@ -301,11 +327,27 @@ void NameExpression::operator << (Reader &from)
 
     Expression::operator << (from);
 
-    from >> d->identifier;
-
-    if (from.version() >= DENG2_PROTOCOL_1_15_0_NameExpression_with_scope_identifier)
+    if (from.version() < DENG2_PROTOCOL_2_2_0_NameExpression_identifier_sequence)
     {
-        from >> d->scopeIdentifier;
+        String ident, scopeIdent;
+        from >> ident;
+        if (from.version() >= DENG2_PROTOCOL_1_15_0_NameExpression_with_scope_identifier)
+        {
+            from >> scopeIdent;
+        }
+        d->identifierSequence << scopeIdent;
+        d->identifierSequence << ident;
+    }
+    else
+    {
+        uint8_t count = 0;
+        from >> count;
+        while (count-- != 0)
+        {
+            String ident;
+            from >> ident;
+            d->identifierSequence << ident;
+        }
     }
 }
 

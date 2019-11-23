@@ -20,7 +20,6 @@
 #include "de/AssignStatement"
 #include "de/Context"
 #include "de/Expression"
-#include "de/NameExpression"
 #include "de/ArrayValue"
 #include "de/RefValue"
 #include "de/Writer"

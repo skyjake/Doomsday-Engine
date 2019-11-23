@@ -757,7 +757,10 @@ enum ProtocolVersion {
 
     DENG2_PROTOCOL_2_1_0  = 3,
 
-    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_2_1_0
+    DENG2_PROTOCOL_2_2_0_NameExpression_identifier_sequence = 4,
+    DENG2_PROTOCOL_2_2_0  = 4,
+
+    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_2_2_0
 };
 
 //@{

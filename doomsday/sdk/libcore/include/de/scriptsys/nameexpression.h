@@ -47,12 +47,12 @@ public:
 
     /// Special scope that can be specified in the constructor to tell the
     /// expression to start looking in the context's local namespace.
-    static String const LOCAL_SCOPE;
+    static const String LOCAL_SCOPE;
 
 public:
     NameExpression();
-    NameExpression(String const &identifier, Flags const &flags = ByValue,
-                   String const &scopeIdentifier = "");
+    NameExpression(const String &identifier, Flags flags = ByValue);
+    NameExpression(const StringList &identifierSeqeunce, Flags flags = ByValue);
 
     /// Returns the identifier in the name expression.
     String const &identifier() const;
