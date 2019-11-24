@@ -106,23 +106,21 @@ DENG2_PIMPL(Process)
 
     /// Fast forward to a suitable catch statement for @a err.
     /// @return  @c true, if suitable catch statement found.
-    bool jumpIntoCatch(Error const &err)
+    bool jumpIntoCatch(const Error &err)
     {
         dint level = 0;
 
         // Proceed along default flow.
         for (context().proceed(); context().current(); context().proceed())
         {
-            Statement const *statement = context().current();
-            TryStatement const *tryStatement = dynamic_cast<TryStatement const *>(statement);
-            if (tryStatement)
+            const Statement *statement = context().current();
+            if (const auto *tryStatement = dynamic_cast<const TryStatement *>(statement))
             {
                 // Encountered a nested try statement.
                 ++level;
                 continue;
             }
-            CatchStatement const *catchStatement = dynamic_cast<CatchStatement const *>(statement);
-            if (catchStatement)
+            if (const auto *catchStatement = dynamic_cast<const CatchStatement *>(statement))
             {
                 if (!level)
                 {
@@ -437,6 +435,15 @@ void Process::namespaces(Namespaces &spaces) const
 
 Record &Process::globals()
 {
+    // Find the global namespace currently in effect.
+    DENG2_FOR_EACH_CONST_REVERSE(Impl::ContextStack, i, d->stack)
+    {
+        Context &context = **i;
+        if (context.type() == Context::GlobalNamespace || context.type() == Context::BaseProcess)
+        {
+            return context.names();
+        }
+    }
     return d->stack[0]->names();
 }
 

@@ -331,7 +331,7 @@ void Function::recordBeingDeleted(Record &DENG2_DEBUG_ONLY(record))
     // The namespace of the record is being deleted.
     DENG2_ASSERT(d->globals == &record);
 
-    d->globals = 0;
+    d->globals = nullptr;
 }
 
 void Function::registerNativeEntryPoint(String const &name, Function::NativeEntryPoint entryPoint)

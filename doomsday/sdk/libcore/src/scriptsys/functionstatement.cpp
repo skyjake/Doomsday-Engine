@@ -63,7 +63,8 @@ void FunctionStatement::execute(Context &context) const
     Evaluator &eval = context.evaluator();
 
     // Set the function's namespace.
-    _function->setGlobals(&context.process().globals());
+    Record &globals = context.process().globals();
+    _function->setGlobals(&globals);
 
     // Variable that will store the function.
     eval.evaluateTo<RefValue>(_identifier);
