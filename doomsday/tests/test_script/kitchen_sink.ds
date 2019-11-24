@@ -612,7 +612,7 @@ def recFunc()
     return a
 end
 
-try: print recFunc()
+try: print recFunc().value
 catch NullError
     print "Records are passed by reference; the returned record went out of scope."
 end
@@ -670,7 +670,7 @@ end
 func6()
 print 'func2() =', func2()
 
-sections.subsection("Accessing function's locals within a subfunction.")
+sections.subsection("Cannot access function's locals within a subfunction.")
 def func7()
     a = 100
     print 'Inside func7: a =', a
