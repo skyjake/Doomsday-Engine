@@ -84,7 +84,7 @@ DENG2_PIMPL_NOREF(NameExpression)
     {
         DENG2_FOR_EACH_CONST(Evaluator::Namespaces, i, spaces)
         {
-            Record &ns = **i;
+            Record &ns = *i->names;
             if (Variable *variable =
                     findInRecord(name, ns, foundInNamespace,
                                    // allow looking in class if local not required:
@@ -95,7 +95,7 @@ DENG2_PIMPL_NOREF(NameExpression)
                 Evaluator::Namespaces::const_iterator next = i;
                 if (++next != spaces.end())
                 {
-                    if (higherNamespace) *higherNamespace = *next;
+                    if (higherNamespace) *higherNamespace = next->names;
                 }
                 return variable;
             }
@@ -213,7 +213,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
        (flags().testFlag(NewSubrecordIfNotInScope) && !variable))
     {
         // Replaces existing member with this identifier.
-        Record &record = spaces.front()->addSubrecord(identifier);
+        Record &record = spaces.front().names->addSubrecord(identifier);
         return new RecordValue(record);
     }
 
@@ -224,17 +224,18 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
         variable = new Variable(identifier);
 
         // Add it to the local namespace.
-        spaces.front()->add(variable);
+        spaces.front().names->add(variable);
 
         // Take note of the namespaces.
-        foundInNamespace = spaces.front();
+        foundInNamespace = spaces.front().names;
         if (!higherNamespace && spaces.size() > 1)
         {
             Evaluator::Namespaces::iterator i = spaces.begin();
-            higherNamespace = *(++i);
+            higherNamespace = (++i)->names;
         }
     }
 
+#if 0
     // Export variable into a higher namespace?
     if (flags().testFlag(Export))
     {
@@ -256,6 +257,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
             higherNamespace->add(variable);
         }
     }
+#endif
 
     // Should we import a namespace?
     if (flags() & Import)
@@ -264,7 +266,7 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
             evaluator.process().globals()[Record::VAR_FILE].value().asText());
 
         // Overwrite any existing member with this identifier.
-        spaces.front()->add(variable = new Variable(identifier));
+        spaces.front().names->add(variable = new Variable(identifier));
 
         if (flags().testFlag(ByValue))
         {

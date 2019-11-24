@@ -38,7 +38,7 @@ String const ScriptLex::FOR("for");
 String const ScriptLex::DEF("def");
 String const ScriptLex::TRY("try");
 String const ScriptLex::IMPORT("import");
-String const ScriptLex::EXPORT("export");
+//String const ScriptLex::EXPORT("export");
 String const ScriptLex::RECORD("record");
 String const ScriptLex::SCOPE("->");
 String const ScriptLex::DEL("del");
@@ -367,7 +367,7 @@ static QSet<QString> const keywordStr
     ScriptLex::FOR,
     ScriptLex::IF,
     ScriptLex::IMPORT,
-    ScriptLex::EXPORT,
+//    ScriptLex::EXPORT,
     ScriptLex::IN,
     ScriptLex::NOT,
     ScriptLex::OR,

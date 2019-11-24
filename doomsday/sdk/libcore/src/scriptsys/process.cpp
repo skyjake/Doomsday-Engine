@@ -424,7 +424,7 @@ void Process::namespaces(Namespaces &spaces) const
             if (gotFunction) continue;
             gotFunction = true;
         }
-        spaces.push_back(&context.names());
+        spaces.push_back({&context.names(), context.type()});
         if (context.type() == Context::GlobalNamespace)
         {
             // This shadows everything below.

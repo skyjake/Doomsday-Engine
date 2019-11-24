@@ -23,6 +23,7 @@
 #include "../Script"
 #include "../Time"
 #include "../Context"
+#include "../Evaluator"
 #include "../Function"
 #include "../String"
 #include "../Variable"
@@ -175,7 +176,7 @@ public:
                      *   script or has been terminated. */
     };
 
-    typedef std::list<Record *> Namespaces;
+    using Namespaces = Evaluator::Namespaces;
 
 public:
     /**

@@ -191,10 +191,12 @@ void Parser::parseStatement(Compound &compound)
     {
         compound.add(parseAssignStatement(), firstTokenLine);
     }
+#if 0
     else if (firstToken.equals(ScriptLex::EXPORT))
     {
         compound.add(parseExportStatement(), firstTokenLine);
     }
+#endif
     else
     {
         compound.add(parseExpressionStatement(), firstTokenLine);
@@ -301,6 +303,7 @@ ExpressionStatement *Parser::parseImportStatement()
     return new ExpressionStatement(parseList(_statementRange.startingFrom(startAt), Token::COMMA, flags));
 }
 
+#if 0
 ExpressionStatement *Parser::parseExportStatement()
 {
     // "export" name-expr ["," name-expr]*
@@ -314,6 +317,7 @@ ExpressionStatement *Parser::parseExportStatement()
     return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA,
                                              Expression::Export | Expression::LocalOnly));
 }
+#endif
 
 Statement *Parser::parseDeclarationStatement()
 {
@@ -498,12 +502,14 @@ AssignStatement *Parser::parseAssignStatement()
 {
     Expression::Flags flags = Expression::NewVariable | Expression::ByReference | Expression::LocalOnly;
 
+#if 0
     /// "export" will export the newly assigned variable.
     if (_statementRange.firstToken().equals(ScriptLex::EXPORT))
     {
         flags |= Expression::Export;
         _statementRange = _statementRange.startingFrom(1);
     }
+#endif
 
     /// "const" makes read-only variables.
     if (_statementRange.firstToken().equals(ScriptLex::CONST))

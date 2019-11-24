@@ -98,7 +98,7 @@ public:
 
     ExpressionStatement *parseImportStatement();
 
-    ExpressionStatement *parseExportStatement();
+//    ExpressionStatement *parseExportStatement();
 
     Statement *parseDeclarationStatement();
 
