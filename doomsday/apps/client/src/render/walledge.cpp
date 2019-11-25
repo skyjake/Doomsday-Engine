@@ -217,6 +217,11 @@ struct WallEdge::Impl : public IHPlane
                                                              : wallHEdge->face().mapElementAs<world::ConvexSubspace>());
         auto const &subsec = space.subsector().as<world::ClientSubsector>();
 
+        /*
+         * For reference, see "Texture aligment" in Doomwiki.org:
+         * https://doomwiki.org/wiki/Texture_alignment
+         */
+
         if (seg.lineSide().considerOneSided()
             || // Mapping errors may result in a line segment missing a back face.
                (!line.definesPolyobj() && !wallHEdge->twin().hasFace()))
@@ -284,25 +289,30 @@ struct WallEdge::Impl : public IHPlane
                 // Self-referencing lines only ever get a middle.
                 if (!line.isSelfReferencing())
                 {
-                    bool const raiseToBackFloor =
+                    const double bceilZ  = bceil->heightSmoothed();
+                    const double bfloorZ = bfloor->heightSmoothed();
+                    const double fceilZ  = fceil->heightSmoothed();
+                    const double ffloorZ = ffloor->heightSmoothed();
+
+                    const bool raiseToBackFloor =
                         (   fceil->surface().hasSkyMaskedMaterial()
                          && bceil->surface().hasSkyMaskedMaterial()
-                         && fceil ->heightSmoothed() < bceil->heightSmoothed()
-                         && bfloor->heightSmoothed() > fceil->heightSmoothed());
+                         && fceilZ < bceilZ
+                         && bfloorZ > fceilZ);
 
-                    coord_t t = bfloor->heightSmoothed();
+                    coord_t t = bfloorZ;
 
-                    lo = ffloor->heightSmoothed();
+                    lo = ffloorZ;
 
                     // Can't go over the back ceiling, would induce polygon flaws.
-                    if (bfloor->heightSmoothed() > bceil->heightSmoothed())
-                        t = bceil->heightSmoothed();
+                    if (bfloorZ > bceilZ)
+                        t = bceilZ;
 
                     // Can't go over front ceiling, would induce polygon flaws.
                     // In the special case of a sky masked upper we must extend the bottom
                     // section up to the height of the back floor.
-                    if (t > fceil->heightSmoothed() && !raiseToBackFloor)
-                        t = fceil->heightSmoothed();
+                    if (t > fceilZ && !raiseToBackFloor)
+                        t = fceilZ;
 
                     hi = t;
 
@@ -316,15 +326,14 @@ struct WallEdge::Impl : public IHPlane
                     materialOrigin = seg.lineSide().bottom().originSmoothed();
                     if (bfloor->heightSmoothed() > fceil->heightSmoothed())
                     {
-                        materialOrigin.y -= (raiseToBackFloor? t : fceil->heightSmoothed())
-                                          - bfloor->heightSmoothed();
+                        materialOrigin.y -= (raiseToBackFloor? t : fceilZ)
+                                          - bfloorZ;
                     }
 
                     if (unpegBottom)
                     {
                         // Align with normal middle texture.
-                        materialOrigin.y += (raiseToBackFloor? t : fceil->heightSmoothed())
-                                          - bfloor->heightSmoothed();
+                        materialOrigin.y += (raiseToBackFloor ? t : de::max(fceilZ, bceilZ)) - bfloorZ;
                     }
                 }
                 break;
