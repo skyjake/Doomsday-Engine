@@ -2711,8 +2711,7 @@ void XS_DoChain(Sector *sec, int ch, int activating, void *act_thing)
     P_FreeDummyLine(dummyLine);
 }
 
-static dd_bool checkChainRequirements(Sector* sec, mobj_t* mo, int ch,
-                                      dd_bool* activating)
+static dd_bool checkChainRequirements(Sector *sec, mobj_t *mo, int ch, dd_bool *activating)
 {
     xgsector_t*         xg;
     sectortype_t*       info;
@@ -2752,13 +2751,15 @@ static dd_bool checkChainRequirements(Sector* sec, mobj_t* mo, int ch,
     {
     case XSCE_FLOOR:
         // Is it touching the floor?
-        if(mo->origin[VZ] > P_GetDoublep(sec, DMU_FLOOR_HEIGHT))
+        if(mo->origin[VZ] > P_GetDoublep(sec, DMU_FLOOR_HEIGHT) + 0.0001)
             return false;
+        break;
 
     case XSCE_CEILING:
         // Is it touching the ceiling?
-        if(mo->origin[VZ] + mo->height < P_GetDoublep(sec, DMU_CEILING_HEIGHT))
+        if(mo->origin[VZ] + mo->height < P_GetDoublep(sec, DMU_CEILING_HEIGHT) - 0.0001)
             return false;
+        break;
 
     default:
         break;
