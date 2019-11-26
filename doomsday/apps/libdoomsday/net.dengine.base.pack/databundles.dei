@@ -465,6 +465,18 @@ package "freedoom.phase2_0.12.1" {
     }
 }
 
+package "freedoom.phase2" {
+    format: IWAD
+    fileName <freedoom2.wad>
+    lumps <MAP01, MAP32>
+    info {
+        title: Freedoom: Phase 2 (unrecognized version)
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod
+    }
+}
+
 package "freedoom.phase1_0.9" {
     format: IWAD
     fileName: freedoom1.wad
@@ -549,6 +561,18 @@ package "freedoom.phase1_0.12.1" {
     }
 }
 
+package "freedoom.phase1" {
+    format: IWAD
+    fileName: freedoom1.wad
+    lumps <E1M1, E4M9>
+    info {
+        title: Freedoom: Phase 1 (unrecognized version)
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom mod
+    }
+}
+
 package "freedoom.freedm_0.10.1" {
     format: IWAD
     fileName: freedm.wad
@@ -599,6 +623,18 @@ package "freedoom.freedm_0.12.1" {
     lumpDirCRC32: 30fd81a7
     info {
         title: Freedoom Deathmatch
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod multiplayer
+    }
+}
+
+package "freedoom.freedm" {
+    format: IWAD
+    fileName: freedm.wad
+    lumps <MAP01, MAP32>
+    info {
+        title: Freedoom Deathmatch (unrecognized version)
         author: Freedoom Project
         license: BSD
         tags: gamedata doom2 mod multiplayer
