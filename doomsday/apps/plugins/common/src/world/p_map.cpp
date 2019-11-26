@@ -2867,6 +2867,24 @@ void P_HandleSectorHeightChange(int sectorIdx)
     P_ChangeSector((Sector *)P_ToPtr(DMU_SECTOR, sectorIdx), false /*don't crush*/);
 }
 
+int P_IterateThinkers(thinkfunc_t func, const std::function<int(thinker_t *)> &callback)
+{
+    // Helper to convert the std::function to a basic C function pointer for the API call.
+    struct IterContext
+    {
+        const std::function<int(thinker_t *)> *func;
+
+        static int callback(thinker_t *thinker, void *ptr)
+        {
+            auto *context = reinterpret_cast<IterContext *>(ptr);
+            return (*context->func)(thinker);
+        }
+    };
+
+    IterContext context{&callback};
+    return Thinker_Iterate(func, IterContext::callback, &context);
+}
+
 #if defined (__JHERETIC__) || defined(__JHEXEN__)
 
 dd_bool P_TestMobjLocation(mobj_t *mo)

@@ -2171,21 +2171,15 @@ int C_DECL XSTrav_Teleport(Sector* sector, dd_bool /*ceiling*/, void* /*context*
         return false;
     }
 
-    for(mo = (mobj_t *) P_GetPtrp(sector, DMT_MOBJS); mo; mo = mo->sNext)
-    {
-        thinker_t *th = (thinker_t*) mo;
-
-        // Not a mobj.
-        if(th->function != (thinkfunc_t) P_MobjThinker)
-            continue;
-
-        // Not a teleportman.
-        if(mo->type != MT_TELEPORTMAN)
-            continue;
-
-        ok = true;
-        break;
-    }
+    P_IterateThinkers(P_MobjThinker, [&mo, &ok, sector](thinker_t *th) {
+        mo = reinterpret_cast<mobj_t *>(th);
+        if (Mobj_Sector(mo) == sector && mo->type == MT_TELEPORTMAN)
+        {
+            ok = true;
+            return de::LoopAbort;
+        }
+        return de::LoopContinue;
+    });
 
     if(ok)
     {
