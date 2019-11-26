@@ -272,6 +272,35 @@ int destroyXSThinker(thinker_t *th, void *context)
     return false; // Continue iteration.
 }
 
+static void XS_UpdateLight(Sector *sec)
+{
+    int         i;
+    float       c, lightlevel;
+    xgsector_t *xg;
+    function_t *fn;
+
+    xg = P_ToXSector(sec)->xg;
+
+    // Light intensity.
+    fn = &xg->light;
+    if (UPDFUNC(fn))
+    {
+        lightlevel = MINMAX_OF(0, fn->value / 255.f, 1);
+        P_SetFloatp(sec, DMU_LIGHT_LEVEL, lightlevel);
+    }
+
+    // Red, green and blue.
+    for (i = 0; i < 3; ++i)
+    {
+        fn = &xg->rgb[i];
+        if (UPDFUNC(fn))
+        {
+            c = MINMAX_OF(0, fn->value / 255.f, 1);
+            P_SetFloatp(sec, TO_DMU_COLOR(i), c);
+        }
+    }
+}
+
 void XS_SetSectorType(Sector *sec, int special)
 {
     LOG_AS("XS_SetSectorType");
@@ -395,6 +424,12 @@ void XS_Init()
         // Initialize XG data for this sector.
         XS_SetSectorType(sec, xsec->special);
     }
+
+    // Run the first tick now, so sector lights are initialized according to the functions.
+    P_IterateThinkers(XS_Thinker, [](thinker_t *th) {
+        XS_Thinker(th);
+        return de::LoopContinue;
+    });
 }
 
 void XS_SectorSound(Sector *sec, int soundId)
@@ -2584,37 +2619,6 @@ void XS_UpdatePlanes(Sector* sec)
     }
 }
 
-void XS_UpdateLight(Sector* sec)
-{
-    int                 i;
-    float               c, lightlevel;
-    xgsector_t*         xg;
-    function_t*         fn;
-
-    xg = P_ToXSector(sec)->xg;
-
-    // Light intensity.
-    fn = &xg->light;
-    if(UPDFUNC(fn))
-    {   // Changed.
-        lightlevel = MINMAX_OF(0, fn->value / 255.f, 1);
-        P_SetFloatp(sec, DMU_LIGHT_LEVEL, lightlevel);
-    }
-
-    // Red, green and blue.
-    for(i = 0; i < 3; ++i)
-    {
-        fn = &xg->rgb[i];
-        if(!UPDFUNC(fn))
-            continue;
-
-        // Changed.
-        c = MINMAX_OF(0, fn->value / 255.f, 1);
-
-        P_SetFloatp(sec, TO_DMU_COLOR(i), c);
-    }
-}
-
 void XS_DoChain(Sector *sec, int ch, int activating, void *act_thing)
 {
     LOG_AS("XS_DoChain");
@@ -2861,7 +2865,7 @@ void XS_Thinker(void *xsThinker)
 {
     xsthinker_t* xs = (xsthinker_t *) xsThinker;
     Sector* sector = xs->sector;
-    xsector_t* xsector = P_ToXSector(sector);
+    xsector_t *xsector = P_ToXSector(sector);
     xgsector_t* xg;
     sectortype_t* info;
     int i;
