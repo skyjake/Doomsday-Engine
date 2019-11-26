@@ -2049,7 +2049,7 @@ int XLTrav_LineTeleport(Line *newLine, dd_bool /*ceiling*/, void *context,
     }
 
     // Spawn flash at the new position?
-    if(info->iparm[2])
+    if (!info->iparm[2])
     {
         an = mobj->angle >> ANGLETOFINESHIFT;
         if((flash = P_SpawnMobjXYZ(MT_TFOG,
