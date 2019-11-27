@@ -40,4 +40,4 @@ precompiled.h.cpp
 compile_commands.json
 /products
 /debian
-
+/.vsbuild/

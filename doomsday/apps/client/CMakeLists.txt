@@ -230,6 +230,8 @@ if (UNIX_LINUX)
         DESTINATION share/applications)
     install (FILES res/linux/deng-logo-256.png
         DESTINATION ${DENG_INSTALL_DATA_DIR})
+    install (FILES res/linux/deng-logo-256.png
+        DESTINATION share/icons/hicolor/256x256/apps/net.dengine.Doomsday.png)
 endif ()
 
 if (WIN32)
