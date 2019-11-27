@@ -21,16 +21,6 @@ add_definitions (
     -D__USE_BSD
     -D_GNU_SOURCE=1
 )
-if (DENG_BASE_DIR)
-    add_definitions (-DDENG_BASE_DIR="${DENG_BASE_DIR}")
-else ()
-    add_definitions (-DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_DATA_DIR}")
-endif ()
-if (NOT DENG_LIBRARY_DIR STREQUAL "")
-    add_definitions (-DDENG_LIBRARY_DIR="${DENG_LIBRARY_DIR}")
-else ()
-    add_definitions (-DDENG_LIBRARY_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR}")
-endif ()
 
 if (DENG_UPDATER_PLATFORM)
     add_definitions (-DDENG_PLATFORM_ID="${DENG_UPDATER_PLATFORM}-${DENG_ARCH}")
@@ -39,6 +29,10 @@ else ()
 endif ()
 
 if (CMAKE_COMPILER_IS_GNUCXX)
+    foreach (cxxOpt -Wno-deprecated-copy;-Wno-class-memaccess;-Wno-address-of-packed-member)
+        append_unique (CMAKE_CXX_FLAGS ${cxxOpt})
+    endforeach (cxxOpt)
+
     # The tree FRE optimization causes crashes with GCC 6 (Yakkety).
     append_unique (CMAKE_CXX_FLAGS_RELEASE        -fno-tree-fre)
     append_unique (CMAKE_CXX_FLAGS_RELWITHDEBINFO -fno-tree-fre)

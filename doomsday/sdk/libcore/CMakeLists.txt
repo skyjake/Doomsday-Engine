@@ -60,6 +60,23 @@ deng_add_library (libcore ${SOURCES} ${HEADERS})
 target_include_directories (libcore PRIVATE ${ZLIB_INCLUDE_DIR})
 deng_target_link_qt (libcore PUBLIC Core Network)
 target_link_libraries (libcore PUBLIC ${ZLIB_LIBRARIES})
+if (UNIX AND NOT APPLE)
+    if (DENG_BASE_DIR)
+        set (baseDir "${DENG_BASE_DIR}")
+    else ()
+        set (baseDir "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_DATA_DIR}")
+    endif ()
+    if (DENG_LIBRARY_DIR)
+        set (libDir "${DENG_LIBRARY_DIR}")
+    else ()
+        set (libDir "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR}")
+    endif ()
+    target_compile_definitions (libcore PUBLIC
+        -DDENG_BASE_DIR="${baseDir}"
+        -DDENG_LIBRARY_DIR="${libDir}"
+    )
+endif ()
+
 deng_deploy_library (libcore DengCore)
 
 deng_cotire (libcore src/precompiled.h)
