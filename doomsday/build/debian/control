@@ -17,4 +17,5 @@ Description: Doom/Heretic/Hexen port with enhanced graphics
  using modern technology, including high-resolution OpenGL graphics, 3D 
  models, and dynamic lighting effects. Data files from the original games
  are not included; you must acquire a copy of the original games from 
- id Software and/or Raven Software.
+ id Software and/or Raven Software. You may also use free alternatives
+ such as https://freedoom.github.io/.

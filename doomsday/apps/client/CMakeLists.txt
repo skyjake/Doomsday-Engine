@@ -225,7 +225,8 @@ else ()
 endif ()
 
 if (UNIX_LINUX)
-    configure_file (doomsday-engine.desktop.in net.dengine.Doomsday.desktop)
+    configure_file (res/linux/net.dengine.Doomsday.desktop.in
+        net.dengine.Doomsday.desktop)
     install (PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/net.dengine.Doomsday.desktop
         DESTINATION share/applications)
     install (FILES res/linux/deng-logo-256.png
@@ -233,6 +234,8 @@ if (UNIX_LINUX)
     install (FILES res/linux/deng-logo-256.png
         DESTINATION share/icons/hicolor/256x256/apps
         RENAME net.dengine.Doomsday.png)
+    install (FILES res/linux/net.dengine.Doomsday.metainfo.xml
+        DESTINATION share/metainfo)
 endif ()
 
 if (WIN32)
