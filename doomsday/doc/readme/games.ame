@@ -7,22 +7,22 @@ games. You can use the following ways to let the engine know where your IWADs
 can be found:
 
 @list{
-    
+
     @item The first time you launch Doomsday and it doesn't find any IWADs, it
     will show a tab titled @ui{Data Files?} containing a single button.
     Clicking the button opens a file dialog where you can pick a folder where
     your IWAD files are located.
-    
+
     @ifdef{UNIX}{@item The directory @file{/usr/share/games/doom} is always
     checked for any recognized IWAD files.}
-    
+
     @ifndef{UNIX}{@item If you have Steam installed, Doomsday will
     automatically detect if you have purchased a compatible game and will
     access the IWAD files in the Steam games directories.}
-    
+
     @ifdef{WIN32}{@item Compatible games purchased from
     @link{GOG.com}{https://gog.com} are autodetected.}
-    
+
     @item Using the @opt{-iwad} command-line option. You can either provide the
     path to the IWAD to use, or the path of the directory under which IWADs are
     located. Doomsday will look through the specified location and use all the
@@ -31,19 +31,20 @@ can be found:
     one for each launched game.
 
     @opt{-iwad} will also accept multiple paths as parameters:
-    
-    @samp{@opt{-iwad path1 path2}}
 
-    @item The configuration variable @var{Config.resource.iwadFolder}. This is
-    typically set automatically via the user interface, for instance when you
-    first start Doomsday. Its value can also be manipulated in the Doomsday
-    Script command prompt.
+    @samp{@opt{-iwad path1 path2}}
 
     @ifndef{WIN32}{@item The configuration file @file{~/.doomsday/paths} is
     checked for @var{iwaddir} (see @ref{paths_file}{Files}).}
-    
+
     @item Environment variables DOOMWADDIR and DOOMWADPATH (see
     @ref{environ}{Environment}).
+
+    @item The configuration variable @var{Config.resource.packageFolder}. This
+    is typically set automatically via the user interface, for instance when you
+    first start Doomsday. Its value can also be manipulated in the Doomsday
+    Script command prompt. (The variable @var{Config.resource.recursedFolders}
+    determines if subdirectories should be searched.)
 
 }
 
@@ -63,7 +64,7 @@ with Doomsday.
 @table{19 25 56}{
 	@header{Plugin} @tab @header{Game ID} @tab @header{Description} @row{single}
 
-@plugin{Doom} 
+@plugin{Doom}
     @tab doom1-share @tab Shareware Doom v1.9 @row
 	@tab doom1 @tab Registered Doom v1.9 @row
 	@tab doom1-ultimate @tab Ultimate Doom* @row
@@ -78,12 +79,12 @@ with Doomsday.
     @tab doom2-bfg @tab Doom 2 (Doom 3 BFG Edition)@row
     @tab doom2-nerve @tab No Rest for the Living @row
 
-@plugin{Heretic} 
+@plugin{Heretic}
     @tab heretic-share @tab Shareware Heretic @row
 	@tab heretic @tab Registered Heretic @row
 	@tab heretic-ext @tab Heretic: Shadow of the Serpent Riders** @row
 
-@plugin{Hexen} 
+@plugin{Hexen}
     @tab hexen @tab Hexen v1.1 @row
     @tab hexen-v10 @tab Hexen v1.0 @row
 	@tab hexen-dk @tab Hexen: Death Kings of Dark Citadel @row
