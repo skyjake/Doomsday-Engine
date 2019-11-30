@@ -114,6 +114,8 @@ void fastMonstersChanged()
 
 void Common_Register()
 {
+    C_VAR_BYTE ("hud-title-author-nounknown",   &cfg.common.hideIWADAuthor,     0, 0, 1);
+
     // Movement
     C_VAR_FLOAT("player-move-speed",    &cfg.common.playerMoveSpeed,    0, 0, 1);
     C_VAR_INT  ("player-jump",          &cfg.common.jumpEnabled,        0, 0, 1);

@@ -171,6 +171,7 @@ void X_PreInit()
     cfg.common.mapTitle = true;
     cfg.common.automapTitleAtBottom = true;
     cfg.common.hideIWADAuthor = true;
+    cfg.common.hideUnknownAuthor = true;
     cfg.common.menuPatchReplaceMode = PRM_ALLOW_TEXT;
     cfg.common.menuScale = .75f;
     cfg.common.menuTextColors[0][0] = defFontRGB[0];

@@ -197,6 +197,7 @@ void D_PreInit()
     cfg.common.mapTitle = true;
     cfg.common.automapTitleAtBottom = true;
     cfg.common.hideIWADAuthor = true;
+    cfg.common.hideUnknownAuthor = true;
     cfg.common.menuTextColors[0][CR] = 1;
     cfg.common.menuTextColors[0][CG] = 0;
     cfg.common.menuTextColors[0][CB] = 0;

@@ -275,6 +275,7 @@ void D_PreInit()
     cfg.common.mapTitle = true;
     cfg.common.automapTitleAtBottom = true;
     cfg.common.hideIWADAuthor = true;
+    cfg.common.hideUnknownAuthor = true;
 
     cfg.common.confirmQuickGameSave = true;
     cfg.common.confirmRebornLoad = true;

@@ -2146,15 +2146,20 @@ String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor)
 
     if (!author.isEmpty())
     {
-        // Should we suppress the author?
-        /// @todo Do not do this here.
         GameInfo gameInfo;
         DD_GameInfo(&gameInfo);
+
+        // Should we suppress the author?
         if (supressGameAuthor || P_MapIsCustom(mapUri.compose().toUtf8().constData()))
         {
             if (!author.compareWithoutCase(Str_Text(gameInfo.author)))
                 return "";
         }
+    }
+
+    if (cfg.common.hideUnknownAuthor && !author.compareWithoutCase("unknown"))
+    {
+        return "";
     }
 
     return author;

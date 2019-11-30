@@ -204,6 +204,7 @@ void H_PreInit()
     cfg.common.mapTitle = true;
     cfg.common.automapTitleAtBottom = true;
     cfg.common.hideIWADAuthor = true;
+    cfg.common.hideUnknownAuthor = true;
     cfg.common.menuTextColors[0][0] = defFontRGB[0];
     cfg.common.menuTextColors[0][1] = defFontRGB[1];
     cfg.common.menuTextColors[0][2] = defFontRGB[2];
