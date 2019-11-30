@@ -425,12 +425,12 @@ static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
 
-    String const text = patchReplacementText(titlePatchId, title);
-    if(!text.isEmpty())
+    const String text = patchReplacementText(titlePatchId, title);
+    if (text)
     {
         // Draw title text.
         drawText(text, origin, ALIGN_TOP, DTF_NO_TYPEIN);
-        origin.y += (5 * FR_TextHeight(text.toUtf8().constData())) / 4;
+        origin.y += (4 * FR_TextHeight(text.toUtf8().constData())) / 5;
     }
     else
     {
@@ -478,15 +478,25 @@ static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
+    // Determine height of the title.
+    int titleHeight = 0;
+    {
+        patchinfo_t info;
+        if(R_GetPatchInfo(patchId, &info))
+        {
+            titleHeight = 5 * info.geometry.size.height / 4;
+        }
+        else
+        {
+            titleHeight = 4 * FR_TextHeight(title.toLatin1().constData()) / 5;
+        }
+    }
+
     // Draw "Entering".
     WI_DrawPatch(pEntering, patchReplacementText(pEntering), origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
 
     // Draw map title.
-    patchinfo_t info;
-    if(R_GetPatchInfo(patchId, &info))
-    {
-        origin.y += (5 * info.geometry.size.height) / 4;
-    }
+    origin.y += titleHeight;
     FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
     WI_DrawPatch(patchId, patchReplacementText(patchId, title),
                  origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
