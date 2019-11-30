@@ -375,7 +375,7 @@ static void Def_ReadLumpDefs()
         if (!DED_ReadLump(DED_Definitions(), *i))
         {
             QByteArray path = NativePath(lumpIndex[*i].container().composePath()).pretty().toUtf8();
-            App_Error("Def_ReadLumpDefs: Parse error reading \"%s:DD_DEFNS\".\n", path.constData());
+            LOG_RES_ERROR("Parse error reading \"%s:DD_DEFNS\": %s") << path.constData() << DED_Error();
         }
     }
 
