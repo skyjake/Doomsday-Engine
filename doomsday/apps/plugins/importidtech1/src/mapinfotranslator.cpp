@@ -309,10 +309,19 @@ namespace internal {
 
             this->sourceIsCustom = sourceIsCustom;
 
-            // May opt out of eerror reporting.
-            if (String(Str_Text(&buffer)).contains("// Doomsday: Ignore errors!", Qt::CaseInsensitive))
+            // May opt out of error reporting.
             {
-                reportErrors = false;
+                const String bufText(Str_Text(&buffer));
+                if (bufText.contains("// Doomsday: Ignore errors!", Qt::CaseInsensitive))
+                {
+                    reportErrors = false;
+                }
+                /// @todo Better to look for all comment lines instead.
+                if (bufText.contains("// ZDaemon"))
+                {
+                    // Wrong format.
+                    return;
+                }
             }
 
             lexer.parse(&buffer);
