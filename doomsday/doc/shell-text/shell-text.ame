@@ -1,7 +1,7 @@
 $ Man page for doomsday-shell-text
 @macro{TITLE}{ doomsday-shell-text }
 @macro{ONELINER}{ Utility for controlling and monitoring Doomsday servers }
-@macro{VERSION}{ Version 2.2 }
+@macro{VERSION}{ Version 2.3 }
 @macro{AUTHOR}{ Deng Team }
 @macro{LINK}{ http://dengine.net/ }
 @require{amestd}
