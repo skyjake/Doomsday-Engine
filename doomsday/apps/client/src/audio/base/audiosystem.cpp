@@ -2793,12 +2793,26 @@ dint S_StartMusicNum(dint musicId, dd_bool looped)
 #undef S_StartMusic
 dint S_StartMusic(char const *musicId, dd_bool looped)
 {
+    LOG_AS("S_StartMusic");
     dint idx = DED_Definitions()->getMusicNum(musicId);
     if (idx < 0)
     {
         if (musicId && !String(musicId).isEmpty())
         {
-            LOG_AS("S_StartMusic");
+#if defined __CLIENT__
+            // Fallback: maybe there's a lump with this name instead.
+            const String musicLumpName = String::format("d_%s.lmp", musicId);
+            const lumpnum_t lumpNum = App_FileSystem().lumpNumForName(musicLumpName);
+            if (lumpNum >= 0)
+            {
+                LOG_AUDIO_MSG("No Music definition for \"%s\", but found lump \"%s\" (%d) instead")
+                    << musicId << musicLumpName << lumpNum;
+                if (const auto result = App_AudioSystem().playMusicLump(lumpNum, looped))
+                {
+                    return result;
+                }
+            }
+#endif // __CLIENT__
             LOG_AUDIO_WARNING("Music \"%s\" not defined, cannot start playback") << musicId;
         }
         return false;
