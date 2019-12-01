@@ -3,11 +3,11 @@
 Additional documentation is available in the @link{Doomsday Manual}{https://manual.dengine.net/}.
 
 @list{
-    @item @wikilink{Getting started with Doomsday}{guide}
-    @item @wikilink{Version history}{version}
+    @item @wikilink{Getting started with Doomsday}{guide/introduction}
+    @item @wikilink{Version history}{version/history}
     @item @wikilink{Doomsday 1 resources}{modding/overview_of_resources_doomsday_1.x}
-    @item @wikilink{Packages and assets}{assets}
-    @item @wikilink{DED definitions and intro/finale animations}{ded}
+    @item @wikilink{Packages and assets}{assets/overview}
+    @item @wikilink{DED definitions and intro/finale animations}{ded/ded}
     @item @wikilink{Doomsday Script}{script/reference}
     @item @link{Project roadmap and features in planning}{https://tracker.dengine.net/projects/deng/roadmap}
 }
