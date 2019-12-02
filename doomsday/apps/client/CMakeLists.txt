@@ -235,7 +235,8 @@ if (UNIX_LINUX)
         DESTINATION share/icons/hicolor/256x256/apps
         RENAME net.dengine.Doomsday.png)
     install (FILES res/linux/net.dengine.Doomsday.metainfo.xml
-        DESTINATION share/metainfo)
+        DESTINATION share/metainfo
+        RENAME net.dengine.Doomsday.appdata.xml)
 endif ()
 
 if (WIN32)
