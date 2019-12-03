@@ -94,6 +94,13 @@ public:
 
         bool isPlayable() const;
 
+        /**
+         * Checks for auto-versioned packages where the specified version is not available,
+         * but a newer auto-versioned package is available. If so, the newer package
+         * replaces the old one.
+         */
+        void upgradePackages();
+
         void loadPackages() const;
 
         void unloadPackages() const;
