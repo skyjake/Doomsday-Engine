@@ -114,7 +114,7 @@ DENG2_PIMPL(Process)
         for (context().proceed(); context().current(); context().proceed())
         {
             const Statement *statement = context().current();
-            if (const auto *tryStatement = dynamic_cast<const TryStatement *>(statement))
+            if (is<TryStatement>(statement))
             {
                 // Encountered a nested try statement.
                 ++level;
