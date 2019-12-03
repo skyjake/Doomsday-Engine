@@ -78,7 +78,10 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
                 return false;
             }
 
-            if (!gameProfile.isPlayable()) return false;
+            if (!gameProfile.isPlayable())
+            {
+                return false;
+            }
 
             // The file must be in the right save folder.
             if (item.savePath().fileNamePath().compareWithoutCase(gameProfile.savePath()))
@@ -394,7 +397,7 @@ void GamePanelButtonWidget::updateContent()
         setKeepButtonsVisible(false);
     }
 
-    label().setText(String(_E(b) "%1\n" _E(l) "%2")
+    label().setText(String(_E(b) "%1\n" _E(l)_E(C) "%2")
                     .arg(d->gameProfile.name())
                     .arg(meta));
 
