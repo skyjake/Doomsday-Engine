@@ -28,6 +28,7 @@
 #include <de/Record>
 
 #include <QTextStream>
+#include <QRegExp>
 
 using namespace de;
 
@@ -632,11 +633,29 @@ bool GameProfiles::arePackageListsCompatible(StringList const &list1, StringList
 {
     if (list1.size() != list2.size()) return false;
 
+    static const QRegExp WHITESPACE("\\s+");
+
     // The package lists must match order and IDs, but currently we ignore the
     // versions.
     for (int i = 0; i < list1.size(); ++i)
     {
-        if (!Package::equals(list1.at(i), list2.at(i)))
+        // Each item may have whitespace separated alternatives.
+        const auto alts1 = list1.at(i).split(WHITESPACE, QString::SkipEmptyParts);
+        const auto alts2 = list2.at(i).split(WHITESPACE, QString::SkipEmptyParts);
+        bool foundMatching = false;
+        for (const auto &id1 : alts1)
+        {
+            for (const auto &id2 : alts2)
+            {
+                if (Package::equals(id1, id2))
+                {
+                    foundMatching = true;
+                    break;
+                }
+            }
+            if (foundMatching) break; // Good enough.
+        }
+        if (!foundMatching)
         {
             return false;
         }
