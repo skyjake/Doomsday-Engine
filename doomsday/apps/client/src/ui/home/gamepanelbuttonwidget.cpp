@@ -283,8 +283,8 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
     void dataBundlesIdentified() override
     {
-        Loop::get().mainCall([this] ()
-        {
+        Loop::get().mainCall([this]() {
+            gameProfile.upgradePackages();
             catalog.clear();
             self().updateContent();
         });

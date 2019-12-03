@@ -210,6 +210,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
             if (profile.game().family() == gameFamily)
             {
                 DENG2_ASSERT(!findProfileItem(profile));
+                profile.upgradePackages();
                 menu->items() << new ProfileItem(this, profile);
                 addOrRemoveSubheading();
                 profile.audienceForChange() += this;
