@@ -130,7 +130,7 @@ DENG_GUI_PIMPL(CreateProfileDialog)
         String const entry = self().profileName();
         if (!entry.isEmpty())
         {
-            if (editing && oldName == entry)
+            if (editing && !oldName.compareWithoutCase(entry))
             {
                 valid = true;
             }
