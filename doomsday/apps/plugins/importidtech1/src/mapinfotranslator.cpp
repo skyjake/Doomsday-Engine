@@ -655,9 +655,9 @@ namespace internal {
          */
         void parseMap(MapInfo *info = 0)
         {
+            de::Uri mapUri;
             if(!info)
             {
-                de::Uri mapUri;
                 String const mapRef = String(Str_Text(lexer.readString()));
 
                 bool isNumber;
@@ -1469,6 +1469,7 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
             if (mapUri.path().isEmpty()) continue;
 
             const String mapId         = toMapId(mapUri);
+            const String musicId       = mapId + "_dd_xlt"; // doomsday translated
             const String musicLumpName = info.gets("music");
             bool         addedMusicDef = false;
 
@@ -1478,7 +1479,7 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
 
                 // Add a music def for this custom music.
                 os << "\n\nMusic {"
-                   << "\n  ID = \"" + mapId + "\";"; // music ID == map ID
+                   << "\n  ID = \"" + musicId + "\";";
                 if (!musicLumpName.isEmpty())
                 {
                    os << "\n  Lump = \"" + musicLumpName + "\";";
@@ -1499,7 +1500,7 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
             os << "\n  Fade Table = \"" + info.gets("fadeTable") + "\";";
             if (addedMusicDef)
             {
-                os << "\n  Music = \"" + mapId + "\";";
+                os << "\n  Music = \"" + musicId + "\";";
             }
             de::Uri titleImageUri(info.gets("titleImage"), RC_NULL);
             if(!titleImageUri.path().isEmpty())

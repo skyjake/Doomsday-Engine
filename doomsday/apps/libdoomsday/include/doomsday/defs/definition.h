@@ -47,6 +47,8 @@ public:
      */
     operator bool() const;
 
+    de::String id() const;
+
     /**
      * Returns the ordinal of the definition. Ordinals are automatically set by
      * DEDRegister as definitions are created.

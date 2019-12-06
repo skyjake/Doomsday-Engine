@@ -40,6 +40,12 @@ Record const &Definition::def() const
     return accessedRecord();
 }
 
+String Definition::id() const
+{
+    if (!accessedRecordPtr()) return {};
+    return gets(VAR_ID);
+}
+
 int Definition::order() const
 {
     if (!accessedRecordPtr()) return -1;
