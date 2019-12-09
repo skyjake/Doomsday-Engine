@@ -730,8 +730,26 @@ ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
     case 1:  // Normal mode.
         if (!(devNoTexFix && surface.hasFixMaterial()))
         {
+            if (!surface.hasMaterial() && surface.parent().type() == DMU_SIDE)
+            {
+                const Line::Side &side = surface.parent().as<Line::Side>();
+                if (side.hasSector())
+                {
+                    // Use the ceiling for missing top section, and floor for missing bottom section.
+                    if (&surface == &side.bottom())
+                    {
+                        return static_cast<ClientMaterial *>(side.sector().floor().surface().materialPtr());
+                    }
+                    else if (&surface == &side.top())
+                    {
+                        return static_cast<ClientMaterial *>(side.sector().ceiling().surface().materialPtr());
+                    }
+                }
+            }
             if (surface.hasMaterial() || surface.parent().type() != DMU_PLANE)
+            {
                 return static_cast<ClientMaterial *>(surface.materialPtr());
+            }
         }
 
         // Use special "missing" material.
@@ -2700,20 +2718,20 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
     {
         if (glowFactor > .0001f)
         {
-            if (material == surface.materialPtr())
-            {
-                parm.glowing = matAnimator.glowStrength();
-            }
-            else
-            {
-                auto *actualMaterial =
-                    surface.hasMaterial() ? static_cast<ClientMaterial *>(surface.materialPtr())
-                                          : &ClientMaterial::find(de::Uri("System", Path("missing")));
+//            if (material == surface.materialPtr())
+//            {
+            parm.glowing = matAnimator.glowStrength();
+//            }
+//            else
+//            {
+//                auto *actualMaterial =
+//                    surface.hasMaterial() ? static_cast<ClientMaterial *>(surface.materialPtr())
+//                                          : &ClientMaterial::find(de::Uri("System", Path("missing")));
 
-                parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
-            }
+//                parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
+//            }
 
-            parm.glowing *= ::glowFactor;
+            parm.glowing *= glowFactor;
         }
 
         projectDynamics(surface, parm.glowing, *parm.topLeft, *parm.bottomRight,

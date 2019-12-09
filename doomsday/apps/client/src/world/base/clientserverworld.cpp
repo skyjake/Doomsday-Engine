@@ -589,6 +589,7 @@ DENG2_PIMPL(ClientServerWorld)
         });
 
 #ifdef __CLIENT__
+        /*
         /// @todo Refactor away:
         map->forAllSectors([] (Sector &sector)
         {
@@ -601,6 +602,7 @@ DENG2_PIMPL(ClientServerWorld)
                 });
             });
         });
+        */
 #endif
 
         map->initPolyobjs();

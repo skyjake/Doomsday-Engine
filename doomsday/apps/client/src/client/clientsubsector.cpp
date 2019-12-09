@@ -1207,12 +1207,14 @@ DENG2_PIMPL(ClientSubsector)
         // We may need to update one or both mapped planes.
         maybeInvalidateMapping(plane.indexInSector());
 
+        /*
         // We may need to fix newly revealed missing materials.
         self().forAllEdgeLoops([] (ClEdgeLoop &loop)
         {
             loop.fixSurfacesMissingMaterials();
             return LoopContinue;
         });
+        */
 
         // We may need to project new decorations.
         markDependentSurfacesForRedecoration(plane);
