@@ -1549,7 +1549,9 @@ Plane const &ClientSubsector::visPlane(dint planeIndex) const
         // Time to remap the planes?
         if (d->needRemapVisPlanes())
         {
-            d->remapVisPlanes();
+            /// @todo This is broken. For instance in ICARUS.WAD map09, locks up for several
+            /// seconds while looping through the map. A better algorithm is needed.
+            //d->remapVisPlanes();
         }
 
         ClientSubsector *mapping = (planeIndex == Sector::Ceiling ? d->mappedVisCeiling
