@@ -120,8 +120,6 @@ void GL_TexReset()
 {
     if (!initedOk) return;
 
-    DENG2_ASSERT(!BusyMode_Active());
-
     Rend_ResetLookups();
 
     App_Resources().releaseAllGLTextures();
@@ -146,9 +144,6 @@ void GL_TexReset()
 
     Rend_ParticleLoadSystemTextures();
     Rend_ParticleLoadExtraTextures();
-
-    GL_ReleaseReservedNames();
-    GL_ReserveNames();
 }
 
 void GL_LoadLightingSystemTextures()
