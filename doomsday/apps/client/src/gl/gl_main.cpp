@@ -457,12 +457,8 @@ void GL_TotalReset()
 {
     if(isDedicated) return;
 
-    // Update the secondary title and the game status.
-    //Rend_ConsoleUpdateTitle();
-
     // Release all texture memory.
     resSys().releaseAllGLTextures();
-    resSys().pruneUnusedTextureSpecs();
     GL_LoadLightingSystemTextures();
     GL_LoadFlareTextures();
     Rend_ParticleLoadSystemTextures();

@@ -97,6 +97,7 @@ void GL_InitTextureManager()
     initedOk = true;
 }
 
+/*
 static int reloadTextures(void *context)
 {
     bool const usingBusyMode = *static_cast<bool *>(context);
@@ -113,30 +114,41 @@ static int reloadTextures(void *context)
         Con_SetProgress(200);
     }
     return 0;
-}
+}*/
 
 void GL_TexReset()
 {
     if (!initedOk) return;
+
+    DENG2_ASSERT(!BusyMode_Active());
 
     Rend_ResetLookups();
 
     App_Resources().releaseAllGLTextures();
     LOG_GL_VERBOSE("Released all GL textures");
 
-    bool useBusyMode = !BusyMode_Active();
-    if (useBusyMode)
-    {
-        BusyMode_FreezeGameForBusyMode();
+//    bool useBusyMode = !BusyMode_Active();
+//    if (useBusyMode)
+//    {
+//        BusyMode_FreezeGameForBusyMode();
 
-        Con_InitProgress(200);
-        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR| (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                                    reloadTextures, &useBusyMode, "Reseting textures...");
-    }
-    else
-    {
-        reloadTextures(&useBusyMode);
-    }
+//        Con_InitProgress(200);
+//        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+//                                    reloadTextures, &useBusyMode, "Reseting textures...");
+//    }
+//    else
+//    {
+//        reloadTextures(&useBusyMode);
+//    }
+
+    GL_LoadLightingSystemTextures();
+    GL_LoadFlareTextures();
+
+    Rend_ParticleLoadSystemTextures();
+    Rend_ParticleLoadExtraTextures();
+
+    GL_ReleaseReservedNames();
+    GL_ReserveNames();
 }
 
 void GL_LoadLightingSystemTextures()

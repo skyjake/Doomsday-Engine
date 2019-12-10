@@ -2306,7 +2306,7 @@ Sector *Map::sectorPtr(dint index) const
     return nullptr;
 }
 
-LoopResult Map::forAllSectors(std::function<LoopResult (Sector &)> func) const
+LoopResult Map::forAllSectors(const std::function<LoopResult (Sector &)> &func) const
 {
     for (Sector *sec : d->sectors)
     {
@@ -3296,6 +3296,17 @@ void Map::deserializeInternalState(Reader &from, IThinkerMapping const &thinkerM
     {
         LOG_MAP_WARNING("Error when reading state: %s") << er.asText();
     }
+}
+
+void Map::redecorate()
+{
+    forAllSectors([](Sector &sector) {
+        sector.forAllSubsectors([](Subsector &subsec) {
+            subsec.as<ClientSubsector>().markForDecorationUpdate();
+            return LoopContinue;
+        });
+        return LoopContinue;
+    });
 }
 
 void Map::worldSystemFrameBegins(bool resetNextViewer)
