@@ -205,7 +205,7 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
         H_SetupState(true);
 
     DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();   
 
     // Prepare the texture rotation matrix.
     DGL_MatrixMode(DGL_TEXTURE);

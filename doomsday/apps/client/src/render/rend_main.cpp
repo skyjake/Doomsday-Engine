@@ -6161,6 +6161,11 @@ D_CMD(TexReset)
         // Reset everything.
         GL_TexReset();
     }
+    if (auto *map = App_World().mapPtr())
+    {
+        // Texture IDs are cached in Lumobjs, so have to redo all of them.
+        map->redecorate();
+    }
     return true;
 }
 
