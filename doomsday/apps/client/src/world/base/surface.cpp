@@ -267,8 +267,10 @@ Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 #endif
 
     // Notify interested parties.
-    DENG2_FOR_AUDIENCE2(MaterialChange, i) i->surfaceMaterialChanged(*this);
-
+    DENG2_FOR_AUDIENCE2(MaterialChange, i)
+    {
+        i->surfaceMaterialChanged(*this);
+    }
     return *this;
 }
 

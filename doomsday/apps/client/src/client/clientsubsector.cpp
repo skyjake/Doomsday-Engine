@@ -187,6 +187,13 @@ DENG2_PIMPL(ClientSubsector)
             if (::ddMapSetup) return;
             needUpdate = yes;
         }
+
+        void clear()
+        {
+            markForUpdate(false);
+            qDeleteAll(decorations);
+            decorations.clear();
+        }
     };
 
     dint validFrame;
@@ -274,6 +281,11 @@ DENG2_PIMPL(ClientSubsector)
         }
     }
 
+    static bool hasDecoratedMaterial(const Surface &surface)
+    {
+        return surface.hasMaterial() && surface.material().as<ClientMaterial>().hasDecorations();
+    }
+
     void observeSurface(Surface *surface, bool yes = true)
     {
         if (!surface) return;
@@ -283,12 +295,19 @@ DENG2_PIMPL(ClientSubsector)
             surface->audienceForMaterialChange      () += this;
             surface->audienceForOriginChange        () += this;
             surface->audienceForOriginSmoothedChange() += this;
+
+            if (hasDecoratedMaterial(*surface))
+            {
+                allocDecorationState(*surface);
+            }
         }
         else
         {
             surface->audienceForOriginSmoothedChange() -= this;
             surface->audienceForOriginChange        () -= this;
             surface->audienceForMaterialChange      () -= this;
+
+            decorSurfaces.remove(surface);
         }
     }
 
@@ -521,6 +540,8 @@ DENG2_PIMPL(ClientSubsector)
 
     void remapVisPlanes()
     {
+        /// @todo Has performance issues -- disabled; needs reworking.
+
         // By default both planes are mapped to the parent sector.
         if (!floorIsMapped())   map(Sector::Floor,   thisPublic);
         if (!ceilingIsMapped()) map(Sector::Ceiling, thisPublic);
@@ -1014,7 +1035,18 @@ DENG2_PIMPL(ClientSubsector)
     }
 
     void decorate(Surface &surface)
-    {
+    {       
+        if (!hasDecoratedMaterial(surface))
+        {
+            // Just clear the state.
+            if (surface.decorationState())
+            {
+                static_cast<DecoratedSurface *>(surface.decorationState())->clear();
+            }
+            return;
+        }
+
+        // Has a decorated material, so needs decoration state.
         auto &ds = allocDecorationState(surface);
 
         if (!ds.needUpdate) return;
@@ -1025,21 +1057,14 @@ DENG2_PIMPL(ClientSubsector)
                     && &surface.parent() == mappedPlane(surface.parent().as<Plane>().indexInSector()) ? " (mapped)" : "")
         );
 
-        ds.markForUpdate(false);
+        ds.clear();
 
-        qDeleteAll(ds.decorations);
-        ds.decorations.clear();
-
-        // Clear any existing decorations.
-        if (surface.hasMaterial())
+        Vector2f materialOrigin;
+        Vector3d bottomRight, topLeft;
+        if (prepareGeometry(surface, topLeft, bottomRight, materialOrigin))
         {
-            Vector2f materialOrigin;
-            Vector3d bottomRight, topLeft;
-            if (prepareGeometry(surface, topLeft, bottomRight, materialOrigin))
-            {
-                MaterialAnimator &animator = *surface.materialAnimator();
-                projectDecorations(surface, animator, materialOrigin, topLeft, bottomRight);
-            }
+            MaterialAnimator &animator = *surface.materialAnimator();
+            projectDecorations(surface, animator, materialOrigin, topLeft, bottomRight);
         }
     }
 
@@ -1312,17 +1337,30 @@ DENG2_PIMPL(ClientSubsector)
     void surfaceMaterialChanged(Surface &surface)
     {
         LOG_AS("ClientSubsector");
-        //DecoratedSurface &ds = decorSurfaces[surface.uniqueId()];
 
-        DecoratedSurface &ds = allocDecorationState(surface);
+        if (auto *ds = static_cast<DecoratedSurface *>(surface.decorationState()))
+        {
+            // Clear any existing decorations (now invalid).
+            ds->clear();
+//            qDeleteAll(ds->decorations);
+//            ds->decorations.clear();
+//            ds->markForUpdate();
+        }
 
-        // Clear any existing decorations (now invalid).
-        qDeleteAll(ds.decorations);
-        ds.decorations.clear();
-        ds.markForUpdate();
+        if (hasDecoratedMaterial(surface))
+        {
+            auto &ds = allocDecorationState(surface);
+            ds.markForUpdate();
+        }
 
         // Begin observing the new material (if any).
-        /// @todo fixme: stop observing the old one!? -ds
+        //
+        // Note that the subsector keeps observing all the materials of all surfaces.
+        // To stop observing old ones, one needs to make sure that no surface in the
+        // subsector is no longer using the material.
+        //
+        /// @todo Stop observing unused materials.
+        //
         observeMaterial(surface.materialPtr());
     }
 
@@ -1889,6 +1927,8 @@ void ClientSubsector::decorate()
 
 bool ClientSubsector::hasDecorations() const
 {
+    return !d.getConst()->decorSurfaces.isEmpty();
+    /*
     for (Surface *surface : d.getConst()->decorSurfaces)
     {
         if (!static_cast<Impl::DecoratedSurface const *>
@@ -1897,7 +1937,7 @@ bool ClientSubsector::hasDecorations() const
             return true;
         }
     }
-    return false;
+    return false;*/
 }
 
 void ClientSubsector::generateLumobjs()

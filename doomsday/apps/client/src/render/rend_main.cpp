@@ -5426,8 +5426,8 @@ static void drawLumobjs(Map &map)
 
     if (!devDrawLums) return;
 
+    DGL_PushState();
     DGL_Disable(DGL_DEPTH_TEST);
-    //glDisable(GL_CULL_FACE);
     DGL_CullFace(DGL_NONE);
 
     map.forAllLumobjs([] (Lumobj &lob)
@@ -5471,9 +5471,7 @@ static void drawLumobjs(Map &map)
         return LoopContinue;
     });
 
-    //glEnable(GL_CULL_FACE);
     DGL_PopState();
-    DGL_Enable(DGL_DEPTH_TEST);
 }
 
 static String labelForLineSideSection(LineSide &side, dint sectionId)
