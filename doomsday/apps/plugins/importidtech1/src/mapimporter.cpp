@@ -21,6 +21,7 @@
 #include "mapimporter.h"
 #include <vector>
 #include <list>
+#include <set>
 #include <QVector>
 #include <de/libcore.h>
 #include <de/Error>
@@ -50,6 +51,12 @@ public:
     }
 
     MapImporter *_map;
+};
+
+struct Vertex
+{
+    Vector2d      pos;
+    std::set<int> lines; // lines connected to this vertex
 };
 
 struct SideDef : public Id1MapElement
@@ -603,6 +610,48 @@ struct Polyobj
     dint16 anchor[2];
 };
 
+struct MaterialDict
+{
+    StringPool dict;
+
+    String const &find(MaterialId id) const
+    {
+        return dict.stringRef(id);
+    }
+
+    MaterialId toMaterialId(String name, MaterialGroup group)
+    {
+        // In original DOOM, texture name references beginning with the
+        // hypen '-' character are always treated as meaning "no reference"
+        // or "invalid texture" and surfaces using them were not drawn.
+        if(group != PlaneMaterials && name[0] == '-')
+        {
+            return 0; // Not a valid id.
+        }
+
+        // Prepare the encoded URI for insertion into the dictionary.
+        // Material paths must be encoded.
+        AutoStr *path = Str_PercentEncode(AutoStr_FromText(name.toUtf8().constData()));
+        de::Uri uri(Str_Text(path), RC_NULL);
+        uri.setScheme(group == PlaneMaterials? "Flats" : "Textures");
+
+        // Intern this material URI in the dictionary.
+        return dict.intern(uri.compose());
+    }
+
+    MaterialId toMaterialId(dint uniqueId, MaterialGroup group)
+    {
+        // Prepare the encoded URI for insertion into the dictionary.
+        de::Uri textureUrn(String("urn:%1:%2").arg(group == PlaneMaterials? "Flats" : "Textures").arg(uniqueId), RC_NULL);
+        uri_s *uri = Materials_ComposeUri(P_ToIndex(DD_MaterialForTextureUri(reinterpret_cast<uri_s *>(&textureUrn))));
+        String uriComposedAsString = Str_Text(Uri_Compose(uri));
+        Uri_Delete(uri);
+
+        // Intern this material URI in the dictionary.
+        return dict.intern(uriComposedAsString);
+    }
+};
+
 } // namespace internal
 
 using namespace internal;
@@ -613,7 +662,7 @@ DENG2_PIMPL(MapImporter)
 {
     Id1MapRecognizer::Format format;
 
-    QVector<coord_t> vertCoords;  ///< Position coords [v0:X, vo:Y, v1:X, v1:Y, ...]
+    std::vector<Vertex> vertices;
 
     typedef std::vector<LineDef> Lines;
     Lines lines;
@@ -633,58 +682,19 @@ DENG2_PIMPL(MapImporter)
     typedef std::list<Polyobj> Polyobjs;
     Polyobjs polyobjs;
 
-    struct MaterialDict
-    {
-        StringPool dict;
-
-        String const &find(MaterialId id) const
-        {
-            return dict.stringRef(id);
-        }
-
-        MaterialId toMaterialId(String name, MaterialGroup group)
-        {
-            // In original DOOM, texture name references beginning with the
-            // hypen '-' character are always treated as meaning "no reference"
-            // or "invalid texture" and surfaces using them were not drawn.
-            if(group != PlaneMaterials && name[0] == '-')
-            {
-                return 0; // Not a valid id.
-            }
-
-            // Prepare the encoded URI for insertion into the dictionary.
-            // Material paths must be encoded.
-            AutoStr *path = Str_PercentEncode(AutoStr_FromText(name.toUtf8().constData()));
-            de::Uri uri(Str_Text(path), RC_NULL);
-            uri.setScheme(group == PlaneMaterials? "Flats" : "Textures");
-
-            // Intern this material URI in the dictionary.
-            return dict.intern(uri.compose());
-        }
-
-        MaterialId toMaterialId(dint uniqueId, MaterialGroup group)
-        {
-            // Prepare the encoded URI for insertion into the dictionary.
-            de::Uri textureUrn(String("urn:%1:%2").arg(group == PlaneMaterials? "Flats" : "Textures").arg(uniqueId), RC_NULL);
-            uri_s *uri = Materials_ComposeUri(P_ToIndex(DD_MaterialForTextureUri(reinterpret_cast<uri_s *>(&textureUrn))));
-            String uriComposedAsString = Str_Text(Uri_Compose(uri));
-            Uri_Delete(uri);
-
-            // Intern this material URI in the dictionary.
-            return dict.intern(uriComposedAsString);
-        }
-    } materials;
+    internal::MaterialDict materials;
 
     Impl(Public *i) : Base(i), format(Id1MapRecognizer::UnknownFormat)
     {}
 
+    /*
     inline dint vertexCount() const {
-        return vertCoords.count() / 2;
+        return int(vertices.size());
     }
 
     inline Vector2d vertexAsVector2d(dint vertexIndex) const {
-        return Vector2d(vertCoords[vertexIndex * 2], vertCoords[vertexIndex * 2 + 1]);
-    }
+        return vertices[vertexIndex].pos;
+    }*/
 
     /// @todo fixme: A real performance killer...
     inline AutoStr *composeMaterialRef(MaterialId id) {
@@ -693,25 +703,28 @@ DENG2_PIMPL(MapImporter)
 
     void readVertexes(de::Reader &from, dint numElements)
     {
-        Id1MapRecognizer::Format format = Id1MapRecognizer::Format(from.version());
-        for(dint n = 0; n < numElements; ++n)
-        {
-            switch(format)
-            {
-            default:
-            case Id1MapRecognizer::DoomFormat: {
-                dint16 x, y;
-                from >> x >> y;
-                vertCoords[n * 2]     = x;
-                vertCoords[n * 2 + 1] = y;
-                break; }
+        vertices.resize(size_t(numElements));
 
-            case Id1MapRecognizer::Doom64Format: {
-                dint32 x, y;
-                from >> x >> y;
-                vertCoords[n * 2]     = FIX2FLT(x);
-                vertCoords[n * 2 + 1] = FIX2FLT(y);
-                break; }
+        Id1MapRecognizer::Format format = Id1MapRecognizer::Format(from.version());
+        for (auto &vert : vertices)
+        {
+            switch (format)
+            {
+                case Id1MapRecognizer::Doom64Format: {
+                    // 16:16 fixed-point.
+                    dint32 x, y;
+                    from >> x >> y;
+                    vert.pos.x = FIX2FLT(x);
+                    vert.pos.y = FIX2FLT(y);
+                    break;
+                }
+                default: {
+                    dint16 x, y;
+                    from >> x >> y;
+                    vert.pos.x = x;
+                    vert.pos.y = y;
+                    break;
+                }
             }
         }
     }
@@ -833,17 +846,18 @@ DENG2_PIMPL(MapImporter)
         Polyobj::LineIndices polyLines;
 
         // First look for a PO_LINE_START linedef set with this tag.
-        DENG2_FOR_EACH(Lines, i, lines)
+        for (size_t i = 0; i < lines.size(); ++i)
         {
+            auto &line = lines[i];
+
             // Already belongs to another polyobj?
-            if(i->aFlags & LAF_POLYOBJ) continue;
+            if(line.aFlags & LAF_POLYOBJ) continue;
 
-            if(!(i->xType == PO_LINE_START && i->xArgs[0] == tag)) continue;
+            if(!(line.xType == PO_LINE_START && line.xArgs[0] == tag)) continue;
 
-            collectPolyobjLines(polyLines, i);
-            if(!polyLines.isEmpty())
+            if (collectPolyobjLines(polyLines, i))
             {
-                dint8 sequenceType = i->xArgs[2];
+                dint8 sequenceType = line.xArgs[2];
                 if(sequenceType >= SEQTYPE_NUMSEQ) sequenceType = 0;
 
                 createPolyobj(polyLines, tag, sequenceType, anchorX, anchorY);
@@ -920,6 +934,22 @@ DENG2_PIMPL(MapImporter)
         return true;
     }
 
+    void linkVertexLines()
+    {
+        for (int i = 0; i < int(lines.size()); ++i)
+        {
+            const auto &line = lines[i];
+            for (int p = 0; p < 2; ++p)
+            {
+                const int vertIndex = line.v[p];
+                if (vertIndex >= 0 && vertIndex < int(vertices.size()))
+                {
+                    vertices[vertIndex].lines.insert(i);
+                }
+            }
+        }
+    }
+
     void analyze()
     {
         Time begunAt;
@@ -944,14 +974,19 @@ DENG2_PIMPL(MapImporter)
     void transferVertexes()
     {
         LOGDEV_MAP_XVERBOSE("Transfering vertexes...", "");
-        dint const numVertexes = vertexCount();
-        dint *indices = new dint[numVertexes];
-        for(int i = 0; i < numVertexes; ++i)
+        const int numVertexes = int(vertices.size());
+        int *     indices     = new dint[numVertexes];
+        coord_t * vertCoords  = new coord_t[numVertexes * 2];
+        coord_t * vert        = vertCoords;
+        for (int i = 0; i < numVertexes; ++i)
         {
             indices[i] = i;
-        }
-        MPE_VertexCreatev(numVertexes, vertCoords.constData(), indices, 0);
+            *vert++ = vertices[i].pos.x;
+            *vert++ = vertices[i].pos.y;
+        }        
+        MPE_VertexCreatev(numVertexes, vertCoords, indices, 0);
         delete[] indices;
+        delete[] vertCoords;
     }
 
     void transferSectors()
@@ -1118,6 +1153,7 @@ DENG2_PIMPL(MapImporter)
         }
     }
 
+#if 0
     /**
      * @param lineList  @c NULL, will cause IterFindPolyLines to count the number
      *                  of lines in the polyobj.
@@ -1140,22 +1176,46 @@ DENG2_PIMPL(MapImporter)
             }
         }
     }
+#endif
 
-    /**
-     * @todo This terribly inefficent (naive) algorithm may need replacing
-     *       (it is far outside an acceptable polynomial range!).
-     */
-    void collectPolyobjLines(Polyobj::LineIndices &lineList, Lines::iterator lineIt)
+    size_t collectPolyobjLines(Polyobj::LineIndices &lineList, size_t startLine)
     {
-        LineDef &line = *lineIt;
-        line.xType    = 0;
-        line.xArgs[0] = 0;
-
         validCount++;
-        // Insert the first line.
-        lineList.append(lineIt - lines.begin());
+
+        LineDef &line   = lines[startLine];
+        line.xType      = 0;
+        line.xArgs[0]   = 0;
         line.validCount = validCount;
-        collectPolyobjLinesWorker(lineList, vertexAsVector2d(line.v[1]));
+
+        // Keep going until we run out of possible lines.
+        for (int currentLine = int(startLine); currentLine >= 0; )
+        {
+            lineList.push_back(currentLine);
+
+            const int currentEnd = lines[currentLine].v[1];
+            int       nextLine   = -1;
+
+            // Look for a line starting where current line ends.
+            for (int i : vertices[currentEnd].lines)
+            {
+                auto &other = lines[i];
+                if ((other.aFlags & LAF_POLYOBJ) || other.validCount == validCount)
+                {
+                    continue;
+                }
+                if (other.v[0] == currentEnd)
+                {
+                    // Use this one.
+                    other.validCount = validCount;
+                    nextLine = i;
+                    break;
+                }
+            }
+
+            currentLine = nextLine;
+        }
+
+        return lineList.size();
     }
 };
 
@@ -1166,11 +1226,13 @@ MapImporter::MapImporter(Id1MapRecognizer const &recognized)
     if(d->format == Id1MapRecognizer::UnknownFormat)
         throw LoadError("MapImporter", "Format unrecognized");
 
+#if 0
     // Allocate the vertices first as a large contiguous array suitable for
     // passing directly to Doomsday's MapEdit interface.
     duint vertexCount = recognized.lumps().find(Id1MapRecognizer::VertexData).value()->size()
                       / Id1MapRecognizer::elementSizeForDataType(d->format, Id1MapRecognizer::VertexData);
     d->vertCoords.resize(vertexCount * 2);
+#endif
 
     DENG2_FOR_EACH_CONST(Id1MapRecognizer::Lumps, i, recognized.lumps())
     {
@@ -1203,7 +1265,7 @@ MapImporter::MapImporter(Id1MapRecognizer const &recognized)
         lump->unlock();
     }
 
-    // Perform post load analyses.
+    d->linkVertexLines();
     d->analyze();
 }
 
