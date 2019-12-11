@@ -63,6 +63,20 @@ static Value *Function_Thing_StartSound(Context &ctx, const Function::ArgumentVa
     return nullptr;
 }
 
+static Value *Function_Thing_Recoil(Context &ctx, const Function::ArgumentValues &args)
+{
+    mobj_t &     mo    = ClientServerWorld::contextMobj(ctx);
+    const double force = args.at(0)->asNumber();
+
+    const angle_t angle = mo.angle + ANG180;
+    const float angle_f = float(angle) / float(ANGLE_180) * PIf;
+
+    mo.mom[MX] += force * cos(angle_f);
+    mo.mom[MY] += force * sin(angle_f);
+
+    return nullptr;
+}
+
 void initBindings(Binder &binder, Record &worldModule)
 {
     // Global functions.
@@ -81,8 +95,8 @@ void initBindings(Binder &binder, Record &worldModule)
         binder.init(thing)
                 << DENG2_FUNC_NOARG(Thing_Id,         "id")
                 << DENG2_FUNC_NOARG(Thing_Health,     "health")
-                << DENG2_FUNC_DEFS (Thing_StartSound, "startSound", "id" << "volume", startSoundArgs);
-
+                << DENG2_FUNC_DEFS (Thing_StartSound, "startSound", "id" << "volume", startSoundArgs)
+                << DENG2_FUNC      (Thing_Recoil,     "recoil", "force");
     }
 }
 
