@@ -104,7 +104,7 @@ static void printMissingMaterialsInDict()
  *
  * @return  Pointer to the found material; otherwise @c 0.
  */
-static Material *findMaterialInDict(String const &materialUriStr)
+static Material *findMaterialInDict(const String &materialUriStr)
 {
     if(materialUriStr.isEmpty()) return 0;
 
@@ -158,10 +158,10 @@ static Material *findMaterialInDict(String const &materialUriStr)
     return material;
 }
 
-static inline Material *findMaterialInDict(ddstring_t const *materialUriStr)
+static inline Material *findMaterialInDict(const char *materialUriStr)
 {
-    if(!materialUriStr) return 0;
-    return findMaterialInDict(Str_Text(materialUriStr));
+    if (!materialUriStr) return nullptr;
+    return findMaterialInDict(String(materialUriStr));
 }
 
 Map *MPE_Map()
@@ -261,12 +261,13 @@ int MPE_LineCreate(int v1, int v2, int frontSectorIdx, int backSectorIdx, int fl
 }
 
 #undef MPE_LineAddSide
-void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *topMaterialUri,
-    float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue,
-    ddstring_t const *middleMaterialUri, float middleOffsetX, float middleOffsetY, float middleRed,
-    float middleGreen, float middleBlue, float middleOpacity, ddstring_t const *bottomMaterialUri,
-    float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen,
-    float bottomBlue, int archiveIndex)
+void MPE_LineAddSide(int lineIdx, int sideId, short flags, const char *topMaterialUri,
+                     float topOffsetX, float topOffsetY, float topRed, float topGreen,
+                     float topBlue, const char *middleMaterialUri, float middleOffsetX,
+                     float middleOffsetY, float middleRed, float middleGreen, float middleBlue,
+                     float middleOpacity, const char *bottomMaterialUri, float bottomOffsetX,
+                     float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue,
+                     int archiveIndex)
 {
     ERROR_IF_NOT_INITIALIZED();
 
@@ -300,7 +301,7 @@ void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *top
 }
 
 #undef MPE_PlaneCreate
-int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri,
+int MPE_PlaneCreate(int sectorIdx, coord_t height, const char *materialUri,
     float matOffsetX, float matOffsetY, float tintRed, float tintGreen, float tintBlue, float opacity,
     float normalX, float normalY, float normalZ, int archiveIndex)
 {

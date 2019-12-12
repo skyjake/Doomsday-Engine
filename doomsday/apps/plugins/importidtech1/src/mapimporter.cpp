@@ -315,7 +315,7 @@ struct SectorDef : public Id1MapElement
         case Id1MapRecognizer::HexenFormat: {
             Block name;
             from.readBytes(8, name);
-            floorMaterial= map().toMaterialId(name.constData(), PlaneMaterials);
+            floorMaterial = map().toMaterialId(name.constData(), PlaneMaterials);
 
             from.readBytes(8, name);
             ceilMaterial = map().toMaterialId(name.constData(), PlaneMaterials);
@@ -326,7 +326,7 @@ struct SectorDef : public Id1MapElement
         case Id1MapRecognizer::Doom64Format: {
             duint16 idx;
             from >> idx;
-            floorMaterial= map().toMaterialId(idx, PlaneMaterials);
+            floorMaterial = map().toMaterialId(idx, PlaneMaterials);
 
             from >> idx;
             ceilMaterial = map().toMaterialId(idx, PlaneMaterials);
@@ -687,20 +687,6 @@ DENG2_PIMPL(MapImporter)
     Impl(Public *i) : Base(i), format(Id1MapRecognizer::UnknownFormat)
     {}
 
-    /*
-    inline dint vertexCount() const {
-        return int(vertices.size());
-    }
-
-    inline Vector2d vertexAsVector2d(dint vertexIndex) const {
-        return vertices[vertexIndex].pos;
-    }*/
-
-    /// @todo fixme: A real performance killer...
-    inline AutoStr *composeMaterialRef(MaterialId id) {
-        return AutoStr_FromTextStd(materials.find(id).toUtf8().constData());
-    }
-
     void readVertexes(de::Reader &from, dint numElements)
     {
         vertices.resize(size_t(numElements));
@@ -954,6 +940,15 @@ DENG2_PIMPL(MapImporter)
     {
         Time begunAt;
 
+        // Detect map hacks.
+        {
+            // Deep water via flat bleeding. Used in TNT MAP02.
+            for (SectorDef &sector : sectors)
+            {
+
+            }
+        }
+
         if(format == Id1MapRecognizer::HexenFormat)
         {
             LOGDEV_MAP_XVERBOSE("Locating polyobjs...", "");
@@ -997,9 +992,9 @@ DENG2_PIMPL(MapImporter)
         {
             dint idx = MPE_SectorCreate(dfloat(i->lightLevel) / 255.0f, 1, 1, 1, i->index);
 
-            MPE_PlaneCreate(idx, i->floorHeight, composeMaterialRef(i->floorMaterial),
+            MPE_PlaneCreate(idx, i->floorHeight, materials.find(i->floorMaterial).toUtf8(),
                             0, 0, 1, 1, 1, 1, 0, 0, 1, -1);
-            MPE_PlaneCreate(idx, i->ceilHeight, composeMaterialRef(i->ceilMaterial),
+            MPE_PlaneCreate(idx, i->ceilHeight, materials.find(i->ceilMaterial).toUtf8(),
                             0, 0, 1, 1, 1, 1, 0, 0, -1, -1);
 
             MPE_GameObjProperty("XSector", idx, "Tag",    DDVT_SHORT, &i->tag);
@@ -1036,24 +1031,54 @@ DENG2_PIMPL(MapImporter)
                                           back? back->sector : -1, i->ddFlags, i->index);
             if(front)
             {
-                MPE_LineAddSide(lineIdx, LineDef::Front, sideFlags,
-                                composeMaterialRef(front->topMaterial),
-                                front->offset[VX], front->offset[VY], 1, 1, 1,
-                                composeMaterialRef(front->middleMaterial),
-                                front->offset[VX], front->offset[VY], 1, 1, 1, 1,
-                                composeMaterialRef(front->bottomMaterial),
-                                front->offset[VX], front->offset[VY], 1, 1, 1,
+                MPE_LineAddSide(lineIdx,
+                                LineDef::Front,
+                                sideFlags,
+                                materials.find(front->topMaterial).toUtf8(),
+                                front->offset[VX],
+                                front->offset[VY],
+                                1,
+                                1,
+                                1,
+                                materials.find(front->middleMaterial).toUtf8(),
+                                front->offset[VX],
+                                front->offset[VY],
+                                1,
+                                1,
+                                1,
+                                1,
+                                materials.find(front->bottomMaterial).toUtf8(),
+                                front->offset[VX],
+                                front->offset[VY],
+                                1,
+                                1,
+                                1,
                                 front->index);
             }
             if(back)
             {
-                MPE_LineAddSide(lineIdx, LineDef::Back, sideFlags,
-                                composeMaterialRef(back->topMaterial),
-                                back->offset[VX], back->offset[VY], 1, 1, 1,
-                                composeMaterialRef(back->middleMaterial),
-                                back->offset[VX], back->offset[VY], 1, 1, 1, 1,
-                                composeMaterialRef(back->bottomMaterial),
-                                back->offset[VX], back->offset[VY], 1, 1, 1,
+                MPE_LineAddSide(lineIdx,
+                                LineDef::Back,
+                                sideFlags,
+                                materials.find(back->topMaterial).toUtf8(),
+                                back->offset[VX],
+                                back->offset[VY],
+                                1,
+                                1,
+                                1,
+                                materials.find(back->middleMaterial).toUtf8(),
+                                back->offset[VX],
+                                back->offset[VY],
+                                1,
+                                1,
+                                1,
+                                1,
+                                materials.find(back->bottomMaterial).toUtf8(),
+                                back->offset[VX],
+                                back->offset[VY],
+                                1,
+                                1,
+                                1,
                                 back->index);
             }
 
