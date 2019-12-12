@@ -243,8 +243,11 @@ public:
     Vector2 abs() const {
         return Vector2(de::abs(x), de::abs(y));
     }
-    ddouble dot(Vector2 const &other) const {
+    double dot(const Vector2 &other) const {
         return x * other.x + y * other.y;
+    }
+    double cross(const Vector2 &other) const {
+        return x * other.y - y * other.x;
     }
     Vector2 min(Vector2 const &other) const {
         return Vector2(de::min(x, other.x), de::min(y, other.y));
