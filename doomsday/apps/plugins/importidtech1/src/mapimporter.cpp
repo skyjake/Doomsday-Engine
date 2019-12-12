@@ -19,10 +19,6 @@
  */
 
 #include "mapimporter.h"
-#include <vector>
-#include <list>
-#include <set>
-#include <QVector>
 #include <de/libcore.h>
 #include <de/Error>
 #include <de/ByteRefArray>
@@ -32,12 +28,21 @@
 #include <de/Vector>
 #include "importidtech1.h"
 
+#include <QVector>
+
+#include <vector>
+#include <list>
+#include <set>
+#include <tuple>
+
 using namespace de;
 
 namespace idtech1 {
 namespace internal {
 
 /**
+ * Intersect an unbounded line with a bounded line segment.
+ *
  * @todo This is from libgloom (geomath.h); should not duplicate it here but use
  * that one in the future when it is available.
  *
@@ -328,7 +333,7 @@ struct SectorDef : public Id1MapElement
     // Internal bookkeeping:
     std::set<int> lines;
     int hackFlags = 0;
-    int srContainedBySector = -1; // self-referencing sector contained by a normal sector
+    int visPlaneLinkSector = -1; // self-referencing sector contained by a normal sector
 
     SectorDef(MapImporter &map) : Id1MapElement(map) {}
 
@@ -863,7 +868,7 @@ DENG2_PIMPL(MapImporter)
         return sides[line.sides[0]].sector;
     }
 
-    int vertexMinY(const SectorDef &sector) const
+    int findMinYVertexIndex(const SectorDef &sector) const
     {
         double minY      = std::numeric_limits<double>::max();
         int    minYIndex = -1;
@@ -898,14 +903,13 @@ DENG2_PIMPL(MapImporter)
 
             return {true, t, lineNormal.dot(dir) < 0 ? LineDef::Front : LineDef::Back};
         }
-
         return {false, 0.0, LineDef::Front};
     }
 
     void locateContainingSector(SectorDef &sector)
     {
         // Find the topmost vertex.
-        const Vector2d start = vertices[vertexMinY(sector)].pos;
+        const Vector2d start = vertices[findMinYVertexIndex(sector)].pos;
         const Vector2d end   = start - Vector2d(0.001, -1.0);
 
         std::pair<double, int> nearestContainer{std::numeric_limits<double>::max(), -1};
@@ -926,8 +930,6 @@ DENG2_PIMPL(MapImporter)
 
                 if (hit && t > 0.0 && t < nearestContainer.first)
                 {
-                    qDebug("inters %f, side:%d", t, side);
-
                     const int sector = sides[line.sideIndex(side)].sector;
                     if (sector >= 0 && !sectors[sector].hackFlags)
                     {
@@ -939,8 +941,8 @@ DENG2_PIMPL(MapImporter)
 
         if (nearestContainer.second >= 0)
         {
-            sector.srContainedBySector = nearestContainer.second;
-            qDebug("sector %i contained by %i", indexOf(sector), sector.srContainedBySector);
+            sector.visPlaneLinkSector = nearestContainer.second;
+            qDebug("sector %i contained by %i", indexOf(sector), sector.visPlaneLinkSector);
         }
     }
 
@@ -1263,23 +1265,24 @@ DENG2_PIMPL(MapImporter)
 
         DENG2_FOR_EACH(Sectors, i, sectors)
         {
-            dint idx = MPE_SectorCreate(dfloat(i->lightLevel) / 255.0f, 1, 1, 1, i->index);
+            dint idx = MPE_SectorCreate(
+                dfloat(i->lightLevel) / 255.0f, 1, 1, 1, i->index, i->visPlaneLinkSector);
 
             MPE_PlaneCreate(idx, i->floorHeight, materials.find(i->floorMaterial).toUtf8(),
                             0, 0, 1, 1, 1, 1, 0, 0, 1, -1);
             MPE_PlaneCreate(idx, i->ceilHeight, materials.find(i->ceilMaterial).toUtf8(),
                             0, 0, 1, 1, 1, 1, 0, 0, -1, -1);
 
-            MPE_GameObjProperty("XSector", idx, "Tag",    DDVT_SHORT, &i->tag);
-            MPE_GameObjProperty("XSector", idx, "Type",   DDVT_SHORT, &i->type);
+            MPE_GameObjProperty("XSector", idx, "Tag",                DDVT_SHORT, &i->tag);
+            MPE_GameObjProperty("XSector", idx, "Type",               DDVT_SHORT, &i->type);
 
             if(format == Id1MapRecognizer::Doom64Format)
             {
-                MPE_GameObjProperty("XSector", idx, "Flags",          DDVT_SHORT, &i->d64flags);
-                MPE_GameObjProperty("XSector", idx, "CeilingColor",   DDVT_SHORT, &i->d64ceilingColor);
-                MPE_GameObjProperty("XSector", idx, "FloorColor",     DDVT_SHORT, &i->d64floorColor);
-                MPE_GameObjProperty("XSector", idx, "UnknownColor",   DDVT_SHORT, &i->d64unknownColor);
-                MPE_GameObjProperty("XSector", idx, "WallTopColor",   DDVT_SHORT, &i->d64wallTopColor);
+                MPE_GameObjProperty("XSector", idx, "Flags",           DDVT_SHORT, &i->d64flags);
+                MPE_GameObjProperty("XSector", idx, "CeilingColor",    DDVT_SHORT, &i->d64ceilingColor);
+                MPE_GameObjProperty("XSector", idx, "FloorColor",      DDVT_SHORT, &i->d64floorColor);
+                MPE_GameObjProperty("XSector", idx, "UnknownColor",    DDVT_SHORT, &i->d64unknownColor);
+                MPE_GameObjProperty("XSector", idx, "WallTopColor",    DDVT_SHORT, &i->d64wallTopColor);
                 MPE_GameObjProperty("XSector", idx, "WallBottomColor", DDVT_SHORT, &i->d64wallBottomColor);
             }
         }

@@ -1570,6 +1570,12 @@ bool ClientSubsector::hasSkyCeiling() const
     return hasSkyPlane(Sector::Ceiling);
 }
 
+void ClientSubsector::linkVisPlanes(ClientSubsector &target)
+{
+    d->map(Sector::Floor, &target, true);
+    d->map(Sector::Ceiling, &target, true);
+}
+
 dint ClientSubsector::visPlaneCount() const
 {
     return sector().planeCount();

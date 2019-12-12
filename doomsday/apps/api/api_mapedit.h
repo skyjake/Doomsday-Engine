@@ -100,7 +100,7 @@ DENG_API_TYPEDEF(MPE)
      */
     int             (*LineCreate)(int v1, int v2, int frontSector, int backSector, int flags, int archiveIndex);
     void            (*LineAddSide)(int line, int side, short flags, const char *topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, const char *middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, const char *bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue, int archiveIndex);
-    int             (*SectorCreate)(float lightlevel, float red, float green, float blue, int archiveIndex);
+    int             (*SectorCreate)(float lightlevel, float red, float green, float blue, int archiveIndex, int visPlaneLinkIndex);
     int             (*PlaneCreate)(int sector, coord_t height, const char *materialUri, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ, int archiveIndex);
     int             (*PolyobjCreate)(int const *lines, int linecount, int tag, int sequenceType, coord_t originX, coord_t originY, int archiveIndex);
     dd_bool         (*GameObjProperty)(char const *objName, int idx, char const *propName, valuetype_t type, void *data);

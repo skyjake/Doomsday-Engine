@@ -197,6 +197,10 @@ public:
      */
     Plane *addPlane(de::Vector3f const &normal, de::ddouble height);
 
+    void setVisPlaneLink(int sectorArchiveIndex);
+
+    int visPlaneLink() const;
+
 //- Subsectors --------------------------------------------------------------------------
 
     typedef std::function<world::Subsector * (QVector<world::ConvexSubspace *> const &)> SubsectorConstructor;
@@ -232,6 +236,8 @@ public:
      * @see hasSubsectors()
      */
     de::dint subsectorCount() const;
+
+    world::Subsector &subsector(int index) const;
 
     /**
      * Iterate Subsectors of the sector.

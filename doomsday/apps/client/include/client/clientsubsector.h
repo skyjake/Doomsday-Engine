@@ -248,6 +248,8 @@ public:
 
 //- Visual Planes (mapped) --------------------------------------------------------------
 
+    void linkVisPlanes(ClientSubsector &target);
+
     /**
      * Returns the total number of @em visual planes in the subsector.
      */

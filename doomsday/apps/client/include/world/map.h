@@ -945,8 +945,9 @@ public:  //- Editing -----------------------------------------------------------
     /**
      * @see isEditable()
      */
-    Sector *createSector(de::dfloat lightLevel, de::Vector3f const &lightColor,
-                         de::dint archiveIndex = MapElement::NoIndex);
+    Sector *createSector(float lightLevel, const de::Vector3f &lightColor,
+                         int archiveIndex = MapElement::NoIndex,
+                         int visPlaneLinkIndex= MapElement::NoIndex);
 
     /**
      * Provides a list of all the editable lines in the map.

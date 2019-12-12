@@ -194,6 +194,8 @@ dd_bool MPE_End()
     if(!editMapInited)
         return false;
 
+
+
     /*
      * Log warnings about any issues we encountered during conversion of
      * the basic map data elements.
@@ -328,12 +330,12 @@ int MPE_PlaneCreate(int sectorIdx, coord_t height, const char *materialUri,
 }
 
 #undef MPE_SectorCreate
-int MPE_SectorCreate(float lightlevel, float red, float green, float blue,
-                     int archiveIndex)
+int MPE_SectorCreate(float lightlevel, float red, float green, float blue, int archiveIndex,
+                     int visPlaneLinkIndex)
 {
     ERROR_IF_NOT_INITIALIZED();
     return editMap->createSector(lightlevel, Vector3f(red, green, blue),
-                                 archiveIndex)->indexInMap();
+                                 archiveIndex, visPlaneLinkIndex)->indexInMap();
 }
 
 #undef MPE_PolyobjCreate
