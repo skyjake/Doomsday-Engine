@@ -37,6 +37,34 @@ using namespace de;
 namespace idtech1 {
 namespace internal {
 
+/**
+ * @todo This is from libgloom (geomath.h); should not duplicate it here but use
+ * that one in the future when it is available.
+ *
+ * @returns true, if line A-B intersects the line segment @a other.
+ */
+static bool lineSegmentIntersection(double &lineT,
+                                    const Vector2d &lineA, const Vector2d &lineB,
+                                    const Vector2d &segmentA, const Vector2d &segmentB)
+{
+    const auto &p = segmentA;
+    const auto  r = segmentB - segmentA;
+
+    const auto &q = lineA;
+    const auto  s = lineB - lineA;
+
+    const double r_s = r.cross(s);
+    if (std::abs(r_s) < EPSILON)
+    {
+        return false;
+    }
+    lineT = (q - p).cross(r) / r_s;
+
+    // It has to hit somewhere on `other`.
+    const double u = (q - p).cross(s) / r_s;
+    return u >= 0 && u < 1;
+}
+
 /// @todo kludge - remove me.
 class Id1MapElement
 {
@@ -171,6 +199,7 @@ struct LineDef : public Id1MapElement
 
     inline bool hasFront() const { return hasSide(Front); }
     inline bool hasBack()  const { return hasSide(Back);  }
+    inline bool isTwoSided() const { return hasFront() && hasBack(); }
 
     inline dint front()    const { return sideIndex(Front); }
     inline dint back()     const { return sideIndex(Back); }
@@ -228,13 +257,13 @@ struct LineDef : public Id1MapElement
         ddFlags    = 0;
 
         // Translate the line flags for Doomsday:
-#define ML_BLOCKING              1 ///< Solid, is an obstacle.
-#define ML_DONTPEGTOP            8 ///< Upper texture unpegged.
-#define ML_DONTPEGBOTTOM        16 ///< Lower texture unpegged.
+        const int16_t ML_BLOCKING      = 1;  // Solid, is an obstacle.
+        const int16_t ML_DONTPEGTOP    = 8;  // Upper texture unpegged.
+        const int16_t ML_DONTPEGBOTTOM = 16; // Lower texture unpegged.
 
-/// If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load.
-#define ML_INVALID              2048
-#define DOOM_VALIDMASK          0x000001ff
+        /// If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load.
+        const int16_t ML_INVALID     = 2048;
+        const int16_t DOOM_VALIDMASK = 0x01ff;
 
         /**
          * Zero unused flags if ML_INVALID is set.
@@ -272,14 +301,10 @@ struct LineDef : public Id1MapElement
             ddFlags |= DDLF_DONTPEGBOTTOM;
             flags &= ~ML_DONTPEGBOTTOM;
         }
-
-#undef DOOM_VALIDMASK
-#undef ML_INVALID
-#undef ML_DONTPEGBOTTOM
-#undef ML_DONTPEGTOP
-#undef ML_BLOCKING
     }
 };
+
+enum { HACK_NONE = 0, HACK_SELF_REFERENCING = 0x1 };
 
 struct SectorDef : public Id1MapElement
 {
@@ -299,6 +324,11 @@ struct SectorDef : public Id1MapElement
     duint16 d64unknownColor;
     duint16 d64wallTopColor;
     duint16 d64wallBottomColor;
+
+    // Internal bookkeeping:
+    std::set<int> lines;
+    int hackFlags = 0;
+    int srContainedBySector = -1; // self-referencing sector contained by a normal sector
 
     SectorDef(MapImporter &map) : Id1MapElement(map) {}
 
@@ -687,6 +717,11 @@ DENG2_PIMPL(MapImporter)
     Impl(Public *i) : Base(i), format(Id1MapRecognizer::UnknownFormat)
     {}
 
+    int indexOf(const SectorDef &sector) const
+    {
+        return int(&sector - sectors.data());
+    }
+
     void readVertexes(de::Reader &from, dint numElements)
     {
         vertices.resize(size_t(numElements));
@@ -780,11 +815,140 @@ DENG2_PIMPL(MapImporter)
         }
     }
 
+    void linkLines()
+    {
+        for (int i = 0; i < int(lines.size()); ++i)
+        {
+            const auto &line = lines[i];
+
+            // Link to vertices.
+            for (int p = 0; p < 2; ++p)
+            {
+                const int vertIndex = line.v[p];
+                if (vertIndex >= 0 && vertIndex < int(vertices.size()))
+                {
+                    vertices[vertIndex].lines.insert(i);
+                }
+            }
+
+            // Link to sectors.
+            for (auto s : {LineDef::Front, LineDef::Back})
+            {
+                if (line.hasSide(s))
+                {
+                    const auto sec = sides[line.sideIndex(s)].sector;
+                    if (sec >= 0 && sec < int(sectors.size()))
+                    {
+                        sectors[sec].lines.insert(i);
+                    }
+                }
+            }
+        }
+    }
+
+    bool isSelfReferencing(const LineDef &line) const
+    {
+        return line.isTwoSided() &&
+               sides[line.sides[0]].sector == sides[line.sides[1]].sector &&
+               sides[line.sides[0]].sector >= 0;
+    }
+
+    int otherSector(const LineDef &line, int sectorIndex) const
+    {
+        DENG2_ASSERT(line.isTwoSided());
+        if (sides[line.sides[0]].sector == sectorIndex)
+        {
+            return sides[line.sides[1]].sector;
+        }
+        return sides[line.sides[0]].sector;
+    }
+
+    int vertexMinY(const SectorDef &sector) const
+    {
+        double minY      = std::numeric_limits<double>::max();
+        int    minYIndex = -1;
+
+        for (int i : sector.lines)
+        {
+            const auto &line = lines[i];
+            for (int p = 0; p < 2; ++p)
+            {
+                if (vertices[line.v[p]].pos.y < minY)
+                {
+                    minY = vertices[line.v[p]].pos.y;
+                    minYIndex = line.v[p];
+                }
+            }
+        }
+        return minYIndex;
+    }
+
+    std::tuple<bool, double, LineDef::Side> findIntersection(
+        const LineDef &line, const Vector2d &start, const Vector2d &end) const
+    {
+        const Vector2d a       = vertices[line.v[0]].pos;
+        const Vector2d b       = vertices[line.v[1]].pos;
+
+        double t;
+        if (lineSegmentIntersection(t, start, end, a, b))
+        {
+            const Vector2d dir        = (end - start).normalize();
+            const Vector2d lineDir    = (b - a).normalize();
+            const Vector2d lineNormal = {lineDir.y, -lineDir.x};
+
+            return {true, t, lineNormal.dot(dir) < 0 ? LineDef::Front : LineDef::Back};
+        }
+
+        return {false, 0.0, LineDef::Front};
+    }
+
+    void locateContainingSector(SectorDef &sector)
+    {
+        // Find the topmost vertex.
+        const Vector2d start = vertices[vertexMinY(sector)].pos;
+        const Vector2d end   = start - Vector2d(0.001, -1.0);
+
+        std::pair<double, int> nearestContainer{std::numeric_limits<double>::max(), -1};
+
+        // Look for intersecting lines in other, normal sectors.
+        for (int lineIndex = 0; lineIndex < int(lines.size()); ++lineIndex)
+        {
+            const auto &line = lines[lineIndex];
+
+            if (!isSelfReferencing(line) &&
+                sector.lines.find(lineIndex) == sector.lines.end())
+            {
+                bool          hit;
+                double        t;
+                LineDef::Side side;
+
+                std::tie(hit, t, side) = findIntersection(line, start, end);
+
+                if (hit && t > 0.0 && t < nearestContainer.first)
+                {
+                    qDebug("inters %f, side:%d", t, side);
+
+                    const int sector = sides[line.sideIndex(side)].sector;
+                    if (sector >= 0 && !sectors[sector].hackFlags)
+                    {
+                        nearestContainer = {t, sector};
+                    }
+                }
+            }
+        }
+
+        if (nearestContainer.second >= 0)
+        {
+            sector.srContainedBySector = nearestContainer.second;
+            qDebug("sector %i contained by %i", indexOf(sector), sector.srContainedBySector);
+        }
+    }
+
     /**
      * Create a temporary polyobj.
      */
     Polyobj *createPolyobj(Polyobj::LineIndices const &lineIndices, dint tag,
-        dint sequenceType, dint16 anchorX, dint16 anchorY)
+                           dint sequenceType, dint16 anchorX, dint16 anchorY)
     {
         // Allocate the new polyobj.
         polyobjs.push_back(Polyobj());
@@ -920,33 +1084,142 @@ DENG2_PIMPL(MapImporter)
         return true;
     }
 
-    void linkVertexLines()
+    size_t collectPolyobjLines(Polyobj::LineIndices &lineList, size_t startLine)
     {
-        for (int i = 0; i < int(lines.size()); ++i)
+        validCount++;
+
+        LineDef &line   = lines[startLine];
+        line.xType      = 0;
+        line.xArgs[0]   = 0;
+        line.validCount = validCount;
+
+        // Keep going until we run out of possible lines.
+        for (int currentLine = int(startLine); currentLine >= 0; )
         {
-            const auto &line = lines[i];
-            for (int p = 0; p < 2; ++p)
+            lineList.push_back(currentLine);
+
+            const int currentEnd = lines[currentLine].v[1];
+            int       nextLine   = -1;
+
+            // Look for a line starting where current line ends.
+            for (int i : vertices[currentEnd].lines)
             {
-                const int vertIndex = line.v[p];
-                if (vertIndex >= 0 && vertIndex < int(vertices.size()))
+                auto &other = lines[i];
+                if ((other.aFlags & LAF_POLYOBJ) || other.validCount == validCount)
                 {
-                    vertices[vertIndex].lines.insert(i);
+                    continue;
+                }
+                if (other.v[0] == currentEnd)
+                {
+                    // Use this one.
+                    other.validCount = validCount;
+                    nextLine = i;
+                    break;
                 }
             }
+
+            currentLine = nextLine;
         }
+
+        return lineList.size();
     }
 
     void analyze()
     {
         Time begunAt;
 
-        // Detect map hacks.
+        // Detect self-referencing sectors: all lines of the sector are two-sided and both
+        // sides refer to the sector itself.
         {
-            // Deep water via flat bleeding. Used in TNT MAP02.
-            for (SectorDef &sector : sectors)
-            {
+            bool foundSelfRefs = false;
 
+            for (auto &sector : sectors)
+            {
+                bool good = true;
+                for (int lineIndex : sector.lines)
+                {
+                    if (!isSelfReferencing(lines[lineIndex]))
+                    {
+                        good = false;
+                        break;
+                    }
+                }
+                if (good)
+                {
+                    foundSelfRefs = true;
+                    sector.hackFlags |= HACK_SELF_REFERENCING;
+                    qDebug("self-referencing sector %d", int(&sector - sectors.data()));
+                }
             }
+
+            if (foundSelfRefs)
+            {
+                // Look for the normal sectors that contain the self-referencing sectors.
+                for (auto &sector : sectors)
+                {
+                    if (sector.hackFlags & HACK_SELF_REFERENCING)
+                    {
+                        locateContainingSector(sector);
+                    }
+                }
+            }
+        }
+
+        // Flat bleeding.
+        {
+#if 0
+            for (int currentSector = 0; currentSector < int(sectors.size()); ++currentSector)
+            {
+                auto &sector = sectors[currentSector];
+
+                bool good = true;
+                int surroundingSector = -1;
+
+                // All the lines must:
+                // - be two-sided
+                // - have the same other sector
+                // - not have lower textures
+                for (int lineIndex : sector.lines)
+                {
+                    const auto &line = lines[lineIndex];
+
+                    if (!line.isTwoSided() ||
+                        sides[line.front()].bottomMaterial ||
+                        sides[line.back()].bottomMaterial)
+                    {
+                        good = false;
+                        break;
+                    }
+                    const int other = otherSector(line, currentSector);
+                    if (surroundingSector < 0)
+                    {
+                        surroundingSector = other;
+                    }
+                    else if (surroundingSector != other)
+                    {
+                        good = false;
+                        break;
+                    }
+                }
+
+                if (surroundingSector < 0)
+                {
+                    good = false;
+                }
+                else if (sector.floorHeight == sectors[surroundingSector].floorHeight)
+                {
+                    good = false;
+                }
+
+                if (good)
+                {
+                    if (sector.floorHeight < sectors[surroundingSector].floorHeight)
+                    {
+                        qDebug("flat bleeding detected in floor of sector %i", currentSector);
+                    }
+                }
+            }
+#endif
         }
 
         if(format == Id1MapRecognizer::HexenFormat)
@@ -1202,46 +1475,6 @@ DENG2_PIMPL(MapImporter)
         }
     }
 #endif
-
-    size_t collectPolyobjLines(Polyobj::LineIndices &lineList, size_t startLine)
-    {
-        validCount++;
-
-        LineDef &line   = lines[startLine];
-        line.xType      = 0;
-        line.xArgs[0]   = 0;
-        line.validCount = validCount;
-
-        // Keep going until we run out of possible lines.
-        for (int currentLine = int(startLine); currentLine >= 0; )
-        {
-            lineList.push_back(currentLine);
-
-            const int currentEnd = lines[currentLine].v[1];
-            int       nextLine   = -1;
-
-            // Look for a line starting where current line ends.
-            for (int i : vertices[currentEnd].lines)
-            {
-                auto &other = lines[i];
-                if ((other.aFlags & LAF_POLYOBJ) || other.validCount == validCount)
-                {
-                    continue;
-                }
-                if (other.v[0] == currentEnd)
-                {
-                    // Use this one.
-                    other.validCount = validCount;
-                    nextLine = i;
-                    break;
-                }
-            }
-
-            currentLine = nextLine;
-        }
-
-        return lineList.size();
-    }
 };
 
 MapImporter::MapImporter(Id1MapRecognizer const &recognized)
@@ -1290,7 +1523,7 @@ MapImporter::MapImporter(Id1MapRecognizer const &recognized)
         lump->unlock();
     }
 
-    d->linkVertexLines();
+    d->linkLines();
     d->analyze();
 }
 
