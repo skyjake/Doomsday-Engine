@@ -735,6 +735,15 @@ ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
                 const Line::Side &side = surface.parent().as<Line::Side>();
                 if (side.hasSector())
                 {
+                    if (auto *midAnim = side.middle().materialAnimator())
+                    {
+                        DENG2_ASSERT(&surface != &side.middle());
+                        if (!midAnim->isOpaque())
+                        {
+                            return &midAnim->material();
+                        }
+                    }
+
                     // Use the ceiling for missing top section, and floor for missing bottom section.
                     if (&surface == &side.bottom())
                     {
@@ -3278,6 +3287,15 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
 {
     LineSide const &front = hedge.mapElementAs<LineSideSegment>().lineSide();
 
+    // TNT map02 window grille: transparent masked wall
+    if (auto *anim = front.middle().materialAnimator())
+    {
+        if (!anim->isOpaque())
+        {
+            return false;
+        }
+    }
+
     if (front.considerOneSided())
     {
         return wroteOpaqueMiddle;
@@ -3315,7 +3333,7 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
     if (wroteOpaqueMiddle && middleCoversOpening)
         return true;
 
-    if (   (bceil  <= ffloor && (front.top   ().hasMaterial() || front.middle().hasMaterial()))
+    if (  (bceil  <= ffloor && (front.top   ().hasMaterial() || front.middle().hasMaterial()))
        || (bfloor >= fceil  && (front.bottom().hasMaterial() || front.middle().hasMaterial())))
     {
         Surface const &ffloorSurface = subsec.visFloor  ().surface();
@@ -3397,7 +3415,8 @@ static void writeAllWalls(HEdge &hedge)
                 }
             }
         }
-        ClientApp::renderSystem().angleClipper().addRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin());
+        ClientApp::renderSystem().angleClipper()
+            .addRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin());
     }
 }
 
@@ -3532,25 +3551,11 @@ static void occludeSubspace(bool frontFacing)
         auto const &backSubsec   = backSubspace.subsector().as<world::ClientSubsector>();
 
         // Determine the opening between plane heights at this edge.
-        ddouble openBottom;
-        if (backSubsec.visFloor().heightSmoothed() > subsec.visFloor().heightSmoothed())
-        {
-            openBottom = backSubsec.visFloor().heightSmoothed();
-        }
-        else
-        {
-            openBottom = subsec.visFloor().heightSmoothed();
-        }
+        ddouble openBottom = de::max(backSubsec.visFloor().heightSmoothed(),
+                                     subsec    .visFloor().heightSmoothed());
 
-        ddouble openTop;
-        if (backSubsec.visCeiling().heightSmoothed() < subsec.visCeiling().heightSmoothed())
-        {
-            openTop = backSubsec.visCeiling().heightSmoothed();
-        }
-        else
-        {
-            openTop = subsec.visCeiling().heightSmoothed();
-        }
+        ddouble openTop = de::min(backSubsec.visCeiling().heightSmoothed(),
+                                  subsec    .visCeiling().heightSmoothed());
 
         // Choose start and end vertexes so that it's facing forward.
         Vertex const &from = frontFacing ? hedge->vertex() : hedge->twin().vertex();

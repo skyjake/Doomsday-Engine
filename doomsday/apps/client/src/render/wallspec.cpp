@@ -19,12 +19,12 @@
 
 #include "de_base.h"
 
+#include "MaterialAnimator"
 #include "Sector"
 #include "Surface"
 #include "world/p_players.h" // viewPlayer
 
 #include "render/rend_main.h"
-
 #include "render/walledge.h"
 
 using namespace de;
@@ -60,6 +60,15 @@ WallSpec WallSpec::fromMapSide(LineSide const &side, dint section) // static
     {
         spec.flags &= ~WallSpec::ForceOpaque;
         spec.flags |= WallSpec::NoEdgeDivisions;
+    }
+
+    // TNT MAP02 window grille: transparent masked wall
+    if (auto *midMan = side.middle().materialAnimator())
+    {
+        if (section != LineSide::Middle && !midMan->isOpaque())
+        {
+            spec.flags &= ~WallSpec::ForceOpaque;
+        }
     }
 
     if (isTwoSidedMiddle)
