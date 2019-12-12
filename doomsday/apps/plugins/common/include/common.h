@@ -62,6 +62,7 @@ int     Common_GetInteger(int id);
 void    Common_Load();
 void    Common_Unload();
 void    Common_Register();
+void    Common_RegisterMapObjs();
 
 #ifdef __cplusplus
 } // extern "C"
