@@ -690,6 +690,11 @@ void Line::Side::chooseSurfaceColors(dint sectionId, Vector3f const **topColor,
     throw InvalidSectionIdError("Line::Side::chooseSurfaceColors", "Invalid section id " + String::number(sectionId));
 }
 
+bool Line::Side::hasAtLeastOneMaterial() const
+{
+    return middle().hasMaterial() || top().hasMaterial() || bottom().hasMaterial();
+}
+
 dint Line::Side::shadowVisCount() const
 {
     return d->shadowVisCount;

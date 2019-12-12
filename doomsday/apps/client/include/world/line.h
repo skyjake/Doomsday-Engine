@@ -371,6 +371,8 @@ public:
         void chooseSurfaceColors(de::dint sectionId, de::Vector3f const **topColor,
                                  de::Vector3f const **bottomColor) const;
 
+        bool hasAtLeastOneMaterial() const;
+
     //- SoundEmitters -------------------------------------------------------------------
 
         /**

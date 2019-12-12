@@ -744,6 +744,12 @@ ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
                         }
                     }
 
+                    if (!side.hasAtLeastOneMaterial())
+                    {
+                        // Keep it blank.
+                        return nullptr;
+                    }
+
                     // Use the ceiling for missing top section, and floor for missing bottom section.
                     if (&surface == &side.bottom())
                     {
@@ -3286,6 +3292,12 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
     bool wroteOpaqueMiddle)
 {
     LineSide const &front = hedge.mapElementAs<LineSideSegment>().lineSide();
+
+    // TNT map09 transparent window: blank line
+    if (!front.hasAtLeastOneMaterial())
+    {
+        return false;
+    }
 
     // TNT map02 window grille: transparent masked wall
     if (auto *anim = front.middle().materialAnimator())
