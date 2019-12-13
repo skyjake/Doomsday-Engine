@@ -579,7 +579,7 @@ D_CMD(CheatWhere)
     if(!plrMo) return true;
 
     String const text = String("Map:%1 position:%2")
-                            .arg(gfw_Session()->mapUri().asText())
+                            .arg(gfw_Session()->mapUri().path().asText())
                             .arg(Vector3d(plrMo->origin).asText());
     P_SetMessageWithFlags(plr, text.toUtf8().constData(), LMF_NO_HIDE);
 
