@@ -358,7 +358,7 @@ struct WallEdge::Impl : public IHPlane
 
                 if (!line.isSelfReferencing() && fceil == &subsec.sector().ceiling())
                 {
-                    hi = de::min(bceil->heightSmoothed(),  fceil->heightSmoothed());
+                    hi = de::min(bceil->heightSmoothed(), fceil->heightSmoothed());
                 }
                 else
                 {
@@ -420,6 +420,16 @@ struct WallEdge::Impl : public IHPlane
                         }
                     }
                 }
+                
+                // Icarus map01: force fields use a masked middle texture that expands above the sector
+                if (isExtendedMasked)
+                {
+                    if (hi - lo < middle.material().height())
+                    {
+                        hi = lo + middle.material().height();
+                    }
+                }
+                
                 break; }
             }
         }

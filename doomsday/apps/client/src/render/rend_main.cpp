@@ -757,7 +757,7 @@ ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
                     }
                     else if (&surface == &side.top())
                     {
-                        static_cast<ClientMaterial *>(side.sector().ceiling().surface().materialPtr());
+                        return static_cast<ClientMaterial *>(side.sector().ceiling().surface().materialPtr());
                     }
                 }
             }
