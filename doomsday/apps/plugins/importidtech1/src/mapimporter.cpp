@@ -33,7 +33,6 @@
 #include <vector>
 #include <list>
 #include <set>
-#include <tuple>
 
 using namespace de;
 
@@ -888,7 +887,14 @@ DENG2_PIMPL(MapImporter)
         return minYIndex;
     }
 
-    std::tuple<bool, double, LineDef::Side> findIntersection(
+    struct IntersectionResult
+    {
+        bool          valid;
+        double        t;
+        LineDef::Side side;
+    };
+
+    IntersectionResult findIntersection(
         const LineDef &line, const Vector2d &start, const Vector2d &end) const
     {
         const Vector2d a       = vertices[line.v[0]].pos;
@@ -922,18 +928,14 @@ DENG2_PIMPL(MapImporter)
             if (!isSelfReferencing(line) &&
                 sector.lines.find(lineIndex) == sector.lines.end())
             {
-                bool          hit;
-                double        t;
-                LineDef::Side side;
+                const auto hit = findIntersection(line, start, end);
 
-                std::tie(hit, t, side) = findIntersection(line, start, end);
-
-                if (hit && t > 0.0 && t < nearestContainer.first)
+                if (hit.valid && hit.t > 0.0 && hit.t < nearestContainer.first)
                 {
-                    const int sector = sides[line.sideIndex(side)].sector;
+                    const int sector = sides[line.sideIndex(hit.side)].sector;
                     if (sector >= 0 && !sectors[sector].hackFlags)
                     {
-                        nearestContainer = {t, sector};
+                        nearestContainer = {hit.t, sector};
                     }
                 }
             }
