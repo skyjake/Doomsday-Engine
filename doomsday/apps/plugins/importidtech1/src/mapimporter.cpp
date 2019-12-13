@@ -935,6 +935,8 @@ DENG2_PIMPL(MapImporter)
 
     void locateContainingSector(SectorDef &sector)
     {
+        if (sector.lines.empty()) return;
+
         // Find the topmost vertex.
         const Vector2d start = vertices[findMinYVertexIndex(sector)].pos;
         const Vector2d end   = start - Vector2d(0.001, -1.0);
