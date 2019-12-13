@@ -220,7 +220,6 @@ DENG2_PIMPL(ClientSubsector)
     bool needReverbUpdate = true;
 
     // Per surface lists of light decoration info and state.
-    //QHash<Id::Type, DecoratedSurface> decorSurfaces;
     QSet<Surface *> decorSurfaces;
 
     Impl(Public *i) : Base(i)
@@ -1230,7 +1229,7 @@ DENG2_PIMPL(ClientSubsector)
         LOG_AS("ClientSubsector");
 
         // We may need to update one or both mapped planes.
-        maybeInvalidateMapping(plane.indexInSector());
+//        maybeInvalidateMapping(plane.indexInSector());
 
         /*
         // We may need to fix newly revealed missing materials.
@@ -1303,7 +1302,7 @@ DENG2_PIMPL(ClientSubsector)
         LOG_AS("ClientSubsector");
 
         // We may need to update one or both mapped planes.
-        maybeInvalidateMapping(plane.indexInSector());
+//        maybeInvalidateMapping(plane.indexInSector());
 
         // We may need to project new decorations.
         markDependentSurfacesForRedecoration(plane);

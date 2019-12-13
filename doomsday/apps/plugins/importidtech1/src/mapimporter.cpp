@@ -160,7 +160,7 @@ struct SideDef : public Id1MapElement
 
 struct LineDef : public Id1MapElement
 {
-    enum Side {
+    enum Side {        
         Front,
         Back
     };
@@ -308,7 +308,12 @@ struct LineDef : public Id1MapElement
     }
 };
 
-enum { HACK_NONE = 0, HACK_SELF_REFERENCING = 0x1 };
+inline LineDef::Side opposite(LineDef::Side side)
+{
+    return side == LineDef::Front ? LineDef::Back : LineDef::Front;
+}
+
+enum { HACK_NONE = 0, HACK_SELF_REFERENCING = 0x1, HACK_FLAT_BLEEDING = 0x2 };
 
 struct SectorDef : public Id1MapElement
 {
@@ -852,7 +857,8 @@ DENG2_PIMPL(MapImporter)
 
     bool isSelfReferencing(const LineDef &line) const
     {
-        return line.isTwoSided() &&
+        return !(line.aFlags & LAF_POLYOBJ) &&
+               line.isTwoSided() &&
                sides[line.sides[0]].sector == sides[line.sides[1]].sector &&
                sides[line.sides[0]].sector >= 0;
     }
@@ -865,6 +871,21 @@ DENG2_PIMPL(MapImporter)
             return sides[line.sides[1]].sector;
         }
         return sides[line.sides[0]].sector;
+    }
+
+    int sideOfSector(const LineDef &line, int sectorIndex) const
+    {        
+        for (auto s : {LineDef::Front, LineDef::Back})
+        {
+            if (line.sides[s] >= 0)
+            {
+                if (sides[line.sides[s]].sector == sectorIndex)
+                {
+                    return s;
+                }
+            }
+        }
+        return -1;
     }
 
     int findMinYVertexIndex(const SectorDef &sector) const
@@ -1132,6 +1153,20 @@ DENG2_PIMPL(MapImporter)
     {
         Time begunAt;
 
+        if (format == Id1MapRecognizer::HexenFormat)
+        {
+            LOGDEV_MAP_XVERBOSE("Locating polyobjs...", "");
+            DENG2_FOR_EACH(Things, i, things)
+            {
+                // A polyobj anchor?
+                if(i->doomEdNum == PO_ANCHOR_DOOMEDNUM)
+                {
+                    dint const tag = i->angle;
+                    findAndCreatePolyobj(tag, i->origin[VX], i->origin[VY]);
+                }
+            }
+        }
+
         // Detect self-referencing sectors: all lines of the sector are two-sided and both
         // sides refer to the sector itself.
         {
@@ -1169,73 +1204,73 @@ DENG2_PIMPL(MapImporter)
             }
         }
 
-        // Flat bleeding.
+        // Transparent window: sector without wall textures.
         {
-#if 0
             for (int currentSector = 0; currentSector < int(sectors.size()); ++currentSector)
             {
                 auto &sector = sectors[currentSector];
 
-                bool good = true;
-                int surroundingSector = -1;
+                if (sector.hackFlags) continue;
 
-                // All the lines must:
-                // - be two-sided
-                // - have the same other sector
-                // - not have lower textures
+                bool good                   = true;
+                int  surroundingSector      = -1;
+                int  surroundingFloorHeight = 0;
+                int  untexturedCount        = 0;
+
                 for (int lineIndex : sector.lines)
                 {
                     const auto &line = lines[lineIndex];
 
-                    if (!line.isTwoSided() ||
-                        sides[line.front()].bottomMaterial ||
-                        sides[line.back()].bottomMaterial)
+                    if (!line.isTwoSided() || line.aFlags & LAF_POLYOBJ)
                     {
                         good = false;
                         break;
                     }
+
+                    if (!sides[line.front()].bottomMaterial &&
+                        !sides[line.front()].topMaterial &&
+                        !sides[line.front()].middleMaterial &&
+                        !sides[line.back()].bottomMaterial &&
+                        !sides[line.back()].topMaterial &&
+                        !sides[line.back()].middleMaterial)
+                    {
+                        untexturedCount++;
+                    }
+
                     const int other = otherSector(line, currentSector);
+                    if (other == currentSector || sectors[other].hackFlags)
+                    {
+                        good = false;
+                        break;
+                    }
+
                     if (surroundingSector < 0)
                     {
-                        surroundingSector = other;
+                        surroundingSector      = other;
+                        surroundingFloorHeight = sectors[other].floorHeight;
                     }
-                    else if (surroundingSector != other)
+                    else if (surroundingFloorHeight != sectors[other].floorHeight)
                     {
+                        // Surrounding sectors must have the same floor height.
                         good = false;
                         break;
                     }
                 }
 
-                if (surroundingSector < 0)
-                {
-                    good = false;
-                }
-                else if (sector.floorHeight == sectors[surroundingSector].floorHeight)
+                if (surroundingSector < 0 || untexturedCount < 2)
                 {
                     good = false;
                 }
 
                 if (good)
                 {
-                    if (sector.floorHeight < sectors[surroundingSector].floorHeight)
-                    {
-                        qDebug("flat bleeding detected in floor of sector %i", currentSector);
-                    }
-                }
-            }
-#endif
-        }
+                    qDebug("flat bleeding detected in floor of sector %d (untx:%d sur.flr:%d)",
+                           currentSector,
+                           untexturedCount,
+                           surroundingFloorHeight);
 
-        if(format == Id1MapRecognizer::HexenFormat)
-        {
-            LOGDEV_MAP_XVERBOSE("Locating polyobjs...", "");
-            DENG2_FOR_EACH(Things, i, things)
-            {
-                // A polyobj anchor?
-                if(i->doomEdNum == PO_ANCHOR_DOOMEDNUM)
-                {
-                    dint const tag = i->angle;
-                    findAndCreatePolyobj(tag, i->origin[VX], i->origin[VY]);
+                    sector.hackFlags |= HACK_FLAT_BLEEDING;
+                    sector.visPlaneLinkSector = surroundingSector;
                 }
             }
         }

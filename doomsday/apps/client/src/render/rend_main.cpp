@@ -744,7 +744,7 @@ ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
                         }
                     }
 
-                    if (!side.hasAtLeastOneMaterial())
+                    if (&surface != &side.top() && !side.hasAtLeastOneMaterial())
                     {
                         // Keep it blank.
                         return nullptr;
