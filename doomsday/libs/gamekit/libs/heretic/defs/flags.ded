@@ -60,4 +60,4 @@ Flag { ID = "mf2_dontdraw"; Value = 0x100000; }
 Flag { ID = "mf3_noinfight"; Value = 0x1; }
 Flag { ID = "mf3_clientaction"; Value = 0x2; }
 Flag { ID = "mf3_nomorph"; Value = 0x4; }
-
+Flag { ID = "mf3_wallbounce"; Value = 0x8; }

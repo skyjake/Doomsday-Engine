@@ -810,8 +810,11 @@ static void setupPlayerSprites()
         spr->psp     = &ddpl->pSprites[i];
         spr->origin  = viewData->current.origin;
         spr->bspLeaf = &Mobj_BspLeafAtOrigin(*mob);
+        spr->alpha   = spr->psp->alpha;
 
         if(!spr->psp->statePtr) continue;
+
+        spr->light.isFullBright = (spr->psp->flags & DDPSPF_FULLBRIGHT) != 0;
 
         // First, determine whether this is a model or a sprite.
         FrameModelDef *mf = nullptr, *nextmf = nullptr;
@@ -874,17 +877,11 @@ static void setupPlayerSprites()
                 viewData->current.angle() / (dfloat) ANGLE_MAX *-360 + spr->data.model.yawAngleOffset + 90;
             spr->data.model.pitch = viewData->current.pitch * 85 / 110 + spr->data.model.yawAngleOffset;
             std::memset(spr->data.model.visOff, 0, sizeof(spr->data.model.visOff));
-
-            spr->data.model.alpha = spr->psp->alpha;
-            spr->data.model.stateFullBright = (spr->psp->flags & DDPSPF_FULLBRIGHT) != 0;
         }
         else
         {
             // No, draw a 2D sprite (in Rend_DrawPlayerSprites).
             spr->type = VPSPR_SPRITE;
-
-            spr->data.sprite.alpha        = spr->psp->alpha;
-            spr->data.sprite.isFullBright = (spr->psp->flags & DDPSPF_FULLBRIGHT) != 0;
         }
     }
 }

@@ -49,8 +49,8 @@ public:
 
 public:
     NameExpression();
-    NameExpression(const String &identifier, const Flags &flags = ByValue,
-                   const String &scopeIdentifier = "");
+    NameExpression(const String &identifier, Flags flags = ByValue);
+    NameExpression(const StringList &identifierSeqeunce, Flags flags = ByValue);
 
     /// Returns the identifier in the name expression.
     const String &identifier() const;

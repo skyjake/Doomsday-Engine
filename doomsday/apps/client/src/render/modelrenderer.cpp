@@ -97,10 +97,11 @@ DE_PIMPL(ModelRenderer)
     }
 
     void setupLighting(const VisEntityLighting &lighting,
-                       const mobj_t *excludeSourceMobj)
+                       const mobj_t *excludeSourceMobj,
+                       float alpha = 1.0f)
     {
         // Ambient color and lighting vectors.
-        setAmbientLight(lighting.ambientColor * .6f);
+        setAmbientLight(lighting.ambientColor * .6f, alpha);
         clearLights();
         ClientApp::renderSystem().forAllVectorLights(lighting.vLightListIdx,
                                                      [this, excludeSourceMobj]
@@ -115,11 +116,27 @@ DE_PIMPL(ModelRenderer)
             addLight(vlight.direction.xzy(), vlight.color);
             return LoopContinue;
         });
+
+        // Modify the ambient light according to model configuration.
+        /*
+        {
+            Vector4f ambient = uAmbientLight;
+            if (model.flags & render::Model::ThingAlphaAsAmbientLightAlpha)
+            {
+                ambient.w = p.alpha;
+    }
+            if (model.flags & render::Model::ThingFullBrightAsAmbientLight)
+            {
+                ambient = {1.0f, 1.0f, 1.0f, ambient.w};
+            }
+            uAmbientLight = ambient;
+        }
+*/
     }
 
-    void setAmbientLight(const Vec3f &ambientIntensity)
+    void setAmbientLight(const Vec3f &ambientIntensity, float alpha)
     {
-        uAmbientLight = Vec4f(ambientIntensity, 1.f);
+        uAmbientLight = Vec4f(ambientIntensity, alpha);
     }
 
     void clearLights()
@@ -148,6 +165,7 @@ DE_PIMPL(ModelRenderer)
                    const Vec3f &modelOffset,
                    float yawAngle,
                    float pitchAngle,
+                   bool useFixedFov,
                    const Mat4f *preModelToLocal = nullptr)
     {
         Vec3f const aspectCorrect(1.0f, 1.0f/1.2f, 1.0f);
@@ -173,8 +191,8 @@ DE_PIMPL(ModelRenderer)
                 Mat4f::translate(origin) *
                 Mat4f::scale(aspectCorrect); // Inverse aspect correction.
 
-        const Mat4f viewProj = Rend_GetProjectionMatrix(weaponFixedFOV) *
-                                  ClientApp::renderSystem().uViewMatrix().toMat4f();
+        const Mat4f viewProj = Rend_GetProjectionMatrix(useFixedFov ? weaponFixedFOV : 0.0f) *
+                               ClientApp::renderSystem().uViewMatrix().toMat4f();
 
         const Mat4f localToScreen = viewProj * localToWorld;
 
@@ -292,9 +310,10 @@ void ModelRenderer::render(const vissprite_t &spr)
 
     d->setupPose((spr.pose.origin + spr.pose.srvo).xzy(),
                  p.model->offset,
-                 spr.pose.yaw   + spr.pose.yawAngleOffset,
+                 spr.pose.yaw + spr.pose.yawAngleOffset,
                  spr.pose.pitch + spr.pose.pitchAngleOffset,
-                 mobjData? &mobjData->modelTransformation() : nullptr);
+                 false, /* regular FOV */
+                 mobjData ? &mobjData->modelTransformation() : nullptr);
 
     // Ambient color and lighting vectors.
     d->setupLighting(spr.light, nullptr);
@@ -321,11 +340,25 @@ void ModelRenderer::render(const vispsprite_t &pspr, const mobj_t *playerMobj)
 
     Mat4f xform = p.model->transformation;
 
-    d->setupPose(Rend_EyeOrigin(), eyeSpace * p.model->offset,
-                 -90 - yaw, pitch,
+    d->setupPose(Rend_EyeOrigin(),
+                 eyeSpace * p.model->offset,
+                 -90 - yaw,
+                 pitch,
+                 true, /* fixed FOV for psprites */
                  &xform);
 
-    d->setupLighting(pspr.light, playerMobj /* player holding weapon is excluded */);
+    float opacity = 1.0f;
+    if (p.model->flags & render::Model::ThingOpacityAsAmbientLightAlpha)
+    {
+        opacity = pspr.alpha;
+    }
+
+    d->setupLighting(pspr.light, playerMobj /* player holding weapon is excluded */, opacity);
+
+    if (p.model->flags & render::Model::ThingFullBrightAsAmbientLight)
+    {
+        d->setAmbientLight({1.0f, 1.0f, 1.0f}, opacity);
+    }
 
     GLState::push().setCull(p.model->cull);
     d->draw(p);

@@ -375,8 +375,8 @@ static void Def_ReadLumpDefs()
     {
         if (!DED_ReadLump(DED_Definitions(), i))
         {
-            App_Error("Def_ReadLumpDefs: Parse error reading \"%s:DD_DEFNS\".\n",
-                      NativePath(lumpIndex[i].container().composePath()).pretty().c_str());
+            QByteArray path = NativePath(lumpIndex[*i].container().composePath()).pretty().toUtf8();
+            LOG_RES_ERROR("Parse error reading \"%s:DD_DEFNS\": %s") << path.constData() << DED_Error();
         }
     }
 
@@ -543,7 +543,7 @@ static void readAllDefinitions()
     {
         const Game &game = App_CurrentGame();
 
-        // Some games use definitions that are translated to DED.
+        // Some games use definitions (MAPINFO lumps) that are translated to DED.
         StringList mapInfoUrns = allMapInfoUrns();
         if (!mapInfoUrns.isEmpty())
         {
@@ -552,23 +552,25 @@ static void readAllDefinitions()
 
             if (!xlat.isEmpty())
             {
-                LOGDEV_MAP_VERBOSE("Non-custom translated MAPINFO definitions:\n") << xlat;
+                LOG_AS("Non-custom translated");
+                LOGDEV_MAP_VERBOSE("MAPINFO definitions:\n") << xlat;
 
                 if (!DED_ReadData(DED_Definitions(), xlat,
                                  "[TranslatedMapInfos]", false /*not custom*/))
                 {
-                    App_Error("readAllDefinitions: DED parse error:\n%s", DED_Error());
+                    LOG_RES_ERROR("DED parse error: %s") << DED_Error();
                 }
             }
 
             if (!xlatCustom.isEmpty())
             {
-                LOGDEV_MAP_VERBOSE("Custom translated MAPINFO definitions:\n") << xlatCustom;
+                LOG_AS("Custom translated");
+                LOGDEV_MAP_VERBOSE("MAPINFO definitions:\n") << xlatCustom;
 
                 if (!DED_ReadData(DED_Definitions(), xlatCustom,
                                  "[TranslatedMapInfos]", true /*custom*/))
                 {
-                    App_Error("readAllDefinitions: DED parse error:\n%s", DED_Error());
+                    LOG_RES_ERROR("DED parse error: %s") << DED_Error();
                 }
             }
         }
@@ -584,9 +586,8 @@ static void readAllDefinitions()
             const String &path = record.resolvedPath(true/*try to locate*/);
             if (path.isEmpty())
             {
-                App_Error(
-                    "readAllDefinitions: Error, failed to locate required game definition \"%s\".",
-                    String::join(record.names(), ";").c_str());
+                const auto names = String::join(record.names(), ";");
+                LOG_RES_ERROR("Failed to locate required game definition \"%s\"") << names;
             }
             readDefinitionFile(path);
         }

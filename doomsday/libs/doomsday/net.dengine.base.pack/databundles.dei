@@ -80,9 +80,9 @@ package "com.idsoftware.doom_1.9" {
 }
 
 package "com.idsoftware.doom.shareware_1.9" {
-    format: IWAD 
+    format: IWAD
     fileName: doom1.wad
-    fileSize: 4196020 
+    fileSize: 4196020
     lumps <E1M1, E1M2, E1M3, E1M4, E1M5, E1M6, E1M7, E1M8, E1M9, D_E1M1, FLOOR4_8, FLOOR7_2>
     lumpDirCRC32: b3950597
     info {
@@ -94,9 +94,9 @@ package "com.idsoftware.doom.shareware_1.9" {
 }
 
 package "com.idsoftware.doom.ultimate_1.9" {
-    format: IWAD 
+    format: IWAD
     fileName <doomu.wad, doom.wad>
-    fileSize: 12408292 
+    fileSize: 12408292
     lumps <E4M1, E4M2, E4M3, E4M4, E4M5, E4M6, E4M7, E4M8, E4M9, M_EPI4>
     lumpDirCRC32: a990524d
     info {
@@ -108,9 +108,9 @@ package "com.idsoftware.doom.ultimate_1.9" {
 }
 
 package "com.idsoftware.doom.bfg_2012.10.16" {
-    format: PWAD 
+    format: PWAD
     fileName: doom.wad
-    fileSize: 12487824 
+    fileSize: 12487824
     lumps <E4M1, E4M2, E4M3, E4M4, E4M5, E4M6, E4M7, E4M8, E4M9, M_EPI4>
     lumpDirCRC32: 8aed7bf2
     info {
@@ -122,9 +122,9 @@ package "com.idsoftware.doom.bfg_2012.10.16" {
 }
 
 package "com.idsoftware.doom.bfg.decensor_1.0" {
-    format: IWAD 
+    format: IWAD
     fileName <udoomcen.wad, doom.wad>
-    fileSize: 12487826 
+    fileSize: 12487826
     lumps <E4M1, E4M2, E4M3, E4M4, E4M5, E4M6, E4M7, E4M8, E4M9, M_EPI4>
     lumpDirCRC32: e51d82df
     info {
@@ -137,9 +137,9 @@ package "com.idsoftware.doom.bfg.decensor_1.0" {
 }
 
 package "com.idsoftware.doom2_1.6.66" {
-    format: IWAD 
+    format: IWAD
     fileName: doom2.wad
-    fileSize: 14943400 
+    fileSize: 14943400
     lumpDirCRC32: b0b547e0
     info {
         title: DOOM 2: Hell on Earth
@@ -150,7 +150,7 @@ package "com.idsoftware.doom2_1.6.66" {
 }
 
 package "com.idsoftware.doom2.german_1.6.66" {
-    format: IWAD 
+    format: IWAD
     fileName: doom2.wad
     fileSize: 14824716
     info {
@@ -162,9 +162,9 @@ package "com.idsoftware.doom2.german_1.6.66" {
 }
 
 package "com.idsoftware.doom2.french_1.8" {
-    format: IWAD 
+    format: IWAD
     fileName: doom2f.wad
-    fileSize: 14607420 
+    fileSize: 14607420
     lumpDirCRC32: 3234e940
     info {
         title: DOOM 2: Hell on Earth (French)
@@ -177,7 +177,7 @@ package "com.idsoftware.doom2.french_1.8" {
 package "com.idsoftware.doom2_1.9" {
     format: IWAD
     fileName <doom2f.wad, doom2.wad>
-    fileSize: 14604584 
+    fileSize: 14604584
     lumps <MAP01, MAP02, MAP03, MAP04, MAP10, MAP20, MAP25, MAP30, VILEN1, VILEO1, VILEQ1, GRNROCK>
     lumpDirCRC32: 687126dc
     info {
@@ -191,7 +191,7 @@ package "com.idsoftware.doom2_1.9" {
 package "com.idsoftware.doom2.bfg_2012.10.16" {
     format: PWAD
     fileName: doom2.wad
-    fileSize: 14691821 
+    fileSize: 14691821
     lumps <MAP01, MAP02, MAP03, MAP04, MAP10, MAP20, MAP25, MAP30, VILEN1, VILEO1, VILEQ1, GRNROCK>
     lumpDirCRC32: 2f9a0a30
     info {
@@ -205,7 +205,7 @@ package "com.idsoftware.doom2.bfg_2012.10.16" {
 package "com.idsoftware.doom2.bfg.decensor_1.0" {
     format: IWAD
     fileName <doom2cen.wad, doom2.wad>
-    fileSize: 14692182 
+    fileSize: 14692182
     lumps <MAP01, MAP02, MAP03, MAP04, MAP10, MAP20, MAP25, MAP30, VILEN1, VILEO1, VILEQ1, GRNROCK>
     lumpDirCRC32: 376c997e
     info {
@@ -220,7 +220,7 @@ package "com.idsoftware.doom2.bfg.decensor_1.0" {
 package "com.nervesoftware.norestfortheliving_2012.10.16" {
     format: PWAD
     fileName: nerve.wad
-    fileSize: 3819855 
+    fileSize: 3819855
     lumps <CWILV00, CWILV08, MAP01, MAP02, MAP03, MAP04, MAP09>
     lumpDirCRC32: 29240a37
     info {
@@ -233,9 +233,9 @@ package "com.nervesoftware.norestfortheliving_2012.10.16" {
 }
 
 package "com.idsoftware.finaldoom.plutonia_1.9" {
-    format: IWAD 
+    format: IWAD
     fileName: plutonia.wad
-    fileSize: 17420824 
+    fileSize: 17420824
     lumps <_DEUTEX_, MAP01, MAP25, MC5, MC11, MC16, MC20>
     lumpDirCRC32: d926b798
     info {
@@ -247,7 +247,7 @@ package "com.idsoftware.finaldoom.plutonia_1.9" {
 }
 
 package "com.idsoftware.finaldoom.plutonia_1.9.1" {
-    format: IWAD 
+    format: IWAD
     fileName: plutonia.wad
     fileSize: 18240172
     lumps <_DEUTEX_, MAP01, MAP25, MC5, MC11, MC16, MC20>
@@ -261,9 +261,9 @@ package "com.idsoftware.finaldoom.plutonia_1.9.1" {
 }
 
 package "com.idsoftware.finaldoom.tnt_1.9" {
-    format: IWAD 
+    format: IWAD
     fileName: tnt.wad
-    fileSize: 18195736 
+    fileSize: 18195736
     lumps <CAVERN5, CAVERN7, STONEW1>
     lumpDirCRC32: 5d08a3ea
     info {
@@ -275,7 +275,7 @@ package "com.idsoftware.finaldoom.tnt_1.9" {
 }
 
 package "com.idsoftware.finaldoom.tnt_1.9.1" {
-    format: IWAD 
+    format: IWAD
     fileName: tnt.wad
     fileSize: 18654796
     lumps <CAVERN5, CAVERN7, STONEW1>
@@ -312,9 +312,9 @@ package "digitalcafe.chexquest" {
 }
 
 package "kaiser.doom64" {
-    format: IWAD 
+    format: IWAD
     fileName: doom64.wad
-    fileSize: 47458247 
+    fileSize: 47458247
     lumps <MAP01, MAP20, MAP33, F_SUCK>
     lumpDirCRC32: c3f5ef4a
     info {
@@ -326,9 +326,9 @@ package "kaiser.doom64" {
 }
 
 package "freedoom.phase2_0.6.4" {
-    format: IWAD 
+    format: IWAD
     fileName: doom2.wad
-    fileSize: 19801320 
+    fileSize: 19801320
     lumps <MAP01>
     lumpDirCRC32: ab472d37
     info {
@@ -340,9 +340,9 @@ package "freedoom.phase2_0.6.4" {
 }
 
 package "freedoom.phase2_0.7" {
-    format: IWAD 
+    format: IWAD
     fileName: doom2.wad
-    fileSize: 27625596 
+    fileSize: 27625596
     lumps <MAP01>
     lumpDirCRC32: 85e31f19
     info {
@@ -354,9 +354,9 @@ package "freedoom.phase2_0.7" {
 }
 
 package "freedoom.phase2_0.8" {
-    format: IWAD 
+    format: IWAD
     fileName: doom2.wad
-    fileSize: 28592816 
+    fileSize: 28592816
     lumps <MAP01>
     lumpDirCRC32: 6ce5db8
     info {
@@ -368,9 +368,9 @@ package "freedoom.phase2_0.8" {
 }
 
 package "freedoom.phase2_0.8.1" {
-    format: IWAD 
+    format: IWAD
     fileName: doom2.wad
-    fileSize: 28144744 
+    fileSize: 28144744
     lumps <MAP01>
     lumpDirCRC32: 5a5e07d3
     info {
@@ -382,7 +382,7 @@ package "freedoom.phase2_0.8.1" {
 }
 
 package "freedoom.phase2_0.9" {
-    format: IWAD 
+    format: IWAD
     fileName <freedoom2.wad, doom2.wad>
     fileSize: 30426864
     lumps <MAP01>
@@ -396,7 +396,7 @@ package "freedoom.phase2_0.9" {
 }
 
 package "freedoom.phase2_0.10" {
-    format: IWAD 
+    format: IWAD
     fileName <freedoom2.wad, doom2.wad>
     fileSize: 29182560
     lumps <MAP01>
@@ -410,7 +410,7 @@ package "freedoom.phase2_0.10" {
 }
 
 package "freedoom.phase2_0.10.1" {
-    format: IWAD 
+    format: IWAD
     fileName <freedoom2.wad, doom2.wad>
     fileSize: 29182140
     lumps <MAP01>
@@ -424,7 +424,7 @@ package "freedoom.phase2_0.10.1" {
 }
 
 package "freedoom.phase2_0.11.2" {
-    format: IWAD 
+    format: IWAD
     fileName <freedoom2.wad>
     fileSize: 29093468
     lumps <MAP01, MAP32>
@@ -438,7 +438,7 @@ package "freedoom.phase2_0.11.2" {
 }
 
 package "freedoom.phase2_0.11.3" {
-    format: IWAD 
+    format: IWAD
     fileName <freedoom2.wad>
     fileSize: 29102220
     lumps <MAP01, MAP32>
@@ -451,8 +451,34 @@ package "freedoom.phase2_0.11.3" {
     }
 }
 
+package "freedoom.phase2_0.12.1" {
+    format: IWAD
+    fileName <freedoom2.wad>
+    fileSize: 28544132
+    lumps <MAP01, MAP32>
+    lumpDirCRC32: 4e1e69f7
+    info {
+        title: Freedoom: Phase 2
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod
+    }
+}
+
+package "freedoom.phase2" {
+    format: IWAD
+    fileName <freedoom2.wad>
+    lumps <MAP01, MAP32>
+    info {
+        title: Freedoom: Phase 2 (unrecognized version)
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod
+    }
+}
+
 package "freedoom.phase1_0.9" {
-    format: IWAD 
+    format: IWAD
     fileName: freedoom1.wad
     fileSize: 20165884
     lumps <E1M1>
@@ -466,7 +492,7 @@ package "freedoom.phase1_0.9" {
 }
 
 package "freedoom.phase1_0.10" {
-    format: IWAD 
+    format: IWAD
     fileName: freedoom1.wad
     fileSize: 21493744
     lumps <E1M1>
@@ -480,7 +506,7 @@ package "freedoom.phase1_0.10" {
 }
 
 package "freedoom.phase1_0.10.1" {
-    format: IWAD 
+    format: IWAD
     fileName: freedoom1.wad
     fileSize: 21493744
     lumps <E1M1>
@@ -494,7 +520,7 @@ package "freedoom.phase1_0.10.1" {
 }
 
 package "freedoom.phase1_0.11.2" {
-    format: IWAD 
+    format: IWAD
     fileName: freedoom1.wad
     fileSize: 23559728
     lumps <E1M1, E4M9>
@@ -508,7 +534,7 @@ package "freedoom.phase1_0.11.2" {
 }
 
 package "freedoom.phase1_0.11.3" {
-    format: IWAD 
+    format: IWAD
     fileName: freedoom1.wad
     fileSize: 23578720
     lumps <E1M1, E4M9>
@@ -521,10 +547,36 @@ package "freedoom.phase1_0.11.3" {
     }
 }
 
+package "freedoom.phase1_0.12.1" {
+    format: IWAD
+    fileName: freedoom1.wad
+    fileSize: 27284988
+    lumps <E1M1, E4M9>
+    lumpDirCRC32: 1e08d29f
+    info {
+        title: Freedoom: Phase 1
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom mod
+    }
+}
+
+package "freedoom.phase1" {
+    format: IWAD
+    fileName: freedoom1.wad
+    lumps <E1M1, E4M9>
+    info {
+        title: Freedoom: Phase 1 (unrecognized version)
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom mod
+    }
+}
+
 package "freedoom.freedm_0.10.1" {
-    format: IWAD 
+    format: IWAD
     fileName: freedm.wad
-    fileSize: 19127900 
+    fileSize: 19127900
     lumps <MAP01>
     lumpDirCRC32: c3be5175
     info {
@@ -536,9 +588,9 @@ package "freedoom.freedm_0.10.1" {
 }
 
 package "freedoom.freedm_0.11.2" {
-    format: IWAD 
+    format: IWAD
     fileName: freedm.wad
-    fileSize: 21103364 
+    fileSize: 21103364
     lumps <MAP01, MAP32>
     lumpDirCRC32: 68d2ddfd
     info {
@@ -550,13 +602,39 @@ package "freedoom.freedm_0.11.2" {
 }
 
 package "freedoom.freedm_0.11.3" {
-    format: IWAD 
+    format: IWAD
     fileName: freedm.wad
-    fileSize: 21112116 
+    fileSize: 21112116
     lumps <MAP01, MAP32>
     lumpDirCRC32: 521c112b
     info {
         title: Freedoom Deathmatch
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod multiplayer
+    }
+}
+
+package "freedoom.freedm_0.12.1" {
+    format: IWAD
+    fileName: freedm.wad
+    fileSize: 21824448
+    lumps <MAP01, MAP32>
+    lumpDirCRC32: 30fd81a7
+    info {
+        title: Freedoom Deathmatch
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod multiplayer
+    }
+}
+
+package "freedoom.freedm" {
+    format: IWAD
+    fileName: freedm.wad
+    lumps <MAP01, MAP32>
+    info {
+        title: Freedoom Deathmatch (unrecognized version)
         author: Freedoom Project
         license: BSD
         tags: gamedata doom2 mod multiplayer
@@ -573,7 +651,7 @@ package "com.ravensoftware.heretic_1.0" {
         author: Raven Software
         license: All rights reserved
         tags: gamedata heretic vanilla
-    }    
+    }
 }
 
 package "com.ravensoftware.heretic_1.2" {
@@ -585,40 +663,40 @@ package "com.ravensoftware.heretic_1.2" {
         author: Raven Software
         license: All rights reserved
         tags: gamedata heretic vanilla
-    }    
+    }
 }
 
 package "com.ravensoftware.heretic.shareware_1.2" {
-    format: IWAD 
+    format: IWAD
     fileName: heretic1.wad
-    fileSize: 5120920 
+    fileSize: 5120920
     lumps <E1M1, MUMSIT, WIZACT, MUS_CPTD, CHKNC5, SPAXA1A5>
     lumpDirCRC32: c3aefe95
     info {
         title: Heretic Shareware
         author: Raven Software
         license: All rights reserved
-        tags: gamedata heretic vanilla    
+        tags: gamedata heretic vanilla
     }
 }
 
 package "com.ravensoftware.heretic.shareware_1.0" {
-    format: IWAD 
+    format: IWAD
     fileName: heretic1.wad
-    fileSize: 5120300 
+    fileSize: 5120300
     lumps <E1M1, MUMSIT, WIZACT, MUS_CPTD, CHKNC5, SPAXA1A5>
     info {
         title: Heretic Shareware
         author: Raven Software
         license: All rights reserved
-        tags: gamedata heretic vanilla    
+        tags: gamedata heretic vanilla
     }
 }
 
 package "com.ravensoftware.heretic.extended" {
-    format: IWAD 
+    format: IWAD
     fileName: heretic.wad
-    fileSize: 14189976 
+    fileSize: 14189976
     lumps <EXTENDED, E5M2, E5M7, E6M2, MUMSIT, WIZACT, MUS_CPTD, CHKNC5, SPAXA1A5>
     lumpDirCRC32: 515ab4d9
     info {
@@ -630,9 +708,9 @@ package "com.ravensoftware.heretic.extended" {
 }
 
 package "com.ravensoftware.hexen.deathkings_1.0" {
-    format: IWAD 
+    format: IWAD
     fileName: hexdd.wad
-    fileSize: 4429700 
+    fileSize: 4429700
     lumps <MAP59, MAP60>
     lumpDirCRC32: b0b096be
     info {
@@ -645,7 +723,7 @@ package "com.ravensoftware.hexen.deathkings_1.0" {
 }
 
 package "com.ravensoftware.hexen.deathkings_1.1" {
-    format: IWAD 
+    format: IWAD
     fileName: hexdd.wad
     fileSize: 4440584
     lumps <MAP59, MAP60>
@@ -660,37 +738,37 @@ package "com.ravensoftware.hexen.deathkings_1.1" {
 }
 
 package "com.ravensoftware.hexen_1.0" {
-    format: IWAD 
+    format: IWAD
     fileName: hexen.wad
-    fileSize: 20128392 
+    fileSize: 20128392
     lumps <MAP08, MAP22, MAP41, TINTTAB, FOGMAP, DARTA1, ARTIPORK, SKYFOG, GROVER>
     lumpDirCRC32: 37edddfd
     info {
         title: Hexen
         author: Raven Software
         license: All rights reserved
-        tags: gamedata hexen vanilla        
+        tags: gamedata hexen vanilla
     }
 }
 
 package "com.ravensoftware.hexen_1.1" {
-    format: IWAD 
+    format: IWAD
     fileName: hexen.wad
-    fileSize: 20083672 
+    fileSize: 20083672
     lumps <MAP08, MAP22, TINTTAB, FOGMAP, TRANTBLA, DARTA1, ARTIPORK, SKYFOG, TALLYTOP, GROVER>
     lumpDirCRC32: d334ff57
     info {
         title: Hexen
         author: Raven Software
         license: All rights reserved
-        tags: gamedata hexen vanilla        
+        tags: gamedata hexen vanilla
     }
 }
 
 package "com.ravensoftware.hexen.mac_1.1" {
-    format: IWAD 
+    format: IWAD
     fileName: hexen.wad
-    fileSize: 21078584 
+    fileSize: 21078584
     lumps <MAP08, MAP22, TINTTAB, FOGMAP, TRANTBLA, DARTA1, ARTIPORK, SKYFOG, TALLYTOP, GROVER>
     lumpDirCRC32: 6340baf
     info {
@@ -702,9 +780,9 @@ package "com.ravensoftware.hexen.mac_1.1" {
 }
 
 package "com.ravensoftware.hexen.beta" {
-    format: IWAD 
+    format: IWAD
     fileName <hexen.wad, hexenbeta.wad>
-    fileSize: 10615976 
+    fileSize: 10615976
     lumps <MAP01, MAP04, TINTTAB, FOGMAP, DARTA1, ARTIPORK, AFLYA0, "DEMO3==13866">
     lumpDirCRC32: 2f99489f
     info {
@@ -716,7 +794,7 @@ package "com.ravensoftware.hexen.beta" {
 }
 
 package "com.ravensoftware.hexen.demo" {
-    format: IWAD 
+    format: IWAD
     fileName <hexen.wad, hexendemo.wad>
     fileSize: 10644136
     lumps <MAP01, MAP04, TINTTAB, FOGMAP, DARTA1, ARTIPORK, "DEMO3==18150">
@@ -730,9 +808,9 @@ package "com.ravensoftware.hexen.demo" {
 }
 
 package "com.ravensoftware.hexen.macdemo" {
-    format: IWAD 
+    format: IWAD
     fileName <hexen.wad, machexendemo.wad>
-    fileSize: 13596228 
+    fileSize: 13596228
     lumpDirCRC32: 4b8db35c
     info {
         title: Hexen (Macintosh Demo)

@@ -27,7 +27,7 @@ model.skeletal {
             in vec4 aVertex;
             in vec4 aColor;
             in vec2 aUV;
-            in vec4 aBounds0;   // diffuse map
+            in vec4 aBounds0;  // diffuse map
             in vec4 aBounds1;  // normal map
             in vec4 aBounds2;  // specular map
             in vec4 aBounds3;  // emission map
@@ -92,7 +92,7 @@ model.skeletal {
                 vec3 msNormal = modelSpaceNormalVector(normalUV);
                 vec4 specGloss = specularGloss(specularUV);
 
-                float alphaFactor = uAlpha;
+                float alphaFactor = uAlpha * uAmbientLight.a;
             #if defined (PREDEF_TRANSFORM_ALPHA)
                 PREDEF_TRANSFORM_ALPHA(alphaFactor);
             #endif
@@ -146,7 +146,7 @@ model.skeletal {
                 vec4 specGloss = specularGloss(specularUV);
 
                 out_FragColor = diffuseAndReflectedLight(
-                    vColor * vec4(uColor, uAlpha), uv, specGloss, msNormal);
+                    vColor * vec4(uColor, uAlpha * uAmbientLight.a), uv, specGloss, msNormal);
 
                 if (out_FragColor.a < uAlphaLimit) discard;
 
@@ -185,7 +185,7 @@ model.skeletal {
             in vec4 aVertex;
             in vec4 aColor;
             in vec2 aUV;
-            in vec4 aBounds0;   // diffuse map
+            in vec4 aBounds0;  // diffuse map
             in vec4 aBounds1;  // normal map
             in vec4 aBounds2;  // specular map
 
@@ -243,7 +243,7 @@ model.skeletal {
                 vec4 specGloss = specularGloss(specularUV);
 
                 out_FragColor = diffuseAndReflectedLight(
-                    vColor * vec4(uColor, uAlpha), uv, specGloss, msNormal);
+                    vColor * vec4(uColor, uAlpha * uAmbientLight.a), uv, specGloss, msNormal);
                 if (out_FragColor.a < uAlphaLimit) discard;
 
                 out_FragColor.rgb += specularLight(specGloss, msNormal);
@@ -276,7 +276,7 @@ model.skeletal {
             in vec4 aVertex;
             in vec4 aColor;
             in vec2 aUV;
-            in vec4 aBounds0;   // diffuse map
+            in vec4 aBounds0;  // diffuse map
             in vec4 aBounds1;  // normal map
 
             out vec4 vColor;
@@ -331,7 +331,7 @@ model.skeletal {
                              * texture(uTex, uv);
                 if (out_FragColor.a < uAlphaLimit) discard;
 
-                out_FragColor.a = uAlpha;
+                out_FragColor.a = uAlpha * uAmbientLight.a;
 
                 applyFog();
             }"

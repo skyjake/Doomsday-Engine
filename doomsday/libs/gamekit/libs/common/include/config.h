@@ -115,6 +115,7 @@ typedef struct libcommon_config_s {
 
     byte            mapTitle;
     byte            hideIWADAuthor;
+    byte            hideUnknownAuthor;
 
     // Crosshair:
     int             xhair;

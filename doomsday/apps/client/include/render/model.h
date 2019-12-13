@@ -58,6 +58,8 @@ struct Model : public ModelDrawable
     enum Flag
     {
         AutoscaleToThingHeight = 0x1,
+        ThingOpacityAsAmbientLightAlpha = 0x2,
+        ThingFullBrightAsAmbientLight = 0x4,
         DefaultFlags = AutoscaleToThingHeight
     };
 

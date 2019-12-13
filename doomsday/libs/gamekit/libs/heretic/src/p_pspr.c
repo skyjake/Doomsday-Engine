@@ -708,10 +708,13 @@ void C_DECL A_MacePL1Check(mobj_t *ball)
 
     ball->special1 = 0;
     ball->flags2 |= MF2_LOGRAV;
-    an = ball->angle >> ANGLETOFINESHIFT;
-    ball->mom[MX] = 7 * FIX2FLT(finecosine[an]);
-    ball->mom[MY] = 7 * FIX2FLT(finesine[an]);
     ball->mom[MZ] /= 2;
+    if (!(ball->flags3 & MF3_WALLBOUNCE))
+    {
+        an = ball->angle >> ANGLETOFINESHIFT;
+        ball->mom[MX] = 7 * FIX2FLT(finecosine[an]);
+        ball->mom[MY] = 7 * FIX2FLT(finesine[an]);
+    }
 }
 
 void C_DECL A_MaceBallImpact(mobj_t* ball)

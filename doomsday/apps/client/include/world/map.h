@@ -209,6 +209,11 @@ public:
 
     void restoreObjects(const de::Info &objState, const IThinkerMapping &thinkerMapping) const;
 
+    /**
+     * Force an update on all decorated surfaces.
+     */
+    void redecorate();
+
 public:  //- Light sources --------------------------------------------------------------
 
 #if 0
@@ -530,7 +535,7 @@ public:  //- Polyobjects -------------------------------------------------------
      *
      * @param callback  Function to call for each Sector.
      */
-    de::LoopResult forAllSectors(std::function<de::LoopResult (Sector &)> callback) const;
+    de::LoopResult forAllSectors(const std::function<de::LoopResult (Sector &)> &callback) const;
 
     /**
      * Increment validCount before calling this routine. The callback function will be
@@ -943,8 +948,9 @@ public:  //- Editing -----------------------------------------------------------
     /**
      * @see isEditable()
      */
-    Sector *createSector(de::dfloat lightLevel, const de::Vec3f &lightColor,
-                         de::dint archiveIndex = MapElement::NoIndex);
+    Sector *createSector(float lightLevel, const de::Vec3f &lightColor,
+                         int archiveIndex = MapElement::NoIndex,
+                         int visPlaneLinkIndex = MapElement::NoIndex);
 
     /**
      * Provides a list of all the editable lines in the map.

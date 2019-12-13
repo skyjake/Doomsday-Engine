@@ -244,10 +244,10 @@ public:
     Vector2 abs() const {
         return Vector2(de::abs(x), de::abs(y));
     }
-    ddouble dot(const Vector2 &other) const {
+    double dot(const Vector2 &other) const {
         return x * other.x + y * other.y;
     }
-    ddouble cross(const Vector2 &other) const {
+    double cross(const Vector2 &other) const {
         return x * other.y - y * other.x;
     }
     Vector2 min(const Vector2 &other) const {

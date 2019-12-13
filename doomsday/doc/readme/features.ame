@@ -21,7 +21,7 @@ Graphics:
     @item Dynamic @wikiterm{ambient occlusion} (corner shadowing) for world surfaces
     @item Dynamic shadowing effects for world objects
     @item @wikiterm{Particle effects} system
-    @item 3D models for world objects (with per-vertex lighting and multiple light sources), @wikiterm{skies}, @wikiterm{skyboxes}, and @wikiterm{particles}
+    @item 3D models for world objects, @wikiterm{skies}, @wikiterm{skyboxes}, and @wikiterm{particles}
     @item Environmental mapping effects for 3D models and world surfaces
     @item Automatic world surface (light) @wikiterm{decorations}
     @item @wikiterm{Detail texturing}, shine and @wikiterm{glowing} effects for world surfaces
@@ -63,7 +63,7 @@ Multiplayer:
 
 Other:
 @list/thin{
-    @item @wikilink{Cross-platform}{Supported_platforms}, runs on @link{Qt}{http://qt.io/}
+    @item Cross-platform, based on the @link{Qt framework}{http://qt.io/}
     @item Open source (see @wikilink{Getting Started}{devel})
     @item @wikiterm{Plugin} based @wikiterm{extensible architecture}
 }

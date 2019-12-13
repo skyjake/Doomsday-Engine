@@ -54,6 +54,8 @@ DE_STATIC_STRING(DEF_STATE              , "state");
 DE_STATIC_STRING(DEF_TEXTURE_MAPPING    , "textureMapping");
 DE_STATIC_STRING(DEF_TIMELINE           , "timeline");
 DE_STATIC_STRING(DEF_UP_VECTOR          , "up");
+DE_STATIC_STRING(DEF_WEAPON_OPACITY     , "opacityFromWeapon");
+DE_STATIC_STRING(DEF_WEAPON_FULLBRIGHT  , "fullbrightFromWeapon");
 DE_STATIC_STRING(DEF_VARIANT            , "variant");
 
 DE_STATIC_STRING(SHADER_DEFAULT         , "model.skeletal.generic");
@@ -77,7 +79,7 @@ DE_PIMPL(ModelLoader)
     filesys::AssetObserver observer{"model\\..*"};
     ModelBank bank {
         // Using render::Model instances.
-        [] () -> ModelDrawable * { return new render::Model; }
+        []() -> ModelDrawable * { return new render::Model; }
     };
     LockableT<Set<String>> pendingModels;
 
@@ -451,6 +453,10 @@ DE_PIMPL(ModelLoader)
         }
         applyFlagOperation(model.flags, render::Model::AutoscaleToThingHeight,
                            ScriptedInfo::isTrue(asset, DEF_AUTOSCALE())? SetFlags : UnsetFlags);
+        applyFlagOperation(model.flags, render::Model::ThingOpacityAsAmbientLightAlpha,
+                           ScriptedInfo::isTrue(asset, DEF_WEAPON_OPACITY, true)? SetFlags : UnsetFlags);
+        applyFlagOperation(model.flags, render::Model::ThingFullBrightAsAmbientLight,
+                           ScriptedInfo::isTrue(asset, DEF_WEAPON_FULLBRIGHT)? SetFlags : UnsetFlags);
 
         // Alignment modes.
         model.alignYaw   = parseAlignment(asset, DEF_ALIGNMENT_YAW());

@@ -215,7 +215,7 @@ void Evaluator::namespaces(Namespaces &spaces) const
     {
         // A specific namespace has been defined.
         spaces.clear();
-        spaces.push_back(d->names);
+        spaces.push_back({d->names, Context::Namespace});
     }
     else
     {
@@ -230,7 +230,7 @@ Record *Evaluator::localNamespace() const
     namespaces(spaces);
     DE_ASSERT(!spaces.empty());
     DE_ASSERT(spaces.front() != nullptr);
-    return spaces.front();
+    return spaces.front().names;
 }
 
 bool Evaluator::hasResult() const

@@ -176,7 +176,6 @@ void FinalePageWidget::draw() const
         widget->draw(worldOrigin);
     }
 
-    // Restore original matrices and state: back to normal 2D.
     DGL_PopState();
 
 #if defined (DE_OPENGL)
@@ -190,10 +189,29 @@ void FinalePageWidget::draw() const
     // Filter on top of everything. Only draw if necessary.
     if (d->filter[3].value > 0)
     {
-        GL_DrawRectf2Color(0, 0, SCREENWIDTH, SCREENHEIGHT, d->filter[0].value, d->filter[1].value, d->filter[2].value, d->filter[3].value);
-    }
+        // Cover the entire window.
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_LoadIdentity();
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PushMatrix();
+        DGL_LoadIdentity();
+        DGL_Ortho(0, 0, 1, 1, 0, 1);
+        DGL_PushState();
+        DGL_Disable(DGL_SCISSOR_TEST); // set by bordered projection mode
 
-    //GL_SetMultisample(false);
+        GL_DrawRectf2Color(0,
+                           0,
+                           1,
+                           1,
+                           d->filter[0].value,
+                           d->filter[1].value,
+                           d->filter[2].value,
+                           d->filter[3].value);
+
+        DGL_PopState();
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PopMatrix();
+    }
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();

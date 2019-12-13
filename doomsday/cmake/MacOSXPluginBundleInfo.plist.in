@@ -2,31 +2,31 @@
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>English</string>
+	<key>CFBundleIdentifier</key>
+	<string>${MACOSX_BUNDLE_BUNDLE_NAME}</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleVersion</key>
+	<string>${DE_VERSION_WITH_BUILD}</string>
+	<key>CFBundleLongVersionString</key>
+	<string>${DE_VERSION_WITH_BUILD}</string>
+	<key>CFBundleShortVersionString</key>
+	<string>${DE_VERSION}</string>
+	<key>CFBundleName</key>
+	<string>${MACOSX_BUNDLE_BUNDLE_NAME}</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>${DE_TEAM_COPYRIGHT}</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
 	<key>CFBundleExecutable</key>
 	<string>${MACOSX_BUNDLE_BUNDLE_EXECUTABLE}</string>
 	<key>CFBundleGetInfoString</key>
 	<string></string>
 	<key>CFBundleIconFile</key>
 	<string></string>
-	<key>CFBundleIdentifier</key>
-	<string>${MACOSX_BUNDLE_BUNDLE_NAME}</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>CFBundleLongVersionString</key>
-	<string>${DE_VERSION}</string>
-	<key>CFBundleName</key>
-	<string>${MACOSX_BUNDLE_BUNDLE_NAME}</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleShortVersionString</key>
-	<string>${DE_VERSION}</string>
-	<key>CFBundleSignature</key>
-	<string>????</string>
-	<key>CFBundleVersion</key>
-	<string>${DE_VERSION}</string>
-	<key>NSHumanReadableCopyright</key>
-	<string>${DE_TEAM_COPYRIGHT}</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
 </dict>
 </plist>

@@ -39,7 +39,6 @@ const char *ScriptLex::FOR("for");
 const char *ScriptLex::DEF("def");
 const char *ScriptLex::TRY("try");
 const char *ScriptLex::IMPORT("import");
-const char *ScriptLex::EXPORT("export");
 const char *ScriptLex::RECORD("record");
 const char *ScriptLex::SCOPE("->");
 const char *ScriptLex::DEL("del");
@@ -355,7 +354,7 @@ bool ScriptLex::combinesWith(Char a, Char b)
 
 const Set<CString> ScriptLex::KEYWORDS = {
     AND,    BREAK, CATCH,  CONST,  CONTINUE, DEF,  DEL,     ELSE,   ELSIF, END,
-    FOR,    IF,    IMPORT, EXPORT, IN,       NOT,  OR,      PASS,   PRINT, RECORD,
+    FOR,    IF,    IMPORT, IN,     NOT,      OR,   PASS,    PRINT,  RECORD,
     RETURN, SCOPE, THROW,  TRY,    WHILE,    NONE, T_FALSE, T_TRUE, PI,
 };
 

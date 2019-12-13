@@ -272,6 +272,35 @@ int destroyXSThinker(thinker_t *th, void *context)
     return false; // Continue iteration.
 }
 
+static void XS_UpdateLight(Sector *sec)
+{
+    int         i;
+    float       c, lightlevel;
+    xgsector_t *xg;
+    function_t *fn;
+
+    xg = P_ToXSector(sec)->xg;
+
+    // Light intensity.
+    fn = &xg->light;
+    if (UPDFUNC(fn))
+    {
+        lightlevel = MINMAX_OF(0, fn->value / 255.f, 1);
+        P_SetFloatp(sec, DMU_LIGHT_LEVEL, lightlevel);
+    }
+
+    // Red, green and blue.
+    for (i = 0; i < 3; ++i)
+    {
+        fn = &xg->rgb[i];
+        if (UPDFUNC(fn))
+        {
+            c = MINMAX_OF(0, fn->value / 255.f, 1);
+            P_SetFloatp(sec, TO_DMU_COLOR(i), c);
+        }
+    }
+}
+
 void XS_SetSectorType(Sector *sec, int special)
 {
     LOG_AS("XS_SetSectorType");
@@ -395,6 +424,12 @@ void XS_Init()
         // Initialize XG data for this sector.
         XS_SetSectorType(sec, xsec->special);
     }
+
+    // Run the first tick now, so sector lights are initialized according to the functions.
+    P_IterateThinkers(XS_Thinker, [](thinker_t *th) {
+        XS_Thinker(th);
+        return de::LoopContinue;
+    });
 }
 
 void XS_SectorSound(Sector *sec, int soundId)
@@ -2171,21 +2206,15 @@ int C_DECL XSTrav_Teleport(Sector* sector, dd_bool /*ceiling*/, void* /*context*
         return false;
     }
 
-    for(mo = (mobj_t *) P_GetPtrp(sector, DMT_MOBJS); mo; mo = mo->sNext)
-    {
-        thinker_t *th = (thinker_t*) mo;
-
-        // Not a mobj.
-        if(th->function != (thinkfunc_t) P_MobjThinker)
-            continue;
-
-        // Not a teleportman.
-        if(mo->type != MT_TELEPORTMAN)
-            continue;
-
-        ok = true;
-        break;
-    }
+    P_IterateThinkers(P_MobjThinker, [&mo, &ok, sector](thinker_t *th) {
+        mo = reinterpret_cast<mobj_t *>(th);
+        if (Mobj_Sector(mo) == sector && mo->type == MT_TELEPORTMAN)
+        {
+            ok = true;
+            return de::LoopAbort;
+        }
+        return de::LoopContinue;
+    });
 
     if(ok)
     {
@@ -2590,37 +2619,6 @@ void XS_UpdatePlanes(Sector* sec)
     }
 }
 
-void XS_UpdateLight(Sector* sec)
-{
-    int                 i;
-    float               c, lightlevel;
-    xgsector_t*         xg;
-    function_t*         fn;
-
-    xg = P_ToXSector(sec)->xg;
-
-    // Light intensity.
-    fn = &xg->light;
-    if(UPDFUNC(fn))
-    {   // Changed.
-        lightlevel = MINMAX_OF(0, fn->value / 255.f, 1);
-        P_SetFloatp(sec, DMU_LIGHT_LEVEL, lightlevel);
-    }
-
-    // Red, green and blue.
-    for(i = 0; i < 3; ++i)
-    {
-        fn = &xg->rgb[i];
-        if(!UPDFUNC(fn))
-            continue;
-
-        // Changed.
-        c = MINMAX_OF(0, fn->value / 255.f, 1);
-
-        P_SetFloatp(sec, TO_DMU_COLOR(i), c);
-    }
-}
-
 void XS_DoChain(Sector *sec, int ch, int activating, void *act_thing)
 {
     LOG_AS("XS_DoChain");
@@ -2713,8 +2711,7 @@ void XS_DoChain(Sector *sec, int ch, int activating, void *act_thing)
     P_FreeDummyLine(dummyLine);
 }
 
-static dd_bool checkChainRequirements(Sector* sec, mobj_t* mo, int ch,
-                                      dd_bool* activating)
+static dd_bool checkChainRequirements(Sector *sec, mobj_t *mo, int ch, dd_bool *activating)
 {
     xgsector_t*         xg;
     sectortype_t*       info;
@@ -2754,13 +2751,15 @@ static dd_bool checkChainRequirements(Sector* sec, mobj_t* mo, int ch,
     {
     case XSCE_FLOOR:
         // Is it touching the floor?
-        if(mo->origin[VZ] > P_GetDoublep(sec, DMU_FLOOR_HEIGHT))
+        if(mo->origin[VZ] > P_GetDoublep(sec, DMU_FLOOR_HEIGHT) + 0.0001)
             return false;
+        break;
 
     case XSCE_CEILING:
         // Is it touching the ceiling?
-        if(mo->origin[VZ] + mo->height < P_GetDoublep(sec, DMU_CEILING_HEIGHT))
+        if(mo->origin[VZ] + mo->height < P_GetDoublep(sec, DMU_CEILING_HEIGHT) - 0.0001)
             return false;
+        break;
 
     default:
         break;
@@ -2867,7 +2866,7 @@ void XS_Thinker(void *xsThinker)
 {
     xsthinker_t* xs = (xsthinker_t *) xsThinker;
     Sector* sector = xs->sector;
-    xsector_t* xsector = P_ToXSector(sector);
+    xsector_t *xsector = P_ToXSector(sector);
     xgsector_t* xg;
     sectortype_t* info;
     int i;

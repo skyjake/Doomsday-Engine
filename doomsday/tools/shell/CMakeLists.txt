@@ -57,7 +57,6 @@ deng_install_bundle_deps (shell
     glbinding::glbinding
 )
 deng_deploy_target (shell)
-deng_codesign (shell)
 
 if (UNIX_LINUX)
     configure_file (doomsday-shell.desktop.in net.dengine.Shell.desktop)

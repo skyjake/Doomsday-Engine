@@ -578,8 +578,8 @@ D_CMD(CheatWhere)
     if(!plrMo) return true;
 
     const String text = Stringf("Map:%s position:%s",
-                                       gfw_Session()->mapUri().asText().c_str(),
-                                       Vec3d(plrMo->origin).asText().c_str());
+                                gfw_Session()->mapUri().path().asText().c_str(),
+                                Vec3d(plrMo->origin).asText().c_str());
     P_SetMessageWithFlags(plr, text, LMF_NO_HIDE);
 
     // Also print the some information to the console.

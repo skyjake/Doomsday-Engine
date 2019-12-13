@@ -73,6 +73,22 @@ deng_add_package (net.dengine.stdlib)
 deng_add_library (libcore ${SOURCES} ${HEADERS})
 target_include_directories (libcore PRIVATE ${ZLIB_INCLUDE_DIR})
 target_link_libraries (libcore PUBLIC ${ZLIB_LIBRARIES} the_Foundation::the_Foundation)
+if (UNIX AND NOT APPLE)
+    if (DE_BASE_DIR)
+        set (baseDir "${DE_BASE_DIR}")
+    else ()
+        set (baseDir "${CMAKE_INSTALL_PREFIX}/${DE_INSTALL_DATA_DIR}")
+    endif ()
+    if (DE_LIBRARY_DIR)
+        set (libDir "${DE_LIBRARY_DIR}")
+    else ()
+        set (libDir "${CMAKE_INSTALL_PREFIX}/${DE_INSTALL_PLUGIN_DIR}")
+    endif ()
+    target_compile_definitions (libcore PUBLIC
+        -DDE_BASE_DIR="${baseDir}"
+        -DDE_LIBRARY_DIR="${libDir}"
+    )
+endif ()
 if (WIN32)
     # timeBeginPeriod, timeEndPeriod
     target_link_libraries (libcore PRIVATE winmm)

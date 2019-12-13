@@ -187,7 +187,7 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
 
                         int lightlevel = block.contains("lightlevel")? block["lightlevel"]->asInt() : 160;
 
-                        MPE_SectorCreate(float(lightlevel)/255.f, 1.f, 1.f, 1.f, index);
+                        MPE_SectorCreate(float(lightlevel)/255.f, 1.f, 1.f, 1.f, index, -1);
 
                         MPE_PlaneCreate(index,
                                         block["heightfloor"]->asNumber(),

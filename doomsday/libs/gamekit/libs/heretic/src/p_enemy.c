@@ -160,8 +160,7 @@ dd_bool P_Move(mobj_t *actor, dd_bool dropoff)
     if(actor->moveDir == DI_NODIR)
         return false;
 
-    if(!VALID_MOVEDIR(actor->moveDir))
-        Con_Error("Weird actor->moveDir!");
+    assert(VALID_MOVEDIR(actor->moveDir));
 
     step[VX] = actor->info->speed * dirSpeed[actor->moveDir][VX];
     step[VY] = actor->info->speed * dirSpeed[actor->moveDir][VY];

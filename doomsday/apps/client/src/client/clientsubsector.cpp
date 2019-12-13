@@ -185,6 +185,13 @@ DE_PIMPL(ClientSubsector)
             if (::ddMapSetup) return;
             needUpdate = yes;
         }
+
+        void clear()
+        {
+            markForUpdate(false);
+            qDeleteAll(decorations);
+            decorations.clear();
+        }
     };
 
     dint validFrame;
@@ -266,6 +273,10 @@ DE_PIMPL(ClientSubsector)
             materialAnimator.audienceForDecorationStageChange -= this;
             material->audienceForDimensionsChange() -= this;
         }
+
+    static bool hasDecoratedMaterial(const Surface &surface)
+    {
+        return surface.hasMaterial() && surface.material().as<ClientMaterial>().hasDecorations();
     }
 
     void observeSurface(Surface *surface, bool yes = true)
@@ -277,12 +288,19 @@ DE_PIMPL(ClientSubsector)
             surface->audienceForMaterialChange      () += this;
             surface->audienceForOriginChange        () += this;
             surface->audienceForOriginSmoothedChange() += this;
+
+            if (hasDecoratedMaterial(*surface))
+            {
+                allocDecorationState(*surface);
+        }
         }
         else
         {
             surface->audienceForOriginSmoothedChange() -= this;
             surface->audienceForOriginChange        () -= this;
             surface->audienceForMaterialChange      () -= this;
+
+            decorSurfaces.remove(surface);
         }
     }
 
@@ -516,6 +534,8 @@ DE_PIMPL(ClientSubsector)
 
     void remapVisPlanes()
     {
+        /// @todo Has performance issues -- disabled; needs reworking.
+
         // By default both planes are mapped to the parent sector.
         if (!floorIsMapped())   map(Sector::Floor,   thisPublic);
         if (!ceilingIsMapped()) map(Sector::Ceiling, thisPublic);
@@ -1009,7 +1029,18 @@ DE_PIMPL(ClientSubsector)
     }
 
     void decorate(Surface &surface)
+    {       
+        if (!hasDecoratedMaterial(surface))
+        {
+            // Just clear the state.
+            if (surface.decorationState())
     {
+                static_cast<DecoratedSurface *>(surface.decorationState())->clear();
+            }
+            return;
+        }
+
+        // Has a decorated material, so needs decoration state.
         auto &ds = allocDecorationState(surface);
 
         if (!ds.needUpdate) return;
@@ -1020,7 +1051,7 @@ DE_PIMPL(ClientSubsector)
                     && &surface.parent() == mappedPlane(surface.parent().as<Plane>().indexInSector()) ? " (mapped)" : "")
         );
 
-        ds.markForUpdate(false);
+        ds.clear();
 
         // Clear any existing decorations.
         deleteAll(ds.decorations);
@@ -1036,7 +1067,6 @@ DE_PIMPL(ClientSubsector)
                 projectDecorations(surface, animator, materialOrigin, topLeft, bottomRight);
             }
         }
-    }
 
     void markDependentSurfacesForRedecoration(Plane &plane, bool yes = true)
     {
@@ -1200,14 +1230,16 @@ DE_PIMPL(ClientSubsector)
         LOG_AS("ClientSubsector");
 
         // We may need to update one or both mapped planes.
-        maybeInvalidateMapping(plane.indexInSector());
+//        maybeInvalidateMapping(plane.indexInSector());
 
+        /*
         // We may need to fix newly revealed missing materials.
         self().forAllEdgeLoops([] (ClEdgeLoop &loop)
         {
             loop.fixSurfacesMissingMaterials();
             return LoopContinue;
         });
+        */
 
         // We may need to project new decorations.
         markDependentSurfacesForRedecoration(plane);
@@ -1271,7 +1303,7 @@ DE_PIMPL(ClientSubsector)
         LOG_AS("ClientSubsector");
 
         // We may need to update one or both mapped planes.
-        maybeInvalidateMapping(plane.indexInSector());
+//        maybeInvalidateMapping(plane.indexInSector());
 
         // We may need to project new decorations.
         markDependentSurfacesForRedecoration(plane);
@@ -1305,17 +1337,30 @@ DE_PIMPL(ClientSubsector)
     void surfaceMaterialChanged(Surface &surface)
     {
         LOG_AS("ClientSubsector");
-        //DecoratedSurface &ds = decorSurfaces[surface.uniqueId()];
 
-        DecoratedSurface &ds = allocDecorationState(surface);
+        if (auto *ds = static_cast<DecoratedSurface *>(surface.decorationState()))
+        {
+            // Clear any existing decorations (now invalid).
+            ds->clear();
+//            qDeleteAll(ds->decorations);
+//            ds->decorations.clear();
+//            ds->markForUpdate();
+        }
 
-        // Clear any existing decorations (now invalid).
-        deleteAll(ds.decorations);
-        ds.decorations.clear();
-        ds.markForUpdate();
+        if (hasDecoratedMaterial(surface))
+        {
+            auto &ds = allocDecorationState(surface);
+            ds.markForUpdate();
+        }
 
         // Begin observing the new material (if any).
-        /// @todo fixme: stop observing the old one!? -ds
+        //
+        // Note that the subsector keeps observing all the materials of all surfaces.
+        // To stop observing old ones, one needs to make sure that no surface in the
+        // subsector is no longer using the material.
+        //
+        /// @todo Stop observing unused materials.
+        //
         observeMaterial(surface.materialPtr());
     }
 
@@ -1525,6 +1570,12 @@ bool ClientSubsector::hasSkyCeiling() const
     return hasSkyPlane(Sector::Ceiling);
 }
 
+void ClientSubsector::linkVisPlanes(ClientSubsector &target)
+{
+    d->map(Sector::Floor, &target, true);
+    d->map(Sector::Ceiling, &target, true);
+}
+
 dint ClientSubsector::visPlaneCount() const
 {
     return sector().planeCount();
@@ -1542,7 +1593,9 @@ const Plane &ClientSubsector::visPlane(dint planeIndex) const
         // Time to remap the planes?
         if (d->needRemapVisPlanes())
         {
-            d->remapVisPlanes();
+            /// @todo This is broken. For instance in ICARUS.WAD map09, locks up for several
+            /// seconds while looping through the map. A better algorithm is needed.
+            //d->remapVisPlanes();
         }
 
         ClientSubsector *mapping = (planeIndex == Sector::Ceiling ? d->mappedVisCeiling
@@ -1874,6 +1927,8 @@ void ClientSubsector::decorate()
 
 bool ClientSubsector::hasDecorations() const
 {
+    return !d.getConst()->decorSurfaces.isEmpty();
+    /*
     for (Surface *surface : d.getConst()->decorSurfaces)
     {
         if (!static_cast<const Impl::DecoratedSurface *>
@@ -1882,7 +1937,7 @@ bool ClientSubsector::hasDecorations() const
             return true;
         }
     }
-    return false;
+    return false;*/
 }
 
 void ClientSubsector::generateLumobjs()

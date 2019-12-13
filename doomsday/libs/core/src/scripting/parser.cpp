@@ -191,10 +191,12 @@ void Parser::parseStatement(Compound &compound)
     {
         compound.add(parseAssignStatement(), firstTokenLine);
     }
+#if 0
     else if (firstToken.equals(ScriptLex::EXPORT))
     {
         compound.add(parseExportStatement(), firstTokenLine);
     }
+#endif
     else
     {
         compound.add(parseExpressionStatement(), firstTokenLine);
@@ -301,6 +303,7 @@ ExpressionStatement *Parser::parseImportStatement()
     return new ExpressionStatement(parseList(_statementRange.startingFrom(startAt), Token::COMMA, flags));
 }
 
+#if 0
 ExpressionStatement *Parser::parseExportStatement()
 {
     // "export" name-expr ["," name-expr]*
@@ -314,6 +317,7 @@ ExpressionStatement *Parser::parseExportStatement()
     return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA,
                                              Expression::Export | Expression::LocalOnly));
 }
+#endif
 
 Statement *Parser::parseDeclarationStatement()
 {
@@ -432,7 +436,8 @@ void Parser::parseTryCatchSequence(Compound &compound)
     }
     CatchStatement *finalCatch = nullptr;
     bool expectEnd = false;
-    while (_statementRange.firstToken().equals(ScriptLex::CATCH))
+    while (!_statementRange.isEmpty() &&
+           _statementRange.firstToken().equals(ScriptLex::CATCH))
     {
         dint colon = _statementRange.find(Token::COLON);
         expectEnd = (colon < 0);
@@ -498,12 +503,14 @@ AssignStatement *Parser::parseAssignStatement()
 {
     Flags flags = Expression::NewVariable | Expression::ByReference | Expression::LocalOnly;
 
+#if 0
     /// "export" will export the newly assigned variable.
     if (_statementRange.firstToken().equals(ScriptLex::EXPORT))
     {
         flags |= Expression::Export;
         _statementRange = _statementRange.startingFrom(1);
     }
+#endif
 
     /// "const" makes read-only variables.
     if (_statementRange.firstToken().equals(ScriptLex::CONST))
@@ -893,8 +900,8 @@ Expression *Parser::parseTokenExpression(const TokenRange &range, const Flags &f
                 range.token(1).type() == Token::IDENTIFIER)
         {
             // Explicit local scope.
-            return new NameExpression(range.token(1).str(), flags,
-                                      NameExpression::LOCAL_SCOPE);
+            return new NameExpression(StringList{NameExpression::LOCAL_SCOPE, range.token(1).str()},
+                                      flags);
         }
     }
 
@@ -905,14 +912,30 @@ Expression *Parser::parseTokenExpression(const TokenRange &range, const Flags &f
         {
             return new NameExpression(range.token(0).str(), flags);
         }
-        else if (range.size() == 3 &&
+        else if (range.size() >= 3 &&
                  range.token(1).equals(ScriptLex::SCOPE) &&
                  range.token(2).type() == Token::IDENTIFIER)
         {
+            StringList identifierSequence;
+            identifierSequence << range.token(0).str()
+                               << range.token(2).str();
+            for (duint i = 3; i < range.size() - 1; i += 2)
+            {
+                if (range.token(i).equals(ScriptLex::SCOPE) &&
+                    range.token(i + 1).type() == Token::IDENTIFIER)
+        {
+                    identifierSequence << range.token(i + 1).str();
+                }
+                else
+                {
+                    throw UnexpectedTokenError("Parser::parseTokenExpression",
+                                               "Unexpected tokens: " + range.token(i).asText() +
+                                                   " followed by " + range.token(i + 1).asText());
+                }
+            }
             // Scoped name. This is intended for allowing access to shadowed
             // identifiers from super records.
-            return new NameExpression(range.token(2).str(), flags,
-                                      range.token(0).str());
+            return new NameExpression(identifierSequence, flags);
         }
         else
         {

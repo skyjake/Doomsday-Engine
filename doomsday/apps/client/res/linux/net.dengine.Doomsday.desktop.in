@@ -1,9 +1,8 @@
 [Desktop Entry]
-Encoding=UTF-8
-Name=Doomsday 2
+Name=Doomsday Engine
 Comment=Doom/Heretic/Hexen with enhanced graphics
 Categories=Game;ActionGame;
 Exec=${CMAKE_INSTALL_PREFIX}/bin/doomsday
 Terminal=false
 Type=Application
-Icon=${CMAKE_INSTALL_PREFIX}/${DE_INSTALL_DATA_DIR}/deng-logo-256.png
+Icon=net.dengine.Doomsday

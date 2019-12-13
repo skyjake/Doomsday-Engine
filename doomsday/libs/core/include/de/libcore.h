@@ -799,6 +799,7 @@ enum ProtocolVersion {
     DE_PROTOCOL_2_0_0  = 3,
     DE_PROTOCOL_2_1_0  = 3,
 
+    DE_PROTOCOL_2_2_0_NameExpression_identifier_sequence = 4,
     DE_PROTOCOL_2_2_0  = 4,
 
     DE_PROTOCOL_LATEST = DE_PROTOCOL_2_2_0

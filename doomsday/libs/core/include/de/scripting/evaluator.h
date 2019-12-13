@@ -45,7 +45,8 @@ public:
     /// Result is of wrong type. @ingroup errors
     DE_ERROR(ResultTypeError);
 
-    typedef std::list<Record *> Namespaces;
+    using Namespace = struct { Record *names; unsigned nsType; };
+    using Namespaces = std::list<Namespace>;
 
 public:
     Evaluator(Context &owner);

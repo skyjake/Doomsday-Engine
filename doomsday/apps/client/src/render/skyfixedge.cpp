@@ -28,6 +28,7 @@
 #include "Plane"
 #include "Sector"
 #include "Surface"
+#include "MaterialAnimator"
 
 #include "render/rend_main.h"
 
@@ -124,6 +125,9 @@ DE_PIMPL(SkyFixEdge)
         // Only edges with line segments need fixes.
         if (!hedge->hasMapElement()) return false;
 
+        const auto &lineSeg  = hedge->mapElementAs<LineSideSegment>();
+        const auto &lineSide = lineSeg.lineSide();
+
         const auto *space     = &hedge->face().mapElementAs<ConvexSubspace>();
         const auto *backSpace = hedge->twin().hasFace() ? &hedge->twin().face().mapElementAs<ConvexSubspace>()
                                                         : nullptr;
@@ -135,6 +139,15 @@ DE_PIMPL(SkyFixEdge)
         if (backSubsec && &backSubsec->sector() == &subsec->sector())
             return false;
 
+        if (lineSide.middle().hasMaterial() &&
+            !lineSide.middle().materialAnimator()->isOpaque() &&
+            ((!lower && !lineSide.top().hasMaterial()) ||
+             (lower  && !lineSide.bottom().hasMaterial())))
+        {
+            // Icarus: force fields render hack
+            return false;
+        }
+
         // Select the relative planes for the fix type.
         dint relPlane = lower ? Sector::Floor : Sector::Ceiling;
         const Plane *front   = &subsec->visPlane(relPlane);
@@ -143,7 +156,6 @@ DE_PIMPL(SkyFixEdge)
         if (!front->surface().hasSkyMaskedMaterial())
             return false;
 
-        const LineSide &lineSide = hedge->mapElementAs<LineSideSegment>().lineSide();
         const bool hasClosedBack = R_SideBackClosed(lineSide);
 
         if (!devRendSkyMode)

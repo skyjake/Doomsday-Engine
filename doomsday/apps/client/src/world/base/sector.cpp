@@ -136,6 +136,9 @@ DE_PIMPL(Sector)
     List<LineSide *>       sides;      ///< All line sides referencing the sector (not owned).
     Subsectors             subsectors; ///< Traversable subsectors of the sector.
     ThinkerT<SoundEmitter> emitter;    ///< Head of the sound emitter chain.
+    int visPlaneLinkSector = MapElement::NoIndex;
+    dfloat lightLevel = 0;           ///< Ambient light level.
+    Vector3f lightColor;             ///< Ambient light color.
 
     dfloat lightLevel = 0; ///< Ambient light level.
     Vec3f  lightColor;     ///< Ambient light color.
@@ -337,6 +340,16 @@ Plane *Sector::addPlane(const Vec3f &normal, ddouble height)
     return plane;
 }
 
+void Sector::setVisPlaneLink(int sectorArchiveIndex)
+{
+    d->visPlaneLinkSector = sectorArchiveIndex;
+}
+
+int Sector::visPlaneLink() const
+{
+    return d->visPlaneLinkSector;
+}
+
 bool Sector::hasSubsectors() const
 {
     return !d->subsectors.isEmpty();
@@ -345,6 +358,12 @@ bool Sector::hasSubsectors() const
 dint Sector::subsectorCount() const
 {
     return d->subsectors.count();
+}
+
+Subsector &Sector::subsector(int index) const
+{
+    DENG2_ASSERT(index >= 0 && index < d->subsectors.count());
+    return *d->subsectors.at(index);
 }
 
 LoopResult Sector::forAllSubsectors(const std::function<LoopResult(Subsector &)> &callback) const

@@ -17,7 +17,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>${DE_VERSION}</string>
+	<string>${DE_VERSION_WITH_BUILD}</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>${DE_TEAM_COPYRIGHT}</string>
 	<key>NSPrincipalClass</key>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2019 Jaakko Keränen <jaakko.keranen@iki.fi> -->
+<component type="desktop-application">
+    <id>net.dengine.Doomsday</id>
+    <metadata_license>CC0-1.0</metadata_license>
+    <project_license>GPL-3.0+</project_license>
+
+    <name>Doomsday Engine</name>
+    <summary>Enhanced source port of Doom, Heretic, and Hexen</summary>
+    <description>
+        <p>
+            The Doomsday Engine is a portable version of the classic first person
+            shooters DOOM, Heretic, and Hexen. It lets you enjoy the original games
+            using modern technology, including high-resolution OpenGL graphics, 3D
+            models, and dynamic lighting effects.
+        </p>
+        <p>
+            Data files from the original games are not included; you must acquire
+            a copy of the original games from id Software and/or Raven Software.
+            You may also use free alternatives such as https://freedoom.github.io/.
+        </p>
+    </description>
+    <content_rating type="oars-1.0">
+        <content_attribute id="violence-fantasy">intense</content_attribute>
+        <content_attribute id="violence-bloodshed">moderate</content_attribute>
+        <content_attribute id="social-chat">intense</content_attribute>
+    </content_rating>
+
+    <launchable type="desktop-id">net.dengine.Doomsday.desktop</launchable>
+
+    <screenshots>
+        <screenshot type="default">
+            <image>https://files.dengine.net/images/metainfo-1.jpg</image>
+        </screenshot>
+        <screenshot>
+            <image>https://files.dengine.net/images/metainfo-2.jpg</image>
+        </screenshot>
+        <screenshot>
+            <image>https://files.dengine.net/images/metainfo-3.jpg</image>
+        </screenshot>
+    </screenshots>
+
+    <url type="homepage">https://dengine.net</url>
+    <url type="help">https://manual.dengine.net</url>
+    <url type="donation">https://dengine.net/donate</url>
+    <url type="bugtracker">https://tracker.dengine.net/projects/deng</url>
+    <url type="contact">https://twitter.com/skyjake</url>
+
+    <developer_name>Jaakko Keränen</developer_name>
+
+    <provides>
+        <binary>doomsday</binary>
+    </provides>
+
+    <update_contact>jaakko.keranen@iki.fi</update_contact>
+
+    <releases>
+        <release version="2.1.2" date="2019-11-02">
+            <description>
+                <p>Patch release that addresses issues found in version 2.1.</p>
+            </description>
+            <url>https://manual.dengine.net/version/2.1.2</url>
+        </release>
+    </releases>
+</component>

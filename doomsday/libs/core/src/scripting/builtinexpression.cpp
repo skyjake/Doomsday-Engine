@@ -164,14 +164,29 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         }
         if (args.size() == 2)
         {
-            // One argument: make an owned copy of a referenced record.
-            const RecordValue *rec = dynamic_cast<const RecordValue *>(&args.at(1));
-            if (!rec)
+            std::unique_ptr<Record> returned;
+
+            if (const auto *dict = maybeAs<DictionaryValue>(args.at(1)))
+            {
+                // Make an owned record out of a dictionary.
+                returned.reset(new Record);
+                for (auto i : dict->elements())
+                {
+                    returned->set(i.first.value->asText(), *i.second);
+                }
+            }
+            else if (const auto *rec = maybeAs<RecordValue>(args.at(1)))
+            {
+                // Make an owned copy of a referenced record / argument.
+                returned.reset(new Record(rec->dereference()));
+            }
+            else
             {
                 throw WrongArgumentsError("BuiltInExpression::evaluate",
-                                          "Argument 1 of AS_RECORD must be a record");
+                                          "Argument 1 of AS_RECORD must be a record or dictionary");
             }
-            return new RecordValue(new Record(*rec->record()), RecordValue::OwnsRecord);
+
+            return new RecordValue(returned.release(), RecordValue::OwnsRecord);
         }
         throw WrongArgumentsError("BuiltInExpression::evaluate",
                                   "Expected less than two arguments for AS_RECORD");

@@ -58,12 +58,11 @@ bool CatchStatement::matches(const Error &err) const
         return true;
     }
 
-    const NameExpression *name = dynamic_cast<const NameExpression *>(&_args->at(0));
-    DE_ASSERT(name != nullptr);
+    const NameExpression &name = static_cast<const NameExpression &>(_args->at(0));
 
-    return (name->identifier() == "Error" ||   // Generic catch-all.
-            name->identifier().c_str() == err.name() || // Exact match.
-            String(err.name()).endsWith("_" + name->identifier())); // Sub-error match.
+    return (name.identifier() == "Error" ||   // Generic catch-all.
+            name.identifier().c_str() == err.name() || // Exact match.
+            String(err.name()).endsWith("_" + name.identifier())); // Sub-error match.
 }
 
 void CatchStatement::executeCatch(Context &context, const Error &err) const

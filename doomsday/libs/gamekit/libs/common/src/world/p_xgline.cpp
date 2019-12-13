@@ -2049,7 +2049,7 @@ int XLTrav_LineTeleport(Line *newLine, dd_bool /*ceiling*/, void *context,
     }
 
     // Spawn flash at the new position?
-    if(info->iparm[2])
+    if (!info->iparm[2])
     {
         an = mobj->angle >> ANGLETOFINESHIFT;
         if((flash = P_SpawnMobjXYZ(MT_TFOG,
@@ -2709,12 +2709,24 @@ int XL_LineEvent(int evtype, int linetype, Line* line, int sidenum,
             return false;
         }
     // Check game mode.
-    if(IS_NETGAME)
+    if (IS_NETGAME)
     {
-        if(!(info->flags2 & (LTF2_COOPERATIVE | LTF2_DEATHMATCH)))
+        const int netFlags = info->flags2 & (LTF2_COOPERATIVE | LTF2_DEATHMATCH);
+        if (!netFlags)
         {
             LOG_MAP_MSG_XGDEVONLY2("Line %i: ABORTING EVENT due to netgame mode", P_ToIndex(line));
             return false;
+        }
+        if (netFlags != (LTF2_COOPERATIVE | LTF2_DEATHMATCH))
+        {
+            // Need to check which game mode.
+            const auto netType = gfw_Rule(deathmatch);
+            if (((netFlags & LTF2_COOPERATIVE) && netType != 0) ||
+                ((netFlags & LTF2_DEATHMATCH) && netType == 0))
+            {
+                LOG_MAP_MSG_XGDEVONLY2("Line %i: ABORTING EVENT due to non-matching deathmatch/coop flag", P_ToIndex(line));
+                return false;
+            }
         }
     }
     else

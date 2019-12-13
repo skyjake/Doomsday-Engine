@@ -384,7 +384,9 @@ bool Profiles::AbstractProfile::setName(const String &newName)
     if (newName.isEmpty()) return false;
 
     Profiles *owner = d->owner;
-    if (!owner || owner->rename(*this, newName))
+    if (!owner ||
+        !d->name.compareWithoutCase(newName) || // just a case change
+        owner->rename(*this, newName))
     {
         d->name = newName;
         notifyChange();

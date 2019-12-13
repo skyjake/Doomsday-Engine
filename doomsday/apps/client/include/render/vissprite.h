@@ -41,7 +41,7 @@ enum visspritetype_t
     VSPR_SPRITE,
     VSPR_MASKED_WALL,
     VSPR_MODEL,
-    VSPR_MODEL_GL2,    ///< GL2 model (de::ModelDrawable)
+    VSPR_MODELDRAWABLE,    // GL2 model (de::ModelDrawable)
     VSPR_FLARE
 };
 
@@ -98,6 +98,7 @@ struct VisEntityLighting
 {
     de::Vec4f ambientColor;
     de::duint vLightListIdx = 0;
+    bool isFullBright = false;
 
     VisEntityLighting() = default;
 
@@ -160,45 +161,39 @@ enum vispspritetype_t
 /// @ingroup render
 struct vispsprite_t
 {
-    vispspritetype_t type;
-    ddpsprite_t *psp;
-    de::Vec3d origin;
+    vispspritetype_t      type;
+    ddpsprite_t *         psp;
+    de::Vec3d             origin;
     const world::BspLeaf *bspLeaf;
-    VisEntityLighting light;
+    VisEntityLighting     light;
+    float                 alpha; // overall opacity
 
     union vispsprite_data_u {
-        struct vispsprite_sprite_s {
-            de::dfloat alpha;
-            dd_bool isFullBright;
-        } sprite;
         struct vispsprite_model_s {
-            coord_t topZ;                 ///< global top for silhouette clipping
-            de::dint flags;               ///< for color translation and shadow draw
-            de::duint id;
-            de::dint selector;
-            de::dint pClass;              ///< player class (used in translation)
-            coord_t floorClip;
-            dd_bool stateFullBright;
-            dd_bool viewAligned;          ///< @c true= Align to view plane.
-            coord_t secFloor;
-            coord_t secCeil;
-            de::dfloat alpha;
-            de::ddouble visOff[3];        ///< Last-minute offset to coords.
-            dd_bool floorAdjust;          ///< Allow moving sprite to match visible floor.
-
             FrameModelDef *mf;
             FrameModelDef *nextMF;
-            de::dfloat yaw;
-            de::dfloat pitch;
-            de::dfloat pitchAngleOffset;
-            de::dfloat yawAngleOffset;
-            de::dfloat inter;             ///< Frame interpolation, 0..1
+            coord_t        topZ;        ///< global top for silhouette clipping
+            int            flags;       ///< for color translation and shadow draw
+            unsigned int   id;
+            int            selector;
+            int            pClass;      ///< player class (used in translation)
+            coord_t        floorClip;
+            bool           viewAligned; ///< @c true= Align to view plane.
+            coord_t        secFloor;
+            coord_t        secCeil;
+            double         visOff[3];   ///< Last-minute offset to coords.
+            bool           floorAdjust; ///< Allow moving sprite to match visible floor.
+            float          yaw;
+            float          pitch;
+            float          pitchAngleOffset;
+            float          yawAngleOffset;
+            float          inter;       ///< Frame interpolation, 0..1
         } model;
         struct vispsprite_model2_s {
             const render::Model *model;
             const render::StateAnimator *animator;
-            de::dfloat pitchAngleOffset;
-            de::dfloat yawAngleOffset;
+            float pitchAngleOffset;
+            float yawAngleOffset;
         } model2;
     } data;
 };

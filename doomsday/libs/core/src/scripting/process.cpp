@@ -114,15 +114,13 @@ DE_PIMPL(Process)
         for (context().proceed(); context().current(); context().proceed())
         {
             const Statement *statement = context().current();
-            const TryStatement *tryStatement = dynamic_cast<const TryStatement *>(statement);
-            if (tryStatement)
+            if (is<TryStatement>(statement))
             {
                 // Encountered a nested try statement.
                 ++level;
                 continue;
             }
-            const CatchStatement *catchStatement = dynamic_cast<const CatchStatement *>(statement);
-            if (catchStatement)
+            if (const auto *catchStatement = dynamic_cast<const CatchStatement *>(statement))
             {
                 if (!level)
                 {
@@ -387,9 +385,7 @@ void Process::call(const Function &function, const ArrayValue &arguments, Value 
         for (; b != argValues.end() && a != function.arguments().end(); ++b, ++a)
         {
             // Records must only be passed as unowned references.
-            DE_ASSERT(!is<RecordValue>(*b) || !(*b)->as<RecordValue>().hasOwnership());
-
-            context().names().add(new Variable(*a, (*b)->duplicate()));
+            context().names().add(new Variable(*a, (*b)->duplicateAsReference()));
         }
 
         // This should never be called if the process is suspended.
@@ -428,7 +424,7 @@ void Process::namespaces(Namespaces &spaces) const
             if (gotFunction) continue;
             gotFunction = true;
         }
-        spaces.push_back(&context.names());
+        spaces.push_back({&context.names(), unsigned(context.type())});
         if (context.type() == Context::GlobalNamespace)
         {
             // This shadows everything below.
@@ -439,6 +435,15 @@ void Process::namespaces(Namespaces &spaces) const
 
 Record &Process::globals()
 {
+    // Find the global namespace currently in effect.
+    DE_FOR_EACH_CONST_REVERSE(Impl::ContextStack, i, d->stack)
+    {
+        Context &context = **i;
+        if (context.type() == Context::GlobalNamespace || context.type() == Context::BaseProcess)
+        {
+            return context.names();
+        }
+    }
     return d->stack[0]->names();
 }
 

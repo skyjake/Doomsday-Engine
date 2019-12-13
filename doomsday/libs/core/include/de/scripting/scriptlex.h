@@ -69,7 +69,6 @@ public:
     static const char *DEF;
     static const char *TRY;
     static const char *IMPORT;
-    static const char *EXPORT;
     static const char *RECORD;
     static const char *SCOPE;
     static const char *DEL;

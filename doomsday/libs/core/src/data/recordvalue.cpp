@@ -204,7 +204,11 @@ Value *RecordValue::duplicateAsReference() const
 
 Value::Text RecordValue::asText() const
 {
-    return dereference().asText();
+    if (d->record)
+    {
+        return d->record->asText();
+    }
+    return "(null)";
 }
 
 Record *RecordValue::memberScope() const

@@ -269,12 +269,38 @@ DE_PIMPL(DoomsdayApp)
         return folderPath;
     }
 
+    bool isValidDataPath(const NativePath &path) const
+    {
+        // Don't allow the App's built-in /data and /home directories to be re-added.
+        for (const char *builtinDir : {"/data", "/home"})
+        {
+            const auto &folder = FS::locate<Folder>(builtinDir);
+            for (const auto *feed : folder.feeds())
+            {
+                if (const auto *dirFeed = maybeAs<DirectoryFeed>(feed))
+                {
+                    if (dirFeed->nativePath() == path)
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
     void attachWadFeed(const String &    description,
                        const NativePath &path,
                        Flags             populationMode = DirectoryFeed::OnlyThisFolder)
     {
         if (!path.isEmpty())
         {
+            if (!isValidDataPath(path))
+        {
+                LOG_RES_WARNING("Redundant %s WAD folder: %s") << description << path.pretty();
+                return;
+            }
+
             if (path.exists())
             {
                 LOG_RES_NOTE("Using %s WAD folder%s: %s")
@@ -300,6 +326,12 @@ DE_PIMPL(DoomsdayApp)
     {
         if (!path.isEmpty())
         {
+            if (!isValidDataPath(path))
+            {
+                LOG_RES_WARNING("Redundant %s package folder: %s") << description << path.pretty();
+                return;
+            }
+
             if (path.exists())
             {
                 LOG_RES_NOTE("Using %s package folder%s: %s")
@@ -822,7 +854,7 @@ StringList DoomsdayApp::loadedPackagesAffectingGameplay() // static
     for (auto iter = ids.begin(); iter != ids.end(); )
     {
         if (!GameStateFolder::isPackageAffectingGameplay(*iter))
-    {
+        {
             iter = ids.erase(iter);
         }
         else

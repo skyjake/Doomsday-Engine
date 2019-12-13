@@ -12,10 +12,3 @@ deng_link_libraries (wadtool PRIVATE DengCore)
 
 deng_target_rpath (wadtool)
 deng_install_tool (wadtool)
-
-if (APPLE AND TARGET client)
-    # Installed to app bundle, so must be re-signed.
-    # TODO: Build this before client, so it can be bundled cleanly.
-    deng_codesign (client)
-endif ()
-

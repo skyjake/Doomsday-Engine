@@ -8,7 +8,7 @@
 @macro{ONELINER}{ Enhanced source port of Doom, Heretic and Hexen }
 @macro{VERSION}{ Version 3.0 }
 @macro{AUTHOR}{ Jaakko Keränen (skyjake), Daniel Swanson (DaniJ) & Contributors }
-@macro{LINK}{ http://dengine.net/ }
+@macro{LINK}{ https://dengine.net/ }
 @require{amestd}
 
 $ Readme-specific formatting macros.

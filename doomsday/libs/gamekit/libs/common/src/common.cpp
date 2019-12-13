@@ -31,8 +31,11 @@
 #include <de/Context>
 #include <de/NoneValue>
 #include <de/ScriptSystem>
+#include <doomsday/DoomsdayApp>
 #include <doomsday/defs/definition.h>
+#include <doomsday/players.h>
 #include <doomsday/world/map.h>
+#include <doomsday/world/entitydef.h>
 
 int Common_GetInteger(int id)
 {
@@ -113,6 +116,8 @@ void fastMonstersChanged()
 
 void Common_Register()
 {
+    C_VAR_BYTE ("hud-title-author-nounknown",   &cfg.common.hideIWADAuthor,     0, 0, 1);
+
     // Movement
     C_VAR_FLOAT("player-move-speed",    &cfg.common.playerMoveSpeed,    0, 0, 1);
     C_VAR_INT  ("player-jump",          &cfg.common.jumpEnabled,        0, 0, 1);
@@ -130,6 +135,7 @@ void Common_Register()
 //-------------------------------------------------------------------------------------------------
 
 static de::Binder *gameBindings;
+static de::Record *gameModule;
 
 static mobj_t &instanceMobj(const de::Context &ctx)
 {
@@ -199,9 +205,41 @@ static de::Value *Function_Thing_Attack(de::Context &ctx, const de::Function::Ar
 }
 #endif
 
+static int playerNumberArgument(const de::Value &arg)
+{
+    if (de::is<de::NoneValue>(arg))
+    {
+        return CONSOLEPLAYER;
+    }
+    const int plrNum = arg.asInt();
+    if (plrNum < 0 || plrNum >= MAXPLAYERS)
+    {
+        throw de::Error("playerNumberArgument", "Player index out of bounds");
+    }
+    return plrNum;
+}
+
+static de::Value *Function_SetMessage(de::Context &, const de::Function::ArgumentValues &args)
+{
+    const int plrNum = playerNumberArgument(*args.at(1));
+    P_SetMessage(&players[plrNum], args.at(0)->asText().toLatin1());
+    return nullptr;
+}
+
+#if defined (__JHEXEN__)
+static de::Value *Function_SetYellowMessage(de::Context &, const de::Function::ArgumentValues &args)
+{
+    const int plrNum = playerNumberArgument(*args.at(1));
+    P_SetYellowMessage(&players[plrNum], args.at(0)->asText().toLatin1());
+    return nullptr;
+}
+#endif
+
 void Common_Load()
 {
     using namespace de;
+
+    gameModule = new Record;
 
     Function::Defaults spawnMissileArgs;
     spawnMissileArgs["angle"] = new NoneValue;
@@ -211,18 +249,59 @@ void Common_Load()
     attackArgs["damage"] = new NumberValue(0.0);
     attackArgs["missile"] = new NoneValue;
 
+    Function::Defaults setMessageArgs;
+    setMessageArgs["player"] = new NoneValue;
+
     DE_ASSERT(gameBindings == nullptr);
     gameBindings = new Binder(nullptr, Binder::FunctionsOwned); // must delete when plugin unloaded
     gameBindings->init(ScriptSystem::get().builtInClass("World", "Thing"))
 #if defined(__JHERETIC__)
             << DE_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs)
 #endif
-            << DE_FUNC_DEFS(Thing_SpawnMissile, "spawnMissile", "id" << "angle" << "momz", spawnMissileArgs);
+        << DENG2_FUNC_DEFS(Thing_SpawnMissile, "spawnMissile", "id" << "angle" << "momz", spawnMissileArgs);
+
+    gameBindings->init(*gameModule)
+        << DENG2_FUNC_DEFS(SetMessage, "setMessage", "message" << "player", setMessageArgs);
+
+    #if defined(__JHEXEN__)
+    {
+        Function::Defaults setYellowMessageArgs;
+        setYellowMessageArgs["player"] = new NoneValue;
+        *gameBindings
+            << DENG2_FUNC_DEFS(SetYellowMessage, "setYellowMessage", "message" << "player", setYellowMessageArgs);
+    }
+#endif
+
+    ScriptSystem::get().addNativeModule("Game", *gameModule);
 }
 
 void Common_Unload()
 {
     DE_ASSERT(gameBindings != nullptr);
+    de::ScriptSystem::get().removeNativeModule("Game");
     delete gameBindings;
     gameBindings = nullptr;
+    delete gameModule;
+    gameModule = nullptr;
+}
+
+void Common_RegisterMapObjs()
+{
+    P_RegisterMapObj(MO_THING, "Thing");
+    P_RegisterMapObjProperty(MO_THING, MO_X, "X", DDVT_DOUBLE);
+    P_RegisterMapObjProperty(MO_THING, MO_Y, "Y", DDVT_DOUBLE);
+    P_RegisterMapObjProperty(MO_THING, MO_Z, "Z", DDVT_DOUBLE);
+    P_RegisterMapObjProperty(MO_THING, MO_ANGLE, "Angle", DDVT_ANGLE);
+    P_RegisterMapObjProperty(MO_THING, MO_DOOMEDNUM, "DoomEdNum", DDVT_INT);
+    P_RegisterMapObjProperty(MO_THING, MO_SKILLMODES, "SkillModes", DDVT_INT);
+    P_RegisterMapObjProperty(MO_THING, MO_FLAGS, "Flags", DDVT_INT);
+
+    P_RegisterMapObj(MO_XLINEDEF, "XLinedef");
+    P_RegisterMapObjProperty(MO_XLINEDEF, MO_TAG, "Tag", DDVT_SHORT);
+    P_RegisterMapObjProperty(MO_XLINEDEF, MO_TYPE, "Type", DDVT_SHORT);
+    P_RegisterMapObjProperty(MO_XLINEDEF, MO_FLAGS, "Flags", DDVT_SHORT);
+
+    P_RegisterMapObj(MO_XSECTOR, "XSector");
+    P_RegisterMapObjProperty(MO_XSECTOR, MO_TAG, "Tag", DDVT_SHORT);
+    P_RegisterMapObjProperty(MO_XSECTOR, MO_TYPE, "Type", DDVT_SHORT);
 }

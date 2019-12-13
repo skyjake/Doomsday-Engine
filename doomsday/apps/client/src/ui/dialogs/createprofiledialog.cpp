@@ -132,7 +132,7 @@ DE_GUI_PIMPL(CreateProfileDialog)
         const String entry = self().profileName();
         if (!entry.isEmpty())
         {
-            if (editing && oldName == entry)
+            if (editing && !oldName.compareWithoutCase(entry))
             {
                 valid = true;
             }

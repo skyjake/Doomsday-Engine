@@ -25,7 +25,7 @@ Music { ID = "sixater"; Lump = "SIXATER"; }
 Music { ID = "wobabyr"; Lump = "WOBABYR"; }
 Music { ID = "cryptr"; 	Lump = "CRYPTR";  }
 Music { ID = "fantar"; 	Lump = "FANTAR";  }
-Music { ID = "belchr"; 	Lump = "BELCHR";  }
+Music { ID = "blechr"; 	Lump = "BLECHR";  }
 Music { ID = "voidr"; 	Lump = "VOIDR";   }
 Music { ID = "chap_1r"; Lump = "CHAP_1R"; }
 Music { ID = "chap_2r"; Lump = "CHAP_2R"; }

@@ -507,6 +507,8 @@ macro (deng_codesign target)
                 if (NOT _skip)
                 message (STATUS \"Signing \${fn}...\")
                 execute_process (COMMAND ${CODESIGN_COMMAND} --verbose
+                        --options runtime
+                        --timestamp
                         -s \"${DE_CODESIGN_APP_CERT}\"
                         ${DE_FW_CODESIGN_EXTRA_FLAGS}
                         \"\${fn}\"
@@ -515,9 +517,15 @@ macro (deng_codesign target)
             endforeach (fn)
             message (STATUS \"Signing \${CMAKE_INSTALL_PREFIX}/${_outName}.app using '${DE_CODESIGN_APP_CERT}'...\")
             execute_process (COMMAND ${CODESIGN_COMMAND} --verbose
+                --options runtime
+                --timestamp
                 --force -s \"${DE_CODESIGN_APP_CERT}\"
                 ${DE_CODESIGN_EXTRA_FLAGS}
+            )
+            message (STATUS \"Notarizing \${CMAKE_INSTALL_PREFIX}/${_outName}.app...\")
+            execute_process (COMMAND ${DENG_SOURCE_DIR}/build/scripts/notarize.py 
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
+                ${DENG_NOTARIZATION_APPLE_ID}
             )")
     endif ()
     if (WIN32 AND DE_SIGNTOOL_CERT)

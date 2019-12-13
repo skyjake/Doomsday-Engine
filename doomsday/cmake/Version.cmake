@@ -3,6 +3,11 @@ set (DE_VERSION_MINOR 0)
 set (DE_VERSION_PATCH 0)
 
 set (DE_VERSION ${DE_VERSION_MAJOR}.${DE_VERSION_MINOR}.${DE_VERSION_PATCH})
+if (DEFINED DE_BUILD)
+    set (DE_VERSION_WITH_BUILD ${DE_VERSION}.${DE_BUILD})
+else ()
+    set (DE_VERSION_WITH_BUILD ${DE_VERSION})
+endif ()
 
 # Binary compatibility version for shared libraries / APIs.
 set (DE_COMPAT_VERSION 3.0)

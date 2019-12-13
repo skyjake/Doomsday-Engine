@@ -41,6 +41,7 @@ DE_EXTERN_C mobj_t *PuffSpawned;
 #endif
 
 #ifdef __cplusplus
+#include <functional>
 extern "C" {
 #endif
 
@@ -192,16 +193,22 @@ coord_t P_GetGravity(void);
  */
 dd_bool P_CheckSides(mobj_t *actor, coord_t x, coord_t y);
 
+#ifdef __cplusplus
+int P_IterateThinkers(thinkfunc_t func, const std::function<int(thinker_t *)> &);
+#endif
+
 #if __JHERETIC__ || __JHEXEN__
 /**
  * @param mo  The mobj whoose position to test.
  * @return dd_bool  @c true iff the mobj is not blocked by anything.
  */
 dd_bool P_TestMobjLocation(mobj_t *mobj);
+
+dd_bool P_BounceWall(mobj_t *mobj);
+
 #endif
 
 #if __JHEXEN__
-void P_BounceWall(mobj_t *mobj);
 
 mobj_t *P_CheckOnMobj(mobj_t *mobj);
 

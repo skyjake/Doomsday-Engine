@@ -78,7 +78,10 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
                 return false;
             }
 
-            if (!gameProfile.isPlayable()) return false;
+            if (!gameProfile.isPlayable())
+            {
+                return false;
+            }
 
             // The file must be in the right save folder.
             if (item.savePath().fileNamePath().compare(gameProfile.savePath().c_str(), CaseInsensitive))
@@ -275,8 +278,8 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
 
     void dataBundlesIdentified() override
     {
-        Loop::get().mainCall([this] ()
-        {
+        Loop::get().mainCall([this]() {
+            gameProfile.upgradePackages();
             catalog.clear();
             self().updateContent();
         });
@@ -391,7 +394,7 @@ void GamePanelButtonWidget::updateContent()
     }
 
     label().setText(
-        Stringf(_E(b) "%s\n" _E(l) "%s", d->gameProfile.name().c_str(), meta.c_str()));
+        Stringf(_E(b) "%s\n" _E(l)_E(C) "%s", d->gameProfile.name().c_str(), meta.c_str()));
 
     d->packagesButton->setPackages(d->gameProfile.packages());
     d->updatePackagesIndicator();

@@ -93,15 +93,16 @@ int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum)
             const uint8_t *data = lump.cache();
             String sourcePath = lump.container().composePath();
             bool custom       = (lump.isContained()? lump.container().hasCustom() : lump.hasCustom());
-            DED_ReadData(ded, (const char *)data, sourcePath, custom);
+            const int result  = DED_ReadData(ded, (const char *)data, sourcePath, custom);
             lump.unlock();
+            return result;
         }
         return true;
     }
     catch (LumpIndex::NotFoundError const&)
     {} // Ignore error.
     DED_SetError("Bad lump number");
-    return false;
+    return 0;
 }
 
 int DED_Read(ded_t *ded, const String& path)

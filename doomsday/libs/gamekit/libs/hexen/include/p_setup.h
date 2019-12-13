@@ -54,7 +54,7 @@ enum {
     MO_ARG2,
     MO_ARG3,
     MO_ARG4,
-    MO_SPECIAL
+    MO_SPECIAL,
 };
 
 #ifdef __cplusplus

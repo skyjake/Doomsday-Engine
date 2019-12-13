@@ -2135,15 +2135,20 @@ String G_MapAuthor(const res::Uri &mapUri, bool supressGameAuthor)
 
     if (!author.isEmpty())
     {
-        // Should we suppress the author?
-        /// @todo Do not do this here.
         GameInfo gameInfo;
         DD_GameInfo(&gameInfo);
+
+        // Should we suppress the author?
         if (supressGameAuthor || P_MapIsCustom(mapUri.compose()))
         {
             if (!author.compareWithoutCase(Str_Text(gameInfo.author)))
                 return "";
         }
+    }
+
+    if (cfg.common.hideUnknownAuthor && !author.compareWithoutCase("unknown"))
+    {
+        return "";
     }
 
     return author;
@@ -2796,6 +2801,17 @@ D_CMD(WarpMap)
     {
         P_SetMessageWithFlags(&players[CONSOLEPLAYER], "Cannot warp to the current map.", LMF_NO_HIDE);
         return false;
+    }
+
+    // Restore health of dead players before modifying the game session. This is a workaround
+    // for IssueID #2357: dead players would be restored to zero-health zombies after the new
+    // map is loaded. The actual bug is likely in gamesession.cpp restorePlayersInHub().
+    for (int i = 0; i < MAXPLAYERS; ++i)
+    {
+        if (players[i].plr->inGame && players[i].playerState == PST_DEAD)
+        {
+            players[i].health = maxHealth; /// @todo: Game sessions vs. hubs needs to be debugged.
+        }
     }
 #endif
 

@@ -28,12 +28,13 @@ sections.begin('BASIC EXPRESSIONS')
 sections.subsection('Basic types (number, text, array, dictionary, time).')
 print 5, 5.5, -3.141592657
 print 0x100, 0X123
-print 'Using underscores for readability:', 0x0012_3456
+print 'Using underscores for readability: %x' % 0x0012_3456
 print "Hello", 'World'
 print """I can span
 newlines."""
 print [1, 2, 3]
 print [1, [2, 3], 4]
+print {'a': 10, 'b': Pi}
 print {'a': 'b', 1: ['b', {5:6, 6:7}], ['array', 'as', 'key']: 'oh my'}
 print 'The time is now:', Time()
 
@@ -110,6 +111,7 @@ print 'a =', a
 path = '/some/path/'
 print 'path =', path
 print 'path =', path /= 'filename.ext'
+print 'path =', path
 
 sections.subsection('Operators: []')
 transports = ['planes', 'trains', 'automobiles', 'bicycles']
@@ -610,7 +612,7 @@ def recFunc()
     return a
 end
 
-try: print recFunc()
+try: print recFunc().value
 catch NullError
     print "Records are passed by reference; the returned record went out of scope."
 end
@@ -668,7 +670,7 @@ end
 func6()
 print 'func2() =', func2()
 
-sections.subsection("Accessing function's locals within a subfunction.")
+sections.subsection("Cannot access function's locals within a subfunction.")
 def func7()
     a = 100
     print 'Inside func7: a =', a
@@ -694,14 +696,14 @@ doCallback(10, 15, myrec.func5)
 sections.subsection('Returning a local function from a function.')
 a = 'Process scope.'
 def testfun()
-    a = 'testfun() scope.'
+    a = 'testfun() scope.'  # not used
     def returningFunc()
-        print 'I come from another place.', a
+        print 'I come from another place.', a  # not local, so use global
     end
-    returningFunc()  # 'a' found in local namespace
+    returningFunc() 
     return returningFunc
 end
-testfun()()  # 'a' found in global namespace! (testfun()'s local scope does not exist here)
+testfun()()
 ar = [testfun]
 ar[0]()()
 
@@ -724,32 +726,32 @@ end
 globalAssign()
 print 'a =', a
 
-sections.subsection('Exporting variable from a function.')
-def exporting()
-    abc = 'Value from exporting()'
-    export abc
-end
-abc = 'Value in global namespace'
-print 'Before: abc =', abc
-exporting()
-print 'After: abc =', abc
-
-sections.subsection('Exporting a record.')
-def exporting2()
-    record bunny
-    bunny.ear = 'value'
-    export bunny
-end
-exporting2()
-print 'bunny =', bunny
-
-sections.subsection('Exporting while assigning.')
-del abc
-def exporting3()
-    export abc = 'Value from exporting3()'
-end
-exporting3()
-print 'abc =', abc
+#sections.subsection('Exporting variable from a function.')
+#def exporting()
+#    abc = 'Value from exporting()'
+#    export abc
+#end
+#abc = 'Value in global namespace'
+#print 'Before: abc =', abc
+#exporting()
+#print 'After: abc =', abc
+#
+#sections.subsection('Exporting a record.')
+#def exporting2()
+#    record bunny
+#    bunny.ear = 'value'
+#    export bunny
+#end
+#exporting2()
+#print 'bunny =', bunny
+#
+#sections.subsection('Exporting while assigning.')
+#del abc
+#def exporting3()
+#    export abc = 'Value from exporting3()'
+#end
+#exporting3()
+#print 'abc =', abc
 
 sections.subsection('Built-in function locals() returns the local namespace as a record.')
 print 'At global level:'

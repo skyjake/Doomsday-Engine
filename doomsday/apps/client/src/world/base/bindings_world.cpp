@@ -20,6 +20,7 @@
 #include "world/clientserverworld.h"
 #include "world/map.h"
 #include "world/thinkers.h"
+#include "world/p_players.h"
 #include "audio/audiosystem.h"
 #include "dd_main.h"
 
@@ -30,6 +31,16 @@
 using namespace de;
 
 namespace world {
+
+static Value *Function_World_ConsolePlayer(Context &, const Function::ArgumentValues &)
+{
+    return new NumberValue(consolePlayer);
+}
+
+static Value *Function_Thing_Id(Context &ctx, const Function::ArgumentValues &)
+{
+    return new NumberValue(ClientServerWorld::contextMobj(ctx).thinker.id);
+}
 
 static Value *Function_Thing_Health(Context &ctx, const Function::ArgumentValues &)
 {
@@ -52,8 +63,28 @@ static Value *Function_Thing_StartSound(Context &ctx, const Function::ArgumentVa
     return nullptr;
 }
 
+static Value *Function_Thing_Recoil(Context &ctx, const Function::ArgumentValues &args)
+{
+    mobj_t &     mo    = ClientServerWorld::contextMobj(ctx);
+    const double force = args.at(0)->asNumber();
+
+    const angle_t angle = mo.angle + ANG180;
+    const float angle_f = float(angle) / float(ANGLE_180) * PIf;
+
+    mo.mom[MX] += force * cos(angle_f);
+    mo.mom[MY] += force * sin(angle_f);
+
+    return nullptr;
+}
+
 void initBindings(Binder &binder, Record &worldModule)
 {
+    // Global functions.
+    {
+        binder.init(worldModule)
+            << DENG2_FUNC_NOARG(World_ConsolePlayer, "consolePlayer");
+    }
+
     // Thing
     {
         Record &thing = worldModule.addSubrecord("Thing");
@@ -62,9 +93,10 @@ void initBindings(Binder &binder, Record &worldModule)
         startSoundArgs["volume"] = new NumberValue(1.0);
 
         binder.init(thing)
-                << DE_FUNC_NOARG(Thing_Health, "health")
-                << DE_FUNC_DEFS (Thing_StartSound, "startSound", "id" << "volume", startSoundArgs);
-
+                << DE_FUNC_NOARG(Thing_Id,         "id")
+                << DE_FUNC_NOARG(Thing_Health,     "health")
+                << DE_FUNC_DEFS (Thing_StartSound, "startSound", "id" << "volume", startSoundArgs)
+                << DE_FUNC      (Thing_Recoil,     "recoil", "force");
     }
 }
 

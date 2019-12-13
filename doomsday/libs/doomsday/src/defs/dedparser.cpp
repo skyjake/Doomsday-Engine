@@ -87,18 +87,19 @@ using namespace res;
 #define ISTOKEN(X)  (!stricmp(token, X))
 
 #define READSTR(X)  if (!ReadString(X, sizeof(X))) { \
-                    setError("Syntax error in string value."); \
+                    setError("Syntax error in string value"); \
                     retVal = false; goto ded_end_read; }
 
 
 #define READURI(X, SHM) if (!ReadUri(X, SHM)) { \
-    setError("Syntax error parsing resource path."); \
+    setError("Syntax error parsing resource path"); \
     retVal = false; goto ded_end_read; }
 
-#define MISSING_SC_ERROR    setError("Missing semicolon."); \
+#define MISSING_SC_ERROR    setError("Missing semicolon"); \
                             retVal = false; goto ded_end_read;
 
 #define CHECKSC     if (source->version <= 5) { ReadToken(); if (!ISTOKEN(";")) { MISSING_SC_ERROR; } }
+#define SKIPSC      { ReadToken(); if (!ISTOKEN(";")) { UnreadToken(token); }}
 
 #define FINDBEGIN   while (!ISTOKEN("{") && !source->atEnd) ReadToken();
 #define FINDEND     while (!ISTOKEN("}") && !source->atEnd) ReadToken();
@@ -148,7 +149,7 @@ using namespace res;
 #define RV_FLAGS_ELEM(lab, X, ELEM, P) if (ISLABEL(lab)) { if (!ReadFlags(&X, P, ELEM)) { FAILURE } } else
 #define RV_BLENDMODE(lab, X) if (ISLABEL(lab)) { READBLENDMODE(X); } else
 #define RV_ANYSTR(lab, X)   if (ISLABEL(lab)) { if (!ReadAnyString(&X)) { FAILURE } } else
-#define RV_END          { setError("Unknown label '" + String(label) + "'."); retVal = false; goto ded_end_read; }
+#define RV_END          { setError("Unknown label '" + String(label) + "'"); retVal = false; goto ded_end_read; }
 
 static struct xgclass_s *xgClassLinks;
 
@@ -1154,12 +1155,12 @@ DE_PIMPL(DEDParser)
                                 exit++;
                             }
                             else RV_END
-                            CHECKSC;
+                            SKIPSC;
                         }
                         notHubMap++;
                     }
                     else RV_END
-                    CHECKSC;
+                    SKIPSC;
                 }
 
                 // If we did not read into a dummy update the previous index.
@@ -1261,6 +1262,9 @@ DE_PIMPL(DEDParser)
                     RV_INT_ELEM("Misc2", (*mo)["misc"], 1)
                     RV_INT_ELEM("Misc3", (*mo)["misc"], 2)
                     RV_INT_ELEM("Misc4", (*mo)["misc"], 3)
+
+                    RV_STR("On touch", (*mo)["onTouch"]) // script function (MF_SPECIAL)
+
                     RV_END
                     CHECKSC;
                 }
@@ -2142,7 +2146,7 @@ DE_PIMPL(DEDParser)
                         model++;
                     }
                     else RV_END
-                    CHECKSC;
+                    SKIPSC;
                 }
 
                 // If we did not read into a dummy update the previous index.

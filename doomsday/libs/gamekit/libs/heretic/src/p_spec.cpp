@@ -570,6 +570,11 @@ static void P_CrossSpecialLine(Line *line, int side, mobj_t *thing)
         EV_Teleport(line, side, thing, true);
         break;
 
+    case 98:
+        // Lower Floor (TURBO)
+        EV_DoFloor(line, FT_LOWERTURBO);
+        break;
+
     case 100:
         // DJS - Heretic has one turbo door raise
         EV_DoDoor(line, DT_BLAZEOPEN);

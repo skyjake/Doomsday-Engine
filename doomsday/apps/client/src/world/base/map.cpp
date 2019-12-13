@@ -2308,7 +2308,7 @@ Sector *Map::sectorPtr(dint index) const
     return nullptr;
 }
 
-LoopResult Map::forAllSectors(std::function<LoopResult (Sector &)> func) const
+LoopResult Map::forAllSectors(const std::function<LoopResult (Sector &)> &func) const
 {
     for (Sector *sec : d->sectors)
     {
@@ -3299,6 +3299,17 @@ void Map::deserializeInternalState(Reader &from, const IThinkerMapping &thinkerM
     }
 }
 
+void Map::redecorate()
+{
+    forAllSectors([](Sector &sector) {
+        sector.forAllSubsectors([](Subsector &subsec) {
+            subsec.as<ClientSubsector>().markForDecorationUpdate();
+            return LoopContinue;
+        });
+        return LoopContinue;
+    });
+}
+
 void Map::worldSystemFrameBegins(bool resetNextViewer)
 {
     DE_ASSERT(&App_World().map() == this); // Sanity check.
@@ -3960,25 +3971,19 @@ bool Map::endEditing()
     //
     // Collate sectors:
     DE_ASSERT(d->sectors.isEmpty());
-#ifdef DE_QT_4_7_OR_NEWER
     d->sectors.reserve(d->editable.sectors.count());
-#endif
     d->sectors.append(d->editable.sectors);
     d->editable.sectors.clear();
 
     // Collate lines:
     DE_ASSERT(d->lines.isEmpty());
-#ifdef DE_QT_4_7_OR_NEWER
     d->lines.reserve(d->editable.lines.count());
-#endif
     d->lines.append(d->editable.lines);
     d->editable.lines.clear();
 
     // Collate polyobjs:
     DE_ASSERT(d->polyobjs.isEmpty());
-#ifdef DE_QT_4_7_OR_NEWER
     d->polyobjs.reserve(d->editable.polyobjs.count());
-#endif
     while (!d->editable.polyobjs.isEmpty())
     {
         d->polyobjs.append(d->editable.polyobjs.takeFirst());
@@ -4031,8 +4036,11 @@ bool Map::endEditing()
     }
 
     // Finish sectors.
+    std::map<int, Sector *> sectorsByArchiveIndex;
     for (Sector *sector : d->sectors)
     {
+        sectorsByArchiveIndex[sector->indexInArchive()] = sector;
+
         d->buildSubsectors(*sector);
         sector->buildSides();
         sector->chainSoundEmitters();
@@ -4041,6 +4049,22 @@ bool Map::endEditing()
     // Finish planes.
     for (Sector *sector : d->sectors)
     {
+#if defined (__CLIENT__)
+        if (sector->visPlaneLink() != MapElement::NoIndex)
+        {
+            if (Sector *target = sectorsByArchiveIndex[sector->visPlaneLink()])
+            {
+                // Use the first subsector as the target.
+                auto &targetSub = target->subsector(0).as<ClientSubsector>();
+
+                // Linking is done for each subsector separately. (Necessary, though?)
+                sector->forAllSubsectors([&targetSub](Subsector &sub) {
+                    sub.as<ClientSubsector>().linkVisPlanes(targetSub);
+                    return LoopContinue;
+                });
+            }
+        }
+#endif
         sector->forAllPlanes([] (Plane &plane)
         {
             plane.updateSoundEmitterOrigin();
@@ -4095,7 +4119,8 @@ Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
     return line;
 }
 
-Sector *Map::createSector(dfloat lightLevel, const Vec3f &lightColor, dint archiveIndex)
+Sector *Map::createSector(float lightLevel, const Vec3f &lightColor, int archiveIndex,
+                          int visPlaneLinkIndex)
 {
     if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
@@ -4106,6 +4131,7 @@ Sector *Map::createSector(dfloat lightLevel, const Vec3f &lightColor, dint archi
 
     sector->setMap(this);
     sector->setIndexInArchive(archiveIndex);
+    sector->setVisPlaneLink(visPlaneLinkIndex);
 
     /// @todo Don't do this here.
     sector->setIndexInMap(d->editable.sectors.count() - 1);

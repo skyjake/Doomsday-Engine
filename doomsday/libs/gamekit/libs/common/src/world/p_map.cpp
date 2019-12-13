@@ -1410,12 +1410,13 @@ static dd_bool P_TryMove2(mobj_t *thing, coord_t x, coord_t y, dd_bool dropoff)
          * Allow dropoffs in controlled circumstances.
          * Improve symmetry of clipping on stairs.
          */
-        if(!(thing->flags & (MF_DROPOFF | MF_FLOAT)))
+        {
+        if (!(thing->flags & (MF_DROPOFF | MF_FLOAT)))
         {
             // Dropoff height limit.
-            if(cfg.avoidDropoffs)
+            if (cfg.avoidDropoffs)
             {
-                if(tmFloorZ - tmDropoffZ > 24)
+                if (tmFloorZ - tmDropoffZ > 24)
                 {
                     return false; // Don't stand over dropoff.
                 }
@@ -1423,23 +1424,29 @@ static dd_bool P_TryMove2(mobj_t *thing, coord_t x, coord_t y, dd_bool dropoff)
             else
             {
                 coord_t floorZ = tmFloorZ;
-
-                if(thing->onMobj)
+                if (thing->onMobj)
                 {
                     // Thing is stood on something so use our z position as the floor.
-                    floorZ = (thing->origin[VZ] > tmFloorZ? thing->origin[VZ] : tmFloorZ);
+                    floorZ = (thing->origin[VZ] > tmFloorZ ? thing->origin[VZ] : tmFloorZ);
                 }
 
-                if(!dropoff)
+                if (!dropoff)
                 {
-                    if(thing->floorZ - floorZ > 24 || thing->dropOffZ - tmDropoffZ > 24)
-                        return false;
+                    if (thing->floorZ - floorZ > 24 || thing->dropOffZ - tmDropoffZ > 24)
+                    return false;
                 }
                 else
                 {
                     tmFellDown = !(thing->flags & MF_NOGRAVITY) && thing->origin[VZ] - floorZ > 24;
                 }
             }
+#if defined (__JHERETIC__)
+            else if (!thing->onMobj && (thing->flags & MF_DROPOFF) && !(thing->flags & MF_NOGRAVITY))
+            {
+                // Allow gentle dropoff from great heights.
+                tmFellDown = (thing->origin[VZ] - tmFloorZ > 24);
+            }
+#endif
         }
 #endif
 
@@ -2710,9 +2717,9 @@ static int PIT_ChangeSector(mobj_t *thing, void *context)
 
     // Update the Z position of the mobj and determine whether it physically
     // fits in the opening between floor and ceiling.
-    if(!P_MobjIsCamera(thing))
+    if (!P_MobjIsCamera(thing))
     {
-        const bool onfloor = (thing->origin[VZ] == thing->floorZ);
+        const bool onfloor = de::fequal(thing->origin[VZ], thing->floorZ);
 
         P_CheckPosition(thing, thing->origin);
         thing->floorZ   = tmFloorZ;
@@ -2721,7 +2728,7 @@ static int PIT_ChangeSector(mobj_t *thing, void *context)
         thing->dropOffZ = tmDropoffZ; // $dropoff_fix: remember dropoffs.
 #endif
 
-        if(onfloor)
+        if (onfloor)
         {
 #if __JHEXEN__
             if((thing->origin[VZ] - thing->floorZ < 9) ||
@@ -2859,7 +2866,26 @@ void P_HandleSectorHeightChange(int sectorIdx)
     P_ChangeSector((Sector *)P_ToPtr(DMU_SECTOR, sectorIdx), false /*don't crush*/);
 }
 
-#if __JHERETIC__ || __JHEXEN__
+int P_IterateThinkers(thinkfunc_t func, const std::function<int(thinker_t *)> &callback)
+{
+    // Helper to convert the std::function to a basic C function pointer for the API call.
+    struct IterContext
+    {
+        const std::function<int(thinker_t *)> *func;
+
+        static int callback(thinker_t *thinker, void *ptr)
+        {
+            auto *context = reinterpret_cast<IterContext *>(ptr);
+            return (*context->func)(thinker);
+        }
+    };
+
+    IterContext context{&callback};
+    return Thinker_Iterate(func, IterContext::callback, &context);
+}
+
+#if defined (__JHERETIC__) || defined(__JHEXEN__)
+
 dd_bool P_TestMobjLocation(mobj_t *mo)
 {
     const int oldFlags = mo->flags;
@@ -2875,6 +2901,109 @@ dd_bool P_TestMobjLocation(mobj_t *mo)
     // XY is ok, now check Z
     return mo->origin[VZ] >= mo->floorZ && (mo->origin[VZ] + mo->height) <= mo->ceilingZ;
 }
+
+struct ptr_boucetraverse_params_t {
+    mobj_t *bounceMobj;
+    Line *  bestLine;
+    coord_t bestDistance;
+};
+
+static int PTR_BounceTraverse(Intercept const *icpt, void *context)
+{
+    DENG_ASSERT(icpt->type == ICPT_LINE);
+
+    ptr_boucetraverse_params_t &parm = *static_cast<ptr_boucetraverse_params_t *>(context);
+
+    Line *line = icpt->line;
+    if (!P_GetPtrp(line, DMU_FRONT_SECTOR) || !P_GetPtrp(line, DMU_BACK_SECTOR))
+    {
+        if (Line_PointOnSide(line, parm.bounceMobj->origin) < 0)
+        {
+            return false; // Don't hit the back side.
+        }
+        goto bounceblocking;
+    }
+
+    Interceptor_AdjustOpening(icpt->trace, line);
+
+    if (Interceptor_Opening(icpt->trace)->range < parm.bounceMobj->height)
+    {
+        goto bounceblocking; // Doesn't fit.
+    }
+    if (Interceptor_Opening(icpt->trace)->top - parm.bounceMobj->origin[VZ] <
+        parm.bounceMobj->height)
+    {
+        goto bounceblocking; // Mobj is too high...
+    }
+    if (parm.bounceMobj->origin[VZ] - Interceptor_Opening(icpt->trace)->bottom < 0)
+    {
+        goto bounceblocking; // Mobj is too low...
+    }
+    // This line doesn't block movement...
+    return false;
+
+    // The line does block movement, see if it is closer than best so far.
+bounceblocking:
+    if (icpt->distance < parm.bestDistance)
+    {
+        parm.bestDistance = icpt->distance;
+        parm.bestLine     = line;
+    }
+    return false;
+}
+
+dd_bool P_BounceWall(mobj_t *mo)
+{
+    if (!mo) return false;
+
+    // Trace a line from the origin to the would be destination point (which is
+    // apparently not reachable) to find a line from which we'll calculate the
+    // inverse "bounce" vector.
+    vec2d_t leadPos = {mo->origin[VX] + (mo->mom[MX] > 0 ? mo->radius : -mo->radius),
+                       mo->origin[VY] + (mo->mom[MY] > 0 ? mo->radius : -mo->radius)};
+    vec2d_t destPos;
+    V2d_Sum(destPos, leadPos, mo->mom);
+
+    ptr_boucetraverse_params_t parm;
+    parm.bounceMobj   = mo;
+    parm.bestLine     = 0;
+    parm.bestDistance = 1; // Intercept distances are normalized [0..1]
+
+    P_PathTraverse2(leadPos, destPos, PTF_LINE, PTR_BounceTraverse, &parm);
+
+    if (parm.bestLine)
+    {
+//        fprintf(stderr, "mo %p: bouncing off line %p, dist=%f\n",
+//                mo, parm.bestLine, parm.bestDistance);
+
+        int const side = Line_PointOnSide(parm.bestLine, mo->origin) < 0;
+        vec2d_t   lineDirection;
+        P_GetDoublepv(parm.bestLine, DMU_DXY, lineDirection);
+
+        angle_t lineAngle  = M_PointToAngle(lineDirection) + (side ? ANG180 : 0);
+        angle_t moveAngle  = M_PointToAngle(mo->mom);
+        angle_t deltaAngle = (2 * lineAngle) - moveAngle;
+
+        coord_t moveLen = M_ApproxDistance(mo->mom[MX], mo->mom[MY]) * 0.75f /*Friction*/;
+        if (moveLen < 1) moveLen = 2;
+
+        uint an = deltaAngle >> ANGLETOFINESHIFT;
+        V2d_Set(mo->mom, moveLen * FIX2FLT(finecosine[an]), moveLen * FIX2FLT(finesine[an]));
+
+#if defined (__JHERETIC__)
+        // Reduce momentum.
+        mo->mom[MX] *= 0.9;
+        mo->mom[MY] *= 0.9;
+
+        // The same sound for all wall-bouncing things... Using an action function might be
+        // a better idea.
+        S_StartSound(SFX_BOUNCE, mo);
+#endif
+        return true;
+    }
+    return false;
+}
+
 #endif
 
 #if __JHEXEN__
