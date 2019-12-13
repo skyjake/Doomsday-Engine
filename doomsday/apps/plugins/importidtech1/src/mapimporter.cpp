@@ -953,10 +953,13 @@ DENG2_PIMPL(MapImporter)
 
                 if (hit.valid && hit.t > 0.0 && hit.t < nearestContainer.first)
                 {
-                    const int sector = sides[line.sideIndex(hit.side)].sector;
-                    if (sector >= 0 && !sectors[sector].hackFlags)
+                    if (line.hasSide(hit.side))
                     {
-                        nearestContainer = {hit.t, sector};
+                        const int sector = sides[line.sideIndex(hit.side)].sector;
+                        if (sector >= 0 && !sectors[sector].hackFlags)
+                        {
+                            nearestContainer = {hit.t, sector};
+                        }
                     }
                 }
             }
@@ -1302,6 +1305,9 @@ DENG2_PIMPL(MapImporter)
 
         DENG2_FOR_EACH(Sectors, i, sectors)
         {
+            // Never should have linked to a hacked sector.
+            DENG2_ASSERT(i->visPlaneLinkSector < 0 || !sectors[i->visPlaneLinkSector].hackFlags);
+
             dint idx = MPE_SectorCreate(
                 dfloat(i->lightLevel) / 255.0f, 1, 1, 1, i->index, i->visPlaneLinkSector);
 
