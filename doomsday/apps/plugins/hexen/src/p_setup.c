@@ -44,7 +44,6 @@ void P_RegisterMapObjs(void)
     P_RegisterMapObjProperty(MO_XLINEDEF, MO_ARG2, "Arg2", DDVT_BYTE);
     P_RegisterMapObjProperty(MO_XLINEDEF, MO_ARG3, "Arg3", DDVT_BYTE);
     P_RegisterMapObjProperty(MO_XLINEDEF, MO_ARG4, "Arg4", DDVT_BYTE);
-    P_RegisterMapObjProperty(MO_XLINEDEF, MO_FLAGS, "Flags", DDVT_SHORT);
 }
 
 /**
