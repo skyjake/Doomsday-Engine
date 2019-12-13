@@ -757,7 +757,7 @@ ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
                     }
                     else if (&surface == &side.top())
                     {
-                        return static_cast<ClientMaterial *>(side.sector().ceiling().surface().materialPtr());
+                        static_cast<ClientMaterial *>(side.sector().ceiling().surface().materialPtr());
                     }
                 }
             }
@@ -3118,8 +3118,8 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
             bool endStrip = false;
             if (hedge->hasMapElement())
             {
-                scanMaterialOffset += hedge->mapElementAs<LineSideSegment>().length()
-                                    * (direction == Anticlockwise? -1 : 1);
+                scanMaterialOffset += hedge->mapElementAs<LineSideSegment>().length() *
+                                      (direction == Anticlockwise ? -1 : 1);
 
                 // Prepare the edge geometry
                 SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::From : Line::To,

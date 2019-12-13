@@ -29,7 +29,7 @@
 #include "world/maputil.h"
 #include "world/surface.h"
 #include "client/clientsubsector.h"
-
+#include "MaterialAnimator"
 #include "render/rend_main.h"  /// devRendSkyMode @todo remove me
 
 #include "Face"
@@ -341,6 +341,10 @@ struct WallEdge::Impl : public IHPlane
             case LineSide::Middle: {
                 LineSide const &lineSide = seg.lineSide();
                 Surface const &middle    = lineSide.middle();
+
+                const bool isExtendedMasked = middle.hasMaterial() &&
+                                              !middle.materialAnimator()->isOpaque() &&
+                                              !lineSide.top().hasMaterial();
 
                 if (!line.isSelfReferencing() && ffloor == &subsec.sector().floor())
                 {
