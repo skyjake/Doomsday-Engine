@@ -49,8 +49,8 @@ namespace internal {
  * @returns true, if line A-B intersects the line segment @a other.
  */
 static bool lineSegmentIntersection(double &lineT,
-                                    const Vector2d &lineA, const Vector2d &lineB,
-                                    const Vector2d &segmentA, const Vector2d &segmentB)
+                                    const Vec2d &lineA, const Vec2d &lineB,
+                                    const Vec2d &segmentA, const Vec2d &segmentB)
 {
     const auto &p = segmentA;
     const auto  r = segmentB - segmentA;
@@ -88,7 +88,7 @@ public:
 
 struct Vertex
 {
-    Vector2d      pos;
+    Vec2d         pos;
     std::set<int> lines; // lines connected to this vertex
 };
 
@@ -922,17 +922,17 @@ DE_PIMPL(MapImporter)
     };
 
     IntersectionResult findIntersection(
-        const LineDef &line, const Vector2d &start, const Vector2d &end) const
+        const LineDef &line, const Vec2d &start, const Vec2d &end) const
     {
-        const Vector2d a       = vertices[line.v[0]].pos;
-        const Vector2d b       = vertices[line.v[1]].pos;
+        const Vec2d a = vertices[line.v[0]].pos;
+        const Vec2d b = vertices[line.v[1]].pos;
 
         double t;
         if (lineSegmentIntersection(t, start, end, a, b))
         {
-            const Vector2d dir        = (end - start).normalize();
-            const Vector2d lineDir    = (b - a).normalize();
-            const Vector2d lineNormal = {lineDir.y, -lineDir.x};
+            const Vec2d dir        = (end - start).normalize();
+            const Vec2d lineDir    = (b - a).normalize();
+            const Vec2d lineNormal = {lineDir.y, -lineDir.x};
 
             return {true, t, lineNormal.dot(dir) < 0 ? LineDef::Front : LineDef::Back};
         }
@@ -944,8 +944,8 @@ DE_PIMPL(MapImporter)
         if (sector.lines.empty()) return;
 
         // Find the topmost vertex.
-        const Vector2d start = vertices[findMinYVertexIndex(sector)].pos;
-        const Vector2d end   = start - Vector2d(0.001, -1.0);
+        const Vec2d start = vertices[findMinYVertexIndex(sector)].pos;
+        const Vec2d end   = start - Vec2d(0.001, -1.0);
 
         std::pair<double, int> nearestContainer{std::numeric_limits<double>::max(), -1};
 
@@ -976,7 +976,7 @@ DE_PIMPL(MapImporter)
         if (nearestContainer.second >= 0)
         {
             sector.visPlaneLinkSector = nearestContainer.second;
-            qDebug("sector %i contained by %i", indexOf(sector), sector.visPlaneLinkSector);
+            LOGDEV_MAP_VERBOSE("Sector %d contained by %d") << indexOf(sector) << sector.visPlaneLinkSector;
         }
     }
 
@@ -1198,7 +1198,7 @@ DE_PIMPL(MapImporter)
                 {
                     foundSelfRefs = true;
                     sector.hackFlags |= HACK_SELF_REFERENCING;
-                    qDebug("self-referencing sector %d", int(&sector - sectors.data()));
+                    LOGDEV_MAP_VERBOSE("Self-referencing sector %d") << int(&sector - sectors.data());
                 }
             }
 
@@ -1275,10 +1275,10 @@ DE_PIMPL(MapImporter)
 
                 if (good)
                 {
-                    qDebug("flat bleeding detected in floor of sector %d (untx:%d sur.flr:%d)",
-                           currentSector,
-                           untexturedCount,
-                           surroundingFloorHeight);
+                    LOGDEV_MAP_VERBOSE("Flat bleeding detected in floor of sector %d (untx:%d sur.flr:%d)")
+                        << currentSector
+                        << untexturedCount
+                        << surroundingFloorHeight;
 
                     sector.hackFlags |= HACK_FLAT_BLEEDING;
                     sector.visPlaneLinkSector = surroundingSector;
@@ -1319,9 +1319,9 @@ DE_PIMPL(MapImporter)
             dint idx = MPE_SectorCreate(
                 dfloat(i->lightLevel) / 255.0f, 1, 1, 1, i->index, i->visPlaneLinkSector);
 
-            MPE_PlaneCreate(idx, i->floorHeight, materials.find(i->floorMaterial).toUtf8(),
+            MPE_PlaneCreate(idx, i->floorHeight, materials.find(i->floorMaterial),
                             0, 0, 1, 1, 1, 1, 0, 0, 1, -1);
-            MPE_PlaneCreate(idx, i->ceilHeight, materials.find(i->ceilMaterial).toUtf8(),
+            MPE_PlaneCreate(idx, i->ceilHeight, materials.find(i->ceilMaterial),
                             0, 0, 1, 1, 1, 1, 0, 0, -1, -1);
 
             MPE_GameObjProperty("XSector", idx, "Tag",                DDVT_SHORT, &i->tag);
@@ -1361,20 +1361,20 @@ DE_PIMPL(MapImporter)
                 MPE_LineAddSide(lineIdx,
                                 LineDef::Front,
                                 sideFlags,
-                                materials.find(front->topMaterial).toUtf8(),
+                                materials.find(front->topMaterial),
                                 front->offset[VX],
                                 front->offset[VY],
                                 1,
                                 1,
                                 1,
-                                materials.find(front->middleMaterial).toUtf8(),
+                                materials.find(front->middleMaterial),
                                 front->offset[VX],
                                 front->offset[VY],
                                 1,
                                 1,
                                 1,
                                 1,
-                                materials.find(front->bottomMaterial).toUtf8(),
+                                materials.find(front->bottomMaterial),
                                 front->offset[VX],
                                 front->offset[VY],
                                 1,
@@ -1387,20 +1387,20 @@ DE_PIMPL(MapImporter)
                 MPE_LineAddSide(lineIdx,
                                 LineDef::Back,
                                 sideFlags,
-                                materials.find(back->topMaterial).toUtf8(),
+                                materials.find(back->topMaterial),
                                 back->offset[VX],
                                 back->offset[VY],
                                 1,
                                 1,
                                 1,
-                                materials.find(back->middleMaterial).toUtf8(),
+                                materials.find(back->middleMaterial),
                                 back->offset[VX],
                                 back->offset[VY],
                                 1,
                                 1,
                                 1,
                                 1,
-                                materials.find(back->bottomMaterial).toUtf8(),
+                                materials.find(back->bottomMaterial),
                                 back->offset[VX],
                                 back->offset[VY],
                                 1,

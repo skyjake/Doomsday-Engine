@@ -222,7 +222,7 @@ static int playerNumberArgument(const de::Value &arg)
 static de::Value *Function_SetMessage(de::Context &, const de::Function::ArgumentValues &args)
 {
     const int plrNum = playerNumberArgument(*args.at(1));
-    P_SetMessage(&players[plrNum], args.at(0)->asText().toLatin1());
+    P_SetMessage(&players[plrNum], args.at(0)->asText());
     return nullptr;
 }
 
@@ -230,7 +230,7 @@ static de::Value *Function_SetMessage(de::Context &, const de::Function::Argumen
 static de::Value *Function_SetYellowMessage(de::Context &, const de::Function::ArgumentValues &args)
 {
     const int plrNum = playerNumberArgument(*args.at(1));
-    P_SetYellowMessage(&players[plrNum], args.at(0)->asText().toLatin1());
+    P_SetYellowMessage(&players[plrNum], args.at(0)->asText());
     return nullptr;
 }
 #endif
@@ -256,19 +256,19 @@ void Common_Load()
     gameBindings = new Binder(nullptr, Binder::FunctionsOwned); // must delete when plugin unloaded
     gameBindings->init(ScriptSystem::get().builtInClass("World", "Thing"))
 #if defined(__JHERETIC__)
-            << DE_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs)
+        << DE_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs)
 #endif
-        << DENG2_FUNC_DEFS(Thing_SpawnMissile, "spawnMissile", "id" << "angle" << "momz", spawnMissileArgs);
+        << DE_FUNC_DEFS(Thing_SpawnMissile, "spawnMissile", "id" << "angle" << "momz", spawnMissileArgs);
 
     gameBindings->init(*gameModule)
-        << DENG2_FUNC_DEFS(SetMessage, "setMessage", "message" << "player", setMessageArgs);
+        << DE_FUNC_DEFS(SetMessage, "setMessage", "message" << "player", setMessageArgs);
 
     #if defined(__JHEXEN__)
     {
         Function::Defaults setYellowMessageArgs;
         setYellowMessageArgs["player"] = new NoneValue;
         *gameBindings
-            << DENG2_FUNC_DEFS(SetYellowMessage, "setYellowMessage", "message" << "player", setYellowMessageArgs);
+            << DE_FUNC_DEFS(SetYellowMessage, "setYellowMessage", "message" << "player", setYellowMessageArgs);
     }
 #endif
 

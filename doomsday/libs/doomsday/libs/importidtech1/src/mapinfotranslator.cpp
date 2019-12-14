@@ -311,7 +311,7 @@ namespace internal {
             // May opt out of error reporting.
             {
                 const String bufText(Str_Text(&buffer));
-                if (bufText.contains("// Doomsday: Ignore errors!", Qt::CaseInsensitive))
+                if (bufText.contains("// Doomsday: Ignore errors!", CaseInsensitive))
                 {
                     reportErrors = false;
                 }

@@ -490,7 +490,7 @@ static void drawEnteringTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
         }
         else
         {
-            titleHeight = 4 * FR_TextHeight(title.toLatin1().constData()) / 5;
+            titleHeight = 4 * FR_TextHeight(title) / 5;
         }
     }
 

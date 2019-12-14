@@ -26,9 +26,9 @@
 #include <de/NoneValue>
 #include <de/PackageLoader>
 #include <de/Record>
+#include <de/RegExp>
 
 #include <sstream>
-#include <QRegExp>
 
 using namespace de;
 
@@ -39,9 +39,9 @@ DE_STATIC_STRING(VAR_USER_CREATED,          "userCreated");
 DE_STATIC_STRING(VAR_USE_GAME_REQUIREMENTS, "useGameRequirements");
 DE_STATIC_STRING(VAR_AUTO_START_MAP,        "autoStartMap");
 DE_STATIC_STRING(VAR_AUTO_START_SKILL,      "autoStartSkill");
-static String const VAR_LAST_PLAYED     ("lastPlayed");
-static String const VAR_SAVE_LOCATION_ID("saveLocationId");
-static String const VAR_VALUES          ("values");
+DE_STATIC_STRING(VAR_LAST_PLAYED,           "lastPlayed");
+DE_STATIC_STRING(VAR_SAVE_LOCATION_ID,      "saveLocationId");
+DE_STATIC_STRING(VAR_VALUES,                "values");
 
 static constexpr int DEFAULT_SKILL = 3; // Normal skill level (1-5)
 
@@ -195,15 +195,15 @@ Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(const Info::BlockE
     {
         prof->setAutoStartSkill(block.keyValue(VAR_AUTO_START_SKILL()).text.toInt());
     }
-    if (block.contains(VAR_SAVE_LOCATION_ID))
+    if (block.contains(VAR_SAVE_LOCATION_ID()))
     {
-        prof->setSaveLocationId(block.keyValue(VAR_SAVE_LOCATION_ID).text.toUInt32(nullptr, 16));
+        prof->setSaveLocationId(block.keyValue(VAR_SAVE_LOCATION_ID()).text.toUInt32(nullptr, 16));
     }
-    if (block.contains(VAR_LAST_PLAYED))
+    if (block.contains(VAR_LAST_PLAYED()))
     {
-        prof->setLastPlayedAt(Time::fromText(block.keyValue(VAR_LAST_PLAYED).text));
+        prof->setLastPlayedAt(Time::fromText(block.keyValue(VAR_LAST_PLAYED()).text));
     }
-    if (const auto *values = block.findAs<Info::BlockElement>(VAR_VALUES))
+    if (const auto *values = block.findAs<Info::BlockElement>(VAR_VALUES()))
     {
         prof->objectNamespace() = values->asRecord();
     }
@@ -638,18 +638,18 @@ String GameProfiles::Profile::toInfoSource() const
     os << "\n" << VAR_AUTO_START_SKILL() << ": " << d->autoStartSkill;
     if (d->lastPlayedAt.isValid())
     {
-        os << "\n" << VAR_LAST_PLAYED << ": " << d->lastPlayedAt.asText();
+        os << "\n" << VAR_LAST_PLAYED() << ": " << d->lastPlayedAt.asText();
     }
     if (d->saveLocationId)
     {
-        os << "\n" << VAR_SAVE_LOCATION_ID << ": " << String::format("%08x", d->saveLocationId);
+        os << "\n" << VAR_SAVE_LOCATION_ID() << ": " << String::format("%08x", d->saveLocationId);
     }
     // Additional configuration values (e.g., config for the game to use).
     if (!d->values.isEmpty())
     {
         String indented = d->values.asInfo();
         indented.replace("\n", "\n    ");
-        os << "\n" << VAR_VALUES << " {\n    " << indented << "\n}";
+        os << "\n" << VAR_VALUES() << " {\n    " << indented << "\n}";
     }
     return os.str();
 }
@@ -668,22 +668,20 @@ bool GameProfiles::arePackageListsCompatible(const StringList &list1, const Stri
 {
     if (list1.size() != list2.size()) return false;
 
-    static const QRegExp WHITESPACE("\\s+");
-
     // The package lists must match order and IDs, but currently we ignore the
     // versions.
     for (int i = 0; i < list1.sizei(); ++i)
     {
         // Each item may have whitespace separated alternatives.
-        const auto alts1 = list1.at(i).split(WHITESPACE, QString::SkipEmptyParts);
-        const auto alts2 = list2.at(i).split(WHITESPACE, QString::SkipEmptyParts);
+        const auto alts1 = list1.at(i).split(RegExp::WHITESPACE);
+        const auto alts2 = list2.at(i).split(RegExp::WHITESPACE);
         bool foundMatching = false;
         for (const auto &id1 : alts1)
         {
             for (const auto &id2 : alts2)
             {
                 if (Package::equals(id1, id2))
-    {
+                {
                     foundMatching = true;
                     break;
                 }

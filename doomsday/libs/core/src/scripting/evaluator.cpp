@@ -229,7 +229,7 @@ Record *Evaluator::localNamespace() const
     Namespaces spaces;
     namespaces(spaces);
     DE_ASSERT(!spaces.empty());
-    DE_ASSERT(spaces.front() != nullptr);
+    DE_ASSERT(spaces.front().names != nullptr);
     return spaces.front().names;
 }
 
