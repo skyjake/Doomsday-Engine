@@ -32,6 +32,8 @@
 #include <de/Set>
 #include <de/Log>
 
+#include <list>
+
 using namespace de;
 
 namespace world {
@@ -370,7 +372,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
     /*
      * Build the line segment -> sector continuity map.
      */
-    List<Continuity>             continuities;
+    std::list<Continuity>        continuities;
     Hash<Sector *, Continuity *> scMap; // sector continuity map
     
     for (const auto &oseg : d->orderedSegments)
@@ -381,7 +383,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
         if (found == scMap.end())
         {
             continuities.emplace_back(frontSector);
-            found = scMap.insert(frontSector, &continuities.last());
+            found = scMap.insert(frontSector, &continuities.back());
         }
         
         Continuity *conty = found->second;
@@ -484,7 +486,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
     // Determine which sector to attribute the BSP leaf to.
     continuities.sort();
-    leaf.setSector(continuities.first().sector);
+    leaf.setSector(continuities.front().sector);
 
 /*#ifdef DE_DEBUG
     LOG_INFO("ConvexSubspace %s BSP sector:%i (%i continuities)")
