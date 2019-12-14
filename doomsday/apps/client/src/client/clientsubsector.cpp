@@ -165,7 +165,7 @@ DE_PIMPL(ClientSubsector)
         ~GeometryGroups()
         {
             for (auto &g : *this)
-    {
+            {
                 g.second.deleteAll();
             }
         }
@@ -189,7 +189,7 @@ DE_PIMPL(ClientSubsector)
         void clear()
         {
             markForUpdate(false);
-            qDeleteAll(decorations);
+            deleteAll(decorations);
             decorations.clear();
         }
     };
@@ -273,6 +273,7 @@ DE_PIMPL(ClientSubsector)
             materialAnimator.audienceForDecorationStageChange -= this;
             material->audienceForDimensionsChange() -= this;
         }
+    }
 
     static bool hasDecoratedMaterial(const Surface &surface)
     {
@@ -1034,7 +1035,7 @@ DE_PIMPL(ClientSubsector)
         {
             // Just clear the state.
             if (surface.decorationState())
-    {
+            {
                 static_cast<DecoratedSurface *>(surface.decorationState())->clear();
             }
             return;
@@ -1067,6 +1068,7 @@ DE_PIMPL(ClientSubsector)
                 projectDecorations(surface, animator, materialOrigin, topLeft, bottomRight);
             }
         }
+    }
 
     void markDependentSurfacesForRedecoration(Plane &plane, bool yes = true)
     {

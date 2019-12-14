@@ -1162,7 +1162,7 @@ dd_bool Mobj_TouchSpecialScriptedThing(mobj_t *mob, mobj_t *special, enum mobjto
 
     // Check Thing definition for an onTouch script.
     const auto &thingDef = DED_Definitions()->things[special->type];
-    if (const String onTouchSrc = thingDef.gets(QStringLiteral("onTouch")))
+    if (const String onTouchSrc = thingDef.gets(DE_STR("onTouch")))
     {
         LOG_AS("Mobj_TouchSpecialScriptedThing");
 
@@ -1190,11 +1190,11 @@ dd_bool Mobj_TouchSpecialScriptedThing(mobj_t *mob, mobj_t *special, enum mobjto
         proc.execute();
 
         // Function is ready, call it now with the mobjs.
-        ns.add(QStringLiteral("self")).set(new RecordValue(self));
+        ns.add(DE_STR("self")).set(new RecordValue(self));
         std::unique_ptr<Value> resultValue(
             Process::scriptCall(Process::TakeResult,
                                 ns,
-                                QStringLiteral("onTouch"),
+                                DE_STR("onTouch"),
                                 &THINKER_DATA(mob->thinker, ThinkerData)));
         if (result)
         {

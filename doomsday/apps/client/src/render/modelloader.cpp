@@ -452,11 +452,11 @@ DE_PIMPL(ModelLoader)
             model.offset = vectorFromValue<Vec3f>(asset.get(DEF_OFFSET()));
         }
         applyFlagOperation(model.flags, render::Model::AutoscaleToThingHeight,
-                           ScriptedInfo::isTrue(asset, DEF_AUTOSCALE())? SetFlags : UnsetFlags);
+                           ScriptedInfo::isTrue(asset, DEF_AUTOSCALE()) ? SetFlags : UnsetFlags);
         applyFlagOperation(model.flags, render::Model::ThingOpacityAsAmbientLightAlpha,
-                           ScriptedInfo::isTrue(asset, DEF_WEAPON_OPACITY, true)? SetFlags : UnsetFlags);
+                           ScriptedInfo::isTrue(asset, DEF_WEAPON_OPACITY(), true) ? SetFlags : UnsetFlags);
         applyFlagOperation(model.flags, render::Model::ThingFullBrightAsAmbientLight,
-                           ScriptedInfo::isTrue(asset, DEF_WEAPON_FULLBRIGHT)? SetFlags : UnsetFlags);
+                           ScriptedInfo::isTrue(asset, DEF_WEAPON_FULLBRIGHT()) ? SetFlags : UnsetFlags);
 
         // Alignment modes.
         model.alignYaw   = parseAlignment(asset, DEF_ALIGNMENT_YAW());

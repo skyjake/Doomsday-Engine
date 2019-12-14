@@ -82,7 +82,7 @@ void initBindings(Binder &binder, Record &worldModule)
     // Global functions.
     {
         binder.init(worldModule)
-            << DENG2_FUNC_NOARG(World_ConsolePlayer, "consolePlayer");
+            << DE_FUNC_NOARG(World_ConsolePlayer, "consolePlayer");
     }
 
     // Thing

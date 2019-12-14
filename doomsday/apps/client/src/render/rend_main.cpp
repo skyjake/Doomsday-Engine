@@ -740,12 +740,13 @@ ClientMaterial *Rend_ChooseMapSurfaceMaterial(const Surface &surface)
         {
             if (!surface.hasMaterial() && surface.parent().type() == DMU_SIDE)
             {
+                // These are a few special cases to deal with DOOM render hacks:
                 const Line::Side &side = surface.parent().as<Line::Side>();
                 if (side.hasSector())
                 {
                     if (auto *midAnim = side.middle().materialAnimator())
                     {
-                        DENG2_ASSERT(&surface != &side.middle());
+                        DE_ASSERT(&surface != &side.middle());
                         if (!midAnim->isOpaque())
                         {
                             return &midAnim->material();
