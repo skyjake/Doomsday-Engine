@@ -321,7 +321,7 @@ DE_GUI_PIMPL(PackagesWidget)
                 icon().setImageScale(.5f);
             }
 
-            String labelText = Stringf(_E(b) "%s\n" _E(l) _E(s) "%s",
+            String labelText = Stringf(_E(b) "%s\n" _E(l)_E(C) _E(s) "%s",
                                               _item->label().c_str(),
                                               pkgIdVer.first.c_str());
                 
