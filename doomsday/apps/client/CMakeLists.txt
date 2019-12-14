@@ -9,7 +9,10 @@ include (../../cmake/Config.cmake)
 
 add_subdirectory (libs/importsave)
 add_subdirectory (libs/fmod)
-add_subdirectory (libs/openal)
+if (NOT APPLE)
+    # 10.15 deprecates OpenAL in favor of AVAudioEngine
+    add_subdirectory (libs/openal)
+endif ()
 add_subdirectory (libs/fluidsynth)
 # if (WIN32)
 #     add_subdirectory (libs/directsound)
