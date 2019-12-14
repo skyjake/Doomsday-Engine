@@ -55,7 +55,7 @@ public:
     void glDeinit();
 
     de::GLShaderBank &shaders();
-    de::ImageBank &images();
+//    de::ImageBank &images();
     const de::GLUniform &uMapTime() const;
     de::GLUniform &uProjectionMatrix() const;
     de::GLUniform &uViewMatrix() const;

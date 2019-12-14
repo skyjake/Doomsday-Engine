@@ -62,7 +62,7 @@ DE_PIMPL(RenderSystem)
     SkyDrawable sky;
     ConfigProfiles settings;
     ConfigProfiles appearanceSettings;
-    ImageBank images;
+//    ImageBank images;
 
     AngleClipper clipper;
 
@@ -422,10 +422,10 @@ GLShaderBank &RenderSystem::shaders()
     return BaseGuiApp::shaders();
 }
 
-ImageBank &RenderSystem::images()
-{
-    return d->images;
-}
+//ImageBank &RenderSystem::images()
+//{
+//    return d->images;
+//}
 
 const GLUniform &RenderSystem::uMapTime() const
 {

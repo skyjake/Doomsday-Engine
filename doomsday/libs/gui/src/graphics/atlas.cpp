@@ -390,8 +390,7 @@ Id Atlas::alloc(const Image &image, const Id &chosenId)
     if (image.isNull())
     {
         LOG_AS("Atlas");
-        LOGDEV_GL_WARNING("Cannot allocate an empty image (%ix%i)") << image.width()
-                                                                    << image.height();
+        LOGDEV_GL_VERBOSE("Attempted to allocate a null image");
         return Id::None;
     }
 
