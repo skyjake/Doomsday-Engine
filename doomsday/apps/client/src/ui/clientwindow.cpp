@@ -546,7 +546,7 @@ DE_PIMPL(ClientWindow)
         }
     }
 
-    void mouseStateChanged(MouseEventSource::State state) override
+    void mouseStateChanged(MouseEventSource::State /*state*/) override
     {
 //        Mouse_Trap(state == MouseEventSource::Trapped);
 
