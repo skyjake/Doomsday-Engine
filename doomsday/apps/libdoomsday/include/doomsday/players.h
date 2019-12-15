@@ -72,6 +72,8 @@ public:
      */
     int indexOf(ddplayer_s const *publicData) const;
 
+    void initBindings();
+
 private:
     DENG2_PRIVATE(d)
 };

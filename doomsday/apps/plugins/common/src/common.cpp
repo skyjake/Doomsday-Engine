@@ -233,50 +233,143 @@ static de::Value *Function_SetYellowMessage(de::Context &, const de::Function::A
 }
 #endif
 
+static player_t &contextPlayer(const de::Context &ctx)
+{
+    int num = ctx.selfInstance().geti("__id__", 0);
+    if (num < 0 || num >= MAXPLAYERS)
+    {
+        throw de::Error("contextPlayer", "invalid player number");
+    }
+    return players[num];
+}
+
+static de::Value *Function_Player_Health(de::Context &ctx, const de::Function::ArgumentValues &)
+{
+    return new de::NumberValue(contextPlayer(ctx).health);
+}
+
+#if !defined (__JHEXEN__)
+#  define HAVE_DOOM_ARMOR_BINDINGS 1
+
+static de::Value *Function_Player_Armor(de::Context &ctx, const de::Function::ArgumentValues &)
+{
+    return new de::NumberValue(contextPlayer(ctx).armorPoints);
+}
+
+static de::Value *Function_Player_ArmorType(de::Context &ctx, const de::Function::ArgumentValues &)
+{
+    return new de::NumberValue(contextPlayer(ctx).armorType);
+}
+#endif
+
+static de::Value *Function_Player_Power(de::Context &ctx, const de::Function::ArgumentValues &args)
+{
+    int power = args.at(0)->asInt();
+    if (power < PT_FIRST || power >= NUM_POWER_TYPES)
+    {
+        throw de::Error("Function_Player_Power", "invalid power type");
+    }
+    return new de::NumberValue(contextPlayer(ctx).powers[power]);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void Common_Load()
 {
     using namespace de;
 
-    gameModule = new Record;
-
-    Function::Defaults spawnMissileArgs;
-    spawnMissileArgs["angle"] = new NoneValue;
-    spawnMissileArgs["momz"] = new NumberValue(0.0);
-
-    Function::Defaults attackArgs;
-    attackArgs["damage"] = new NumberValue(0.0);
-    attackArgs["missile"] = new NoneValue;
-
-    Function::Defaults setMessageArgs;
-    setMessageArgs["player"] = new NoneValue;
-
-    DENG2_ASSERT(gameBindings == nullptr);
-    gameBindings = new Binder(nullptr, Binder::FunctionsOwned); // must delete when plugin unloaded
-    gameBindings->init(ScriptSystem::get().builtInClass("World", "Thing"))
-#if defined(__JHERETIC__)
-        << DENG2_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs)
-#endif
-        << DENG2_FUNC_DEFS(Thing_SpawnMissile, "spawnMissile", "id" << "angle" << "momz", spawnMissileArgs);
-
-    gameBindings->init(*gameModule)
-        << DENG2_FUNC_DEFS(SetMessage, "setMessage", "message" << "player", setMessageArgs);
-
-    #if defined(__JHEXEN__)
+    // Script bindings.
     {
-        Function::Defaults setYellowMessageArgs;
-        setYellowMessageArgs["player"] = new NoneValue;
-        *gameBindings
-            << DENG2_FUNC_DEFS(SetYellowMessage, "setYellowMessage", "message" << "player", setYellowMessageArgs);
-    }
-    #endif
+        auto &scr = ScriptSystem::get();
 
-    ScriptSystem::get().addNativeModule("Game", *gameModule);
+        DENG2_ASSERT(gameBindings == nullptr);
+        gameBindings = new Binder(nullptr, Binder::FunctionsOwned); // must delete when plugin unloaded
+
+        // Game module.
+        {
+            gameModule = new Record;
+            scr.addNativeModule("Game", *gameModule);
+
+            Function::Defaults spawnMissileArgs;
+            spawnMissileArgs["angle"] = new NoneValue;
+            spawnMissileArgs["momz"] = new NumberValue(0.0);
+
+            Function::Defaults attackArgs;
+            attackArgs["damage"] = new NumberValue(0.0);
+            attackArgs["missile"] = new NoneValue;
+
+            Function::Defaults setMessageArgs;
+            setMessageArgs["player"] = new NoneValue;
+
+            gameBindings->init(*gameModule)
+                << DENG2_FUNC_DEFS(SetMessage, "setMessage", "message" << "player", setMessageArgs);
+
+#if defined(__JHEXEN__)
+            {
+                Function::Defaults setYellowMessageArgs;
+                setYellowMessageArgs["player"] = new NoneValue;
+                *gameBindings
+                    << DENG2_FUNC_DEFS(SetYellowMessage, "setYellowMessage", "message" << "player", setYellowMessageArgs);
+            }
+#endif
+
+            gameBindings->init(scr.builtInClass("World", "Thing"))
+                << DENG2_FUNC_DEFS(Thing_SpawnMissile, "spawnMissile", "id" << "angle" << "momz", spawnMissileArgs);
+#if defined(__JHERETIC__)
+            *gameBindings << DENG2_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs);
+#endif
+        }
+
+        // App.Player
+        {
+            auto &playerClass = scr.builtInClass("App", "Player");
+            gameBindings->init(playerClass)
+                << DENG2_FUNC_NOARG (Player_Health, "health")
+                << DENG2_FUNC       (Player_Power, "power", "type");
+
+#if defined(HAVE_DOOM_ARMOR_BINDINGS)
+            *gameBindings
+                << DENG2_FUNC_NOARG (Player_Armor, "armor")
+                << DENG2_FUNC_NOARG (Player_ArmorType, "armorType");
+#endif
+
+#if defined(__JHERETIC__)
+            // Heretic: Powerup constants.
+            playerClass.set("PT_INVULNERABILITY", PT_INVULNERABILITY);
+            playerClass.set("PT_INVISIBILITY", PT_INVISIBILITY);
+            playerClass.set("PT_ALLMAP", PT_ALLMAP);
+            playerClass.set("PT_INFRARED", PT_INFRARED);
+            playerClass.set("PT_WEAPONLEVEL2", PT_WEAPONLEVEL2);
+            playerClass.set("PT_FLIGHT", PT_FLIGHT);
+            playerClass.set("PT_SHIELD", PT_SHIELD);
+            playerClass.set("PT_HEALTH2", PT_HEALTH2);
+#endif
+        }
+    }
 }
 
 void Common_Unload()
 {
+    using namespace de;
+
+    auto &scr = ScriptSystem::get();
+
+    // Constants.
+    {
+#if defined(__JHERETIC__)
+        auto &playerClass = scr.builtInClass("App", "Player");
+        for (const String &name : playerClass.members().keys())
+        {
+            if (name.beginsWith("PT_"))
+            {
+                playerClass.remove(name);
+            }
+        }
+#endif
+    }
+
     DENG2_ASSERT(gameBindings != nullptr);
-    de::ScriptSystem::get().removeNativeModule("Game");
+    scr.removeNativeModule("Game");
     delete gameBindings;
     gameBindings = nullptr;
     delete gameModule;

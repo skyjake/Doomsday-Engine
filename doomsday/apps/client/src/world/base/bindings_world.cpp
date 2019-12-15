@@ -32,10 +32,7 @@ using namespace de;
 
 namespace world {
 
-static Value *Function_World_ConsolePlayer(Context &, const Function::ArgumentValues &)
-{
-    return new NumberValue(consolePlayer);
-}
+//-------------------------------------------------------------------------------------------------
 
 static Value *Function_Thing_Id(Context &ctx, const Function::ArgumentValues &)
 {
@@ -77,14 +74,10 @@ static Value *Function_Thing_Recoil(Context &ctx, const Function::ArgumentValues
     return nullptr;
 }
 
+//-------------------------------------------------------------------------------------------------
+
 void initBindings(Binder &binder, Record &worldModule)
 {
-    // Global functions.
-    {
-        binder.init(worldModule)
-            << DENG2_FUNC_NOARG(World_ConsolePlayer, "consolePlayer");
-    }
-
     // Thing
     {
         Record &thing = worldModule.addSubrecord("Thing");

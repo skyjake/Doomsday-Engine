@@ -19,6 +19,8 @@
 #include "doomsday/player.h"
 #include "doomsday/world/world.h"
 
+#include <de/ScriptSystem>
+
 using namespace de;
 
 DENG2_PIMPL_NOREF(Player)
@@ -54,6 +56,11 @@ Player::Player()
 
 Player::~Player()
 {}
+
+void Player::initBindings()
+{
+    objectNamespace().addSuperRecord(ScriptSystem::builtInClass("App", "Player"));
+}
 
 void Player::setWorld(World *world)
 {
@@ -105,6 +112,16 @@ Pinger const &Player::pinger() const
 
 void Player::tick(timespan_t /*elapsed*/)
 {}
+
+Record &Player::objectNamespace()
+{
+    return d->info;
+}
+
+const Record &Player::objectNamespace() const
+{
+    return d->info;
+}
 
 short P_LookDirToShort(float lookDir)
 {

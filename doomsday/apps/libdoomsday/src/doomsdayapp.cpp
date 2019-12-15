@@ -133,6 +133,7 @@ DENG2_PIMPL(DoomsdayApp)
         audienceForGameChange += scriptAudienceForGameChange;
 
         initBindings(binder);
+        players.initBindings();
 
         gameProfiles.setGames(games);
         saveGames   .setGames(games);
