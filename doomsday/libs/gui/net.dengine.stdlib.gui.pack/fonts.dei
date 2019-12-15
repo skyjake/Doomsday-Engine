@@ -27,49 +27,10 @@ script {
 }
 
 group {
-    condition: Version.OS in ['windows', 'unix']
+    # All platforms use the same stbtt TrueType font renderer.
+    condition: True
 
     script { loadFonts() }
-
-    font default {
-        family: SourceSansPro
-        size: 16pt
-        weight: normal
-        style: normal
-    }
-
-    font monospace inherits default {
-        family: SourceCodePro
-        size: 12pt
-    }
-}
-
-group {
-    condition: Version.OS in ['macx', 'ios']
-
-    script {
-        loadFonts()
-
-        # Define mappings for native font styles and weights.
-        # (These work with the CoreText font renderer.)
-        # import App
-        # App.addFontMapping("Apple UI", {
-        #     ['regular', 25]: '#system-light',
-        #     ['regular', 50]: '#system',
-        #     ['regular', 75]: '#system-bold',
-        #     ['italic',  25]: '#system-italic-light',
-        #     ['italic',  50]: '#system-italic',
-        #     ['italic',  75]: '#system-italic-bold'
-        # })
-        # App.addFontMapping("Apple Mono", {
-        #     ['regular', 25]: 'Menlo-Regular',
-        #     ['regular', 50]: 'Menlo-Regular',
-        #     ['regular', 75]: 'Menlo-Bold',
-        #     ['italic',  25]: 'Menlo-Italic',
-        #     ['italic',  50]: 'Menlo-Italic',
-        #     ['italic',  75]: 'Menlo-BoldItalic'
-        # })
-    }
 
     font default {
         family: SourceSansPro

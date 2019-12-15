@@ -26,39 +26,29 @@
  * Unicode key symbols. @ingroup types
  * @{
  */
+#define DE_CHAR_MDASH               "\u2014"
+#define DE_CHAR_COPYRIGHT           "\u00a9"
+#define DE_CHAR_UP_ARROW            "\u2191"
+#define DE_CHAR_DOWN_ARROW          "\u2193"
+#define DE_CHAR_UP_DOWN_ARROW       DE_CHAR_UP_ARROW " / " DE_CHAR_DOWN_ARROW
+#define DE_CHAR_RIGHT_DOUBLEARROW   "\u21d2"
+
 #ifdef MACOSX
-#  define DE_CHAR_MAC_COMMAND_KEY     "\u2318"
-#  define DE_CHAR_MAC_CONTROL_KEY     "\u2303"
-#  define DE_CHAR_CONTROL_KEY         DE_CHAR_MAC_COMMAND_KEY
-#  define DE_CHAR_SHIFT_KEY           "\u21e7"
-#  define DE_CHAR_ALT_KEY             "\u2325"
-#  define DE_CHAR_UP_ARROW            "\u2191"
-#  define DE_CHAR_DOWN_ARROW          "\u2193"
-#  define DE_CHAR_UP_DOWN_ARROW       DE_CHAR_UP_ARROW " / " DE_CHAR_DOWN_ARROW
-#  define DE_CHAR_RIGHT_DOUBLEARROW   "\u21d2"
-#  define DE_CHAR_MDASH               "\u2014"
+#  define DE_CHAR_MAC_COMMAND_KEY   "\u2318"
+#  define DE_CHAR_MAC_CONTROL_KEY   "\u2303"
+#  define DE_CHAR_CONTROL_KEY       DE_CHAR_MAC_COMMAND_KEY
+#  define DE_CHAR_SHIFT_KEY         "\u21e7"
+#  define DE_CHAR_ALT_KEY           "\u2325"
 #elif UNIX
-#  define DE_CHAR_CONTROL_KEY         "Ctrl-"
-#  define DE_CHAR_SHIFT_KEY           "\u21e7"
-#  define DE_CHAR_ALT_KEY             "Alt-"
-#  define DE_CHAR_UP_ARROW            "\u2191"
-#  define DE_CHAR_DOWN_ARROW          "\u2193"
-#  define DE_CHAR_UP_DOWN_ARROW       DE_CHAR_UP_ARROW " / " DE_CHAR_DOWN_ARROW
-#  define DE_CHAR_RIGHT_DOUBLEARROW   "\u21d2"
-#  define DE_CHAR_MDASH               "\u2014"
+#  define DE_CHAR_CONTROL_KEY       "Ctrl-"
+#  define DE_CHAR_SHIFT_KEY         "\u21e7"
+#  define DE_CHAR_ALT_KEY           "Alt-"
 #else
-#  define DE_CHAR_CONTROL_KEY         "Ctrl-"
-#  define DE_CHAR_SHIFT_KEY           "Shift-"
-#  define DE_CHAR_ALT_KEY             "Alt-"
-#  define DE_CHAR_UP_ARROW            "Up Arrow"
-#  define DE_CHAR_DOWN_ARROW          "Down Arrow"
-#  define DE_CHAR_UP_DOWN_ARROW       "Up/Down Arrow"
-#  define DE_CHAR_RIGHT_DOUBLEARROW   "=>"
-#  define DE_CHAR_MDASH               "-"
+#  define DE_CHAR_CONTROL_KEY       "Ctrl-"
+#  define DE_CHAR_SHIFT_KEY         "Shift-"
+#  define DE_CHAR_ALT_KEY           "Alt-"
 #endif
 /** @} */
-
-#define DE_CHAR_COPYRIGHT             "\u00a9"
 
 namespace de {
 
