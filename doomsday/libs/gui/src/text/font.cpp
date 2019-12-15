@@ -22,13 +22,8 @@
 #include <de/Hash>
 #include <de/ThreadLocal>
 
-//#if (defined(MACOSX) && defined(MACOS_10_7)) || defined(DE_IOS)
-//#   include "coretextnativefont_macx.h"
-//    namespace de { using PlatformFont = CoreTextNativeFont; }
-//#else
-#   include "stbttnativefont.h"
-    namespace de { using PlatformFont = StbTtNativeFont; }
-//#endif
+#include "stbttnativefont.h"
+namespace de { using PlatformFont = StbTtNativeFont; }
 
 namespace std {
 template<>
