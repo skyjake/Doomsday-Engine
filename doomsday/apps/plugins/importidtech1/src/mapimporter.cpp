@@ -1174,6 +1174,7 @@ DENG2_PIMPL(MapImporter)
 
         // Detect self-referencing sectors: all lines of the sector are two-sided and both
         // sides refer to the sector itself.
+        // For example: TNT map02 deep water.
         {
             bool foundSelfRefs = false;
 
@@ -1209,7 +1210,8 @@ DENG2_PIMPL(MapImporter)
             }
         }
 
-        // Transparent window: sector without wall textures.
+        // Flat bleeding caused by sector without wall textures.
+        // For example: TNT map09 transparent window.
         {
             for (int currentSector = 0; currentSector < int(sectors.size()); ++currentSector)
             {
@@ -1240,6 +1242,16 @@ DENG2_PIMPL(MapImporter)
                         !sides[line.back()].middleMaterial)
                     {
                         untexturedCount++;
+                    }
+
+                    const int innerSide = sideOfSector(line, currentSector);
+                    if ((line.ddFlags & DDLF_DONTPEGBOTTOM) &&
+                        sides[line.sides[innerSide]].topMaterial)
+                    {
+                        // This looks like a door.
+                        // Avoids triggering in Heretic E1M1 secret door, for example.
+                        good = false;
+                        break;
                     }
 
                     const int other = otherSector(line, currentSector);
