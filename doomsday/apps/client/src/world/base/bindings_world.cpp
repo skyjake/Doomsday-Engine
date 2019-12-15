@@ -27,6 +27,7 @@
 #include <doomsday/defs/ded.h>
 #include <doomsday/world/mobj.h>
 #include <de/Context>
+#include <de/RecordValue>
 
 using namespace de;
 
@@ -60,6 +61,17 @@ static Value *Function_Thing_StartSound(Context &ctx, const Function::ArgumentVa
     return nullptr;
 }
 
+static Value *Function_Thing_Player(Context &ctx, const Function::ArgumentValues &)
+{
+    const mobj_t &mo = ClientServerWorld::contextMobj(ctx);
+    if (mo.dPlayer)
+    {
+        auto &plrs = DoomsdayApp::players();
+        return new RecordValue(plrs.at(plrs.indexOf(mo.dPlayer)).objectNamespace());
+    }
+    return nullptr;
+}
+
 static Value *Function_Thing_Recoil(Context &ctx, const Function::ArgumentValues &args)
 {
     mobj_t &     mo    = ClientServerWorld::contextMobj(ctx);
@@ -88,6 +100,7 @@ void initBindings(Binder &binder, Record &worldModule)
         binder.init(thing)
                 << DENG2_FUNC_NOARG(Thing_Id,         "id")
                 << DENG2_FUNC_NOARG(Thing_Health,     "health")
+                << DENG2_FUNC_NOARG(Thing_Player,     "player")
                 << DENG2_FUNC_DEFS (Thing_StartSound, "startSound", "id" << "volume", startSoundArgs)
                 << DENG2_FUNC      (Thing_Recoil,     "recoil", "force");
     }
