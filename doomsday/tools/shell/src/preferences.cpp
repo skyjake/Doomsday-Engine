@@ -109,7 +109,7 @@ DENG2_PIMPL(Preferences)
             bl->addWidget(iwadFolder);
             QLabel *info = new QLabel("<small>" +
                         tr("Doomsday tries to locate game data such as "
-                           "<a href=\"http://dengine.net/dew/index.php?title=IWAD_folder\">IWAD files</a> "
+                           "<a href=\"https://manual.dengine.net/guide/wad\">IWAD files</a> "
                            "automatically, but that may fail "
                            "if you have the files in a custom location.") + "</small>");
             QObject::connect(info, SIGNAL(linkActivated(QString)), &GuiShellApp::app(), SLOT(openWebAddress(QString)));
