@@ -31,7 +31,7 @@ AboutDialog::AboutDialog(QWidget *parent)
                     "The Shell is a utility for controlling and monitoring "
                     "Doomsday servers.")
                  .arg(SHELL_VERSION)
-                 .arg("2013-2018 <a href=\"http://dengine.net/\">Deng Team</a>"));
+                 .arg("2013-2019 <a href=\"http://dengine.net/\">Deng Team</a>"));
 
     connect(txt, SIGNAL(linkActivated(QString)), &GuiShellApp::app(), SLOT(openWebAddress(QString)));
 
