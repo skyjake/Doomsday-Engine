@@ -41,20 +41,7 @@ group {
 group {
     condition: Version.OS == 'macx' or Version.OS == 'ios'
 
-    script {
-        loadFonts()
-
-        # Define mappings for native font styles and weights.
-        import App
-        App.addFontMapping("Menlo", {
-            ['regular', 25]: 'Menlo-Regular',
-            ['regular', 50]: 'Menlo-Regular',
-            ['regular', 75]: 'Menlo-Bold',
-            ['italic',  25]: 'Menlo-Italic',
-            ['italic',  50]: 'Menlo-Italic',
-            ['italic',  75]: 'Menlo-BoldItalic'
-        })
-    }
+    script { loadFonts() }
 
     font default {
         family: Source Sans Pro
