@@ -658,6 +658,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                 if (!notes.isEmpty())
                 {
                     notes.replace(QRegExp("\\s+"), " "); // normalize whitespace
+                    notes.remove('\r'); // begone foul MS-DOS
                     meta.set(VAR_NOTES, notes);
                 }
             }

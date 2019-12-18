@@ -357,7 +357,9 @@ DENG_GUI_PIMPL(PackageInfoDialog)
 
         if (meta.has("notes"))
         {
-            msg += "\n\n" + meta.gets("notes") + _E(r);
+            String notesText = meta.gets("notes");
+            notesText.remove('\r'); // maybe old MS-DOS text
+            msg += "\n\n" + notesText + _E(r);
         }
 
         if (!bundle)
