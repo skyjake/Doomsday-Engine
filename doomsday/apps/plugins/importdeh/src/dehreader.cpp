@@ -35,6 +35,7 @@
 #include <doomsday/filesys/lumpindex.h>
 #include <doomsday/defs/thing.h>
 #include <doomsday/defs/state.h>
+#include <doomsday/defs/ded.h>
 #include <doomsday/game.h>
 #include <de/App>
 #include <de/ArrayValue>
@@ -1786,18 +1787,41 @@ public:
 
     bool patchSpriteNames(String const &origName, String const &newName)
     {
-        // Is this a sprite name?
-        if(origName.length() != 4) return false;
+        // Is this potentially a sprite name?
+        if (origName.length() != 4 || newName.length() != 4)
+        {
+            return false;
+        }
 
-        // Only sprites names in the original name map can be patched.
-        /// @todo Why the restriction?
-        int spriteIdx = findSpriteNameInMap(origName);
-        if(spriteIdx < 0) return false;
+        // Look for the corresponding sprite definition and change the sprite name.
+        auto *defs = DED_Definitions();
+        for (int i = 0; i < defs->sprites.size(); ++i)
+        {
+            if (String(defs->sprites[i].id).compareWithoutCase(origName) == 0)
+            {
+                strcpy(defs->sprites[i].id, newName.toLatin1());
+                LOG_DEBUG("Sprite #%d \"%s\" => \"%s\"")
+                    << i << origName << newName;
 
-        /// @todo Presently disabled because the engine can't handle remapping.
-        DENG2_UNUSED(newName);
-        LOG_WARNING("DeHackEd sprite name table remapping is not supported");
-        return true; // Pretend success.
+                // Update all states that refer to this sprite.
+                for (int s = 0; s < defs->states.size(); ++s)
+                {
+                    auto &state = defs->states[s];
+                    if (state.gets("sprite") == origName)
+                    {
+                        state.set("sprite", newName);
+                    }
+                }
+                return true;
+            }
+        }
+
+//        /// @todo Presently disabled because the engine can't handle remapping.
+//        DENG2_UNUSED(newName);
+//        LOG_WARNING("DeHackEd sprite name table remapping is not supported");
+//        // Pretend success.
+
+        return false;
 
 #if 0
         if(spriteIdx >= ded->count.sprites.num)

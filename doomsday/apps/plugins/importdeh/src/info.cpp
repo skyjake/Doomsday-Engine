@@ -227,6 +227,7 @@ int findMusicLumpNameInMap(QString const &name)
     return -1; // Not found.
 }
 
+#if 0
 static QString const SpriteMap[] = {
     "TROO",
     "SHTG",
@@ -380,6 +381,7 @@ int findSpriteNameInMap(QString const &name)
     }
     return -1; // Not found.
 }
+#endif
 
 static QString const SoundMap[] = {
     "None",
