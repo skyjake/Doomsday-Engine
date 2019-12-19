@@ -757,6 +757,19 @@ ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
                     }
                     else if (&surface == &side.top())
                     {
+                        /*
+                        // TNT map31: missing upper texture, high ceiling in the room
+                        if (side.back().hasSector())
+                        {
+                            const auto &backSector = side.back().sector();
+                            //const auto backCeilZ = backSector.ceiling().heightSmoothed();
+                            //const auto frontCeilZ = side.sector().ceiling().heightSmoothed();
+                            if (fequal(backSector.ceiling().height(), backSector.floor().height()))
+                            {
+                                return nullptr;
+                            }
+                        }*/
+
                         return static_cast<ClientMaterial *>(side.sector().ceiling().surface().materialPtr());
                     }
                 }

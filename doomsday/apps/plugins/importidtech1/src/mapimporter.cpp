@@ -313,7 +313,13 @@ inline LineDef::Side opposite(LineDef::Side side)
     return side == LineDef::Front ? LineDef::Back : LineDef::Front;
 }
 
-enum { HACK_NONE = 0, HACK_SELF_REFERENCING = 0x1, HACK_FLAT_BLEEDING = 0x2 };
+enum {
+    HACK_NONE                = 0,
+    HACK_IS_LINK_TARGET      = 0x1,
+    HACK_SELF_REFERENCING    = 0x2,
+    HACK_FLAT_BLEEDING       = 0x4,
+    HACK_MISSING_OUTSIDE_TOP = 0x8,
+};
 
 struct SectorDef : public Id1MapElement
 {
@@ -337,7 +343,7 @@ struct SectorDef : public Id1MapElement
     // Internal bookkeeping:
     std::set<int> lines;
     int hackFlags = 0;
-    int visPlaneLinkSector = -1; // self-referencing sector contained by a normal sector
+    struct de_api_sector_hacks_s hackParams{{0, 0}, -1};
 
     SectorDef(MapImporter &map) : Id1MapElement(map) {}
 
@@ -958,7 +964,10 @@ DENG2_PIMPL(MapImporter)
                     if (line.hasSide(hit.side))
                     {
                         const int sector = sides[line.sideIndex(hit.side)].sector;
-                        if (sector >= 0 && !sectors[sector].hackFlags)
+
+                        // It must be a regular sector, but multiple hacked sectors
+                        // can link to the same regular one.
+                        if (sector >= 0 && !(sectors[sector].hackFlags & ~HACK_IS_LINK_TARGET))
                         {
                             nearestContainer = {hit.t, sector};
                         }
@@ -969,8 +978,12 @@ DENG2_PIMPL(MapImporter)
 
         if (nearestContainer.second >= 0)
         {
-            sector.visPlaneLinkSector = nearestContainer.second;
-            qDebug("sector %i contained by %i", indexOf(sector), sector.visPlaneLinkSector);
+            sectors[nearestContainer.second].hackFlags |= HACK_IS_LINK_TARGET;
+
+            sector.hackParams.visPlaneLinkTargetSector = nearestContainer.second;
+            sector.hackParams.flags.linkFloorPlane     = true;
+            sector.hackParams.flags.linkCeilingPlane   = true;
+            qDebug("sector %i contained by %i", indexOf(sector), nearestContainer.second);
         }
     }
 
@@ -1177,7 +1190,6 @@ DENG2_PIMPL(MapImporter)
         // For example: TNT map02 deep water.
         {
             bool foundSelfRefs = false;
-
             for (auto &sector : sectors)
             {
                 bool good = true;
@@ -1287,7 +1299,70 @@ DENG2_PIMPL(MapImporter)
                            surroundingFloorHeight);
 
                     sector.hackFlags |= HACK_FLAT_BLEEDING;
-                    sector.visPlaneLinkSector = surroundingSector;
+                    sector.hackParams.visPlaneLinkTargetSector = surroundingSector;
+                    sector.hackParams.flags.linkFloorPlane = true;
+                }
+            }
+        }
+
+        // Missing upper textures for transparent doors.
+        {
+            for (int currentSector = 0; currentSector < int(sectors.size()); ++currentSector)
+            {
+                auto &sector = sectors[currentSector];
+                if (sector.hackFlags) continue;
+
+                bool good = true;
+                int surroundingSector = -1;
+
+                for (int lineIndex : sector.lines)
+                {
+                    const auto &line = lines[lineIndex];
+
+                    if (!line.isTwoSided() || line.aFlags & LAF_POLYOBJ)
+                    {
+                        good = false;
+                        break;
+                    }
+
+                    const auto innerSide = LineDef::Side(sideOfSector(line, currentSector));
+                    const auto outerSide = opposite(innerSide);
+
+                    if (sides[line.sides[outerSide]].topMaterial)
+                    {
+                        good = false;
+                        break;
+                    }
+
+                    const int other = otherSector(line, currentSector);
+                    if (surroundingSector < 0)
+                    {
+                        surroundingSector = other;
+                        if (sector.ceilHeight >= sectors[other].ceilHeight)
+                        {
+                            good = false;
+                            break;
+                        }
+                    }
+                    else if (other != surroundingSector)
+                    {
+                        good = false;
+                        break;
+                    }
+                }
+
+                if (surroundingSector < 0)
+                {
+                    good = false;
+                }
+
+                if (good)
+                {
+                    sector.hackFlags |= HACK_MISSING_OUTSIDE_TOP;
+                    sector.hackParams.visPlaneLinkTargetSector = surroundingSector;
+                    sector.hackParams.flags.linkCeilingPlane = true;
+                    qDebug("sector %d missing outside upper walls (surrounded by sector %d)",
+                           currentSector, surroundingSector);
                 }
             }
         }
@@ -1319,11 +1394,8 @@ DENG2_PIMPL(MapImporter)
 
         DENG2_FOR_EACH(Sectors, i, sectors)
         {
-            // Never should have linked to a hacked sector.
-            DENG2_ASSERT(i->visPlaneLinkSector < 0 || !sectors[i->visPlaneLinkSector].hackFlags);
-
             dint idx = MPE_SectorCreate(
-                dfloat(i->lightLevel) / 255.0f, 1, 1, 1, i->index, i->visPlaneLinkSector);
+                dfloat(i->lightLevel) / 255.0f, 1, 1, 1, &i->hackParams, i->index);
 
             MPE_PlaneCreate(idx, i->floorHeight, materials.find(i->floorMaterial).toUtf8(),
                             0, 0, 1, 1, 1, 1, 0, 0, 1, -1);
@@ -1347,13 +1419,32 @@ DENG2_PIMPL(MapImporter)
 
     void transferLinesAndSides()
     {
+        auto transferSide = [this](int lineIdx, short sideFlags, SideDef *side, LineDef::Side sideIndex)
+        {
+            const auto topUri = materials.find(side->topMaterial).toUtf8();
+            const auto midUri = materials.find(side->middleMaterial).toUtf8();
+            const auto botUri = materials.find(side->bottomMaterial).toUtf8();
+
+            struct de_api_side_section_s top = {
+                topUri, {float(side->offset[VX]), float(side->offset[VY])}, {1, 1, 1, 1}};
+
+            auto middle = top;
+            middle.material = midUri;
+
+            auto bottom = top;
+            bottom.material = botUri;
+
+            MPE_LineAddSide(
+                lineIdx, sideIndex, sideFlags, &top, &middle, &bottom, side->index);
+        };
+
         LOGDEV_MAP_XVERBOSE("Transfering lines and sides...", "");
         DENG2_FOR_EACH(Lines, i, lines)
         {
             SideDef *front = (i->hasFront()? &sides[i->front()] : 0);
             SideDef *back  = (i->hasBack() ? &sides[i->back() ] : 0);
 
-            dint sideFlags = (format == Id1MapRecognizer::Doom64Format? SDF_MIDDLE_STRETCH : 0);
+            short sideFlags = (format == Id1MapRecognizer::Doom64Format? SDF_MIDDLE_STRETCH : 0);
 
             // Interpret the lack of a ML_TWOSIDED line flag to mean the
             // suppression of the side relative back sector.
@@ -1362,57 +1453,14 @@ DENG2_PIMPL(MapImporter)
 
             dint lineIdx = MPE_LineCreate(i->v[0], i->v[1], front? front->sector : -1,
                                           back? back->sector : -1, i->ddFlags, i->index);
-            if(front)
+
+            if (front)
             {
-                MPE_LineAddSide(lineIdx,
-                                LineDef::Front,
-                                sideFlags,
-                                materials.find(front->topMaterial).toUtf8(),
-                                front->offset[VX],
-                                front->offset[VY],
-                                1,
-                                1,
-                                1,
-                                materials.find(front->middleMaterial).toUtf8(),
-                                front->offset[VX],
-                                front->offset[VY],
-                                1,
-                                1,
-                                1,
-                                1,
-                                materials.find(front->bottomMaterial).toUtf8(),
-                                front->offset[VX],
-                                front->offset[VY],
-                                1,
-                                1,
-                                1,
-                                front->index);
+                transferSide(lineIdx, sideFlags, front, LineDef::Front);
             }
-            if(back)
+            if (back)
             {
-                MPE_LineAddSide(lineIdx,
-                                LineDef::Back,
-                                sideFlags,
-                                materials.find(back->topMaterial).toUtf8(),
-                                back->offset[VX],
-                                back->offset[VY],
-                                1,
-                                1,
-                                1,
-                                materials.find(back->middleMaterial).toUtf8(),
-                                back->offset[VX],
-                                back->offset[VY],
-                                1,
-                                1,
-                                1,
-                                1,
-                                materials.find(back->bottomMaterial).toUtf8(),
-                                back->offset[VX],
-                                back->offset[VY],
-                                1,
-                                1,
-                                1,
-                                back->index);
+                transferSide(lineIdx, sideFlags, back, LineDef::Back);
             }
 
             MPE_GameObjProperty("XLinedef", lineIdx, "Flags", DDVT_SHORT, &i->flags);
