@@ -247,6 +247,12 @@ public:
     Variable *tryRemove(String const &variableName);
 
     /**
+     * Removes all members whose name begins with @a prefix.
+     * @param prefix  Prefix string.
+     */
+    void removeMembersWithPrefix(const String &prefix);
+
+    /**
      * Adds a new variable to the record with a NoneValue. If there is an existing
      * variable with the given name, the old variable is deleted first.
      *
