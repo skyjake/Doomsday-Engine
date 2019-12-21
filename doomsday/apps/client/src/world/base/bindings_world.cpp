@@ -72,6 +72,11 @@ static Value *Function_Thing_Player(Context &ctx, const Function::ArgumentValues
     return nullptr;
 }
 
+static Value *Function_Thing_Pos(Context &ctx, const Function::ArgumentValues &)
+{
+    return new ArrayValue(Vector3d(ClientServerWorld::contextMobj(ctx).origin));
+}
+
 static Value *Function_Thing_Recoil(Context &ctx, const Function::ArgumentValues &args)
 {
     mobj_t &     mo    = ClientServerWorld::contextMobj(ctx);
@@ -101,6 +106,7 @@ void initBindings(Binder &binder, Record &worldModule)
                 << DENG2_FUNC_NOARG(Thing_Id,         "id")
                 << DENG2_FUNC_NOARG(Thing_Health,     "health")
                 << DENG2_FUNC_NOARG(Thing_Player,     "player")
+                << DENG2_FUNC_NOARG(Thing_Pos,        "pos")
                 << DENG2_FUNC_DEFS (Thing_StartSound, "startSound", "id" << "volume", startSoundArgs)
                 << DENG2_FUNC      (Thing_Recoil,     "recoil", "force");
     }

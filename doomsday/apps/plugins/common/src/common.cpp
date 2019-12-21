@@ -23,6 +23,7 @@
 #include "g_defs.h"
 #include "g_update.h"
 #include "p_map.h"
+#include "p_start.h"
 #include "polyobjs.h"
 #include "r_common.h"
 
@@ -31,10 +32,11 @@
 #include <de/NoneValue>
 #include <de/ScriptSystem>
 #include <doomsday/DoomsdayApp>
-#include <doomsday/defs/definition.h>
+#include <doomsday/defs/thing.h>
 #include <doomsday/players.h>
 #include <doomsday/world/map.h>
 #include <doomsday/world/entitydef.h>
+#include <doomsday/world/thinkerdata.h>
 
 int Common_GetInteger(int id)
 {
@@ -234,6 +236,40 @@ static de::Value *Function_SetYellowMessage(de::Context &, const de::Function::A
 }
 #endif
 
+static de::Value *Function_World_SpawnThing(de::Context &, const de::Function::ArgumentValues &args)
+{
+    using namespace de;
+
+    mobjtype_t mobjType   = mobjtype_t(Defs().getMobjNum(args.at(0)->asText()));
+    int        spawnFlags = args.at(3)->asInt();
+    Vector3d   pos;
+
+    if (args.at(1)->size() == 2)
+    {
+        pos = vectorFromValue<Vector2d>(*args.at(1));
+        spawnFlags |= MSF_Z_FLOOR;
+    }
+    else
+    {
+        pos = vectorFromValue<Vector3d>(*args.at(1));
+    }
+
+    angle_t angle =
+        angle_t((is<NoneValue>(args.at(2)) ? 360.0f * randf() : args.at(2)->asNumber()) / 180.0f *
+                ANGLE_180);
+
+    if (mobjType < 0)
+    {
+        throw Error("Function_World_SpawnThing", "Invalid thing type: " + args.at(0)->asText());
+    }
+
+    if (mobj_t *mobj = P_SpawnMobjXYZ(mobjType, pos.x, pos.y, pos.z, angle, spawnFlags))
+    {
+        return new RecordValue(THINKER_NS(mobj->thinker));
+    }
+    return new NoneValue;
+}
+
 static player_t &contextPlayer(const de::Context &ctx)
 {
     int num = ctx.selfInstance().geti("__id__", 0);
@@ -291,14 +327,6 @@ void Common_Load()
             gameModule = new Record;
             scr.addNativeModule("Game", *gameModule);
 
-            Function::Defaults spawnMissileArgs;
-            spawnMissileArgs["angle"] = new NoneValue;
-            spawnMissileArgs["momz"] = new NumberValue(0.0);
-
-            Function::Defaults attackArgs;
-            attackArgs["damage"] = new NumberValue(0.0);
-            attackArgs["missile"] = new NoneValue;
-
             Function::Defaults setMessageArgs;
             setMessageArgs["player"] = new NoneValue;
 
@@ -313,9 +341,44 @@ void Common_Load()
                     << DENG2_FUNC_DEFS(SetYellowMessage, "setYellowMessage", "message" << "player", setYellowMessageArgs);
             }
 #endif
+        }
+
+        // World module.
+        {
+            Function::Defaults spawnThingArgs;
+            spawnThingArgs["angle"] = new NoneValue;
+            spawnThingArgs["flags"] = new NumberValue(0.0);
+
+            gameBindings->init(scr["World"])
+                << DENG2_FUNC_DEFS(World_SpawnThing,
+                                   "spawnThing",
+                                   "type" << "pos" << "angle" << "flags",
+                                   spawnThingArgs);
+
+            Function::Defaults spawnMissileArgs;
+            spawnMissileArgs["angle"] = new NoneValue;
+            spawnMissileArgs["momz"] = new NumberValue(0.0);
+
+            Function::Defaults attackArgs;
+            attackArgs["damage"] = new NumberValue(0.0);
+            attackArgs["missile"] = new NoneValue;
 
             gameBindings->init(scr.builtInClass("World", "Thing"))
-                << DENG2_FUNC_DEFS(Thing_SpawnMissile, "spawnMissile", "id" << "angle" << "momz", spawnMissileArgs);
+                << DENG2_FUNC_DEFS(Thing_SpawnMissile,
+                                   "spawnMissile",
+                                   "id" << "angle" << "momz",
+                                   spawnMissileArgs);
+
+            auto &world = scr["World"];
+            world.set("MSF_Z_FLOOR", MSF_Z_FLOOR);
+            world.set("MSF_Z_CEIL", MSF_Z_CEIL);
+#if defined(MSF_DEAF)
+            world.set("MSF_AMBUSH", MSF_DEAF);
+#endif
+#if defined(MSF_AMBUSH)
+            world.set("MSF_AMBUSH", MSF_AMBUSH);
+#endif
+
 #if defined(__JHERETIC__)
             *gameBindings << DENG2_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs);
 #endif
@@ -355,17 +418,13 @@ void Common_Unload()
 
     auto &scr = ScriptSystem::get();
 
-    // Constants.
+    // After game is unloaded, binder will delete its functions but
+    // other symbols need to be manually cleaned up.
     {
+        scr["World"].removeMembersWithPrefix("MSF_");
+
 #if defined(__JHERETIC__)
-        auto &playerClass = scr.builtInClass("App", "Player");
-        for (const String &name : playerClass.members().keys())
-        {
-            if (name.beginsWith("PT_"))
-            {
-                playerClass.remove(name);
-            }
-        }
+        scr.builtInClass("App", "Player").removeMembersWithPrefix("PT_");
 #endif
     }
 
