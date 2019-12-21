@@ -190,7 +190,8 @@ DENG2_PIMPL(ModelRenderer)
         const Matrix4f localToWorld = Matrix4f::translate(origin) *
                                       Matrix4f::scale(aspectCorrect); // Inverse aspect correction.
 
-        const Matrix4f viewProj = Rend_GetProjectionMatrix(useFixedFov ? weaponFixedFOV : 0.0f) *
+        const Matrix4f viewProj = Rend_GetProjectionMatrix(useFixedFov ? weaponFixedFOV : 0.0f,
+                                                           0.1f /* near plane distance: IssueID #2373 */) *
                                   ClientApp::renderSystem().uViewMatrix().toMatrix4f();
 
         const Matrix4f localToScreen = viewProj * localToWorld;
