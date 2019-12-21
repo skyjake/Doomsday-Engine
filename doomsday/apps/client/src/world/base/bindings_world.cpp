@@ -35,6 +35,16 @@ namespace world {
 
 //-------------------------------------------------------------------------------------------------
 
+static Value *Function_Thing_AddMom(Context &ctx, const Function::ArgumentValues &args)
+{
+    mobj_t &   mo    = ClientServerWorld::contextMobj(ctx);
+    const auto delta = vectorFromValue<Vector3d>(*args.at(0));
+    mo.mom[VX] += delta.x;
+    mo.mom[VY] += delta.y;
+    mo.mom[VZ] += delta.z;
+    return nullptr;
+}
+
 static Value *Function_Thing_Id(Context &ctx, const Function::ArgumentValues &)
 {
     return new NumberValue(ClientServerWorld::contextMobj(ctx).thinker.id);
@@ -43,6 +53,16 @@ static Value *Function_Thing_Id(Context &ctx, const Function::ArgumentValues &)
 static Value *Function_Thing_Health(Context &ctx, const Function::ArgumentValues &)
 {
     return new NumberValue(ClientServerWorld::contextMobj(ctx).health);
+}
+
+static Value *Function_Thing_Height(Context &ctx, const Function::ArgumentValues &)
+{
+    return new NumberValue(ClientServerWorld::contextMobj(ctx).height);
+}
+
+static Value *Function_Thing_Mom(Context &ctx, const Function::ArgumentValues &)
+{
+    return new ArrayValue(Vector3d(ClientServerWorld::contextMobj(ctx).mom));
 }
 
 static Value *Function_Thing_StartSound(Context &ctx, const Function::ArgumentValues &args)
@@ -91,6 +111,11 @@ static Value *Function_Thing_Recoil(Context &ctx, const Function::ArgumentValues
     return nullptr;
 }
 
+static Value *Function_Thing_Type(Context &ctx, const Function::ArgumentValues &)
+{
+    return new NumberValue(ClientServerWorld::contextMobj(ctx).type);
+}
+
 //-------------------------------------------------------------------------------------------------
 
 void initBindings(Binder &binder, Record &worldModule)
@@ -103,12 +128,16 @@ void initBindings(Binder &binder, Record &worldModule)
         startSoundArgs["volume"] = new NumberValue(1.0);
 
         binder.init(thing)
+                << DENG2_FUNC      (Thing_AddMom,     "addMom", "delta")
                 << DENG2_FUNC_NOARG(Thing_Id,         "id")
                 << DENG2_FUNC_NOARG(Thing_Health,     "health")
+                << DENG2_FUNC_NOARG(Thing_Height,     "height")
+                << DENG2_FUNC_NOARG(Thing_Mom,        "mom")
                 << DENG2_FUNC_NOARG(Thing_Player,     "player")
                 << DENG2_FUNC_NOARG(Thing_Pos,        "pos")
                 << DENG2_FUNC_DEFS (Thing_StartSound, "startSound", "id" << "volume", startSoundArgs)
-                << DENG2_FUNC      (Thing_Recoil,     "recoil", "force");
+                << DENG2_FUNC      (Thing_Recoil,     "recoil", "force")
+                << DENG2_FUNC_NOARG(Thing_Type,       "type");
     }
 }
 
