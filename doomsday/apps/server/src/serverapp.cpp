@@ -35,6 +35,7 @@
 #include <de/LogBuffer>
 #include <de/PackageFeed>
 #include <de/PackageLoader>
+#include <de/ScriptSystem>
 #include <de/c_wrapper.h>
 
 #include "serverapp.h"
@@ -273,6 +274,8 @@ void ServerApp::initialize()
 #endif
 
     plugins().loadAll();
+
+    scriptSystem().importModule("commonlib"); // from net.dengine.base
 
     DD_FinishInitializationAfterWindowReady();
 }

@@ -1,5 +1,5 @@
 # DOOMSDAY CLIENT BOOTSTRAP
-# 
+#
 # This script is executed after the client application has been fully
 # initialized, immediately after subsystems are all ready. No game is
 # loaded at this stage, although all plugins have been enumerated.
@@ -26,7 +26,7 @@ def runLegacySavegameConversion(newGame)
 end
 
 def runPluginLoadHooks(newGame)
-    if newGame == 'null-game': return    
+    if newGame == 'null-game': return
     try
         gameConf = Config.plugin[App.gamePlugin()]
         for func in gameConf.onNextLoad: func()
@@ -42,12 +42,12 @@ end
 def addOnLoadHookForAllGames(function)
     for plug in subrecords(Config.plugin).values()
         plug.onNextLoad += [function]
-    end    
+    end
 end
 
 def cleanPackageFolders()
     # Config.resource.iwadFolder was used previously for IWADs
-    # (non-recursive), but now everything can be put in 
+    # (non-recursive), but now everything can be put in
     # Config.resource.packageFolder and recursing is specified
     # separately.
     try
@@ -73,23 +73,23 @@ end
 
 def upgradeMaintenance()
     if not 'OLD_VERSION' in Version: return
-    
+
     # Ensure that the default Tilde binding is present when upgrading
     # from an older version.
     if isUpgradedToBuild(920)
         # Register a single-shot hook that ensures the binding is present
         # after a game has been loaded the next time. This must be done
         # per-plugin as the bindings are stored separately for each.
-        # Config is persistent so these will be remembered even after 
+        # Config is persistent so these will be remembered even after
         # shutting down the app.
         addOnLoadHookForAllGames(bindDefaultConsoleTildeKey)
     end
-    
+
     # Add the default Menu key bindings.
     if isUpgradedToBuild(1479)
         addOnLoadHookForAllGames(bindWindowsMenuKey)
     end
-    
+
     cleanPackageFolders()
 end
 
@@ -121,3 +121,4 @@ App.audienceForGameAddition += [runLegacySavegameConversion]
 App.audienceForGameChange += [runPluginLoadHooks]
 
 import controllers
+import commonlib  # from net.dengine.base
