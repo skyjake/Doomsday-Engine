@@ -55,6 +55,12 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="2.2" date="2019-12-18">
+            <description>
+                <p>Several bug fixes and modding related enhancements.</p>
+            </description>
+            <url>https://manual.dengine.net/version/2.2</url>
+        </release>
         <release version="2.1.2" date="2019-11-02">
             <description>
                 <p>Patch release that addresses issues found in version 2.1.</p>
