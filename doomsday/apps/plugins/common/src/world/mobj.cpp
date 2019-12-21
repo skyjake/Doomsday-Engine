@@ -1154,17 +1154,59 @@ void Mobj_RestoreObjectState(mobj_t *mob, de::Info::BlockElement const &state)
     #endif
 }
 
-dd_bool Mobj_TouchSpecialScriptedThing(mobj_t *mob, mobj_t *special, enum mobjtouchresult_e *result)
+void Mobj_RunScriptOnDeath(mobj_t *mob, mobj_t *killer)
 {
     using namespace de;
+
+    if (IS_NETWORK_CLIENT)
+    {
+        // Clients don't do this, only the server will.
+        return;
+    }
+
+    // Check Thing definition for an onDeath script.
+    const auto &thingDef = DED_Definitions()->things[mob->type];
+    if (const String onDeathSrc = thingDef.gets(QStringLiteral("onDeath")))
+    {
+        LOG_AS("Mobj_RunScriptOnDeath");
+
+        const auto &self = THINKER_NS(mob->thinker);
+
+        Record ns;
+        ns.add(QStringLiteral("self")).set(new RecordValue(self));
+        Variable &killerVar = ns.add(QStringLiteral("killer"));
+        if (killer)
+        {
+            killerVar.set(new RecordValue(THINKER_NS(killer->thinker)));
+        }
+        else
+        {
+            killerVar.set(new NoneValue);
+        }
+        Process proc(&ns);
+        Script script(onDeathSrc);
+        proc.run(script);
+        proc.execute();
+    }
+}
+
+dd_bool Mobj_RunScriptOnTouch(mobj_t *mob, mobj_t *special, enum mobjtouchresult_e *result)
+{
+    using namespace de;
+
+    if (IS_NETWORK_CLIENT)
+    {
+        // Clients don't do this, only the server will.
+        return false;
+    }
 
     // Check Thing definition for an onTouch script.
     const auto &thingDef = DED_Definitions()->things[special->type];
     if (const String onTouchSrc = thingDef.gets(QStringLiteral("onTouch")))
     {
-        LOG_AS("Mobj_TouchSpecialScriptedThing");
+        LOG_AS("Mobj_RunScriptOnTouch");
 
-        const auto &self = THINKER_DATA(special->thinker, ThinkerData).objectNamespace();
+        const auto &self = THINKER_NS(special->thinker);
 
         // We will make it seem like the special thing has a script function
         // called "onTouch", even though we are only now parsing the script from
@@ -1177,6 +1219,7 @@ dd_bool Mobj_TouchSpecialScriptedThing(mobj_t *mob, mobj_t *special, enum mobjto
         // the function. The function returns a code that tells what to do with the
         // special item afterwards: "keep", "dormant", "hide", "destroy".
 
+        // We are interested in the return value, so make it a function that can be called.
         String src = "def onTouch(toucher)\n";
         src += onTouchSrc;
         src += "\nend";

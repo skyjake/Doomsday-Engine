@@ -57,7 +57,7 @@ static Value *Function_Player_Thing(Context &ctx, const Function::ArgumentValues
     const int plrNum = playerIndex(ctx);
     if (const mobj_t *mo = DoomsdayApp::players().at(plrNum).publicData().mo)
     {
-        return new RecordValue(THINKER_DATA(mo->thinker, ThinkerData).objectNamespace());
+        return new RecordValue(THINKER_NS(mo->thinker));
     }
     return nullptr;
 }

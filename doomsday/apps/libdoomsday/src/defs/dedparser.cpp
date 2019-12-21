@@ -1265,6 +1265,7 @@ DENG2_PIMPL(DEDParser)
                     RV_INT_ELEM("Misc4", (*mo)["misc"], 3)
 
                     RV_STR("On touch", (*mo)["onTouch"]) // script function (MF_SPECIAL)
+                    RV_STR("On death", (*mo)["onDeath"]) // script function
 
                     RV_END
                     CHECKSC;

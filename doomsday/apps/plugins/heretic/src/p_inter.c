@@ -971,7 +971,7 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher)
 
     player = toucher->player;
 
-    if (Mobj_TouchSpecialScriptedThing(toucher, special, &touchResult))
+    if (Mobj_RunScriptOnTouch(toucher, special, &touchResult))
     {
         switch (touchResult)
         {
@@ -1058,6 +1058,9 @@ static void killMobj(mobj_t *source, mobj_t *target)
     target->flags2 &= ~MF2_PASSMOBJ;
     target->corpseTics = 0;
     target->height /= 2*2;
+
+    Mobj_RunScriptOnDeath(target, source);
+
     if(source && source->player)
     {
         if(target->flags & MF_COUNTKILL)
