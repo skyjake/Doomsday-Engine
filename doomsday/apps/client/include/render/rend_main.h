@@ -183,9 +183,10 @@ de::Vector3d Rend_EyeOrigin();
  * Returns the projection matrix that is used for rendering the current frame's
  * 3D portions.
  *
- * @param fixedFov  If non-zero, overrides the user's FOV with a fixed value.
+ * @param fixedFov        If non-zero, overrides the user's FOV with a fixed value.
+ * @param clipRangeScale  Multiplier to apply to clip plane distances.
  */
-de::Matrix4f Rend_GetProjectionMatrix(float fixedFov = 0.f);
+de::Matrix4f Rend_GetProjectionMatrix(float fixedFov = 0.0f, float clipRangeScale = 1.0f);
 
 #define Rend_PointDist2D(c) (abs((vOrigin.z-(c)[VY])*viewsidex - (vOrigin.x-(c)[VX])*viewsidey))
 
