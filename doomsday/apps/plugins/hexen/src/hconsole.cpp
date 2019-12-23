@@ -116,13 +116,10 @@ void G_ConsoleRegistration()
 
     // Compatibility options
     C_VAR_INT  ("game-icecorpse",                   &cfg.translucentIceCorpse,          0, 0, 1);
-    //C_VAR_BYTE ("game-monsters-floatoverblocking",  &cfg.allowMonsterFloatOverBlocking, 0, 0, 1);
-
-    // Game state
-    //C_VAR_BYTE ("game-fastmonsters",                &cfg.fastMonsters,                  0, 0, 1);
 
     // Gameplay
     C_VAR_INT  ("game-maulator-time",               &maulatorSeconds,                   CVF_NO_MAX, 1, 0);
+    C_VAR_BYTE ("game-deathkings-respawn-chance",   &cfg.deathkingsAutoRespawnChance,   0, 0, 100);
 
     // Misc
     C_VAR_BYTE ("msg-echo",                         &cfg.common.echoMsg,                       0, 0, 1);

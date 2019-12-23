@@ -34,6 +34,8 @@
 
 using namespace de;
 
+int acs::Interpreter::currentScriptNumber = -1;
+
 namespace internal
 {
     /// Status to return from ACScript command functions.
@@ -1107,8 +1109,12 @@ void Interpreter::think()
             return;
         }
 
+        currentScriptNumber = script().entryPoint().scriptNumber;
+
         while((action = findCommand(DD_LONG(*pcodePtr++))(*this)) == Continue)
         {}
+
+        currentScriptNumber = -1;
     }
 
     if(action == Terminate)

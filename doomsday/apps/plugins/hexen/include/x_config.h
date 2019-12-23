@@ -73,6 +73,7 @@ typedef struct jhexen_config_s {
 
     int             translucentIceCorpse;
     byte            allowMonsterFloatOverBlocking; // if true, floating mobjs are allowed to climb over mobjs blocking the way.
+    byte            deathkingsAutoRespawnChance; // allow script 255 to spawn things (0-100%)
 
     byte            netClass;
     byte            netRandomClass;
