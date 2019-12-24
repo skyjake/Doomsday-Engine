@@ -2,7 +2,7 @@
  * @file dd_version.h
  * Version information.
  *
- * @authors Copyright &copy; 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2000-2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2007-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
@@ -34,9 +34,8 @@ extern "C" {
 
 #define LIBDENG_PLUGINDESC      "(" DOOMSDAY_NICENAME " Plugin)"
 
-#define DOOMSDAY_HOMEURL        "http://dengine.net"
-#define DOOMSDAY_MASTERURL      "http://dengine.net/master.php"
-#define DOOMSDAY_DOCSURL        "http://dengine.net/dew"
+#define DOOMSDAY_HOMEURL        "https://dengine.net"
+#define DOOMSDAY_DOCSURL        "https://manual.dengine.net/"
 
 /**
  * Version number rules: (major).(minor).(revision)-(release name)
@@ -63,7 +62,7 @@ extern "C" {
 /**
  * Copyright string is used in WIN32 binary metadata markup.
  */
-#define DOOMSDAY_COPYRIGHT      "2003-2017, " DENGPROJECT_NICEAUTHOR
+#define DOOMSDAY_COPYRIGHT      "2003-2020, " DENGPROJECT_NICEAUTHOR
 
 /**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
