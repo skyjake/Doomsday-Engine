@@ -161,7 +161,7 @@ package "com.idsoftware.doom2.german_1.6.66" {
     }
 }
 
-package "com.idsoftware.doom2_1.7.1" {
+package "com.idsoftware.doom2_1.7" {
     format: IWAD
     fileName: doom2.wad
     fileSize: 14612688
