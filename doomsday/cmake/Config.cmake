@@ -120,8 +120,12 @@ endif ()
 
 # Helpers --------------------------------------------------------------------
 
-set (Python_ADDITIONAL_VERSIONS 2.7)
+set (Python_ADDITIONAL_VERSIONS 3)
 find_package (PythonInterp REQUIRED)
+
+if (PYTHON_VERSION_MAJOR LESS 3)
+    message (FATAL "Python 3 required")
+endif ()
 
 if (DENG_ENABLE_COTIRE)
     include (cotire)
