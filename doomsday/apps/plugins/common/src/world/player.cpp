@@ -1,6 +1,6 @@
 /** @file player.cpp  Common playsim routines relating to players.
  *
- * @authors Copyright © 2006-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2019 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -25,6 +25,8 @@
 #include <cstring>
 #include <cstdio>
 #include <de/memory.h>
+#include <de/Slope>
+#include <de/Matrix>
 #include <doomsday/plugins.h>
 #include "d_net.h"
 #include "d_netcl.h"
@@ -287,6 +289,23 @@ dd_bool P_PlayerInWalkState(player_t *pl)
 #if __JDOOM64__
     return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
 #endif
+}
+
+void P_TrajectoryNoise(angle_t *angle, float *slope, float degreesPhi, float degreesTheta)
+{
+    Slope trajectory(float(*angle) / ANG180 * DD_PI, *slope);
+
+    const Vector2f angles(degreesPhi * (randf() - randf()), degreesTheta * (randf() - randf()));
+
+    const Vector3f front = trajectory.toUnitVec();
+    const Vector3f side  = front.cross(Vector3f(0, 0, 1)).normalize();
+    const Vector3f up    = front.cross(side);
+
+    trajectory = Slope::fromVec(Matrix4f::rotate(angles.x, up) *
+                                Matrix4f::rotate(angles.y, side) * front);
+
+    *angle = angle_t(trajectory.angle / DD_PI * ANG180);
+    *slope = trajectory.slope;
 }
 
 void P_ShotAmmo(player_t *player)

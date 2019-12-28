@@ -159,6 +159,8 @@ dd_bool P_CheckAmmo(player_t *plr);
  */
 void P_ShotAmmo(player_t *plr);
 
+void P_TrajectoryNoise(angle_t *angle, float *slope, float degreesPhi, float degreesTheta);
+
 #if __JHEXEN__
 /**
  * Changes the class of the given player. Will not work if the player
