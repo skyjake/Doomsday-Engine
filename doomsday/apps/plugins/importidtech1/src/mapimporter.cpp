@@ -314,11 +314,14 @@ inline LineDef::Side opposite(LineDef::Side side)
 }
 
 enum {
-    HACK_NONE                = 0,
-    HACK_IS_LINK_TARGET      = 0x1,
-    HACK_SELF_REFERENCING    = 0x2,
-    HACK_FLAT_BLEEDING       = 0x4,
-    HACK_MISSING_OUTSIDE_TOP = 0x8,
+    HACK_NONE                                   = 0,
+    HACK_IS_LINK_TARGET                         = 0x0001,
+    HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE = 0x0002,
+    HACK_ANALYSIS_BITS                          = 0xffff,
+
+    HACK_SELF_REFERENCING                       = 0x10000,
+    HACK_FLAT_BLEEDING                          = 0x20000,
+    HACK_MISSING_OUTSIDE_TOP                    = 0x40000,
 };
 
 struct SectorDef : public Id1MapElement
@@ -894,24 +897,97 @@ DENG2_PIMPL(MapImporter)
         return -1;
     }
 
-    int findMinYVertexIndex(const SectorDef &sector) const
+    std::set<int> sectorVertices(const SectorDef &sector) const
     {
-        double minY      = std::numeric_limits<double>::max();
-        int    minYIndex = -1;
+        std::set<int> verts;
+        for (int i : sector.lines)
+        {
+            verts.insert(lines[i].v[0]);
+            verts.insert(lines[i].v[1]);
+        }
+        return verts;
+    }
 
+    Vector2d sectorBoundsMiddle(const SectorDef &sector) const
+    {
+        Vector2d mid;
+        int      count = 0;
+        for (int v : sectorVertices(sector))
+        {
+            mid += vertices[v].pos;
+            ++count;
+        }
+        if (count > 0) mid /= count;
+        return mid;
+    }
+
+    std::vector<double> findSectorIntercepts(const SectorDef &sector, const Vec2d &start, const Vec2d &dir) const
+    {
+        const Vector2d end = start + dir;
+
+        std::vector<double> intercepts;
         for (int i : sector.lines)
         {
             const auto &line = lines[i];
-            for (int p = 0; p < 2; ++p)
+            const Vec2d a    = vertices[line.v[0]].pos;
+            const Vec2d b    = vertices[line.v[1]].pos;
+
+            double t;
+            if (lineSegmentIntersection(t, start, end, a, b))
             {
-                if (vertices[line.v[p]].pos.y < minY)
+                if (t > 0)
                 {
-                    minY = vertices[line.v[p]].pos.y;
-                    minYIndex = line.v[p];
+                    intercepts.push_back(t);
                 }
             }
         }
-        return minYIndex;
+        return intercepts;
+    }
+
+    /**
+     * Finds a point that is inside the sector. The first option is to use the
+     * middle of the sector's bounding box, but if that is outside the sector,
+     * tries to intersect against the sector lines to find a valid point inside.
+     *
+     * @param sector  Sector.
+     *
+     * @return A point inside the sector.
+     */
+    Vector2d findPointInsideSector(const SectorDef &sector) const
+    {
+        Vector2d inside;
+        int count = 0;
+        for (int i : sectorVertices(sector))
+        {
+            inside += vertices[i].pos;
+            count++;
+        }
+        if (count > 0) inside /= count;
+
+        // Is this actually inside the sector? Need to do a polygon check.
+        {
+            Vec2d dir{1, 0};
+            std::vector<double> intercepts = findSectorIntercepts(sector, inside, dir);
+            if (intercepts.empty())
+            {
+                dir = {-1, 0};
+                intercepts = findSectorIntercepts(sector, inside, dir);
+            }
+
+            if (intercepts.size() > 0 && intercepts.size() % 2 == 0)
+            {
+                qDebug("(%f,%f) is not inside!", inside.x, inside.y);
+
+                const Vec2d first  = inside + dir * intercepts[0];
+                const Vec2d second = inside + dir * intercepts[1];
+
+                inside = (first + second) * 0.5f;
+
+                qDebug("  -> choosing (%f,%f) instead", inside.x, inside.y);
+            }
+        }
+
+        return inside;
     }
 
     struct IntersectionResult
@@ -924,8 +1000,8 @@ DENG2_PIMPL(MapImporter)
     IntersectionResult findIntersection(
         const LineDef &line, const Vector2d &start, const Vector2d &end) const
     {
-        const Vector2d a       = vertices[line.v[0]].pos;
-        const Vector2d b       = vertices[line.v[1]].pos;
+        const Vector2d a = vertices[line.v[0]].pos;
+        const Vector2d b = vertices[line.v[1]].pos;
 
         double t;
         if (lineSegmentIntersection(t, start, end, a, b))
@@ -943,9 +1019,8 @@ DENG2_PIMPL(MapImporter)
     {
         if (sector.lines.empty()) return;
 
-        // Find the topmost vertex.
-        const Vector2d start = vertices[findMinYVertexIndex(sector)].pos;
-        const Vector2d end   = start - Vector2d(0.001, -1.0);
+        const Vector2d start = findPointInsideSector(sector);
+        const Vector2d end   = start + Vector2d(0.001, 1.0);
 
         std::pair<double, int> nearestContainer{std::numeric_limits<double>::max(), -1};
 
@@ -983,6 +1058,7 @@ DENG2_PIMPL(MapImporter)
             sector.hackParams.visPlaneLinkTargetSector = nearestContainer.second;
             sector.hackParams.flags.linkFloorPlane     = true;
             sector.hackParams.flags.linkCeilingPlane   = true;
+
             qDebug("sector %i contained by %i", indexOf(sector), nearestContainer.second);
         }
     }
@@ -1187,25 +1263,69 @@ DENG2_PIMPL(MapImporter)
 
         // Detect self-referencing sectors: all lines of the sector are two-sided and both
         // sides refer to the sector itself.
-        // For example: TNT map02 deep water.
+        //
+        // For example:
+        // - TNT map02 deep water: single sector with self-referencing lines
+        // - AV map11 deep water (x=2736, y=8): multiple connected self-referencing sectors
         {
-            bool foundSelfRefs = false;
+            // First look for potentially self-referencing sectors that have at least one
+            // self-referencing line.
             for (auto &sector : sectors)
             {
+                int  numSelfRef     = 0;
+                bool hasSingleSided = false;
+                for (int lineIndex : sector.lines)
+                {
+                    auto &line = lines[lineIndex];
+                    if (!line.isTwoSided())
+                    {
+                        hasSingleSided = true;
+                    }
+                    if (isSelfReferencing(line))
+                    {
+                        numSelfRef++;
+                    }
+                }
+                if (numSelfRef > 0 && !hasSingleSided)
+                {
+                    sector.hackFlags |= HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE;
+                    qDebug("possibly a self-referencing sector %d", int(&sector - sectors.data()));
+                }
+            }
+
+            bool foundSelfRefs = false;
+            for (int sectorIndex = 0; sectorIndex < int(sectors.size()); ++sectorIndex)
+            {
+                auto &sector = sectors[sectorIndex];
+
                 bool good = true;
                 for (int lineIndex : sector.lines)
                 {
-                    if (!isSelfReferencing(lines[lineIndex]))
+                    auto &line = lines[lineIndex];
+                    if (!isSelfReferencing(line))
                     {
-                        good = false;
-                        break;
-                    }
+                        if (!line.isTwoSided())
+                        {
+                            good = false;
+                            break;
+                        }
+                        // Combine multiple self-referencing sectors.
+                        const int other = otherSector(line, sectorIndex);
+                        if (other >= 0 && !(sectors[other].hackFlags &
+                                            HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE))
+                        {
+                            good = false;
+                            break;
+                        }
+                    }                   
                 }
                 if (good)
                 {
                     foundSelfRefs = true;
                     sector.hackFlags |= HACK_SELF_REFERENCING;
-                    qDebug("self-referencing sector %d", int(&sector - sectors.data()));
+                    qDebug("self-referencing sector %d (ceil:%s floor:%s)", sectorIndex,
+                           materials.find(sector.ceilMaterial).toUtf8().constData(),
+                           materials.find(sector.floorMaterial).toUtf8().constData());
                 }
             }
 
