@@ -26,7 +26,7 @@ namespace de {
  * Combination of a yaw angle and Z slope at an XY distance of 1.0 units.
  * @ingroup math
  */
-DENG2_PUBLIC struct Slope
+struct DENG2_PUBLIC Slope
 {
     float angle; // radians
     float slope;
