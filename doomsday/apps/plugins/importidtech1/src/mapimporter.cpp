@@ -1298,6 +1298,11 @@ DENG2_PIMPL(MapImporter)
             {
                 auto &sector = sectors[sectorIndex];
 
+                if (!(sector.hackFlags & HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE))
+                {
+                    continue;
+                }
+
                 bool good = true;
                 for (int lineIndex : sector.lines)
                 {
