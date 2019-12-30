@@ -344,7 +344,8 @@ struct WallEdge::Impl : public IHPlane
 
                 const bool isExtendedMasked = middle.hasMaterial() &&
                                               !middle.materialAnimator()->isOpaque() &&
-                                              !lineSide.top().hasMaterial();
+                                              !lineSide.top().hasMaterial() &&
+                                              lineSide.sector().ceiling().surface().material().isSkyMasked();
 
                 if (!line.isSelfReferencing() && ffloor == &subsec.sector().floor())
                 {
@@ -420,7 +421,7 @@ struct WallEdge::Impl : public IHPlane
                         }
                     }
                 }
-                
+
                 // Icarus map01: force fields use a masked middle texture that expands above the sector
                 if (isExtendedMasked)
                 {
@@ -429,7 +430,7 @@ struct WallEdge::Impl : public IHPlane
                         hi = lo + middle.material().height();
                     }
                 }
-                
+
                 break; }
             }
         }
