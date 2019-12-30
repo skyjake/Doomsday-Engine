@@ -317,6 +317,7 @@ enum {
     HACK_NONE                                   = 0,
     HACK_IS_LINK_TARGET                         = 0x0001,
     HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE = 0x0002,
+    HACK_HAS_SELF_REFERENCING_LOOP              = 0x0004,
     HACK_ANALYSIS_BITS                          = 0xffff,
 
     HACK_SELF_REFERENCING                       = 0x10000,
@@ -345,6 +346,7 @@ struct SectorDef : public Id1MapElement
 
     // Internal bookkeeping:
     std::set<int> lines;
+    std::vector<int> selfRefLoop;
     int hackFlags = 0;
     struct de_api_sector_hacks_s hackParams{{0, 0}, -1};
 
@@ -900,7 +902,17 @@ DENG2_PIMPL(MapImporter)
     std::set<int> sectorVertices(const SectorDef &sector) const
     {
         std::set<int> verts;
-        for (int i : sector.lines)
+        // If a self-referencing loop has been detected in the sector, we are only interested
+        // in the loop because it is being used for render hacks.
+        if (!sector.selfRefLoop.empty())
+        {
+            for (int i : sector.selfRefLoop)
+            {
+                verts.insert(lines[i].v[0]);
+                verts.insert(lines[i].v[1]);
+            }
+        }
+        else for (int i : sector.lines)
         {
             verts.insert(lines[i].v[0]);
             verts.insert(lines[i].v[1]);
@@ -908,6 +920,7 @@ DENG2_PIMPL(MapImporter)
         return verts;
     }
 
+#if 0
     Vector2d sectorBoundsMiddle(const SectorDef &sector) const
     {
         Vector2d mid;
@@ -920,6 +933,7 @@ DENG2_PIMPL(MapImporter)
         if (count > 0) mid /= count;
         return mid;
     }
+#endif
 
     std::vector<double> findSectorIntercepts(const SectorDef &sector, const Vec2d &start, const Vec2d &dir) const
     {
@@ -971,6 +985,11 @@ DENG2_PIMPL(MapImporter)
             if (intercepts.empty())
             {
                 dir = {-1, 0};
+                intercepts = findSectorIntercepts(sector, inside, dir);
+            }
+            if (intercepts.empty())
+            {
+                dir = {0, -1};
                 intercepts = findSectorIntercepts(sector, inside, dir);
             }
 
@@ -1243,6 +1262,21 @@ DENG2_PIMPL(MapImporter)
         return lineList.size();
     }
 
+    struct LineDefSet : public std::set<const LineDef *>
+    {
+        using Base = std::set<const LineDef *>;
+
+        const LineDef *take()
+        {
+            if (empty()) return nullptr;
+
+            auto iter = begin();
+            const auto *line = *iter;
+            erase(iter);
+            return line;
+        }
+    };
+
     void analyze()
     {
         Time begunAt;
@@ -1272,7 +1306,7 @@ DENG2_PIMPL(MapImporter)
             // self-referencing line.
             for (auto &sector : sectors)
             {
-                int  numSelfRef     = 0;
+                LineDefSet selfRefLines;
                 bool hasSingleSided = false;
                 for (int lineIndex : sector.lines)
                 {
@@ -1283,10 +1317,65 @@ DENG2_PIMPL(MapImporter)
                     }
                     if (isSelfReferencing(line))
                     {
-                        numSelfRef++;
+                        selfRefLines.insert(&line);
                     }
                 }
-                if (numSelfRef > 0 && !hasSingleSided)
+
+                // Detect loops in the self-referencing lines.
+                if (!selfRefLines.empty())
+                {
+                    std::vector<const LineDef *> loop;
+                    const LineDef *              atLine;
+                    auto                         remaining = selfRefLines;
+
+                    loop.push_back(atLine = remaining.take());
+                    int atVertex = atLine->v[0];
+
+                    for (;;)
+                    {
+                        const int nextVertex = atLine->v[atLine->v[0] == atVertex ? 1 : 0];
+                        const LineDef *nextLine = nullptr;
+
+                        // Was a loop completed?
+                        if (loop.size() >= 3)
+                        {
+                            if (nextVertex == loop.front()->v[0] || nextVertex == loop.front()->v[1])
+                            {
+                                qDebug("sector %d has a self-ref loop:", int(&sector - sectors.data()));
+                                for (const auto *ld : loop)
+                                {
+                                    const int lineIndex = int(ld - lines.data());
+                                    sector.selfRefLoop.push_back(lineIndex);
+                                    qDebug("    line %d", lineIndex);
+                                }
+                                sector.hackFlags |= HACK_HAS_SELF_REFERENCING_LOOP;
+                                break;
+                            }
+                        }
+
+                        for (int lineIdx : vertices[nextVertex].lines)
+                        {
+                            const auto &check = lines[lineIdx];
+                            if (remaining.find(&check) != remaining.end())
+                            {
+                                if (check.v[0] == nextVertex || check.v[1] == nextVertex)
+                                {
+                                    nextLine = &check;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!nextLine) break; // No more connected lines, give up.
+
+                        remaining.erase(nextLine);
+                        loop.push_back(nextLine);
+                        atLine   = nextLine;
+                        atVertex = nextVertex;
+                    }
+                }
+
+                if (!selfRefLines.empty() && !hasSingleSided)
                 {
                     sector.hackFlags |= HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE;
                     qDebug("possibly a self-referencing sector %d", int(&sector - sectors.data()));
@@ -1298,7 +1387,8 @@ DENG2_PIMPL(MapImporter)
             {
                 auto &sector = sectors[sectorIndex];
 
-                if (!(sector.hackFlags & HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE))
+                if (!(sector.hackFlags & (HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE |
+                                          HACK_HAS_SELF_REFERENCING_LOOP)))
                 {
                     continue;
                 }
@@ -1307,7 +1397,12 @@ DENG2_PIMPL(MapImporter)
                 for (int lineIndex : sector.lines)
                 {
                     auto &line = lines[lineIndex];
-                    if (!isSelfReferencing(line))
+
+                    // Sectors with a loop of self-referencing lines can contain any number
+                    // of other lines, we'll still consider them self-referencing.
+
+                    if (!isSelfReferencing(line) &&
+                        !(sector.hackFlags & HACK_HAS_SELF_REFERENCING_LOOP))
                     {
                         if (!line.isTwoSided())
                         {
