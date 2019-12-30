@@ -471,7 +471,7 @@ void R_LoadColorPalettes()
             }
             else
             {
-                lumpName = String("TRANTBL%1").arg('A' + (xlatNum - 10));
+                lumpName = String::format("TRANTBL%c", 'A' + (xlatNum - 10));
             }
             xlatNum++;
 
