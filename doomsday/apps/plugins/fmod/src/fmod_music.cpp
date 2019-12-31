@@ -96,12 +96,12 @@ static void releaseSong()
     {
         if (needReleaseSong)
         {
-            DSFMOD_TRACE("releaseSong: Song " << song << " will be released.");
+            DSFMOD_TRACE("releaseSong: Song %p will be released." << song);
             song->release();
         }
         else
         {
-            DSFMOD_TRACE("releaseSong: Song " << song << " will NOT be released.");
+            DSFMOD_TRACE("releaseSong: Song %p will NOT be released." << song);
         }
         song = 0;
         needReleaseSong = false;
@@ -296,7 +296,7 @@ int DM_Music_Play(int looped)
                                          FMOD_CREATESTREAM | FMOD_OPENMEMORY |
                                          (looped? FMOD_LOOP_NORMAL : 0),
                                          &extra, &song);
-        DSFMOD_TRACE("Music_Play: songBuffer has " << songBuffer->size << " bytes, created Sound " << song);
+        DSFMOD_TRACE("Music_Play: songBuffer has %d bytes, created Sound %p" << songBuffer->size << song);
         DSFMOD_ERRCHECK(result);
 
         needReleaseSong = true;
@@ -352,7 +352,7 @@ int DM_Music_PlayFile(const char *filename, int looped)
     FMOD_RESULT result;
     result = fmodSystem->createSound(filename, FMOD_CREATESTREAM | (looped? FMOD_LOOP_NORMAL : 0),
                                      &extra, &song);
-    DSFMOD_TRACE("Music_Play: loaded '" << filename << "' => Sound " << song);
+    DSFMOD_TRACE("Music_Play: loaded '%s'' => Sound %p" << filename << song);
     DSFMOD_ERRCHECK(result);
 
     needReleaseSong = true;

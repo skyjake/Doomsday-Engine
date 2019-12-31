@@ -1178,7 +1178,7 @@ DENG2_PIMPL(AudioSystem)
         if (nowTime - sfxLogicLastPurge < SOUND_LOGICAL_PURGEINTERVAL) return;
 
         // Peform the purge now.
-        LOGDEV_AUDIO_XVERBOSE("purging logic sound hash...", "");
+//        LOGDEV_AUDIO_XVERBOSE("purging logic sound hash...", "");
         sfxLogicLastPurge = nowTime;
 
         // Check all sounds in the hash.
