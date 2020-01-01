@@ -1303,9 +1303,12 @@ DENG2_PIMPL(MapImporter)
         // - AV map11 deep water (x=2736, y=8): multiple connected self-referencing sectors
         {
             // First look for potentially self-referencing sectors that have at least one
-            // self-referencing line.
+            // self-referencing line. Also be on the lookout for line loops composed of
+            // self-referencing lines.
             for (auto &sector : sectors)
             {
+                const int sectorIndex = int(&sector - sectors.data());
+
                 LineDefSet selfRefLines;
                 bool hasSingleSided = false;
                 for (int lineIndex : sector.lines)
@@ -1341,7 +1344,7 @@ DENG2_PIMPL(MapImporter)
                         {
                             if (nextVertex == loop.front()->v[0] || nextVertex == loop.front()->v[1])
                             {
-                                qDebug("sector %d has a self-ref loop:", int(&sector - sectors.data()));
+                                qDebug("sector %d has a self-ref loop:", sectorIndex);
                                 for (const auto *ld : loop)
                                 {
                                     const int lineIndex = int(ld - lines.data());
@@ -1360,12 +1363,18 @@ DENG2_PIMPL(MapImporter)
                             {
                                 if (check.v[0] == nextVertex || check.v[1] == nextVertex)
                                 {
+                                    if (nextLine)
+                                    {
+                                        // Multiple self-referencing lines of the same sector
+                                        // connect to this vertex. This is likely a 3D bridge.
+                                        qDebug("possible 3D bridge in sector %d", sectorIndex);
+                                        nextLine = nullptr;
+                                        break;
+                                    }
                                     nextLine = &check;
-                                    break;
                                 }
                             }
                         }
-
                         if (!nextLine) break; // No more connected lines, give up.
 
                         remaining.erase(nextLine);
