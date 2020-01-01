@@ -1387,22 +1387,27 @@ DENG2_PIMPL(MapImporter)
             {
                 auto &sector = sectors[sectorIndex];
 
+                if (sector.lines.empty()) continue;
+
                 if (!(sector.hackFlags & (HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE |
                                           HACK_HAS_SELF_REFERENCING_LOOP)))
                 {
                     continue;
                 }
 
+                int numSelfRef = 0;
+
                 bool good = true;
                 for (int lineIndex : sector.lines)
                 {
-                    auto &line = lines[lineIndex];
+                    auto &     line      = lines[lineIndex];
+                    const bool isSelfRef = isSelfReferencing(line);
+
+                    if (isSelfRef) ++numSelfRef;
 
                     // Sectors with a loop of self-referencing lines can contain any number
                     // of other lines, we'll still consider them self-referencing.
-
-                    if (!isSelfReferencing(line) &&
-                        !(sector.hackFlags & HACK_HAS_SELF_REFERENCING_LOOP))
+                    if (!isSelfRef && !(sector.hackFlags & HACK_HAS_SELF_REFERENCING_LOOP))
                     {
                         if (!line.isTwoSided())
                         {
@@ -1417,7 +1422,13 @@ DENG2_PIMPL(MapImporter)
                             good = false;
                             break;
                         }
-                    }                   
+                    }
+                }
+                if (!(sector.hackFlags & HACK_HAS_SELF_REFERENCING_LOOP) &&
+                    float(numSelfRef) / float(sector.lines.size()) < 0.25f)
+                {
+                    // Mostly regular lines and no loops.
+                    good = false;
                 }
                 if (good)
                 {
