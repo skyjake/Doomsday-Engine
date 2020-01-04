@@ -49,7 +49,7 @@ endfunction (list_remove_matches)
 
 macro (clean_paths outputVariable text)
     string (REGEX REPLACE "${CMAKE_BINARY_DIR}/([A-Za-z0-9]+)"
-        "\\1" ${outputVariable} ${text}
+        "\\1" ${outputVariable} "${text}"
     )
 endmacro ()
 
@@ -324,7 +324,7 @@ function (deng_add_package packName)
     set (outName "${packName}.pack")
     get_filename_component (fullPath "${outName}" ABSOLUTE)
     if (NOT EXISTS ${fullPath})
-        message (FATAL_ERROR "deng_package: \"${outName}\" not found")
+        message (FATAL_ERROR "deng_add_package: \"${outName}\" not found")
     endif ()
     set (outDir ${CMAKE_CURRENT_BINARY_DIR})
     # Build the package immediately during the CMake run.
@@ -337,7 +337,7 @@ function (deng_add_package packName)
         OUTPUT_VARIABLE msg
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
-    clean_paths (msg ${msg})
+    clean_paths (msg "${msg}")
     message (STATUS "${msg}")
     # Find all the source files for the package.
     file (GLOB_RECURSE packSrc "${fullPath}/*")
