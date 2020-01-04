@@ -141,7 +141,8 @@ DE_PIMPL(Sector)
     Vec3f lightColor;     ///< Ambient light color.
 
     int visPlaneLinkSector = MapElement::NoIndex;
-
+    int visPlaneLinkBits = 0;
+    
     std::unique_ptr<GeomData> gdata; ///< Additional geometry info/metrics (cache).
 
     dint validCount = 0; ///< Used by legacy algorithms to prevent repeated processing.
@@ -339,14 +340,20 @@ Plane *Sector::addPlane(const Vec3f &normal, ddouble height)
     return plane;
 }
 
-void Sector::setVisPlaneLink(int sectorArchiveIndex)
+void Sector::setVisPlaneLinks(int sectorArchiveIndex, int planeBits)
 {
     d->visPlaneLinkSector = sectorArchiveIndex;
+    d->visPlaneLinkBits   = planeBits;
 }
 
-int Sector::visPlaneLink() const
+int Sector::visPlaneLinkTargetSector() const
 {
     return d->visPlaneLinkSector;
+}
+
+bool Sector::visPlaneLinked(int planeIndex) const
+{
+    return (d->visPlaneLinkBits & (1 << planeIndex)) != 0;
 }
 
 bool Sector::hasSubsectors() const

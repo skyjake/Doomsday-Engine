@@ -18,9 +18,9 @@ AboutDialog::AboutDialog()
     logo->setSizePolicy(ui::Fixed, ui::Expand);
     logo->setImageFit(ui::FitToSize);
     area().add(logo);
-
+                 
     auto *text = LabelWidget::newWithText("Copyright " DE_CHAR_COPYRIGHT
-                                          " 2013-2019 Jaakko Keränen et al.\n\n"
+                                          " 2013-2020 Jaakko Keränen et al.\n\n"
                                           "The Shell is a utility for controlling and monitoring "
                                           "Doomsday servers.",
                                           &area());

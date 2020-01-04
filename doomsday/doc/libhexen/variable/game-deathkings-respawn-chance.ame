@@ -1,0 +1,11 @@
+@summary{
+    In Deathkings of the Dark Citadel, ACS script 255 will periodically 
+    respawn more monsters into the map. This variable specifies the
+    chance of respawning as a percentage. For example:
+    @list{
+        @item 100 means all respawns occur normally (as in the original game).
+        @item 75 means 25% of the respawns will randomly be cancelled. 
+        @item 0 means respawns are disabled.
+    }
+}
+

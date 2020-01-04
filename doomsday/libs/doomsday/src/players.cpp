@@ -99,3 +99,11 @@ int Players::indexOf(const ddplayer_s *publicData) const
     }
     return -1;
 }
+
+void Players::initBindings()
+{
+    for (auto *plr : d->players)
+    {
+        plr->initBindings();
+    }
+}

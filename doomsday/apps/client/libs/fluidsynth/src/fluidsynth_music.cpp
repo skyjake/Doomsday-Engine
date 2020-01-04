@@ -275,8 +275,8 @@ static void startPlayer()
 
     startWorker();
 
-    // Update the buffer's volume.
-    DMFluid_Sfx()->Set(sfxBuf, SFXBP_VOLUME, musicVolume);
+    // Volume applied via synthesizer gain setting.
+    DMFluid_Sfx()->Set(sfxBuf, SFXBP_VOLUME, 1.0f);
 
     DMFluid_Sfx()->Play(sfxBuf);
 }
@@ -382,10 +382,7 @@ void fluidsynth_DM_Music_Set(int prop, float value)
     {
     case MUSIP_VOLUME:
         musicVolume = value;
-        if (sfxBuf)
-        {
-            DMFluid_Sfx()->Set(sfxBuf, SFXBP_VOLUME, musicVolume);
-        }
+        fluid_synth_set_gain(DMFluid_Synth(), musicVolume * MAX_SYNTH_GAIN);
         DSFLUIDSYNTH_TRACE("Music_Set: MUSIP_VOLUME = " << musicVolume);
         break;
 

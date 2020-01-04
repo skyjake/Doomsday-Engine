@@ -63,13 +63,7 @@ DE_GUI_PIMPL(Preferences)
         recurseIwad->setText("Include subdirectories");
         recurseIwad->setAlignment(ui::AlignLeft);
         recurseIwad->setActive(cfg.getb("Preferences.recurseIwad", false));
-
-        // QLabel *info = new QLabel("<small>" +
-        //             tr("Doomsday tries to locate game data such as "
-        //                "<a href=\"http://dengine.net/dew/index.php?title=IWAD_folder\">IWAD files</a> "
-        //                "automatically, but that may fail "
-        //                "if you have the files in a custom location.") + "</small>");
-
+        
         SequentialLayout layout(
             self().area().contentRule().left(), self().area().contentRule().top(), ui::Down);
         //layout.setGridSize(1, 0);

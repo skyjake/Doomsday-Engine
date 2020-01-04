@@ -44,6 +44,7 @@ void Thing::resetToDefaults()
     def().addNumber("mass", 0);
     def().addNumber("damage", 0);
     def().addText  ("onTouch", ""); // script function to call when touching a special thing
+    def().addText  ("onDeath", ""); // script function to call when thing is killed
     def().addArray ("flags").array().addMany(NUM_MOBJ_FLAGS, 0);
     def().addArray ("misc").array().addMany(NUM_MOBJ_MISC, 0);
 }

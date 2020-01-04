@@ -96,6 +96,7 @@ typedef struct ddplayer_s {
 
 #ifdef __cplusplus
 
+#include <de/IObject>
 #include <de/Record>
 
 class World;
@@ -109,7 +110,7 @@ class World;
  * public. Some members could be moved into an internal, engine-only private class,
  * if necessary. -jk
  */
-class LIBDOOMSDAY_PUBLIC Player
+class LIBDOOMSDAY_PUBLIC Player : public de::IObject
 {
 public:
     // ID number. Each client has a unique ID number.
@@ -129,6 +130,8 @@ public:
     Player();
 
     virtual ~Player();
+
+    void initBindings();
 
     virtual void setWorld(World *world);
 
@@ -163,6 +166,10 @@ public:
     virtual void tick(timespan_t elapsed);
 
     DE_CAST_METHODS()
+
+    // Implements IObject.
+    de::Record &objectNamespace();
+    const de::Record &objectNamespace() const;
 
 private:
     DE_PRIVATE(d)

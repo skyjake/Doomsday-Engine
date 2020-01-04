@@ -498,6 +498,7 @@ public:
     inline void decompose(Type *array) const {
         for (int i = 0; i < 3; ++i) array[i] = (*this)[i];
     }
+    Vector2<Type> xy() const { return *this; }
     Vector2<Type> xz() const { return swizzle(*this, AxisX, AxisZ); }
     Vector3<Type> xzy() const { return swizzle(*this, AxisX, AxisZ, AxisY); }
     Vector3<Type> zyx() const { return swizzle(*this, AxisZ, AxisY, AxisX); }

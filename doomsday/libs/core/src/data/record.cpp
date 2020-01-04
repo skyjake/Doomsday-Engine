@@ -564,6 +564,17 @@ Variable *Record::tryRemove(const String &variableName)
     return nullptr;
 }
 
+void Record::removeMembersWithPrefix(const String &prefix)
+{
+    for (const String &name : members().keys())
+    {
+        if (name.beginsWith(prefix))
+        {
+            remove(name);
+        }
+    }
+}
+
 Variable &Record::add(const String &name, Flags variableFlags)
 {
     return d->parentRecordByPath(name)
@@ -817,11 +828,11 @@ Variable &Record::appendUniqueWord(const String &name, const String &word, const
 Variable &Record::appendMultipleUniqueWords(const String &name, const String &words, const String &separator)
 {
     for (const String &word : words.split(separator))
-{
-        if (word)
     {
-        appendUniqueWord(name, word, separator);
-    }
+        if (word)
+        {
+            appendUniqueWord(name, word, separator);
+        }
     }
     return (*this)[name];
 }

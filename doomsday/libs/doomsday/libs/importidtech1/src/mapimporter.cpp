@@ -314,7 +314,17 @@ inline LineDef::Side opposite(LineDef::Side side)
     return side == LineDef::Front ? LineDef::Back : LineDef::Front;
 }
 
-enum { HACK_NONE = 0, HACK_SELF_REFERENCING = 0x1, HACK_FLAT_BLEEDING = 0x2 };
+enum {
+    HACK_NONE                                   = 0,
+    HACK_IS_LINK_TARGET                         = 0x0001,
+    HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE = 0x0002,
+    HACK_HAS_SELF_REFERENCING_LOOP              = 0x0004,
+    HACK_ANALYSIS_BITS                          = 0xffff,
+
+    HACK_SELF_REFERENCING                       = 0x10000,
+    HACK_FLAT_BLEEDING                          = 0x20000,
+    HACK_MISSING_OUTSIDE_TOP                    = 0x40000,
+};
 
 struct SectorDef : public Id1MapElement
 {
@@ -337,8 +347,9 @@ struct SectorDef : public Id1MapElement
 
     // Internal bookkeeping:
     std::set<int> lines;
+    std::vector<int> selfRefLoop;
     int hackFlags = 0;
-    int visPlaneLinkSector = -1; // self-referencing sector contained by a normal sector
+    struct de_api_sector_hacks_s hackParams{{0, 0}, -1};
 
     SectorDef(MapImporter &map) : Id1MapElement(map) {}
 
@@ -894,24 +905,114 @@ DE_PIMPL(MapImporter)
         return -1;
     }
 
-    int findMinYVertexIndex(const SectorDef &sector) const
+    std::set<int> sectorVertices(const SectorDef &sector) const
     {
-        double minY      = std::numeric_limits<double>::max();
-        int    minYIndex = -1;
+        std::set<int> verts;
+        // If a self-referencing loop has been detected in the sector, we are only interested
+        // in the loop because it is being used for render hacks.
+        if (!sector.selfRefLoop.empty())
+        {
+            for (int i : sector.selfRefLoop)
+            {
+                verts.insert(lines[i].v[0]);
+                verts.insert(lines[i].v[1]);
+            }
+        }
+        else for (int i : sector.lines)
+        {
+            verts.insert(lines[i].v[0]);
+            verts.insert(lines[i].v[1]);
+        }
+        return verts;
+    }
 
+#if 0
+    Vector2d sectorBoundsMiddle(const SectorDef &sector) const
+    {
+        Vector2d mid;
+        int      count = 0;
+        for (int v : sectorVertices(sector))
+        {
+            mid += vertices[v].pos;
+            ++count;
+    }
+        if (count > 0) mid /= count;
+        return mid;
+    }
+#endif
+
+    std::vector<double> findSectorIntercepts(const SectorDef &sector, const Vec2d &start, const Vec2d &dir) const
+    {
+        const Vector2d end = start + dir;
+
+        std::vector<double> intercepts;
         for (int i : sector.lines)
         {
             const auto &line = lines[i];
-            for (int p = 0; p < 2; ++p)
+            const Vec2d a    = vertices[line.v[0]].pos;
+            const Vec2d b    = vertices[line.v[1]].pos;
+
+            double t;
+            if (lineSegmentIntersection(t, start, end, a, b))
             {
-                if (vertices[line.v[p]].pos.y < minY)
+                if (t > 0)
                 {
-                    minY = vertices[line.v[p]].pos.y;
-                    minYIndex = line.v[p];
+                    intercepts.push_back(t);
                 }
             }
         }
-        return minYIndex;
+        return intercepts;
+    }
+
+    /**
+     * Finds a point that is inside the sector. The first option is to use the
+     * middle of the sector's bounding box, but if that is outside the sector,
+     * tries to intersect against the sector lines to find a valid point inside.
+     *
+     * @param sector  Sector.
+     *
+     * @return A point inside the sector.
+     */
+    Vector2d findPointInsideSector(const SectorDef &sector) const
+    {
+        Vector2d inside;
+        int count = 0;
+        for (int i : sectorVertices(sector))
+        {
+            inside += vertices[i].pos;
+            count++;
+        }
+        if (count > 0) inside /= count;
+
+        // Is this actually inside the sector? Need to do a polygon check.
+        {
+            Vec2d dir{1, 0};
+            std::vector<double> intercepts = findSectorIntercepts(sector, inside, dir);
+            if (intercepts.empty())
+            {
+                dir = {-1, 0};
+                intercepts = findSectorIntercepts(sector, inside, dir);
+            }
+            if (intercepts.empty())
+                {
+                dir = {0, -1};
+                intercepts = findSectorIntercepts(sector, inside, dir);
+                }
+
+            if (intercepts.size() > 0 && intercepts.size() % 2 == 0)
+            {
+                qDebug("(%f,%f) is not inside!", inside.x, inside.y);
+
+                const Vec2d first  = inside + dir * intercepts[0];
+                const Vec2d second = inside + dir * intercepts[1];
+
+                inside = (first + second) * 0.5f;
+
+                qDebug("  -> choosing (%f,%f) instead", inside.x, inside.y);
+            }
+        }
+
+        return inside;
     }
 
     struct IntersectionResult
@@ -943,9 +1044,8 @@ DE_PIMPL(MapImporter)
     {
         if (sector.lines.empty()) return;
 
-        // Find the topmost vertex.
-        const Vec2d start = vertices[findMinYVertexIndex(sector)].pos;
-        const Vec2d end   = start - Vec2d(0.001, -1.0);
+        const Vec2d start = findPointInsideSector(sector);
+        const Vec2d end   = start + Vec2d(0.001, 1.0);
 
         std::pair<double, int> nearestContainer{std::numeric_limits<double>::max(), -1};
 
@@ -964,7 +1064,10 @@ DE_PIMPL(MapImporter)
                     if (line.hasSide(hit.side))
                     {
                         const int sector = sides[line.sideIndex(hit.side)].sector;
-                        if (sector >= 0 && !sectors[sector].hackFlags)
+
+                        // It must be a regular sector, but multiple hacked sectors
+                        // can link to the same regular one.
+                        if (sector >= 0 && !(sectors[sector].hackFlags & ~HACK_IS_LINK_TARGET))
                         {
                             nearestContainer = {hit.t, sector};
                         }
@@ -975,7 +1078,12 @@ DE_PIMPL(MapImporter)
 
         if (nearestContainer.second >= 0)
         {
-            sector.visPlaneLinkSector = nearestContainer.second;
+            sectors[nearestContainer.second].hackFlags |= HACK_IS_LINK_TARGET;
+
+            sector.hackParams.visPlaneLinkTargetSector = nearestContainer.second;
+            sector.hackParams.flags.linkFloorPlane     = true;
+            sector.hackParams.flags.linkCeilingPlane   = true;
+
             LOGDEV_MAP_VERBOSE("Sector %d contained by %d") << indexOf(sector) << sector.visPlaneLinkSector;
         }
     }
@@ -1160,6 +1268,21 @@ DE_PIMPL(MapImporter)
         return lineList.size();
     }
 
+    struct LineDefSet : public std::set<const LineDef *>
+    {
+        using Base = std::set<const LineDef *>;
+
+        const LineDef *take()
+        {
+            if (empty()) return nullptr;
+
+            auto iter = begin();
+            const auto *line = *iter;
+            erase(iter);
+            return line;
+    }
+    };
+
     void analyze()
     {
         Time begunAt;
@@ -1180,25 +1303,156 @@ DE_PIMPL(MapImporter)
 
         // Detect self-referencing sectors: all lines of the sector are two-sided and both
         // sides refer to the sector itself.
+        //
+        // For example:
+        // - TNT map02 deep water: single sector with self-referencing lines
+        // - AV map11 deep water (x=2736, y=8): multiple connected self-referencing sectors
         {
-            bool foundSelfRefs = false;
-
+            // First look for potentially self-referencing sectors that have at least one
+            // self-referencing line. Also be on the lookout for line loops composed of
+            // self-referencing lines.
             for (auto &sector : sectors)
             {
+                const int sectorIndex = int(&sector - sectors.data());
+
+                LineDefSet selfRefLines;
+                bool hasSingleSided = false;
+                for (int lineIndex : sector.lines)
+                {
+                    auto &line = lines[lineIndex];
+                    if (!line.isTwoSided())
+                    {
+                        hasSingleSided = true;
+                    }
+                    if (isSelfReferencing(line))
+                    {
+                        selfRefLines.insert(&line);
+                    }
+                }
+
+                // Detect loops in the self-referencing lines.
+                if (!selfRefLines.empty())
+                {
+                    std::vector<const LineDef *> loop;
+                    const LineDef *              atLine;
+                    auto                         remaining = selfRefLines;
+
+                    loop.push_back(atLine = remaining.take());
+                    int atVertex = atLine->v[0];
+
+                    for (;;)
+                    {
+                        const int nextVertex = atLine->v[atLine->v[0] == atVertex ? 1 : 0];
+                        const LineDef *nextLine = nullptr;
+
+                        // Was a loop completed?
+                        if (loop.size() >= 3)
+                        {
+                            if (nextVertex == loop.front()->v[0] || nextVertex == loop.front()->v[1])
+                            {
+                                qDebug("sector %d has a self-ref loop:", sectorIndex);
+                                for (const auto *ld : loop)
+                                {
+                                    const int lineIndex = int(ld - lines.data());
+                                    sector.selfRefLoop.push_back(lineIndex);
+                                    qDebug("    line %d", lineIndex);
+                                }
+                                sector.hackFlags |= HACK_HAS_SELF_REFERENCING_LOOP;
+                                break;
+                            }
+                        }
+
+                        for (int lineIdx : vertices[nextVertex].lines)
+                        {
+                            const auto &check = lines[lineIdx];
+                            if (remaining.find(&check) != remaining.end())
+                            {
+                                if (check.v[0] == nextVertex || check.v[1] == nextVertex)
+                                {
+                                    if (nextLine)
+                                    {
+                                        // Multiple self-referencing lines of the same sector
+                                        // connect to this vertex. This is likely a 3D bridge.
+                                        qDebug("possible 3D bridge in sector %d", sectorIndex);
+                                        nextLine = nullptr;
+                                        break;
+                                    }
+                                    nextLine = &check;
+                                }
+                            }
+                        }
+                        if (!nextLine) break; // No more connected lines, give up.
+
+                        remaining.erase(nextLine);
+                        loop.push_back(nextLine);
+                        atLine   = nextLine;
+                        atVertex = nextVertex;
+                    }
+                }
+
+                if (!selfRefLines.empty() && !hasSingleSided)
+        {
+                    sector.hackFlags |= HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE;
+                    qDebug("possibly a self-referencing sector %d", int(&sector - sectors.data()));
+                }
+            }
+
+            bool foundSelfRefs = false;
+            for (int sectorIndex = 0; sectorIndex < int(sectors.size()); ++sectorIndex)
+            {
+                auto &sector = sectors[sectorIndex];
+
+                if (sector.lines.empty()) continue;
+
+                if (!(sector.hackFlags & (HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE |
+                                          HACK_HAS_SELF_REFERENCING_LOOP)))
+            {
+                    continue;
+                }
+
+                int numSelfRef = 0;
+
                 bool good = true;
                 for (int lineIndex : sector.lines)
                 {
-                    if (!isSelfReferencing(lines[lineIndex]))
+                    auto &     line      = lines[lineIndex];
+                    const bool isSelfRef = isSelfReferencing(line);
+
+                    if (isSelfRef) ++numSelfRef;
+
+                    // Sectors with a loop of self-referencing lines can contain any number
+                    // of other lines, we'll still consider them self-referencing.
+                    if (!isSelfRef && !(sector.hackFlags & HACK_HAS_SELF_REFERENCING_LOOP))
+                    {
+                        if (!line.isTwoSided())
+                {
+                            good = false;
+                            break;
+                        }
+                        // Combine multiple self-referencing sectors.
+                        const int other = otherSector(line, sectorIndex);
+                        if (other >= 0 && !(sectors[other].hackFlags &
+                                            HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE))
                     {
                         good = false;
                         break;
+                        }
+                if (!(sector.hackFlags & HACK_HAS_SELF_REFERENCING_LOOP) &&
                     }
+                }
+                    float(numSelfRef) / float(sector.lines.size()) < 0.25f)
+                {
+                    // Mostly regular lines and no loops.
+                    good = false;
                 }
                 if (good)
                 {
                     foundSelfRefs = true;
                     sector.hackFlags |= HACK_SELF_REFERENCING;
-                    LOGDEV_MAP_VERBOSE("Self-referencing sector %d") << int(&sector - sectors.data());
+                    LOGDEV_MAP_VERBOSE("self-referencing sector %d (ceil:%s floor:%s)")
+<< sectorIndex
+  <<  materials.find(sector.ceilMaterial).toUtf8().constData(),
+     << materials.find(sector.floorMaterial).toUtf8().constData());
                 }
             }
 
@@ -1215,7 +1469,8 @@ DE_PIMPL(MapImporter)
             }
         }
 
-        // Transparent window: sector without wall textures.
+        // Flat bleeding caused by sector without wall textures.
+        // For example: TNT map09 transparent window.
         {
             for (int currentSector = 0; currentSector < int(sectors.size()); ++currentSector)
             {
@@ -1246,6 +1501,16 @@ DE_PIMPL(MapImporter)
                         !sides[line.back()].middleMaterial)
                     {
                         untexturedCount++;
+                    }
+
+                    const int innerSide = sideOfSector(line, currentSector);
+                    if ((line.ddFlags & DDLF_DONTPEGBOTTOM) &&
+                        sides[line.sides[innerSide]].topMaterial)
+                    {
+                        // This looks like a door.
+                        // Avoids triggering in Heretic E1M1 secret door, for example.
+                        good = false;
+                        break;
                     }
 
                     const int other = otherSector(line, currentSector);
@@ -1281,7 +1546,70 @@ DE_PIMPL(MapImporter)
                         << surroundingFloorHeight;
 
                     sector.hackFlags |= HACK_FLAT_BLEEDING;
-                    sector.visPlaneLinkSector = surroundingSector;
+                    sector.hackParams.visPlaneLinkTargetSector = surroundingSector;
+                    sector.hackParams.flags.linkFloorPlane = true;
+                }
+            }
+        }
+
+        // Missing upper textures for transparent doors.
+        {
+            for (int currentSector = 0; currentSector < int(sectors.size()); ++currentSector)
+            {
+                auto &sector = sectors[currentSector];
+                if (sector.hackFlags) continue;
+
+                bool good = true;
+                int surroundingSector = -1;
+
+                for (int lineIndex : sector.lines)
+                {
+                    const auto &line = lines[lineIndex];
+
+                    if (!line.isTwoSided() || line.aFlags & LAF_POLYOBJ)
+                    {
+                        good = false;
+                        break;
+                    }
+
+                    const auto innerSide = LineDef::Side(sideOfSector(line, currentSector));
+                    const auto outerSide = opposite(innerSide);
+
+                    if (sides[line.sides[outerSide]].topMaterial)
+                    {
+                        good = false;
+                        break;
+                    }
+
+                    const int other = otherSector(line, currentSector);
+                    if (surroundingSector < 0)
+                    {
+                        surroundingSector = other;
+                        if (sector.ceilHeight >= sectors[other].ceilHeight)
+                        {
+                            good = false;
+                            break;
+                        }
+                    }
+                    else if (other != surroundingSector)
+                    {
+                        good = false;
+                        break;
+                    }
+                }
+
+                if (surroundingSector < 0)
+                {
+                    good = false;
+                }
+
+                if (good)
+                {
+                    sector.hackFlags |= HACK_MISSING_OUTSIDE_TOP;
+                    sector.hackParams.visPlaneLinkTargetSector = surroundingSector;
+                    sector.hackParams.flags.linkCeilingPlane = true;
+                    qDebug("sector %d missing outside upper walls (surrounded by sector %d)",
+                           currentSector, surroundingSector);
                 }
             }
         }
@@ -1313,11 +1641,8 @@ DE_PIMPL(MapImporter)
 
         DE_FOR_EACH(Sectors, i, sectors)
         {
-            // Never should have linked to a hacked sector.
-            DE_ASSERT(i->visPlaneLinkSector < 0 || !sectors[i->visPlaneLinkSector].hackFlags);
-
             dint idx = MPE_SectorCreate(
-                dfloat(i->lightLevel) / 255.0f, 1, 1, 1, i->index, i->visPlaneLinkSector);
+                dfloat(i->lightLevel) / 255.0f, 1, 1, 1, &i->hackParams, i->index);
 
             MPE_PlaneCreate(idx, i->floorHeight, materials.find(i->floorMaterial),
                             0, 0, 1, 1, 1, 1, 0, 0, 1, -1);
@@ -1341,13 +1666,32 @@ DE_PIMPL(MapImporter)
 
     void transferLinesAndSides()
     {
+        auto transferSide = [this](int lineIdx, short sideFlags, SideDef *side, LineDef::Side sideIndex)
+    {
+            const auto topUri = materials.find(side->topMaterial).toUtf8();
+            const auto midUri = materials.find(side->middleMaterial).toUtf8();
+            const auto botUri = materials.find(side->bottomMaterial).toUtf8();
+
+            struct de_api_side_section_s top = {
+                topUri, {float(side->offset[VX]), float(side->offset[VY])}, {1, 1, 1, 1}};
+
+            auto middle = top;
+            middle.material = midUri;
+
+            auto bottom = top;
+            bottom.material = botUri;
+
+            MPE_LineAddSide(
+                lineIdx, sideIndex, sideFlags, &top, &middle, &bottom, side->index);
+        };
+
         LOGDEV_MAP_XVERBOSE("Transfering lines and sides...", "");
         DE_FOR_EACH(Lines, i, lines)
         {
             SideDef *front = (i->hasFront()? &sides[i->front()] : 0);
             SideDef *back  = (i->hasBack() ? &sides[i->back() ] : 0);
 
-            dint sideFlags = (format == Id1MapRecognizer::Doom64Format? SDF_MIDDLE_STRETCH : 0);
+            short sideFlags = (format == Id1MapRecognizer::Doom64Format? SDF_MIDDLE_STRETCH : 0);
 
             // Interpret the lack of a ML_TWOSIDED line flag to mean the
             // suppression of the side relative back sector.
@@ -1356,57 +1700,14 @@ DE_PIMPL(MapImporter)
 
             dint lineIdx = MPE_LineCreate(i->v[0], i->v[1], front? front->sector : -1,
                                           back? back->sector : -1, i->ddFlags, i->index);
-            if(front)
+
+            if (front)
             {
-                MPE_LineAddSide(lineIdx,
-                                LineDef::Front,
-                                sideFlags,
-                                materials.find(front->topMaterial),
-                                front->offset[VX],
-                                front->offset[VY],
-                                1,
-                                1,
-                                1,
-                                materials.find(front->middleMaterial),
-                                front->offset[VX],
-                                front->offset[VY],
-                                1,
-                                1,
-                                1,
-                                1,
-                                materials.find(front->bottomMaterial),
-                                front->offset[VX],
-                                front->offset[VY],
-                                1,
-                                1,
-                                1,
-                                front->index);
+                transferSide(lineIdx, sideFlags, front, LineDef::Front);
             }
-            if(back)
+            if (back)
             {
-                MPE_LineAddSide(lineIdx,
-                                LineDef::Back,
-                                sideFlags,
-                                materials.find(back->topMaterial),
-                                back->offset[VX],
-                                back->offset[VY],
-                                1,
-                                1,
-                                1,
-                                materials.find(back->middleMaterial),
-                                back->offset[VX],
-                                back->offset[VY],
-                                1,
-                                1,
-                                1,
-                                1,
-                                materials.find(back->bottomMaterial),
-                                back->offset[VX],
-                                back->offset[VY],
-                                1,
-                                1,
-                                1,
-                                back->index);
+                transferSide(lineIdx, sideFlags, back, LineDef::Back);
             }
 
             MPE_GameObjProperty("XLinedef", lineIdx, "Flags", DDVT_SHORT, &i->flags);

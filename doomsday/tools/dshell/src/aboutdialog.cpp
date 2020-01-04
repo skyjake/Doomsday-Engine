@@ -27,9 +27,9 @@ AboutDialog::AboutDialog()
     LabelWidget *label = new LabelWidget;
     label->setLabel(Stringf("Doomsday Shell %s\nCopyright (c) %s\n\n"
                        "The Shell is a utility for controlling and monitoring "
-                                   "Doomsday servers using a text-based (curses) user interface.",
-                                   SHELL_VERSION,
-                                   "2013-2018 Deng Team"));
+                       "Doomsday servers using a text-based (curses) user interface.",
+                       SHELL_VERSION,
+                       "2013-2020 Jaakko Keränen et al."));
 
     label->setExpandsToFitLines(true);
     label->rule()

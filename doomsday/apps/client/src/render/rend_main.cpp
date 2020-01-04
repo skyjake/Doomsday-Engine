@@ -567,18 +567,35 @@ void Rend_ModelViewMatrix(bool inWorldSpace)
         Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer), inWorldSpace).values());
 }
 
-Mat4f Rend_GetProjectionMatrix(float fixedFov)
+Mat4f Rend_GetProjectionMatrix(float fixedFov, float clipRangeScale)
 {
     if (fixedView)
     {
         return fixedView->projectionMatrix;
     }
 
-    const dfloat fov = (fixedFov > 0 ? fixedFov : Rend_FieldOfView());
     const Vec2f size = R_Console3DViewRect(displayPlayer).size();
-    yfov = vrCfg().verticalFieldOfView(fov, size);
-    const Rangef clip = GL_DepthClipRange();
-    return vrCfg().projectionMatrix(fov, size, clip.start, clip.end) *
+
+    // IssueID #2379: adapt fixed FOV angle for a 4:3 aspect ratio
+    if (fixedFov > 0)
+    {
+        const float ASPECT_DEFAULT = 16.0f / 9.0f;
+        const float ASPECT_MIN     = 4.0f / 3.0f;
+        const float aspect         = de::max(size.x / size.y, ASPECT_MIN);
+
+        if (aspect < ASPECT_DEFAULT)
+        {
+            // The fixed FOV angle is specified for a 16:9 horizontal view.
+            // Adjust for this aspect ratio.
+            fixedFov *= lerp(0.825f, 1.0f, (aspect - ASPECT_MIN) / (ASPECT_DEFAULT - ASPECT_MIN));
+        }
+    }
+
+    const dfloat   fov  = (fixedFov > 0 ? fixedFov : Rend_FieldOfView());
+    yfov                = vrCfg().verticalFieldOfView(fov, size);
+    const Rangef clip   = GL_DepthClipRange();
+    return vrCfg().projectionMatrix(
+               fov, size, clip.start * clipRangeScale, clip.end * clipRangeScale) *
            Mat4f::scale(Vec3f(1, 1, -1));
 }
 
@@ -766,6 +783,19 @@ ClientMaterial *Rend_ChooseMapSurfaceMaterial(const Surface &surface)
                     }
                     else if (&surface == &side.top())
                     {
+                        /*
+                        // TNT map31: missing upper texture, high ceiling in the room
+                        if (side.back().hasSector())
+                        {
+                            const auto &backSector = side.back().sector();
+                            //const auto backCeilZ = backSector.ceiling().heightSmoothed();
+                            //const auto frontCeilZ = side.sector().ceiling().heightSmoothed();
+                            if (fequal(backSector.ceiling().height(), backSector.floor().height()))
+                    {
+                                return nullptr;
+                            }
+                        }*/
+
                         return static_cast<ClientMaterial *>(side.sector().ceiling().surface().materialPtr());
                     }
                 }

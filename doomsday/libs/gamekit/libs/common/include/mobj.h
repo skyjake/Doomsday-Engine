@@ -236,6 +236,8 @@ enum mobjtouchresult_e {
     MTR_DESTROY
 };
 
+void Mobj_RunScriptOnDeath(mobj_t *mob, mobj_t *killer);
+
 /**
  * Called when @a toucher comes into contact with special thing @a special that has a
  * custom scripted touch action.
@@ -247,7 +249,7 @@ enum mobjtouchresult_e {
  * @return @c true if a scripted action is defined for the object. In this case, @a result
  * will contain a valid value afterwards.
  */
-dd_bool Mobj_TouchSpecialScriptedThing(mobj_t *mob, mobj_t *special, enum mobjtouchresult_e *result);
+dd_bool Mobj_RunScriptOnTouch(mobj_t *mob, mobj_t *special, enum mobjtouchresult_e *result);
 
 #ifdef __cplusplus
 }  // extern "C"

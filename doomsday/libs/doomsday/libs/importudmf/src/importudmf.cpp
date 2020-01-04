@@ -184,10 +184,10 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                     else if (type == UDMFLex::SECTOR)
                     {
                         const int index = importState.sectorCount++;
-
-                        int lightlevel = block.contains("lightlevel")? block["lightlevel"]->asInt() : 160;
-
-                        MPE_SectorCreate(float(lightlevel)/255.f, 1.f, 1.f, 1.f, index, -1);
+                        const int lightlevel = block.contains("lightlevel")? block["lightlevel"]->asInt() : 160;
+                        const struct de_api_sector_hacks_s hacks{{0, 0}, -1};
+                        
+                        MPE_SectorCreate(float(lightlevel)/255.f, 1.f, 1.f, 1.f, &hacks, index);
 
                         MPE_PlaneCreate(index,
                                         block["heightfloor"]->asNumber(),
@@ -260,37 +260,52 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                         return "Textures:" + tex.asText();
                     };
 
-                    // Front side.
+                    auto addSide = [&texName, sideFlags](
+                                       int index, const UDMFParser::Block &side, int sideIndex)
                     {
-                        const int offsetx = front["offsetx"]->asInt();
-                        const int offsety = front["offsety"]->asInt();
-                        float opacity = 1.f;
+                        const int offsetx = side["offsetx"]->asInt();
+                        const int offsety = side["offsety"]->asInt();
+                        float     opacity = 1.f;
+
+                        const auto topTex = texName(side["texturetop"]   );
+                        const auto midTex = texName(side["texturemiddle"]);
+                        const auto botTex = texName(side["texturebottom"]);
+
+                        struct de_api_side_section_s top = {
+                            topTex,
+                            {float(offsetx), float(offsety)},
+                            {1, 1, 1, 1}
+                        };
+
+                        struct de_api_side_section_s mid = {
+                            midTex,
+                            {float(offsetx), float(offsety)},
+                            {1, 1, 1, opacity}
+                        };
+
+                        struct de_api_side_section_s bot = {
+                            botTex,
+                            {float(offsetx), float(offsety)},
+                            {1, 1, 1, 1}
+                        };
 
                         MPE_LineAddSide(
                             index,
                             0 /* front */,
                             sideFlags,
-                            de::Str(texName(*front["texturetop"]   )), offsetx, offsety, 1, 1, 1,
-                            de::Str(texName(*front["texturemiddle"])), offsetx, offsety, 1, 1, 1, opacity,
-                            de::Str(texName(*front["texturebottom"])), offsetx, offsety, 1, 1, 1,
-                            sidefront);
-                    }
+                            &top,
+                            &mid,
+                            &bot,
+                            sideIndex);
+                    };
+
+                    // Front side.
+                    addSide(index, front, sidefront);
 
                     // Back side.
                     if (back)
                     {
-                        const int offsetx = (*back)["offsetx"]->asInt();
-                        const int offsety = (*back)["offsety"]->asInt();
-                        float opacity = 1.f;
-
-                        MPE_LineAddSide(
-                            index,
-                            1 /* front */,
-                            sideFlags,
-                            de::Str(texName(*(*back)["texturetop"]   )), offsetx, offsety, 1, 1, 1,
-                            de::Str(texName(*(*back)["texturemiddle"])), offsetx, offsety, 1, 1, 1, opacity,
-                            de::Str(texName(*(*back)["texturebottom"])), offsetx, offsety, 1, 1, 1,
-                            sideback);
+                        addSide(index, *back, sideback);
                     }
 
                     // More line flags.
@@ -307,7 +322,7 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                     if (!importState.isHexen)
                     {
                         gmoSetLineProperty<DDVT_INT>(index, "Tag",
-                                                     linedef.contains("id")?
+                                                     linedef.contains("id") ?
                                                          linedef["id"]->asInt() : -1);
                     }
                     if (importState.isHexen)
@@ -356,17 +371,3 @@ DE_ENTRYPOINT void *extension_importudmf_symbol(const char *name)
     warning("\"%s\" not found in importudmf", name);
     return nullptr;
 }
-
-//#else
-
-//DE_DECLARE_API(Map);
-//DE_DECLARE_API(Material);
-//DE_DECLARE_API(MPE);
-
-//DE_API_EXCHANGE(
-//    DE_GET_API(DE_API_MAP, Map);
-//    DE_GET_API(DE_API_MATERIALS, Material);
-//    DE_GET_API(DE_API_MAP_EDIT, MPE);
-//)
-
-//#endif

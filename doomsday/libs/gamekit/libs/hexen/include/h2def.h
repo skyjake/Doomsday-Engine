@@ -271,7 +271,8 @@ typedef enum {
  */
 typedef enum {
     PT_NONE,
-    PT_INVULNERABILITY,
+    PT_FIRST,
+    PT_INVULNERABILITY = PT_FIRST,
     PT_ALLMAP,
     PT_INFRARED,
     PT_FLIGHT,

@@ -291,6 +291,8 @@ void X_PreInit()
     // Hexen's torch light attenuates with distance.
     DD_SetInteger(DD_FIXEDCOLORMAP_ATTENUATE, 1);
 
+    cfg.deathkingsAutoRespawnChance = 100; // 100% spawn chance
+
     // Do the common pre init routine.
     G_CommonPreInit();
 }

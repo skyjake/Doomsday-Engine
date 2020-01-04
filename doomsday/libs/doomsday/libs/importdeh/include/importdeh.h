@@ -27,7 +27,6 @@
 
 struct font_s;
 
-//#define DE_INTERNAL_DATA_ACCESS
 #include <doomsday.h>
 
 #include <de/libcore.h>

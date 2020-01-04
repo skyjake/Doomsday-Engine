@@ -229,6 +229,7 @@ int findMusicLumpNameInMap(const String &name)
     return -1; // Not found.
 }
 
+#if 0
 static String const SpriteMap[] = {
     "TROO",
     "SHTG",
@@ -382,6 +383,7 @@ int findSpriteNameInMap(const String &name)
     }
     return -1; // Not found.
 }
+#endif
 
 static const StringList SoundMap = {
     "None",

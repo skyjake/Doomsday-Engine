@@ -23,6 +23,7 @@
 #include "g_defs.h"
 #include "g_update.h"
 #include "p_map.h"
+#include "p_start.h"
 #include "polyobjs.h"
 #include "r_common.h"
 
@@ -32,10 +33,11 @@
 #include <de/NoneValue>
 #include <de/ScriptSystem>
 #include <doomsday/DoomsdayApp>
-#include <doomsday/defs/definition.h>
+#include <doomsday/defs/thing.h>
 #include <doomsday/players.h>
 #include <doomsday/world/map.h>
 #include <doomsday/world/entitydef.h>
+#include <doomsday/world/thinkerdata.h>
 
 int Common_GetInteger(int id)
 {
@@ -235,50 +237,201 @@ static de::Value *Function_SetYellowMessage(de::Context &, const de::Function::A
 }
 #endif
 
+static de::Value *Function_World_SpawnThing(de::Context &, const de::Function::ArgumentValues &args)
+{
+    using namespace de;
+
+    mobjtype_t mobjType   = mobjtype_t(Defs().getMobjNum(args.at(0)->asText()));
+    int        spawnFlags = args.at(3)->asInt();
+    Vector3d   pos;
+
+    if (args.at(1)->size() == 2)
+    {
+        pos = vectorFromValue<Vector2d>(*args.at(1));
+        spawnFlags |= MSF_Z_FLOOR;
+    }
+    else
+    {
+        pos = vectorFromValue<Vector3d>(*args.at(1));
+    }
+
+    angle_t angle =
+        angle_t((is<NoneValue>(args.at(2)) ? 360.0f * randf() : args.at(2)->asNumber()) / 180.0f *
+                ANGLE_180);
+
+    if (mobjType < 0)
+    {
+        throw Error("Function_World_SpawnThing", "Invalid thing type: " + args.at(0)->asText());
+    }
+
+    if (mobj_t *mobj = P_SpawnMobjXYZ(mobjType, pos.x, pos.y, pos.z, angle, spawnFlags))
+    {
+        return new RecordValue(THINKER_NS(mobj->thinker));
+    }
+    return new NoneValue;
+}
+
+static player_t &contextPlayer(const de::Context &ctx)
+{
+    int num = ctx.selfInstance().geti("__id__", 0);
+    if (num < 0 || num >= MAXPLAYERS)
+    {
+        throw de::Error("contextPlayer", "invalid player number");
+    }
+    return players[num];
+}
+
+static de::Value *Function_Player_Health(de::Context &ctx, const de::Function::ArgumentValues &)
+{
+    return new de::NumberValue(contextPlayer(ctx).health);
+}
+
+#if !defined (__JHEXEN__)
+#  define HAVE_DOOM_ARMOR_BINDINGS 1
+
+static de::Value *Function_Player_Armor(de::Context &ctx, const de::Function::ArgumentValues &)
+{
+    return new de::NumberValue(contextPlayer(ctx).armorPoints);
+}
+
+static de::Value *Function_Player_ArmorType(de::Context &ctx, const de::Function::ArgumentValues &)
+{
+    return new de::NumberValue(contextPlayer(ctx).armorType);
+}
+#endif
+
+static de::Value *Function_Player_Power(de::Context &ctx, const de::Function::ArgumentValues &args)
+{
+    int power = args.at(0)->asInt();
+    if (power < PT_FIRST || power >= NUM_POWER_TYPES)
+    {
+        throw de::Error("Function_Player_Power", "invalid power type");
+    }
+    return new de::NumberValue(contextPlayer(ctx).powers[power]);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void Common_Load()
 {
     using namespace de;
 
-    gameModule = new Record;
-
-    Function::Defaults spawnMissileArgs;
-    spawnMissileArgs["angle"] = new NoneValue;
-    spawnMissileArgs["momz"] = new NumberValue(0.0);
-
-    Function::Defaults attackArgs;
-    attackArgs["damage"] = new NumberValue(0.0);
-    attackArgs["missile"] = new NoneValue;
-
-    Function::Defaults setMessageArgs;
-    setMessageArgs["player"] = new NoneValue;
-
-    DE_ASSERT(gameBindings == nullptr);
-    gameBindings = new Binder(nullptr, Binder::FunctionsOwned); // must delete when plugin unloaded
-    gameBindings->init(ScriptSystem::get().builtInClass("World", "Thing"))
-#if defined(__JHERETIC__)
-        << DE_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs)
-#endif
-        << DE_FUNC_DEFS(Thing_SpawnMissile, "spawnMissile", "id" << "angle" << "momz", spawnMissileArgs);
-
-    gameBindings->init(*gameModule)
-        << DE_FUNC_DEFS(SetMessage, "setMessage", "message" << "player", setMessageArgs);
-
-    #if defined(__JHEXEN__)
+    // Script bindings.
     {
-        Function::Defaults setYellowMessageArgs;
-        setYellowMessageArgs["player"] = new NoneValue;
-        *gameBindings
-            << DE_FUNC_DEFS(SetYellowMessage, "setYellowMessage", "message" << "player", setYellowMessageArgs);
-    }
+        auto &scr = ScriptSystem::get();
+
+        DENG2_ASSERT(gameBindings == nullptr);
+        gameBindings = new Binder(nullptr, Binder::FunctionsOwned); // must delete when plugin unloaded
+
+        // Game module.
+        {
+            gameModule = new Record;
+            scr.addNativeModule("Game", *gameModule);
+
+            Function::Defaults setMessageArgs;
+            setMessageArgs["player"] = new NoneValue;
+
+            gameBindings->init(*gameModule)
+                << DENG2_FUNC_DEFS(SetMessage, "setMessage", "message" << "player", setMessageArgs);
+
+#if defined(__JHEXEN__)
+            {
+                Function::Defaults setYellowMessageArgs;
+                setYellowMessageArgs["player"] = new NoneValue;
+                *gameBindings
+                    << DENG2_FUNC_DEFS(SetYellowMessage, "setYellowMessage", "message" << "player", setYellowMessageArgs);
+            }
+#endif
+        }
+
+        // World module.
+        {
+            Function::Defaults spawnThingArgs;
+            spawnThingArgs["angle"] = new NoneValue;
+            spawnThingArgs["flags"] = new NumberValue(0.0);
+
+            gameBindings->init(scr["World"])
+                << DENG2_FUNC_DEFS(World_SpawnThing,
+                                   "spawnThing",
+                                   "type" << "pos" << "angle" << "flags",
+                                   spawnThingArgs);
+
+            Function::Defaults spawnMissileArgs;
+            spawnMissileArgs["angle"] = new NoneValue;
+            spawnMissileArgs["momz"] = new NumberValue(0.0);
+
+            Function::Defaults attackArgs;
+            attackArgs["damage"] = new NumberValue(0.0);
+            attackArgs["missile"] = new NoneValue;
+
+            gameBindings->init(scr.builtInClass("World", "Thing"))
+                << DENG2_FUNC_DEFS(Thing_SpawnMissile,
+                                   "spawnMissile",
+                                   "id" << "angle" << "momz",
+                                   spawnMissileArgs);
+
+            auto &world = scr["World"];
+            world.set("MSF_Z_FLOOR", MSF_Z_FLOOR);
+            world.set("MSF_Z_CEIL", MSF_Z_CEIL);
+#if defined(MSF_DEAF)
+            world.set("MSF_AMBUSH", MSF_DEAF);
+#endif
+#if defined(MSF_AMBUSH)
+            world.set("MSF_AMBUSH", MSF_AMBUSH);
 #endif
 
-    ScriptSystem::get().addNativeModule("Game", *gameModule);
+#if defined(__JHERETIC__)
+            *gameBindings << DE_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs);
+#endif
+        }
+
+        // App.Player
+        {
+            auto &playerClass = scr.builtInClass("App", "Player");
+            gameBindings->init(playerClass)
+                << DE_FUNC_NOARG (Player_Health, "health")
+                << DE_FUNC       (Player_Power, "power", "type");
+
+#if defined(HAVE_DOOM_ARMOR_BINDINGS)
+        *gameBindings
+                << DE_FUNC_NOARG (Player_Armor, "armor")
+                << DE_FUNC_NOARG (Player_ArmorType, "armorType");
+#endif
+
+#if defined(__JHERETIC__)
+            // Heretic: Powerup constants.
+            playerClass.set("PT_INVULNERABILITY", PT_INVULNERABILITY);
+            playerClass.set("PT_INVISIBILITY", PT_INVISIBILITY);
+            playerClass.set("PT_ALLMAP", PT_ALLMAP);
+            playerClass.set("PT_INFRARED", PT_INFRARED);
+            playerClass.set("PT_WEAPONLEVEL2", PT_WEAPONLEVEL2);
+            playerClass.set("PT_FLIGHT", PT_FLIGHT);
+            playerClass.set("PT_SHIELD", PT_SHIELD);
+            playerClass.set("PT_HEALTH2", PT_HEALTH2);
+#endif
+        }
+    }
 }
 
 void Common_Unload()
 {
+    using namespace de;
     DE_ASSERT(gameBindings != nullptr);
-    de::ScriptSystem::get().removeNativeModule("Game");
+
+    auto &scr = ScriptSystem::get();
+
+    // After game is unloaded, binder will delete its functions but
+    // other symbols need to be manually cleaned up.
+    {
+        scr["World"].removeMembersWithPrefix("MSF_");
+
+#if defined(__JHERETIC__)
+        scr.builtInClass("App", "Player").removeMembersWithPrefix("PT_");
+#endif
+    }
+
+    DENG2_ASSERT(gameBindings != nullptr);
+    scr.removeNativeModule("Game");
     delete gameBindings;
     gameBindings = nullptr;
     delete gameModule;

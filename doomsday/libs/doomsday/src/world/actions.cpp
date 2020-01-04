@@ -1,6 +1,6 @@
 /** @file world/actions.cpp
  *
- * @authors Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2015-2019 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -39,11 +39,13 @@ static String s_currentAction;
 static void C_DECL A_DoomsdayScript(void *actor)
 {
     struct mobj_s *mobj = reinterpret_cast<struct mobj_s *>(actor);
+    int plrNum = -1;
+
+    auto &plrs = DoomsdayApp::players();
 
     // The actor can also be a player in the case of psprites.
     // Look up the corresponding player.
     {
-        auto &plrs = DoomsdayApp::players();
         for (int i = 0; i < DDMAXPLAYERS; ++i)
         {
             // Note: It is assumed that the player data structure begins with a pointer to
@@ -54,6 +56,7 @@ static void C_DECL A_DoomsdayScript(void *actor)
             {
                 // Refer to the player mobj instead.
                 mobj = plrs.at(i).publicData().mo;
+                plrNum = i;
             }
         }
     }
@@ -63,6 +66,11 @@ static void C_DECL A_DoomsdayScript(void *actor)
     {
         const ThinkerData &data = THINKER_DATA(mobj->thinker, ThinkerData);
         Record ns;
+        if (plrNum >= 0)
+        {
+            ns.add(new Variable(QStringLiteral("player"),
+                                new RecordValue(plrs.at(plrNum).objectNamespace())));
+        }
         ns.add(new Variable(DE_STR("self"), new RecordValue(data.objectNamespace())));
         Process proc(&ns);
         const Script script(s_currentAction);
@@ -77,7 +85,7 @@ static void C_DECL A_DoomsdayScript(void *actor)
 
 static bool isScriptAction(const String &name)
 {
-    return name.contains('(') && name.contains(")");
+    return !name.beginsWith("A_");
 }
 
 void P_GetGameActions()

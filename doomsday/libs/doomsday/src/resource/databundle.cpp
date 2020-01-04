@@ -673,6 +673,7 @@ DE_PIMPL(DataBundle), public Lockable
                 if (!notes.isEmpty())
                 {
                     notes.replace(RegExp::WHITESPACE, " "); // normalize whitespace
+                    notes.remove('\r'); // begone foul MS-DOS
                     meta.set(VAR_NOTES(), notes);
                 }
             }
@@ -699,6 +700,7 @@ DE_PIMPL(DataBundle), public Lockable
 
         bool foundVersion = false;
         bool foundTitle   = false;
+        bool foundAuthor  = false;
 
         for (const auto &line : meta.gets(VAR_NOTES(), "").splitRef("\n"))
         {
@@ -740,10 +742,14 @@ DE_PIMPL(DataBundle), public Lockable
                 continue;
             }
 
-            if (reAuthor.match(line, match))
+            if (!foundAuthor)
             {
-                meta.set(VAR_AUTHOR(), match.captured(2).strip());
-                continue;
+                if (reAuthor.match(line, match))
+                {
+                    meta.set(VAR_AUTHOR(), match.captured(2).strip());
+                    foundAuthor = true;
+                    continue;
+                }
             }
 
             if (reContact.match(line, match))

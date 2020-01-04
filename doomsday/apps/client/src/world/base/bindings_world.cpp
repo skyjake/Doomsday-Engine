@@ -27,14 +27,22 @@
 #include <doomsday/defs/ded.h>
 #include <doomsday/world/mobj.h>
 #include <de/Context>
+#include <de/RecordValue>
 
 using namespace de;
 
 namespace world {
 
-static Value *Function_World_ConsolePlayer(Context &, const Function::ArgumentValues &)
+//-------------------------------------------------------------------------------------------------
+
+static Value *Function_Thing_AddMom(Context &ctx, const Function::ArgumentValues &args)
 {
-    return new NumberValue(consolePlayer);
+    mobj_t &   mo    = ClientServerWorld::contextMobj(ctx);
+    const auto delta = vectorFromValue<Vector3d>(*args.at(0));
+    mo.mom[VX] += delta.x;
+    mo.mom[VY] += delta.y;
+    mo.mom[VZ] += delta.z;
+    return nullptr;
 }
 
 static Value *Function_Thing_Id(Context &ctx, const Function::ArgumentValues &)
@@ -45,6 +53,16 @@ static Value *Function_Thing_Id(Context &ctx, const Function::ArgumentValues &)
 static Value *Function_Thing_Health(Context &ctx, const Function::ArgumentValues &)
 {
     return new NumberValue(ClientServerWorld::contextMobj(ctx).health);
+}
+
+static Value *Function_Thing_Height(Context &ctx, const Function::ArgumentValues &)
+{
+    return new NumberValue(ClientServerWorld::contextMobj(ctx).height);
+}
+
+static Value *Function_Thing_Mom(Context &ctx, const Function::ArgumentValues &)
+{
+    return new ArrayValue(Vector3d(ClientServerWorld::contextMobj(ctx).mom));
 }
 
 static Value *Function_Thing_StartSound(Context &ctx, const Function::ArgumentValues &args)
@@ -63,6 +81,22 @@ static Value *Function_Thing_StartSound(Context &ctx, const Function::ArgumentVa
     return nullptr;
 }
 
+static Value *Function_Thing_Player(Context &ctx, const Function::ArgumentValues &)
+{
+    const mobj_t &mo = ClientServerWorld::contextMobj(ctx);
+    if (mo.dPlayer)
+    {
+        auto &plrs = DoomsdayApp::players();
+        return new RecordValue(plrs.at(plrs.indexOf(mo.dPlayer)).objectNamespace());
+    }
+    return nullptr;
+}
+
+static Value *Function_Thing_Pos(Context &ctx, const Function::ArgumentValues &)
+{
+    return new ArrayValue(Vector3d(ClientServerWorld::contextMobj(ctx).origin));
+}
+
 static Value *Function_Thing_Recoil(Context &ctx, const Function::ArgumentValues &args)
 {
     mobj_t &     mo    = ClientServerWorld::contextMobj(ctx);
@@ -77,14 +111,15 @@ static Value *Function_Thing_Recoil(Context &ctx, const Function::ArgumentValues
     return nullptr;
 }
 
+static Value *Function_Thing_Type(Context &ctx, const Function::ArgumentValues &)
+{
+    return new NumberValue(ClientServerWorld::contextMobj(ctx).type);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void initBindings(Binder &binder, Record &worldModule)
 {
-    // Global functions.
-    {
-        binder.init(worldModule)
-            << DE_FUNC_NOARG(World_ConsolePlayer, "consolePlayer");
-    }
-
     // Thing
     {
         Record &thing = worldModule.addSubrecord("Thing");
@@ -93,10 +128,16 @@ void initBindings(Binder &binder, Record &worldModule)
         startSoundArgs["volume"] = new NumberValue(1.0);
 
         binder.init(thing)
+                << DE_FUNC      (Thing_AddMom,     "addMom", "delta")
                 << DE_FUNC_NOARG(Thing_Id,         "id")
                 << DE_FUNC_NOARG(Thing_Health,     "health")
+                << DE_FUNC_NOARG(Thing_Height,     "height")
+                << DE_FUNC_NOARG(Thing_Mom,        "mom")
+                << DE_FUNC_NOARG(Thing_Player,     "player")
+                << DE_FUNC_NOARG(Thing_Pos,        "pos")
                 << DE_FUNC_DEFS (Thing_StartSound, "startSound", "id" << "volume", startSoundArgs)
-                << DE_FUNC      (Thing_Recoil,     "recoil", "force");
+                << DE_FUNC      (Thing_Recoil,     "recoil", "force")
+                << DE_FUNC_NOARG(Thing_Type,       "type");
     }
 }
 

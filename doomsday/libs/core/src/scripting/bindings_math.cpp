@@ -34,11 +34,36 @@ static Value *Function_Math_RandInt(Context &, const Function::ArgumentValues &a
     return new NumberValue(range.random());
 }
 
+static Value *Function_Math_RandNum(Context &, const Function::ArgumentValues &args)
+{
+    Ranged range(args.at(0)->asNumber(), args.at(1)->asNumber());
+    return new NumberValue(range.random());
+}
+
+static Value *Function_Math_Cos(Context &, const Function::ArgumentValues &args)
+{
+    return new NumberValue(std::cos(args.at(0)->asNumber()));
+}
+
+static Value *Function_Math_Sin(Context &, const Function::ArgumentValues &args)
+{
+    return new NumberValue(std::sin(args.at(0)->asNumber()));
+}
+
+static Value *Function_Math_Tan(Context &, const Function::ArgumentValues &args)
+{
+    return new NumberValue(std::tan(args.at(0)->asNumber()));
+}
+
 void initMathModule(Binder &binder, Record &mathModule)
 {
     binder.init(mathModule)
             << DE_FUNC_NOARG(Math_Random, "random")
             << DE_FUNC      (Math_RandInt, "randInt", "low" << "high");
+            << DE_FUNC      (Math_RandNum, "randNum", "low" << "high")
+            << DE_FUNC      (Math_Cos, "cos", "radians")
+            << DE_FUNC      (Math_Sin, "sin", "radians")
+            << DE_FUNC      (Math_Tan, "tan", "radians");
 }
 
 } // namespace de

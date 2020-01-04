@@ -196,6 +196,7 @@ DE_PIMPL(ClientSubsector)
 
     dint validFrame;
     bool hasWorldVolumeInValidFrame;
+    bool hasInvisibleTop = false;
 
     bool             needClassify     = true; ///< @c true= (Re)classification is necessary.
     SubsectorFlags   flags            = 0;
@@ -1572,10 +1573,9 @@ bool ClientSubsector::hasSkyCeiling() const
     return hasSkyPlane(Sector::Ceiling);
 }
 
-void ClientSubsector::linkVisPlanes(ClientSubsector &target)
+void ClientSubsector::linkVisPlane(int planeIndex, ClientSubsector &target)
 {
-    d->map(Sector::Floor, &target, true);
-    d->map(Sector::Ceiling, &target, true);
+    d->map(planeIndex, &target, true);
 }
 
 dint ClientSubsector::visPlaneCount() const

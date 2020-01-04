@@ -20,6 +20,7 @@
 
 #include "de_platform.h"
 #include "resource/image.h"
+#include "resource/tga.h"
 #include "dd_main.h"
 #include "gl/gl_tex.h"
 #include "render/rend_main.h" // misc global vars awaiting new home
@@ -29,7 +30,6 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/res/Composite>
 #include <doomsday/resource/pcx.h>
-#include <doomsday/resource/tga.h>
 
 #include <de/legacy/memory.h>
 #include <de/LogBuffer>
@@ -53,7 +53,7 @@ struct GraphicFileType
 
     bool (*interpretFunc)(FileHandle &hndl, String filePath, image_t &img);
 
-    const char *(*getLastErrorFunc)(); ///< Can be NULL.
+    //char const *(*getLastErrorFunc)(); ///< Can be NULL.
 };
 
 static bool interpretPcx(FileHandle &hndl, String /*filePath*/, image_t &img)
@@ -77,15 +77,15 @@ static bool interpretTga(FileHandle &hndl, String /*filePath*/, image_t &img)
 {
     Image_Init(img);
     img.pixels = TGA_Load(hndl, img.size, img.pixelSize);
-    return (0 != img.pixels);
+    return img.pixels != nullptr;
 }
 
 // Graphic resource types.
-static const GraphicFileType graphicTypes[] = {
-    { "PNG",    "png",      interpretPng, 0 },
-    { "JPG",    "jpg",      interpretJpg, 0 }, // TODO: add alternate "jpeg" extension
-    { "TGA",    "tga",      interpretTga, TGA_LastError },
-    { "PCX",    "pcx",      interpretPcx, PCX_LastError }
+static GraphicFileType const graphicTypes[] = {
+    { "PNG",    "png",      interpretPng /*, 0*/ },
+    { "JPG",    "jpg",      interpretJpg /*, 0*/ }, // TODO: add alternate "jpeg" extension
+    { "TGA",    "tga",      interpretTga /*, TGA_LastError*/ },
+    { "PCX",    "pcx",      interpretPcx /*, PCX_LastError*/ }
 };
 
 static const GraphicFileType *guessGraphicFileTypeFromFileName(String fileName)
@@ -102,7 +102,7 @@ static const GraphicFileType *guessGraphicFileTypeFromFileName(String fileName)
             }
         }
     }
-    return 0; // Unknown.
+    return nullptr; // Unknown.
 }
 
 static void interpretGraphic(FileHandle &hndl, String filePath, image_t &img)

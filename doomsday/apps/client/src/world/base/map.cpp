@@ -4049,17 +4049,24 @@ bool Map::endEditing()
     // Finish planes.
     for (Sector *sector : d->sectors)
     {
-#if defined (__CLIENT__)
-        if (sector->visPlaneLink() != MapElement::NoIndex)
+#if defined(__CLIENT__)
+        if (sector->visPlaneLinkTargetSector() != MapElement::NoIndex)
         {
-            if (Sector *target = sectorsByArchiveIndex[sector->visPlaneLink()])
+            if (Sector *target = sectorsByArchiveIndex[sector->visPlaneLinkTargetSector()])
             {
                 // Use the first subsector as the target.
                 auto &targetSub = target->subsector(0).as<ClientSubsector>();
 
                 // Linking is done for each subsector separately. (Necessary, though?)
-                sector->forAllSubsectors([&targetSub](Subsector &sub) {
-                    sub.as<ClientSubsector>().linkVisPlanes(targetSub);
+                sector->forAllSubsectors([&targetSub, sector](Subsector &sub) {
+                    auto &clsub = sub.as<ClientSubsector>();
+                    for (int plane = 0; plane < 2; ++plane)
+                    {
+                        if (sector->visPlaneLinked(plane))
+                        {
+                            clsub.linkVisPlane(plane, targetSub);
+                        }
+                    }
                     return LoopContinue;
                 });
             }
@@ -4120,7 +4127,7 @@ Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
 }
 
 Sector *Map::createSector(float lightLevel, const Vec3f &lightColor, int archiveIndex,
-                          int visPlaneLinkIndex)
+                          int visPlaneLinkTargetSector, int planeLinkBits)
 {
     if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
@@ -4131,7 +4138,7 @@ Sector *Map::createSector(float lightLevel, const Vec3f &lightColor, int archive
 
     sector->setMap(this);
     sector->setIndexInArchive(archiveIndex);
-    sector->setVisPlaneLink(visPlaneLinkIndex);
+    sector->setVisPlaneLinks(visPlaneLinkTargetSector, planeLinkBits);
 
     /// @todo Don't do this here.
     sector->setIndexInMap(d->editable.sectors.count() - 1);

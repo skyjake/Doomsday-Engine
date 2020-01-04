@@ -47,13 +47,22 @@ Image ClientStyle::makeGameLogo(const Game &game, const res::LumpCatalog &catalo
             const Block titlePic = catalog.read("TITLEPIC");
             const Block interPic = catalog.read("INTERPIC");
 
-            res::IdTech1Image img(title? title : (titlePic? titlePic : interPic), playPal);
+            const Block *dataToUse = &(title ? title : (titlePic ? titlePic : interPic));
 
-            const int sizeDiv = flags.testFlag(Downscale50Percent)? 2 : 1;
-            Image::Size const finalSize(    img.pixelSize().x        / sizeDiv,
-                                        int(img.pixelSize().y * 1.2f / sizeDiv)); // VGA aspect
+            // Maybe it's a modern image format?
+            Image logoImage = Image::fromData(*dataToUse);
 
-            Image logoImage = Image::fromRgbaData(img.pixelSize(), img.pixels());
+            if (logoImage.isNull())
+            {
+                // Try a raw image or graphic patch instead.
+                res::IdTech1Image img(*dataToUse, playPal);
+                logoImage = Image::fromRgbaData(img.pixelSize(), img.pixels());
+            }
+
+            const int sizeDiv = flags & Downscale50Percent ? 2 : 1;
+            const Image::Size finalSize(    logoImage.size().x        / sizeDiv,
+                                        int(logoImage.size().y * 1.2f / sizeDiv)); // VGA aspect
+
             logoImage.resize(finalSize);
 
             if (flags & ColorizedByFamily)

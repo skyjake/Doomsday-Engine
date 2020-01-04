@@ -338,6 +338,11 @@ DE_GUI_PIMPL(PackageInfoDialog)
                     DE_PLURAL_S(mapCount),
                     String::join(bundle->lumpDirectory()->mapsInContiguousRangesAsText(), ", ").c_str());
                 moreMsg += "\n";
+
+                if (bundle->lumpDirectory()->has("DEHACKED"))
+                {
+                    moreMsg += "Contains a DeHackEd patch\n";
+                }
             }
 
             if (lumpDirCrc32)
@@ -351,7 +356,14 @@ DE_GUI_PIMPL(PackageInfoDialog)
 
         if (meta.has("notes"))
         {
-            msg += "\n\n" + meta.gets("notes") + _E(r);
+            String notesText = meta.gets("notes");
+            notesText.remove('\r'); // maybe old MS-DOS text
+
+            // Tabs should be properly expanded to the next multiple of 8. This simple
+            // replacement works for beginning-of-line indentation, though.
+            notesText.replace("\t", "        ");
+
+            msg += "\n\n" + notesText + _E(r);
         }
 
         if (!bundle)

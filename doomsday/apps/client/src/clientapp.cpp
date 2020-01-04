@@ -144,6 +144,11 @@ static void continueInitWithEventLoopRunning()
 #endif
 }
 
+static Value *Function_App_ConsolePlayer(Context &, const Function::ArgumentValues &)
+{
+    return new RecordValue(DoomsdayApp::players().at(consolePlayer).objectNamespace());
+}
+
 static Value *Function_App_GamePlugin(Context &, const Function::ArgumentValues &)
 {
     if (App_CurrentGame().isNull())
@@ -569,9 +574,13 @@ ClientApp::ClientApp(const StringList &args)
     // We must presently set the current game manually (the collection is global).
     setGame(games().nullGame());
 
+    // Script bindings.
+    {
     d->binder.init(scriptSystem()["App"])
-            << DE_FUNC_NOARG (App_GamePlugin, "gamePlugin")
-            << DE_FUNC_NOARG (App_Quit,       "quit");
+                << DE_FUNC_NOARG (App_ConsolePlayer, "consolePlayer")
+                << DE_FUNC_NOARG (App_GamePlugin,    "gamePlugin")
+                << DE_FUNC_NOARG (App_Quit,          "quit");
+    }
 
 /*#if !defined (DE_MOBILE)
     /// @todo Remove the splash screen when file system indexing can be done as

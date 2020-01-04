@@ -1,6 +1,6 @@
 /** @file tga.h  Truevision TGA (a.k.a Targa) image reader
  *
- * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2019 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -18,16 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_TGA_H
-#define LIBDOOMSDAY_RESOURCE_TGA_H
+#pragma once
 
 #ifdef __cplusplus
 
 #include <doomsday/filesys/filehandle.h>
 #include <de/Vector>
-
-/// @addtogroup resource
-///@{
 
 /**
  * Loads a 24-bit or a 32-bit image (24-bit color + 8-bit alpha).
@@ -37,6 +33,7 @@
  *
  * @return  Non-zero iff the image is loaded successfully.
  */
+<<<<<<< HEAD:doomsday/libs/doomsday/include/doomsday/resource/tga.h
 LIBDOOMSDAY_PUBLIC uint8_t *TGA_Load(res::FileHandle &file, de::Vec2ui &outSize, int &pixelSize);
 
 /**
@@ -45,7 +42,8 @@ LIBDOOMSDAY_PUBLIC uint8_t *TGA_Load(res::FileHandle &file, de::Vec2ui &outSize,
 LIBDOOMSDAY_PUBLIC const char *TGA_LastError();
 
 ///@}
+=======
+uint8_t *TGA_Load(de::FileHandle &file, de::Vector2ui &outSize, int &pixelSize);
+>>>>>>> 022839e0b9e352a33d3bd144728aad0541779ede:doomsday/apps/client/include/resource/tga.h
 
 #endif // __cplusplus
-
-#endif // LIBDOOMSDAY_RESOURCE_TGA_H

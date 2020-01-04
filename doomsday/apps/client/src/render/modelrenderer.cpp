@@ -191,7 +191,8 @@ DE_PIMPL(ModelRenderer)
                 Mat4f::translate(origin) *
                 Mat4f::scale(aspectCorrect); // Inverse aspect correction.
 
-        const Mat4f viewProj = Rend_GetProjectionMatrix(useFixedFov ? weaponFixedFOV : 0.0f) *
+        const Mat4f viewProj = Rend_GetProjectionMatrix(useFixedFov ? weaponFixedFOV : 0.0f,
+                                                        0.1f /* near plane distance: IssueID #2373 */) *
                                ClientApp::renderSystem().uViewMatrix().toMat4f();
 
         const Mat4f localToScreen = viewProj * localToWorld;

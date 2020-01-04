@@ -72,6 +72,8 @@ public:
      */
     int indexOf(const ddplayer_s *publicData) const;
 
+    void initBindings();
+
 private:
     DE_PRIVATE(d)
 };

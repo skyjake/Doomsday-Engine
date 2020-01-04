@@ -197,9 +197,11 @@ public:
      */
     Plane *addPlane(const de::Vec3f &normal, de::ddouble height);
 
-    void setVisPlaneLink(int sectorArchiveIndex);
+    void setVisPlaneLinks(int sectorArchiveIndex, int planeBits);
 
-    int visPlaneLink() const;
+    int visPlaneLinkTargetSector() const;
+
+    bool visPlaneLinked(int planeIndex) const;
 
 //- Subsectors --------------------------------------------------------------------------
 

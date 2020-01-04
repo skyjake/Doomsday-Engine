@@ -51,6 +51,7 @@
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <de/App>
+#include <de/Binder>
 #include <de/Config>
 #include <de/CommandLine>
 #include <de/FileSystem>
@@ -88,6 +89,10 @@ DE_EXTERN_C audiointerface_music_t audiodQuickTimeMusic;
 
 static AudioSystem *theAudioSystem;
 
+static duint const SOUND_LOGICAL_PURGEINTERVAL = 2000;  ///< 2 seconds
+
+static byte sfxOneSoundPerEmitter;  //< @c false= Traditional Doomsday behavior: allow sounds to overlap.
+
 static const duint SOUND_LOGICAL_PURGEINTERVAL = 2000;  ///< 2 seconds
 #ifdef __CLIENT__
 static const dint SOUND_CHANNEL_COUNT_DEFAULT  = 16;
@@ -104,11 +109,7 @@ static bool sfxNoRndPitch;  ///< @todo should be a cvar.
 //static dint sfx16Bit;
 //static dint sfxSampleRate = 11025;
 static dint sfx3D;
-#endif  // __CLIENT__
-static byte sfxOneSoundPerEmitter;  //< @c false= Traditional Doomsday behavior: allow sounds to overlap.
-#ifdef __CLIENT__
 static dfloat sfxReverbStrength = 0.5f;
-
 static char *musMidiFontPath = (char *) "";
 // When multiple sources are available this setting determines which to use (mus < ext < cd).
 static AudioSystem::MusicSource musSourcePreference = AudioSystem::MUSP_EXT;
@@ -184,7 +185,10 @@ static bool recognizeMus(res::File1 &file)
     // ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
     return !iCmpStrN(buf, "MUS\x01a", 4);
 }
-#endif
+
+static Value *Function_Audio_LocalSound(Context &, const Function::ArgumentValues &args);
+
+#endif // __CLIENT__
 
 DE_PIMPL(AudioSystem)
 , DE_OBSERVES(DoomsdayApp, GameUnload)
@@ -193,6 +197,7 @@ DE_PIMPL(AudioSystem)
 #endif
 {
     Record module;
+    Binder binder;
 
 #ifdef __CLIENT__
     AudioDriver drivers[AUDIODRIVER_COUNT];
@@ -650,7 +655,14 @@ DE_PIMPL(AudioSystem)
     {
         theAudioSystem = thisPublic;
 
+        // Script bindings.
+        {
         ScriptSystem::get().addNativeModule("Audio", module);
+#if defined(__CLIENT__)
+            binder.init(module)
+                << DENG2_FUNC(Audio_LocalSound, "localSound", "id" << "volume");
+#endif
+        }
 
 #ifdef __CLIENT__
         DoomsdayApp::app().audienceForGameUnload() += this;
@@ -1171,7 +1183,7 @@ DE_PIMPL(AudioSystem)
         if (nowTime - sfxLogicLastPurge < SOUND_LOGICAL_PURGEINTERVAL) return;
 
         // Peform the purge now.
-        LOGDEV_AUDIO_XVERBOSE("purging logic sound hash...", "");
+//        LOGDEV_AUDIO_XVERBOSE("purging logic sound hash...", "");
         sfxLogicLastPurge = nowTime;
 
         // Check all sounds in the hash.
@@ -3019,6 +3031,21 @@ void S_StopSoundGroup(dint group, const mobj_t *emitter)
 dint S_StopSoundWithLowerPriority(dint soundId, mobj_t *emitter, dint defPriority)
 {
     return App_AudioSystem().stopSoundWithLowerPriority(soundId, emitter, defPriority);
+}
+
+static Value *Function_Audio_LocalSound(Context &, const Function::ArgumentValues &args)
+{
+    const int   sound  = DED_Definitions()->getSoundNum(args.at(0)->asText());
+    const float volume = float(args.at(1)->asNumber());
+    if (sound >= 0)
+    {
+        S_LocalSoundAtVolume(sound, nullptr, volume);
+    }
+    else
+    {
+        throw Error("Function_Thing_StartSound", "Undefined sound: " + args.at(0)->asText());
+    }
+    return nullptr;
 }
 
 #endif  // __CLIENT__
