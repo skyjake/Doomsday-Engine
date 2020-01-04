@@ -34,10 +34,6 @@ endif ()
 list (APPEND CMAKE_PREFIX_PATH "${DE_DEPENDS_DIR}/products")
 list (APPEND CMAKE_MODULE_PATH "${DE_DEPENDS_DIR}/products/lib/cmake/assimp-4.1")
 
-# if (WIN32)
-#     set (MSYS2_LIBS_DIR "" CACHE PATH "msys2-libs directory")
-# endif ()
-
 # Platform-Specific Configuration --------------------------------------------
 
 if (CYGWIN)
