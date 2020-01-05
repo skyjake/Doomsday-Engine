@@ -347,6 +347,7 @@ struct SectorDef : public Id1MapElement
     // Internal bookkeeping:
     std::set<int> lines;
     std::vector<int> selfRefLoop;
+    int singleSidedCount = 0;
     int hackFlags = 0;
     struct de_api_sector_hacks_s hackParams{{0, 0}, -1};
 
@@ -1317,6 +1318,7 @@ DENG2_PIMPL(MapImporter)
                     if (!line.isTwoSided())
                     {
                         hasSingleSided = true;
+                        sector.singleSidedCount++;
                     }
                     if (isSelfReferencing(line))
                     {
@@ -1352,6 +1354,13 @@ DENG2_PIMPL(MapImporter)
                                     qDebug("    line %d", lineIndex);
                                 }
                                 sector.hackFlags |= HACK_HAS_SELF_REFERENCING_LOOP;
+                                if (sector.singleSidedCount > int(loop.size()))
+                                {
+                                    qDebug("    but the sector has %d single-sided lines, so ignoring the loop",
+                                           sector.singleSidedCount);
+                                    sector.hackFlags &= ~HACK_HAS_SELF_REFERENCING_LOOP;
+                                    sector.selfRefLoop.clear();
+                                }
                                 break;
                             }
                         }
