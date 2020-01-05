@@ -48,8 +48,8 @@ namespace internal {
  * @returns true, if line A-B intersects the line segment @a other.
  */
 static bool lineSegmentIntersection(double &lineT,
-                                    const Vector2d &lineA, const Vector2d &lineB,
-                                    const Vector2d &segmentA, const Vector2d &segmentB)
+                                    const Vec2d &lineA, const Vec2d &lineB,
+                                    const Vec2d &segmentA, const Vec2d &segmentB)
 {
     const auto &p = segmentA;
     const auto  r = segmentB - segmentA;
@@ -87,7 +87,7 @@ public:
 
 struct Vertex
 {
-    Vector2d      pos;
+    Vec2d      pos;
     std::set<int> lines; // lines connected to this vertex
 };
 
@@ -921,9 +921,9 @@ DENG2_PIMPL(MapImporter)
     }
 
 #if 0
-    Vector2d sectorBoundsMiddle(const SectorDef &sector) const
+    Vec2d sectorBoundsMiddle(const SectorDef &sector) const
     {
-        Vector2d mid;
+        Vec2d mid;
         int      count = 0;
         for (int v : sectorVertices(sector))
         {
@@ -937,7 +937,7 @@ DENG2_PIMPL(MapImporter)
 
     std::vector<double> findSectorIntercepts(const SectorDef &sector, const Vec2d &start, const Vec2d &dir) const
     {
-        const Vector2d end = start + dir;
+        const Vec2d end = start + dir;
 
         std::vector<double> intercepts;
         for (int i : sector.lines)
@@ -967,9 +967,9 @@ DENG2_PIMPL(MapImporter)
      *
      * @return A point inside the sector.
      */
-    Vector2d findPointInsideSector(const SectorDef &sector) const
+    Vec2d findPointInsideSector(const SectorDef &sector) const
     {
-        Vector2d inside;
+        Vec2d inside;
         int count = 0;
         for (int i : sectorVertices(sector))
         {
@@ -1017,17 +1017,17 @@ DENG2_PIMPL(MapImporter)
     };
 
     IntersectionResult findIntersection(
-        const LineDef &line, const Vector2d &start, const Vector2d &end) const
+        const LineDef &line, const Vec2d &start, const Vec2d &end) const
     {
-        const Vector2d a = vertices[line.v[0]].pos;
-        const Vector2d b = vertices[line.v[1]].pos;
+        const Vec2d a = vertices[line.v[0]].pos;
+        const Vec2d b = vertices[line.v[1]].pos;
 
         double t;
         if (lineSegmentIntersection(t, start, end, a, b))
         {
-            const Vector2d dir        = (end - start).normalize();
-            const Vector2d lineDir    = (b - a).normalize();
-            const Vector2d lineNormal = {lineDir.y, -lineDir.x};
+            const Vec2d dir        = (end - start).normalize();
+            const Vec2d lineDir    = (b - a).normalize();
+            const Vec2d lineNormal = {lineDir.y, -lineDir.x};
 
             return {true, t, lineNormal.dot(dir) < 0 ? LineDef::Front : LineDef::Back};
         }
@@ -1038,8 +1038,8 @@ DENG2_PIMPL(MapImporter)
     {
         if (sector.lines.empty()) return;
 
-        const Vector2d start = findPointInsideSector(sector);
-        const Vector2d end   = start + Vector2d(0.001, 1.0);
+        const Vec2d start = findPointInsideSector(sector);
+        const Vec2d end   = start + Vec2d(0.001, 1.0);
 
         std::pair<double, int> nearestContainer{std::numeric_limits<double>::max(), -1};
 
@@ -1804,7 +1804,7 @@ DENG2_PIMPL(MapImporter)
      * @param lineList  @c NULL, will cause IterFindPolyLines to count the number
      *                  of lines in the polyobj.
      */
-    void collectPolyobjLinesWorker(Polyobj::LineIndices &lineList, Vector2d const &point)
+    void collectPolyobjLinesWorker(Polyobj::LineIndices &lineList, Vec2d const &point)
     {
         DENG2_FOR_EACH(Lines, i, lines)
         {
@@ -1814,11 +1814,11 @@ DENG2_PIMPL(MapImporter)
             // Have we already encounterd this?
             if(i->validCount == validCount) continue;
 
-            if(point == vertexAsVector2d(i->v[0]))
+            if(point == vertexAsVec2d(i->v[0]))
             {
                 i->validCount = validCount;
                 lineList.append( i - lines.begin() );
-                collectPolyobjLinesWorker(lineList, vertexAsVector2d(i->v[1]));
+                collectPolyobjLinesWorker(lineList, vertexAsVec2d(i->v[1]));
             }
         }
     }
