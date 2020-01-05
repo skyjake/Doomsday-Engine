@@ -176,10 +176,17 @@ DE_PIMPL(StbTtNativeFont)
             int fontAscent, fontDescent, fontLineGap;
             stbtt_GetFontVMetrics(font, &fontAscent, &fontDescent, &fontLineGap);
 
-            height     = roundi(fontScale * (fontAscent - fontDescent));
-            ascent     = roundi(fontScale * fontAscent);
-            descent    = roundi(-fontScale * fontDescent);
-            lineHeight = roundi(fontScale * (fontAscent - fontDescent + fontLineGap));
+            // TODO: There should be a proper setting for scaling the vertical metrics
+            // independent of the font scaling itself.
+
+            const float lineSpacingFactor = 0.82f;
+            float asc  = fontAscent * lineSpacingFactor;
+            float desc = fontDescent * lineSpacingFactor;
+
+            height     = roundi(fontScale * (asc - desc));
+            ascent     = roundi(fontScale * asc);
+            descent    = roundi(-fontScale * desc);
+            lineHeight = roundi(fontScale * (asc - desc + fontLineGap));
         }
         else
         {
