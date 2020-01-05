@@ -27,12 +27,12 @@ Slope::Slope(float angle, float slope)
     , slope(slope)
 {}
 
-Vector3f Slope::toUnitVec() const
+Vec3f Slope::toUnitVec() const
 {
-    return Vector3f(std::cos(angle), std::sin(angle), slope).normalize();
+    return Vec3f(std::cos(angle), std::sin(angle), slope).normalize();
 }
 
-Slope Slope::fromVec(const Vector3f &vector)
+Slope Slope::fromVec(const Vec3f &vector)
 {
     const auto vec = vector.normalize();
     if (fequal(vec.x, 0.0f) && fequal(vec.y, 0.0f))
@@ -40,7 +40,7 @@ Slope Slope::fromVec(const Vector3f &vector)
         return {0.0f, vec.z > 0 ? std::numeric_limits<float>::max() :
                                   std::numeric_limits<float>::min()};
     }
-    return {atan2(vec.y, vec.x), float(vec.z / vec.xy().length())};
+    return {std::atan2(vec.y, vec.x), float(vec.z / vec.xy().length())};
 }
 
 } // namespace de

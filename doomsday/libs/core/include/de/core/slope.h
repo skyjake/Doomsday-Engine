@@ -26,15 +26,15 @@ namespace de {
  * Combination of a yaw angle and Z slope at an XY distance of 1.0 units.
  * @ingroup math
  */
-struct DENG2_PUBLIC Slope
+struct DE_PUBLIC Slope
 {
     float angle; // radians
     float slope;
 
     Slope(float angle = 0.0f, float slope = 0.0f);
-    Vector3f toUnitVec() const;
+    Vec3f toUnitVec() const;
 
-    static Slope fromVec(const Vector3f &vector);
+    static Slope fromVec(const Vec3f &vector);
 };
 
 } // namespace de

@@ -20,6 +20,7 @@
 #define LIBCORE_HASH_H
 
 #include <unordered_map>
+#include <list>
 #include "../libcore.h"
 
 namespace de {
@@ -48,6 +49,7 @@ public:
 
     using iterator       = typename Base::iterator;
     using const_iterator = typename Base::const_iterator;
+    using value_type     = typename Base::value_type;
 
     using Base::begin;
     using Base::empty;
@@ -96,6 +98,13 @@ public:
     void deleteAll()
     {
         for (auto &i : *this) { delete i.second; }
+    }
+
+    std::list<Key> keys() const
+    {
+        return map<std::list<Key>>(*this, [](const value_type &v) {
+            return v.first;
+        });
     }
 };
 

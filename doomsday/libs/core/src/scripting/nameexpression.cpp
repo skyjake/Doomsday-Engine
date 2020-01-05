@@ -177,15 +177,15 @@ Value *NameExpression::evaluate(Evaluator &evaluator) const
     }
 
     // Look up the rest in relation to what was already found.
-    for (int i = 2; i < d->identifierSequence.size(); ++i)
+    for (int i = 2; i < d->identifierSequence.sizei(); ++i)
     {
         if (!variable)
         {
             throw NotFoundError("NameExpression::evaluate",
                                 "Scope '" + identifier + "' not found");
+        }
         identifier = d->identifierSequence.at(i);
-    }
-        variable = d->findInRecord(identifier, variable->valueAsRecord(), foundInNamespace);
+        variable   = d->findInRecord(identifier, variable->valueAsRecord(), foundInNamespace);
     }
 
     if (flags().testFlag(ThrowawayIfInScope) && variable)

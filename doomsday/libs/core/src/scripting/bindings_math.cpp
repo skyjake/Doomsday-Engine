@@ -59,7 +59,7 @@ void initMathModule(Binder &binder, Record &mathModule)
 {
     binder.init(mathModule)
             << DE_FUNC_NOARG(Math_Random, "random")
-            << DE_FUNC      (Math_RandInt, "randInt", "low" << "high");
+            << DE_FUNC      (Math_RandInt, "randInt", "low" << "high")
             << DE_FUNC      (Math_RandNum, "randNum", "low" << "high")
             << DE_FUNC      (Math_Cos, "cos", "radians")
             << DE_FUNC      (Math_Sin, "sin", "radians")
