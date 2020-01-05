@@ -175,6 +175,11 @@ private:
 static RingBuffer* blockBuffer;
 static float musicVolume = 1.0f;
 
+static void setSynthGain(float vol)
+{
+    fluid_synth_set_gain(DMFluid_Synth(), vol * MAX_SYNTH_GAIN);
+}
+
 /**
  * Thread entry point for the synthesizer. Runs until the song is stopped.
  * @param parm  Not used.
@@ -275,8 +280,9 @@ static void startPlayer()
 
     startWorker();
 
-    // Volume applied via synthesizer gain setting.
-    DMFluid_Sfx()->Set(sfxBuf, SFXBP_VOLUME, 1.0f);
+    // Volume applied immediately.
+    DMFluid_Sfx()->Set(sfxBuf, SFXBP_VOLUME, musicVolume);
+    setSynthGain(1.0f);
 
     DMFluid_Sfx()->Play(sfxBuf);
 }
@@ -382,7 +388,16 @@ void DM_Music_Set(int prop, float value)
     {
     case MUSIP_VOLUME:
         musicVolume = value;
-        fluid_synth_set_gain(DMFluid_Synth(), musicVolume * MAX_SYNTH_GAIN);
+        if (sfxBuf)
+        {
+            // This will take effect immediately.
+            DMFluid_Sfx()->Set(sfxBuf, SFXBP_VOLUME, musicVolume);
+        }
+        else
+        {
+            // Effect will be heard only after buffered samples have been played.
+            setSynthGain(musicVolume);
+        }
         DSFLUIDSYNTH_TRACE("Music_Set: MUSIP_VOLUME = " << musicVolume);
         break;
 
