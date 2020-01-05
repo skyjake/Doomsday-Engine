@@ -1168,15 +1168,15 @@ void Mobj_RunScriptOnDeath(mobj_t *mob, mobj_t *killer)
 
     // Check Thing definition for an onDeath script.
     const auto &thingDef = DED_Definitions()->things[mob->type];
-    if (const String onDeathSrc = thingDef.gets(QStringLiteral("onDeath")))
+    if (const String onDeathSrc = thingDef.gets(DE_STR("onDeath")))
     {
         LOG_AS("Mobj_RunScriptOnDeath");
 
         const auto &self = THINKER_NS(mob->thinker);
 
         Record ns;
-        ns.add(QStringLiteral("self")).set(new RecordValue(self));
-        Variable &killerVar = ns.add(QStringLiteral("killer"));
+        ns.add(DE_STR("self")).set(new RecordValue(self));
+        Variable &killerVar = ns.add(DE_STR("killer"));
         if (killer)
         {
             killerVar.set(new RecordValue(THINKER_NS(killer->thinker)));

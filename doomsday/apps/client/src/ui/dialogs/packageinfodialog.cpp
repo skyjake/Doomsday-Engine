@@ -357,7 +357,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
         if (meta.has("notes"))
         {
             String notesText = meta.gets("notes");
-            notesText.remove('\r'); // maybe old MS-DOS text
+            notesText.replace("\r", ""); // maybe old MS-DOS text
 
             // Tabs should be properly expanded to the next multiple of 8. This simple
             // replacement works for beginning-of-line indentation, though.

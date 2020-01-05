@@ -1811,7 +1811,7 @@ public:
         {
             if (String(defs->sprites[i].id).compareWithoutCase(origName) == 0)
             {
-                strcpy(defs->sprites[i].id, newName.toLatin1());
+                strcpy(defs->sprites[i].id, newName);
                 LOG_DEBUG("Sprite #%d \"%s\" => \"%s\"")
                     << i << origName << newName;
 

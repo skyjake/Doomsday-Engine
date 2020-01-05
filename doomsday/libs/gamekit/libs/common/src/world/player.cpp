@@ -295,14 +295,14 @@ void P_TrajectoryNoise(angle_t *angle, float *slope, float degreesPhi, float deg
 {
     Slope trajectory(float(*angle) / ANG180 * DD_PI, *slope);
 
-    const Vector2f angles(degreesPhi * (randf() - randf()), degreesTheta * (randf() - randf()));
+    const Vec2f angles(degreesPhi * (randf() - randf()), degreesTheta * (randf() - randf()));
 
-    const Vector3f front = trajectory.toUnitVec();
-    const Vector3f side  = front.cross(Vector3f(0, 0, 1)).normalize();
-    const Vector3f up    = front.cross(side);
+    const Vec3f front = trajectory.toUnitVec();
+    const Vec3f side  = front.cross({0, 0, 1}).normalize();
+    const Vec3f up    = front.cross(side);
 
-    trajectory = Slope::fromVec(Matrix4f::rotate(angles.x, up) *
-                                Matrix4f::rotate(angles.y, side) * front);
+    trajectory = Slope::fromVec(Mat4f::rotate(angles.x, up) *
+                                Mat4f::rotate(angles.y, side) * front);
 
     *angle = angle_t(trajectory.angle / DD_PI * ANG180);
     *slope = trajectory.slope;

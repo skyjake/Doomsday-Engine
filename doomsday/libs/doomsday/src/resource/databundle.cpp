@@ -673,7 +673,7 @@ DE_PIMPL(DataBundle), public Lockable
                 if (!notes.isEmpty())
                 {
                     notes.replace(RegExp::WHITESPACE, " "); // normalize whitespace
-                    notes.remove('\r'); // begone foul MS-DOS
+                    notes.replace("\r", ""); // begone foul MS-DOS
                     meta.set(VAR_NOTES(), notes);
                 }
             }

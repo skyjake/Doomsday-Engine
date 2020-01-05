@@ -89,8 +89,6 @@ DE_EXTERN_C audiointerface_music_t audiodQuickTimeMusic;
 
 static AudioSystem *theAudioSystem;
 
-static duint const SOUND_LOGICAL_PURGEINTERVAL = 2000;  ///< 2 seconds
-
 static byte sfxOneSoundPerEmitter;  //< @c false= Traditional Doomsday behavior: allow sounds to overlap.
 
 static const duint SOUND_LOGICAL_PURGEINTERVAL = 2000;  ///< 2 seconds
@@ -660,7 +658,7 @@ DE_PIMPL(AudioSystem)
         ScriptSystem::get().addNativeModule("Audio", module);
 #if defined(__CLIENT__)
             binder.init(module)
-                << DENG2_FUNC(Audio_LocalSound, "localSound", "id" << "volume");
+                << DE_FUNC(Audio_LocalSound, "localSound", "id" << "volume");
 #endif
         }
 

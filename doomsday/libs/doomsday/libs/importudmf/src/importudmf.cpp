@@ -267,9 +267,9 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                         const int offsety = side["offsety"]->asInt();
                         float     opacity = 1.f;
 
-                        const auto topTex = texName(side["texturetop"]   );
-                        const auto midTex = texName(side["texturemiddle"]);
-                        const auto botTex = texName(side["texturebottom"]);
+                        const auto topTex = texName(*side["texturetop"]   );
+                        const auto midTex = texName(*side["texturemiddle"]);
+                        const auto botTex = texName(*side["texturebottom"]);
 
                         struct de_api_side_section_s top = {
                             topTex,

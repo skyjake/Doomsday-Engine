@@ -86,8 +86,8 @@ void DoomsdayApp::initBindings(Binder &binder)
     {
         Record &player = appModule.addSubrecord("Player");
         binder.init(player)
-            << DENG2_FUNC_NOARG(Player_Id, "id")
-            << DENG2_FUNC_NOARG(Player_Thing, "thing");
+            << DE_FUNC_NOARG(Player_Id,     "id")
+            << DE_FUNC_NOARG(Player_Thing,  "thing");
     }
 
     binder.init(scr["FS"])

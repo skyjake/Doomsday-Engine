@@ -743,11 +743,6 @@ DE_PIMPL(MapImporter)
         return int(&sector - sectors.data());
     }
 
-    /// @todo fixme: A real performance killer...
-    inline AutoStr *composeMaterialRef(MaterialId id) {
-        return AutoStr_FromTextStd(materials.find(id));
-    }
-
     void readVertexes(de::Reader &from, dint numElements)
     {
         vertices.resize(size_t(numElements));
@@ -757,15 +752,17 @@ DE_PIMPL(MapImporter)
         {
             switch (format)
             {
-            case Id1MapRecognizer::Doom64Format: {
+                case Id1MapRecognizer::Doom64Format:
+                {
                     // 16:16 fixed-point.
-                dint32 x, y;
-                from >> x >> y;
+                    dint32 x, y;
+                    from >> x >> y;
                     vert.pos.x = FIX2FLT(x);
                     vert.pos.y = FIX2FLT(y);
                     break;
                 }
-                default: {
+                default:
+                {
                     dint16 x, y;
                     from >> x >> y;
                     vert.pos.x = x;
@@ -943,7 +940,7 @@ DE_PIMPL(MapImporter)
 
     std::vector<double> findSectorIntercepts(const SectorDef &sector, const Vec2d &start, const Vec2d &dir) const
     {
-        const Vector2d end = start + dir;
+        const Vec2d end = start + dir;
 
         std::vector<double> intercepts;
         for (int i : sector.lines)
@@ -973,9 +970,9 @@ DE_PIMPL(MapImporter)
      *
      * @return A point inside the sector.
      */
-    Vector2d findPointInsideSector(const SectorDef &sector) const
+    Vec2d findPointInsideSector(const SectorDef &sector) const
     {
-        Vector2d inside;
+        Vec2d inside;
         int count = 0;
         for (int i : sectorVertices(sector))
         {
@@ -994,21 +991,21 @@ DE_PIMPL(MapImporter)
                 intercepts = findSectorIntercepts(sector, inside, dir);
             }
             if (intercepts.empty())
-                {
+            {
                 dir = {0, -1};
                 intercepts = findSectorIntercepts(sector, inside, dir);
-                }
+            }
 
             if (intercepts.size() > 0 && intercepts.size() % 2 == 0)
             {
-                qDebug("(%f,%f) is not inside!", inside.x, inside.y);
+                LOGDEV_MAP_VERBOSE("(%f,%f) is not inside!") << inside.x << inside.y;
 
                 const Vec2d first  = inside + dir * intercepts[0];
                 const Vec2d second = inside + dir * intercepts[1];
 
                 inside = (first + second) * 0.5f;
 
-                qDebug("  -> choosing (%f,%f) instead", inside.x, inside.y);
+                LOGDEV_MAP_VERBOSE("  -> choosing (%f,%f) instead") << inside.x << inside.y;
             }
         }
 
@@ -1084,7 +1081,8 @@ DE_PIMPL(MapImporter)
             sector.hackParams.flags.linkFloorPlane     = true;
             sector.hackParams.flags.linkCeilingPlane   = true;
 
-            LOGDEV_MAP_VERBOSE("Sector %d contained by %d") << indexOf(sector) << sector.visPlaneLinkSector;
+            LOGDEV_MAP_VERBOSE("Sector %d contained by %d")
+                << indexOf(sector) << sector.hackParams.visPlaneLinkTargetSector;
         }
     }
 
@@ -1181,7 +1179,7 @@ DE_PIMPL(MapImporter)
                     if(i->xArgs[1] == n + 1)
                     {
                         // Add this line to the list.
-                        polyLines.append( i - lines.begin() );
+                        polyLines.append(i - lines.begin());
                         foundAnotherLine = true;
 
                         // Clear any special.
@@ -1280,7 +1278,7 @@ DE_PIMPL(MapImporter)
             const auto *line = *iter;
             erase(iter);
             return line;
-    }
+        }
     };
 
     void analyze()
@@ -1350,12 +1348,12 @@ DE_PIMPL(MapImporter)
                         {
                             if (nextVertex == loop.front()->v[0] || nextVertex == loop.front()->v[1])
                             {
-                                qDebug("sector %d has a self-ref loop:", sectorIndex);
+                                LOGDEV_MAP_VERBOSE("sector %d has a self-ref loop:") << sectorIndex;
                                 for (const auto *ld : loop)
                                 {
                                     const int lineIndex = int(ld - lines.data());
                                     sector.selfRefLoop.push_back(lineIndex);
-                                    qDebug("    line %d", lineIndex);
+                                    LOGDEV_MAP_VERBOSE("    line %d") << lineIndex;
                                 }
                                 sector.hackFlags |= HACK_HAS_SELF_REFERENCING_LOOP;
                                 break;
@@ -1373,7 +1371,7 @@ DE_PIMPL(MapImporter)
                                     {
                                         // Multiple self-referencing lines of the same sector
                                         // connect to this vertex. This is likely a 3D bridge.
-                                        qDebug("possible 3D bridge in sector %d", sectorIndex);
+                                        LOGDEV_MAP_VERBOSE("possible 3D bridge in sector %d") << sectorIndex;
                                         nextLine = nullptr;
                                         break;
                                     }
@@ -1391,9 +1389,9 @@ DE_PIMPL(MapImporter)
                 }
 
                 if (!selfRefLines.empty() && !hasSingleSided)
-        {
+                {
                     sector.hackFlags |= HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE;
-                    qDebug("possibly a self-referencing sector %d", int(&sector - sectors.data()));
+                    LOGDEV_MAP_VERBOSE("possibly a self-referencing sector %d") << int(&sector - sectors.data());
                 }
             }
 
@@ -1406,7 +1404,7 @@ DE_PIMPL(MapImporter)
 
                 if (!(sector.hackFlags & (HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE |
                                           HACK_HAS_SELF_REFERENCING_LOOP)))
-            {
+                {
                     continue;
                 }
 
@@ -1425,7 +1423,7 @@ DE_PIMPL(MapImporter)
                     if (!isSelfRef && !(sector.hackFlags & HACK_HAS_SELF_REFERENCING_LOOP))
                     {
                         if (!line.isTwoSided())
-                {
+                        {
                             good = false;
                             break;
                         }
@@ -1433,13 +1431,13 @@ DE_PIMPL(MapImporter)
                         const int other = otherSector(line, sectorIndex);
                         if (other >= 0 && !(sectors[other].hackFlags &
                                             HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE))
-                    {
-                        good = false;
-                        break;
+                        {
+                            good = false;
+                            break;
                         }
-                if (!(sector.hackFlags & HACK_HAS_SELF_REFERENCING_LOOP) &&
                     }
                 }
+                if (!(sector.hackFlags & HACK_HAS_SELF_REFERENCING_LOOP) &&
                     float(numSelfRef) / float(sector.lines.size()) < 0.25f)
                 {
                     // Mostly regular lines and no loops.
@@ -1450,9 +1448,8 @@ DE_PIMPL(MapImporter)
                     foundSelfRefs = true;
                     sector.hackFlags |= HACK_SELF_REFERENCING;
                     LOGDEV_MAP_VERBOSE("self-referencing sector %d (ceil:%s floor:%s)")
-<< sectorIndex
-  <<  materials.find(sector.ceilMaterial).toUtf8().constData(),
-     << materials.find(sector.floorMaterial).toUtf8().constData());
+                        << sectorIndex << materials.find(sector.ceilMaterial)
+                        << materials.find(sector.floorMaterial);
                 }
             }
 
@@ -1608,8 +1605,8 @@ DE_PIMPL(MapImporter)
                     sector.hackFlags |= HACK_MISSING_OUTSIDE_TOP;
                     sector.hackParams.visPlaneLinkTargetSector = surroundingSector;
                     sector.hackParams.flags.linkCeilingPlane = true;
-                    qDebug("sector %d missing outside upper walls (surrounded by sector %d)",
-                           currentSector, surroundingSector);
+                    LOGDEV_MAP_VERBOSE("sector %d missing outside upper walls (surrounded by sector %d)")
+                           << currentSector << surroundingSector;
                 }
             }
         }
@@ -1668,9 +1665,9 @@ DE_PIMPL(MapImporter)
     {
         auto transferSide = [this](int lineIdx, short sideFlags, SideDef *side, LineDef::Side sideIndex)
     {
-            const auto topUri = materials.find(side->topMaterial).toUtf8();
-            const auto midUri = materials.find(side->middleMaterial).toUtf8();
-            const auto botUri = materials.find(side->bottomMaterial).toUtf8();
+            const auto topUri = materials.find(side->topMaterial);
+            const auto midUri = materials.find(side->middleMaterial);
+            const auto botUri = materials.find(side->bottomMaterial);
 
             struct de_api_side_section_s top = {
                 topUri, {float(side->offset[VX]), float(side->offset[VY])}, {1, 1, 1, 1}};
@@ -1745,16 +1742,16 @@ DE_PIMPL(MapImporter)
         if(surfaceTints.empty()) return;
 
         LOGDEV_MAP_XVERBOSE("Transfering surface tints...", "");
-        DE_FOR_EACH(SurfaceTints, i, surfaceTints)
+        for (int idx = 0; idx < int(surfaceTints.size()); idx++)
         {
-            dint idx = i - surfaceTints.begin();
+            auto &i = surfaceTints[idx];
 
-            MPE_GameObjProperty("Light", idx, "ColorR",   DDVT_FLOAT, &i->rgb[0]);
-            MPE_GameObjProperty("Light", idx, "ColorG",   DDVT_FLOAT, &i->rgb[1]);
-            MPE_GameObjProperty("Light", idx, "ColorB",   DDVT_FLOAT, &i->rgb[2]);
-            MPE_GameObjProperty("Light", idx, "XX0",      DDVT_BYTE,  &i->xx[0]);
-            MPE_GameObjProperty("Light", idx, "XX1",      DDVT_BYTE,  &i->xx[1]);
-            MPE_GameObjProperty("Light", idx, "XX2",      DDVT_BYTE,  &i->xx[2]);
+            MPE_GameObjProperty("Light", idx, "ColorR",   DDVT_FLOAT, &i.rgb[0]);
+            MPE_GameObjProperty("Light", idx, "ColorG",   DDVT_FLOAT, &i.rgb[1]);
+            MPE_GameObjProperty("Light", idx, "ColorB",   DDVT_FLOAT, &i.rgb[2]);
+            MPE_GameObjProperty("Light", idx, "XX0",      DDVT_BYTE,  &i.xx[0]);
+            MPE_GameObjProperty("Light", idx, "XX1",      DDVT_BYTE,  &i.xx[1]);
+            MPE_GameObjProperty("Light", idx, "XX2",      DDVT_BYTE,  &i.xx[2]);
         }
     }
 
@@ -1779,7 +1776,7 @@ DE_PIMPL(MapImporter)
         LOGDEV_MAP_XVERBOSE("Transfering things...", "");
         DE_FOR_EACH(Things, i, things)
         {
-            dint idx = i - things.begin();
+            const auto idx = int(i - things.begin());
 
             MPE_GameObjProperty("Thing", idx, "X",            DDVT_SHORT, &i->origin[VX]);
             MPE_GameObjProperty("Thing", idx, "Y",            DDVT_SHORT, &i->origin[VY]);
@@ -1805,31 +1802,6 @@ DE_PIMPL(MapImporter)
             }
         }
     }
-
-#if 0
-    /**
-     * @param lineList  @c NULL, will cause IterFindPolyLines to count the number
-     *                  of lines in the polyobj.
-     */
-    void collectPolyobjLinesWorker(Polyobj::LineIndices &lineList, const Vec2d &point)
-    {
-        DE_FOR_EACH(Lines, i, lines)
-        {
-            // Already belongs to another polyobj?
-            if(i->aFlags & LAF_POLYOBJ) continue;
-
-            // Have we already encounterd this?
-            if(i->validCount == validCount) continue;
-
-            if(point == vertexAsVector2d(i->v[0]))
-            {
-                i->validCount = validCount;
-                lineList.append( i - lines.begin() );
-                collectPolyobjLinesWorker(lineList, vertexAsVector2d(i->v[1]));
-            }
-        }
-    }
-#endif
 };
 
 MapImporter::MapImporter(const Id1MapRecognizer &recognized)
@@ -1838,14 +1810,6 @@ MapImporter::MapImporter(const Id1MapRecognizer &recognized)
     d->format = recognized.format();
     if(d->format == Id1MapRecognizer::UnknownFormat)
         throw LoadError("MapImporter", "Format unrecognized");
-
-#if 0
-    // Allocate the vertices first as a large contiguous array suitable for
-    // passing directly to Doomsday's MapEdit interface.
-    duint vertexCount = recognized.lumps().find(Id1MapRecognizer::VertexData)->second->size()
-                      / Id1MapRecognizer::elementSizeForDataType(d->format, Id1MapRecognizer::VertexData);
-    d->vertCoords.resize(vertexCount * 2);
-#endif
 
     DE_FOR_EACH_CONST(Id1MapRecognizer::Lumps, i, recognized.lumps())
     {

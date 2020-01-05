@@ -38,7 +38,7 @@ namespace world {
 static Value *Function_Thing_AddMom(Context &ctx, const Function::ArgumentValues &args)
 {
     mobj_t &   mo    = ClientServerWorld::contextMobj(ctx);
-    const auto delta = vectorFromValue<Vector3d>(*args.at(0));
+    const auto delta = vectorFromValue<Vec3d>(*args.at(0));
     mo.mom[VX] += delta.x;
     mo.mom[VY] += delta.y;
     mo.mom[VZ] += delta.z;
@@ -62,7 +62,7 @@ static Value *Function_Thing_Height(Context &ctx, const Function::ArgumentValues
 
 static Value *Function_Thing_Mom(Context &ctx, const Function::ArgumentValues &)
 {
-    return new ArrayValue(Vector3d(ClientServerWorld::contextMobj(ctx).mom));
+    return new ArrayValue(Vec3d(ClientServerWorld::contextMobj(ctx).mom));
 }
 
 static Value *Function_Thing_StartSound(Context &ctx, const Function::ArgumentValues &args)
@@ -94,7 +94,7 @@ static Value *Function_Thing_Player(Context &ctx, const Function::ArgumentValues
 
 static Value *Function_Thing_Pos(Context &ctx, const Function::ArgumentValues &)
 {
-    return new ArrayValue(Vector3d(ClientServerWorld::contextMobj(ctx).origin));
+    return new ArrayValue(Vec3d(ClientServerWorld::contextMobj(ctx).origin));
 }
 
 static Value *Function_Thing_Recoil(Context &ctx, const Function::ArgumentValues &args)

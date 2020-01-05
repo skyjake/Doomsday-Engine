@@ -243,16 +243,16 @@ static de::Value *Function_World_SpawnThing(de::Context &, const de::Function::A
 
     mobjtype_t mobjType   = mobjtype_t(Defs().getMobjNum(args.at(0)->asText()));
     int        spawnFlags = args.at(3)->asInt();
-    Vector3d   pos;
+    Vec3d      pos;
 
     if (args.at(1)->size() == 2)
     {
-        pos = vectorFromValue<Vector2d>(*args.at(1));
+        pos = vectorFromValue<Vec2d>(*args.at(1));
         spawnFlags |= MSF_Z_FLOOR;
     }
     else
     {
-        pos = vectorFromValue<Vector3d>(*args.at(1));
+        pos = vectorFromValue<Vec3d>(*args.at(1));
     }
 
     angle_t angle =
@@ -320,7 +320,7 @@ void Common_Load()
     {
         auto &scr = ScriptSystem::get();
 
-        DENG2_ASSERT(gameBindings == nullptr);
+        DE_ASSERT(gameBindings == nullptr);
         gameBindings = new Binder(nullptr, Binder::FunctionsOwned); // must delete when plugin unloaded
 
         // Game module.
@@ -332,14 +332,14 @@ void Common_Load()
             setMessageArgs["player"] = new NoneValue;
 
             gameBindings->init(*gameModule)
-                << DENG2_FUNC_DEFS(SetMessage, "setMessage", "message" << "player", setMessageArgs);
+                << DE_FUNC_DEFS(SetMessage, "setMessage", "message" << "player", setMessageArgs);
 
 #if defined(__JHEXEN__)
             {
                 Function::Defaults setYellowMessageArgs;
                 setYellowMessageArgs["player"] = new NoneValue;
                 *gameBindings
-                    << DENG2_FUNC_DEFS(SetYellowMessage, "setYellowMessage", "message" << "player", setYellowMessageArgs);
+                    << DE_FUNC_DEFS(SetYellowMessage, "setYellowMessage", "message" << "player", setYellowMessageArgs);
             }
 #endif
         }
@@ -351,10 +351,10 @@ void Common_Load()
             spawnThingArgs["flags"] = new NumberValue(0.0);
 
             gameBindings->init(scr["World"])
-                << DENG2_FUNC_DEFS(World_SpawnThing,
-                                   "spawnThing",
-                                   "type" << "pos" << "angle" << "flags",
-                                   spawnThingArgs);
+                << DE_FUNC_DEFS(World_SpawnThing,
+                                "spawnThing",
+                                "type" << "pos" << "angle" << "flags",
+                                spawnThingArgs);
 
             Function::Defaults spawnMissileArgs;
             spawnMissileArgs["angle"] = new NoneValue;
@@ -365,10 +365,10 @@ void Common_Load()
             attackArgs["missile"] = new NoneValue;
 
             gameBindings->init(scr.builtInClass("World", "Thing"))
-                << DENG2_FUNC_DEFS(Thing_SpawnMissile,
-                                   "spawnMissile",
-                                   "id" << "angle" << "momz",
-                                   spawnMissileArgs);
+                << DE_FUNC_DEFS(Thing_SpawnMissile,
+                                "spawnMissile",
+                                "id" << "angle" << "momz",
+                                spawnMissileArgs);
 
             auto &world = scr["World"];
             world.set("MSF_Z_FLOOR", MSF_Z_FLOOR);
@@ -430,7 +430,7 @@ void Common_Unload()
 #endif
     }
 
-    DENG2_ASSERT(gameBindings != nullptr);
+    DE_ASSERT(gameBindings != nullptr);
     scr.removeNativeModule("Game");
     delete gameBindings;
     gameBindings = nullptr;

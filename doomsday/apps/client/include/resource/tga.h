@@ -33,17 +33,6 @@
  *
  * @return  Non-zero iff the image is loaded successfully.
  */
-<<<<<<< HEAD:doomsday/libs/doomsday/include/doomsday/resource/tga.h
-LIBDOOMSDAY_PUBLIC uint8_t *TGA_Load(res::FileHandle &file, de::Vec2ui &outSize, int &pixelSize);
-
-/**
- * @return  Textual message detailing the last error encountered else @c 0.
- */
-LIBDOOMSDAY_PUBLIC const char *TGA_LastError();
-
-///@}
-=======
-uint8_t *TGA_Load(de::FileHandle &file, de::Vector2ui &outSize, int &pixelSize);
->>>>>>> 022839e0b9e352a33d3bd144728aad0541779ede:doomsday/apps/client/include/resource/tga.h
+uint8_t *TGA_Load(res::FileHandle &file, de::Vec2ui &outSize, int &pixelSize);
 
 #endif // __cplusplus

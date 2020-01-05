@@ -68,7 +68,7 @@ static void C_DECL A_DoomsdayScript(void *actor)
         Record ns;
         if (plrNum >= 0)
         {
-            ns.add(new Variable(QStringLiteral("player"),
+            ns.add(new Variable(DE_STR("player"),
                                 new RecordValue(plrs.at(plrNum).objectNamespace())));
         }
         ns.add(new Variable(DE_STR("self"), new RecordValue(data.objectNamespace())));

@@ -260,7 +260,7 @@ static Image load(const Block &data)
 
     const int pixelSize = header.depth / 8;
     Image img(Image::Size(header.size.x, header.size.y),
-               pixelSize == 4? Image::RGBA_8888 : Image::RGB_888);
+              pixelSize == 4? Image::RGBA_8888 : Image::RGB_888);
     dbyte *base = reinterpret_cast<dbyte *>(img.bits());
 
     const bool isUpperOrigin = header.flags.testFlag(Header::ScreenOriginUpper);
@@ -329,27 +329,29 @@ static Image load(const Block &data)
         DE_ASSERT(header.depth == 8);
 
         // Read the colormap.
-        std::vector<QRgb> colorTable(256);
+        std::vector<Image::Color> colorTable(256);
         for (int i = 0; i < header.mapCount; ++i)
         {
             uint8_t color[4] = {0, 0, 0, 255};
             ByteRefArray buf(color, 4);
             input.readBytes(header.mapEntrySize / 8, buf);
-
-            DENG2_ASSERT(header.mapIndex + i < 256);
-
-            colorTable[header.mapIndex + i] = qRgba(color[0], color[1], color[2], color[3]);
+            DE_ASSERT(header.mapIndex + i < 256);
+            colorTable[header.mapIndex + i] = {color[0], color[1], color[2], color[3]};
         }
 
-        img = QImage(QSize(header.size.x, header.size.y), QImage::Format_Indexed8);
-        img.setColorTable(colorTable);
+        img = Image(Image::Size(header.size.x, header.size.y), Image::RGBA_8888);
 
-        dbyte *base = img.bits();
+        Block lineBuf(header.size.x);
         for (int y = 0; y < header.size.y; y++)
-        {
-            int inY = (isUpperOrigin? y : (header.size.y - y - 1));
-            ByteRefArray line(base + inY * img.bytesPerLine(), header.size.x);
-            input.readBytesFixedSize(line);
+        {           
+            input.readBytesFixedSize(lineBuf);
+
+            const int inY = (isUpperOrigin ? y : (header.size.y - y - 1));
+            uint8_t * idx = lineBuf.data();
+            for (uint32_t *px = img.row32(inY); px != img.rowEnd32(inY); ++px)
+            {
+                *px = Image::packColor(colorTable[*idx++]);
+            }
         }
     }
 
