@@ -98,6 +98,8 @@ void BlackOutlines(uint8_t* pixels, int width, int height);
  */
 void ColorOutlinesIdx(uint8_t* pixels, int width, int height);
 
+void ColorOutlinesRGBA(uint8_t *buffer, int width, int height);
+
 /**
  * @param pixels     RGB(a) image to be desaturated (in/out).
  * @param width      Width of the image in pixels.
