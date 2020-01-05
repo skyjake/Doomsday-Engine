@@ -333,10 +333,8 @@ DE_GUI_PIMPL(PackageInfoDialog)
                 bundle->lumpDirectory()->mapType() != res::LumpDirectory::None)
             {
                 const int mapCount = bundle->lumpDirectory()->findMaps().count();
-                msg += Stringf("\n\nContains %i map%s: ",
-                    mapCount,
-                    DE_PLURAL_S(mapCount),
-                    String::join(bundle->lumpDirectory()->mapsInContiguousRangesAsText(), ", ").c_str());
+                msg += Stringf("\n\nContains %i map%s: ", mapCount, DE_PLURAL_S(mapCount));
+                msg += String::join(bundle->lumpDirectory()->mapsInContiguousRangesAsText(), ", ");
                 moreMsg += "\n";
 
                 if (bundle->lumpDirectory()->has("DEHACKED"))
