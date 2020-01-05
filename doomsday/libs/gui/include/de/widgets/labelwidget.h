@@ -177,6 +177,8 @@ public:
 
     void setMaximumTextWidth(const Rule &pixels);
 
+    void setMinimumWidth(const Rule &minWidth);
+
     void setMinimumHeight(const Rule &minHeight);
 
     /**

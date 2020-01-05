@@ -332,7 +332,7 @@ DE_GUI_PIMPL(DialogWidget)
                 }
                 else if (i->role() & (Reject | No))
                 {
-                    but.setActionFn([this](){ self().reject(); });
+                    but.setActionFn([this]() { self().reject(); });
                 }
             }
         }
@@ -346,6 +346,12 @@ DE_GUI_PIMPL(DialogWidget)
 
             // Button images must be a certain size.
             but.setOverrideImageSize(style().fonts().font("default").height());
+
+            // Normal buttons should not be too small.
+            if (~i->role() & Action)
+            {
+                but.setMinimumWidth(rule("dialog.button.minwidth"));
+            }
 
             // Set default label?
             if (item.label().isEmpty())

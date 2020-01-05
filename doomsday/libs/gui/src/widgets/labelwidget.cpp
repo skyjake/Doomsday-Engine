@@ -56,6 +56,7 @@ public Font::RichFormat::IStyle
 
     ConstantRule *width;
     ConstantRule *height;
+    IndirectRule *minWidth;
     IndirectRule *minHeight;
     const Rule *outHeight;
     AnimationRule *appearSize;
@@ -73,10 +74,10 @@ public Font::RichFormat::IStyle
     ColorBank::Color altAccentColor;
     const Font::RichFormat::IStyle *richStyle;
 
+    // Content.
     String styledText;
     TextDrawable glText;
     mutable Vec2ui latestTextSize;
-
     std::unique_ptr<ProceduralImage> image;
     std::unique_ptr<ProceduralImage> overlayImage;
     GuiVertexBuilder verts;
@@ -104,6 +105,7 @@ public Font::RichFormat::IStyle
     {
         width     = new ConstantRule(0);
         height    = new ConstantRule(0);
+        minWidth  = new IndirectRule;
         minHeight = new IndirectRule;
         outHeight = new OperatorRule(OperatorRule::Maximum, *height, *minHeight);
 
@@ -117,6 +119,7 @@ public Font::RichFormat::IStyle
     {
         releaseRef(width);
         releaseRef(height);
+        releaseRef(minWidth);
         releaseRef(minHeight);
         releaseRef(outHeight);
         releaseRef(appearSize);
@@ -766,6 +769,11 @@ void LabelWidget::setMaximumTextWidth(const Rule &pixels)
     requestGeometry();
 }
 
+void LabelWidget::setMinimumWidth(const Rule &minWidth)
+{
+    d->minWidth->setSource(minWidth);
+}
+
 void LabelWidget::setMinimumHeight(const Rule &minHeight)
 {
     d->minHeight->setSource(minHeight);
@@ -885,7 +893,7 @@ void LabelWidget::setWidthPolicy(SizePolicy policy)
     d->horizPolicy = policy;
     if (policy == Expand)
     {
-        rule().setInput(Rule::Width, *d->widthRule());
+        rule().setInput(Rule::Width, OperatorRule::maximum(*d->minWidth, *d->widthRule()));
     }
     else
     {
