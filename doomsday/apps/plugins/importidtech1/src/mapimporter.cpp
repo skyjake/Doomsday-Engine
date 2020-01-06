@@ -869,10 +869,14 @@ DENG2_PIMPL(MapImporter)
 
     bool isSelfReferencing(const LineDef &line) const
     {
+        // Use of middle materials indicates that this is not a render hack.
+        const auto *s = line.sides;
         return !(line.aFlags & LAF_POLYOBJ) &&
                line.isTwoSided() &&
-               sides[line.sides[0]].sector == sides[line.sides[1]].sector &&
-               sides[line.sides[0]].sector >= 0;
+               !sides[s[0]].middleMaterial &&
+               !sides[s[1]].middleMaterial &&
+               sides[s[0]].sector == sides[s[1]].sector &&
+               sides[s[0]].sector >= 0;
     }
 
     int otherSector(const LineDef &line, int sectorIndex) const
