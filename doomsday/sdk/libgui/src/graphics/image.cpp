@@ -340,7 +340,8 @@ static QImage load(Block const &data)
 
             DENG2_ASSERT(header.mapIndex + i < 256);
 
-            colorTable[header.mapIndex + i] = qRgba(color[0], color[1], color[2], color[3]);
+            // R/B swapped
+            colorTable[header.mapIndex + i] = qRgba(color[2], color[1], color[0], color[3]);
         }
 
         img = QImage(QSize(header.size.x, header.size.y), QImage::Format_Indexed8);
@@ -355,7 +356,7 @@ static QImage load(Block const &data)
         }
     }
 
-    if (pixelSize == 3)
+    if (pixelSize >= 3)
     {
         img = img.rgbSwapped();
     }
