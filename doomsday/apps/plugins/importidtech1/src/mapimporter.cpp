@@ -1508,6 +1508,11 @@ DENG2_PIMPL(MapImporter)
                         goodHacks = 0;
                         break;
                     }
+                    if (sides[line.sides[0]].sector == sides[line.sides[1]].sector)
+                    {
+                        // Does not affect this hack.
+                        continue;
+                    }
 
                     const auto innerSide = LineDef::Side(sideOfSector(line, currentSector));
                     const auto outerSide = opposite(innerSide);
