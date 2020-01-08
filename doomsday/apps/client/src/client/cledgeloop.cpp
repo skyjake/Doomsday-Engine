@@ -177,7 +177,7 @@ DENG2_PIMPL(ClEdgeLoop)
                 // We'll need to recalculate reverb.
                 /// @todo Use an observer based mechanism in ClientSubsector -ds
                 owner.markReverbDirty();
-                owner.markVisPlanesDirty();
+                //owner.markVisPlanesDirty();
             }
         }
     }

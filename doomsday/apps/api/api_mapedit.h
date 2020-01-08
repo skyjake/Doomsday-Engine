@@ -30,7 +30,8 @@
 /// @ingroup world
 ///@{
 
-struct de_api_side_section_s {
+struct de_api_side_section_s
+{
     const char *material;
     float       offset[2];
     float       color[4];
@@ -39,8 +40,12 @@ struct de_api_side_section_s {
 struct de_api_sector_hacks_s
 {
     struct {
-        int linkFloorPlane   : 1;
-        int linkCeilingPlane : 1;
+        int linkFloorPlane       : 1;
+        int linkCeilingPlane     : 1;
+        int missingInsideTop     : 1;
+        int missingInsideBottom  : 1;
+        int missingOutsideTop    : 1;
+        int missingOutsideBottom : 1;
     } flags;
     int visPlaneLinkTargetSector;
 };

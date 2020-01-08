@@ -59,6 +59,7 @@ class Plane;
 class Sector;
 class Surface;
 class Vertex;
+struct de_api_sector_hacks_s;
 
 #if 0
 #ifdef __CLIENT__
@@ -947,8 +948,7 @@ public:  //- Editing -----------------------------------------------------------
      */
     Sector *createSector(float lightLevel, const de::Vector3f &lightColor,
                          int archiveIndex = MapElement::NoIndex,
-                         int visPlaneLinkTargetSector = MapElement::NoIndex,
-                         int planeLinkBits = 0);
+                         const struct de_api_sector_hacks_s *hacks = nullptr);
 
     /**
      * Provides a list of all the editable lines in the map.
