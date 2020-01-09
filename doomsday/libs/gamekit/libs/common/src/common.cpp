@@ -148,8 +148,8 @@ static mobj_t &instanceMobj(const de::Context &ctx)
     {
         return *mo;
     }
-    throw world::BaseMap::MissingObjectError("instanceMobj",
-                                             String::format("Mobj %d does not exist", id));
+    throw world::Map::MissingObjectError("instanceMobj",
+                                         String::format("Mobj %d does not exist", id));
 }
 
 static de::Value *Function_Thing_SpawnMissile(de::Context &ctx, const de::Function::ArgumentValues &args)

@@ -96,14 +96,6 @@ using namespace world;
 
 dint validCount = 1;  // Increment every time a check is made.
 
-#ifdef __CLIENT__
-//static dfloat handDistance = 300;  //cvar
-static inline RenderSystem &rendSys()
-{
-    return ClientApp::renderSystem();
-}
-#endif
-
 /**
  * Observes the progress of a map conversion and records any issues/problems that
  * are encountered in the process. When asked, compiles a human-readable report
@@ -279,24 +271,6 @@ const dint MapConversionReporter::maxWarningsPerType = 10;
 
 dd_bool ddMapSetup;
 
-// Should we be caching successfully loaded maps?
-//static byte mapCache = true; // cvar
-
-static const char *mapCacheDir = "mapcache/";
-
-/// Determine the identity key for maps loaded from the specified @a sourcePath.
-static String cacheIdForMap(const String &sourcePath)
-{
-    DE_ASSERT(!sourcePath.isEmpty());
-    dushort id = 0;
-    int i = 0;
-    for (Char ch : sourcePath)
-    {
-        id ^= duint(ch) << ((i++ * 3) % 11);
-    }
-    return Stringf("%04x", id);
-}
-
 DE_PIMPL(ClientServerWorld)
 {
     Binder binder;               ///< Doomsday Script bindings for the World.
@@ -305,11 +279,6 @@ DE_PIMPL(ClientServerWorld)
 
     timespan_t time = 0;         ///< World-wide time.
     Scheduler scheduler;
-#if 0
-#ifdef __CLIENT__
-    std::unique_ptr<Hand> hand;  ///< For map editing/manipulation.
-#endif
-#endif // 0
 
     Impl(Public *i) : Base(i)
     {
@@ -338,25 +307,12 @@ DE_PIMPL(ClientServerWorld)
 #endif
     }
 
-    /**
-     * Compose the relative path (relative to the runtime directory) to the
-     * directory of the cache where maps from this source (e.g., the add-on
-     * which contains the map) will reside.
-     *
-     * @param sourcePath  Path to the primary resource file (the source) for
-     *                    the original map data.
-     *
-     * @return  The composed path.
-     */
-    static Path cachePath(const String& sourcePath)
+#if defined(__CLIENT__)
+    static inline RenderSystem &rendSys()
     {
-        if (sourcePath.isEmpty()) return String();
-
-        // Compose the final path.
-        return mapCacheDir + App_CurrentGame().id()
-               / sourcePath.fileNameWithoutExtension()
-               + "-" + cacheIdForMap(sourcePath);
+        return ClientApp::renderSystem();
     }
+#endif
 
     /**
      * Attempt JIT conversion of the map data with the help of a plugin. Note that
@@ -408,37 +364,6 @@ DE_PIMPL(ClientServerWorld)
         return MPE_TakeMap();
     }
 
-#if 0
-    /**
-     * Returns @c true iff data for the map is available in the cache.
-     */
-    bool haveCachedMap(res::MapManifest &mapManifest)
-    {
-        // Disabled?
-        if (!mapCache) return false;
-        return DAM_MapIsValid(mapManifest.cachePath, mapManifest.id());
-    }
-
-    /**
-     * Attempt to load data for the map from the cache.
-     *
-     * @see isCachedDataAvailable()
-     *
-     * @return  @c true if loading completed successfully.
-     */
-    Map *loadMapFromCache(MapManifest &mapManifest)
-    {
-        const Uri mapUri = mapManifest.composeUri();
-        Map *map = DAM_MapRead(mapManifest.cachePath);
-        if (!map)
-            /// Failed to load the map specified from the data cache.
-            throw Error("loadMapFromCache", "Failed loading map \"" + mapUri.asText() + "\" from cache");
-
-        map->_uri = mapUri;
-        return map;
-    }
-#endif
-
     /**
      * Attempt to load the associated map data.
      *
@@ -448,21 +373,11 @@ DE_PIMPL(ClientServerWorld)
     {
         LOG_AS("ClientServerWorld::loadMap");
 
-        /*if (mapManifest.lastLoadAttemptFailed && !forceRetry)
-            return nullptr;
-
-        // Load from cache?
-        if (haveCachedMap(mapManifest))
-        {
-            return loadMapFromCache(mapManifest);
-        }*/
-
         // Try a JIT conversion with the help of a plugin.
         auto *map = convertMap(mapManifest, reporter);
         if (!map)
         {
             LOG_WARNING("Failed conversion of \"%s\".") << mapManifest.composeUri().path();
-            //mapManifest.lastLoadAttemptFailed = true;
         }
         return map;
     }
@@ -479,25 +394,6 @@ DE_PIMPL(ClientServerWorld)
         // We cannot make an editable map current.
         DE_ASSERT(!map->isEditable());
 
-        // Should we cache this map?
-        /*if (mapCache && !haveCachedMap(&map->def()))
-        {
-            // Ensure the destination directory exists.
-            F_MakePath(map->def().cachePath);
-
-            // Cache the map!
-            DAM_MapWrite(map);
-        }*/
-
-#ifdef __CLIENT__
-        // Connect the map to world audiences:
-        /// @todo The map should instead be notified when it is made current
-        /// so that it may perform the connection itself. Such notification
-        /// would also afford the map the opportunity to prepare various data
-        /// which is only needed when made current (e.g., caches for render).
-        self().audienceForFrameBegin() += map;
-#endif
-
         // Print summary information about this map.
         LOG_MAP_NOTE(_E(b) "Current map elements:");
         LOG_MAP_NOTE("%s") << map->elementSummaryAsStyledText();
@@ -509,7 +405,25 @@ DE_PIMPL(ClientServerWorld)
         map->_globalGravity     = mapInfo.getf("gravity");
         map->_effectiveGravity  = map->_globalGravity;
 
+        // Init the thinker lists (public and private).
+        map->thinkers().initLists(0x1 | 0x2);
+
+        // Must be called before we go any further.
+        P_InitUnusedMobjList();
+
+        // Must be called before any mobjs are spawned.
+        map->initNodePiles();
+
+        map->initPolyobjs();
+
 #ifdef __CLIENT__
+        // Connect the map to world audiences.
+        /// @todo The map should instead be notified when it is made current
+        /// so that it may perform the connection itself. Such notification
+        /// would also afford the map the opportunity to prepare various data
+        /// which is only needed when made current (e.g., caches for render).
+        self().audienceForFrameBegin() += map;
+
         // Reconfigure the sky.
         defn::Sky skyDef;
         if (const Record *def = DED_Definitions()->skies.tryFind("id", mapInfo.gets("skyId")))
@@ -524,18 +438,7 @@ DE_PIMPL(ClientServerWorld)
 
         // Set up the SkyDrawable to get its config from the map's Sky.
         map->skyAnimator().setSky(&rendSys().sky().configure(&map->sky()));
-#endif
 
-        // Init the thinker lists (public and private).
-        map->thinkers().initLists(0x1 | 0x2);
-
-        // Must be called before we go any further.
-        P_InitUnusedMobjList();
-
-        // Must be called before any mobjs are spawned.
-        map->initNodePiles();
-
-#ifdef __CLIENT__
         // Prepare the client-side data.
         Cl_ResetFrame();
         Cl_InitPlayers();  // Player data, too.
@@ -585,32 +488,8 @@ DE_PIMPL(ClientServerWorld)
                 }
             }
 #endif
-
             return LoopContinue;
         });
-
-#ifdef __CLIENT__
-        /*
-        /// @todo Refactor away:
-        map->forAllSectors([] (Sector &sector)
-        {
-            return sector.forAllSubsectors([] (Subsector &subsec)
-            {
-                return subsec.as<ClientSubsector>().forAllEdgeLoops([] (ClEdgeLoop &loop)
-                {
-                    loop.fixSurfacesMissingMaterials();
-                    return LoopContinue;
-                });
-            });
-        });
-        */
-#endif
-
-        map->initPolyobjs();
-
-#ifdef __CLIENT__
-        App_AudioSystem().worldMapChanged();
-#endif
 
 #ifdef __SERVER__
         if (::isServer)
@@ -621,6 +500,8 @@ DE_PIMPL(ClientServerWorld)
 #endif
 
 #ifdef __CLIENT__
+        App_AudioSystem().worldMapChanged();
+
         GL_SetupFogFromMapInfo(mapInfo.accessedRecordPtr());
 
         //map->initLightGrid();
@@ -644,7 +525,6 @@ DE_PIMPL(ClientServerWorld)
         map->initContactBlockmaps();
         R_InitContactLists(*map);
         rendSys().worldSystemMapChanged(*map);
-        //map->initBias();  // Shadow bias sources and surfaces.
 
         // Rewind/restart material animators.
         /// @todo Only rewind animators responsible for map-surface contexts.
@@ -657,6 +537,15 @@ DE_PIMPL(ClientServerWorld)
                 return LoopContinue;
             });
         });
+
+        // Make sure that the next frame doesn't use a filtered viewer.
+        R_ResetViewer();
+
+        // Clear any input events that might have accumulated during setup.
+        ClientApp::inputSystem().clearEvents();
+
+        // Inform the timing system to suspend the starting of the clock.
+        firstFrameAfterLoad = true;
 #endif
 
         /*
@@ -688,17 +577,6 @@ DE_PIMPL(ClientServerWorld)
         // appear that no time has passed during the setup.
         DD_ResetTimer();
 
-#ifdef __CLIENT__
-        // Make sure that the next frame doesn't use a filtered viewer.
-        R_ResetViewer();
-
-        // Clear any input events that might have accumulated during setup.
-        ClientApp::inputSystem().clearEvents();
-
-        // Inform the timing system to suspend the starting of the clock.
-        firstFrameAfterLoad = true;
-#endif
-
         Z_PrintStatus();
 
         // Inform interested parties that the "current" map has changed.
@@ -710,8 +588,6 @@ DE_PIMPL(ClientServerWorld)
     {
         auto *map = self().mapPtr();
 
-        scheduler.clear();
-
 #ifdef __CLIENT__
         if (map)
         {
@@ -719,7 +595,6 @@ DE_PIMPL(ClientServerWorld)
             /// @todo Map should handle this.
             self().audienceForFrameBegin() -= map;
         }
-#endif
 
         // As the memory zone does not provide the mechanisms to prepare another
         // map in parallel we must free the current map first.
@@ -727,9 +602,11 @@ DE_PIMPL(ClientServerWorld)
         /// mechanisms allowed more fine grained control. It is no longer useful
         /// for allocating memory used elsewhere so it should be repurposed for
         /// this usage specifically.
-#ifdef __CLIENT__
         R_DestroyContactLists();
-#endif
+#endif // __CLIENT__
+
+        scheduler.clear();
+
         delete map;
         self().setMap(nullptr);
 
@@ -774,16 +651,6 @@ DE_PIMPL(ClientServerWorld)
     }
 
 #ifdef __CLIENT__
-#if 0
-    void updateHandOrigin()
-    {
-        DE_ASSERT(hand != nullptr && self().hasMap());
-
-        const viewdata_t *viewData = &::viewPlayer->viewport();
-        hand->setOrigin(viewData->current.origin + viewData->frontVec.xzy() * handDistance);
-    }
-#endif // 0
-
     DE_PIMPL_AUDIENCE(FrameBegin)
     DE_PIMPL_AUDIENCE(FrameEnd)
 #endif
@@ -928,65 +795,6 @@ void ClientServerWorld::tick(timespan_t elapsed)
 #endif
 }
 
-#ifdef __CLIENT__
-#if 0
-Hand &ClientServerWorld::hand(ddouble *distance) const
-{
-    // Time to create the hand?
-    if (!d->hand)
-    {
-        d->hand.reset(new Hand());
-        audienceForFrameEnd() += *d->hand;
-        if (hasMap())
-        {
-            d->updateHandOrigin();
-        }
-    }
-    if (distance)
-    {
-        *distance = handDistance;
-    }
-    return *d->hand;
-}
-#endif // 0
-
-void ClientServerWorld::beginFrame(bool resetNextViewer)
-{
-    // Notify interested parties that a new frame has begun.
-    DE_NOTIFY(FrameBegin, i) i->worldSystemFrameBegins(resetNextViewer);
-}
-
-void ClientServerWorld::endFrame()
-{
-#if 0
-    if (hasMap() && d->hand)
-    {
-        d->updateHandOrigin();
-
-        // If the HueCircle is active update the current edit color.
-        if (HueCircle *hueCircle = SBE_HueCircle())
-        {
-            const viewdata_t *viewData = &viewPlayer->viewport();
-            d->hand->setEditColor(hueCircle->colorAt(viewData->frontVec));
-        }
-    }
-#endif
-
-    // Notify interested parties that the current frame has ended.
-    DE_NOTIFY(FrameEnd, i) i->worldSystemFrameEnds();
-}
-
-#endif  // __CLIENT__
-
-void ClientServerWorld::consoleRegister()  // static
-{
-    //C_VAR_BYTE ("map-cache", &mapCache, 0, 0, 1);
-#ifdef __CLIENT__
-    //C_VAR_FLOAT("edit-bias-grab-distance", &handDistance, 0, 10, 1000);
-#endif
-    world::Map::consoleRegister();
-}
-
 mobj_t &ClientServerWorld::contextMobj(const Context &ctx) // static
 {
     /// @todo Not necessarily always the current map. -jk
@@ -999,3 +807,19 @@ mobj_t &ClientServerWorld::contextMobj(const Context &ctx) // static
     }
     return *mo;
 }
+
+#ifdef __CLIENT__
+
+void ClientServerWorld::beginFrame(bool resetNextViewer)
+{
+    // Notify interested parties that a new frame has begun.
+    DE_NOTIFY(FrameBegin, i) i->worldSystemFrameBegins(resetNextViewer);
+}
+
+void ClientServerWorld::endFrame()
+{
+    // Notify interested parties that the current frame has ended.
+    DE_NOTIFY(FrameEnd, i) i->worldSystemFrameEnds();
+}
+
+#endif  // __CLIENT__

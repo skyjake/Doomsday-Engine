@@ -70,7 +70,7 @@ public:
     LumpPos find(const String &lumpName) const;
 
     List<LumpPos> findAll(const String &lumpName) const;
-    
+
     List<LumpRange> flatRanges() const;
 
     /**

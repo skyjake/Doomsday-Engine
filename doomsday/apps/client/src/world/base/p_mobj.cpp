@@ -213,16 +213,6 @@ DE_EXTERN_C void Mobj_SetState(mobj_t *mob, int statenum)
     }
 }
 
-Vec3d Mobj_Origin(const mobj_t &mob)
-{
-    return Vec3d(mob.origin);
-}
-
-Vec3d Mobj_Center(mobj_t &mob)
-{
-    return Vec3d(mob.origin[0], mob.origin[1], mob.origin[2] + mob.height / 2);
-}
-
 dd_bool Mobj_SetOrigin(struct mobj_s *mob, coord_t x, coord_t y, coord_t z)
 {
     if(!gx.MobjTryMoveXYZ)
@@ -875,11 +865,6 @@ dfloat Mobj_Alpha(const mobj_t &mob)
     return alpha;
 }
 
-coord_t Mobj_Radius(const mobj_t &mobj)
-{
-    return mobj.radius;
-}
-
 #ifdef __CLIENT__
 coord_t Mobj_ShadowRadius(const mobj_t &mobj)
 {
@@ -919,14 +904,6 @@ coord_t Mobj_VisualRadius(const mobj_t &mob)
 
     // Use the physical radius.
     return Mobj_Radius(mob);
-}
-
-AABoxd Mobj_Bounds(const mobj_t &mobj)
-{
-    const Vec2d origin = Mobj_Origin(mobj);
-    const ddouble radius  = Mobj_Radius(mobj);
-    return AABoxd(origin.x - radius, origin.y - radius,
-                  origin.x + radius, origin.y + radius);
 }
 
 D_CMD(InspectMobj)

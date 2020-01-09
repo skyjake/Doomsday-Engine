@@ -95,7 +95,7 @@
  * Define @c DE_INTERNAL_DATA_ACCESS if access to the internal map data
  * structures is needed.
  */
-#if !defined __DOOMSDAY__ && !defined DE_INTERNAL_DATA_ACCESS
+#if !defined __DOOMSDAY__ && !defined __LIBDOOMSDAY__ && !defined DE_INTERNAL_DATA_ACCESS
 
 // Opaque types for public use.
 struct convexsubspace_s;
@@ -112,11 +112,15 @@ struct polyobj_s;
 typedef struct convexsubspace_s ConvexSubspace;
 typedef struct interceptor_s    Interceptor;
 typedef struct line_s           Line;
-typedef struct material_s       world_Material;
 typedef struct plane_s          Plane;
 typedef struct side_s           Side;
 typedef struct sector_s         Sector;
 typedef struct vertex_s         Vertex;
+
+typedef struct interceptor_s    world_Interceptor;
+typedef struct line_s           world_Line;
+typedef struct material_s       world_Material;
+typedef struct sector_s         world_Sector;
 
 #elif defined __cplusplus
 
@@ -124,14 +128,18 @@ typedef struct vertex_s         Vertex;
 namespace world
 {
     class ConvexSubspace;
-    class Material; // libdoomsday/world
+    class Material;
+    class Line;
+    class Plane;
+    class Sector;
+    class Vertex;
+    class Interceptor;
 }
-typedef world::Material world_Material;
-class Interceptor;
-class Line;
-class Plane;
-class Sector;
-class Vertex;
+
+using world_Line        = world::Line;
+using world_Material    = world::Material;
+using world_Interceptor = world::Interceptor;
+using world_Sector      = world::Sector;
 
 #endif
 
@@ -165,7 +173,7 @@ typedef struct lineopening_s {
 
 #ifdef __cplusplus
     lineopening_s() : top(0), bottom(0), range(0), lowFloor(0) {}
-    lineopening_s(const Line &line);
+    lineopening_s(const world_Line &line);
     lineopening_s &operator = (const lineopening_s &other);
 #endif
 } LineOpening;
@@ -191,10 +199,10 @@ typedef struct intercept_s {
     intercepttype_t type;
     union {
         struct mobj_s *mobj;
-        Line *line;
+        world_Line *line;
     };
     double distance;    ///< Along trace vector as a fraction.
-    Interceptor *trace; ///< Trace which produced the intercept.
+    world_Interceptor *trace; ///< Trace which produced the intercept.
 } Intercept;
 
 typedef int (*traverser_t) (const Intercept *intercept, void *context);
@@ -274,14 +282,14 @@ DE_API_TYPEDEF(Map)
      *
      * @param flags  @ref lineIteratorFlags
      */
-    int             (*L_BoxIterator)(const AABoxd *box, int flags, int (*callback) (Line *, void *), void *context);
+    int             (*L_BoxIterator)(const AABoxd *box, int flags, int (*callback) (world_Line *, void *), void *context);
 
-    int             (*L_BoxOnSide)(Line *line, const AABoxd *box);
-    int             (*L_BoxOnSide_FixedPrecision)(Line *line, const AABoxd *box);
-    coord_t         (*L_PointDistance)(Line *line, coord_t const point[2], coord_t *offset);
-    coord_t         (*L_PointOnSide)(const Line *line, coord_t const point[2]);
-    int             (*L_MobjsIterator)(Line *line, int (*callback) (struct mobj_s *, void *), void *context);
-    void            (*L_Opening)(Line *line, LineOpening *opening);
+    int             (*L_BoxOnSide)(world_Line *line, const AABoxd *box);
+    int             (*L_BoxOnSide_FixedPrecision)(world_Line *line, const AABoxd *box);
+    coord_t         (*L_PointDistance)(world_Line *line, coord_t const point[2], coord_t *offset);
+    coord_t         (*L_PointOnSide)(const world_Line *line, coord_t const point[2]);
+    int             (*L_MobjsIterator)(world_Line *line, int (*callback) (struct mobj_s *, void *), void *context);
+    void            (*L_Opening)(world_Line *line, LineOpening *opening);
 
     // Sectors
 
@@ -293,7 +301,7 @@ DE_API_TYPEDEF(Map)
      * (Lovely name; actually this is a combination of SectorMobjs and
      * a bunch of LineMobjs iterations.)
      */
-    int             (*S_TouchingMobjsIterator)(Sector *sector, int (*callback) (struct mobj_s *, void *), void *context);
+    int             (*S_TouchingMobjsIterator)(world_Sector *sector, int (*callback) (struct mobj_s *, void *), void *context);
 
     /**
      * Determine the Sector on the back side of the binary space partition that
@@ -311,7 +319,7 @@ DE_API_TYPEDEF(Map)
      *
      * @return  Sector attributed to the BSP leaf at the specified point.
      */
-    Sector         *(*S_AtPoint_FixedPrecision)(coord_t const point[2]);
+    world_Sector   *(*S_AtPoint_FixedPrecision)(coord_t const point[2]);
 
     // Map Objects
 
@@ -353,7 +361,7 @@ DE_API_TYPEDEF(Map)
      * The callback function will be called once for each line that crosses
      * trough the object. This means all the lines will be two-sided.
      */
-    int             (*MO_LinesIterator)(struct mobj_s *mobj, int (*callback) (Line *, void *), void *context);
+    int             (*MO_LinesIterator)(struct mobj_s *mobj, int (*callback) (world_Line *, void *), void *context);
 
     /**
      * Increment validCount before calling this routine. The callback function
@@ -361,7 +369,7 @@ DE_API_TYPEDEF(Map)
      * partly inside). This is not a 3D check; the mobj may actually reside
      * above or under the sector.
      */
-    int             (*MO_SectorsIterator)(struct mobj_s *mobj, int (*callback) (Sector *, void *), void *context);
+    int             (*MO_SectorsIterator)(struct mobj_s *mobj, int (*callback) (world_Sector *, void *), void *context);
 
     /**
      * Calculate the visible @a origin of @a mobj in world space, including
@@ -378,7 +386,7 @@ DE_API_TYPEDEF(Map)
      *
      * @param mobj  Mobj instance.
      */
-    Sector         *(*MO_Sector)(const struct mobj_s *mobj);
+    world_Sector   *(*MO_Sector)(const struct mobj_s *mobj);
 
     // Polyobjs
 
@@ -404,7 +412,7 @@ DE_API_TYPEDEF(Map)
     /**
      * Returns a pointer to the first Line in the polyobj.
      */
-    Line           *(*PO_FirstLine)(struct polyobj_s *po);
+    world_Line      *(*PO_FirstLine)(struct polyobj_s *po);
 
     /**
      * Lookup a Polyobj on the current map by unique ID.
@@ -466,17 +474,17 @@ DE_API_TYPEDEF(Map)
     /**
      * Provides read-only access to the origin in map space for the given @a trace.
      */
-    const coord_t * (*I_Origin)(const Interceptor *trace);
+    const coord_t * (*I_Origin)(const world_Interceptor *trace);
 
     /**
      * Provides read-only access to the direction in map space for the given @a trace.
      */
-    const coord_t * (*I_Direction)(const Interceptor *trace);
+    const coord_t * (*I_Direction)(const world_Interceptor *trace);
 
     /**
      * Provides read-only access to the line opening state for the given @a trace.
      */
-    const LineOpening *(*I_Opening)(const Interceptor *trace);
+    const LineOpening *(*I_Opening)(const world_Interceptor *trace);
 
     /**
      * Update the "opening" state for the specified @a trace in accordance with
@@ -485,7 +493,7 @@ DE_API_TYPEDEF(Map)
      * @return  @c true iff after the adjustment the opening range is positive,
      * i.e., the top Z coordinate is greater than the bottom Z.
      */
-    dd_bool         (*I_AdjustOpening)(Interceptor *trace, Line *line);
+    dd_bool         (*I_AdjustOpening)(world_Interceptor *trace, world_Line *line);
 
     /*
      * Map Updates (DMU):

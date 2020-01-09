@@ -3569,7 +3569,7 @@ static dint lineAngleSorter(const void *a, const void *b)
     LineOwner *own[2] = { (LineOwner *)a, (LineOwner *)b };
     for (duint i = 0; i < 2; ++i)
     {
-        if (own[i]->_link[Anticlockwise]) // We have a cached result.
+        if (own[i]->_link[CounterClockwise]) // We have a cached result.
         {
             angles[i] = own[i]->angle();
         }
@@ -3584,7 +3584,7 @@ static dint lineAngleSorter(const void *a, const void *b)
             own[i]->_angle = angles[i] = bamsAtan2(-100 *dx, 100 * dy);
 
             // Mark as having a cached angle.
-            own[i]->_link[Anticlockwise] = (LineOwner *) 1;
+            own[i]->_link[CounterClockwise] = (LineOwner *) 1;
         }
     }
 
@@ -3697,7 +3697,7 @@ static void setVertexLineOwner(Vertex *vtx, Line *lineptr, LineOwner **storage)
     LineOwner *newOwner = (*storage)++;
 
     newOwner->_line = lineptr;
-    newOwner->_link[Anticlockwise] = nullptr;
+    newOwner->_link[CounterClockwise] = nullptr;
 
     // Link it in.
     // NOTE: We don't bother linking everything at this stage since we'll
@@ -3772,7 +3772,7 @@ void buildVertexLineOwnerRings(List<Vertex *> const &vertexs, List<Line *> &edit
         LineOwner *p = last->next();
         while (p)
         {
-            p->_link[Anticlockwise] = last;
+            p->_link[CounterClockwise] = last;
 
             // Convert to a relative angle between last and this.
             last->_angle = last->angle() - p->angle();
@@ -3781,7 +3781,7 @@ void buildVertexLineOwnerRings(List<Vertex *> const &vertexs, List<Line *> &edit
             p = p->next();
         }
         last->_link[Clockwise] = v->_lineOwners;
-        v->_lineOwners->_link[Anticlockwise] = last;
+        v->_lineOwners->_link[CounterClockwise] = last;
 
         // Set the angle of the last owner.
         last->_angle = last->angle() - firstAngle;

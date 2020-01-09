@@ -18,12 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_WORLD_LINEOWNER_H
-#define DE_WORLD_LINEOWNER_H
+#pragma once
 
 #include <de/legacy/binangle.h>
-
 #include <de/Vector>
+
+namespace world {
 
 class Line;
 
@@ -56,7 +56,7 @@ public:
     }*/
 
     /**
-     * Returns @c true iff the previous line owner in the ring (anticlockwise)
+     * Returns @c true iff the previous line owner in the ring (CounterClockwise)
      * is not the same as this LineOwner.
      *
      * @see prev()
@@ -75,21 +75,21 @@ public:
      * Navigate to the adjacent line owner in the ring (if any). Note this may
      * be the same LineOwner.
      */
-    LineOwner *navigate(de::ClockDirection dir = de::Anticlockwise) { return _link[dir]; }
+    LineOwner *navigate(de::ClockDirection dir = de::CounterClockwise) { return _link[dir]; }
 
     /// @copydoc navigate()
-    const LineOwner *navigate(de::ClockDirection dir = de::Anticlockwise) const { return _link[dir]; }
+    const LineOwner *navigate(de::ClockDirection dir = de::CounterClockwise) const { return _link[dir]; }
 
     /**
-     * Returns the previous line owner in the ring (anticlockwise). Note that
+     * Returns the previous line owner in the ring (CounterClockwise). Note that
      * this may be the same LineOwner.
      *
      * @see hasPrev()
      */
-    inline LineOwner *prev() { return navigate(de::Anticlockwise); }
+    inline LineOwner *prev() { return navigate(de::CounterClockwise); }
 
     /// @copydoc prev()
-    inline const LineOwner *prev() const { return navigate(de::Anticlockwise); }
+    inline const LineOwner *prev() const { return navigate(de::CounterClockwise); }
 
     /**
      * Returns the next line owner in the ring (clockwise). Note that this may
@@ -102,7 +102,7 @@ public:
     /// @copydoc next()
     inline const LineOwner *next() const { return navigate(de::Clockwise); }
 
-//    inline LineOwner *prevPtr() { return _link[de::Anticlockwise]; }
+//    inline LineOwner *prevPtr() { return _link[de::CounterClockwise]; }
 //    inline LineOwner *nextPtr() { return _link[de::Clockwise]; }
 
     /**
@@ -126,4 +126,4 @@ public:
     const de::Vec2d &extendedShadowOffset() const { return _shadowOffsets.extended; }
 };
 
-#endif // DE_WORLD_LINEOWNER_H
+} // namespace world

@@ -33,7 +33,7 @@ namespace de
 
 namespace world
 {
-    class BaseMap;
+    class Map;
     class Materials;
 }
 
@@ -62,7 +62,7 @@ public:
      *
      * @see hasMap()
      */
-    world::BaseMap &map() const;
+    world::Map &map() const;
 
     world::Materials &       materials();
     const world::Materials & materials() const;
@@ -71,7 +71,7 @@ public:
     void timeChanged(const de::Clock &) override;
 
 protected:
-    void setMap(world::BaseMap *map);
+    void setMap(world::Map *map);
 
 public:
     /// Notified whenever the "current" map changes.

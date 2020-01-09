@@ -42,9 +42,9 @@
 #endif
 
 #include "Mesh"
-#include "Line"
-#include "Polyobj"
-#include "world/bspleaf.h"
+#include <doomsday/world/line.h>
+#include <doomsday/world/polyobj.h>
+#include <doomsday/world/bspleaf.h>
 #include "world/p_object.h"
 
 #ifdef __CLIENT__
@@ -81,10 +81,12 @@ class Thinkers;
 class ClSkyPlane;
 #endif
 
+}
+
 /**
  * World map.
  */
-class Map : public world::BaseMap
+class Map : public world::Map
 #ifdef __CLIENT__
 , DE_OBSERVES(ClientServerWorld, FrameBegin)
 #endif

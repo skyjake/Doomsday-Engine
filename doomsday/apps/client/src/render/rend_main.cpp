@@ -3014,7 +3014,7 @@ static void writeSubspacePlane(Plane &plane)
 
     // Allocate position coordinates.
     Vec3f *posCoords;
-    duint vertCount = buildSubspacePlaneGeometry((plane.isSectorCeiling())? Anticlockwise : Clockwise,
+    duint vertCount = buildSubspacePlaneGeometry((plane.isSectorCeiling())? CounterClockwise : Clockwise,
                                                  plane.heightSmoothed(), &posCoords);
 
     // Draw this section.
@@ -3133,7 +3133,7 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
             scanMaterialOffset = hedge->mapElementAs<LineSideSegment>().lineSideOffset();
 
             // Prepare the edge geometry
-            SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise ? Line::To : Line::From),
+            SkyFixEdge skyEdge(*hedge, fixType, (direction == CounterClockwise ? Line::To : Line::From),
                                scanMaterialOffset);
 
             if (skyEdge.isValid() && skyEdge.bottom().z() < skyEdge.top().z())
@@ -3160,10 +3160,10 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
             if (hedge->hasMapElement())
             {
                 scanMaterialOffset += hedge->mapElementAs<LineSideSegment>().length() *
-                                      (direction == Anticlockwise ? -1 : 1);
+                                      (direction == CounterClockwise ? -1 : 1);
 
                 // Prepare the edge geometry
-                SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::From : Line::To,
+                SkyFixEdge skyEdge(*hedge, fixType, (direction == CounterClockwise)? Line::From : Line::To,
                                    scanMaterialOffset);
 
                 if (!(skyEdge.isValid() && skyEdge.bottom().z() < skyEdge.top().z()))
@@ -3321,7 +3321,7 @@ static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
             // Make geometry.
             Store &verts = ClientApp::renderSystem().buffer();
              gfx::Primitive primitive;
-            uint vertCount = makeFlatSkyMaskGeometry(indices, verts, primitive, *curSubspace, height, Anticlockwise);
+            uint vertCount = makeFlatSkyMaskGeometry(indices, verts, primitive, *curSubspace, height, CounterClockwise);
 
             // Write geometry.
             dlist.write(verts, indices.data(), vertCount, primitive);
@@ -5782,7 +5782,7 @@ static void findMinMaxPlaneHeightsAtVertex(HEdge *base, dint edge,
     // Process neighbors?
     if (!Subsector::isInternalEdge(base))
     {
-        const ClockDirection direction = edge? Clockwise : Anticlockwise;
+        const ClockDirection direction = edge? Clockwise : CounterClockwise;
         HEdge *hedge = base;
         while ((hedge = &SubsectorCirculator::findBackNeighbor(*hedge, direction)) != base)
         {

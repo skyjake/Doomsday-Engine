@@ -249,10 +249,15 @@ public:
      * of the source data is also considered a valid delimiter; no exception
      * will be thrown if the source data ends.
      *
-     * @param byteArray  Destination buffer.
-     * @param delimiter  Delimiter value.
+     * @param byteArray      Destination buffer.
+     * @param delimiter      Delimiter value.
+     * @param keepDelimiter  Delimiter is kept at the end of the buffer.
+     *                       If @c false, @a byteArray will not end with
+     *                       the delimiter.
      */
-    Reader &readUntil(IByteArray &byteArray, IByteArray::Byte delimiter = 0);
+    Reader &readUntil(IByteArray &     byteArray,
+                      IByteArray::Byte delimiter     = 0,
+                      bool             keepDelimiter = true);
 
     /**
      * Reads a line of text ending in a @c \\n character. The source data is

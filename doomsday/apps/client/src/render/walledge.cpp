@@ -570,7 +570,7 @@ struct WallEdge::Impl : public IHPlane
 
     void addNeighborIntercepts(ddouble bottom, ddouble top)
     {
-        const ClockDirection direction = edge ? Clockwise : Anticlockwise;
+        const ClockDirection direction = edge ? Clockwise : CounterClockwise;
 
         const HEdge *hedge = wallHEdge;
         while ((hedge = &SubsectorCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
@@ -702,7 +702,7 @@ struct WallEdge::Impl : public IHPlane
         if(lineSide.line().definesPolyobj())
             return nullptr;
 
-        const ClockDirection direction = (edge? Anticlockwise : Clockwise);
+        const ClockDirection direction = (edge? CounterClockwise : Clockwise);
         const LineOwner &farVertOwner  = *lineSide.line().vertexOwner(lineSide.sideId() ^ edge);
         Line *neighbor;
         if(R_SideBackClosed(lineSide))

@@ -83,15 +83,15 @@ void TriangleStripBuilder::extend(AbstractEdge &edge)
 
     d->reserveElements(2);
 
-    d->positions->append((d->direction == Anticlockwise? to : from).origin());
-    d->positions->append((d->direction == Anticlockwise? from : to).origin());
+    d->positions->append((d->direction == CounterClockwise? to : from).origin());
+    d->positions->append((d->direction == CounterClockwise? from : to).origin());
 
     if(d->buildTexCoords)
     {
         double edgeLength = to.origin().z - from.origin().z;
 
-        d->texcoords->append(edge.materialOrigin() + Vec2f(0, (d->direction == Anticlockwise? 0 : edgeLength)));
-        d->texcoords->append(edge.materialOrigin() + Vec2f(0, (d->direction == Anticlockwise? edgeLength : 0)));
+        d->texcoords->append(edge.materialOrigin() + Vec2f(0, (d->direction == CounterClockwise? 0 : edgeLength)));
+        d->texcoords->append(edge.materialOrigin() + Vec2f(0, (d->direction == CounterClockwise? edgeLength : 0)));
     }
 }
 

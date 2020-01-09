@@ -736,8 +736,8 @@ void applyFlagOperation(FlagsType &flags, const FlagsCompatibleType &newFlags, F
  * Clock-wise direction identifiers.
  */
 enum ClockDirection {
-    Anticlockwise = 0,
-    Clockwise     = 1
+    CounterClockwise = 0,
+    Clockwise        = 1
 };
 
 /**

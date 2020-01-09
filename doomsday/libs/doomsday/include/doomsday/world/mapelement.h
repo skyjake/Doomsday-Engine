@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_MAPELEMENT_H
-#define LIBDOOMSDAY_WORLD_MAPELEMENT_H
+#pragma once
 
 #include "dd_share.h"
 #include "dmuargs.h"
@@ -209,5 +208,3 @@ private:
 
 #undef DMU_Str
 LIBDOOMSDAY_PUBLIC const char *DMU_Str(de::duint prop);
-
-#endif  // LIBDOOMSDAY_WORLD_MAPELEMENT_H

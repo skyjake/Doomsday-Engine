@@ -35,9 +35,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/de_platform.h
     ${src}/include/edit_map.h
     ${src}/include/misc/color.h
-    ${src}/include/misc/face.h
-    ${src}/include/misc/hedge.h
-    ${src}/include/misc/mesh.h
     ${src}/include/misc/r_util.h
     ${src}/include/misc/tab_anorms.h
     ${src}/include/m_profiler.h
@@ -56,7 +53,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/ui/infine/finaletextwidget.h
     ${src}/include/ui/infine/finalewidget.h
     ${src}/include/world/bindings_world.h
-    ${src}/include/world/blockmap.h
     ${src}/include/world/bsp/convexsubspaceproxy.h
     ${src}/include/world/bsp/edgetip.h
     ${src}/include/world/bsp/hplane.h
@@ -64,29 +60,16 @@ set (SHARED_WITH_CLIENT
     ${src}/include/world/bsp/partitioner.h
     ${src}/include/world/bsp/partitionevaluator.h
     ${src}/include/world/bsp/superblockmap.h
-    ${src}/include/world/bspleaf.h
     ${src}/include/world/clientserverworld.h
-    ${src}/include/world/convexsubspace.h
     ${src}/include/world/impulseaccumulator.h
-    ${src}/include/world/interceptor.h
-    ${src}/include/world/line.h
-    ${src}/include/world/lineblockmap.h
     ${src}/include/world/lineowner.h
-    ${src}/include/world/linesighttest.h
     ${src}/include/world/map.h
     ${src}/include/world/maputil.h
-    ${src}/include/world/plane.h
-    ${src}/include/world/polyobj.h
-    ${src}/include/world/polyobjdata.h
     ${src}/include/world/p_object.h
     ${src}/include/world/p_players.h
     ${src}/include/world/p_ticker.h
-    ${src}/include/world/reject.h
-    ${src}/include/world/sector.h
     ${src}/include/world/sky.h
-    ${src}/include/world/surface.h
     ${src}/include/world/thinkers.h
-    ${src}/include/world/vertex.h
 
     ${src}/src/api_console.cpp
     ${src}/src/api_filesys.cpp

@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_MATERIAL_H
-#define LIBDOOMSDAY_WORLD_MATERIAL_H
+#pragma once
 
 #include "../res/Texture"
 #include "mapelement.h"
@@ -289,5 +288,3 @@ private:
 typedef Material::Layer MaterialLayer;
 
 } // namespace world
-
-#endif // LIBDOOMSDAY_WORLD_MATERIAL_H

@@ -98,7 +98,7 @@ DE_PIMPL(ClEdgeLoop)
             {
                 // Try the right neighbor.
                 other = R_FindLineNeighbor(side.line(), *side.line().vertexOwner(side.sideId()^1),
-                                           Anticlockwise, frontSec);
+                                           CounterClockwise, frontSec);
             }
 
             if (other)

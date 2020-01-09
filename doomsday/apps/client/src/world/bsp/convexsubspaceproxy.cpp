@@ -449,7 +449,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
             if (extraMesh)
             {
-                // Link the half-edges anticlockwise and close the ring.
+                // Link the half-edges CounterClockwise and close the ring.
                 HEdge *hedge = face->hedge();
                 for (;;)
                 {
@@ -462,7 +462,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
                     if (hedge->hasNext())
                     {
-                        // Link anticlockwise.
+                        // Link CounterClockwise.
                         hedge->next().setPrev(hedge);
                         hedge = &hedge->next();
                     }
@@ -543,7 +543,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
             lineSeg->setHEdge(hedge);
         }
 
-        // Link the half-edges anticlockwise and close the ring.
+        // Link the half-edges CounterClockwise and close the ring.
         HEdge *hedge = face->hedge();
         for (;;)
         {
@@ -556,7 +556,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
             if(hedge->hasNext())
             {
-                // Link anticlockwise.
+                // Link CounterClockwise.
                 hedge->next().setPrev(hedge);
                 hedge = &hedge->next();
             }

@@ -41,9 +41,7 @@ static inline InputSystem &inputSys()
 {
     return ClientApp::inputSystem();
 }
-#endif
 
-#ifdef __CLIENT__
 static int pimpDoubleClickThreshold = 300; ///< Milliseconds, cvar
 #endif
 

@@ -2520,7 +2520,7 @@ void DD_ConsoleRegister()
 #endif
 
     Net_Register();
-    ClientServerWorld::consoleRegister();
+    world::Map::consoleRegister();
     InFineSystem::consoleRegister();
 }
 

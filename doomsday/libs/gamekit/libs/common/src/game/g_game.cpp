@@ -3055,7 +3055,8 @@ static void registerGameStatusCVars()
     // Fourth-weapon pieces:
     for (int i = 0; i < WEAPON_FOURTH_PIECE_COUNT; ++i)
     {
-        C_VAR_INT(Stringf("player-weapon-piece%i", i + 1), &gsvWPieces[i], READONLYCVAR, 0, 1);
+        const auto name = Stringf("player-weapon-piece%i", i + 1);
+        C_VAR_INT(name, &gsvWPieces[i], READONLYCVAR, 0, 1);
     }
     C_VAR_INT("player-weapon-allpieces", &gsvWPieces[WEAPON_FOURTH_PIECE_COUNT], READONLYCVAR, 0, 1);
 #endif

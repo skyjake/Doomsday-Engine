@@ -29,12 +29,7 @@
 #include <doomsday/world/world.h>
 #include <doomsday/uri.h>
 
-namespace world {
-class Map;
-#ifdef __CLIENT__
-//class Hand;
-#endif
-}
+namespace world { class Map; }
 
 /**
  * Ideas for improvement:
@@ -142,26 +137,9 @@ public:
      * that must be completed after view(s) have been drawn.
      */
     void endFrame();
-
-#if 0
-    /**
-     * Returns the hand of the "user" in the world. Used for manipulating elements
-     * for the purposes of runtime map editing.
-     *
-     * @param distance  The current distance of the hand from the viewer will be
-     *                  written here if not @c nullptr.
-     */
-    world::Hand &hand(de::ddouble *distance = nullptr) const;
-#endif
-
 #endif  // __CLIENT__
 
 public:
-    /**
-     * To be called to register the commands and variables of this module.
-     */
-    static void consoleRegister();
-
     /// Scripting helper: get pointer to current instance mobj_t based on the script callstack.
     static mobj_t &contextMobj(const de::Context &);
 

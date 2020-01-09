@@ -33,7 +33,7 @@ static World *theWorld = nullptr;
 
 DE_PIMPL(World)
 {
-    BaseMap *map = nullptr;
+    Map *map = nullptr;
     world::Materials materials;
 
     Impl(Public *i) : Base(i)
@@ -89,7 +89,7 @@ void World::timeChanged(const Clock &)
     // Nothing to do.
 }
 
-void World::setMap(BaseMap *map)
+void World::setMap(Map *map)
 {
     d->map = map;
 }
@@ -99,7 +99,7 @@ bool World::hasMap() const
     return d->map != nullptr;
 }
 
-BaseMap &World::map() const
+Map &World::map() const
 {
     DE_ASSERT(hasMap());
     return *d->map;

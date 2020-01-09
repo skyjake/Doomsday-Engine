@@ -192,7 +192,7 @@ bool R_SideBackClosed(const LineSide &side, bool ignoreOpacity)
 Line *R_FindLineNeighbor(const Line &line, const LineOwner &own, ClockDirection direction,
     const Sector *sector, binangle_t *diff)
 {
-    const LineOwner *cown = (direction == Anticlockwise ? own.prev() : own.next());
+    const LineOwner *cown = (direction == CounterClockwise ? own.prev() : own.next());
     Line *other = &cown->line();
 
     if(other == &line)
@@ -200,7 +200,7 @@ Line *R_FindLineNeighbor(const Line &line, const LineOwner &own, ClockDirection 
 
     if(diff)
     {
-        *diff += (direction == Anticlockwise ? cown->angle() : own.angle());
+        *diff += (direction == CounterClockwise ? cown->angle() : own.angle());
     }
 
     if(!other->back().hasSector() || !other->isSelfReferencing())
@@ -276,14 +276,14 @@ Line *R_FindSolidLineNeighbor(const Line &line, const LineOwner &own, ClockDirec
 {
     DE_ASSERT(sector);
 
-    const LineOwner *cown = (direction == Anticlockwise ? own.prev() : own.next());
+    const LineOwner *cown = (direction == CounterClockwise ? own.prev() : own.next());
     Line *other = &cown->line();
 
     if (other == &line) return nullptr;
 
     if (diff)
     {
-        *diff += (direction == Anticlockwise ? cown->angle() : own.angle());
+        *diff += (direction == CounterClockwise ? cown->angle() : own.angle());
     }
 
     if (!((other->isBspWindow()) && other->front().sectorPtr() != sector)

@@ -975,7 +975,7 @@ DE_PIMPL(Partitioner)
              * The subspace provides a specially ordered list of the segments to
              * simplify this task. The primary clockwise ordering (decreasing angle
              * relative to the center of the subspace) places overlapping segments
-             * adjacently. The secondary anticlockwise ordering sorts the overlapping
+             * adjacently. The secondary CounterClockwise ordering sorts the overlapping
              * segments enabling the use of single pass algorithm here.
              */
             OrderedSegments convexSet = subspace.segments();

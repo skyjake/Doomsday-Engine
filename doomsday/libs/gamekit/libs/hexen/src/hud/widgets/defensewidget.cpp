@@ -110,6 +110,6 @@ void guidata_defense_t::prepareAssets()  // static
 {
     for(dint i = 0; i < FRAME_COUNT; ++i)
     {
-        ::pDefenseIcon[i] = R_DeclarePatch(String("SPSHLD%d", i));
+        ::pDefenseIcon[i] = R_DeclarePatch(Stringf("SPSHLD%d", i));
     }
 }

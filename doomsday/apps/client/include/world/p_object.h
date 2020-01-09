@@ -31,18 +31,18 @@
 #include <doomsday/defs/ded.h>
 #include <doomsday/world/thinker.h>
 #include <doomsday/world/mobj.h>
-
-#include "world/bspleaf.h"
+#include <doomsday/world/bspleaf.h>
 #include "api_map.h"
 #include "dd_def.h"
 #ifdef __CLIENT__
 #  include "resource/framemodeldef.h"
 #endif
 
-namespace world {
-class Subsector;
+namespace world
+{
+    class Subsector;
+    class Plane;
 }
-class Plane;
 
 #define MOBJ_SIZE               gx.GetInteger(DD_MOBJ_SIZE)
 
@@ -93,16 +93,6 @@ world::Map &Mobj_Map(const mobj_t &mob);
  * @todo Automatically link all new mobjs into the map (making this redundant).
  */
 bool Mobj_IsLinked(const mobj_t &mob);
-
-/**
- * Returns a copy of the map-object's origin in map space.
- */
-de::Vec3d Mobj_Origin(const mobj_t &mob);
-
-/**
- * Returns the map-object's visual center (i.e., origin plus z-height offset).
- */
-de::Vec3d Mobj_Center(mobj_t &mob);
 
 /**
  * Set the origin of the map-object in map space.
@@ -233,15 +223,6 @@ coord_t Mobj_BobOffset(const mobj_t &mob);
 de::dfloat Mobj_Alpha(const mobj_t &mob);
 
 /**
- * Returns the physical radius of the mobj.
- *
- * @param mob  Map-object.
- *
- * @see Mobj_VisualRadius()
- */
-coord_t Mobj_Radius(const mobj_t &mob);
-
-/**
  * Returns the radius of the mobj as it would visually appear to be, according
  * to the current visualization (either a sprite or a 3D model).
  *
@@ -250,15 +231,5 @@ coord_t Mobj_Radius(const mobj_t &mob);
  * @see Mobj_Radius()
  */
 coord_t Mobj_VisualRadius(const mobj_t &mob);
-
-/**
- * Returns an axis-aligned bounding box for the mobj in map space, centered
- * on the origin with dimensions equal to @code radius * 2 @endcode.
- *
- * @param mob  Map-object.
- *
- * @see Mobj_Radius()
- */
-AABoxd Mobj_Bounds(const mobj_t &mob);
 
 #endif  // WORLD_P_OBJECT_H

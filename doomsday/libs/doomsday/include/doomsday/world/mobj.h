@@ -1,6 +1,6 @@
 /** @file mobj.h  Base for world map objects.
  *
- * @authors Copyright © 2014-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014-2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -37,5 +37,40 @@ typedef struct mobj_s {
 } mobj_t;
 
 #endif // LIBDOOMSDAY_CUSTOM_MOBJ
+
+#ifdef __cplusplus
+
+#include <de/Vector>
+
+/**
+ * Returns a copy of the map-object's origin in map space.
+ */
+LIBDOOMSDAY_PUBLIC de::Vec3d Mobj_Origin(const mobj_t &mob);
+
+/**
+ * Returns the map-object's visual center (i.e., origin plus z-height offset).
+ */
+LIBDOOMSDAY_PUBLIC de::Vec3d Mobj_Center(mobj_t &mob);
+
+/**
+ * Returns the physical radius of the mobj.
+ *
+ * @param mob  Map-object.
+ *
+ * @see Mobj_VisualRadius()
+ */
+LIBDOOMSDAY_PUBLIC coord_t Mobj_Radius(const mobj_t &mob);
+
+/**
+ * Returns an axis-aligned bounding box for the mobj in map space, centered
+ * on the origin with dimensions equal to @code radius * 2 @endcode.
+ *
+ * @param mob  Map-object.
+ *
+ * @see Mobj_Radius()
+ */
+LIBDOOMSDAY_PUBLIC AABoxd Mobj_Bounds(const mobj_t &mob);
+
+#endif // __cplusplus
 
 #endif // LIBDOOMSDAY_MOBJ_H

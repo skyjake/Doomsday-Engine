@@ -35,7 +35,7 @@ class IThinkerMapping;
 /**
  * Base class for world maps.
  */
-class LIBDOOMSDAY_PUBLIC BaseMap
+class LIBDOOMSDAY_PUBLIC Map
 {
 public:
     /// No resource manifest is associated with the map. @ingroup errors
@@ -48,8 +48,8 @@ public:
     /**
      * @param manifest  Resource manifest for the map (Can be set later, @ref setDef).
      */
-    explicit BaseMap(res::MapManifest *manifest = nullptr);
-    virtual ~BaseMap();
+    explicit Map(res::MapManifest *manifest = nullptr);
+    virtual ~Map();
 
     de::String id() const;
 
@@ -80,14 +80,13 @@ public:
     EntityDatabase &entityDatabase() const;
 
     virtual void serializeInternalState(de::Writer &to) const;
-
     virtual void deserializeInternalState(de::Reader &from, const IThinkerMapping &);
 
     DE_CAST_METHODS()
 
 public:
     /// Notified when the map is about to be deleted.
-    DE_AUDIENCE(Deletion, void mapBeingDeleted(const BaseMap &map))
+    DE_AUDIENCE(Deletion, void mapBeingDeleted(const Map &map))
 
 private:
     DE_PRIVATE(d)

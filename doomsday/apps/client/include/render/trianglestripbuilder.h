@@ -151,7 +151,7 @@ public:
      *
      * Vertex layout:
      *   1--3    2--0
-     *   |  | or |  | if @a direction @c =Anticlockwise
+     *   |  | or |  | if @a direction @c =CounterClockwise
      *   0--2    3--1
      *
      * @param direction        Initial vertex winding direction.

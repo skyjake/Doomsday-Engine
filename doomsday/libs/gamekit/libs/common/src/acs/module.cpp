@@ -105,7 +105,7 @@ Module *Module::newFromBytecode(const Block &bytecode)  // static
         {
             throw FormatError("acs::Module", "Invalid script entrypoint offset");
         }
-        ep.pcodePtr = (const int *)(module->d->pcode.constData() + offset);
+        ep.pcodePtr = reinterpret_cast<const int *>(module->d->pcode.constData() + offset);
 
         from >> ep.scriptArgCount;
         if(ep.scriptArgCount > ACS_INTERPRETER_MAX_SCRIPT_ARGS)
@@ -133,11 +133,11 @@ Module *Module::newFromBytecode(const Block &bytecode)  // static
         from >> offset;
         constantOffsets << offset;
     }
-    for(const auto &offset : constantOffsets)
+    for (const auto &offset : constantOffsets)
     {
         Block utf;
         from.setOffset(dsize(offset));
-        from.readUntil(utf, 0);
+        from.readUntil(utf, 0, false /*delimiter omitted*/);
         module->d->constants << String::fromUtf8(utf);
     }
 

@@ -24,7 +24,7 @@ using namespace de;
 
 namespace world {
 
-DE_PIMPL(BaseMap)
+DE_PIMPL(Map)
 , DE_OBSERVES(Record, Deletion)
 {
     EntityDatabase entityDatabase;
@@ -50,28 +50,28 @@ DE_PIMPL(BaseMap)
     DE_PIMPL_AUDIENCE(Deletion)
 };
 
-DE_AUDIENCE_METHOD(BaseMap, Deletion)
+DE_AUDIENCE_METHOD(Map, Deletion)
 
-BaseMap::BaseMap(res::MapManifest *manifest) : d(new Impl(this))
+Map::Map(res::MapManifest *manifest) : d(new Impl(this))
 {
     setManifest(manifest);
 }
 
-BaseMap::~BaseMap()
+Map::~Map()
 {}
 
-String BaseMap::id() const
+String Map::id() const
 {
     if (!hasManifest()) return "";
     return manifest().gets("id");
 }
 
-bool BaseMap::hasManifest() const
+bool Map::hasManifest() const
 {
     return d->manifest != nullptr;
 }
 
-res::MapManifest &BaseMap::manifest() const
+res::MapManifest &Map::manifest() const
 {
     if (hasManifest())
     {
@@ -79,10 +79,10 @@ res::MapManifest &BaseMap::manifest() const
         return *d->manifest;
     }
     /// @throw MissingResourceManifestError  No associated resource manifest.
-    throw MissingResourceManifestError("world::Map", "No associated resource manifest");
+    throw MissingResourceManifestError("Map::manifest", "No associated resource manifest");
 }
 
-void BaseMap::setManifest(res::MapManifest *newManifest)
+void Map::setManifest(res::MapManifest *newManifest)
 {
     if (d->manifest) d->manifest->audienceForDeletion() -= d;
 
@@ -91,15 +91,15 @@ void BaseMap::setManifest(res::MapManifest *newManifest)
     if (d->manifest) d->manifest->audienceForDeletion() += d;
 }
 
-EntityDatabase &BaseMap::entityDatabase() const
+EntityDatabase &Map::entityDatabase() const
 {
     return d->entityDatabase;
 }
 
-void BaseMap::serializeInternalState(Writer &) const
+void Map::serializeInternalState(Writer &) const
 {}
 
-void BaseMap::deserializeInternalState(Reader &, const IThinkerMapping &)
+void Map::deserializeInternalState(Reader &, const IThinkerMapping &)
 {}
 
 }  // namespace world
