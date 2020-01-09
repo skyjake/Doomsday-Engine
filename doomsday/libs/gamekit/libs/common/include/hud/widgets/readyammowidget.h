@@ -31,7 +31,7 @@ class guidata_readyammo_t : public HudWidget
 public:
     guidata_readyammo_t(void (*updateGeometry) (HudWidget *wi),
                         void (*drawer) (HudWidget *wi, const Point2Raw *offset),
-                        de::dint player);
+                        int player);
     virtual ~guidata_readyammo_t();
 
     void reset();
@@ -41,7 +41,7 @@ public:
     //void draw(const de::Vec2i &offset = de::Vec2i()) const;
 
 //private:
-    de::dint _value = 0;
+    int _value = 0;
 };
 
 void ReadyAmmo_UpdateGeometry    (guidata_readyammo_t *ammo);

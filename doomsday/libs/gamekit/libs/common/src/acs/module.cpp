@@ -23,7 +23,7 @@
 #include "acs/module.h"
 
 #include <de/List>
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/Log>
 #include "acs/interpreter.h"  // ACS_INTERPRETER_MAX_SCRIPT_ARGS
 #include "gamesession.h"
@@ -36,7 +36,7 @@ DE_PIMPL_NOREF(Module)
 {
     Block                  pcode;
     List<EntryPoint>       entryPoints;
-    Map<int, EntryPoint *> epByScriptNumberLut;
+    KeyMap<int, EntryPoint *> epByScriptNumberLut;
     List<String>           constants;
 
     void buildEntryPointLut()

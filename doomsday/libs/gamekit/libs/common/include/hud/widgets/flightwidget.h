@@ -29,7 +29,7 @@
 class guidata_flight_t : public HudWidget
 {
 public:
-    guidata_flight_t(de::dint player);
+    guidata_flight_t(int player);
     virtual ~guidata_flight_t();
 
     void reset();

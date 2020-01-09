@@ -31,7 +31,7 @@ class guidata_readyitem_t : public HudWidget
 public:
     guidata_readyitem_t(void (*updateGeometry) (HudWidget *wi),
                         void (*drawer) (HudWidget *wi, const Point2Raw *offset),
-                        de::dint player);
+                        int player);
     virtual ~guidata_readyitem_t();
 
     void reset();

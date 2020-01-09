@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/NoneValue>
 #include "common.h"
 #include "menu/widgets/widget.h"
@@ -46,7 +46,7 @@ DE_PIMPL_NOREF(Widget)
     int pageFontIdx  = 0;      ///< Index of the predefined page font to use when drawing this.
     int pageColorIdx = 0;      ///< Index of the predefined page color to use when drawing this.
 
-    typedef Map<Action, ActionCallback> Actions;
+    typedef KeyMap<Action, ActionCallback> Actions;
     Actions actions;
 
     OnTickCallback onTickCallback = nullptr;

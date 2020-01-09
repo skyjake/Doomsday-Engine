@@ -46,7 +46,7 @@ public:
     {
     public:
         Args();
-        Args(const de::dbyte *cArr, de::dint length);
+        Args(const de::dbyte *cArr, int length);
     };
 
     /**

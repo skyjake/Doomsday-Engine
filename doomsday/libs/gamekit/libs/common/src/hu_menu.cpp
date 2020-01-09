@@ -26,7 +26,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/legacy/memory.h>
 #include <de/RecordValue>
 #include <de/TextValue>
@@ -206,7 +206,7 @@ static patchid_t pCursors[MENU_CURSOR_FRAMECOUNT];
 
 static bool inited;
 
-typedef Map<String, Page *> Pages;
+typedef KeyMap<String, Page *> Pages;
 static Pages pages;
 
 static menucommand_e chooseCloseMethod()

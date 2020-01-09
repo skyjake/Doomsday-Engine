@@ -31,7 +31,7 @@ class guidata_readyammoicon_t : public HudWidget
 public:
     guidata_readyammoicon_t(void (*updateGeometry) (HudWidget *wi),
                             void (*drawer) (HudWidget *wi, const Point2Raw *offset),
-                            de::dint player);
+                            int player);
     virtual ~guidata_readyammoicon_t();
 
     void reset();
@@ -45,7 +45,7 @@ public:
 
 //private:
 #if __JDOOM__
-    de::dint _sprite = -1;
+    int _sprite = -1;
 #else
     patchid_t _patchId = 0;
 #endif

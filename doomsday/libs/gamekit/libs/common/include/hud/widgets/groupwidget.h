@@ -37,17 +37,17 @@
 class GroupWidget : public HudWidget
 {
 public:
-    GroupWidget(de::dint player);
+    GroupWidget(int player);
     virtual ~GroupWidget();
 
-    de::dint flags() const;
-    void setFlags(de::dint newFlags);
+    int flags() const;
+    void setFlags(int newFlags);
 
     order_t order() const;
     void setOrder(order_t newOrder);
 
-    de::dint padding() const;
-    void setPadding(de::dint newPadding);
+    int padding() const;
+    void setPadding(int newPadding);
 
     void tick(timespan_t elapsed);
     void updateGeometry();
@@ -56,7 +56,7 @@ public:
     /**
      * Returns the total number of child widgets in the group.
      */
-    de::dint childCount() const;
+    int childCount() const;
 
     /**
      * Append widget @a other to the list of child widgets in the group.

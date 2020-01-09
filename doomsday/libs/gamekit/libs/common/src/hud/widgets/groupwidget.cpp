@@ -49,7 +49,7 @@ GroupWidget::GroupWidget(dint player)
 GroupWidget::~GroupWidget()
 {}
 
-de::dint GroupWidget::childCount() const
+int GroupWidget::childCount() const
 {
     return d->children.count();
 }

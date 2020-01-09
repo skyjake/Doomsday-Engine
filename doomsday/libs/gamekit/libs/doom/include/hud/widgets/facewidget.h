@@ -32,7 +32,7 @@ class guidata_face_t : public HudWidget
 public:
     guidata_face_t(void (*updateGeometry) (HudWidget *wi),
                    void (*drawer) (HudWidget *wi, const Point2Raw *offset),
-                   de::dint player);
+                   int player);
     virtual ~guidata_face_t();
 
     void reset();

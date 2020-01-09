@@ -45,7 +45,7 @@ public:
     DE_ERROR(DestinationError);
 
 public:
-    ChatWidget(de::dint player);
+    ChatWidget(int player);
     virtual ~ChatWidget();
 
     /**
@@ -65,7 +65,7 @@ public:
     /**
      * Returns the current destination for chat messages encoded as a number.
      */
-    de::dint destination() const;
+    int destination() const;
 
     /**
      * Change the destination i.e., would-be recipient(s) for subsequent chat
@@ -73,10 +73,10 @@ public:
      *
      * @param newDestination  New destination to be applied.
      */
-    void setDestination(de::dint newDestination);
+    void setDestination(int newDestination);
 
-    de::dint handleEvent(const event_t &ev);
-    de::dint handleMenuCommand(menucommand_e cmd);
+    int handleEvent(const event_t &ev);
+    int handleMenuCommand(menucommand_e cmd);
 
     void updateGeometry();
     void draw(const de::Vec2i &offset = de::Vec2i()) const;
@@ -107,7 +107,7 @@ public:  // Outbound message staging: ------------------------------------------
      * @a macroId (if found) to the chat message being staged. If no macro exists
      * with this id then nothing happens.
      */
-    inline void messageAppendMacro(de::dint macroId) {
+    inline void messageAppendMacro(int macroId) {
         messageAppend(findMacro(macroId));
     }
 
@@ -116,7 +116,7 @@ public:  // Outbound message staging: ------------------------------------------
      * content of the given @a macroId. If no macro exists with this id then the
      * staged message will be cleared.
      */
-    inline void messageCopyMacro(de::dint macroId) {
+    inline void messageCopyMacro(int macroId) {
         messageClear();
         messageAppendMacro(macroId);
     }
@@ -138,7 +138,7 @@ public:
      * Given a macro identifier lookup the associated macro string. There are ten
      * user-configurable macros bound to ids in the range [0..9].
      */
-    static de::String findMacro(de::dint macroId);
+    static de::String findMacro(int macroId);
 
     /**
      * Register the console commands and variables of this module.

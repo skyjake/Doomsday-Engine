@@ -29,7 +29,7 @@
 class guidata_chain_t : public HudWidget
 {
 public:
-    guidata_chain_t(de::dint player);
+    guidata_chain_t(int player);
     virtual ~guidata_chain_t();
 
     void reset();
@@ -42,8 +42,8 @@ public:
     static void prepareAssets();
 
 private:
-    de::dint _healthMarker = 0;
-    de::dint _wiggle = 0;
+    int _healthMarker = 0;
+    int _wiggle = 0;
 };
 
 #endif  // LIBCOMMON_UI_CHAINWIDGET_H

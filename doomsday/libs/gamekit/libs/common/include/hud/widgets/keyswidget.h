@@ -30,7 +30,7 @@
 class guidata_keys_t : public HudWidget
 {
 public:
-    guidata_keys_t(de::dint player);
+    guidata_keys_t(int player);
     virtual ~guidata_keys_t();
 
     void reset();

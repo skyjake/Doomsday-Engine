@@ -970,7 +970,7 @@ res::Uri GameSession::mapUriForNamedExit(const String& name) const
     if (const Record *mgNode = mapGraphNodeDef())
     {
         // Build a lookup table mapping exit ids to exit records.
-        Map<String, const Record *, String::InsensitiveLessThan> exits;
+        KeyMap<String, const Record *, String::InsensitiveLessThan> exits;
         for (const Value *value : mgNode->geta("exit").elements())
         {
             const Record &exit = value->as<RecordValue>().dereference();

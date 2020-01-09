@@ -32,7 +32,7 @@ private:
     int iconSpriteId;
 
 public:
-    guidata_healthicon_t(de::dint player, int sprite);
+    guidata_healthicon_t(int player, int sprite);
     virtual ~guidata_healthicon_t();
 
     void reset();

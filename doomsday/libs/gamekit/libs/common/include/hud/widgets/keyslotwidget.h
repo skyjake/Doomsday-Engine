@@ -29,12 +29,12 @@
 class guidata_keyslot_t : public HudWidget
 {
 public:
-    guidata_keyslot_t(de::dint player);
+    guidata_keyslot_t(int player);
     virtual ~guidata_keyslot_t();
 
     void reset();
 
-    guidata_keyslot_t &setSlot(de::dint newSlotNum);
+    guidata_keyslot_t &setSlot(int newSlotNum);
 
     void tick(timespan_t elapsed);
     void updateGeometry();

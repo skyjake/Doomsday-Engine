@@ -85,7 +85,7 @@ public:
     typedef MapPoint MarkedPoint;
 
 public:
-    AutomapWidget(de::dint player);
+    AutomapWidget(int player);
     virtual ~AutomapWidget();
 
     /**
@@ -110,20 +110,20 @@ public:
      */
     void reveal(bool yes = true);
 
-    de::dint flags() const;
-    void setFlags(de::dint newFlags);
+    int flags() const;
+    void setFlags(int newFlags);
 
     /**
      * Returns the current map opacity factor.
      */
-    de::dfloat opacityEX() const;
-    void setOpacityEX(de::dfloat newOpacity);
+    float opacityEX() const;
+    void setOpacityEX(float newOpacity);
 
     /**
      * Returns the current view space scaling factor.
      */
-    de::dfloat scale() const;
-    void setScale(de::dfloat newScale);
+    float scale() const;
+    void setScale(float newScale);
 
     /**
      * Returns the @em active style config.
@@ -133,10 +133,10 @@ public:
 public:  // Coordinate space conversion utilities: --------------------------------
 
     /// Scale automap window coordinates to map space coordinates.
-    de::dfloat frameToMap(de::dfloat coord) const;
+    float frameToMap(float coord) const;
 
     /// Scale map space coordinates to automap window coordinates.
-    de::dfloat mapToFrame(de::dfloat coord) const;
+    float mapToFrame(float coord) const;
 
 public:  // Map space camera: -----------------------------------------------------
 
@@ -165,20 +165,20 @@ public:  // Map space camera: --------------------------------------------------
      * Returns the player number the camera is following; otherwise @c -1 if no
      * player is currently being followed.
      */
-    de::dint cameraFollowPlayer() const;
-    void setCameraFollowPlayer(de::dint newPlayer);
+    int cameraFollowPlayer() const;
+    void setCameraFollowPlayer(int newPlayer);
 
     /**
      * Returns the angle of the camera in world space.
      */
-    de::dfloat cameraAngle() const;
+    float cameraAngle() const;
 
     /**
      * Change the world space angle of the camera to @a newAngle.
      *
      * @param newOrigin  New world space coordinates to apply.
      */
-    void setCameraAngle(de::dfloat newAngle);
+    void setCameraAngle(float newAngle);
 
     /**
      * Returns the world space origin of the camera.
@@ -214,7 +214,7 @@ public:  // Marked map space points of interest: -------------------------------
     /**
      * Returns the total number of marked points of interest.
      */
-    de::dint pointCount() const;
+    int pointCount() const;
 
     /**
      * Mark a new point of interest at the given map space @a origin.
@@ -223,14 +223,14 @@ public:  // Marked map space points of interest: -------------------------------
      *
      * @return  Index number of the newly added point (base 0).
      */
-    de::dint addPoint(const de::Vec3d &origin);
+    int addPoint(const de::Vec3d &origin);
 
     /**
      * Returns @c true if @a index is a known point of interest.
      *
      * @param index  Index number attributed to the point of interest.
      */
-    bool hasPoint(de::dint index) const;
+    bool hasPoint(int index) const;
 
     /**
      * Lookup a marked point of interest by its unique @a index.
@@ -239,7 +239,7 @@ public:  // Marked map space points of interest: -------------------------------
      *
      * @return  AutomapWidget_Point associated with @a index.
      */
-    MarkedPoint &point(de::dint index) const;
+    MarkedPoint &point(int index) const;
 
     /**
      * Iterate through all marked points of interest.

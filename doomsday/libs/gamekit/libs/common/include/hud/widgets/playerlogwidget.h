@@ -60,7 +60,7 @@ public:
         de::String text;
     };
 
-    PlayerLogWidget(de::dint player);
+    PlayerLogWidget(int player);
     virtual ~PlayerLogWidget();
 
     /**
@@ -80,7 +80,7 @@ public:
      * @param message  Text to be posted. The message may contain encoded parameters
      * intended for Doomsday's @em FR text rendering API.
      */
-    void post(de::dint flags, const de::String &mesage);
+    void post(int flags, const de::String &mesage);
 
     void tick(timespan_t elapsed);
     void updateGeometry();

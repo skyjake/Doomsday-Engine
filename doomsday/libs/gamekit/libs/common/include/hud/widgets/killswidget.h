@@ -29,7 +29,7 @@
 class guidata_kills_t : public HudWidget
 {
 public:
-    guidata_kills_t(de::dint player);
+    guidata_kills_t(int player);
     virtual ~guidata_kills_t();
 
     void reset();
@@ -39,7 +39,7 @@ public:
     void draw(const de::Vec2i &offset = de::Vec2i()) const;
 
 private:
-    de::dint _value = 1994;
+    int _value = 1994;
 };
 
 #endif  // LIBCOMMON_UI_KILLSWIDGET_H

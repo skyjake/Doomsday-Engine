@@ -38,7 +38,7 @@ static void FlightWidget_Draw(guidata_flight_t *flht, const Point2Raw *offset)
     flht->draw(offset? Vec2i(offset->xy) : Vec2i());
 }
 
-guidata_flight_t::guidata_flight_t(de::dint player)
+guidata_flight_t::guidata_flight_t(int player)
     : HudWidget(function_cast<UpdateGeometryFunc>(FlightWidget_UpdateGeometry),
                 function_cast<DrawFunc>(FlightWidget_Draw),
                 player)

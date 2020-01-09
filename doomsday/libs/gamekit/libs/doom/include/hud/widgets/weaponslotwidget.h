@@ -29,12 +29,12 @@
 class guidata_weaponslot_t : public HudWidget
 {
 public:
-    guidata_weaponslot_t(de::dint player);
+    guidata_weaponslot_t(int player);
     virtual ~guidata_weaponslot_t();
 
     void reset();
 
-    guidata_weaponslot_t &setSlot(de::dint newSlotNum);
+    guidata_weaponslot_t &setSlot(int newSlotNum);
 
     void tick(timespan_t elapsed);
     void updateGeometry();
@@ -44,7 +44,7 @@ public:
     static void prepareAssets();
 
 private:
-    de::dint _slot = 0;
+    int _slot = 0;
     patchid_t _patchId = 0;
 };
 

@@ -47,8 +47,8 @@ DE_GUI_PIMPL(MapOutlineWidget)
 
     // Player markers.
     Players           players;
-    Map<int, Vec2i>   oldPlayerPositions;
-    Map<int, Marker>  playerLabels;      // number and name on a round rect background
+    KeyMap<int, Vec2i>   oldPlayerPositions;
+    KeyMap<int, Marker>  playerLabels;      // number and name on a round rect background
     DefaultVertexBuf *plrVBuf = nullptr; // tick marks
 
     // Drawing.

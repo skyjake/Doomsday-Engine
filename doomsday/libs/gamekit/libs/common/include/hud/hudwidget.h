@@ -40,7 +40,7 @@ public:
 public:
     explicit HudWidget(void (*updateGeometry) (HudWidget *wi),
                        void (*drawer) (HudWidget *wi, const Point2Raw *offset),
-                       de::dint player = 0, uiwidgetid_t id = 0);
+                       int player = 0, uiwidgetid_t id = 0);
     virtual ~HudWidget();
 
     DE_CAST_METHODS()
@@ -49,26 +49,26 @@ public:
     void setId(uiwidgetid_t newId);
 
     /// @return  Local player number of the owner of this widget.
-    de::dint player() const;
-    void setPlayer(de::dint newPlayer);
+    int player() const;
+    void setPlayer(int newPlayer);
 
     Rect &geometry() const;
 
     Size2Raw &maximumSize() const;
     void setMaximumSize(const Size2Raw &newMaxSize);
 
-    inline de::dint maximumHeight() const { return maximumSize().height; }
-    inline de::dint maximumWidth () const { return maximumSize().width;  }
+    inline int maximumHeight() const { return maximumSize().height; }
+    inline int maximumWidth () const { return maximumSize().width;  }
 
-    void setMaximumHeight(de::dint newMaxHeight);
-    void setMaximumWidth (de::dint newMaxWidth);
+    void setMaximumHeight(int newMaxHeight);
+    void setMaximumWidth (int newMaxWidth);
 
     /// @return  @ref alignmentFlags
-    de::dint alignment() const;
-    HudWidget &setAlignment(de::dint alignFlags);
+    int alignment() const;
+    HudWidget &setAlignment(int alignFlags);
 
-    de::dfloat opacity() const;
-    HudWidget &setOpacity(de::dfloat newOpacity);
+    float opacity() const;
+    HudWidget &setOpacity(float newOpacity);
 
     fontid_t font() const;
     HudWidget &setFont(fontid_t newFont);
