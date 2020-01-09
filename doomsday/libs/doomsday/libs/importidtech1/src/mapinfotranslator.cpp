@@ -148,9 +148,9 @@ namespace internal {
      * Central database of definitions read from Hexen-derived definition formats.
      */
     struct HexDefs {
-        typedef Map<String, Music>       Musics;
-        typedef Map<String, EpisodeInfo> EpisodeInfos;
-        typedef Map<String, MapInfo>     MapInfos;
+        typedef KeyMap<String, Music>       Musics;
+        typedef KeyMap<String, EpisodeInfo> EpisodeInfos;
+        typedef KeyMap<String, MapInfo>     MapInfos;
 
         Musics       musics;
         EpisodeInfos episodeInfos;
@@ -255,7 +255,7 @@ namespace internal {
         DE_ERROR(ParseError);
 
         /// Mappings from symbolic song name to music id.
-        typedef Map<String, String> MusicMappings;
+        typedef KeyMap<String, String> MusicMappings;
         MusicMappings musicMap;
 
         bool reportErrors = true;
@@ -1240,7 +1240,7 @@ DE_PIMPL_NOREF(MapInfoTranslator)
     HexDefs defs;
     StringList translatedFiles;
 
-    typedef Map<int, List<const MapInfo *>> MapInfos;
+    typedef KeyMap<int, List<const MapInfo *>> MapInfos;
 
     MapInfos buildHubMapInfoTable(const String &episodeId)
     {

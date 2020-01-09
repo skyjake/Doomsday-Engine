@@ -258,7 +258,7 @@ DE_PIMPL(Textures)
         reader >> definitionCount;
 
         // Next is directory of offsets to the definitions.
-        typedef Map<dint32, int> Offsets;
+        typedef KeyMap<dint32, int> Offsets;
         Offsets offsets;
         for (int i = 0; i < definitionCount; ++i)
         {

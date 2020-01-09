@@ -28,7 +28,7 @@
 #include <de/Error>
 #include <de/Log>
 #include <de/legacy/memory.h>
-#include <de/Map>
+#include <de/KeyMap>
 
 using namespace de;
 

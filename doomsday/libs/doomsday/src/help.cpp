@@ -28,12 +28,12 @@
 #include <de/LogBuffer>
 #include <de/Reader>
 
-#include <de/Map>
+#include <de/KeyMap>
 
 using namespace de;
 
-typedef Map<int, String> StringsByType; // HST_* type => string
-typedef Map<String, StringsByType> HelpStrings; // id => typed strings
+typedef KeyMap<int, String> StringsByType; // HST_* type => string
+typedef KeyMap<String, StringsByType> HelpStrings; // id => typed strings
 
 static HelpStrings helps;
 

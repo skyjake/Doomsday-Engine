@@ -99,7 +99,7 @@ defn::CompiledSpriteRecord &Sprites::sprite(spritenum_t id, dint frame)
     return d->findSpriteSet(id).find(frame)->second;
 }
 
-const defn::CompiledSpriteRecord *Sprites::spritePtr(spritenum_t id, de::dint frame) const
+const defn::CompiledSpriteRecord *Sprites::spritePtr(spritenum_t id, int frame) const
 {
     if (const Sprites::SpriteSet *sprSet = tryFindSpriteSet(id))
     {
@@ -220,7 +220,7 @@ static SpriteDefs buildSpriteFramesFromTextures(const res::TextureScheme::Index 
  */
 static Sprites::SpriteSet buildSprites(const std::multimap<dint, SpriteFrameDef> &frameDefs)
 {
-    static const de::dint MAX_ANGLES = 16;
+    static const int MAX_ANGLES = 16;
 
     Sprites::SpriteSet frames;
 

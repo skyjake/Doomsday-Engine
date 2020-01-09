@@ -171,7 +171,7 @@ const Record *Sprite::tryFindView(dint angle) const
 
 static res::Uri nullUri;
 
-Sprite::View Sprite::view(de::dint angle) const
+Sprite::View Sprite::view(int angle) const
 {
     const auto &cmpl = def().compiled();
 
@@ -191,7 +191,7 @@ Sprite::View Sprite::view(de::dint angle) const
     return v;
 }
 
-const res::Uri &Sprite::viewMaterial(de::dint angle) const
+const res::Uri &Sprite::viewMaterial(int angle) const
 {
     const auto &cmpl = def().compiled();
     if (angle < cmpl.views.sizei())

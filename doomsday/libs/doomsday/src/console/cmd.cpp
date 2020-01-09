@@ -27,7 +27,7 @@
 #include <de/Log>
 #include <de/Config>
 #include <de/TextValue>
-#include <de/Map>
+#include <de/KeyMap>
 
 using namespace de;
 
@@ -39,7 +39,7 @@ static blockset_t *ccmdBlockSet;
 /// Running total of the number of uniquely-named commands.
 static uint numUniqueNamedCCmds;
 
-static Map<String, String> mappedConfigVariables;
+static KeyMap<String, String> mappedConfigVariables;
 
 void Con_InitCommands()
 {

@@ -22,7 +22,7 @@
 
 #include <de/ByteOrder>
 #include <de/ByteSubArray>
-#include <de/Map>
+#include <de/KeyMap>
 
 using namespace de;
 
@@ -85,7 +85,7 @@ DE_PIMPL(IdTech1TextureLib)
     const LumpCatalog &    catalog;
     Block                  palette;
     Block                  pnames;
-    Map<String, Texture, String::InsensitiveLessThan> textures;
+    KeyMap<String, Texture, String::InsensitiveLessThan> textures;
 
     Impl(Public *i, const LumpCatalog &catalog) : Base(i), catalog(catalog)
     {

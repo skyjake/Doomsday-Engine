@@ -24,7 +24,7 @@ namespace res {
 DE_PIMPL(IdTech1FlatLib)
 {
     const LumpCatalog &catalog;
-    Map<String, LumpCatalog::LumpPos, String::InsensitiveLessThan> flats;
+    KeyMap<String, LumpCatalog::LumpPos, String::InsensitiveLessThan> flats;
     Block palette;
 
     Impl(Public *i, const LumpCatalog &catalog) : Base(i), catalog(catalog)

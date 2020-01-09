@@ -20,7 +20,7 @@
 #include "doomsday/resource/colorpalettes.h"
 #include "doomsday/resource/resources.h"
 
-#include <de/Map>
+#include <de/KeyMap>
 
 using namespace de;
 
@@ -28,10 +28,10 @@ namespace res {
 
 DE_PIMPL_NOREF(ColorPalettes)
 {
-    typedef Map<Id::Type, ColorPalette *> ColorPalettes;
+    typedef KeyMap<Id::Type, ColorPalette *> ColorPalettes;
     ColorPalettes colorPalettes; // owned
 
-    typedef Map<String, ColorPalette *> ColorPaletteNames;
+    typedef KeyMap<String, ColorPalette *> ColorPaletteNames;
     ColorPaletteNames colorPaletteNames;
 
     Id defaultColorPalette { Id::None };

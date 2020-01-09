@@ -21,7 +21,7 @@
 #include "mapimporter.h"
 
 #include <de/List>
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/libcore.h>
 #include <de/Error>
 #include <de/ByteRefArray>

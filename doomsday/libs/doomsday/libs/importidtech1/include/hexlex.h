@@ -96,7 +96,7 @@ public:
      */
     const Str *token();
 
-    de::ddouble readNumber();
+    double readNumber();
     const Str *readString();
     res::Uri readUri(const de::String &defaultScheme = "");
 

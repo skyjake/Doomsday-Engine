@@ -25,7 +25,7 @@
 #include <de/RecordValue>
 #include <de/RegExp>
 #include <de/Set>
-#include <de/Map>
+#include <de/KeyMap>
 
 using namespace de;
 
@@ -43,9 +43,9 @@ DE_PIMPL(DEDRegister)
         LookupFlags flags;
         Key(const LookupFlags &f = DefaultLookup) : flags(f) {}
     };
-    typedef Map<String, Key> Keys;
+    typedef KeyMap<String, Key> Keys;
     Keys keys;
-    Map<Variable *, Record *> parents;
+    KeyMap<Variable *, Record *> parents;
 
     Impl(Public *i, Record &rec) : Base(i), names(&rec)
     {

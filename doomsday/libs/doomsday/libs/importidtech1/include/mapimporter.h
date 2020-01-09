@@ -72,7 +72,7 @@ public:
     /**
      * Convert a Doom64 style unique material @a number to an internal dictionary id.
      */
-    MaterialId toMaterialId(de::dint number, MaterialGroup group);
+    MaterialId toMaterialId(int number, MaterialGroup group);
 
 private:
     DE_PRIVATE(d)

@@ -22,7 +22,7 @@
 
 #include <de/Log>
 #include <de/Range>
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/legacy/reader.h>
 #include <de/legacy/mathutil.h>
 
@@ -166,7 +166,7 @@ DE_PIMPL(ColorPalette)
     typedef List<Color> ColorTable;
     ColorTable colors;
 
-    typedef Map<String, Translation> Translations;
+    typedef KeyMap<String, Translation> Translations;
     Translations translations;
 
     /// 18-bit to 8-bit, nearest color translation table.
