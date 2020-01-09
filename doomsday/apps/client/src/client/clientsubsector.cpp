@@ -36,7 +36,7 @@
 #include "dd_main.h"  // verbose
 
 #include <de/LogBuffer>
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/Set>
 
 using namespace de;
@@ -159,8 +159,8 @@ DE_PIMPL(ClientSubsector)
         {}
     };
     /// @todo Avoid two-stage lookup.
-    typedef de::Map<dint, GeometryData *> Shards;
-    struct GeometryGroups : public de::Map<MapElement *, Shards>
+    typedef de::KeyMap<dint, GeometryData *> Shards;
+    struct GeometryGroups : public de::KeyMap<MapElement *, Shards>
     {
         ~GeometryGroups()
         {

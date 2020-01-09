@@ -50,7 +50,7 @@ public:
     //dsize size() const;
     bool contains(const de::Value &value) const;
     bool isTrue() const;
-    de::dint compare(const de::Value &value) const;
+    int compare(const de::Value &value) const;
     //void sum(const Value &value);
     //void multiply(const Value &value);
     //void divide(const Value &value);

@@ -29,6 +29,6 @@
 #endif
 
 void Sv_TransmitFrame();
-de::dsize Sv_GetMaxFrameSize(de::dint playerNumber);
+de::dsize Sv_GetMaxFrameSize(int playerNumber);
 
 #endif  // SERVER_FRAME_H

@@ -28,11 +28,11 @@
 #include <de/Process>
 #include <de/String>
 #include <de/TextValue>
-#include <de/Map>
+#include <de/KeyMap>
 
 using namespace de;
 
-using ActionMap = Map<String, acfnptr_t, String::InsensitiveLessThan>;  ///< name => native function pointer.
+using ActionMap = KeyMap<String, acfnptr_t, String::InsensitiveLessThan>;  ///< name => native function pointer.
 static ActionMap actions;
 static String s_currentAction;
 

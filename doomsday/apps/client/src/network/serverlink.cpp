@@ -72,7 +72,7 @@ DE_PIMPL(ServerLink)
     std::unique_ptr<ServerFinder> finder; ///< Finding local servers.
     LinkState state;
     bool fetching;
-    typedef Map<Address, ServerInfo> Servers;
+    typedef KeyMap<Address, ServerInfo> Servers;
     Servers discovered;
     Servers fromMaster;
     ElapsedTimer pingTimer;

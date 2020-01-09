@@ -243,7 +243,7 @@ public:
      *                  For package resources this may be C-String containing a
      *                  semicolon delimited list of identity keys.
      */
-    void addResource(resourceclassid_t classId, de::dint rflags,
+    void addResource(resourceclassid_t classId, int rflags,
                      const char *names, const void *params);
 
     /**

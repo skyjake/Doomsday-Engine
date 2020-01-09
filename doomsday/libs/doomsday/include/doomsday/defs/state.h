@@ -36,8 +36,8 @@ public:
     
     void resetToDefaults();
     
-    de::dint32 misc(de::dint index) const;
-    void setMisc(de::dint index, de::dint32 value);
+    de::dint32 misc(int index) const;
+    void setMisc(int index, de::dint32 value);
 };
     
 } // namespace defn

@@ -206,7 +206,7 @@ dint InputDevice::toButtonId(const String &name) const
     return -1;
 }
 
-bool InputDevice::hasAxis(de::dint id) const
+bool InputDevice::hasAxis(int id) const
 {
     return (id >= 0 && id < d->axes.count());
 }
@@ -230,7 +230,7 @@ int InputDevice::axisCount() const
     return d->axes.count();
 }
 
-bool InputDevice::hasButton(de::dint id) const
+bool InputDevice::hasButton(int id) const
 {
     return (id >= 0 && id < d->buttons.count());
 }
@@ -254,7 +254,7 @@ int InputDevice::buttonCount() const
     return d->buttons.count();
 }
 
-bool InputDevice::hasHat(de::dint id) const
+bool InputDevice::hasHat(int id) const
 {
     return (id >= 0 && id < d->hats.count());
 }

@@ -39,8 +39,8 @@ public:
     void setSound(int soundId, const de::String &sound);
     de::String sound(int soundId) const;
     
-    int flags(de::dint index) const;
-    void setFlags(de::dint index, int flags);
+    int flags(int index) const;
+    void setFlags(int index, int flags);
 };
     
 } // namespace defn

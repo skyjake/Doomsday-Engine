@@ -49,19 +49,19 @@ public:
      * Returns @c true if a Sprite exists with given unique @a id and @a frame number.
      * Consider using spritePtr() if the sprite definition needs to be access as well.
      */
-    bool hasSprite(spritenum_t id, de::dint frame) const;
+    bool hasSprite(spritenum_t id, int frame) const;
 
     /**
      * Lookup a Sprite by it's unique @a id and @a frame number.
      *
      * @see hasSprite(), spritePtr()
      */
-    defn::CompiledSpriteRecord &sprite(spritenum_t id, de::dint frame);
+    defn::CompiledSpriteRecord &sprite(spritenum_t id, int frame);
 
     /**
      * Returns a pointer to the identified Sprite, or @c nullptr.
      */
-    const defn::CompiledSpriteRecord *spritePtr(spritenum_t id, de::dint frame) const;
+    const defn::CompiledSpriteRecord *spritePtr(spritenum_t id, int frame) const;
 
     const SpriteSet *tryFindSpriteSet(spritenum_t id) const;
 
@@ -73,12 +73,12 @@ public:
     /**
      * Returns the total number of SpriteSets.
      */
-    de::dint spriteCount() const;
+    int spriteCount() const;
 
 public:
     /// Returns a value in the range [0..Sprite::MAX_VIEWS] if @a angleCode can be
     /// interpreted as a sprite view (angle) index; otherwise @c -1
-    static de::dint toSpriteAngle(de::Char angleCode);
+    static int toSpriteAngle(de::Char angleCode);
 
     /// Returns @c true if @a name is a well-formed sprite name.
     static bool isValidSpriteName(const de::String& name);

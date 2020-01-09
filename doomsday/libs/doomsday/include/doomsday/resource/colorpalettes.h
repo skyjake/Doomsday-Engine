@@ -36,7 +36,7 @@ public:
     /**
      * Returns the total number of color palettes.
      */
-    de::dint colorPaletteCount() const;
+    int colorPaletteCount() const;
 
     /**
      * Destroys all the color palettes.

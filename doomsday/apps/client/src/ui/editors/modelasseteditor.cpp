@@ -312,7 +312,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
             groups << g;
 
             // Make a variable group for each subrecord.
-            Map<String, Group *> orderedGroups;
+            KeyMap<String, Group *> orderedGroups;
             ns.forSubrecords([this, anim, &orderedGroups] (const String &name, Record &rec)
             {
                 orderedGroups.insert(name, makeGroup(*anim, rec, name, true));

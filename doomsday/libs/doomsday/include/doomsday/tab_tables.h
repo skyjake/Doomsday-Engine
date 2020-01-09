@@ -1,4 +1,4 @@
-/** @file
+/** @file tab_tables.h  Precalculated trigonometric functions.
  *
  * @authors Copyright (c) 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -15,4 +15,15 @@
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
+
 #pragma once
+
+#include "libdoomsday.h"
+
+#include <de/legacy/types.h>
+#include <de/legacy/fixedpoint.h>
+
+LIBDOOMSDAY_PUBLIC DE_EXTERN_C fixed_t  finesine[5 * FINEANGLES / 4];
+LIBDOOMSDAY_PUBLIC DE_EXTERN_C fixed_t *finecosine;
+LIBDOOMSDAY_PUBLIC DE_EXTERN_C int      finetangent[4096];
+LIBDOOMSDAY_PUBLIC DE_EXTERN_C angle_t  tantoangle[SLOPERANGE + 1];

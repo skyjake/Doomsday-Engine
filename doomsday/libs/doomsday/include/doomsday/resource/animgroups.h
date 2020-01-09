@@ -40,7 +40,7 @@ public:
     /**
      * Returns the total number of animation/precache groups.
      */
-    de::dint animGroupCount();
+    int animGroupCount();
 
     /**
      * Destroys all the animation groups.
@@ -52,12 +52,12 @@ public:
      *
      * @param flags  @ref animationGroupFlags
      */
-    AnimGroup &newAnimGroup(de::dint flags);
+    AnimGroup &newAnimGroup(int flags);
 
     /**
      * Returns the AnimGroup associated with @a uniqueId (1-based); otherwise @c 0.
      */
-    AnimGroup *animGroup(de::dint uniqueId);
+    AnimGroup *animGroup(int uniqueId);
 
     AnimGroup *animGroupForTexture(const TextureManifest &textureManifest);
 

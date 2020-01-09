@@ -31,7 +31,7 @@
 
 #include <list>
 #include <de/List>
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/Error>
 
 namespace res {
@@ -107,7 +107,7 @@ public:
             KnownDataCount
         };
 
-        typedef Map<DataType, File1 *> Lumps;
+        typedef KeyMap<DataType, File1 *> Lumps;
 
     public:
         /**

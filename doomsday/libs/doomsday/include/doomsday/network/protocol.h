@@ -23,7 +23,7 @@
 #include "de/Protocol"
 #include "de/RecordPacket"
 #include "de/Vector"
-#include "de/Map"
+#include "de/KeyMap"
 
 namespace network {
 
@@ -101,7 +101,7 @@ public:
         {}
     };
 
-    typedef Map<int, Player> Players;
+    typedef KeyMap<int, Player> Players;
 
 public:
     PlayerInfoPacket();

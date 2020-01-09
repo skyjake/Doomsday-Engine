@@ -59,7 +59,7 @@
 #include <doomsday/world/MaterialManifest>
 #include <doomsday/world/xg.h>
 
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/legacy/findfile.h>
 #include <de/c_wrapper.h>
 #include <de/App>

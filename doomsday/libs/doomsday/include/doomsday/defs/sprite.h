@@ -94,12 +94,12 @@ public:
     /**
      * @param angle  @c 0= front, @c 1= one angle turn clockwise, etc...
      */
-    de::Record &addView(de::String material, de::dint angle, bool mirrorX = false);
+    de::Record &addView(de::String material, int angle, bool mirrorX = false);
 
     /**
      * Returns the total number of Views defined for the sprite.
      */
-    de::dint viewCount() const;
+    int viewCount() const;
 
     de::DictionaryValue &viewsDict();
     //const de::DictionaryValue &viewsDict() const;
@@ -109,20 +109,20 @@ public:
      *
      * @param angle  View angle/rotation index/identifier to lookup.
      */
-    bool hasView(de::dint angle) const;
+    bool hasView(int angle) const;
 
     /**
      * Returns the View associated with the specified @a angle.
      *
      * @param angle  View angle/rotation index/identifier to lookup.
      */
-    //de::Record &findView(de::dint angle);
+    //de::Record &findView(int angle);
 
-    //const de::Record *tryFindView(de::dint angle) const;
+    //const de::Record *tryFindView(int angle) const;
 
-    View view(de::dint angle) const;
+    View view(int angle) const;
 
-    const res::Uri &viewMaterial(de::dint angle) const;
+    const res::Uri &viewMaterial(int angle) const;
 
     /**
      * Select an appropriate View for visualizing the entity, given a mobj angle and the

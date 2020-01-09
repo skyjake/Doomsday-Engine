@@ -19,8 +19,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/legacy/types.h> // FINEANGLES
-#include "dd_def.h"
+#include "doomsday/tab_tables.h"
 
 int finetangent[4096] =
 {
@@ -538,8 +537,7 @@ int finetangent[4096] =
     11392683,13145455,15535599,18988036,24413316,34178904,56965752,170910304
 };
 
-
-int finesine[10240] =
+fixed_t finesine[10240] =
 {
     25,75,125,175,226,276,326,376,
     427,477,527,578,628,678,728,779,
@@ -1823,9 +1821,9 @@ int finesine[10240] =
     65534,65535,65535,65535,65535,65535,65535,65535
 };
 
-fixed_t *fineCosine = &finesine[FINEANGLES / 4];
+fixed_t *finecosine = &finesine[FINEANGLES / 4];
 
-int tantoangle[2049] =
+angle_t tantoangle[2049] =
 {
     0,333772,667544,1001315,1335086,1668857,2002626,2336395,
     2670163,3003929,3337694,3671457,4005219,4338979,4672736,5006492,

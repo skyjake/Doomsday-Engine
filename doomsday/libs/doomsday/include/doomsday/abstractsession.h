@@ -25,7 +25,7 @@
 #include <de/Error>
 #include <de/Observers>
 #include <de/String>
-#include <de/Map>
+#include <de/KeyMap>
 
 class GameStateFolder;
 

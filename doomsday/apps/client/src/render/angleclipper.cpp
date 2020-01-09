@@ -594,7 +594,7 @@ DE_PIMPL_NOREF(AngleClipper)
         // Now we must determine which plane occludes which.
         // Pick a point in the middle of the range.
         crossAngle = (orange->from + orange->to) >> (1 + BAMS_BITS - 13);
-        cross.x = 100 * FIX2FLT(fineCosine[crossAngle]);
+        cross.x = 100 * FIX2FLT(finecosine[crossAngle]);
         cross.y = 100 * FIX2FLT(finesine  [crossAngle]);
         cross.z = -(orange->normal.x * cross.x +
                     orange->normal.y * cross.y) / orange->normal.z;

@@ -78,7 +78,7 @@ DE_DECLARE_API(InternalData) =
     nullptr,
     nullptr,
     nullptr,
-    &validCount
+    &World::validCount
 };
 
 #ifdef __CLIENT__

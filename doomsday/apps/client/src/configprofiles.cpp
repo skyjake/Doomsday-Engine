@@ -32,7 +32,7 @@
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/Game>
-#include <de/Map>
+#include <de/KeyMap>
 #include <sstream>
 
 using namespace de;
@@ -79,12 +79,12 @@ DE_PIMPL(ConfigProfiles)
         }
     };
 
-    typedef Map<String, Setting> Settings;
+    typedef KeyMap<String, Setting> Settings;
     Settings settings;
 
     struct Profile : public Profiles::AbstractProfile
     {
-        typedef Map<String, std::shared_ptr<Value>> Values;
+        typedef KeyMap<String, std::shared_ptr<Value>> Values;
         Values values;
 
         ConfigProfiles &owner()

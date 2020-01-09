@@ -60,7 +60,7 @@
 #include <de/List>
 #include <de/String>
 #include <de/PathTree>
-#include <de/Map>
+#include <de/KeyMap>
 
 /**
  * @defgroup fs File System
@@ -262,7 +262,7 @@ public:
     };
 
     /// File system subspace schemes.
-    typedef Map<String, Scheme *> Schemes;
+    typedef KeyMap<String, Scheme *> Schemes;
 
     /**
      * PathListItem represents a found path for find file search results.

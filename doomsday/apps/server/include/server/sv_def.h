@@ -42,10 +42,10 @@ struct material_s;
 // Anything farther than this will never be taken into consideration.
 #define FAR_MOBJ_DIST       1500
 
-extern de::dint svMaxPlayers;
-extern de::dint allowFrames;    ///< Allow sending of frames.
-extern de::dint frameInterval;  ///< In tics.
-extern de::dint netRemoteUser;  ///< The client who is currently logged in.
+extern int svMaxPlayers;
+extern int allowFrames;    ///< Allow sending of frames.
+extern int frameInterval;  ///< In tics.
+extern int netRemoteUser;  ///< The client who is currently logged in.
 extern char *netPassword;       ///< Remote login password.
 
 void Sv_Shutdown();
@@ -58,7 +58,7 @@ dd_bool Sv_PlayerArrives(nodeid_t nodeID, const char *name);
 
 void Sv_PlayerLeaves(nodeid_t nodeID);
 
-void Sv_Handshake(de::dint playernum, dd_bool newplayer);
+void Sv_Handshake(int playernum, dd_bool newplayer);
 
 void Sv_GetPackets();
 
@@ -70,13 +70,13 @@ void Sv_GetPackets();
  * @param flags  @ref consolePrintFlags
  * @param msg    Message to send.
  */
-void Sv_SendText(de::dint to, de::dint flags, const char *msg);
+void Sv_SendText(int to, int flags, const char *msg);
 
 void Sv_Ticker(timespan_t ticLength);
 
-de::dint Sv_Latency(byte cmdTime);
+int Sv_Latency(byte cmdTime);
 
-void Sv_Kick(de::dint who);
+void Sv_Kick(int who);
 
 //void Sv_GetInfo(serverinfo_t *info);
 
@@ -84,13 +84,13 @@ void Sv_Kick(de::dint who);
 
 //de::Record *Sv_InfoToRecord(serverinfo_t *info);
 
-de::dint Sv_GetNumPlayers();
+int Sv_GetNumPlayers();
 
-de::dint Sv_GetNumConnected();
+int Sv_GetNumConnected();
 
-dd_bool Sv_CheckBandwidth(de::dint playerNumber);
+dd_bool Sv_CheckBandwidth(int playerNumber);
 
-dd_bool Sv_CanTrustClientPos(de::dint plrNum);
+dd_bool Sv_CanTrustClientPos(int plrNum);
 
 /**
  * Returns a unique id for material @a mat that can be passed on to clients.

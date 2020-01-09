@@ -53,7 +53,7 @@ public:
     /**
      * Returns the total number of map resource manifests in the system.
      */
-    de::dint mapManifestCount() const;
+    int mapManifestCount() const;
 
     /// @todo make private.
     void initMapManifests();

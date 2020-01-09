@@ -31,7 +31,7 @@
 #ifndef DE_C_API_ONLY
 
 #include <de/String>
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/Log>
 #include <de/NativePath>
 #include <de/String>
@@ -167,7 +167,7 @@ inline bool isNativeFileType(FileType const& ftype) {
 }
 
 /// Map of symbolic file type names to file types (not owned).
-typedef Map<String, const FileType *> FileTypes;
+typedef KeyMap<String, const FileType *> FileTypes;
 
 } // namespace res
 

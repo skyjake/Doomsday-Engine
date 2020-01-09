@@ -26,7 +26,7 @@
 
 #include <de/legacy/types.h>
 
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/Set>
 
 namespace res {
@@ -46,7 +46,7 @@ namespace res {
 class LIBDOOMSDAY_PUBLIC Textures
 {
 public:
-    typedef Map<de::String, TextureScheme *, de::String::InsensitiveLessThan> TextureSchemes;
+    typedef KeyMap<de::String, TextureScheme *, de::String::InsensitiveLessThan> TextureSchemes;
     typedef Set<Texture *> AllTextures;
 
     static Textures &get();
@@ -161,7 +161,7 @@ public:
     /**
      * Returns the total number of manifest schemes in the collection.
      */
-    inline de::dint textureSchemeCount() const {
+    inline int textureSchemeCount() const {
         return allTextureSchemes().size();
     }
 
@@ -203,7 +203,7 @@ public:
             de::Flags flags,
             const de::Vec2ui &dimensions,
             const de::Vec2i &origin,
-            de::dint uniqueId,
+            int uniqueId,
             const res::Uri *resourceUri = nullptr)
     {
         return textureScheme(uri.scheme())

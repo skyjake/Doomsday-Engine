@@ -458,7 +458,7 @@ viewer_t R_SharpViewer(ClientPlayer &player)
         duint angle = view.angle() >> ANGLETOFINESHIFT;
         duint pitch = angle_t(LOOKDIR2DEG(view.pitch) / 360 * ANGLE_MAX) >> ANGLETOFINESHIFT;
 
-        view.origin -= Vec3d(FIX2FLT(fineCosine[angle]),
+        view.origin -= Vec3d(FIX2FLT(finecosine[angle]),
                                 FIX2FLT(finesine[angle]),
                                 FIX2FLT(finesine[pitch])) * distance;
     }
@@ -627,7 +627,7 @@ void R_UpdateViewer(dint consoleNum)
 
     const duint an = viewYaw >> ANGLETOFINESHIFT;
     vd->viewSin = FIX2FLT(finesine[an]);
-    vd->viewCos = FIX2FLT(fineCosine[an]);
+    vd->viewCos = FIX2FLT(finecosine[an]);
 
     // Calculate the front, up and side unit vectors.
     const dfloat yawRad   = ((viewYaw / (dfloat) ANGLE_MAX) *2) * PI;
