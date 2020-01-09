@@ -22,6 +22,8 @@
 
 #include "../libdoomsday.h"
 #include "../resource/mapmanifest.h"
+#include "mapelement.h"
+#include "bspnode.h"
 
 #include <de/Id>
 #include <de/Observers>
@@ -32,16 +34,19 @@ class EntityDatabase;
 struct polyobj_s;
 
 namespace mesh { class Mesh; }
+namespace network { class MapOutlinePacket; }
 
 namespace world {
 
 class Blockmap;
-class Line;
-class LineSide;
-class LineBlockmap;
+class BspLeaf;
 class IThinkerMapping;
-class Subsector;
+class Line;
+class LineBlockmap;
+class LineSide;
 class Sky;
+class Subsector;
+class Surface;
 class Thinkers;
 
 /**
@@ -69,6 +74,9 @@ public:
 
     /// Required BSP data is missing. @ingroup errors
     DE_ERROR(MissingBspTreeError);
+
+    /// Thrown when the referenced subsector is missing/unknown. @ingroup errors
+    DE_ERROR(MissingSubsectorError);
 
     /// Required thinker lists are missing. @ingroup errors
     DE_ERROR(MissingThinkersError);
@@ -116,7 +124,7 @@ public:
     /**
      * Returns the effective map-info definition Record for the map.
      *
-     * @see WorldSystem::mapInfoForMapUri()
+     * @see World::mapInfoForMapUri()
      */
     const de::Record &mapInfo() const;
 
@@ -376,9 +384,6 @@ public:
      */
     de::LoopResult forAllSectorsTouchingMobj(struct mobj_s &mob, const std::function<de::LoopResult (Sector &)>& callback) const;
 
-    /// Thrown when the referenced subsector is missing/unknown.
-    DE_ERROR(MissingSubsectorError);
-
     /**
      * Lookup a Subsector in the map by it's unique identifier @a id.
      */
@@ -584,6 +589,21 @@ public:
 //- Multiplayer -------------------------------------------------------------------------
 
     void initMapOutlinePacket(network::MapOutlinePacket &packet);
+
+//- Dummy Map Elements ----------------------------------------------------------------------------
+
+    static void initDummyElements();
+
+    static void *createDummyElement(int type, void *extraData);
+
+    /**
+     * Determines the type of a dummy object.
+     */
+    static int dummyElementType(const void *mapElement);
+
+    static void destroyDummyElement(void *mapElement);
+
+    static void *dummyElementExtraData(void *mapElement);
 
 public:  /// @todo Most of the following should be private:
 

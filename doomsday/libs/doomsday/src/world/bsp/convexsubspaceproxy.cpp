@@ -17,27 +17,26 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
-#include "world/bsp/convexsubspaceproxy.h"
-#include "BspLeaf"
-#include "ConvexSubspace"
-#include "Line"
-#include "Sector"
-#include "world/bsp/linesegment.h"
-#include "world/clientserverworld.h" /// validCount @todo Remove me
+#include "doomsday/world/bsp/convexsubspaceproxy.h"
+#include "doomsday/world/bspleaf.h"
+#include "doomsday/world/convexsubspace.h"
+#include "doomsday/world/line.h"
+#include "doomsday/world/sector.h"
+#include "doomsday/world/bsp/linesegment.h"
+#include "doomsday/world/world.h"
+#include "doomsday/mesh/face.h"
+#include "doomsday/mesh/hedge.h"
+#include "doomsday/mesh/mesh.h"
 
-#include <doomsday/mesh/face.h>
-#include <doomsday/mesh/hedge.h>
-#include <doomsday/mesh/mesh.h>
 #include <de/Set>
 #include <de/Log>
 
 #include <list>
 
-using namespace de;
-
 namespace world {
 namespace bsp {
+
+using namespace de;
 
 typedef List<LineSegmentSide *> SegmentList;
 
@@ -425,6 +424,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, mesh::Mesh &mesh) const
                 
                 extraMeshSegments += 1;
 
+                DE_ASSERT_FAIL("refactor away __CLIENT__");
 #ifdef __CLIENT__
                 /// @todo LineSide::newSegment() should encapsulate:
                 seg->setLineSideOffset(Vec2d(mapSide->from().origin() - lineSeg->from().origin()).length());

@@ -20,20 +20,20 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_WORLD_BSP_PARTITIONER_H
-#define DE_WORLD_BSP_PARTITIONER_H
+#pragma once
 
-#include "world/map.h"
+#include "../map.h"
+#include "../../mesh/mesh.h"
 
-#include <doomsday/mesh/mesh.h>
 #include <de/Set>
 #include <de/Observers>
 #include <de/Vector>
 
+namespace world {
+
 class Line;
 class Sector;
 
-namespace world {
 namespace bsp {
 
 /// Minimum length of a half-edge post partitioning. Used in cost evaluation.
@@ -107,5 +107,3 @@ private:
 
 }  // namespace bsp
 }  // namespace world
-
-#endif  // DE_WORLD_BSP_PARTITIONER_H

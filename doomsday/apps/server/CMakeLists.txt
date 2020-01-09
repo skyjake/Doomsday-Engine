@@ -53,13 +53,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/ui/infine/finaletextwidget.h
     ${src}/include/ui/infine/finalewidget.h
     ${src}/include/world/bindings_world.h
-    ${src}/include/world/bsp/convexsubspaceproxy.h
-    ${src}/include/world/bsp/edgetip.h
-    ${src}/include/world/bsp/hplane.h
-    ${src}/include/world/bsp/linesegment.h
-    ${src}/include/world/bsp/partitioner.h
-    ${src}/include/world/bsp/partitionevaluator.h
-    ${src}/include/world/bsp/superblockmap.h
     ${src}/include/world/clientserverworld.h
     ${src}/include/world/impulseaccumulator.h
     ${src}/include/world/map.h

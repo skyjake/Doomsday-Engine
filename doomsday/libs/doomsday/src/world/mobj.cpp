@@ -17,6 +17,7 @@
  */
 
 #include "doomsday/world/mobj.h"
+#include "doomsday/world/bspleaf.h"
 
 using namespace de;
 
@@ -41,4 +42,29 @@ AABoxd Mobj_Bounds(const mobj_t &mobj)
     const ddouble radius  = Mobj_Radius(mobj);
     return AABoxd(origin.x - radius, origin.y - radius,
                   origin.x + radius, origin.y + radius);
+}
+
+bool Mobj_IsLinked(const mobj_t &mob)
+{
+    return mob._bspLeaf != 0;
+}
+
+bool Mobj_IsSectorLinked(const mobj_t &mob)
+{
+    return (mob._bspLeaf != nullptr && mob.sPrev != nullptr);
+}
+
+world_Sector *Mobj_Sector(const mobj_t *mob)
+{
+    if (!mob || !Mobj_IsLinked(*mob)) return nullptr;
+    return Mobj_BspLeafAtOrigin(*mob).sectorPtr();
+}
+
+world::BspLeaf &Mobj_BspLeafAtOrigin(const mobj_t &mob)
+{
+    if (Mobj_IsLinked(mob))
+    {
+        return *reinterpret_cast<world::BspLeaf *>(mob._bspLeaf);
+    }
+    throw Error("Mobj_BspLeafAtOrigin", "Mobj is not yet linked");
 }

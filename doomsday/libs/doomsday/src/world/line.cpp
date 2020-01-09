@@ -974,14 +974,16 @@ dint LineSide::setProperty(const DmuArgs &args)
     switch(args.prop)
     {
     case DMU_SECTOR: {
-        if (P_IsDummy(&line()))
+        if (Map::dummyElementType(&line()) != DMU_NONE)
         {
             args.value(DMT_SIDE_SECTOR, &_sector, 0);
         }
         else
         {
             /// @throw WritePropertyError Sector is not writable for non-dummy sides.
-            throw WritePropertyError("LineSide::setProperty", "Property " + String(DMU_Str(args.prop)) + " is only writable for dummy LineSides");
+            throw WritePropertyError("LineSide::setProperty",
+                                     "Property " + std::string(DMU_Str(args.prop)) +
+                                         " is only writable for dummy LineSides");
         }
         break; }
 

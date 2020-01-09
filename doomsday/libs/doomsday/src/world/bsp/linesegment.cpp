@@ -23,14 +23,14 @@
  * 02110-1301 USA</small>
  */
 
-#include "world/bsp/linesegment.h"
+#include "doomsday/world/bsp/linesegment.h"
+#include "doomsday/world/bsp/convexsubspaceproxy.h"
+#include "doomsday/world/bsp/superblockmap.h"
 
 #include <de/legacy/vector1.h> /// @todo remove me
 #include <de/legacy/aabox.h> // M_BoxOnLineSide2
 #include <de/Observers>
 #include <de/Vector>
-#include "world/bsp/convexsubspaceproxy.h"
-#include "world/bsp/superblockmap.h"
 
 using namespace de;
 
@@ -76,7 +76,7 @@ DE_PIMPL_NOREF(LineSegment::Side)
     slopetype_t pSlopeType = ST_VERTICAL;
 
     /// Half-edge produced from this map line segment (if any, not owned).
-    HEdge *hedge = nullptr;
+    mesh::HEdge *hedge = nullptr;
 
     inline LineSegment::Side **neighborAdr(int edge) {
         return edge ? &rightNeighbor : &leftNeighbor;
@@ -129,7 +129,7 @@ bool LineSegment::Side::hasHEdge() const
     return d->hedge != nullptr;
 }
 
-HEdge &LineSegment::Side::hedge() const
+mesh::HEdge &LineSegment::Side::hedge() const
 {
     if(d->hedge)
     {
@@ -139,7 +139,7 @@ HEdge &LineSegment::Side::hedge() const
     throw MissingHEdgeError("LineSegment::Side::hedge", "No half-edge is associated");
 }
 
-void LineSegment::Side::setHEdge(HEdge *newHEdge)
+void LineSegment::Side::setHEdge(mesh::HEdge *newHEdge)
 {
     d->hedge = newHEdge;
 }

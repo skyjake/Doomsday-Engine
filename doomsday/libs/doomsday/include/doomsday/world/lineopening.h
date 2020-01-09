@@ -1,4 +1,4 @@
-/** @file factory.h  Factory for constructing world objects.
+/** @file
  *
  * @authors Copyright (c) 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -19,31 +19,31 @@
 #pragma once
 
 #include "../libdoomsday.h"
-#include "../defs/sky.h"
+#include "api_map.h"
 
-#include <de/Id>
-#include <de/Vector>
-
-class MobjThinkerData;
-struct polyobj_s;
-
-namespace world {
-
-class Material;
-class MaterialManifest;
-class Sky;
-
-class LIBDOOMSDAY_PUBLIC Factory
+/**
+ * Describes the @em sharp coordinates of the opening between sectors which
+ * interface at a given map line. The open range is defined as the gap between
+ * foor and ceiling on the front side clipped by the floor and ceiling planes on
+ * the back side (if present).
+ */
+struct LIBDOOMSDAY_PUBLIC lineopening_s
 {
-public:
-    static void setMaterialConstructor(const std::function<Material *(MaterialManifest &)> &);
-    static void setMobjThinkerDataConstructor(const std::function<MobjThinkerData *(const de::Id &)> &);
-    static void setSkyConstructor(const std::function<Sky *(const defn::Sky *)> &);
+    /// Top and bottom z of the opening.
+    float top, bottom;
 
-    static Material *        newMaterial(MaterialManifest &);
-    static MobjThinkerData * newMobjThinkerData(const de::Id &);
-    static Sky *             newSky(const defn::Sky *);
-    static struct polyobj_s *newPolyobj(const de::Vec2d &origin);
+    /// Distance from top to bottom.
+    float range;
+
+    /// Z height of the lowest Plane at the opening on the X|Y axis.
+    /// @todo Does not belong here?
+    float lowFloor;
+
+#ifdef __cplusplus
+    lineopening_s() : top(0), bottom(0), range(0), lowFloor(0) {}
+    lineopening_s(const world_Line &line);
+    lineopening_s &operator=(const lineopening_s &other);
+#endif
 };
 
-} // namespace world
+typedef struct lineopening_s LineOpening;

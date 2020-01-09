@@ -104,14 +104,6 @@ public:
     inline void unloadMap() { changeMap(res::Uri()); }
 
     /**
-     * Returns the effective map-info definition Record associated with the given
-     * @a mapUri (which may be the default definition, if invalid/unknown).
-     *
-     * @param mapUri  Unique identifier for the map to lookup map-info data for.
-     */
-    const de::Record &mapInfoForMapUri(const res::Uri &mapUri) const;
-
-    /**
      * Advance time in the world.
      *
      * @param delta  Time delta to apply.

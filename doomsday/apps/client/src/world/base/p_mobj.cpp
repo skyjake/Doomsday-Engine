@@ -36,6 +36,7 @@
 #include <doomsday/res/Sprites>
 #include <doomsday/world/mobjthinkerdata.h>
 #include <doomsday/world/Materials>
+#include <doomsday/world/thinkers.h>
 
 #include "def_main.h"
 #include "api_sound.h"
@@ -56,7 +57,6 @@
 #include "world/clientserverworld.h" // validCount
 #include "world/p_object.h"
 #include "world/p_players.h"
-#include "world/thinkers.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "Subsector"
@@ -174,11 +174,6 @@ void P_MobjRecycle(mobj_t* mo)
     unusedMobjs = mo;
 }
 
-bool Mobj_IsSectorLinked(const mobj_t &mob)
-{
-    return (mob._bspLeaf != nullptr && mob.sPrev != nullptr);
-}
-
 #undef Mobj_SetState
 DE_EXTERN_C void Mobj_SetState(mobj_t *mob, int statenum)
 {
@@ -268,20 +263,6 @@ world::Map &Mobj_Map(const mobj_t &mob)
     return Thinker_Map(mob.thinker);
 }
 
-bool Mobj_IsLinked(const mobj_t &mob)
-{
-    return mob._bspLeaf != 0;
-}
-
-BspLeaf &Mobj_BspLeafAtOrigin(const mobj_t &mob)
-{
-    if (Mobj_IsLinked(mob))
-    {
-        return *(BspLeaf *)mob._bspLeaf;
-    }
-    throw Error("Mobj_BspLeafAtOrigin", "Mobj is not yet linked");
-}
-
 bool Mobj_HasSubsector(const mobj_t &mob)
 {
     if (!Mobj_IsLinked(mob)) return false;
@@ -298,13 +279,6 @@ Subsector &Mobj_Subsector(const mobj_t &mob)
 Subsector *Mobj_SubsectorPtr(const mobj_t &mob)
 {
     return Mobj_HasSubsector(mob) ? &Mobj_Subsector(mob) : nullptr;
-}
-
-#undef Mobj_Sector
-DE_EXTERN_C Sector *Mobj_Sector(const mobj_t *mob)
-{
-    if (!mob || !Mobj_IsLinked(*mob)) return nullptr;
-    return Mobj_BspLeafAtOrigin(*mob).sectorPtr();
 }
 
 void Mobj_SpawnParticleGen(mobj_t *mob, const ded_ptcgen_t *def)

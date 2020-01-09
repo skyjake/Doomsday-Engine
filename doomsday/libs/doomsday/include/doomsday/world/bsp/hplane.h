@@ -26,18 +26,20 @@
 #ifndef DE_WORLD_BSP_HPLANE_H
 #define DE_WORLD_BSP_HPLANE_H
 
+#include "linesegment.h"
+
 #include <de/List>
 #include <de/Partition>
 #include <de/Vector>
-#include "world/bsp/linesegment.h"
 
 /// Two intercepts whose distance is inclusive of this bound will be merged.
 #define HPLANE_INTERCEPT_MERGE_DISTANCE_EPSILON     1.0 / 128
 
+namespace world {
+
 class Sector;
 class Vertex;
 
-namespace world {
 namespace bsp {
 
 class EdgeTips;

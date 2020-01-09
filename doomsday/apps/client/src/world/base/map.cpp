@@ -81,8 +81,6 @@
 
 using namespace de;
 
-static dint bspSplitFactor = 7;  ///< cvar
-
 #ifdef __CLIENT__
 /// Milliseconds it takes for Unpredictable and Hidden mobjs to be
 /// removed from the hash. Under normal circumstances, the special
@@ -2013,7 +2011,30 @@ bool Map::endEditing()
         return false;
     }
 
+    forAllSectors([](Sector &sector) {
+        if (sector.visPlaneLinkTargetSector() != MapElement::NoIndex)
+        {
+            if (Sector *target = sectorsByArchiveIndex[sector.visPlaneLinkTargetSector()])
+            {
+                // Use the first subsector as the target.
+                auto &targetSub = target->subsector(0).as<ClientSubsector>();
 
+                // Linking is done for each subsector separately. (Necessary, though?)
+                sector.forAllSubsectors([&targetSub, &sector](Subsector &sub) {
+                    auto &clsub = sub.as<ClientSubsector>();
+                    for (int plane = 0; plane < 2; ++plane)
+                    {
+                        if (sector.visPlaneLinked(plane))
+                        {
+                            clsub.linkVisPlane(plane, targetSub);
+                        }
+                    }
+                    return LoopContinue;
+                });
+            }
+        }
+        return LoopContinue;
+    });
 
     return true;
 }

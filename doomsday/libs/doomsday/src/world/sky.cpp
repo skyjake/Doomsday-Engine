@@ -18,30 +18,20 @@
  * 02110-1301 USA</small>
  */
 
-#include "world/sky.h"
+#include "doomsday/world/sky.h"
 
-#include <cmath>
-#include <de/Log>
 #include <doomsday/res/TextureManifest>
 #include <doomsday/world/Materials>
-#include "dd_main.h"
-
-#ifdef __CLIENT__
-#  include "gl/gl_main.h"
-#  include "gl/gl_tex.h"
-#  include "render/rend_main.h"    // rendSkyLightAuto
-#  include "render/skydrawable.h"  // SkyDrawable::layerMaterialSpec
-#  include "MaterialAnimator"
-#  include "ClientTexture"
-#endif
-
-#define NUM_LAYERS  2
+#include <cmath>
+#include <de/Log>
 
 DE_STATIC_STRING(DEFAULT_SKY_SPHERE_MATERIAL, "Textures:SKY1")
 
 using namespace de;
 
 namespace world {
+
+const int Sky::NUM_LAYERS = 2;
 
 DE_PIMPL_NOREF(Sky::Layer)
 {
@@ -135,16 +125,7 @@ void Sky::Layer::setFadeoutLimit(dfloat newLimit)
     d->fadeOutLimit = newLimit;
 }
 
-#ifdef __CLIENT__
-static const Vec3f AmbientLightColorDefault{1, 1, 1}; // Pure white.
-#endif
-
 DE_PIMPL(Sky)
-#ifdef __CLIENT__
-, DE_OBSERVES(Layer, ActiveChange)
-, DE_OBSERVES(Layer, MaterialChange)
-, DE_OBSERVES(Layer, MaskedChange)
-#endif
 {
     using Layers = List<std::unique_ptr<Layer>>;
 
@@ -156,15 +137,9 @@ DE_PIMPL(Sky)
 
     Impl(Public *i) : Base(i)
     {
-        for(dint i = 0; i < NUM_LAYERS; ++i)
+        for (int i = 0; i < NUM_LAYERS; ++i)
         {
             layers.emplace_back(new Layer(self()));
-#ifdef __CLIENT__
-            Layer *layer = layers.back().get();
-            layer->audienceForActiveChange()   += this;
-            layer->audienceForMaskedChange()   += this;
-            layer->audienceForMaterialChange() += this;
-#endif
         }
     }
 
@@ -172,139 +147,6 @@ DE_PIMPL(Sky)
     {
         DE_NOTIFY_PUBLIC(Deletion, i) i->skyBeingDeleted(self());
     }
-
-#ifdef __CLIENT__
-    /**
-     * Ambient lighting characteristics.
-     */
-    struct AmbientLight
-    {
-        bool custom     = false;  /// @c true= defined in a MapInfo def.
-        bool needUpdate = true;   /// @c true= update if not custom.
-        Vec3f color;
-
-        void setColor(const Vec3f &newColor, bool isCustom = true)
-        {
-            color  = newColor.min(Vec3f(1)).max(Vec3f(0.0f));
-            custom = isCustom;
-        }
-
-        void reset()
-        {
-            custom     = false;
-            color      = AmbientLightColorDefault;
-            needUpdate = true;
-        }
-    } ambientLight;
-
-    /**
-     * @todo Move to SkyDrawable and have it simply update this component once the
-     * ambient color has been calculated.
-     *
-     * @todo Re-implement me by rendering the sky to a low-quality cubemap and use
-     * that to obtain the lighting characteristics.
-     */
-    void updateAmbientLightIfNeeded()
-    {
-        // Never update if a custom color is defined.
-        if(ambientLight.custom) return;
-
-        // Is it time to update the color?
-        if(!ambientLight.needUpdate) return;
-        ambientLight.needUpdate = false;
-
-        ambientLight.color = AmbientLightColorDefault;
-
-        // Determine the first active layer.
-        dint firstActiveLayer = -1; // -1 denotes 'no active layers'.
-        for(dint i = 0; i < layers.count(); ++i)
-        {
-            if(layers[i]->isActive())
-            {
-                firstActiveLayer = i;
-                break;
-            }
-        }
-
-        // A sky with no active layer uses the default color.
-        if(firstActiveLayer < 0) return;
-
-        Vec3f avgLayerColor;
-        Vec3f bottomCapColor;
-        Vec3f topCapColor;
-
-        dint avgCount = 0;
-        for(dint i = firstActiveLayer; i < layers.count(); ++i)
-        {
-            Layer &layer = *layers[i];
-
-            // Inactive layers won't be drawn.
-            if(!layer.isActive()) continue;
-
-            // A material is required for drawing.
-            ClientMaterial *mat = static_cast<ClientMaterial *>(layer.material());
-            if(!mat) continue;
-            MaterialAnimator &matAnimator = mat->getAnimator(SkyDrawable::layerMaterialSpec(layer.isMasked()));
-
-            // Ensure we've up to date info about the material.
-            matAnimator.prepare();
-
-            if(TextureVariant *tex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture)
-            {
-                const auto *avgColor = reinterpret_cast<const averagecolor_analysis_t *>(tex->base().analysisDataPointer(ClientTexture::AverageColorAnalysis));
-                if(!avgColor) throw Error("calculateSkyAmbientColor", "Texture \"" + tex->base().manifest().composeUri().asText() + "\" has no AverageColorAnalysis");
-
-                if(i == firstActiveLayer)
-                {
-                    const auto *avgLineColor = reinterpret_cast<const averagecolor_analysis_t *>(tex->base().analysisDataPointer(ClientTexture::AverageTopColorAnalysis));
-                    if(!avgLineColor) throw Error("calculateSkyAmbientColor", "Texture \"" + tex->base().manifest().composeUri().asText() + "\" has no AverageTopColorAnalysis");
-
-                    topCapColor = Vec3f(avgLineColor->color.rgb);
-
-                    avgLineColor = reinterpret_cast<const averagecolor_analysis_t *>(tex->base().analysisDataPointer(ClientTexture::AverageBottomColorAnalysis));
-                    if(!avgLineColor) throw Error("calculateSkyAmbientColor", "Texture \"" +  tex->base().manifest().composeUri().asText() + "\" has no AverageBottomColorAnalysis");
-
-                    bottomCapColor = Vec3f(avgLineColor->color.rgb);
-                }
-
-                avgLayerColor += Vec3f(avgColor->color.rgb);
-                ++avgCount;
-            }
-        }
-
-        // The caps cover a large amount of the sky sphere, so factor it in too.
-        // Each cap is another unit.
-        ambientLight.setColor((avgLayerColor + topCapColor + bottomCapColor) / (avgCount + 2),
-                              false /*not a custom color*/);
-    }
-
-    /// Observes Layer ActiveChange
-    void skyLayerActiveChanged(Layer &)
-    {
-        ambientLight.needUpdate = true;
-    }
-
-    /// Observes Layer MaterialChange
-    void skyLayerMaterialChanged(Layer &layer)
-    {
-        // We may need to recalculate the ambient color of the sky.
-        if(!layer.isActive()) return;
-        //if(ambientLight.custom) return;
-
-        ambientLight.needUpdate = true;
-    }
-
-    /// Observes Layer MaskedChange
-    void skyLayerMaskedChanged(Layer &layer)
-    {
-        // We may need to recalculate the ambient color of the sky.
-        if(!layer.isActive()) return;
-        //if(ambientLight.custom) return;
-
-        ambientLight.needUpdate = true;
-    }
-
-#endif  // __CLIENT__
 
     DE_PIMPL_AUDIENCE(Deletion)
     DE_PIMPL_AUDIENCE(HeightChange)
@@ -361,21 +203,6 @@ void Sky::configure(const defn::Sky *def)
 
         lyr.setActive(lyrDef? (lyrDef->geti("flags") & SLF_ENABLE) : i == 0);
     }
-
-#ifdef __CLIENT__
-    if(def)
-    {
-        Vec3f color(def->get("color"));
-        if(color != Vec3f(0.0f))
-        {
-            d->ambientLight.setColor(color);
-        }
-    }
-    else
-    {
-        d->ambientLight.reset();
-    }
-#endif
 }
 
 const Record *Sky::def() const
@@ -524,24 +351,5 @@ dint Sky::setProperty(const DmuArgs &args)
 
     return false; // Continue iteration.
 }
-
-#ifdef __CLIENT__
-
-const Vec3f &Sky::ambientColor() const
-{
-    if(d->ambientLight.custom || rendSkyLightAuto)
-    {
-        d->updateAmbientLightIfNeeded();
-        return d->ambientLight.color;
-    }
-    return AmbientLightColorDefault;
-}
-
-void Sky::setAmbientColor(const Vec3f &newColor)
-{
-    d->ambientLight.setColor(newColor);
-}
-
-#endif // __CLIENT__
 
 }  // namespace world

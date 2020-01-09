@@ -21,19 +21,19 @@
  * 02110-1301 USA</small>
  */
 
-#include "world/bsp/partitionevaluator.h"
-#include "world/bsp/partitioner.h"
-#include "world/clientserverworld.h" // validCount
+#include "doomsday/world/bsp/partitionevaluator.h"
+#include "doomsday/world/bsp/partitioner.h"
+#include "doomsday/world/world.h" // validCount
 
 #include <de/Log>
 #include <de/String>
 #include <de/Task>
 #include <de/TaskPool>
 
-using namespace de;
-
 namespace world {
 namespace bsp {
+
+using namespace de;
 
 namespace internal
 {
@@ -408,7 +408,7 @@ LineSegmentSide *PartitionEvaluator::choose(LineSegmentBlockTreeNode &node)
     // Increment valid count so we can avoid testing the line segments
     // produced from a single line more than once per round of partition
     // selection.
-    validCount++;
+    World::validCount++;
 
     // Iterative pre-order traversal.
     const LineSegmentBlockTreeNode *cur  = d->rootNode;
@@ -435,11 +435,11 @@ LineSegmentSide *PartitionEvaluator::choose(LineSegmentBlockTreeNode &node)
                 // Optimization: Only the first line segment produced from a
                 // given line is tested per round of partition costing because
                 // they are all collinear.
-                if(candidate->mapLine().validCount() == validCount)
+                if(candidate->mapLine().validCount() == World::validCount)
                     continue; // Skip this.
 
                 // Don't consider further segments of the candidate.
-                candidate->mapLine().setValidCount(validCount);
+                candidate->mapLine().setValidCount(World::validCount);
 
                 // Determine candidate suitability and cost.
                 d->beginPartitionCosting(candidate);

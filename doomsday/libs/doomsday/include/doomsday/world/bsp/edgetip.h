@@ -26,8 +26,8 @@
 #ifndef DE_WORLD_BSP_EDGETIP_H
 #define DE_WORLD_BSP_EDGETIP_H
 
+#include "linesegment.h"
 #include <list>
-#include "world/bsp/linesegment.h"
 
 namespace world {
 namespace bsp {
@@ -40,7 +40,7 @@ namespace bsp {
 class EdgeTip
 {
 public:
-    /// Logical side identifiers.
+    // Logical side identifiers.
     enum Side { Front, Back };
 
 public:

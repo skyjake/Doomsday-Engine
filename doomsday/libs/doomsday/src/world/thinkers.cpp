@@ -23,6 +23,8 @@
 #include "doomsday/world/map.h"
 #include "doomsday/world/mobj.h"
 #include "doomsday/world/world.h"
+#include "doomsday/world/thinkerdata.h"
+#include "doomsday/DoomsdayApp"
 
 #include <de/legacy/memoryzone.h>
 #include <de/List>
@@ -31,6 +33,7 @@ using namespace de;
 
 bool Thinker_IsMobjFunc(thinkfunc_t func)
 {
+    const auto &gx = DoomsdayApp::app().plugins().gameExports();
     return (func && func == reinterpret_cast<thinkfunc_t>(gx.MobjThinker));
 }
 
@@ -407,18 +410,11 @@ dint Thinkers::count(dint *numInStasis) const
     return total;
 }
 
-static void unlinkThinkerFromList(thinker_t *th)
-{
-    th->next->prev = th->prev;
-    th->prev->next = th->next;
-}
-
 }  // namespace world
-using namespace world;
 
 void Thinker_InitPrivateData(thinker_t *th, Id::Type knownId)
 {
-    //DE_ASSERT(th->d == nullptr);
+    using namespace world;
 
     /// @todo The game should be asked to create its own private data. -jk
 
@@ -428,7 +424,7 @@ void Thinker_InitPrivateData(thinker_t *th, Id::Type knownId)
 
         if (Thinker_IsMobj(th))
         {
-            th->d = world::Factory::newMobjThinkerData(privateId);
+            th->d = Factory::newMobjThinkerData(privateId);
 //#ifdef __CLIENT__
 //            th->d = new ClientMobjThinkerData(privateId);
 //#else
@@ -453,105 +449,3 @@ void Thinker_InitPrivateData(thinker_t *th, Id::Type knownId)
         THINKER_DATA(*th, ThinkerData).setId(knownId);
     }
 }
-
-/**
- * Locates a mobj by it's unique identifier in the CURRENT map.
- */
-#undef Mobj_ById
-DE_EXTERN_C struct mobj_s *Mobj_ById(dint id)
-{
-    /// @todo fixme: Do not assume the current map.
-    if (!App_World().hasMap()) return nullptr;
-    return App_World().map().thinkers().mobjById(id);
-}
-
-#undef Thinker_Init
-void Thinker_Init()
-{
-    /// @todo fixme: Do not assume the current map.
-    if (!App_World().hasMap()) return;
-    App_World().map().thinkers().initLists(0x1);  // Init the public thinker lists.
-}
-
-#undef Thinker_Run
-void Thinker_Run()
-{
-    /// @todo fixme: Do not assume the current map.
-    if (!App_World().hasMap()) return;
-
-    App_World().map().thinkers().forAll(0x1 | 0x2, [] (thinker_t *th)
-    {
-        try
-        {
-            if (Thinker_InStasis(th)) return LoopContinue; // Skip.
-
-            // Time to remove it?
-        if (th->function == thinkfunc_t(-1))
-            {
-                unlinkThinkerFromList(th);
-
-                if (th->id)
-                {
-                    // Recycle for reduced allocation overhead.
-                P_MobjRecycle(reinterpret_cast<mobj_t *>(th));
-                }
-                else
-                {
-                    // Non-mobjs are just deleted right away.
-                    Thinker::destroy(th);
-                }
-            }
-            else if (th->function)
-            {
-                // Create a private data instance of appropriate type.
-                if (!th->d) Thinker_InitPrivateData(th);
-
-                // Public thinker callback.
-                th->function(th);
-
-                // Private thinking.
-                if (th->d) THINKER_DATA(*th, Thinker::IData).think();
-            }
-        }
-        catch (const Error &er)
-        {
-            LOG_MAP_WARNING("Thinker %i: %s") << th->id << er.asText();
-        }
-        return LoopContinue;
-    });
-}
-
-#undef Thinker_Add
-void Thinker_Add(thinker_t *th)
-{
-    if (!th) return;
-    Thinker_Map(*th).thinkers().add(*th);
-}
-
-#undef Thinker_Remove
-void Thinker_Remove(thinker_t *th)
-{
-    if (!th) return;
-    Thinker_Map(*th).thinkers().remove(*th);
-}
-
-#undef Thinker_Iterate
-dint Thinker_Iterate(thinkfunc_t func, dint (*callback) (thinker_t *, void *), void *context)
-{
-    if (!App_World().hasMap()) return false;  // Continue iteration.
-
-    return App_World().map().thinkers().forAll(func, 0x1, [&callback, &context] (thinker_t *th)
-    {
-        return callback(th, context);
-    });
-}
-
-DE_DECLARE_API(Thinker) =
-{
-    { DE_API_THINKER },
-    Thinker_Init,
-    Thinker_Run,
-    Thinker_Add,
-    Thinker_Remove,
-    Thinker_Iterate
-};

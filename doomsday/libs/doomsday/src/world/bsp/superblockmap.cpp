@@ -21,13 +21,13 @@
  * 02110-1301 USA</small>
  */
 
-#include "world/bsp/superblockmap.h"
+#include "doomsday/world/bsp/superblockmap.h"
 #include <de/legacy/vector1.h>
-
-using namespace de;
 
 namespace world {
 namespace bsp {
+
+using namespace de;
 
 DE_PIMPL_NOREF(LineSegmentBlock)
 {

@@ -26,7 +26,7 @@
 
 #ifdef __CLIENT__
 #  include "Surface"
-#  include "world/lineowner.h"
+#  include <doomsday/world/lineowner.h>
 
 #  include "MaterialVariantSpec"
 
@@ -34,60 +34,6 @@
 #  include "MaterialAnimator"
 #  include "WallEdge"
 #endif
-
-using namespace de;
-
-lineopening_s::lineopening_s(const Line &line)
-{
-    if(!line.back().hasSector())
-    {
-        top = bottom = range = lowFloor = 0;
-        return;
-    }
-
-    const Sector *frontSector = line.front().sectorPtr();
-    const Sector *backSector  = line.back().sectorPtr();
-    DE_ASSERT(frontSector != 0);
-
-    if(backSector && backSector->ceiling().height() < frontSector->ceiling().height())
-    {
-        top = backSector->ceiling().height();
-    }
-    else
-    {
-        top = frontSector->ceiling().height();
-    }
-
-    if(backSector && backSector->floor().height() > frontSector->floor().height())
-    {
-        bottom = backSector->floor().height();
-    }
-    else
-    {
-        bottom = frontSector->floor().height();
-    }
-
-    range = top - bottom;
-
-    // Determine the "low floor".
-    if(backSector && frontSector->floor().height() > backSector->floor().height())
-    {
-        lowFloor = float( backSector->floor().height() );
-    }
-    else
-    {
-        lowFloor = float( frontSector->floor().height() );
-    }
-}
-
-lineopening_s &lineopening_s::operator = (const lineopening_s &other)
-{
-    top      = other.top;
-    bottom   = other.bottom;
-    range    = other.range;
-    lowFloor = other.lowFloor;
-    return *this;
-}
 
 #ifdef __CLIENT__
 

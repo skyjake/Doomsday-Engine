@@ -29,9 +29,9 @@
 #include <de/Error>
 #include <de/Vector>
 
-#include "HEdge"
-#include "Line"
-#include "Vertex"
+#include "../../mesh/hedge.h"
+#include "../line.h"
+#include "../vertex.h"
 
 /// Rounding threshold within which two points are considered as co-incident.
 #define LINESEGMENT_INCIDENT_DISTANCE_EPSILON       1.0 / 128
@@ -420,7 +420,7 @@ public:
          *
          * @see hasHEdge()
          */
-        de::HEdge &hedge() const;
+        mesh::HEdge &hedge() const;
 
         /**
          * Returns a pointer to the built half-edge linked to "this" side of
@@ -428,7 +428,7 @@ public:
          *
          * @see hasHEdge()
          */
-        inline de::HEdge *hedgePtr() const { return hasHEdge()? &hedge() : nullptr; }
+        inline mesh::HEdge *hedgePtr() const { return hasHEdge()? &hedge() : nullptr; }
 
         /**
          * Change the built half-edge linked to "this" side of the line segment.
@@ -437,7 +437,7 @@ public:
          *
          * @see hedge()
          */
-        void setHEdge(de::HEdge *newHEdge);
+        void setHEdge(mesh::HEdge *newHEdge);
 
         /**
          * Returns a pointer to the ConvexSubspaceProxy to which "this" side of the

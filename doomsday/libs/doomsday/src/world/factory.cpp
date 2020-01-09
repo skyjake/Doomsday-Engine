@@ -18,11 +18,28 @@
 
 #include "doomsday/world/factory.h"
 
+// For Polyobj constructor:
+#include "doomsday/world/polyobj.h"
+#include "doomsday/DoomsdayApp"
+#include <de/legacy/memory.h>
+
 namespace world {
 
 using namespace de;
 
-static std::function<MobjThinkerData *(const Id &)> mobjThinkerDataCtor;
+static std::function<Material *(MaterialManifest &)> materialCtor;
+static std::function<MobjThinkerData *(const Id &)>  mobjThinkerDataCtor;
+static std::function<Sky *(const defn::Sky *)>       skyCtor;
+
+void Factory::setMaterialConstructor(const std::function<Material *(MaterialManifest &)> &ctor)
+{
+    materialCtor = ctor;
+}
+
+Material *Factory::newMaterial(MaterialManifest &m)
+{
+    return materialCtor(m);
+}
 
 void Factory::setMobjThinkerDataConstructor(const std::function<MobjThinkerData *(const de::Id &)> &ctor)
 {
@@ -32,6 +49,24 @@ void Factory::setMobjThinkerDataConstructor(const std::function<MobjThinkerData 
 MobjThinkerData *Factory::newMobjThinkerData(const de::Id &id)
 {
     return mobjThinkerDataCtor(id);
+}
+
+void Factory::setSkyConstructor(const std::function<Sky *(const defn::Sky *)> &ctor)
+{
+    skyCtor = ctor;
+}
+
+Sky *Factory::newSky(const defn::Sky *def)
+{
+    return skyCtor(def);
+}
+
+struct polyobj_s *Factory::newPolyobj(const de::Vec2d &origin)
+{
+    /// @todo The app should register their own constructor like with the others.
+    const auto &gx = DoomsdayApp::app().plugins().gameExports();
+    void *region = M_Calloc(gx.GetInteger(DD_POLYOBJ_SIZE));
+    return new (region) Polyobj(origin);
 }
 
 } // namespace world

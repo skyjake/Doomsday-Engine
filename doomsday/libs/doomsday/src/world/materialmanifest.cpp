@@ -20,12 +20,11 @@
 #include "doomsday/world/materialmanifest.h"
 #include "doomsday/world/MaterialScheme"
 #include "doomsday/world/materials.h"
+#include "doomsday/world/factory.h"
 
 using namespace de;
 
 namespace world {
-
-static MaterialManifest::MaterialConstructor materialConstructor;
 
 DE_PIMPL_NOREF(MaterialManifest)
 , DE_OBSERVES(Material, Deletion)
@@ -55,10 +54,8 @@ Material *MaterialManifest::derive()
 {
     if (!hasMaterial())
     {
-        DE_ASSERT(materialConstructor);
-
         // Instantiate and associate the new material with this.
-        setMaterial(materialConstructor(*this));
+        setMaterial(Factory::newMaterial(*this));
 
         // Notify interested parties that a new material was derived from the manifest.
         DE_NOTIFY_VAR(MaterialDerived, i) i->materialManifestMaterialDerived(*this, material());
@@ -154,11 +151,6 @@ void MaterialManifest::setMaterial(Material *newMaterial)
             d->material->audienceForDeletion() += d;
         }
     }
-}
-
-void MaterialManifest::setMaterialConstructor(MaterialConstructor func) // static
-{
-    materialConstructor = func;
 }
 
 } // namespace world

@@ -85,16 +85,6 @@ void P_MobjRecycle(mobj_t *mob);
 world::Map &Mobj_Map(const mobj_t &mob);
 
 /**
- * Returns @c true if the map-object has been linked into the map. The only time this is
- * not true is if @ref Mobj_SetOrigin() has not yet been called.
- *
- * @param mob  Map-object.
- *
- * @todo Automatically link all new mobjs into the map (making this redundant).
- */
-bool Mobj_IsLinked(const mobj_t &mob);
-
-/**
  * Set the origin of the map-object in map space.
  *
  * @return  @c true if successful, @c false otherwise. The object's position is not changed
@@ -103,16 +93,6 @@ bool Mobj_IsLinked(const mobj_t &mob);
  * @note Internal to the engine.
  */
 dd_bool Mobj_SetOrigin(mobj_t *mob, coord_t x, coord_t y, coord_t z);
-
-/**
- * Returns the map BSP leaf at the origin of the map-object. Note that the mobj must be
- * linked in the map (i.e., @ref Mobj_SetOrigin() has been called).
- *
- * @param mob  Map-object.
- *
- * @see Mobj_IsLinked(), Mobj_SetOrigin()
- */
-world::BspLeaf &Mobj_BspLeafAtOrigin(const mobj_t &mob);
 
 /**
  * Returns @c true if the BSP leaf at the map-object's origin is known (i.e., it has been
@@ -208,12 +188,6 @@ coord_t Mobj_ShadowRadius(const mobj_t &mob);
 #endif // __CLIENT__
 
 coord_t Mobj_ApproxPointDistance(const mobj_t *mob, const coord_t *point);
-
-/**
- * Returns @c true if the map-object is physically inside (and @em presently linked to)
- * some Sector of the owning Map.
- */
-bool Mobj_IsSectorLinked(const mobj_t &mob);
 
 /**
  * Returns the current "float bob" offset (if enabled); otherwise @c 0.

@@ -41,6 +41,7 @@
 #include "doomdata.h"
 #include "info.h"
 #include "tables.h"
+#include <doomsday/world/mobj.h>
 
 #ifdef __cplusplus
 class MapStateReader;

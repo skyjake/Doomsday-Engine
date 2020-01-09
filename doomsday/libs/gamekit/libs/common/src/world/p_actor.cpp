@@ -26,7 +26,7 @@
 #include "p_tick.h"
 #include "p_actor.h"
 
-#include "p_actor.h"
+#include <doomsday/world/mobj.h>
 
 #if __JDOOM64__
 # define RESPAWNTICS            (4 * TICSPERSEC)

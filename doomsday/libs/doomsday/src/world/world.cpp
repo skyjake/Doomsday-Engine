@@ -19,6 +19,10 @@
 #include "doomsday/world/world.h"
 #include "doomsday/world/materials.h"
 #include "doomsday/world/map.h"
+#include "doomsday/world/sector.h"
+#include "doomsday/world/line.h"
+#include "doomsday/defs/ded.h"
+#include "doomsday/defs/mapinfo.h"
 #include "doomsday/DoomsdayApp"
 #include "doomsday/players.h"
 #include "api_player.h"
@@ -36,12 +40,16 @@ int World::validCount = 1;
 
 DE_PIMPL(World)
 {
+    Record           fallbackMapInfo; // Used when no effective MapInfo definition.
     world::Map *     map = nullptr;
     world::Materials materials;
 
     Impl(Public *i) : Base(i)
     {
         theWorld = thisPublic;
+
+        // One time init of the fallback MapInfo definition.
+        defn::MapInfo(fallbackMapInfo).resetToDefaults();
     }
 
     ~Impl()
@@ -62,6 +70,22 @@ World::World() : d(new Impl(this))
         plr.setWorld(this);
         return LoopContinue;
     });
+}
+
+const Record &World::mapInfoForMapUri(const res::Uri &mapUri) const
+{
+    // Is there a MapInfo definition for the given URI?
+    if (const Record *def = DED_Definitions()->mapInfos.tryFind("id", mapUri.compose()))
+    {
+        return *def;
+    }
+    // Is there is a default definition (for all maps)?
+    if (const Record *def = DED_Definitions()->mapInfos.tryFind("id", res::Uri("Maps", Path("*")).compose()))
+    {
+        return *def;
+    }
+    // Use the fallback.
+    return d->fallbackMapInfo;
 }
 
 void World::reset()

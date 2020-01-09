@@ -39,6 +39,7 @@ deng_merge_sources (mesh        src/mesh/*.cpp)
 deng_merge_sources (network     src/network/*.cpp)
 deng_merge_sources (resource    src/resource/*.cpp)
 deng_merge_sources (world       src/world/*.cpp)
+deng_merge_sources (world_bsp   src/world/bsp/*.cpp)
 
 deng_add_package (net.dengine.base)
 

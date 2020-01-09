@@ -59,8 +59,6 @@ public:
         Custom
     };
 
-    typedef std::function<Material * (MaterialManifest &)> MaterialConstructor;
-
 public:
     MaterialManifest(const de::PathTree::NodeArgs &args);
 
@@ -162,8 +160,6 @@ public:
      * @param newMaterial  New material to associate with.
      */
     void setMaterial(Material *newMaterial);
-
-    static void setMaterialConstructor(MaterialConstructor func);
 
 private:
     DE_PRIVATE(d)

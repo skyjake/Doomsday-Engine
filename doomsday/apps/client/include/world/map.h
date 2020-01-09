@@ -80,9 +80,7 @@ class ClSkyPlane;
  * World map.
  */
 class Map : public world::Map
-#ifdef __CLIENT__
 , DE_OBSERVES(ClientServerWorld, FrameBegin)
-#endif
 {
     DE_NO_COPY  (Map)
     DE_NO_ASSIGN(Map)
@@ -120,8 +118,11 @@ public:
      */
     explicit Map(res::MapManifest *manifest = nullptr);
 
+    bool endEditing() override;
     void update() override;
     void link(mobj_t &mob, int flags) override;
+
+    static void consoleRegister();
 
 #ifdef __CLIENT__
 

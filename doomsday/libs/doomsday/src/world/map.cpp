@@ -20,15 +20,66 @@
 #include "doomsday/world/map.h"
 #include "doomsday/world/mobj.h"
 #include "doomsday/world/sector.h"
+#include "doomsday/world/blockmap.h"
 #include "doomsday/world/line.h"
+#include "doomsday/world/lineblockmap.h"
+#include "doomsday/world/lineowner.h"
+#include "doomsday/world/bspleaf.h"
+#include "doomsday/world/convexsubspace.h"
+#include "doomsday/world/bsp/partitioner.h"
+#include "doomsday/world/factory.h"
+#include "doomsday/world/thinkers.h"
+#include "doomsday/world/sky.h"
+#include "doomsday/world/world.h"
+#include "doomsday/mesh/face.h"
 #include "doomsday/EntityDatabase"
+#include "doomsday/console/var.h"
+#include "doomsday/DoomsdayApp"
+#include "doomsday/network/protocol.h"
 
 #include <de/legacy/nodepile.h>
 #include <de/legacy/memory.h>
+#include <de/legacy/memoryzone.h>
+#include <de/Rectangle>
+#include <de/LogBuffer>
 
 using namespace de;
 
 namespace world {
+
+static int bspSplitFactor = 7;  // cvar
+
+/*
+ * Additional data for all dummy elements.
+ */
+struct DummyData
+{
+    void *extraData; /// Pointer to user data.
+
+    DummyData() : extraData(0) {}
+    virtual ~DummyData() {} // polymorphic
+};
+
+class DummySector : public Sector, public DummyData {};
+
+class DummyLine : public Line, public DummyData // TODO: enough to be derived from world::Line? (add to Factory?)
+{
+public:
+    DummyLine(Vertex &v1, Vertex &v2) : Line(v1, v2) {}
+};
+
+struct DummyGlobals
+{
+    Set<MapElement *> dummies;
+    mesh::Mesh        dummyMesh;
+
+    static inline DummyGlobals &get()
+    {
+        static DummyGlobals *s_mapGlobals = nullptr;
+        if (!s_mapGlobals) s_mapGlobals = new DummyGlobals;
+        return *s_mapGlobals;
+    }
+};
 
 struct EditableElements
 {
@@ -54,7 +105,7 @@ struct EditableElements
 
 DE_PIMPL(Map)
 , DE_OBSERVES(Record, Deletion)
-, DE_OBSERVES(world::bsp::Partitioner, UnclosedSectorFound)
+, DE_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
 {
     struct Bsp
     {
@@ -79,43 +130,41 @@ DE_PIMPL(Map)
 
     res::MapManifest *manifest = nullptr; // Not owned, may be @c nullptr.
 
-    bool editingEnabled = true;
+    double           globalGravity     = 0; // The defined gravity for this map.
+    double           effectiveGravity  = 0; // The effective gravity for this map.
+    int              ambientLightLevel = 0; // Ambient lightlevel for the current map.
+    bool             editingEnabled    = true;
     EditableElements editable;
 
-    mesh::Mesh      mesh; ///< All map geometries.
-    List<Sector *>  sectors;
-    List<Polyobj *> polyobjs;
-    List<Line *>    lines;
-    AABoxd          bounds; ///< Boundary points which encompass the entire map
-    EntityDatabase  entityDatabase;
-
-    double globalGravity    = 0;  ///< The defined gravity for this map.
-    double effectiveGravity = 0;  ///< The effective gravity for this map.
-    int ambientLightLevel   = 0;  ///< Ambient lightlevel for the current map.
-
-    Bsp bsp;
-    List<ConvexSubspace *> subspaces;     ///< All player-traversable subspaces.
-    Hash<Id, Subsector *> subsectorsById; ///< Not owned.
+    mesh::Mesh             mesh; // All map geometries.
+    Bsp                    bsp;
+    List<ConvexSubspace *> subspaces;      ///< All player-traversable subspaces.
+    Hash<Id, Subsector *>  subsectorsById; ///< Not owned.
+    AABoxd                 bounds;         ///< Boundary points which encompass the entire map
 
     //
     // Map entities and element properties (things, line specials, etc...).
     //
+    EntityDatabase            entityDatabase;
     std::unique_ptr<Thinkers> thinkers;
-    Sky sky;
+    std::unique_ptr<Sky>      sky;
+    List<Sector *>            sectors;
+    List<Polyobj *>           polyobjs;
+    List<Line *>              lines;
 
-    std::unique_ptr<Blockmap> mobjBlockmap;
-    std::unique_ptr<Blockmap> polyobjBlockmap;
+    std::unique_ptr<Blockmap>     mobjBlockmap;
+    std::unique_ptr<Blockmap>     polyobjBlockmap;
     std::unique_ptr<LineBlockmap> lineBlockmap;
-    std::unique_ptr<Blockmap> subspaceBlockmap;
-
-    nodepile_t mobjNodes;
-    nodepile_t lineNodes;
-    nodeindex_t *lineLinks = nullptr;  ///< Indices to roots.
+    std::unique_ptr<Blockmap>     subspaceBlockmap;
+    nodepile_t                    mobjNodes;
+    nodepile_t                    lineNodes;
+    nodeindex_t *                 lineLinks = nullptr; ///< Indices to roots.
 
     Impl(Public *i) : Base(i)
     {
-        sky.setMap(thisPublic);
-        sky.setIndexInMap(0);
+        sky.reset(Factory::newSky(nullptr));
+        sky->setMap(thisPublic);
+        sky->setIndexInMap(0);
     }
 
     ~Impl()
@@ -177,7 +226,7 @@ DE_PIMPL(Map)
     void unclosedSectorFound(Sector &sector, const Vec2d &nearPoint)
     {
         // Notify interested parties that an unclosed sector was found.
-        DE_NOTIFY_PUBLIC_VAR(UnclosedSectorFound, i) i->unclosedSectorFound(sector, nearPoint);
+        DE_NOTIFY_PUBLIC(UnclosedSectorFound, i) i->unclosedSectorFound(sector, nearPoint);
     }
 
     /**
@@ -188,7 +237,7 @@ DE_PIMPL(Map)
      */
     void notifyOneWayWindowFound(Line &line, Sector &backFacingSector)
     {
-        DE_NOTIFY_PUBLIC_VAR(OneWayWindowFound, i) i->oneWayWindowFound(line, backFacingSector);
+        DE_NOTIFY_PUBLIC(OneWayWindowFound, i) i->oneWayWindowFound(line, backFacingSector);
     }
 
     struct testForWindowEffectParams
@@ -436,7 +485,7 @@ DE_PIMPL(Map)
                             if (!leaf.sectorPtr())
                             {
                                 LOGDEV_MAP_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
-                                    << &leaf << (leaf.hasSubspace()? leaf.subspace().poly().hedgeCount() : 0);
+                                    << &leaf << (leaf.hasSubspace() ? leaf.subspace().poly().hedgeCount() : 0);
                             }
 
                             if (leaf.hasSubspace())
@@ -448,7 +497,7 @@ DE_PIMPL(Map)
 
 #ifdef DE_DEBUG  // See if we received a partial geometry...
                                 dint discontinuities = 0;
-                                HEdge *hedge = subspace.poly().hedge();
+                                auto *hedge = subspace.poly().hedge();
                                 do
                                 {
                                     if (hedge->next().origin() != hedge->twin().origin())
@@ -547,8 +596,8 @@ DE_PIMPL(Map)
 
                     for (ConvexSubspace *subspace : subspaceSets[i])
                     {
-                        HEdge *baseHEdge = subspace->poly().hedge();
-                        HEdge *hedge = baseHEdge;
+                        auto *baseHEdge = subspace->poly().hedge();
+                        auto *hedge = baseHEdge;
                         do
                         {
                             if (hedge->twin().hasFace()
@@ -582,7 +631,7 @@ DE_PIMPL(Map)
         // Clustering complete.
 
         // Build subsectors.
-        dint needed = 0;
+        int needed = 0;
         for (const Subspaces &subspaceSet : subspaceSets)
         {
             needed += subspaceSet.count();
@@ -911,10 +960,10 @@ void Map::setManifest(res::MapManifest *newManifest)
 
 const Record &Map::mapInfo() const
 {
-    return App_World().mapInfoForMapUri(hasManifest() ? manifest().composeUri() : res::makeUri("Maps:"));
+    return World::get().mapInfoForMapUri(hasManifest() ? manifest().composeUri() : res::makeUri("Maps:"));
 }
 
-const Mesh &Map::mesh() const
+const mesh::Mesh &Map::mesh() const
 {
     return d->mesh;
 }
@@ -1039,9 +1088,9 @@ LoopResult Map::forAllMobjsTouchingSector(Sector &sector, const std::function<Lo
                                for (nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
                                {
                                    auto *mob = reinterpret_cast<mobj_t *>(ln[nix].ptr);
-                                   if (mob->validCount != validCount)
+                                   if (mob->validCount != World::validCount)
                                    {
-                                       mob->validCount = validCount;
+                                       mob->validCount = World::validCount;
                                        linkStore.append(mob);
                                    }
                                }
@@ -1425,7 +1474,7 @@ struct VertexInfo
     }
 };
 
-void pruneVertexes(Mesh &mesh, const Map::Lines &lines)
+static void pruneVertexes(mesh::Mesh &mesh, const Map::Lines &lines)
 {
     //
     // Step 1 - Find equivalent vertexes:
@@ -1574,7 +1623,7 @@ bool Map::endEditing()
         // Create half-edge geometry and line segments for each line.
         for (Line *line : polyobj->lines())
         {
-            HEdge *hedge = polyobj->mesh().newHEdge(line->from());
+            auto *hedge = polyobj->mesh().newHEdge(line->from());
 
             hedge->setTwin(polyobj->mesh().newHEdge(line->to()));
             hedge->twin().setTwin(hedge);
@@ -1610,7 +1659,7 @@ bool Map::endEditing()
     // Finish lines.
     for (Line *line : d->lines)
     {
-        line->forAllSides([] (Line::Side &side)
+        line->forAllSides([] (LineSide &side)
                           {
                               side.updateAllSurfaceNormals();
                               return LoopContinue;
@@ -1631,34 +1680,10 @@ bool Map::endEditing()
     // Finish planes.
     for (Sector *sector : d->sectors)
     {
-#if defined(__CLIENT__)
-        if (sector->visPlaneLinkTargetSector() != MapElement::NoIndex)
-        {
-            if (Sector *target = sectorsByArchiveIndex[sector->visPlaneLinkTargetSector()])
-            {
-                // Use the first subsector as the target.
-                auto &targetSub = target->subsector(0).as<ClientSubsector>();
-
-                // Linking is done for each subsector separately. (Necessary, though?)
-                sector->forAllSubsectors([&targetSub, sector](Subsector &sub) {
-                    auto &clsub = sub.as<ClientSubsector>();
-                    for (int plane = 0; plane < 2; ++plane)
-                    {
-                        if (sector->visPlaneLinked(plane))
-                        {
-                            clsub.linkVisPlane(plane, targetSub);
-                        }
-                    }
-                    return LoopContinue;
-                });
-            }
-        }
-#endif
-        sector->forAllPlanes([] (Plane &plane)
-                             {
-                                 plane.updateSoundEmitterOrigin();
-                                 return LoopContinue;
-                             });
+        sector->forAllPlanes([](Plane &plane) {
+            plane.updateSoundEmitterOrigin();
+            return LoopContinue;
+        });
     }
 
     // We can now initialize the subspace blockmap.
@@ -1734,8 +1759,7 @@ Polyobj *Map::createPolyobj(const Vec2d &origin)
         /// @throw EditError  Attempted when not editing.
         throw EditError("Map::createPolyobj", "Editing is not enabled");
 
-    void *region = M_Calloc(gx.GetInteger(DD_POLYOBJ_SIZE));
-    auto *pob = new (region) Polyobj(origin);
+    Polyobj *pob = Factory::newPolyobj(origin);
     d->editable.polyobjs.append(pob);
 
     /// @todo Don't do this here.
@@ -1788,17 +1812,17 @@ D_CMD(InspectMap)
 
     LOG_AS("inspectmap (Cmd)");
 
-    if (!App_World().hasMap())
+    if (!World::get().hasMap())
     {
         LOG_SCR_WARNING("No map is currently loaded");
         return false;
     }
 
-    Map &map = App_World().map();
+    Map &map = World::get().map();
 
     LOG_SCR_NOTE(_E(b) "%s - %s")
-        << Con_GetString("map-name")
-        << Con_GetString("map-author");
+        << CVar_String(Con_FindVariable("map-name"))
+        << CVar_String(Con_FindVariable("map-author"));
     LOG_SCR_MSG("\n");
 
     LOG_SCR_MSG(    _E(l) "Uri: "    _E(.) _E(i) "%s" _E(.)
@@ -1806,7 +1830,7 @@ D_CMD(InspectMap)
                 _E(l) " Music: "  _E(.) _E(i) "%i")
         << (map.hasManifest()? map.manifest().composeUri().asText() : "(unknown map)")
         /*<< map.oldUniqueId()*/
-        << Con_GetInteger("map-music");
+        << CVar_Integer(Con_FindVariable("map-music"));
 
     if (map.hasManifest() && map.manifest().sourceFile()->hasCustom())
     {
@@ -1871,4 +1895,84 @@ void Map::consoleRegister() // static
 
     C_CMD("inspectmap", "", InspectMap);
 }
+
+void Map::initDummyElements() // static
+{
+    // TODO: free existing/old dummies here?
+
+    auto &g = DummyGlobals::get();
+    g.dummies.clear();
+    g.dummyMesh.clear();
+}
+
+int Map::dummyElementType(const void *dummy)
+{
+    const MapElement *elem = reinterpret_cast<const MapElement *>(dummy);
+    if (!dynamic_cast<const DummyData *>(elem))
+    {
+        // Not a dummy.
+        return DMU_NONE;
+    }
+    DE_ASSERT(DummyGlobals::get().dummies.contains(const_cast<MapElement *>(elem)));
+    return elem->type();
+}
+
+void *Map::createDummyElement(int type, void *extraData)
+{
+    auto &g = DummyGlobals::get();
+    switch(type)
+    {
+        case DMU_LINE:
+        {
+            // Time to allocate the dummy vertex?
+            if(g.dummyMesh.vertexsIsEmpty())
+            {
+                g.dummyMesh.newVertex();
+            }
+            Vertex &dummyVertex = *g.dummyMesh.vertexs().first();
+            DummyLine *dl = new DummyLine(dummyVertex, dummyVertex);
+            g.dummies.insert(dl);
+            dl->extraData = extraData;
+            return dl;
+        }
+        case DMU_SECTOR:
+        {
+            DummySector *ds = new DummySector;
+            g.dummies.insert(ds);
+            ds->extraData = extraData;
+            return ds;
+        }
+        default:
+            break;
+    }
+    throw Error("Map::createDummyElement",
+                stringf("Dummies of type %s are not supported", DMU_Str(type)));
+}
+
+void Map::destroyDummyElement(void *mapElement)
+{
+    MapElement *elem = reinterpret_cast<MapElement *>(mapElement);
+
+    const int type = dummyElementType(mapElement);
+    if (type == DMU_NONE)
+    {
+        throw Error("Map::destroyDummyMapElement", "Dummy is of unknown type");
+    }
+
+    DE_ASSERT(DummyGlobals::get().dummies.contains(elem));
+
+    DummyGlobals::get().dummies.remove(elem);
+    delete elem;
+}
+
+void *Map::dummyElementExtraData(void *mapElement)
+{
+    if (dummyElementType(mapElement) != DMU_NONE)
+    {
+        MapElement *elem = reinterpret_cast<MapElement *>(mapElement);
+        return maybeAs<DummyData>(elem)->extraData;
+    }
+    return nullptr;
+}
+
 } // namespace world

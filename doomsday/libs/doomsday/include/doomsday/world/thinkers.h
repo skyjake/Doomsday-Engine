@@ -23,9 +23,12 @@
 #include <functional>
 #include <de/Error>
 #include <de/Id>
+#include <de/Observers>
 #include "api_thinker.h"
 
 namespace world {
+
+class Map;
 
 /**
  * World map thinker lists / collection.
@@ -37,7 +40,7 @@ namespace world {
 class Thinkers
 {
 public:
-    DE_AUDIENCE(Removal, thinkerRemoved(thinker_t &))
+    DE_AUDIENCE(Removal, void thinkerRemoved(thinker_t &))
 
 public:
     Thinkers();
@@ -129,9 +132,9 @@ private:
 
 }  // namespace world
 
-bool Thinker_IsMobj(const thinker_t *th);
-bool Thinker_IsMobjFunc(thinkfunc_t func);
-world::Map &Thinker_Map(const thinker_t &th);
+LIBDOOMSDAY_PUBLIC bool        Thinker_IsMobj      (const thinker_t *th);
+LIBDOOMSDAY_PUBLIC bool        Thinker_IsMobjFunc  (thinkfunc_t func);
+LIBDOOMSDAY_PUBLIC world::Map &Thinker_Map         (const thinker_t &th);
 
 /**
  * Initializes the private data object of a thinker. The type of private data is chosen
@@ -143,4 +146,4 @@ world::Map &Thinker_Map(const thinker_t &th);
  * @param th       Thinker.
  * @param knownId  Known private ID to use for the thinker. If zero, a new ID is generated.
  */
-void Thinker_InitPrivateData(thinker_t *th, de::Id::Type knownId = 0);
+LIBDOOMSDAY_PUBLIC void Thinker_InitPrivateData(thinker_t *th, de::Id::Type knownId = 0);

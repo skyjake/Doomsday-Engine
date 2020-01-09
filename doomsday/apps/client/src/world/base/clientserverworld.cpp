@@ -38,6 +38,7 @@
 #include <doomsday/resource/mapmanifests.h>
 #include <doomsday/world/MaterialManifest>
 #include <doomsday/world/Materials>
+#include <doomsday/world/thinkers.h>
 
 #include "dd_main.h"
 #include "dd_def.h"
@@ -64,7 +65,6 @@
 #include "world/p_players.h"
 #include "world/p_ticker.h"
 #include "world/sky.h"
-#include "world/thinkers.h"
 #include "world/bindings_world.h"
 #include "edit_map.h"
 #include "Plane"
@@ -271,7 +271,6 @@ DE_PIMPL(ClientServerWorld)
 {
     Binder binder;               ///< Doomsday Script bindings for the World.
     Record worldModule;
-    Record fallbackMapInfo;      ///< Used when no effective MapInfo definition.
 
     timespan_t time = 0;         ///< World-wide time.
     Scheduler scheduler;
@@ -280,9 +279,6 @@ DE_PIMPL(ClientServerWorld)
     {
         world::initBindings(binder, worldModule);
         ScriptSystem::get().addNativeModule("World", worldModule);
-
-        // One time init of the fallback MapInfo definition.
-        defn::MapInfo(fallbackMapInfo).resetToDefaults();
 
         // Callbacks.
         world::DmuArgs::setPointerToIndexFunc(P_ToIndex);
@@ -736,22 +732,6 @@ void ClientServerWorld::update()
 Scheduler &ClientServerWorld::scheduler()
 {
     return d->scheduler;
-}
-
-const Record &ClientServerWorld::mapInfoForMapUri(const res::Uri &mapUri) const
-{
-    // Is there a MapInfo definition for the given URI?
-    if (const Record *def = DED_Definitions()->mapInfos.tryFind("id", mapUri.compose()))
-    {
-        return *def;
-    }
-    // Is there is a default definition (for all maps)?
-    if (const Record *def = DED_Definitions()->mapInfos.tryFind("id", res::Uri("Maps", Path("*")).compose()))
-    {
-        return *def;
-    }
-    // Use the fallback.
-    return d->fallbackMapInfo;
 }
 
 void ClientServerWorld::advanceTime(timespan_t delta)

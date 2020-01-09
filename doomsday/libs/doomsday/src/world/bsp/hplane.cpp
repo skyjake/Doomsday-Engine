@@ -23,14 +23,13 @@
  * 02110-1301 USA</small>
  */
 
-#include "world/bsp/hplane.h"
-
-#include "Line"
-#include "Sector"
-#include "Vertex"
-#include "world/bsp/edgetip.h"
-#include "world/bsp/linesegment.h"
-#include "world/bsp/partitioner.h"
+#include "doomsday/world/bsp/hplane.h"
+#include "doomsday/world/bsp/edgetip.h"
+#include "doomsday/world/bsp/linesegment.h"
+#include "doomsday/world/bsp/partitioner.h"
+#include "doomsday/world/line.h"
+#include "doomsday/world/sector.h"
+#include "doomsday/world/vertex.h"
 
 #include <de/legacy/mathutil.h> // M_InverseAngle
 #include <de/legacy/vector1.h>  // remove me
@@ -39,10 +38,10 @@
 
 #include <memory>
 
-using namespace de;
-
 namespace world {
 namespace bsp {
+
+using namespace de;
 
 HPlane::Intercept::Intercept(ddouble distance, LineSegmentSide &lineSeg, dint edge)
 {

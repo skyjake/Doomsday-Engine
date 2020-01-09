@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include <doomsday/defs/ded.h>
-#include <doomsday/defs/sky.h>
-#include <doomsday/world/Material>
-//#include "resource/framemodeldef.h"
+#include "../defs/ded.h"
+#include "../defs/sky.h"
+#include "material.h"
+
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
@@ -34,18 +34,16 @@ namespace world {
 /**
  * Behavior logic for a sky in the world system.
  */
-class Sky : public MapElement
+class LIBDOOMSDAY_PUBLIC Sky : public MapElement
 {
 public:
-    /// Notified when the sky is about to be deleted.
     DE_AUDIENCE(Deletion,            void skyBeingDeleted(const Sky &sky))
-
-    /// Notified whenever the height changes.
     DE_AUDIENCE(HeightChange,        void skyHeightChanged(Sky &sky))
-
-    /// Notified whenever the horizon offset changes.
     DE_AUDIENCE(HorizonOffsetChange, void skyHorizonOffsetChanged(Sky &sky))
 
+    static const int NUM_LAYERS;
+
+public:
     explicit Sky(const defn::Sky *definition = nullptr);
 
     /**
@@ -54,7 +52,7 @@ public:
      *
      * @see configureDefault()
      */
-    void configure(const defn::Sky *definition = nullptr);
+    virtual void configure(const defn::Sky *definition = nullptr);
 
     /**
      * Reconfigure the sky, returning all values to their defaults.
@@ -111,13 +109,8 @@ public:
     class Layer
     {
     public:
-        /// Notified whenever the active-state changes.
         DE_AUDIENCE(ActiveChange,   void skyLayerActiveChanged(Layer &layer))
-
-        /// Notified whenever the masked-state changes.
         DE_AUDIENCE(MaskedChange,   void skyLayerMaskedChanged(Layer &layer))
-
-        /// Notified whenever the layer material changes.
         DE_AUDIENCE(MaterialChange, void skyLayerMaterialChanged(Layer &layer))
 
     public:
@@ -231,28 +224,6 @@ public:
      */
     de::LoopResult forAllLayers(const std::function<de::LoopResult (Layer &)>& func);
     de::LoopResult forAllLayers(const std::function<de::LoopResult (const Layer &)>& func) const;
-
-#ifdef __CLIENT__
-// --------------------------------------------------------------------------------------
-
-    /**
-     * Returns the ambient color of the sky. The ambient color is automatically calculated
-     * by averaging the color information in the configured layer material textures.
-     *
-     * Alternatively, this color can be overridden manually by calling @ref setAmbientColor().
-     */
-    const de::Vec3f &ambientColor() const;
-
-    /**
-     * Override the automatically calculated ambient color.
-     *
-     * @param newColor  New ambient color to apply (will be normalized).
-     *
-     * @see ambientColor()
-     */
-    void setAmbientColor(const de::Vec3f &newColor);
-
-#endif // __CLIENT__
 
 protected:
     int property(world::DmuArgs &args) const;

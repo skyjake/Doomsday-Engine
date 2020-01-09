@@ -20,10 +20,10 @@
 #ifndef DE_WORLD_BSP_CONVEXSUBSPACEPROXY_H
 #define DE_WORLD_BSP_CONVEXSUBSPACEPROXY_H
 
-#include "world/bsp/linesegment.h"
+#include "linesegment.h"
+#include "../../mesh/mesh.h"
+#include "../sector.h"
 
-#include <doomsday/mesh/mesh.h>
-#include <doomsday/world/sector.h>
 #include <de/List>
 #include <de/Error>
 #include <de/Log>

@@ -53,6 +53,14 @@ public:
 public:
     World();
 
+    /**
+     * Returns the effective map-info definition Record associated with the given
+     * @a mapUri (which may be the default definition, if invalid/unknown).
+     *
+     * @param mapUri  Unique identifier for the map to lookup map-info data for.
+     */
+    const de::Record &mapInfoForMapUri(const res::Uri &mapUri) const;
+
     virtual void reset();
 
     /**

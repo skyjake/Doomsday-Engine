@@ -18,9 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-//#include "de_base.h"
 #include "doomsday/world/polyobj.h"
-
 #include "doomsday/world/polyobjdata.h"
 #include "doomsday/world/blockmap.h"
 #include "doomsday/world/map.h"
@@ -28,6 +26,7 @@
 #include "doomsday/world/bspleaf.h"
 #include "doomsday/world/world.h"
 #include "doomsday/world/convexsubspace.h"
+#include "doomsday/tab_tables.h"
 
 #include <de/legacy/vector1.h>
 #include <de/Set>

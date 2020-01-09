@@ -143,6 +143,10 @@ using world_Sector      = world::Sector;
 
 #endif
 
+struct lineopening_s;
+
+typedef struct lineopening_s LineOpening;
+
 /**
  * @defgroup lineSightFlags Line Sight Flags
  * Flags used to dictate logic within P_CheckLineSight().
@@ -153,30 +157,6 @@ using world_Sector      = world::Sector;
 #define LS_PASSOVER            0x2 ///< Ray may cross over sector ceiling height on ray-entry side.
 #define LS_PASSUNDER           0x4 ///< Ray may cross under sector floor height on ray-entry side.
 ///@}
-
-/**
- * Describes the @em sharp coordinates of the opening between sectors which
- * interface at a given map line. The open range is defined as the gap between
- * foor and ceiling on the front side clipped by the floor and ceiling planes on
- * the back side (if present).
- */
-typedef struct lineopening_s {
-    /// Top and bottom z of the opening.
-    float top, bottom;
-
-    /// Distance from top to bottom.
-    float range;
-
-    /// Z height of the lowest Plane at the opening on the X|Y axis.
-    /// @todo Does not belong here?
-    float lowFloor;
-
-#ifdef __cplusplus
-    lineopening_s() : top(0), bottom(0), range(0), lowFloor(0) {}
-    lineopening_s(const world_Line &line);
-    lineopening_s &operator = (const lineopening_s &other);
-#endif
-} LineOpening;
 
 /**
  * @defgroup pathTraverseFlags  Path Traverse Flags
@@ -377,16 +357,6 @@ DE_API_TYPEDEF(Map)
      */
     void            (*MO_OriginSmoothed)(struct mobj_s *mobj, coord_t origin[3]);
     angle_t         (*MO_AngleSmoothed)(struct mobj_s *mobj);
-
-    /**
-     * Returns the sector attributed to the BSP leaf in which the mobj's origin
-     * currently falls. If the mobj is not yet linked then @c 0 is returned.
-     *
-     * Note: The mobj is necessarily within the bounds of the sector!
-     *
-     * @param mobj  Mobj instance.
-     */
-    world_Sector   *(*MO_Sector)(const struct mobj_s *mobj);
 
     // Polyobjs
 
@@ -715,7 +685,6 @@ DE_API_T(Map);
 #define Mobj_TouchedSectorsIterator         _api_Map.MO_SectorsIterator
 #define Mobj_AngleSmoothed                  _api_Map.MO_AngleSmoothed
 #define Mobj_OriginSmoothed                 _api_Map.MO_OriginSmoothed
-#define Mobj_Sector                         _api_Map.MO_Sector
 
 #define Polyobj_MoveXY                      _api_Map.PO_MoveXY
 #define Polyobj_Rotate                      _api_Map.PO_Rotate

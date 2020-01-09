@@ -39,6 +39,8 @@
 #include "player.h"
 #include "p_mapsetup.h"
 
+#include <doomsday/world/lineopening.h>
+
 /*
  * Try move variables:
  */

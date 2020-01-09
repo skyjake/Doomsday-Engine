@@ -27,6 +27,8 @@
 #include "p_mapsetup.h"
 #include "acs/system.h"
 
+#include <doomsday/world/lineopening.h>
+
 using namespace de;
 
 iterlist_t *spechit;  ///< For crossed line specials.

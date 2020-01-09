@@ -27,8 +27,6 @@
 #include "api_map.h"
 
 #include "network/net_main.h"
-#include "world/blockmap.h"
-#include "world/linesighttest.h"
 #include "world/maputil.h"
 #include "world/p_players.h"
 #include "world/clientserverworld.h"
@@ -41,8 +39,12 @@
 #include <de/legacy/memoryzone.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/resource/mapmanifests.h>
+#include <doomsday/world/blockmap.h>
+#include <doomsday/world/linesighttest.h>
 #include <doomsday/world/MaterialManifest>
 #include <doomsday/world/Materials>
+#include <doomsday/world/plane.h>
+#include <doomsday/world/thinkers.h>
 #include <doomsday/EntityDatabase>
 
 using namespace de;
@@ -51,39 +53,6 @@ using namespace world;
 // Converting a public void* pointer to an internal world::MapElement.
 #define IN_ELEM(p)          reinterpret_cast<MapElement *>(p)
 #define IN_ELEM_CONST(p)    reinterpret_cast<const MapElement *>(p)
-
-/**
- * Additional data for all dummy elements.
- */
-struct DummyData
-{
-    void *extraData; /// Pointer to user data.
-
-    DummyData() : extraData(0) {}
-    virtual ~DummyData() {} // polymorphic
-};
-
-class DummySector : public Sector, public DummyData {};
-
-class DummyLine : public Line, public DummyData
-{
-public:
-    DummyLine(Vertex &v1, Vertex &v2) : Line(v1, v2) {}
-};
-
-/// FIXME: Get rid of global state.
-struct DummyGlobals 
-{
-    Set<MapElement *> dummies;
-    Mesh              dummyMesh;
-
-    static inline DummyGlobals &get()
-    {
-        static DummyGlobals *s_mapGlobals = nullptr;
-        if (!s_mapGlobals) s_mapGlobals = new DummyGlobals;
-        return *s_mapGlobals;
-    }
-};
 
 #undef DMU_GetType
 int DMU_GetType(const void *ptr)
@@ -112,99 +81,28 @@ int DMU_GetType(const void *ptr)
     return DMU_NONE;
 }
 
-void world::Map::initDummies() // static
-{
-    // TODO: free existing/old dummies here?
-
-    auto &g = DummyGlobals::get();
-    g.dummies.clear();
-    g.dummyMesh.clear();
-}
-
-/**
- * Determines the type of a dummy object. For extra safety (in a debug build)
- * it would be possible to look through the dummy arrays and make sure the
- * pointer refers to a real dummy.
- */
-static int dummyType(const void *dummy)
-{
-    const MapElement *elem = IN_ELEM_CONST(dummy);
-
-    if(!dynamic_cast<const DummyData *>(elem))
-    {
-        // Not a dummy.
-        return DMU_NONE;
-    }
-
-    DE_ASSERT(DummyGlobals::get().dummies.contains(const_cast<MapElement *>(elem)));
-
-    return elem->type();
-}
-
 #undef P_AllocDummy
 void *P_AllocDummy(int type, void *extraData)
 {
-    auto &g = DummyGlobals::get();
-    switch(type)
-    {
-    case DMU_LINE: {
-        // Time to allocate the dummy vertex?
-        if(g.dummyMesh.vertexsIsEmpty())
-            g.dummyMesh.newVertex();
-        Vertex &dummyVertex = *g.dummyMesh.vertexs().first();
-
-        DummyLine *dl = new DummyLine(dummyVertex, dummyVertex);
-        g.dummies.insert(dl);
-        dl->extraData = extraData;
-        return dl; }
-
-    case DMU_SECTOR: {
-        DummySector *ds = new DummySector;
-        g.dummies.insert(ds);
-        ds->extraData = extraData;
-        return ds; }
-
-    default: {
-        App_FatalError(Stringf("P_AllocDummy: Dummies of type %s not supported.", DMU_Str(type)));
-        break; }
-    }
-
-    return 0; // Unreachable.
+    return Map::createDummyElement(type, extraData);
 }
 
 #undef P_IsDummy
 dd_bool P_IsDummy(const void *dummy)
 {
-    return dummyType(dummy) != DMU_NONE;
+    return Map::dummyElementType(dummy) != DMU_NONE;
 }
 
 #undef P_FreeDummy
 void P_FreeDummy(void *dummy)
 {
-    MapElement *elem = IN_ELEM(dummy);
-
-    int type = dummyType(dummy);
-    if(type == DMU_NONE)
-    {
-        /// @todo Throw exception.
-        App_FatalError("P_FreeDummy: Dummy is of unknown type.");
-    }
-
-    DE_ASSERT(DummyGlobals::get().dummies.contains(elem));
-
-    DummyGlobals::get().dummies.remove(elem);
-    delete elem;
+    Map::destroyDummyElement(dummy);
 }
 
 #undef P_DummyExtraData
 void *P_DummyExtraData(void *dummy)
 {
-    if(P_IsDummy(dummy))
-    {
-        MapElement *elem = IN_ELEM(dummy);
-        return maybeAs<DummyData>(elem)->extraData;
-    }
-    return 0;
+    return Map::dummyElementExtraData(dummy);
 }
 
 #undef P_ToIndex
@@ -1681,9 +1579,6 @@ DE_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mobj, coord_t origin[3]);
 DE_EXTERN_C Sector *Mobj_Sector(const mobj_t *mobj);
 DE_EXTERN_C void Mobj_SpawnDamageParticleGen(const mobj_t *mobj, const mobj_t *inflictor, int amount);
 
-// p_think.c
-DE_EXTERN_C struct mobj_s* Mobj_ById(int id);
-
 #undef Polyobj_SetCallback
 DE_EXTERN_C void Polyobj_SetCallback(void (*func) (struct mobj_s *, void *, void *))
 {
@@ -1799,6 +1694,17 @@ DE_EXTERN_C void Line_Opening(Line *line, LineOpening *opening)
     *opening = LineOpening(*line);
 }
 
+/*
+ * Locates a mobj by it's unique identifier in the CURRENT map.
+ */
+#undef Mobj_ById
+DE_EXTERN_C struct mobj_s *Mobj_ById(dint id)
+{
+    /// @todo fixme: Do not assume the current map.
+    if (!World::get().hasMap()) return nullptr;
+    return World::get().map().thinkers().mobjById(id);
+}
+
 DE_DECLARE_API(Map) =
 {
     { DE_API_MAP },
@@ -1830,7 +1736,6 @@ DE_DECLARE_API(Map) =
     Mobj_TouchedSectorsIterator,
     Mobj_OriginSmoothed,
     Mobj_AngleSmoothed,
-    Mobj_Sector,
 
     Polyobj_MoveXY,
     Polyobj_Rotate,

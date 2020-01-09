@@ -23,10 +23,9 @@
 #include "doomsday/world/blockmap.h"
 #include "doomsday/world/line.h"
 #include "doomsday/world/lineblockmap.h"
+#include "doomsday/world/lineopening.h"
 #include "doomsday/world/mobj.h"
 #include "doomsday/world/world.h"
-//#include "world/p_object.h"
-//#include "world/clientserverworld.h" // validCount
 
 #include <de/legacy/memoryzone.h>
 #include <de/legacy/vector1.h>

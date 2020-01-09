@@ -26,6 +26,10 @@
 // This macro can be used to calculate a mobj-specific 'random' number.
 #define MOBJ_TO_ID(mo)          ( (long)(mo)->thinker.id * 48 + (PTR2INT(mo)/1000) )
 
+// Forward declaration.
+struct mobj_s;
+typedef struct mobj_s mobj_t;
+
 // Game plugins define their own mobj_s/t.
 /// @todo Plugin mobjs should be derived from a class in libdoomsday, and
 /// the DD_BASE_MOBJ_ELEMENTS macros should be removed. -jk
@@ -41,6 +45,8 @@ typedef struct mobj_s {
 #ifdef __cplusplus
 
 #include <de/Vector>
+
+namespace world { class BspLeaf; }
 
 /**
  * Returns a copy of the map-object's origin in map space.
@@ -71,6 +77,42 @@ LIBDOOMSDAY_PUBLIC coord_t Mobj_Radius(const mobj_t &mob);
  */
 LIBDOOMSDAY_PUBLIC AABoxd Mobj_Bounds(const mobj_t &mob);
 
+/**
+ * Returns the map BSP leaf at the origin of the map-object. Note that the mobj must be
+ * linked in the map (i.e., @ref Mobj_SetOrigin() has been called).
+ *
+ * @param mob  Map-object.
+ *
+ * @see Mobj_IsLinked(), Mobj_SetOrigin()
+ */
+LIBDOOMSDAY_PUBLIC world::BspLeaf &Mobj_BspLeafAtOrigin(const mobj_t &mob);
+
+/**
+ * Returns @c true if the map-object has been linked into the map. The only time this is
+ * not true is if @ref Mobj_SetOrigin() has not yet been called.
+ *
+ * @param mob  Map-object.
+ *
+ * @todo Automatically link all new mobjs into the map (making this redundant).
+ */
+LIBDOOMSDAY_PUBLIC bool Mobj_IsLinked(const mobj_t &mob);
+
+/**
+ * Returns @c true if the map-object is physically inside (and @em presently linked to)
+ * some Sector of the owning Map.
+ */
+LIBDOOMSDAY_PUBLIC bool Mobj_IsSectorLinked(const mobj_t &mob);
+
 #endif // __cplusplus
+
+/**
+ * Returns the sector attributed to the BSP leaf in which the mobj's origin
+ * currently falls. If the mobj is not yet linked then @c 0 is returned.
+ *
+ * Note: The mobj is necessarily within the bounds of the sector!
+ *
+ * @param mobj  Mobj instance.
+ */
+LIBDOOMSDAY_PUBLIC DE_EXTERN_C world_Sector *Mobj_Sector(const mobj_t *mobj);
 
 #endif // LIBDOOMSDAY_MOBJ_H

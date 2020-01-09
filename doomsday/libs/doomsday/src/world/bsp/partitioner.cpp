@@ -1,5 +1,6 @@
 /** @file partitioner.cpp  World map, binary space partitioner.
  *
+ * @authors Copyright © 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
@@ -22,22 +23,22 @@
  * 02110-1301 USA</small>
  */
 
-#include "world/bsp/partitioner.h"
+#include "doomsday/world/bsp/partitioner.h"
 
-#include "BspLeaf"
-#include "Line"
-#include "Vertex"
+#include "doomsday/world/bspleaf.h"
+#include "doomsday/world/bspnode.h"
+#include "doomsday/world/line.h"
+#include "doomsday/world/sector.h"
+#include "doomsday/world/vertex.h"
+#include "doomsday/world/bsp/convexsubspaceproxy.h"
+#include "doomsday/world/bsp/edgetip.h"
+#include "doomsday/world/bsp/hplane.h"
+#include "doomsday/world/bsp/linesegment.h"
+#include "doomsday/world/bsp/partitionevaluator.h"
+#include "doomsday/world/bsp/superblockmap.h"
 
-#include "world/bsp/convexsubspaceproxy.h"
-#include "world/bsp/edgetip.h"
-#include "world/bsp/hplane.h"
-#include "world/bsp/linesegment.h"
-#include "world/bsp/partitionevaluator.h"
-#include "world/bsp/superblockmap.h"
-
-#include <doomsday/world/bspnode.h>
-#include <doomsday/world/sector.h>
 #include <de/legacy/vector1.h>
+
 #include <de/Hash>
 #include <de/LogBuffer>
 #include <algorithm>
@@ -1056,7 +1057,7 @@ DE_PIMPL(Partitioner)
 
                 if(seg->hasHEdge() && !seg->back().hasHEdge())
                 {
-                    HEdge *hedge = &seg->hedge();
+                    auto *hedge = &seg->hedge();
                     DE_ASSERT(!hedge->hasTwin());
 
                     // Allocate the twin from the same mesh.

@@ -58,7 +58,6 @@ if (NOT IOS)
 endif ()
 deng_merge_sources (world         src/world/*.cpp)
 deng_merge_sources (world_base    src/world/base/*.cpp)
-deng_merge_sources (world_bsp     src/world/bsp/*.cpp)
 
 deng_glob_sources (SOURCES src/gl/*.cpp) # Can't merge due to GL deferred calls mechanism.
 

@@ -17,10 +17,9 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_WORLD_BSP_PARTITIONEVALUATOR_H
-#define DE_WORLD_BSP_PARTITIONEVALUATOR_H
+#pragma once
 
-#include "world/bsp/superblockmap.h"
+#include "superblockmap.h"
 
 namespace world {
 namespace bsp {
@@ -53,5 +52,3 @@ private:
 
 }  // namespace bsp
 }  // namespace world
-
-#endif  // DE_WORLD_BSP_PARTITIONEVALUATOR_H

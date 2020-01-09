@@ -29,7 +29,7 @@
 #include <de/List>
 #include <de/legacy/aabox.h>
 #include <de/BinaryTree>
-#include "world/bsp/linesegment.h"
+#include "linesegment.h"
 
 namespace world {
 namespace bsp {
