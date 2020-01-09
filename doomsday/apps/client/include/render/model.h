@@ -23,7 +23,7 @@
 #include <de/ModelDrawable>
 #include <de/Timeline>
 #include <de/MultiAtlas>
-#include <de/Map>
+#include <de/KeyMap>
 
 namespace render {
 
@@ -52,7 +52,7 @@ struct Model : public ModelDrawable
         AnimSequence(const String &n, const Record &d);
     };
 
-    struct StateAnims : public Map<String, List<AnimSequence>>
+    struct StateAnims : public KeyMap<String, List<AnimSequence>>
     {};
 
     enum Flag

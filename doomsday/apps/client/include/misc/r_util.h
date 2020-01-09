@@ -125,6 +125,4 @@ bool R_GenerateTexCoords(de::Vec2f &s, de::Vec2f &t, const de::Vec3d &point,
     float xScale, float yScale, const de::Vec3d &v1, const de::Vec3d &v2,
     const de::Mat3f &tangentMatrix);
 
-const char *R_NameForBlendMode(blendmode_t mode);
-
 #endif // DE_REFRESH_UTIL_H

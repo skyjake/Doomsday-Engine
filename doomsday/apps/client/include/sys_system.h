@@ -25,7 +25,7 @@
 #include <de/NativePath>
 #include "dd_types.h"
 
-extern de::dint novideo;
+extern int novideo;
 
 void Sys_Init();
 void Sys_Shutdown();
@@ -40,7 +40,7 @@ DE_EXTERN_C void Sys_Quit();
 
 void Sys_HideMouseCursor();
 
-void Sys_Sleep(de::dint millisecs);
+void Sys_Sleep(int millisecs);
 
 /**
  * Blocks the thread for a very short period of time. If attempting to wait
@@ -52,7 +52,7 @@ void Sys_Sleep(de::dint millisecs);
  */
 void Sys_BlockUntilRealTime(de::duint realTimeMs);
 
-de::dint Sys_CriticalMessage(const char *msg);
-de::dint Sys_CriticalMessagef(const char *format, ...) PRINTF_F(1,2);
+int Sys_CriticalMessage(const char *msg);
+int Sys_CriticalMessagef(const char *format, ...) PRINTF_F(1,2);
 
 #endif  // DE_CORE_SYSTEM_H

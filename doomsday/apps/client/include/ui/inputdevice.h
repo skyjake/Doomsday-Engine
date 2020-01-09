@@ -251,12 +251,12 @@ public:
      *
      * @return  Index of the named axis control if found, otherwise @c -1.
      */
-    de::dint toAxisId(const de::String &name) const;
+    int toAxisId(const de::String &name) const;
 
     /**
      * Returns @c true if @a id is a known axis control.
      */
-    bool hasAxis(de::dint id) const;
+    bool hasAxis(int id) const;
 
     /**
      * Lookup an axis control by unique @a id.
@@ -265,7 +265,7 @@ public:
      *
      * @return  Axis control associated with the given @a id.
      */
-    AxisInputControl &axis(de::dint id) const;
+    AxisInputControl &axis(int id) const;
 
     /**
      * Add an @a axis control to the input device.
@@ -277,19 +277,19 @@ public:
     /**
      * Returns the number of axis controls of the device.
      */
-    de::dint axisCount() const;
+    int axisCount() const;
 
     /**
      * Translate a symbolic key @a name to the associated unique key id.
      *
      * @return  Index of the named key control if found, otherwise @c -1.
      */
-    de::dint toButtonId(const de::String &name) const;
+    int toButtonId(const de::String &name) const;
 
     /**
      * Returns @c true if @a id is a known button control.
      */
-    bool hasButton(de::dint id) const;
+    bool hasButton(int id) const;
 
     /**
      * Lookup a button control by unique @a id.
@@ -298,7 +298,7 @@ public:
      *
      * @return  Button control associated with the given @a id.
      */
-    ButtonInputControl &button(de::dint id) const;
+    ButtonInputControl &button(int id) const;
 
     /**
      * Add a @a button control to the input device.
@@ -310,12 +310,12 @@ public:
     /**
      * Returns the number of button controls of the device.
      */
-    de::dint buttonCount() const;
+    int buttonCount() const;
 
     /**
      * Returns @c true if @a id is a known hat control.
      */
-    bool hasHat(de::dint id) const;
+    bool hasHat(int id) const;
 
     /**
      * Lookup a hat control by unique @a id.
@@ -324,7 +324,7 @@ public:
      *
      * @return  Hat control associated with the given @a id.
      */
-    HatInputControl &hat(de::dint id) const;
+    HatInputControl &hat(int id) const;
 
     /**
      * Add a @a hat control to the input device.
@@ -336,7 +336,7 @@ public:
     /**
      * Returns the number of hat controls of the device.
      */
-    de::dint hatCount() const;
+    int hatCount() const;
 
     /**
      * Register the console commands and variables for this device and all controls.

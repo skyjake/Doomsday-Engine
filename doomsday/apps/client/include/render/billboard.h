@@ -43,16 +43,16 @@ struct drawmaskedwallparams_t
     blendmode_t blendMode;         ///< Blendmode to be used when drawing (two sided mid textures only)
 
     struct wall_vertex_s {
-        de::dfloat pos[3];         ///< x y and z coordinates.
-        de::dfloat color[4];
+        float pos[3];         ///< x y and z coordinates.
+        float color[4];
     } vertices[4];
 
-    de::ddouble texOffset[2];
-    de::dfloat texCoord[2][2];     ///< u and v coordinates.
+    double texOffset[2];
+    float texCoord[2][2];     ///< u and v coordinates.
 
     DGLuint modTex;                ///< Texture to modulate with.
-    de::dfloat modTexCoord[2][2];  ///< [top-left, bottom-right][x, y]
-    de::dfloat modColor[4];
+    float modTexCoord[2][2];  ///< [top-left, bottom-right][x, y]
+    float modColor[4];
 };
 
 void Rend_DrawMaskedWall(const drawmaskedwallparams_t &parms);
@@ -63,15 +63,15 @@ void Rend_DrawMaskedWall(const drawmaskedwallparams_t &parms);
  */
 struct rendpspriteparams_t
 {
-    de::dfloat pos[2];           ///< [X, Y] Screen-space position.
-    de::dfloat width;
-    de::dfloat height;
+    float pos[2];           ///< [X, Y] Screen-space position.
+    float width;
+    float height;
 
     ClientMaterial *mat;
-    de::dfloat texOffset[2];
+    float texOffset[2];
     dd_bool texFlip[2];          ///< [X, Y] Flip along the specified axis.
 
-    de::dfloat ambientColor[4];
+    float ambientColor[4];
     de::duint vLightListIdx;
 };
 
@@ -92,7 +92,7 @@ struct drawspriteparams_t
 
 void Rend_DrawSprite(const vissprite_t &spr);
 
-const de::MaterialVariantSpec &Rend_SpriteMaterialSpec(de::dint tclass = 0, de::dint tmap = 0);
+const de::MaterialVariantSpec &Rend_SpriteMaterialSpec(int tclass = 0, int tmap = 0);
 
 /**
  * @defgroup rendFlareFlags  Flare renderer flags
@@ -111,21 +111,21 @@ const de::MaterialVariantSpec &Rend_SpriteMaterialSpec(de::dint tclass = 0, de::
  */
 struct drawflareparams_t {
     de::dbyte  flags; ///< @ref rendFlareFlags.
-    de::dint   size;
-    de::dfloat color[3];
+    int   size;
+    float color[3];
     de::dbyte  factor;
-    de::dfloat xOff;
+    float xOff;
     DGLuint    tex; ///< Flaremap if flareCustom ELSE (flaretexName id. Zero = automatical)
-    de::dfloat mul; ///< Flare brightness factor.
+    float mul; ///< Flare brightness factor.
     dd_bool    isDecoration;
-    de::dint   lumIdx;
+    int   lumIdx;
 };
 
-DE_EXTERN_C de::dint alwaysAlign;
-DE_EXTERN_C de::dint spriteLight;
-DE_EXTERN_C de::dint useSpriteAlpha;
-DE_EXTERN_C de::dint useSpriteBlend;
-DE_EXTERN_C de::dint noSpriteZWrite;
+DE_EXTERN_C int alwaysAlign;
+DE_EXTERN_C int spriteLight;
+DE_EXTERN_C int useSpriteAlpha;
+DE_EXTERN_C int useSpriteBlend;
+DE_EXTERN_C int noSpriteZWrite;
 DE_EXTERN_C de::dbyte noSpriteTrans;
 DE_EXTERN_C de::dbyte devNoSprites;
 

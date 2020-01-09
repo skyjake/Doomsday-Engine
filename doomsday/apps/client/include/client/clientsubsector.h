@@ -58,7 +58,7 @@ public:
      * Returns @c true if @a height (up-axis offset) lies above/below the ceiling/floor
      * height of the subsector.
      */
-    bool isHeightInVoid(de::ddouble height) const;
+    bool isHeightInVoid(double height) const;
 
     /**
      * Determines whether the subsector has positive world volume, i.e., the height of
@@ -78,12 +78,12 @@ public:
         InnerLoop
     };
 
-    static de::String edgeLoopIdAsText(de::dint loopId);
+    static de::String edgeLoopIdAsText(int loopId);
 
     /**
      * Returns the total number of EdgeLoops for the subsector.
      */
-    de::dint edgeLoopCount() const;
+    int edgeLoopCount() const;
 
     /**
      * Iterate the EdgeLoops of the subsector.
@@ -100,10 +100,10 @@ public:
      */
     struct AudioEnvironment
     {
-        de::dfloat volume  = 0;
-        de::dfloat space   = 0;
-        de::dfloat decay   = 0;
-        de::dfloat damping = 0;
+        float volume  = 0;
+        float space   = 0;
+        float decay   = 0;
+        float damping = 0;
 
         void reset() { volume = space = decay = damping = 0; }
     };
@@ -145,13 +145,13 @@ public:
      * Returns the geometry Shard for the specified @a mapElement and geometry
      * group identifier @a geomId; otherwise @c 0.
      */
-    Shard *findShard(MapElement &mapElement, de::dint geomId);
+    Shard *findShard(MapElement &mapElement, int geomId);
 
     /**
      * Generate/locate the geometry Shard for the specified @a mapElement and
      * geometry group identifier @a geomId.
      */
-    Shard &shard(MapElement &mapElement, de::dint geomId);
+    Shard &shard(MapElement &mapElement, int geomId);
 
     /**
      * Shards owned by the Subsector should call this periodically to update
@@ -201,7 +201,7 @@ public:
      * Returns the final ambient light intensity for the source.
      * @see lightSourceColorf()
      */
-    de::dfloat lightSourceIntensity(const de::Vec3d &viewPoint = de::Vec3d(0, 0, 0)) const override;
+    float lightSourceIntensity(const de::Vec3d &viewPoint = de::Vec3d(0, 0, 0)) const override;
 
     /**
      * Returns the final ambient light color and intensity for the source.
@@ -214,7 +214,7 @@ public:
     /**
      * Returns the Z-axis bias scale factor for the light grid, block light source.
      */
-    de::dint blockLightSourceZBias();
+    int blockLightSourceZBias();
 
 //- Sky Planes --------------------------------------------------------------------------
 
@@ -226,7 +226,7 @@ public:
      *
      * @see hasSkyFloor(), hasSkyCeiling()
      */
-    bool hasSkyPlane(de::dint planeIndex = -1) const;
+    bool hasSkyPlane(int planeIndex = -1) const;
 
     /**
      * Determines whether the Surface of the @em floor plane has a sky-masked Material
@@ -251,7 +251,7 @@ public:
     /**
      * Returns the total number of @em visual planes in the subsector.
      */
-    de::dint visPlaneCount() const;
+    int visPlaneCount() const;
 
     /**
      * Iterate the @em visual Planes of the subsector.
@@ -266,8 +266,8 @@ public:
      *
      * @see visFloor(), visCeiling()
      */
-    Plane       &visPlane(de::dint planeIndex);
-    const Plane &visPlane(de::dint planeIndex) const;
+    Plane       &visPlane(int planeIndex);
+    const Plane &visPlane(int planeIndex) const;
 
     /**
      * Returns the @em visual floor Plane of the subsector.

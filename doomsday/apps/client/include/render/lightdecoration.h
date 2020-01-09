@@ -50,12 +50,12 @@ public:
     /**
      * Returns the current angle fade factor (user configurable).
      */
-    static de::dfloat angleFadeFactor();
+    static float angleFadeFactor();
 
     /**
      * Returns the current brightness scale factor (user configurable).
      */
-    static de::dfloat brightFactor();
+    static float brightFactor();
 
     /**
      * Calculates an occlusion factor for the light source. Determined by the
@@ -66,7 +66,7 @@ public:
      * @return  Occlusion factor in the range [0..1], where @c 0 is fully
      * occluded and @c 1 is fully visible.
      */
-    de::dfloat occlusion(const de::Vec3d &eye) const;
+    float occlusion(const de::Vec3d &eye) const;
 
     /**
      * Generates a new lumobj for the light decoration. A map surface must be

@@ -45,10 +45,10 @@ class Plane;
  */
 struct shadowcorner_t
 {
-    de::dfloat corner;
+    float corner;
     Plane *proximity;
-    de::dfloat pOffset;
-    de::dfloat pHeight;
+    float pOffset;
+    float pHeight;
 };
 
 /**
@@ -57,11 +57,11 @@ struct shadowcorner_t
  */
 struct edgespan_t
 {
-    de::dfloat length;
-    de::dfloat shift;
+    float length;
+    float shift;
 };
 
-DE_EXTERN_C de::dint rendFakeRadio;
+DE_EXTERN_C int rendFakeRadio;
 DE_EXTERN_C byte devFakeRadioUpdate;
 
 /**
@@ -75,7 +75,7 @@ DE_EXTERN_C byte devFakeRadioUpdate;
  * @param rightEdge     Geometry for the right edge of the wall section.
  * @param ambientLight  Ambient light level/luminosity.
  */
-void Rend_DrawWallRadio(const WallEdge &leftEdge, const WallEdge &rightEdge, de::dfloat ambientLight);
+void Rend_DrawWallRadio(const WallEdge &leftEdge, const WallEdge &rightEdge, float ambientLight);
 
 /**
  * Render FakeRadio for the given subspace. Draws all shadow geometry linked to the ConvexSubspace,

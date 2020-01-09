@@ -54,15 +54,15 @@ public:
 
         struct LayerState
         {
-            de::dfloat offset;
+            float offset;
         };
 
         struct ModelState
         {
-            de::dint frame;
-            de::dint timer;
-            de::dint maxTimer;
-            de::dfloat yaw;
+            int frame;
+            int timer;
+            int maxTimer;
+            float yaw;
         };
 
     public:
@@ -77,27 +77,27 @@ public:
          * Determines whether the specified animation layer state @a index is valid.
          * @see layer()
          */
-        bool hasLayer(de::dint index) const;
+        bool hasLayer(int index) const;
 
         /**
          * Lookup an animation layer state by it's unique @a index.
          * @see hasLayer()
          */
-        LayerState       &layer(de::dint index);
-        const LayerState &layer(de::dint index) const;
+        LayerState       &layer(int index);
+        const LayerState &layer(int index) const;
 
         /**
          * Determines whether the specified animation model state @a index is valid.
          * @see model()
          */
-        bool hasModel(de::dint index) const;
+        bool hasModel(int index) const;
 
         /**
          * Lookup an animation model state by it's unique @a index.
          * @see hasModel()
          */
-        ModelState       &model(de::dint index);
-        const ModelState &model(de::dint index) const;
+        ModelState       &model(int index);
+        const ModelState &model(int index) const;
 
         /**
          * Advances the animation state.
@@ -145,7 +145,7 @@ public:
      *
      * @param modelIndex  Unique index of the model.
      */
-    FrameModelDef *modelDef(de::dint modelIndex) const;
+    FrameModelDef *modelDef(int modelIndex) const;
 
 public:
     static const de::MaterialVariantSpec &layerMaterialSpec(bool masked);

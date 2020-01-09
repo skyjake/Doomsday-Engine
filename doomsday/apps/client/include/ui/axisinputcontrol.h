@@ -59,35 +59,35 @@ public:
     /**
      * Returns the current position of the axis.
      */
-    de::ddouble position() const;
-    void setPosition(de::ddouble newPosition);
+    double position() const;
+    void setPosition(double newPosition);
 
     void markPosition();
-    de::ddouble markedPosition() const;
+    double markedPosition() const;
 
     /**
      * Update the position of the axis control from a "real" position.
      *
      * @param newPosition  New position to be applied (maybe filtered, normalized, etc...).
      */
-    void applyRealPosition(de::dfloat newPosition);
+    void applyRealPosition(float newPosition);
 
-    de::dfloat translateRealPosition(de::dfloat rawPosition) const;
+    float translateRealPosition(float rawPosition) const;
 
     /**
      * Returns the current dead zone (0..1) limit for the axis.
      */
-    de::dfloat deadZone() const;
-    void setDeadZone(de::dfloat newDeadZone);
+    float deadZone() const;
+    void setDeadZone(float newDeadZone);
 
     /**
      * Returns the current position scaling factor (applied to "real" positions).
      */
-    de::dfloat scale() const;
-    void setScale(de::dfloat newScale);
+    float scale() const;
+    void setScale(float newScale);
 
-    de::dfloat offset() const;
-    void setOffset(de::dfloat newOffset);
+    float offset() const;
+    void setOffset(float newOffset);
 
     /**
      * When the state of the control last changed, in milliseconds since app init.

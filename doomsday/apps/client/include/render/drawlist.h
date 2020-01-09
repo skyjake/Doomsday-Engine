@@ -87,7 +87,7 @@ struct AttributeSpec
         NUM_SEMANTICS
     };
 };
-typedef std::array<de::dint, MAX_TEX_UNITS> TexUnitMap;
+typedef std::array<int, MAX_TEX_UNITS> TexUnitMap;
 
 /**
  * A list of drawable GL geometry primitives (buffered) and optional GL attribute/state commands.

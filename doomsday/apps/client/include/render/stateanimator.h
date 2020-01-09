@@ -87,7 +87,7 @@ public:
 
     // ModelDrawable::Animator
     void advanceTime(de::TimeSpan elapsed) override;
-    de::ddouble currentTime(int index) const override;
+    double currentTime(int index) const override;
     de::Vec4f extraRotationForNode(const de::String &nodeName) const override;
 
     // Implements IObject.

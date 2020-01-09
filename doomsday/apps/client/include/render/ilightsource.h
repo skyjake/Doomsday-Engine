@@ -64,7 +64,7 @@ public:
      *                   the intensity may vary depending on the relative direction
      *                   and/or position of the viewer.
      */
-    virtual de::dfloat lightSourceIntensity(const de::Vec3d &viewPoint) const = 0;
+    virtual float lightSourceIntensity(const de::Vec3d &viewPoint) const = 0;
 };
 
 /**
@@ -89,7 +89,7 @@ public:
      * Returns the radius of the emitter itself, in map units. A radius of
      * zero would mean that the light emitter is an infinitely small point.
      */
-    virtual de::dfloat lightSourceRadius() const = 0;
+    virtual float lightSourceRadius() const = 0;
 };
 
 #endif // DE_CLIENT_ILIGHTSOURCE_H

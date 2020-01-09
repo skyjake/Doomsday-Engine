@@ -31,8 +31,6 @@ DE_EXTERN_C float    weaponOffsetScale, weaponFOVShift;
 DE_EXTERN_C int      weaponOffsetScaleY;
 DE_EXTERN_C byte     weaponScaleMode; // cvar
 
-DE_EXTERN_C fixed_t  fineTangent[FINEANGLES / 2];
-
 /**
  * Draws 2D HUD sprites. If they were already drawn 3D, this won't do anything.
  */

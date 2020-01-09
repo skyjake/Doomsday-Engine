@@ -45,18 +45,18 @@ struct drawmodelparams_t
     // Animation, frame interpolation:
     FrameModelDef *mf;
     FrameModelDef *nextMF;
-    de::dfloat inter;
+    float inter;
     dd_bool alwaysInterpolate;
-    de::dint id;                ///< For a unique skin offset.
-    de::dint selector;
+    int id;                ///< For a unique skin offset.
+    int selector;
 
     // Appearance:
-    de::dint flags;  ///< Mobj flags.
-    de::dint tmap;
+    int flags;  ///< Mobj flags.
+    int tmap;
 
     // Shiney texture mapping:
-    de::dfloat shineYawOffset;
-    de::dfloat shinePitchOffset;
+    float shineYawOffset;
+    float shinePitchOffset;
     dd_bool shineTranslateWithViewerPos;
     dd_bool shinepspriteCoordSpace;       ///< Use the psprite coordinate space hack.
 };
@@ -70,14 +70,14 @@ struct drawmodel2params_t
 };
 
 DE_EXTERN_C de::dbyte useModels;
-DE_EXTERN_C de::dint modelLight;
-DE_EXTERN_C de::dint frameInter;
-DE_EXTERN_C de::dfloat modelAspectMod;
-DE_EXTERN_C de::dint mirrorHudModels;
-//DE_EXTERN_C de::dint modelShinyMultitex;
-DE_EXTERN_C de::dfloat modelSpinSpeed;
-DE_EXTERN_C de::dint maxModelDistance;
-DE_EXTERN_C de::dfloat rendModelLOD;
+DE_EXTERN_C int modelLight;
+DE_EXTERN_C int frameInter;
+DE_EXTERN_C float modelAspectMod;
+DE_EXTERN_C int mirrorHudModels;
+//DE_EXTERN_C int modelShinyMultitex;
+DE_EXTERN_C float modelSpinSpeed;
+DE_EXTERN_C int maxModelDistance;
+DE_EXTERN_C float rendModelLOD;
 DE_EXTERN_C de::dbyte precacheSkins;
 
 /**

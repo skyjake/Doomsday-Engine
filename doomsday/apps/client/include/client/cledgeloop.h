@@ -31,13 +31,13 @@ class ClEdgeLoop
 {
 public:
     ClEdgeLoop(ClientSubsector &owner, de::HEdge &first,
-               de::dint loopId = ClientSubsector::OuterLoop);
+               int loopId = ClientSubsector::OuterLoop);
 
     ClientSubsector &owner() const;
 
     de::String description() const;
 
-    de::dint loopId() const;
+    int loopId() const;
 
     bool isInner() const;
     bool isOuter() const;

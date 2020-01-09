@@ -36,13 +36,13 @@
 
 namespace res { class File1; }
 
-extern de::dint verbose;
-extern de::dint isDedicated; // true if __SERVER__
+extern int verbose;
+extern int isDedicated; // true if __SERVER__
 #ifdef __CLIENT__
-extern de::dint symbolicEchoMode;
+extern int symbolicEchoMode;
 #endif
 
-de::dint DD_EarlyInit();
+int DD_EarlyInit();
 void     DD_FinishInitializationAfterWindowReady();
 void     DD_ConsoleRegister();
 
@@ -76,7 +76,7 @@ ClientServerWorld &App_World();
  * Attempt to change the 'open' state of the console.
  * @note In dedicated mode the console cannot be closed.
  */
-void Con_Open(de::dint yes);
+void Con_Open(int yes);
 
 void DD_CheckTimeDemo();
 void DD_UpdateEngineState();

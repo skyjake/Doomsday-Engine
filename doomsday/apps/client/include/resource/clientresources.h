@@ -22,7 +22,7 @@
 #define DE_CLIENT_RESOURCES_H
 
 #include <de/List>
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/Set>
 #include <de/Error>
 #include <de/Record>
@@ -92,7 +92,7 @@ public:
     /// The specified font id was invalid (out of range). @ingroup errors
     DE_ERROR(UnknownFontIdError);
 
-    typedef de::Map<de::String, de::FontScheme *> FontSchemes;
+    typedef de::KeyMap<de::String, de::FontScheme *> FontSchemes;
     typedef de::List<AbstractFont *> AllFonts;
 
     static ClientResources &get();
@@ -193,7 +193,7 @@ public:
     /**
      * Returns the total number of manifest schemes in the collection.
      */
-    inline de::dint fontSchemeCount() const { return allFontSchemes().size(); }
+    inline int fontSchemeCount() const { return allFontSchemes().size(); }
 
     /**
      * Clear all resources in all schemes.
@@ -230,7 +230,7 @@ public:
      *
      * @return  Index of the definition; otherwise @c -1 if @a modelDef is unknown.
      */
-    de::dint indexOf(const FrameModelDef *modelDef);
+    int indexOf(const FrameModelDef *modelDef);
 
     /**
      * Convenient method of looking up a concrete model resource in the collection
@@ -256,7 +256,7 @@ public:
      *
      * @see modelDefCount()
      */
-    FrameModelDef &modelDef(de::dint index);
+    FrameModelDef &modelDef(int index);
 
     /**
      * Lookup a model definition by it's unique @a id. O(n)
@@ -277,17 +277,17 @@ public:
      *
      * @return  Found model definition; otherwise @c nullptr.
      */
-    FrameModelDef *modelDefForState(de::dint stateIndex, de::dint select = 0);
+    FrameModelDef *modelDefForState(int stateIndex, int select = 0);
 
     /**
      * Returns the total number of model definitions in the system.
      *
      * @see modelDef()
      */
-    de::dint modelDefCount() const;
+    int modelDefCount() const;
 
     /// @todo Refactor away. Used for animating particle/sky models.
-    void setModelDefFrame(FrameModelDef &modelDef, de::dint frame);
+    void setModelDefFrame(FrameModelDef &modelDef, int frame);
 
     /**
      * Release all GL-textures in all schemes.
@@ -334,15 +334,15 @@ public:
      * @return  The interned copy of the rationalized specification.
      */
     const de::MaterialVariantSpec &materialSpec(MaterialContextId contextId,
-                                                de::dint          flags,
+                                                int          flags,
                                                 byte              border,
-                                                de::dint          tClass,
-                                                de::dint          tMap,
+                                                int          tClass,
+                                                int          tMap,
                                                 GLenum            wrapS,
                                                 GLenum            wrapT,
-                                                de::dint          minFilter,
-                                                de::dint          magFilter,
-                                                de::dint          anisoFilter,
+                                                int          minFilter,
+                                                int          magFilter,
+                                                int          anisoFilter,
                                                 bool              mipmapped,
                                                 bool              gammaCorrection,
                                                 bool              noStretch,
@@ -361,8 +361,8 @@ public:
      * @return  The interned copy of the rationalized specification.
      */
     const TextureVariantSpec &textureSpec(texturevariantusagecontext_t tc,
-        de::dint flags, byte border, de::dint tClass, de::dint tMap, GLenum wrapS, GLenum wrapT,
-        de::dint minFilter, de::dint magFilter, de::dint anisoFilter,
+        int flags, byte border, int tClass, int tMap, GLenum wrapS, GLenum wrapT,
+        int minFilter, int magFilter, int anisoFilter,
         dd_bool mipmapped, dd_bool gammaCorrection, dd_bool noStretch, dd_bool toAlpha);
 
     /**
@@ -371,7 +371,7 @@ public:
      *
      * @return  A rationalized and valid TextureVariantSpecification.
      */
-    TextureVariantSpec &detailTextureSpec(de::dfloat contrast);
+    TextureVariantSpec &detailTextureSpec(float contrast);
 
     AbstractFont *newFontFromDef(const ded_compositefont_t &def);
     AbstractFont *newFontFromFile(const res::Uri &uri, const de::String& filePath);

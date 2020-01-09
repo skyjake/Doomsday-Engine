@@ -54,11 +54,11 @@ public:
     {
     public:
         Event();
-        Event(WallEdge &owner, de::ddouble distance = 0);
+        Event(WallEdge &owner, double distance = 0);
 
         Event &operator = (const Event &other);
         bool operator < (const Event &other) const;
-        de::ddouble distance() const;
+        double distance() const;
         de::Vec3d origin() const;
 
     private:

@@ -68,11 +68,11 @@ struct VisEntityPose
 
     VisEntityPose(const de::Vec3d &origin_, const de::Vec3d &visOffset,
                   bool viewAlign_ = false,
-                  de::dfloat topZ_ = 0,
-                  de::dfloat yaw_ = 0,
-                  de::dfloat yawAngleOffset_ = 0,
-                  de::dfloat pitch_ = 0,
-                  de::dfloat pitchAngleOffset_= 0)
+                  float topZ_ = 0,
+                  float yaw_ = 0,
+                  float yawAngleOffset_ = 0,
+                  float pitch_ = 0,
+                  float pitchAngleOffset_= 0)
         : origin(origin_)
         , topZ(topZ_)
         , srvo(visOffset)
@@ -107,7 +107,7 @@ struct VisEntityLighting
         , vLightListIdx(lightListIndex)
     {}
 
-    void setupLighting(const de::Vec3d &origin, de::ddouble distance, const world::BspLeaf &bspLeaf);
+    void setupLighting(const de::Vec3d &origin, double distance, const world::BspLeaf &bspLeaf);
 };
 
 /**
@@ -140,14 +140,14 @@ struct vissprite_t
 #define VS_FLARE(v)         (&((v)->data.flare))
 
 void VisSprite_SetupSprite(vissprite_t *spr, const VisEntityPose &pose, const VisEntityLighting &light,
-    de::dfloat secFloor, de::dfloat secCeil, de::dfloat floorClip, de::dfloat top,
+    float secFloor, float secCeil, float floorClip, float top,
     ClientMaterial &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
-    de::dint tClass, de::dint tMap, world::BspLeaf *bspLeafAtOrigin,
+    int tClass, int tMap, world::BspLeaf *bspLeafAtOrigin,
     bool floorAdjust, bool fitTop, bool fitBottom);
 
 void VisSprite_SetupModel(vissprite_t *spr, const VisEntityPose &pose, const VisEntityLighting &light,
-    FrameModelDef *mf, FrameModelDef *nextMF, de::dfloat inter,
-    de::dint id, de::dint selector, world::BspLeaf *bspLeafAtOrigin, de::dint mobjDDFlags, de::dint tmap,
+    FrameModelDef *mf, FrameModelDef *nextMF, float inter,
+    int id, int selector, world::BspLeaf *bspLeafAtOrigin, int mobjDDFlags, int tmap,
     bool fullBright, bool alwaysInterpolate);
 
 /// @ingroup render

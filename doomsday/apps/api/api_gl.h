@@ -173,8 +173,26 @@ typedef enum blendmode_e {
 } blendmode_t;
 
 #define VALID_BLENDMODE(val) ((int)(val) >= BM_FIRST && (int)(val) <= BM_LAST)
-
 #define NUM_BLENDMODES       (10)
+
+static inline const char *DGL_NameForBlendMode(blendmode_t mode)
+{
+    static const char *names[1 + NUM_BLENDMODES] = {
+        /* invalid */               "(invalid)",
+        /* BM_ZEROALPHA */          "zero_alpha",
+        /* BM_NORMAL */             "normal",
+        /* BM_ADD */                "add",
+        /* BM_DARK */               "dark",
+        /* BM_SUBTRACT */           "subtract",
+        /* BM_REVERSE_SUBTRACT */   "reverse_subtract",
+        /* BM_MUL */                "mul",
+        /* BM_INVERSE */            "inverse",
+        /* BM_INVERSE_MUL */        "inverse_mul",
+        /* BM_ALPHA_SUBTRACT */     "alpha_subtract"
+    };
+    if (!VALID_BLENDMODE(mode)) return names[0];
+    return names[2 + (int) mode];
+}
 
 typedef struct dgl_vertex_s {
     float           xyz[4]; ///< The fourth is padding.

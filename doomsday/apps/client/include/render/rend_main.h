@@ -265,7 +265,7 @@ de::Vec3f Rend_SkyLightColor();
  *
  * @return  Calculated result.
  */
-de::Vec3f Rend_LuminousColor(const de::Vec3f &color, de::dfloat light);
+de::Vec3f Rend_LuminousColor(const de::Vec3f &color, float light);
 
 /**
  * Given an @a intensity determine the height of the plane glow, applying any
@@ -273,7 +273,7 @@ de::Vec3f Rend_LuminousColor(const de::Vec3f &color, de::dfloat light);
  *
  * @return Calculated result.
  */
-coord_t Rend_PlaneGlowHeight(de::dfloat intensity);
+coord_t Rend_PlaneGlowHeight(float intensity);
 
 /**
  * @param point         World space point to evaluate.
@@ -287,7 +287,7 @@ de::duint Rend_CollectAffectingLights(const de::Vec3d &point,
     const de::Vec3f &ambientColor = de::Vec3f(1), world::ConvexSubspace *subspace = nullptr,
     bool starkLight = false);
 
-void Rend_DrawVectorLight(const VectorLightData &vlight, de::dfloat alpha);
+void Rend_DrawVectorLight(const VectorLightData &vlight, float alpha);
 
 MaterialAnimator *Rend_SpriteMaterialAnimator(const de::Record &spriteDef);
 
@@ -296,7 +296,7 @@ MaterialAnimator *Rend_SpriteMaterialAnimator(const de::Record &spriteDef);
  *
  * @note Presently considers rotation 0 only!
  */
-de::ddouble Rend_VisualRadius(const de::Record &sprite);
+double Rend_VisualRadius(const de::Record &sprite);
 
 /**
  * Produce a luminous object from the given @a sprite configuration. The properties of

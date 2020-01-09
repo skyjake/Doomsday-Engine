@@ -78,11 +78,11 @@ public:
                            const de::String &settingName,
                            const de::Value & value = de::NoneValue());
 
-    inline ConfigProfiles &define(SettingType type, const de::String &settingName, de::dint value)
+    inline ConfigProfiles &define(SettingType type, const de::String &settingName, int value)
     {
         return define(type, settingName, de::NumberValue(value));
     }
-    inline ConfigProfiles &define(SettingType type, const de::String &settingName, de::dfloat value)
+    inline ConfigProfiles &define(SettingType type, const de::String &settingName, float value)
     {
         return define(type, settingName, de::NumberValue(value));
     }

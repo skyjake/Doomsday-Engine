@@ -110,10 +110,6 @@ enum { CR, CG, CB, CA };           // Color indices.
 
 extern float    texGamma;
 
-// tab_tables.c
-extern fixed_t  finesine[5 * FINEANGLES / 4];
-extern fixed_t *fineCosine;
-
 #ifdef __cplusplus
 } // extern "C"
 #endif
