@@ -33,7 +33,7 @@
 class guidata_armoricon_t : public HudWidget
 {
 public:
-    guidata_armoricon_t(de::dint player, int sprite1, int sprite2);
+    guidata_armoricon_t(int player, int sprite1, int sprite2);
     virtual ~guidata_armoricon_t();
 
     void reset();
@@ -43,7 +43,7 @@ public:
     void draw(const de::Vec2i &offset = de::Vec2i()) const;
 
 private:
-    de::dint currentSprite = 0;
+    int currentSprite = 0;
     int armorSprite1       = 0;
     int armorSprite2       = 0;
 };

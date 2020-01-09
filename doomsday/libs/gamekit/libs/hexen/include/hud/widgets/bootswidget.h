@@ -29,7 +29,7 @@
 class guidata_boots_t : public HudWidget
 {
 public:
-    guidata_boots_t(de::dint player);
+    guidata_boots_t(int player);
     virtual ~guidata_boots_t();
 
     void reset();

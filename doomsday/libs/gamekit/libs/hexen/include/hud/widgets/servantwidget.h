@@ -29,7 +29,7 @@
 class guidata_servant_t : public HudWidget
 {
 public:
-    guidata_servant_t(de::dint player);
+    guidata_servant_t(int player);
     virtual ~guidata_servant_t();
 
     void reset();

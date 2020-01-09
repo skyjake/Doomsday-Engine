@@ -29,7 +29,7 @@
 class guidata_defense_t : public HudWidget
 {
 public:
-    guidata_defense_t(de::dint player);
+    guidata_defense_t(int player);
     virtual ~guidata_defense_t();
 
     void reset();

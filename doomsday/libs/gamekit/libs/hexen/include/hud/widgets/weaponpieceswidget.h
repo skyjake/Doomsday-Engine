@@ -29,7 +29,7 @@
 class guidata_weaponpieces_t : public HudWidget
 {
 public:
-    guidata_weaponpieces_t(de::dint player);
+    guidata_weaponpieces_t(int player);
     virtual ~guidata_weaponpieces_t();
 
     void reset();
@@ -42,7 +42,7 @@ public:
     static void prepareAssets();
 
 private:
-    de::dint _ownedPieces = 0;
+    int _ownedPieces = 0;
 };
 
 #endif  // LIBHEXEN_UI_WEAPONPIECESWIDGET_H

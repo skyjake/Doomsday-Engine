@@ -29,7 +29,7 @@
 class guidata_greenmanavial_t : public HudWidget
 {
 public:
-    guidata_greenmanavial_t(de::dint player);
+    guidata_greenmanavial_t(int player);
     virtual ~guidata_greenmanavial_t();
 
     void reset();
@@ -42,8 +42,8 @@ public:
     static void prepareAssets();
 
 private:
-    de::dint _backgroundIdx = -1;
-    de::dfloat _filled = 0;  ///< Percentage.
+    int _backgroundIdx = -1;
+    float _filled = 0;  ///< Percentage.
 };
 
 #endif  // LIBHEXEN_UI_GREENMANAVIALWIDGET_H

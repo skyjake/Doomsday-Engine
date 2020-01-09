@@ -31,7 +31,7 @@ class guidata_bluemanaicon_t : public HudWidget
 public:
     guidata_bluemanaicon_t(void (*updateGeometry) (HudWidget *wi),
                            void (*drawer) (HudWidget *wi, const Point2Raw *offset),
-                           de::dint player);
+                           int player);
     virtual ~guidata_bluemanaicon_t();
 
     void reset();
@@ -44,7 +44,7 @@ public:
     static void prepareAssets();
 
 //private:
-    de::dint _iconIdx = 0;
+    int _iconIdx = 0;
 };
 
 void BlueManaIconWidget_Draw    (guidata_bluemanaicon_t *icon, const Point2Raw *offset);

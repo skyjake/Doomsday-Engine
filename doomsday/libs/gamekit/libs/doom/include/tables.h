@@ -43,6 +43,7 @@
 #define ANG180              0x80000000
 #define ANG270              0xc0000000
 
+/*
 // Effective size is 10240.
 DE_EXTERN_C fixed_t finesine[5 * FINEANGLES / 4];
 
@@ -51,6 +52,7 @@ DE_EXTERN_C fixed_t *finecosine;
 
 // Effective size is 4096.
 DE_EXTERN_C fixed_t finetangent[FINEANGLES / 2];
+*/
 
 // Effective size is 2049;
 // The +1 size is to handle the case when x==y without additional checking.

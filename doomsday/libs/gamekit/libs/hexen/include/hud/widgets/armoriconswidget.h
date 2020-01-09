@@ -30,7 +30,7 @@
 class guidata_armoricons_t : public HudWidget
 {
 public:
-    guidata_armoricons_t(de::dint player);
+    guidata_armoricons_t(int player);
     virtual ~guidata_armoricons_t();
 
     void reset();
@@ -43,7 +43,7 @@ public:
     static void prepareAssets();
 
 private:
-    de::dint _armorPoints[NUMARMOR];
+    int _armorPoints[NUMARMOR];
 };
 
 #endif  // LIBHEXEN_UI_ARMORICONSWIDGET_H

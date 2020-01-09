@@ -29,7 +29,7 @@
 class guidata_tomeofpower_t : public HudWidget
 {
 public:
-    guidata_tomeofpower_t(de::dint player);
+    guidata_tomeofpower_t(int player);
     virtual ~guidata_tomeofpower_t();
 
     void reset();

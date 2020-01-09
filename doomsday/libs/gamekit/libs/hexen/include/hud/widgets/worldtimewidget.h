@@ -29,7 +29,7 @@
 class guidata_worldtime_t : public HudWidget
 {
 public:
-    guidata_worldtime_t(de::dint player);
+    guidata_worldtime_t(int player);
     virtual ~guidata_worldtime_t();
 
     void reset();
