@@ -27,7 +27,7 @@ namespace de {
 DE_PIMPL(Profiles)
 , DE_OBSERVES(Deletable, Deletion)
 {
-    using Profiles = Map<String, AbstractProfile *, String::InsensitiveLessThan>;
+    using Profiles = KeyMap<String, AbstractProfile *, String::InsensitiveLessThan>;
 
     Profiles profiles;
     String   persistentName;

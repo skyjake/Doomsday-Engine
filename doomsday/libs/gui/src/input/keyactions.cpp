@@ -17,13 +17,13 @@
  */
 
 #include "de/KeyActions"
-#include <de/Map>
+#include <de/KeyMap>
 
 namespace de {
 
 DE_PIMPL_NOREF(KeyActions)
 {
-    Map<KeyEvent, std::function<void()>> actions;
+    KeyMap<KeyEvent, std::function<void()>> actions;
 };
 
 KeyActions::KeyActions()

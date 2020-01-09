@@ -17,7 +17,7 @@
  */
 
 #include "de/NativeFont"
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/Hash>
 #include <de/Property>
 

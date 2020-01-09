@@ -338,14 +338,14 @@ duint64 LittleEndianByteOrder_ToForeignUInt64(duint64 value)
 
 dfloat LittleEndianByteOrder_ToForeignFloat(dfloat value)
 {
-    DE_ASSERT(sizeof(dfloat) == sizeof(de::dfloat));
-    return de::littleEndianByteOrder.toNetwork(de::dfloat(value));
+    DE_ASSERT(sizeof(dfloat) == sizeof(float));
+    return de::littleEndianByteOrder.toNetwork(float(value));
 }
 
 ddouble LittleEndianByteOrder_ToForeignDouble(ddouble value)
 {
-    DE_ASSERT(sizeof(ddouble) == sizeof(de::ddouble));
-    return de::littleEndianByteOrder.toNetwork(de::ddouble(value));
+    DE_ASSERT(sizeof(ddouble) == sizeof(double));
+    return de::littleEndianByteOrder.toNetwork(double(value));
 }
 
 dint16 LittleEndianByteOrder_ToNativeInt16(dint16 value)
@@ -386,12 +386,12 @@ duint64 LittleEndianByteOrder_ToNativeUInt64(duint64 value)
 
 dfloat LittleEndianByteOrder_ToNativeFloat(dfloat value)
 {
-    DE_ASSERT(sizeof(dfloat) == sizeof(de::dfloat));
-    return de::littleEndianByteOrder.toHost(de::dfloat(value));
+    DE_ASSERT(sizeof(dfloat) == sizeof(float));
+    return de::littleEndianByteOrder.toHost(float(value));
 }
 
 ddouble LittleEndianByteOrder_ToNativeDouble(ddouble value)
 {
-    DE_ASSERT(sizeof(ddouble) == sizeof(de::ddouble));
-    return de::littleEndianByteOrder.toHost(de::ddouble(value));
+    DE_ASSERT(sizeof(ddouble) == sizeof(double));
+    return de::littleEndianByteOrder.toHost(double(value));
 }

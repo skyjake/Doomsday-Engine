@@ -24,7 +24,7 @@
 #include "de/BaseGuiApp"
 #include <de/Image>
 
-#include <de/Map>
+#include <de/KeyMap>
 #include <atomic>
 
 namespace de {
@@ -418,7 +418,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
         int extraLinesProduced = 0;
 
         // Determine the actual positions of each tab stop according to segment widths.
-        Map<int, int> stopMaxWidths; // stop => maxWidth
+        KeyMap<int, int> stopMaxWidths; // stop => maxWidth
 
         for (int i = lineRange.start; i < lineRange.end; ++i)
         {

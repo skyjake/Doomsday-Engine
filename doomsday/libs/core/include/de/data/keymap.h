@@ -1,4 +1,4 @@
-/** @file map.h  Key-value container with ordered keys.
+/** @file keymap.h  Key-value container with ordered keys.
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_MAP_H
-#define LIBCORE_MAP_H
+#pragma once
 
 #include <map>
 #include "../libcore.h"
@@ -28,14 +27,14 @@ namespace de {
  * Key-value container with ordered keys (based on std::map).
  */
 template <typename Key, typename Value, typename Compare = std::less<Key>>
-class Map : public std::map<Key, Value, Compare>
+class KeyMap : public std::map<Key, Value, Compare>
 {
     using Base = std::map<Key, Value, Compare>;
 
 public:
-    Map() {}
+    KeyMap() {}
 
-    Map(const std::initializer_list<typename Base::value_type> &init)
+    KeyMap(const std::initializer_list<typename Base::value_type> &init)
         : Base(init)
     {}
 
@@ -102,9 +101,9 @@ public:
 };
 
 template <typename Key, typename Value, typename Compare = std::less<Key>>
-class MutableMapIterator
+class MutableKeyMapIterator
 {
-    using Container = Map<Key, Value, Compare>;
+    using Container = KeyMap<Key, Value, Compare>;
     using Iterator = typename Container::iterator;
 
     Container _map;
@@ -112,7 +111,7 @@ class MutableMapIterator
     Iterator _cur;
 
 public:
-    MutableMapIterator(Container &c) : _map(c)
+    MutableKeyMapIterator(Container &c) : _map(c)
     {
         _iter = _map.begin();
     }
@@ -146,4 +145,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_MAP_H

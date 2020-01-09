@@ -24,7 +24,7 @@
 #include <de/Matrix>
 #include <de/AnimationRule>
 
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/Timer>
 
 namespace de {
@@ -35,7 +35,7 @@ DE_GUI_PIMPL(NotificationAreaWidget)
 , DE_OBSERVES(Widget, Deletion)
 {
     AnimationRule *shift;
-    Map<GuiWidget *, RelayWidget *> shown;
+    KeyMap<GuiWidget *, RelayWidget *> shown;
 
     Timer dismissTimer;
     List<GuiWidget *> pendingDismiss;

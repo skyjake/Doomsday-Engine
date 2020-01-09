@@ -21,7 +21,7 @@
 #include "de/Garbage"
 #include "de/LogBuffer"
 #include "de/Loop"
-#include "de/Map"
+#include "de/KeyMap"
 #include "de/Reader"
 #include "de/Timer"
 #include "de/Writer"
@@ -48,7 +48,7 @@ DE_PIMPL(Beacon)
     tF::ref<iDatagram>     socket;
     std::unique_ptr<Timer> timer;
     Time                   discoveryEndsAt;
-    Map<Address, Block>    found;
+    KeyMap<Address, Block>    found;
     List<tF::ref<iAddress>> broadcastAddresses;
 
     Impl(Public *i) : Base(i)

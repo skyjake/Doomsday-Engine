@@ -18,7 +18,7 @@
 
 #include "stbttnativefont.h"
 
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/String>
 #include <de/ThreadLocal>
 #include <de/NativePath>
@@ -68,7 +68,7 @@ struct FontSpec
 
 struct FontDatabase
 {
-    Map<String, Block, String::InsensitiveLessThan> sourceData; // TrueType files
+    KeyMap<String, Block, String::InsensitiveLessThan> sourceData; // TrueType files
 
     FontDatabase()
     {
@@ -93,7 +93,7 @@ static FontDatabase fontDb;
 
 struct FontCache // thread-local
 {
-    Map<FontSpec, stbtt_fontinfo> fonts; // loaded fonts
+    KeyMap<FontSpec, stbtt_fontinfo> fonts; // loaded fonts
 
     const stbtt_fontinfo *load(const String &name)
     {

@@ -17,7 +17,7 @@
  */
 
 #include "de/BitField"
-#include "de/Map"
+#include "de/KeyMap"
 #include "de/List"
 
 namespace de {
@@ -29,7 +29,7 @@ DE_PIMPL(BitField::Elements)
         int numBits;
         int firstBit;
     };
-    typedef Map<Id, Element> Elements; // needs to be ordered
+    typedef KeyMap<Id, Element> Elements; // needs to be ordered
 
     Elements elements;
     dsize totalBits;

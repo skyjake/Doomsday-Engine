@@ -31,7 +31,7 @@
 
 namespace de {
 
-using RegisteredEntryPoints = Map<String, Function::NativeEntryPoint>;
+using RegisteredEntryPoints = KeyMap<String, Function::NativeEntryPoint>;
 
 static RegisteredEntryPoints &entryPoints()
 {

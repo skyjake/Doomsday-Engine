@@ -25,7 +25,7 @@
 #include <de/ByteArrayFile>
 #include <de/DictionaryValue>
 #include <de/FS>
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/RegExp>
 #include <de/ScriptedInfo>
 #include <de/math.h>
@@ -166,7 +166,7 @@ DE_PIMPL(GLShaderBank)
         }
     };
 
-    typedef Map<String, GLShader *> Shaders; // path -> shader
+    typedef KeyMap<String, GLShader *> Shaders; // path -> shader
     Shaders shaders;
     std::unique_ptr<DictionaryValue> preDefines;
 

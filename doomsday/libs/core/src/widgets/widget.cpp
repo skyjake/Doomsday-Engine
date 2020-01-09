@@ -22,7 +22,7 @@
 #include "de/Asset"
 #include "de/LogBuffer"
 #include "de/List"
-#include "de/Map"
+#include "de/KeyMap"
 
 namespace de {
 
@@ -37,11 +37,11 @@ DE_PIMPL(Widget)
     String focusNext;
     String focusPrev;
 
-    typedef Map<int, Widget *> Routing;
+    typedef KeyMap<int, Widget *> Routing;
     Routing routing;
 
     typedef WidgetList Children;
-    typedef Map<String, Widget *> NamedChildren;
+    typedef KeyMap<String, Widget *> NamedChildren;
     Children children;
     NamedChildren index;
 

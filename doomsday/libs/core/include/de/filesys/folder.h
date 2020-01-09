@@ -23,7 +23,7 @@
 #include "../libcore.h"
 #include "../File"
 #include "../List"
-#include "../Map"
+#include "../KeyMap"
 
 namespace de {
 
@@ -67,7 +67,7 @@ public:
     DE_ERROR(NewFileError);
 
     typedef List<Feed *> Feeds;
-    typedef Map<String, File *> Contents; // lower-cased
+    typedef KeyMap<String, File *> Contents; // lower-cased
 
     enum PopulationBehavior {
         PopulateFullTree       = 0x1,   ///< The full tree is populated.

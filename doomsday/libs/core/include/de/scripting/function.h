@@ -26,7 +26,7 @@
 #include "../Compound"
 #include "../Record"
 #include "../List"
-#include "../Map"
+#include "../KeyMap"
 #include "../Set"
 
 namespace de {
@@ -63,7 +63,7 @@ public:
     DE_ERROR(UnknownEntryPointError);
 
     typedef List<String>         Arguments;
-    typedef Map<String, Value *> Defaults;
+    typedef KeyMap<String, Value *> Defaults;
     typedef List<const Value *>  ArgumentValues;
 
 public:

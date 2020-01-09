@@ -19,7 +19,7 @@
 #include "statuswidget.h"
 #include <de/String>
 #include <de/LabelWidget>
-#include <de/Map>
+#include <de/KeyMap>
 #include <doomsday/DoomsdayInfo>
 #include <doomsday/MapOutlineWidget>
 

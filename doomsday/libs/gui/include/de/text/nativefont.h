@@ -24,7 +24,7 @@
 #include <de/String>
 #include <de/Asset>
 #include <de/Rectangle>
-#include <de/Map>
+#include <de/KeyMap>
 
 #include "../Image"
 
@@ -76,7 +76,7 @@ public:
         }
     };
 
-    typedef Map<Spec, String> StyleMapping; ///< Spec => native font name
+    typedef KeyMap<Spec, String> StyleMapping; ///< Spec => native font name
 
     /**
      * Defines a mapping from font family name plus style/weight to an actual platform

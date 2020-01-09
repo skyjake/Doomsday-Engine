@@ -190,7 +190,7 @@ void OpenDialog::updateLocalList(bool autoselect)
     ServerFinder &       finder   = GuiShellApp::app().serverFinder();
     bool                 selected = false;
     auto &               items    = d->localServers->items();
-    Map<String, Address> found;
+    KeyMap<String, Address> found;
 
     for (const auto &sv : finder.foundServers())
     {

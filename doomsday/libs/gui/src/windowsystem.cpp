@@ -21,7 +21,7 @@
 #include "de/Style"
 #include "de/BaseGuiApp" // for updating pixel ratio
 
-#include <de/Map>
+#include <de/KeyMap>
 
 #include <SDL_events.h>
 
@@ -41,7 +41,7 @@ DE_PIMPL(WindowSystem)
         }
     };
 
-    Map<String, WindowData> windows;
+    KeyMap<String, WindowData> windows;
     String                  mainId;
     String                  focusedId; // name of focused window (receives gesture input)
     std::unique_ptr<Style>  style;

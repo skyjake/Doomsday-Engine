@@ -28,7 +28,7 @@ namespace de {
 DE_PIMPL(DirectoryTreeData)
 {
     using DirList = ui::ListDataT<DirectoryItem>;
-    Map<NativePath, std::unique_ptr<DirList>> pathItems;
+    KeyMap<NativePath, std::unique_ptr<DirList>> pathItems;
     bool enableFiles = true;
     bool enableHiddenFiles = false;
 

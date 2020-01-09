@@ -17,16 +17,16 @@
  */
 
 #include "de/Drawable"
-#include <de/Map>
+#include <de/KeyMap>
 
 namespace de {
 
 DE_PIMPL(Drawable)
 {
-    typedef Map<Id, std::shared_ptr<GLBuffer>> Buffers;
-    typedef Map<Id, GLProgram *> Programs;
-    typedef Map<Id, GLState *>   States;
-    typedef Map<String, Id>      Names;
+    typedef KeyMap<Id, std::shared_ptr<GLBuffer>> Buffers;
+    typedef KeyMap<Id, GLProgram *> Programs;
+    typedef KeyMap<Id, GLState *>   States;
+    typedef KeyMap<String, Id>      Names;
 
     struct BufferConfig {
         const GLProgram *program;
@@ -35,7 +35,7 @@ DE_PIMPL(Drawable)
         BufferConfig(const GLProgram *p = nullptr, const GLState *s = nullptr)
             : program(p), state(s) {}
     };
-    typedef Map<Id, BufferConfig> BufferConfigs;
+    typedef KeyMap<Id, BufferConfig> BufferConfigs;
 
     Buffers       buffers;
     Programs      programs;

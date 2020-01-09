@@ -23,7 +23,7 @@
 #include "de/CommandLine"
 #include "de/LogBuffer"
 #include "de/Loop"
-#include "de/Map"
+#include "de/KeyMap"
 #include "de/NumberValue"
 #include "de/Reader"
 #include "de/TextValue"
@@ -42,7 +42,7 @@ DE_PIMPL(ServerFinder)
     };
 
     Beacon beacon;
-    Map<Address, Found> servers;
+    KeyMap<Address, Found> servers;
     Timer expiration;
 
     Impl(Public * i)

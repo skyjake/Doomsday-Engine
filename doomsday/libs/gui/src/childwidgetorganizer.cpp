@@ -21,7 +21,7 @@
 #include "de/ui/Item"
 
 #include <de/App>
-#include <de/Map>
+#include <de/KeyMap>
 
 namespace de {
 
@@ -53,7 +53,7 @@ DE_PIMPL(ChildWidgetOrganizer)
     GuiWidget *container;
     IWidgetFactory *factory;
 
-    typedef Map<const ui::Item *, GuiWidget *> Mapping;
+    typedef KeyMap<const ui::Item *, GuiWidget *> Mapping;
     Mapping mapping; ///< Maps items to corresponding widgets.
 
     bool virtualEnabled = false;

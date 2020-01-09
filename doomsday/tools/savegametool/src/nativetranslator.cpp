@@ -101,7 +101,7 @@ public:
         return *this;
     }
 
-    LZReader &operator >> (de::dfloat &value)
+    LZReader &operator >> (float &value)
     {
         *this >> *reinterpret_cast<de::duint32 *>(&value);
         return *this;

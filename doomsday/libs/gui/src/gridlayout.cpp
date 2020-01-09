@@ -19,13 +19,13 @@
 #include "de/GridLayout"
 #include "de/SequentialLayout"
 
-#include <de/Map>
+#include <de/KeyMap>
 
 namespace de {
 
 DE_PIMPL(GridLayout)
 {
-    typedef Map<Vec2i, ui::Alignment> CellAlignments;
+    typedef KeyMap<Vec2i, ui::Alignment> CellAlignments;
 
     GuiWidgetList widgets;
     Mode mode;
@@ -38,8 +38,8 @@ DE_PIMPL(GridLayout)
     Vec2i cell;
     const Rule *fixedCellWidth;
     const Rule *fixedCellHeight;
-    Map<int, const Rule *> fixedColWidths;
-    Map<const GuiWidget *, int> widgetMultiCellCount; ///< Only multicell widgets.
+    KeyMap<int, const Rule *> fixedColWidths;
+    KeyMap<const GuiWidget *, int> widgetMultiCellCount; ///< Only multicell widgets.
     CellAlignments cellAlignment;
     const Rule *colPad;
     const Rule *rowPad;

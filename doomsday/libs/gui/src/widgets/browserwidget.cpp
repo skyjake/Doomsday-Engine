@@ -37,7 +37,7 @@ DE_GUI_PIMPL(BrowserWidget)
     ui::TreeData *data = nullptr;
     List<ui::DataPos> selectedItems;
     Path path;
-    Map<Path, SavedState> savedState;
+    KeyMap<Path, SavedState> savedState;
     LabelWidget *noContents;
     LabelWidget *cwdLabel;
     LabelWidget *menuLabel;
