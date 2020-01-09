@@ -37,8 +37,7 @@ class LineOwner
 public: /// @todo Make private:
     Line *_line;
 
-    /// {Anitclockwise, Clockwise}
-    LineOwner *_link[2];
+    LineOwner *_link[2]; // by ClockDirection
 
     /// Angle between this and the next line owner, clockwise.
     binangle_t _angle;

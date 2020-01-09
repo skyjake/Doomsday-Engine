@@ -24,6 +24,7 @@
 #include "doomsday/world/line.h"
 #include "doomsday/world/lineblockmap.h"
 #include "doomsday/world/mobj.h"
+#include "doomsday/world/world.h"
 //#include "world/p_object.h"
 //#include "world/clientserverworld.h" // validCount
 
@@ -274,7 +275,7 @@ DE_PIMPL_NOREF(Interceptor)
     void runTrace()
     {
         clearIntercepts();
-        const dint localValidCount = ++validCount;
+        const dint localValidCount = ++World::validCount;
 
         if(flags & PTF_LINE)
         {

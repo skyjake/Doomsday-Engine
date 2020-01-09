@@ -140,23 +140,23 @@ LoopResult Subsector::forAllSubspaces(const std::function<LoopResult (ConvexSubs
     return LoopContinue;
 }
 
-List<HEdge *> Subsector::listUniqueBoundaryEdges() const
+List<mesh::HEdge *> Subsector::listUniqueBoundaryEdges() const
 {
-    List<HEdge *> list;
+    List<mesh::HEdge *> list;
     for (const ConvexSubspace *sub : d->subspaces)
     {
-        HEdge *hedge = sub->poly().hedge();
+        auto *hedge = sub->poly().hedge();
         do
         {
             if (hedge->hasMapElement() && !isInternalEdge(hedge))
             {
                 bool unique = true;
-                for (HEdge *base : list)
+                for (auto *base : list)
                 {
                     SubsectorCirculator subIt(base);
                     do
                     {
-                        HEdge &other = *subIt;
+                        auto &other = *subIt;
                         if (&other == hedge)
                         {
                             unique = false;
@@ -203,7 +203,7 @@ ddouble Subsector::roughArea() const
     return (box.maxX - box.minX) * (box.maxY - box.minY);
 }
 
-bool Subsector::isInternalEdge(HEdge *hedge) // static
+bool Subsector::isInternalEdge(mesh::HEdge *hedge) // static
 {
     if (!hedge) return false;
     if (!hedge->hasFace() || !hedge->twin().hasFace()) return false;
@@ -227,10 +227,11 @@ Subsector *SubsectorCirculator::getSubsector(const HEdge &hedge) // static
 }
 #endif
 
-HEdge &SubsectorCirculator::getNeighbor(const HEdge &hedge, ClockDirection direction,
-    const Subsector *subsec) // static
+mesh::HEdge &SubsectorCirculator::getNeighbor(const mesh::HEdge &hedge,
+                                              ClockDirection     direction,
+                                              const Subsector *  subsec) // static
 {
-    HEdge *neighbor = &hedge.neighbor(direction);
+    auto *neighbor = &hedge.neighbor(direction);
     // Skip over interior edges.
     if (subsec)
     {

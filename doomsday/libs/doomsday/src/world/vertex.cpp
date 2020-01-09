@@ -19,8 +19,8 @@
  */
 
 #include "doomsday/world/vertex.h"
-#include "Line"
-#include "world/lineowner.h"  /// @todo remove me
+#include "doomsday/world/line.h"
+#include "doomsday/world/lineowner.h"  /// @todo remove me
 #include "doomsday/world/sector.h"
 
 #include <de/Vector>

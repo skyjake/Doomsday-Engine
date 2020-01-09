@@ -19,22 +19,10 @@
 
 #define DE_NO_API_MACROS_THINKER
 
-#include "de_base.h"
-#include "world/thinkers.h"
-
-#ifdef __CLIENT__
-#  include "client/cl_mobj.h"
-#  include "world/clientmobjthinkerdata.h"
-#endif
-
-#ifdef __SERVER__
-#  include "def_main.h"
-#  include "server/sv_pool.h"
-#  include <doomsday/world/mobjthinkerdata.h>
-#endif
-
-#include "world/map.h"
-#include "world/p_object.h"
+#include "doomsday/world/thinkers.h"
+#include "doomsday/world/map.h"
+#include "doomsday/world/mobj.h"
+#include "doomsday/world/world.h"
 
 #include <de/legacy/memoryzone.h>
 #include <de/List>
@@ -54,7 +42,7 @@ bool Thinker_IsMobj(const thinker_t *th)
 world::Map &Thinker_Map(const thinker_t & /*th*/)
 {
     /// @todo Do not assume the current map.
-    return App_World().map();
+    return World::get().map();
 }
 
 namespace world {
@@ -194,7 +182,11 @@ DE_PIMPL(Thinkers)
         lists.append(new ThinkerList(func, makePublic));
         return lists.last();
     }
+
+    DE_PIMPL_AUDIENCE(Removal)
 };
+
+DE_AUDIENCE_METHOD(Thinkers, Removal)
 
 Thinkers::Thinkers() : d(new Impl(this))
 {}
@@ -280,18 +272,7 @@ void Thinkers::remove(thinker_t &th)
         d->mobjIdLookup.remove(th.id);
         d->thinkerIdLookup.remove(th.id);
 
-#ifdef __SERVER__
-        // Then it must be a mobj.
-        auto *mob = reinterpret_cast<mobj_t *>(&th);
-
-        // If the state of the mobj is the NULL state, this is a
-        // predictable mobj removal (result of animation reaching its
-        // end) and shouldn't be included in netGame deltas.
-        if (!mob->state || !runtimeDefs.states.indexOf(mob->state))
-        {
-            Sv_MobjRemoved(th.id);
-        }
-#endif
+        DE_NOTIFY(Removal, i) i->thinkerRemoved(th);
     }
 
     th.function = thinkfunc_t(-1);
@@ -447,11 +428,12 @@ void Thinker_InitPrivateData(thinker_t *th, Id::Type knownId)
 
         if (Thinker_IsMobj(th))
         {
-#ifdef __CLIENT__
-            th->d = new ClientMobjThinkerData(privateId);
-#else
-            th->d = new MobjThinkerData(privateId);
-#endif
+            th->d = world::Factory::newMobjThinkerData(privateId);
+//#ifdef __CLIENT__
+//            th->d = new ClientMobjThinkerData(privateId);
+//#else
+//            th->d = new MobjThinkerData(privateId);
+//#endif
         }
         else
         {

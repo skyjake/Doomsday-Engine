@@ -27,11 +27,10 @@
 #include <de/Observers>
 #include <de/Vector>
 
-class LineOwner;
-
 namespace world {
 
 class Line;
+class LineOwner;
 
 /**
  * Map geometry vertex.
@@ -39,7 +38,7 @@ class Line;
  * An @em owner in this context is any line whose start or end points are
  * defined as the vertex.
  */
-class Vertex : public world::MapElement, public mesh::MeshElement
+class Vertex : public MapElement, public mesh::MeshElement
 {
     DE_NO_COPY  (Vertex)
     DE_NO_ASSIGN(Vertex)

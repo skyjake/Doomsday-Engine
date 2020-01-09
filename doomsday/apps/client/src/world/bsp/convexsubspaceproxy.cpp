@@ -19,9 +19,6 @@
 
 #include "de_platform.h"
 #include "world/bsp/convexsubspaceproxy.h"
-#include "Face"
-#include "HEdge"
-#include "Mesh"
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "Line"
@@ -29,6 +26,9 @@
 #include "world/bsp/linesegment.h"
 #include "world/clientserverworld.h" /// validCount @todo Remove me
 
+#include <doomsday/mesh/face.h>
+#include <doomsday/mesh/hedge.h>
+#include <doomsday/mesh/mesh.h>
 #include <de/Set>
 #include <de/Log>
 
@@ -356,8 +356,10 @@ void ConvexSubspaceProxy::addOneSegment(const LineSegmentSide &newSegment)
     }
 }
 
-void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
+void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, mesh::Mesh &mesh) const
 {
+    using namespace mesh;
+
     LOG_AS("ConvexSubspaceProxy::buildGeometry");
 
     // Sanity check.

@@ -26,7 +26,6 @@
 
 #include "BspLeaf"
 #include "Line"
-#include "Sector"
 #include "Vertex"
 
 #include "world/bsp/convexsubspaceproxy.h"
@@ -36,9 +35,10 @@
 #include "world/bsp/partitionevaluator.h"
 #include "world/bsp/superblockmap.h"
 
-#include <doomsday/BspNode>
-#include <de/Hash>
+#include <doomsday/world/bspnode.h>
+#include <doomsday/world/sector.h>
 #include <de/legacy/vector1.h>
+#include <de/Hash>
 #include <de/LogBuffer>
 #include <algorithm>
 
@@ -59,7 +59,7 @@ DE_PIMPL(Partitioner)
     int splitCostFactor = 7; ///< Cost of splitting a line segment.
     
     Lines lines;          ///< Set of map lines to build from (in index order, not owned).
-    Mesh *mesh = nullptr; ///< Provider of map geometries (cf. Factory).
+    mesh::Mesh *mesh = nullptr; ///< Provider of map geometries (cf. Factory).
     
     int segmentCount = 0; ///< Running total of segments built.
     int vertexCount  = 0; ///< Running total of vertexes built.
@@ -1125,7 +1125,7 @@ static AABox blockmapBounds(const AABoxd &mapBounds)
     return blockBounds;
 }
 
-BspTree *Partitioner::makeBspTree(const Set<Line *> &lines, Mesh &mesh)
+BspTree *Partitioner::makeBspTree(const Set<Line *> &lines, mesh::Mesh &mesh)
 {
     d->clear();
 

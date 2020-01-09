@@ -38,7 +38,7 @@ class BspLeaf;
  */
 struct ParticleInfo
 {
-    de::dint stage;           ///< -1 => particle doesn't exist
+    int stage;           ///< -1 => particle doesn't exist
     de::dshort tics;
     fixed_t origin[3];        ///< Coordinates.
     fixed_t mov[3];           ///< Momentum.
@@ -112,13 +112,13 @@ public:                                   /// @todo make private:
     Plane *             plane;            ///< Flat-triggered.
     const ded_ptcgen_t *def;              ///< The definition of this generator.
     struct mobj_s *     source;           ///< If mobj-triggered.
-    de::dint            srcid;            ///< Source mobj ID.
-    de::dint            type;             ///< Type-triggered; mobj type number (-1=none).
-    de::dint            type2;            ///< Type-triggered; alternate type.
+    int            srcid;            ///< Source mobj ID.
+    int            type;             ///< Type-triggered; mobj type number (-1=none).
+    int            type2;            ///< Type-triggered; alternate type.
     fixed_t             originAtSpawn[3]; ///< Used by untriggered/damage gens.
     fixed_t             vector[3];        ///< Converted from the definition.
-    de::dfloat          spawnRateMultiplier;
-    de::dint            count; ///< Number of particles generated thus far.
+    float          spawnRateMultiplier;
+    int            count; ///< Number of particles generated thus far.
     ParticleStage *     stages;
 
 public:
@@ -154,12 +154,12 @@ public:
     /**
      * Run the generator's thinker for the given number of @a tics.
      */
-    void presimulate(de::dint tics);
+    void presimulate(int tics);
 
     /**
      * Returns the age of the generator (time since spawn), in tics.
      */
-    de::dint age() const;
+    int age() const;
 
     /**
      * Determine the @em approximate origin of the generator in map space.
@@ -195,7 +195,7 @@ public:
     /**
      * Returns the total number of @em active particles for the generator.
      */
-    de::dint activeParticleCount() const;
+    int activeParticleCount() const;
 
     /**
      * Provides readonly access to the generator particle info data.
@@ -213,7 +213,7 @@ public: /// @todo make private:
      *
      * @return  Index of the newly spawned particle; otherwise @c -1.
      */
-    de::dint newParticle();
+    int newParticle();
 
     /**
      * The movement is done in two steps:
@@ -221,11 +221,11 @@ public: /// @todo make private:
      * XY movement checks for hits with solid walls (no backsector).
      * This is supposed to be fast and simple (but not too simple).
      */
-    void moveParticle(de::dint index);
+    void moveParticle(int index);
 
     void spinParticle(ParticleInfo &pt);
 
-    de::dfloat particleZ(const ParticleInfo &pt) const;
+    float particleZ(const ParticleInfo &pt) const;
 
     de::Vec3f particleOrigin(const ParticleInfo &pt) const;
     de::Vec3f particleMomentum(const ParticleInfo &pt) const;
@@ -239,10 +239,10 @@ public:
 private:
     Id            _id; ///< Unique in the map.
     de::Flags     _flags;
-    de::dint      _age; ///< Time since spawn, in tics.
-    de::dfloat    _spawnCount;
+    int      _age; ///< Time since spawn, in tics.
+    float    _spawnCount;
     bool          _untriggered; ///< @c true= consider this as not yet triggered.
-    de::dint      _spawnCP;     ///< Particle spawn cursor.
+    int      _spawnCP;     ///< Particle spawn cursor.
     ParticleInfo *_pinfo;       ///< Info about each generated particle.
 };
 

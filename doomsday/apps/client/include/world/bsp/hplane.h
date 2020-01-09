@@ -64,7 +64,7 @@ public:
          * @param edge          Relative edge of the line segment nearest to the
          *                      interception point.
          */
-        Intercept(de::ddouble distance, LineSegmentSide &lineSeg, de::dint edge);
+        Intercept(double distance, LineSegmentSide &lineSeg, int edge);
 
         bool operator < (const Intercept &other) const {
             return _distance < other._distance;
@@ -73,14 +73,14 @@ public:
         /**
          * Determine the distance between "this" and the @a other intercept.
          */
-        de::ddouble operator - (const Intercept &other) const {
+        double operator - (const Intercept &other) const {
             return _distance - other._distance;
         }
 
         /**
          * Returns distance along the half-plane relative to the origin.
          */
-        de::ddouble distance() const { return _distance; }
+        double distance() const { return _distance; }
 
         /**
          * Returns the intercepted line segment.
@@ -96,7 +96,7 @@ public:
          * Returns the identifier for the relevant edge of the intercepted
          * line segment.
          */
-        de::dint lineSegmentEdge() const;
+        int lineSegmentEdge() const;
 
         /**
          * Returns the relative vertex from the intercepted line segment.
@@ -127,11 +127,11 @@ public:
         LineSegmentSide *_after  = nullptr;
 
         /// Distance along the half-plane relative to the origin.
-        de::ddouble _distance = 0;
+        double _distance = 0;
 
         // The intercepted line segment and edge identifier.
         LineSegmentSide *_lineSeg = nullptr;
-        de::dint _edge = 0;
+        int _edge = 0;
     };
 
     typedef de::List<Intercept> Intercepts;
@@ -161,7 +161,7 @@ public:
      * @return  Distance to intersection point along the half-plane (relative
      *          to the origin).
      */
-    de::ddouble intersect(const LineSegmentSide &lineSeg, de::dint edge);
+    double intersect(const LineSegmentSide &lineSeg, int edge);
 
     /**
      * Perform intersection of the half-plane with the specified @a lineSeg.
@@ -179,7 +179,7 @@ public:
      *
      * @return  The resultant new intercept; otherwise @c nullptr.
      */
-    Intercept *intercept(const LineSegmentSide &lineSeg, de::dint edge,
+    Intercept *intercept(const LineSegmentSide &lineSeg, int edge,
                          const EdgeTips &edgeTips);
 
     /**
@@ -223,14 +223,14 @@ public:
      *
      * @see inverseAngle(), Partition::direction
      */
-    de::ddouble angle() const;
+    double angle() const;
 
     /**
      * Returns the inverted world angle for the partition line (i.e., rotated 180 degrees).
      *
      * @see angle()
      */
-    de::ddouble inverseAngle() const;
+    double inverseAngle() const;
 
     /**
      * Returns the logical @em slopetype for the partition line (which, is determined
@@ -260,8 +260,8 @@ public:
      * @param fromDist  (Returned) Perpendicular distance from the "from" vertex. Can be @c nullptr.
      * @param toDist    (Returned) Perpendicular distance from the "to" vertex. Can be @c nullptr.
      */
-    void distance(const LineSegmentSide &lineSegment, de::ddouble *fromDist = nullptr,
-                  de::ddouble *toDist = nullptr) const;
+    void distance(const LineSegmentSide &lineSegment, double *fromDist = nullptr,
+                  double *toDist = nullptr) const;
 
     /**
      * Determine the logical relationship between the partition line and the given
@@ -275,8 +275,8 @@ public:
      * @return LineRelationship between the partition line and the line segment.
      */
     LineRelationship relationship(const LineSegmentSide &lineSegment,
-                                  de::ddouble *retFromDist = nullptr,
-                                  de::ddouble *retToDist   = nullptr) const;
+                                  double *retFromDist = nullptr,
+                                  double *retToDist   = nullptr) const;
 
     /**
      * Returns the list of intercepts for the half-plane for efficient traversal.
@@ -291,7 +291,7 @@ public:
     /**
      * Returns the current number of half-plane intercepts.
      */
-    inline de::dint interceptCount() const { return intercepts().count(); }
+    inline int interceptCount() const { return intercepts().count(); }
 
 private:
     DE_PRIVATE(d)

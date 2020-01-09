@@ -61,7 +61,7 @@ public:
 
 #define IS_BLOCK_LINKED(mo)     ((mo)->bNext != 0)
 
-DE_EXTERN_C de::dint useSRVO, useSRVOAngle;
+DE_EXTERN_C int useSRVO, useSRVOAngle;
 
 void P_InitUnusedMobjList();
 
@@ -71,7 +71,7 @@ void P_InitUnusedMobjList();
 void Mobj_ConsoleRegister();
 
 mobj_t *P_MobjCreate(thinkfunc_t function, const de::Vec3d &origin, angle_t angle,
-    coord_t radius, coord_t height, de::dint ddflags);
+    coord_t radius, coord_t height, int ddflags);
 
 void P_MobjRecycle(mobj_t *mob);
 
@@ -175,7 +175,7 @@ void Mobj_AnimateHaloOcclussion(mobj_t &mob);
  * @note Implemented using a greatly simplified version of the lighting equation;
  *       no light diminishing or light range compression.
  */
-de::dfloat Mobj_ShadowStrength(const mobj_t &mob);
+float Mobj_ShadowStrength(const mobj_t &mob);
 
 /**
  * Determines which of the available sprites is in effect for the current map-object state
@@ -194,7 +194,7 @@ const de::Record *Mobj_SpritePtr(const mobj_t &mob);
  * @return  Active model definition for the current frame (if any).
  */
 FrameModelDef *Mobj_ModelDef(const mobj_t &mob, FrameModelDef **nextModef = nullptr,
-                        de::dfloat *interp = nullptr);
+                        float *interp = nullptr);
 
 /**
  * Calculates the shadow radius of the map-object. Falls back to Mobj_VisualRadius().
@@ -220,7 +220,7 @@ bool Mobj_IsSectorLinked(const mobj_t &mob);
  */
 coord_t Mobj_BobOffset(const mobj_t &mob);
 
-de::dfloat Mobj_Alpha(const mobj_t &mob);
+float Mobj_Alpha(const mobj_t &mob);
 
 /**
  * Returns the radius of the mobj as it would visually appear to be, according

@@ -71,9 +71,9 @@ public:
      */
     const de::Vec3d &origin() const;
 
-    inline de::ddouble x() const { return origin().x; }
-    inline de::ddouble y() const { return origin().y; }
-    inline de::ddouble z() const { return origin().z; }
+    inline double x() const { return origin().x; }
+    inline double y() const { return origin().y; }
+    inline double z() const { return origin().z; }
 
     /**
      * Change the origin of the object in map space.
@@ -121,7 +121,7 @@ public:
      *
      * @see setIndexInMap()
      */
-    de::dint indexInMap() const;
+    int indexInMap() const;
 
     /**
      * Change the "in-map" index attributed to the map object.
@@ -131,7 +131,7 @@ public:
      *
      * @see indexInMap()
      */
-    void setIndexInMap(de::dint newIndex = NoIndex);
+    void setIndexInMap(int newIndex = NoIndex);
 
 private:
     DE_PRIVATE(d)

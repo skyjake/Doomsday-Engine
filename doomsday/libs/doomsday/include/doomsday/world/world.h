@@ -17,10 +17,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_H
-#define LIBDOOMSDAY_WORLD_H
+#pragma once
 
 #include "../libdoomsday.h"
+#include "factory.h"
 #include "mobj.h"
 
 #include <de/Observers>
@@ -46,6 +46,9 @@ class LIBDOOMSDAY_PUBLIC World : public de::System
 {
 public:
     static World &get();
+
+    static int ddMapSetup;
+    static int validCount;
 
 public:
     World();
@@ -83,5 +86,3 @@ public:  /// @todo make private:
 private:
     DE_PRIVATE(d)
 };
-
-#endif  // LIBDOOMSDAY_WORLD_H

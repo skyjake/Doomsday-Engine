@@ -20,14 +20,13 @@
 #ifndef DE_WORLD_BSP_CONVEXSUBSPACEPROXY_H
 #define DE_WORLD_BSP_CONVEXSUBSPACEPROXY_H
 
+#include "world/bsp/linesegment.h"
+
+#include <doomsday/mesh/mesh.h>
+#include <doomsday/world/sector.h>
 #include <de/List>
 #include <de/Error>
 #include <de/Log>
-#include "world/bsp/linesegment.h"
-
-class Sector;
-
-namespace de { class Mesh; }
 
 namespace world {
 namespace bsp {
@@ -38,8 +37,8 @@ namespace bsp {
 struct OrderedSegment
 {
     LineSegmentSide *segment;
-    de::ddouble fromAngle;
-    de::ddouble toAngle;
+    double fromAngle;
+    double toAngle;
 
     bool operator == (const OrderedSegment &other) const
     {
@@ -107,7 +106,7 @@ public:
     /**
      * Returns the total number of segments in the subspace.
      */
-    de::dint segmentCount() const;
+    int segmentCount() const;
 
     /**
      * Returns @c true iff the subspace is "empty", which is to say there are
@@ -167,7 +166,7 @@ public:
      * @param bspLeaf  BSP leaf to build geometry for.
      * @param mesh     Mesh from which to assign geometry.
      */
-    void buildGeometry(BspLeaf &bspLeaf, de::Mesh &mesh) const;
+    void buildGeometry(BspLeaf &bspLeaf, mesh::Mesh &mesh) const;
 
     /**
      * The BspLeaf to which the subspace has been attributed if any.

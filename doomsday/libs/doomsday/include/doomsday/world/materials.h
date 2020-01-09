@@ -124,7 +124,7 @@ public:
     /**
      * Returns the total number of unique materials in the collection.
      */
-    de::dint materialCount() const;
+    int materialCount() const;
 
     /**
      * Returns @c true iff a MaterialScheme exists with the symbolic @a name.
@@ -146,7 +146,7 @@ public:
     /**
      * Returns the total number of material manifest schemes in the collection.
      */
-    de::dint materialSchemeCount() const;
+    int materialSchemeCount() const;
 
     /**
      * Iterate through all the material resource schemes of the resource system.
@@ -158,7 +158,7 @@ public:
     /**
      * Lookup a material manifest group by unique @a number.
      */
-    MaterialManifestGroup &materialGroup(de::dint number) const;
+    MaterialManifestGroup &materialGroup(int number) const;
 
     /**
      * Create a new (empty) material manifest group.
@@ -173,7 +173,7 @@ public:
     /**
      * Returns the total number of material manifest groups in the collection.
      */
-    inline de::dint materialGroupCount() const { return allMaterialGroups().count(); }
+    inline int materialGroupCount() const { return allMaterialGroups().count(); }
 
     /**
      * Declare a material in the collection, producing a manifest for a logical

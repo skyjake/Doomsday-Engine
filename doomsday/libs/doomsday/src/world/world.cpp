@@ -31,9 +31,12 @@ using namespace world;
 
 static World *theWorld = nullptr;
 
+int World::ddMapSetup = false;
+int World::validCount = 1;
+
 DE_PIMPL(World)
 {
-    Map *map = nullptr;
+    world::Map *     map = nullptr;
     world::Materials materials;
 
     Impl(Public *i) : Base(i)
@@ -89,7 +92,7 @@ void World::timeChanged(const Clock &)
     // Nothing to do.
 }
 
-void World::setMap(Map *map)
+void World::setMap(world::Map *map)
 {
     d->map = map;
 }
@@ -99,7 +102,7 @@ bool World::hasMap() const
     return d->map != nullptr;
 }
 
-Map &World::map() const
+world::Map &World::map() const
 {
     DE_ASSERT(hasMap());
     return *d->map;

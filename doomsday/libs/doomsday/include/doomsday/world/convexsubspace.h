@@ -138,7 +138,7 @@ public:
     /**
      * Returns the total number of Polyobjs linked to the subspace.
      */
-    de::dint polyobjCount() const;
+    int polyobjCount() const;
 
     /**
      * Iterate all Polyobjs linked in the subspace.
@@ -167,9 +167,9 @@ public:
      *
      * @todo Refactor away.
      */
-    de::dint validCount() const;
+    int validCount() const;
 
-    void setValidCount(de::dint newValidCount);
+    void setValidCount(int newValidCount);
 
 protected:
     ConvexSubspace(mesh::Face &convexPolygon, BspLeaf *bspLeaf = nullptr);
@@ -222,14 +222,14 @@ public:
      *
      * @see fanBase()
      */
-    de::dint fanVertexCount() const;
+    int fanVertexCount() const;
 
     /**
      * Returns the frame number of the last time mobj sprite projection was performed for
      * the subspace.
      */
-    de::dint lastSpriteProjectFrame() const;
-    void setLastSpriteProjectFrame(de::dint newFrameNumber);
+    int lastSpriteProjectFrame() const;
+    void setLastSpriteProjectFrame(int newFrameNumber);
 
     //- Audio environment -------------------------------------------------------------------
 
@@ -249,7 +249,7 @@ public:
     /**
      * Returns the total number of shadow line sides linked in the subspace.
      */
-    de::dint shadowLineCount() const;
+    int shadowLineCount() const;
 
     /**
      * Clear the list of fake radio shadow line sides for the subspace.
@@ -276,7 +276,7 @@ public:
     /**
      * Returns the total number of Lumobjs linked to the subspace.
      */
-    de::dint lumobjCount() const;
+    int lumobjCount() const;
 
     /**
      * Iterate all Lumobjs linked in the subspace.

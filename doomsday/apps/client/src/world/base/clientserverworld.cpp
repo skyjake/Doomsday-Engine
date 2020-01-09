@@ -20,7 +20,7 @@
 
 #include "world/clientserverworld.h"
 
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/legacy/memoryzone.h>
 #include <de/legacy/timer.h>
 #include <de/Binder>
@@ -94,8 +94,6 @@ using namespace de;
 using namespace res;
 using namespace world;
 
-dint validCount = 1;  // Increment every time a check is made.
-
 /**
  * Observes the progress of a map conversion and records any issues/problems that
  * are encountered in the process. When asked, compiles a human-readable report
@@ -106,7 +104,7 @@ dint validCount = 1;  // Increment every time a check is made.
 class MapConversionReporter
 : DE_OBSERVES(world::Map, UnclosedSectorFound)
 , DE_OBSERVES(world::Map, OneWayWindowFound)
-, DE_OBSERVES(BaseMap,    Deletion)
+, DE_OBSERVES(world::Map, Deletion)
 {
     /// Record "unclosed sectors".
     /// Sector index => world point relatively near to the problem area.
@@ -268,8 +266,6 @@ private:
 };
 
 const dint MapConversionReporter::maxWarningsPerType = 10;
-
-dd_bool ddMapSetup;
 
 DE_PIMPL(ClientServerWorld)
 {

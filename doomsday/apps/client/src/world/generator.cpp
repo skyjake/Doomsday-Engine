@@ -80,9 +80,9 @@ static void uncertainPosition(fixed_t *pos, fixed_t low, fixed_t high)
         fixed_t phi = acos(2 * (RNG_RandByte() * reciprocal255) - 1) / PI * (ANGLE_180 >> ANGLETOFINESHIFT);
 
         fixed_t vec[3];
-        vec[0] = FixedMul(fineCosine[theta], finesine[phi]);
+        vec[0] = FixedMul(finecosine[theta], finesine[phi]);
         vec[1] = FixedMul(finesine[theta], finesine[phi]);
-        vec[2] = FixedMul(fineCosine[phi], FLT2FIX(0.8333f));
+        vec[2] = FixedMul(finecosine[phi], FLT2FIX(0.8333f));
 
         for(int i = 0; i < 3; ++i)
         {
@@ -371,7 +371,7 @@ dint Generator::newParticle()
         const duint an      = angle >> ANGLETOFINESHIFT;
         const duint an2     = (angle + ANG90) >> ANGLETOFINESHIFT;
 
-        pinfo->origin[0] += FixedMul(fineCosine[an], originAtSpawn[0]);
+        pinfo->origin[0] += FixedMul(finecosine[an], originAtSpawn[0]);
         pinfo->origin[1] += FixedMul(finesine[an], originAtSpawn[0]);
 
         // There might be an offset from the model of the mobj.
@@ -403,8 +403,8 @@ dint Generator::newParticle()
             off[2] += mf->particleOffset(subidx)[2];
 
             // Apply it to the particle coords.
-            pinfo->origin[0] += FixedMul(fineCosine[an],  FLT2FIX(off[0]));
-            pinfo->origin[0] += FixedMul(fineCosine[an2], FLT2FIX(off[2]));
+            pinfo->origin[0] += FixedMul(finecosine[an],  FLT2FIX(off[0]));
+            pinfo->origin[0] += FixedMul(finecosine[an2], FLT2FIX(off[2]));
             pinfo->origin[1] += FixedMul(finesine[an],    FLT2FIX(off[0]));
             pinfo->origin[1] += FixedMul(finesine[an2],   FLT2FIX(off[2]));
             pinfo->origin[2] += FLT2FIX(off[1]);

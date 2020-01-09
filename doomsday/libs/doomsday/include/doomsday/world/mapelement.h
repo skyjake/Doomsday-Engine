@@ -65,14 +65,14 @@ public:
      * @param type    DMU type identifier.
      * @param parent  Parent map element (if any).
      */
-    explicit MapElement(de::dint t = DMU_NONE, MapElement *parent = nullptr);
+    explicit MapElement(int t = DMU_NONE, MapElement *parent = nullptr);
 
     virtual ~MapElement();
 
     /**
      * Returns the DMU_* type of the object.
      */
-    de::dint type() const;
+    int type() const;
 
     DE_CAST_METHODS()
 
@@ -143,7 +143,7 @@ public:
     /**
      * Returns the "in-map" index attributed to the map element.
      */
-    de::dint indexInMap() const;
+    int indexInMap() const;
 
     /**
      * Change the "in-map" index attributed to the map element.
@@ -151,7 +151,7 @@ public:
      * @param newIndex  New index to attribute to the map element. @c NoIndex clears the
      * attribution (not a valid index).
      */
-    void setIndexInMap(de::dint newIndex = NoIndex);
+    void setIndexInMap(int newIndex = NoIndex);
 
     /**
      * Returns the archive index for the map element. The archive index is the position of
@@ -161,14 +161,14 @@ public:
      *
      * @see setIndexInArchive()
      */
-    de::dint indexInArchive() const;
+    int indexInArchive() const;
 
     /**
      * Change the "archive index" of the map element to @a newIndex.
      *
      * @see indexInArchive()
      */
-    void setIndexInArchive(de::dint newIndex = NoIndex);
+    void setIndexInArchive(int newIndex = NoIndex);
 
     /**
      * Get a property value, selected by DMU_* name.
@@ -182,7 +182,7 @@ public:
      *
      * @return  Always @c 0 (can be used as an iterator).
      */
-    virtual de::dint property(world::DmuArgs &args) const;
+    virtual int property(world::DmuArgs &args) const;
 
     /**
      * Update a property value, selected by DMU_* name.
@@ -196,7 +196,7 @@ public:
 
      * @return  Always @c 0 (can be used as an iterator).
      */
-    virtual de::dint setProperty(const world::DmuArgs &args);
+    virtual int setProperty(const world::DmuArgs &args);
 
 private:
     DE_PRIVATE(d)

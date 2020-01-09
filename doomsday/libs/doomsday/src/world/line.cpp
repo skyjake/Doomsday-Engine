@@ -34,7 +34,7 @@
 #include <doomsday/console/cmd.h>
 #include <de/legacy/vector1.h>
 #include <de/List>
-#include <de/Map>
+#include <de/KeyMap>
 #include <array>
 #include <cwctype>
 
@@ -110,7 +110,7 @@ DE_PIMPL(LineSide)
         std::array<shadowcorner_t, 2> topCorners;     ///< { left, right }
         std::array<shadowcorner_t, 2> bottomCorners;  ///< { left, right }
         std::array<shadowcorner_t, 2> sideCorners;    ///< { left, right }
-        de::dint updateFrame = 0;
+        int updateFrame = 0;
     };
 #endif
 
@@ -172,7 +172,7 @@ DE_PIMPL(LineSide)
             return;
 
         // We'll use a Map for sorting the segments.
-        de::Map<ddouble, LineSideSegment *> sortedSegs;
+        de::KeyMap<ddouble, LineSideSegment *> sortedSegs;
         for (auto *seg : segments)
         {
             sortedSegs.insert((seg->hedge().origin() - lineSideOrigin).length(), seg);

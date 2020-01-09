@@ -19,18 +19,15 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_WORLD_SKY_H
-#define DE_WORLD_SKY_H
+#pragma once
 
-#include <functional>
-#include <de/libcore.h>
-#include <de/Error>
-#include <de/Observers>
-#include <de/Vector>
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/sky.h>
 #include <doomsday/world/Material>
-#include "resource/framemodeldef.h"
+//#include "resource/framemodeldef.h"
+#include <de/Error>
+#include <de/Observers>
+#include <de/Vector>
 
 namespace world {
 
@@ -76,7 +73,7 @@ public:
      *
      * @see setHeight()
      */
-    de::dfloat height() const;
+    float height() const;
 
     /**
      * Change the height scale factor for the sky.
@@ -85,14 +82,14 @@ public:
      *
      * @see height()
      */
-    void setHeight(de::dfloat newHeight);
+    void setHeight(float newHeight);
 
     /**
      * Returns the horizon offset for the sky.
      *
      * @see setHorizonOffset()
      */
-    de::dfloat horizonOffset() const;
+    float horizonOffset() const;
 
     /**
      * Change the horizon offset for the sky.
@@ -101,7 +98,7 @@ public:
      *
      * @see horizonOffset()
      */
-    void setHorizonOffset(de::dfloat newOffset);
+    void setHorizonOffset(float newOffset);
 
 //- Layers ------------------------------------------------------------------------------
 
@@ -181,26 +178,26 @@ public:
         /**
          * Returns the horizontal offset for the layer.
          */
-        de::dfloat offset() const;
+        float offset() const;
 
         /**
          * Change the horizontal offset for the layer.
          *
          * @param newOffset  New offset to apply.
          */
-        void setOffset(de::dfloat newOffset);
+        void setOffset(float newOffset);
 
         /**
          * Returns the fadeout limit for the layer.
          */
-        de::dfloat fadeOutLimit() const;
+        float fadeOutLimit() const;
 
         /**
          * Change the fadeout limit for the layer.
          *
          * @param newLimit  New fadeout limit to apply.
          */
-        void setFadeoutLimit(de::dfloat newLimit);
+        void setFadeoutLimit(float newLimit);
 
     private:
         DE_PRIVATE(d)
@@ -209,23 +206,23 @@ public:
     /**
      * Returns the total number of layers defined for the sky (both active and inactive).
      */
-    de::dint layerCount() const;
+    int layerCount() const;
 
     /**
      * Returns @c true if @a layerIndex is a known layer index.
      */
-    bool hasLayer(de::dint layerIndex) const;
+    bool hasLayer(int layerIndex) const;
 
     /**
      * Returns a pointer to the layer associated with @a layerIndex if known; otherwise @c nullptr.
      */
-    Layer *layerPtr(de::dint layerIndex) const;
+    Layer *layerPtr(int layerIndex) const;
 
     /**
      * Lookup a layer by it's unique @a layerIndex.
      */
-    Layer       &layer(de::dint layerIndex);
-    const Layer &layer(de::dint layerIndex) const;
+    Layer       &layer(int layerIndex);
+    const Layer &layer(int layerIndex) const;
 
     /**
      * Iterate Layers of the sky.
@@ -258,8 +255,8 @@ public:
 #endif // __CLIENT__
 
 protected:
-    de::dint property(world::DmuArgs &args) const;
-    de::dint setProperty(const world::DmuArgs &args);
+    int property(world::DmuArgs &args) const;
+    int setProperty(const world::DmuArgs &args);
 
 private:
     DE_PRIVATE(d)
@@ -268,5 +265,3 @@ private:
 typedef Sky::Layer SkyLayer;
 
 } // namespace world
-
-#endif // DE_WORLD_SKY_H

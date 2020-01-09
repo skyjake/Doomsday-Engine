@@ -192,7 +192,7 @@ public:
     /**
      * @overload
      */
-    inline bool move(de::ddouble x, de::ddouble y) {
+    inline bool move(double x, double y) {
         return move(de::Vec2d(x, y));
     }
 

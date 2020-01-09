@@ -147,7 +147,4 @@ private:
     DE_PRIVATE(d)
 };
 
-DE_EXTERN_C dd_bool ddMapSetup;
-DE_EXTERN_C int validCount;
-
 #endif  // WORLDSYSTEM_H

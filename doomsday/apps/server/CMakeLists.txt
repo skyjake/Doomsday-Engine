@@ -62,14 +62,11 @@ set (SHARED_WITH_CLIENT
     ${src}/include/world/bsp/superblockmap.h
     ${src}/include/world/clientserverworld.h
     ${src}/include/world/impulseaccumulator.h
-    ${src}/include/world/lineowner.h
     ${src}/include/world/map.h
     ${src}/include/world/maputil.h
     ${src}/include/world/p_object.h
     ${src}/include/world/p_players.h
     ${src}/include/world/p_ticker.h
-    ${src}/include/world/sky.h
-    ${src}/include/world/thinkers.h
 
     ${src}/src/api_console.cpp
     ${src}/src/api_filesys.cpp

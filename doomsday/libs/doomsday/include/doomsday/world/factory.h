@@ -1,4 +1,4 @@
-/** @file
+/** @file factory.h  Factory for constructing world objects.
  *
  * @authors Copyright (c) 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -15,4 +15,23 @@
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
+
 #pragma once
+
+#include "../libdoomsday.h"
+
+#include <de/Id>
+
+class MobjThinkerData;
+
+namespace world {
+
+class LIBDOOMSDAY_PUBLIC Factory
+{
+public:
+    static void setMobjThinkerDataConstructor(const std::function<MobjThinkerData *(const de::Id &)> &);
+
+    static MobjThinkerData *newMobjThinkerData(const de::Id &);
+};
+
+} // namespace world

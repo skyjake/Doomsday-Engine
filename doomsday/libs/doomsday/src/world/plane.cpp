@@ -22,9 +22,9 @@
 
 #include "doomsday/world/map.h"
 //#include "world/thinkers.h"
-//#include "world/clientserverworld.h"  // ddMapSetup
 #include "doomsday/world/surface.h"
 #include "doomsday/world/sector.h"
+#include "doomsday/world/world.h"
 
 //#include "dd_loop.h"  // frameTimePos
 //#include "dd_main.h"  // App_Resources()
@@ -86,7 +86,7 @@ DE_PIMPL(Plane)
 
         height = newHeight;
 
-        if (!ddMapSetup)
+        if (!World::ddMapSetup)
         {
             // Update the sound emitter origin for the plane.
             self().updateSoundEmitterOrigin();

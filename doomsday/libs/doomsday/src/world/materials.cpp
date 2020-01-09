@@ -23,7 +23,7 @@
 #include "doomsday/resource/resources.h"
 
 #include <de/legacy/memory.h>
-#include <de/Map>
+#include <de/KeyMap>
 #include <de/List>
 #include <unordered_set>
 
@@ -53,7 +53,7 @@ DE_PIMPL(Materials)
 , DE_OBSERVES(Material,         Deletion)
 {
     /// System subspace schemes containing the manifests/resources.
-    de::Map<String, MaterialScheme *, String::InsensitiveLessThan> materialSchemes;
+    de::KeyMap<String, MaterialScheme *, String::InsensitiveLessThan> materialSchemes;
     List<MaterialScheme *> materialSchemeCreationOrder;
 
     List<Material *> materials;       ///< From all schemes.

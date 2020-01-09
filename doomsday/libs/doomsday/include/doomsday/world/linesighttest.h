@@ -50,9 +50,9 @@ public:
      * @param flags        @ref lineSightFlags dictate trace behavior/logic.
      */
     LineSightTest(const de::Vec3d &from, const de::Vec3d &to,
-                  de::dfloat bottomSlope = -1,
-                  de::dfloat topSlope    = +1,
-                  de::dint flags         = 0);
+                  float bottomSlope = -1,
+                  float topSlope    = +1,
+                  int flags         = 0);
 
     /**
      * Execute the trace (i.e., cast the ray).

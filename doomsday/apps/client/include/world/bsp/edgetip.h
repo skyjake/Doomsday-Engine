@@ -51,7 +51,7 @@ public:
         , _back(side.back().hasSector()? &side.back() : nullptr)
     {}
 
-    de::ddouble angle() const { return _angle; }
+    double angle() const { return _angle; }
 
     void setAngle(coord_t newAngle) {
         _angle = newAngle;
@@ -99,7 +99,7 @@ public:
 
 private:
     /// Angle that line makes at vertex (degrees; 0 is E, 90 is N).
-    de::ddouble _angle = 0;
+    double _angle = 0;
 
     /// Line segments on each side of the tip. Front is the side of increasing
     /// angles, back is the side of decreasing angles. Either may be @c nullptr.
@@ -133,7 +133,7 @@ public:
      * an anti-clockwise (increasing angle) order. @a epsilon is the angle
      * equivalence threshold (in degrees).
      */
-    void insert(const EdgeTip &tip, de::ddouble epsilon = 1.0 / 128) {
+    void insert(const EdgeTip &tip, double epsilon = 1.0 / 128) {
         Tips::reverse_iterator after = _tips.rbegin();
         while(after != _tips.rend() && tip.angle() + epsilon < (*after).angle())
         {
@@ -159,10 +159,10 @@ public:
     /**
      * @a epsilon is the angle equivalence threshold (in degrees).
      */
-    const EdgeTip *at(de::ddouble angle, de::ddouble epsilon = 1.0 / 128) const {
+    const EdgeTip *at(double angle, double epsilon = 1.0 / 128) const {
         for(const EdgeTip &tip : _tips)
         {
-            de::ddouble delta = de::abs(tip.angle() - angle);
+            double delta = de::abs(tip.angle() - angle);
             if(delta < epsilon || delta > (360.0 - epsilon))
             {
                 return &tip;
@@ -174,7 +174,7 @@ public:
     /**
      * @a epsilon is the angle equivalence threshold (in degrees).
      */
-    const EdgeTip *after(de::ddouble angle, de::ddouble epsilon = 1.0 / 128) const {
+    const EdgeTip *after(double angle, double epsilon = 1.0 / 128) const {
         for(const EdgeTip &tip : _tips)
         {
             if(angle + epsilon < tip.angle())

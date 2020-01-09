@@ -107,12 +107,12 @@ public:
      * Returns a rough approximation of the total area of the geometries of all subspaces
      * in the subsector (map units squared).
      */
-    de::ddouble roughArea() const;
+    double roughArea() const;
 
     /**
      * Returns the total number of subspaces in the subsector.
      */
-    de::dint subspaceCount() const;
+    int subspaceCount() const;
 
     /**
      * Convenient method returning the first subspace in the subsector.

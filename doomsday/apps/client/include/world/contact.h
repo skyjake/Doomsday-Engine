@@ -69,7 +69,7 @@ struct Contact
     /**
      * Returns the linked object's radius in map space.
      */
-    de::ddouble objectRadius() const;
+    double objectRadius() const;
 
     /**
      * Returns an axis-aligned bounding box for the linked object in map space.

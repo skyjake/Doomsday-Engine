@@ -41,7 +41,7 @@
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <de/List>
-#include <de/Map>
+#include <de/KeyMap>
 
 using namespace de;
 
@@ -51,9 +51,9 @@ ClientPlayer *viewPlayer;
 int consolePlayer;
 int displayPlayer;
 
-typedef Map<int, PlayerImpulse *> Impulses; // ID lookup.
-typedef Map<String, PlayerImpulse *, String::InsensitiveLessThan> ImpulseNameMap; // Name lookup
-typedef Map<int, ImpulseAccumulator *> ImpulseAccumulators; // ImpulseId lookup.
+typedef KeyMap<int, PlayerImpulse *> Impulses; // ID lookup.
+typedef KeyMap<String, PlayerImpulse *, String::InsensitiveLessThan> ImpulseNameMap; // Name lookup
+typedef KeyMap<int, ImpulseAccumulator *> ImpulseAccumulators; // ImpulseId lookup.
 
 struct ImpulseGlobals
 {
@@ -254,7 +254,7 @@ D_CMD(ListImpulses)
     DE_UNUSED(argv, argc, src);
 
     // Group the defined impulses by binding context.
-    Map<String, List<PlayerImpulse *>> contextGroups;
+    KeyMap<String, List<PlayerImpulse *>> contextGroups;
     for (const auto &imp : impulseGlobals().impulsesByName)
     {
         if (!contextGroups.contains(imp.second->bindContextName))

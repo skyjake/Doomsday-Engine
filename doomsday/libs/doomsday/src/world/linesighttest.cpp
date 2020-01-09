@@ -28,6 +28,7 @@
 #include "doomsday/world/line.h"
 #include "doomsday/world/polyobj.h"
 #include "doomsday/world/sector.h"
+#include "doomsday/world/world.h"
 
 #include <de/legacy/aabox.h>
 #include <de/legacy/fixedpoint.h>
@@ -89,10 +90,10 @@ DE_PIMPL_NOREF(LineSightTest)
 
         Line &line = side.line();
 
-        if (line.validCount() == validCount)
+        if (line.validCount() == World::validCount)
             return true;  // Ignore
 
-        line.setValidCount(validCount);
+        line.setValidCount(World::validCount);
 
         // Does the ray intercept the line on the X/Y plane?
         // Try a quick bounding-box rejection.
@@ -324,7 +325,7 @@ LineSightTest::LineSightTest(const Vec3d &from, const Vec3d &to, dfloat bottomSl
 
 bool LineSightTest::trace(const BspTree &bspRoot)
 {
-    validCount++;
+    World::validCount++;
 
     d->topSlope    = d->to.z + d->topSlope    - d->from.z;
     d->bottomSlope = d->to.z + d->bottomSlope - d->from.z;

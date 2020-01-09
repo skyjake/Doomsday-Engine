@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef WORLD_THINKERS_H
-#define WORLD_THINKERS_H
+#pragma once
 
 #include <functional>
 #include <de/Error>
@@ -37,6 +36,9 @@ namespace world {
  */
 class Thinkers
 {
+public:
+    DE_AUDIENCE(Removal, thinkerRemoved(thinker_t &))
+
 public:
     Thinkers();
 
@@ -92,7 +94,7 @@ public:
      *
      * @param id  Unique id of the mobj to lookup.
      */
-    struct mobj_s *mobjById(de::dint id);
+    struct mobj_s *mobjById(int id);
 
     /**
      * Finds a thinker by its identifier.
@@ -119,7 +121,7 @@ public:
      *                     be added to the current value (caller must ensure to
      *                     initialize this).
      */
-    de::dint count(de::dint *numInStasis = nullptr) const;
+    int count(int *numInStasis = nullptr) const;
 
 private:
     DE_PRIVATE(d)
@@ -142,5 +144,3 @@ world::Map &Thinker_Map(const thinker_t &th);
  * @param knownId  Known private ID to use for the thinker. If zero, a new ID is generated.
  */
 void Thinker_InitPrivateData(thinker_t *th, de::Id::Type knownId = 0);
-
-#endif  // DE_WORLD_THINKERS_H

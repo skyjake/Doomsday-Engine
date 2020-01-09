@@ -106,7 +106,7 @@ public:
     /**
      * Utility function which returns the linear index of the specified cell.
      */
-    de::dint toCellIndex(de::duint cellX, de::duint cellY) const;
+    int toCellIndex(de::duint cellX, de::duint cellY) const;
 
     /**
      * Given map space XY coordinates @a pos, output the blockmap cell[x, y] it
@@ -135,7 +135,7 @@ public:
      *
      * @return  Number of unique objects linked into the cell, or @c 0 if invalid.
      */
-    de::dint cellElementCount(const Cell &cell) const;
+    int cellElementCount(const Cell &cell) const;
 
     bool link(const Cell &cell, void *elem);
 

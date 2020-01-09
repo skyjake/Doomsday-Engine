@@ -23,25 +23,24 @@
 #ifndef DE_WORLD_BSP_PARTITIONER_H
 #define DE_WORLD_BSP_PARTITIONER_H
 
+#include "world/map.h"
+
+#include <doomsday/mesh/mesh.h>
 #include <de/Set>
 #include <de/Observers>
 #include <de/Vector>
 
-#include "world/map.h"
-
 class Line;
 class Sector;
-
-namespace de { class Mesh; }
 
 namespace world {
 namespace bsp {
 
 /// Minimum length of a half-edge post partitioning. Used in cost evaluation.
-static const de::ddouble SHORT_HEDGE_EPSILON = 4.0;
+static const double SHORT_HEDGE_EPSILON = 4.0;
 
 /// Smallest distance between two points before being considered equal.
-static const de::ddouble DIST_EPSILON        = 1.0 / 128.0;
+static const double DIST_EPSILON        = 1.0 / 128.0;
 
 /**
  * World map binary space partitioner (BSP).
@@ -63,14 +62,14 @@ public:
      *
      * @param splitCostFactor  Cost factor attributed to splitting a half-edge.
      */
-    Partitioner(de::dint splitCostFactor = 7);
+    Partitioner(int splitCostFactor = 7);
 
     /**
      * Set the cost factor associated with splitting an existing half-edge.
      *
      * @param newFactor  New split cost factor.
      */
-    void setSplitCostFactor(de::dint newFactor);
+    void setSplitCostFactor(int newFactor);
 
     /**
      * Build a new BspTree for the given geometry.
@@ -86,7 +85,7 @@ public:
      * @return  Root tree node of the resultant BSP; otherwise @c nullptr if no usable tree
      * data was produced.
      */
-    BspTree *makeBspTree(de::Set<Line *> const &lines, de::Mesh &mesh);
+    BspTree *makeBspTree(const de::Set<Line *> &lines, mesh::Mesh &mesh);
 
     /**
      * Retrieve the number of Segments owned by the partitioner. When the build completes
@@ -95,12 +94,12 @@ public:
      *
      * @return  Current number of Segments owned by the partitioner.
      */
-    de::dint segmentCount();
+    int segmentCount();
 
     /**
      * Retrieve the total number of Vertexes produced during the build process.
      */
-    de::dint vertexCount();
+    int vertexCount();
 
 private:
     DE_PRIVATE(d)

@@ -1,4 +1,4 @@
-/** @file
+/** @file factory.cpp  Factory for world objects.
  *
  * @authors Copyright (c) 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -15,3 +15,23 @@
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
+
+#include "doomsday/world/factory.h"
+
+namespace world {
+
+using namespace de;
+
+static std::function<MobjThinkerData *(const Id &)> mobjThinkerDataCtor;
+
+void Factory::setMobjThinkerDataConstructor(const std::function<MobjThinkerData *(const de::Id &)> &ctor)
+{
+    mobjThinkerDataCtor = ctor;
+}
+
+MobjThinkerData *Factory::newMobjThinkerData(const de::Id &id)
+{
+    return mobjThinkerDataCtor(id);
+}
+
+} // namespace world

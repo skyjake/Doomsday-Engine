@@ -18,9 +18,11 @@
 
 #include "world/vertex.h"
 
+#include <doomsday/world/line.h>
+#include <doomsday/world/lineowner.h>
 #include <de/Partition>
 
-Vertex(mesh::Mesh &mesh, const de::Vec2d &origin)
+Vertex::Vertex(mesh::Mesh &mesh, const de::Vec2d &origin)
     : world::Vertex(mesh, origin)
 {}
 
@@ -112,14 +114,14 @@ void Vertex::updateShadowOffsets()
 {
     using namespace de;
 
-    LineOwner *base = firstLineOwner();
+    world::LineOwner *base = firstLineOwner();
     if(!base) return;
 
-    LineOwner *own = base;
+    world::LineOwner *own = base;
     do
     {
-        const Line &lineB = own->line();
-        const Line &lineA = own->next()->line();
+        const auto &lineB = own->line();
+        const auto &lineA = own->next()->line();
 
         const Vec2d rightDir = (&lineB.from() == this?  lineB.direction() : -lineB.direction());
         const Vec2d leftDir  = (&lineA.from() == this? -lineA.direction() :  lineA.direction()) * -1;  // Always flipped.

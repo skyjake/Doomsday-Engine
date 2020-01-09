@@ -19,12 +19,20 @@
 
 #include "de_platform.h"
 
-//#include <QNetworkProxyFactory>
-//#include <QHostInfo>
-//#include <QDebug>
-#include <stdlib.h>
+#include "serverapp.h"
+#include "serverplayer.h"
+#include "dd_main.h"
+#include "dd_def.h"
+#include "dd_loop.h"
+#include "sys_system.h"
+#include "def_main.h"
+#include "con_config.h"
+#include "network/net_main.h"
+#include "world/map.h"
+#include "world/p_players.h"
 
 #include <doomsday/console/var.h>
+#include <doomsday/world/thinkers.h>
 
 #include <de/CommandLine>
 #include <de/Config>
@@ -38,17 +46,7 @@
 #include <de/ScriptSystem>
 #include <de/c_wrapper.h>
 
-#include "serverapp.h"
-#include "serverplayer.h"
-#include "dd_main.h"
-#include "dd_def.h"
-#include "dd_loop.h"
-#include "sys_system.h"
-#include "def_main.h"
-#include "con_config.h"
-#include "network/net_main.h"
-#include "world/map.h"
-#include "world/p_players.h"
+#include <stdlib.h>
 
 using namespace de;
 
@@ -69,13 +67,14 @@ DE_PIMPL(ServerApp)
 , DE_OBSERVES(DoomsdayApp, ConsoleRegistration)
 , DE_OBSERVES(DoomsdayApp, PeriodicAutosave)
 , DE_OBSERVES(PackageLoader, Activity)
+, DE_OBSERVES(world::Thinkers, Removal)
 {
     std::unique_ptr<ServerSystem> serverSystem;
     std::unique_ptr<Resources>    resources;
     std::unique_ptr<AudioSystem>  audioSys;
     ClientServerWorld             world;
     InFineSystem                  infineSys;
-    duint32 serverId;
+    duint32                       serverId;
 
     Impl(Public *i)
         : Base(i)

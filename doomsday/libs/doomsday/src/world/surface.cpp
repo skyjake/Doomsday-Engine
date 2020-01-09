@@ -20,17 +20,15 @@
 
 #include "doomsday/world/surface.h"
 
-//#include "world/clientserverworld.h" // ddMapSetup
 #include "doomsday/world/map.h"
 #include "doomsday/world/plane.h"
-#ifdef __CLIENT__
-#  include "Decoration"
-#endif
+#include "doomsday/world/line.h"
+#include "doomsday/world/world.h"
+#include "doomsday/world/materialmanifest.h"
+#include "doomsday/world/material.h"
 
 //#include "misc/r_util.h" // R_NameForBlendMode()
 
-#include <doomsday/world/MaterialManifest>
-#include <doomsday/world/Material>
 #include <de/Log>
 #include <de/legacy/vector1.h>
 
@@ -162,7 +160,7 @@ String Surface::description() const
                   origin().asText().c_str(),
                   normal().asText().c_str(),
                   opacity(),
-                  R_NameForBlendMode(blendMode()),
+                  DGL_NameForBlendMode(blendMode()),
                   color().asText().c_str());
 
 #ifdef DE_DEBUG
@@ -237,7 +235,7 @@ Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
     }
 
     // During map setup we log missing material fixes.
-    if (::ddMapSetup && d->materialIsMissingFix && d->material)
+    if (World::ddMapSetup && d->materialIsMissingFix && d->material)
     {
         if (d->owner().type() == DMU_SIDE)
         {
@@ -564,7 +562,23 @@ dint Surface::setProperty(const DmuArgs &args)
     return false;  // Continue iteration.
 }
 
+Surface::IDecorationState::~IDecorationState()
+{}
+
+} // namespace world
+
 #ifdef __CLIENT__
+
+#  include "gl/gl_tex.h"
+#  include "render/rend_main.h"
+#  include "resource/clienttexture.h"
+
+#  include "dd_loop.h" // frameTimePos
+
+#  include <doomsday/resource/texturemanifest.h>
+
+#  include "Decoration"
+
 
 MaterialAnimator *Surface::materialAnimator() const
 {
@@ -573,7 +587,7 @@ MaterialAnimator *Surface::materialAnimator() const
     if (!d->matAnimator)
     {
         d->matAnimator = &d->material->as<ClientMaterial>()
-                .getAnimator(Rend_MapSurfaceMaterialSpec());
+                              .getAnimator(Rend_MapSurfaceMaterialSpec());
     }
     return d->matAnimator;
 }
@@ -597,7 +611,7 @@ void Surface::lerpSmoothedOrigin()
 {
     // $smoothmaterialorigin
     d->originSmoothedDelta = d->oldOrigin[0] * (1 - ::frameTimePos)
-        + origin() * ::frameTimePos - origin();
+                             + origin() * ::frameTimePos - origin();
 
     // Visible material origin.
     d->originSmoothed = origin() + d->originSmoothedDelta;
@@ -658,19 +672,4 @@ dfloat Surface::glow(Vec3f &color) const
     return matAnimator.glowStrength() * glowFactor; // Global scale factor.
 }
 
-#endif // __CLIENT__
-
-Surface::IDecorationState::~IDecorationState()
-{}
-
-} // namespace world
-
-#ifdef __CLIENT__
-#  include "gl/gl_tex.h"
-#  include "render/rend_main.h"
-#  include "resource/clienttexture.h"
-
-#  include "dd_loop.h" // frameTimePos
-
-#  include <doomsday/resource/texturemanifest.h>
 #endif
