@@ -19,15 +19,13 @@
 
 #include "de_base.h"
 #include "client/clplanemover.h"
-
 #include "client/cl_def.h"
 #include "client/cl_player.h"
-
 #include "world/map.h"
-#include "world/thinkers.h"
 #include "world/p_players.h"
-#include "Sector"
 
+#include <doomsday/world/sector.h>
+#include <doomsday/world/thinkers.h>
 #include <de/LogBuffer>
 
 using namespace de;

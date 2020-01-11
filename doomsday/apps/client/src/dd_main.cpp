@@ -77,8 +77,9 @@
 #include <doomsday/res/Sprites>
 #include <doomsday/res/Textures>
 #include <doomsday/world/Materials>
-#include <doomsday/help.h>
 #include <doomsday/world/entitydef.h>
+#include <doomsday/world/sector.h>
+#include <doomsday/help.h>
 
 #ifdef __SERVER__
 #  include "serverapp.h"
@@ -104,7 +105,7 @@
 #  include "clientapp.h"
 
 #  include "client/cledgeloop.h"
-#  include "client/clientsubsector.h"
+#  include "world/subsector.h"
 #  include "client/cl_def.h"
 #  include "client/cl_infine.h"
 
@@ -126,7 +127,6 @@
 
 #  include "Contact"
 #  include "MaterialAnimator"
-#  include "Sector"
 
 #  include "ui/ui_main.h"
 #  include "ui/inputsystem.h"
@@ -2542,7 +2542,7 @@ DE_EXTERN_C void R_SetupMap(dint mode, dint flags)
     world::Map &map = App_World().map();
 
 #ifdef __CLIENT__
-    map.initSkyFix();
+    map.as<Map>().initSkyFix();
 #endif
 
 #ifdef __CLIENT__

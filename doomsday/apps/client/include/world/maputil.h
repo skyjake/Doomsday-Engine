@@ -21,12 +21,13 @@
 #ifndef WORLD_MAPUTIL_H
 #define WORLD_MAPUTIL_H
 
+#include <doomsday/world/lineowner.h>
 #include <de/libcore.h>
 #include <de/legacy/binangle.h>
-#include "Line"
 
-class Sector;
-class LineOwner;
+#include "world/line.h"
+
+namespace world { class Sector; }
 
 /**
  * Returns @c true if this side is considered "closed" (i.e., there is no opening through
@@ -41,11 +42,11 @@ bool R_SideBackClosed(const LineSide &side, bool ignoreOpacity = true);
 /**
  * A neighbor is a Line that shares a vertex with @a line and faces the given @a sector.
  */
-Line *R_FindLineNeighbor(const Line &line, const LineOwner &own, de::ClockDirection direction,
-    const Sector *sector, binangle_t *diff = nullptr);
+Line *R_FindLineNeighbor(const Line &line, const world::LineOwner &own, de::ClockDirection direction,
+    const world::Sector *sector, binangle_t *diff = nullptr);
 
-Line *R_FindSolidLineNeighbor(const Line &line, const LineOwner &own, de::ClockDirection direction,
-    const Sector *sector, binangle_t *diff = nullptr);
+Line *R_FindSolidLineNeighbor(const Line &line, const world::LineOwner &own, de::ClockDirection direction,
+    const world::Sector *sector, binangle_t *diff = nullptr);
 
 #endif  // WORLD_MAPUTIL_H
 #endif  // __CLIENT__

@@ -24,8 +24,8 @@
 #include "world/impulseaccumulator.h"
 #include "world/map.h"
 #include "world/p_object.h"
-#include "Subsector"
-#include "Surface"
+#include <doomsday/world/subsector.h>
+#include <doomsday/world/surface.h>
 
 #ifdef __CLIENT__
 #  include "BindContext"
@@ -33,7 +33,7 @@
 #  include "ui/inputdevice.h"
 #  include "ui/inputsystem.h"
 
-#  include "client/clientsubsector.h"
+#  include "world/subsector.h"
 #  include "client/clskyplane.h"
 #  include "clientapp.h"
 #endif
@@ -192,10 +192,10 @@ bool P_IsInVoid(player_t *player)
         if (!Mobj_HasSubsector(*mob))
             return true;
 
-        const auto &subsec = Mobj_Subsector(*mob).as<world::ClientSubsector>();
+        const auto &subsec = Mobj_Subsector(*mob).as<Subsector>();
         if (subsec.visCeiling().surface().hasSkyMaskedMaterial())
         {
-            const world::ClSkyPlane &skyCeiling = subsec.sector().map().skyCeiling();
+            const ClSkyPlane &skyCeiling = subsec.sector().map().as<Map>().skyCeiling();
             if (skyCeiling.height() < DDMAXFLOAT && mob->origin[2] > skyCeiling.height() - 4)
                 return true;
         }
@@ -205,7 +205,7 @@ bool P_IsInVoid(player_t *player)
         }
         if (subsec.visFloor().surface().hasSkyMaskedMaterial())
         {
-            const world::ClSkyPlane &skyFloor = subsec.sector().map().skyFloor();
+            const ClSkyPlane &skyFloor = subsec.sector().map().as<Map>().skyFloor();
             if (skyFloor.height() > DDMINFLOAT && mob->origin[2] < skyFloor.height() + 4)
                 return true;
         }

@@ -1,6 +1,6 @@
-/** @file clientsubsector.cpp  Client-side world map subsector.
+/** @file subsector.cpp  Client-side world map subsector.
  *
- * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -18,10 +18,9 @@
  * 02110-1301 USA</small>
  */
 
-#include "client/clientsubsector.h"
+#include "world/subsector.h"
 
 #include "world/map.h"
-#include "world/blockmap.h"
 #include "world/convexsubspace.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
@@ -32,16 +31,20 @@
 #include "LightDecoration"
 #include "MaterialAnimator"
 #include "WallEdge"
-#include "misc/face.h"
 #include "dd_main.h"  // verbose
 
+#include <doomsday/mesh/face.h>
+#include <doomsday/world/blockmap.h>
 #include <de/LogBuffer>
 #include <de/KeyMap>
 #include <de/Set>
 
 using namespace de;
-
-namespace world {
+using mesh::HEdge;
+using world::Material;
+using world::MapElement;
+using world::Sector;
+using world::SubsectorCirculator;
 
 /// Classification flags:
 enum SubsectorFlag
@@ -62,14 +65,14 @@ using SubsectorFlags = Flags;
 static DotPath composeSurfacePath(const Surface &surface)
 {
     DE_ASSERT(surface.hasParent());
-    const MapElement &owner = surface.parent();
+    const auto &owner = surface.parent();
 
     switch (owner.type())
     {
     case DMU_PLANE:
         return Stringf("sector#%i.%s",
                               owner.as<Plane>().sector().indexInMap(),
-                              Sector::planeIdAsText(owner.as<Plane>().indexInSector()).c_str());
+                              world::Sector::planeIdAsText(owner.as<Plane>().indexInSector()).c_str());
 
     case DMU_SIDE:
         return Stringf(
@@ -92,7 +95,7 @@ static DotPath composeSurfacePath(const Surface &surface)
  * operation to perform, which, would not require plotting decorations again. This
  * frequent case should be designed for. -ds
  */
-DE_PIMPL(ClientSubsector)
+DE_PIMPL(Subsector)
 , DE_OBSERVES(Subsector, Deletion)
 , DE_OBSERVES(Plane,     Deletion)
 
@@ -106,7 +109,7 @@ DE_PIMPL(ClientSubsector)
 , DE_OBSERVES(Surface, OriginChange)
 , DE_OBSERVES(Surface, OriginSmoothedChange)
 
-, DE_OBSERVES(Material,         DimensionsChange)
+, DE_OBSERVES(Material,  DimensionsChange)
 , DE_OBSERVES(MaterialAnimator, DecorationStageChange)
 {
     struct BoundaryData
@@ -148,18 +151,15 @@ DE_PIMPL(ClientSubsector)
     struct GeometryData
     {
         MapElement *mapElement;
-        dint geomId;
-#if 0
-        std::unique_ptr<Shard> shard;
-#endif
+        int geomId;
 
-        GeometryData(MapElement *mapElement, dint geomId)
+        GeometryData(MapElement *mapElement, int geomId)
             : mapElement(mapElement)
             , geomId(geomId)
         {}
     };
     /// @todo Avoid two-stage lookup.
-    typedef de::KeyMap<dint, GeometryData *> Shards;
+    typedef de::KeyMap<int, GeometryData *> Shards;
     struct GeometryGroups : public de::KeyMap<MapElement *, Shards>
     {
         ~GeometryGroups()
@@ -182,7 +182,7 @@ DE_PIMPL(ClientSubsector)
 
         void markForUpdate(bool yes = true)
         {
-            if (::ddMapSetup) return;
+            if (World::ddMapSetup) return;
             needUpdate = yes;
         }
 
@@ -194,14 +194,14 @@ DE_PIMPL(ClientSubsector)
         }
     };
 
-    dint validFrame;
+    int validFrame;
     bool hasWorldVolumeInValidFrame;
     bool hasInvisibleTop = false;
 
     bool             needClassify     = true; ///< @c true= (Re)classification is necessary.
     SubsectorFlags   flags            = 0;
-    ClientSubsector *mappedVisFloor   = nullptr;
-    ClientSubsector *mappedVisCeiling = nullptr;
+    Subsector *mappedVisFloor   = nullptr;
+    Subsector *mappedVisCeiling = nullptr;
 
     std::unique_ptr<BoundaryData> boundaryData;
 
@@ -242,19 +242,19 @@ DE_PIMPL(ClientSubsector)
         return mappedVisFloor == 0 || mappedVisCeiling == 0;
     }
 
-    ClientSubsector **mappedSubsectorAdr(dint planeIdx)
+    Subsector **mappedSubsectorAdr(int planeIdx)
     {
         if (planeIdx == Sector::Floor)   return &mappedVisFloor;
         if (planeIdx == Sector::Ceiling) return &mappedVisCeiling;
         return nullptr;
     }
 
-    Plane *mappedPlane(dint planeIdx)
+    Plane *mappedPlane(int planeIdx)
     {
-        ClientSubsector **subsecAdr = mappedSubsectorAdr(planeIdx);
+        Subsector **subsecAdr = mappedSubsectorAdr(planeIdx);
         if (subsecAdr && *subsecAdr)
         {
-            return &(*subsecAdr)->sector().plane(planeIdx);
+            return &(*subsecAdr)->sector().plane(planeIdx).as<Plane>();
         }
         return nullptr;
     }
@@ -287,9 +287,9 @@ DE_PIMPL(ClientSubsector)
 
         if (yes)
         {
-            surface->audienceForMaterialChange      () += this;
-            surface->audienceForOriginChange        () += this;
-            surface->audienceForOriginSmoothedChange() += this;
+            surface->audienceForMaterialChange()     += this;
+            surface->audienceForOriginChange()       += this;
+            surface->audienceForOriginSmoothedChange += this;
 
             if (hasDecoratedMaterial(*surface))
             {
@@ -298,9 +298,9 @@ DE_PIMPL(ClientSubsector)
         }
         else
         {
-            surface->audienceForOriginSmoothedChange() -= this;
-            surface->audienceForOriginChange        () -= this;
-            surface->audienceForMaterialChange      () -= this;
+            surface->audienceForOriginSmoothedChange -= this;
+            surface->audienceForOriginChange()       -= this;
+            surface->audienceForMaterialChange()     -= this;
 
             decorSurfaces.remove(surface);
         }
@@ -315,19 +315,19 @@ DE_PIMPL(ClientSubsector)
             plane->audienceForDeletion() += this;
             if (observeHeight)
             {
-                plane->audienceForHeightChange        () += this;
-                plane->audienceForHeightSmoothedChange() += this;
+                plane->audienceForHeightChange() += this;
+                plane->audienceForHeightSmoothedChange += this;
             }
         }
         else
         {
-            plane->audienceForHeightSmoothedChange() -= this;
-            plane->audienceForHeightChange        () -= this;
-            plane->audienceForDeletion            () -= this;
+            plane->audienceForHeightSmoothedChange -= this;
+            plane->audienceForHeightChange() -= this;
+            plane->audienceForDeletion() -= this;
         }
     }
 
-    void observeSubsector(ClientSubsector *subsec, bool yes = true)
+    void observeSubsector(Subsector *subsec, bool yes = true)
     {
         if (!subsec || subsec == thisPublic)
             return;
@@ -336,9 +336,9 @@ DE_PIMPL(ClientSubsector)
         else     subsec->audienceForDeletion -= this;
     }
 
-    void map(dint planeIdx, ClientSubsector *newSubsector, bool permanent = false)
+    void map(int planeIdx, Subsector *newSubsector, bool permanent = false)
     {
-        ClientSubsector **subsecAdr = mappedSubsectorAdr(planeIdx);
+        Subsector **subsecAdr = mappedSubsectorAdr(planeIdx);
         if (!subsecAdr || *subsecAdr == newSubsector)
             return;
 
@@ -367,7 +367,7 @@ DE_PIMPL(ClientSubsector)
         }
     }
 
-    void clearMapping(dint planeIdx)
+    void clearMapping(int planeIdx)
     {
         map(planeIdx, 0);
     }
@@ -376,12 +376,12 @@ DE_PIMPL(ClientSubsector)
      * To be called when a plane moves to possibly invalidate mapped planes so
      * that they will be re-evaluated later.
      */
-    void maybeInvalidateMapping(dint planeIdx)
+    void maybeInvalidateMapping(int planeIdx)
     {
         if (classification() & NeverMapped)
             return;
 
-        ClientSubsector **subsecAdr = mappedSubsectorAdr(planeIdx);
+        Subsector **subsecAdr = mappedSubsectorAdr(planeIdx);
         if (!subsecAdr || *subsecAdr == thisPublic)
             return;
 
@@ -406,10 +406,10 @@ DE_PIMPL(ClientSubsector)
 
             flags &= ~(NeverMapped | PartSelfRef);
             flags |= AllSelfRef | AllMissingBottom | AllMissingTop;
-            self().forAllSubspaces([this] (ConvexSubspace &subspace)
+            self().forAllSubspaces([this] (world::ConvexSubspace &subspace)
             {
-                const HEdge *base  = subspace.poly().hedge();
-                const HEdge *hedge = base;
+                const auto *base  = subspace.poly().hedge();
+                const auto *hedge = base;
                 do
                 {
                     if (!hedge->hasMapElement())
@@ -429,12 +429,12 @@ DE_PIMPL(ClientSubsector)
                         continue;
 
                     const auto &backSpace = hedge->twin().face().mapElementAs<ConvexSubspace>();
-                    // ClientSubsector internal edges are not considered.
+                    // Subsector internal edges are not considered.
                     if (&backSpace.subsector() == thisPublic)
                         continue;
 
-                    const LineSide &frontSide = hedge->mapElementAs<LineSideSegment>().lineSide();
-                    const LineSide &backSide  = hedge->twin().mapElementAs<LineSideSegment>().lineSide();
+                    const LineSide &frontSide = hedge->mapElementAs<LineSideSegment>().lineSide().as<LineSide>();
+                    const LineSide &backSide  = hedge->twin().mapElementAs<LineSideSegment>().lineSide().as<LineSide>();
 
                     // Similarly if no sections are defined for either side then
                     // never map planes. This can happen due to mapping errors
@@ -502,7 +502,7 @@ DE_PIMPL(ClientSubsector)
             DE_ASSERT(!neighbors.isEmpty());
 
             List<Rectanglef> boundaries;
-            for (HEdge *base : neighbors)
+            for (auto *base : neighbors)
             {
                 Rectanglef bounds;
                 SubsectorCirculator it(base);
@@ -523,7 +523,7 @@ DE_PIMPL(ClientSubsector)
                     largest = &boundary;
             }
 
-            for (dint i = 0; i < neighbors.count(); ++i)
+            for (int i = 0; i < neighbors.count(); ++i)
             {
                 Rectanglef &boundary = boundaries[i];
                 HEdge *     hedge    = neighbors[i];
@@ -550,7 +550,7 @@ DE_PIMPL(ClientSubsector)
             // Should we permanently map one or both planes to those of another sector?
             self().forAllEdgeLoops([this] (const ClEdgeLoop &loop)
             {
-                auto &backSubsec = loop.backSubsector().as<ClientSubsector>();
+                auto &backSubsec = loop.backSubsector().as<Subsector>();
                 if (loop.isSelfReferencing()
                     && (classification() & AllSelfRef)
                     && !(backSubsec.d->classification() & AllSelfRef)
@@ -576,7 +576,7 @@ DE_PIMPL(ClientSubsector)
                 {
                     if (loop->isSelfReferencing())
                     {
-                        auto &backSubsec = loop->backSubsector().as<ClientSubsector>();
+                        auto &backSubsec = loop->backSubsector().as<Subsector>();
                         if ((classification() & AllSelfRef)
                             && !(backSubsec.d->classification() & AllSelfRef))
                         {
@@ -621,7 +621,7 @@ DE_PIMPL(ClientSubsector)
             const ClEdgeLoop &loop = *boundaryData->outerLoop;
             if (loop.hasBackSubsector())
             {
-                auto &backSubsec = loop.backSubsector().as<ClientSubsector>();
+                auto &backSubsec = loop.backSubsector().as<Subsector>();
                 SubsectorCirculator it(&loop.first());
                 do
                 {
@@ -656,7 +656,7 @@ DE_PIMPL(ClientSubsector)
         {
             if (loop->hasBackSubsector())
             {
-                auto &backSubsec = loop->backSubsector().as<ClientSubsector>();
+                auto &backSubsec = loop->backSubsector().as<Subsector>();
                 SubsectorCirculator it(&loop->first());
                 do
                 {
@@ -709,7 +709,7 @@ DE_PIMPL(ClientSubsector)
      * @param canAlloc  @c true= to allocate if no data exists. Note that the number of
      * vertices in the fan geometry must be known at this time.
      */
-    GeometryData *geomData(MapElement &mapElement, dint geomId, bool canAlloc = false)
+    GeometryData *geomData(MapElement &mapElement, int geomId, bool canAlloc = false)
     {
         auto foundGroup = geomGroups.find(&mapElement);
         if (foundGroup != geomGroups.end())
@@ -765,7 +765,7 @@ DE_PIMPL(ClientSubsector)
      */
     void findReverbSubspaces()
     {
-        const Map &map = self().sector().map();
+        const Map &map = self().sector().map().as<Map>();
 
         AABoxd box = self().bounds();
         box.minX -= 128;
@@ -775,7 +775,7 @@ DE_PIMPL(ClientSubsector)
 
         // Link all convex subspaces whose axis-aligned bounding box intersects
         // with the affection bounds to the reverb set.
-        const dint localValidCount = ++validCount;
+        const int localValidCount = ++World::validCount;
         map.subspaceBlockmap().forAllInBox(box, [this, &box, &localValidCount] (void *object)
         {
             auto &sub = *(ConvexSubspace *)object;
@@ -810,7 +810,7 @@ DE_PIMPL(ClientSubsector)
 
         needReverbUpdate = false;
 
-        duint spaceVolume = dint((self().visCeiling().height() - self().visFloor().height())
+        duint spaceVolume = int((self().visCeiling().height() - self().visFloor().height())
                           * self().roughArea());
 
         reverb.reset();
@@ -829,7 +829,7 @@ DE_PIMPL(ClientSubsector)
             }
         }
 
-        dfloat spaceScatter;
+        float spaceScatter;
 
         if (reverb.space)
         {
@@ -888,7 +888,7 @@ DE_PIMPL(ClientSubsector)
         if (surface.parent().type() == DMU_SIDE)
         {
             auto &side = surface.parent().as<LineSide>();
-            dint section = &side.middle() == &surface ? LineSide::Middle
+            int section = &side.middle() == &surface ? LineSide::Middle
                          : &side.bottom() == &surface ? LineSide::Bottom
                          :                              LineSide::Top;
 
@@ -945,7 +945,7 @@ DE_PIMPL(ClientSubsector)
         if (de::fequal(delta.length(), 0)) return;
 
         ClientMaterial &material = matAnimator.material();
-        const dint axis = suf.normal().maxAxis();
+        const int axis = suf.normal().maxAxis();
 
         Vec2d sufDimensions;
         if (axis == 0 || axis == 1)
@@ -963,7 +963,7 @@ DE_PIMPL(ClientSubsector)
         if (sufDimensions.y < 0) sufDimensions.y = -sufDimensions.y;
 
         // Generate a number of decorations.
-        dint decorIndex = 0;
+        int decorIndex = 0;
 
         material.forAllDecorations([this, &suf, &matAnimator, &materialOrigin
                                    , &topLeft
@@ -983,14 +983,14 @@ DE_PIMPL(ClientSubsector)
 
             Vec3d origin = topLeft + suf.normal() * decorSS.elevation();
 
-            dfloat s = de::wrap(decorSS.origin().x - matDimensions.x * decor.patternOffset().x + materialOrigin.x,
+            float s = de::wrap(decorSS.origin().x - matDimensions.x * decor.patternOffset().x + materialOrigin.x,
                                 0.f, repeat.x);
 
             // Plot decorations.
             for (; s < sufDimensions.x; s += repeat.x)
             {
                 // Determine the topmost point for this row.
-                dfloat t = de::wrap(decorSS.origin().y - matDimensions.y * decor.patternOffset().y + materialOrigin.y,
+                float t = de::wrap(decorSS.origin().y - matDimensions.y * decor.patternOffset().y + materialOrigin.y,
                                     0.f, repeat.y);
 
                 for (; t < sufDimensions.y; t += repeat.y)
@@ -1073,7 +1073,7 @@ DE_PIMPL(ClientSubsector)
 
     void markDependentSurfacesForRedecoration(Plane &plane, bool yes = true)
     {
-        if (::ddMapSetup) return;
+        if (World::ddMapSetup) return;
 
         LOGDEV_MAP_XVERBOSE_DEBUGONLY("Marking [%p] (sector: %i) for redecoration..."
             , thisPublic << self().sector().indexInMap()
@@ -1090,11 +1090,11 @@ DE_PIMPL(ClientSubsector)
                     if (    &plane == &self().visPlane(plane.indexInSector())
                         || (&plane == (it->hasTwin() && it->twin().hasFace()
                                        ? &it->twin().face().mapElementAs<ConvexSubspace>()
-                                                  .subsector().as<ClientSubsector>().visPlane(plane.indexInSector())
+                                                  .subsector().as<Subsector>().visPlane(plane.indexInSector())
                                        : nullptr)))
                     {
-                        LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
-                        side.forAllSurfaces([&yes] (Surface &surface)
+                        auto &side = it->mapElementAs<LineSideSegment>().lineSide();
+                        side.forAllSurfaces([&yes] (world::Surface &surface)
                         {
                             LOGDEV_MAP_XVERBOSE_DEBUGONLY("  ", composeSurfacePath(surface));
                             if (auto *decor = surface.decorationState())
@@ -1121,7 +1121,7 @@ DE_PIMPL(ClientSubsector)
 
     void markDependentSurfacesForRedecoration(Material &material, bool yes = true)
     {
-        if (::ddMapSetup) return;
+        if (World::ddMapSetup) return;
 
         LOGDEV_MAP_XVERBOSE_DEBUGONLY("Marking [%p] (sector: %i) for redecoration..."
             , thisPublic << self().sector().indexInMap()
@@ -1135,8 +1135,8 @@ DE_PIMPL(ClientSubsector)
             {
                 if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
                 {
-                    LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
-                    side.forAllSurfaces([&material, &yes] (Surface &surface)
+                    auto &side = it->mapElementAs<LineSideSegment>().lineSide();
+                    side.forAllSurfaces([&material, &yes] (world::Surface &surface)
                     {
                         if (surface.materialPtr() == &material)
                         {
@@ -1175,10 +1175,10 @@ DE_PIMPL(ClientSubsector)
     }
 
     /// Observes Line FlagsChange
-    void lineFlagsChanged(Line &line, dint oldFlags)
+    void lineFlagsChanged(world::Line &line, int oldFlags) override
     {
-        LOG_AS("ClientSubsector");
-        line.forAllSides([this, &oldFlags] (LineSide &side)
+        LOG_AS("Subsector");
+        line.forAllSides([this, &oldFlags] (world::LineSide &side)
         {
             if (side.sectorPtr() == &self().sector())
             {
@@ -1204,33 +1204,33 @@ DE_PIMPL(ClientSubsector)
     /// Observes Material DimensionsChange
     void materialDimensionsChanged(Material &material)
     {
-        LOG_AS("ClientSubsector");
+        LOG_AS("Subsector");
         markDependentSurfacesForRedecoration(material);
     }
 
     /// Observes MaterialAnimator DecorationStageChange
     void materialAnimatorDecorationStageChanged(MaterialAnimator &animator)
     {
-        LOG_AS("ClientSubsector");
+        LOG_AS("Subsector");
         markDependentSurfacesForRedecoration(animator.material());
     }
 
     /// Observes Plane Deletion.
-    void planeBeingDeleted(const Plane &plane)
+    void planeBeingDeleted(const world::Plane &plane) override
     {
-        LOG_AS("ClientSubsector");
+        LOG_AS("Subsector");
         if (&plane == mappedPlane(plane.indexInSector()))
         {
             clearMapping(plane.indexInSector());
-            decorSurfaces.remove(plane.surfacePtr());
+            decorSurfaces.remove(static_cast<Surface *>(plane.surfacePtr()));
         }
     }
 
     /// Observes Plane HeightChange.
     /// @todo Optimize: Process only the mapping-affected surfaces -ds
-    void planeHeightChanged(Plane &plane)
+    void planeHeightChanged(world::Plane &plane) override
     {
-        LOG_AS("ClientSubsector");
+        LOG_AS("Subsector");
 
         // We may need to update one or both mapped planes.
 //        maybeInvalidateMapping(plane.indexInSector());
@@ -1245,7 +1245,7 @@ DE_PIMPL(ClientSubsector)
         */
 
         // We may need to project new decorations.
-        markDependentSurfacesForRedecoration(plane);
+        markDependentSurfacesForRedecoration(plane.as<Plane>());
 
         const bool planeIsInterior = (&plane == &self().visPlane(plane.indexInSector()));
         if (planeIsInterior)
@@ -1268,42 +1268,13 @@ DE_PIMPL(ClientSubsector)
                 }
                 return LoopContinue;
             });
-
-#if 0
-            // Inform bias surfaces of changed geometry?
-            if (!::ddMapSetup && ::useBias)
-            {
-                self().forAllSubspaces([this, &plane] (ConvexSubspace &subspace)
-                {
-                    if (Shard *shard = self().findShard(subspace, plane.indexInSector()))
-                    {
-                        shard->updateBiasAfterMove();
-                    }
-
-                    HEdge *hedge = subspace.poly().hedge();
-                    do
-                    {
-                        updateBiasForWallSectionsAfterGeometryMove(hedge);
-                    } while ((hedge = &hedge->next()) != subspace.poly().hedge());
-
-                    return subspace.forAllExtraMeshes([this] (Mesh &mesh)
-                    {
-                        for (HEdge *hedge : mesh.hedges())
-                        {
-                            updateBiasForWallSectionsAfterGeometryMove(hedge);
-                        }
-                        return LoopContinue;
-                    });
-                });
-            }
-#endif
         }
     }
 
     /// Observes Plane HeightSmoothedChange.
     void planeHeightSmoothedChanged(Plane &plane)
     {
-        LOG_AS("ClientSubsector");
+        LOG_AS("Subsector");
 
         // We may need to update one or both mapped planes.
 //        maybeInvalidateMapping(plane.indexInSector());
@@ -1312,34 +1283,10 @@ DE_PIMPL(ClientSubsector)
         markDependentSurfacesForRedecoration(plane);
     }
 
-#if 0
-    /// Observes Sector LightLevelChange.
-    void sectorLightLevelChanged(Sector &DE_DEBUG_ONLY(changed))
-    {
-        DE_ASSERT(&changed == &self().sector());
-        LOG_AS("ClientSubsector");
-        if (self().sector().map().hasLightGrid())
-        {
-            self().sector().map().lightGrid().blockLightSourceChanged(thisPublic);
-        }
-    }
-
-    /// Observes Sector LightColorChange.
-    void sectorLightColorChanged(Sector &DE_DEBUG_ONLY(changed))
-    {
-        DE_ASSERT(&changed == &self().sector());
-        LOG_AS("ClientSubsector");
-        if (self().sector().map().hasLightGrid())
-        {
-            self().sector().map().lightGrid().blockLightSourceChanged(thisPublic);
-        }
-    }
-#endif
-
     /// Observes Surface MaterialChange
-    void surfaceMaterialChanged(Surface &surface)
+    void surfaceMaterialChanged(world::Surface &surface) override
     {
-        LOG_AS("ClientSubsector");
+        LOG_AS("Subsector");
 
         if (auto *ds = static_cast<DecoratedSurface *>(surface.decorationState()))
         {
@@ -1352,7 +1299,7 @@ DE_PIMPL(ClientSubsector)
 
         if (hasDecoratedMaterial(surface))
         {
-            auto &ds = allocDecorationState(surface);
+            auto &ds = allocDecorationState(surface.as<Surface>());
             ds.markForUpdate();
         }
 
@@ -1368,19 +1315,19 @@ DE_PIMPL(ClientSubsector)
     }
 
     /// Observes Surface OriginChange
-    void surfaceOriginChanged(Surface &surface)
+    void surfaceOriginChanged(world::Surface &surface) override
     {
-        LOG_AS("ClientSubsector");
+        LOG_AS("Subsector");
         if (surface.hasMaterial())
         {
-            allocDecorationState(surface).markForUpdate();
+            allocDecorationState(surface.as<Surface>()).markForUpdate();
         }
     }
 
     /// Observes Surface OriginChange
-    void surfaceOriginSmoothedChanged(Surface &surface)
+    void surfaceOriginSmoothedChanged(Surface &surface) override
     {
-        LOG_AS("ClientSubsector");
+        LOG_AS("Subsector");
         if (surface.hasMaterial())
         {
             allocDecorationState(surface).markForUpdate();
@@ -1388,34 +1335,34 @@ DE_PIMPL(ClientSubsector)
     }
 
     /// Observes Subsector Deletion.
-    void subsectorBeingDeleted(const Subsector &subsec)
+    void subsectorBeingDeleted(const world::Subsector &subsec) override
     {
-        //LOG_AS("ClientSubsector");
+        //LOG_AS("Subsector");
         if (  mappedVisFloor == &subsec) clearMapping(Sector::Floor);
         if (mappedVisCeiling == &subsec) clearMapping(Sector::Ceiling);
     }
 };
 
-ClientSubsector::ClientSubsector(List<ConvexSubspace *> const &subspaces)
-    : Subsector(subspaces)
+Subsector::Subsector(const List<world::ConvexSubspace *> &subspaces)
+    : world::Subsector(subspaces)
     , d(new Impl(this))
 {
     // Observe changes to surfaces in the subsector.
-    forAllSubspaces([this] (ConvexSubspace &subspace)
+    forAllSubspaces([this] (world::ConvexSubspace &subspace)
     {
-        HEdge *hedge = subspace.poly().hedge();
+        auto *hedge = subspace.poly().hedge();
         do
         {
             if (hedge->hasMapElement())
             {
-                LineSide &front = hedge->mapElementAs<LineSideSegment>().lineSide();
+                auto &front = hedge->mapElementAs<LineSideSegment>().lineSide();
 
                 // Line flags affect material offsets so observe those, too.
                 front.line().audienceForFlagsChange += d;
 
-                front.forAllSurfaces([this] (Surface &surface)
+                front.forAllSurfaces([this] (world::Surface &surface)
                 {
-                    d->observeSurface(&surface);
+                    d->observeSurface(&surface.as<Surface>());
                     d->observeMaterial(surface.materialPtr());
                     return LoopContinue;
                 });
@@ -1424,8 +1371,8 @@ ClientSubsector::ClientSubsector(List<ConvexSubspace *> const &subspaces)
                 if (front.back().hasSector())
                 {
                     Sector &backsec = front.back().sector();
-                    d->observePlane(&backsec.floor());
-                    d->observePlane(&backsec.ceiling());
+                    d->observePlane(&backsec.floor().as<Plane>());
+                    d->observePlane(&backsec.ceiling().as<Plane>());
                 }
             }
         } while ((hedge = &hedge->next()) != subspace.poly().hedge());
@@ -1434,24 +1381,18 @@ ClientSubsector::ClientSubsector(List<ConvexSubspace *> const &subspaces)
     });
 
     // Observe changes to planes in the sector.
-    Plane *floor = &sector().floor();
-    d->observePlane(floor);
-    d->observeSurface(&floor->surface());
-    d->observeMaterial(floor->surface().materialPtr());
+    Plane &floor = sector().floor().as<Plane>();
+    d->observePlane(&floor);
+    d->observeSurface(&floor.surface());
+    d->observeMaterial(floor.surface().materialPtr());
 
-    Plane *ceiling = &sector().ceiling();
-    d->observePlane(ceiling);
-    d->observeSurface(&ceiling->surface());
-    d->observeMaterial(ceiling->surface().materialPtr());
-
-#if 0
-    // Observe changes to lighting properties in the sector.
-    sector().audienceForLightLevelChange() += d;
-    sector().audienceForLightColorChange() += d;
-#endif
+    Plane &ceiling = sector().ceiling().as<Plane>();
+    d->observePlane(&ceiling);
+    d->observeSurface(&ceiling.surface());
+    d->observeMaterial(ceiling.surface().materialPtr());
 }
 
-String ClientSubsector::description() const
+String Subsector::description() const
 {
     auto desc = Stringf(_E(l) "%s: " _E(.) _E(i) "Sector %i%s" _E(.) " " _E(l) "%s: " _E(.)
                                    _E(i) "Sector %i%s" _E(.),
@@ -1465,7 +1406,7 @@ String ClientSubsector::description() const
     if (d->boundaryData)
     {
         desc += Stringf(_E(D) "\nEdge loops (%i):" _E(.), edgeLoopCount());
-        dint index = 0;
+        int index = 0;
         forAllEdgeLoops([&desc, &index] (const ClEdgeLoop &loop)
         {
             desc += Stringf("\n[%i]: ", index) + _E(>) + loop.description() + _E(<);
@@ -1477,7 +1418,7 @@ String ClientSubsector::description() const
     if (hasDecorations())
     {
         desc += String(_E(D) "\nDecorations:" _E(.));
-        dint decorIndex = 0;
+        int decorIndex = 0;
         for (Surface *surface : d->decorSurfaces)
         {
             for (Decoration *decor : static_cast<Impl::DecoratedSurface *>
@@ -1490,12 +1431,12 @@ String ClientSubsector::description() const
     }
 
     DE_DEBUG_ONLY(
-        desc.prepend(Stringf(_E(b) "ClientSubsector " _E(.) "[%p]\n", this));
+        desc.prepend(Stringf(_E(b) "Subsector " _E(.) "[%p]\n", this));
     )
-    return Subsector::description() + "\n" + desc;
+    return world::Subsector::description() + "\n" + desc;
 }
 
-String ClientSubsector::edgeLoopIdAsText(dint loopId) // static
+String Subsector::edgeLoopIdAsText(int loopId) // static
 {
     switch (loopId)
     {
@@ -1503,18 +1444,18 @@ String ClientSubsector::edgeLoopIdAsText(dint loopId) // static
     case InnerLoop: return "inner";
 
     default:
-        DE_ASSERT_FAIL("ClientSubsector::edgeLoopIdAsText: Invalid loopId");
-        throw Error("ClientSubsector::edgeLoopIdAsText", stringf("Unknown loop ID %i", loopId));
+        DE_ASSERT_FAIL("Subsector::edgeLoopIdAsText: Invalid loopId");
+        throw Error("Subsector::edgeLoopIdAsText", stringf("Unknown loop ID %i", loopId));
     }
 }
 
-dint ClientSubsector::edgeLoopCount() const
+int Subsector::edgeLoopCount() const
 {
     d->initBoundaryDataIfNeeded();
     return (bool(d->boundaryData->outerLoop) ? 1 : 0) + d->boundaryData->innerLoops.count();
 }
 
-LoopResult ClientSubsector::forAllEdgeLoops(const std::function<LoopResult (ClEdgeLoop &)> &func)
+LoopResult Subsector::forAllEdgeLoops(const std::function<LoopResult (ClEdgeLoop &)> &func)
 {
     d->initBoundaryDataIfNeeded();
     DE_ASSERT(d->boundaryData->outerLoop);
@@ -1530,7 +1471,7 @@ LoopResult ClientSubsector::forAllEdgeLoops(const std::function<LoopResult (ClEd
     return LoopContinue;
 }
 
-LoopResult ClientSubsector::forAllEdgeLoops(const std::function<LoopResult (const ClEdgeLoop &)> &func) const
+LoopResult Subsector::forAllEdgeLoops(const std::function<LoopResult (const ClEdgeLoop &)> &func) const
 {
     d->initBoundaryDataIfNeeded();
     DE_ASSERT(d->boundaryData->outerLoop);
@@ -1546,11 +1487,11 @@ LoopResult ClientSubsector::forAllEdgeLoops(const std::function<LoopResult (cons
     return LoopContinue;
 }
 
-bool ClientSubsector::hasSkyPlane(dint planeIndex) const
+bool Subsector::hasSkyPlane(int planeIndex) const
 {
     if (planeIndex < 0)
     {
-        for (dint i = 0; i < sector().planeCount(); ++i)
+        for (int i = 0; i < sector().planeCount(); ++i)
         {
             if (visPlane(i).surface().hasSkyMaskedMaterial())
                 return true;
@@ -1563,32 +1504,32 @@ bool ClientSubsector::hasSkyPlane(dint planeIndex) const
     }
 }
 
-bool ClientSubsector::hasSkyFloor() const
+bool Subsector::hasSkyFloor() const
 {
     return hasSkyPlane(Sector::Floor);
 }
 
-bool ClientSubsector::hasSkyCeiling() const
+bool Subsector::hasSkyCeiling() const
 {
     return hasSkyPlane(Sector::Ceiling);
 }
 
-void ClientSubsector::linkVisPlane(int planeIndex, ClientSubsector &target)
+void Subsector::linkVisPlane(int planeIndex, Subsector &target)
 {
     d->map(planeIndex, &target, true);
 }
 
-dint ClientSubsector::visPlaneCount() const
+int Subsector::visPlaneCount() const
 {
     return sector().planeCount();
 }
 
-Plane &ClientSubsector::visPlane(dint planeIndex)
+Plane &Subsector::visPlane(int planeIndex)
 {
-    return const_cast<Plane &>(const_cast<const ClientSubsector *>(this)->visPlane(planeIndex));
+    return const_cast<Plane &>(const_cast<const Subsector *>(this)->visPlane(planeIndex));
 }
 
-const Plane &ClientSubsector::visPlane(dint planeIndex) const
+const Plane &Subsector::visPlane(int planeIndex) const
 {
     if (planeIndex >= Sector::Floor && planeIndex <= Sector::Ceiling)
     {
@@ -1600,7 +1541,7 @@ const Plane &ClientSubsector::visPlane(dint planeIndex) const
             //d->remapVisPlanes();
         }
 
-        ClientSubsector *mapping = (planeIndex == Sector::Ceiling ? d->mappedVisCeiling
+        Subsector *mapping = (planeIndex == Sector::Ceiling ? d->mappedVisCeiling
                                                                   : d->mappedVisFloor);
         if (mapping && mapping != this)
         {
@@ -1608,12 +1549,12 @@ const Plane &ClientSubsector::visPlane(dint planeIndex) const
         }
     }
     // Not mapped.
-    return sector().plane(planeIndex);
+    return sector().plane(planeIndex).as<Plane>();
 }
 
-LoopResult ClientSubsector::forAllVisPlanes(const std::function<LoopResult (Plane &)>& func)
+LoopResult Subsector::forAllVisPlanes(const std::function<LoopResult (Plane &)>& func)
 {
-    for (dint i = 0; i < visPlaneCount(); ++i)
+    for (int i = 0; i < visPlaneCount(); ++i)
     {
         if (auto result = func(visPlane(i)))
             return result;
@@ -1621,9 +1562,9 @@ LoopResult ClientSubsector::forAllVisPlanes(const std::function<LoopResult (Plan
     return LoopContinue;
 }
 
-LoopResult ClientSubsector::forAllVisPlanes(const std::function<LoopResult (const Plane &)>& func) const
+LoopResult Subsector::forAllVisPlanes(const std::function<LoopResult (const Plane &)>& func) const
 {
-    for (dint i = 0; i < visPlaneCount(); ++i)
+    for (int i = 0; i < visPlaneCount(); ++i)
     {
         if (auto result = func(visPlane(i)))
             return result;
@@ -1631,12 +1572,12 @@ LoopResult ClientSubsector::forAllVisPlanes(const std::function<LoopResult (cons
     return LoopContinue;
 }
 
-bool ClientSubsector::isHeightInVoid(ddouble height) const
+bool Subsector::isHeightInVoid(double height) const
 {
     // Check the mapped planes.
     if (visCeiling().surface().hasSkyMaskedMaterial())
     {
-        const ClSkyPlane &skyCeil = sector().map().skyCeiling();
+        const ClSkyPlane &skyCeil = sector().map().as<Map>().skyCeiling();
         if (skyCeil.height() < DDMAXFLOAT && height > skyCeil.height())
             return true;
     }
@@ -1647,7 +1588,7 @@ bool ClientSubsector::isHeightInVoid(ddouble height) const
 
     if (visFloor().surface().hasSkyMaskedMaterial())
     {
-        const ClSkyPlane &skyFloor = sector().map().skyFloor();
+        const ClSkyPlane &skyFloor = sector().map().as<Map>().skyFloor();
         if (skyFloor.height() > DDMINFLOAT && height < skyFloor.height())
             return true;
     }
@@ -1659,7 +1600,7 @@ bool ClientSubsector::isHeightInVoid(ddouble height) const
     return false;  // Not in the void.
 }
 
-bool ClientSubsector::hasWorldVolume(bool useSmoothedHeights) const
+bool Subsector::hasWorldVolume(bool useSmoothedHeights) const
 {
     const auto currentFrame = R_FrameCount();
     if (d->validFrame != currentFrame)
@@ -1677,12 +1618,12 @@ bool ClientSubsector::hasWorldVolume(bool useSmoothedHeights) const
     return d->hasWorldVolumeInValidFrame;
 }
 
-void ClientSubsector::markReverbDirty(bool yes)
+void Subsector::markReverbDirty(bool yes)
 {
     d->needReverbUpdate = yes;
 }
 
-const ClientSubsector::AudioEnvironment &ClientSubsector::reverb() const
+const Subsector::AudioEnvironment &Subsector::reverb() const
 {
     // Perform any scheduled update now.
     if (d->needReverbUpdate)
@@ -1692,19 +1633,19 @@ const ClientSubsector::AudioEnvironment &ClientSubsector::reverb() const
     return d->reverb;
 }
 
-void ClientSubsector::markVisPlanesDirty()
+void Subsector::markVisPlanesDirty()
 {
     d->maybeInvalidateMapping(Sector::Floor);
     d->maybeInvalidateMapping(Sector::Ceiling);
 }
 
-ClientSubsector::LightId ClientSubsector::lightSourceId() const
+Subsector::LightId Subsector::lightSourceId() const
 {
-    /// @todo Need unique ClientSubsector ids.
+    /// @todo Need unique Subsector ids.
     return LightId(sector().indexInMap());
 }
 
-Vec3f ClientSubsector::lightSourceColorf() const
+Vec3f Subsector::lightSourceColorf() const
 {
     if (Rend_SkyLightIsEnabled() && hasSkyPlane())
     {
@@ -1716,14 +1657,14 @@ Vec3f ClientSubsector::lightSourceColorf() const
     return sector().lightColor();
 }
 
-dfloat ClientSubsector::lightSourceIntensity(const Vec3d &/*viewPoint*/) const
+float Subsector::lightSourceIntensity(const Vec3d &/*viewPoint*/) const
 {
     return sector().lightLevel();
 }
 
-dint ClientSubsector::blockLightSourceZBias()
+int Subsector::blockLightSourceZBias()
 {
-    dint height      = dint(visCeiling().height() - visFloor().height());
+    int height      = int(visCeiling().height() - visFloor().height());
     bool hasSkyFloor = visFloor().surface().hasSkyMaskedMaterial();
     bool hasSkyCeil  = visCeiling().surface().hasSkyMaskedMaterial();
 
@@ -1742,161 +1683,9 @@ dint ClientSubsector::blockLightSourceZBias()
     return 0;
 }
 
-#if 0
-void ClientSubsector::applyBiasChanges(QBitArray &allChanges)
+void Subsector::decorate()
 {
-    DE_FOR_EACH(Impl::GeometryGroups, g, d->geomGroups)
-    {
-        for (Impl::GeometryData *gdata : g.value())
-        {
-            DE_ASSERT(bool(gdata->shard));
-            gdata->shard->biasTracker().applyChanges(allChanges);
-        }
-    }
-}
-#endif
-
-#if 0
-// Determine the number of bias illumination points needed for this geometry.
-// Presently we define a 1:1 mapping to geometry vertices.
-static dint countIlluminationPoints(MapElement &mapElement, dint DE_DEBUG_ONLY(group))
-{
-    switch (mapElement.type())
-    {
-    case DMU_SUBSPACE: {
-        auto &space = mapElement.as<ConvexSubspace>();
-        DE_ASSERT(group >= 0 && group < space.subsector().sector().planeCount()); // sanity check
-        return space.fanVertexCount(); }
-
-    case DMU_SEGMENT:
-        DE_ASSERT(group >= 0 && group <= LineSide::Top); // sanity check
-        return 4;
-
-    default:
-        throw Error("ClientSubsector::countIlluminationPoints", "Invalid MapElement type");
-    }
-    return 0;
-}
-
-Shard &ClientSubsector::shard(MapElement &mapElement, dint geomId)
-{
-    auto *gdata = d->geomData(mapElement, geomId, true /*create*/);
-    if (!gdata->shard)
-    {
-        gdata->shard.reset(new Shard(/*countIlluminationPoints(mapElement, geomId),*/ this));
-    }
-    return *gdata->shard;
-}
-
-Shard *ClientSubsector::findShard(MapElement &mapElement, dint geomId)
-{
-    if (auto *gdata = d->geomData(mapElement, geomId))
-    {
-        return gdata->shard.get();
-    }
-    return nullptr;
-}
-
-/**
- * @todo This could be enhanced so that only the lights on the right side of the
- * surface are taken into consideration.
- */
-bool ClientSubsector::updateBiasContributors(Shard *shard)
-{
-    if (Impl::GeometryData *gdata = d->geomDataForShard(shard))
-    {
-        const Map &map = sector().map();
-
-        BiasTracker &tracker = shard->biasTracker();
-        tracker.clearContributors();
-
-        switch (gdata->mapElement->type())
-        {
-        case DMU_SUBSPACE: {
-            auto &subspace         = gdata->mapElement->as<ConvexSubspace>();
-            const Plane &plane     = visPlane(gdata->geomId);
-            const Surface &surface = plane.surface();
-
-            Vec3d const surfacePoint(subspace.poly().center(), plane.heightSmoothed());
-
-            map.forAllBiasSources([&tracker, &subspace, &surface, &surfacePoint] (BiasSource &source)
-            {
-                // If the source is too weak we will ignore it completely.
-                if (source.intensity() <= 0)
-                    return LoopContinue;
-
-                Vec3d sourceToSurface = (source.origin() - surfacePoint).normalize();
-                ddouble distance = 0;
-
-                // Calculate minimum 2D distance to the subspace.
-                /// @todo This is probably too accurate an estimate.
-                HEdge *baseNode = subspace.poly().hedge();
-                HEdge *node = baseNode;
-                do
-                {
-                    ddouble len = (Vec2d(source.origin()) - node->origin()).length();
-                    if (node == baseNode || len < distance)
-                        distance = len;
-                } while ((node = &node->next()) != baseNode);
-
-                if (sourceToSurface.dot(surface.normal()) < 0)
-                    return LoopContinue;
-
-                tracker.addContributor(&source, source.evaluateIntensity() / de::max(distance, 1.0));
-                return LoopContinue;
-            });
-            break; }
-
-        case DMU_SEGMENT: {
-            auto &seg              = gdata->mapElement->as<LineSideSegment>();
-            const Surface &surface = seg.lineSide().middle();
-            const Vec2d &from   = seg.hedge().origin();
-            const Vec2d &to     = seg.hedge().twin().origin();
-            const Vec2d center  = (from + to) / 2;
-
-            map.forAllBiasSources([&tracker, &surface, &from, &to, &center] (BiasSource &source)
-            {
-                // If the source is too weak we will ignore it completely.
-                if (source.intensity() <= 0)
-                    return LoopContinue;
-
-                Vec3d sourceToSurface = (source.origin() - center).normalize();
-
-                // Calculate minimum 2D distance to the segment.
-                ddouble distance = 0;
-                for (dint k = 0; k < 2; ++k)
-                {
-                    ddouble len = (Vec2d(source.origin()) - (!k? from : to)).length();
-                    if (k == 0 || len < distance)
-                        distance = len;
-                }
-
-                if (sourceToSurface.dot(surface.normal()) < 0)
-                    return LoopContinue;
-
-                tracker.addContributor(&source, source.evaluateIntensity() / de::max(distance, 1.0));
-                return LoopContinue;
-            });
-            break; }
-
-        default:
-            throw Error("ClientSubsector::updateBiasContributors", "Invalid MapElement type");
-        }
-
-        return true;
-    }
-    return false;
-}
-
-duint ClientSubsector::biasLastChangeOnFrame() const
-{
-    return sector().map().biasLastChangeOnFrame();
-}
-#endif
-
-void ClientSubsector::decorate()
-{
-    LOG_AS("ClientSubsector::decorate");
+    LOG_AS("Subsector::decorate");
 
     if (!hasDecorations()) return;
 
@@ -1908,12 +1697,12 @@ void ClientSubsector::decorate()
         {
             if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
             {
-                LineSide &side = it->mapElementAs<LineSideSegment>().lineSide();
+                auto &side = it->mapElementAs<LineSideSegment>().lineSide();
                 if (side.hasSections())
                 {
-                    for (dint i = LineSide::Middle; i <= LineSide::Top; ++i)
+                    for (int i = LineSide::Middle; i <= LineSide::Top; ++i)
                     {
-                        d->decorate(side.surface(i));
+                        d->decorate(side.surface(i).as<Surface>());
                     }
                 }
             }
@@ -1927,7 +1716,7 @@ void ClientSubsector::decorate()
     d->decorate(visCeiling().surface());
 }
 
-bool ClientSubsector::hasDecorations() const
+bool Subsector::hasDecorations() const
 {
     return !d.getConst()->decorSurfaces.isEmpty();
     /*
@@ -1942,9 +1731,9 @@ bool ClientSubsector::hasDecorations() const
     return false;*/
 }
 
-void ClientSubsector::generateLumobjs()
+void Subsector::generateLumobjs()
 {
-    world::Map &map = sector().map();
+    Map &map = sector().map().as<Map>();
     for (Surface *surface : d.getConst()->decorSurfaces)
     {
         for (Decoration *decor : static_cast<Impl::DecoratedSurface *>(surface->decorationState())->decorations)
@@ -1960,7 +1749,7 @@ void ClientSubsector::generateLumobjs()
     }
 }
 
-void ClientSubsector::markForDecorationUpdate(bool yes)
+void Subsector::markForDecorationUpdate(bool yes)
 {
     for (Surface *surface : d.getConst()->decorSurfaces)
     {
@@ -1970,5 +1759,3 @@ void ClientSubsector::markForDecorationUpdate(bool yes)
         }
     }
 }
-
-} // namespace world

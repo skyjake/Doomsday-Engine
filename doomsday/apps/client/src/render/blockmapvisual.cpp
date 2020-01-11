@@ -21,32 +21,30 @@
 #include "de_base.h"
 #include "render/blockmapvisual.h"
 
+#include "gl/gl_main.h"
+#include "gl/gl_texmanager.h"
+
+#include "world/map.h"
+#include "world/p_object.h"
+#include "world/p_players.h"
+#include "ConvexSubspace"
+#include "api_fontrender.h"
+#include "render/rend_font.h"
+#include "ui/ui_main.h"
+
+#include <doomsday/world/blockmap.h>
+#include <doomsday/world/lineblockmap.h>
+#include <doomsday/mesh/face.h>
+#include <doomsday/mesh/hedge.h>
 #include <de/legacy/aabox.h>
 #include <de/legacy/concurrency.h>
 #include <de/GLInfo>
 #include <de/Vector>
 
-#include "gl/gl_main.h"
-#include "gl/gl_texmanager.h"
-
-#include "world/blockmap.h"
-#include "world/lineblockmap.h"
-#include "world/map.h"
-#include "world/p_object.h"
-#include "world/p_players.h"
-#include "ConvexSubspace"
-#include "Face"
-#include "HEdge"
-
-#include "api_fontrender.h"
-#include "render/rend_font.h"
-#include "ui/ui_main.h"
-
 using namespace de;
-using namespace world;
 
-byte bmapShowDebug; // 1 = mobjs, 2 = lines, 3 = BSP leafs, 4 = polyobjs. cvar
-dfloat bmapDebugSize = 1.5f; // cvar
+byte  bmapShowDebug; // 1 = mobjs, 2 = lines, 3 = BSP leafs, 4 = polyobjs. cvar
+float bmapDebugSize = 1.5f; // cvar
 
 static void drawMobj(const mobj_t &mob)
 {
@@ -58,7 +56,7 @@ static void drawMobj(const mobj_t &mob)
     DGL_Vertex2f(bounds.minX, bounds.maxY);
 }
 
-static void drawLine(const Line &line)
+static void drawLine(const world::Line &line)
 {
     DGL_Vertex2f(line.from().x(), line.from().y());
     DGL_Vertex2f(line.to  ().x(), line.to  ().y());
@@ -69,9 +67,9 @@ static void drawSubspace(const ConvexSubspace &subspace)
     const dfloat scale = de::max(bmapDebugSize, 1.f);
     const dfloat width = (DE_GAMEVIEW_WIDTH / 16) / scale;
 
-    const Face &poly = subspace.poly();
-    HEdge *base = poly.hedge();
-    HEdge *hedge = base;
+    const mesh::Face &poly = subspace.poly();
+    mesh::HEdge *base = poly.hedge();
+    mesh::HEdge *hedge = base;
     do
     {
         Vec2d start = hedge->origin();
@@ -125,15 +123,15 @@ static void drawSubspace(const ConvexSubspace &subspace)
     } while ((hedge = &hedge->next()) != base);
 }
 
-static int drawCellLines(const Blockmap &bmap, const BlockmapCell &cell, void *)
+static int drawCellLines(const world::Blockmap &bmap, const world::BlockmapCell &cell, void *)
 {
     DGL_Begin(DGL_LINES);
         bmap.forAllInCell(cell, [] (void *object)
         {
             Line &line = *(Line *)object;
-            if (line.validCount() != validCount)
+            if (line.validCount() != World::validCount)
             {
-                line.setValidCount(validCount);
+                line.setValidCount(World::validCount);
                 drawLine(line);
             }
             return LoopContinue;
@@ -142,17 +140,17 @@ static int drawCellLines(const Blockmap &bmap, const BlockmapCell &cell, void *)
     return false; // Continue iteration.
 }
 
-static int drawCellPolyobjs(const Blockmap &bmap, const BlockmapCell &cell, void * /*context*/)
+static int drawCellPolyobjs(const world::Blockmap &bmap, const world::BlockmapCell &cell, void * /*context*/)
 {
     DGL_Begin(DGL_LINES);
         bmap.forAllInCell(cell, [] (void *object)
         {
             Polyobj &pob = *(Polyobj *)object;
-            for (Line *line : pob.lines())
+            for (auto *line : pob.lines())
             {
-                if (line->validCount() != validCount)
+                if (line->validCount() != World::validCount)
                 {
-                    line->setValidCount(validCount);
+                    line->setValidCount(World::validCount);
                     drawLine(*line);
                 }
             }
@@ -162,15 +160,15 @@ static int drawCellPolyobjs(const Blockmap &bmap, const BlockmapCell &cell, void
     return false; // Continue iteration.
 }
 
-static int drawCellMobjs(const Blockmap &bmap, const BlockmapCell &cell, void *)
+static int drawCellMobjs(const world::Blockmap &bmap, const world::BlockmapCell &cell, void *)
 {
     DGL_Begin(DGL_QUADS);
         bmap.forAllInCell(cell, [] (void *object)
         {
             mobj_t &mob = *(mobj_t *)object;
-            if (mob.validCount != validCount)
+            if (mob.validCount != World::validCount)
             {
-                mob.validCount = validCount;
+                mob.validCount = World::validCount;
                 drawMobj(mob);
             }
             return LoopContinue;
@@ -179,14 +177,14 @@ static int drawCellMobjs(const Blockmap &bmap, const BlockmapCell &cell, void *)
     return false; // Continue iteration.
 }
 
-static int drawCellSubspaces(const Blockmap &bmap, const BlockmapCell &cell, void *)
+static int drawCellSubspaces(const world::Blockmap &bmap, const world::BlockmapCell &cell, void *)
 {
     bmap.forAllInCell(cell, [] (void *object)
     {
         ConvexSubspace *sub = (ConvexSubspace *)object;
-        if (sub->validCount() != validCount)
+        if (sub->validCount() != World::validCount)
         {
-            sub->setValidCount(validCount);
+            sub->setValidCount(World::validCount);
             drawSubspace(*sub);
         }
         return LoopContinue;
@@ -194,9 +192,9 @@ static int drawCellSubspaces(const Blockmap &bmap, const BlockmapCell &cell, voi
     return false; // Continue iteration.
 }
 
-static void drawBackground(const Blockmap &bmap)
+static void drawBackground(const world::Blockmap &bmap)
 {
-    const BlockmapCell &dimensions = bmap.dimensions();
+    const world::BlockmapCell &dimensions = bmap.dimensions();
 
     // Scale modelview matrix so we can express cell geometry
     // using a cell-sized unit coordinate space.
@@ -219,18 +217,20 @@ static void drawBackground(const Blockmap &bmap)
      * Draw the "null cells" over the top.
      */
     DGL_Color4f(0, 0, 0, .95f);
-    BlockmapCell cell;
+    world::BlockmapCell cell;
     for (cell.y = 0; cell.y < dimensions.y; ++cell.y)
-    for (cell.x = 0; cell.x < dimensions.x; ++cell.x)
     {
-        if (bmap.cellElementCount(cell)) continue;
+        for (cell.x = 0; cell.x < dimensions.x; ++cell.x)
+        {
+            if (bmap.cellElementCount(cell)) continue;
 
-        DGL_Begin(DGL_QUADS);
-            DGL_Vertex2f(cell.x,     cell.y);
-            DGL_Vertex2f(cell.x + 1, cell.y);
-            DGL_Vertex2f(cell.x + 1, cell.y + 1);
-            DGL_Vertex2f(cell.x,     cell.y + 1);
-        DGL_End();
+            DGL_Begin(DGL_QUADS);
+                DGL_Vertex2f(cell.x,     cell.y);
+                DGL_Vertex2f(cell.x + 1, cell.y);
+                DGL_Vertex2f(cell.x + 1, cell.y + 1);
+                DGL_Vertex2f(cell.x,     cell.y + 1);
+            DGL_End();
+        }
     }
 
     // Restore previous GL state.
@@ -263,7 +263,7 @@ static void drawCellInfo(const Vec2d &origin_, const char *info)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawBlockmapInfo(const Vec2d &origin_, const Blockmap &blockmap)
+static void drawBlockmapInfo(const Vec2d &origin_, const world::Blockmap &blockmap)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -309,8 +309,8 @@ static void drawBlockmapInfo(const Vec2d &origin_, const Blockmap &blockmap)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawCellInfoBox(const Vec2d &origin, const Blockmap &blockmap,
-    const char *objectTypeName, const BlockmapCell &cell)
+static void drawCellInfoBox(const Vec2d &origin, const world::Blockmap &blockmap,
+    const char *objectTypeName, const world::BlockmapCell &cell)
 {
     uint count = blockmap.cellElementCount(cell);
     char info[160]; dd_snprintf(info, 160, "Cell:(%u, %u) %s:#%u", cell.x, cell.y, objectTypeName, count);
@@ -322,13 +322,13 @@ static void drawCellInfoBox(const Vec2d &origin, const Blockmap &blockmap,
  * @param followMobj  Mobj to center/focus the visual on. Can be @c 0.
  * @param cellDrawer  Blockmap cell content drawing callback. Can be @c 0.
  */
-static void drawBlockmap(const Blockmap &bmap, mobj_t *followMobj,
-    int (*cellDrawer) (const Blockmap &, const BlockmapCell &, void *))
+static void drawBlockmap(const world::Blockmap &bmap, mobj_t *followMobj,
+    int (*cellDrawer) (const world::Blockmap &, const world::BlockmapCell &, void *))
 {
-    BlockmapCellBlock vCellBlock;
-    BlockmapCell vCell;
+    world::BlockmapCellBlock vCellBlock;
+    world::BlockmapCell vCell;
 
-    const BlockmapCell &dimensions = bmap.dimensions();
+    const world::BlockmapCell &dimensions = bmap.dimensions();
     const Vec2d cellDimensions = bmap.cellDimensions();
 
     if (followMobj)
@@ -374,7 +374,7 @@ static void drawBlockmap(const Blockmap &bmap, mobj_t *followMobj,
         // Highlight cells the followed Mobj "touches".
         DGL_Begin(DGL_QUADS);
 
-        BlockmapCell cell;
+        world::BlockmapCell cell;
         for (cell.y = vCellBlock.min.y; cell.y < vCellBlock.max.y; ++cell.y)
         for (cell.x = vCellBlock.min.x; cell.x < vCellBlock.max.x; ++cell.x)
         {
@@ -410,7 +410,7 @@ static void drawBlockmap(const Blockmap &bmap, mobj_t *followMobj,
     DGL_PushMatrix();
     DGL_Scalef(cellDimensions.x, cellDimensions.y, 1);
 
-    bmap.drawDebugVisual();
+//    bmap.drawDebugVisual();
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -434,9 +434,9 @@ static void drawBlockmap(const Blockmap &bmap, mobj_t *followMobj,
              */
 
             // First, the cells outside the "touch" range (crimson).
-            validCount++;
+            World::validCount++;
             DGL_Color4f(.33f, 0, 0, .75f);
-            BlockmapCell cell;
+            world::BlockmapCell cell;
             for (cell.y = 0; cell.y < dimensions.y; ++cell.y)
             for (cell.x = 0; cell.x < dimensions.x; ++cell.x)
             {
@@ -451,7 +451,7 @@ static void drawBlockmap(const Blockmap &bmap, mobj_t *followMobj,
             }
 
             // Next, the cells within the "touch" range (orange).
-            validCount++;
+            World::validCount++;
             DGL_Color3f(1, .5f, 0);
             for (cell.y = vCellBlock.min.y; cell.y < vCellBlock.max.y; ++cell.y)
             for (cell.x = vCellBlock.min.x; cell.x < vCellBlock.max.x; ++cell.x)
@@ -463,7 +463,7 @@ static void drawBlockmap(const Blockmap &bmap, mobj_t *followMobj,
             }
 
             // Lastly, the cell the followed Mobj is in (yellow).
-            validCount++;
+            World::validCount++;
             DGL_Color3f(1, 1, 0);
             if (bmap.cellElementCount(vCell))
             {
@@ -473,9 +473,9 @@ static void drawBlockmap(const Blockmap &bmap, mobj_t *followMobj,
         else
         {
             // Draw all cells without color coding.
-            validCount++;
+            World::validCount++;
             DGL_Color4f(.33f, 0, 0, .75f);
-            BlockmapCell cell;
+            world::BlockmapCell cell;
             for (cell.y = 0; cell.y < dimensions.y; ++cell.y)
             for (cell.x = 0; cell.x < dimensions.x; ++cell.x)
             {
@@ -491,7 +491,7 @@ static void drawBlockmap(const Blockmap &bmap, mobj_t *followMobj,
      */
     if (followMobj)
     {
-        validCount++;
+        World::validCount++;
         DGL_Color3f(0, 1, 0);
         DGL_Begin(DGL_QUADS);
             drawMobj(*followMobj);
@@ -511,8 +511,8 @@ void Rend_BlockmapDebug()
     if (!App_World().hasMap()) return;
     auto &map = App_World().map();
 
-    const Blockmap *blockmap;
-    int (*cellDrawer) (const Blockmap &, const BlockmapCell &, void *);
+    const world::Blockmap *blockmap;
+    int (*cellDrawer) (const world::Blockmap &, const world::BlockmapCell &, void *);
     const char *objectTypeName;
     switch (bmapShowDebug)
     {
@@ -583,7 +583,7 @@ void Rend_BlockmapDebug()
     {
         // About the cell the followed Mobj is in.
         bool didClip;
-        BlockmapCell cell = blockmap->toCell(Vec2d(followMobj->origin), &didClip);
+        auto cell = blockmap->toCell(Vec2d(followMobj->origin), &didClip);
         if (!didClip)
         {
             drawCellInfoBox(Vec2d(DE_GAMEVIEW_WIDTH / 2, 30), *blockmap,

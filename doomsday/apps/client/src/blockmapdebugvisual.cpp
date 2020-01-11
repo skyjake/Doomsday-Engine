@@ -24,6 +24,10 @@ using namespace de;
 
 void BlockmapDebugVisual::draw(const world::Blockmap &bmap) // static
 {
+    // TODO: Needs refactoring. libdoomsday has the private implementation, which
+    // this relies on. world::Blockmap should expose the relevant info here?
+    
+#if 0
     const auto &d = bmap.d;
 
     const float UNIT_SIZE = 1;
@@ -77,4 +81,5 @@ void BlockmapDebugVisual::draw(const world::Blockmap &bmap) // static
 
     // Restore GL state.
     DGL_Color4fv(oldColor);
+#endif
 }

@@ -980,6 +980,51 @@ const BspTree &Map::bspTree() const
     throw MissingBspTreeError("Map::bspTree", "No BSP tree is available");
 }
 
+BspLeaf &Map::bspLeafAt(const Vec2d &point) const
+{
+    if (!d->bsp.tree)
+        /// @throw MissingBspTreeError  No BSP data is available.
+        throw MissingBspTreeError("Map::bspLeafAt", "No BSP data available");
+
+    const BspTree *bspTree = d->bsp.tree;
+    while (!bspTree->isLeaf())
+    {
+        auto &bspNode = bspTree->userData()->as<BspNode>();
+        dint side     = bspNode.pointOnSide(point) < 0;
+
+        // Descend to the child subspace on "this" side.
+        bspTree = bspTree->childPtr(BspTree::ChildId(side));
+    }
+
+    // We've arrived at a leaf.
+    return bspTree->userData()->as<BspLeaf>();
+}
+
+BspLeaf &Map::bspLeafAt_FixedPrecision(const Vec2d &point) const
+{
+    if (!d->bsp.tree)
+        /// @throw MissingBspTreeError  No BSP data is available.
+        throw MissingBspTreeError("Map::bspLeafAt_FixedPrecision", "No BSP data available");
+
+    fixed_t pointX[2] = { DBL2FIX(point.x), DBL2FIX(point.y) };
+
+    const BspTree *bspTree = d->bsp.tree;
+    while (!bspTree->isLeaf())
+    {
+        const auto &bspNode = bspTree->userData()->as<BspNode>();
+
+        fixed_t lineOriginX[2]    = { DBL2FIX(bspNode.origin.x),    DBL2FIX(bspNode.origin.y) };
+        fixed_t lineDirectionX[2] = { DBL2FIX(bspNode.direction.x), DBL2FIX(bspNode.direction.y) };
+        dint side = V2x_PointOnLineSide(pointX, lineOriginX, lineDirectionX);
+
+        // Decend to the child subspace on "this" side.
+        bspTree = bspTree->childPtr(BspTree::ChildId(side));
+    }
+
+    // We've arrived at a leaf.
+    return bspTree->userData()->as<BspLeaf>();
+}
+
 EntityDatabase &Map::entityDatabase() const
 {
     return d->entityDatabase;
@@ -1031,7 +1076,52 @@ LoopResult Map::forAllLines(const std::function<LoopResult (Line &)>& func) cons
     return LoopContinue;
 }
 
-LoopResult Map::forAllMobjsTouchingLine(Line &line, const std::function<LoopResult (mobj_t &)>& func) const
+LoopResult Map::forAllLinesInBox(const AABoxd &box, dint flags,
+                                 const std::function<LoopResult (Line &line)> &func) const
+{
+    LoopResult result = LoopContinue;
+
+    // Process polyobj lines?
+    if ((flags & LIF_POLYOBJ) && polyobjCount())
+    {
+        const dint localValidCount = World::validCount;
+        result = polyobjBlockmap().forAllInBox(box, [&func, &localValidCount](void *object) {
+            auto &pob = *reinterpret_cast<Polyobj *>(object);
+            if (pob.validCount != localValidCount) // not yet processed
+            {
+                pob.validCount = localValidCount;
+                for (Line *line : pob.lines())
+                {
+                    if (line->validCount() != localValidCount) // not yet processed
+                    {
+                        line->setValidCount(localValidCount);
+                        if (auto result = func(*line)) return result;
+                    }
+                }
+            }
+            return LoopResult(); // continue
+        });
+    }
+
+    // Process sector lines?
+    if (!result && (flags & LIF_SECTOR))
+    {
+        const dint localValidCount = World::validCount;
+        result = lineBlockmap().forAllInBox(box, [&func, &localValidCount](void *object) {
+            auto &line = *reinterpret_cast<Line *>(object);
+            if (line.validCount() != localValidCount) // not yet processed
+            {
+                line.setValidCount(localValidCount);
+                return func(line);
+            }
+            return LoopResult(); // continue
+        });
+    }
+
+    return result;
+}
+
+LoopResult Map::forAllMobjsTouchingLine(Line &line, const std::function<LoopResult (mobj_t &)> &func) const
 {
     /// @todo Optimize: It should not be necessary to collate the objects first in
     /// in order to perform the iteration. This kind of "belt and braces" safety
@@ -1107,6 +1197,360 @@ LoopResult Map::forAllMobjsTouchingSector(Sector &sector, const std::function<Lo
     return LoopContinue;
 }
 
+LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, const std::function<LoopResult (Sector &)>& func) const
+{
+    /// @todo Optimize: It should not be necessary to collate the objects first in
+    /// in order to perform the iteration. This kind of "belt and braces" safety
+    /// measure would not be necessary at this level if the caller(s) instead took
+    /// responsibility for managing relationship changes during the iteration. -ds
+
+    if (&Mobj_Map(mob) == this && Mobj_IsLinked(mob))
+    {
+        List<Sector *> linkStore;
+
+        // Always process the mobj's own sector first.
+        Sector &ownSec = *Mobj_BspLeafAtOrigin(mob).sectorPtr();
+        ownSec.setValidCount(World::validCount);
+        linkStore << &ownSec;
+
+        // Any good lines around here?
+        if (mob.lineRoot)
+        {
+            linknode_t *tn = d->mobjNodes.nodes;
+            for (nodeindex_t nix = tn[mob.lineRoot].next; nix != mob.lineRoot; nix = tn[nix].next)
+            {
+                auto *ld = reinterpret_cast<Line *>(tn[nix].ptr);
+
+                // All these lines have sectors on both sides.
+                // First, try the front.
+                Sector &frontSec = ld->front().sector();
+                if (frontSec.validCount() != World::validCount)
+                {
+                    frontSec.setValidCount(World::validCount);
+                    linkStore.append(&frontSec);
+                }
+
+                // And then the back.
+                /// @todo Above comment suggest always twosided, which is it? -ds
+                if (ld->back().hasSector())
+                {
+                    Sector &backSec = ld->back().sector();
+                    if (backSec.validCount() != World::validCount)
+                    {
+                        backSec.setValidCount(World::validCount);
+                        linkStore.append(&backSec);
+                    }
+                }
+            }
+        }
+
+        for (dint i = 0; i < linkStore.count(); ++i)
+        {
+            if (auto result = func(*linkStore[i]))
+                return result;
+        }
+    }
+
+    return LoopContinue;
+}
+
+LoopResult Map::forAllLinesTouchingMobj(mobj_t &mob, const std::function<LoopResult (Line &)> &func) const
+{
+    /// @todo Optimize: It should not be necessary to collate the objects first in
+    /// in order to perform the iteration. This kind of "belt and braces" safety
+    /// measure would not be necessary at this level if the caller(s) instead took
+    /// responsibility for managing relationship changes during the iteration. -ds
+
+    if (&Mobj_Map(mob) == this && Mobj_IsLinked(mob) && mob.lineRoot)
+    {
+        List<Line *> linkStore;
+
+        linknode_t *tn = d->mobjNodes.nodes;
+        for (nodeindex_t nix = tn[mob.lineRoot].next; nix != mob.lineRoot; nix = tn[nix].next)
+        {
+            linkStore.append(reinterpret_cast<Line *>(tn[nix].ptr));
+        }
+
+        for (dint i = 0; i < linkStore.count(); ++i)
+        {
+            if (auto result = func(*linkStore[i]))
+                return result;
+        }
+    }
+    return LoopContinue;
+}
+
+void Map::initPolyobjs()
+{
+    LOG_AS("Map::initPolyobjs");
+
+    for (Polyobj *po : d->polyobjs)
+    {
+        /// @todo Is this still necessary? -ds
+        /// (This data is updated automatically when moving/rotating).
+        po->updateBounds();
+        po->updateSurfaceTangents();
+
+        po->unlink();
+        po->link();
+    }
+}
+
+int Map::ambientLightLevel() const
+{
+    return d->ambientLightLevel;
+}
+
+const AABoxd &Map::bounds() const
+{
+    return d->bounds;
+}
+
+coord_t Map::gravity() const
+{
+    return d->effectiveGravity;
+}
+
+void Map::setGravity(coord_t newGravity)
+{
+    if (!de::fequal(d->effectiveGravity, newGravity))
+    {
+        d->effectiveGravity = newGravity;
+        LOG_MAP_VERBOSE("Effective gravity for %s now %.1f")
+            << (hasManifest() ? manifest().gets("id") : "(unknown map)") << d->effectiveGravity;
+    }
+}
+
+Thinkers &Map::thinkers() const
+{
+    if (bool( d->thinkers )) return *d->thinkers;
+    /// @throw MissingThinkersError  The thinker lists are not yet initialized.
+    throw MissingThinkersError("Map::thinkers", "Thinkers not initialized");
+}
+
+Sky &Map::sky() const
+{
+    return *d->sky;
+}
+
+dint Map::vertexCount() const
+{
+    return d->mesh.vertexCount();
+}
+
+Vertex &Map::vertex(dint index) const
+{
+    if (Vertex *vtx = vertexPtr(index)) return *vtx;
+    /// @throw MissingElementError  Invalid Vertex reference specified.
+    throw MissingElementError("Map::vertex", "Unknown Vertex index:" + String::asText(index));
+}
+
+Vertex *Map::vertexPtr(dint index) const
+{
+    if (index >= 0 && index < d->mesh.vertexCount())
+    {
+        return d->mesh.vertexs().at(index);
+    }
+    return nullptr;
+}
+
+LoopResult Map::forAllVertexs(const std::function<LoopResult (Vertex &)>& func) const
+{
+    for (Vertex *vtx : d->mesh.vertexs())
+    {
+        if (auto result = func(*vtx)) return result;
+    }
+    return LoopContinue;
+}
+
+dint Map::sectorCount() const
+{
+    return d->sectors.count();
+}
+
+dint Map::subspaceCount() const
+{
+    return d->subspaces.count();
+}
+
+ConvexSubspace &Map::subspace(dint index) const
+{
+    if (ConvexSubspace *sub = subspacePtr(index)) return *sub;
+    /// @throw MissingElementError  Invalid ConvexSubspace reference specified.
+    throw MissingElementError("Map::subspace", "Unknown subspace index:" + String::asText(index));
+}
+
+ConvexSubspace *Map::subspacePtr(dint index) const
+{
+    if (index >= 0 && index < d->subspaces.count())
+    {
+        return d->subspaces.at(index);
+    }
+    return nullptr;
+}
+
+LoopResult Map::forAllSubspaces(const std::function<LoopResult (ConvexSubspace &)>& func) const
+{
+    for (ConvexSubspace *sub : d->subspaces)
+    {
+        if (auto result = func(*sub)) return result;
+    }
+    return LoopContinue;
+}
+
+LineSide &Map::side(dint index) const
+{
+    if (LineSide *side = sidePtr(index)) return *side;
+    /// @throw MissingElementError  Invalid LineSide reference specified.
+    throw MissingElementError("Map::side", stringf("Unknown LineSide index: %i", index));
+}
+
+LineSide *Map::sidePtr(dint index) const
+{
+    if (index < 0) return nullptr;
+    return &d->lines.at(index / 2)->side(index % 2);
+}
+
+dint Map::toSideIndex(dint lineIndex, dint backSide) // static
+{
+    DE_ASSERT(lineIndex >= 0);
+    return lineIndex * 2 + (backSide? 1 : 0);
+}
+
+bool Map::identifySoundEmitter(const SoundEmitter &emitter, Sector **sector,
+                               Polyobj **poly, Plane **plane, Surface **surface) const
+{
+    *sector  = nullptr;
+    *poly    = nullptr;
+    *plane   = nullptr;
+    *surface = nullptr;
+
+    /// @todo Optimize: All sound emitters in a sector are linked together forming
+    /// a chain. Make use of the chains instead.
+
+    *poly = d->polyobjBySoundEmitter(emitter);
+    if (!*poly)
+    {
+        // Not a polyobj. Try the sectors next.
+        *sector = d->sectorBySoundEmitter(emitter);
+        if (!*sector)
+        {
+            // Not a sector. Try the planes next.
+            *plane = d->planeBySoundEmitter(emitter);
+            if (!*plane)
+            {
+                // Not a plane. Try the surfaces next.
+                *surface = d->surfaceBySoundEmitter(emitter);
+            }
+        }
+    }
+
+    return (*sector != 0 || *poly != 0|| *plane != 0|| *surface != 0);
+}
+
+void Map::initNodePiles()
+{
+    LOG_AS("Map");
+
+    Time begunAt;
+
+    // Initialize node piles and line rings.
+    NP_Init(&d->mobjNodes, 256);  // Allocate a small pile.
+    NP_Init(&d->lineNodes, lineCount() + 1000);
+
+    // Allocate the rings.
+    DE_ASSERT(d->lineLinks == nullptr);
+    d->lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*d->lineLinks) * lineCount(), PU_MAPSTATIC, 0);
+
+    for (dint i = 0; i < lineCount(); ++i)
+    {
+        d->lineLinks[i] = NP_New(&d->lineNodes, NP_ROOT_NODE);
+    }
+
+    // How much time did we spend?
+    LOGDEV_MAP_MSG("Initialized node piles in %.2f seconds") << begunAt.since();
+}
+
+Sector &Map::sector(dint index) const
+{
+    if (Sector *sec = sectorPtr(index)) return *sec;
+    /// @throw MissingElementError  Invalid Sector reference specified.
+    throw MissingElementError("Map::sector", "Unknown Sector index:" + String::asText(index));
+}
+
+Sector *Map::sectorPtr(dint index) const
+{
+    if (index >= 0 && index < d->sectors.count())
+    {
+        return d->sectors.at(index);
+    }
+    return nullptr;
+}
+
+LoopResult Map::forAllSectors(const std::function<LoopResult (Sector &)> &func) const
+{
+    for (Sector *sec : d->sectors)
+    {
+        if (auto result = func(*sec)) return result;
+    }
+    return LoopContinue;
+}
+
+Subsector *Map::subsectorAt(const Vec2d &point) const
+{
+    BspLeaf &bspLeaf = bspLeafAt(point);
+    if (bspLeaf.hasSubspace() && bspLeaf.subspace().contains(point))
+    {
+        return bspLeaf.subspace().subsectorPtr();
+    }
+    return nullptr;
+}
+
+Subsector &Map::subsector(de::Id id) const
+{
+    if (Subsector *subsec = subsectorPtr(id)) return *subsec;
+    /// @throw MissingElementError  Invalid Sector reference specified.
+    throw MissingSubsectorError("Map::subsector", "Unknown Subsector \"" + id.asText() + "\"");
+}
+
+Subsector *Map::subsectorPtr(de::Id id) const
+{
+    auto found = d->subsectorsById.find(id);
+    if (found != d->subsectorsById.end())
+    {
+        return found->second;
+    }
+    return nullptr;
+}
+
+const Blockmap &Map::mobjBlockmap() const
+{
+    if (bool(d->mobjBlockmap)) return *d->mobjBlockmap;
+    /// @throw MissingBlockmapError  The mobj blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::mobjBlockmap", "Mobj blockmap is not initialized");
+}
+
+const Blockmap &Map::polyobjBlockmap() const
+{
+    if (bool(d->polyobjBlockmap)) return *d->polyobjBlockmap;
+    /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::polyobjBlockmap", "Polyobj blockmap is not initialized");
+}
+
+const LineBlockmap &Map::lineBlockmap() const
+{
+    if (bool(d->lineBlockmap)) return *d->lineBlockmap;
+    /// @throw MissingBlockmapError  The line blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::lineBlockmap", "Line blockmap is not initialized");
+}
+
+const Blockmap &Map::subspaceBlockmap() const
+{
+    if (bool(d->subspaceBlockmap)) return *d->subspaceBlockmap;
+    /// @throw MissingBlockmapError  The subspace blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::subspaceBlockmap", "Convex subspace blockmap is not initialized");
+}
+
 dint Map::unlink(mobj_t &mob)
 {
     dint links = 0;
@@ -1151,6 +1595,16 @@ void Map::link(mobj_t &mob, dint flags)
     }
 }
 
+void Map::unlink(Polyobj &polyobj)
+{
+    d->polyobjBlockmap->unlink(polyobj.bounds, &polyobj);
+}
+
+void Map::link(Polyobj &polyobj)
+{
+    d->polyobjBlockmap->link(polyobj.bounds, &polyobj);
+}
+
 dint Map::polyobjCount() const
 {
     return d->polyobjs.count();
@@ -1193,11 +1647,11 @@ static Vertex *rootVtx;
  * pre: rootVtx must point to the vertex common between a and b
  *      which are (lineowner_t*) ptrs.
  */
-static dint lineAngleSorter(const void *a, const void *b)
+static int lineAngleSorter(LineOwner *a, LineOwner *b)
 {
     binangle_t angles[2];
 
-    world::LineOwner *own[2] = { (world::LineOwner *)a, (world::LineOwner *)b };
+    world::LineOwner *own[2] = { a, b };
     for (duint i = 0; i < 2; ++i)
     {
         if (own[i]->_link[CounterClockwise]) // We have a cached result.
@@ -1206,13 +1660,13 @@ static dint lineAngleSorter(const void *a, const void *b)
         }
         else
         {
-            auto *line = &own[i]->line();
+            const auto *line = &own[i]->line();
             const auto &otherVtx = line->vertex(&line->from() == rootVtx? 1:0);
 
-            fixed_t dx = otherVtx.origin().x - rootVtx->origin().x;
-            fixed_t dy = otherVtx.origin().y - rootVtx->origin().y;
+            auto dx = otherVtx.origin().x - rootVtx->origin().x;
+            auto dy = otherVtx.origin().y - rootVtx->origin().y;
 
-            own[i]->_angle = angles[i] = bamsAtan2(-100 *dx, 100 * dy);
+            own[i]->_angle = angles[i] = bamsAtan2(int(-100 * dx), int(100 * dy));
 
             // Mark as having a cached angle.
             own[i]->_link[CounterClockwise] = (world::LineOwner *) 1;
@@ -1228,7 +1682,7 @@ static dint lineAngleSorter(const void *a, const void *b)
  * @return  The newly merged list.
  */
 static LineOwner *mergeLineOwners(LineOwner *left, LineOwner *right,
-                                  dint (*compare) (const void *a, const void *b))
+                                  int (*compare) (LineOwner *, LineOwner *))
 {
     LineOwner tmp;
     LineOwner *np = &tmp;
@@ -1296,7 +1750,7 @@ static LineOwner *splitLineOwners(LineOwner *list)
  * This routine uses a recursive mergesort algorithm; O(NlogN)
  */
 static LineOwner *sortLineOwners(LineOwner *list,
-                                 dint (*compare) (const void *a, const void *b))
+                                 int (*compare) (LineOwner *a, LineOwner *b))
 {
     if (list && list->next())
     {
@@ -1667,11 +2121,8 @@ bool Map::endEditing()
     }
 
     // Finish sectors.
-    std::map<int, Sector *> sectorsByArchiveIndex;
     for (Sector *sector : d->sectors)
     {
-        sectorsByArchiveIndex[sector->indexInArchive()] = sector;
-
         d->buildSubsectors(*sector);
         sector->buildSides();
         sector->chainSoundEmitters();
@@ -1719,7 +2170,7 @@ Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
         /// @throw EditError  Attempted when not editing.
         throw EditError("Map::createLine", "Editing is not enabled");
 
-    auto *line = new Line(v1, v2, flags, frontSector, backSector);
+    auto *line = Factory::newLine(v1, v2, flags, frontSector, backSector);
     d->editable.lines.append(line);
 
     line->setMap(this);
@@ -1804,6 +2255,113 @@ const Map::Polyobjs &Map::editablePolyobjs() const
         throw EditError("Map::editablePolyobjs", "Editing is not enabled");
     }
     return d->editable.polyobjs;
+}
+
+String Map::objectSummaryAsStyledText() const
+{
+    dint thCountInStasis = 0;
+    dint thCount = thinkers().count(&thCountInStasis);
+    String str;
+
+#define TABBED(count, label) Stringf(_E(Ta) "  %i " _E(Tb) "%s\n", count, label)
+    if (thCount) str += TABBED(thCount, stringf("Thinkers (%i in stasis)", thCountInStasis).c_str());
+#undef TABBED
+
+    return str.rightStrip();
+}
+
+String Map::elementSummaryAsStyledText() const
+{
+    String str;
+
+#define TABBED(count, label) Stringf(_E(Ta) "  %i " _E(Tb) "%s\n", count, label)
+    if (lineCount())    str += TABBED(lineCount(),    "Lines");
+    //if (sideCount())    str += TABBED(sideCount(),    "Sides");
+    if (sectorCount())  str += TABBED(sectorCount(),  "Sectors");
+    if (vertexCount())  str += TABBED(vertexCount(),  "Vertexes");
+    if (polyobjCount()) str += TABBED(polyobjCount(), "Polyobjs");
+#undef TABBED
+
+    return str.rightStrip();
+}
+
+void Map::initDummyElements() // static
+{
+    // TODO: free existing/old dummies here?
+
+    auto &g = DummyGlobals::get();
+    g.dummies.clear();
+    g.dummyMesh.clear();
+}
+
+int Map::dummyElementType(const void *dummy)
+{
+    const MapElement *elem = reinterpret_cast<const MapElement *>(dummy);
+    if (!dynamic_cast<const DummyData *>(elem))
+    {
+        // Not a dummy.
+        return DMU_NONE;
+    }
+    DE_ASSERT(DummyGlobals::get().dummies.contains(const_cast<MapElement *>(elem)));
+    return elem->type();
+}
+
+void *Map::createDummyElement(int type, void *extraData)
+{
+    auto &g = DummyGlobals::get();
+    switch(type)
+    {
+        case DMU_LINE:
+        {
+            // Time to allocate the dummy vertex?
+            if(g.dummyMesh.vertexsIsEmpty())
+            {
+                g.dummyMesh.newVertex();
+            }
+            Vertex &dummyVertex = *g.dummyMesh.vertexs().first();
+            DummyLine *dl = new DummyLine(dummyVertex, dummyVertex);
+            g.dummies.insert(dl);
+            dl->extraData = extraData;
+            return dl;
+        }
+        case DMU_SECTOR:
+        {
+            DummySector *ds = new DummySector;
+            g.dummies.insert(ds);
+            ds->extraData = extraData;
+            return ds;
+        }
+        default:
+            break;
+    }
+    throw Error("Map::createDummyElement",
+                stringf("Dummies of type %s are not supported", DMU_Str(type)));
+}
+
+void Map::destroyDummyElement(void *mapElement)
+{
+    MapElement *elem = reinterpret_cast<MapElement *>(mapElement);
+
+    const int type = dummyElementType(mapElement);
+    if (type == DMU_NONE)
+    {
+        throw Error("Map::destroyDummyMapElement", "Dummy is of unknown type");
+    }
+
+    DE_ASSERT(DummyGlobals::get().dummies.contains(elem));
+
+    DummyGlobals::get().dummies.remove(elem);
+    delete elem;
+}
+
+void *Map::dummyElementExtraData(void *mapElement)
+{
+    if (dummyElementType(mapElement) != DMU_NONE)
+    {
+        MapElement *elem = reinterpret_cast<MapElement *>(mapElement);
+        return maybeAs<DummyData>(elem)->extraData;
+    }
+    return nullptr;
 }
 
 D_CMD(InspectMap)
@@ -1894,85 +2452,6 @@ void Map::consoleRegister() // static
     C_VAR_INT("bsp-factor", &bspSplitFactor, CVF_NO_MAX, 0, 0);
 
     C_CMD("inspectmap", "", InspectMap);
-}
-
-void Map::initDummyElements() // static
-{
-    // TODO: free existing/old dummies here?
-
-    auto &g = DummyGlobals::get();
-    g.dummies.clear();
-    g.dummyMesh.clear();
-}
-
-int Map::dummyElementType(const void *dummy)
-{
-    const MapElement *elem = reinterpret_cast<const MapElement *>(dummy);
-    if (!dynamic_cast<const DummyData *>(elem))
-    {
-        // Not a dummy.
-        return DMU_NONE;
-    }
-    DE_ASSERT(DummyGlobals::get().dummies.contains(const_cast<MapElement *>(elem)));
-    return elem->type();
-}
-
-void *Map::createDummyElement(int type, void *extraData)
-{
-    auto &g = DummyGlobals::get();
-    switch(type)
-    {
-        case DMU_LINE:
-        {
-            // Time to allocate the dummy vertex?
-            if(g.dummyMesh.vertexsIsEmpty())
-            {
-                g.dummyMesh.newVertex();
-            }
-            Vertex &dummyVertex = *g.dummyMesh.vertexs().first();
-            DummyLine *dl = new DummyLine(dummyVertex, dummyVertex);
-            g.dummies.insert(dl);
-            dl->extraData = extraData;
-            return dl;
-        }
-        case DMU_SECTOR:
-        {
-            DummySector *ds = new DummySector;
-            g.dummies.insert(ds);
-            ds->extraData = extraData;
-            return ds;
-        }
-        default:
-            break;
-    }
-    throw Error("Map::createDummyElement",
-                stringf("Dummies of type %s are not supported", DMU_Str(type)));
-}
-
-void Map::destroyDummyElement(void *mapElement)
-{
-    MapElement *elem = reinterpret_cast<MapElement *>(mapElement);
-
-    const int type = dummyElementType(mapElement);
-    if (type == DMU_NONE)
-    {
-        throw Error("Map::destroyDummyMapElement", "Dummy is of unknown type");
-    }
-
-    DE_ASSERT(DummyGlobals::get().dummies.contains(elem));
-
-    DummyGlobals::get().dummies.remove(elem);
-    delete elem;
-}
-
-void *Map::dummyElementExtraData(void *mapElement)
-{
-    if (dummyElementType(mapElement) != DMU_NONE)
-    {
-        MapElement *elem = reinterpret_cast<MapElement *>(mapElement);
-        return maybeAs<DummyData>(elem)->extraData;
-    }
-    return nullptr;
 }
 
 } // namespace world

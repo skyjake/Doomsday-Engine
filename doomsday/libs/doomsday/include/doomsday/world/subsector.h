@@ -48,15 +48,6 @@ public:
     /// Notified when the subsector is about to be deleted.
     DE_DEFINE_AUDIENCE(Deletion, void subsectorBeingDeleted(const Subsector &subsector))
 
-    /**
-     * Construct a new subsector comprised of the specified set of map subspace regions.
-     * It is assumed that all the subspaces are attributed to the same Sector and there
-     * is always at least one in the set.
-     *
-     * @param subspaces  Set of subspaces comprising the resulting subsector.
-     */
-    Subsector(de::List<ConvexSubspace *> const &subspaces);
-
     virtual ~Subsector();
 
     DE_CAST_METHODS()
@@ -132,6 +123,16 @@ public:
      */
     de::List<mesh::HEdge *> listUniqueBoundaryEdges() const;
 
+protected:
+    /**
+     * Construct a new subsector comprised of the specified set of map subspace regions.
+     * It is assumed that all the subspaces are attributed to the same Sector and there
+     * is always at least one in the set.
+     *
+     * @param subspaces  Set of subspaces comprising the resulting subsector.
+     */
+    Subsector(const de::List<ConvexSubspace *> &subspaces);
+    
 private:
     DE_PRIVATE(d)
 };

@@ -20,20 +20,19 @@
 #ifndef RENDER_WALLEDGE
 #define RENDER_WALLEDGE
 
-#include <de/Error>
-#include <de/Vector>
-
-#include "Line"
+#include "world/line.h"
 #include "WallSpec"
 #include "TriangleStripBuilder"
 #include "IHPlane"
+
+#include <doomsday/mesh/hedge.h>
+#include <de/Error>
+#include <de/Vector>
 
 class Surface;
 
 /// Maximum number of intercepts in a WallEdge.
 #define WALLEDGE_MAX_INTERCEPTS          64
-
-namespace de { class HEdge; }
 
 /**
  * Helper/utility class intended to simplify the process of generating sections of wall
@@ -71,7 +70,7 @@ public:
      *
      * @param hedge  Assumed to have a mapped LineSideSegment with sections.
      */
-    WallEdge(const WallSpec &spec, de::HEdge &hedge, int edge);
+    WallEdge(const WallSpec &spec, mesh::HEdge &hedge, int edge);
 
     virtual ~WallEdge();
 
@@ -89,7 +88,7 @@ public:
     const WallSpec &spec() const;
 
     inline LineSide &lineSide() const {
-        return lineSideSegment().lineSide();
+        return lineSideSegment().lineSide().as<LineSide>();
     }
 
     coord_t lineSideOffset() const;

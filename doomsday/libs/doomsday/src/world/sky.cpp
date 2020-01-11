@@ -38,8 +38,8 @@ DE_PIMPL_NOREF(Sky::Layer)
     bool active         = false;
     bool masked         = false;
     Material *material = nullptr;
-    dfloat offset       = 0;
-    dfloat fadeOutLimit = 0;
+    float offset       = 0;
+    float fadeOutLimit = 0;
 
     Sky &sky;
     Impl(Sky &sky) : sky(sky) {}
@@ -105,22 +105,22 @@ void Sky::Layer::setMaterial(Material *newMaterial)
     }
 }
 
-dfloat Sky::Layer::offset() const
+float Sky::Layer::offset() const
 {
     return d->offset;
 }
 
-void Sky::Layer::setOffset(dfloat newOffset)
+void Sky::Layer::setOffset(float newOffset)
 {
     d->offset = newOffset;
 }
 
-dfloat Sky::Layer::fadeOutLimit() const
+float Sky::Layer::fadeOutLimit() const
 {
     return d->fadeOutLimit;
 }
 
-void Sky::Layer::setFadeoutLimit(dfloat newLimit)
+void Sky::Layer::setFadeoutLimit(float newLimit)
 {
     d->fadeOutLimit = newLimit;
 }
@@ -132,8 +132,8 @@ DE_PIMPL(Sky)
     Layers layers;
 
     const Record *def    = nullptr; ///< Sky definition.
-    dfloat height        = 1;
-    dfloat horizonOffset = 0;
+    float height        = 1;
+    float horizonOffset = 0;
 
     Impl(Public *i) : Base(i)
     {
@@ -174,7 +174,7 @@ void Sky::configure(const defn::Sky *def)
     setHeight(def? def->getf("height") : DEFAULT_SKY_HEIGHT);
     setHorizonOffset(def? def->getf("horizonOffset") : DEFAULT_SKY_HORIZON_OFFSET);
 
-    for(dint i = 0; i < d->layers.count(); ++i)
+    for(int i = 0; i < d->layers.count(); ++i)
     {
         const Record *lyrDef = def? &def->layer(i) : 0;
         Layer &lyr = *d->layers[i];
@@ -210,30 +210,30 @@ const Record *Sky::def() const
     return d->def;
 }
 
-dint Sky::layerCount() const
+int Sky::layerCount() const
 {
     return d->layers.count();
 }
 
-bool Sky::hasLayer(dint layerIndex) const
+bool Sky::hasLayer(int layerIndex) const
 {
     return !d->layers.isEmpty() && layerIndex < d->layers.count();
 }
 
-Sky::Layer *Sky::layerPtr(dint layerIndex) const
+Sky::Layer *Sky::layerPtr(int layerIndex) const
 {
     if (hasLayer(layerIndex)) return d->layers.at(layerIndex).get();
     return nullptr;
 }
 
-Sky::Layer &Sky::layer(dint layerIndex)
+Sky::Layer &Sky::layer(int layerIndex)
 {
     if (Layer *layer = layerPtr(layerIndex)) return *layer;
     /// @throw MissingLayerError Unknown layerIndex specified,
     throw MissingLayerError("Sky::layer", stringf("Unknown layer #%i", layerIndex));
 }
 
-const Sky::Layer &Sky::layer(dint layerIndex) const
+const Sky::Layer &Sky::layer(int layerIndex) const
 {
     if (Layer *layer = layerPtr(layerIndex)) return *layer;
     /// @throw MissingLayerError Unknown layerIndex specified,
@@ -258,12 +258,12 @@ LoopResult Sky::forAllLayers(const std::function<LoopResult (const Layer &)>& fu
     return LoopContinue;
 }
 
-dfloat Sky::height() const
+float Sky::height() const
 {
     return d->height;
 }
 
-void Sky::setHeight(dfloat newHeight)
+void Sky::setHeight(float newHeight)
 {
     newHeight = de::clamp(0.f, newHeight, 1.f);
     if(!de::fequal(d->height, newHeight))
@@ -273,12 +273,12 @@ void Sky::setHeight(dfloat newHeight)
     }
 }
 
-dfloat Sky::horizonOffset() const
+float Sky::horizonOffset() const
 {
     return d->horizonOffset;
 }
 
-void Sky::setHorizonOffset(dfloat newOffset)
+void Sky::setHorizonOffset(float newOffset)
 {
     if(!de::fequal(d->horizonOffset, newOffset))
     {
@@ -287,14 +287,14 @@ void Sky::setHorizonOffset(dfloat newOffset)
     }
 }
 
-dint Sky::property(DmuArgs &args) const
+int Sky::property(DmuArgs &args) const
 {
     LOG_AS("Sky");
 
     switch(args.prop)
     {
     case DMU_FLAGS: {
-        dint flags = 0;
+        int flags = 0;
         if(layer(0).isActive()) flags |= SKYF_LAYER0_ENABLED;
         if(layer(1).isActive()) flags |= SKYF_LAYER1_ENABLED;
 
@@ -315,14 +315,14 @@ dint Sky::property(DmuArgs &args) const
     return false; // Continue iteration.
 }
 
-dint Sky::setProperty(const DmuArgs &args)
+int Sky::setProperty(const DmuArgs &args)
 {
     LOG_AS("Sky");
 
     switch(args.prop)
     {
     case DMU_FLAGS: {
-        dint flags = 0;
+        int flags = 0;
         if(layer(0).isActive()) flags |= SKYF_LAYER0_ENABLED;
         if(layer(1).isActive()) flags |= SKYF_LAYER1_ENABLED;
 
@@ -333,7 +333,7 @@ dint Sky::setProperty(const DmuArgs &args)
         break; }
 
     case DMU_HEIGHT: {
-        dfloat newHeight = d->height;
+        float newHeight = d->height;
         args.value(DDVT_FLOAT, &newHeight, 0);
 
         setHeight(newHeight);

@@ -21,7 +21,7 @@
 #define DE_CLIENT_PLANEMOVER_H
 
 #include "api_thinker.h"
-#include "Plane"
+#include "world/plane.h"
 #include <doomsday/world/thinkerdata.h>
 
 /**

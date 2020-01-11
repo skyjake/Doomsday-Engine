@@ -24,6 +24,8 @@
 #include <de/Error>
 #include <de/Log>
 #include <doomsday/console/var.h>
+#include <doomsday/mesh/hedge.h>
+#include <doomsday/tab_tables.h>
 
 #include "dd_def.h"
 #include "render/rend_main.h"
@@ -811,7 +813,7 @@ dint AngleClipper::isPointVisible(const Vec3d &point) const
     return true;  // Not occluded.
 }
 
-dint AngleClipper::isPolyVisible(const Face &poly) const
+dint AngleClipper::isPolyVisible(const mesh::Face &poly) const
 {
     DE_ASSERT(poly.isConvex());
 
@@ -826,7 +828,7 @@ dint AngleClipper::isPolyVisible(const Face &poly) const
     // Find angles to all corners.
     const Vec2d eyeOrigin = Rend_EyeOrigin().xz();
     dint n = 0;
-    const HEdge *hedge = poly.hedge();
+    const auto *hedge = poly.hedge();
     do
     {
         d->angleBuf[n++] = pointToAngle(hedge->origin() - eyeOrigin);

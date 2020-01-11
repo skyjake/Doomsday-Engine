@@ -171,8 +171,6 @@ public:
     de::LoopResult forAllInPath(const de::Vec2d &from, const de::Vec2d &to,
                                 std::function<de::LoopResult (void *object)> func) const;
 
-    friend class ::BlockmapDebugVisual;
-
 private:
     DE_PRIVATE(d)
 };

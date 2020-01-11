@@ -19,13 +19,13 @@
 #include "world/bindings_world.h"
 #include "world/clientserverworld.h"
 #include "world/map.h"
-#include "world/thinkers.h"
 #include "world/p_players.h"
 #include "audio/audiosystem.h"
 #include "dd_main.h"
 
 #include <doomsday/defs/ded.h>
 #include <doomsday/world/mobj.h>
+#include <doomsday/world/thinkers.h>
 #include <de/Context>
 #include <de/RecordValue>
 

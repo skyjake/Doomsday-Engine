@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_WORLD_GENERATOR_H
-#define CLIENT_WORLD_GENERATOR_H
+#pragma once
 
 #include <de/Vector>
 #include <doomsday/defs/dedtypes.h>
@@ -29,22 +28,18 @@ class Line;
 class Plane;
 struct mobj_s;
 
-namespace world {
-
-class BspLeaf;
-
 /**
  * POD structure used when querying the current state of a particle.
  */
 struct ParticleInfo
 {
-    int stage;           ///< -1 => particle doesn't exist
-    de::dshort tics;
-    fixed_t origin[3];        ///< Coordinates.
-    fixed_t mov[3];           ///< Momentum.
-    world::BspLeaf *bspLeaf;  ///< Updated when needed.
-    Line *contact;            ///< Updated when lines hit/avoided.
-    de::dushort yaw, pitch;   ///< Rotation angles (0-65536 => 0-360).
+    int             stage;      // -1 => particle doesn't exist
+    int16_t         tics;
+    fixed_t         origin[3];  // Coordinates.
+    fixed_t         mov[3];     // Momentum.
+    world::BspLeaf *bspLeaf;    // Updated when needed.
+    Line *          contact;    // Updated when lines hit/avoided.
+    uint16_t        yaw, pitch; // Rotation angles (0-65536 => 0-360).
 };
 
 /**
@@ -75,7 +70,7 @@ struct Generator
             RandomPitch    = 0x1000
         };
 
-        de::dshort type;
+        int16_t type;
         de::Flags flags;
         fixed_t resistance;
         fixed_t bounce;
@@ -105,20 +100,20 @@ struct Generator
     };
 
     /// Unique identifier associated with each generator (1-based).
-    typedef de::dshort Id;
+    typedef int16_t Id;
 
-public:                                   /// @todo make private:
-    thinker_t           thinker;          ///< Func = P_PtcGenThinker
-    Plane *             plane;            ///< Flat-triggered.
-    const ded_ptcgen_t *def;              ///< The definition of this generator.
-    struct mobj_s *     source;           ///< If mobj-triggered.
-    int            srcid;            ///< Source mobj ID.
-    int            type;             ///< Type-triggered; mobj type number (-1=none).
-    int            type2;            ///< Type-triggered; alternate type.
-    fixed_t             originAtSpawn[3]; ///< Used by untriggered/damage gens.
-    fixed_t             vector[3];        ///< Converted from the definition.
-    float          spawnRateMultiplier;
-    int            count; ///< Number of particles generated thus far.
+public:                                   //! @todo make private:
+    thinker_t           thinker;          //  Func = P_PtcGenThinker
+    Plane *             plane;            //  Flat-triggered.
+    const ded_ptcgen_t *def;              //  The definition of this generator.
+    struct mobj_s *     source;           //  If mobj-triggered.
+    int                 srcid;            //  Source mobj ID.
+    int                 type;             //  Type-triggered; mobj type number (-1=none).
+    int                 type2;            //  Type-triggered; alternate type.
+    fixed_t             originAtSpawn[3]; //  Used by untriggered/damage gens.
+    fixed_t             vector[3];        //  Converted from the definition.
+    float               spawnRateMultiplier;
+    int                 count;            // Number of particles generated thus far.
     ParticleStage *     stages;
 
 public:
@@ -127,7 +122,7 @@ public:
      *
      * @see Thinker_Map()
      */
-    world::Map &map() const;
+    Map &map() const;
 
     /**
      * Returns the unique identifier of the generator. The identifier is 1-based.
@@ -237,20 +232,16 @@ public:
     static void consoleRegister();
 
 private:
-    Id            _id; ///< Unique in the map.
+    Id            _id; // Unique in the map.
     de::Flags     _flags;
-    int      _age; ///< Time since spawn, in tics.
-    float    _spawnCount;
-    bool          _untriggered; ///< @c true= consider this as not yet triggered.
-    int      _spawnCP;     ///< Particle spawn cursor.
-    ParticleInfo *_pinfo;       ///< Info about each generated particle.
+    int           _age; // Time since spawn, in tics.
+    float         _spawnCount;
+    bool          _untriggered; // @c true= consider this as not yet triggered.
+    int           _spawnCP;     // Particle spawn cursor.
+    ParticleInfo *_pinfo;       // Info about each generated particle.
 };
 
 typedef Generator::ParticleStage GeneratorParticleStage;
 
 void Generator_Delete(Generator *gen);
 void Generator_Thinker(Generator *gen);
-
-}  // namespace world
-
-#endif  // CLIENT_WORLD_GENERATOR_H

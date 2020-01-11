@@ -46,7 +46,6 @@
 #define MAX_MODELS  32
 
 using namespace de;
-using namespace world;
 
 namespace internal {
 
@@ -93,7 +92,7 @@ struct Hemisphere
     /**
      * Determine the material to use for the given sky @a layer.
      */
-    static world::Material *chooseMaterialForSkyLayer(const SkyLayer &layer)
+    static world::Material *chooseMaterialForSkyLayer(const world::SkyLayer &layer)
     {
         if(renderTextures == 0)
         {
@@ -113,7 +112,7 @@ struct Hemisphere
     /**
      * Determine the cap/fadeout color to use for the given sky @a layer.
      */
-    static Vec3f chooseCapColor(SphereComponent hemisphere, const SkyLayer &layer,
+    static Vec3f chooseCapColor(SphereComponent hemisphere, const world::SkyLayer &layer,
                                    bool *needFadeOut = nullptr)
     {
         if (world::Material *mat = chooseMaterialForSkyLayer(layer))
@@ -185,7 +184,7 @@ struct Hemisphere
         DGL_End();
     }
 
-    void draw(SphereComponent hemisphere, const Sky &sky, dint firstActiveLayer,
+    void draw(SphereComponent hemisphere, const world::Sky &sky, dint firstActiveLayer,
               const LayerData *layerData) const
     {
         DE_ASSERT(layerData);
@@ -208,7 +207,7 @@ struct Hemisphere
 
         for (dint i = firstActiveLayer; i < MAX_LAYERS; ++i)
         {
-            const SkyLayer &skyLayer = sky.layer(i);
+            const auto &skyLayer = sky.layer(i);
             const LayerData &ldata   = layerData[i];
 
             if (!ldata.active) continue;
@@ -389,7 +388,7 @@ DE_PIMPL(SkyDrawable)
         firstActiveLayer = -1;
         for (dint i = 0; i < MAX_LAYERS; ++i)
         {
-            const SkyLayer &skyLayer = sky->layer(i);
+            const auto &skyLayer = sky->layer(i);
 
             layers[i].active = skyLayer.isActive();
             layers[i].offset = skyLayer.offset() + animator->layer(i).offset;
@@ -574,21 +573,21 @@ DE_PIMPL(SkyDrawable)
     }
 
     /// Observes Sky Deletion
-    void skyBeingDeleted(const Sky &)
+    void skyBeingDeleted(const world::Sky &) override
     {
         // Stop observing Sky change notifications.
         self().configure();
     }
 
     /// Observes Sky HeightChange
-    void skyHeightChanged(Sky &)
+    void skyHeightChanged(world::Sky &) override
     {
         // Defer the update (we may be part way through drawing a frame).
         needHeightUpdate = true;
     }
 
     /// Observes Sky HeightChange
-    void skyHorizonOffsetChanged(Sky &)
+    void skyHorizonOffsetChanged(world::Sky &) override
     {
         // Defer the update (we may be part way through drawing a frame).
         needHorizonOffsetUpdate = true;
@@ -635,7 +634,7 @@ void SkyDrawable::cacheAssets()
 {
     if (!d->sky) return;
 
-    d->sky->forAllLayers([] (const SkyLayer &layer)
+    d->sky->forAllLayers([] (const world::SkyLayer &layer)
     {
         if (world::Material *mat = layer.material())
         {

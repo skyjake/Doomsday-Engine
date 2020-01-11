@@ -29,30 +29,36 @@
 #include "network/net_main.h"
 #include "world/maputil.h"
 #include "world/p_players.h"
+#include "world/plane.h"
+#include "world/map.h"
 #include "world/clientserverworld.h"
-#include "BspLeaf"
+#include "render/rend_fakeradio.h"
 #include "ConvexSubspace"
-#include "Face"
-#include "Interceptor"
 #include "Surface"
 
 #include <de/legacy/memoryzone.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/resource/mapmanifests.h>
+#include <doomsday/mesh/face.h>
 #include <doomsday/world/blockmap.h>
+#include <doomsday/world/bspleaf.h>
+#include <doomsday/world/interceptor.h>
 #include <doomsday/world/linesighttest.h>
+#include <doomsday/world/lineopening.h>
 #include <doomsday/world/MaterialManifest>
 #include <doomsday/world/Materials>
 #include <doomsday/world/plane.h>
+#include <doomsday/world/sector.h>
 #include <doomsday/world/thinkers.h>
 #include <doomsday/EntityDatabase>
 
 using namespace de;
-using namespace world;
+using world::MapElement;
+using world::DmuArgs;
 
 // Converting a public void* pointer to an internal world::MapElement.
-#define IN_ELEM(p)          reinterpret_cast<MapElement *>(p)
-#define IN_ELEM_CONST(p)    reinterpret_cast<const MapElement *>(p)
+#define IN_ELEM(p)          reinterpret_cast<world::MapElement *>(p)
+#define IN_ELEM_CONST(p)    reinterpret_cast<const world::MapElement *>(p)
 
 #undef DMU_GetType
 int DMU_GetType(const void *ptr)
@@ -127,7 +133,7 @@ int P_ToIndex(const void *ptr)
         return elem->as<Plane>().indexInSector();
 
     case DMU_MATERIAL:
-        return elem->as<Material>().manifest().id(); // 1-based
+        return elem->as<world::Material>().manifest().id(); // 1-based
 
     default:
         DE_ASSERT_FAIL("Invalid DMU type"); // Unknown/non-indexable DMU type.
@@ -204,17 +210,17 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
     switch(elem->type())
     {
     case DMU_SECTOR: {
-        Sector &sector = elem->as<Sector>();
+        auto &sector = elem->as<world::Sector>();
         switch(prop)
         {
         case DMU_LINE:
-            return sector.forAllSides([&callback, &context] (LineSide &side)
+            return sector.forAllSides([&callback, &context] (world::LineSide &side)
             {
                 return callback(&side.line(), context);
             });
 
         case DMU_PLANE:
-            return sector.forAllPlanes([&callback, &context] (Plane &plane)
+            return sector.forAllPlanes([&callback, &context] (world::Plane &plane)
             {
                 return callback(&plane, context);
             });
@@ -229,8 +235,8 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
         {
         case DMU_LINE: {
             ConvexSubspace &subspace = elem->as<ConvexSubspace>();
-            HEdge *base  = subspace.poly().hedge();
-            HEdge *hedge = base;
+            auto *base  = subspace.poly().hedge();
+            auto *hedge = base;
             do
             {
                 if(hedge->hasMapElement())
@@ -240,15 +246,15 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
                 }
             } while((hedge = &hedge->next()) != base);
 
-            LoopResult result = subspace.forAllExtraMeshes([&callback, &context] (Mesh &mesh)
+            LoopResult result = subspace.forAllExtraMeshes([&callback, &context] (mesh::Mesh &mesh)
             {
-                for(HEdge *hedge : mesh.hedges())
+                for (auto *hedge : mesh.hedges())
                 {
                     // Is this on the back of a one-sided line?
                     if(!hedge->hasMapElement())
                         continue;
 
-                    if(int result = callback(&hedge->mapElement().as<LineSideSegment>().line(), context))
+                    if (int result = callback(&hedge->mapElement().as<LineSideSegment>().line(), context))
                         return LoopResult( result );
                 }
                 return LoopResult(); // continue
@@ -272,35 +278,35 @@ int P_Callback(int type, int index, int (*callback)(void *p, void *ctx), void *c
     switch(type)
     {
     case DMU_VERTEX:
-        if(Vertex *vtx = App_World().map().vertexPtr(index))
+        if (auto *vtx = App_World().map().vertexPtr(index))
         {
             return callback(vtx, context);
         }
         break;
 
     case DMU_LINE:
-        if(Line *li = App_World().map().linePtr(index))
+        if (auto *li = App_World().map().linePtr(index))
         {
             return callback(li, context);
         }
         break;
 
     case DMU_SIDE:
-        if(LineSide *si = App_World().map().sidePtr(index))
+        if (auto *si = App_World().map().sidePtr(index))
         {
             return callback(si, context);
         }
         break;
 
     case DMU_SUBSPACE:
-        if(ConvexSubspace *sub = App_World().map().subspacePtr(index))
+        if (auto *sub = App_World().map().subspacePtr(index))
         {
             return callback(sub, context);
         }
         break;
 
     case DMU_SECTOR:
-        if(Sector *sec = App_World().map().sectorPtr(index))
+        if (auto *sec = App_World().map().sectorPtr(index))
         {
             return callback(sec, context);
         }
@@ -384,8 +390,10 @@ int P_Callbackp(int type, void *elPtr, int (*callback)(void *p, void *ctx), void
  * When a property changes, the relevant subsystems are notified of the change
  * so that they can update their state accordingly.
  */
-static void setProperty(MapElement *elem, DmuArgs &args)
+static void setProperty(MapElement *elem, world::DmuArgs &args)
 {
+    using world::Sector;
+    
     DE_ASSERT(elem != 0);
 
     /**
@@ -492,6 +500,8 @@ static void setProperty(MapElement *elem, DmuArgs &args)
 
 static void getProperty(const MapElement *elem, DmuArgs &args)
 {
+    using world::Sector;
+    
     DE_ASSERT(elem != 0);
 
     // Dereference where necessary. Note the order, these cascade.
@@ -1361,10 +1371,10 @@ DE_EXTERN_C void Mobj_Unlink(mobj_t *mobj)
 }
 
 #undef Mobj_TouchedLinesIterator
-DE_EXTERN_C int Mobj_TouchedLinesIterator(mobj_t *mob, int (*callback) (Line *, void *), void *context)
+DE_EXTERN_C int Mobj_TouchedLinesIterator(mobj_t *mob, int (*callback) (world::Line *, void *), void *context)
 {
     DE_ASSERT(mob && callback);
-    LoopResult result = Mobj_Map(*mob).forAllLinesTouchingMobj(*mob, [&callback, &context] (Line &line)
+    LoopResult result = Mobj_Map(*mob).forAllLinesTouchingMobj(*mob, [&callback, &context] (world::Line &line)
     {
         return LoopResult( callback(&line, context) );
     });
@@ -1372,10 +1382,10 @@ DE_EXTERN_C int Mobj_TouchedLinesIterator(mobj_t *mob, int (*callback) (Line *, 
 }
 
 #undef Mobj_TouchedSectorsIterator
-DE_EXTERN_C int Mobj_TouchedSectorsIterator(mobj_t *mob, int (*callback) (Sector *, void *), void *context)
+DE_EXTERN_C int Mobj_TouchedSectorsIterator(mobj_t *mob, int (*callback) (world::Sector *, void *), void *context)
 {
     DE_ASSERT(mob && callback);
-    LoopResult result = Mobj_Map(*mob).forAllSectorsTouchingMobj(*mob, [&callback, &context] (Sector &sector)
+    LoopResult result = Mobj_Map(*mob).forAllSectorsTouchingMobj(*mob, [&callback, &context] (world::Sector &sector)
     {
         return LoopResult( callback(&sector, context) );
     });
@@ -1383,7 +1393,7 @@ DE_EXTERN_C int Mobj_TouchedSectorsIterator(mobj_t *mob, int (*callback) (Sector
 }
 
 #undef Line_TouchingMobjsIterator
-DE_EXTERN_C int Line_TouchingMobjsIterator(Line *line, int (*callback) (mobj_t *, void *), void *context)
+DE_EXTERN_C int Line_TouchingMobjsIterator(world_Line *line, int (*callback) (mobj_t *, void *), void *context)
 {
     DE_ASSERT(line && callback);
     LoopResult result = line->map().forAllMobjsTouchingLine(*line, [&callback, &context] (mobj_t &mob)
@@ -1394,7 +1404,7 @@ DE_EXTERN_C int Line_TouchingMobjsIterator(Line *line, int (*callback) (mobj_t *
 }
 
 #undef Sector_TouchingMobjsIterator
-DE_EXTERN_C int Sector_TouchingMobjsIterator(Sector *sector, int (*callback) (mobj_t *, void *), void *context)
+DE_EXTERN_C int Sector_TouchingMobjsIterator(world_Sector *sector, int (*callback) (mobj_t *, void *), void *context)
 {
     DE_ASSERT(sector && callback);
     LoopResult result = sector->map().forAllMobjsTouchingSector(*sector, [&callback, &context] (mobj_t &mob)
@@ -1405,7 +1415,7 @@ DE_EXTERN_C int Sector_TouchingMobjsIterator(Sector *sector, int (*callback) (mo
 }
 
 #undef Sector_AtPoint_FixedPrecision
-DE_EXTERN_C Sector *Sector_AtPoint_FixedPrecision(const_pvec2d_t point)
+DE_EXTERN_C world_Sector *Sector_AtPoint_FixedPrecision(const_pvec2d_t point)
 {
     if(!App_World().hasMap()) return 0;
     return App_World().map().bspLeafAt_FixedPrecision(Vec2d(point)).sectorPtr();
@@ -1420,8 +1430,8 @@ DE_EXTERN_C int Mobj_BoxIterator(const AABoxd *box,
     LoopResult result = LoopContinue;
     if(App_World().hasMap())
     {
-        const auto &map            = App_World().map();
-        const int localValidCount = validCount;
+        const auto &map           = App_World().map();
+        const int localValidCount = World::validCount;
 
         result = map.mobjBlockmap().forAllInBox(*box, [&callback, &context, &localValidCount] (void *object)
         {
@@ -1447,7 +1457,7 @@ DE_EXTERN_C int Polyobj_BoxIterator(const AABoxd *box,
     if(App_World().hasMap())
     {
         const auto &map            = App_World().map();
-        const dint localValidCount = validCount;
+        const dint localValidCount = World::validCount;
 
         result = map.polyobjBlockmap().forAllInBox(*box, [&callback, &context, &localValidCount] (void *object)
         {
@@ -1465,12 +1475,12 @@ DE_EXTERN_C int Polyobj_BoxIterator(const AABoxd *box,
 
 #undef Line_BoxIterator
 DE_EXTERN_C int Line_BoxIterator(const AABoxd *box, int flags,
-    int (*callback) (Line *, void *), void *context)
+    int (*callback) (world_Line *, void *), void *context)
 {
     DE_ASSERT(box && callback);
     if(!App_World().hasMap()) return LoopContinue;
 
-    return App_World().map().forAllLinesInBox(*box, flags, [&callback, &context] (Line &line)
+    return World::get().map().forAllLinesInBox(*box, flags, [&callback, &context] (world::Line &line)
     {
         return LoopResult( callback(&line, context) );
     });
@@ -1483,7 +1493,7 @@ DE_EXTERN_C int Subspace_BoxIterator(const AABoxd *box,
     DE_ASSERT(box && callback);
     if (!App_World().hasMap()) return LoopContinue;
 
-    const dint localValidCount = validCount;
+    const dint localValidCount = World::validCount;
 
     return App_World().map().subspaceBlockmap()
         .forAllInBox(*box, [&box, &callback, &context, &localValidCount] (void *object)
@@ -1512,7 +1522,7 @@ DE_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
 {
     if(!App_World().hasMap()) return false;  // Continue iteration.
 
-    return Interceptor(callback, Vec2d(from), Vec2d(to), flags, context)
+    return world::Interceptor(callback, Vec2d(from), Vec2d(to), flags, context)
                 .trace(App_World().map());
 }
 
@@ -1522,7 +1532,7 @@ DE_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
 {
     if(!App_World().hasMap()) return false;  // Continue iteration.
 
-    return Interceptor(callback, Vec2d(from), Vec2d(to), PTF_ALL, context)
+    return world::Interceptor(callback, Vec2d(from), Vec2d(to), PTF_ALL, context)
                 .trace(App_World().map());
 }
 
@@ -1532,33 +1542,33 @@ DE_EXTERN_C dd_bool P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coo
 {
     if(!App_World().hasMap()) return false;  // Continue iteration.
 
-    return LineSightTest(Vec3d(from), Vec3d(to), bottomSlope, topSlope, flags)
+    return world::LineSightTest(Vec3d(from), Vec3d(to), bottomSlope, topSlope, flags)
                 .trace(App_World().map().bspTree());
 }
 
 #undef Interceptor_Origin
-DE_EXTERN_C const coord_t *Interceptor_Origin(const Interceptor *trace)
+DE_EXTERN_C const coord_t *Interceptor_Origin(const world_Interceptor *trace)
 {
     if(!trace) return 0;
     return trace->origin();
 }
 
 #undef Interceptor_Direction
-DE_EXTERN_C const coord_t *(Interceptor_Direction)(const Interceptor *trace)
+DE_EXTERN_C const coord_t *(Interceptor_Direction)(const world_Interceptor *trace)
 {
     if(!trace) return 0;
     return trace->direction();
 }
 
 #undef Interceptor_Opening
-DE_EXTERN_C const LineOpening *Interceptor_Opening(const Interceptor *trace)
+DE_EXTERN_C const LineOpening *Interceptor_Opening(const world_Interceptor *trace)
 {
     if(!trace) return 0;
     return &trace->opening();
 }
 
 #undef Interceptor_AdjustOpening
-DE_EXTERN_C dd_bool Interceptor_AdjustOpening(Interceptor *trace, Line *line)
+DE_EXTERN_C dd_bool Interceptor_AdjustOpening(world_Interceptor *trace, world_Line *line)
 {
     if(!trace) return false;
     return trace->adjustOpening(line);
@@ -1576,7 +1586,7 @@ DE_EXTERN_C void Mobj_Destroy(mobj_t *mobj);
 DE_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum);
 DE_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t *mobj);
 DE_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mobj, coord_t origin[3]);
-DE_EXTERN_C Sector *Mobj_Sector(const mobj_t *mobj);
+DE_EXTERN_C world_Sector *Mobj_Sector(const mobj_t *mobj);
 DE_EXTERN_C void Mobj_SpawnDamageParticleGen(const mobj_t *mobj, const mobj_t *inflictor, int amount);
 
 #undef Polyobj_SetCallback
@@ -1647,21 +1657,21 @@ DE_EXTERN_C dd_bool Polyobj_Rotate(Polyobj *po, angle_t angle)
 }
 
 #undef Polyobj_FirstLine
-DE_EXTERN_C Line *Polyobj_FirstLine(Polyobj *po)
+DE_EXTERN_C world_Line *Polyobj_FirstLine(Polyobj *po)
 {
     if(!po) return 0;
     return po->lines()[0];
 }
 
 #undef Line_PointDistance
-DE_EXTERN_C coord_t Line_PointDistance(Line *line, const coord_t point[2], coord_t *offset)
+DE_EXTERN_C coord_t Line_PointDistance(world_Line *line, const coord_t point[2], coord_t *offset)
 {
     DE_ASSERT(line);
     return line->pointDistance(Vec2d(point), offset);
 }
 
 #undef Line_PointOnSide
-DE_EXTERN_C coord_t Line_PointOnSide(const Line *line, const coord_t point[2])
+DE_EXTERN_C coord_t Line_PointOnSide(const world_Line *line, const coord_t point[2])
 {
     DE_ASSERT(line);
     if(!point)
@@ -1674,21 +1684,21 @@ DE_EXTERN_C coord_t Line_PointOnSide(const Line *line, const coord_t point[2])
 }
 
 #undef Line_BoxOnSide
-DE_EXTERN_C int Line_BoxOnSide(Line *line, const AABoxd *box)
+DE_EXTERN_C int Line_BoxOnSide(world_Line *line, const AABoxd *box)
 {
     DE_ASSERT(line && box);
     return line->boxOnSide(*box);
 }
 
 #undef Line_BoxOnSide_FixedPrecision
-DE_EXTERN_C int Line_BoxOnSide_FixedPrecision(Line *line, const AABoxd *box)
+DE_EXTERN_C int Line_BoxOnSide_FixedPrecision(world_Line *line, const AABoxd *box)
 {
     DE_ASSERT(line && box);
     return line->boxOnSide_FixedPrecision(*box);
 }
 
 #undef Line_Opening
-DE_EXTERN_C void Line_Opening(Line *line, LineOpening *opening)
+DE_EXTERN_C void Line_Opening(world_Line *line, LineOpening *opening)
 {
     DE_ASSERT(line && opening);
     *opening = LineOpening(*line);

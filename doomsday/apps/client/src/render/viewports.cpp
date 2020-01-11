@@ -26,7 +26,6 @@
 #include <de/BitArray>
 #include <de/GLInfo>
 #include <de/GLState>
-#include <doomsday/filesys/fs_util.h>
 
 #include "clientapp.h"
 #include "api_console.h"
@@ -51,23 +50,25 @@
 
 #include "network/net_demo.h"
 
-#include "world/linesighttest.h"
-#include "world/thinkers.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
-#include "world/sky.h"
-#include "BspLeaf"
-#include "ConvexSubspace"
-#include "Surface"
+#include "world/convexsubspace.h"
+#include "world/surface.h"
 #include "Contact"
-#include "client/clientsubsector.h"
+#include "world/subsector.h"
+#include "world/sky.h"
 
 #include "ui/ui_main.h"
 #include "ui/clientwindow.h"
 //#include "ui/widgets/gameuiwidget.h"
 
+#include <doomsday/world/bspleaf.h>
+#include <doomsday/world/linesighttest.h>
+#include <doomsday/world/thinkers.h>
+#include <doomsday/filesys/fs_util.h>
+#include <doomsday/tab_tables.h>
+
 using namespace de;
-using namespace world;
 
 dd_bool firstFrameAfterLoad;
 
@@ -90,7 +91,7 @@ static List<FrameLuminous> frameLuminous;
 
 static BitArray subspacesVisible;
 
-static BitArray generatorsVisible(world::Map::MAX_GENERATORS);
+static BitArray generatorsVisible(Map::MAX_GENERATORS);
 
 static dint frameCount;
 
@@ -515,7 +516,7 @@ void R_NewSharpWorld()
 
     if(ClientApp::world().hasMap())
     {
-        auto &map = ClientApp::world().map();
+        auto &map = World::get().map().as<Map>();
         map.updateTrackedPlanes();
         map.updateScrollingSurfaces();
     }
@@ -681,7 +682,7 @@ void R_SetupFrame(player_t *player)
             player->extraLight = player->targetExtraLight;
     }
 
-    validCount++;
+    World::validCount++;
 
     extraLight      = player->extraLight;
     extraLightDelta = extraLight / 16.0f;
@@ -782,7 +783,7 @@ static void setupPlayerSprites()
     mobj_t *mob = ddpl->mo;
 
     if(!Mobj_HasSubsector(*mob)) return;
-    auto &subsec = Mobj_Subsector(*mob).as<world::ClientSubsector>();
+    auto &subsec = Mobj_Subsector(*mob).as<Subsector>();
 
     // Determine if we should be drawing all the psprites full bright?
     bool fullBright = CPP_BOOL(::levelFullBright);
@@ -1043,7 +1044,7 @@ DE_EXTERN_C void R_RenderPlayerView(dint num)
     setupPlayerSprites();
 
     if (ClientApp::vr().mode() == VRConfig::OculusRift &&
-        ClientApp::world().map().isPointInVoid(Rend_EyeOrigin().xzy()))
+        World::get().map().as<Map>().isPointInVoid(Rend_EyeOrigin().xzy()))
     {
         // Putting one's head in the wall will cause a blank screen.
         GLState::current().target().clear(GLFramebuffer::Color0);
@@ -1075,7 +1076,7 @@ DE_EXTERN_C void R_RenderPlayerView(dint num)
     //switchTo3DState(true); //, currentViewport, vd);
     changeViewState(PlayerView3D);
 
-    Rend_RenderMap(ClientApp::world().map());
+    Rend_RenderMap(World::get().map().as<Map>());
 
     // Orthogonal projection to the view window.
     //restore2DState(1); //, currentViewport, vd);
@@ -1231,10 +1232,10 @@ DE_EXTERN_C void R_SkyParams(dint layerIndex, dint param, void * /*data*/)
         LOG_GL_WARNING("No map currently loaded, ignoring");
         return;
     }
-    Sky &sky = ClientApp::world().map().sky();
+    auto &sky = World::get().map().sky();
     if (layerIndex >= 0 && layerIndex < sky.layerCount())
     {
-        SkyLayer &layer = sky.layer(layerIndex);
+        auto &layer = sky.layer(layerIndex);
         switch (param)
         {
         case DD_ENABLE:  layer.enable();  break;
@@ -1249,15 +1250,15 @@ DE_EXTERN_C void R_SkyParams(dint layerIndex, dint param, void * /*data*/)
     LOG_GL_WARNING("Invalid layer #%i") << + layerIndex;
 }
 
-bool R_ViewerSubspaceIsVisible(const ConvexSubspace &subspace)
+bool R_ViewerSubspaceIsVisible(const world::ConvexSubspace &subspace)
 {
-    DE_ASSERT(subspace.indexInMap() != MapElement::NoIndex);
+    DE_ASSERT(subspace.indexInMap() != world::MapElement::NoIndex);
     return subspacesVisible.testBit(subspace.indexInMap());
 }
 
-void R_ViewerSubspaceMarkVisible(const ConvexSubspace &subspace, bool yes)
+void R_ViewerSubspaceMarkVisible(const world::ConvexSubspace &subspace, bool yes)
 {
-    DE_ASSERT(subspace.indexInMap() != MapElement::NoIndex);
+    DE_ASSERT(subspace.indexInMap() != world::MapElement::NoIndex);
     subspacesVisible.setBit(subspace.indexInMap(), yes);
 }
 
@@ -1274,7 +1275,7 @@ void R_ViewerGeneratorMarkVisible(const Generator &generator, bool yes)
 ddouble R_ViewerLumobjDistance(dint idx)
 {
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
+    if(idx >= 0 && idx < World::get().map().as<Map>().lumobjCount())
     {
         return frameLuminous.at(idx).distance;
     }
@@ -1302,7 +1303,7 @@ bool R_ViewerLumobjIsHidden(dint idx)
 static void markLumobjClipped(const Lumobj &lob, bool yes = true)
 {
     const dint index = lob.indexInMap();
-    DE_ASSERT(index >= 0 && index < lob.map().lumobjCount());
+    DE_ASSERT(index >= 0 && index < lob.map().as<Map>().lumobjCount());
     DE_ASSERT(index < frameLuminous.sizei());
     frameLuminous[index].isClipped = yes? 1 : 0;
 }
@@ -1311,7 +1312,7 @@ void R_BeginFrame()
 {
     static List<int> frameLuminousOrder;
 
-    auto &map = ClientApp::world().map();
+    auto &map = World::get().map().as<Map>();
 
     subspacesVisible.resize(map.subspaceCount());
     subspacesVisible.fill(false);
@@ -1401,7 +1402,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
         markLumobjClipped(*lum);
 
         const Vec3d eye = Rend_EyeOrigin().xzy();
-        if (LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER)
+        if (world::LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER)
                 .trace(lum->map().bspTree()))
         {
             markLumobjClipped(*lum, false); // Will have a halo.
@@ -1409,7 +1410,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
     }
 }
 
-void R_ViewerClipLumobjBySight(Lumobj *lob, ConvexSubspace *subspace)
+void R_ViewerClipLumobjBySight(Lumobj *lob, world::ConvexSubspace *subspace)
 {
     if(!lob || !subspace) return;
 
@@ -1423,7 +1424,7 @@ void R_ViewerClipLumobjBySight(Lumobj *lob, ConvexSubspace *subspace)
 
     subspace->forAllPolyobjs([&lob, &eye] (Polyobj &pob)
     {
-        for(HEdge *hedge : pob.mesh().hedges())
+        for(auto *hedge : pob.mesh().hedges())
         {
             // Is this on the back of a one-sided line?
             if(!hedge->hasMapElement())

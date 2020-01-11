@@ -20,32 +20,18 @@
 
 #include "world/clientserverworld.h"
 
-#include <de/KeyMap>
-#include <de/legacy/memoryzone.h>
-#include <de/legacy/timer.h>
-#include <de/Binder>
-#include <de/Context>
-#include <de/Error>
-#include <de/Log>
-#include <de/Scheduler>
-#include <de/ScriptSystem>
-#include <de/Time>
-#include <doomsday/doomsdayapp.h>
-#include <doomsday/console/cmd.h>
-#include <doomsday/console/exec.h>
-#include <doomsday/console/var.h>
-#include <doomsday/defs/mapinfo.h>
-#include <doomsday/resource/mapmanifests.h>
-#include <doomsday/world/MaterialManifest>
-#include <doomsday/world/Materials>
-#include <doomsday/world/thinkers.h>
-
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"
 #include "def_main.h"  // ::defs
-
 #include "api_player.h"
+#include "network/net_main.h"
+#include "api_mapedit.h"
+#include "world/p_players.h"
+#include "world/p_ticker.h"
+#include "world/sky.h"
+#include "world/bindings_world.h"
+#include "edit_map.h"
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
@@ -53,29 +39,9 @@
 #  include "client/cl_frame.h"
 #  include "client/cl_player.h"
 #  include "gl/gl_main.h"
-#endif
-
-#ifdef __SERVER__
-#  include "server/sv_pool.h"
-#endif
-
-#include "network/net_main.h"
-
-#include "api_mapedit.h"
-#include "world/p_players.h"
-#include "world/p_ticker.h"
-#include "world/sky.h"
-#include "world/bindings_world.h"
-#include "edit_map.h"
-#include "Plane"
-#include "Sector"
-#include "Subsector"
-#include "Surface"
-
-#ifdef __CLIENT__
 #  include "world/contact.h"
 #  include "client/cledgeloop.h"
-#  include "client/clientsubsector.h"
+#  include "world/subsector.h"
 #  include "Lumobj"
 #  include "render/viewports.h"  // R_ResetViewer
 #  include "render/rend_fakeradio.h"
@@ -87,12 +53,40 @@
 #  include "ui/inputsystem.h"
 #endif
 
+#ifdef __SERVER__
+#  include "server/sv_pool.h"
+#endif
+
+#include <doomsday/world/sector.h>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/exec.h>
+#include <doomsday/console/var.h>
+#include <doomsday/defs/mapinfo.h>
+#include <doomsday/resource/mapmanifests.h>
+#include <doomsday/world/MaterialManifest>
+#include <doomsday/world/Materials>
+#include <doomsday/world/plane.h>
+#include <doomsday/world/subsector.h>
+#include <doomsday/world/surface.h>
+#include <doomsday/world/thinkers.h>
+
+#include <de/KeyMap>
+#include <de/legacy/memoryzone.h>
+#include <de/legacy/timer.h>
+#include <de/Binder>
+#include <de/Context>
+#include <de/Error>
+#include <de/Log>
+#include <de/Scheduler>
+#include <de/ScriptSystem>
+#include <de/Time>
+
 #include <map>
 #include <utility>
 
 using namespace de;
 using namespace res;
-using namespace world;
 
 /**
  * Observes the progress of a map conversion and records any issues/problems that
@@ -210,19 +204,19 @@ public:
 
 protected:
     /// Observes Map UnclosedSectorFound.
-    void unclosedSectorFound(Sector &sector, const Vec2d &nearPoint)
+    void unclosedSectorFound(world::Sector &sector, const Vec2d &nearPoint) override
     {
         _unclosedSectors.insert(std::make_pair(sector.indexInArchive(), nearPoint.toVec2i()));
     }
 
     /// Observes Map OneWayWindowFound.
-    void oneWayWindowFound(Line &line, Sector &backFacingSector)
+    void oneWayWindowFound(world::Line &line, world::Sector &backFacingSector) override
     {
         _oneWayWindows.insert(std::make_pair(line.indexInArchive(), backFacingSector.indexInArchive()));
     }
 
     /// Observes Map Deletion.
-    void mapBeingDeleted(const BaseMap &map)
+    void mapBeingDeleted(const world::Map &map) override
     {
         DE_ASSERT(&map == _map);  // sanity check.
         DE_UNUSED(map);
@@ -248,15 +242,15 @@ private:
 
         if (yes)
         {
-            _map->audienceForDeletion()          += this;
-            _map->audienceForOneWayWindowFound   += this;
-            _map->audienceForUnclosedSectorFound += this;
+            _map->audienceForDeletion()            += this;
+            _map->audienceForOneWayWindowFound()   += this;
+            _map->audienceForUnclosedSectorFound() += this;
         }
         else
         {
-            _map->audienceForDeletion()          -= this;
-            _map->audienceForOneWayWindowFound   -= this;
-            _map->audienceForUnclosedSectorFound -= this;
+            _map->audienceForDeletion()            -= this;
+            _map->audienceForOneWayWindowFound()   -= this;
+            _map->audienceForUnclosedSectorFound() -= this;
         }
     }
 
@@ -283,17 +277,17 @@ DE_PIMPL(ClientServerWorld)
         // Callbacks.
         world::DmuArgs::setPointerToIndexFunc(P_ToIndex);
 #ifdef __CLIENT__
-        world::MaterialManifest::setMaterialConstructor([] (world::MaterialManifest &m) -> world::Material * {
+        world::Factory::setMaterialConstructor([](world::MaterialManifest &m) -> world::Material * {
             return new ClientMaterial(m);
         });
-        Sector::setSubsectorConstructor([] (List<world::ConvexSubspace *> const &sl) -> world::Subsector * {
-            return new ClientSubsector(sl);
+        world::Factory::setSubsectorConstructor([](const List<world::ConvexSubspace *> &sl) -> world::Subsector * {
+            return new Subsector(sl);
         });
 #else
-        world::MaterialManifest::setMaterialConstructor([] (world::MaterialManifest &m) -> world::Material * {
+        world::Factory::setMaterialConstructor([] (world::MaterialManifest &m) -> world::Material * {
             return new world::Material(m);
         });
-        Sector::setSubsectorConstructor([] (List<world::ConvexSubspace *> const &sl) -> world::Subsector * {
+        world::Factory::setSubsectorConstructor([] (const List<world::ConvexSubspace *> &sl) -> world::Subsector * {
             return new Subsector(sl);
         });
 #endif
@@ -390,13 +384,6 @@ DE_PIMPL(ClientServerWorld)
         LOG_MAP_NOTE(_E(b) "Current map elements:");
         LOG_MAP_NOTE("%s") << map->elementSummaryAsStyledText();
 
-        // See what MapInfo says about this map.
-        const Record &mapInfo = map->mapInfo();
-
-        map->_ambientLightLevel = mapInfo.getf("ambient") * 255;
-        map->_globalGravity     = mapInfo.getf("gravity");
-        map->_effectiveGravity  = map->_globalGravity;
-
         // Init the thinker lists (public and private).
         map->thinkers().initLists(0x1 | 0x2);
 
@@ -408,35 +395,30 @@ DE_PIMPL(ClientServerWorld)
 
         map->initPolyobjs();
 
+        // Update based on Map Info.
+        map->update();
+
 #ifdef __CLIENT__
-        // Connect the map to world audiences.
-        /// @todo The map should instead be notified when it is made current
-        /// so that it may perform the connection itself. Such notification
-        /// would also afford the map the opportunity to prepare various data
-        /// which is only needed when made current (e.g., caches for render).
-        self().audienceForFrameBegin() += map;
-
-        // Reconfigure the sky.
-        defn::Sky skyDef;
-        if (const Record *def = DED_Definitions()->skies.tryFind("id", mapInfo.gets("skyId")))
         {
-            skyDef = *def;
+            Map &clMap = map->as<Map>();
+            
+            // Connect the map to world audiences.
+            /// @todo The map should instead be notified when it is made current
+            /// so that it may perform the connection itself. Such notification
+            /// would also afford the map the opportunity to prepare various data
+            /// which is only needed when made current (e.g., caches for render).
+            self().audienceForFrameBegin() += clMap;
+
+            // Set up the SkyDrawable to get its config from the map's Sky.
+            clMap.skyAnimator().setSky(&rendSys().sky().configure(&map->sky().as<Sky>()));
+
+            // Prepare the client-side data.
+            Cl_ResetFrame();
+            Cl_InitPlayers();  // Player data, too.
+
+            /// @todo Defer initial generator spawn until after finalization.
+            clMap.initGenerators();
         }
-        else
-        {
-            skyDef = mapInfo.subrecord("sky");
-        }
-        map->sky().configure(&skyDef);
-
-        // Set up the SkyDrawable to get its config from the map's Sky.
-        map->skyAnimator().setSky(&rendSys().sky().configure(&map->sky()));
-
-        // Prepare the client-side data.
-        Cl_ResetFrame();
-        Cl_InitPlayers();  // Player data, too.
-
-        /// @todo Defer initial generator spawn until after finalization.
-        map->initGenerators();
 #endif
 
         // The game may need to perform it's own finalization now that the
@@ -471,7 +453,7 @@ DE_PIMPL(ClientServerWorld)
             {
                 if (Mobj_HasSubsector(*mob))
                 {
-                    const auto &subsec = Mobj_Subsector(*mob).as<ClientSubsector>();
+                    const auto &subsec = Mobj_Subsector(*mob).as<Subsector>();
                     if (   mob->origin[2] >= subsec.visFloor  ().heightSmoothed()
                         && mob->origin[2] <  subsec.visCeiling().heightSmoothed() - 4)
                     {
@@ -492,52 +474,54 @@ DE_PIMPL(ClientServerWorld)
 #endif
 
 #ifdef __CLIENT__
-        App_AudioSystem().worldMapChanged();
-
-        GL_SetupFogFromMapInfo(mapInfo.accessedRecordPtr());
-
-        //map->initLightGrid();
-        map->initSkyFix();
-        map->spawnPlaneParticleGens();
-
-        // Precaching from 100 to 200.
-        Con_SetProgress(100);
-        Time begunPrecacheAt;
-        // Sky models usually have big skins.
-        rendSys().sky().cacheAssets();
-        App_Resources().cacheForCurrentMap();
-        App_Resources().processCacheQueue();
-        LOG_RES_VERBOSE("Precaching completed in %.2f seconds") << begunPrecacheAt.since();
-
-        rendSys().clearDrawLists();
-        R_InitRendPolyPools();
-        Rend_UpdateLightModMatrix();
-
-        map->initRadio();
-        map->initContactBlockmaps();
-        R_InitContactLists(*map);
-        rendSys().worldSystemMapChanged(*map);
-
-        // Rewind/restart material animators.
-        /// @todo Only rewind animators responsible for map-surface contexts.
-        world::Materials::get().updateLookup();
-        world::Materials::get().forAnimatedMaterials([] (world::Material &material)
         {
-            return material.as<ClientMaterial>().forAllAnimators([] (MaterialAnimator &animator)
+            Map &clMap = map->as<Map>();
+            App_AudioSystem().worldMapChanged();
+
+            GL_SetupFogFromMapInfo(map->mapInfo().accessedRecordPtr());
+            
+            clMap.initSkyFix();
+            clMap.spawnPlaneParticleGens();
+
+            // Precaching from 100 to 200.
+            Con_SetProgress(100);
+            Time begunPrecacheAt;
+            // Sky models usually have big skins.
+            rendSys().sky().cacheAssets();
+            App_Resources().cacheForCurrentMap();
+            App_Resources().processCacheQueue();
+            LOG_RES_VERBOSE("Precaching completed in %.2f seconds") << begunPrecacheAt.since();
+
+            rendSys().clearDrawLists();
+            R_InitRendPolyPools();
+            Rend_UpdateLightModMatrix();
+
+            clMap.initRadio();
+            clMap.initContactBlockmaps();
+            R_InitContactLists(clMap);
+            rendSys().worldSystemMapChanged(clMap);
+
+            // Rewind/restart material animators.
+            /// @todo Only rewind animators responsible for map-surface contexts.
+            world::Materials::get().updateLookup();
+            world::Materials::get().forAnimatedMaterials([] (world::Material &material)
             {
-                animator.rewind();
-                return LoopContinue;
+                return material.as<ClientMaterial>().forAllAnimators([] (MaterialAnimator &animator)
+                {
+                    animator.rewind();
+                    return LoopContinue;
+                });
             });
-        });
 
-        // Make sure that the next frame doesn't use a filtered viewer.
-        R_ResetViewer();
+            // Make sure that the next frame doesn't use a filtered viewer.
+            R_ResetViewer();
 
-        // Clear any input events that might have accumulated during setup.
-        ClientApp::inputSystem().clearEvents();
+            // Clear any input events that might have accumulated during setup.
+            ClientApp::inputSystem().clearEvents();
 
-        // Inform the timing system to suspend the starting of the clock.
-        firstFrameAfterLoad = true;
+            // Inform the timing system to suspend the starting of the clock.
+            firstFrameAfterLoad = true;
+        }
 #endif
 
         /*
@@ -545,7 +529,7 @@ DE_PIMPL(ClientServerWorld)
          */
 
         // Run any commands specified in MapInfo.
-        String execute = mapInfo.gets("execute");
+        String execute = map->mapInfo().gets("execute");
         if (!execute.isEmpty())
         {
             Con_Execute(CMDS_SCRIPT, execute, true, false);
@@ -585,7 +569,7 @@ DE_PIMPL(ClientServerWorld)
         {
             // Remove the current map from our audiences.
             /// @todo Map should handle this.
-            self().audienceForFrameBegin() -= map;
+            self().audienceForFrameBegin() -= map->as<Map>();
         }
 
         // As the memory zone does not provide the mechanisms to prepare another
@@ -610,7 +594,7 @@ DE_PIMPL(ClientServerWorld)
         LOG_MSG("Loading map \"%s\"...") << mapManifest->composeUri().path();
 
         // A new map is about to be set up.
-        ::ddMapSetup = true;
+        World::ddMapSetup = true;
 
         // Attempt to load in the new map.
         MapConversionReporter reporter;
@@ -634,7 +618,7 @@ DE_PIMPL(ClientServerWorld)
         makeCurrent(newMap);
 
         // We've finished setting up the map.
-        ::ddMapSetup = false;
+        World::ddMapSetup = false;
 
         // Output a human-readable report of any issues encountered during conversion.
         reporter.writeLog();
@@ -755,7 +739,7 @@ void ClientServerWorld::tick(timespan_t elapsed)
 #ifdef __CLIENT__
     if (hasMap())
     {
-        map().skyAnimator().advanceTime(elapsed);
+        map().as<Map>().skyAnimator().advanceTime(elapsed);
 
         if (DD_IsSharpTick())
         {

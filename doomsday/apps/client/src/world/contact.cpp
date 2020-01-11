@@ -19,17 +19,15 @@
 
 #include "de_platform.h"
 #include "world/contact.h"
-
-#include <de/legacy/memoryzone.h>
-#include <de/Error>
 #include "world/map.h"
 #include "world/p_object.h"
-#include "BspLeaf"
-#include "ConvexSubspace"
+
+#include <doomsday/world/bspleaf.h>
+#include <doomsday/world/convexsubspace.h>
+#include <de/legacy/memoryzone.h>
+#include <de/Error>
 
 using namespace de;
-
-namespace world {
 
 ContactType Contact::type() const
 {
@@ -80,7 +78,7 @@ AABoxd Contact::objectBounds() const
     return AABoxd();
 }
 
-BspLeaf &Contact::objectBspLeafAtOrigin() const
+world::BspLeaf &Contact::objectBspLeafAtOrigin() const
 {
     switch(_type)
     {
@@ -91,11 +89,7 @@ BspLeaf &Contact::objectBspLeafAtOrigin() const
     }
 }
 
-}  // namespace world
-
 //- ContactList -------------------------------------------------------------------------
-
-namespace world {
 
 struct ContactList::Node
 {
@@ -238,7 +232,7 @@ void R_AddContact(Lumobj &lum)
     }
 }
 
-LoopResult R_ForAllContacts(std::function<LoopResult (const world::Contact &)> func)
+LoopResult R_ForAllContacts(const std::function<LoopResult (const Contact &)> &func)
 {
     for(Contact *contact = contacts; contact; contact = contact->next)
     {
@@ -248,7 +242,7 @@ LoopResult R_ForAllContacts(std::function<LoopResult (const world::Contact &)> f
     return LoopContinue;
 }
 
-LoopResult R_ForAllSubspaceMobContacts(world::ConvexSubspace &subspace, std::function<LoopResult (mobj_s &)> func)
+LoopResult R_ForAllSubspaceMobContacts(ConvexSubspace &subspace, const std::function<LoopResult (mobj_s &)> &func)
 {
     ContactList &list = R_ContactList(subspace, ContactMobj);
     for(ContactList::Node *node = list.begin(); node; node = node->next)
@@ -259,7 +253,7 @@ LoopResult R_ForAllSubspaceMobContacts(world::ConvexSubspace &subspace, std::fun
     return LoopContinue;
 }
 
-LoopResult R_ForAllSubspaceLumContacts(ConvexSubspace &subspace, std::function<LoopResult (Lumobj &)> func)
+LoopResult R_ForAllSubspaceLumContacts(ConvexSubspace &subspace, const std::function<LoopResult (Lumobj &)> &func)
 {
     ContactList &list = R_ContactList(subspace, ContactLumobj);
     for(ContactList::Node *node = list.begin(); node; node = node->next)
@@ -269,5 +263,3 @@ LoopResult R_ForAllSubspaceLumContacts(ConvexSubspace &subspace, std::function<L
     }
     return LoopContinue;
 }
-
-}  // namespace world

@@ -22,23 +22,21 @@
 #include "world/maputil.h"
 #include "world/surface.h"
 #include "world/convexsubspace.h"
-#include "misc/face.h"
 
+#include <doomsday/mesh/face.h>
 #include <doomsday/world/Material>
 #include <doomsday/world/Materials>
 #include <de/Log>
 
 using namespace de;
 
-namespace world {
-
 DE_PIMPL(ClEdgeLoop)
 {
-    ClientSubsector &owner;
-    HEdge *firstHEdge = nullptr;
+    Subsector &owner;
+    mesh::HEdge *firstHEdge = nullptr;
     dint loopId = 0;
 
-    Impl(Public *i, ClientSubsector &owner)
+    Impl(Public *i, Subsector &owner)
         : Base(i)
         , owner(owner)
     {}
@@ -50,13 +48,13 @@ DE_PIMPL(ClEdgeLoop)
      * Material on back neighbor plane has priority. Non-animated materials are preferred.
      * Sky-masked materials are ignored.
      */
-    Material *chooseFixMaterial(HEdge &hedge, dint section) const
+    world::Material *chooseFixMaterial(mesh::HEdge &hedge, dint section) const
     {
-        Material *choice1 = nullptr, *choice2 = nullptr;
+        world::Material *choice1 = nullptr, *choice2 = nullptr;
 
         if (self().hasBackSubsector())
         {
-            ClientSubsector &backSubsec = self().backSubsector();
+            Subsector &backSubsec = self().backSubsector();
 
             // Our first choice is the back subsector material in the back subsector.
             switch (section)
@@ -87,17 +85,17 @@ DE_PIMPL(ClEdgeLoop)
         }
         else
         {
-            Sector *frontSec = &owner.sector();
-            LineSide &side = hedge.mapElementAs<LineSideSegment>().lineSide();
+            world::Sector *frontSec = &owner.sector();
+            auto &side = hedge.mapElementAs<LineSideSegment>().lineSide();
 
             // Our first choice is a material on an adjacent wall section.
             // Try the left neighbor first.
-            Line *other = R_FindLineNeighbor(side.line(), *side.line().vertexOwner(side.sideId()),
+            Line *other = R_FindLineNeighbor(side.line().as<Line>(), *side.line().vertexOwner(side.sideId()),
                                              Clockwise, frontSec);
             if (!other)
             {
                 // Try the right neighbor.
-                other = R_FindLineNeighbor(side.line(), *side.line().vertexOwner(side.sideId()^1),
+                other = R_FindLineNeighbor(side.line().as<Line>(), *side.line().vertexOwner(side.sideId()^1),
                                            CounterClockwise, frontSec);
             }
 
@@ -111,8 +109,8 @@ DE_PIMPL(ClEdgeLoop)
                 else
                 {
                     // Compare the relative heights to decide.
-                    LineSide &otherSide = other->side(&other->front().sector() == frontSec ? Line::Front : Line::Back);
-                    Sector &otherSec    = other->side(&other->front().sector() == frontSec ? Line::Back  : Line::Front).sector();
+                    auto &otherSide = other->side(&other->front().sector() == frontSec ? Line::Front : Line::Back);
+                    auto &otherSec    = other->side(&other->front().sector() == frontSec ? Line::Back  : Line::Front).sector();
 
                     if (otherSec.ceiling().height() <= frontSec->floor().height())
                         choice1 = otherSide.top().materialPtr();
@@ -128,7 +126,7 @@ DE_PIMPL(ClEdgeLoop)
         }
 
         // Our second choice is a material from this sector.
-        choice2 = owner.visPlane(section == LineSide::Bottom ? Sector::Floor : Sector::Ceiling)
+        choice2 = owner.visPlane(section == LineSide::Bottom ? world::Sector::Floor : world::Sector::Ceiling)
                            .surface().materialPtr();
 
         // Prefer a non-animated, non-masked material.
@@ -148,13 +146,13 @@ DE_PIMPL(ClEdgeLoop)
         if (choice2) return choice2;
 
         // We'll assign the special "missing" material...
-        return &Materials::get().material(res::Uri("System", Path("missing")));
+        return &world::Materials::get().material(res::Uri("System", Path("missing")));
     }
 
-    void fixMissingMaterial(HEdge &hedge, dint section) const
+    void fixMissingMaterial(mesh::HEdge &hedge, dint section) const
     {
         // Sides without sections need no fixing.
-        LineSide &side = hedge.mapElementAs<LineSideSegment>().lineSide();
+        auto &side = hedge.mapElementAs<LineSideSegment>().lineSide();
         if (!side.hasSections()) return;
         // ...nor those of self-referencing lines.
         if (side.line().isSelfReferencing()) return;
@@ -162,10 +160,10 @@ DE_PIMPL(ClEdgeLoop)
         if (!side.back().hasSections() && side.back().hasSector()) return;
 
         // A material must actually be missing to qualify for fixing.
-        Surface &surface = side.surface(section);
+        auto &surface = side.surface(section);
         if (!surface.hasMaterial() || surface.hasFixMaterial())
         {
-            Material *oldMaterial = surface.materialPtr();
+            world::Material *oldMaterial = surface.materialPtr();
 
             // Look for and apply a suitable replacement (if found).
             surface.setMaterial(chooseFixMaterial(hedge, section), true/* is missing fix */);
@@ -173,7 +171,7 @@ DE_PIMPL(ClEdgeLoop)
             if (surface.materialPtr() != oldMaterial)
             {
                 // We'll need to recalculate reverb.
-                /// @todo Use an observer based mechanism in ClientSubsector -ds
+                /// @todo Use an observer based mechanism in Subsector -ds
                 owner.markReverbDirty();
                 owner.markVisPlanesDirty();
             }
@@ -181,14 +179,14 @@ DE_PIMPL(ClEdgeLoop)
     }
 };
 
-ClEdgeLoop::ClEdgeLoop(ClientSubsector &owner, HEdge &first, dint loopId)
+ClEdgeLoop::ClEdgeLoop(Subsector &owner, mesh::HEdge &first, dint loopId)
     : d(new Impl(this, owner))
 {
     d->firstHEdge = &first;
     d->loopId     = loopId;
 }
 
-ClientSubsector &ClEdgeLoop::owner() const
+Subsector &ClEdgeLoop::owner() const
 {
     return d->owner;
 }
@@ -197,7 +195,7 @@ String ClEdgeLoop::description() const
 {
     auto desc = Stringf(    _E(l) "Loop: "       _E(.)_E(i) "%s" _E(.)
                                " " _E(l) "Half-edge: "  _E(.)_E(i) "[%p]" _E(.),
-                  ClientSubsector::edgeLoopIdAsText(loopId()).upperFirstChar().c_str(),
+                  Subsector::edgeLoopIdAsText(loopId()).upperFirstChar().c_str(),
                   d->firstHEdge);
     DE_DEBUG_ONLY(
         desc.prepend(Stringf(_E(b) "ClEdgeLoop " _E(.) "[%p]\n", this));
@@ -212,15 +210,15 @@ dint ClEdgeLoop::loopId() const
 
 bool ClEdgeLoop::isInner() const
 {
-    return d->loopId == ClientSubsector::InnerLoop;
+    return d->loopId == Subsector::InnerLoop;
 }
 
 bool ClEdgeLoop::isOuter() const
 {
-    return d->loopId == ClientSubsector::OuterLoop;
+    return d->loopId == Subsector::OuterLoop;
 }
 
-HEdge &ClEdgeLoop::first() const
+mesh::HEdge &ClEdgeLoop::first() const
 {
     DE_ASSERT(d->firstHEdge);
     return *d->firstHEdge;
@@ -240,26 +238,26 @@ bool ClEdgeLoop::hasBackSubsector() const
         && d->firstHEdge->twin().face().mapElementAs<ConvexSubspace>().hasSubsector();
 }
 
-ClientSubsector &ClEdgeLoop::backSubsector() const
+Subsector &ClEdgeLoop::backSubsector() const
 {
     DE_ASSERT(d->firstHEdge);
-    return d->firstHEdge->twin().face().mapElementAs<ConvexSubspace>().subsector().as<ClientSubsector>();
+    return d->firstHEdge->twin().face().mapElementAs<ConvexSubspace>().subsector().as<Subsector>();
 }
 
 void ClEdgeLoop::fixSurfacesMissingMaterials()
 {
     DE_ASSERT(d->firstHEdge);
-    SubsectorCirculator it(d->firstHEdge);
+    world::SubsectorCirculator it(d->firstHEdge);
     do
     {
         if (it->hasMapElement()) // BSP errors may fool the circulator wrt interior edges -ds
         {
-            LineSide &lineSide = it->mapElementAs<LineSideSegment>().lineSide();
+            auto &lineSide = it->mapElementAs<LineSideSegment>().lineSide();
             if (lineSide.hasSections()) // Not a "one-way window" -ds
             {
                 if (hasBackSubsector())
                 {
-                    const auto &backSubsec = backSubsector().as<ClientSubsector>();
+                    const auto &backSubsec = backSubsector().as<Subsector>();
 
                     // Potential bottom section fix?
                     if (!d->owner.hasSkyFloor() && !backSubsec.hasSkyFloor())
@@ -296,5 +294,3 @@ void ClEdgeLoop::fixSurfacesMissingMaterials()
         }
     } while (&it.next() != d->firstHEdge);
 }
-
-} // namespace world

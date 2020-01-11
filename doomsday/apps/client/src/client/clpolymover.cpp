@@ -25,9 +25,9 @@
 
 #include "world/map.h"
 #include "world/p_players.h"
-#include "world/thinkers.h"
 #include "world/polyobjdata.h"
 
+#include <doomsday/world/thinkers.h>
 #include <de/LogBuffer>
 
 using namespace de;
@@ -35,7 +35,7 @@ using namespace de;
 thinker_s *ClPolyMover::newThinker(Polyobj &polyobj, bool moving, bool rotating) // static
 {
     // If there is an existing mover, modify it.
-    if (ClPolyMover *mover = polyobj.data().mover())
+    if (ClPolyMover *mover = polyobj.data().as<PolyobjData>().mover())
     {
         mover->_move   = moving;
         mover->_rotate = rotating;
@@ -58,12 +58,12 @@ ClPolyMover::ClPolyMover(Polyobj &pobj, bool moving, bool rotating)
     , _move    ( moving  )
     , _rotate  ( rotating)
 {
-    _polyobj->data().addMover(*this);
+    _polyobj->data().as<PolyobjData>().addMover(*this);
 }
 
 ClPolyMover::~ClPolyMover()
 {
-    _polyobj->data().removeMover(*this);
+    _polyobj->data().as<PolyobjData>().removeMover(*this);
 }
 
 void ClPolyMover::think()

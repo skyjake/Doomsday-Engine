@@ -237,6 +237,7 @@ void Thinkers::add(thinker_t &th, bool makePublic)
     {
         // It is a mobj, give it an ID (not for client mobjs, though, they
         // already have an id).
+        DE_ASSERT_FAIL("set up a callback for assigning thinker IDs")
 #ifdef __CLIENT__
         if (!Cl_IsClientMobj(reinterpret_cast<mobj_t *>(&th)))
 #endif

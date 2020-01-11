@@ -23,7 +23,7 @@
 
 #include <de/legacy/binangle.h>
 #include <de/Vector>
-#include "Face"
+#include <doomsday/mesh/face.h>
 
 /**
  * Inclusive > inclusive binary angle range.
@@ -94,7 +94,7 @@ public:
      *
      * @param poly  Map-space convex face geometry to test.
      */
-    int isPolyVisible(const de::Face &poly) const;
+    int isPolyVisible(const mesh::Face &poly) const;
 
 public:  // ---------------------------------------------------------------------------
 

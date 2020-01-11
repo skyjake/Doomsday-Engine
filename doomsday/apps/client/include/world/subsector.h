@@ -1,8 +1,8 @@
-/** @file clientsubsector.h  Client-side world map subsector.
+/** @file subsector.h  Client-side world map subsector.
  * @ingroup world
  *
  * @authors Copyright © 2013-2016 Daniel Swanson <danij@dengine.net>
- * @authors Copyright © 2016-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2016-2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,25 +19,22 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_WORLD_CLIENTSUBSECTOR_H
-#define DE_WORLD_CLIENTSUBSECTOR_H
+#pragma once
 
 #include "world/audioenvironment.h"
 #include "world/line.h"
 #include "world/plane.h"
-#include "world/sector.h"
-#include "world/subsector.h"
-
 #include "render/ilightsource.h"
+#include "world/convexsubspace.h"
 
+#include <doomsday/world/subsector.h>
+#include <doomsday/world/sector.h>
 #include <de/BitArray>
 #include <de/List>
 
-namespace world {
-
 class ClEdgeLoop;
 
-class ClientSubsector : public Subsector, public ILightSource
+class Subsector : public world::Subsector, public ILightSource
 {
 public:
     /**
@@ -47,7 +44,7 @@ public:
      *
      * @param subspaces  Set of subspaces comprising the resulting subsector.
      */
-    ClientSubsector(de::List<ConvexSubspace *> const &subspaces);
+    Subsector(const de::List<world::ConvexSubspace *> &subspaces);
 
     /**
      * Returns a human-friendly, textual description of the subsector.
@@ -122,47 +119,6 @@ public:
      * (i.e., wall/plane material changes).
      */
     void markReverbDirty(bool yes = true);
-
-#if 0
-//- Bias lighting ----------------------------------------------------------------------
-
-    /**
-     * Apply bias lighting changes to @em all geometry Shards within the subsector.
-     *
-     * @param changes  Digest of lighting changes to be applied.
-     */
-    void applyBiasChanges(QBitArray &changes);
-
-    /**
-     * Convenient method of determining the frameCount of the current bias render
-     * frame. Used for tracking changes to bias sources/surfaces.
-     *
-     * @see Map::biasLastChangeOnFrame()
-     */
-    de::duint biasLastChangeOnFrame() const;
-
-    /**
-     * Returns the geometry Shard for the specified @a mapElement and geometry
-     * group identifier @a geomId; otherwise @c 0.
-     */
-    Shard *findShard(MapElement &mapElement, int geomId);
-
-    /**
-     * Generate/locate the geometry Shard for the specified @a mapElement and
-     * geometry group identifier @a geomId.
-     */
-    Shard &shard(MapElement &mapElement, int geomId);
-
-    /**
-     * Shards owned by the Subsector should call this periodically to update
-     * their bias lighting contributions.
-     *
-     * @param shard  Shard to be updated (owned by the Subsector).
-     *
-     * @return  @c true if one or more BiasIllum contributors was updated.
-    */
-    bool updateBiasContributors(Shard *shard);
-#endif
 
 //- Decorations -------------------------------------------------------------------------
 
@@ -246,7 +202,7 @@ public:
 
 //- Visual Planes (mapped) --------------------------------------------------------------
 
-    void linkVisPlane(int planeIndex, ClientSubsector &target);
+    void linkVisPlane(int planeIndex, Subsector &target);
 
     /**
      * Returns the total number of @em visual planes in the subsector.
@@ -274,16 +230,16 @@ public:
      *
      * @see ceiling(), plane()
      */
-    inline Plane       &visFloor()       { return visPlane(Sector::Floor); }
-    inline const Plane &visFloor() const { return visPlane(Sector::Floor); }
+    inline Plane       &visFloor()       { return visPlane(world::Sector::Floor); }
+    inline const Plane &visFloor() const { return visPlane(world::Sector::Floor); }
 
     /**
      * Returns the @em visual ceiling Plane of the subsector.
      *
      * @see floor(), plane()
      */
-    inline Plane       &visCeiling()       { return visPlane(Sector::Ceiling); }
-    inline const Plane &visCeiling() const { return visPlane(Sector::Ceiling); }
+    inline Plane       &visCeiling()       { return visPlane(world::Sector::Ceiling); }
+    inline const Plane &visCeiling() const { return visPlane(world::Sector::Ceiling); }
 
     /**
      * To be called to force re-evaluation of mapped visual planes. This is only necessary
@@ -294,7 +250,3 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-} // namespace world
-
-#endif // DE_WORLD_CLIENTSUBSECTOR_H

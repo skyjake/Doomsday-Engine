@@ -401,7 +401,7 @@ DE_PIMPL(ClientApp)
             Con_SetAllowed(0);
 
             R_ClearViewData();
-            world::R_DestroyContactLists();
+            R_DestroyContactLists();
             P_ClearPlayerImpulses();
 
             Con_Execute(CMDS_DDAY, "clearbindings", true, false);
@@ -824,7 +824,7 @@ void ClientApp::gameSessionWasSaved(const AbstractSession &session,
         // Object state.
         {
             File &file = toFolder.replaceFile(d->mapObjectStatePath(mapId));
-            file << world().map().objectsDescription().toUtf8(); // plain text
+            file << world().map().as<Map>().objectsDescription().toUtf8(); // plain text
         }
     }
     catch (const Error &er)
@@ -863,7 +863,7 @@ void ClientApp::gameSessionWasLoaded(const AbstractSession &session,
         if (const File *file = fromFolder.tryLocate<File const>(d->mapObjectStatePath(mapId)))
         {
             // Parse the info and cross-check with current state.
-            world().map().restoreObjects(Info(*file), *session.thinkerMapping());
+            world().map().as<Map>().restoreObjects(Info(*file), *session.thinkerMapping());
         }
         else
         {

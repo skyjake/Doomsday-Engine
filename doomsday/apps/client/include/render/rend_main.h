@@ -32,22 +32,45 @@
 
 #include "def_main.h"
 #include "MaterialVariantSpec"
-#include "WallEdge"
 
-class Lumobj;
-class Sector;
 struct VectorLightData;
+class Lumobj;
 class ClientMaterial;
+class Map;
 class MaterialAnimator;
-#if 0
-namespace de {
-    class LightGrid;
-}
-#endif
-namespace world {
+class Plane;
+class Surface;
+class WallEdge;
+class WorldEdge;
+
+namespace world
+{
     class ConvexSubspace;
+    class Sector;
     class Subsector;
 }
+
+/**
+ * FakeRadio shadow data.
+ * @ingroup render
+ */
+struct shadowcorner_t
+{
+    float corner;
+    Plane *proximity;
+    float pOffset;
+    float pHeight;
+};
+
+/**
+ * FakeRadio connected edge data.
+ * @ingroup render
+ */
+struct edgespan_t
+{
+    float length;
+    float shift;
+};
 
 // Multiplicative blending for dynamic lights?
 #define IS_MUL          (dynlightBlend != 1 && !fogParams.usingFog)
@@ -166,7 +189,7 @@ bool Rend_IsMTexLights();
 /// @return @c true iff multitexturing is currently enabled for detail textures.
 bool Rend_IsMTexDetails();
 
-void Rend_RenderMap(world::Map &map);
+void Rend_RenderMap(Map &map);
 
 float Rend_FieldOfView();
 

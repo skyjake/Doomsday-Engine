@@ -24,21 +24,21 @@
 
 #include "world/map.h"
 #include "world/polyobjdata.h"
+#include "world/line.h"
 #include "Plane"
-#include "Sector"
 #include "Surface"
 #include "edit_map.h"
 #include "dd_main.h"
 
 #include <doomsday/world/entitydef.h>
 #include <doomsday/world/Materials>
+#include <doomsday/world/sector.h>
 #include <doomsday/EntityDatabase>
 #include <de/Error>
 #include <de/Log>
 #include <de/StringPool>
 
 using namespace de;
-using namespace world;
 
 #define ERROR_IF_NOT_INITIALIZED() { \
     if (!editMapInited) \
@@ -104,12 +104,12 @@ static void printMissingMaterialsInDict()
  *
  * @return  Pointer to the found material; otherwise @c 0.
  */
-static Material *findMaterialInDict(const String &materialUriStr)
+static world::Material *findMaterialInDict(const String &materialUriStr)
 {
-    if(materialUriStr.isEmpty()) return 0;
+    if (materialUriStr.isEmpty()) return 0;
 
     // Time to create the dictionary?
-    if(!materialDict)
+    if (!materialDict)
     {
         materialDict = new StringPool;
     }
@@ -118,14 +118,14 @@ static Material *findMaterialInDict(const String &materialUriStr)
 
     // Intern this reference.
     StringPool::Id internId = materialDict->intern(materialUri.compose());
-    Material *material = 0;
+    world::Material *material = 0;
 
     // Have we previously encountered this?.
     uint refCount = materialDict->userValue(internId);
-    if(refCount)
+    if (refCount)
     {
         // Yes, if resolved the user pointer holds the found material.
-        material = (Material *) materialDict->userPointer(internId);
+        material = (world::Material *) materialDict->userPointer(internId);
     }
     else
     {
@@ -135,7 +135,7 @@ static Material *findMaterialInDict(const String &materialUriStr)
         {
             material = &world::Materials::get().material(materialUri);
         }
-        catch(const Resources::MissingResourceManifestError &)
+        catch (const Resources::MissingResourceManifestError &)
         {
             // Try any scheme.
             try
@@ -143,7 +143,7 @@ static Material *findMaterialInDict(const String &materialUriStr)
                 materialUri.setScheme("");
                 material = &world::Materials::get().material(materialUri);
             }
-            catch(const Resources::MissingResourceManifestError &)
+            catch (const Resources::MissingResourceManifestError &)
             {}
         }
 
@@ -158,7 +158,7 @@ static Material *findMaterialInDict(const String &materialUriStr)
     return material;
 }
 
-static inline Material *findMaterialInDict(const char *materialUriStr)
+static inline world::Material *findMaterialInDict(const char *materialUriStr)
 {
     if (!materialUriStr) return nullptr;
     return findMaterialInDict(String(materialUriStr));
@@ -217,13 +217,13 @@ dd_bool MPE_VertexCreatev(int num, const coord_t *values, int *archiveIndices, i
 {
     ERROR_IF_NOT_INITIALIZED();
 
-    if(num <= 0 || !values)
+    if (num <= 0 || !values)
         return false;
 
     // Create many vertexes.
-    for(int n = 0; n < num; ++n)
+    for (int n = 0; n < num; ++n)
     {
-        Vertex *vertex = editMap->createVertex(Vec2d(values[n * 2], values[n * 2 + 1]),
+        auto *vertex = editMap->createVertex(Vec2d(values[n * 2], values[n * 2 + 1]),
                                                archiveIndices[n]);
         if(retIndices)
         {
@@ -248,12 +248,12 @@ int MPE_LineCreate(int v1, int v2, int frontSectorIdx, int backSectorIdx, int fl
 
     // Next, check the length is not zero.
     /// @todo fixme: We need to allow these... -ds
-    Vertex &vtx1 = editMap->vertex(v1);
-    Vertex &vtx2 = editMap->vertex(v2);
+    auto &vtx1 = editMap->vertex(v1);
+    auto &vtx2 = editMap->vertex(v2);
     if(de::abs(Vec2d(vtx1.origin() - vtx2.origin()).length()) <= 0.0001) return -1;
 
-    Sector *frontSector = (frontSectorIdx >= 0? editMap->editableSectors().at(frontSectorIdx) : 0);
-    Sector *backSector  = (backSectorIdx  >= 0? editMap->editableSectors().at(backSectorIdx) : 0);
+    auto *frontSector = (frontSectorIdx >= 0? editMap->editableSectors().at(frontSectorIdx) : 0);
+    auto *backSector  = (backSectorIdx  >= 0? editMap->editableSectors().at(backSectorIdx) : 0);
 
     return editMap->createLine(vtx1, vtx2, flags, frontSector, backSector, archiveIndex)
                         ->indexInMap();
@@ -270,8 +270,8 @@ void MPE_LineAddSide(int lineIdx, int sideId, short flags,
 
     if(lineIdx < 0 || lineIdx >= editMap->editableLineCount()) return;
 
-    Line *line = editMap->editableLines().at(lineIdx);
-    LineSide &side = line->side(sideId);
+    auto *line = editMap->editableLines().at(lineIdx);
+    auto &side = line->side(sideId);
 
     side.setFlags(flags);
     side.setIndexInArchive(archiveIndex);
@@ -306,8 +306,8 @@ int MPE_PlaneCreate(int sectorIdx, coord_t height, const char *materialUri,
 
     if(sectorIdx < 0 || sectorIdx >= editMap->editableSectorCount()) return -1;
 
-    Sector *sector = editMap->editableSectors().at(sectorIdx);
-    Plane *plane = sector->addPlane(Vec3f(normalX, normalY, normalZ), height);
+    auto *sector = editMap->editableSectors().at(sectorIdx);
+    auto *plane = sector->addPlane(Vec3f(normalX, normalY, normalZ), height);
 
     plane->setIndexInArchive(archiveIndex);
 
@@ -316,7 +316,7 @@ int MPE_PlaneCreate(int sectorIdx, coord_t height, const char *materialUri,
         .setColor({tintRed, tintGreen, tintBlue})
         .setOrigin({matOffsetX, matOffsetY});
 
-    if(!plane->isSectorFloor() && !plane->isSectorCeiling())
+    if (!plane->isSectorFloor() && !plane->isSectorCeiling())
     {
         plane->surface().setOpacity(opacity);
     }
@@ -356,7 +356,7 @@ int MPE_PolyobjCreate(const int *lines, int lineCount, int tag, int sequenceType
     {
         if(lines[i] < 0 || lines[i] >= editMap->editableLineCount()) return -1;
 
-        Line *line = editMap->editableLines().at(lines[i]);
+        auto *line = editMap->editableLines().at(lines[i]);
         if(line->definesPolyobj()) return -1;
     }
 
@@ -366,7 +366,7 @@ int MPE_PolyobjCreate(const int *lines, int lineCount, int tag, int sequenceType
 
     for(int i = 0; i < lineCount; ++i)
     {
-        Line *line = editMap->editableLines().at(lines[i]);
+        auto *line = editMap->editableLines().at(lines[i]);
 
         // This line belongs to a polyobj.
         line->setPolyobj(po);

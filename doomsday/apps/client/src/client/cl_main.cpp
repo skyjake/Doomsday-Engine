@@ -478,7 +478,7 @@ void Cl_Ticker(timespan_t ticLength)
 
     if (App_World().hasMap())
     {
-        App_World().map().expireClMobjs();
+        App_World().map().as<Map>().expireClMobjs();
     }
 }
 

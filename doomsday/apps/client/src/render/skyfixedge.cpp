@@ -19,27 +19,25 @@
 
 #include "render/skyfixedge.h"
 
-#include "Face"
-
 #include "world/map.h"
 #include "world/maputil.h" // R_SideBackClosed, remove me
 #include "world/p_players.h"
-#include "ConvexSubspace"
-#include "Plane"
-#include "Sector"
-#include "Surface"
+#include "world/subsector.h"
+#include "world/convexsubspace.h"
+#include "world/plane.h"
+#include "world/surface.h"
 #include "MaterialAnimator"
 
 #include "render/rend_main.h"
 
-#include "client/clientsubsector.h"
 #include "client/clskyplane.h"
 
-using namespace world;
+#include <doomsday/mesh/face.h>
+#include <doomsday/world/sector.h>
 
-namespace de {
+using namespace de;
 
-static ddouble skyFixFloorZ(const Plane *frontFloor, const Plane *backFloor)
+static double skyFixFloorZ(const Plane *frontFloor, const Plane *backFloor)
 {
     DE_UNUSED(backFloor);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
@@ -47,7 +45,7 @@ static ddouble skyFixFloorZ(const Plane *frontFloor, const Plane *backFloor)
     return frontFloor->map().skyFloor().height();
 }
 
-static ddouble skyFixCeilZ(const Plane *frontCeil, const Plane *backCeil)
+static double skyFixCeilZ(const Plane *frontCeil, const Plane *backCeil)
 {
     DE_UNUSED(backCeil);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
@@ -58,15 +56,14 @@ static ddouble skyFixCeilZ(const Plane *frontCeil, const Plane *backCeil)
 DE_PIMPL_NOREF(SkyFixEdge::Event)
 {
     SkyFixEdge &owner;
-    ddouble distance;
-    Impl(SkyFixEdge &owner, ddouble distance)
+    double distance;
+    Impl(SkyFixEdge &owner, double distance)
         : owner(owner), distance(distance)
     {}
 };
 
-SkyFixEdge::Event::Event(SkyFixEdge &owner, ddouble distance)
-    : WorldEdge::Event()
-    , d(new Impl(owner, distance))
+SkyFixEdge::Event::Event(SkyFixEdge &owner, double distance)
+    : d(new Impl(owner, distance))
 {}
 
 bool SkyFixEdge::Event::operator < (const Event &other) const
@@ -74,7 +71,7 @@ bool SkyFixEdge::Event::operator < (const Event &other) const
     return d->distance < other.distance();
 }
 
-ddouble SkyFixEdge::Event::distance() const
+double SkyFixEdge::Event::distance() const
 {
     return d->distance;
 }
@@ -86,7 +83,7 @@ Vec3d SkyFixEdge::Event::origin() const
 
 DE_PIMPL(SkyFixEdge)
 {
-    HEdge *hedge;
+    mesh::HEdge *hedge;
     FixType fixType;
     dint edge;
 
@@ -101,7 +98,7 @@ DE_PIMPL(SkyFixEdge)
 
     Vec2f materialOrigin;
 
-    Impl(Public *i, HEdge &hedge, FixType fixType, int edge,
+    Impl(Public *i, mesh::HEdge &hedge, FixType fixType, int edge,
              const Vec2f &materialOrigin)
         : Base(i),
           hedge(&hedge),
@@ -126,21 +123,21 @@ DE_PIMPL(SkyFixEdge)
         if (!hedge->hasMapElement()) return false;
 
         const auto &lineSeg  = hedge->mapElementAs<LineSideSegment>();
-        const auto &lineSide = lineSeg.lineSide();
+        const auto &lineSide = lineSeg.lineSide().as<LineSide>();
 
         const auto *space     = &hedge->face().mapElementAs<ConvexSubspace>();
         const auto *backSpace = hedge->twin().hasFace() ? &hedge->twin().face().mapElementAs<ConvexSubspace>()
                                                         : nullptr;
 
-        const auto *subsec     = &space->subsector().as<ClientSubsector>();
-        const auto *backSubsec = backSpace && backSpace->hasSubsector() ? &backSpace->subsector().as<ClientSubsector>()
+        const auto *subsec     = &space->subsector().as<Subsector>();
+        const auto *backSubsec = backSpace && backSpace->hasSubsector() ? &backSpace->subsector().as<Subsector>()
                                                                         : nullptr;
 
         if (backSubsec && &backSubsec->sector() == &subsec->sector())
             return false;
 
         if (lineSide.middle().hasMaterial() &&
-            !lineSide.middle().materialAnimator()->isOpaque() &&
+            !lineSide.middle().as<Surface>().materialAnimator()->isOpaque() &&
             ((!lower && !lineSide.top().hasMaterial()) ||
              (lower  && !lineSide.bottom().hasMaterial())))
         {
@@ -149,7 +146,7 @@ DE_PIMPL(SkyFixEdge)
         }
 
         // Select the relative planes for the fix type.
-        dint relPlane = lower ? Sector::Floor : Sector::Ceiling;
+        dint relPlane = lower ? world::Sector::Floor : world::Sector::Ceiling;
         const Plane *front   = &subsec->visPlane(relPlane);
         const Plane *back    = backSubsec ? &backSubsec->visPlane(relPlane) : nullptr;
 
@@ -175,14 +172,14 @@ DE_PIMPL(SkyFixEdge)
 
         // Figure out the relative plane heights.
         coord_t fz = front->heightSmoothed();
-        if (relPlane == Sector::Ceiling)
+        if (relPlane == world::Sector::Ceiling)
             fz = -fz;
 
         coord_t bz = 0;
         if (back)
         {
             bz = back->heightSmoothed();
-            if(relPlane == Sector::Ceiling)
+            if(relPlane == world::Sector::Ceiling)
                 bz = -bz;
         }
 
@@ -206,8 +203,8 @@ DE_PIMPL(SkyFixEdge)
         const auto *subspace     = &hedge->face().mapElementAs<ConvexSubspace>();
         const auto *backSubspace = hedge->twin().hasFace() ? &hedge->twin().face().mapElementAs<ConvexSubspace>() : nullptr;
 
-        const auto *subsec       = &subspace->subsector().as<world::ClientSubsector>();
-        const auto *backSubsec   = backSubspace && backSubspace->hasSubsector() ? &backSubspace->subsector().as<world::ClientSubsector>()
+        const auto *subsec       = &subspace->subsector().as<Subsector>();
+        const auto *backSubsec   = backSubspace && backSubspace->hasSubsector() ? &backSubspace->subsector().as<Subsector>()
                                                                                 : nullptr;
 
         const Plane *ffloor = &subsec->visFloor();
@@ -238,7 +235,7 @@ DE_PIMPL(SkyFixEdge)
     }
 };
 
-SkyFixEdge::SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS)
+SkyFixEdge::SkyFixEdge(mesh::HEdge &hedge, FixType fixType, int edge, float materialOffsetS)
     : WorldEdge((edge? hedge.twin() : hedge).origin()),
       d(new Impl(this, hedge, fixType, edge, Vec2f(materialOffsetS, 0)))
 {
@@ -285,5 +282,3 @@ const SkyFixEdge::Event &SkyFixEdge::at(EventIndex index) const
     /// @throw InvalidIndexError The specified event index is not valid.
     throw Error("SkyFixEdge::at", stringf("Index '%i' does not map to a known event (count: 2)", index));
 }
-
-} // namespace de

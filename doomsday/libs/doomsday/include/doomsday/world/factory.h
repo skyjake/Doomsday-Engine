@@ -22,28 +22,55 @@
 #include "../defs/sky.h"
 
 #include <de/Id>
+#include <de/List>
 #include <de/Vector>
 
 class MobjThinkerData;
 struct polyobj_s;
 
+namespace mesh { class Face; }
+
 namespace world {
 
+class BspLeaf;
+class ConvexSubspace;
+class Line;
+class MapElement;
 class Material;
 class MaterialManifest;
+class Plane;
+class PolyobjData;
+class Sector;
 class Sky;
+class Subsector;
+class Surface;
+class Vertex;
 
 class LIBDOOMSDAY_PUBLIC Factory
 {
 public:
+    using SubsectorConstructor = std::function<Subsector *(const de::List<ConvexSubspace *> &)>;
+
+    static void setConvexSubspaceConstructor(const std::function<ConvexSubspace *(mesh::Face &, BspLeaf *)> &);
+    static void setLineConstructor(const std::function<Line *(Vertex &, Vertex &, int, Sector *, Sector *)> &);
     static void setMaterialConstructor(const std::function<Material *(MaterialManifest &)> &);
     static void setMobjThinkerDataConstructor(const std::function<MobjThinkerData *(const de::Id &)> &);
+    static void setPlaneConstructor(const std::function<Plane *(Sector &, const de::Vec3f &, double)> &);
+    static void setPolyobjDataConstructor(const std::function<PolyobjData *()> &);
     static void setSkyConstructor(const std::function<Sky *(const defn::Sky *)> &);
+    static void setSubsectorConstructor(const SubsectorConstructor &func);
+    static void setSurfaceConstructor(const std::function<Surface *(world::MapElement &, float, const de::Vec3f &)> &);
 
+    static ConvexSubspace *  newConvexSubspace(mesh::Face &, BspLeaf *);
     static Material *        newMaterial(MaterialManifest &);
     static MobjThinkerData * newMobjThinkerData(const de::Id &);
+    static Line *            newLine(Vertex &from, Vertex &to, int flags = 0, Sector *frontSector = nullptr, Sector *backSector  = nullptr);
+    static Plane *           newPlane(Sector &sector, const de::Vec3f &normal = de::Vec3f(0, 0, 1), double height = 0);
+    static PolyobjData *     newPolyobjData();
     static Sky *             newSky(const defn::Sky *);
-    static struct polyobj_s *newPolyobj(const de::Vec2d &origin);
+    static Subsector *       newSubsector(const de::List<ConvexSubspace *> &subspaces);
+    static Surface *         newSurface(world::MapElement &, float = 1.0f, const de::Vec3f & = {1.0f});
+    static struct polyobj_s *newPolyobj(const de::Vec2d &);
 };
 
 } // namespace world

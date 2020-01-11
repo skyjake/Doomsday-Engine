@@ -20,13 +20,10 @@
 #ifndef DE_RENDER_SKY_FIX_EDGE
 #define DE_RENDER_SKY_FIX_EDGE
 
+#include <doomsday/mesh/hedge.h>
 #include <de/Vector>
 
 #include "TriangleStripBuilder" /// @todo remove me
-
-namespace de {
-
-class HEdge;
 
 /**
  * @ingroup render
@@ -49,7 +46,7 @@ public:
 
         double distance() const;
 
-        Vec3d origin() const;
+        de::Vec3d origin() const;
 
     private:
         DE_PRIVATE(d)
@@ -60,12 +57,12 @@ public:
      * @param hedge    HEdge from which to determine sky fix coordinates.
      * @param fixType  Fix type.
      */
-    SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS = 0);
+    SkyFixEdge(mesh::HEdge &hedge, FixType fixType, int edge, float materialOffsetS = 0);
 
-    const Vec3d &pOrigin() const;
-    const Vec3d &pDirection() const;
+    const de::Vec3d &pOrigin() const;
+    const de::Vec3d &pDirection() const;
 
-    Vec2f materialOrigin() const;
+    de::Vec2f materialOrigin() const;
 
     /// Implement IEdge.
     bool isValid() const;
@@ -84,7 +81,5 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-} // namespace de
 
 #endif // DE_RENDER_SKY_FIX_EDGE

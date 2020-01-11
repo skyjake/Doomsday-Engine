@@ -22,7 +22,6 @@
 #include "clientapp.h"
 #include "world/clientserverworld.h"
 #include "world/map.h"
-#include "world/thinkers.h"
 #include "world/clientmobjthinkerdata.h"
 #include "clientplayer.h"
 #include "render/rend_main.h"
@@ -30,6 +29,8 @@
 #include "render/modelloader.h"
 #include "render/stateanimator.h"
 #include "render/playerweaponanimator.h"
+
+#include <doomsday/world/thinkers.h>
 
 #include <de/AnimationValue>
 #include <de/FS>

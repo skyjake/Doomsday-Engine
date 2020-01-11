@@ -27,10 +27,7 @@
 #include "def_main.h"      // ::defs
 #include "api_map.h"
 #include "world/p_players.h"
-#include "world/thinkers.h"
 #include "audio/s_cache.h"
-#include "Sector"
-#include "Subsector"
 
 #ifdef __CLIENT__
 #  include "sys_system.h"  // Sys_Sleep()
@@ -38,7 +35,7 @@
 #  include "audio/sfxchannel.h"
 #  include "audio/sys_audiod_dummy.h"
 #  include "world/audioenvironment.h"
-#  include "client/clientsubsector.h"
+#  include "world/subsector.h"
 #  include <doomsday/defs/music.h>
 #  include <doomsday/filesys/fs_main.h>
 #  include <doomsday/filesys/fs_util.h>
@@ -46,8 +43,11 @@
 
 #ifdef __SERVER__
 #  include "server/sv_sound.h"
+#  include <doomsday/world/subsector.h>
 #endif
 
+#include <doomsday/world/sector.h>
+#include <doomsday/world/thinkers.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <de/App>
@@ -1383,7 +1383,7 @@ DE_PIMPL(AudioSystem)
                 sfxListenerSubsector = newSubsector;
 
                 // It may be necessary to recalculate the reverb properties...
-                const world::ClientSubsector::AudioEnvironment &aenv = sfxListenerSubsector->as<world::ClientSubsector>().reverb();
+                const Subsector::AudioEnvironment &aenv = sfxListenerSubsector->as<Subsector>().reverb();
 
                 dfloat args[NUM_REVERB_DATA];
                 args[SFXLP_REVERB_VOLUME ] = aenv.volume * sfxReverbStrength;

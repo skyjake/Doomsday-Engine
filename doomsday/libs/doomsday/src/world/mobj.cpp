@@ -18,6 +18,7 @@
 
 #include "doomsday/world/mobj.h"
 #include "doomsday/world/bspleaf.h"
+#include "doomsday/world/thinkers.h"
 
 using namespace de;
 
@@ -58,6 +59,11 @@ world_Sector *Mobj_Sector(const mobj_t *mob)
 {
     if (!mob || !Mobj_IsLinked(*mob)) return nullptr;
     return Mobj_BspLeafAtOrigin(*mob).sectorPtr();
+}
+
+world::Map &Mobj_Map(const mobj_t &mob)
+{
+    return Thinker_Map(mob.thinker);
 }
 
 world::BspLeaf &Mobj_BspLeafAtOrigin(const mobj_t &mob)

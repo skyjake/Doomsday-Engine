@@ -27,8 +27,8 @@
 
 #include "world/map.h"
 #include "world/p_players.h"
-#include "BspLeaf"
-#include "Sector"
+#include <doomsday/world/bspleaf.h>
+#include <doomsday/world/sector.h>
 
 #include <de/LogBuffer>
 #include <de/Vector>
@@ -284,7 +284,7 @@ void ClPlayer_ReadDelta()
     LOG_AS("ClPlayer_ReadDelta2");
 
     /// @todo Do not assume the CURRENT map.
-    world::Map &map = App_World().map();
+    Map &map = World::get().map().as<Map>();
 
     dint df = 0;
     ushort num;

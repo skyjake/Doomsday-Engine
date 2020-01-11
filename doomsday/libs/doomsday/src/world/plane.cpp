@@ -21,13 +21,9 @@
 #include "doomsday/world/plane.h"
 
 #include "doomsday/world/map.h"
-//#include "world/thinkers.h"
 #include "doomsday/world/surface.h"
 #include "doomsday/world/sector.h"
 #include "doomsday/world/world.h"
-
-//#include "dd_loop.h"  // frameTimePos
-//#include "dd_main.h"  // App_Resources()
 
 #include <de/LogBuffer>
 #include <array>
@@ -38,18 +34,17 @@ using namespace de;
 
 DE_PIMPL(Plane)
 {
-    Surface surface;
-    ThinkerT<SoundEmitter> soundEmitter;
+    std::unique_ptr<Surface> surface;
+    ThinkerT<SoundEmitter>   soundEmitter;
 
-    dint indexInSector = -1;           ///< Index in the owning sector.
+    int indexInSector = -1;           ///< Index in the owning sector.
 
-    ddouble height = 0;                ///< Current @em sharp height.
-    ddouble heightTarget = 0;          ///< Target @em sharp height.
-    ddouble speed = 0;                 ///< Movement speed (map space units per tic).
+    double heightTarget = 0;          ///< Target @em sharp height.
+    double speed = 0;                 ///< Movement speed (map space units per tic).
 
     Impl(Public *i)
         : Base(i)
-        , surface(dynamic_cast<MapElement &>(*i))
+        , surface(Factory::newSurface(*dynamic_cast<MapElement *>(i)))
     {
 #ifdef __CLIENT__
         surface.audienceForMaterialChange() += this;
@@ -68,23 +63,13 @@ DE_PIMPL(Plane)
 
     inline world::Map &map() const { return self().map(); }
 
-    void setHeight(ddouble newHeight)
-    {
-        height = heightTarget = newHeight;
-
-#ifdef __CLIENT__
-        heightSmoothed = newHeight;
-        oldHeight[0] = oldHeight[1] = newHeight;
-#endif
-    }
-
     void applySharpHeightChange(ddouble newHeight)
     {
         // No change?
-        if(de::fequal(newHeight, height))
+        if(de::fequal(newHeight, self()._height))
             return;
 
-        height = newHeight;
+        self()._height = newHeight;
 
         if (!World::ddMapSetup)
         {
@@ -103,46 +88,10 @@ DE_PIMPL(Plane)
 #endif
     }
 
-#ifdef __CLIENT__
-    /// @todo Cache this result.
-    Generator *tryFindGenerator()
-    {
-        Generator *found = nullptr;
-        map().forAllGenerators([this, &found] (Generator &gen)
-        {
-            if(gen.plane == thisPublic)
-            {
-                found = &gen;
-                return LoopAbort;  // Found it.
-            }
-            return LoopContinue;
-        });
-        return found;
-    }
-#endif
-
     void notifyHeightChanged()
     {
         DE_NOTIFY_PUBLIC(HeightChange, i) i->planeHeightChanged(self());
     }
-
-#ifdef __CLIENT__
-    void notifySmoothedHeightChanged()
-    {
-        DE_NOTIFY_PUBLIC(HeightSmoothedChange, i) i->planeHeightSmoothedChanged(self());
-    }
-
-    void surfaceMaterialChanged(Surface &suf)
-    {
-        DE_ASSERT(&suf == &surface);
-        DE_UNUSED(suf);
-        if (!::ddMapSetup && surface.hasMaterial())
-        {
-            res::Uri uri = surface.material().manifest().composeUri();
-            self().spawnParticleGen(Def_GetGenerator(reinterpret_cast<uri_s *>(&uri)));
-        }
-    }
-#endif
 
     DE_PIMPL_AUDIENCE(Deletion)
     DE_PIMPL_AUDIENCE(HeightChange)
@@ -161,16 +110,16 @@ Plane::Plane(Sector &sector, const Vec3f &normal, ddouble height)
     : MapElement(DMU_PLANE, &sector)
     , d(new Impl(this))
 {
-    d->setHeight(height);
+    setHeight(height);
     setNormal(normal);
 }
 
 String Plane::description() const
 {
     auto desc = Stringf(    _E(l) "Sector: "        _E(.)_E(i) "%i" _E(.)
-                               " " _E(l) "Height: "        _E(.)_E(i) "%f" _E(.)
-                               " " _E(l) "Height Target: " _E(.)_E(i) "%f" _E(.)
-                               " " _E(l) "Speed: "         _E(.)_E(i) "%f" _E(.),
+                        " " _E(l) "Height: "        _E(.)_E(i) "%f" _E(.)
+                        " " _E(l) "Height Target: " _E(.)_E(i) "%f" _E(.)
+                        " " _E(l) "Speed: "         _E(.)_E(i) "%f" _E(.),
                   sector().indexInMap(),
                   height(),
                   heightTarget(),
@@ -214,22 +163,22 @@ bool Plane::isSectorCeiling() const
 
 Surface &Plane::surface()
 {
-    return d->surface;
+    return *d->surface;
 }
 
 const Surface &Plane::surface() const
 {
-    return d->surface;
+    return *d->surface;
 }
 
 Surface *Plane::surfacePtr() const
 {
-    return &d->surface;
+    return d->surface.get();
 }
 
 void Plane::setNormal(const Vec3f &newNormal)
 {
-    d->surface.setNormal(newNormal);  // will normalize
+    d->surface->setNormal(newNormal);  // will normalize
 }
 
 SoundEmitter &Plane::soundEmitter()
@@ -248,12 +197,17 @@ void Plane::updateSoundEmitterOrigin()
 
     d->soundEmitter->origin[0] = sector().soundEmitter().origin[0];
     d->soundEmitter->origin[1] = sector().soundEmitter().origin[1];
-    d->soundEmitter->origin[2] = d->height;
+    d->soundEmitter->origin[2] = _height;
+}
+
+void Plane::setHeight(double newHeight)
+{
+    _height = d->heightTarget = newHeight;
 }
 
 ddouble Plane::height() const
 {
-    return d->height;
+    return _height;
 }
 
 ddouble Plane::heightTarget() const
@@ -265,167 +219,6 @@ ddouble Plane::speed() const
 {
     return d->speed;
 }
-
-#ifdef __CLIENT__
-
-ddouble Plane::heightSmoothed() const
-{
-    return d->heightSmoothed;
-}
-
-ddouble Plane::heightSmoothedDelta() const
-{
-    return d->heightSmoothedDelta;
-}
-
-void Plane::lerpSmoothedHeight()
-{
-    // Interpolate.
-    d->heightSmoothedDelta = d->oldHeight[0] * (1 - frameTimePos)
-                           + d->height * frameTimePos - d->height;
-
-    ddouble newHeightSmoothed = d->height + d->heightSmoothedDelta;
-    if(!de::fequal(d->heightSmoothed, newHeightSmoothed))
-    {
-        d->heightSmoothed = newHeightSmoothed;
-        d->notifySmoothedHeightChanged();
-    }
-}
-
-void Plane::resetSmoothedHeight()
-{
-    // Reset interpolation.
-    d->heightSmoothedDelta = 0;
-
-    ddouble newHeightSmoothed = d->oldHeight[0] = d->oldHeight[1] = d->height;
-    if(!de::fequal(d->heightSmoothed, newHeightSmoothed))
-    {
-        d->heightSmoothed = newHeightSmoothed;
-        d->notifySmoothedHeightChanged();
-    }
-}
-
-void Plane::updateHeightTracking()
-{
-    d->oldHeight[0] = d->oldHeight[1];
-    d->oldHeight[1] = d->height;
-
-    if(!de::fequal(d->oldHeight[0], d->oldHeight[1]))
-    {
-        if(de::abs(d->oldHeight[0] - d->oldHeight[1]) >= MAX_SMOOTH_MOVE)
-        {
-            // Too fast: make an instantaneous jump.
-            d->oldHeight[0] = d->oldHeight[1];
-        }
-    }
-}
-
-bool Plane::hasGenerator() const
-{
-    return d->tryFindGenerator() != nullptr;
-}
-
-Generator &Plane::generator() const
-{
-    if(Generator *gen = d->tryFindGenerator()) return *gen;
-    /// @throw MissingGeneratorError No generator is attached.
-    throw MissingGeneratorError("Plane::generator", "No generator is attached");
-}
-
-void Plane::spawnParticleGen(const ded_ptcgen_t *def)
-{
-    //if(!useParticles) return;
-
-    if(!def) return;
-
-    // Plane we spawn relative to may not be this one.
-    dint relPlane = indexInSector();
-    if(def->flags & Generator::SpawnCeiling)
-        relPlane = Sector::Ceiling;
-    if(def->flags & Generator::SpawnFloor)
-        relPlane = Sector::Floor;
-
-    if(relPlane != indexInSector())
-    {
-        sector().plane(relPlane).spawnParticleGen(def);
-        return;
-    }
-
-    // Only planes in sectors with volume on the world X/Y axis can support generators.
-    if(!sector().sideCount()) return;
-
-    // Only one generator per plane.
-    if(hasGenerator()) return;
-
-    // Are we out of generators?
-    Generator *gen = map().newGenerator();
-    if(!gen) return;
-
-    gen->count = def->particles;
-    // Size of source sector might determine count.
-    if(def->flags & Generator::Density)
-    {
-        gen->spawnRateMultiplier = sector().roughArea() / (128 * 128);
-    }
-    else
-    {
-        gen->spawnRateMultiplier = 1;
-    }
-
-    // Initialize the particle generator.
-    gen->configureFromDef(def);
-    gen->plane = this;
-
-    // Is there a need to pre-simulate?
-    gen->presimulate(def->preSim);
-}
-
-void Plane::addMover(ClPlaneMover &mover)
-{
-    // Forcibly remove the existing mover for this plane.
-    if(d->mover)
-    {
-        LOG_MAP_XVERBOSE("Removing existing mover %p in sector #%i, plane %i",
-                         &d->mover->thinker() << sector().indexInMap()
-                         << indexInSector());
-
-        map().thinkers().remove(d->mover->thinker());
-
-        DE_ASSERT(!d->mover);
-    }
-
-    d->mover = &mover;
-}
-
-void Plane::removeMover(ClPlaneMover &mover)
-{
-    if(d->mover == &mover)
-    {
-        d->mover = nullptr;
-    }
-}
-
-bool Plane::castsShadow() const
-{
-    if (auto *matAnim = d->surface.materialAnimator())
-    {
-        // Ensure we have up to date info about the material.
-        matAnim->prepare();
-
-        if (!matAnim->material().isDrawable()) return false;
-        if (matAnim->material().isSkyMasked()) return false;
-
-        return de::fequal(matAnim->glowStrength(), 0);
-    }
-    return false;
-}
-
-bool Plane::receivesShadow() const
-{
-    return castsShadow();  // Qualification is the same as with casting.
-}
-
-#endif // __CLIENT__
 
 dint Plane::property(DmuArgs &args) const
 {
@@ -440,7 +233,7 @@ dint Plane::property(DmuArgs &args) const
         args.setValue(DMT_PLANE_SECTOR, &secPtr, 0);
         break; }
     case DMU_HEIGHT:
-        args.setValue(DMT_PLANE_HEIGHT, &d->height, 0);
+        args.setValue(DMT_PLANE_HEIGHT, &_height, 0);
         break;
     case DMU_TARGET_HEIGHT:
         args.setValue(DMT_PLANE_TARGET, &d->heightTarget, 0);
@@ -460,7 +253,7 @@ dint Plane::setProperty(const DmuArgs &args)
     switch(args.prop)
     {
     case DMU_HEIGHT: {
-        ddouble newHeight = d->height;
+        ddouble newHeight = _height;
         args.value(DMT_PLANE_HEIGHT, &newHeight, 0);
         d->applySharpHeightChange(newHeight);
         break; }
@@ -478,11 +271,3 @@ dint Plane::setProperty(const DmuArgs &args)
 }
 
 } // namespace world
-
-#ifdef __CLIENT__
-
-#include "MaterialAnimator"
-#include "render/rend_main.h"
-#include <doomsday/world/materialmanifest.h>
-
-#endif

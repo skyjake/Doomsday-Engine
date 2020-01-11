@@ -20,7 +20,7 @@
 #ifndef DE_RENDER_WALLSPEC
 #define DE_RENDER_WALLSPEC
 
-#include "Line"
+#include "world/line.h"
 
 /**
  * Wall geometry specification. The members are public for convenient access.

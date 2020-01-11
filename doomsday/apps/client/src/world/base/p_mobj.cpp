@@ -24,10 +24,29 @@
 #include "de_base.h"
 #include "world/p_object.h"
 
-#include <cmath>
-#include <de/legacy/vector1.h>
-#include <de/Error>
-#include <de/LogBuffer>
+#include "def_main.h"
+#include "api_sound.h"
+#include "network/net_main.h"
+#include "world/p_object.h"
+#include "world/p_players.h"
+
+#ifdef __CLIENT__
+#  include "client/cl_mobj.h"
+#  include "gl/gl_tex.h"
+#  include "world/subsector.h"
+#  include "network/net_demo.h"
+#  include "render/viewports.h"
+#  include "render/rend_main.h"
+#  include "render/rend_model.h"
+#  include "render/rend_halo.h"
+#  include "render/billboard.h"
+#  include "Generator"
+#  include "Lumobj"
+#endif
+
+#include <doomsday/world/bspleaf.h>
+#include <doomsday/world/convexsubspace.h>
+#include <doomsday/world/subsector.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
@@ -38,36 +57,12 @@
 #include <doomsday/world/Materials>
 #include <doomsday/world/thinkers.h>
 
-#include "def_main.h"
-#include "api_sound.h"
-#include "network/net_main.h"
-
-#ifdef __CLIENT__
-#  include "client/cl_mobj.h"
-#  include "client/clientsubsector.h"
-#  include "gl/gl_tex.h"
-#  include "network/net_demo.h"
-#  include "render/viewports.h"
-#  include "render/rend_main.h"
-#  include "render/rend_model.h"
-#  include "render/rend_halo.h"
-#  include "render/billboard.h"
-#endif
-
-#include "world/clientserverworld.h" // validCount
-#include "world/p_object.h"
-#include "world/p_players.h"
-#include "BspLeaf"
-#include "ConvexSubspace"
-#include "Subsector"
-
-#ifdef __CLIENT__
-#  include "Generator"
-#  include "Lumobj"
-#endif
+#include <de/legacy/vector1.h>
+#include <de/Error>
+#include <de/LogBuffer>
+#include <cmath>
 
 using namespace de;
-using namespace world;
 
 // static String const VAR_MATERIAL("material");
 
@@ -258,25 +253,20 @@ DE_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mob, coord_t origin[3])
 #endif
 }
 
-world::Map &Mobj_Map(const mobj_t &mob)
-{
-    return Thinker_Map(mob.thinker);
-}
-
 bool Mobj_HasSubsector(const mobj_t &mob)
 {
     if (!Mobj_IsLinked(mob)) return false;
-    const BspLeaf &bspLeaf = Mobj_BspLeafAtOrigin(mob);
+    const auto &bspLeaf = Mobj_BspLeafAtOrigin(mob);
     if (!bspLeaf.hasSubspace()) return false;
     return bspLeaf.subspace().hasSubsector();
 }
 
-Subsector &Mobj_Subsector(const mobj_t &mob)
+world_Subsector &Mobj_Subsector(const mobj_t &mob)
 {
     return Mobj_BspLeafAtOrigin(mob).subspace().subsector();
 }
 
-Subsector *Mobj_SubsectorPtr(const mobj_t &mob)
+world_Subsector *Mobj_SubsectorPtr(const mobj_t &mob)
 {
     return Mobj_HasSubsector(mob) ? &Mobj_Subsector(mob) : nullptr;
 }
@@ -288,7 +278,7 @@ void Mobj_SpawnParticleGen(mobj_t *mob, const ded_ptcgen_t *def)
 
     //if (!useParticles) return;
 
-    Generator *gen = Mobj_Map(*mob).newGenerator();
+    Generator *gen = Mobj_Map(*mob).as<Map>().newGenerator();
     if (!gen) return;
 
     /*LOG_INFO("SpawnPtcGen: %s/%i (src:%s typ:%s mo:%p)")
@@ -330,7 +320,7 @@ DE_EXTERN_C void Mobj_SpawnDamageParticleGen(const mobj_t *mob, const mobj_t *in
     const ded_ptcgen_t *def = Def_GetDamageGenerator(mob->type);
     if (def)
     {
-        Generator *gen = Mobj_Map(*mob).newGenerator();
+        Generator *gen = Mobj_Map(*mob).as<Map>().newGenerator();
         if (!gen) return; // No more generators.
 
         gen->count = def->particles;
@@ -373,7 +363,7 @@ dd_bool Mobj_OriginBehindVisPlane(mobj_t *mob)
 {
     if (!mob || !Mobj_HasSubsector(*mob)) return false;
 
-    auto &subsec = Mobj_Subsector(*mob).as<ClientSubsector>();
+    auto &subsec = Mobj_Subsector(*mob).as<Subsector>();
 
     if (&subsec.sector().floor() != &subsec.visFloor()
         && mob->origin[2] < subsec.visFloor().heightSmoothed())
@@ -415,7 +405,7 @@ void Mobj_GenerateLumobjs(mobj_t *mob)
     Mobj_UnlinkLumobjs(mob);
 
     if (!Mobj_HasSubsector(*mob)) return;
-    auto &subsec = Mobj_Subsector(*mob).as<ClientSubsector>();
+    auto &subsec = Mobj_Subsector(*mob).as<Subsector>();
 
     if (!(((mob->state && (mob->state->flags & STF_FULLBRIGHT))
             && !(mob->ddFlags & DDMF_DONTDRAW))
@@ -503,7 +493,7 @@ void Mobj_GenerateLumobjs(mobj_t *mob)
 
     // Insert a copy of the temporary lumobj in the map and remember it's unique
     // index in the mobj (this'll allow a halo to be rendered).
-    mob->lumIdx = subsec.sector().map().addLumobj(lum.release()).indexInMap();
+    mob->lumIdx = subsec.sector().map().as<Map>().addLumobj(lum.release()).indexInMap();
 }
 
 void Mobj_AnimateHaloOcclussion(mobj_t &mob)
@@ -570,7 +560,7 @@ dfloat Mobj_ShadowStrength(const mobj_t &mob)
     if (mob.ddFlags & DDMF_ALWAYSLIT) return 0;
 
     // Evaluate the ambient light level at our map origin.
-    const auto &subsec = Mobj_Subsector(mob).as<ClientSubsector>();
+    const auto &subsec = Mobj_Subsector(mob).as<Subsector>();
     dfloat ambientLightLevel;
 #if 0
     if (::useBias && subsec.sector().map().hasLightGrid())
@@ -882,6 +872,8 @@ coord_t Mobj_VisualRadius(const mobj_t &mob)
 
 D_CMD(InspectMobj)
 {
+    using world::Sector;
+    
     DE_UNUSED(src);
 
     if (argc != 2)
@@ -931,7 +923,7 @@ D_CMD(InspectMobj)
         << Sector::planeIdAsText(Sector::Floor  ).upperFirstChar() << mob->floorZ
         << Sector::planeIdAsText(Sector::Ceiling).upperFirstChar() << mob->ceilingZ;
 
-    if (Subsector *subsec = Mobj_SubsectorPtr(*mob))
+    if (auto *subsec = Mobj_SubsectorPtr(*mob))
     {
         LOG_MAP_MSG("Sector:%i (%sZ:%f %sZ:%f)")
                 << subsec->sector().indexInMap()

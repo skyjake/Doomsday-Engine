@@ -17,6 +17,7 @@
  */
 
 #include "api_thinker.h"
+#include "world/p_object.h"
 
 #include <doomsday/world/map.h>
 #include <doomsday/world/world.h>

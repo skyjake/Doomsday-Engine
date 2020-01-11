@@ -46,7 +46,11 @@ typedef struct mobj_s {
 
 #include <de/Vector>
 
-namespace world { class BspLeaf; }
+namespace world
+{
+    class BspLeaf;
+    class Map;
+}
 
 /**
  * Returns a copy of the map-object's origin in map space.
@@ -102,6 +106,15 @@ LIBDOOMSDAY_PUBLIC bool Mobj_IsLinked(const mobj_t &mob);
  * some Sector of the owning Map.
  */
 LIBDOOMSDAY_PUBLIC bool Mobj_IsSectorLinked(const mobj_t &mob);
+
+/**
+ * Returns the map in which the map-object exists. Note that a map-object may exist in a
+ * map while not being @em linked into data structures such as the blockmap and sectors.
+ * To determine whether the map-object is linked, call @ref Mobj_IsLinked().
+ *
+ * @see Thinker_Map()
+ */
+LIBDOOMSDAY_PUBLIC world::Map &Mobj_Map(const mobj_t &mob);
 
 #endif // __cplusplus
 

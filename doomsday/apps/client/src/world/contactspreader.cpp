@@ -19,26 +19,24 @@
 
 #include "world/contactspreader.h"
 
-#include "Face"
-#include "HEdge"
-#include "BspLeaf"
+//#include "Face"
+//#include "HEdge"
+//#include "BspLeaf"
 #include "Contact"
-#include "ConvexSubspace"
-#include "Sector"
-#include "Subsector"
-#include "Surface"
-#include "world/clientserverworld.h"  // validCount
+//#include "ConvexSubspace"
+//#include "Sector"
+//#include "Subsector"
+//#include "Surface"
+//#include "world/clientserverworld.h"  // validCount
+#include "world/subsector.h"
 #include "render/rend_main.h"  // Rend_mapSurfaceMaterialSpec
 #include "MaterialAnimator"
 #include "WallEdge"
 
-#include "client/clientsubsector.h"
-
+#include <doomsday/mesh/face.h>
 #include <de/legacy/vector1.h>
 
 using namespace de;
-
-namespace world {
 
 /**
  * On which side of the half-edge does the specified @a point lie?
@@ -50,7 +48,7 @@ namespace world {
  *         @c =0 Point lies directly on the segment.
  *         @c >0 Point is to the right/front of the segment.
  */
-static ddouble pointOnHEdgeSide(const HEdge &hedge, const Vec2d &point)
+static ddouble pointOnHEdgeSide(const mesh::HEdge &hedge, const Vec2d &point)
 {
     const Vec2d direction = hedge.twin().origin() - hedge.origin();
 
@@ -85,9 +83,9 @@ struct ContactSpreader
      */
     void spread(const AABoxd &box)
     {
-        const BlockmapCellBlock cellBlock = _blockmap.toCellBlock(box);
+        const world::BlockmapCellBlock cellBlock = _blockmap.toCellBlock(box);
 
-        BlockmapCell cell;
+        world::BlockmapCell cell;
         for(cell.y = cellBlock.min.y; cell.y < cellBlock.max.y; ++cell.y)
         for(cell.x = cellBlock.min.x; cell.x < cellBlock.max.x; ++cell.x)
         {
@@ -119,12 +117,12 @@ private:
      */
     void spreadContact(Contact &contact)
     {
-        ConvexSubspace &subspace = contact.objectBspLeafAtOrigin().subspace();
+        ConvexSubspace &subspace = contact.objectBspLeafAtOrigin().subspace().as<ConvexSubspace>();
 
         R_ContactList(subspace, contact.type()).link(&contact);
 
         // Spread to neighboring BSP leafs.
-        subspace.setValidCount(++validCount);
+        subspace.setValidCount(++World::validCount);
 
         _spread.contact       = &contact;
         _spread.contactBounds = contact.objectBounds();
@@ -132,24 +130,24 @@ private:
         spreadInSubspace(subspace);
     }
 
-    void maybeSpreadOverEdge(HEdge *hedge)
+    void maybeSpreadOverEdge(mesh::HEdge *hedge)
     {
         DE_ASSERT(_spread.contact != 0);
 
         if (!hedge) return;
 
         auto &subspace = hedge->face().mapElementAs<ConvexSubspace>();
-        auto &subsec   = subspace.subsector().as<ClientSubsector>();
+        auto &subsec   = subspace.subsector().as<Subsector>();
 
         // There must be a back BSP leaf to spread to.
         if (!hedge->hasTwin() || !hedge->twin().hasFace() || !hedge->twin().face().hasMapElement())
             return;
 
         auto &backSubspace = hedge->twin().face().mapElementAs<ConvexSubspace>();
-        auto &backSubsec   = backSubspace.subsector().as<ClientSubsector>();
+        auto &backSubsec   = backSubspace.subsector().as<Subsector>();
 
         // Which way does the spread go?
-        if (!(subspace.validCount() == validCount && backSubspace.validCount() != validCount))
+        if (!(subspace.validCount() == World::validCount && backSubspace.validCount() != World::validCount))
         {
             return; // Not eligible for spreading.
         }
@@ -182,14 +180,14 @@ private:
             const LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
 
             // On which side of the line are we? (distance is from segment to origin).
-            const LineSide &facingLineSide = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));
+            const auto &facingLineSide = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));
 
             // One-way window?
             if (!facingLineSide.back().hasSections())
                 return;
 
-            const ClientSubsector &fromSubsec = facingLineSide.isFront() ? subsec : backSubsec;
-            const ClientSubsector &toSubsec   = facingLineSide.isFront() ? backSubsec : subsec;
+            const Subsector &fromSubsec = facingLineSide.isFront() ? subsec : backSubsec;
+            const Subsector &toSubsec   = facingLineSide.isFront() ? backSubsec : subsec;
 
             // Might a material cover the opening?
             if (facingLineSide.hasSections() && facingLineSide.middle().hasMaterial())
@@ -219,7 +217,7 @@ private:
                     openTop = fromSubsec.visCeiling().heightSmoothed();
                 }
 
-                MaterialAnimator &matAnimator = *facingLineSide.middle().materialAnimator();
+                MaterialAnimator &matAnimator = *facingLineSide.middle().as<Surface>().materialAnimator();
                         //.as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec());
 
                 // Ensure we have up to date info about the material.
@@ -228,7 +226,7 @@ private:
                 if (matAnimator.isOpaque() && matAnimator.dimensions().y >= openTop - openBottom)
                 {
                     // Possibly; check the placement.
-                    WallEdge edge(WallSpec::fromMapSide(facingLineSide, LineSide::Middle),
+                    WallEdge edge(WallSpec::fromMapSide(facingLineSide.as<LineSide>(), LineSide::Middle),
                                      *facingLineSide.leftHEdge(), Line::From);
 
                     if (edge.isValid() && edge.top().z() > edge.bottom().z() &&
@@ -239,7 +237,7 @@ private:
         }
 
         // During the next step this contact will spread from the back leaf.
-        backSubspace.setValidCount(validCount);
+        backSubspace.setValidCount(World::validCount);
 
         R_ContactList(backSubspace, _spread.contact->type()).link(_spread.contact);
 
@@ -256,8 +254,8 @@ private:
      */
     void spreadInSubspace(ConvexSubspace &subspace)
     {
-        HEdge *base = subspace.poly().hedge();
-        HEdge *hedge = base;
+        auto *base = subspace.poly().hedge();
+        auto *hedge = base;
         do
         {
             maybeSpreadOverEdge(hedge);
@@ -266,9 +264,7 @@ private:
     }
 };
 
-void spreadContacts(const Blockmap &blockmap, const AABoxd &region, BitArray *spreadBlocks)
+void spreadContacts(const world::Blockmap &blockmap, const AABoxd &region, BitArray *spreadBlocks)
 {
     ContactSpreader(blockmap, spreadBlocks).spread(region);
 }
-
-}  // namespace world

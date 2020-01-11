@@ -42,7 +42,9 @@
 #include <cmath>
 
 using namespace de;
-using namespace world;
+
+using world::Sector;
+using world::DmuArgs;
 
 /// Convert 8.8/10.6 fixed point to 16.16.
 #define UNFIXED8_8(x)   (((x) << 16) / 256)
@@ -332,7 +334,7 @@ static dd_bool ClMobj_IsStuckInsideLocalPlayer(mobj_t *mo)
 void ClMobj_ReadDelta()
 {
     /// @todo Do not assume the CURRENT map.
-    world::Map &map = App_World().map();
+    Map &map = World::get().map().as<Map>();
 
     const thid_t id = Reader_ReadUInt16(msgReader); // Read the ID.
     const dint df   = Reader_ReadUInt16(msgReader); // Flags.
@@ -582,7 +584,7 @@ void ClMobj_ReadNullDelta()
     LOG_AS("ClMobj_ReadNullDelta");
 
     /// @todo Do not assume the CURRENT map.
-    auto &map = App_World().map();
+    auto &map = World::get().map().as<Map>();
 
     // The delta only contains an ID.
     thid_t id = Reader_ReadUInt16(msgReader);
@@ -623,7 +625,7 @@ mobj_t *ClMobj_Find(thid_t id)
     if (!App_World().hasMap()) return nullptr;
 
     /// @todo Do not assume the CURRENT map.
-    return App_World().map().clMobjFor(id);
+    return World::get().map().as<Map>().clMobjFor(id);
 }
 
 // cl_player.c

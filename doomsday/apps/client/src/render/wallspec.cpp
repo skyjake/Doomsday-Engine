@@ -19,11 +19,12 @@
 
 #include "de_base.h"
 #include "MaterialAnimator"
-#include "Sector"
-#include "Surface"
+#include "world/surface.h"
 #include "world/p_players.h" // viewPlayer
 #include "render/rend_main.h"
 #include "render/walledge.h"
+
+#include <doomsday/world/sector.h>
 
 using namespace de;
 
@@ -40,7 +41,7 @@ static bool useWallSectionLightLevelDeltas(const LineSide &side, dint section)
     if (side.surface(section).hasFixMaterial() &&
         side.hasSector() && side.back().hasSector())
     {
-        Sector &backSector = side.back().sector();
+        auto &backSector = side.back().sector();
         if (backSector.floor().height() < backSector.ceiling().height())
             return false;
     }
@@ -61,7 +62,7 @@ WallSpec WallSpec::fromMapSide(const LineSide &side, dint section) // static
     }
 
     // TNT MAP02 window grille: transparent masked wall
-    if (auto *midMan = side.middle().materialAnimator())
+    if (auto *midMan = side.middle().as<Surface>().materialAnimator())
     {
         if (section != LineSide::Middle && !midMan->isOpaque())
         {

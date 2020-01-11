@@ -20,8 +20,6 @@
 
 #include "render/rend_fakeradio.h"
 
-#include <de/Vector>
-#include <doomsday/console/var.h>
 #include "clientapp.h"
 
 #include "gl/gl_texmanager.h"
@@ -30,13 +28,11 @@
 #include "MaterialVariantSpec"
 
 #include "world/map.h"
-#include "ConvexSubspace"
-#include "Line"
-#include "Surface"
-#include "client/clientsubsector.h"
+#include "world/convexsubspace.h"
+#include "world/line.h"
+#include "world/surface.h"
+#include "world/subsector.h"
 
-#include "Face"
-#include "HEdge"
 #include "WallEdge"
 
 #include "render/rend_main.h"
@@ -47,8 +43,12 @@
 #include "render/viewports.h"  // R_FrameCount()
 #include "render/store.h"
 
+#include <doomsday/console/var.h>
+#include <doomsday/mesh/face.h>
+#include <doomsday/mesh/hedge.h>
+#include <de/Vector>
+
 using namespace de;
-using namespace world;
 
 enum WallShadow
 {
@@ -58,14 +58,14 @@ enum WallShadow
     RightShadow
 };
 
-static const dfloat MIN_OPEN            = 0.1f;
+static const float MIN_OPEN            = 0.1f;
 static const ddouble MINDIFF            = 8;       ///< Min plane height difference (world units).
 static const ddouble INDIFF             = 8;       ///< Max plane height for indifference offset.
-static const dfloat MIN_SHADOW_DARKNESS = .0001f;  ///< Minimum to qualify.
+static const float MIN_SHADOW_DARKNESS = .0001f;  ///< Minimum to qualify.
 static const ddouble MIN_SHADOW_SIZE    = 1;       ///< In map units.
 
-dint rendFakeRadio              = true;  ///< cvar
-static dfloat fakeRadioDarkness = 1.2f;  ///< cvar
+int rendFakeRadio              = true;  ///< cvar
+static float fakeRadioDarkness = 1.2f;  ///< cvar
 byte devFakeRadioUpdate         = true;  ///< cvar
 
 /**
@@ -75,7 +75,7 @@ byte devFakeRadioUpdate         = true;  ///< cvar
  * @param ambientLight  Ambient light level to process. It is assumed that adaptation has
  *                      @em NOT yet been applied (it will be).
  */
-static inline dfloat calcShadowDarkness(dfloat ambientLight)
+static inline float calcShadowDarkness(float ambientLight)
 {
     ambientLight += Rend_LightAdaptationDelta(ambientLight);
     return (0.6f - ambientLight * 0.4f) * 0.65f * ::fakeRadioDarkness;
@@ -87,7 +87,7 @@ static inline dfloat calcShadowDarkness(dfloat ambientLight)
  * @param ambientLight  Ambient light level to process. It is assumed that adaptation has
  *                      @em NOT yet been applied (it will be).
  */
-static inline dfloat calcShadowSize(dfloat ambientLight)
+static inline float calcShadowSize(float ambientLight)
 {
     return 2 * (8 + 16 - ambientLight * 16);  /// @todo Make cvars out of constants.
 }
@@ -159,7 +159,7 @@ static ddouble wallOffset(const WallEdge &leftEdge, const WallEdge &/*rightEdge*
  * @param rightEdge   WallEdge describing the logical right-edge of the wall section.
  * @param rightSide   Use the right edge if @c true; otherwise the left edge.
  */
-static dfloat wallSideOpenness(const WallEdge &leftEdge, const WallEdge &/*rightEdge*/, bool rightSide)
+static float wallSideOpenness(const WallEdge &leftEdge, const WallEdge &/*rightEdge*/, bool rightSide)
 {
     return leftEdge.lineSide().radioCornerSide(rightSide).corner;
 }
@@ -174,14 +174,14 @@ static dfloat wallSideOpenness(const WallEdge &leftEdge, const WallEdge &/*right
  * @param shadowSize  Shadow size in map units.
  */
 static bool wallReceivesShadow(const WallEdge &leftEdge, const WallEdge &rightEdge,
-    WallShadow shadow, dfloat shadowSize)
+    WallShadow shadow, float shadowSize)
 {
     if(shadowSize <= 0) return false;
 
     const LineSide &side = leftEdge.lineSide();
     DE_ASSERT(side.leftHEdge());
 
-    const auto &subsec      = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
+    const auto &subsec      = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector().as<Subsector>();
     const Plane &visFloor   = subsec.visFloor  ();
     const Plane &visCeiling = subsec.visCeiling();
 
@@ -217,7 +217,7 @@ static bool wallReceivesShadow(const WallEdge &leftEdge, const WallEdge &rightEd
  * @param lineLength  If negative; implies that the texture is flipped horizontally.
  * @param segOffset   Offset to the start of the segment.
  */
-static inline dfloat calcTexCoordX(dfloat lineLength, dfloat segOffset)
+static inline float calcTexCoordX(float lineLength, float segOffset)
 {
     return (lineLength > 0 ? segOffset : lineLength + segOffset);
 }
@@ -230,7 +230,7 @@ static inline dfloat calcTexCoordX(dfloat lineLength, dfloat segOffset)
  * @param top        Z height of the top of the wall section.
  * @param texHeight  If negative; implies that the texture is flipped vertically.
  */
-static inline dfloat calcTexCoordY(dfloat z, dfloat bottom, dfloat top, dfloat texHeight)
+static inline float calcTexCoordY(float z, float bottom, float top, float texHeight)
 {
     return (texHeight > 0 ? top - z : bottom - z);
 }
@@ -249,7 +249,7 @@ static void setTopShadowParams(const WallEdge &leftEdge, const WallEdge &rightEd
     LineSide /*const*/ &side = leftEdge.lineSide();
     DE_ASSERT(side.leftHEdge());
     const auto &space       = side.leftHEdge()->face().mapElementAs<ConvexSubspace>();
-    const auto &subsec      = space.subsector().as<world::ClientSubsector>();
+    const auto &subsec      = space.subsector().as<Subsector>();
     const Plane &visFloor   = subsec.visFloor  ();
     const Plane &visCeiling = subsec.visCeiling();
 
@@ -406,7 +406,7 @@ static void setBottomShadowParams(const WallEdge &leftEdge, const WallEdge &righ
 {
     LineSide /*const*/ &side = leftEdge.lineSide();
     DE_ASSERT(side.leftHEdge());
-    const auto &subsec      = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
+    const auto &subsec      = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector().as<Subsector>();
     const Plane &visFloor   = subsec.visFloor  ();
     const Plane &visCeiling = subsec.visCeiling();
 
@@ -561,9 +561,9 @@ static void setSideShadowParams(const WallEdge &leftEdge, const WallEdge &rightE
     ddouble shadowSize, ProjectedShadowData &projected)
 {
     LineSide /*const*/ &side = leftEdge.lineSide();
-    const HEdge *hedge = side.leftHEdge();
+    const auto *hedge = side.leftHEdge();
     DE_ASSERT(hedge);
-    const auto &subsec      = hedge->face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
+    const auto &subsec      = hedge->face().mapElementAs<ConvexSubspace>().subsector().as<Subsector>();
     const Plane &visFloor   = subsec.visFloor  ();
     const Plane &visCeiling = subsec.visCeiling();
     DE_ASSERT(visFloor.castsShadow() || visCeiling.castsShadow());  // sanity check.
@@ -627,7 +627,7 @@ static void setSideShadowParams(const WallEdge &leftEdge, const WallEdge &rightE
         const auto &bSpace = hedge->twin().face().mapElementAs<ConvexSubspace>();
         if (bSpace.hasSubsector())
         {
-            const auto &bSubsec  = bSpace.subsector().as<world::ClientSubsector>();
+            const auto &bSubsec  = bSpace.subsector().as<Subsector>();
             const ddouble bFloor = bSubsec.visFloor  ().heightSmoothed();
             const ddouble bCeil  = bSubsec.visCeiling().heightSmoothed();
             if (bFloor > visFloor.heightSmoothed() && bCeil < visCeiling.heightSmoothed())
@@ -742,7 +742,7 @@ static bool projectWallShadow(const WallEdge &leftEdge, const WallEdge &rightEdg
 }
 
 static void drawWallShadow(const Vec3f *posCoords, const WallEdge &leftEdge, const WallEdge &rightEdge,
-    dfloat shadowDark, const ProjectedShadowData &tp)
+    float shadowDark, const ProjectedShadowData &tp)
 {
     DE_ASSERT(posCoords);
 
@@ -787,7 +787,7 @@ static void drawWallShadow(const Vec3f *posCoords, const WallEdge &leftEdge, con
             buffer.colorCoords [indices[numVerts - 1]] = shadowColor;
             buffer.texCoords[0][indices[numVerts - 1]] = tp.texCoords[2];
 
-            for(dint i = 0; i < rightEdge.divisionCount(); ++i)
+            for(int i = 0; i < rightEdge.divisionCount(); ++i)
             {
                 const WorldEdge::Event &icpt = rightEdge.at(rightEdge.lastDivision() - i);
 
@@ -827,7 +827,7 @@ static void drawWallShadow(const Vec3f *posCoords, const WallEdge &leftEdge, con
             buffer.colorCoords [indices[numVerts - 1]] = shadowColor;
             buffer.texCoords[0][indices[numVerts - 1]] = tp.texCoords[1];
 
-            for(dint i = 0; i < leftEdge.divisionCount(); ++i)
+            for(int i = 0; i < leftEdge.divisionCount(); ++i)
             {
                 const WorldEdge::Event &icpt = leftEdge.at(leftEdge.firstDivision() + i);
 
@@ -870,19 +870,19 @@ static void drawWallShadow(const Vec3f *posCoords, const WallEdge &leftEdge, con
     }
 }
 
-void Rend_DrawWallRadio(const WallEdge &leftEdge, const WallEdge &rightEdge, dfloat ambientLight)
+void Rend_DrawWallRadio(const WallEdge &leftEdge, const WallEdge &rightEdge, float ambientLight)
 {
     // Disabled?
     if(!::rendFakeRadio || ::levelFullBright || leftEdge.spec().flags.testFlag(WallSpec::NoFakeRadio))
         return;
 
     // Skip if the surface is not lit with ambient light.
-    const dfloat shadowDark = calcShadowDarkness(ambientLight);
+    const float shadowDark = calcShadowDarkness(ambientLight);
     if(shadowDark < MIN_SHADOW_DARKNESS)
         return;
 
     // Skip if the determined shadow size is too small.
-    const dfloat shadowSize = calcShadowSize(ambientLight);
+    const float shadowSize = calcShadowSize(ambientLight);
     if(shadowSize < MIN_SHADOW_SIZE)
         return;
 
@@ -936,8 +936,8 @@ void Rend_DrawWallRadio(const WallEdge &leftEdge, const WallEdge &rightEdge, dfl
  *
  * @return  @c true if one or both edges are partially in shadow.
  */
-static bool prepareFlatShadowEdges(ShadowEdge edges[2], const HEdge *hEdges[2], dint sectorPlaneIndex,
-    dfloat shadowDark)
+static bool prepareFlatShadowEdges(ShadowEdge edges[2], const mesh::HEdge *hEdges[2],
+                                   int sectorPlaneIndex, float shadowDark)
 {
     DE_ASSERT(edges && hEdges && hEdges[0] && hEdges[1]);
 
@@ -947,10 +947,10 @@ static bool prepareFlatShadowEdges(ShadowEdge edges[2], const HEdge *hEdges[2], 
     if(!hEdges[0]->hasFace() || !hEdges[0]->face().hasMapElement())
         return false;
 
-    if(!hEdges[0]->face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>().hasWorldVolume())
+    if(!hEdges[0]->face().mapElementAs<ConvexSubspace>().subsector().as<Subsector>().hasWorldVolume())
         return false;
 
-    for(dint i = 0; i < 2; ++i)
+    for(int i = 0; i < 2; ++i)
     {
         edges[i].init(*hEdges[i], i);
         edges[i].prepare(sectorPlaneIndex);
@@ -962,7 +962,7 @@ static uint makeFlatShadowGeometry(DrawList::Indices &indices,
                                    Store &            verts,
                                    gfx::Primitive &primitive,
                                    ShadowEdge const   edges[2],
-                                   dfloat             shadowDark,
+                                   float             shadowDark,
                                    bool               haveFloor)
 {
     static duint const floorOrder[][4] = { { 0, 1, 2, 3 }, { 1, 2, 3, 0 } };
@@ -1019,10 +1019,10 @@ void Rend_DrawFlatRadio(const ConvexSubspace &subspace)
     // If no shadow-casting lines are linked we no work to do.
     if(!subspace.shadowLineCount()) return;
 
-    const auto &subsec = subspace.subsector().as<world::ClientSubsector>();
+    const auto &subsec = subspace.subsector().as<Subsector>();
 
     // Determine the shadow properties.
-    const dfloat shadowDark = calcShadowDarkness(subsec.lightSourceIntensity());
+    const float shadowDark = calcShadowDarkness(subsec.lightSourceIntensity());
     if(shadowDark < MIN_SHADOW_DARKNESS)
         return;
 
@@ -1051,7 +1051,7 @@ void Rend_DrawFlatRadio(const ConvexSubspace &subspace)
         {
             side.setShadowVisCount(R_FrameCount());  // Mark processed.
 
-            for (dint pln = 0; pln < subsec.visPlaneCount(); ++pln)
+            for (int pln = 0; pln < subsec.visPlaneCount(); ++pln)
             {
                 const Plane &plane = subsec.visPlane(pln);
 
@@ -1062,7 +1062,7 @@ void Rend_DrawFlatRadio(const ConvexSubspace &subspace)
                 if (Vec3f(eyeToSubspace, Rend_EyeOrigin().y - plane.heightSmoothed())
                          .dot(plane.surface().normal()) >= 0)
                 {
-                    const HEdge *hEdges[2/*left, right*/] = { side.leftHEdge(), side.leftHEdge() };
+                    const mesh::HEdge *hEdges[2/*left, right*/] = { side.leftHEdge(), side.leftHEdge() };
 
                     if (prepareFlatShadowEdges(shadowEdges, hEdges, pln, shadowDark))
                     {

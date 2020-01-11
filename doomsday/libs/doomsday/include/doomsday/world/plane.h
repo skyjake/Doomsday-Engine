@@ -55,15 +55,6 @@ public:
 
 public:
     /**
-     * Construct a new plane.
-     *
-     * @param sector  Sector parent which will own the plane.
-     * @param normal  Normal of the plane (will be normalized if necessary).
-     * @param height  Height of the plane in map space coordinates.
-     */
-    Plane(Sector &sector, const de::Vec3f &normal = de::Vec3f(0, 0, 1), double height = 0);
-
-    /**
      * Composes a human-friendly, styled, textual description of the plane.
      */
     de::String description() const;
@@ -128,6 +119,8 @@ public:
      */
     void updateSoundEmitterOrigin();
 
+    virtual void setHeight(double newHeight);
+
     /**
      * Returns the @em current sharp height of the plane relative to @c 0 on the
      * map up axis. The HeightChange audience is notified whenever the height
@@ -154,110 +147,22 @@ public:
     double speed() const;
 
 protected:
+    /**
+     * Construct a new plane.
+     *
+     * @param sector  Sector parent which will own the plane.
+     * @param normal  Normal of the plane (will be normalized if necessary).
+     * @param height  Height of the plane in map space coordinates.
+     */
+    Plane(Sector &sector, const de::Vec3f &normal = de::Vec3f(0, 0, 1), double height = 0);
+
     int property(world::DmuArgs &args) const;
     int setProperty(const world::DmuArgs &args);
+
+    double _height = 0;                // Current sharp height.
 
 private:
     DE_PRIVATE(d)
 };
 
 } // namespace world
-
-#ifdef __CLIENT__
-#include "def_main.h"  // ded_ptcgen_t
-
-namespace world { struct Generator; }
-class ClPlaneMover;
-
-class Plane : public world::Plane
-            , DE_OBSERVES(world::Surface, MaterialChange)
-{
-public:
-    /// No generator is attached. @ingroup errors
-    DE_ERROR(MissingGeneratorError);
-
-    /// Notified whenever a @em smoothed height change occurs.
-    DE_AUDIENCE(HeightSmoothedChange, void planeHeightSmoothedChanged(Plane &plane))
-
-public:
-    Plane(Sector &sector, const de::Vec3f &normal = de::Vec3f(0, 0, 1), double height = 0);
-
-    /**
-     * Returns the current smoothed height of the plane (interpolated) in the
-     * map coordinate space.
-     *
-     * @see heightTarget(), height()
-     */
-    double heightSmoothed() const;
-
-    /**
-     * Returns the delta between current height and the smoothed height of the
-     * plane in the map coordinate space.
-     *
-     * @see heightSmoothed(), heightTarget()
-     */
-    double heightSmoothedDelta() const;
-
-    /**
-     * Perform smoothed height interpolation.
-     *
-     * @see heightSmoothed(), heightTarget()
-     */
-    void lerpSmoothedHeight();
-
-    /**
-     * Reset the plane's height tracking buffer (for smoothing).
-     *
-     * @see heightSmoothed(), heightTarget()
-     */
-    void resetSmoothedHeight();
-
-    /**
-     * Roll the plane's height tracking buffer.
-     *
-     * @see heightTarget()
-     */
-    void updateHeightTracking();
-
-    /**
-     * Returns @c true iff a generator is attached to the plane.
-     *
-     * @see generator()
-     */
-    bool hasGenerator() const;
-
-    /**
-     * Returns the generator attached to the plane.
-     *
-     * @see hasGenerator()
-     */
-    world::Generator &generator() const;
-
-    /**
-     * Creates a new flat-triggered particle generator based on the given
-     * definition. Note that it may @em not be "this" plane to which the resultant
-     * generator is attached as the definition may override this.
-     */
-    void spawnParticleGen(const ded_ptcgen_t *def);
-
-    void addMover(ClPlaneMover &mover);
-    void removeMover(ClPlaneMover &mover);
-
-    /**
-     * Determines whether the plane qualifies as a FakeRadio shadow caster (onto walls).
-     */
-    bool castsShadow() const;
-
-    /**
-     * Determines whether the plane qualifies as a FakeRadio shadow receiver (from walls).
-     */
-    bool receivesShadow() const;
-
-private:
-    std::array<ddouble, 2> oldHeight;  ///< @em sharp height change tracking buffer (for smoothing).
-    ddouble heightSmoothed = 0;        ///< @ref height (smoothed).
-    ddouble heightSmoothedDelta = 0;   ///< Delta between the current @em sharp height and the visual height.
-    ClPlaneMover *mover = nullptr;     ///< The current mover.
-};
-
-#endif

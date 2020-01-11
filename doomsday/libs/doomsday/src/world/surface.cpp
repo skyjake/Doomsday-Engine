@@ -53,36 +53,21 @@ static inline bool Surface_isSectorExtraPlane(const Surface &suf)
 
 DE_PIMPL(Surface)
 {
-    dint flags = 0;                             ///< @ref sufFlags
+    dint flags = 0;                         ///< @ref sufFlags
 
-    Mat3f tangentMatrix { Mat3f::Zero };  ///< Tangent space vectors.
-    bool needUpdateTangentMatrix = false;       ///< @c true= marked for update.
+    Mat3f tangentMatrix { Mat3f::Zero };    ///< Tangent space vectors.
+    bool needUpdateTangentMatrix = false;   ///< @c true= marked for update.
 
-    Material *material = nullptr;               ///< Currently bound material.
-    bool materialIsMissingFix = false;          ///< @c true= @ref material is a "missing fix".
+    Material *material = nullptr;           ///< Currently bound material.
+    bool materialIsMissingFix = false;      ///< @c true= @ref material is a "missing fix".
 
-    Vec2f origin;                            ///< @em sharp offset to surface-space origin.
+    Vec2f origin;                           ///< @em sharp offset to surface-space origin.
     Vec3f color;
-    dfloat opacity = 0;
+    float opacity = 0;
     blendmode_t blendMode { BM_NORMAL };
-
-#ifdef __CLIENT__
-    Vec2f oldOrigin[2];                      ///< Old @em sharp surface space material origins, for smoothing.
-    Vec2f originSmoothed;                    ///< @em smoothed surface space material origin.
-    Vec2f originSmoothedDelta;               ///< Delta between @em sharp and @em smoothed.
-    MaterialAnimator *matAnimator = nullptr;
-#endif
 
     Impl(Public *i) : Base(i)
     {}
-
-#ifdef __CLIENT__
-    ~Impl()
-    {
-        // Stop scroll interpolation for this surface.
-        self().map().scrollingSurfaces().remove(thisPublic);
-    }
-#endif
 
     inline MapElement &owner() const { return self().parent(); }
 
@@ -105,7 +90,7 @@ DE_PIMPL(Surface)
     {
         needUpdateTangentMatrix = false;
 
-        dfloat values[9];
+        float values[9];
         Vec3f normal = tangentMatrix.column(2);
         V3f_Set(values + 6, normal.x, normal.y, normal.z);
         V3f_BuildTangents(values, values + 3, values + 6);
@@ -113,33 +98,12 @@ DE_PIMPL(Surface)
         tangentMatrix = Mat3f(values);
     }
 
-#ifdef __CLIENT__
-    void notifyOriginSmoothedChanged()
-    {
-        DE_NOTIFY_PUBLIC(OriginSmoothedChange, i) i->surfaceOriginSmoothedChanged(self());
-    }
-#endif
-
-    DE_PIMPL_AUDIENCE(ColorChange)
-    DE_PIMPL_AUDIENCE(MaterialChange)
-    DE_PIMPL_AUDIENCE(NormalChange)
-    DE_PIMPL_AUDIENCE(OpacityChange)
-    DE_PIMPL_AUDIENCE(OriginChange)
-#ifdef __CLIENT__
-    DE_PIMPL_AUDIENCE(OriginSmoothedChange)
-#endif
+    DE_PIMPL_AUDIENCES(ColorChange, MaterialChange, NormalChange, OpacityChange, OriginChange)
 };
 
-DE_AUDIENCE_METHOD(Surface, ColorChange)
-DE_AUDIENCE_METHOD(Surface, MaterialChange)
-DE_AUDIENCE_METHOD(Surface, NormalChange)
-DE_AUDIENCE_METHOD(Surface, OpacityChange)
-DE_AUDIENCE_METHOD(Surface, OriginChange)
-#ifdef __CLIENT__
-DE_AUDIENCE_METHOD(Surface, OriginSmoothedChange)
-#endif
+DE_AUDIENCE_METHODS(Surface, ColorChange, MaterialChange, NormalChange, OpacityChange, OriginChange)
 
-Surface::Surface(MapElement &owner, dfloat opacity, const Vec3f &color)
+Surface::Surface(MapElement &owner, float opacity, const Vec3f &color)
     : MapElement(DMU_SURFACE, &owner)
     , d(new Impl(this))
 {
@@ -253,9 +217,7 @@ Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
         }
     }
 
-#ifdef __CLIENT__
-    d->matAnimator = nullptr;
-#endif
+    resetLookups();
 
     // Notify interested parties.
     DE_NOTIFY(MaterialChange, i) i->surfaceMaterialChanged(*this);
@@ -274,7 +236,7 @@ Surface &Surface::setOrigin(const Vec2f &newOrigin)
     {
         d->origin = newOrigin;
 #ifdef __CLIENT__
-        if (::ddMapSetup)
+        if (World::ddMapSetup)
         {
             // During map setup we'll apply this immediately to the visual origin also.
             d->originSmoothed = d->origin;
@@ -287,7 +249,7 @@ Surface &Surface::setOrigin(const Vec2f &newOrigin)
         DE_NOTIFY(OriginChange, i) i->surfaceOriginChanged(*this);
 
 #ifdef __CLIENT__
-        if (!::ddMapSetup)
+        if (!World::ddMapSetup)
         {
             map().scrollingSurfaces().insert(this);
         }
@@ -322,12 +284,15 @@ void Surface::setDecorationState(IDecorationState *state)
     _decorationState.reset(state);
 }
 
-dfloat Surface::opacity() const
+void world::Surface::resetLookups()
+{}
+
+float Surface::opacity() const
 {
     return d->opacity;
 }
 
-Surface &Surface::setOpacity(dfloat newOpacity)
+Surface &Surface::setOpacity(float newOpacity)
 {
     DE_ASSERT(Surface_isSideMiddle(*this) || Surface_isSectorExtraPlane(*this));  // sanity check
 
@@ -525,7 +490,7 @@ dint Surface::setProperty(const DmuArgs &args)
         break; }
 
     case DMU_ALPHA: {
-        dfloat newOpacity;
+        float newOpacity;
         args.value(DMT_SURFACE_RGBA, &newOpacity, 0);
         setOpacity(newOpacity);
         break; }
@@ -566,110 +531,3 @@ Surface::IDecorationState::~IDecorationState()
 {}
 
 } // namespace world
-
-#ifdef __CLIENT__
-
-#  include "gl/gl_tex.h"
-#  include "render/rend_main.h"
-#  include "resource/clienttexture.h"
-
-#  include "dd_loop.h" // frameTimePos
-
-#  include <doomsday/resource/texturemanifest.h>
-
-#  include "Decoration"
-
-
-MaterialAnimator *Surface::materialAnimator() const
-{
-    if (!d->material) return nullptr;
-
-    if (!d->matAnimator)
-    {
-        d->matAnimator = &d->material->as<ClientMaterial>()
-                              .getAnimator(Rend_MapSurfaceMaterialSpec());
-    }
-    return d->matAnimator;
-}
-
-void Surface::resetLookups()
-{
-    d->matAnimator = nullptr;
-}
-
-const Vec2f &Surface::originSmoothed() const
-{
-    return d->originSmoothed;
-}
-
-const Vec2f &Surface::originSmoothedAsDelta() const
-{
-    return d->originSmoothedDelta;
-}
-
-void Surface::lerpSmoothedOrigin()
-{
-    // $smoothmaterialorigin
-    d->originSmoothedDelta = d->oldOrigin[0] * (1 - ::frameTimePos)
-                             + origin() * ::frameTimePos - origin();
-
-    // Visible material origin.
-    d->originSmoothed = origin() + d->originSmoothedDelta;
-
-    d->notifyOriginSmoothedChanged();
-}
-
-void Surface::resetSmoothedOrigin()
-{
-    // $smoothmaterialorigin
-    d->originSmoothed = d->oldOrigin[0] = d->oldOrigin[1] = origin();
-    d->originSmoothedDelta = Vec2f();
-
-    d->notifyOriginSmoothedChanged();
-}
-
-void Surface::updateOriginTracking()
-{
-    // $smoothmaterialorigin
-    d->oldOrigin[0] = d->oldOrigin[1];
-    d->oldOrigin[1] = origin();
-
-    if (d->oldOrigin[0] != d->oldOrigin[1])
-    {
-        dfloat moveDistance = de::abs(Vec2f(d->oldOrigin[1] - d->oldOrigin[0]).length());
-
-        if (moveDistance >= MAX_SMOOTH_MATERIAL_MOVE)
-        {
-            // Too fast: make an instantaneous jump.
-            d->oldOrigin[0] = d->oldOrigin[1];
-        }
-    }
-}
-
-dfloat Surface::glow(Vec3f &color) const
-{
-    if (!hasMaterial() || material().isSkyMasked())
-    {
-        color = Vec3f();
-        return 0;
-    }
-
-    MaterialAnimator &matAnimator = *materialAnimator(); //material().as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec());
-
-    // Ensure we've up to date info about the material.
-    matAnimator.prepare();
-
-    TextureVariant *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
-    if (!texture) return 0;
-    const auto *avgColorAmplified = reinterpret_cast<const averagecolor_analysis_t *>(texture->base().analysisDataPointer(ClientTexture::AverageColorAmplifiedAnalysis));
-    if (!avgColorAmplified)
-    {
-        //throw Error("Surface::glow", "Texture \"" + texture->base().manifest().composeUri().asText() + "\" has no AverageColorAmplifiedAnalysis");
-        return 0;
-    }
-
-    color = Vec3f(avgColorAmplified->color.rgb);
-    return matAnimator.glowStrength() * glowFactor; // Global scale factor.
-}
-
-#endif

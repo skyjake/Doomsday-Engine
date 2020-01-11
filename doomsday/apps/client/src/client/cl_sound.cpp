@@ -1,4 +1,4 @@
-﻿/** @file cl_sound.cpp  Clientside sounds.
+/** @file cl_sound.cpp  Clientside sounds.
  *
  * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -18,36 +18,34 @@
  */
 
 #include "de_base.h"
-#include "client/cl_sound.h"
-
 #include "api_client.h"
-#include "client/cl_player.h"
-
 #include "api_sound.h"
-
+#include "client/cl_sound.h"
+#include "client/cl_player.h"
 #include "network/net_msg.h"
-
 #include "world/map.h"
 #include "world/p_players.h"
-#include "Sector"
 
+#include <doomsday/world/sector.h>
 #include <de/LogBuffer>
 
 using namespace de;
+
+using world::Sector;
 
 void Cl_ReadSoundDelta(deltatype_t type)
 {
     LOG_AS("Cl_ReadSoundDelta");
 
     /// @todo Do not assume the CURRENT map.
-    world::Map &map = App_World().map();
+    Map &map = World::get().map().as<Map>();
 
     dint sound = 0, soundFlags = 0;
     mobj_t *cmo = 0;
     thid_t mobjId = 0;
     Sector *sector = 0;
     Polyobj *poly = 0;
-    LineSide *side = 0;
+    world::LineSide *side = 0;
     mobj_t *emitter = 0;
 
     const duint16 deltaId = Reader_ReadUInt16(::msgReader);

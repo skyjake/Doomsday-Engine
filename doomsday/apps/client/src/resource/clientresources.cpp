@@ -85,9 +85,10 @@
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/sky.h"
-#include "world/thinkers.h"
-#include "Sector"
-#include "Surface"
+#include "world/surface.h"
+
+#include <doomsday/world/sector.h>
+#include <doomsday/world/thinkers.h>
 
 using namespace de;
 using namespace res;
@@ -678,7 +679,7 @@ DE_PIMPL(ClientResources)
      * Create a new modeldef or find an existing one. There can be only one model
      * definition associated with a state/intermark pair.
      */
-    FrameModelDef *getModelDef(dint state, dfloat interMark, dint select)
+    FrameModelDef *getModelDef(int state, dfloat interMark, int select)
     {
         // Is this a valid state?
         if (state < 0 || state >= runtimeDefs.states.size())
@@ -741,7 +742,7 @@ DE_PIMPL(ClientResources)
         if (ClientTexture *tex = static_cast<ClientTexture *>(self().textures().defineTexture("ModelSkins", res::Uri(skinPath))))
         {
             // A duplicate? (return existing skin number)
-            for (dint i = 0; i < mdl.skinCount(); ++i)
+            for (int i = 0; i < mdl.skinCount(); ++i)
             {
                 if (mdl.skin(i).texture == tex)
                     return i;
@@ -759,8 +760,8 @@ DE_PIMPL(ClientResources)
     {
         const String &modelFilePath = findModelPath(mdl.modelId());
 
-        dint numFoundSkins = 0;
-        for (dint i = 0; i < mdl.skinCount(); ++i)
+        int numFoundSkins = 0;
+        for (int i = 0; i < mdl.skinCount(); ++i)
         {
             FrameModelSkin &skin = mdl.skin(i);
             try
@@ -810,7 +811,7 @@ DE_PIMPL(ClientResources)
 
 #ifdef DE_DEBUG
         LOGDEV_RES_XVERBOSE("Model \"%s\" skins:", NativePath(modelFilePath).pretty());
-        dint skinIdx = 0;
+        int skinIdx = 0;
         for (const FrameModelSkin &skin : mdl.skins())
         {
             const res::TextureManifest *texManifest = skin.texture? &skin.texture->manifest() : 0;
@@ -860,7 +861,7 @@ DE_PIMPL(ClientResources)
         matAnimator.prepare();  // Ensure we have up-to-date info.
 
         const ClientTexture &texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture->base();
-        dint off = de::max(0, -texture.origin().y - int(matAnimator.dimensions().y));
+        int off = de::max(0, -texture.origin().y - int(matAnimator.dimensions().y));
 
         scaleModel(mf, matAnimator.dimensions().y, off);
     }
@@ -905,8 +906,8 @@ DE_PIMPL(ClientResources)
 
         auto &defs = *DED_Definitions();
 
-        const dint modelScopeFlags = def.geti("flags") | defs.modelFlags;
-        const dint statenum = defs.getStateNum(def.gets("state"));
+        const int modelScopeFlags = def.geti("flags") | defs.modelFlags;
+        const int statenum = defs.getStateNum(def.gets("state"));
 
         // Is this an ID'd model?
         FrameModelDef *modef = getModelDefWithId(def.gets("id"));
@@ -929,14 +930,14 @@ DE_PIMPL(ClientResources)
         modef->scale.y  *= defs.modelScale;  // Common Y axis scaling.
         modef->resize    = def.getf("resize");
         modef->skinTics  = de::max(def.geti("skinTics"), 1);
-        for (dint i = 0; i < 2; ++i)
+        for (int i = 0; i < 2; ++i)
         {
             modef->interRange[i] = float(def.geta("interRange")[i].asNumber());
         }
 
         // Submodels.
         modef->clearSubs();
-        for (dint i = 0; i < def.subCount(); ++i)
+        for (int i = 0; i < def.subCount(); ++i)
         {
             const Record &subdef = def.sub(i);
             SubmodelDef *sub = modef->addSub();
@@ -1443,7 +1444,7 @@ void ClientResources::pruneUnusedTextureSpecs()
 {
     if (Sys_IsShuttingDown()) return;
 
-    dint numPruned = 0;
+    int numPruned = 0;
     numPruned += d->pruneUnusedTextureSpecs(TST_GENERAL);
     numPruned += d->pruneUnusedTextureSpecs(TST_DETAIL);
 
@@ -1452,15 +1453,15 @@ void ClientResources::pruneUnusedTextureSpecs()
 }
 
 const TextureVariantSpec &ClientResources::textureSpec(texturevariantusagecontext_t tc,
-                                                       dint    flags,
+                                                       int    flags,
                                                        byte    border,
-                                                       dint    tClass,
-                                                       dint    tMap,
+                                                       int    tClass,
+                                                       int    tMap,
                                                        GLenum  wrapS,
                                                        GLenum  wrapT,
-                                                       dint    minFilter,
-                                                       dint    magFilter,
-                                                       dint    anisoFilter,
+                                                       int    minFilter,
+                                                       int    magFilter,
+                                                       int    anisoFilter,
                                                        dd_bool mipmapped,
                                                        dd_bool gammaCorrection,
                                                        dd_bool noStretch,
@@ -1539,7 +1540,7 @@ FontManifest &ClientResources::fontManifest(const res::Uri &uri) const
         if (uIdPos > 0)
         {
             String schemeName = pathStr.left(uIdPos);
-            dint uniqueId     = pathStr.substr(uIdPos + 1 /*skip delimiter*/).toInt();
+            int uniqueId     = pathStr.substr(uIdPos + 1 /*skip delimiter*/).toInt();
 
             try
             {
@@ -1757,7 +1758,7 @@ bool ClientResources::hasModelDef(String id) const
     return false;
 }
 
-FrameModelDef &ClientResources::modelDef(dint index)
+FrameModelDef &ClientResources::modelDef(int index)
 {
     if (index >= 0 && index < modelDefCount()) return d->modefs[index];
     /// @throw MissingModelDefError An unknown model definition was referenced.
@@ -1780,7 +1781,7 @@ FrameModelDef &ClientResources::modelDef(String id)
     throw MissingModelDefError("ClientResources::modelDef", "Invalid id '" + id + "'");
 }
 
-FrameModelDef *ClientResources::modelDefForState(dint stateIndex, dint select)
+FrameModelDef *ClientResources::modelDefForState(int stateIndex, int select)
 {
     if (stateIndex < 0 || stateIndex >= DED_Definitions()->states.size())
         return nullptr;
@@ -1796,7 +1797,7 @@ FrameModelDef *ClientResources::modelDefForState(dint stateIndex, dint select)
     if (select)
     {
         // Choose the correct selector, or selector zero if the given one not available.
-        const dint mosel = (select & DDMOBJ_SELECTOR_MASK);        
+        const int mosel = (select & DDMOBJ_SELECTOR_MASK);
         for (FrameModelDef *it = def; it; it = it->selectNext)
         {
             if (it->select == mosel)
@@ -1809,7 +1810,7 @@ FrameModelDef *ClientResources::modelDefForState(dint stateIndex, dint select)
     return def;
 }
 
-dint ClientResources::modelDefCount() const
+int ClientResources::modelDefCount() const
 {
     return d->modefs.count();
 }
@@ -1840,14 +1841,14 @@ void ClientResources::initModels()
 
     // Clear the stateid => modeldef LUT.
     d->stateModefs.resize(runtimeDefs.states.size());
-    for (dint i = 0; i < runtimeDefs.states.size(); ++i)
+    for (int i = 0; i < runtimeDefs.states.size(); ++i)
     {
         d->stateModefs[i] = -1;
     }
 
     // Read in the model files and their data.
     // Use the latest definition available for each sprite ID.
-    for (dint i = dint(defs.models.size()) - 1; i >= 0; --i)
+    for (int i = int(defs.models.size()) - 1; i >= 0; --i)
     {
         if (!(i % 100))
         {
@@ -1862,14 +1863,14 @@ void ClientResources::initModels()
     // is important. We want to allow "patch" definitions, right?
 
     // For each modeldef we will find the "next" def.
-    for (dint i = d->modefs.count() - 1; i >= 0; --i)
+    for (int i = d->modefs.count() - 1; i >= 0; --i)
     {
         FrameModelDef *me = &d->modefs[i];
 
         dfloat minmark = 2; // max = 1, so this is "out of bounds".
 
         FrameModelDef *closest = 0;
-        for (dint k = d->modefs.count() - 1; k >= 0; --k)
+        for (int k = d->modefs.count() - 1; k >= 0; --k)
         {
             FrameModelDef *other = &d->modefs[k];
 
@@ -1891,16 +1892,16 @@ void ClientResources::initModels()
     }
 
     // Create selectlinks.
-    for (dint i = d->modefs.count() - 1; i >= 0; --i)
+    for (int i = d->modefs.count() - 1; i >= 0; --i)
     {
         FrameModelDef *me = &d->modefs[i];
 
-        dint minsel = DDMAXINT;
+        int minsel = DDMAXINT;
 
         FrameModelDef *closest = 0;
 
         // Start scanning from the next definition.
-        for (dint k = d->modefs.count() - 1; k >= 0; --k)
+        for (int k = d->modefs.count() - 1; k >= 0; --k)
         {
             FrameModelDef *other = &d->modefs[k];
 
@@ -1921,13 +1922,13 @@ void ClientResources::initModels()
     LOG_RES_MSG("Model init completed in %.2f seconds") << begunAt.since();
 }
 
-dint ClientResources::indexOf(const FrameModelDef *modelDef)
+int ClientResources::indexOf(const FrameModelDef *modelDef)
 {
-    dint index = dint(modelDef - &d->modefs[0]);
+    int index = int(modelDef - &d->modefs[0]);
     return (index >= 0 && index < d->modefs.count() ? index : -1);
 }
 
-void ClientResources::setModelDefFrame(FrameModelDef &modef, dint frame)
+void ClientResources::setModelDefFrame(FrameModelDef &modef, int frame)
 {
     for (duint i = 0; i < modef.subCount(); ++i)
     {
@@ -1968,8 +1969,8 @@ void ClientResources::cache(FrameModelDef *modelDef)
 }
 
 const MaterialVariantSpec &ClientResources::materialSpec(MaterialContextId contextId,
-    dint flags, byte border, dint tClass, dint tMap, GLenum wrapS, GLenum wrapT,
-    dint minFilter, dint magFilter, dint anisoFilter,
+    int flags, byte border, int tClass, int tMap, GLenum wrapS, GLenum wrapT,
+    int minFilter, int magFilter, int anisoFilter,
     bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha)
 {
     return d->getMaterialSpecForContext(contextId, flags, border, tClass, tMap,
@@ -1988,11 +1989,11 @@ void ClientResources::cacheForCurrentMap()
     {
         const MaterialVariantSpec &spec = Rend_MapSurfaceMaterialSpec();
 
-        map.forAllLines([this, &spec] (Line &line)
+        map.forAllLines([this, &spec] (world::Line &line)
         {
-            for (dint i = 0; i < 2; ++i)
+            for (int i = 0; i < 2; ++i)
             {
-                LineSide &side = line.side(i);
+                auto &side = line.side(i);
                 if (!side.hasSections()) continue;
 
                 if (side.middle().hasMaterial())
@@ -2007,12 +2008,12 @@ void ClientResources::cacheForCurrentMap()
             return LoopContinue;
         });
 
-        map.forAllSectors([this, &spec] (Sector &sector)
+        map.forAllSectors([this, &spec] (world::Sector &sector)
         {
             // Skip sectors with no line sides as their planes will never be drawn.
             if (sector.sideCount())
             {
-                sector.forAllPlanes([this, &spec] (Plane &plane)
+                sector.forAllPlanes([this, &spec] (world::Plane &plane)
                 {
                     if (plane.surface().hasMaterial())
                     {
@@ -2029,7 +2030,7 @@ void ClientResources::cacheForCurrentMap()
     {
         const MaterialVariantSpec &matSpec = Rend_SpriteMaterialSpec();
 
-        for (dint i = 0; i < sprites().spriteCount(); ++i)
+        for (int i = 0; i < sprites().spriteCount(); ++i)
         {
             const auto sprite = spritenum_t(i);
 
@@ -2041,7 +2042,7 @@ void ClientResources::cacheForCurrentMap()
                 if (mob.type >= 0 && mob.type < runtimeDefs.mobjInfo.size())
                 {
                     /// @todo optimize: traverses the entire state list!
-                    for (dint k = 0; k < DED_Definitions()->states.size(); ++k)
+                    for (int k = 0; k < DED_Definitions()->states.size(); ++k)
                     {
                         if (runtimeDefs.stateInfo[k].owner != &runtimeDefs.mobjInfo[mob.type])
                             continue;
@@ -2072,7 +2073,7 @@ void ClientResources::cacheForCurrentMap()
         {
             const auto &mob = *reinterpret_cast<mobj_t *>(th);
             // Check through all the model definitions.
-            for (dint i = 0; i < modelDefCount(); ++i)
+            for (int i = 0; i < modelDefCount(); ++i)
             {
                 FrameModelDef &modef = modelDef(i);
 

@@ -20,14 +20,6 @@
 
 #include "de_platform.h"
 
-#include <de/legacy/vector1.h>
-#include <de/GLInfo>
-#include <de/GLState>
-#include <de/GLFramebuffer>
-#include <doomsday/defs/sprite.h>
-#include <doomsday/world/Materials>
-#include <doomsday/res/Sprites>
-
 #include "dd_def.h"  // finesine
 #include "clientapp.h"
 #include "gl/gl_main.h"
@@ -40,10 +32,18 @@
 #include "render/vissprite.h"
 #include "resource/clientresources.h"
 #include "world/map.h"
+#include "world/subsector.h"
+#include "world/convexsubspace.h"
 #include "world/p_players.h"
-#include "BspLeaf"
-#include "ConvexSubspace"
-#include "client/clientsubsector.h"
+
+#include <doomsday/defs/sprite.h>
+#include <doomsday/world/bspleaf.h>
+#include <doomsday/world/Materials>
+#include <doomsday/res/Sprites>
+#include <de/legacy/vector1.h>
+#include <de/GLInfo>
+#include <de/GLState>
+#include <de/GLFramebuffer>
 
 using namespace de;
 
@@ -131,7 +131,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, const vispsprite_t &vs
         else
 #endif
         {
-            const auto &subsec   = vs.bspLeaf->subspace().subsector().as<world::ClientSubsector>();
+            const auto &subsec   = vs.bspLeaf->subspace().subsector().as<Subsector>();
             const Vec4f color = subsec.lightSourceColorfIntensity();
 
             // No need for distance attentuation.

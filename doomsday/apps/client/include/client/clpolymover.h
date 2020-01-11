@@ -20,9 +20,9 @@
 #ifndef DE_CLIENT_POLYMOVER_H
 #define DE_CLIENT_POLYMOVER_H
 
-#include <doomsday/world/thinkerdata.h>
 #include "api_thinker.h"
-#include "Polyobj"
+#include <doomsday/world/thinkerdata.h>
+#include <doomsday/world/polyobj.h>
 
 /**
  * Polyobj movement thinker.

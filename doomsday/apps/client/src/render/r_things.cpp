@@ -51,12 +51,12 @@
 #include "world/p_object.h"
 #include "world/p_players.h"
 #include "world/clientmobjthinkerdata.h"
-#include "BspLeaf"
-#include "ConvexSubspace"
-#include "client/clientsubsector.h"
+#include "world/convexsubspace.h"
+#include "world/subsector.h"
+
+#include <doomsday/world/bspleaf.h>
 
 using namespace de;
-using namespace world;
 
 static void evaluateLighting(const Vec3d &origin, ConvexSubspace &subspaceAtOrigin,
     coord_t distToEye, bool fullbright, Vec4f &ambientColor, duint *vLightListIdx)
@@ -68,7 +68,7 @@ static void evaluateLighting(const Vec3d &origin, ConvexSubspace &subspaceAtOrig
     }
     else
     {
-        auto &subsec = subspaceAtOrigin.subsector().as<world::ClientSubsector>();
+        auto &subsec = subspaceAtOrigin.subsector().as<Subsector>();
 
 #if 0
         Map &map = subsec.sector().map();
@@ -136,15 +136,15 @@ static Vec3d mobjOriginSmoothed(mobj_t *mob)
  */
 static void findMobjZOrigin(mobj_t &mob, bool floorAdjust, vissprite_t &vis)
 {
-    validCount++;
-    Mobj_Map(mob).forAllSectorsTouchingMobj(mob, [&mob, &floorAdjust, &vis](Sector &sector) {
+    World::validCount++;
+    Mobj_Map(mob).forAllSectorsTouchingMobj(mob, [&mob, &floorAdjust, &vis](world::Sector &sector) {
         if (floorAdjust && fequal(mob.origin[2], sector.floor().height()))
         {
-            vis.pose.origin.z = sector.floor().heightSmoothed();
+            vis.pose.origin.z = sector.floor().as<Plane>().heightSmoothed();
         }
         if (fequal(mob.origin[2] + mob.height, sector.ceiling().height()))
         {
-            vis.pose.origin.z = sector.ceiling().heightSmoothed() - mob.height;
+            vis.pose.origin.z = sector.ceiling().as<Plane>().heightSmoothed() - mob.height;
         }
         return LoopContinue;
     });
@@ -170,8 +170,8 @@ void R_ProjectSprite(mobj_t &mob)
     const dfloat alpha = Mobj_Alpha(mob);
     if(alpha <= 0) return;
     // ...origin lies in a sector with no volume?
-    ConvexSubspace &subspace = Mobj_BspLeafAtOrigin(mob).subspace();
-    auto &subsec = subspace.subsector().as<ClientSubsector>();
+    ConvexSubspace &subspace = Mobj_BspLeafAtOrigin(mob).subspace().as<ConvexSubspace>();
+    auto &subsec = subspace.subsector().as<Subsector>();
     if(!subsec.hasWorldVolume()) return;
 
     const ClientMobjThinkerData *mobjData = THINKER_DATA_MAYBE(mob.thinker, ClientMobjThinkerData);
@@ -498,7 +498,7 @@ void R_ProjectSprite(mobj_t &mob)
             const auto *pl = (const pointlight_analysis_t *) tex->base().analysisDataPointer(res::Texture::BrightPointAnalysis);
             DE_ASSERT(pl);
 
-            const Lumobj &lob = subsec.sector().map().lumobj(mob.lumIdx);
+            const Lumobj &lob = subsec.sector().map().as<Map>().lumobj(mob.lumIdx);
             vissprite_t *vis  = R_NewVisSprite(VSPR_FLARE);
 
             vis->pose.distance = distFromEye;

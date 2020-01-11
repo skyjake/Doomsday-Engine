@@ -27,11 +27,10 @@
 
 #include "world/map.h"
 #include "world/p_players.h"
-#include "BspLeaf"
-#include "ConvexSubspace"
-#include "Line"
-#include "Plane"
-#include "client/clientsubsector.h"
+#include "world/convexsubspace.h"
+#include "world/line.h"
+#include "world/plane.h"
+#include "world/subsector.h"
 
 #include "resource/image.h"
 
@@ -47,6 +46,7 @@
 
 #include <doomsday/console/var.h>
 #include <doomsday/filesys/fs_main.h>
+#include <doomsday/world/bspleaf.h>
 #include <de/legacy/concurrency.h>
 #include <de/legacy/vector1.h>
 #include <de/Folder>
@@ -55,7 +55,6 @@
 #include <cstdlib>
 
 using namespace de;
-using namespace world;
 using namespace res;
 
 // Point + custom textures.
@@ -69,8 +68,8 @@ static bool hasPointTexs[NUM_TEX_NAMES];
 struct OrderedParticle
 {
     const Generator *generator;
-    dint particleId;
-    dfloat distance;
+    int particleId;
+    float distance;
 };
 static OrderedParticle *order;
 static size_t orderSize;
@@ -81,14 +80,14 @@ static size_t numParts;
  * Console variables:
  */
 dbyte useParticles = true;
-static dint maxParticles;           ///< @c 0= Unlimited.
-static dint particleNearLimit;
-static dfloat particleDiffuse = 4;
+static int maxParticles;           ///< @c 0= Unlimited.
+static int particleNearLimit;
+static float particleDiffuse = 4;
 
-static dfloat pointDist(fixed_t const c[3])
+static float pointDist(fixed_t const c[3])
 {
     const viewdata_t *viewData = &viewPlayer->viewport();
-    dfloat dist = ((viewData->current.origin.y - FIX2FLT(c[1])) * -viewData->viewSin)
+    float dist = ((viewData->current.origin.y - FIX2FLT(c[1])) * -viewData->viewSin)
                 - ((viewData->current.origin.x - FIX2FLT(c[0])) * viewData->viewCos);
 
     return de::abs(dist);  // Always return positive.
@@ -217,8 +216,8 @@ void Rend_ParticleLoadExtraTextures()
     Rend_ParticleReleaseExtraTextures();
     if (!App_GameLoaded()) return;
 
-    List<dint> loaded;
-    for (dint i = 0; i < MAX_PTC_TEXTURES; ++i)
+    List<int> loaded;
+    for (int i = 0; i < MAX_PTC_TEXTURES; ++i)
     {
         if(loadParticleTexture(i))
         {
@@ -251,7 +250,7 @@ void Rend_ParticleReleaseExtraTextures()
 /**
  * Sorts in descending order.
  */
-static dint comparePOrder(const void *a, const void *b)
+static int comparePOrder(const void *a, const void *b)
 {
     const auto &ptA = *(const OrderedParticle *) a;
     const auto &ptB = *(const OrderedParticle *) b;
@@ -299,13 +298,13 @@ static bool particlePVisible(const ParticleInfo &pinfo)
         return false;
 
     // Potentially, if the subspace at the origin is visible.
-    return R_ViewerSubspaceIsVisible(pinfo.bspLeaf->subspace());
-}
+    return R_ViewerSubspaceIsVisible(pinfo.bspLeaf->subspace().as<ConvexSubspace>());
+ }
 
 /**
  * @return  @c true if there are particles to be drawn.
  */
-static dint listVisibleParticles(world::Map &map)
+static int listVisibleParticles(Map &map)
 {
     ::hasPoints = ::hasModels = ::hasLines = false;
     ::hasAdditive = ::hasNoBlend = false;
@@ -333,16 +332,16 @@ static dint listVisibleParticles(world::Map &map)
     {
         if(!R_ViewerGeneratorIsVisible(gen)) return LoopContinue;  // Skip.
 
-        for(dint i = 0; i < gen.count; ++i)
+        for(int i = 0; i < gen.count; ++i)
         {
             const ParticleInfo &pinfo = gen.particleInfo()[i];
 
             if(!particlePVisible(pinfo)) continue;  // Skip.
 
             // Skip particles too far from, or near to, the viewer.
-            const dfloat dist = de::max(pointDist(pinfo.origin), 1.f);
+            const float dist = de::max(pointDist(pinfo.origin), 1.f);
             if(gen.def->maxDist != 0 && dist > gen.def->maxDist) continue;
-            if(dist < dfloat( ::particleNearLimit )) continue;
+            if(dist < float( ::particleNearLimit )) continue;
 
             // This particle is visible. Add it to the sort buffer.
             OrderedParticle *slot = &::order[numVisibleParts++];
@@ -352,7 +351,7 @@ static dint listVisibleParticles(world::Map &map)
 
             // Determine what type of particle this is, as this will affect how
             // we go order our render passes and manipulate the render state.
-            const dint psType = gen.stages[pinfo.stage].type;
+            const int psType = gen.stages[pinfo.stage].type;
             if(psType == PTC_POINT)
             {
                 ::hasPoints = true;
@@ -403,7 +402,7 @@ static dint listVisibleParticles(world::Map &map)
 
 static void setupModelParamsForParticle(vissprite_t &spr, const ParticleInfo *pinfo,
     const GeneratorParticleStage *st, const ded_ptcstage_t *dst, const Vec3f &origin,
-    dfloat dist, dfloat size, dfloat mark, dfloat alpha)
+    float dist, float size, float mark, float alpha)
 {
     drawmodelparams_t &parm = *VS_MODEL(&spr);
 
@@ -414,7 +413,7 @@ static void setupModelParamsForParticle(vissprite_t &spr, const ParticleInfo *pi
     parm.mf = &ClientApp::resources().modelDef(dst->model);
     parm.alwaysInterpolate = true;
 
-    dint frame;
+    int frame;
     if(dst->endFrame < 0)
     {
         frame = dst->frame;
@@ -462,7 +461,7 @@ static void setupModelParamsForParticle(vissprite_t &spr, const ParticleInfo *pi
         {
             Vec4f color = map.lightGrid().evaluate(spr.pose.origin);
             // Apply light range compression.
-            for(dint i = 0; i < 3; ++i)
+            for(int i = 0; i < 3; ++i)
             {
                 color[i] += Rend_LightAdaptationDelta(color[i]);
             }
@@ -473,10 +472,10 @@ static void setupModelParamsForParticle(vissprite_t &spr, const ParticleInfo *pi
         else
 #endif
         {
-            const Vec4f color = pinfo->bspLeaf->subspace().subsector().as<world::ClientSubsector>()
+            const Vec4f color = pinfo->bspLeaf->subspace().subsector().as<Subsector>()
                                        .lightSourceColorfIntensity();
 
-            dfloat lightLevel = color.w;
+            float lightLevel = color.w;
 
             // Apply distance attenuation.
             lightLevel = Rend_AttenuateLightLevel(spr.pose.distance, lightLevel);
@@ -489,7 +488,7 @@ static void setupModelParamsForParticle(vissprite_t &spr, const ParticleInfo *pi
             Rend_ApplyLightAdaptation(lightLevel);
 
             // Determine the final ambientColor.
-            for(dint i = 0; i < 3; ++i)
+            for(int i = 0; i < 3; ++i)
             {
                 spr.light.ambientColor[i] = lightLevel * color[i];
             }
@@ -511,7 +510,7 @@ static void setupModelParamsForParticle(vissprite_t &spr, const ParticleInfo *pi
  */
 static Vec2f lineUnitVector(const Line &line)
 {
-    ddouble len = M_ApproxDistance(line.direction().x, line.direction().y);
+    double len = M_ApproxDistance(line.direction().x, line.direction().y);
     if(len)
     {
         return line.direction() / len;
@@ -519,7 +518,7 @@ static Vec2f lineUnitVector(const Line &line)
     return Vec2f();
 }
 
-static void drawParticles(dint rtype, bool withBlend)
+static void drawParticles(int rtype, bool withBlend)
 {
     DE_ASSERT_IN_RENDER_THREAD();
     DE_ASSERT_GL_CONTEXT_ACTIVE();
@@ -629,10 +628,10 @@ static void drawParticles(dint rtype, bool withBlend)
         }
 
         // Where is intermark?
-        const dfloat inter = 1 - dfloat( pinfo.tics ) / stDef->tics;
+        const float inter = 1 - float( pinfo.tics ) / stDef->tics;
 
         // Calculate size and color.
-        dfloat size = de::lerp(    stDef->particleRadius(slot->particleId),
+        float size = de::lerp(    stDef->particleRadius(slot->particleId),
                                nextStDef->particleRadius(slot->particleId), inter);
 
         // Infinitely small?
@@ -646,14 +645,14 @@ static void drawParticles(dint rtype, bool withBlend)
             // range compression).
             if (world::ConvexSubspace *subspace = pinfo.bspLeaf->subspacePtr())
             {
-                const dfloat intensity = subspace->subsector().as<world::ClientSubsector>()
+                const float intensity = subspace->subsector().as<Subsector>()
                                             .lightSourceIntensity();
                 color *= Vec4f(intensity, intensity, intensity, 1);
             }
         }
 
-        const dfloat maxDist = gen->def->maxDist;
-        const dfloat dist    = order[i].distance;
+        const float maxDist = gen->def->maxDist;
+        const float dist    = order[i].distance;
 
         // Far diffuse?
         if(maxDist)
@@ -683,7 +682,7 @@ static void drawParticles(dint rtype, bool withBlend)
         bool nearPlane = false;
         if (world::ConvexSubspace *space = pinfo.bspLeaf->subspacePtr())
         {
-            auto &subsec = space->subsector().as<world::ClientSubsector>();
+            auto &subsec = space->subsector().as<Subsector>();
             if (   FLT2FIX(subsec.  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pinfo.origin[2]
                 || FLT2FIX(subsec.visCeiling().heightSmoothed()) - 2 * FRACUNIT <= pinfo.origin[2])
             {
@@ -752,12 +751,12 @@ static void drawParticles(dint rtype, bool withBlend)
 
                 vec2d_t projected;
                 V2d_ProjectOnLine(projected, origin,
-                                  contact.from().origin().data().baseAs<ddouble>(),
-                                  contact.direction().data().baseAs<ddouble>());
+                                  contact.from().origin().data().baseAs<double>(),
+                                  contact.direction().data().baseAs<double>());
 
                 // Move away from the wall to avoid the worst Z-fighting.
-                const ddouble gap = -1;  // 1 map unit.
-                ddouble diff[2], dist;
+                const double gap = -1;  // 1 map unit.
+                double diff[2], dist;
                 V2d_Subtract(diff, projected, origin);
                 if((dist = V2d_Length(diff)) != 0)
                 {
@@ -860,7 +859,7 @@ static void renderPass(bool useBlending)
         drawParticles(PTC_POINT, useBlending);
     }
 
-    for(dint i = 0; i < NUM_TEX_NAMES; ++i)
+    for(int i = 0; i < NUM_TEX_NAMES; ++i)
     {
         if(hasPointTexs[i])
         {
@@ -877,12 +876,12 @@ static void renderPass(bool useBlending)
     DE_ASSERT(!Sys_GLCheckError());
 }
 
-void Rend_RenderParticles(world::Map &map)
+void Rend_RenderParticles(Map &map)
 {
     if(!useParticles) return;
 
     // No visible particles at all?
-    if(!listVisibleParticles(map)) return;
+    if (!listVisibleParticles(map)) return;
 
     // Render all the visible particles.
     if(hasNoBlend)

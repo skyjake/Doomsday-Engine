@@ -203,10 +203,6 @@ public:
 
 //- Subsectors --------------------------------------------------------------------------
 
-    typedef std::function<world::Subsector *(const de::List<world::ConvexSubspace *> &)> SubsectorConstructor;
-
-    static void setSubsectorConstructor(SubsectorConstructor func);
-
     /**
      * Returns the minimum bounding rectangle containing all the subsector geometries.
      * If no subsectors are defined an invalid rectangle is returned (negative dimensions).

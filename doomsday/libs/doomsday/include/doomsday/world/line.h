@@ -474,12 +474,6 @@ public: /// @todo make private:
     Sector *_bspWindowSector = nullptr;
 
 public:
-    Line(Vertex &from,
-         Vertex &to,
-         int     flags       = 0,
-         Sector *frontSector = nullptr,
-         Sector *backSector  = nullptr);
-
     /**
      * Returns the public DDLF_* flags for the line.
      */
@@ -758,6 +752,13 @@ public:
      */
     static void consoleRegister();
 
+protected:
+    Line(Vertex &from,
+         Vertex &to,
+         int     flags       = 0,
+         Sector *frontSector = nullptr,
+         Sector *backSector  = nullptr);
+
 private:
     DE_PRIVATE(d)
 };
@@ -769,81 +770,3 @@ Vertex       &LineSide::vertex(int to)       { return line().vertex(sideId() ^ t
 const Vertex &LineSide::vertex(int to) const { return line().vertex(sideId() ^ to); }
 
 } // namespace world
-
-#if defined(__CLIENT__)
-
-struct edgespan_t;
-struct shadowcorner_t;
-
-class LineSide : public world::LineSide
-{
-public:
-    /**
-     * To be called to update the shadow properties for the line side.
-     *
-     * @todo Handle this internally -ds.
-     */
-    void updateRadioForFrame(int frameNumber);
-
-    /**
-     * Provides access to the FakeRadio shadowcorner_t data.
-     */
-    const shadowcorner_t &radioCornerTop   (bool right) const;
-    const shadowcorner_t &radioCornerBottom(bool right) const;
-    const shadowcorner_t &radioCornerSide  (bool right) const;
-
-    /**
-     * Provides access to the FakeRadio edgespan_t data.
-     */
-    const edgespan_t &radioEdgeSpan(bool top) const;
-};
-
-class LineSideSegment : public world::LineSideSegment
-{
-public:
-    /**
-     * Returns the distance along the attributed map line at which the
-     * from vertex vertex occurs.
-     *
-     * @see lineSide()
-     */
-    double lineSideOffset() const;
-
-    /// @todo Refactor away.
-    void setLineSideOffset(double newOffset);
-
-    /**
-     * Returns the accurate length of the segment, from the 'from'
-     * vertex to the 'to' vertex in map coordinate space units.
-     */
-    double length() const;
-
-    /// @todo Refactor away.
-    void setLength(double newLength);
-
-    /**
-     * Returns @c true iff the segment is marked as "front facing".
-     */
-    bool isFrontFacing() const;
-
-    /**
-     * Mark the current segment as "front facing".
-     */
-    void setFrontFacing(bool yes = true);
-
-private:
-    ddouble _length = 0;          // Accurate length of the segment.
-    ddouble _lineSideOffset = 0;  // Distance along the attributed map line at which the half-edge vertex occurs.
-    bool    _frontFacing = false;
-};
-
-class Line : public world::Line
-{
-public:
-    /**
-     * Returns @c true if the line qualifies for FakeRadio shadow casting (on planes).
-     */
-    bool isShadowCaster() const;
-};
-
-#endif // defined(__CLIENT__)

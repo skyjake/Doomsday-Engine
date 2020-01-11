@@ -164,7 +164,7 @@ public:
      * Provides access to the entity database.
      */
     EntityDatabase &entityDatabase() const;
-
+    
     /**
      * To be called following an engine reset to update the map state.
      */
@@ -515,7 +515,7 @@ public:
     /**
      * Returns a rich formatted, textual summary of the map's objects, suitable for logging.
      */
-    de::String objectSummaryAsStyledText() const;
+    virtual de::String objectSummaryAsStyledText() const;
 
     /**
      * To be called to initialize the dummy element arrays (which are used with the DMU API),

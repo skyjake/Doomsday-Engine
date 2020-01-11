@@ -27,9 +27,37 @@ namespace world {
 
 using namespace de;
 
-static std::function<Material *(MaterialManifest &)> materialCtor;
-static std::function<MobjThinkerData *(const Id &)>  mobjThinkerDataCtor;
-static std::function<Sky *(const defn::Sky *)>       skyCtor;
+static std::function<ConvexSubspace *(mesh::Face &, BspLeaf *)>     convexSubspaceCtor;
+static std::function<Line *(Vertex &, Vertex &, int, Sector *, Sector *)> lineCtor;
+static std::function<Material *(MaterialManifest &)>                materialCtor;
+static std::function<MobjThinkerData *(const Id &)>                 mobjThinkerDataCtor;
+static std::function<Plane *(Sector &, const Vec3f &, double)>      planeCtor;
+static std::function<PolyobjData *()>                               polyobjDataCtor;
+static std::function<Sky *(const defn::Sky *)>                      skyCtor;
+static Factory::SubsectorConstructor                                subsectorCtor;
+static std::function<Surface *(MapElement &, float, const Vec3f &)> surfaceCtor;
+
+void Factory::setConvexSubspaceConstructor(const std::function<ConvexSubspace *(mesh::Face &, BspLeaf *)> &ctor)
+{
+    convexSubspaceCtor = ctor;
+}
+
+ConvexSubspace *Factory::newConvexSubspace(mesh::Face &face, BspLeaf *leaf)
+{
+    DE_ASSERT(convexSubspaceCtor);
+    return convexSubspaceCtor(face, leaf);
+}
+
+void Factory::setLineConstructor(const std::function<Line *(Vertex &, Vertex &, int, Sector *, Sector *)> &ctor)
+{
+    lineCtor = ctor;
+}
+
+Line *Factory::newLine(Vertex &from, Vertex &to, int flags, Sector *frontSector, Sector *backSector)
+{
+    DE_ASSERT(lineCtor);
+    return lineCtor(from, to, flags, frontSector, backSector);
+}
 
 void Factory::setMaterialConstructor(const std::function<Material *(MaterialManifest &)> &ctor)
 {
@@ -38,17 +66,40 @@ void Factory::setMaterialConstructor(const std::function<Material *(MaterialMani
 
 Material *Factory::newMaterial(MaterialManifest &m)
 {
+    DE_ASSERT(materialCtor);
     return materialCtor(m);
 }
 
-void Factory::setMobjThinkerDataConstructor(const std::function<MobjThinkerData *(const de::Id &)> &ctor)
+void Factory::setMobjThinkerDataConstructor(const std::function<MobjThinkerData *(const Id &)> &ctor)
 {
     mobjThinkerDataCtor = ctor;
 }
 
 MobjThinkerData *Factory::newMobjThinkerData(const de::Id &id)
 {
+    DE_ASSERT(mobjThinkerDataCtor);
     return mobjThinkerDataCtor(id);
+}
+
+void Factory::setPlaneConstructor(const std::function<Plane *(Sector &, const Vec3f &, double)> &ctor)
+{
+    planeCtor = ctor;
+}
+
+Plane *Factory::newPlane(Sector &sector, const Vec3f &normal, double height)
+{
+    return planeCtor(sector, normal, height);
+}
+
+void Factory::setPolyobjDataConstructor(const std::function<PolyobjData *()> &ctor)
+{
+    polyobjDataCtor = ctor;
+}
+
+PolyobjData *Factory::newPolyobjData()
+{
+    DE_ASSERT(polyobjDataCtor);
+    return polyobjDataCtor();
 }
 
 void Factory::setSkyConstructor(const std::function<Sky *(const defn::Sky *)> &ctor)
@@ -58,7 +109,30 @@ void Factory::setSkyConstructor(const std::function<Sky *(const defn::Sky *)> &c
 
 Sky *Factory::newSky(const defn::Sky *def)
 {
+    DE_ASSERT(skyCtor);
     return skyCtor(def);
+}
+
+void Factory::setSubsectorConstructor(const SubsectorConstructor &ctor)
+{
+    subsectorCtor = ctor;
+}
+
+Subsector *Factory::newSubsector(const de::List<ConvexSubspace *> &subspaces)
+{
+    DE_ASSERT(subsectorCtor);
+    return subsectorCtor(subspaces);
+}
+
+void Factory::setSurfaceConstructor(const std::function<Surface *(MapElement &, float, const Vec3f &)> &ctor)
+{
+    surfaceCtor = ctor;
+}
+
+Surface *Factory::newSurface(MapElement &owner, float opacity, const Vec3f &color)
+{
+    DE_ASSERT(surfaceCtor);
+    return surfaceCtor(owner, opacity, color);
 }
 
 struct polyobj_s *Factory::newPolyobj(const de::Vec2d &origin)

@@ -318,7 +318,6 @@ dd_bool Con_IsChanged()
 }
 
 #if 0 // should use libshell!
-#ifdef __CLIENT__
 /**
  * Send a console command to the server.
  * This shouldn't be called unless we're logged in with the right password.
@@ -343,7 +342,6 @@ static void Con_Send(const char *command, byte src, int silent)
     Msg_End();
     Net_SendBuffer(0, 0);
 }
-#endif // __CLIENT__
 #endif
 
 static void Con_QueueCmd(const char *singleCmd, timespan_t atSecond,

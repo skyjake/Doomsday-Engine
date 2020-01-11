@@ -23,8 +23,6 @@
 #include "de_base.h"
 #include "audio/s_environ.h"
 
-#include "Sector"
-
 using namespace de;
 
 static AudioEnvironment envInfo[1 + NUM_AUDIO_ENVIRONMENTS] = {
@@ -49,22 +47,21 @@ const AudioEnvironment &S_AudioEnvironment(AudioEnvironmentId id)
 
 AudioEnvironmentId S_AudioEnvironmentId(const res::Uri *uri)
 {
-    if(uri)
+    if (uri)
     {
-        for(dint i = 0; i < DED_Definitions()->textureEnv.size(); ++i)
+        for (dint i = 0; i < DED_Definitions()->textureEnv.size(); ++i)
         {
             const ded_tenviron_t *env = &DED_Definitions()->textureEnv[i];
-            for(dint k = 0; k < env->materials.size(); ++k)
+            for (dint k = 0; k < env->materials.size(); ++k)
             {
                 res::Uri *ref = env->materials[k].uri;
-                if(!ref || *ref != *uri) continue;
+                if (!ref || *ref != *uri) continue;
 
                 // Is this a known environment?
-                for(dint m = 0; m < NUM_AUDIO_ENVIRONMENTS; ++m)
+                for (dint m = 0; m < NUM_AUDIO_ENVIRONMENTS; ++m)
                 {
-                    const AudioEnvironment &envInfo = S_AudioEnvironment(AudioEnvironmentId(m));
-                    if(!iCmpStrCase(env->id, envInfo.name))
-                        return AudioEnvironmentId(m);
+                    const auto &envInfo = S_AudioEnvironment(AudioEnvironmentId(m));
+                    if (!iCmpStrCase(env->id, envInfo.name)) return AudioEnvironmentId(m);
                 }
                 return AE_NONE;
             }

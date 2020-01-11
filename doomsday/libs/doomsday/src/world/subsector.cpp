@@ -37,7 +37,7 @@ namespace world {
 
 DE_PIMPL_NOREF(Subsector)
 {
-    List<ConvexSubspace *> subspaces;
+    List<world::ConvexSubspace *> subspaces;
     std::unique_ptr<AABoxd> bounds;
     Id id;
     Sector *sector = nullptr;
@@ -49,7 +49,7 @@ DE_PIMPL_NOREF(Subsector)
     {
         bool inited = false;
         AABoxd bounds;
-        for (const ConvexSubspace *subspace : subspaces)
+        for (const auto *subspace : subspaces)
         {
             const AABoxd &subBounds = subspace->poly().bounds();
             if (inited)
@@ -66,10 +66,10 @@ DE_PIMPL_NOREF(Subsector)
     }
 };
 
-Subsector::Subsector(const List<ConvexSubspace *> &subspaces) : d(new Impl)
+Subsector::Subsector(const List<world::ConvexSubspace *> &subspaces) : d(new Impl)
 {
     d->subspaces += subspaces;
-    for (ConvexSubspace *subspace : subspaces)
+    for (auto *subspace : subspaces)
     {
         // Attribute the subspace to the subsector.
         subspace->setSubsector(this);

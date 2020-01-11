@@ -33,6 +33,7 @@
 
 #include <de/legacy/vector1.h>
 #include <de/legacy/concurrency.h>
+#include <de/legacy/binangle.h>
 #include <de/GLInfo>
 #include <doomsday/console/var.h>
 #include <doomsday/world/Materials>

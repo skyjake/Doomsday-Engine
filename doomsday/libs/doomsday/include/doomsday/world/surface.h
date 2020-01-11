@@ -33,7 +33,7 @@
 namespace world {
 
 /**
- * MapElement for an infinite two-dimensional geometric plane.
+ * An infinite two-dimensional geometric plane.
  */
 class Surface : public MapElement
 {
@@ -59,17 +59,6 @@ public:
 
     /// Notified whenever the @em sharp origin changes.
     DE_AUDIENCE(OriginChange,  void surfaceOriginChanged(Surface &surface))
-
-    /**
-     * Construct a new surface.
-     *
-     * @param owner    Map element which will own the surface.
-     * @param opacity  Opacity strength (@c 1= fully opaque).
-     * @param color    Tint color.
-     */
-    Surface(world::MapElement &owner,
-            float opacity        = 1,
-            const de::Vec3f &color = de::Vec3f(1));
 
     /**
      * Composes a human-friendly, styled, textual description of the surface.
@@ -214,7 +203,20 @@ public:
         return _decorationState.get();
     }
 
+    virtual void resetLookups();
+
 protected:
+    /**
+     * Construct a new surface.
+     *
+     * @param owner    Map element which will own the surface.
+     * @param opacity  Opacity strength (@c 1= fully opaque).
+     * @param color    Tint color.
+     */
+    Surface(world::MapElement &owner,
+            float opacity        = 1,
+            const de::Vec3f &color = de::Vec3f(1));
+
     int property(world::DmuArgs &args) const;
     int setProperty(const world::DmuArgs &args);
 
@@ -225,76 +227,3 @@ private:
 };
 
 } // namespace world
-
-#ifdef __CLIENT__
-
-class Decoration;
-class MaterialAnimator;
-
-class Surface : public world::Surface
-{
-public:
-    MaterialAnimator *materialAnimator() const;
-
-    /**
-     * Resets all lookups that are used for accelerating common operations.
-     */
-    void resetLookups();
-
-//- Origin smoothing --------------------------------------------------------------------
-
-    /// Notified when the @em sharp material origin changes.
-    DE_AUDIENCE(OriginSmoothedChange, void surfaceOriginSmoothedChanged(Surface &surface))
-
-    /// Maximum speed for a smoothed material offset.
-    static const int MAX_SMOOTH_MATERIAL_MOVE = 8;
-
-    /**
-     * Returns the current smoothed (interpolated) material origin for the
-     * surface in the map coordinate space.
-     *
-     * @see setOrigin()
-     */
-    const de::Vec2f &originSmoothed() const;
-
-    /**
-     * Returns the delta between current and the smoothed material origin for
-     * the surface in the map coordinate space.
-     *
-     * @see setOrigin(), smoothOrigin()
-     */
-    const de::Vec2f &originSmoothedAsDelta() const;
-
-    /**
-     * Perform smoothed material origin interpolation.
-     *
-     * @see originSmoothed()
-     */
-    void lerpSmoothedOrigin();
-
-    /**
-     * Reset the surface's material origin tracking.
-     *
-     * @see originSmoothed()
-     */
-    void resetSmoothedOrigin();
-
-    /**
-     * Roll the surface's material origin tracking buffer.
-     */
-    void updateOriginTracking();
-
-    //---------------------------------------------------------------------------------------
-
-    /**
-     * Determine the glow properties of the surface, which, are derived from the
-     * bound material (averaged color).
-     *
-     * @param color  Amplified glow color is written here.
-     *
-     * @return  Glow strength/intensity or @c 0 if not presently glowing.
-     */
-    float glow(de::Vec3f &color) const;
-};
-
-#endif

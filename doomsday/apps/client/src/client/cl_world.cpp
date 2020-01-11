@@ -23,15 +23,16 @@
 #include "client/cl_player.h"
 #include "api_map.h"
 #include "world/map.h"
-#include "Sector"
-#include "Surface"
+#include "world/surface.h"
 #include "network/net_msg.h"
 #include "network/protocol.h"
 
 #include <doomsday/world/MaterialArchive>
+#include <doomsday/world/sector.h>
 #include <de/legacy/stringarray.h>
 
 using namespace de;
+using world::Sector;
 
 static world::MaterialArchive *serverMaterials;
 
@@ -233,20 +234,20 @@ void Cl_ReadSectorDelta(dint /*deltaType*/)
     // Do we need to start any moving planes?
     if (df & SDF_FLOOR_HEIGHT)
     {
-        ClPlaneMover::newThinker(sec->floor(), height[PLN_FLOOR], 0);
+        ClPlaneMover::newThinker(sec->floor().as<Plane>(), height[PLN_FLOOR], 0);
     }
     else if (df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
     {
-        ClPlaneMover::newThinker(sec->floor(), target[PLN_FLOOR], speed[PLN_FLOOR]);
+        ClPlaneMover::newThinker(sec->floor().as<Plane>(), target[PLN_FLOOR], speed[PLN_FLOOR]);
     }
 
     if (df & SDF_CEILING_HEIGHT)
     {
-        ClPlaneMover::newThinker(sec->ceiling(), height[PLN_CEILING], 0);
+        ClPlaneMover::newThinker(sec->ceiling().as<Plane>(), height[PLN_CEILING], 0);
     }
     else if (df & (SDF_CEILING_TARGET | SDF_CEILING_SPEED))
     {
-        ClPlaneMover::newThinker(sec->ceiling(), target[PLN_CEILING], speed[PLN_CEILING]);
+        ClPlaneMover::newThinker(sec->ceiling().as<Plane>(), target[PLN_CEILING], speed[PLN_CEILING]);
     }
 
 #undef PLN_CEILING
@@ -261,7 +262,7 @@ void Cl_ReadSideDelta(dint /*deltaType*/)
     const dint index = Reader_ReadUInt16(msgReader);
     const dint df    = Reader_ReadPackedUInt32(msgReader); // Flags.
 
-    LineSide *side = map.sidePtr(index);
+    auto *side = map.sidePtr(index);
     DE_ASSERT(side != 0);
 
     if (df & SIDF_TOP_MATERIAL)
@@ -286,7 +287,7 @@ void Cl_ReadSideDelta(dint /*deltaType*/)
     {
         // The delta includes the entire lowest byte.
         dint lineFlags = Reader_ReadByte(msgReader);
-        Line &line = side->line();
+        auto &line = side->line();
         line.setFlags((line.flags() & ~0xff) | lineFlags, de::ReplaceFlags);
     }
 

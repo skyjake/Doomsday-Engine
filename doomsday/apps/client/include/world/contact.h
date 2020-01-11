@@ -17,21 +17,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifdef __CLIENT__
-#ifndef DE_CLIENT_WORLD_CONTACT_H
-#define DE_CLIENT_WORLD_CONTACT_H
+#ifdef __SERVER__
+#  error "contact.h is only for the client"
+#endif
+
+#pragma once
 
 #include <functional>
 #include <de/legacy/aabox.h>
 #include <de/Vector>
 
 #include "world/map.h"
-#include "world/bspleaf.h"
+#include <doomsday/world/bspleaf.h>
 
 class Lumobj;
-
-namespace world {
-
 class ConvexSubspace;
 
 enum ContactType
@@ -79,7 +78,7 @@ struct Contact
     /**
      * Returns the BSP leaf at the linked object's origin in map space.
      */
-    BspLeaf &objectBspLeafAtOrigin() const;
+    world::BspLeaf &objectBspLeafAtOrigin() const;
 };
 
 struct ContactList
@@ -141,21 +140,16 @@ ContactList &R_ContactList(ConvexSubspace &subspace, ContactType type);
 /**
  * Traverse the list of @em all contacts for the current render frame.
  */
-de::LoopResult R_ForAllContacts(std::function<de::LoopResult (const Contact &)> func);
+de::LoopResult R_ForAllContacts(const std::function<de::LoopResult (const Contact &)> &func);
 
 /**
  * Traverse the list of mobj contacts linked directly to the specified @a subspace,
  * for the current render frame.
  */
-de::LoopResult R_ForAllSubspaceMobContacts(ConvexSubspace &subspace, std::function<de::LoopResult (struct mobj_s &)> func);
+de::LoopResult R_ForAllSubspaceMobContacts(const ConvexSubspace &subspace, const std::function<de::LoopResult (struct mobj_s &)> &func);
 
 /**
  * Traverse the list of lumobj contacts linked directly to the specified @a subspace,
  * for the current render frame.
  */
-de::LoopResult R_ForAllSubspaceLumContacts(ConvexSubspace &subspace, std::function<de::LoopResult (Lumobj &)> func);
-
-}  // namespace world
-
-#endif  // DE_CLIENT_WORLD_CONTACT_H
-#endif  // __CLIENT__
+de::LoopResult R_ForAllSubspaceLumContacts(const ConvexSubspace &subspace, const std::function<de::LoopResult (Lumobj &)> &func);

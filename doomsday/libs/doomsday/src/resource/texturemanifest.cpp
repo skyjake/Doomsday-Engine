@@ -115,9 +115,9 @@ String TextureManifest::description(res::Uri::ComposeAsTextFlags uriCompositionF
     String info =
         composeUri().compose(uriCompositionFlags | res::Uri::DecodePath) + " " + sourceDescription();
 
-#ifdef __CLIENT__
-    info += Stringf("x%i", !hasTexture()? 0 : texture().variantCount());
-#endif
+//#ifdef __CLIENT__
+//    info += Stringf("x%i", !hasTexture()? 0 : texture().variantCount());
+//#endif
     info += " ";
     info += (!hasResourceUri()? "N/A" : resourceUri().asText());
     return info;

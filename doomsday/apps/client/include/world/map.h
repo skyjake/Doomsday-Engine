@@ -19,61 +19,54 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_WORLD_MAP_H
-#define DE_WORLD_MAP_H
+#pragma once
 
-#include <functional>
-#include <de/Hash>
-#include <de/List>
-#include <de/Set>
-#include <doomsday/BspNode>
+#ifdef __SERVER__
+#  error "client's map.h included from server app"
+#endif
+
+#include "client/clplanemover.h"
+#include "client/clpolymover.h"
+
+#include "world/p_object.h"
+#include "world/clientserverworld.h"
+#include "Generator"
+#include "Lumobj"
+#include "render/skydrawable.h"
+
+#include <doomsday/mesh/mesh.h>
+#include <doomsday/world/bspleaf.h>
+#include <doomsday/world/bspnode.h>
+#include <doomsday/world/line.h>
+#include <doomsday/world/polyobj.h>
 #include <doomsday/network/Protocol>
 #include <doomsday/uri.h>
 #include <doomsday/world/map.h>
 #include <doomsday/world/ithinkermapping.h>
+
+#include <de/Hash>
+#include <de/List>
+#include <de/Set>
 #include <de/BinaryTree>
 #include <de/Id>
+#include <de/Info>
 #include <de/Observers>
 #include <de/Vector>
 
-#ifdef __CLIENT__
-#  include "client/clplanemover.h"
-#  include "client/clpolymover.h"
-#endif
-
-#include "Mesh"
-#include <doomsday/world/line.h>
-#include <doomsday/world/polyobj.h>
-#include <doomsday/world/bspleaf.h>
-#include "world/p_object.h"
-
-#ifdef __CLIENT__
-#  include "world/clientserverworld.h"
-#  include "Generator"
-//#  include "BiasSource"
-#  include "Lumobj"
-#  include "render/skydrawable.h"
-#endif
-
+class ClSkyPlane;
 class Plane;
-class Sector;
 class Surface;
 class Vertex;
 
-namespace de { class Info; }
-
-namespace world {
-
-class Blockmap;
-class ConvexSubspace;
-class LineBlockmap;
-class Subsector;
-class Sky;
-class Thinkers;
-#ifdef __CLIENT__
-class ClSkyPlane;
-#endif
-
+namespace world
+{
+    class Blockmap;
+    class ConvexSubspace;
+    class LineBlockmap;
+    class Sector;
+    class Subsector;
+    class Sky;
+    class Thinkers;
 }
 
 /**
@@ -87,7 +80,6 @@ class Map : public world::Map
 
 public:
 
-#ifdef __CLIENT__
     /// Required light grid is missing. @ingroup errors
     DE_ERROR(MissingLightGridError);
 
@@ -102,10 +94,9 @@ public:
     /// Maximum number of generators per map.
     static const int MAX_GENERATORS = 512;
 
-    typedef Set<Plane *> PlaneSet;
-    typedef Set<Surface *> SurfaceSet;
-    typedef Hash<thid_t, struct mobj_s *> ClMobjHash;
-#endif
+    typedef de::Set<Plane *> PlaneSet;
+    typedef de::Set<Surface *> SurfaceSet;
+    typedef de::Hash<thid_t, struct mobj_s *> ClMobjHash;
 
 public:
     /**
@@ -121,17 +112,19 @@ public:
     bool endEditing() override;
     void update() override;
     void link(mobj_t &mob, int flags) override;
+    de::String objectSummaryAsStyledText() const override;
 
     static void consoleRegister();
 
-#ifdef __CLIENT__
-
     void serializeInternalState(de::Writer &to) const override;
-    void deserializeInternalState(de::Reader &from, const IThinkerMapping &thinkerMapping) override;
+
+    void deserializeInternalState(de::Reader &                  from,
+                                  const world::IThinkerMapping &thinkerMapping) override;
 
     de::String objectsDescription() const;
 
-    void restoreObjects(const de::Info &objState, const IThinkerMapping &thinkerMapping) const;
+    void restoreObjects(const de::Info &              objState,
+                        const world::IThinkerMapping &thinkerMapping) const;
 
     /**
      * Force an update on all decorated surfaces.
@@ -208,15 +201,13 @@ public:  //- Particle generators -----------------------------------------------
      * @param sector    Sector requirement (only linked @em Generators will be processed).
      * @param callback  Function to call for each Generator.
      */
-    de::LoopResult forAllGeneratorsInSector(const Sector &sector, const std::function<de::LoopResult (Generator &)>& callback) const;
+    de::LoopResult forAllGeneratorsInSector(
+        const world::Sector &                             sector,
+        const std::function<de::LoopResult(Generator &)> &callback) const;
 
-    void unlink(Generator &generator);
-
-#endif  // __CLIENT__
+    void unlinkGenerator(Generator &generator);
 
 //- Skies -------------------------------------------------------------------------------
-
-#ifdef __CLIENT__
 
     SkyDrawable::Animator &skyAnimator() const;
 
@@ -233,46 +224,10 @@ public:  //- Particle generators -----------------------------------------------
         return ceiling ? skyCeiling() : skyFloor();
     }
 
-#endif
-
-#ifdef __CLIENT__
     /**
     * Returns @c true if the given @a point is in the void (outside all map subspaces).
     */
     bool isPointInVoid(const de::Vec3d &pos) const;
-#endif
-
-#ifdef __CLIENT__
-
-#if 0
-    /**
-     * Returns @c true if a LightGrid has been initialized for the map.
-     *
-     * @see lightGrid()
-     */
-    bool hasLightGrid() const;
-
-    /**
-     * Provides access to the light grid for the map.
-     *
-     * @see hasLightGrid()
-     */
-    de::LightGrid       &lightGrid();
-    const de::LightGrid &lightGrid() const;
-
-    /**
-     * (Re)-initialize the light grid used for smoothed sector lighting.
-     *
-     * If the grid has not yet been initialized block light sources are determined at this
-     * time (Subsectors must be built for this).
-     *
-     * If the grid has already been initialized calling this will perform a full update.
-     *
-     * @note Initialization may take some time depending on the complexity of the map
-     * (physical dimensions, number of sectors) and should therefore be done "off-line".
-     */
-    void initLightGrid();
-#endif
 
     /**
      * Returns the set of scrolling surfaces for the map.
@@ -299,10 +254,6 @@ public:  //- Particle generators -----------------------------------------------
      */
     void spreadAllContacts(const AABoxd &region);
 
-#endif  // __CLIENT__
-
-#ifdef __CLIENT__
-
     /**
      * Fixing the sky means that for adjacent sky sectors the lower sky ceiling is lifted
      * to match the upper sky. The raising only affects rendering, it has no bearing on gameplay.
@@ -313,16 +264,6 @@ public:  //- Particle generators -----------------------------------------------
      * Rebuild the surface material lists. To be called when a full update is necessary.
      */
     void buildMaterialLists();
-
-#if 0
-    /**
-     * Initializes bias lighting for the map. New light sources are initialized from the
-     * loaded Light definitions. Map surfaces are prepared for tracking rays.
-     *
-     * Must be called before rendering a frame with bias lighting enabled.
-     */
-    void initBias();
-#endif
 
     /**
      * Initialize the map object => BSP leaf "contact" blockmaps.
@@ -392,16 +333,9 @@ public:  //- Particle generators -----------------------------------------------
     const ClMobjHash &clMobjHash() const;
 
 protected:
-
     /// Observes WorldSystem FrameBegin
     void worldSystemFrameBegins(bool resetNextViewer);
-
-#endif  // __CLIENT__
 
 private:
     DE_PRIVATE(d)
 };
-
-}  // namespace world
-
-#endif  // DE_WORLD_MAP_H

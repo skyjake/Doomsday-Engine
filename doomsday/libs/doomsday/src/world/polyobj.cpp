@@ -26,6 +26,7 @@
 #include "doomsday/world/bspleaf.h"
 #include "doomsday/world/world.h"
 #include "doomsday/world/convexsubspace.h"
+#include "doomsday/world/factory.h"
 #include "doomsday/tab_tables.h"
 
 #include <de/legacy/vector1.h>
@@ -115,7 +116,7 @@ polyobj_s::polyobj_s(const Vec2d &origin_)
     _bspLeaf = 0;
 
     // Allocate private data.
-    thinker.d = new PolyobjData;
+    thinker.d = Factory::newPolyobjData();
     THINKER_DATA(thinker, PolyobjData).setThinker(&thinker);
 }
 

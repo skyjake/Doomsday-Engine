@@ -76,15 +76,6 @@ mobj_t *P_MobjCreate(thinkfunc_t function, const de::Vec3d &origin, angle_t angl
 void P_MobjRecycle(mobj_t *mob);
 
 /**
- * Returns the map in which the map-object exists. Note that a map-object may exist in a
- * map while not being @em linked into data structures such as the blockmap and sectors.
- * To determine whether the map-object is linked, call @ref Mobj_IsLinked().
- *
- * @see Thinker_Map()
- */
-world::Map &Mobj_Map(const mobj_t &mob);
-
-/**
  * Set the origin of the map-object in map space.
  *
  * @return  @c true if successful, @c false otherwise. The object's position is not changed
@@ -109,7 +100,7 @@ bool Mobj_HasSubsector(const mobj_t &mob);
  *
  * @see Mobj_HasSubsector()
  */
-world::Subsector &Mobj_Subsector(const mobj_t &mob);
+world_Subsector &Mobj_Subsector(const mobj_t &mob);
 
 /**
  * Returns a pointer to subsector in which the mobj currently resides, or @c nullptr
@@ -119,7 +110,7 @@ world::Subsector &Mobj_Subsector(const mobj_t &mob);
  *
  * @see Mobj_HasSubsector()
  */
-world::Subsector *Mobj_SubsectorPtr(const mobj_t &mob);
+world_Subsector *Mobj_SubsectorPtr(const mobj_t &mob);
 
 /**
  * Creates a new map-object triggered particle generator based on the given definition.

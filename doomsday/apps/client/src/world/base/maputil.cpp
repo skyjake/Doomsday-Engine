@@ -18,24 +18,24 @@
  * 02110-1301 USA</small>
  */
 
-#include "world/maputil.h"
-
-#include "Line"
-#include "Plane"
-#include "Sector"
-
-#ifdef __CLIENT__
-#  include "Surface"
-#  include <doomsday/world/lineowner.h>
-
-#  include "MaterialVariantSpec"
-
-#  include "render/rend_main.h" // Rend_MapSurfacematerialSpec
-#  include "MaterialAnimator"
-#  include "WallEdge"
+#ifdef __SERVER__
+#  error "maputil.cpp is for Client only"
 #endif
 
-#ifdef __CLIENT__
+#include "world/maputil.h"
+#include "world/line.h"
+#include "world/plane.h"
+
+#include "Surface"
+
+#include "MaterialVariantSpec"
+
+#include "MaterialAnimator"
+#include "WallEdge"
+#include "render/rend_main.h" // Rend_MapSurfacematerialSpec
+
+#include <doomsday/world/sector.h>
+#include <doomsday/world/lineowner.h>
 
 /**
  * Same as @ref R_OpenRange() but works with the "visual" (i.e., smoothed) plane
@@ -53,27 +53,27 @@
  */
 static coord_t visOpenRange(const LineSide &side, coord_t *retBottom = nullptr, coord_t *retTop = nullptr)
 {
-    const Sector *frontSec = side.sectorPtr();
-    const Sector *backSec  = side.back().sectorPtr();
+    const auto *frontSec = side.sectorPtr();
+    const auto *backSec  = side.back().sectorPtr();
 
     coord_t bottom;
-    if(backSec && backSec->floor().heightSmoothed() > frontSec->floor().heightSmoothed())
+    if(backSec && backSec->floor().as<Plane>().heightSmoothed() > frontSec->floor().as<Plane>().heightSmoothed())
     {
-        bottom = backSec->floor().heightSmoothed();
+        bottom = backSec->floor().as<Plane>().heightSmoothed();
     }
     else
     {
-        bottom = frontSec->floor().heightSmoothed();
+        bottom = frontSec->floor().as<Plane>().heightSmoothed();
     }
 
     coord_t top;
-    if(backSec && backSec->ceiling().heightSmoothed() < frontSec->ceiling().heightSmoothed())
+    if(backSec && backSec->ceiling().as<Plane>().heightSmoothed() < frontSec->ceiling().as<Plane>().heightSmoothed())
     {
-        top = backSec->ceiling().heightSmoothed();
+        top = backSec->ceiling().as<Plane>().heightSmoothed();
     }
     else
     {
-        top = frontSec->ceiling().heightSmoothed();
+        top = frontSec->ceiling().as<Plane>().heightSmoothed();
     }
 
     if(retBottom) *retBottom = bottom;
@@ -85,23 +85,23 @@ static coord_t visOpenRange(const LineSide &side, coord_t *retBottom = nullptr, 
 /// @todo fixme: Should use the visual plane heights of subsectors.
 bool R_SideBackClosed(const LineSide &side, bool ignoreOpacity)
 {
-    if(!side.hasSections()) return false;
-    if(!side.hasSector()) return false;
-    if(side.line().isSelfReferencing()) return false; // Never.
+    if (!side.hasSections()) return false;
+    if (!side.hasSector()) return false;
+    if (side.line().isSelfReferencing()) return false; // Never.
 
-    if(side.considerOneSided()) return true;
+    if (side.considerOneSided()) return true;
 
-    const Sector &frontSec = side.sector();
-    const Sector &backSec  = side.back().sector();
+    const auto &frontSec = side.sector();
+    const auto &backSec  = side.back().sector();
 
-    if(backSec.floor().heightSmoothed()   >= backSec.ceiling().heightSmoothed())  return true;
-    if(backSec.ceiling().heightSmoothed() <= frontSec.floor().heightSmoothed())   return true;
-    if(backSec.floor().heightSmoothed()   >= frontSec.ceiling().heightSmoothed()) return true;
+    if (backSec.floor().as<Plane>().heightSmoothed()   >= backSec.ceiling().as<Plane>().heightSmoothed())  return true;
+    if (backSec.ceiling().as<Plane>().heightSmoothed() <= frontSec.floor().as<Plane>().heightSmoothed())   return true;
+    if (backSec.floor().as<Plane>().heightSmoothed()   >= frontSec.ceiling().as<Plane>().heightSmoothed()) return true;
 
     // Perhaps a middle material completely covers the opening?
     //if(side.middle().hasMaterial())
 
-    if (MaterialAnimator *matAnimator = side.middle().materialAnimator())
+    if (MaterialAnimator *matAnimator = side.middle().as<Surface>().materialAnimator())
     {
         //MaterialAnimator &matAnimator = static_cast<ClientMaterial &>(side.middle().material())
         //        .getAnimator(Rend_MapSurfaceMaterialSpec());
@@ -135,18 +135,18 @@ bool R_SideBackClosed(const LineSide &side, bool ignoreOpacity)
     return false;
 }
 
-Line *R_FindLineNeighbor(const Line &line, const LineOwner &own, ClockDirection direction,
-    const Sector *sector, binangle_t *diff)
+Line *R_FindLineNeighbor(const Line &line, const world::LineOwner &own, de::ClockDirection direction,
+    const world::Sector *sector, binangle_t *diff)
 {
-    const LineOwner *cown = (direction == CounterClockwise ? own.prev() : own.next());
-    Line *other = &cown->line();
+    const world::LineOwner *cown = (direction == de::CounterClockwise ? own.prev() : own.next());
+    Line *other = &cown->line().as<Line>();
 
     if(other == &line)
         return nullptr;
 
     if(diff)
     {
-        *diff += (direction == CounterClockwise ? cown->angle() : own.angle());
+        *diff += (direction == de::CounterClockwise ? cown->angle() : own.angle());
     }
 
     if(!other->back().hasSector() || !other->isSelfReferencing())
@@ -176,34 +176,35 @@ Line *R_FindLineNeighbor(const Line &line, const LineOwner &own, ClockDirection 
  *
  * @todo fixme: Should use the visual plane heights of subsectors.
  */
-static bool middleMaterialCoversOpening(const LineSide &side)
+static bool middleMaterialCoversOpening(const world::LineSide &side)
 {
-    if(!side.hasSector()) return false; // Never.
+    if (!side.hasSector()) return false; // Never.
 
-    if(!side.hasSections()) return false;
+    if (!side.hasSections()) return false;
     //if(!side.middle().hasMaterial()) return false;
 
     // Stretched middles always cover the opening.
-    if(side.isFlagged(SDF_MIDDLE_STRETCH))
+    if (side.isFlagged(SDF_MIDDLE_STRETCH))
         return true;
 
-    MaterialAnimator *matAnimator = side.middle().materialAnimator();
+    MaterialAnimator *matAnimator = side.middle().as<Surface>().materialAnimator();
             //.as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec());
     if (!matAnimator) return false;
 
     // Ensure we have up to date info about the material.
     matAnimator->prepare();
 
-    if(matAnimator->isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
+    if (matAnimator->isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
     {
-        if(side.leftHEdge())  // possibility of degenerate BSP leaf.
+        if (side.leftHEdge())  // possibility of degenerate BSP leaf.
         {
             coord_t openRange, openBottom, openTop;
-            openRange = visOpenRange(side, &openBottom, &openTop);
-            if(matAnimator->dimensions().y >= openRange)
+            openRange = visOpenRange(side.as<LineSide>(), &openBottom, &openTop);
+            if (matAnimator->dimensions().y >= openRange)
             {
                 // Possibly; check the placement.
-                WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle), *side.leftHEdge(), Line::From);
+                WallEdge edge(WallSpec::fromMapSide(side.as<LineSide>(), LineSide::Middle),
+                              *side.leftHEdge(), Line::From);
 
                 return (edge.isValid()
                         && edge.top   ().z() > edge.bottom().z()
@@ -217,19 +218,19 @@ static bool middleMaterialCoversOpening(const LineSide &side)
 }
 
 /// @todo fixme: Should use the visual plane heights of subsectors.
-Line *R_FindSolidLineNeighbor(const Line &line, const LineOwner &own, ClockDirection direction,
-    const Sector *sector, binangle_t *diff)
+Line *R_FindSolidLineNeighbor(const Line &line, const world::LineOwner &own, de::ClockDirection direction,
+    const world::Sector *sector, binangle_t *diff)
 {
     DE_ASSERT(sector);
 
-    const LineOwner *cown = (direction == CounterClockwise ? own.prev() : own.next());
-    Line *other = &cown->line();
+    const auto *cown = (direction == de::CounterClockwise ? own.prev() : own.next());
+    Line *other = &cown->line().as<Line>();
 
     if (other == &line) return nullptr;
 
     if (diff)
     {
-        *diff += (direction == CounterClockwise ? cown->angle() : own.angle());
+        *diff += (direction == de::CounterClockwise ? cown->angle() : own.angle());
     }
 
     if (!((other->isBspWindow()) && other->front().sectorPtr() != sector)
@@ -238,18 +239,18 @@ Line *R_FindSolidLineNeighbor(const Line &line, const LineOwner &own, ClockDirec
         if (!other->front().hasSector() || !other->back().hasSector())
             return other;
 
-        if (   other->front().sector().floor  ().heightSmoothed() >= sector->ceiling().heightSmoothed()
-            || other->front().sector().ceiling().heightSmoothed() <= sector->floor  ().heightSmoothed()
-            || other->back().sector().floor  ().heightSmoothed() >= sector->ceiling().heightSmoothed()
-            || other->back().sector().ceiling().heightSmoothed() <= sector->floor  ().heightSmoothed()
-            || other->back().sector().ceiling().heightSmoothed() <= other->back().sector().floor().heightSmoothed())
+        if (   other->front().sector().floor  ().as<Plane>().heightSmoothed() >= sector->ceiling().as<Plane>().heightSmoothed()
+            || other->front().sector().ceiling().as<Plane>().heightSmoothed() <= sector->floor  ().as<Plane>().heightSmoothed()
+            || other->back().sector().floor  ().as<Plane>().heightSmoothed() >= sector->ceiling().as<Plane>().heightSmoothed()
+            || other->back().sector().ceiling().as<Plane>().heightSmoothed() <= sector->floor  ().as<Plane>().heightSmoothed()
+            || other->back().sector().ceiling().as<Plane>().heightSmoothed() <= other->back().sector().floor().as<Plane>().heightSmoothed())
             return other;
 
         // Both front and back MUST be open by this point.
 
         // Perhaps a middle material completely covers the opening?
         // We should not give away the location of false walls (secrets).
-        LineSide &otherSide = other->side(other->front().sectorPtr() == sector ? Line::Front : Line::Back);
+        auto &otherSide = other->side(other->front().sectorPtr() == sector ? Line::Front : Line::Back);
         if (middleMaterialCoversOpening(otherSide))
             return other;
     }
@@ -258,5 +259,3 @@ Line *R_FindSolidLineNeighbor(const Line &line, const LineOwner &own, ClockDirec
     DE_ASSERT(cown);
     return R_FindSolidLineNeighbor(line, *cown, direction, sector, diff);
 }
-
-#endif  // __CLIENT__

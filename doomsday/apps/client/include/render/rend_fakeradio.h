@@ -34,35 +34,19 @@
 #ifndef DE_CLIENT_RENDER_FAKERADIO
 #define DE_CLIENT_RENDER_FAKERADIO
 
-#include "WallEdge"
+#ifdef __SERVER__
+#  error "rend_fakeradio.h is only for the Client"
+#endif
+
+#include <de/libcore.h>
 
 namespace world { class ConvexSubspace; }
+
+class WallEdge;
 class Plane;
 
-/**
- * FakeRadio shadow data.
- * @ingroup render
- */
-struct shadowcorner_t
-{
-    float corner;
-    Plane *proximity;
-    float pOffset;
-    float pHeight;
-};
-
-/**
- * FakeRadio connected edge data.
- * @ingroup render
- */
-struct edgespan_t
-{
-    float length;
-    float shift;
-};
-
-DE_EXTERN_C int rendFakeRadio;
-DE_EXTERN_C byte devFakeRadioUpdate;
+DE_EXTERN_C int     rendFakeRadio;
+DE_EXTERN_C uint8_t devFakeRadioUpdate;
 
 /**
  * Render FakeRadio for the specified wall section. Generates and then draws all shadow geometry

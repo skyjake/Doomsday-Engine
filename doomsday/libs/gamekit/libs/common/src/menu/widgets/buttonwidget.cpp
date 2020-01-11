@@ -55,21 +55,11 @@ ButtonWidget::~ButtonWidget()
 
 void ButtonWidget::draw() const
 {
-    const fontid_t fontId  = mnRendState->textFonts[font()];
-    const Vec4f &textColor = mnRendState->textColors[color()];
-    float t = (isFocused()? 1 : 0);
+    const fontid_t fontId    = mnRendState->textFonts[font()];
+    const Vec4f &  textColor = mnRendState->textColors[color()];
+    const Vec4f    color     = selectionFlashColor(textColor);
+    const float    fadeout   = scrollingFadeout();
 
-    const Vec4f color = selectionFlashColor(textColor);
-
-//    // Flash if focused.
-//    if (isFocused() && cfg.common.menuTextFlashSpeed > 0)
-//    {
-//        const float speed = cfg.common.menuTextFlashSpeed / 2.f;
-//        t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
-//    }
-//    const Vector4f color = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
-
-    const float fadeout = scrollingFadeout();
     if (fadeout < .001f) return;
 
     FR_SetFont(fontId);

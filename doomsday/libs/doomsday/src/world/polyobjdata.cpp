@@ -1,6 +1,6 @@
 /** @file polyobjdata.cpp  Private data for polyobj.
  *
- * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -51,31 +51,3 @@ Thinker::IData *PolyobjData::duplicate() const
 }
 
 } // namespace world
-
-#ifdef __CLIENT__
-#include "client/clpolymover.h"
-
-void PolyobjData::addMover(ClPolyMover &mover)
-{
-    if(_mover)
-    {
-        Thinker_Map(_mover->thinker()).thinkers().remove(_mover->thinker());
-        DE_ASSERT(!_mover);
-    }
-
-    _mover = &mover;
-}
-
-void PolyobjData::removeMover(ClPolyMover &mover)
-{
-    if(_mover == &mover)
-    {
-        _mover = 0;
-    }
-}
-
-ClPolyMover *PolyobjData::mover() const
-{
-    return _mover;
-}
-#endif

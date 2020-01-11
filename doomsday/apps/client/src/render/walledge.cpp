@@ -20,22 +20,20 @@
 #include "de_base.h"
 #include "render/walledge.h"
 
-#include "BspLeaf"
-#include "ConvexSubspace"
-#include "Sector"
-
-#include "world/lineowner.h"
+#include "world/convexsubspace.h"
 #include "world/p_players.h"
 #include "world/maputil.h"
 #include "world/surface.h"
-#include "client/clientsubsector.h"
+#include "world/subsector.h"
 #include "MaterialAnimator"
 #include "render/rend_main.h"  /// devRendSkyMode @todo remove me
 
-#include "Face"
+#include <doomsday/world/bspleaf.h>
+#include <doomsday/world/sector.h>
+#include <doomsday/world/lineowner.h>
+#include <doomsday/mesh/face.h>
 
 using namespace de;
-using namespace world;
 
 /**
  * Determines whether normal smoothing should be performed for the given pair of
@@ -101,7 +99,7 @@ struct WallEdge::Impl : public IHPlane
     WallSpec spec;
     dint edge = 0;
 
-    HEdge *wallHEdge = nullptr;
+    mesh::HEdge *wallHEdge = nullptr;
 
     /// The half-plane which partitions the surface coordinate space.
     Partition hplane;
@@ -195,7 +193,7 @@ struct WallEdge::Impl : public IHPlane
         needUpdateNormal = true;
     }
 
-    void init(WallEdge *i, const WallSpec &wallSpec, HEdge &hedge, dint edge)
+    void init(WallEdge *i, const WallSpec &wallSpec, mesh::HEdge &hedge, dint edge)
     {
         self = i;
 
@@ -207,13 +205,13 @@ struct WallEdge::Impl : public IHPlane
 
         // Determine the map space Z coordinates of the wall section.
         LineSideSegment &seg   = lineSideSegment();
-        const Line &line       = seg.line();
+        const auto &line       = seg.line();
         const bool unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
         const bool unpegTop    = (line.flags() & DDLF_DONTPEGTOP)    != 0;
 
-        const ConvexSubspace &space = (line.definesPolyobj() ? line.polyobj().bspLeaf().subspace()
-                                                             : wallHEdge->face().mapElementAs<world::ConvexSubspace>());
-        const auto &subsec = space.subsector().as<world::ClientSubsector>();
+        const auto &space = (line.definesPolyobj() ? line.polyobj().bspLeaf().subspace()
+                               : wallHEdge->face().mapElementAs<world::ConvexSubspace>());
+        const auto &subsec = space.subsector().as<Subsector>();
 
         /*
          * For reference, see "Texture aligment" in Doomwiki.org:
@@ -234,7 +232,7 @@ struct WallEdge::Impl : public IHPlane
                 lo = hi = subsec.visFloor().heightSmoothed();
             }
 
-            materialOrigin = seg.lineSide().middle().originSmoothed();
+            materialOrigin = seg.lineSide().middle().as<Surface>().originSmoothed();
             if (unpegBottom)
             {
                 materialOrigin.y -= hi - lo;
@@ -246,7 +244,7 @@ struct WallEdge::Impl : public IHPlane
             const auto &backSubsec =
                 line.definesPolyobj() ? subsec
                                       : wallHEdge->twin().face().mapElementAs<world::ConvexSubspace>()
-                                            .subsector().as<world::ClientSubsector>();
+                                            .subsector().as<Subsector>();
 
             const Plane *ffloor = &subsec.visFloor();
             const Plane *fceil  = &subsec.visCeiling();
@@ -274,7 +272,7 @@ struct WallEdge::Impl : public IHPlane
                         hi = lo;
                     }
 
-                    materialOrigin = seg.lineSide().middle().originSmoothed();
+                    materialOrigin = seg.lineSide().middle().as<Surface>().originSmoothed();
                     if (!unpegTop)
                     {
                         // Align with normal middle texture.
@@ -321,7 +319,7 @@ struct WallEdge::Impl : public IHPlane
                         lo = hi;
                     }
 
-                    materialOrigin = seg.lineSide().bottom().originSmoothed();
+                    materialOrigin = seg.lineSide().bottom().as<Surface>().originSmoothed();
                     if (bfloor->heightSmoothed() > fceil->heightSmoothed())
                     {
                         materialOrigin.y -= (raiseToBackFloor? t : fceilZ)
@@ -337,8 +335,8 @@ struct WallEdge::Impl : public IHPlane
                 break;
 
             case LineSide::Middle: {
-                const LineSide &lineSide = seg.lineSide();
-                const Surface &middle    = lineSide.middle();
+                const auto &   lineSide = seg.lineSide();
+                const Surface &middle   = lineSide.middle().as<Surface>();
 
                 const bool isExtendedMasked = middle.hasMaterial() &&
                                               !middle.materialAnimator()->isOpaque() &&
@@ -352,7 +350,7 @@ struct WallEdge::Impl : public IHPlane
                 else
                 {
                     // Use the unmapped heights for positioning purposes.
-                    lo = lineSide.sector().floor().heightSmoothed();
+                    lo = lineSide.sector().floor().as<Plane>().heightSmoothed();
                 }
 
                 if (!line.isSelfReferencing() && fceil == &subsec.sector().ceiling())
@@ -362,7 +360,7 @@ struct WallEdge::Impl : public IHPlane
                 else
                 {
                     // Use the unmapped heights for positioning purposes.
-                    hi = lineSide.back().sector().ceiling().heightSmoothed();
+                    hi = lineSide.back().sector().ceiling().as<Plane>().heightSmoothed();
                 }
 
                 materialOrigin = Vec2f(middle.originSmoothed().x, 0);
@@ -572,15 +570,15 @@ struct WallEdge::Impl : public IHPlane
     {
         const ClockDirection direction = edge ? Clockwise : CounterClockwise;
 
-        const HEdge *hedge = wallHEdge;
-        while ((hedge = &SubsectorCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
+        const auto *hedge = wallHEdge;
+        while ((hedge = &world::SubsectorCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
         {
             // Stop if there is no space on the back side.
             if (!hedge->hasFace() || !hedge->hasMapElement())
                 break;
 
-            const auto &backSpace = hedge->face().mapElementAs<ConvexSubspace>();
-            const auto &subsec    = backSpace.subsector().as<world::ClientSubsector>();
+            const auto &backSpace = hedge->face().mesh::Mesh::Element::mapElementAs<ConvexSubspace>();
+            const auto &subsec    = backSpace.subsector().as<Subsector>();
 
             if (subsec.hasWorldVolume())
             {
@@ -693,26 +691,26 @@ struct WallEdge::Impl : public IHPlane
         diff = 0;
 
         // Are we not blending?
-        if(spec.flags.testFlag(WallSpec::NoEdgeNormalSmoothing))
+        if (spec.flags.testFlag(WallSpec::NoEdgeNormalSmoothing))
             return nullptr;
 
-        const LineSide &lineSide = lineSideSegment().lineSide();
+        const LineSide &lineSide = lineSideSegment().lineSide().as<LineSide>();
 
         // Polyobj lines have no owner rings.
-        if(lineSide.line().definesPolyobj())
+        if (lineSide.line().definesPolyobj())
             return nullptr;
 
         const ClockDirection direction = (edge? CounterClockwise : Clockwise);
-        const LineOwner &farVertOwner  = *lineSide.line().vertexOwner(lineSide.sideId() ^ edge);
+        const auto &farVertOwner  = *lineSide.line().vertexOwner(lineSide.sideId() ^ edge);
         Line *neighbor;
-        if(R_SideBackClosed(lineSide))
+        if (R_SideBackClosed(lineSide))
         {
-            neighbor = R_FindSolidLineNeighbor(lineSide.line(), farVertOwner, direction,
+            neighbor = R_FindSolidLineNeighbor(lineSide.line().as<Line>(), farVertOwner, direction,
                                                lineSide.sectorPtr(), &diff);
         }
         else
         {
-            neighbor = R_FindLineNeighbor(lineSide.line(), farVertOwner, direction,
+            neighbor = R_FindLineNeighbor(lineSide.line().as<Line>(), farVertOwner, direction,
                                           lineSide.sectorPtr(), &diff);
         }
 
@@ -720,7 +718,7 @@ struct WallEdge::Impl : public IHPlane
         if(!neighbor) return nullptr;
 
         // Choose the correct side of the neighbor (determined by which vertex is shared).
-        LineSide *otherSide;
+        world::LineSide *otherSide;
         if(&neighbor->vertex(edge ^ 1) == &lineSide.vertex(edge))
             otherSide = &neighbor->front();
         else
@@ -730,7 +728,7 @@ struct WallEdge::Impl : public IHPlane
         if(!otherSide->hasSections()) return nullptr;
 
         /// @todo Do not assume the neighbor is the middle section of @var otherSide.
-        return &otherSide->middle();
+        return &otherSide->middle().as<Surface>();
     }
 
     /**
@@ -741,8 +739,8 @@ struct WallEdge::Impl : public IHPlane
     {
         needUpdateNormal = false;
 
-        LineSide &lineSide = lineSideSegment().lineSide();
-        Surface &surface   = lineSide.surface(spec.section);
+        auto &lineSide   = lineSideSegment().lineSide();
+        Surface &surface = lineSide.surface(spec.section).as<Surface>();
 
         binangle_t angleDiff;
         Surface *blendSurface = findBlendNeighbor(angleDiff);
@@ -759,7 +757,7 @@ struct WallEdge::Impl : public IHPlane
     }
 };
 
-WallEdge::WallEdge(const WallSpec &spec, HEdge &hedge, int edge)
+WallEdge::WallEdge(const WallSpec &spec, mesh::HEdge &hedge, int edge)
     : WorldEdge((edge? hedge.twin() : hedge).origin())
     , d(getRecycledImpl())
 {

@@ -24,12 +24,11 @@
 
 #include "clientapp.h"
 
-//#include "render/lightgrid.h"
-
 #include "world/map.h"
-#include "world/bspleaf.h"
 #include "world/convexsubspace.h"
-#include "client/clientsubsector.h"
+#include "world/subsector.h"
+
+#include <doomsday/world/bspleaf.h>
 
 using namespace de;
 
@@ -192,8 +191,8 @@ void VisEntityLighting::setupLighting(const Vec3d &origin, ddouble distance,
     else
 #endif
     {
-        const auto &subsec   = bspLeaf.subspace().subsector().as<world::ClientSubsector>();
-        const Vec4f color = subsec.lightSourceColorfIntensity();
+        const auto &subsec = bspLeaf.subspace().subsector().as<Subsector>();
+        const Vec4f color  = subsec.lightSourceColorfIntensity();
 
         // No need for distance attentuation.
         dfloat lightLevel = color.w;

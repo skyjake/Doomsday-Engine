@@ -21,7 +21,7 @@
 #ifndef DE_CLIENT_RENDER_PARTICLE_H
 #define DE_CLIENT_RENDER_PARTICLE_H
 
-namespace world { class Map; }
+class Map;
 
 // Maximum number of particle textures (not instances).
 #define MAX_PTC_TEXTURES        300
@@ -66,6 +66,6 @@ void Rend_ParticleReleaseExtraTextures();
  * particles from one generator will obscure particles from another.
  * This would be especially bad with smoke trails.
  */
-void Rend_RenderParticles(world::Map &map);
+void Rend_RenderParticles(Map &map);
 
 #endif  // DE_CLIENT_RENDER_PARTICLE_H

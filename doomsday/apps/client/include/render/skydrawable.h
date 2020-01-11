@@ -116,19 +116,19 @@ public:
      *
      * @param sky  Sky to visualize, if any (may be @c nullptr to configure layer).
      */
-    explicit SkyDrawable(const world::Sky *sky = nullptr);
+    explicit SkyDrawable(const Sky *sky = nullptr);
 
     /**
      * Reconfigure the drawable for visualizing the given @a sky.
      *
      * @return Reference to this drawable, for caller convenience.
      */
-    SkyDrawable &configure(const world::Sky *sky = nullptr);
+    SkyDrawable &configure(const Sky *sky = nullptr);
 
     /**
      * Returns a pointer to the configured sky, if any (may be @c nullptr).
      */
-    const world::Sky *sky() const;
+    const Sky *sky() const;
 
     /**
      * Render the sky.

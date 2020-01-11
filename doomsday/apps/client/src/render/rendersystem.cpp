@@ -41,9 +41,9 @@
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 
-#include "ConvexSubspace"
-#include "Subsector"
-#include "Surface"
+#include "world/convexsubspace.h"
+#include "world/subsector.h"
+#include "world/surface.h"
 
 #include "Contact"
 #include "misc/r_util.h"

@@ -40,7 +40,7 @@ enum AudioEnvironmentId
  */
 struct AudioEnvironment
 {
-    char const name[9]; ///< Environment type name.
+    char name[9]; ///< Environment type name.
     int volume;
     int decay;
     int damping;

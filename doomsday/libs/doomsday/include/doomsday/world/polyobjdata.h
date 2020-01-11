@@ -1,6 +1,6 @@
 /** @file polyobjdata.h  Private data for a polyobj
  *
- * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -39,7 +39,6 @@ public:
     typedef de::List<de::Vec2d> VertexCoords;
 
 public:
-    PolyobjData();
     ~PolyobjData();
 
     void setThinker(thinker_s *thinker);
@@ -56,26 +55,13 @@ public:
     VertexCoords originalPts;  ///< Used as the base for the rotations.
     VertexCoords prevPts;      ///< Use to restore the old point values.
 
+protected:
+    PolyobjData();
+    
 private:
     polyobj_s *_polyobj = nullptr;
 };
 
 } // namespace world
 
-#ifdef __CLIENT__
-
-class ClPolyMover;
-
-class PolyobjData : public world::PolyobjData
-{
-public:
-    void addMover(ClPolyMover &mover);
-    void removeMover(ClPolyMover &mover);
-    ClPolyMover *mover() const;
-
-private:
-    ClPolyMover *_mover = nullptr;
-};
-
-#endif
 

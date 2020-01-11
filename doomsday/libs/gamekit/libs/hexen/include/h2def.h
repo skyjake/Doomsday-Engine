@@ -43,6 +43,7 @@
 #include <de/legacy/fixedpoint.h>
 #include <de/input/ddkey.h>
 #include <doomsday/gamefw/defs.h>
+#include <doomsday/world/mobj.h>
 #include "doomsday.h"
 #include "version.h"
 #include "info.h"

@@ -40,8 +40,6 @@ namespace world {
 
 using namespace de;
 
-static Sector::SubsectorConstructor subsectorConstructor;
-
 DE_PIMPL(Sector)
 , DE_OBSERVES(Plane, HeightChange)
 {
@@ -318,7 +316,7 @@ LoopResult Sector::forAllPlanes(const std::function<LoopResult (const Plane &)>&
 
 Plane *Sector::addPlane(const Vec3f &normal, ddouble height)
 {
-    auto *plane = new Plane(*this, normal, height);
+    auto *plane = Factory::newPlane(*this, normal, height);
 
     plane->setIndexInSector(d->planes.count());
     d->planes.append(plane);
@@ -385,9 +383,9 @@ LoopResult Sector::forAllSubsectors(const std::function<LoopResult(Subsector &)>
 
 Subsector *Sector::addSubsector(List<ConvexSubspace *> const &subspaces)
 {
-    DE_ASSERT(subsectorConstructor);
     /// @todo Add/move debug logic for ensuring the set is valid here. -ds
-    std::unique_ptr<Subsector> subsec(subsectorConstructor(subspaces));
+    
+    std::unique_ptr<Subsector> subsec(Factory::newSubsector(subspaces));
     d->subsectors << subsec.get();
     LOG_MAP_XVERBOSE("New Subsector %s (sector-%s)", subsec->id().asText() << indexInMap());
     return subsec.release();
@@ -540,12 +538,10 @@ const AABoxd &Sector::bounds() const
     return d->geom().bounds;
 }
 
-#ifdef __CLIENT__
-ddouble Sector::roughArea() const
+double Sector::roughArea() const
 {
     return d->geom().roughArea;
 }
-#endif
 
 dint Sector::property(DmuArgs &args) const
 {
@@ -709,11 +705,6 @@ String Sector::planeIdAsText(dint planeId)
 void Sector::consoleRegister()  // static
 {
     C_CMD("inspectsector", "i", InspectSector);
-}
-
-void Sector::setSubsectorConstructor(SubsectorConstructor func) // static
-{
-    subsectorConstructor = std::move(func);
 }
 
 } // namespace world

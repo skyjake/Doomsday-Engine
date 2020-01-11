@@ -121,6 +121,7 @@ typedef struct interceptor_s    world_Interceptor;
 typedef struct line_s           world_Line;
 typedef struct material_s       world_Material;
 typedef struct sector_s         world_Sector;
+typedef struct subsector_s      world_Subsector;
 
 #elif defined __cplusplus
 
@@ -132,6 +133,7 @@ namespace world
     class Line;
     class Plane;
     class Sector;
+    class Subsector;
     class Vertex;
     class Interceptor;
 }
@@ -140,6 +142,7 @@ using world_Line        = world::Line;
 using world_Material    = world::Material;
 using world_Interceptor = world::Interceptor;
 using world_Sector      = world::Sector;
+using world_Subsector   = world::Subsector;
 
 #endif
 

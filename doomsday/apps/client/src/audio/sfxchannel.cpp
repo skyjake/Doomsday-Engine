@@ -20,7 +20,6 @@
 
 #include "audio/sfxchannel.h"
 
-#include "world/thinkers.h"
 #include "dd_main.h"     // remove me
 #include "def_main.h"    // ::defs
 
@@ -31,6 +30,7 @@
 #include "render/rend_font.h"
 #include "ui/ui_main.h"
 
+#include <doomsday/world/thinkers.h>
 #include <de/legacy/concurrency.h>
 #include <de/legacy/timer.h>    // TICSPERSEC
 #include <de/legacy/vector1.h>  // remove me
