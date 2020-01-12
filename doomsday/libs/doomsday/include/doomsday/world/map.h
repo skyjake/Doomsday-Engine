@@ -295,10 +295,10 @@ public:
      */
     virtual int unlink(struct mobj_s &mob);
 
-//- Vertexs --------------------------------------------------------------------------------------
+//- Vertices --------------------------------------------------------------------------------------
 
     /**
-     * Returns the total number of Vertexs in the map.
+     * Returns the total number of Vertices in the map.
      */
     int vertexCount() const;
 
@@ -309,11 +309,11 @@ public:
     Vertex *vertexPtr(int index) const;
 
     /**
-     * Iterate Vertexs in the map, making a function @a callback for each.
+     * Iterate Vertices in the map, making a function @a callback for each.
      *
      * @param callback  Function to call for each Vertex.
      */
-    de::LoopResult forAllVertexs(const std::function<de::LoopResult (Vertex &)>& callback) const;
+    de::LoopResult forAllVertices(const std::function<de::LoopResult (Vertex &)>& callback) const;
 
 //- Polyobjects ----------------------------------------------------------------------------------
 
@@ -517,12 +517,6 @@ public:
      */
     virtual de::String objectSummaryAsStyledText() const;
 
-    /**
-     * To be called to initialize the dummy element arrays (which are used with the DMU API),
-     * with a fixed number of @em shared dummies.
-     */
-    static void initDummies();
-
 //- Editing --------------------------------------------------------------------
 
     /**
@@ -592,6 +586,10 @@ public:
 
 //- Dummy Map Elements ----------------------------------------------------------------------------
 
+    /**
+     * Initialize the dummy map element arrays (which are used with the DMU API),
+     * with a fixed number of @em shared dummies.
+     */
     static void initDummyElements();
 
     static void *createDummyElement(int type, void *extraData);

@@ -32,7 +32,7 @@ namespace world {
  *
  * Stored in the Polyobj's thinker.d (polyobjs are not normal thinkers).
  */
-class PolyobjData : public Thinker::IData
+class LIBDOOMSDAY_PUBLIC PolyobjData : public Thinker::IData
 {
 public:
     /// Used to store the original/previous vertex coordinates.

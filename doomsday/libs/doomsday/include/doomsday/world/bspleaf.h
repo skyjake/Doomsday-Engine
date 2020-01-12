@@ -40,7 +40,7 @@ class Sector;
  *
  * @see http://en.wikipedia.org/wiki/Binary_space_partitioning
  */
-class BspLeaf : public BspElement
+class LIBDOOMSDAY_PUBLIC BspLeaf : public BspElement
 {
 public:
     /// Required subspace is missing. @ingroup errors

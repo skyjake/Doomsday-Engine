@@ -34,7 +34,7 @@ namespace mesh {
  *
  * @ingroup world
  */
-class HEdge : public MeshElement
+class LIBDOOMSDAY_PUBLIC HEdge : public MeshElement
 {
 public:
     /// Required twin half-edge is missing. @ingroup errors

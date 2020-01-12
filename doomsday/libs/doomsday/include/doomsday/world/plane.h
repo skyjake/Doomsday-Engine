@@ -37,7 +37,7 @@ class Surface;
 /**
  * World map sector plane.
  */
-class Plane : public MapElement
+class LIBDOOMSDAY_PUBLIC Plane : public MapElement
 {
     DE_NO_COPY  (Plane)
     DE_NO_ASSIGN(Plane)

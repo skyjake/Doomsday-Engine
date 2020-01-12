@@ -675,7 +675,7 @@ void Map::initRadio()
 
     Time begunAt;
 
-    forAllVertexs([](world::Vertex &vtx) {
+    forAllVertices([](world::Vertex &vtx) {
         vtx.as<Vertex>().updateShadowOffsets();
         return LoopContinue;
     });

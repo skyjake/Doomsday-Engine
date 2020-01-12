@@ -59,7 +59,7 @@ void Mesh::Element::setMapElement(world::MapElement *newMapElement)
 
 DE_PIMPL_NOREF(Mesh)
 {
-    Vertexs vertexs;  ///< All vertexs in the mesh.
+    Vertices vertices;  ///< All vertices in the mesh.
     HEdges hedges;    ///< All half-edges in the mesh.
     Faces faces;      ///< All faces in the mesh.
 };
@@ -74,7 +74,7 @@ Mesh::~Mesh()
 
 void Mesh::clear()
 {
-    deleteAll(d->vertexs); d->vertexs.clear();
+    deleteAll(d->vertices); d->vertices.clear();
     deleteAll(d->hedges); d->hedges.clear();
     deleteAll(d->faces); d->faces.clear();
 }
@@ -82,7 +82,7 @@ void Mesh::clear()
 world::Vertex *Mesh::newVertex(const de::Vec2d &origin)
 {
     auto *vtx = new world::Vertex(*this, origin);
-    d->vertexs.append(vtx);
+    d->vertices.append(vtx);
     return vtx;
 }
 
@@ -102,7 +102,7 @@ Face *Mesh::newFace()
 
 void Mesh::removeVertex(world::Vertex &vertex)
 {
-    if (d->vertexs.removeOne(&vertex))
+    if (d->vertices.removeOne(&vertex))
     {
         delete &vertex;
     }
@@ -124,9 +124,9 @@ void Mesh::removeFace(Face &face)
     }
 }
 
-const Mesh::Vertexs &Mesh::vertexs() const
+const Mesh::Vertices &Mesh::vertices() const
 {
-    return d->vertexs;
+    return d->vertices;
 }
 
 const Mesh::Faces &Mesh::faces() const

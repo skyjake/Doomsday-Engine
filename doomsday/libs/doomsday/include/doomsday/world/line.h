@@ -44,7 +44,7 @@ class Surface;
 /**
  * Side geometry segment on the XY plane.
  */
-class LineSideSegment : public world::MapElement
+class LIBDOOMSDAY_PUBLIC LineSideSegment : public world::MapElement
 {
     DE_NO_COPY  (LineSideSegment)
     DE_NO_ASSIGN(LineSideSegment)
@@ -91,7 +91,7 @@ private:
  * subsections. Each Section having ownership of an Emitter and an optional Surface.
  * This should allow for a significant reduction in implementation complexity. -ds
  */
-class LineSide : public MapElement
+class LIBDOOMSDAY_PUBLIC LineSide : public MapElement
 {
     DE_NO_COPY  (LineSide)
     DE_NO_ASSIGN(LineSide)
@@ -444,7 +444,7 @@ const Line &LineSideSegment::line() const { return lineSide().line(); }
  *
  * @see http://en.wikipedia.org/wiki/Arrangement_of_lines
  */
-class Line : public MapElement
+class LIBDOOMSDAY_PUBLIC Line : public MapElement
 {
     DE_NO_COPY  (Line)
     DE_NO_ASSIGN(Line)
@@ -591,7 +591,7 @@ public:
 
     /**
      * Returns the map space point (on the line) which lies at the center of the line's
-     * two Vertexs.
+     * two Vertices.
      */
     de::Vec2d center() const;
 
@@ -637,11 +637,11 @@ public:
     const Vertex &vertex(int to) const;
 
     /**
-     * Iterate through the edge Vertexs for the line.
+     * Iterate through the edge Vertices for the line.
      *
      * @param func  Callback to make for each Vertex.
      */
-    de::LoopResult forAllVertexs(std::function<de::LoopResult(Vertex &)> func) const;
+    de::LoopResult forAllVertices(std::function<de::LoopResult(Vertex &)> func) const;
 
     /**
      * On which side of the line does the specified box lie?

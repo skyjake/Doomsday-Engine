@@ -359,7 +359,7 @@ DE_PIMPL(Map)
     {
         using namespace world::bsp;
 
-        for (auto *vertex : mesh.vertexs())
+        for (auto *vertex : mesh.vertices())
         {
             // Count the total number of one and two-sided line owners for each
             // vertex. (Used in the process of locating window effect lines.)
@@ -460,7 +460,7 @@ DE_PIMPL(Map)
             // Attribute an index to any new vertexes.
             for (dint i = nextVertexOrd; i < mesh.vertexCount(); ++i)
             {
-                Vertex *vtx = mesh.vertexs().at(i);
+                Vertex *vtx = mesh.vertices().at(i);
                 vtx->setMap(thisPublic);
                 vtx->setIndexInMap(i);
             }
@@ -1349,14 +1349,14 @@ Vertex *Map::vertexPtr(dint index) const
 {
     if (index >= 0 && index < d->mesh.vertexCount())
     {
-        return d->mesh.vertexs().at(index);
+        return d->mesh.vertices().at(index);
     }
     return nullptr;
 }
 
-LoopResult Map::forAllVertexs(const std::function<LoopResult (Vertex &)>& func) const
+LoopResult Map::forAllVertices(const std::function<LoopResult (Vertex &)>& func) const
 {
-    for (Vertex *vtx : d->mesh.vertexs())
+    for (Vertex *vtx : d->mesh.vertices())
     {
         if (auto result = func(*vtx)) return result;
     }
@@ -1821,7 +1821,7 @@ static bool vertexHasValidLineOwnerRing(Vertex &v)
  * Generates the line owner rings for each vertex. Each ring includes all the lines which
  * the vertex belongs to sorted by angle, (the rings are arranged in clockwise order, east = 0).
  */
-void buildVertexLineOwnerRings(List<Vertex *> const &vertexs, List<Line *> &editableLines)
+void buildVertexLineOwnerRings(List<Vertex *> const &vertices, List<Line *> &editableLines)
 {
     LOG_AS("buildVertexLineOwnerRings");
 
@@ -1841,7 +1841,7 @@ void buildVertexLineOwnerRings(List<Vertex *> const &vertexs, List<Line *> &edit
     //
     // Step 2: Sort line owners of each vertex and finalize the rings.
     //
-    for (Vertex *v : vertexs)
+    for (Vertex *v : vertices)
     {
         if (!v->_numLineOwners) continue;
 
@@ -1936,7 +1936,7 @@ static void pruneVertexes(mesh::Mesh &mesh, const Map::Lines &lines)
     // Populate the vertex info.
     List<VertexInfo> vertexInfo(mesh.vertexCount());
     dint ord = 0;
-    for (Vertex *vertex : mesh.vertexs())
+    for (Vertex *vertex : mesh.vertices())
     {
         vertexInfo[ord++].vertex = vertex;
     }
@@ -2015,7 +2015,7 @@ static void pruneVertexes(mesh::Mesh &mesh, const Map::Lines &lines)
     {
         // Re-index with a contiguous range of indices.
         dint ord = 0;
-        for (Vertex *vertex : mesh.vertexs())
+        for (Vertex *vertex : mesh.vertices())
         {
             vertex->setIndexInMap(ord++);
         }
@@ -2049,7 +2049,7 @@ bool Map::endEditing()
             line->setFlags(DDLF_BLOCKING);
     }
 
-    buildVertexLineOwnerRings(d->mesh.vertexs(), d->editable.lines);
+    buildVertexLineOwnerRings(d->mesh.vertices(), d->editable.lines);
 
     //
     // Move the editable elements to the "static" element lists.
@@ -2314,11 +2314,11 @@ void *Map::createDummyElement(int type, void *extraData)
         case DMU_LINE:
         {
             // Time to allocate the dummy vertex?
-            if(g.dummyMesh.vertexsIsEmpty())
+            if(g.dummyMesh.verticesIsEmpty())
             {
                 g.dummyMesh.newVertex();
             }
-            Vertex &dummyVertex = *g.dummyMesh.vertexs().first();
+            Vertex &dummyVertex = *g.dummyMesh.vertices().first();
             DummyLine *dl = new DummyLine(dummyVertex, dummyVertex);
             g.dummies.insert(dl);
             dl->extraData = extraData;

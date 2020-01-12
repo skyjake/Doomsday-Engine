@@ -35,7 +35,7 @@ namespace world {
 /**
  * An infinite two-dimensional geometric plane.
  */
-class Surface : public MapElement
+class LIBDOOMSDAY_PUBLIC Surface : public MapElement
 {
     DE_NO_COPY  (Surface)
     DE_NO_ASSIGN(Surface)

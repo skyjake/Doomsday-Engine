@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "../libdoomsday.h"
 #include "map.h"
 #include "api_map.h" // traverser_t
 
@@ -32,7 +33,7 @@ namespace world {
  * Note: For technical reasons it is not presently possible to nest one or more
  * interceptor traces.
  */
-class Interceptor
+class LIBDOOMSDAY_PUBLIC Interceptor
 {
 public:
     /**

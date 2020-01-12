@@ -28,10 +28,10 @@
 #include <de/Vector>
 
 #include "world/map.h"
+#include "world/convexsubspace.h"
 #include <doomsday/world/bspleaf.h>
 
 class Lumobj;
-class ConvexSubspace;
 
 enum ContactType
 {
@@ -135,7 +135,7 @@ void R_AddContact(Lumobj &lumobj);
 /**
  * Returns the contact list for the specified @a subspace and contact @a type.
  */
-ContactList &R_ContactList(ConvexSubspace &subspace, ContactType type);
+ContactList &R_ContactList(const ConvexSubspace &subspace, ContactType type);
 
 /**
  * Traverse the list of @em all contacts for the current render frame.

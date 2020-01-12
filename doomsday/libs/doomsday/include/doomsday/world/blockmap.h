@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <functional>
+#include "../libdoomsday.h"
 #include <de/legacy/aabox.h>
 #include <de/Vector>
 
@@ -34,7 +34,7 @@ class BlockmapDebugVisual;
 
 namespace world {
 
-class Blockmap
+class LIBDOOMSDAY_PUBLIC Blockmap
 {
 public:
     typedef de::Vec2ui Cell;
@@ -45,7 +45,7 @@ public:
      *
      * @todo Use Rectangleui instead -ds
      */
-    struct CellBlock
+    struct LIBDOOMSDAY_PUBLIC CellBlock
     {
         Cell min;
         Cell max;

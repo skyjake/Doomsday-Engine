@@ -37,7 +37,7 @@ class Map;
  *
  * @todo Replace with new mechanism from the old 'new-order' branch(es).
  */
-class Thinkers
+class LIBDOOMSDAY_PUBLIC Thinkers
 {
 public:
     DE_AUDIENCE(Removal, void thinkerRemoved(thinker_t &))

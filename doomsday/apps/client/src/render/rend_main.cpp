@@ -2552,7 +2552,7 @@ static bool lightWithPlaneGlow(const Vec3d &point, const Subsector &subsec,
 }
 
 uint32_t Rend_CollectAffectingLights(const Vec3d &point, const Vec3f &ambientColor,
-    ConvexSubspace *subspace, bool starkLight)
+    world::ConvexSubspace *subspace, bool starkLight)
 {
     uint32_t lightListIdx = 0;
 
@@ -2571,7 +2571,7 @@ uint32_t Rend_CollectAffectingLights(const Vec3d &point, const Vec3f &ambientCol
     {
         // Interpret lighting from luminous-objects near the origin and which
         // are in contact the specified subspace and add them to the identified list.
-        R_ForAllSubspaceLumContacts(*subspace, [&point, &lightListIdx] (Lumobj &lum)
+        R_ForAllSubspaceLumContacts(subspace->as<ConvexSubspace>(), [&point, &lightListIdx] (Lumobj &lum)
         {
             VectorLightData vlight;
             if (lightWithLumobj(point, lum, vlight))
@@ -5784,7 +5784,7 @@ static void findMinMaxPlaneHeightsAtVertex(mesh::HEdge *base, int edge,
     }
 }
 
-static void drawSubspaceVertexs(ConvexSubspace &sub, drawvertexvisual_parameters_t &parms)
+static void drawSubspaceVertices(ConvexSubspace &sub, drawvertexvisual_parameters_t &parms)
 {
     auto &subsec = sub.subsector().as<Subsector>();
     const double min = subsec.  visFloor().heightSmoothed();
@@ -5871,7 +5871,7 @@ static void drawVertexes(Map &map)
                  || polyBounds.minY > box.maxY
                  || polyBounds.maxY < box.minY))
             {
-                drawSubspaceVertexs(subspace, parms);
+                drawSubspaceVertices(subspace, parms);
             }
             return LoopContinue;
         });
@@ -5903,7 +5903,7 @@ static void drawVertexes(Map &map)
               || polyBounds.minY > box.maxY
               || polyBounds.maxY < box.minY))
         {
-            drawSubspaceVertexs(subspace, parms);
+            drawSubspaceVertices(subspace, parms);
         }
         return LoopContinue;
     });
@@ -5926,7 +5926,7 @@ static void drawVertexes(Map &map)
                   || polyBounds.minY > box.maxY
                   || polyBounds.maxY < box.minY))
             {
-                drawSubspaceVertexs(subspace, parms);
+                drawSubspaceVertices(subspace, parms);
             }
             return LoopContinue;
         });

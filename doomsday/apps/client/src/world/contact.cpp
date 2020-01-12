@@ -21,9 +21,9 @@
 #include "world/contact.h"
 #include "world/map.h"
 #include "world/p_object.h"
+#include "world/convexsubspace.h"
 
 #include <doomsday/world/bspleaf.h>
-#include <doomsday/world/convexsubspace.h>
 #include <de/legacy/memoryzone.h>
 #include <de/Error>
 
@@ -148,9 +148,9 @@ ContactList::Node *ContactList::newNode(void *object) // static
 // Separate contact lists for each BSP leaf and contact type.
 static ContactList *subspaceContactLists;
 
-ContactList &R_ContactList(world::ConvexSubspace &subspace, ContactType type)
+ContactList &R_ContactList(const ConvexSubspace &subspace, ContactType type)
 {
-    return subspaceContactLists[subspace.indexInMap() * ContactTypeCount + dint( type )];
+    return subspaceContactLists[subspace.indexInMap() * ContactTypeCount + int(type)];
 }
 
 static Contact *contacts;
@@ -242,7 +242,7 @@ LoopResult R_ForAllContacts(const std::function<LoopResult (const Contact &)> &f
     return LoopContinue;
 }
 
-LoopResult R_ForAllSubspaceMobContacts(ConvexSubspace &subspace, const std::function<LoopResult (mobj_s &)> &func)
+LoopResult R_ForAllSubspaceMobContacts(const ConvexSubspace &subspace, const std::function<LoopResult (mobj_s &)> &func)
 {
     ContactList &list = R_ContactList(subspace, ContactMobj);
     for(ContactList::Node *node = list.begin(); node; node = node->next)
@@ -253,7 +253,7 @@ LoopResult R_ForAllSubspaceMobContacts(ConvexSubspace &subspace, const std::func
     return LoopContinue;
 }
 
-LoopResult R_ForAllSubspaceLumContacts(ConvexSubspace &subspace, const std::function<LoopResult (Lumobj &)> &func)
+LoopResult R_ForAllSubspaceLumContacts(const ConvexSubspace &subspace, const std::function<LoopResult (Lumobj &)> &func)
 {
     ContactList &list = R_ContactList(subspace, ContactLumobj);
     for(ContactList::Node *node = list.begin(); node; node = node->next)

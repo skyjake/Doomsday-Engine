@@ -38,7 +38,7 @@ class LineOwner;
  * An @em owner in this context is any line whose start or end points are
  * defined as the vertex.
  */
-class Vertex : public MapElement, public mesh::MeshElement
+class LIBDOOMSDAY_PUBLIC Vertex : public MapElement, public mesh::MeshElement
 {
     DE_NO_COPY  (Vertex)
     DE_NO_ASSIGN(Vertex)

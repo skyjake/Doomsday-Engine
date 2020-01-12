@@ -45,7 +45,7 @@ class Subsector;
  * dependent on the height of said plane are updated automatically. Also, any Surfaces
  * which are missing Materials are re-evaluated (to fill any new gaps).
  */
-class Sector : public MapElement
+class LIBDOOMSDAY_PUBLIC Sector : public MapElement
 {
     DE_NO_COPY  (Sector)
     DE_NO_ASSIGN(Sector)

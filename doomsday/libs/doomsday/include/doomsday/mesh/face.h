@@ -31,7 +31,7 @@ namespace mesh {
  *
  * @ingroup data
  */
-class Face : public MeshElement
+class LIBDOOMSDAY_PUBLIC Face : public MeshElement
 {
 public: /// @todo make private:
     /// Total number of half-edge's in the face geometry.

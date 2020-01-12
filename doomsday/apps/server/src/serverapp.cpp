@@ -353,7 +353,7 @@ void ServerApp::unloadGame(const GameProfile &upcomingGame)
 {
     DoomsdayApp::unloadGame(upcomingGame);
 
-    world::Map::initDummies();
+    world::Map::initDummyElements();
 }
 
 ServerApp &ServerApp::app()

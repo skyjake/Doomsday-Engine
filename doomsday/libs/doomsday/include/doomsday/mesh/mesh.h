@@ -25,9 +25,10 @@
 
 #include "../world/mapelement.h"
 
-namespace world {
-class Vertex;
-class MapElement;
+namespace world
+{
+    class Vertex;
+    class MapElement;
 }
 
 namespace mesh {
@@ -43,17 +44,17 @@ class HEdge;
  *
  * @ingroup data
  */
-class Mesh
+class LIBDOOMSDAY_PUBLIC Mesh
 {
 public:
-    typedef de::List<world::Vertex *> Vertexs;
+    typedef de::List<world::Vertex *> Vertices;
     typedef de::List<Face *>          Faces;
     typedef de::List<HEdge *>         HEdges;
 
     /**
      * Base class for all elements of a mesh.
      */
-    class Element
+    class LIBDOOMSDAY_PUBLIC Element
     {
         DE_NO_COPY  (Element)
         DE_NO_ASSIGN(Element)
@@ -155,7 +156,7 @@ public:
     /**
      * Returns the total number of vertexes in the mesh.
      */
-    inline int vertexCount() const { return vertexs().count(); }
+    inline int vertexCount() const { return vertices().count(); }
 
     /**
      * Returns the total number of faces in the mesh.
@@ -170,7 +171,7 @@ public:
     /**
      * Returns @c true iff there are no vertexes in the mesh.
      */
-    inline bool vertexsIsEmpty() const { return vertexs().isEmpty(); }
+    inline bool verticesIsEmpty() const { return vertices().isEmpty(); }
 
     /**
      * Returns @c true iff there are no faces in the mesh.
@@ -185,7 +186,7 @@ public:
     /**
      * Provides access to the set of all vertexes in the mesh.
      */
-    const Vertexs &vertexs() const;
+    const Vertices &vertices() const;
 
     /**
      * Provides access to the set of all faces in the mesh.

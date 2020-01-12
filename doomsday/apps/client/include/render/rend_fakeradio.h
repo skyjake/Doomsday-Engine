@@ -40,8 +40,7 @@
 
 #include <de/libcore.h>
 
-namespace world { class ConvexSubspace; }
-
+class ConvexSubspace;
 class WallEdge;
 class Plane;
 
@@ -65,7 +64,7 @@ void Rend_DrawWallRadio(const WallEdge &leftEdge, const WallEdge &rightEdge, flo
  * Render FakeRadio for the given subspace. Draws all shadow geometry linked to the ConvexSubspace,
  * that has not already been rendered.
  */
-void Rend_DrawFlatRadio(const world::ConvexSubspace &subspace);
+void Rend_DrawFlatRadio(const ConvexSubspace &subspace);
 
 /**
  * Register the console commands, variables, etc..., of this module.

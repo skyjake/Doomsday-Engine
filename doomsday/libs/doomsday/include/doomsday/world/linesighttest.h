@@ -37,7 +37,7 @@ namespace world {
  * @todo optimize: Make use of the blockmap to take advantage of the inherent spatial
  * locality in this data structure.
  */
-class LineSightTest
+class LIBDOOMSDAY_PUBLIC LineSightTest
 {
 public:
     /**

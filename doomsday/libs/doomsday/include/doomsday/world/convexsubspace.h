@@ -31,7 +31,7 @@
 
 namespace world {
 
-class ConvexSubspace : public MapElement
+class LIBDOOMSDAY_PUBLIC ConvexSubspace : public MapElement
 {
 public:
     /// An invalid polygon was specified. @ingroup errors

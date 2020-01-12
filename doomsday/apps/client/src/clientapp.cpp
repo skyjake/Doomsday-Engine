@@ -1083,7 +1083,7 @@ void ClientApp::unloadGame(const GameProfile &upcomingGame)
     R_InitViewWindow();
     R_InitSvgs();
 
-    world::Map::initDummies();
+    world::Map::initDummyElements();
 }
 
 void ClientApp::makeGameCurrent(const GameProfile &newGame)

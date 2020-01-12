@@ -42,7 +42,7 @@ class ConvexSubspace;
  * @attention Should not be confused with the (more granular) id Tech 1 component of the
  * same name (now ConvexSubspace).
  */
-class Subsector
+class LIBDOOMSDAY_PUBLIC Subsector
 {
 public:
     /// Notified when the subsector is about to be deleted.
@@ -150,7 +150,7 @@ private:
  *
  * @ingroup world
  */
-class SubsectorCirculator
+class LIBDOOMSDAY_PUBLIC SubsectorCirculator
 {
 public:
     /// Attempt to dereference a NULL circulator. @ingroup errors

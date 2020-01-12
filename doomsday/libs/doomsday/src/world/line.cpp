@@ -870,7 +870,7 @@ const Vertex &Line::to() const
     return vertex(To);
 }
 
-LoopResult Line::forAllVertexs(std::function<LoopResult(Vertex &)> func) const
+LoopResult Line::forAllVertices(std::function<LoopResult(Vertex &)> func) const
 {
     for (dint i = 0; i < 2; ++i)
     {

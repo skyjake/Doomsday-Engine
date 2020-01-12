@@ -28,7 +28,8 @@
 #include <de/Error>
 #include <de/Vector>
 
-namespace world {
+namespace world
+{
     class BspLeaf;
     class Line;
     class Map;
@@ -43,7 +44,7 @@ namespace world {
 /**
  * World polyobj. Moveable Polygonal Map-Object (Polyobj).
  */
-typedef struct polyobj_s
+typedef struct LIBDOOMSDAY_PUBLIC polyobj_s
 {
 public:
     /// The polyobj is not presently linked in the BSP. @ingroup errors
