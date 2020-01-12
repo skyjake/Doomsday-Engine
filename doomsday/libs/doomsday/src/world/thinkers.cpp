@@ -117,6 +117,7 @@ DE_PIMPL(Thinkers)
     dint idtable[2048];     ///< 65536 bits telling which IDs are in use.
     dushort iddealer = 0;
 
+    std::function<void (thinker_t &)> idAssignor;
     List<ThinkerList *>       lists;
     Hash<thid_t, mobj_t *>    mobjIdLookup;    ///< public only
     Hash<thid_t, thinker_t *> thinkerIdLookup; ///< all thinkers with ID
@@ -194,6 +195,11 @@ DE_AUDIENCE_METHOD(Thinkers, Removal)
 Thinkers::Thinkers() : d(new Impl(this))
 {}
 
+void Thinkers::setIdAssignmentFunc(const std::function<void (thinker_t &)> &func)
+{
+    d->idAssignor = func;
+}
+
 bool Thinkers::isUsedMobjId(thid_t id)
 {
     return d->idtable[id >> 5] & (1 << (id & 31) /*(id % 32) */ );
@@ -237,10 +243,11 @@ void Thinkers::add(thinker_t &th, bool makePublic)
     {
         // It is a mobj, give it an ID (not for client mobjs, though, they
         // already have an id).
-        DE_ASSERT_FAIL("set up a callback for assigning thinker IDs")
-#ifdef __CLIENT__
-        if (!Cl_IsClientMobj(reinterpret_cast<mobj_t *>(&th)))
-#endif
+        if (d->idAssignor)
+        {
+            d->idAssignor(th);
+        }
+        else
         {
             th.id = d->newMobjId();
         }
@@ -411,6 +418,11 @@ dint Thinkers::count(dint *numInStasis) const
     return total;
 }
 
+thid_t Thinkers::newMobjId()
+{
+    return d->newMobjId();
+}
+
 }  // namespace world
 
 void Thinker_InitPrivateData(thinker_t *th, Id::Type knownId)
@@ -426,11 +438,6 @@ void Thinker_InitPrivateData(thinker_t *th, Id::Type knownId)
         if (Thinker_IsMobj(th))
         {
             th->d = Factory::newMobjThinkerData(privateId);
-//#ifdef __CLIENT__
-//            th->d = new ClientMobjThinkerData(privateId);
-//#else
-//            th->d = new MobjThinkerData(privateId);
-//#endif
         }
         else
         {

@@ -33,10 +33,6 @@ namespace mesh {
  */
 class LIBDOOMSDAY_PUBLIC Face : public MeshElement
 {
-public: /// @todo make private:
-    /// Total number of half-edge's in the face geometry.
-    int _hedgeCount;
-
 public:
     explicit Face(Mesh &mesh);
 
@@ -44,6 +40,8 @@ public:
      * Total number of half-edges in the face geometry.
      */
     int hedgeCount() const;
+    
+    void incrementHedgeCount() { _hedgeCount++; }
 
     /**
      * Returns a pointer to the first half-edge in the face geometry (note that
@@ -98,7 +96,10 @@ public:
     de::String description() const;
 
 private:
-    DE_PRIVATE(d)
+    HEdge *   _hedge = nullptr; // First half-edge in the face geometry.
+    AABoxd    _bounds;          // Vertex bounding box.
+    de::Vec2d _center;          // Center of vertices.
+    int       _hedgeCount = 0;  // Total number of half-edge's in the face geometry.
 };
 
 } // namespace mesh

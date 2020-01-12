@@ -45,20 +45,11 @@ DE_PIMPL(Plane)
     Impl(Public *i)
         : Base(i)
         , surface(Factory::newSurface(*dynamic_cast<MapElement *>(i)))
-    {
-#ifdef __CLIENT__
-        surface.audienceForMaterialChange() += this;
-#endif
-    }
+    {}
 
     ~Impl()
     {
         DE_NOTIFY_PUBLIC(Deletion, i) i->planeBeingDeleted(self());
-
-#ifdef __CLIENT__
-        // Stop movement tracking of this plane.
-        map().trackedPlanes().remove(thisPublic);
-#endif
     }
 
     inline world::Map &map() const { return self().map(); }
@@ -77,34 +68,15 @@ DE_PIMPL(Plane)
             self().updateSoundEmitterOrigin();
         }
 
-        notifyHeightChanged();
-
-#ifdef __CLIENT__
-        if(!ddMapSetup)
-        {
-            // Add ourself to tracked plane list (for movement interpolation).
-            map().trackedPlanes().insert(thisPublic);
-        }
-#endif
-    }
-
-    void notifyHeightChanged()
-    {
         DE_NOTIFY_PUBLIC(HeightChange, i) i->planeHeightChanged(self());
     }
 
     DE_PIMPL_AUDIENCE(Deletion)
     DE_PIMPL_AUDIENCE(HeightChange)
-#ifdef __CLIENT__
-    DE_PIMPL_AUDIENCE(HeightSmoothedChange)
-#endif
 };
 
 DE_AUDIENCE_METHOD(Plane, Deletion)
 DE_AUDIENCE_METHOD(Plane, HeightChange)
-#ifdef __CLIENT__
-DE_AUDIENCE_METHOD(Plane, HeightSmoothedChange)
-#endif
 
 Plane::Plane(Sector &sector, const Vec3f &normal, ddouble height)
     : MapElement(DMU_PLANE, &sector)

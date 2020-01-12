@@ -38,7 +38,8 @@ void LineSide::updateRadioCorner(shadowcorner_t &sc, float openness, Plane *prox
     {
         // Determine relative height offsets (affects shadow map selection).
         sc.pHeight = sc.proximity->heightSmoothed();
-        sc.pOffset = sc.pHeight - sector().plane(top? world::Sector::Ceiling : world::Sector::Floor).as<Plane>().heightSmoothed();
+        sc.pOffset = sc.pHeight - sector().plane(top? world::Sector::Ceiling : world::Sector::Floor)
+            .as<Plane>().heightSmoothed();
     }
     else
     {
@@ -343,40 +344,6 @@ void LineSide::updateRadioForFrame(int frameNumber)
                              top.sector ? &top.sector->ceiling().as<Plane>() : nullptr);
     }
 }
-
-//------------------------------------------------------------------------------------------------
-
-double LineSideSegment::lineSideOffset() const
-{
-    return _lineSideOffset;
-}
-
-void LineSideSegment::setLineSideOffset(double newOffset)
-{
-    _lineSideOffset = newOffset;
-}
-
-double LineSideSegment::length() const
-{
-    return _length;
-}
-
-void LineSideSegment::setLength(double newLength)
-{
-    _length = newLength;
-}
-
-bool LineSideSegment::isFrontFacing() const
-{
-    return _frontFacing;
-}
-
-void LineSideSegment::setFrontFacing(bool yes)
-{
-    _frontFacing = yes;
-}
-
-//------------------------------------------------------------------------------------------------
 
 bool Line::isShadowCaster() const
 {

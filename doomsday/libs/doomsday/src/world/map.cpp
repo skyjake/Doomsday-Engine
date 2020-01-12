@@ -103,6 +103,9 @@ struct EditableElements
     }
 };
 
+// Used when sorting vertex line owners.
+static Vertex *rootVtx;
+
 DE_PIMPL(Map)
 , DE_OBSERVES(Record, Deletion)
 , DE_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
@@ -121,7 +124,7 @@ DE_PIMPL(Map)
         }
 
     private:
-        static dint clearUserDataWorker(BspTree &subtree, void *)
+        static int clearUserDataWorker(BspTree &subtree, void *)
         {
             delete subtree.userData();
             return 0;
@@ -242,15 +245,15 @@ DE_PIMPL(Map)
 
     struct testForWindowEffectParams
     {
-        ddouble frontDist   = 0;
-        ddouble backDist    = 0;
-        Sector *frontOpen   = nullptr;
-        Sector *backOpen    = nullptr;
-        Line *frontLine     = nullptr;
-        Line *backLine      = nullptr;
-        Line *testLine      = nullptr;
-        bool castHorizontal = false;
-        Vec2d testLineCenter;
+        double  frontDist      = 0;
+        double  backDist       = 0;
+        Sector *frontOpen      = nullptr;
+        Sector *backOpen       = nullptr;
+        Line *  frontLine      = nullptr;
+        Line *  backLine       = nullptr;
+        Line *  testLine       = nullptr;
+        bool    castHorizontal = false;
+        Vec2d   testLineCenter;
     };
 
     static bool lineHasZeroLength(const Line &line)
@@ -266,7 +269,7 @@ DE_PIMPL(Map)
         if (line.isSelfReferencing()) return;
         if (lineHasZeroLength(line)) return;
 
-        ddouble dist = 0;
+        double dist = 0;
         Sector *hitSector = nullptr;
         bool isFront = false;
         if (p.castHorizontal)
@@ -428,7 +431,7 @@ DE_PIMPL(Map)
 
         // Remember the current next vertex ordinal as we'll need to index any
         // new vertexes produced during the build process.
-        dint nextVertexOrd = mesh.vertexCount();
+        int nextVertexOrd = mesh.vertexCount();
 
         // Determine the set of lines for which we will build a BSP.
         auto linesToBuildFor = compose<Set<Line *>>(lines.begin(), lines.end());
@@ -458,7 +461,7 @@ DE_PIMPL(Map)
                 << partitioner.vertexCount();
 
             // Attribute an index to any new vertexes.
-            for (dint i = nextVertexOrd; i < mesh.vertexCount(); ++i)
+            for (int i = nextVertexOrd; i < mesh.vertexCount(); ++i)
             {
                 Vertex *vtx = mesh.vertices().at(i);
                 vtx->setMap(thisPublic);
@@ -496,7 +499,7 @@ DE_PIMPL(Map)
                                 subspaces.append(&subspace);
 
 #ifdef DE_DEBUG  // See if we received a partial geometry...
-                                dint discontinuities = 0;
+                                int discontinuities = 0;
                                 auto *hedge = subspace.poly().hedge();
                                 do
                                 {
@@ -589,8 +592,8 @@ DE_PIMPL(Map)
         while (subspaceSets.count() > 1)
         {
             bool didMerge = false;
-            for (dint i = 0; i < subspaceSets.count(); ++i)
-                for (dint k = 0; k < subspaceSets.count(); ++k)
+            for (int i = 0; i < subspaceSets.count(); ++i)
+                for (int k = 0; k < subspaceSets.count(); ++k)
                 {
                     if (i == k) continue;
 
@@ -662,7 +665,7 @@ DE_PIMPL(Map)
      *
      * @pre Coordinate space bounds have already been determined.
      */
-    void initLineBlockmap(ddouble margin = 8)
+    void initLineBlockmap(double margin = 8)
     {
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
@@ -682,7 +685,7 @@ DE_PIMPL(Map)
      *
      * @pre Coordinate space bounds have already been determined.
      */
-    void initMobjBlockmap(ddouble margin = 8)
+    void initMobjBlockmap(double margin = 8)
     {
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
@@ -760,21 +763,21 @@ DE_PIMPL(Map)
 
         World::validCount++;
         self().forAllLinesInBox(box, [this, &mob, &box] (Line &line)
-                                {
-                                    // Do the bounding boxes intercept?
-                                    if (!(   box.minX >= line.bounds().maxX
-                                          || box.minY >= line.bounds().maxY
-                                          || box.maxX <= line.bounds().minX
-                                          || box.maxY <= line.bounds().minY))
-                                    {
-                                        // Line crosses the mobj's bounding box?
-                                        if (!line.boxOnSide(box))
-                                        {
-                                            this->linkMobjToLine(&mob, &line);
-                                        }
-                                    }
-                                    return LoopContinue;
-                                });
+        {
+            // Do the bounding boxes intercept?
+            if (!(   box.minX >= line.bounds().maxX
+                  || box.minY >= line.bounds().maxY
+                  || box.maxX <= line.bounds().minX
+                  || box.maxY <= line.bounds().minY))
+            {
+                // Line crosses the mobj's bounding box?
+                if (!line.boxOnSide(box))
+                {
+                    this->linkMobjToLine(&mob, &line);
+                }
+            }
+            return LoopContinue;
+        });
     }
 
     /**
@@ -782,7 +785,7 @@ DE_PIMPL(Map)
      *
      * @pre Coordinate space bounds have already been determined.
      */
-    void initPolyobjBlockmap(ddouble margin = 8)
+    void initPolyobjBlockmap(double margin = 8)
     {
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
@@ -799,7 +802,7 @@ DE_PIMPL(Map)
      *
      * @pre Coordinate space bounds have already been determined.
      */
-    void initSubspaceBlockmap(ddouble margin = 8)
+    void initSubspaceBlockmap(double margin = 8)
     {
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
@@ -888,7 +891,7 @@ DE_PIMPL(Map)
     {
         // Perhaps a wall surface?
         for (Line *line : lines)
-            for (dint i = 0; i < 2; ++i)
+            for (int i = 0; i < 2; ++i)
             {
                 LineSide &side = line->side(i);
                 if (!side.hasSections()) continue;
@@ -908,6 +911,258 @@ DE_PIMPL(Map)
             }
 
         return nullptr;  // Not found.
+    }
+
+    static void setVertexLineOwner(Vertex *vtx, Line *lineptr, LineOwner **storage)
+    {
+        if (!lineptr) return;
+
+        // Has this line already been registered with this vertex?
+        const LineOwner *own = vtx->firstLineOwner();
+        while (own)
+        {
+            if (&own->line() == lineptr)
+                return;  // Yes, we can exit.
+
+            own = own->next();
+        }
+
+        // Add a new owner.
+        vtx->_numLineOwners++;
+        LineOwner *newOwner = (*storage)++;
+
+        newOwner->_line = lineptr;
+        newOwner->_link[CounterClockwise] = nullptr;
+
+        // Link it in.
+        // NOTE: We don't bother linking everything at this stage since we'll
+        // be sorting the lists anyway. After which we'll finish the job by
+        // setting the prev and circular links.
+        // So, for now this is only linked singlely, forward.
+        newOwner->_link[Clockwise] = vtx->_lineOwners;
+        vtx->_lineOwners = newOwner;
+
+        // Link the line to its respective owner node.
+        if (vtx == &lineptr->from())
+            lineptr->_vo1 = newOwner;
+        else
+            lineptr->_vo2 = newOwner;
+    }
+    
+#ifdef DE_DEBUG
+    /**
+     * Determines whether the specified vertex @a v has a correctly formed line owner ring.
+     */
+    static bool vertexHasValidLineOwnerRing(Vertex &v)
+    {
+        const LineOwner *base = v.firstLineOwner();
+        const LineOwner *cur = base;
+        do
+        {
+            if (cur->prev()->next() != cur) return false;
+            if (cur->next()->prev() != cur) return false;
+
+        } while ((cur = cur->next()) != base);
+        return true;
+    }
+#endif
+    
+    /**
+     * Merge left and right line owner lists into a new list.
+     *
+     * @return  The newly merged list.
+     */
+    static LineOwner *mergeLineOwners(LineOwner *left, LineOwner *right,
+                                      int (*compare) (LineOwner *, LineOwner *))
+    {
+        LineOwner tmp;
+        LineOwner *np = &tmp;
+
+        tmp._link[Clockwise] = np;
+        while (left && right)
+        {
+            if (compare(left, right) <= 0)
+            {
+                np->_link[Clockwise] = left;
+                np = left;
+
+                left = left->next();
+            }
+            else
+            {
+                np->_link[Clockwise] = right;
+                np = right;
+
+                right = right->next();
+            }
+        }
+
+        // At least one of these lists is now empty.
+        if (left)
+        {
+            np->_link[Clockwise] = left;
+        }
+        if (right)
+        {
+            np->_link[Clockwise] = right;
+        }
+
+        // Is the list empty?
+        if (!tmp.hasNext())
+            return nullptr;
+
+        return tmp.next();
+    }
+
+    static LineOwner *splitLineOwners(LineOwner *list)
+    {
+        if (!list) return nullptr;
+
+        LineOwner *lista = list;
+        LineOwner *listb = list;
+        LineOwner *listc = list;
+
+        do
+        {
+            listc = listb;
+            listb = listb->next();
+            lista = lista->next();
+            if (lista)
+            {
+                lista = lista->next();
+            }
+        } while (lista);
+
+        listc->_link[Clockwise] = nullptr;
+        return listb;
+    }
+    
+    /**
+     * This routine uses a recursive mergesort algorithm; O(NlogN)
+     */
+    static LineOwner *sortLineOwners(LineOwner *list,
+                                     int (*compare) (LineOwner *a, LineOwner *b))
+    {
+        if (list && list->next())
+        {
+            LineOwner *p = splitLineOwners(list);
+
+            // Sort both halves and merge them back.
+            list = mergeLineOwners(sortLineOwners(list, compare),
+                                   sortLineOwners(p, compare), compare);
+        }
+        return list;
+    }
+    
+    /**
+     * Generates the line owner rings for each vertex. Each ring includes all the lines which
+     * the vertex belongs to sorted by angle, (the rings are arranged in clockwise order, east = 0).
+     */
+    static void buildVertexLineOwnerRings(const List<Vertex *> &vertices, List<Line *> &editableLines)
+    {
+        LOG_AS("buildVertexLineOwnerRings");
+
+        //
+        // Step 1: Find and link up all line owners.
+        //
+        // We know how many vertex line owners we need (numLines * 2).
+        auto *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * editableLines.count() * 2, PU_MAPSTATIC, 0);
+        LineOwner *allocator = lineOwners;
+
+        for (Line *line : editableLines)
+            for (int p = 0; p < 2; ++p)
+            {
+                setVertexLineOwner(&line->vertex(p), line, &allocator);
+            }
+
+        //
+        // Step 2: Sort line owners of each vertex and finalize the rings.
+        //
+        for (Vertex *v : vertices)
+        {
+            if (!v->_numLineOwners) continue;
+
+            // Sort them; ordered clockwise by angle.
+            rootVtx = v;
+            v->_lineOwners = sortLineOwners(v->_lineOwners, lineAngleSorter);
+
+            // Finish the linking job and convert to relative angles.
+            // They are only singly linked atm, we need them to be doubly
+            // and circularly linked.
+            binangle_t firstAngle = v->_lineOwners->angle();
+            LineOwner *last = v->_lineOwners;
+            LineOwner *p = last->next();
+            while (p)
+            {
+                p->_link[CounterClockwise] = last;
+
+                // Convert to a relative angle between last and this.
+                last->_angle = last->angle() - p->angle();
+
+                last = p;
+                p = p->next();
+            }
+            last->_link[Clockwise] = v->_lineOwners;
+            v->_lineOwners->_link[CounterClockwise] = last;
+
+            // Set the angle of the last owner.
+            last->_angle = last->angle() - firstAngle;
+
+            /*#ifdef DE_DEBUG
+            LOG_MAP_VERBOSE("Vertex #%i: line owners #%i")
+                << editmap.vertexes.indexOf(v) << v->lineOwnerCount();
+
+            const LineOwner *base = v->firstLineOwner();
+            const LineOwner *cur = base;
+            duint idx = 0;
+            do
+            {
+                LOG_MAP_VERBOSE("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f")
+                    << idx << cur->prev().line().indexInMap() << cur->line().indexInMap()
+                    << cur->next().line().indexInMap() << BANG2DEG(cur->angle());
+
+                idx++;
+            } while ((cur = &cur->next()) != base);
+    #endif*/
+
+            // Sanity check.
+            DE_ASSERT(vertexHasValidLineOwnerRing(*v));
+        }
+    }
+
+    /**
+     * Compares the angles of two lines that share a common vertex.
+     *
+     * pre: rootVtx must point to the vertex common between a and b
+     *      which are (lineowner_t*) ptrs.
+     */
+    static int lineAngleSorter(LineOwner *a, LineOwner *b)
+    {
+        binangle_t angles[2];
+
+        world::LineOwner *own[2] = { a, b };
+        for (duint i = 0; i < 2; ++i)
+        {
+            if (own[i]->_link[CounterClockwise]) // We have a cached result.
+            {
+                angles[i] = own[i]->angle();
+            }
+            else
+            {
+                const auto *line = &own[i]->line();
+                const auto &otherVtx = line->vertex(&line->from() == rootVtx? 1:0);
+
+                auto dx = otherVtx.origin().x - rootVtx->origin().x;
+                auto dy = otherVtx.origin().y - rootVtx->origin().y;
+
+                own[i]->_angle = angles[i] = bamsAtan2(int(-100 * dx), int(100 * dy));
+
+                // Mark as having a cached angle.
+                own[i]->_link[CounterClockwise] = (world::LineOwner *) 1;
+            }
+        }
+
+        return (angles[1] - angles[0]);
     }
 
     DE_PIMPL_AUDIENCE(OneWayWindowFound)
@@ -990,7 +1245,7 @@ BspLeaf &Map::bspLeafAt(const Vec2d &point) const
     while (!bspTree->isLeaf())
     {
         auto &bspNode = bspTree->userData()->as<BspNode>();
-        dint side     = bspNode.pointOnSide(point) < 0;
+        int side     = bspNode.pointOnSide(point) < 0;
 
         // Descend to the child subspace on "this" side.
         bspTree = bspTree->childPtr(BspTree::ChildId(side));
@@ -1015,7 +1270,7 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(const Vec2d &point) const
 
         fixed_t lineOriginX[2]    = { DBL2FIX(bspNode.origin.x),    DBL2FIX(bspNode.origin.y) };
         fixed_t lineDirectionX[2] = { DBL2FIX(bspNode.direction.x), DBL2FIX(bspNode.direction.y) };
-        dint side = V2x_PointOnLineSide(pointX, lineOriginX, lineDirectionX);
+        int side = V2x_PointOnLineSide(pointX, lineOriginX, lineDirectionX);
 
         // Decend to the child subspace on "this" side.
         bspTree = bspTree->childPtr(BspTree::ChildId(side));
@@ -1046,19 +1301,19 @@ void Map::serializeInternalState(Writer &) const
 void Map::deserializeInternalState(Reader &, const IThinkerMapping &)
 {}
 
-dint Map::lineCount() const
+int Map::lineCount() const
 {
     return d->lines.count();
 }
 
-Line &Map::line(dint index) const
+Line &Map::line(int index) const
 {
     if (Line *li = linePtr(index)) return *li;
     /// @throw MissingElementError  Invalid Line reference specified.
     throw MissingElementError("Map::line", "Unknown Line index:" + String::asText(index));
 }
 
-Line *Map::linePtr(dint index) const
+Line *Map::linePtr(int index) const
 {
     if (index >= 0 && index < d->lines.count())
     {
@@ -1076,7 +1331,7 @@ LoopResult Map::forAllLines(const std::function<LoopResult (Line &)>& func) cons
     return LoopContinue;
 }
 
-LoopResult Map::forAllLinesInBox(const AABoxd &box, dint flags,
+LoopResult Map::forAllLinesInBox(const AABoxd &box, int flags,
                                  const std::function<LoopResult (Line &line)> &func) const
 {
     LoopResult result = LoopContinue;
@@ -1084,7 +1339,7 @@ LoopResult Map::forAllLinesInBox(const AABoxd &box, dint flags,
     // Process polyobj lines?
     if ((flags & LIF_POLYOBJ) && polyobjCount())
     {
-        const dint localValidCount = World::validCount;
+        const int localValidCount = World::validCount;
         result = polyobjBlockmap().forAllInBox(box, [&func, &localValidCount](void *object) {
             auto &pob = *reinterpret_cast<Polyobj *>(object);
             if (pob.validCount != localValidCount) // not yet processed
@@ -1106,7 +1361,7 @@ LoopResult Map::forAllLinesInBox(const AABoxd &box, dint flags,
     // Process sector lines?
     if (!result && (flags & LIF_SECTOR))
     {
-        const dint localValidCount = World::validCount;
+        const int localValidCount = World::validCount;
         result = lineBlockmap().forAllInBox(box, [&func, &localValidCount](void *object) {
             auto &line = *reinterpret_cast<Line *>(object);
             if (line.validCount() != localValidCount) // not yet processed
@@ -1140,7 +1395,7 @@ LoopResult Map::forAllMobjsTouchingLine(Line &line, const std::function<LoopResu
             linkStore << reinterpret_cast<mobj_t *>(ln[nix].ptr);
         }
 
-        for (dint i = 0; i < linkStore.sizei(); ++i)
+        for (int i = 0; i < linkStore.sizei(); ++i)
         {
             if (auto result = func(*linkStore[i]))
                 return result;
@@ -1188,7 +1443,7 @@ LoopResult Map::forAllMobjsTouchingSector(Sector &sector, const std::function<Lo
                            });
 
         // Process all collected mobjs.
-        for (dint i = 0; i < linkStore.sizei(); ++i)
+        for (int i = 0; i < linkStore.sizei(); ++i)
         {
             if (auto result = func(*linkStore[i]))
                 return result;
@@ -1244,7 +1499,7 @@ LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, const std::function<LoopR
             }
         }
 
-        for (dint i = 0; i < linkStore.count(); ++i)
+        for (int i = 0; i < linkStore.count(); ++i)
         {
             if (auto result = func(*linkStore[i]))
                 return result;
@@ -1271,7 +1526,7 @@ LoopResult Map::forAllLinesTouchingMobj(mobj_t &mob, const std::function<LoopRes
             linkStore.append(reinterpret_cast<Line *>(tn[nix].ptr));
         }
 
-        for (dint i = 0; i < linkStore.count(); ++i)
+        for (int i = 0; i < linkStore.count(); ++i)
         {
             if (auto result = func(*linkStore[i]))
                 return result;
@@ -1333,19 +1588,19 @@ Sky &Map::sky() const
     return *d->sky;
 }
 
-dint Map::vertexCount() const
+int Map::vertexCount() const
 {
     return d->mesh.vertexCount();
 }
 
-Vertex &Map::vertex(dint index) const
+Vertex &Map::vertex(int index) const
 {
     if (Vertex *vtx = vertexPtr(index)) return *vtx;
     /// @throw MissingElementError  Invalid Vertex reference specified.
     throw MissingElementError("Map::vertex", "Unknown Vertex index:" + String::asText(index));
 }
 
-Vertex *Map::vertexPtr(dint index) const
+Vertex *Map::vertexPtr(int index) const
 {
     if (index >= 0 && index < d->mesh.vertexCount())
     {
@@ -1363,24 +1618,24 @@ LoopResult Map::forAllVertices(const std::function<LoopResult (Vertex &)>& func)
     return LoopContinue;
 }
 
-dint Map::sectorCount() const
+int Map::sectorCount() const
 {
     return d->sectors.count();
 }
 
-dint Map::subspaceCount() const
+int Map::subspaceCount() const
 {
     return d->subspaces.count();
 }
 
-ConvexSubspace &Map::subspace(dint index) const
+ConvexSubspace &Map::subspace(int index) const
 {
     if (ConvexSubspace *sub = subspacePtr(index)) return *sub;
     /// @throw MissingElementError  Invalid ConvexSubspace reference specified.
     throw MissingElementError("Map::subspace", "Unknown subspace index:" + String::asText(index));
 }
 
-ConvexSubspace *Map::subspacePtr(dint index) const
+ConvexSubspace *Map::subspacePtr(int index) const
 {
     if (index >= 0 && index < d->subspaces.count())
     {
@@ -1398,20 +1653,20 @@ LoopResult Map::forAllSubspaces(const std::function<LoopResult (ConvexSubspace &
     return LoopContinue;
 }
 
-LineSide &Map::side(dint index) const
+LineSide &Map::side(int index) const
 {
     if (LineSide *side = sidePtr(index)) return *side;
     /// @throw MissingElementError  Invalid LineSide reference specified.
     throw MissingElementError("Map::side", stringf("Unknown LineSide index: %i", index));
 }
 
-LineSide *Map::sidePtr(dint index) const
+LineSide *Map::sidePtr(int index) const
 {
     if (index < 0) return nullptr;
     return &d->lines.at(index / 2)->side(index % 2);
 }
 
-dint Map::toSideIndex(dint lineIndex, dint backSide) // static
+int Map::toSideIndex(int lineIndex, int backSide) // static
 {
     DE_ASSERT(lineIndex >= 0);
     return lineIndex * 2 + (backSide? 1 : 0);
@@ -1462,7 +1717,7 @@ void Map::initNodePiles()
     DE_ASSERT(d->lineLinks == nullptr);
     d->lineLinks = (nodeindex_t *) Z_Malloc(sizeof(*d->lineLinks) * lineCount(), PU_MAPSTATIC, 0);
 
-    for (dint i = 0; i < lineCount(); ++i)
+    for (int i = 0; i < lineCount(); ++i)
     {
         d->lineLinks[i] = NP_New(&d->lineNodes, NP_ROOT_NODE);
     }
@@ -1471,14 +1726,14 @@ void Map::initNodePiles()
     LOGDEV_MAP_MSG("Initialized node piles in %.2f seconds") << begunAt.since();
 }
 
-Sector &Map::sector(dint index) const
+Sector &Map::sector(int index) const
 {
     if (Sector *sec = sectorPtr(index)) return *sec;
     /// @throw MissingElementError  Invalid Sector reference specified.
     throw MissingElementError("Map::sector", "Unknown Sector index:" + String::asText(index));
 }
 
-Sector *Map::sectorPtr(dint index) const
+Sector *Map::sectorPtr(int index) const
 {
     if (index >= 0 && index < d->sectors.count())
     {
@@ -1551,9 +1806,9 @@ const Blockmap &Map::subspaceBlockmap() const
     throw MissingBlockmapError("Map::subspaceBlockmap", "Convex subspace blockmap is not initialized");
 }
 
-dint Map::unlink(mobj_t &mob)
+int Map::unlink(mobj_t &mob)
 {
-    dint links = 0;
+    int links = 0;
 
     if (d->unlinkMobjFromSectors(mob))
         links |= MLF_SECTOR;
@@ -1568,7 +1823,7 @@ dint Map::unlink(mobj_t &mob)
     return links;
 }
 
-void Map::link(mobj_t &mob, dint flags)
+void Map::link(mobj_t &mob, int flags)
 {
     BspLeaf &bspLeafAtOrigin = bspLeafAt_FixedPrecision(Mobj_Origin(mob));
 
@@ -1605,19 +1860,19 @@ void Map::link(Polyobj &polyobj)
     d->polyobjBlockmap->link(polyobj.bounds, &polyobj);
 }
 
-dint Map::polyobjCount() const
+int Map::polyobjCount() const
 {
     return d->polyobjs.count();
 }
 
-Polyobj &Map::polyobj(dint index) const
+Polyobj &Map::polyobj(int index) const
 {
     if (Polyobj *pob = polyobjPtr(index)) return *pob;
     /// @throw MissingObjectError  Invalid ConvexSubspace reference specified.
     throw MissingObjectError("Map::subspace", "Unknown Polyobj index:" + String::asText(index));
 }
 
-Polyobj *Map::polyobjPtr(dint index) const
+Polyobj *Map::polyobjPtr(int index) const
 {
     if (index >= 0 && index < d->polyobjs.count())
     {
@@ -1635,263 +1890,7 @@ LoopResult Map::forAllPolyobjs(const std::function<LoopResult (Polyobj &)>& func
     return LoopContinue;
 }
 
-
 //- Runtime map editing -----------------------------------------------------------------
-
-/// Used when sorting vertex line owners.
-static Vertex *rootVtx;
-
-/**
- * Compares the angles of two lines that share a common vertex.
- *
- * pre: rootVtx must point to the vertex common between a and b
- *      which are (lineowner_t*) ptrs.
- */
-static int lineAngleSorter(LineOwner *a, LineOwner *b)
-{
-    binangle_t angles[2];
-
-    world::LineOwner *own[2] = { a, b };
-    for (duint i = 0; i < 2; ++i)
-    {
-        if (own[i]->_link[CounterClockwise]) // We have a cached result.
-        {
-            angles[i] = own[i]->angle();
-        }
-        else
-        {
-            const auto *line = &own[i]->line();
-            const auto &otherVtx = line->vertex(&line->from() == rootVtx? 1:0);
-
-            auto dx = otherVtx.origin().x - rootVtx->origin().x;
-            auto dy = otherVtx.origin().y - rootVtx->origin().y;
-
-            own[i]->_angle = angles[i] = bamsAtan2(int(-100 * dx), int(100 * dy));
-
-            // Mark as having a cached angle.
-            own[i]->_link[CounterClockwise] = (world::LineOwner *) 1;
-        }
-    }
-
-    return (angles[1] - angles[0]);
-}
-
-/**
- * Merge left and right line owner lists into a new list.
- *
- * @return  The newly merged list.
- */
-static LineOwner *mergeLineOwners(LineOwner *left, LineOwner *right,
-                                  int (*compare) (LineOwner *, LineOwner *))
-{
-    LineOwner tmp;
-    LineOwner *np = &tmp;
-
-    tmp._link[Clockwise] = np;
-    while (left && right)
-    {
-        if (compare(left, right) <= 0)
-        {
-            np->_link[Clockwise] = left;
-            np = left;
-
-            left = left->next();
-        }
-        else
-        {
-            np->_link[Clockwise] = right;
-            np = right;
-
-            right = right->next();
-        }
-    }
-
-    // At least one of these lists is now empty.
-    if (left)
-    {
-        np->_link[Clockwise] = left;
-    }
-    if (right)
-    {
-        np->_link[Clockwise] = right;
-    }
-
-    // Is the list empty?
-    if (!tmp.hasNext())
-        return nullptr;
-
-    return tmp.next();
-}
-
-static LineOwner *splitLineOwners(LineOwner *list)
-{
-    if (!list) return nullptr;
-
-    LineOwner *lista = list;
-    LineOwner *listb = list;
-    LineOwner *listc = list;
-
-    do
-    {
-        listc = listb;
-        listb = listb->next();
-        lista = lista->next();
-        if (lista)
-        {
-            lista = lista->next();
-        }
-    } while (lista);
-
-    listc->_link[Clockwise] = nullptr;
-    return listb;
-}
-
-/**
- * This routine uses a recursive mergesort algorithm; O(NlogN)
- */
-static LineOwner *sortLineOwners(LineOwner *list,
-                                 int (*compare) (LineOwner *a, LineOwner *b))
-{
-    if (list && list->next())
-    {
-        LineOwner *p = splitLineOwners(list);
-
-        // Sort both halves and merge them back.
-        list = mergeLineOwners(sortLineOwners(list, compare),
-                               sortLineOwners(p, compare), compare);
-    }
-    return list;
-}
-
-static void setVertexLineOwner(Vertex *vtx, Line *lineptr, LineOwner **storage)
-{
-    if (!lineptr) return;
-
-    // Has this line already been registered with this vertex?
-    const LineOwner *own = vtx->firstLineOwner();
-    while (own)
-    {
-        if (&own->line() == lineptr)
-            return;  // Yes, we can exit.
-
-        own = own->next();
-    }
-
-    // Add a new owner.
-    vtx->_numLineOwners++;
-    LineOwner *newOwner = (*storage)++;
-
-    newOwner->_line = lineptr;
-    newOwner->_link[CounterClockwise] = nullptr;
-
-    // Link it in.
-    // NOTE: We don't bother linking everything at this stage since we'll
-    // be sorting the lists anyway. After which we'll finish the job by
-    // setting the prev and circular links.
-    // So, for now this is only linked singlely, forward.
-    newOwner->_link[Clockwise] = vtx->_lineOwners;
-    vtx->_lineOwners = newOwner;
-
-    // Link the line to its respective owner node.
-    if (vtx == &lineptr->from())
-        lineptr->_vo1 = newOwner;
-    else
-        lineptr->_vo2 = newOwner;
-}
-
-#ifdef DE_DEBUG
-/**
- * Determines whether the specified vertex @a v has a correctly formed line owner ring.
- */
-static bool vertexHasValidLineOwnerRing(Vertex &v)
-{
-    const LineOwner *base = v.firstLineOwner();
-    const LineOwner *cur = base;
-    do
-    {
-        if (cur->prev()->next() != cur) return false;
-        if (cur->next()->prev() != cur) return false;
-
-    } while ((cur = cur->next()) != base);
-    return true;
-}
-#endif
-
-/**
- * Generates the line owner rings for each vertex. Each ring includes all the lines which
- * the vertex belongs to sorted by angle, (the rings are arranged in clockwise order, east = 0).
- */
-void buildVertexLineOwnerRings(List<Vertex *> const &vertices, List<Line *> &editableLines)
-{
-    LOG_AS("buildVertexLineOwnerRings");
-
-    //
-    // Step 1: Find and link up all line owners.
-    //
-    // We know how many vertex line owners we need (numLines * 2).
-    auto *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * editableLines.count() * 2, PU_MAPSTATIC, 0);
-    LineOwner *allocator = lineOwners;
-
-    for (Line *line : editableLines)
-        for (dint p = 0; p < 2; ++p)
-        {
-            setVertexLineOwner(&line->vertex(p), line, &allocator);
-        }
-
-    //
-    // Step 2: Sort line owners of each vertex and finalize the rings.
-    //
-    for (Vertex *v : vertices)
-    {
-        if (!v->_numLineOwners) continue;
-
-        // Sort them; ordered clockwise by angle.
-        rootVtx = v;
-        v->_lineOwners = sortLineOwners(v->_lineOwners, lineAngleSorter);
-
-        // Finish the linking job and convert to relative angles.
-        // They are only singly linked atm, we need them to be doubly
-        // and circularly linked.
-        binangle_t firstAngle = v->_lineOwners->angle();
-        LineOwner *last = v->_lineOwners;
-        LineOwner *p = last->next();
-        while (p)
-        {
-            p->_link[CounterClockwise] = last;
-
-            // Convert to a relative angle between last and this.
-            last->_angle = last->angle() - p->angle();
-
-            last = p;
-            p = p->next();
-        }
-        last->_link[Clockwise] = v->_lineOwners;
-        v->_lineOwners->_link[CounterClockwise] = last;
-
-        // Set the angle of the last owner.
-        last->_angle = last->angle() - firstAngle;
-
-        /*#ifdef DE_DEBUG
-        LOG_MAP_VERBOSE("Vertex #%i: line owners #%i")
-            << editmap.vertexes.indexOf(v) << v->lineOwnerCount();
-
-        const LineOwner *base = v->firstLineOwner();
-        const LineOwner *cur = base;
-        duint idx = 0;
-        do
-        {
-            LOG_MAP_VERBOSE("  %i: p= #%05i this= #%05i n= #%05i, dANG= %-3.f")
-                << idx << cur->prev().line().indexInMap() << cur->line().indexInMap()
-                << cur->next().line().indexInMap() << BANG2DEG(cur->angle());
-
-            idx++;
-        } while ((cur = &cur->next()) != base);
-#endif*/
-
-        // Sanity check.
-        DE_ASSERT(vertexHasValidLineOwnerRing(*v));
-    }
-}
 
 bool Map::isEditable() const
 {
@@ -1905,7 +1904,7 @@ struct VertexInfo
     duint refCount = 0;        ///< Line -> Vertex reference count.
 
     /// @todo Math here is not correct (rounding directionality). -ds
-    dint compareVertexOrigins(const VertexInfo &other) const
+    int compareVertexOrigins(const VertexInfo &other) const
     {
         DE_ASSERT(vertex && other.vertex);
 
@@ -1913,13 +1912,13 @@ struct VertexInfo
         if (vertex == other.vertex) return 0;
 
         // Order is firstly X axis major.
-        if (dint(vertex->origin().x) != dint(other.vertex->origin().x))
+        if (int(vertex->origin().x) != int(other.vertex->origin().x))
         {
-            return dint(vertex->origin().x) - dint(other.vertex->origin().x);
+            return int(vertex->origin().x) - int(other.vertex->origin().x);
         }
 
         // Order is secondly Y axis major.
-        return dint(vertex->origin().y) - dint(other.vertex->origin().y);
+        return int(vertex->origin().y) - int(other.vertex->origin().y);
     }
 
     bool operator < (const VertexInfo &other) const
@@ -1935,7 +1934,7 @@ static void pruneVertexes(mesh::Mesh &mesh, const Map::Lines &lines)
     //
     // Populate the vertex info.
     List<VertexInfo> vertexInfo(mesh.vertexCount());
-    dint ord = 0;
+    int ord = 0;
     for (Vertex *vertex : mesh.vertices())
     {
         vertexInfo[ord++].vertex = vertex;
@@ -1947,7 +1946,7 @@ static void pruneVertexes(mesh::Mesh &mesh, const Map::Lines &lines)
         sortedInfo.sort();
 
         // Locate equivalent vertexes in the sorted info.
-        for (dint i = 0; i < sortedInfo.count() - 1; ++i)
+        for (int i = 0; i < sortedInfo.count() - 1; ++i)
         {
             VertexInfo &a = sortedInfo[i];
             VertexInfo &b = sortedInfo[i + 1];
@@ -1998,7 +1997,7 @@ static void pruneVertexes(mesh::Mesh &mesh, const Map::Lines &lines)
     //
     // Step 3 - Prune vertexes:
     //
-    dint prunedCount = 0, numUnused = 0;
+    int prunedCount = 0, numUnused = 0;
     for (const VertexInfo &info : vertexInfo)
     {
         Vertex *vertex = info.vertex;
@@ -2014,7 +2013,7 @@ static void pruneVertexes(mesh::Mesh &mesh, const Map::Lines &lines)
     if (prunedCount)
     {
         // Re-index with a contiguous range of indices.
-        dint ord = 0;
+        int ord = 0;
         for (Vertex *vertex : mesh.vertices())
         {
             vertex->setIndexInMap(ord++);
@@ -2049,7 +2048,7 @@ bool Map::endEditing()
             line->setFlags(DDLF_BLOCKING);
     }
 
-    buildVertexLineOwnerRings(d->mesh.vertices(), d->editable.lines);
+    Impl::buildVertexLineOwnerRings(d->mesh.vertices(), d->editable.lines);
 
     //
     // Move the editable elements to the "static" element lists.
@@ -2083,11 +2082,7 @@ bool Map::endEditing()
             hedge->twin().setTwin(hedge);
 
             LineSideSegment *seg = line->front().addSegment(*hedge);
-#ifdef __CLIENT__
             seg->setLength(line->length());
-#else
-            DE_UNUSED(seg);
-#endif
         }
 
         polyobj->buildUniqueVertexes();
@@ -2146,7 +2141,7 @@ bool Map::endEditing()
     return true;
 }
 
-Vertex *Map::createVertex(const Vec2d &origin, dint archiveIndex)
+Vertex *Map::createVertex(const Vec2d &origin, int archiveIndex)
 {
     if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
@@ -2259,8 +2254,8 @@ const Map::Polyobjs &Map::editablePolyobjs() const
 
 String Map::objectSummaryAsStyledText() const
 {
-    dint thCountInStasis = 0;
-    dint thCount = thinkers().count(&thCountInStasis);
+    int thCountInStasis = 0;
+    int thCount = thinkers().count(&thCountInStasis);
     String str;
 
 #define TABBED(count, label) Stringf(_E(Ta) "  %i " _E(Tb) "%s\n", count, label)

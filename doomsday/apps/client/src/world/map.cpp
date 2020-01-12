@@ -1522,6 +1522,14 @@ bool Map::endEditing()
         return false;
     }
 
+    // Client mobjs use server-assigned IDs so we don't need to assign them locally.
+    thinkers().setIdAssignmentFunc([this](thinker_t &th){
+        if (!Cl_IsClientMobj(reinterpret_cast<mobj_t *>(&th)))
+        {
+            th.id = thinkers().newMobjId();
+        }
+    });
+    
     std::map<int, world::Sector *> sectorsByArchiveIndex;
     forAllSectors([&sectorsByArchiveIndex](world::Sector &sector) {
         sectorsByArchiveIndex[sector.indexInArchive()] = &sector;

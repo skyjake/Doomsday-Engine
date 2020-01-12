@@ -27,69 +27,58 @@ namespace mesh {
 
 using namespace de;
 
-DE_PIMPL_NOREF(Face)
-{
-    HEdge *hedge = nullptr; ///< First half-edge in the face geometry.
-    AABoxd bounds;          ///< Vertex bounding box.
-    Vec2d  center;          ///< Center of vertices.
-};
-
 Face::Face(Mesh &mesh)
     : MeshElement(mesh)
-    , _hedgeCount(0)
-    , d(new Impl())
 {}
 
-dint Face::hedgeCount() const
+int Face::hedgeCount() const
 {
     return _hedgeCount;
 }
 
 HEdge *Face::hedge() const
 {
-    return d->hedge;
+    return _hedge;
 }
 
 void Face::setHEdge(const HEdge *newHEdge)
 {
-    d->hedge = const_cast<HEdge *>(newHEdge);
+    _hedge = const_cast<HEdge *>(newHEdge);
 }
 
 const AABoxd &Face::bounds() const
 {
-    return d->bounds;
+    return _bounds;
 }
 
 void Face::updateBounds()
 {
-    d->bounds.clear();
+    _bounds.clear();
 
-    if(!d->hedge) return; // Very odd...
+    if (!_hedge) return; // Very odd...
 
-    const HEdge *hedge = d->hedge;
-    V2d_InitBoxXY(d->bounds.arvec2, hedge->origin().x, hedge->origin().y);
+    const HEdge *hedge = _hedge;
+    V2d_InitBoxXY(_bounds.arvec2, hedge->origin().x, hedge->origin().y);
 
-    while ((hedge = &hedge->next()) != d->hedge)
+    while ((hedge = &hedge->next()) != _hedge)
     {
-        V2d_AddToBoxXY(d->bounds.arvec2, hedge->origin().x, hedge->origin().y);
+        V2d_AddToBoxXY(_bounds.arvec2, hedge->origin().x, hedge->origin().y);
     }
 }
 
 const Vec2d &Face::center() const
 {
-    return d->center;
+    return _center;
 }
 
 void Face::updateCenter()
 {
     // The center is the middle of our AABox.
-    d->center = Vec2d(d->bounds.min)
-              + (Vec2d(d->bounds.max) - Vec2d(d->bounds.min)) / 2;
+    _center = Vec2d(_bounds.min) + (Vec2d(_bounds.max) - Vec2d(_bounds.min)) / 2;
 }
 
 bool Face::isConvex() const
 {
-    /// @todo Implement full conformance checking.
     return _hedgeCount > 2;
 }
 
@@ -97,11 +86,11 @@ String Face::description() const
 {
     String text = Stringf("Face [%p] comprises %i half-edges", this, _hedgeCount);
 
-    if (const HEdge *hedge = d->hedge)
+    if (const HEdge *hedge = _hedge)
     {
         do
         {
-            Vec2d direction = hedge->origin() - d->center;
+            Vec2d direction = hedge->origin() - _center;
             coord_t angle      = M_DirectionToAngleXY(direction.x, direction.y);
 
             text += Stringf("\n  [%p]: Angle %3.6f %s -> %s",
@@ -110,7 +99,7 @@ String Face::description() const
                                    hedge->origin().asText().c_str(),
                                    hedge->twin().origin().asText().c_str());
 
-        } while ((hedge = &hedge->next()) != d->hedge);
+        } while ((hedge = &hedge->next()) != _hedge);
     }
 
     return text;

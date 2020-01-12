@@ -176,11 +176,13 @@ public:
     world::Subsector *subsector() const;
 
 private:
-    DE_PRIVATE(d)
-
-    // Heavily used; visible for inline access:
     world::Vertex *_vertex;
-    Face *_face;     ///< Face geometry to which the half-edge is attributed (if any).
+    Face *         _face = nullptr; // Face geometry to which the half-edge is attributed (if any).
+    HEdge *_twin = nullptr; // Linked @em twin half-edge (that on the other side of "this" half-edge).
+    HEdge *_neighbors[2]{}; // Previous (CounterClockwise) and next half-edge (clockwise) around the @em
+                            // face.
+    mutable bool              _subsectorMissing = false;
+    mutable world::Subsector *_subsector        = nullptr;
 };
 
 }  // namespace mesh

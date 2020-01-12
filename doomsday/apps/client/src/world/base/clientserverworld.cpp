@@ -277,6 +277,9 @@ DE_PIMPL(ClientServerWorld)
         // Callbacks.
         world::DmuArgs::setPointerToIndexFunc(P_ToIndex);
 #ifdef __CLIENT__
+        world::Factory::setMobjThinkerDataConstructor([](const Id &id) -> MobjThinkerData * {
+            return new ClientMobjThinkerData(id);
+        });
         world::Factory::setMaterialConstructor([](world::MaterialManifest &m) -> world::Material * {
             return new ClientMaterial(m);
         });
@@ -284,6 +287,9 @@ DE_PIMPL(ClientServerWorld)
             return new Subsector(sl);
         });
 #else
+        world::Factory::setMobjThinkerDataConstructor([](const Id &id) -> MobjThinkerData * {
+            return new MobjThinkerData(id);
+        });
         world::Factory::setMaterialConstructor([] (world::MaterialManifest &m) -> world::Material * {
             return new world::Material(m);
         });

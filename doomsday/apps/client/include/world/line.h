@@ -24,6 +24,7 @@
 #include <doomsday/world/line.h>
 
 class Line;
+class LineSideSegment;
 class Plane;
 
 class LineSide : public world::LineSide
@@ -44,7 +45,7 @@ public:
 public:
     inline Line &      line();
     inline const Line &line() const;
-
+    
     /**
      * To be called to update the shadow properties for the line side.
      *
@@ -98,39 +99,17 @@ class LineSideSegment : public world::LineSideSegment
 {
 public:
     /**
-     * Returns the distance along the attributed map line at which the
-     * from vertex vertex occurs.
-     *
-     * @see lineSide()
-     */
-    double lineSideOffset() const;
-
-    /// @todo Refactor away.
-    void setLineSideOffset(double newOffset);
-
-    /**
-     * Returns the accurate length of the segment, from the 'from'
-     * vertex to the 'to' vertex in map coordinate space units.
-     */
-    double length() const;
-
-    /// @todo Refactor away.
-    void setLength(double newLength);
-
-    /**
      * Returns @c true iff the segment is marked as "front facing".
      */
-    bool isFrontFacing() const;
+    bool isFrontFacing() const { return _frontFacing; }
 
     /**
      * Mark the current segment as "front facing".
      */
-    void setFrontFacing(bool yes = true);
+    void setFrontFacing(bool yes = true) { _frontFacing = yes; }
 
 private:
-    double _length = 0;          // Accurate length of the segment.
-    double _lineSideOffset = 0;  // Distance along the attributed map line at which the half-edge vertex occurs.
-    bool   _frontFacing = false;
+    bool _frontFacing = false;
 };
 
 class Line : public world::Line

@@ -46,6 +46,12 @@ public:
     Thinkers();
 
     /**
+     * Sets a function that gets called on each newly added thinker.
+     * It should assign a new ID to the thinker if appropriate.
+     */
+    void setIdAssignmentFunc(const std::function<void (thinker_t &)> &);
+
+    /**
      * Returns @c true iff the thinker lists been initialized.
      */
     bool isInited() const;
@@ -125,6 +131,8 @@ public:
      *                     initialize this).
      */
     int count(int *numInStasis = nullptr) const;
+    
+    thid_t newMobjId();
 
 private:
     DE_PRIVATE(d)

@@ -37,8 +37,8 @@ class Face;
 class HEdge;
 
 /**
- * Two dimensioned mesh geometry data structure employing the half-edge model (more formally
- * known as "Doubly connected edge list" (DECL)).
+ * Two dimensioned mesh geometry data structure employing the half-edge model, more formally
+ * known as "Doubly connected edge list" (DCEL).
  *
  * @see http://en.wikipedia.org/wiki/Doubly_connected_edge_list
  *
@@ -107,12 +107,12 @@ public:
         void setMapElement(world::MapElement *newMapElement);
 
     private:
-        Mesh *_owner = nullptr;
-        world::MapElement *_mapElement = nullptr;  ///< Attributed MapElement (not owned).
+        Mesh *             _owner      = nullptr;
+        world::MapElement *_mapElement = nullptr; ///< Attributed MapElement (not owned).
     };
 
 public:
-    Mesh();
+    Mesh() = default;
     ~Mesh();
 
     /**
@@ -199,7 +199,9 @@ public:
     const HEdges &hedges() const;
 
 private:
-    DE_PRIVATE(d)
+    Vertices _vertices; // All vertices in the mesh.
+    HEdges   _hedges;   // All half-edges in the mesh.
+    Faces    _faces;    // All faces in the mesh.
 };
 
 typedef Mesh::Element MeshElement;

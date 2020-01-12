@@ -422,16 +422,10 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, mesh::Mesh &mesh) const
                 HEdge *          hedge = extraMesh->newHEdge(lineSeg->from());
                 LineSideSegment *seg   = mapSide->addSegment(*hedge);
                 
-                extraMeshSegments += 1;
-
-                DE_ASSERT_FAIL("refactor away __CLIENT__");
-#ifdef __CLIENT__
-                /// @todo LineSide::newSegment() should encapsulate:
                 seg->setLineSideOffset(Vec2d(mapSide->from().origin() - lineSeg->from().origin()).length());
                 seg->setLength(Vec2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
-#else
-                DE_UNUSED(seg);
-#endif
+
+                extraMeshSegments += 1;
 
                 // Link the new half-edge for this line segment to the head of
                 // the list in the new face geometry.
@@ -456,8 +450,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, mesh::Mesh &mesh) const
                 for (;;)
                 {
                     // There is now one more half-edge in this face.
-                    /// @todo Face should encapsulate.
-                    face->_hedgeCount += 1;
+                    face->incrementHedgeCount();
 
                     // Attribute the half-edge to the Face.
                     hedge->setFace(face);
@@ -520,13 +513,9 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, mesh::Mesh &mesh) const
             if (LineSide *mapSide = lineSeg->mapSidePtr())
             {
                 LineSideSegment *seg = mapSide->addSegment(*hedge);
-#ifdef __CLIENT__
-                /// @todo LineSide::newSegment() should encapsulate:
+                
                 seg->setLineSideOffset(Vec2d(mapSide->from().origin() - lineSeg->from().origin()).length());
                 seg->setLength(Vec2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
-#else
-                DE_UNUSED(seg);
-#endif
             }
             
             // Link the new half-edge for this line segment to the head of
@@ -550,8 +539,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, mesh::Mesh &mesh) const
         for (;;)
         {
             // There is now one more half-edge in this face.
-            /// @todo Face should encapsulate.
-            face->_hedgeCount += 1;
+            face->incrementHedgeCount();
 
             // Attribute the half-edge to the Face.
             hedge->setFace(face);

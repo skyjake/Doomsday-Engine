@@ -385,7 +385,7 @@ void LineSide::clearSegments()
 
 LineSideSegment *LineSide::addSegment(mesh::HEdge &hedge)
 {
-    // Have we an exiting segment for this half-edge?
+    // Have we an existing segment for this half-edge?
     for (auto *seg : d->segments)
     {
         if (&seg->hedge() == &hedge)
@@ -393,7 +393,7 @@ LineSideSegment *LineSide::addSegment(mesh::HEdge &hedge)
     }
 
     // No, insert a new one.
-    auto *newSeg = new LineSideSegment(*this, hedge);
+    auto *newSeg = Factory::newLineSideSegment(*this, hedge);
     d->segments.append(newSeg);
     d->needSortSegments = true;  // We'll need to (re)sort.
 
@@ -657,9 +657,9 @@ String LineSide::sectionIdAsText(dint sectionId) // static
 DE_PIMPL(Line)
 , DE_OBSERVES(Vertex, OriginChange)
 {
-    dint flags;                 ///< Public DDLF_* flags.
-    LineSide front;             ///< Front side of the line.
-    LineSide back;              ///< Back side of the line.
+    dint flags;                      ///< Public DDLF_* flags.
+    std::unique_ptr<LineSide> front; ///< Front side of the line.
+    std::unique_ptr<LineSide> back;  ///< Back side of the line.
     std::array<bool, DDMAXPLAYERS> mapped {}; ///< Whether the line has been seen by each player yet.
 
     Vertex *from     = nullptr; ///< Start vertex (not owned).
@@ -701,8 +701,8 @@ DE_PIMPL(Line)
 
     Impl(Public *i, Sector *frontSector, Sector *backSector)
         : Base (i)
-        , front(*i, frontSector)
-        , back (*i, backSector)
+        , front(Factory::newLineSide(*i, frontSector))
+        , back (Factory::newLineSide(*i, backSector))
     {}
 
     /**
@@ -807,12 +807,12 @@ bool Line::isSelfReferencing() const
 
 LineSide &Line::side(dint back)
 {
-    return (back ? d->back : d->front);
+    return (back ? *d->back : *d->front);
 }
 
 const LineSide &Line::side(dint back) const
 {
-    return (back ? d->back : d->front);
+    return (back ? *d->back : *d->front);
 }
 
 LoopResult Line::forAllSides(std::function<LoopResult(LineSide &)> func) const
@@ -1026,12 +1026,12 @@ dint Line::property(DmuArgs &args) const
         break;
     case DMU_FRONT: {
         /// @todo Update the games so that sides without sections can be returned.
-        const LineSide *frontAdr = front().hasSections() ? &d->front : nullptr;
+        const LineSide *frontAdr = front().hasSections() ? d->front.get() : nullptr;
         args.setValue(DDVT_PTR, &frontAdr, 0);
         break; }
     case DMU_BACK: {
         /// @todo Update the games so that sides without sections can be returned.
-        const LineSide *backAdr  = back().hasSections() ? &d->back   : nullptr;
+        const LineSide *backAdr  = back().hasSections() ? d->back.get()   : nullptr;
         args.setValue(DDVT_PTR, &backAdr, 0);
         break; }
     case DMU_VERTEX0:

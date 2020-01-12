@@ -57,16 +57,6 @@ void Mesh::Element::setMapElement(world::MapElement *newMapElement)
     _mapElement = newMapElement;
 }
 
-DE_PIMPL_NOREF(Mesh)
-{
-    Vertices vertices;  ///< All vertices in the mesh.
-    HEdges hedges;    ///< All half-edges in the mesh.
-    Faces faces;      ///< All faces in the mesh.
-};
-
-Mesh::Mesh() : d(new Impl)
-{}
-
 Mesh::~Mesh()
 {
     clear();
@@ -74,35 +64,35 @@ Mesh::~Mesh()
 
 void Mesh::clear()
 {
-    deleteAll(d->vertices); d->vertices.clear();
-    deleteAll(d->hedges); d->hedges.clear();
-    deleteAll(d->faces); d->faces.clear();
+    deleteAll(_vertices); _vertices.clear();
+    deleteAll(_hedges); _hedges.clear();
+    deleteAll(_faces); _faces.clear();
 }
 
 world::Vertex *Mesh::newVertex(const de::Vec2d &origin)
 {
     auto *vtx = new world::Vertex(*this, origin);
-    d->vertices.append(vtx);
+    _vertices.append(vtx);
     return vtx;
 }
 
 HEdge *Mesh::newHEdge(world::Vertex &vertex)
 {
     auto *hedge = new HEdge(*this, vertex);
-    d->hedges.append(hedge);
+    _hedges.append(hedge);
     return hedge;
 }
 
 Face *Mesh::newFace()
 {
     auto *face = new Face(*this);
-    d->faces.append(face);
+    _faces.append(face);
     return face;
 }
 
 void Mesh::removeVertex(world::Vertex &vertex)
 {
-    if (d->vertices.removeOne(&vertex))
+    if (_vertices.removeOne(&vertex))
     {
         delete &vertex;
     }
@@ -110,7 +100,7 @@ void Mesh::removeVertex(world::Vertex &vertex)
 
 void Mesh::removeHEdge(HEdge &hedge)
 {
-    if (d->hedges.removeOne(&hedge))
+    if (_hedges.removeOne(&hedge))
     {
         delete &hedge;
     }
@@ -118,7 +108,7 @@ void Mesh::removeHEdge(HEdge &hedge)
 
 void Mesh::removeFace(Face &face)
 {
-    if (d->faces.removeOne(&face))
+    if (_faces.removeOne(&face))
     {
         delete &face;
     }
@@ -126,17 +116,17 @@ void Mesh::removeFace(Face &face)
 
 const Mesh::Vertices &Mesh::vertices() const
 {
-    return d->vertices;
+    return _vertices;
 }
 
 const Mesh::Faces &Mesh::faces() const
 {
-    return d->faces;
+    return _faces;
 }
 
 const Mesh::HEdges &Mesh::hedges() const
 {
-    return d->hedges;
+    return _hedges;
 }
 
 }  // namespace mesh

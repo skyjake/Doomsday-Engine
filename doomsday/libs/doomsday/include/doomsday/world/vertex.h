@@ -31,6 +31,7 @@ namespace world {
 
 class Line;
 class LineOwner;
+class Map;
 
 /**
  * Map geometry vertex.
@@ -46,17 +47,6 @@ class LIBDOOMSDAY_PUBLIC Vertex : public MapElement, public mesh::MeshElement
 public:
     /// Notified whenever the origin changes.
     DE_DEFINE_AUDIENCE(OriginChange, void vertexOriginChanged(Vertex &vertex))
-
-public: /// @todo Move to the map loader:
-    /// Head of the LineOwner rings (an array of [numLineOwners] size). The
-    /// owner ring is a doubly, circularly linked list. The head is the owner
-    /// with the lowest angle and the next-most being that with greater angle.
-    LineOwner *_lineOwners = nullptr;
-    uint _numLineOwners = 0;  ///< Total number of line owners.
-
-    // Total numbers of line owners.
-    uint _onesOwnerCount = 0;
-    uint _twosOwnerCount = 0;
 
 public:
     Vertex(mesh::Mesh &mesh, const de::Vec2d &origin = {});
@@ -131,6 +121,17 @@ protected:
 
 private:
     de::Vec2d _origin;  ///< Map-space coordinates.
+
+    friend class Map; // Map accesses the members below.
+    
+    // Head of the LineOwner rings (an array of [numLineOwners] size). The
+    // owner ring is a doubly, circularly linked list. The head is the owner
+    // with the lowest angle and the next-most being that with greater angle.
+    LineOwner *_lineOwners = nullptr;
+    uint _numLineOwners = 0;  // Total number of line owners.
+    uint _onesOwnerCount = 0;
+    uint _twosOwnerCount = 0;
+
 };
 
 } // namespace world

@@ -37,10 +37,19 @@ Plane::Plane(world::Sector &sector, const Vec3f &normal, double height)
     : world::Plane(sector, normal, height)
 {
     surface().audienceForMaterialChange() += this;
+    
+    audienceForHeightChange() += [this]() {
+        if (!World::ddMapSetup)
+        {
+            // Add ourself to tracked plane list (for movement interpolation).
+            map().trackedPlanes().insert(this);
+        }
+    };
 }
 
 Plane::~Plane()
 {
+    // Stop movement tracking of this plane.
     map().trackedPlanes().remove(this);
 }
 

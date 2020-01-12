@@ -51,6 +51,40 @@ class LIBDOOMSDAY_PUBLIC LineSideSegment : public world::MapElement
 
 public:
     /**
+     * Returns the half-edge for the segment.
+     */
+    mesh::HEdge &hedge() const;
+
+    /**
+     * Returns the Side owner of the segment.
+     */
+    LineSide       &lineSide();
+    const LineSide &lineSide() const;
+
+    /**
+     * Returns the Line attributed to the Side owner of the segment.
+     */
+    inline Line       &line();
+    inline const Line &line() const;
+
+    /**
+     * Returns the distance along the attributed map line at which the
+     * from vertex vertex occurs.
+     */
+    double lineSideOffset() const { return _lineSideOffset; }
+
+    void setLineSideOffset(double offset) { _lineSideOffset = offset; }
+
+    /**
+     * Returns the accurate length of the segment, from the 'from'
+     * vertex to the 'to' vertex in map coordinate space units.
+     */
+    double length() const { return _length; };
+
+    void setLength(double length) { _length = length; }
+
+protected:
+    /**
      * Construct a new line side segment.
      *
      * @param lineSide  Side parent which will own the segment.
@@ -59,29 +93,10 @@ public:
      */
     LineSideSegment(LineSide &lineSide, mesh::HEdge &hedge);
 
-    /**
-         * Returns the half-edge for the segment.
-         */
-    mesh::HEdge &hedge() const;
-
-    /**
-         * Returns the Side owner of the segment.
-         *
-         * @see line()
-         */
-    LineSide       &lineSide();
-    const LineSide &lineSide() const;
-
-    /**
-         * Accessor. Returns the Line attributed to the Side owner of the segment.
-         *
-         * @see lineSide()
-         */
-    inline Line       &line();
-    inline const Line &line() const;
-
 private:
-    mesh::HEdge *_hedge = nullptr;      ///< Half-edge attributed to the line segment (not owned).
+    mesh::HEdge *_hedge  = nullptr; // Half-edge attributed to the line segment (not owned).
+    double       _length = 0;       // Accurate length of the segment.
+    double       _lineSideOffset = 0; // Distance along the attributed map line at which the half-edge vertex occurs.
 };
 
 /**
@@ -118,16 +133,6 @@ public:
     using SectionFlags = de::Flags;
 
 public:
-    /**
-     * Construct a new line side.
-     *
-     * @param line    Line parent which will own the side.
-     * @param sector  Sector on "this" side of the line. Can be @c nullptr.
-     *                Note that once attributed, the sector cannot normally
-     *                be changed.
-     */
-    LineSide(Line &line, Sector *sector = nullptr);
-
     /**
      * Composes a human-friendly, styled, textual description of the side.
      */
@@ -414,6 +419,16 @@ public:
     inline const Vertex &vertex(int to) const;
 
 protected:
+    /**
+     * Construct a new line side.
+     *
+     * @param line    Line parent which will own the side.
+     * @param sector  Sector on "this" side of the line. Can be @c nullptr.
+     *                Note that once attributed, the sector cannot normally
+     *                be changed.
+     */
+    LineSide(Line &line, Sector *sector = nullptr);
+
     int property(world::DmuArgs &args) const;
     int setProperty(const world::DmuArgs &args);
 
@@ -687,10 +702,6 @@ public:
      */
     double pointOnSide(const de::Vec2d &point) const;
 
-protected:
-    int property(world::DmuArgs &args) const;
-    int setProperty(const world::DmuArgs &args);
-
 public:
     /**
      * Returns the @em validCount of the line. Used by some legacy iteration algorithms
@@ -746,7 +757,6 @@ public:
      */
     inline LineOwner *v2Owner() const { return vertexOwner(To); }
 
-public:
     /**
      * Register the console commands and/or variables of this module.
      */
@@ -758,6 +768,9 @@ protected:
          int     flags       = 0,
          Sector *frontSector = nullptr,
          Sector *backSector  = nullptr);
+
+    int property(world::DmuArgs &args) const;
+    int setProperty(const world::DmuArgs &args);
 
 private:
     DE_PRIVATE(d)

@@ -235,25 +235,7 @@ Surface &Surface::setOrigin(const Vec2f &newOrigin)
     if (d->origin != newOrigin)
     {
         d->origin = newOrigin;
-#ifdef __CLIENT__
-        if (World::ddMapSetup)
-        {
-            // During map setup we'll apply this immediately to the visual origin also.
-            d->originSmoothed = d->origin;
-            d->originSmoothedDelta = Vec2f();
-
-            d->oldOrigin[0] = d->oldOrigin[1] = d->origin;
-        }
-#endif
-
         DE_NOTIFY(OriginChange, i) i->surfaceOriginChanged(*this);
-
-#ifdef __CLIENT__
-        if (!World::ddMapSetup)
-        {
-            map().scrollingSurfaces().insert(this);
-        }
-#endif
     }
     return *this;
 }

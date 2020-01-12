@@ -29,6 +29,8 @@ using namespace de;
 
 static std::function<ConvexSubspace *(mesh::Face &, BspLeaf *)>     convexSubspaceCtor;
 static std::function<Line *(Vertex &, Vertex &, int, Sector *, Sector *)> lineCtor;
+static std::function<LineSide *(Line &, Sector *)>                  lineSideCtor;
+static std::function<LineSideSegment *(LineSide &, mesh::HEdge &)>  lineSideSegmentCtor;
 static std::function<Material *(MaterialManifest &)>                materialCtor;
 static std::function<MobjThinkerData *(const Id &)>                 mobjThinkerDataCtor;
 static std::function<Plane *(Sector &, const Vec3f &, double)>      planeCtor;
@@ -57,6 +59,28 @@ Line *Factory::newLine(Vertex &from, Vertex &to, int flags, Sector *frontSector,
 {
     DE_ASSERT(lineCtor);
     return lineCtor(from, to, flags, frontSector, backSector);
+}
+
+void Factory::setLineSideConstructor(const std::function<LineSide *(Line &, Sector *)> &ctor)
+{
+    lineSideCtor = ctor;
+}
+
+LineSide *Factory::newLineSide(Line &line, Sector *sector)
+{
+    DE_ASSERT(lineSideCtor);
+    return lineSideCtor(line, sector);
+}
+
+void Factory::setLineSideSegmentConstructor(const std::function<LineSideSegment *(LineSide &, mesh::HEdge &)> &ctor)
+{
+    lineSideSegmentCtor = ctor;
+}
+
+LineSideSegment *Factory::newLineSideSegment(LineSide &side, mesh::HEdge &hedge)
+{
+    DE_ASSERT(lineSideSegmentCtor);
+    return lineSideSegmentCtor(side, hedge);
 }
 
 void Factory::setMaterialConstructor(const std::function<Material *(MaterialManifest &)> &ctor)

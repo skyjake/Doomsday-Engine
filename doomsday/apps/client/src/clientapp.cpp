@@ -1099,9 +1099,9 @@ void ClientApp::reset()
     DoomsdayApp::reset();
 
     Rend_ResetLookups();
-    for (int i = 0; i < ClientApp::players().count(); ++i)
+    for (int i = 0; i < players().count(); ++i)
     {
-        ClientApp::player(i).viewCompositor().glDeinit();
+        player(i).viewCompositor().glDeinit();
     }
     if (App_GameLoaded())
     {
