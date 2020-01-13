@@ -11,9 +11,9 @@ otool_cmd = '/usr/bin/otool'
 name_cmd = '/usr/bin/install_name_tool'
 print("Fixing install names in:", sys.argv[1])
 root = os.path.join(sys.argv[1], 'Contents')
-binaries = list(
-    map(lambda n: '/MacOS/' + n, os.listdir(root + '/MacOS')) + \
-    map(lambda n: '/Frameworks/' + n, os.listdir(root + '/Frameworks')))
+binaries = \
+    list(map(lambda n: '/MacOS/' + n, os.listdir(root + '/MacOS'))) + \
+    list(map(lambda n: '/Frameworks/' + n, os.listdir(root + '/Frameworks')))
 actions = {}
 for binary in binaries:
     if binary.startswith('/Frameworks/'):
@@ -31,9 +31,9 @@ while len(binaries) > 0:
     binary = binaries[0]
     del binaries[0]
     print(binary)
-    if not re.search('cmd LC_RPATH', subprocess.check_output([otool_cmd, '-l', root + binary])):
+    if not re.search('cmd LC_RPATH', subprocess.check_output([otool_cmd, '-l', root + binary], encoding='utf-8')):
         subprocess.check_call([name_cmd, '-add_rpath', '@loader_path/../Frameworks', root + binary])
-    deps = subprocess.check_output([otool_cmd, '-L', root + binary])
+    deps = subprocess.check_output([otool_cmd, '-L', root + binary], encoding='utf-8')
     dep_actions = []
     for deps_line in deps.split('\n'):
         dep = re.match('\\s+(.*) \\(compatibility version.*', deps_line)
