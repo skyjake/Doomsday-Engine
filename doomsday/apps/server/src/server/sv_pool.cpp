@@ -23,22 +23,24 @@
 
 #include "de_base.h"
 #include "server/sv_pool.h"
+#include "def_main.h"  // Def_SameStateSequence
+#include "network/net_main.h"
+#include "world/p_object.h"
+#include "world/p_players.h"
 
-#include <cmath>
+#include <doomsday/world/sector.h>
+#include <doomsday/world/thinkers.h>
 #include <de/legacy/mathutil.h>
 #include <de/legacy/timer.h>
 #include <de/legacy/vector1.h>
 #include <de/LogBuffer>
-#include "def_main.h"  // Def_SameStateSequence
-
-#include "network/net_main.h"
-
-#include "world/p_object.h"
-#include "world/p_players.h"
-#include "world/thinkers.h"
-#include "Sector"
+#include <cmath>
 
 using namespace de;
+
+using world::Plane;
+using world::Sector;
+using world::Surface;
 
 #define DEFAULT_DELTA_BASE_SCORE    ( 10000 )
 
@@ -452,7 +454,7 @@ void Sv_RegisterSide(dt_side_t *reg, dint number)
 {
     DE_ASSERT(reg);
 
-    LineSide *side = worldSys().map().sidePtr(number);
+    auto *side = worldSys().map().sidePtr(number);
 
     if (side->hasSections())
     {
@@ -746,8 +748,8 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d
 dd_bool Sv_RegisterCompareSide(cregister_t *reg, duint number, sidedelta_t *d, byte doUpdate)
 {
     DE_ASSERT(reg/* && d*/);
-    const LineSide *side = worldSys().map().sidePtr(number);
-    dt_side_t *r         = &reg->sides[number];
+    const auto *side = worldSys().map().sidePtr(number);
+    dt_side_t * r    = &reg->sides[number];
 
     byte lineFlags = side->line().flags() & 0xff;
     byte sideFlags = side->flags() & 0xff;
@@ -1536,7 +1538,7 @@ coord_t Sv_SectorDistance(int index, const ownerinfo_t *info)
 coord_t Sv_SideDistance(int index, int deltaFlags, const ownerinfo_t *info)
 {
     DE_ASSERT(info);
-    const LineSide *side = worldSys().map().sidePtr(index);
+    const auto *side = worldSys().map().sidePtr(index);
 
     const SoundEmitter &emitter = (  deltaFlags & SNDDF_SIDE_MIDDLE? side->middleSoundEmitter()
                                    : deltaFlags & SNDDF_SIDE_TOP   ? side->topSoundEmitter()
@@ -1578,8 +1580,8 @@ coord_t Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 
     if (delta->type == DT_SIDE)
     {
-        LineSide *side = worldSys().map().sidePtr(delta->id);
-        Line &line = side->line();
+        auto *side = worldSys().map().sidePtr(delta->id);
+        auto &line = side->line();
         return M_ApproxDistance(info->origin[0] - line.center().x,
                                 info->origin[1] - line.center().y);
     }
@@ -2284,8 +2286,8 @@ void Sv_NewPolyDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     }
 }
 
-void Sv_NewSoundDelta(int soundId, const mobj_t *emitter, Sector *sourceSector,
-    Polyobj *sourcePoly, Plane *sourcePlane, Surface *sourceSurface,
+void Sv_NewSoundDelta(int soundId, const mobj_t *emitter, world::Sector *sourceSector,
+    Polyobj *sourcePoly, world::Plane *sourcePlane, world::Surface *sourceSurface,
     float volume, dd_bool isRepeating, int clientsMask)
 {
     pool_t *targets[DDMAXPLAYERS + 1];
@@ -2335,7 +2337,7 @@ void Sv_NewSoundDelta(int soundId, const mobj_t *emitter, Sector *sourceSector,
         type = DT_SIDE_SOUND;
 
         // Clients need to know which emitter to use.
-        LineSide &side = sourceSurface->parent().as<LineSide>();
+        auto &side = sourceSurface->parent().as<world::LineSide>();
 
         if (&side.middle() == sourceSurface)
         {

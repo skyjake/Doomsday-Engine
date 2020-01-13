@@ -19,23 +19,22 @@
 
 #include "shelluser.h"
 
+#include "api_console.h"
+#include "dd_main.h"
+#include "network/net_main.h"
+#include "world/p_object.h"
+#include "world/p_players.h"
+
+#include <doomsday/console/exec.h>
+#include <doomsday/console/knownword.h>
+#include <doomsday/games.h>
+#include <doomsday/network/Protocol>
+#include <doomsday/world/map.h>
 #include <de/Lexicon>
 #include <de/Log>
 #include <de/LogBuffer>
 #include <de/LogSink>
 #include <de/Loop>
-#include <doomsday/console/exec.h>
-#include <doomsday/console/knownword.h>
-#include <doomsday/games.h>
-#include <doomsday/network/Protocol>
-
-#include "api_console.h"
-
-#include "dd_main.h"
-#include "network/net_main.h"
-#include "world/map.h"
-#include "world/p_object.h"
-#include "world/p_players.h"
 
 using namespace de;
 

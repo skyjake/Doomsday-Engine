@@ -20,12 +20,10 @@
 #ifndef LIBDOOMSDAY_XG_CLASSES_H
 #define LIBDOOMSDAY_XG_CLASSES_H
 
+#include "api_map.h"
+
 // When the common playsim is in place - Doomsday will call the
 // the XG Class Funcs which are owned by the game.
-
-#ifndef __DOOMSDAY__
-typedef struct line_s Line;
-#endif
 
 // iparm string mapping identifiers
 #define MAP_SND             0x01000000
@@ -67,7 +65,7 @@ typedef struct xgclass_s {
     int             (C_DECL *doFunc)();
 
     // Init function (called once, before ref iteration)
-    void            (*initFunc)(Line *line);
+    void            (*initFunc)(world_Line *line);
 
     // what the class wants to traverse
     xgtravtype      traverse;

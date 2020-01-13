@@ -20,19 +20,15 @@
 #define DE_NO_API_MACROS_PLAYER
 
 #include "world/p_players.h"
-
 #include "world/impulseaccumulator.h"
-#include "world/map.h"
 #include "world/p_object.h"
-#include <doomsday/world/subsector.h>
-#include <doomsday/world/surface.h>
 
 #ifdef __CLIENT__
 #  include "BindContext"
 #  include "ui/b_util.h"
 #  include "ui/inputdevice.h"
 #  include "ui/inputsystem.h"
-
+#  include "world/map.h"
 #  include "world/subsector.h"
 #  include "client/clskyplane.h"
 #  include "clientapp.h"
@@ -40,6 +36,8 @@
 
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
+#include <doomsday/world/subsector.h>
+#include <doomsday/world/surface.h>
 #include <de/List>
 #include <de/KeyMap>
 

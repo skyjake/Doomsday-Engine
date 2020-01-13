@@ -19,9 +19,9 @@
 
 #define DE_NO_API_MACROS_MAP_EDIT
 
+#if defined(__CLIENT__)
 #include "de_platform.h"
 #include "api_mapedit.h"
-
 #include "world/map.h"
 #include "world/polyobjdata.h"
 #include "world/line.h"
@@ -29,6 +29,15 @@
 #include "Surface"
 #include "edit_map.h"
 #include "dd_main.h"
+#endif
+
+#if defined(__SERVER__)
+#include <doomsday/world/map.h>
+#include <doomsday/world/surface.h>
+#include <doomsday/world/polyobjdata.h>
+#include <doomsday/resource/resources.h>
+#include <doomsday/gamefw/defs.h>
+#endif
 
 #include <doomsday/world/entitydef.h>
 #include <doomsday/world/Materials>

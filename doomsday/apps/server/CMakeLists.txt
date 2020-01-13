@@ -65,6 +65,7 @@ set (SHARED_WITH_CLIENT
     ${src}/src/api_filesys.cpp
     ${src}/src/api_map.cpp
     ${src}/src/api_mapedit.cpp
+    ${src}/src/api_thinker.cpp
     ${src}/src/api_uri.cpp
     ${src}/src/con_config.cpp
     ${src}/src/dd_loop.cpp
@@ -80,7 +81,6 @@ deng_merge_sources (misc          ${src}/src/misc/*.cpp)
 deng_merge_sources (net_base      ${src}/src/network/base/*.cpp)
 deng_merge_sources (resource_base ${src}/src/resource/base/*.cpp)
 deng_merge_sources (world_base    ${src}/src/world/base/*.cpp)
-deng_merge_sources (world_bsp     ${src}/src/world/bsp/*.cpp)
 
 if (WIN32)
     include_directories (../client/include/windows)

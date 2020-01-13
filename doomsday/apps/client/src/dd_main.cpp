@@ -53,11 +53,7 @@
 #include <de/Log>
 #include <de/EscapeParser>
 #include <de/NativePath>
-#ifdef __CLIENT__
-#  include <de/legacy/texgamma.h>
-#  include <de/GLWindow>
-#  include <de/WindowSystem>
-#endif
+
 #include <doomsday/AbstractSession>
 #include <doomsday/console/alias.h>
 #include <doomsday/console/cmd.h>
@@ -81,20 +77,13 @@
 #include <doomsday/world/sector.h>
 #include <doomsday/help.h>
 
-#ifdef __SERVER__
-#  include "serverapp.h"
-#endif
-
 #include "dd_loop.h"
 #include "def_main.h"
 #include "busyrunner.h"
 #include "con_config.h"
 #include "sys_system.h"
-//#include "ui/editors/edit_bias.h"
-#include "gl/svg.h"
 
 #include "world/clientserverworld.h"
-#include "world/map.h"
 #include "world/p_players.h"
 
 #include "ui/infine/infinesystem.h"
@@ -104,14 +93,16 @@
 #ifdef __CLIENT__
 #  include "clientapp.h"
 
-#  include "client/cledgeloop.h"
-#  include "world/subsector.h"
 #  include "client/cl_def.h"
 #  include "client/cl_infine.h"
+#  include "client/cledgeloop.h"
+#  include "world/subsector.h"
+#  include "world/map.h"
 
 #  include "gl/gl_main.h"
 #  include "gl/gl_defer.h"
 #  include "gl/gl_texmanager.h"
+#  include "gl/svg.h"
 
 #  include "network/net_main.h"
 #  include "network/net_demo.h"
@@ -138,11 +129,17 @@
 
 #  include "updater.h"
 #  include "updater/updatedownloaddialog.h"
-#endif
-#ifdef __SERVER__
-#  include "network/net_main.h"
 
+#  include <de/legacy/texgamma.h>
+#  include <de/GLWindow>
+#  include <de/WindowSystem>
+#endif
+
+#ifdef __SERVER__
+#  include "serverapp.h"
+#  include "network/net_main.h"
 #  include "server/sv_def.h"
+#  include <doomsday/world/map.h>
 #endif
 
 using namespace de;
@@ -1685,9 +1682,9 @@ dint DD_GetInteger(dint ddvalue)
         return DED_Definitions()->things.size();
 
     case DD_MAP_MUSIC:
-        if (App_World().hasMap())
+        if (World::get().hasMap())
         {
-            const Record &mapInfo = App_World().map().mapInfo();
+            const Record &mapInfo = World::get().map().mapInfo();
             return DED_Definitions()->getMusicNum(mapInfo.gets("music"));
         }
         return -1;
@@ -1748,13 +1745,13 @@ void *DD_GetVariable(dint ddvalue)
         return &gx;
 
     case DD_MAP_POLYOBJ_COUNT:
-        value = App_World().hasMap()? App_World().map().polyobjCount() : 0;
+        value = World::get().hasMap()? World::get().map().polyobjCount() : 0;
         return &value;
 
     case DD_MAP_BOUNDING_BOX:
-        if (App_World().hasMap())
+        if (World::get().hasMap())
         {
-            valueBox = App_World().map().bounds();
+            valueBox = World::get().map().bounds();
         }
         else
         {
@@ -1763,26 +1760,26 @@ void *DD_GetVariable(dint ddvalue)
         return &valueBox;
 
     case DD_MAP_MIN_X:
-        valueD = App_World().hasMap()? App_World().map().bounds().minX : 0;
+        valueD = World::get().hasMap()? World::get().map().bounds().minX : 0;
         return &valueD;
 
     case DD_MAP_MIN_Y:
-        valueD = App_World().hasMap()? App_World().map().bounds().minY : 0;
+        valueD = World::get().hasMap()? World::get().map().bounds().minY : 0;
         return &valueD;
 
     case DD_MAP_MAX_X:
-        valueD = App_World().hasMap()? App_World().map().bounds().maxX : 0;
+        valueD = World::get().hasMap()? World::get().map().bounds().maxX : 0;
         return &valueD;
 
     case DD_MAP_MAX_Y:
-        valueD = App_World().hasMap()? App_World().map().bounds().maxY : 0;
+        valueD = World::get().hasMap()? World::get().map().bounds().maxY : 0;
         return &valueD;
 
     /*case DD_CPLAYER_THRUST_MUL:
         return &cplrThrustMul;*/
 
     case DD_MAP_GRAVITY:
-        valueD = App_World().hasMap()? App_World().map().gravity() : 0;
+        valueD = World::get().hasMap()? World::get().map().gravity() : 0;
         return &valueD;
 
 #ifdef __CLIENT__
@@ -1849,8 +1846,8 @@ void DD_SetVariable(dint ddvalue, void *parm)
             return;*/
 
         case DD_MAP_GRAVITY:
-            if (App_World().hasMap())
-                App_World().map().setGravity(*(coord_t*) parm);
+            if (World::get().hasMap())
+                World::get().map().setGravity(*(coord_t*) parm);
             return;
 
 #ifdef __CLIENT__
@@ -2535,11 +2532,11 @@ DE_EXTERN_C void R_SetupMap(dint mode, dint flags)
 {
     DE_UNUSED(mode, flags);
 
-    if (!App_World().hasMap()) return; // Huh?
+    if (!World::get().hasMap()) return; // Huh?
 
     // Perform map setup again. Its possible that after loading we now
     // have more HOMs to fix, etc..
-    world::Map &map = App_World().map();
+    world::Map &map = World::get().map();
 
 #ifdef __CLIENT__
     map.as<Map>().initSkyFix();

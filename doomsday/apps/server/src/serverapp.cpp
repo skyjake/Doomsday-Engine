@@ -28,10 +28,10 @@
 #include "def_main.h"
 #include "con_config.h"
 #include "network/net_main.h"
-#include "world/map.h"
 #include "world/p_players.h"
 
 #include <doomsday/console/var.h>
+#include <doomsday/world/map.h>
 #include <doomsday/world/thinkers.h>
 
 #include <de/CommandLine>
@@ -67,7 +67,6 @@ DE_PIMPL(ServerApp)
 , DE_OBSERVES(DoomsdayApp, ConsoleRegistration)
 , DE_OBSERVES(DoomsdayApp, PeriodicAutosave)
 , DE_OBSERVES(PackageLoader, Activity)
-, DE_OBSERVES(world::Thinkers, Removal)
 {
     std::unique_ptr<ServerSystem> serverSystem;
     std::unique_ptr<Resources>    resources;

@@ -20,6 +20,10 @@
 #ifndef DE_CLIENT_PLANEMOVER_H
 #define DE_CLIENT_PLANEMOVER_H
 
+#if !defined(__CLIENT__)
+#  error clplanemover.h is client only
+#endif
+
 #include "api_thinker.h"
 #include "world/plane.h"
 #include <doomsday/world/thinkerdata.h>

@@ -19,6 +19,24 @@
 
 #include "serversystem.h"
 
+#include "api_console.h"
+#include "serverapp.h"
+#include "shellusers.h"
+#include "remoteuser.h"
+#include "remotefeeduser.h"
+#include "server/sv_def.h"
+#include "server/sv_frame.h"
+#include "network/net_main.h"
+#include "network/net_buf.h"
+#include "network/net_event.h"
+#include "network/monitor.h"
+#include "network/masterserver.h"
+#include "dd_main.h"
+#include "dd_loop.h"
+#include "sys_system.h"
+#include "world/p_players.h"
+
+#include <doomsday/world/map.h>
 #include <de/c_wrapper.h>
 #include <de/legacy/timer.h>
 #include <de/Address>
@@ -27,28 +45,6 @@
 #include <de/Garbage>
 #include <de/ListenSocket>
 #include <de/TextApp>
-
-#include "api_console.h"
-
-#include "serverapp.h"
-#include "shellusers.h"
-#include "remoteuser.h"
-#include "remotefeeduser.h"
-
-#include "server/sv_def.h"
-#include "server/sv_frame.h"
-
-#include "network/net_main.h"
-#include "network/net_buf.h"
-#include "network/net_event.h"
-#include "network/monitor.h"
-#include "network/masterserver.h"
-
-#include "dd_main.h"
-#include "dd_loop.h"
-#include "sys_system.h"
-#include "world/map.h"
-#include "world/p_players.h"
 
 using namespace de;
 

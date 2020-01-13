@@ -19,12 +19,12 @@
  */
 
 #include "de_base.h"
+#include "network/net_main.h"
 #include "server/sv_sound.h"
+#include "server/sv_pool.h"
+#include "world/p_players.h"
 
 #include <de/LogBuffer>
-#include "network/net_main.h"
-#include "world/p_players.h"
-#include "server/sv_pool.h"
 
 using namespace de;
 
@@ -36,8 +36,8 @@ static inline dd_bool isRealMobj(const mobj_t *base)
 /**
  * Find the map object to whom @a base belongs.
  */
-static void identifySoundEmitter(const mobj_t **base, Sector **sector, Polyobj **poly,
-                                 Plane **plane, Surface **surface)
+static void identifySoundEmitter(const mobj_t **base, world::Sector **sector, Polyobj **poly,
+                                 world::Plane **plane, world::Surface **surface)
 {
     *sector  = nullptr;
     *poly    = nullptr;
@@ -72,10 +72,10 @@ void Sv_SoundAtVolume(dint soundIDAndFlags, const mobj_t *origin, dfloat volume,
     dint soundID = (soundIDAndFlags & ~DDSF_FLAG_MASK);
     if (!soundID) return;
 
-    Sector *sector;
+    world::Sector *sector;
     Polyobj *poly;
-    Plane *plane;
-    Surface *surface;
+    world::Plane *plane;
+    world::Surface *surface;
     identifySoundEmitter(&origin, &sector, &poly, &plane, &surface);
 
     dint targetPlayers = 0;
@@ -108,10 +108,10 @@ void Sv_StopSound(dint soundId, const mobj_t *origin)
 {
     if (::isClient) return;
 
-    Sector *sector;
+    world::Sector *sector;
+    world::Plane *plane;
+    world::Surface *surface;
     Polyobj *poly;
-    Plane *plane;
-    Surface *surface;
     identifySoundEmitter(&origin, &sector, &poly, &plane, &surface);
 
     LOGDEV_NET_XVERBOSE("Sv_StopSound: id: #%i origin: %i(%p) sec: %p poly: %p plane: %p surface: %p",

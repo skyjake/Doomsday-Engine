@@ -31,7 +31,7 @@
 
 #include <de/liblegacy.h>
 #include <doomsday/defs/ded.h>
-#include "world/map.h"
+#include <doomsday/world/map.h>
 
 #ifndef __SERVER__
 #  error "Attempted to include server's header in a non-server build"

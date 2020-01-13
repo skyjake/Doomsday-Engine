@@ -21,6 +21,10 @@
 
 #pragma once
 
+#if defined(__SERVER__)
+#  error "plane.h is only for Client"
+#endif
+
 #include "world/surface.h"
 #include <doomsday/world/plane.h>
 #include <array>

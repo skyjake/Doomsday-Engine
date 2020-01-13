@@ -111,11 +111,11 @@ dint Thinker_Iterate(thinkfunc_t func, dint (*callback) (thinker_t *, void *), v
 }
 
 DE_DECLARE_API(Thinker) =
-    {
-        { DE_API_THINKER },
-        Thinker_Init,
-        Thinker_Run,
-        Thinker_Add,
-        Thinker_Remove,
-        Thinker_Iterate
+{
+    { DE_API_THINKER },
+    Thinker_Init,
+    Thinker_Run,
+    Thinker_Add,
+    Thinker_Remove,
+    Thinker_Iterate
 };

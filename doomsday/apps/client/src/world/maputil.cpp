@@ -18,18 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#ifdef __SERVER__
-#  error "maputil.cpp is for Client only"
-#endif
-
 #include "world/maputil.h"
 #include "world/line.h"
 #include "world/plane.h"
-
 #include "Surface"
-
 #include "MaterialVariantSpec"
-
 #include "MaterialAnimator"
 #include "WallEdge"
 #include "render/rend_main.h" // Rend_MapSurfacematerialSpec

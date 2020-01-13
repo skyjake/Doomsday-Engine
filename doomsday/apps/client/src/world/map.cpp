@@ -221,21 +221,6 @@ DE_PIMPL(Map)
         self().removeAllLumobjs();
     }
 
-#ifdef __SERVER__
-    void thinkerRemoved(thinker_t &th) override
-    {
-        auto *mob = reinterpret_cast<mobj_t *>(&th);
-
-        // If the state of the mobj is the NULL state, this is a
-        // predictable mobj removal (result of animation reaching its
-        // end) and shouldn't be included in netGame deltas.
-        if (!mob->state || !runtimeDefs.states.indexOf(mob->state))
-        {
-            Sv_MobjRemoved(th.id);
-        }
-    }
-#endif
-
     void initContactBlockmaps(ddouble margin = 8)
     {
         const auto &bounds = self().bounds();

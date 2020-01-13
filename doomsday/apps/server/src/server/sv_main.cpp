@@ -21,32 +21,30 @@
 
 #include "de_base.h"
 #include "server/sv_def.h"
+#include "dd_main.h"
+#include "def_main.h"
+#include "network/net_main.h"
+#include "network/net_buf.h"
+#include "network/net_event.h"
+#include "world/p_players.h"
+#include "api_server.h"
+#include "serversystem.h"
+#include "server/sv_def.h"
+#include "server/sv_pool.h"
 
-#include <cmath>
-#include <de/legacy/stringarray.h>
-#include <de/legacy/timer.h>
-#include <de/ArrayValue>
-#include <de/NumberValue>
-#include <de/LogBuffer>
+#include <doomsday/world/map.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/wad.h>
 #include <doomsday/world/MaterialArchive>
 
-#include "dd_main.h"
-#include "def_main.h"
+#include <de/legacy/stringarray.h>
+#include <de/legacy/timer.h>
+#include <de/ArrayValue>
+#include <de/NumberValue>
+#include <de/LogBuffer>
 
-#include "network/net_main.h"
-#include "network/net_buf.h"
-#include "network/net_event.h"
-
-#include "world/map.h"
-#include "world/p_players.h"
-
-#include "api_server.h"
-#include "serversystem.h"
-#include "server/sv_def.h"
-#include "server/sv_pool.h"
+#include <cmath>
 
 using namespace de;
 

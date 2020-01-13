@@ -23,8 +23,8 @@
 #include "network/net_event.h"
 #include "server/sv_def.h"
 #include "serverapp.h"
-#include "world/map.h"
 
+#include <doomsday/world/map.h>
 #include <doomsday/network/Protocol>
 
 #include <de/data/json.h>

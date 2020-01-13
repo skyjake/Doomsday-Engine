@@ -55,6 +55,7 @@
 
 #ifdef __SERVER__
 #  include "server/sv_pool.h"
+#  include <doomsday/world/mobjthinkerdata.h>
 #endif
 
 #include <doomsday/world/sector.h>
@@ -262,6 +263,9 @@ private:
 const dint MapConversionReporter::maxWarningsPerType = 10;
 
 DE_PIMPL(ClientServerWorld)
+#if defined(__SERVER__)
+, DE_OBSERVES(world::Thinkers, Removal)
+#endif
 {
     Binder binder;               ///< Doomsday Script bindings for the World.
     Record worldModule;
@@ -294,7 +298,7 @@ DE_PIMPL(ClientServerWorld)
             return new world::Material(m);
         });
         world::Factory::setSubsectorConstructor([] (const List<world::ConvexSubspace *> &sl) -> world::Subsector * {
-            return new Subsector(sl);
+            return new world::Subsector(sl);
         });
 #endif
     }
@@ -570,6 +574,12 @@ DE_PIMPL(ClientServerWorld)
     {
         auto *map = self().mapPtr();
 
+#ifdef __SERVER__
+        if (map)
+        {
+            map->thinkers().audienceForRemoval() -= this;
+        }
+#endif
 #ifdef __CLIENT__
         if (map)
         {
@@ -585,7 +595,7 @@ DE_PIMPL(ClientServerWorld)
         /// for allocating memory used elsewhere so it should be repurposed for
         /// this usage specifically.
         R_DestroyContactLists();
-#endif // __CLIENT__
+#endif 
 
         scheduler.clear();
 
@@ -609,7 +619,7 @@ DE_PIMPL(ClientServerWorld)
         {
             // The map may still be in an editable state -- switch to playable.
             const bool mapIsPlayable = newMap->endEditing();
-
+            
             // Cancel further reports about the map.
             reporter.setMap(nullptr);
 
@@ -619,6 +629,10 @@ DE_PIMPL(ClientServerWorld)
                 delete newMap; newMap = nullptr;
             }
         }
+
+#ifdef __SERVER__
+        newMap->thinkers().audienceForRemoval() += this;
+#endif
 
         // This becomes the new current map.
         makeCurrent(newMap);
@@ -631,6 +645,21 @@ DE_PIMPL(ClientServerWorld)
 
         return self().hasMap();
     }
+
+#ifdef __SERVER__
+    void thinkerRemoved(thinker_t &th) override
+    {
+        auto *mob = reinterpret_cast<mobj_t *>(&th);
+
+        // If the state of the mobj is the NULL state, this is a
+        // predictable mobj removal (result of animation reaching its
+        // end) and shouldn't be included in netGame deltas.
+        if (!mob->state || !runtimeDefs.states.indexOf(mob->state))
+        {
+            Sv_MobjRemoved(th.id);
+        }
+    }
+#endif
 
 #ifdef __CLIENT__
     DE_PIMPL_AUDIENCE(FrameBegin)

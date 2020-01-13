@@ -23,9 +23,9 @@
 
 #define DE_NO_API_MACROS_MAP
 
+#if defined(__CLIENT__)
 #include "de_base.h"
 #include "api_map.h"
-
 #include "network/net_main.h"
 #include "world/maputil.h"
 #include "world/p_players.h"
@@ -35,6 +35,20 @@
 #include "render/rend_fakeradio.h"
 #include "ConvexSubspace"
 #include "Surface"
+#endif
+
+#if defined(__SERVER__)
+#include "api_map.h"
+#include "dd_main.h"
+#include "world/p_players.h"
+#include <doomsday/resource/resources.h>
+#include <doomsday/world/convexsubspace.h>
+#include <doomsday/world/map.h>
+#include <doomsday/world/surface.h>
+#include <doomsday/world/world.h>
+#include <de/c_wrapper.h>
+using namespace world;
+#endif
 
 #include <de/legacy/memoryzone.h>
 #include <doomsday/filesys/fs_main.h>
@@ -147,16 +161,16 @@ void *P_ToPtr(int type, int index)
     switch(type)
     {
     case DMU_VERTEX:
-        return App_World().map().vertexPtr(index);
+        return World::get().map().vertexPtr(index);
 
     case DMU_LINE:
-        return App_World().map().linePtr(index);
+        return World::get().map().linePtr(index);
 
     case DMU_SIDE:
-        return App_World().map().sidePtr(index);
+        return World::get().map().sidePtr(index);
 
     case DMU_SECTOR:
-        return App_World().map().sectorPtr(index);
+        return World::get().map().sectorPtr(index);
 
     case DMU_PLANE:
         App_FatalError(Stringf("P_ToPtr: Cannot convert %s to a ptr (sector is unknown).",
@@ -164,11 +178,11 @@ void *P_ToPtr(int type, int index)
         return 0; // Unreachable.
 
     case DMU_SUBSPACE:
-        return App_World().map().subspacePtr(index);
+        return World::get().map().subspacePtr(index);
 
     case DMU_SKY:
         if(index != 0) return 0; // Only one sky per map, presently.
-        return &App_World().map().sky();
+        return &World::get().map().sky();
 
     case DMU_MATERIAL:
         /// @note @a index is 1-based.
@@ -187,11 +201,11 @@ int P_Count(int type)
 {
     switch(type)
     {
-    case DMU_VERTEX:    return App_World().hasMap()? App_World().map().vertexCount()   : 0;
-    case DMU_LINE:      return App_World().hasMap()? App_World().map().lineCount()     : 0;
-    case DMU_SIDE:      return App_World().hasMap()? App_World().map().sideCount()     : 0;
-    case DMU_SECTOR:    return App_World().hasMap()? App_World().map().sectorCount()   : 0;
-    case DMU_SUBSPACE:  return App_World().hasMap()? App_World().map().subspaceCount() : 0;
+    case DMU_VERTEX:    return World::get().hasMap() ? World::get().map().vertexCount()   : 0;
+    case DMU_LINE:      return World::get().hasMap() ? World::get().map().lineCount()     : 0;
+    case DMU_SIDE:      return World::get().hasMap() ? World::get().map().sideCount()     : 0;
+    case DMU_SECTOR:    return World::get().hasMap() ? World::get().map().sectorCount()   : 0;
+    case DMU_SUBSPACE:  return World::get().hasMap() ? World::get().map().subspaceCount() : 0;
     case DMU_SKY:       return 1; // Only one sky per map presently.
 
     case DMU_MATERIAL:  return world::Materials::get().materialCount();
@@ -278,35 +292,35 @@ int P_Callback(int type, int index, int (*callback)(void *p, void *ctx), void *c
     switch(type)
     {
     case DMU_VERTEX:
-        if (auto *vtx = App_World().map().vertexPtr(index))
+        if (auto *vtx = World::get().map().vertexPtr(index))
         {
             return callback(vtx, context);
         }
         break;
 
     case DMU_LINE:
-        if (auto *li = App_World().map().linePtr(index))
+        if (auto *li = World::get().map().linePtr(index))
         {
             return callback(li, context);
         }
         break;
 
     case DMU_SIDE:
-        if (auto *si = App_World().map().sidePtr(index))
+        if (auto *si = World::get().map().sidePtr(index))
         {
             return callback(si, context);
         }
         break;
 
     case DMU_SUBSPACE:
-        if (auto *sub = App_World().map().subspacePtr(index))
+        if (auto *sub = World::get().map().subspacePtr(index))
         {
             return callback(sub, context);
         }
         break;
 
     case DMU_SECTOR:
-        if (auto *sec = App_World().map().sectorPtr(index))
+        if (auto *sec = World::get().map().sectorPtr(index))
         {
             return callback(sec, context);
         }
@@ -320,7 +334,7 @@ int P_Callback(int type, int index, int (*callback)(void *p, void *ctx), void *c
     case DMU_SKY: {
         if(index == 0) // Only one sky per map presently.
         {
-            return callback(&App_World().map().sky(), context);
+            return callback(&World::get().map().sky(), context);
         }
         break; }
 
@@ -1292,14 +1306,14 @@ void P_GetPtrpv(void *ptr, uint prop, void *params)
 DE_EXTERN_C dd_bool P_MapExists(const char *uriCString)
 {
     if(!uriCString || !uriCString[0]) return false;
-    return App_Resources().mapManifests().tryFindMapManifest(res::makeUri(uriCString)) != nullptr;
+    return Resources::get().mapManifests().tryFindMapManifest(res::makeUri(uriCString)) != nullptr;
 }
 
 #undef P_MapIsCustom
 DE_EXTERN_C dd_bool P_MapIsCustom(const char *uriCString)
 {
     if(!uriCString || !uriCString[0]) return false;
-    if(const res::MapManifest *mapDef = App_Resources().mapManifests().tryFindMapManifest(res::makeUri(uriCString)))
+    if(const res::MapManifest *mapDef = Resources::get().mapManifests().tryFindMapManifest(res::makeUri(uriCString)))
     {
         return mapDef->sourceFile()->hasCustom();
     }
@@ -1310,7 +1324,7 @@ DE_EXTERN_C dd_bool P_MapIsCustom(const char *uriCString)
 DE_EXTERN_C AutoStr *P_MapSourceFile(const char *uriCString)
 {
     if(!uriCString || !uriCString[0]) return nullptr;
-    if(const res::MapManifest *mapDef = App_Resources().mapManifests().tryFindMapManifest(res::makeUri(uriCString)))
+    if(const res::MapManifest *mapDef = Resources::get().mapManifests().tryFindMapManifest(res::makeUri(uriCString)))
     {
         return AutoStr_FromTextStd(mapDef->sourceFile()->composePath());
     }
@@ -1320,7 +1334,7 @@ DE_EXTERN_C AutoStr *P_MapSourceFile(const char *uriCString)
 #undef P_MapChange
 DE_EXTERN_C dd_bool P_MapChange(const char *uriCString)
 {
-    if(!uriCString || !uriCString[0])
+    if (!uriCString || !uriCString[0])
     {
         App_FatalError("P_MapChange: Invalid Uri argument.");
     }
@@ -1335,9 +1349,9 @@ DE_EXTERN_C dd_bool P_MapChange(const char *uriCString)
 #ifdef __SERVER__
     // Whenever the map changes, remote players must tell us when they're
     // ready to begin receiving frames.
-    for(uint i = 0; i < DDMAXPLAYERS; ++i)
+    for (uint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(DD_Player(i)->isConnected())
+        if (DD_Player(i)->isConnected())
         {
             LOG_DEBUG("Client %i marked as 'not ready' to receive frames.") << i;
             DD_Player(i)->ready = false;
@@ -1352,7 +1366,7 @@ DE_EXTERN_C dd_bool P_MapChange(const char *uriCString)
 DE_EXTERN_C uint P_CountMapObjs(int entityId)
 {
     if(!App_World().hasMap()) return 0;
-    EntityDatabase &entities = App_World().map().entityDatabase();
+    EntityDatabase &entities = World::get().map().entityDatabase();
     return entities.entityCount(P_MapEntityDef(entityId));
 }
 
@@ -1360,7 +1374,7 @@ DE_EXTERN_C uint P_CountMapObjs(int entityId)
 DE_EXTERN_C void Mobj_Link(mobj_t *mobj, int flags)
 {
     if(!mobj || !App_World().hasMap()) return; // Huh?
-    App_World().map().link(*mobj, flags);
+    World::get().map().link(*mobj, flags);
 }
 
 #undef Mobj_Unlink
@@ -1418,7 +1432,7 @@ DE_EXTERN_C int Sector_TouchingMobjsIterator(world_Sector *sector, int (*callbac
 DE_EXTERN_C world_Sector *Sector_AtPoint_FixedPrecision(const_pvec2d_t point)
 {
     if(!App_World().hasMap()) return 0;
-    return App_World().map().bspLeafAt_FixedPrecision(Vec2d(point)).sectorPtr();
+    return World::get().map().bspLeafAt_FixedPrecision(Vec2d(point)).sectorPtr();
 }
 
 #undef Mobj_BoxIterator
@@ -1430,7 +1444,7 @@ DE_EXTERN_C int Mobj_BoxIterator(const AABoxd *box,
     LoopResult result = LoopContinue;
     if(App_World().hasMap())
     {
-        const auto &map           = App_World().map();
+        const auto &map           = World::get().map();
         const int localValidCount = World::validCount;
 
         result = map.mobjBlockmap().forAllInBox(*box, [&callback, &context, &localValidCount] (void *object)
@@ -1456,7 +1470,7 @@ DE_EXTERN_C int Polyobj_BoxIterator(const AABoxd *box,
     LoopResult result = LoopContinue;
     if(App_World().hasMap())
     {
-        const auto &map            = App_World().map();
+        const auto &map            = World::get().map();
         const dint localValidCount = World::validCount;
 
         result = map.polyobjBlockmap().forAllInBox(*box, [&callback, &context, &localValidCount] (void *object)
@@ -1495,7 +1509,7 @@ DE_EXTERN_C int Subspace_BoxIterator(const AABoxd *box,
 
     const dint localValidCount = World::validCount;
 
-    return App_World().map().subspaceBlockmap()
+    return World::get().map().subspaceBlockmap()
         .forAllInBox(*box, [&box, &callback, &context, &localValidCount] (void *object)
     {
         auto &sub = *(ConvexSubspace *)object;
@@ -1523,7 +1537,7 @@ DE_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
     if(!App_World().hasMap()) return false;  // Continue iteration.
 
     return world::Interceptor(callback, Vec2d(from), Vec2d(to), flags, context)
-                .trace(App_World().map());
+                .trace(World::get().map());
 }
 
 #undef P_PathTraverse
@@ -1533,7 +1547,7 @@ DE_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
     if(!App_World().hasMap()) return false;  // Continue iteration.
 
     return world::Interceptor(callback, Vec2d(from), Vec2d(to), PTF_ALL, context)
-                .trace(App_World().map());
+                .trace(World::get().map());
 }
 
 #undef P_CheckLineSight
@@ -1543,7 +1557,7 @@ DE_EXTERN_C dd_bool P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coo
     if(!App_World().hasMap()) return false;  // Continue iteration.
 
     return world::LineSightTest(Vec3d(from), Vec3d(to), bottomSlope, topSlope, flags)
-                .trace(App_World().map().bspTree());
+                .trace(World::get().map().bspTree());
 }
 
 #undef Interceptor_Origin
@@ -1613,7 +1627,7 @@ DE_EXTERN_C void Polyobj_Link(Polyobj *po)
 DE_EXTERN_C Polyobj *Polyobj_ById(int index)
 {
     if(!App_World().hasMap()) return nullptr;
-    return App_World().map().polyobjPtr(index);
+    return World::get().map().polyobjPtr(index);
 }
 
 #undef Polyobj_ByTag
@@ -1622,7 +1636,7 @@ DE_EXTERN_C Polyobj *Polyobj_ByTag(int tag)
     Polyobj *found = nullptr; // not found.
     if(App_World().hasMap())
     {
-        App_World().map().forAllPolyobjs([&tag, &found] (Polyobj &pob)
+        World::get().map().forAllPolyobjs([&tag, &found] (Polyobj &pob)
         {
             if(pob.tag == tag)
             {
