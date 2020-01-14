@@ -41,6 +41,7 @@
 #  include "client/cledgeloop.h"
 #  include "gl/gl_main.h"
 #  include "world/contact.h"
+#  include "world/polyobjdata.h"
 #  include "world/subsector.h"
 #  include "world/vertex.h"
 #  include "Lumobj"
@@ -70,6 +71,7 @@
 #include <doomsday/world/MaterialManifest>
 #include <doomsday/world/Materials>
 #include <doomsday/world/plane.h>
+#include <doomsday/world/polyobjdata.h>
 #include <doomsday/world/subsector.h>
 #include <doomsday/world/surface.h>
 #include <doomsday/world/thinkers.h>
@@ -310,6 +312,9 @@ DE_PIMPL(ClientServerWorld)
         Factory::setPlaneConstructor([](world::Sector &sec, const Vec3f &norm, double hgt) -> world::Plane * {
             return new Plane(sec, norm, hgt);
         });
+        Factory::setPolyobjDataConstructor([]() -> world::PolyobjData * {
+            return new PolyobjData();
+        });
         Factory::setSkyConstructor([](const defn::Sky *def) -> world::Sky * {
             return new Sky(def);
         });
@@ -344,6 +349,7 @@ DE_PIMPL(ClientServerWorld)
         Factory::setPlaneConstructor([](world::Sector &sec, const Vec3f &norm, double hgt) {
             return new world::Plane(sec, norm, hgt);
         });
+        Factory::setPolyobjDataConstructor([]() { return new world::PolyobjData(); });
         Factory::setSkyConstructor([](const defn::Sky *def) { return new world::Sky(def); });
         Factory::setSubsectorConstructor([] (const List<world::ConvexSubspace *> &sl) {
             return new world::Subsector(sl);

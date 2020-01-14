@@ -26,7 +26,7 @@ class ClPolyMover;
 class PolyobjData : public world::PolyobjData
 {
 public:
-    PolyobjData();
+    PolyobjData() = default;
     
     void addMover(ClPolyMover &mover);
     void removeMover(ClPolyMover &mover);

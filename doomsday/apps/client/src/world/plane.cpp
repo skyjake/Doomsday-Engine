@@ -36,8 +36,9 @@ using namespace de;
 Plane::Plane(world::Sector &sector, const Vec3f &normal, double height)
     : world::Plane(sector, normal, height)
 {
+    setHeight(height); // init smooth height
+
     surface().audienceForMaterialChange() += this;
-    
     audienceForHeightChange() += [this]() {
         if (!World::ddMapSetup)
         {

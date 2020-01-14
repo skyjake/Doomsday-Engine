@@ -1608,11 +1608,13 @@ bool Subsector::hasWorldVolume(bool useSmoothedHeights) const
         d->validFrame = currentFrame;
         if (useSmoothedHeights)
         {
-            d->hasWorldVolumeInValidFrame = visCeiling().heightSmoothed() - visFloor().heightSmoothed() > 0;
+//            debug("ceiling %f -- floor %f (%f, %f)", visCeiling().heightSmoothed(), visFloor().heightSmoothed(),
+//                  sector().ceiling().height(), sector().floor().height());
+            d->hasWorldVolumeInValidFrame = visCeiling().heightSmoothed() > visFloor().heightSmoothed();
         }
         else
         {
-            d->hasWorldVolumeInValidFrame = sector().ceiling().height() - sector().floor().height() > 0;
+            d->hasWorldVolumeInValidFrame = sector().ceiling().height() > sector().floor().height();
         }
     }
     return d->hasWorldVolumeInValidFrame;

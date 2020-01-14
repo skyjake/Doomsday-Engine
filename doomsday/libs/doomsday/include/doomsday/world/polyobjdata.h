@@ -39,6 +39,7 @@ public:
     typedef de::List<de::Vec2d> VertexCoords;
 
 public:
+    PolyobjData();
     ~PolyobjData();
 
     void setThinker(thinker_s *thinker);
@@ -54,9 +55,6 @@ public:
     de::List<Vertex *> uniqueVertexes;
     VertexCoords originalPts;  ///< Used as the base for the rotations.
     VertexCoords prevPts;      ///< Use to restore the old point values.
-
-protected:
-    PolyobjData();
     
 private:
     polyobj_s *_polyobj = nullptr;

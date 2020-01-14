@@ -3849,12 +3849,12 @@ static void traverseBspTreeAndDrawSubspaces(const world::BspTree *bspTree)
     if (auto *subspace = bspTree->userData()->as<world::BspLeaf>().subspacePtr())
     {
         DE_ASSERT(subspace->hasSubsector());
-
+        
         // Skip zero-volume subspaces.
         // (Neighbors handle the angle clipper ranges.)
         if (!subspace->subsector().as<Subsector>().hasWorldVolume())
             return;
-
+        
         // Is this subspace visible?
         if (!::firstSubspace && !clipper.isPolyVisible(subspace->poly()))
             return;
