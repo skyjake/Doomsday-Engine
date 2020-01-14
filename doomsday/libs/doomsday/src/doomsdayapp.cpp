@@ -77,6 +77,7 @@
 #endif
 
 using namespace de;
+using World = world::World;
 
 DE_EXTENSION(importdeh);
 DE_EXTENSION(importidtech1);

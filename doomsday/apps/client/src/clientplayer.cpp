@@ -27,7 +27,7 @@
 using namespace de;
 
 DE_PIMPL(ClientPlayer)
-, DE_OBSERVES(World, MapChange)
+, DE_OBSERVES(world::World, MapChange)
 {
     ViewCompositor     viewCompositor;
     viewdata_t         viewport;
@@ -63,7 +63,7 @@ ClientPlayer::ClientPlayer()
     , d(new Impl(this))
 {}
 
-void ClientPlayer::setWorld(World *world)
+void ClientPlayer::setWorld(world::World *world)
 {
     Player::setWorld(world);
     if (world)

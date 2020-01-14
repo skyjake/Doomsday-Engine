@@ -45,6 +45,7 @@ using world::Material;
 using world::MapElement;
 using world::Sector;
 using world::SubsectorCirculator;
+using world::World;
 
 /// Classification flags:
 enum SubsectorFlag

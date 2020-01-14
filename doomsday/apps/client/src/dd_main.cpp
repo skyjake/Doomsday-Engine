@@ -144,6 +144,7 @@
 
 using namespace de;
 using namespace res;
+using World = world::World;
 
 class ZipFileType : public NativeFileType
 {
@@ -633,7 +634,7 @@ Resources &App_Resources()
 
 ClientServerWorld &App_World()
 {
-    return static_cast<ClientServerWorld &>(World::get());
+    return static_cast<ClientServerWorld &>(world::World::get());
 }
 
 InFineSystem &App_InFineSystem()

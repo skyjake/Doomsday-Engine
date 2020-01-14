@@ -99,7 +99,7 @@ typedef struct ddplayer_s {
 #include <de/IObject>
 #include <de/Record>
 
-class World;
+namespace world { class World; }
 
 /**
  * Base class for player state: common functionality shared by both the server
@@ -133,7 +133,7 @@ public:
 
     void initBindings();
 
-    virtual void setWorld(World *world);
+    virtual void setWorld(world::World *world);
 
     ddplayer_t &publicData();
     const ddplayer_t &publicData() const;

@@ -45,7 +45,7 @@ bool Thinker_IsMobj(const thinker_t *th)
 world::Map &Thinker_Map(const thinker_t & /*th*/)
 {
     /// @todo Do not assume the current map.
-    return World::get().map();
+    return world::World::get().map();
 }
 
 namespace world {

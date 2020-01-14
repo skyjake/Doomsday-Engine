@@ -69,6 +69,7 @@ using namespace world;
 using namespace de;
 using world::MapElement;
 using world::DmuArgs;
+using world::World;
 
 // Converting a public void* pointer to an internal world::MapElement.
 #define IN_ELEM(p)          reinterpret_cast<world::MapElement *>(p)

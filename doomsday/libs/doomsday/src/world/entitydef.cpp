@@ -34,6 +34,7 @@
 #include <de/StringPool>
 
 using namespace de;
+using World = world::World;
 
 // Map entity definitions.
 static StringPool *entityDefs;

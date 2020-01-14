@@ -25,7 +25,7 @@ using namespace de;
 
 DE_PIMPL_NOREF(Player)
 {
-    World *world = nullptr;
+    world::World *world = nullptr;
     ddplayer_t publicData;
     Record info;
     Smoother *smoother = Smoother_New();
@@ -62,7 +62,7 @@ void Player::initBindings()
     objectNamespace().addSuperRecord(ScriptSystem::builtInClass("App", "Player"));
 }
 
-void Player::setWorld(World *world)
+void Player::setWorld(world::World *world)
 {
     if (world)
     {

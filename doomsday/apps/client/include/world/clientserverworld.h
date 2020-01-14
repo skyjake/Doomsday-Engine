@@ -29,6 +29,7 @@
 #include <doomsday/world/world.h>
 #include <doomsday/uri.h>
 
+namespace de { class Context; }
 namespace world { class Map; }
 
 /**
@@ -43,7 +44,7 @@ namespace world { class Map; }
  *
  * @ingroup world
  */
-class ClientServerWorld : public World
+class ClientServerWorld : public world::World
 {
 public:
     /// No map is currently loaded. @ingroup errors

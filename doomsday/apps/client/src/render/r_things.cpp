@@ -57,6 +57,7 @@
 #include <doomsday/world/bspleaf.h>
 
 using namespace de;
+using world::World;
 
 static void evaluateLighting(const Vec3d &origin, ConvexSubspace &subspaceAtOrigin,
     coord_t distToEye, bool fullbright, Vec4f &ambientColor, duint *vLightListIdx)

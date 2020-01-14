@@ -42,6 +42,7 @@
 #include <de/Vector>
 
 using namespace de;
+using world::World;
 
 byte  bmapShowDebug; // 1 = mobjs, 2 = lines, 3 = BSP leafs, 4 = polyobjs. cvar
 float bmapDebugSize = 1.5f; // cvar

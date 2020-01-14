@@ -46,6 +46,7 @@
 #include <cmath>
 
 using namespace de;
+using world::World;
 
 #define DOT2F(a,b)          ( FIX2FLT(a[0]) * FIX2FLT(b[0]) + FIX2FLT(a[1]) * FIX2FLT(b[1]) )
 #define VECMUL(a,scalar)    ( a[0] = FixedMul(a[0], scalar), a[1] = FixedMul(a[1], scalar) )

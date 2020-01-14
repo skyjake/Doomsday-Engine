@@ -34,7 +34,7 @@ Surface::Surface(world::MapElement &owner, float opacity, const Vec3f &color)
     : world::Surface(owner, opacity, color)
 {
     audienceForOriginChange() += [this]() {
-        if (World::ddMapSetup)
+        if (world::World::ddMapSetup)
         {
             // During map setup we'll apply this immediately to the visual origin also.
             _originSmoothed = origin();

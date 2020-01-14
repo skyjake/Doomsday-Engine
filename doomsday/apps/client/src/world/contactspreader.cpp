@@ -19,15 +19,7 @@
 
 #include "world/contactspreader.h"
 
-//#include "Face"
-//#include "HEdge"
-//#include "BspLeaf"
 #include "Contact"
-//#include "ConvexSubspace"
-//#include "Sector"
-//#include "Subsector"
-//#include "Surface"
-//#include "world/clientserverworld.h"  // validCount
 #include "world/subsector.h"
 #include "render/rend_main.h"  // Rend_mapSurfaceMaterialSpec
 #include "MaterialAnimator"
@@ -37,6 +29,7 @@
 #include <de/legacy/vector1.h>
 
 using namespace de;
+using world::World;
 
 /**
  * On which side of the half-edge does the specified @a point lie?

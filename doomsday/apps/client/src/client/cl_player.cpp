@@ -34,6 +34,7 @@
 #include <de/Vector>
 
 using namespace de;
+using world::World;
 
 #define TOP_PSPY            (32)
 #define BOTTOM_PSPY         (128)

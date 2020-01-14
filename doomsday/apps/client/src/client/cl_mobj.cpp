@@ -43,6 +43,7 @@
 
 using namespace de;
 
+using world::World;
 using world::Sector;
 using world::DmuArgs;
 

@@ -82,6 +82,7 @@
 #include <map>
 
 using namespace de;
+using world::World;
 
 /// Milliseconds it takes for Unpredictable and Hidden mobjs to be
 /// removed from the hash. Under normal circumstances, the special

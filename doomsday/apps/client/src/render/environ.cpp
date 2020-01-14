@@ -38,7 +38,7 @@ namespace render {
 
 DE_PIMPL(Environment)
 , DE_OBSERVES(filesys::AssetObserver, Availability)
-, DE_OBSERVES(World, MapChange)
+, DE_OBSERVES(world::World, MapChange)
 {
     enum { Interior, Exterior };
 
@@ -58,7 +58,7 @@ DE_PIMPL(Environment)
     Impl(Public *i) : Base(i)
     {
         observer.audienceForAvailability() += this;
-        World::get().audienceForMapChange() += this;
+        world::World::get().audienceForMapChange() += this;
 
         // Reflection cube maps use mipmapping for blurred reflections.
         for (auto &tex : reflectionTextures)

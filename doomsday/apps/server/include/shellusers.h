@@ -28,7 +28,7 @@
 /**
  * All remote shell users.
  */
-class ShellUsers : public Users, DE_OBSERVES(World, MapChange)
+class ShellUsers : public Users, DE_OBSERVES(world::World, MapChange)
 {
 public:
     ShellUsers();

@@ -27,11 +27,9 @@
 #include "doomsday/players.h"
 #include "api_player.h"
 
-#include <de/App>
-#include <de/Context>
+namespace world {
 
 using namespace de;
-using namespace world;
 
 static World *theWorld = nullptr;
 
@@ -152,3 +150,6 @@ void World::notifyMapChange()
 {
     DE_NOTIFY(MapChange, i) i->worldMapChanged();
 }
+
+} // namespace world
+

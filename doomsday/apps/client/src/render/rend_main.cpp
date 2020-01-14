@@ -102,6 +102,7 @@
 #include <cstdlib>
 
 using namespace de;
+using world::World;
 
 /**
  * POD structure used to transport vertex data refs as a logical unit.

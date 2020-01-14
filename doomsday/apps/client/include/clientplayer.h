@@ -75,7 +75,7 @@ public:
 public:
     ClientPlayer();
 
-    void setWorld(World *world) override;
+    void setWorld(world::World *world) override;
 
     ViewCompositor &viewCompositor();
 

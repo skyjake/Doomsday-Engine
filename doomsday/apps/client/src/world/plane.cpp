@@ -40,7 +40,7 @@ Plane::Plane(world::Sector &sector, const Vec3f &normal, double height)
 
     surface().audienceForMaterialChange() += this;
     audienceForHeightChange() += [this]() {
-        if (!World::ddMapSetup)
+        if (!world::World::ddMapSetup)
         {
             // Add ourself to tracked plane list (for movement interpolation).
             map().trackedPlanes().insert(this);
@@ -242,7 +242,7 @@ void Plane::notifySmoothedHeightChanged()
 
 void Plane::surfaceMaterialChanged(world::Surface &)
 {
-    if (!World::ddMapSetup && surface().hasMaterial())
+    if (!world::World::ddMapSetup && surface().hasMaterial())
     {
         const res::Uri uri = surface().material().manifest().composeUri();
         spawnParticleGen(Def_GetGenerator(reinterpret_cast<const uri_s *>(&uri)));

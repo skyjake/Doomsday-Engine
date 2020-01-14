@@ -26,28 +26,22 @@
 #include <de/Observers>
 #include <de/System>
 
-namespace de
-{
-    class Context;
-}
+namespace world {
 
-namespace world
-{
-    class Map;
-    class Materials;
-}
+class Map;
+class Materials;
 
 /**
  * Base class for the game world.
  *
- * Singleton: there can only be one instance of the world at a time.
+ * There can only be one instance of the world at a time.
  */
 class LIBDOOMSDAY_PUBLIC World : public de::System
 {
 public:
     static World &get();
 
-    static int ddMapSetup;
+    static int ddMapSetup; // map setup is in progress
     static int validCount;
 
 public:
@@ -94,3 +88,6 @@ public:  /// @todo make private:
 private:
     DE_PRIVATE(d)
 };
+
+} // namespace world
+

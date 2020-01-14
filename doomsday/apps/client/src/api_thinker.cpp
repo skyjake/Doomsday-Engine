@@ -24,6 +24,7 @@
 #include <doomsday/world/thinkers.h>
 
 using namespace de;
+using World = world::World;
 
 #undef Thinker_Init
 void Thinker_Init()

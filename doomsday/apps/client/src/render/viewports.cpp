@@ -69,6 +69,7 @@
 #include <doomsday/tab_tables.h>
 
 using namespace de;
+using world::World;
 
 dd_bool firstFrameAfterLoad;
 

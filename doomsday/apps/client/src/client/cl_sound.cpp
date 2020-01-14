@@ -32,6 +32,7 @@
 using namespace de;
 
 using world::Sector;
+using world::World;
 
 void Cl_ReadSoundDelta(deltatype_t type)
 {
