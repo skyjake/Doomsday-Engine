@@ -31,6 +31,7 @@ static std::function<ConvexSubspace *(mesh::Face &, BspLeaf *)>     convexSubspa
 static std::function<Line *(Vertex &, Vertex &, int, Sector *, Sector *)> lineCtor;
 static std::function<LineSide *(Line &, Sector *)>                  lineSideCtor;
 static std::function<LineSideSegment *(LineSide &, mesh::HEdge &)>  lineSideSegmentCtor;
+static std::function<Map *()>                                       mapCtor;
 static std::function<Material *(MaterialManifest &)>                materialCtor;
 static std::function<MobjThinkerData *(const Id &)>                 mobjThinkerDataCtor;
 static std::function<Plane *(Sector &, const Vec3f &, double)>      planeCtor;
@@ -38,6 +39,7 @@ static std::function<PolyobjData *()>                               polyobjDataC
 static std::function<Sky *(const defn::Sky *)>                      skyCtor;
 static Factory::SubsectorConstructor                                subsectorCtor;
 static std::function<Surface *(MapElement &, float, const Vec3f &)> surfaceCtor;
+static std::function<Vertex *(mesh::Mesh &, const de::Vec2d &)>     vertexCtor;
 
 void Factory::setConvexSubspaceConstructor(const std::function<ConvexSubspace *(mesh::Face &, BspLeaf *)> &ctor)
 {
@@ -83,6 +85,17 @@ LineSideSegment *Factory::newLineSideSegment(LineSide &side, mesh::HEdge &hedge)
     return lineSideSegmentCtor(side, hedge);
 }
 
+void Factory::setMapConstructor(const std::function<Map *()> &ctor)
+{
+    mapCtor = ctor;
+}
+
+Map *Factory::newMap()
+{
+    DE_ASSERT(mapCtor);
+    return mapCtor();
+}
+
 void Factory::setMaterialConstructor(const std::function<Material *(MaterialManifest &)> &ctor)
 {
     materialCtor = ctor;
@@ -112,6 +125,7 @@ void Factory::setPlaneConstructor(const std::function<Plane *(Sector &, const Ve
 
 Plane *Factory::newPlane(Sector &sector, const Vec3f &normal, double height)
 {
+    DE_ASSERT(planeCtor);
     return planeCtor(sector, normal, height);
 }
 
@@ -165,6 +179,17 @@ struct polyobj_s *Factory::newPolyobj(const de::Vec2d &origin)
     const auto &gx = DoomsdayApp::app().plugins().gameExports();
     void *region = M_Calloc(gx.GetInteger(DD_POLYOBJ_SIZE));
     return new (region) Polyobj(origin);
+}
+
+void Factory::setVertexConstructor(const std::function<Vertex *(mesh::Mesh &, const de::Vec2d &)> &ctor)
+{
+    vertexCtor = ctor;
+}
+
+Vertex *Factory::newVertex(mesh::Mesh &mesh, const de::Vec2d &origin)
+{
+    DE_ASSERT(vertexCtor);
+    return vertexCtor(mesh, origin);
 }
 
 } // namespace world

@@ -43,6 +43,8 @@ public:
     };
 
 public:
+    using world::LineSide::LineSide;
+    
     inline Line &      line();
     inline const Line &line() const;
     
@@ -98,6 +100,8 @@ private:
 class LineSideSegment : public world::LineSideSegment
 {
 public:
+    using world::LineSideSegment::LineSideSegment;
+
     /**
      * Returns @c true iff the segment is marked as "front facing".
      */
@@ -115,6 +119,8 @@ private:
 class Line : public world::Line
 {
 public:
+    using world::Line::Line;
+    
     /**
      * Returns @c true if the line qualifies for FakeRadio shadow casting (on planes).
      */

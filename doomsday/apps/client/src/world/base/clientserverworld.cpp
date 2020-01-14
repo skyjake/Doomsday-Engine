@@ -38,10 +38,11 @@
 #  include "client/cl_def.h"
 #  include "client/cl_frame.h"
 #  include "client/cl_player.h"
+#  include "client/cledgeloop.h"
 #  include "gl/gl_main.h"
 #  include "world/contact.h"
-#  include "client/cledgeloop.h"
 #  include "world/subsector.h"
+#  include "world/vertex.h"
 #  include "Lumobj"
 #  include "render/viewports.h"  // R_ResetViewer
 #  include "render/rend_fakeradio.h"
@@ -55,6 +56,7 @@
 
 #ifdef __SERVER__
 #  include "server/sv_pool.h"
+#  include <doomsday/world/convexsubspace.h>
 #  include <doomsday/world/mobjthinkerdata.h>
 #endif
 
@@ -280,25 +282,77 @@ DE_PIMPL(ClientServerWorld)
 
         // Callbacks.
         world::DmuArgs::setPointerToIndexFunc(P_ToIndex);
+        
+        using world::Factory;
+        
 #ifdef __CLIENT__
-        world::Factory::setMobjThinkerDataConstructor([](const Id &id) -> MobjThinkerData * {
+        Factory::setConvexSubspaceConstructor([](mesh::Face &f, world::BspLeaf *bl) -> world::ConvexSubspace * {
+            return new ConvexSubspace(f, bl);
+        });
+        Factory::setLineConstructor([](world::Vertex &s, world::Vertex &t, int flg, world::Sector *fs, world::Sector *bs) -> world::Line * {
+            return new Line(s, t, flg, fs, bs);
+        });
+        Factory::setLineSideConstructor([](world::Line &ln, world::Sector *s) -> world::LineSide * {
+            return new LineSide(ln, s);
+        });
+        Factory::setLineSideSegmentConstructor([](world::LineSide &ls, mesh::HEdge &he) -> world::LineSideSegment * {
+            return new LineSideSegment(ls, he);
+        });
+        Factory::setMapConstructor([]() -> world::Map * {
+            return new Map();
+        });
+        Factory::setMobjThinkerDataConstructor([](const Id &id) -> MobjThinkerData * {
             return new ClientMobjThinkerData(id);
         });
-        world::Factory::setMaterialConstructor([](world::MaterialManifest &m) -> world::Material * {
+        Factory::setMaterialConstructor([](world::MaterialManifest &m) -> world::Material * {
             return new ClientMaterial(m);
         });
-        world::Factory::setSubsectorConstructor([](const List<world::ConvexSubspace *> &sl) -> world::Subsector * {
+        Factory::setPlaneConstructor([](world::Sector &sec, const Vec3f &norm, double hgt) -> world::Plane * {
+            return new Plane(sec, norm, hgt);
+        });
+        Factory::setSkyConstructor([](const defn::Sky *def) -> world::Sky * {
+            return new Sky(def);
+        });
+        Factory::setSubsectorConstructor([](const List<world::ConvexSubspace *> &sl) -> world::Subsector * {
             return new Subsector(sl);
         });
-#else
-        world::Factory::setMobjThinkerDataConstructor([](const Id &id) -> MobjThinkerData * {
-            return new MobjThinkerData(id);
+        Factory::setSurfaceConstructor([](world::MapElement &me, float opac, const Vec3f &clr) -> world::Surface * {
+            return new Surface(me, opac, clr);
         });
-        world::Factory::setMaterialConstructor([] (world::MaterialManifest &m) -> world::Material * {
+        Factory::setVertexConstructor([](mesh::Mesh &m, const Vec2d &p) -> world::Vertex * {
+            return new Vertex(m, p);
+        });
+#else
+        Factory::setConvexSubspaceConstructor([](mesh::Face &f, world::BspLeaf *bl) {
+            return new world::ConvexSubspace(f, bl);
+        });
+        Factory::setLineConstructor([](world::Vertex &s, world::Vertex &t, int flg,
+                                       world::Sector *fs, world::Sector *bs) {
+            return new world::Line(s, t, flg, fs, bs);
+        });
+        Factory::setLineSideConstructor([](world::Line &ln, world::Sector *s) {
+            return new world::LineSide(ln, s);
+        });
+        Factory::setLineSideSegmentConstructor([](world::LineSide &ls, mesh::HEdge &he) {
+            return new world::LineSideSegment(ls, he);
+        });
+        Factory::setMapConstructor([]() { return new world::Map(); });
+        Factory::setMobjThinkerDataConstructor([](const Id &id) { return new MobjThinkerData(id); });
+        Factory::setMaterialConstructor([] (world::MaterialManifest &m) {
             return new world::Material(m);
         });
-        world::Factory::setSubsectorConstructor([] (const List<world::ConvexSubspace *> &sl) -> world::Subsector * {
+        Factory::setPlaneConstructor([](world::Sector &sec, const Vec3f &norm, double hgt) {
+            return new world::Plane(sec, norm, hgt);
+        });
+        Factory::setSkyConstructor([](const defn::Sky *def) { return new world::Sky(def); });
+        Factory::setSubsectorConstructor([] (const List<world::ConvexSubspace *> &sl) {
             return new world::Subsector(sl);
+        });
+        Factory::setSurfaceConstructor([](world::MapElement &me, float opac, const Vec3f &clr) {
+            return new world::Surface(me, opac, clr);
+        });
+        Factory::setVertexConstructor([](mesh::Mesh &m, const Vec2d &p) -> world::Vertex * {
+            return new world::Vertex(m, p);
         });
 #endif
     }

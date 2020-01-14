@@ -41,6 +41,8 @@ public:
     DE_ERROR(MissingSubsectorError);
 
 public:
+    ConvexSubspace(mesh::Face &convexPolygon, BspLeaf *bspLeaf = nullptr);
+
     /**
      * Attempt to construct a ConvexSubspace from the Face geometry provided. Before the
      * geometry is accepted it is first conformance tested to ensure that it is a simple
@@ -170,8 +172,6 @@ public:
     void setValidCount(int newValidCount);
 
 protected:
-    ConvexSubspace(mesh::Face &convexPolygon, BspLeaf *bspLeaf = nullptr);
-
     DE_PRIVATE(d)
 
     // Heavily used; visible for inline access:

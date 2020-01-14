@@ -20,6 +20,7 @@
 #include "doomsday/mesh/mesh.h"
 #include "doomsday/mesh/hedge.h"
 #include "doomsday/mesh/face.h"
+#include "doomsday/world/factory.h"
 #include "doomsday/world/vertex.h"
 
 namespace mesh {
@@ -71,7 +72,7 @@ void Mesh::clear()
 
 world::Vertex *Mesh::newVertex(const de::Vec2d &origin)
 {
-    auto *vtx = new world::Vertex(*this, origin);
+    auto *vtx = world::Factory::newVertex(*this, origin);
     _vertices.append(vtx);
     return vtx;
 }

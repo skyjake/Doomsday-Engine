@@ -40,6 +40,7 @@
 #endif
 
 #include <doomsday/world/entitydef.h>
+#include <doomsday/world/factory.h>
 #include <doomsday/world/Materials>
 #include <doomsday/world/sector.h>
 #include <doomsday/EntityDatabase>
@@ -191,7 +192,7 @@ dd_bool MPE_Begin(const uri_s * /*mapUri*/)
     if(!editMapInited)
     {
         delete editMap;
-        editMap = new world::Map;
+        editMap = world::Factory::newMap();
         editMapInited = true;
     }
     return true;

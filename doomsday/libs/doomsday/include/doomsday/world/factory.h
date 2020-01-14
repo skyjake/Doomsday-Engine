@@ -28,7 +28,7 @@
 class MobjThinkerData;
 struct polyobj_s;
 
-namespace mesh { class Face; class HEdge; }
+namespace mesh { class Face; class HEdge; class Mesh; }
 
 namespace world {
 
@@ -37,6 +37,7 @@ class ConvexSubspace;
 class Line;
 class LineSide;
 class LineSideSegment;
+class Map;
 class MapElement;
 class Material;
 class MaterialManifest;
@@ -57,6 +58,7 @@ public:
     static void setLineConstructor(const std::function<Line *(Vertex &, Vertex &, int, Sector *, Sector *)> &);
     static void setLineSideConstructor(const std::function<LineSide *(Line &, Sector *)> &);
     static void setLineSideSegmentConstructor(const std::function<LineSideSegment *(LineSide &, mesh::HEdge &)> &);
+    static void setMapConstructor(const std::function<Map *()> &);
     static void setMaterialConstructor(const std::function<Material *(MaterialManifest &)> &);
     static void setMobjThinkerDataConstructor(const std::function<MobjThinkerData *(const de::Id &)> &);
     static void setPlaneConstructor(const std::function<Plane *(Sector &, const de::Vec3f &, double)> &);
@@ -64,8 +66,10 @@ public:
     static void setSkyConstructor(const std::function<Sky *(const defn::Sky *)> &);
     static void setSubsectorConstructor(const SubsectorConstructor &func);
     static void setSurfaceConstructor(const std::function<Surface *(world::MapElement &, float, const de::Vec3f &)> &);
+    static void setVertexConstructor(const std::function<Vertex *(mesh::Mesh &, const de::Vec2d &)> &);
 
     static ConvexSubspace *  newConvexSubspace(mesh::Face &, BspLeaf *);
+    static Map *             newMap();
     static Material *        newMaterial(MaterialManifest &);
     static MobjThinkerData * newMobjThinkerData(const de::Id &);
     static Line *            newLine(Vertex &from, Vertex &to, int flags = 0, Sector *frontSector = nullptr, Sector *backSector  = nullptr);
@@ -77,6 +81,7 @@ public:
     static Subsector *       newSubsector(const de::List<ConvexSubspace *> &subspaces);
     static Surface *         newSurface(world::MapElement &, float = 1.0f, const de::Vec3f & = {1.0f});
     static struct polyobj_s *newPolyobj(const de::Vec2d &);
+    static Vertex *          newVertex(mesh::Mesh &, const de::Vec2d & = {});
 };
 
 } // namespace world

@@ -55,6 +55,15 @@ public:
 
 public:
     /**
+     * Construct a new plane.
+     *
+     * @param sector  Sector parent which will own the plane.
+     * @param normal  Normal of the plane (will be normalized if necessary).
+     * @param height  Height of the plane in map space coordinates.
+     */
+    Plane(Sector &sector, const de::Vec3f &normal = de::Vec3f(0, 0, 1), double height = 0);
+
+    /**
      * Composes a human-friendly, styled, textual description of the plane.
      */
     de::String description() const;
@@ -147,15 +156,6 @@ public:
     double speed() const;
 
 protected:
-    /**
-     * Construct a new plane.
-     *
-     * @param sector  Sector parent which will own the plane.
-     * @param normal  Normal of the plane (will be normalized if necessary).
-     * @param height  Height of the plane in map space coordinates.
-     */
-    Plane(Sector &sector, const de::Vec3f &normal = de::Vec3f(0, 0, 1), double height = 0);
-
     int property(world::DmuArgs &args) const;
     int setProperty(const world::DmuArgs &args);
 

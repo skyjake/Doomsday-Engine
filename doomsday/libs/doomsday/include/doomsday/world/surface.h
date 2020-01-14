@@ -60,6 +60,18 @@ public:
     /// Notified whenever the @em sharp origin changes.
     DE_AUDIENCE(OriginChange,  void surfaceOriginChanged(Surface &surface))
 
+public:
+    /**
+     * Construct a new surface.
+     *
+     * @param owner    Map element which will own the surface.
+     * @param opacity  Opacity strength (@c 1= fully opaque).
+     * @param color    Tint color.
+     */
+    Surface(world::MapElement &owner,
+            float opacity        = 1,
+            const de::Vec3f &color = de::Vec3f(1));
+
     /**
      * Composes a human-friendly, styled, textual description of the surface.
      */
@@ -206,17 +218,6 @@ public:
     virtual void resetLookups();
 
 protected:
-    /**
-     * Construct a new surface.
-     *
-     * @param owner    Map element which will own the surface.
-     * @param opacity  Opacity strength (@c 1= fully opaque).
-     * @param color    Tint color.
-     */
-    Surface(world::MapElement &owner,
-            float opacity        = 1,
-            const de::Vec3f &color = de::Vec3f(1));
-
     int property(world::DmuArgs &args) const;
     int setProperty(const world::DmuArgs &args);
 

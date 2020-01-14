@@ -614,7 +614,7 @@ public:  /// @todo Most of the following should be private:
      * Initialize all polyobjs in the map. To be called after map load.
      */
     void initPolyobjs();
-
+    
 private:
     DE_PRIVATE(d)
 };

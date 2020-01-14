@@ -34,6 +34,8 @@
 
 namespace world {
 
+namespace bsp { class Partitioner; }
+
 class Line;
 class LineSide;
 class LineOwner;
@@ -50,6 +52,15 @@ class LIBDOOMSDAY_PUBLIC LineSideSegment : public world::MapElement
     DE_NO_ASSIGN(LineSideSegment)
 
 public:
+    /**
+     * Construct a new line side segment.
+     *
+     * @param lineSide  Side parent which will own the segment.
+     * @param hedge     Half-edge from the map geometry mesh which the
+     *                  new segment visualizes.
+     */
+    LineSideSegment(LineSide &lineSide, mesh::HEdge &hedge);
+
     /**
      * Returns the half-edge for the segment.
      */
@@ -82,16 +93,6 @@ public:
     double length() const { return _length; };
 
     void setLength(double length) { _length = length; }
-
-protected:
-    /**
-     * Construct a new line side segment.
-     *
-     * @param lineSide  Side parent which will own the segment.
-     * @param hedge     Half-edge from the map geometry mesh which the
-     *                  new segment visualizes.
-     */
-    LineSideSegment(LineSide &lineSide, mesh::HEdge &hedge);
 
 private:
     mesh::HEdge *_hedge  = nullptr; // Half-edge attributed to the line segment (not owned).
@@ -133,6 +134,16 @@ public:
     using SectionFlags = de::Flags;
 
 public:
+    /**
+     * Construct a new line side.
+     *
+     * @param line    Line parent which will own the side.
+     * @param sector  Sector on "this" side of the line. Can be @c nullptr.
+     *                Note that once attributed, the sector cannot normally
+     *                be changed.
+     */
+    LineSide(Line &line, Sector *sector = nullptr);
+
     /**
      * Composes a human-friendly, styled, textual description of the side.
      */
@@ -419,16 +430,6 @@ public:
     inline const Vertex &vertex(int to) const;
 
 protected:
-    /**
-     * Construct a new line side.
-     *
-     * @param line    Line parent which will own the side.
-     * @param sector  Sector on "this" side of the line. Can be @c nullptr.
-     *                Note that once attributed, the sector cannot normally
-     *                be changed.
-     */
-    LineSide(Line &line, Sector *sector = nullptr);
-
     int property(world::DmuArgs &args) const;
     int setProperty(const world::DmuArgs &args);
 
@@ -479,16 +480,13 @@ public:
 
     static de::String sideIdAsText(int sideId);
 
-public: /// @todo make private:
-    /// Links to vertex line owner nodes:
-    LineOwner *_vo1 = nullptr;
-    LineOwner *_vo2 = nullptr;
-
-    /// Sector of the map for which this line acts as a "One-way window".
-    /// @todo Now unnecessary, refactor away -ds
-    Sector *_bspWindowSector = nullptr;
-
 public:
+    Line(Vertex &from,
+         Vertex &to,
+         int     flags       = 0,
+         Sector *frontSector = nullptr,
+         Sector *backSector  = nullptr);
+
     /**
      * Returns the public DDLF_* flags for the line.
      */
@@ -763,17 +761,22 @@ public:
     static void consoleRegister();
 
 protected:
-    Line(Vertex &from,
-         Vertex &to,
-         int     flags       = 0,
-         Sector *frontSector = nullptr,
-         Sector *backSector  = nullptr);
-
     int property(world::DmuArgs &args) const;
     int setProperty(const world::DmuArgs &args);
 
 private:
     DE_PRIVATE(d)
+
+    /// Links to vertex line owner nodes:
+    LineOwner *_vo1 = nullptr;
+    LineOwner *_vo2 = nullptr;
+
+    /// Sector of the map for which this line acts as a "One-way window".
+    /// @todo Now unnecessary, refactor away -ds
+    Sector *_bspWindowSector = nullptr;
+    
+    friend class Map;
+    friend class bsp::Partitioner;
 };
 
 LineSide       &LineSide::back()       { return line().side(sideId() ^ 1); }

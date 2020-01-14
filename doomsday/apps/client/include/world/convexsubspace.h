@@ -34,7 +34,7 @@ namespace world { class AudioEnvironment; }
 class ConvexSubspace : public world::ConvexSubspace
 {
 public:
-    // --------------------------------------------------------------------------------------
+    ConvexSubspace(mesh::Face &convexPolygon, world::BspLeaf *bspLeaf = nullptr);
 
     /**
      * Returns the vector described by the offset from the map coordinate space origin to
@@ -142,7 +142,5 @@ public:
     void link(Lumobj &lumobj);
 
 private:
-    ConvexSubspace(mesh::Face &convexPolygon, world::BspLeaf *bspLeaf = nullptr);
-
     DE_PRIVATE(d)
 };
