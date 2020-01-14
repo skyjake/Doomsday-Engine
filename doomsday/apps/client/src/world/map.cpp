@@ -219,6 +219,7 @@ DE_PIMPL(Map)
     ~Impl()
     {
         self().removeAllLumobjs();
+        self().clearData();
     }
 
     void initContactBlockmaps(ddouble margin = 8)

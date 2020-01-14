@@ -173,19 +173,30 @@ DE_PIMPL(Map)
     ~Impl()
     {
         DE_NOTIFY_PUBLIC(Deletion, i) i->mapBeingDeleted(self());
-
+        clearData();
+    }
+    
+    void clearData()
+    {
         // Delete thinkers before the map elements, because thinkers may reference them
         // in their private data destructors.
         thinkers.reset();
 
         deleteAll(sectors);
+        sectors.clear();
+        
         deleteAll(subspaces);
+        
+        subspaces.clear();
         for (Polyobj *polyobj : polyobjs)
         {
             polyobj->~Polyobj();
             M_Free(polyobj);
         }
+        polyobjs.clear();
+        
         deleteAll(lines);
+        lines.clear();
 
         /// @todo fixme: Free all memory we have ownership of.
         // mobjNodes/lineNodes/lineLinks
@@ -1181,6 +1192,11 @@ Map::Map(res::MapManifest *manifest) : d(new Impl(this))
 
 Map::~Map()
 {}
+
+void Map::clearData()
+{
+    d->clearData();
+}
 
 String Map::id() const
 {

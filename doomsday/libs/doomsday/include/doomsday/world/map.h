@@ -97,6 +97,12 @@ public:
     explicit Map(res::MapManifest *manifest = nullptr);
 
     virtual ~Map();
+    
+    /**
+     * Delete all elements of the map, returning it to an empty state like the map
+     * would exist after construction.
+     */
+    void clearData();
 
     de::String id() const;
 
