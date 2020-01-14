@@ -489,6 +489,7 @@ macro (deng_codesign target)
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/*/*.dylib\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/Frameworks/*.dylib\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/Frameworks/*.framework\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/MacOS/*\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/PlugIns/*.bundle/*\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/PlugIns/*.bundle\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/*.dylib\"
@@ -503,14 +504,14 @@ macro (deng_codesign target)
                     endif ()
                 endif ()
                 if (NOT _skip)
-                message (STATUS \"Signing \${fn}...\")
-                execute_process (COMMAND ${CODESIGN_COMMAND} --verbose 
-                        --options runtime
-                        --timestamp
-                        -s \"${DENG_CODESIGN_APP_CERT}\"
-                        ${DENG_FW_CODESIGN_EXTRA_FLAGS}
-                        \"\${fn}\"
-                )
+                    message (STATUS \"Signing \${fn}...\")
+                    execute_process (COMMAND ${CODESIGN_COMMAND} --verbose 
+                            --options runtime
+                            --timestamp
+                            --force -s \"${DENG_CODESIGN_APP_CERT}\"
+                            ${DENG_FW_CODESIGN_EXTRA_FLAGS}
+                            \"\${fn}\"
+                    )
                 endif ()
             endforeach (fn)
             message (STATUS \"Signing \${CMAKE_INSTALL_PREFIX}/${_outName}.app using '${DENG_CODESIGN_APP_CERT}'...\")
