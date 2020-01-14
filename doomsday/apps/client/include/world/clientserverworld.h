@@ -116,9 +116,12 @@ public:
      */
     timespan_t time() const;
 
-    void tick(timespan_t elapsed);
-
 #ifdef __CLIENT__
+   
+    bool allowAdvanceTime() const override;
+    
+    void tick(timespan_t) override;
+    
     /**
      * To be called at the beginning of a render frame, so that we can prepare for
      * drawing view(s) of the current map.
@@ -130,11 +133,8 @@ public:
      * that must be completed after view(s) have been drawn.
      */
     void endFrame();
+    
 #endif  // __CLIENT__
-
-public:
-    /// Scripting helper: get pointer to current instance mobj_t based on the script callstack.
-    static mobj_t &contextMobj(const de::Context &);
 
 private:
     DE_PRIVATE(d)

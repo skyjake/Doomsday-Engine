@@ -68,6 +68,7 @@
 #include <doomsday/console/var.h>
 #include <doomsday/defs/mapinfo.h>
 #include <doomsday/resource/mapmanifests.h>
+#include <doomsday/world/mapconversionreporter.h>
 #include <doomsday/world/MaterialManifest>
 #include <doomsday/world/Materials>
 #include <doomsday/world/plane.h>
@@ -92,179 +93,7 @@
 
 using namespace de;
 using namespace res;
-
-/**
- * Observes the progress of a map conversion and records any issues/problems that
- * are encountered in the process. When asked, compiles a human-readable report
- * intended to assist mod authors in debugging their maps.
- *
- * @todo Consolidate with the missing material reporting done elsewhere -ds
- */
-class MapConversionReporter
-: DE_OBSERVES(world::Map, UnclosedSectorFound)
-, DE_OBSERVES(world::Map, OneWayWindowFound)
-, DE_OBSERVES(world::Map, Deletion)
-{
-    /// Record "unclosed sectors".
-    /// Sector index => world point relatively near to the problem area.
-    typedef std::map<dint, Vec2i> UnclosedSectorMap;
-
-    /// Record "one-way window lines".
-    /// Line index => Sector index the back side faces.
-    typedef std::map<dint, dint> OneWayWindowMap;
-
-    /// Maximum number of warnings to output (of each type) about any problems
-    /// encountered during the build process.
-    static dint const maxWarningsPerType;
-
-public:
-    /**
-     * Construct a new conversion reporter.
-     * @param map
-     */
-    MapConversionReporter(world::Map *map = nullptr)
-    {
-        setMap(map);
-    }
-
-    ~MapConversionReporter()
-    {
-        observeMap(false);
-    }
-
-    /**
-     * Change the map to be reported on. Note that any existing report data is
-     * retained until explicitly cleared.
-     */
-    void setMap(world::Map *newMap)
-    {
-        if (_map != newMap)
-        {
-            observeMap(false);
-            _map = newMap;
-            observeMap(true);
-        }
-    }
-
-    /// @see setMap(), clearReport()
-    inline void setMapAndClearReport(world::Map *newMap)
-    {
-        setMap(newMap);
-        clearReport();
-    }
-
-    /// Same as @code setMap(nullptr); @endcode
-    inline void clearMap() { setMap(nullptr); }
-
-    /**
-     * Clear any existing conversion report data.
-     */
-    void clearReport()
-    {
-        _unclosedSectors.clear();
-        _oneWayWindows.clear();
-    }
-
-    /**
-     * Compile and output any existing report data to the message log.
-     */
-    void writeLog()
-    {
-        if (dint numToLog = maxWarnings(unclosedSectorCount()))
-        {
-            String str;
-
-            UnclosedSectorMap::const_iterator it = _unclosedSectors.begin();
-            for (dint i = 0; i < numToLog; ++i, ++it)
-            {
-                if (i != 0) str += "\n";
-                str += Stringf(
-                    "Sector #%d is unclosed near %s", it->first, it->second.asText().c_str());
-            }
-
-            if (numToLog < unclosedSectorCount())
-                str += Stringf("\n(%i more like this)", unclosedSectorCount() - numToLog);
-
-            LOGDEV_MAP_WARNING("%s") << str;
-        }
-
-        if (dint numToLog = maxWarnings(oneWayWindowCount()))
-        {
-            String str;
-
-            OneWayWindowMap::const_iterator it = _oneWayWindows.begin();
-            for (dint i = 0; i < numToLog; ++i, ++it)
-            {
-                if (i != 0) str += "\n";
-                str += Stringf("Line #%i seems to be a One-Way Window (back faces sector #%i).",
-                           it->first, it->second);
-            }
-
-            if (numToLog < oneWayWindowCount())
-                str += Stringf("\n(%i more like this)", oneWayWindowCount() - numToLog);
-
-            LOGDEV_MAP_MSG("%s") << str;
-        }
-    }
-
-protected:
-    /// Observes Map UnclosedSectorFound.
-    void unclosedSectorFound(world::Sector &sector, const Vec2d &nearPoint) override
-    {
-        _unclosedSectors.insert(std::make_pair(sector.indexInArchive(), nearPoint.toVec2i()));
-    }
-
-    /// Observes Map OneWayWindowFound.
-    void oneWayWindowFound(world::Line &line, world::Sector &backFacingSector) override
-    {
-        _oneWayWindows.insert(std::make_pair(line.indexInArchive(), backFacingSector.indexInArchive()));
-    }
-
-    /// Observes Map Deletion.
-    void mapBeingDeleted(const world::Map &map) override
-    {
-        DE_ASSERT(&map == _map);  // sanity check.
-        DE_UNUSED(map);
-        _map = nullptr;
-    }
-
-private:
-    inline dint unclosedSectorCount() const { return dint( _unclosedSectors.size() ); }
-    inline dint oneWayWindowCount() const   { return dint( _oneWayWindows.size() ); }
-
-    static inline dint maxWarnings(dint issueCount)
-    {
-#ifdef DE_DEBUG
-        return issueCount; // No limit.
-#else
-        return de::min(issueCount, maxWarningsPerType);
-#endif
-    }
-
-    void observeMap(bool yes)
-    {
-        if (!_map) return;
-
-        if (yes)
-        {
-            _map->audienceForDeletion()            += this;
-            _map->audienceForOneWayWindowFound()   += this;
-            _map->audienceForUnclosedSectorFound() += this;
-        }
-        else
-        {
-            _map->audienceForDeletion()            -= this;
-            _map->audienceForOneWayWindowFound()   -= this;
-            _map->audienceForUnclosedSectorFound() -= this;
-        }
-    }
-
-    world::Map *      _map = nullptr; ///< Map currently being reported on, if any (not owned).
-    UnclosedSectorMap _unclosedSectors;
-    OneWayWindowMap   _oneWayWindows;
-};
-
-const dint MapConversionReporter::maxWarningsPerType = 10;
+using world::MapConversionReporter;
 
 DE_PIMPL(ClientServerWorld)
 #if defined(__SERVER__)
@@ -284,91 +113,7 @@ DE_PIMPL(ClientServerWorld)
 
         // Callbacks.
         world::DmuArgs::setPointerToIndexFunc(P_ToIndex);
-        
-        using world::Factory;
-        
-#ifdef __CLIENT__
-        Factory::setConvexSubspaceConstructor([](mesh::Face &f, world::BspLeaf *bl) -> world::ConvexSubspace * {
-            return new ConvexSubspace(f, bl);
-        });
-        Factory::setLineConstructor([](world::Vertex &s, world::Vertex &t, int flg, world::Sector *fs, world::Sector *bs) -> world::Line * {
-            return new Line(s, t, flg, fs, bs);
-        });
-        Factory::setLineSideConstructor([](world::Line &ln, world::Sector *s) -> world::LineSide * {
-            return new LineSide(ln, s);
-        });
-        Factory::setLineSideSegmentConstructor([](world::LineSide &ls, mesh::HEdge &he) -> world::LineSideSegment * {
-            return new LineSideSegment(ls, he);
-        });
-        Factory::setMapConstructor([]() -> world::Map * {
-            return new Map();
-        });
-        Factory::setMobjThinkerDataConstructor([](const Id &id) -> MobjThinkerData * {
-            return new ClientMobjThinkerData(id);
-        });
-        Factory::setMaterialConstructor([](world::MaterialManifest &m) -> world::Material * {
-            return new ClientMaterial(m);
-        });
-        Factory::setPlaneConstructor([](world::Sector &sec, const Vec3f &norm, double hgt) -> world::Plane * {
-            return new Plane(sec, norm, hgt);
-        });
-        Factory::setPolyobjDataConstructor([]() -> world::PolyobjData * {
-            return new PolyobjData();
-        });
-        Factory::setSkyConstructor([](const defn::Sky *def) -> world::Sky * {
-            return new Sky(def);
-        });
-        Factory::setSubsectorConstructor([](const List<world::ConvexSubspace *> &sl) -> world::Subsector * {
-            return new Subsector(sl);
-        });
-        Factory::setSurfaceConstructor([](world::MapElement &me, float opac, const Vec3f &clr) -> world::Surface * {
-            return new Surface(me, opac, clr);
-        });
-        Factory::setVertexConstructor([](mesh::Mesh &m, const Vec2d &p) -> world::Vertex * {
-            return new Vertex(m, p);
-        });
-#else
-        Factory::setConvexSubspaceConstructor([](mesh::Face &f, world::BspLeaf *bl) {
-            return new world::ConvexSubspace(f, bl);
-        });
-        Factory::setLineConstructor([](world::Vertex &s, world::Vertex &t, int flg,
-                                       world::Sector *fs, world::Sector *bs) {
-            return new world::Line(s, t, flg, fs, bs);
-        });
-        Factory::setLineSideConstructor([](world::Line &ln, world::Sector *s) {
-            return new world::LineSide(ln, s);
-        });
-        Factory::setLineSideSegmentConstructor([](world::LineSide &ls, mesh::HEdge &he) {
-            return new world::LineSideSegment(ls, he);
-        });
-        Factory::setMapConstructor([]() { return new world::Map(); });
-        Factory::setMobjThinkerDataConstructor([](const Id &id) { return new MobjThinkerData(id); });
-        Factory::setMaterialConstructor([] (world::MaterialManifest &m) {
-            return new world::Material(m);
-        });
-        Factory::setPlaneConstructor([](world::Sector &sec, const Vec3f &norm, double hgt) {
-            return new world::Plane(sec, norm, hgt);
-        });
-        Factory::setPolyobjDataConstructor([]() { return new world::PolyobjData(); });
-        Factory::setSkyConstructor([](const defn::Sky *def) { return new world::Sky(def); });
-        Factory::setSubsectorConstructor([] (const List<world::ConvexSubspace *> &sl) {
-            return new world::Subsector(sl);
-        });
-        Factory::setSurfaceConstructor([](world::MapElement &me, float opac, const Vec3f &clr) {
-            return new world::Surface(me, opac, clr);
-        });
-        Factory::setVertexConstructor([](mesh::Mesh &m, const Vec2d &p) -> world::Vertex * {
-            return new world::Vertex(m, p);
-        });
-#endif
     }
-
-#if defined(__CLIENT__)
-    static inline RenderSystem &rendSys()
-    {
-        return ClientApp::renderSystem();
-    }
-#endif
 
     /**
      * Attempt JIT conversion of the map data with the help of a plugin. Note that
@@ -447,6 +192,14 @@ DE_PIMPL(ClientServerWorld)
         self().setMap(map);
         if (!map) return;
 
+        if (gameTime > 20000000 / TICSPERSEC)
+        {
+            // In very long-running games, gameTime will become so large that
+            // it cannot be accurately converted to 35 Hz integer tics. Thus it
+            // needs to be reset back to zero.
+            gameTime = 0;
+        }
+
         // We cannot make an editable map current.
         DE_ASSERT(!map->isEditable());
 
@@ -468,43 +221,12 @@ DE_PIMPL(ClientServerWorld)
         // Update based on Map Info.
         map->update();
 
-#ifdef __CLIENT__
-        {
-            Map &clMap = map->as<Map>();
-            
-            // Connect the map to world audiences.
-            /// @todo The map should instead be notified when it is made current
-            /// so that it may perform the connection itself. Such notification
-            /// would also afford the map the opportunity to prepare various data
-            /// which is only needed when made current (e.g., caches for render).
-            self().audienceForFrameBegin() += clMap;
-
-            // Set up the SkyDrawable to get its config from the map's Sky.
-            clMap.skyAnimator().setSky(&rendSys().sky().configure(&map->sky().as<Sky>()));
-
-            // Prepare the client-side data.
-            Cl_ResetFrame();
-            Cl_InitPlayers();  // Player data, too.
-
-            /// @todo Defer initial generator spawn until after finalization.
-            clMap.initGenerators();
-        }
-#endif
-
         // The game may need to perform it's own finalization now that the
         // "current" map has changed.
         const res::Uri mapUri = (map->hasManifest() ? map->manifest().composeUri() : res::makeUri("Maps:"));
         if (gx.FinalizeMapChange)
         {
             gx.FinalizeMapChange(reinterpret_cast<const uri_s *>(&mapUri));
-        }
-
-        if (gameTime > 20000000 / TICSPERSEC)
-        {
-            // In very long-running games, gameTime will become so large that
-            // it cannot be accurately converted to 35 Hz integer tics. Thus it
-            // needs to be reset back to zero.
-            gameTime = 0;
         }
 
         // Init player values.
@@ -545,8 +267,19 @@ DE_PIMPL(ClientServerWorld)
 
 #ifdef __CLIENT__
         {
-            Map &clMap = map->as<Map>();
-            App_AudioSystem().worldMapChanged();
+            // Prepare the client-side data.
+            Cl_ResetFrame();
+            Cl_InitPlayers();  // Player data, too (reset to zero).
+
+            auto &rendSys = ClientApp::renderSystem();
+            Map & clMap   = map->as<Map>();
+
+            self().audienceForFrameBegin() += clMap;
+
+            // Set up the SkyDrawable to get its config from the map's Sky.
+            clMap.skyAnimator().setSky(&ClientApp::renderSystem().sky().configure(&map->sky().as<Sky>()));
+
+            ClientApp::audioSystem().worldMapChanged();
 
             GL_SetupFogFromMapInfo(map->mapInfo().accessedRecordPtr());
             
@@ -557,19 +290,20 @@ DE_PIMPL(ClientServerWorld)
             Con_SetProgress(100);
             Time begunPrecacheAt;
             // Sky models usually have big skins.
-            rendSys().sky().cacheAssets();
+            rendSys.sky().cacheAssets();
             App_Resources().cacheForCurrentMap();
             App_Resources().processCacheQueue();
             LOG_RES_VERBOSE("Precaching completed in %.2f seconds") << begunPrecacheAt.since();
 
-            rendSys().clearDrawLists();
+            rendSys.clearDrawLists();
             R_InitRendPolyPools();
             Rend_UpdateLightModMatrix();
 
+            clMap.initGenerators();
             clMap.initRadio();
             clMap.initContactBlockmaps();
             R_InitContactLists(clMap);
-            rendSys().worldSystemMapChanged(clMap);
+            rendSys.worldSystemMapChanged(clMap);
 
             // Rewind/restart material animators.
             /// @todo Only rewind animators responsible for map-surface contexts.
@@ -626,7 +360,7 @@ DE_PIMPL(ClientServerWorld)
         Z_PrintStatus();
 
         // Inform interested parties that the "current" map has changed.
-        self().notifyMapChange();
+        DE_NOTIFY_PUBLIC(MapChange, i) i->worldMapChanged();
     }
 
     /// @todo Split this into subtasks (load, make current, cache assets).
@@ -727,16 +461,6 @@ DE_PIMPL(ClientServerWorld)
 #endif
 };
 
-#ifdef __CLIENT__
-DE_AUDIENCE_METHOD(ClientServerWorld, FrameBegin)
-DE_AUDIENCE_METHOD(ClientServerWorld, FrameEnd)
-#endif
-
-ClientServerWorld::ClientServerWorld()
-    : World()
-    , d(new Impl(this))
-{}
-
 world::Map &ClientServerWorld::map() const
 {
     if (!hasMap())
@@ -773,22 +497,6 @@ bool ClientServerWorld::changeMap(const res::Uri &mapUri)
     }
 }
 
-void ClientServerWorld::reset()
-{
-    World::reset();
-
-#ifdef __CLIENT__
-    if (isClient)
-    {
-        Cl_ResetFrame();
-        Cl_InitPlayers();
-    }
-#endif
-
-    // If a map is currently loaded -- unload it.
-    unloadMap();
-}
-
 void ClientServerWorld::update()
 {
     DoomsdayApp::players().forAll([] (Player &plr)
@@ -815,9 +523,7 @@ Scheduler &ClientServerWorld::scheduler()
 
 void ClientServerWorld::advanceTime(timespan_t delta)
 {
-#if defined (__CLIENT__)
-    if (!::clientPaused)
-#endif
+    if (allowAdvanceTime())
     {
         d->time += delta;
         d->scheduler.advanceTime(TimeSpan(delta));
@@ -829,9 +535,78 @@ timespan_t ClientServerWorld::time() const
     return d->time;
 }
 
+#ifdef __CLIENT__
+
+DE_AUDIENCE_METHOD(ClientServerWorld, FrameBegin)
+DE_AUDIENCE_METHOD(ClientServerWorld, FrameEnd)
+
+ClientServerWorld::ClientServerWorld()
+    : world::World()
+    , d(new Impl(this))
+{
+    using world::Factory;
+
+    Factory::setConvexSubspaceConstructor([](mesh::Face &f, world::BspLeaf *bl) -> world::ConvexSubspace * {
+        return new ConvexSubspace(f, bl);
+    });
+    Factory::setLineConstructor([](world::Vertex &s, world::Vertex &t, int flg, world::Sector *fs, world::Sector *bs) -> world::Line * {
+        return new Line(s, t, flg, fs, bs);
+    });
+    Factory::setLineSideConstructor([](world::Line &ln, world::Sector *s) -> world::LineSide * {
+        return new LineSide(ln, s);
+    });
+    Factory::setLineSideSegmentConstructor([](world::LineSide &ls, mesh::HEdge &he) -> world::LineSideSegment * {
+        return new LineSideSegment(ls, he);
+    });
+    Factory::setMapConstructor([]() -> world::Map * {
+        return new Map();
+    });
+    Factory::setMobjThinkerDataConstructor([](const Id &id) -> MobjThinkerData * {
+        return new ClientMobjThinkerData(id);
+    });
+    Factory::setMaterialConstructor([](world::MaterialManifest &m) -> world::Material * {
+        return new ClientMaterial(m);
+    });
+    Factory::setPlaneConstructor([](world::Sector &sec, const Vec3f &norm, double hgt) -> world::Plane * {
+        return new Plane(sec, norm, hgt);
+    });
+    Factory::setPolyobjDataConstructor([]() -> world::PolyobjData * {
+        return new PolyobjData();
+    });
+    Factory::setSkyConstructor([](const defn::Sky *def) -> world::Sky * {
+        return new Sky(def);
+    });
+    Factory::setSubsectorConstructor([](const List<world::ConvexSubspace *> &sl) -> world::Subsector * {
+        return new Subsector(sl);
+    });
+    Factory::setSurfaceConstructor([](world::MapElement &me, float opac, const Vec3f &clr) -> world::Surface * {
+        return new Surface(me, opac, clr);
+    });
+    Factory::setVertexConstructor([](mesh::Mesh &m, const Vec2d &p) -> world::Vertex * {
+        return new Vertex(m, p);
+    });
+}
+
+bool ClientServerWorld::allowAdvanceTime() const
+{
+    return !clientPaused;
+}
+
+void ClientServerWorld::reset()
+{
+    World::reset();
+    if (isClient)
+    {
+        Cl_ResetFrame();
+        Cl_InitPlayers();
+    }
+    unloadMap();
+}
+
 void ClientServerWorld::tick(timespan_t elapsed)
 {
-#ifdef __CLIENT__
+    world::World::tick(elapsed);
+    
     if (hasMap())
     {
         map().as<Map>().skyAnimator().advanceTime(elapsed);
@@ -845,25 +620,7 @@ void ClientServerWorld::tick(timespan_t elapsed)
             });
         }
     }
-#else
-    DE_UNUSED(elapsed);
-#endif
 }
-
-mobj_t &ClientServerWorld::contextMobj(const Context &ctx) // static
-{
-    /// @todo Not necessarily always the current map. -jk
-    const int id = ctx.selfInstance().geti(DE_STR("__id__"), 0);
-    mobj_t *mo = App_World().map().thinkers().mobjById(id);
-    if (!mo)
-    {
-        throw world::Map::MissingObjectError("ClientServerWorld::contextMobj",
-                                      String::format("Mobj %d does not exist", id));
-    }
-    return *mo;
-}
-
-#ifdef __CLIENT__
 
 void ClientServerWorld::beginFrame(bool resetNextViewer)
 {
@@ -878,3 +635,54 @@ void ClientServerWorld::endFrame()
 }
 
 #endif  // __CLIENT__
+
+#if defined(__SERVER__)
+
+ClientServerWorld::ClientServerWorld()
+    : world::World()
+    , d(new Impl(this))
+{
+    using world::Factory;
+            
+    Factory::setConvexSubspaceConstructor([](mesh::Face &f, world::BspLeaf *bl) {
+        return new world::ConvexSubspace(f, bl);
+    });
+    Factory::setLineConstructor([](world::Vertex &s, world::Vertex &t, int flg,
+                                   world::Sector *fs, world::Sector *bs) {
+        return new world::Line(s, t, flg, fs, bs);
+    });
+    Factory::setLineSideConstructor([](world::Line &ln, world::Sector *s) {
+        return new world::LineSide(ln, s);
+    });
+    Factory::setLineSideSegmentConstructor([](world::LineSide &ls, mesh::HEdge &he) {
+        return new world::LineSideSegment(ls, he);
+    });
+    Factory::setMapConstructor([]() { return new world::Map(); });
+    Factory::setMobjThinkerDataConstructor([](const Id &id) { return new MobjThinkerData(id); });
+    Factory::setMaterialConstructor([] (world::MaterialManifest &m) {
+        return new world::Material(m);
+    });
+    Factory::setPlaneConstructor([](world::Sector &sec, const Vec3f &norm, double hgt) {
+        return new world::Plane(sec, norm, hgt);
+    });
+    Factory::setPolyobjDataConstructor([]() { return new world::PolyobjData(); });
+    Factory::setSkyConstructor([](const defn::Sky *def) { return new world::Sky(def); });
+    Factory::setSubsectorConstructor([] (const List<world::ConvexSubspace *> &sl) {
+        return new world::Subsector(sl);
+    });
+    Factory::setSurfaceConstructor([](world::MapElement &me, float opac, const Vec3f &clr) {
+        return new world::Surface(me, opac, clr);
+    });
+    Factory::setVertexConstructor([](mesh::Mesh &m, const Vec2d &p) -> world::Vertex * {
+        return new world::Vertex(m, p);
+    });
+}
+
+void ClientServerWorld::reset()
+{
+    World::reset();
+    unloadMap();
+}
+
+#endif // defined(__SERVER__)
+

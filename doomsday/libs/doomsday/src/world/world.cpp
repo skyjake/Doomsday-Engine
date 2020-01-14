@@ -21,11 +21,14 @@
 #include "doomsday/world/map.h"
 #include "doomsday/world/sector.h"
 #include "doomsday/world/line.h"
+#include "doomsday/world/thinkers.h"
 #include "doomsday/defs/ded.h"
 #include "doomsday/defs/mapinfo.h"
 #include "doomsday/DoomsdayApp"
 #include "doomsday/players.h"
 #include "api_player.h"
+
+#include <de/Context>
 
 namespace world {
 
@@ -109,7 +112,17 @@ void World::reset()
     });
 }
 
-void World::timeChanged(const Clock &)
+//void World::timeChanged(const Clock &)
+//{
+//    // Nothing to do.
+//}
+
+bool World::allowAdvanceTime() const
+{
+    return true;
+}
+
+void World::tick(timespan_t)
 {
     // Nothing to do.
 }
@@ -146,9 +159,16 @@ World &World::get()
     return *theWorld;
 }
 
-void World::notifyMapChange()
+mobj_t &World::contextMobj(const Context &ctx) // static
 {
-    DE_NOTIFY(MapChange, i) i->worldMapChanged();
+    const int id = ctx.selfInstance().geti(DE_STR("__id__"), 0);
+    mobj_t *mo = get().map().thinkers().mobjById(id);
+    if (!mo)
+    {
+        throw Map::MissingObjectError("World::contextMobj",
+                                      Stringf("Mobj %d does not exist", id));
+    }
+    return *mo;
 }
 
 } // namespace world

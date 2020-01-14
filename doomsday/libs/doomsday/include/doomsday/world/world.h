@@ -26,6 +26,8 @@
 #include <de/Observers>
 #include <de/System>
 
+namespace de { class Context; }
+
 namespace world {
 
 class Map;
@@ -43,6 +45,8 @@ public:
 
     static int ddMapSetup; // map setup is in progress
     static int validCount;
+
+    DE_AUDIENCE(MapChange, void worldMapChanged())
 
 public:
     World();
@@ -71,19 +75,20 @@ public:
 
     world::Materials &       materials();
     const world::Materials & materials() const;
+    
+    virtual bool allowAdvanceTime() const;
 
-    // Systems observe the passage of time.
-    void timeChanged(const de::Clock &) override;
+    /**
+     * Called from P_Ticker() to update world state.
+     */
+    virtual void tick(timespan_t elapsed);
+    
+public:
+    /// Scripting helper: get pointer to current instance mobj_t based on the script callstack.
+    static mobj_t &contextMobj(const de::Context &);
 
 protected:
     void setMap(world::Map *map);
-
-public:
-    /// Notified whenever the "current" map changes.
-    DE_AUDIENCE(MapChange, void worldMapChanged())
-
-public:  /// @todo make private:
-    void notifyMapChange();
 
 private:
     DE_PRIVATE(d)

@@ -37,7 +37,7 @@ namespace world {
 
 static Value *Function_Thing_AddMom(Context &ctx, const Function::ArgumentValues &args)
 {
-    mobj_t &   mo    = ClientServerWorld::contextMobj(ctx);
+    mobj_t &   mo    = World::contextMobj(ctx);
     const auto delta = vectorFromValue<Vec3d>(*args.at(0));
     mo.mom[VX] += delta.x;
     mo.mom[VY] += delta.y;
@@ -47,27 +47,27 @@ static Value *Function_Thing_AddMom(Context &ctx, const Function::ArgumentValues
 
 static Value *Function_Thing_Id(Context &ctx, const Function::ArgumentValues &)
 {
-    return new NumberValue(ClientServerWorld::contextMobj(ctx).thinker.id);
+    return new NumberValue(World::contextMobj(ctx).thinker.id);
 }
 
 static Value *Function_Thing_Health(Context &ctx, const Function::ArgumentValues &)
 {
-    return new NumberValue(ClientServerWorld::contextMobj(ctx).health);
+    return new NumberValue(World::contextMobj(ctx).health);
 }
 
 static Value *Function_Thing_Height(Context &ctx, const Function::ArgumentValues &)
 {
-    return new NumberValue(ClientServerWorld::contextMobj(ctx).height);
+    return new NumberValue(World::contextMobj(ctx).height);
 }
 
 static Value *Function_Thing_Mom(Context &ctx, const Function::ArgumentValues &)
 {
-    return new ArrayValue(Vec3d(ClientServerWorld::contextMobj(ctx).mom));
+    return new ArrayValue(Vec3d(World::contextMobj(ctx).mom));
 }
 
 static Value *Function_Thing_StartSound(Context &ctx, const Function::ArgumentValues &args)
 {
-    const mobj_t &mo     = ClientServerWorld::contextMobj(ctx);
+    const mobj_t &mo     = World::contextMobj(ctx);
     const int     sound  = DED_Definitions()->getSoundNum(args.at(0)->asText());
     const float   volume = float(args.at(1)->asNumber());
     if (sound >= 0)
@@ -83,7 +83,7 @@ static Value *Function_Thing_StartSound(Context &ctx, const Function::ArgumentVa
 
 static Value *Function_Thing_Player(Context &ctx, const Function::ArgumentValues &)
 {
-    const mobj_t &mo = ClientServerWorld::contextMobj(ctx);
+    const mobj_t &mo = World::contextMobj(ctx);
     if (mo.dPlayer)
     {
         auto &plrs = DoomsdayApp::players();
@@ -94,12 +94,12 @@ static Value *Function_Thing_Player(Context &ctx, const Function::ArgumentValues
 
 static Value *Function_Thing_Pos(Context &ctx, const Function::ArgumentValues &)
 {
-    return new ArrayValue(Vec3d(ClientServerWorld::contextMobj(ctx).origin));
+    return new ArrayValue(Vec3d(World::contextMobj(ctx).origin));
 }
 
 static Value *Function_Thing_Recoil(Context &ctx, const Function::ArgumentValues &args)
 {
-    mobj_t &     mo    = ClientServerWorld::contextMobj(ctx);
+    mobj_t &     mo    = World::contextMobj(ctx);
     const double force = args.at(0)->asNumber();
 
     const angle_t angle = mo.angle + ANG180;
@@ -113,7 +113,7 @@ static Value *Function_Thing_Recoil(Context &ctx, const Function::ArgumentValues
 
 static Value *Function_Thing_Type(Context &ctx, const Function::ArgumentValues &)
 {
-    return new NumberValue(ClientServerWorld::contextMobj(ctx).type);
+    return new NumberValue(World::contextMobj(ctx).type);
 }
 
 //-------------------------------------------------------------------------------------------------
