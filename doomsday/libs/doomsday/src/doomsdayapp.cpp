@@ -129,6 +129,8 @@ DE_STATIC_STRING(PATH_LOCAL_PACKS, "/local/packs");
 
 static DoomsdayApp *theDoomsdayApp = nullptr;
 
+int DoomsdayApp::verbose;
+
 DE_PIMPL(DoomsdayApp)
 , public IFolderPopulationObserver
 {

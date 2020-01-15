@@ -31,7 +31,7 @@
 #include "world/p_players.h"
 #include "world/plane.h"
 #include "world/map.h"
-#include "world/clientserverworld.h"
+#include "world/clientworld.h"
 #include "render/rend_fakeradio.h"
 #include "ConvexSubspace"
 #include "Surface"

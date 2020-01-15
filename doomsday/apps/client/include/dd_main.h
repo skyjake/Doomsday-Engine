@@ -20,7 +20,6 @@
 #ifndef DE_MAIN_H
 #define DE_MAIN_H
 
-//#include <de/LibraryFile>
 #include <de/String>
 #include <doomsday/resource/resources.h>
 #include <doomsday/gameapi.h>
@@ -29,14 +28,15 @@
 
 #ifdef __CLIENT__
 #  include "resource/clientresources.h"
+#  include "world/clientworld.h"
+#else
+#  include "serverworld.h"
 #endif
 #include "audio/audiosystem.h"
-#include "world/clientserverworld.h"
 #include "ui/infine/infinesystem.h"
 
 namespace res { class File1; }
 
-extern int verbose;
 extern int isDedicated; // true if __SERVER__
 #ifdef __CLIENT__
 extern int symbolicEchoMode;
@@ -62,13 +62,14 @@ InFineSystem &App_InFineSystem();
 #ifdef __CLIENT__
 /// Returns the application's resources.
 ClientResources &App_Resources();
+/// Returns the application's global WorldSystem.
+ClientWorld &App_World();
 #else
 /// Returns the application's resources.
 Resources &App_Resources();
-#endif
-
 /// Returns the application's global WorldSystem.
-ClientServerWorld &App_World();
+ServerWorld &App_World();
+#endif
 
 #undef Con_Open
 

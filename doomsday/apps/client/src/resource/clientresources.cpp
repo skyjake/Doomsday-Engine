@@ -81,7 +81,7 @@
 #include "render/billboard.h"  // Rend_SpriteMaterialSpec
 #include "render/skydrawable.h"
 
-#include "world/clientserverworld.h"
+#include "world/clientworld.h"
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/sky.h"
@@ -1637,7 +1637,7 @@ AbstractFont *ClientResources::newFontFromDef(const ded_compositefont_t &def)
         manifest.setResource(CompositeBitmapFont::fromDef(manifest, def));
         if (manifest.hasResource())
         {
-            if (verbose >= 1)
+            if (ClientApp::verbose >= 1)
             {
                 LOG_RES_VERBOSE("New font \"%s\"")
                     << manifest.composeUri();
@@ -1696,7 +1696,7 @@ AbstractFont *ClientResources::newFontFromFile(const res::Uri &uri, const String
         manifest.setResource(BitmapFont::fromFile(manifest, filePath));
         if (manifest.hasResource())
         {
-            if (verbose >= 1)
+            if (ClientApp::verbose >= 1)
             {
                 LOG_RES_VERBOSE("New font \"%s\"")
                     << manifest.composeUri();

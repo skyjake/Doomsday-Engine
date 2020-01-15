@@ -1,4 +1,4 @@
-/** @file worldsystem.h  World subsystem.
+/** @file clientworld.h  World subsystem for the Client app.
  *
  * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -18,19 +18,18 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef WORLDSYSTEM_H
-#define WORLDSYSTEM_H
+#pragma once
 
-#include <de/liblegacy.h>
 #include <de/Error>
 #include <de/Observers>
-#include <de/Scheduler>
 #include <de/Vector>
 #include <doomsday/world/world.h>
 #include <doomsday/uri.h>
 
 namespace de { class Context; }
 namespace world { class Map; }
+
+class Map;
 
 /**
  * Ideas for improvement:
@@ -44,25 +43,20 @@ namespace world { class Map; }
  *
  * @ingroup world
  */
-class ClientServerWorld : public world::World
+class ClientWorld : public world::World
 {
 public:
-    /// No map is currently loaded. @ingroup errors
-    DE_ERROR(MapError);
-
-#ifdef __CLIENT__
     /// Notified when a new frame begins.
-    DE_AUDIENCE(FrameBegin, void worldSystemFrameBegins(bool resetNextViewer))
+    DE_DEFINE_AUDIENCE(FrameBegin, void worldSystemFrameBegins(bool resetNextViewer))
 
     /// Notified when the "current" frame ends.
-    DE_AUDIENCE(FrameEnd, void worldSystemFrameEnds())
-#endif
+    DE_DEFINE_AUDIENCE(FrameEnd, void worldSystemFrameEnds())
 
 public:
     /**
      * Construct a new world system (no map is loaded by default).
      */
-    ClientServerWorld();
+    ClientWorld();
 
     /**
      * To be called to reset the world back to the initial state. Any currently
@@ -72,54 +66,11 @@ public:
      */
     void reset();
 
-    /**
-     * To be called following an engine reset to update the world state.
-     */
-    void update();
-
-    de::Scheduler &scheduler();
-
-    /**
-     * Provides access to the currently loaded map.
-     */
-    world::Map &map() const;
-
-    /**
-     * Returns a pointer to the currently loaded map, if any.
-     */
-    inline world::Map *mapPtr() const { return hasMap() ? &map() : nullptr; }
-
-    /**
-     * @param uri  Universal resource identifier (URI) for the map to change to.
-     *             If an empty URI is specified the current map will be unloaded.
-     *
-     * @return  @c true= the map change completed successfully.
-     */
-    bool changeMap(const res::Uri &uri);
-
-    /**
-     * Unload the currently loaded map (if any).
-     *
-     * @see changeMap()
-     */
-    inline void unloadMap() { changeMap(res::Uri()); }
-
-    /**
-     * Advance time in the world.
-     *
-     * @param delta  Time delta to apply.
-     */
-    void advanceTime(timespan_t delta);
-
-    /**
-     * Returns the current world time.
-     */
-    timespan_t time() const;
-
-#ifdef __CLIENT__
+    Map &map() const;
    
+    void aboutToChangeMap() override;
+    void mapFinalized() override;
     bool allowAdvanceTime() const override;
-    
     void tick(timespan_t) override;
     
     /**
@@ -133,11 +84,4 @@ public:
      * that must be completed after view(s) have been drawn.
      */
     void endFrame();
-    
-#endif  // __CLIENT__
-
-private:
-    DE_PRIVATE(d)
 };
-
-#endif  // WORLDSYSTEM_H

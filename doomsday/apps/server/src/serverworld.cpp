@@ -1,0 +1,166 @@
+/** @file serverworld.cpp  World subsystem for the Server app.
+ *
+ * @authors Copyright © 2003-2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
+ */
+
+#include "serverworld.h"
+
+#include "dd_main.h"
+#include "dd_def.h"
+#include "dd_loop.h"
+#include "def_main.h"  // ::defs
+#include "api_player.h"
+#include "network/net_main.h"
+#include "api_mapedit.h"
+#include "world/p_players.h"
+#include "world/p_ticker.h"
+#include "world/sky.h"
+#include "edit_map.h"
+
+#include "server/sv_pool.h"
+#include <doomsday/world/convexsubspace.h>
+#include <doomsday/world/mobjthinkerdata.h>
+
+#include <doomsday/world/sector.h>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/exec.h>
+#include <doomsday/console/var.h>
+#include <doomsday/defs/mapinfo.h>
+#include <doomsday/resource/mapmanifests.h>
+#include <doomsday/world/mapbuilder.h>
+#include <doomsday/world/MaterialManifest>
+#include <doomsday/world/Materials>
+#include <doomsday/world/plane.h>
+#include <doomsday/world/polyobjdata.h>
+#include <doomsday/world/subsector.h>
+#include <doomsday/world/surface.h>
+#include <doomsday/world/thinkers.h>
+
+#include <de/KeyMap>
+#include <de/legacy/memoryzone.h>
+#include <de/legacy/timer.h>
+#include <de/Binder>
+#include <de/Context>
+#include <de/Error>
+#include <de/Log>
+#include <de/Scheduler>
+#include <de/ScriptSystem>
+#include <de/Time>
+
+#include <map>
+#include <utility>
+
+using namespace de;
+using namespace res;
+
+ServerWorld::ServerWorld()
+{
+    using world::Factory;
+            
+    world::DmuArgs::setPointerToIndexFunc(P_ToIndex);
+
+    Factory::setConvexSubspaceConstructor([](mesh::Face &f, world::BspLeaf *bl) {
+        return new world::ConvexSubspace(f, bl);
+    });
+    Factory::setLineConstructor([](world::Vertex &s, world::Vertex &t, int flg,
+                                   world::Sector *fs, world::Sector *bs) {
+        return new world::Line(s, t, flg, fs, bs);
+    });
+    Factory::setLineSideConstructor([](world::Line &ln, world::Sector *s) {
+        return new world::LineSide(ln, s);
+    });
+    Factory::setLineSideSegmentConstructor([](world::LineSide &ls, mesh::HEdge &he) {
+        return new world::LineSideSegment(ls, he);
+    });
+    Factory::setMapConstructor([]() { return new world::Map(); });
+    Factory::setMobjThinkerDataConstructor([](const Id &id) { return new MobjThinkerData(id); });
+    Factory::setMaterialConstructor([] (world::MaterialManifest &m) {
+        return new world::Material(m);
+    });
+    Factory::setPlaneConstructor([](world::Sector &sec, const Vec3f &norm, double hgt) {
+        return new world::Plane(sec, norm, hgt);
+    });
+    Factory::setPolyobjDataConstructor([]() { return new world::PolyobjData(); });
+    Factory::setSkyConstructor([](const defn::Sky *def) { return new world::Sky(def); });
+    Factory::setSubsectorConstructor([] (const List<world::ConvexSubspace *> &sl) {
+        return new world::Subsector(sl);
+    });
+    Factory::setSurfaceConstructor([](world::MapElement &me, float opac, const Vec3f &clr) {
+        return new world::Surface(me, opac, clr);
+    });
+    Factory::setVertexConstructor([](mesh::Mesh &m, const Vec2d &p) -> world::Vertex * {
+        return new world::Vertex(m, p);
+    });
+    
+    audienceForMapChange() += [this]() {
+        if (hasMap())
+        {
+            map().thinkers().audienceForRemoval() += this;
+        }
+        // Now that the setup is done, let's reset the timer so that it will
+        // appear that no time has passed during the setup.
+        DD_ResetTimer();
+    };
+}
+
+void ServerWorld::aboutToChangeMap()
+{
+    if (hasMap())
+    {
+        map().thinkers().audienceForRemoval() -= this;
+    }
+}
+
+void ServerWorld::thinkerRemoved(thinker_t &th)
+{
+    auto *mob = reinterpret_cast<mobj_t *>(&th);
+
+    // If the state of the mobj is the NULL state, this is a
+    // predictable mobj removal (result of animation reaching its
+    // end) and shouldn't be included in netGame deltas.
+    if (!mob->state || !runtimeDefs.states.indexOf(mob->state))
+    {
+        Sv_MobjRemoved(th.id);
+    }
+}
+
+void ServerWorld::mapFinalized()
+{
+    world::World::mapFinalized();
+    
+    if (gameTime > 20000000 / TICSPERSEC)
+    {
+        // In very long-running games, gameTime will become so large that
+        // it cannot be accurately converted to 35 Hz integer tics. Thus it
+        // needs to be reset back to zero.
+        gameTime = 0;
+    }
+
+    if (::isServer)
+    {
+        // Init server data.
+        Sv_InitPools();
+    }
+}
+
+void ServerWorld::reset()
+{
+    World::reset();
+    unloadMap();
+}

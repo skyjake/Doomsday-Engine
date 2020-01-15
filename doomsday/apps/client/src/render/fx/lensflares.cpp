@@ -20,8 +20,8 @@
 #include "render/ilightsource.h"
 #include "render/viewports.h"
 #include "render/rend_main.h"
-#include "world/clientserverworld.h"
 #include "world/p_players.h"
+#include "world/clientworld.h"
 #include "gl/gl_main.h"
 #include "clientapp.h"
 

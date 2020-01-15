@@ -185,19 +185,18 @@ DE_PIMPL(ClientApp)
 #if defined (DE_HAVE_BUSYRUNNER)
     BusyRunner busyRunner;
 #endif
-    ConfigProfiles              audioSettings;
-    ConfigProfiles              networkSettings;
-    ConfigProfiles              logSettings;
-    ConfigProfiles              windowSettings;
-    ConfigProfiles              uiSettings;
-    InputSystem *               inputSys  = nullptr;
-    AudioSystem *               audioSys  = nullptr;
-    RenderSystem *              rendSys   = nullptr;
-    ClientResources *           resources = nullptr;
-//    ClientWindowSystem *        winSys    = nullptr;
-    InFineSystem                infineSys; // instantiated at construction time
-    ServerLink *                svLink = nullptr;
-    ClientServerWorld *         world  = nullptr;
+    ConfigProfiles   audioSettings;
+    ConfigProfiles   networkSettings;
+    ConfigProfiles   logSettings;
+    ConfigProfiles   windowSettings;
+    ConfigProfiles   uiSettings;
+    InputSystem *    inputSys  = nullptr;
+    AudioSystem *    audioSys  = nullptr;
+    RenderSystem *   rendSys   = nullptr;
+    ClientResources *resources = nullptr;
+    InFineSystem     infineSys; // instantiated at construction time
+    ServerLink *     svLink = nullptr;
+    ClientWorld *    world  = nullptr;
 
     /**
      * Log entry sink that passes warning messages to the main window's alert
@@ -688,7 +687,7 @@ void ClientApp::initialize()
     #endif
 
     // Create the world system.
-    d->world = new ClientServerWorld;
+    d->world = new ClientWorld;
     addSystem(*d->world);
 
     // Create the render system.
@@ -1026,7 +1025,7 @@ ClientResources &ClientApp::resources()
     return *a.d->resources;
 }
 
-ClientServerWorld &ClientApp::world()
+ClientWorld &ClientApp::world()
 {
     ClientApp &a = ClientApp::app();
     DE_ASSERT(a.d->world != 0);

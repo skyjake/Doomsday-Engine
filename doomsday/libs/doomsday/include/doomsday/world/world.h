@@ -26,7 +26,7 @@
 #include <de/Observers>
 #include <de/System>
 
-namespace de { class Context; }
+namespace de { class Context; class Scheduler; }
 
 namespace world {
 
@@ -48,6 +48,9 @@ public:
 
     DE_AUDIENCE(MapChange, void worldMapChanged())
 
+    /// No map is currently loaded. @ingroup errors
+    DE_ERROR(MapError);
+
 public:
     World();
 
@@ -60,22 +63,56 @@ public:
     const de::Record &mapInfoForMapUri(const res::Uri &mapUri) const;
 
     virtual void reset();
+    
+    /**
+     * @param uri  Universal resource identifier (URI) for the map to change to.
+     *             If an empty URI is specified the current map will be unloaded.
+     *
+     * @return  @c true= the map change completed successfully.
+     */
+    bool changeMap(const res::Uri &uri);
 
+    /**
+     * Unload the currently loaded map (if any).
+     *
+     * @see changeMap()
+     */
+    inline void unloadMap() { changeMap({}); }
     /**
      * Returns @c true if a map is currently loaded.
      */
     bool hasMap() const;
 
     /**
-     * Provides access to the currently loaded map.
-     *
-     * @see hasMap()
+     * Returns the currently loaded map.
      */
-    world::Map &map() const;
+    Map &map() const;
 
-    world::Materials &       materials();
-    const world::Materials & materials() const;
+    /**
+     * Returns a pointer to the currently loaded map, if any.
+     */
+    inline Map *mapPtr() const { return hasMap() ? &map() : nullptr; }
     
+    mobj_t *takeUnusedMobj();
+    void    putUnusedMobj(mobj_t *mo);
+
+    Materials &       materials();
+    const Materials & materials() const;
+    
+    de::Scheduler &scheduler();
+    
+    /**
+     * Returns the current world time.
+     */
+    timespan_t time() const;
+    
+    /**
+     * Advance time in the world.
+     *
+     * @param delta  Time delta to advance.
+     */
+    void advanceTime(timespan_t delta);
+
     virtual bool allowAdvanceTime() const;
 
     /**
@@ -83,12 +120,20 @@ public:
      */
     virtual void tick(timespan_t elapsed);
     
+    /**
+     * Update the world state after engine reset.
+     * Must be called only following an engine reset.
+     */
+    void update();
+    
 public:
     /// Scripting helper: get pointer to current instance mobj_t based on the script callstack.
     static mobj_t &contextMobj(const de::Context &);
 
 protected:
-    void setMap(world::Map *map);
+    void setMap(Map *map);
+    virtual void aboutToChangeMap();
+    virtual void mapFinalized();
 
 private:
     DE_PRIVATE(d)

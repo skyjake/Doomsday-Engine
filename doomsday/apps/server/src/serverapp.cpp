@@ -71,7 +71,7 @@ DE_PIMPL(ServerApp)
     std::unique_ptr<ServerSystem> serverSystem;
     std::unique_ptr<Resources>    resources;
     std::unique_ptr<AudioSystem>  audioSys;
-    ClientServerWorld             world;
+    ServerWorld                   world;
     InFineSystem                  infineSys;
     duint32                       serverId;
 
@@ -381,7 +381,7 @@ Resources &ServerApp::resources()
     return *app().d->resources;
 }
 
-ClientServerWorld &ServerApp::world()
+ServerWorld &ServerApp::world()
 {
     return app().d->world;
 }

@@ -63,8 +63,6 @@ public:
 
 DE_EXTERN_C int useSRVO, useSRVOAngle;
 
-void P_InitUnusedMobjList();
-
 /**
  * To be called to register the commands and variables of this module.
  */

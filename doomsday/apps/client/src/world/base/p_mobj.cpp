@@ -64,10 +64,6 @@
 
 using namespace de;
 
-// static String const VAR_MATERIAL("material");
-
-static mobj_t *unusedMobjs;
-
 /*
  * Console variables:
  */
@@ -77,15 +73,6 @@ dint useSRVOAngle = 1;
 #ifdef __CLIENT__
 static byte mobjAutoLights = true;
 #endif
-
-/**
- * Called during map loading.
- */
-void P_InitUnusedMobjList()
-{
-    // Any zone memory allocated for the mobjs will have already been purged.
-    ::unusedMobjs = nullptr;
-}
 
 /**
  * All mobjs must be allocated through this routine. Part of the public API.
@@ -105,13 +92,8 @@ mobj_t *P_MobjCreate(thinkfunc_t function, const Vec3d &origin, angle_t angle,
 #endif
 
     // Do we have any unused mobjs we can reuse?
-    mobj_t *mob;
-    if (::unusedMobjs)
-    {
-        mob = ::unusedMobjs;
-        ::unusedMobjs = ::unusedMobjs->sNext;
-    }
-    else
+    mobj_t *mob = world::World::get().takeUnusedMobj();
+    if (!mob)
     {
         // No, we need to allocate another.
         mob = MobjThinker(Thinker::AllocateMemoryZone).take();
@@ -165,8 +147,7 @@ void P_MobjRecycle(mobj_t* mo)
     MobjThinker::zap(*mo);
 
     // The sector next link is used as the unused mobj list links.
-    mo->sNext = unusedMobjs;
-    unusedMobjs = mo;
+    world::World::get().putUnusedMobj(mo);
 }
 
 #undef Mobj_SetState

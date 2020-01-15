@@ -1,7 +1,7 @@
-/** @file bindings_world.h
+/** @file world/bindings.h
  * @ingroup world
  *
- * @authors Copyright � 2015-2017 Jaakko Ker�nen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2015-2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_WORLD_BINDINGS_H
-#define DE_CLIENT_WORLD_BINDINGS_H
+#pragma once
 
 #include <de/Binder>
 
@@ -27,5 +26,3 @@ namespace world {
 void initBindings(de::Binder &binder, de::Record &worldModule);
 
 }  // namespace world
-
-#endif  // DE_CLIENT_WORLD_BINDINGS_H

@@ -24,7 +24,7 @@
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "render/rend_main.h"
-#include "world/clientserverworld.h"
+#include "world/clientworld.h"
 
 #include <de/GLInfo>
 #include <de/legacy/vector1.h>

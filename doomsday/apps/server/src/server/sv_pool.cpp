@@ -97,11 +97,6 @@ static dfloat deltaBaseScores[NUM_DELTA_TYPES];
 // the mobj being compared.
 static ThinkerT<dt_mobj_t> dummyZeroMobj;
 
-static inline ClientServerWorld &worldSys()
-{
-    return App_World();
-}
-
 /**
  * Called once for each map, from R_SetupMap(). Initialize the world
  * register and drain all pools.
@@ -415,7 +410,7 @@ void Sv_RegisterPlayer(dt_player_t *reg, duint number)
 void Sv_RegisterSector(dt_sector_t *reg, dint number)
 {
     DE_ASSERT(reg);
-    Sector &sector = worldSys().map().sector(number);
+    Sector &sector = ServerWorld::get().map().sector(number);
 
     reg->lightLevel = sector.lightLevel();
     for (dint i = 0; i < 3; ++i)
@@ -454,7 +449,7 @@ void Sv_RegisterSide(dt_side_t *reg, dint number)
 {
     DE_ASSERT(reg);
 
-    auto *side = worldSys().map().sidePtr(number);
+    auto *side = ServerWorld::get().map().sidePtr(number);
 
     if (side->hasSections())
     {
@@ -485,7 +480,7 @@ void Sv_RegisterSide(dt_side_t *reg, dint number)
 void Sv_RegisterPoly(dt_poly_t *reg, duint number)
 {
     DE_ASSERT(reg);
-    const Polyobj &pob = worldSys().map().polyobj(number);
+    const Polyobj &pob = ServerWorld::get().map().polyobj(number);
 
     reg->dest[0]    = pob.dest[0];
     reg->dest[1]    = pob.dest[1];
@@ -626,7 +621,7 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d
 {
     DE_ASSERT(reg && d);
     dt_sector_t *r  = &reg->sectors[number];
-    const Sector &s = worldSys().map().sector(number);
+    const Sector &s = ServerWorld::get().map().sector(number);
     dint df = 0;
 
     // Determine which data is different.
@@ -748,7 +743,7 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d
 dd_bool Sv_RegisterCompareSide(cregister_t *reg, duint number, sidedelta_t *d, byte doUpdate)
 {
     DE_ASSERT(reg/* && d*/);
-    const auto *side = worldSys().map().sidePtr(number);
+    const auto *side = ServerWorld::get().map().sidePtr(number);
     dt_side_t * r    = &reg->sides[number];
 
     byte lineFlags = side->line().flags() & 0xff;
@@ -943,7 +938,7 @@ void Sv_RegisterWorld(cregister_t *reg, dd_bool isInitial)
 {
     DE_ASSERT(reg);
 
-    world::Map &map = worldSys().map();
+    world::Map &map = ServerWorld::get().map();
 
     de::zapPtr(reg);
     reg->gametic = SECONDS_TO_TICKS(gameTime);
@@ -1528,7 +1523,7 @@ coord_t Sv_MobjDistance(const mobj_t *mo, const ownerinfo_t *info, dd_bool isRea
 coord_t Sv_SectorDistance(int index, const ownerinfo_t *info)
 {
     DE_ASSERT(info);
-    const Sector &sector = worldSys().map().sector(index);
+    const Sector &sector = ServerWorld::get().map().sector(index);
 
     return M_ApproxDistance3(info->origin[0] - sector.soundEmitter().origin[0],
                              info->origin[1] - sector.soundEmitter().origin[1],
@@ -1538,7 +1533,7 @@ coord_t Sv_SectorDistance(int index, const ownerinfo_t *info)
 coord_t Sv_SideDistance(int index, int deltaFlags, const ownerinfo_t *info)
 {
     DE_ASSERT(info);
-    const auto *side = worldSys().map().sidePtr(index);
+    const auto *side = ServerWorld::get().map().sidePtr(index);
 
     const SoundEmitter &emitter = (  deltaFlags & SNDDF_SIDE_MIDDLE? side->middleSoundEmitter()
                                    : deltaFlags & SNDDF_SIDE_TOP   ? side->topSoundEmitter()
@@ -1580,7 +1575,7 @@ coord_t Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 
     if (delta->type == DT_SIDE)
     {
-        auto *side = worldSys().map().sidePtr(delta->id);
+        auto *side = ServerWorld::get().map().sidePtr(delta->id);
         auto &line = side->line();
         return M_ApproxDistance(info->origin[0] - line.center().x,
                                 info->origin[1] - line.center().y);
@@ -1588,7 +1583,7 @@ coord_t Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 
     if (delta->type == DT_POLY)
     {
-        const Polyobj &pob = worldSys().map().polyobj(delta->id);
+        const Polyobj &pob = ServerWorld::get().map().polyobj(delta->id);
         return M_ApproxDistance(info->origin[0] - pob.origin[0],
                                 info->origin[1] - pob.origin[1]);
     }
@@ -1611,7 +1606,7 @@ coord_t Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 
     if (delta->type == DT_POLY_SOUND)
     {
-        const Polyobj &pob = worldSys().map().polyobj(delta->id);
+        const Polyobj &pob = ServerWorld::get().map().polyobj(delta->id);
         return M_ApproxDistance(info->origin[VX] - pob.origin[VX],
                                 info->origin[VY] - pob.origin[VY]);
     }
@@ -2072,7 +2067,7 @@ void Sv_NewNullDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
             next = obj->next;
 
             /// @todo Do not assume mobj is from the CURRENT map.
-            if (!worldSys().map().thinkers().isUsedMobjId(obj->mo.thinker.id))
+            if (!ServerWorld::get().map().thinkers().isUsedMobjId(obj->mo.thinker.id))
             {
                 // This object no longer exists!
                 Sv_NewDelta(&null, DT_MOBJ, obj->mo.thinker.id);
@@ -2098,7 +2093,7 @@ void Sv_NewNullDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
  */
 void Sv_NewMobjDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
 {
-    worldSys().map().thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+    ServerWorld::get().map().thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
                                        0x1 /*public*/, [&reg, &doUpdate, &targets] (thinker_t *th)
     {
         auto &mob = *reinterpret_cast<mobj_t *>(th);
@@ -2211,7 +2206,7 @@ void Sv_NewSectorDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
 {
     sectordelta_t delta;
 
-    for (int i = 0; i < worldSys().map().sectorCount(); ++i)
+    for (int i = 0; i < ServerWorld::get().map().sectorCount(); ++i)
     {
         if (Sv_RegisterCompareSector(reg, i, &delta, doUpdate))
         {
@@ -2230,7 +2225,7 @@ void Sv_NewSideDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     static uint numShifts = 2, shift = 0;
 
     /// @todo fixme: Do not assume the current map.
-    world::Map &map = worldSys().map();
+    world::Map &map = ServerWorld::get().map();
 
     // When comparing against an initial register, always compare all
     // sides (since the comparing is only done once, not continuously).
@@ -2270,7 +2265,7 @@ void Sv_NewPolyDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     polydelta_t delta;
 
     /// @todo fixme: Do not assume the current map.
-    for (int i = 0; i < worldSys().map().polyobjCount(); ++i)
+    for (int i = 0; i < ServerWorld::get().map().polyobjCount(); ++i)
     {
         if (Sv_RegisterComparePoly(reg, i, &delta))
         {

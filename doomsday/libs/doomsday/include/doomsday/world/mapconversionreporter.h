@@ -107,6 +107,4 @@ private:
     OneWayWindowMap   _oneWayWindows;
 };
 
-const int MapConversionReporter::maxWarningsPerType = 10;
-
 } // namespace world

@@ -83,7 +83,6 @@
 #include "con_config.h"
 #include "sys_system.h"
 
-#include "world/clientserverworld.h"
 #include "world/p_players.h"
 
 #include "ui/infine/infinesystem.h"
@@ -92,6 +91,7 @@
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
+#  include "world/clientworld.h"
 
 #  include "client/cl_def.h"
 #  include "client/cl_infine.h"
@@ -137,6 +137,7 @@
 
 #ifdef __SERVER__
 #  include "serverapp.h"
+#  include "serverworld.h"
 #  include "network/net_main.h"
 #  include "server/sv_def.h"
 #  include <doomsday/world/map.h>
@@ -191,7 +192,6 @@ static dint DD_StartupWorker(void *context);
 static dint DD_DummyWorker(void *context);
 
 dint isDedicated;
-dint verbose;                      ///< For debug messages (-verbose).
 #ifdef __CLIENT__
 dint symbolicEchoMode = false;     ///< @note Mutable via public API.
 #endif
@@ -625,17 +625,22 @@ ClientResources &App_Resources()
 {
     return ClientResources::get();
 }
+
+ClientWorld &App_World()
+{
+    return static_cast<ClientWorld &>(world::World::get());
+}
 #else
 Resources &App_Resources()
 {
     return Resources::get();
 }
-#endif
 
-ClientServerWorld &App_World()
+ServerWorld &App_World()
 {
-    return static_cast<ClientServerWorld &>(world::World::get());
+    return static_cast<ServerWorld &>(world::World::get());
 }
+#endif
 
 InFineSystem &App_InFineSystem()
 {
@@ -993,7 +998,7 @@ static const GameProfile *autoselectGameProfile()
 dint DD_EarlyInit()
 {
     // Determine the requested degree of verbosity.
-    ::verbose = CommandLine_Exists("-verbose");
+    DoomsdayApp::verbose = CommandLine_Exists("-verbose");
 
 #ifdef __SERVER__
     ::isDedicated = true;
@@ -1066,7 +1071,7 @@ static void initializeWithWindowReady()
     //Con_InitProgress(200);
 #endif
 
-    BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+    BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | (DoomsdayApp::verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 DD_StartupWorker, 0, "Starting up...");
 
     // Engine initialization is complete. Now finish up with the GL.
@@ -1084,7 +1089,7 @@ static void initializeWithWindowReady()
 //    // Do deferred uploads.
 //    Con_SetProgress(100);
 //#endif
-    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | (DoomsdayApp::verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 DD_DummyWorker, 0, "Buffering...");
 
     //
@@ -1581,7 +1586,7 @@ void DD_UpdateEngineState()
 #ifdef __CLIENT__
         Con_InitProgress(200);
 #endif
-        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (DoomsdayApp::verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                     DD_UpdateEngineStateWorker, &initiatedBusyMode,
                                     "Updating engine state...");
     }

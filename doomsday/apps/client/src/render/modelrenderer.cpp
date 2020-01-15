@@ -27,9 +27,9 @@
 #include "world/p_players.h"
 #include "world/p_object.h"
 #include "world/clientmobjthinkerdata.h"
+#include "world/clientworld.h"
 #include "world/convexsubspace.h"
 #include "clientapp.h"
-#include "world/clientserverworld.h"
 
 #include <doomsday/world/bspleaf.h>
 #include <de/App>

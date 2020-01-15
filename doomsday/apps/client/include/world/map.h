@@ -29,7 +29,7 @@
 #include "client/clpolymover.h"
 
 #include "world/p_object.h"
-#include "world/clientserverworld.h"
+#include "clientworld.h"
 #include "Generator"
 #include "Lumobj"
 #include "render/skydrawable.h"
@@ -72,8 +72,9 @@ namespace world
 /**
  * World map.
  */
-class Map : public world::Map
-, DE_OBSERVES(ClientServerWorld, FrameBegin)
+class Map
+    : public world::Map
+    , DE_OBSERVES(ClientWorld, FrameBegin)
 {
     DE_NO_COPY  (Map)
     DE_NO_ASSIGN(Map)

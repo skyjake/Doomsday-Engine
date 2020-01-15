@@ -26,6 +26,8 @@ namespace world {
 
 using namespace de;
 
+const int MapConversionReporter::maxWarningsPerType = 10;
+
 MapConversionReporter::MapConversionReporter(Map *map)
 {
     setMap(map);

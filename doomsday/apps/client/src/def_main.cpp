@@ -351,7 +351,7 @@ static void Def_InitTextDef(ddtext_t *txt, const char *str)
  */
 static String defCountMsg(int count, const String &label)
 {
-    if (!::verbose && !count)
+    if (!DoomsdayApp::verbose && !count)
         return "";  // Don't print zeros if not verbose.
 
     return Stringf(_E(Ta) "  %i " _E(Tb) "%s\n", count, label.c_str());
@@ -377,7 +377,7 @@ static void Def_ReadLumpDefs()
     }
 
     const auto numProcessedLumps = foundDefns.size();
-    if (::verbose && numProcessedLumps > 0)
+    if (DoomsdayApp::verbose && numProcessedLumps > 0)
     {
         LOG_RES_NOTE("Processed %i %s")
                 << numProcessedLumps << (numProcessedLumps != 1 ? "lumps" : "lump");

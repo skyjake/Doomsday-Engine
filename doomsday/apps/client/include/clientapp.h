@@ -26,7 +26,7 @@
 class AudioSystem;
 class ClientPlayer;
 class ClientResources;
-class ClientServerWorld;
+class ClientWorld;
 class ClientWindow;
 class ConfigProfiles;
 class InFineSystem;
@@ -78,22 +78,22 @@ public:
     static ClientPlayer &player(int console);
     static de::LoopResult forLocalPlayers(const std::function<de::LoopResult (ClientPlayer &)> &func);
 
-    static ClientApp &          app();
-    static ConfigProfiles &     logSettings();
-    static ConfigProfiles &     networkSettings();
-    static ConfigProfiles &     audioSettings();    ///< @todo Belongs in AudioSystem.
-    static ConfigProfiles &     windowSettings();
-    static ConfigProfiles &     uiSettings();
-    static ServerLink &         serverLink();
-    static InFineSystem &       infineSystem();
-    static InputSystem &        inputSystem();
-    static AudioSystem &        audioSystem();
-    static RenderSystem &       renderSystem();
-    static ClientResources &    resources();
-    static ClientServerWorld &  world();
+    static ClientApp &      app();
+    static ConfigProfiles & logSettings();
+    static ConfigProfiles & networkSettings();
+    static ConfigProfiles & audioSettings(); ///< @todo Belongs in AudioSystem.
+    static ConfigProfiles & windowSettings();
+    static ConfigProfiles & uiSettings();
+    static ServerLink &     serverLink();
+    static InFineSystem &   infineSystem();
+    static InputSystem &    inputSystem();
+    static AudioSystem &    audioSystem();
+    static RenderSystem &   renderSystem();
+    static ClientResources &resources();
+    static ClientWorld &    world();
 
 #if defined (DE_HAVE_BUSYRUNNER)
-    static BusyRunner &         busyRunner();
+    static BusyRunner &     busyRunner();
 #endif
 
     static ClientWindow *mainWindow();

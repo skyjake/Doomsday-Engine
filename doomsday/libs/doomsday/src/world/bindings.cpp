@@ -1,6 +1,6 @@
-/** @file bindings_world.cpp  World related Doomsday Script bindings.
+/** @file world/bindings.cpp  World related Doomsday Script bindings.
  *
- * @authors Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2015-2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,16 +16,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "world/bindings_world.h"
-#include "world/clientserverworld.h"
-#include "world/p_players.h"
-#include "audio/audiosystem.h"
-#include "dd_main.h"
-
-#include <doomsday/defs/ded.h>
-#include <doomsday/world/map.h>
-#include <doomsday/world/mobj.h>
-#include <doomsday/world/thinkers.h>
+#include "bindings.h"
+#include "doomsday/defs/ded.h"
+#include "doomsday/DoomsdayApp"
+#include "doomsday/players.h"
+#include "doomsday/world/map.h"
+#include "doomsday/world/mobj.h"
+#include "doomsday/world/thinkers.h"
+#include "doomsday/world/world.h"
 #include <de/Context>
 #include <de/RecordValue>
 
@@ -63,22 +61,6 @@ static Value *Function_Thing_Height(Context &ctx, const Function::ArgumentValues
 static Value *Function_Thing_Mom(Context &ctx, const Function::ArgumentValues &)
 {
     return new ArrayValue(Vec3d(World::contextMobj(ctx).mom));
-}
-
-static Value *Function_Thing_StartSound(Context &ctx, const Function::ArgumentValues &args)
-{
-    const mobj_t &mo     = World::contextMobj(ctx);
-    const int     sound  = DED_Definitions()->getSoundNum(args.at(0)->asText());
-    const float   volume = float(args.at(1)->asNumber());
-    if (sound >= 0)
-    {
-        S_StartSoundAtVolume(sound, &mo, volume);
-    }
-    else
-    {
-        throw Error("Function_Thing_StartSound", "Undefined sound: " + args.at(0)->asText());
-    }
-    return nullptr;
 }
 
 static Value *Function_Thing_Player(Context &ctx, const Function::ArgumentValues &)
@@ -124,9 +106,6 @@ void initBindings(Binder &binder, Record &worldModule)
     {
         Record &thing = worldModule.addSubrecord("Thing");
 
-        Function::Defaults startSoundArgs;
-        startSoundArgs["volume"] = new NumberValue(1.0);
-
         binder.init(thing)
                 << DE_FUNC      (Thing_AddMom,     "addMom", "delta")
                 << DE_FUNC_NOARG(Thing_Id,         "id")
@@ -135,7 +114,6 @@ void initBindings(Binder &binder, Record &worldModule)
                 << DE_FUNC_NOARG(Thing_Mom,        "mom")
                 << DE_FUNC_NOARG(Thing_Player,     "player")
                 << DE_FUNC_NOARG(Thing_Pos,        "pos")
-                << DE_FUNC_DEFS (Thing_StartSound, "startSound", "id" << "volume", startSoundArgs)
                 << DE_FUNC      (Thing_Recoil,     "recoil", "force")
                 << DE_FUNC_NOARG(Thing_Type,       "type");
     }

@@ -17,8 +17,8 @@
  */
 
 #include "render/fx/bloom.h"
+#include "world/clientworld.h"
 #include "clientapp.h"
-#include "world/clientserverworld.h"
 
 #include <doomsday/console/var.h>
 #include <de/Drawable>

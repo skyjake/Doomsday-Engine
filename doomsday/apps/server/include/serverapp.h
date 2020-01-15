@@ -28,7 +28,7 @@
 #include "serversystem.h"
 #include "ui/infine/infinesystem.h"
 #include "audio/audiosystem.h"
-#include "world/clientserverworld.h"
+#include "serverworld.h"
 
 /**
  * The server application.
@@ -59,12 +59,12 @@ public:
      */
     static de::ServerInfo currentServerInfo();
 
-    static ServerApp &        app();
-    static ServerSystem &     serverSystem();
-    static InFineSystem &     infineSystem();
-    static AudioSystem &      audioSystem();
-    static Resources &        resources();
-    static ClientServerWorld &world();
+    static ServerApp &   app();
+    static ServerSystem &serverSystem();
+    static InFineSystem &infineSystem();
+    static AudioSystem & audioSystem();
+    static Resources &   resources();
+    static ServerWorld & world();
 
 protected:
     void reset() override;

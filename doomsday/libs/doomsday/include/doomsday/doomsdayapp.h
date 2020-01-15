@@ -76,6 +76,8 @@ public:
         DefaultFlags            = 0
     };
 
+    static int verbose;
+    
 public:
     DoomsdayApp(const Players::Constructor &playerConstructor, de::Flags flags = DefaultFlags);
 

@@ -1,6 +1,6 @@
 # Additional functions for games
 
-import World, Math, Defs
+import Audio, World, Math, Defs
 
 def World.Thing.info()
     return Defs.things.order[self.type()]
@@ -25,4 +25,8 @@ def World.Thing.dropItem(type, force=1.0, lift=0.0, height=0.5, prob=1.0)
         item.addMom(mom)
     end
     return item
+end
+
+def World.Thing.startSound(id, volume=1.0)
+    return Audio.startSound(id, self, volume)
 end

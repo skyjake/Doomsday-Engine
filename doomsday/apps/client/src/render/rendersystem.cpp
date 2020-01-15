@@ -36,11 +36,11 @@
 #include "render/modelrenderer.h"
 #include "render/skydrawable.h"
 #include "render/store.h"
-#include "world/clientserverworld.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 
+#include "world/clientworld.h"
 #include "world/convexsubspace.h"
 #include "world/subsector.h"
 #include "world/surface.h"

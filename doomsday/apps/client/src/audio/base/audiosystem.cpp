@@ -46,6 +46,7 @@
 #  include <doomsday/world/subsector.h>
 #endif
 
+#include <doomsday/world/map.h>
 #include <doomsday/world/sector.h>
 #include <doomsday/world/thinkers.h>
 #include <doomsday/console/cmd.h>
@@ -187,6 +188,8 @@ static bool recognizeMus(res::File1 &file)
 static Value *Function_Audio_LocalSound(Context &, const Function::ArgumentValues &args);
 
 #endif // __CLIENT__
+
+static Value *Function_Audio_StartSound(Context &, const Function::ArgumentValues &args);
 
 DE_PIMPL(AudioSystem)
 , DE_OBSERVES(DoomsdayApp, GameUnload)
@@ -655,11 +658,12 @@ DE_PIMPL(AudioSystem)
 
         // Script bindings.
         {
-        ScriptSystem::get().addNativeModule("Audio", module);
-#if defined(__CLIENT__)
+            ScriptSystem::get().addNativeModule("Audio", module);
             binder.init(module)
-                << DE_FUNC(Audio_LocalSound, "localSound", "id" << "volume");
+#if defined(__CLIENT__)
+                << DE_FUNC(Audio_LocalSound, "localSound", "id" << "volume")
 #endif
+                << DE_FUNC(Audio_StartSound, "startSound", "id" << "emitter" << "volume");
         }
 
 #ifdef __CLIENT__
@@ -3047,6 +3051,27 @@ static Value *Function_Audio_LocalSound(Context &, const Function::ArgumentValue
 }
 
 #endif  // __CLIENT__
+
+static Value *Function_Audio_StartSound(Context &, const Function::ArgumentValues &args)
+{
+    const String  soundId = args.at(0)->asText();
+    const int     sound   = DED_Definitions()->getSoundNum(soundId);
+    const mobj_t *emitter = nullptr;
+    const float   volume  = float(args.at(2)->asNumber());
+    
+    if (const auto *rec = maybeAs<RecordValue>(args.at(1)))
+    {
+        emitter = world::World::get().map().thinkers().mobjById(rec->geti(DE_STR("__id__"), 0));
+    }
+    if (sound < 0)
+    {
+        throw Error("Function_Audio_StartSound", "Undefined sound: " + soundId);
+    }
+    
+    const auto success = S_LocalSoundAtVolumeFrom(sound, emitter, nullptr, volume);
+    
+    return new NumberValue(success != 0);
+}
 
 DE_DECLARE_API(S) =
 {
