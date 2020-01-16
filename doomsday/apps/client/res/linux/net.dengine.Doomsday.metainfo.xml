@@ -55,7 +55,7 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
-        <release version="2.2.1" date="2020-10-14">
+        <release version="2.2.1" date="2020-01-14">
             <description>
                 <p>Patch release that addresses issues found in version 2.2.</p>
             </description>
