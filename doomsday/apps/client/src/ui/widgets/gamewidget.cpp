@@ -219,9 +219,9 @@ void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
     int const baseYaw = 180;
 
     GLTextureFramebuffer destFb(Image::RGB_888, fbSize, 1);
+    destFb.glInit();
     for (int i = 0; i < 6; ++i)
     {
-        destFb.glInit();
         if (i < 4)
         {
             Rend_SetFixedView(player, baseYaw + 90 + i * -90, 0, 90, fbSize);
@@ -229,11 +229,16 @@ void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
         else
         {
             Rend_SetFixedView(player, baseYaw, i == 4? -90 : 90, 90, fbSize);
-        }
+        }        
         d->renderPlayerViewToFramebuffer(player, destFb);
         painter.drawImage(i * size, 0, destFb.toImage());
-        destFb.glDeinit();
+
+        // IssueID #2401: Somewhere the GL state is messed up, only the first view would
+        // be visible. A proper fix would be to look through the GL state changes during
+        // rendering.
+        GLState::considerNativeStateUndefined();
     }
+    destFb.glDeinit();
 
     App_World().endFrame();
 
