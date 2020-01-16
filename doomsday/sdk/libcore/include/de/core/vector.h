@@ -814,6 +814,19 @@ typedef Vector4<dfloat>  Vector4f;  ///< 4-component vector of floating point va
 typedef Vector4<ddouble> Vector4d;  ///< 4-component vector of high-precision floating point values.
 ///@}
 
+using Vec2i = Vector2i;
+using Vec2ui = Vector2ui;
+using Vec3i = Vector3i;
+using Vec3ui = Vector3ui;
+using Vec4i = Vector4i;
+using Vec4ub = Vector4ub;
+using Vec2f = Vector2f;
+using Vec3f = Vector3f;
+using Vec4f = Vector4f;
+using Vec2d = Vector2d;
+using Vec3d = Vector3d;
+using Vec4d = Vector4d;
+
 // Qt hash functions:
 inline quint32 qHash(Vector2i const &vec) { return vec.x * vec.y + vec.x - vec.y; }
 
