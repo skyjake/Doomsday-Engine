@@ -819,8 +819,11 @@ typedef Vector4<ddouble> Vector4d;  ///< 4-component vector of high-precision fl
 ///@}
 
 using Vec2i = Vector2i;
+using Vec2ui = Vector2ui;
 using Vec3i = Vector3i;
+using Vec3ui = Vector3ui;
 using Vec4i = Vector4i;
+using Vec4ub = Vector4ub;
 using Vec2f = Vector2f;
 using Vec3f = Vector3f;
 using Vec4f = Vector4f;
