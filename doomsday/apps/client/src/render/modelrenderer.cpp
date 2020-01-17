@@ -166,6 +166,7 @@ DENG2_PIMPL(ModelRenderer)
                    float yawAngle,
                    float pitchAngle,
                    bool useFixedFov,
+                   bool usePSpriteClipPlane,
                    Matrix4f const *preModelToLocal = nullptr)
     {
         Vector3f const aspectCorrect(1.0f, 1.0f/1.2f, 1.0f);
@@ -190,9 +191,11 @@ DENG2_PIMPL(ModelRenderer)
         const Matrix4f localToWorld = Matrix4f::translate(origin) *
                                       Matrix4f::scale(aspectCorrect); // Inverse aspect correction.
 
-        const Matrix4f viewProj = Rend_GetProjectionMatrix(useFixedFov ? weaponFixedFOV : 0.0f,
-                                                           0.1f /* near plane distance: IssueID #2373 */) *
-                                  ClientApp::renderSystem().uViewMatrix().toMatrix4f();
+        const Matrix4f viewProj =
+            Rend_GetProjectionMatrix(
+                useFixedFov ? weaponFixedFOV : 0.0f,
+                usePSpriteClipPlane ? 0.1f /* near plane distance: IssueID #2373 */ : 1.0f) *
+            ClientApp::renderSystem().uViewMatrix().toMatrix4f();
 
         const Matrix4f localToScreen = viewProj * localToWorld;
 
@@ -313,6 +316,7 @@ void ModelRenderer::render(vissprite_t const &spr)
                  spr.pose.yaw + spr.pose.yawAngleOffset,
                  spr.pose.pitch + spr.pose.pitchAngleOffset,
                  false, /* regular FOV */
+                 false, /* regular clip planes */
                  mobjData ? &mobjData->modelTransformation() : nullptr);
 
     // Ambient color and lighting vectors.
@@ -345,6 +349,7 @@ void ModelRenderer::render(vispsprite_t const &pspr, mobj_t const *playerMobj)
                  -90 - yaw,
                  pitch,
                  true, /* fixed FOV for psprites */
+                 true, /* nearby clip planes */
                  &xform);
 
     float opacity = 1.0f;
