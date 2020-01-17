@@ -114,7 +114,7 @@ DENG2_PIMPL(GameWidget)
     void drawComposited()
     {
         int numLocal = 0;
-        ClientApp::forLocalPlayers([this, &numLocal] (ClientPlayer &player)
+        ClientApp::forLocalPlayers([&numLocal](ClientPlayer &player)
         {
             player.viewCompositor().drawCompositedLayers();
             ++numLocal;
@@ -196,21 +196,18 @@ void GameWidget::drawComposited()
 
 void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
 {
-    int const player = consolePlayer;
-    Vector2ui fbSize(size, size);
-
-    GLTextureFramebuffer destFb(Image::RGB_888, fbSize, 1);
-    destFb.glInit();
+    const int player = consolePlayer;
+    Vec2ui fbSize(size, size);
 
     LOG_GL_MSG("Rendering %ix%i cube map...") << 6 * fbSize.x << fbSize.y;
 
     // Prevent the angleclipper from clipping anything.
-    int old_devNoCulling = devNoCulling;
+    const int old_devNoCulling = devNoCulling;
     devNoCulling = 1;
 
     // Make the player temporarily a plain camera to hide weapons etc.
     ClientPlayer &plr = ClientApp::player(player);
-    auto const oldPlrFlags = plr.publicData().flags;
+    const auto oldPlrFlags = plr.publicData().flags;
     plr.publicData().flags |= DDPF_CAMERA;
 
     // Notify the world that a new render frame has begun.
@@ -221,6 +218,8 @@ void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
 
     int const baseYaw = 180;
 
+    GLTextureFramebuffer destFb(Image::RGB_888, fbSize, 1);
+    destFb.glInit();
     for (int i = 0; i < 6; ++i)
     {
         if (i < 4)
@@ -233,7 +232,13 @@ void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
         }
         d->renderPlayerViewToFramebuffer(player, destFb);
         painter.drawImage(i * size, 0, destFb.toImage());
+
+        // IssueID #2401: Somewhere the GL state is messed up, only the first view would
+        // be visible. A proper fix would be to look through the GL state changes during
+        // rendering.
+        GLState::considerNativeStateUndefined();
     }
+    destFb.glDeinit();
 
     App_World().endFrame();
 
@@ -261,7 +266,6 @@ void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
     }
 
     // Cleanup.
-    destFb.glDeinit();
     Rend_UnsetFixedView();
     devNoCulling = old_devNoCulling;
     plr.publicData().flags = oldPlrFlags;
