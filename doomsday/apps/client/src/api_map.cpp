@@ -1360,7 +1360,7 @@ DE_EXTERN_C dd_bool P_MapChange(const char *uriCString)
     }
 #endif
 
-    return (dd_bool) App_World().changeMap(res::makeUri(uriCString));
+    return World::get().changeMap(res::makeUri(uriCString));
 }
 
 #undef P_CountMapObjs
