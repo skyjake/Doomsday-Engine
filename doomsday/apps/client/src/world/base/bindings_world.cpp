@@ -45,6 +45,31 @@ static Value *Function_Thing_AddMom(Context &ctx, const Function::ArgumentValues
     return nullptr;
 }
 
+static Value *Function_Thing_ChangeFlags(Context &ctx, const Function::ArgumentValues &args)
+{
+    const int flagsIndex = args.at(0)->asInt();
+    auto &mo = ClientServerWorld::contextMobj(ctx);
+    int &flags = (flagsIndex == 3 ? mo.flags3 : flagsIndex == 2 ? mo.flags2 : mo.flags);
+    const int oldFlags = flags;
+    const auto value = args.at(1)->asUInt();
+    if (args.at(2)->isTrue())
+    {
+        flags |= value;
+    }
+    else
+    {
+        flags &= ~value;
+    }
+    return new NumberValue(oldFlags);
+}
+
+static Value *Function_Thing_Flags(Context &ctx, const Function::ArgumentValues &args)
+{
+    const int flagsIndex = args.at(0)->asInt();
+    const auto &mo = ClientServerWorld::contextMobj(ctx);
+    return new NumberValue(uint32_t(flagsIndex == 3 ? mo.flags3 : flagsIndex == 2 ? mo.flags2 : mo.flags));
+}
+
 static Value *Function_Thing_Id(Context &ctx, const Function::ArgumentValues &)
 {
     return new NumberValue(ClientServerWorld::contextMobj(ctx).thinker.id);
@@ -129,6 +154,8 @@ void initBindings(Binder &binder, Record &worldModule)
 
         binder.init(thing)
                 << DENG2_FUNC      (Thing_AddMom,     "addMom", "delta")
+                << DENG2_FUNC      (Thing_ChangeFlags,"changeFlags", "index" << "flags" << "doSet")
+                << DENG2_FUNC      (Thing_Flags,      "flags", "index")
                 << DENG2_FUNC_NOARG(Thing_Id,         "id")
                 << DENG2_FUNC_NOARG(Thing_Health,     "health")
                 << DENG2_FUNC_NOARG(Thing_Height,     "height")
