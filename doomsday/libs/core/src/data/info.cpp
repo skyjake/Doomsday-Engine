@@ -798,8 +798,8 @@ Record Info::BlockElement::asRecord() const
     Record rec;
     for (auto i = _contents.begin(); i != _contents.end(); ++i)
     {
-        std::unique_ptr<Variable> var(new Variable(i->first));
-        const Element *elem = i->second;
+        const Element *elem = i->second;        
+        std::unique_ptr<Variable> var(new Variable(elem->name())); // retain case in the name
         if (elem->isBlock())
         {
             var->set(RecordValue::takeRecord(elem->as<BlockElement>().asRecord()));

@@ -102,11 +102,14 @@ public:
     virtual Number asSafeNumber(const Number &defaultValue = 0.0) const;
 
     /**
-     * Convert the value to the nearest integer. Uses asNumber().
+     * Convert the value to the nearest 32-bit signed integer. Uses asNumber().
      */
     dint asInt() const;
 
-    inline duint asUInt() const { return duint(asInt()); }
+    /**
+     * Convert the value to the nearest 32-bit unsigned integer. Uses asNumber().
+     */
+    int asUInt() const;
 
     /**
      * Convert the value to a list of strings using asText().

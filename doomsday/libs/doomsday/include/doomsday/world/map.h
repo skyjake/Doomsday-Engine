@@ -24,6 +24,7 @@
 #include "../resource/mapmanifest.h"
 #include "mapelement.h"
 #include "bspnode.h"
+#include "api_mapedit.h"
 
 #include <de/Id>
 #include <de/Observers>
@@ -561,8 +562,9 @@ public:
      */
     Sector *createSector(float lightLevel, const de::Vec3f &lightColor,
                          int archiveIndex = MapElement::NoIndex,
-                         int visPlaneLinkTargetSector = MapElement::NoIndex,
-                         int planeLinkBits = 0);
+                         const struct de_api_sector_hacks_s *hacks = nullptr);
+
+    virtual void applySectorHacks(Sector &sector, const struct de_api_sector_hacks_s *hacks);
 
     /**
      * Provides a list of all the editable lines in the map.

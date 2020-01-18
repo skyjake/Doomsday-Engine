@@ -248,7 +248,9 @@ public:
         void moveContents(BlockElement &destination);
 
         /**
-         * Converts the contents of the block into a Record.
+         * Converts the contents of the block into a Record. Variables in the record
+         * are named using the unmodified element names (i.e., not lowercased).
+         *
          * @return Record with block elements.
          */
         Record asRecord() const;

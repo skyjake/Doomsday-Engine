@@ -195,11 +195,24 @@ public:
      */
     Plane *addPlane(const de::Vec3f &normal, double height);
 
+    /**
+     * Sets plane linking target and conditions. This is used for render hacks where the
+     * plane is drawn at a different height and appearance, usually borrowing state
+     * from a neighboring sector.
+     *
+     * @param sectorArchiveIndex  Target sector for plane linking.
+     * @param planeBits           Flags that determine what and when to link planes:
+     *                            - Bits 0...1: link the floor (bit 0), ceiling (bit 1) plane
+     *                            - Bits 2...3: flat bleeding in floor (bit 2) or ceiling (bit 3)
+     *                            - Bits 4...5: invisible platform (bit 4) or door (bit 5)
+     */
     void setVisPlaneLinks(int sectorArchiveIndex, int planeBits);
 
     int visPlaneLinkTargetSector() const;
 
-    bool visPlaneLinked(int planeIndex) const;
+    bool isVisPlaneLinked(int planeIndex) const;
+
+    int visPlaneBits() const;
 
 //- Subsectors --------------------------------------------------------------------------
 

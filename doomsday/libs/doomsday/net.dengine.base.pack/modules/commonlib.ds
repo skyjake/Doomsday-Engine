@@ -27,6 +27,10 @@ def World.Thing.dropItem(type, force=1.0, lift=0.0, height=0.5, prob=1.0)
     return item
 end
 
+def World.Thing.setNoBlocking()
+    self.changeFlags(1, 0x2, False)  # MF_SOLID in mo.flags
+end
+
 def World.Thing.startSound(id, volume=1.0)
     return Audio.startSound(id, self, volume)
 end

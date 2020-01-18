@@ -315,15 +315,18 @@ inline LineDef::Side opposite(LineDef::Side side)
 }
 
 enum {
-    HACK_NONE                                   = 0,
-    HACK_IS_LINK_TARGET                         = 0x0001,
-    HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE = 0x0002,
-    HACK_HAS_SELF_REFERENCING_LOOP              = 0x0004,
-    HACK_ANALYSIS_BITS                          = 0xffff,
+    // Sector analysis flags.
+    SAF_NONE                                   = 0,
+    SAF_IS_LINK_TARGET                         = 0x1,
+    SAF_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE = 0x2,
+    SAF_HAS_SELF_REFERENCING_LOOP              = 0x4,
 
-    HACK_SELF_REFERENCING                       = 0x10000,
-    HACK_FLAT_BLEEDING                          = 0x20000,
-    HACK_MISSING_OUTSIDE_TOP                    = 0x40000,
+    // Detected hacks.
+    HACK_SELF_REFERENCING                       = 0x01,
+    HACK_MISSING_OUTSIDE_TOP                    = 0x02, // invisible door
+    HACK_MISSING_OUTSIDE_BOTTOM                 = 0x04, // invisible platform
+    HACK_MISSING_INSIDE_TOP                     = 0x08, // flat bleeding in ceiling
+    HACK_MISSING_INSIDE_BOTTOM                  = 0x10, // flat bleeding in floor
 };
 
 struct SectorDef : public Id1MapElement
@@ -348,8 +351,10 @@ struct SectorDef : public Id1MapElement
     // Internal bookkeeping:
     std::set<int> lines;
     std::vector<int> selfRefLoop;
-    int hackFlags = 0;
-    struct de_api_sector_hacks_s hackParams{{0, 0}, -1};
+    int singleSidedCount = 0;
+    int aFlags = 0;
+    int foundHacks = 0;
+    struct de_api_sector_hacks_s hackParams{{}, -1};
 
     SectorDef(MapImporter &map) : Id1MapElement(map) {}
 
@@ -871,10 +876,19 @@ DE_PIMPL(MapImporter)
 
     bool isSelfReferencing(const LineDef &line) const
     {
+        // Use of middle materials indicates that this is not a render hack.
+        const auto *s = line.sides;
         return !(line.aFlags & LAF_POLYOBJ) &&
                line.isTwoSided() &&
-               sides[line.sides[0]].sector == sides[line.sides[1]].sector &&
-               sides[line.sides[0]].sector >= 0;
+               !sides[s[0]].middleMaterial &&
+               !sides[s[1]].middleMaterial &&
+               sides[s[0]].sector == sides[s[1]].sector &&
+               sides[s[0]].sector >= 0;
+    }
+
+    double lineLength(const LineDef &line) const
+    {
+        return (vertices[line.v[0]].pos - vertices[line.v[1]].pos).length();
     }
 
     int otherSector(const LineDef &line, int sectorIndex) const
@@ -924,9 +938,9 @@ DE_PIMPL(MapImporter)
     }
 
 #if 0
-    Vector2d sectorBoundsMiddle(const SectorDef &sector) const
+    Vec2d sectorBoundsMiddle(const SectorDef &sector) const
     {
-        Vector2d mid;
+        Vec2d mid;
         int      count = 0;
         for (int v : sectorVertices(sector))
         {
@@ -1064,7 +1078,7 @@ DE_PIMPL(MapImporter)
 
                         // It must be a regular sector, but multiple hacked sectors
                         // can link to the same regular one.
-                        if (sector >= 0 && !(sectors[sector].hackFlags & ~HACK_IS_LINK_TARGET))
+                        if (sector >= 0 && !sectors[sector].foundHacks)
                         {
                             nearestContainer = {hit.t, sector};
                         }
@@ -1075,7 +1089,7 @@ DE_PIMPL(MapImporter)
 
         if (nearestContainer.second >= 0)
         {
-            sectors[nearestContainer.second].hackFlags |= HACK_IS_LINK_TARGET;
+            sectors[nearestContainer.second].aFlags |= SAF_IS_LINK_TARGET;
 
             sector.hackParams.visPlaneLinkTargetSector = nearestContainer.second;
             sector.hackParams.flags.linkFloorPlane     = true;
@@ -1321,6 +1335,7 @@ DE_PIMPL(MapImporter)
                     if (!line.isTwoSided())
                     {
                         hasSingleSided = true;
+                        sector.singleSidedCount++;
                     }
                     if (isSelfReferencing(line))
                     {
@@ -1355,7 +1370,14 @@ DE_PIMPL(MapImporter)
                                     sector.selfRefLoop.push_back(lineIndex);
                                     LOGDEV_MAP_VERBOSE("    line %d") << lineIndex;
                                 }
-                                sector.hackFlags |= HACK_HAS_SELF_REFERENCING_LOOP;
+                                sector.aFlags |= SAF_HAS_SELF_REFERENCING_LOOP;
+                                if (sector.singleSidedCount > int(loop.size()))
+                                {
+                                    LOGDEV_MAP_VERBOSE("    but the sector has %d single-sided lines, so ignoring the loop")
+                                           << sector.singleSidedCount;
+                                    sector.aFlags &= ~SAF_HAS_SELF_REFERENCING_LOOP;
+                                    sector.selfRefLoop.clear();
+                                }
                                 break;
                             }
                         }
@@ -1390,7 +1412,7 @@ DE_PIMPL(MapImporter)
 
                 if (!selfRefLines.empty() && !hasSingleSided)
                 {
-                    sector.hackFlags |= HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE;
+                    sector.aFlags |= SAF_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE;
                     LOGDEV_MAP_VERBOSE("possibly a self-referencing sector %d") << int(&sector - sectors.data());
                 }
             }
@@ -1402,8 +1424,8 @@ DE_PIMPL(MapImporter)
 
                 if (sector.lines.empty()) continue;
 
-                if (!(sector.hackFlags & (HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE |
-                                          HACK_HAS_SELF_REFERENCING_LOOP)))
+                if (!(sector.aFlags & (SAF_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE |
+                                       SAF_HAS_SELF_REFERENCING_LOOP)))
                 {
                     continue;
                 }
@@ -1420,7 +1442,7 @@ DE_PIMPL(MapImporter)
 
                     // Sectors with a loop of self-referencing lines can contain any number
                     // of other lines, we'll still consider them self-referencing.
-                    if (!isSelfRef && !(sector.hackFlags & HACK_HAS_SELF_REFERENCING_LOOP))
+                    if (!isSelfRef && !(sector.aFlags & SAF_HAS_SELF_REFERENCING_LOOP))
                     {
                         if (!line.isTwoSided())
                         {
@@ -1429,15 +1451,15 @@ DE_PIMPL(MapImporter)
                         }
                         // Combine multiple self-referencing sectors.
                         const int other = otherSector(line, sectorIndex);
-                        if (other >= 0 && !(sectors[other].hackFlags &
-                                            HACK_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE))
+                        if (other >= 0 && !(sectors[other].aFlags &
+                                            SAF_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE))
                         {
                             good = false;
                             break;
                         }
                     }
                 }
-                if (!(sector.hackFlags & HACK_HAS_SELF_REFERENCING_LOOP) &&
+                if (!(sector.aFlags & SAF_HAS_SELF_REFERENCING_LOOP) &&
                     float(numSelfRef) / float(sector.lines.size()) < 0.25f)
                 {
                     // Mostly regular lines and no loops.
@@ -1446,7 +1468,7 @@ DE_PIMPL(MapImporter)
                 if (good)
                 {
                     foundSelfRefs = true;
-                    sector.hackFlags |= HACK_SELF_REFERENCING;
+                    sector.foundHacks |= HACK_SELF_REFERENCING;
                     LOGDEV_MAP_VERBOSE("self-referencing sector %d (ceil:%s floor:%s)")
                         << sectorIndex << materials.find(sector.ceilMaterial)
                         << materials.find(sector.floorMaterial);
@@ -1458,7 +1480,7 @@ DE_PIMPL(MapImporter)
                 // Look for the normal sectors that contain the self-referencing sectors.
                 for (auto &sector : sectors)
                 {
-                    if (sector.hackFlags & HACK_SELF_REFERENCING)
+                    if (sector.foundHacks & HACK_SELF_REFERENCING)
                     {
                         locateContainingSector(sector);
                     }
@@ -1466,107 +1488,34 @@ DE_PIMPL(MapImporter)
             }
         }
 
-        // Flat bleeding caused by sector without wall textures.
-        // For example: TNT map09 transparent window.
+        // Missing upper/lower textures are used for transparent doors and platform.
+        // Depending on the plane heights, they also cause flat bleeding.
+        // For example: TNT map31 suspended Arachnotrons.
         {
             for (int currentSector = 0; currentSector < int(sectors.size()); ++currentSector)
             {
                 auto &sector = sectors[currentSector];
+                if (sector.foundHacks) continue;
 
-                if (sector.hackFlags) continue;
-
-                bool good                   = true;
-                int  surroundingSector      = -1;
-                int  surroundingFloorHeight = 0;
-                int  untexturedCount        = 0;
-
-                for (int lineIndex : sector.lines)
-                {
-                    const auto &line = lines[lineIndex];
-
-                    if (!line.isTwoSided() || line.aFlags & LAF_POLYOBJ)
-                    {
-                        good = false;
-                        break;
-                    }
-
-                    if (!sides[line.front()].bottomMaterial &&
-                        !sides[line.front()].topMaterial &&
-                        !sides[line.front()].middleMaterial &&
-                        !sides[line.back()].bottomMaterial &&
-                        !sides[line.back()].topMaterial &&
-                        !sides[line.back()].middleMaterial)
-                    {
-                        untexturedCount++;
-                    }
-
-                    const int innerSide = sideOfSector(line, currentSector);
-                    if ((line.ddFlags & DDLF_DONTPEGBOTTOM) &&
-                        sides[line.sides[innerSide]].topMaterial)
-                    {
-                        // This looks like a door.
-                        // Avoids triggering in Heretic E1M1 secret door, for example.
-                        good = false;
-                        break;
-                    }
-
-                    const int other = otherSector(line, currentSector);
-                    if (other == currentSector || sectors[other].hackFlags)
-                    {
-                        good = false;
-                        break;
-                    }
-
-                    if (surroundingSector < 0)
-                    {
-                        surroundingSector      = other;
-                        surroundingFloorHeight = sectors[other].floorHeight;
-                    }
-                    else if (surroundingFloorHeight != sectors[other].floorHeight)
-                    {
-                        // Surrounding sectors must have the same floor height.
-                        good = false;
-                        break;
-                    }
-                }
-
-                if (surroundingSector < 0 || untexturedCount < 2)
-                {
-                    good = false;
-                }
-
-                if (good)
-                {
-                    LOGDEV_MAP_VERBOSE("Flat bleeding detected in floor of sector %d (untx:%d sur.flr:%d)")
-                        << currentSector
-                        << untexturedCount
-                        << surroundingFloorHeight;
-
-                    sector.hackFlags |= HACK_FLAT_BLEEDING;
-                    sector.hackParams.visPlaneLinkTargetSector = surroundingSector;
-                    sector.hackParams.flags.linkFloorPlane = true;
-                }
-            }
-        }
-
-        // Missing upper textures for transparent doors.
-        {
-            for (int currentSector = 0; currentSector < int(sectors.size()); ++currentSector)
-            {
-                auto &sector = sectors[currentSector];
-                if (sector.hackFlags) continue;
-
-                bool good = true;
+                int goodHacks = HACK_MISSING_INSIDE_TOP | HACK_MISSING_INSIDE_BOTTOM |
+                                HACK_MISSING_OUTSIDE_TOP | HACK_MISSING_OUTSIDE_BOTTOM;
                 int surroundingSector = -1;
 
                 for (int lineIndex : sector.lines)
                 {
+                    if (!goodHacks) break;
+
                     const auto &line = lines[lineIndex];
 
                     if (!line.isTwoSided() || line.aFlags & LAF_POLYOBJ)
                     {
-                        good = false;
+                        goodHacks = 0;
                         break;
+                    }
+                    if (sides[line.sides[0]].sector == sides[line.sides[1]].sector)
+                    {
+                        // Does not affect this hack.
+                        continue;
                     }
 
                     const auto innerSide = LineDef::Side(sideOfSector(line, currentSector));
@@ -1574,39 +1523,157 @@ DE_PIMPL(MapImporter)
 
                     if (sides[line.sides[outerSide]].topMaterial)
                     {
-                        good = false;
-                        break;
+                        goodHacks &= ~HACK_MISSING_OUTSIDE_TOP;
+                    }
+                    if (sides[line.sides[outerSide]].bottomMaterial)
+                    {
+                        goodHacks &= ~HACK_MISSING_OUTSIDE_BOTTOM;
+                    }
+                    if (sides[line.sides[innerSide]].topMaterial)
+                    {
+                        goodHacks &= ~HACK_MISSING_INSIDE_TOP;
+                    }
+                    if (sides[line.sides[innerSide]].bottomMaterial)
+                    {
+                        goodHacks &= ~HACK_MISSING_INSIDE_BOTTOM;
                     }
 
                     const int other = otherSector(line, currentSector);
                     if (surroundingSector < 0)
                     {
                         surroundingSector = other;
-                        if (sector.ceilHeight >= sectors[other].ceilHeight)
-                        {
-                            good = false;
-                            break;
-                        }
                     }
                     else if (other != surroundingSector)
                     {
-                        good = false;
+                        goodHacks = 0;
                         break;
                     }
                 }
 
-                if (surroundingSector < 0)
+                if (surroundingSector < 0 || surroundingSector == currentSector)
+                {
+                    goodHacks = 0;
+                }
+
+                if (goodHacks)
+                {
+                    sector.foundHacks |= goodHacks;
+                    sector.hackParams.visPlaneLinkTargetSector = surroundingSector;
+                    sector.hackParams.flags.linkCeilingPlane =
+                        (goodHacks & (HACK_MISSING_INSIDE_TOP | HACK_MISSING_OUTSIDE_TOP)) != 0;
+                    sector.hackParams.flags.linkFloorPlane =
+                        (goodHacks & (HACK_MISSING_INSIDE_BOTTOM | HACK_MISSING_OUTSIDE_BOTTOM)) != 0;
+                    sector.hackParams.flags.missingInsideTop =
+                        (goodHacks & HACK_MISSING_INSIDE_TOP) != 0;
+                    sector.hackParams.flags.missingInsideBottom =
+                        (goodHacks & HACK_MISSING_INSIDE_BOTTOM) != 0;
+                    sector.hackParams.flags.missingOutsideTop =
+                        (goodHacks & HACK_MISSING_OUTSIDE_TOP) != 0;
+                    sector.hackParams.flags.missingOutsideBottom =
+                        (goodHacks & HACK_MISSING_OUTSIDE_BOTTOM) != 0;
+
+                    StringList missDesc;
+                    if (sector.hackParams.flags.missingInsideTop) missDesc << "inside upper";
+                    if (sector.hackParams.flags.missingInsideBottom) missDesc << "inside lower";
+                    if (sector.hackParams.flags.missingOutsideTop) missDesc << "outside upper";
+                    if (sector.hackParams.flags.missingOutsideBottom) missDesc << "outside lower";
+
+                    LOGDEV_MAP_VERBOSE("sector %d missing %s walls (surrounded by sector %d)")
+                           << currentSector
+                           << String::join(missDesc, ", ")
+                           << surroundingSector;
+                }
+            }
+        }
+
+        // Flat bleeding caused by sector without wall textures.
+        // For example: TNT map09 transparent window.
+        {
+            for (auto &sector : sectors)
+            {
+                const int currentSector = indexOf(sector);
+
+                if (sector.foundHacks) continue;
+
+                bool good           = true;
+                int  adjacentSector = -1;
+
+                for (int lineIndex : sector.lines)
+                {
+                    const auto &line = lines[lineIndex];
+
+                    if (!line.isTwoSided() || line.aFlags & LAF_POLYOBJ)
+                    {
+                        good = false;
+                        break;
+                    }
+
+                    const int otherSector = this->otherSector(line, currentSector);
+
+                    if (otherSector == currentSector || sectors[otherSector].foundHacks)
+                    {
+                        good = false;
+                        break;
+                    }
+
+                    if (lineLength(line) < 8.5)
+                    {
+                        // Very short line, probably inconsequential.
+                        // Bit of a kludge for TNT map09 transparent window.
+                        continue;
+                    }
+
+                    const auto innerSide    = LineDef::Side(sideOfSector(line, currentSector));
+                    const int  innerSideNum = line.sides[innerSide];
+                    const int  outerSideNum = line.sides[opposite(innerSide)];
+
+                    if (sides[innerSideNum].bottomMaterial ||
+                        sides[innerSideNum].topMaterial ||
+                        sides[innerSideNum].middleMaterial ||
+                        sides[outerSideNum].bottomMaterial ||
+                        sides[outerSideNum].topMaterial ||
+                        sides[outerSideNum].middleMaterial)
+                        {
+                            good = false;
+                            break;
+                        }
+
+                    if (adjacentSector < 0 &&
+                        sectors[otherSector].foundHacks == 0)
+                    {
+                        adjacentSector = otherSector;
+                    }
+                }
+
+                if (adjacentSector < 0)
                 {
                     good = false;
                 }
 
                 if (good)
                 {
-                    sector.hackFlags |= HACK_MISSING_OUTSIDE_TOP;
-                    sector.hackParams.visPlaneLinkTargetSector = surroundingSector;
-                    sector.hackParams.flags.linkCeilingPlane = true;
-                    LOGDEV_MAP_VERBOSE("sector %d missing outside upper walls (surrounded by sector %d)")
-                           << currentSector << surroundingSector;
+                    LOGDEV_MAP_VERBOSE("completely untextured lines in sector %d, linking floor to adjacent sector %d")
+                           << currentSector << adjacentSector;
+
+                    sector.foundHacks |= HACK_MISSING_INSIDE_BOTTOM | HACK_MISSING_OUTSIDE_BOTTOM;
+                    sector.hackParams.visPlaneLinkTargetSector = adjacentSector;
+                    sector.hackParams.flags.linkFloorPlane = true;
+                }
+            }
+        }
+
+        // Cannot link to hacks.
+        {
+            for (auto &sector : sectors)
+            {
+                if (sector.foundHacks &&
+                    sectors[sector.hackParams.visPlaneLinkTargetSector].foundHacks)
+                {
+                    LOGDEV_MAP_VERBOSE("sector %d is linked to hacked sector %d -> cancelling")
+                        << indexOf(sector) << sector.hackParams.visPlaneLinkTargetSector;
+
+                    sector.hackParams.visPlaneLinkTargetSector = -1;
+                    sector.foundHacks = 0;
                 }
             }
         }

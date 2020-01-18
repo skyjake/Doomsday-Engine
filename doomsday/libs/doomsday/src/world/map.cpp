@@ -2196,7 +2196,7 @@ Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
 }
 
 Sector *Map::createSector(float lightLevel, const Vec3f &lightColor, int archiveIndex,
-                          int visPlaneLinkTargetSector, int planeLinkBits)
+                          const struct de_api_sector_hacks_s *hacks)
 {
     if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
@@ -2207,13 +2207,20 @@ Sector *Map::createSector(float lightLevel, const Vec3f &lightColor, int archive
 
     sector->setMap(this);
     sector->setIndexInArchive(archiveIndex);
-    sector->setVisPlaneLinks(visPlaneLinkTargetSector, planeLinkBits);
 
-    /// @todo Don't do this here.
+    // Render hacks.
+    if (hacks)
+    {
+        applySectorHacks(*sector, hacks);
+    }
+
     sector->setIndexInMap(d->editable.sectors.count() - 1);
 
     return sector;
 }
+
+void Map::applySectorHacks(Sector &, const struct de_api_sector_hacks_s *)
+{}
 
 Polyobj *Map::createPolyobj(const Vec2d &origin)
 {
@@ -2224,7 +2231,6 @@ Polyobj *Map::createPolyobj(const Vec2d &origin)
     Polyobj *pob = Factory::newPolyobj(origin);
     d->editable.polyobjs.append(pob);
 
-    /// @todo Don't do this here.
     pob->setIndexInMap(d->editable.polyobjs.count() - 1);
 
     return pob;

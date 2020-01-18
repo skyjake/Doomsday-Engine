@@ -202,7 +202,13 @@ public:
 
 //- Visual Planes (mapped) --------------------------------------------------------------
 
-    void linkVisPlane(int planeIndex, Subsector &target);
+    enum VisPlaneLinkMode {
+        LinkWhenLowerThanTarget  = 0x1,
+        LinkWhenHigherThanTarget = 0x2,
+        LinkAlways               = 0x3,
+    };
+
+    void linkVisPlane(int planeIndex, Subsector &target, VisPlaneLinkMode linkMode);
 
     /**
      * Returns the total number of @em visual planes in the subsector.
@@ -240,12 +246,6 @@ public:
      */
     inline Plane       &visCeiling()       { return visPlane(world::Sector::Ceiling); }
     inline const Plane &visCeiling() const { return visPlane(world::Sector::Ceiling); }
-
-    /**
-     * To be called to force re-evaluation of mapped visual planes. This is only necessary
-     * when a surface material change occurs on a boundary line of the subsector.
-     */
-    void markVisPlanesDirty();
 
 private:
     DE_PRIVATE(d)

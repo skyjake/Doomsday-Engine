@@ -110,7 +110,7 @@ DE_PIMPL(GameWidget)
     void drawComposited()
     {
         int numLocal = 0;
-        ClientApp::forLocalPlayers([&numLocal] (ClientPlayer &player)
+        ClientApp::forLocalPlayers([&numLocal](ClientPlayer &player)
         {
             player.viewCompositor().drawCompositedLayers();
             ++numLocal;
@@ -195,13 +195,10 @@ void GameWidget::renderCubeMap(uint size, const String &outputImagePath)
     const int player = consolePlayer;
     Vec2ui fbSize(size, size);
 
-    GLTextureFramebuffer destFb(Image::RGB_888, fbSize, 1);
-    destFb.glInit();
-
     LOG_GL_MSG("Rendering %ix%i cube map...") << 6 * fbSize.x << fbSize.y;
 
     // Prevent the angleclipper from clipping anything.
-    int old_devNoCulling = devNoCulling;
+    const int old_devNoCulling = devNoCulling;
     devNoCulling = 1;
 
     // Make the player temporarily a plain camera to hide weapons etc.
@@ -217,6 +214,8 @@ void GameWidget::renderCubeMap(uint size, const String &outputImagePath)
 
     const int baseYaw = 180;
 
+    GLTextureFramebuffer destFb(Image::RGB_888, fbSize, 1);
+    destFb.glInit();
     for (int i = 0; i < 6; ++i)
     {
         if (i < 4)
@@ -229,7 +228,13 @@ void GameWidget::renderCubeMap(uint size, const String &outputImagePath)
         }
         d->renderPlayerViewToFramebuffer(player, destFb);
         composited.draw(i * size, 0, destFb.toImage());
+
+        // IssueID #2401: Somewhere the GL state is messed up, only the first view would
+        // be visible. A proper fix would be to look through the GL state changes during
+        // rendering.
+        GLState::considerNativeStateUndefined();
     }
+    destFb.glDeinit();
 
     App_World().endFrame();
 
@@ -255,7 +260,6 @@ void GameWidget::renderCubeMap(uint size, const String &outputImagePath)
     }
 
     // Cleanup.
-    destFb.glDeinit();
     Rend_UnsetFixedView();
     devNoCulling = old_devNoCulling;
     plr.publicData().flags = oldPlrFlags;

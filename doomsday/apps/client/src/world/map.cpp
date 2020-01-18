@@ -1502,6 +1502,34 @@ void Map::consoleRegister() // static
     Mobj_ConsoleRegister();
 }
 
+enum {
+    LinkFloorBit           = 0x1,
+    LinkCeilingBit         = 0x2,
+    FlatBleedingFloorBit   = 0x4,
+    FlatBleedingCeilingBit = 0x8,
+    InvisibleFloorBit      = 0x10,
+    InvisibleCeilingBit    = 0x20,
+};
+
+void Map::applySectorHacks(world::Sector &sector, const struct de_api_sector_hacks_s *hacks)
+{
+    world::Map::applySectorHacks(sector, hacks);
+
+    int linkFlags = 0;
+
+    // Which planes to link.
+    if (hacks->flags.linkFloorPlane)   linkFlags |= LinkFloorBit;
+    if (hacks->flags.linkCeilingPlane) linkFlags |= LinkCeilingBit;
+
+    // When to link the planes.
+    if (hacks->flags.missingInsideBottom)  linkFlags |= FlatBleedingFloorBit;
+    if (hacks->flags.missingInsideTop)     linkFlags |= FlatBleedingCeilingBit;
+    if (hacks->flags.missingOutsideBottom) linkFlags |= InvisibleFloorBit;
+    if (hacks->flags.missingOutsideTop)    linkFlags |= InvisibleCeilingBit;
+
+    sector.setVisPlaneLinks(hacks->visPlaneLinkTargetSector, linkFlags);
+}
+
 bool Map::endEditing()
 {
     if (!world::Map::endEditing())
@@ -1531,14 +1559,40 @@ bool Map::endEditing()
                 // Use the first subsector as the target.
                 auto &targetSub = target->subsector(0).as<Subsector>();
 
+                int linkModes[2]{};
+                if (sector.visPlaneBits() & FlatBleedingFloorBit)
+                {
+                    linkModes[world::Sector::Floor] |= Subsector::LinkWhenLowerThanTarget;
+                }
+                if (sector.visPlaneBits() & FlatBleedingCeilingBit)
+                {
+                    linkModes[world::Sector::Ceiling] |= Subsector::LinkWhenHigherThanTarget;
+                }
+                if (sector.visPlaneBits() & InvisibleFloorBit)
+                {
+                    linkModes[world::Sector::Floor] |= Subsector::LinkWhenHigherThanTarget;
+                }
+                if (sector.visPlaneBits() & InvisibleCeilingBit)
+                {
+                    linkModes[world::Sector::Ceiling] |= Subsector::LinkWhenLowerThanTarget;
+                }
+
+                // Fallback is to link always.
+                for (auto &lm : linkModes)
+                {
+                    if (lm == 0) lm = Subsector::LinkAlways;
+                }
+
                 // Linking is done for each subsector separately. (Necessary, though?)
-                sector.forAllSubsectors([&targetSub, &sector](world::Subsector &wsub) {
+                sector.forAllSubsectors([&targetSub, &sector, linkModes](world::Subsector &wsub) {
                     auto &sub = wsub.as<Subsector>();
                     for (int plane = 0; plane < 2; ++plane)
                     {
-                        if (sector.visPlaneLinked(plane))
+                        if (sector.isVisPlaneLinked(plane))
                         {
-                            sub.linkVisPlane(plane, targetSub);
+                            sub.linkVisPlane(plane,
+                                             targetSub,
+                                             Subsector::VisPlaneLinkMode(linkModes[plane]));
                         }
                     }
                     return LoopContinue;

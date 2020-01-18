@@ -491,6 +491,7 @@ macro (deng_codesign target)
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/*/*.dylib\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/Frameworks/*.dylib\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/Frameworks/*.framework\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/MacOS/*\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/PlugIns/*.bundle/*\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/PlugIns/*.bundle\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/*.dylib\"
@@ -509,7 +510,7 @@ macro (deng_codesign target)
                 execute_process (COMMAND ${CODESIGN_COMMAND} --verbose
                         --options runtime
                         --timestamp
-                        -s \"${DE_CODESIGN_APP_CERT}\"
+                        --force -s \"${DE_CODESIGN_APP_CERT}\"
                         ${DE_FW_CODESIGN_EXTRA_FLAGS}
                         \"\${fn}\"
                 )

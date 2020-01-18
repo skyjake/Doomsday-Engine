@@ -196,9 +196,7 @@ int MPE_SectorCreate(float lightlevel, float red, float green, float blue,
         ->createSector(lightlevel,
                        {red, green, blue},
                        archiveIndex,
-                       hacks->visPlaneLinkTargetSector,
-                       (hacks->flags.linkFloorPlane ? 1 : 0) |
-                           (hacks->flags.linkCeilingPlane ? 2 : 0))
+                       hacks)
         ->indexInMap();
 }
 

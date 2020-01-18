@@ -173,7 +173,7 @@ DE_PIMPL(ClEdgeLoop)
                 // We'll need to recalculate reverb.
                 /// @todo Use an observer based mechanism in Subsector -ds
                 owner.markReverbDirty();
-                owner.markVisPlanesDirty();
+                //owner.markVisPlanesDirty();
             }
         }
     }

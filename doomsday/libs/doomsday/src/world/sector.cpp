@@ -351,9 +351,14 @@ int Sector::visPlaneLinkTargetSector() const
     return d->visPlaneLinkSector;
 }
 
-bool Sector::visPlaneLinked(int planeIndex) const
+bool Sector::isVisPlaneLinked(int planeIndex) const
 {
     return (d->visPlaneLinkBits & (1 << planeIndex)) != 0;
+}
+
+int Sector::visPlaneBits() const
+{
+    return d->visPlaneLinkBits;
 }
 
 bool Sector::hasSubsectors() const

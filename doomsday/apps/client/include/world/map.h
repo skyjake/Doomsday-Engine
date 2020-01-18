@@ -57,6 +57,7 @@ class ClSkyPlane;
 class Plane;
 class Surface;
 class Vertex;
+struct de_api_sector_hacks_s;
 
 namespace world
 {
@@ -110,6 +111,7 @@ public:
      */
     explicit Map(res::MapManifest *manifest = nullptr);
 
+    void applySectorHacks(world::Sector &sector, const struct de_api_sector_hacks_s *hacks) override;
     bool endEditing() override;
     void update() override;
     void link(mobj_t &mob, int flags) override;

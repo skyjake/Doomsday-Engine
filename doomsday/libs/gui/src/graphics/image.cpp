@@ -336,7 +336,7 @@ static Image load(const Block &data)
             ByteRefArray buf(color, 4);
             input.readBytes(header.mapEntrySize / 8, buf);
             DE_ASSERT(header.mapIndex + i < 256);
-            colorTable[header.mapIndex + i] = {color[0], color[1], color[2], color[3]};
+            colorTable[header.mapIndex + i] = {color[2], color[1], color[0], color[3]};
         }
 
         img = Image(Image::Size(header.size.x, header.size.y), Image::RGBA_8888);
@@ -355,7 +355,7 @@ static Image load(const Block &data)
         }
     }
 
-    if (pixelSize == 3)
+    if (pixelSize >= 3)
     {
         img = img.rgbSwapped();
     }
