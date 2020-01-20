@@ -173,9 +173,10 @@ DE_PIMPL(World)
         // Update based on Map Info.
         map->update();
 
+        const res::Uri mapUri = map->uri();
+
         // The game may need to perform it's own finalization now that the
         // "current" map has changed.
-        const res::Uri mapUri = (map->hasManifest() ? map->manifest().composeUri() : res::makeUri("Maps:"));
         auto &gx = DoomsdayApp::plugins().gameExports();
         if (gx.FinalizeMapChange)
         {

@@ -128,6 +128,8 @@ public:
      */
     void setManifest(res::MapManifest *newManifest);
 
+    res::Uri uri() const;
+
     /**
      * Returns the effective map-info definition Record for the map.
      *

@@ -1229,9 +1229,14 @@ void Map::setManifest(res::MapManifest *newManifest)
     if (d->manifest) d->manifest->audienceForDeletion() += d;
 }
 
+res::Uri Map::uri() const
+{
+    return hasManifest() ? manifest().composeUri() : res::makeUri("Maps:");
+}
+
 const Record &Map::mapInfo() const
 {
-    return World::get().mapInfoForMapUri(hasManifest() ? manifest().composeUri() : res::makeUri("Maps:"));
+    return World::get().mapInfoForMapUri(uri());
 }
 
 const mesh::Mesh &Map::mesh() const
@@ -2403,7 +2408,7 @@ D_CMD(InspectMap)
     LOG_SCR_MSG(    _E(l) "Uri: "    _E(.) _E(i) "%s" _E(.)
                 /*" " _E(l) " OldUid: " _E(.) _E(i) "%s" _E(.)*/
                 _E(l) " Music: "  _E(.) _E(i) "%i")
-        << (map.hasManifest()? map.manifest().composeUri().asText() : "(unknown map)")
+        << (map.hasManifest() ? map.manifest().composeUri().asText() : "(unknown map)")
         /*<< map.oldUniqueId()*/
         << CVar_Integer(Con_FindVariable("map-music"));
 

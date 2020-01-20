@@ -19,14 +19,6 @@
 
 #include "de_platform.h"
 
-//#include <QAction>
-//#include <QDebug>
-//#include <QDesktopServices>
-//#include <QFontDatabase>
-//#include <QMenuBar>
-//#include <QNetworkProxyFactory>
-//#include <QSplashScreen>
-
 #include "audio/audiosystem.h"
 #include "busyrunner.h"
 #include "clientapp.h"

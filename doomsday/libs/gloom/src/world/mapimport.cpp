@@ -58,7 +58,7 @@ DE_PIMPL_NOREF(MapImport)
     res::IdTech1TextureLib  textureLib;
     String                  mapId;
     Map                     map;
-    Set<String>            textures;
+    Set<String>             textures;
     Vec3d                   metersPerUnit;
     double                  worldAspectRatio = 1.2;
 
