@@ -44,7 +44,6 @@
 #include "ui/b_main.h"
 #include "ui/clientwindow.h"
 #include "ui/clientstyle.h"
-//#include "ui/clientwindowsystem.h"
 #include "ui/dialogs/alertdialog.h"
 #include "ui/dialogs/packagecompatibilitydialog.h"
 #include "ui/inputsystem.h"
@@ -55,6 +54,7 @@
 #include "updater.h"
 #include "updater/updatedownloaddialog.h"
 #include "world/contact.h"
+#include "world/gloomworld.h"
 #include "world/map.h"
 #include "world/p_players.h"
 
@@ -187,8 +187,9 @@ DE_PIMPL(ClientApp)
     RenderSystem *   rendSys   = nullptr;
     ClientResources *resources = nullptr;
     InFineSystem     infineSys; // instantiated at construction time
-    ServerLink *     svLink = nullptr;
-    ClientWorld *    world  = nullptr;
+    ServerLink *     svLink       = nullptr;
+    ClientWorld *    classicWorld = nullptr;
+    GloomWorld *     gloomWorld   = nullptr;
 
     /**
      * Log entry sink that passes warning messages to the main window's alert
@@ -295,7 +296,8 @@ DE_PIMPL(ClientApp)
         delete resources;
         delete audioSys;
         delete rendSys;
-        delete world;
+        delete classicWorld;
+        delete gloomWorld;
         delete svLink;
         clientAppSingleton = 0;
     }
@@ -679,8 +681,8 @@ void ClientApp::initialize()
     #endif
 
     // Create the world system.
-    d->world = new ClientWorld;
-    addSystem(*d->world);
+    d->classicWorld = new ClientWorld;
+    addSystem(*d->classicWorld);
 
     // Create the render system.
     d->rendSys = new RenderSystem;
@@ -1020,8 +1022,8 @@ ClientResources &ClientApp::resources()
 ClientWorld &ClientApp::world()
 {
     ClientApp &a = ClientApp::app();
-    DE_ASSERT(a.d->world != 0);
-    return *a.d->world;
+    DE_ASSERT(a.d->classicWorld != 0);
+    return *a.d->classicWorld;
 }
 
 void ClientApp::openHomepageInBrowser()

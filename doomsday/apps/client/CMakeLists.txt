@@ -215,7 +215,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "BSD")
 endif()
 
 target_link_libraries (client PUBLIC doomsdaygui)
-deng_link_libraries (client PUBLIC DengGui DengDoomsday DengGameKit)
+deng_link_libraries (client PUBLIC DengGui DengDoomsday DengGameKit DengGloom)
 
 # Extensions ----------------------------------------------------------------------------
 
@@ -317,6 +317,7 @@ if (APPLE AND NOT IOS)
         Deng::libgui
         Deng::libdoomsday
         Deng::libgamekit
+        Deng::libgloom
         doom
         doom64
         heretic
