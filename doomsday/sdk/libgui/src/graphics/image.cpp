@@ -239,6 +239,10 @@ static bool recognize(Block const &data)
     {
         Header header;
         Reader(data) >> header;
+        if (header.size.x == 0 || header.size.y == 0)
+        {
+            return false;
+        }
         if (header.imageType == Header::ColorMapped && header.colorMapType == Header::ColorMap256 &&
             header.depth == 8)
         {
