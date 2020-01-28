@@ -55,6 +55,17 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="2.2.2" date="2020-01-28">
+            <description>
+                <p>Patch release that addresses issues found in version 2.2.</p>
+                <ul>
+                    <li>Some 3D models are only partially visible.</li>
+                    <li>"cubeshot" console command did not render all sides of the cube.</li>
+                    <li>More consistent HUD 3D weapon model positioning.</li>
+                </ul>
+            </description>
+            <url>https://manual.dengine.net/version/2.2.2</url>
+        </release>
         <release version="2.2.1" date="2020-01-14">
             <description>
                 <p>Patch release that addresses issues found in version 2.2.</p>
