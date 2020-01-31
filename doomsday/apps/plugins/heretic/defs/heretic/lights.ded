@@ -12,9 +12,28 @@ SkipIf -nodefaultfx;
 #
 # For further information on Light definition syntax and semantics see:
 #
-#   http://dengine.net/dew/?title=Light
+#   https://manual.dengine.net/ded/light
 
-# A halo would look bad for the chandelier because it wouldn't be rendered around the candle flames.
+# Dimmer flame light for Phoenix Rod PL2; the effect consists of
+# multiple lights.
+Light {
+    State = "PHOENIXFX2_1";
+    Red = 0.2;
+    Green = 0.18;
+    Blue = 0.0;
+}
+Copy Light { State = "PHOENIXFX2_2"; }
+Copy Light { State = "PHOENIXFX2_3"; }
+Copy Light { State = "PHOENIXFX2_4"; }
+Copy Light { State = "PHOENIXFX2_5"; }
+Copy Light { State = "PHOENIXFX2_6"; }
+Copy Light { State = "PHOENIXFX2_7"; }
+Copy Light { State = "PHOENIXFX2_8"; }
+Copy Light { State = "PHOENIXFX2_9"; }
+Copy Light { State = "PHOENIXFX2_10"; }
+
+# A halo would look bad for the chandelier because it wouldn't be
+# rendered around the candle flames.
 Light { State = "CHANDELIER1"; Size = 0.8; Flags = "lgf_nohalo"; }
 Copy Light { State = "CHANDELIER2"; }
 Copy Light { State = "CHANDELIER3"; }
@@ -49,7 +68,7 @@ Copy Light { State = "CKYY9"; }
 #
 # For further information on Decoration definition syntax and semantics see:
 #
-#   http://dengine.net/dew/?title=Decoration
+#   https://manual.dengine.net/ded/decoration
 
 Decoration {
   Material = "textures:GRSKULL3";
