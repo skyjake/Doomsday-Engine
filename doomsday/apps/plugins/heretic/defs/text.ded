@@ -59,7 +59,7 @@ Text {
 
 Text {
   ID = "NIGHTMARE";
-  Text = "Are you sure? This skill level\nisn't even remotely fair.";
+  Text = ""; # Are you sure? This skill level\nisn't even remotely fair.
 }
 
 Text {

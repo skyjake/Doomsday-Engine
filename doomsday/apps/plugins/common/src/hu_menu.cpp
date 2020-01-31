@@ -3587,10 +3587,10 @@ void Hu_MenuFocusSkillMode(Widget &wi, Widget::Action action)
     Hu_MenuDefaultFocusAction(wi, action);
 }
 
-#if __JDOOM__
+#if __JDOOM__ || __JHERETIC__
 static int Hu_MenuConfirmInitNewGame(msgresponse_t response, int /*userValue*/, void * /*context*/)
 {
-    if(response == MSG_YES)
+    if (response == MSG_YES)
     {
         Hu_MenuInitNewGame(true);
     }
@@ -3604,11 +3604,15 @@ static int Hu_MenuConfirmInitNewGame(msgresponse_t response, int /*userValue*/, 
  */
 static void Hu_MenuInitNewGame(bool confirmed)
 {
-#if __JDOOM__
-    if(!confirmed && SM_NIGHTMARE == mnSkillmode)
+#if __JDOOM__ || __JHERETIC__
+    const int nightmareTextNum = Defs().getTextNum("NIGHTMARE");
+    if (nightmareTextNum >= 0 && strlen(Defs().text[nightmareTextNum].text) > 0)
     {
-        Hu_MsgStart(MSG_YESNO, NIGHTMARE, Hu_MenuConfirmInitNewGame, 0, NULL);
-        return;
+        if (!confirmed && mnSkillmode == SM_NIGHTMARE)
+        {
+            Hu_MsgStart(MSG_YESNO, Defs().text[nightmareTextNum].text, Hu_MenuConfirmInitNewGame, 0, NULL);
+            return;
+        }
     }
 #else
     DENG2_UNUSED(confirmed);
