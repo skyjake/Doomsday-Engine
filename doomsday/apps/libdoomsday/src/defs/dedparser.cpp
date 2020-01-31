@@ -2174,6 +2174,8 @@ DENG2_PIMPL(DEDParser)
                         String buffer;
                         if (ReadString(buffer))
                         {
+                            buffer.replace("\\n", "\n"); // newline escapes are allowed
+
                             QByteArray bufferUtf8 = buffer.toUtf8();
                             txt->text = (char *) M_Realloc(txt->text, bufferUtf8.length() + 1);
                             qstrcpy(txt->text, bufferUtf8.constData());
