@@ -309,6 +309,20 @@ static de::Value *Function_Player_Power(de::Context &ctx, const de::Function::Ar
     return new de::NumberValue(contextPlayer(ctx).powers[power]);
 }
 
+static de::Value *Function_Player_ShotAmmo(de::Context &ctx, const de::Function::ArgumentValues &)
+{
+    P_ShotAmmo(&contextPlayer(ctx));
+    return nullptr;
+}
+
+#if defined(__JHERETIC__)
+static de::Value *Function_Player_SetFlameCount(de::Context &ctx, const de::Function::ArgumentValues &args)
+{
+    contextPlayer(ctx).flameCount = args.at(0)->asInt();
+    return nullptr;
+}
+#endif
+
 //-------------------------------------------------------------------------------------------------
 
 void Common_Load()
@@ -389,7 +403,8 @@ void Common_Load()
             auto &playerClass = scr.builtInClass("App", "Player");
             gameBindings->init(playerClass)
                 << DENG2_FUNC_NOARG (Player_Health, "health")
-                << DENG2_FUNC       (Player_Power, "power", "type");
+                << DENG2_FUNC       (Player_Power, "power", "type")
+                << DENG2_FUNC_NOARG (Player_ShotAmmo, "shotAmmo");
 
 #if defined(HAVE_DOOM_ARMOR_BINDINGS)
             *gameBindings
@@ -398,6 +413,9 @@ void Common_Load()
 #endif
 
 #if defined(__JHERETIC__)
+            *gameBindings
+                << DENG2_FUNC(Player_SetFlameCount, "setFlameCount", "tics");
+
             // Heretic: Powerup constants.
             playerClass.set("PT_INVULNERABILITY", PT_INVULNERABILITY);
             playerClass.set("PT_INVISIBILITY", PT_INVISIBILITY);
