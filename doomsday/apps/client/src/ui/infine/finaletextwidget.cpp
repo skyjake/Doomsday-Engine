@@ -62,6 +62,7 @@ DENG2_PIMPL_NOREF(FinaleTextWidget)
 
         for (; *text; text++)
         {
+            if (*text == '\n') break;
             if (*text == '\\')
             {
                 if (!*++text)     break;
@@ -183,6 +184,15 @@ void FinaleTextWidget::draw(Vector3f const &offset)
             linew = d->textLineWidth(ptr);
 
         ch = *ptr;
+        if (*ptr == '\n') // Newline? (see below for unescaped \n)
+        {
+            x = 0;
+            y += FR_CharHeight('A') * (1 + d->lineHeight);
+            linew = -1;
+            cnt++; // Include newlines in the wait count.
+            continue;
+        }
+
         if (*ptr == '\\') // Escape?
         {
             if (!*++ptr)
