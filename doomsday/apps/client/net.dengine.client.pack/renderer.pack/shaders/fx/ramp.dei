@@ -1,0 +1,25 @@
+shader fx.ramp {
+    vertex = "
+        in vec4 aVertex;
+        in vec2 aUV;
+
+        out vec2 vUV;
+
+        void main(void) {
+            gl_Position = aVertex;
+            vUV = aUV;
+        }"
+    fragment = "
+        uniform sampler2D uTex;
+        uniform float uGamma, uContrast, uBrightness;
+
+        in vec2 vUV;
+
+        void main(void) {
+            vec4 pixel = texture(uTex, vUV);
+            pixel.rgb = clamp((pixel.rgb - vec3(0.5)) * uContrast + vec3(0.5), vec3(0.0), vec3(1.0));
+            pixel.rgb = pow(pixel.rgb, vec3(1.0 / uGamma));
+            pixel.rgb += vec3(uBrightness);
+            out_FragColor = pixel;
+        }"
+}
