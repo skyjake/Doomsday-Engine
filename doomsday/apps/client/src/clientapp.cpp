@@ -159,6 +159,19 @@ static Value *Function_App_Quit(Context &, const Function::ArgumentValues &)
     return 0;
 }
 
+static SDL_Surface *createSDLSurfaceFromImage(const Image &image)
+{
+    const int imageWidth  = int(image.width());
+    const int imageHeight = int(image.height());
+
+    return SDL_CreateRGBSurfaceWithFormatFrom(const_cast<uint8_t *>(image.bits()),
+                                              imageWidth,
+                                              imageHeight,
+                                              int(image.depth()),
+                                              int(image.stride()),
+                                              SDL_PIXELFORMAT_ABGR8888);
+}
+
 DE_PIMPL(ClientApp)
 , DE_OBSERVES(Plugins, PublishAPI)
 , DE_OBSERVES(Plugins, Notification)
@@ -590,28 +603,36 @@ ClientApp::ClientApp(const StringList &args)
 
     // Show the splash image in a separate window.
     {
-        const Image splashImage = Image::fromXpmData(doomsdaySplashXpm);
-
-        const int imageWidth  = int(splashImage.width());
-        const int imageHeight = int(splashImage.height());
-
-        SDL_Surface *splashSurface = SDL_CreateRGBSurfaceWithFormatFrom(const_cast<dbyte *>(splashImage.bits()),
-                                                                        imageWidth,
-                                                                        imageHeight,
-                                                                        int(splashImage.depth()),
-                                                                        int(splashImage.stride()),
-                                                                        SDL_PIXELFORMAT_ABGR8888);
+        SDL_Surface *splashSurface = createSDLSurfaceFromImage(Image::fromXpmData(doomsdaySplashXpm));
 
         d->splashWindow =
             SDL_CreateWindow(DOOMSDAY_NICENAME,
                              SDL_WINDOWPOS_CENTERED,
                              SDL_WINDOWPOS_CENTERED,
-                             imageWidth,
-                             imageHeight,
+                             splashSurface->w,
+                             splashSurface->h,
                              SDL_WINDOW_BORDERLESS | SDL_WINDOW_SHOWN | SDL_WINDOW_ALWAYS_ON_TOP |
                              SDL_WINDOW_ALLOW_HIGHDPI);
 
         SDL_BlitSurface(splashSurface, nullptr, SDL_GetWindowSurface(d->splashWindow), nullptr);
+
+        // Version text.
+        {
+            FontParams fp{};
+            fp.family = "Builtin";
+            fp.pointSize = 14;
+            fp.spec.weight = 50;
+            Font font(fp);
+            const Image rasterized = font.rasterize(Version::currentBuild().asHumanReadableText(),
+                                                    Vec4ub(90, 110, 95, 255),
+                                                    Vec4ub(90, 110, 95, 0));
+            auto *surf = createSDLSurfaceFromImage(rasterized);
+            SDL_Rect rect = { splashSurface->w / 2 - surf->w / 2,
+                              splashSurface->h - surf->h * 3 / 2, 0, 0 };
+            SDL_BlitSurface(surf, nullptr, SDL_GetWindowSurface(d->splashWindow), &rect);
+            SDL_FreeSurface(surf);
+        }
+
         SDL_UpdateWindowSurface(d->splashWindow);
         SDL_FreeSurface(splashSurface);
         SDL_RaiseWindow(d->splashWindow);
