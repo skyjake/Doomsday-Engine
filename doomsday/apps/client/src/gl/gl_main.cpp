@@ -109,6 +109,7 @@ dd_bool GL_IsFullyInited()
     return initFullGLOk;
 }
 
+#if 0
 struct GammaRamp
 {
     duint16 red[256];
@@ -208,6 +209,8 @@ void GL_SetGamma()
     GL_MakeGammaRamp(myramp, vid_gamma, vid_contrast, vid_bright);
     GL_SetGammaRamp(myramp);
 }
+#endif
+
 
 void GL_FinishFrame()
 {
@@ -216,11 +219,13 @@ void GL_FinishFrame()
     DE_ASSERT_IN_RENDER_THREAD();
     LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
+#if 0
     // Check for color adjustment changes.
     if (oldgamma != vid_gamma || oldcontrast != vid_contrast || oldbright != vid_bright)
     {
         GL_SetGamma();
     }
+#endif
 
 #if !defined (DE_MOBILE)
     // Wait until the right time to show the frame so that the realized
@@ -294,8 +299,10 @@ void GL_Init()
         App_Error("GL_Init: GL_EarlyInit has not been done yet.\n");
     }
 
+#if 0
     // Set the gamma in accordance with vid-gamma, vid-bright and vid-contrast.
     GL_SetGamma();
+#endif
 
     // Initialize one viewport.
     R_SetupDefaultViewWindow(0);
@@ -1416,6 +1423,7 @@ D_CMD(ListDisplayModes)
     return true;
 }
 
+#if 0
 D_CMD(UpdateGammaRamp)
 {
     DE_UNUSED(src, argc, argv);
@@ -1424,6 +1432,7 @@ D_CMD(UpdateGammaRamp)
     LOG_GL_VERBOSE("Gamma ramp set");
     return true;
 }
+#endif
 
 D_CMD(Fog)
 {
@@ -1527,7 +1536,7 @@ void GL_Register()
     C_VAR_INT  ("rend-mobj-smooth-turn", &useSRVOAngle,     0, 0, 1);
 
     // * video
-    C_VAR_FLOAT("vid-gamma",             &vid_gamma,        0, 0.1f, 4);
+    C_VAR_FLOAT("vid-gamma",             &vid_gamma,        0, 0.1f, 3);
     C_VAR_FLOAT("vid-contrast",          &vid_contrast,     0, 0, 2.5f);
     C_VAR_FLOAT("vid-bright",            &vid_bright,       0, -1, 1);
 
@@ -1545,7 +1554,7 @@ void GL_Register()
     C_CMD      ("setres",           "ii",   SetRes);
     C_CMD      ("setfullres",       "ii",   SetFullRes);
     C_CMD      ("setwinres",        "ii",   SetWinRes);
-    C_CMD      ("setvidramp",       "",     UpdateGammaRamp);
+//    C_CMD      ("setvidramp",       "",     UpdateGammaRamp);
     C_CMD      ("togglefullscreen", "",     ToggleFullscreen);
     C_CMD      ("togglemaximized",  "",     ToggleMaximized);
     C_CMD      ("togglecentered",   "",     ToggleCentered);

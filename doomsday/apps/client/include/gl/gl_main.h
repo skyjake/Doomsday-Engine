@@ -340,6 +340,6 @@ void            DGL_CullFace(DGLenum cull);
 
 // Console commands ---------------------------------------------------------------------
 
-D_CMD(UpdateGammaRamp);
+//D_CMD(UpdateGammaRamp);
 
 #endif // DE_GL_MAIN_H

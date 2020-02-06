@@ -1244,6 +1244,12 @@ void Def_Read()
         st->action    = P_GetAction(dst.gets("action"));
         st->nextState = defs.getStateNum(dst.gets("nextState"));
 
+        if (st->nextState == -1)
+        {
+            LOG_WARNING("State \"%s\": next state \"%s\" is not defined") << dst.gets("id")
+                                                                          << dst.gets("nextState");
+        }
+
         const auto &misc = dst.geta("misc");
         for (int k = 0; k < NUM_STATE_MISC; ++k)
         {

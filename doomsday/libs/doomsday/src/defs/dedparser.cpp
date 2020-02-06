@@ -2173,6 +2173,7 @@ DE_PIMPL(DEDParser)
                         String buffer;
                         if (ReadString(buffer))
                         {
+                            buffer.replace("\\n", "\n"); // newline escapes are allowed
                             txt->text = (char *) M_Realloc(txt->text, buffer.size() + 1);
                             strcpy(txt->text, buffer);
                         }

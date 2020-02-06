@@ -351,7 +351,7 @@ struct SectorDef : public Id1MapElement
     // Internal bookkeeping:
     std::set<int> lines;
     std::vector<int> selfRefLoop;
-    int singleSidedCount = 0;
+    //int singleSidedCount = 0;
     int aFlags = 0;
     int foundHacks = 0;
     struct de_api_sector_hacks_s hackParams{{}, -1};
@@ -1293,7 +1293,64 @@ DE_PIMPL(MapImporter)
             erase(iter);
             return line;
         }
+
+        bool contains(const LineDef &line) const
+        {
+            return Base::find(&line) != Base::end();
+        }
     };
+
+    bool isLoopContainedWithinSameSector(const std::vector<int> &loop, int sector) const
+    {
+        LineDefSet loopSet;
+        for (int lineIndex : loop)
+        {
+            DE_ASSERT(isSelfReferencing(lines[lineIndex]));
+            loopSet.insert(&lines[lineIndex]);
+        }
+
+        LineDefSet regularSectorLines;
+        for (int lineIndex : sectors[sector].lines)
+        {
+            const auto &line = lines[lineIndex];
+            if (!isSelfReferencing(line))
+            {
+                DE_ASSERT(!loopSet.contains(line));
+                regularSectorLines.insert(&line);
+            }
+        }
+
+        const Vec2d interceptDirs[] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+
+        // Check intercepts extending outward from the loop. They should all contact a
+        // regular sector line.
+        for (const auto *loopLine : loopSet)
+        {
+            const Vec2d midPoint = (vertices[loopLine->v[0]].pos + vertices[loopLine->v[1]].pos) / 2;
+
+            for (const auto &dir : interceptDirs)
+            {
+                bool intercepted = false;
+                for (const auto *regular : regularSectorLines)
+                {
+                    auto hit = findIntersection(*regular, midPoint, midPoint + dir);
+                    if (hit.valid && hit.t > 0.0)
+                    {
+                        intercepted = true;
+                        break;
+                    }
+                }
+                if (!intercepted)
+                {
+                    // No containment in this direction.
+                    return false;
+                }
+            }
+        }
+
+        // Fully contained in all directions.
+        return true;
+    }
 
     void analyze()
     {
@@ -1335,7 +1392,7 @@ DE_PIMPL(MapImporter)
                     if (!line.isTwoSided())
                     {
                         hasSingleSided = true;
-                        sector.singleSidedCount++;
+//                        sector.singleSidedCount++;
                     }
                     if (isSelfReferencing(line))
                     {
@@ -1371,10 +1428,11 @@ DE_PIMPL(MapImporter)
                                     LOGDEV_MAP_VERBOSE("    line %d") << lineIndex;
                                 }
                                 sector.aFlags |= SAF_HAS_SELF_REFERENCING_LOOP;
-                                if (sector.singleSidedCount > int(loop.size()))
+                                if (isLoopContainedWithinSameSector(sector.selfRefLoop, sectorIndex))
                                 {
-                                    LOGDEV_MAP_VERBOSE("    but the sector has %d single-sided lines, so ignoring the loop")
-                                           << sector.singleSidedCount;
+                                    LOGDEV_MAP_VERBOSE("    but the loop is contained inside "
+                                                       "sector %d, so ignoring the loop")
+                                        << sectorIndex;
                                     sector.aFlags &= ~SAF_HAS_SELF_REFERENCING_LOOP;
                                     sector.selfRefLoop.clear();
                                 }

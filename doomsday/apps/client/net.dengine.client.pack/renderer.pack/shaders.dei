@@ -12,4 +12,5 @@
 @include <shaders/model.dei>
 @include <shaders/fx/bloom.dei>
 @include <shaders/fx/post.dei>
+@include <shaders/fx/ramp.dei>
 @include <shaders/debug.dei>

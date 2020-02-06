@@ -23,7 +23,7 @@ set (DE_RELEASE_TYPE
     #Stable
 )
 
-set (DE_TEAM_COPYRIGHT "Copyright (c) 2003-2019 Deng Team")
+set (DE_TEAM_COPYRIGHT "Copyright (c) 2003-2020 Jaakko Keränen et al.")
 
 # Build Configuration --------------------------------------------------------
 

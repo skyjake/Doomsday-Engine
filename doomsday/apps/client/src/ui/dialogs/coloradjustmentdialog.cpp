@@ -53,6 +53,13 @@ DE_GUI_PIMPL(ColorAdjustmentDialog)
         layout << *gammaLabel      << *gamma
                << *contrastLabel   << *contrast
                << *brightnessLabel << *brightness;
+        auto *msg = LabelWidget::newWithText("These only affect the 3D game view.", &area);
+        {
+            msg->margins().setTop("unit").setBottom("");
+            msg->setFont("separator.annotation");
+            msg->setTextColor("altaccent");
+        }
+        layout << Const(0) << *msg;
         area.setContentSize(layout);
     }
 

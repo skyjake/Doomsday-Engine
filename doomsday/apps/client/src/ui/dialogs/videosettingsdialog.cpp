@@ -376,7 +376,10 @@ VideoSettingsDialog::VideoSettingsDialog(const String &name)
 #ifdef USE_COLOR_DEPTH_CHOICE
         modeLayout << *colorLabel << *d->depths;
 #endif
+    }
 
+    // Color adjustment.
+    {
         auto *adjustButton = new ButtonWidget;
         adjustButton->setText("Color Adjustments...");
         adjustButton->setActionFn([this]() { showColorAdjustments(); });
