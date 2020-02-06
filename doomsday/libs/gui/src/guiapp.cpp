@@ -18,6 +18,7 @@
 
 #include "de/GuiApp"
 #include "de/graphics/opengl.h"
+#include "de/text/builtinfont.h"
 #include "de/ImageFile"
 #include "de/GLWindow"
 
@@ -95,6 +96,9 @@ DE_PIMPL(GuiApp)
             self().scriptSystem().addNativeModule("DisplayMode", binder.module());
             binder.module().addNumber("PIXEL_RATIO", 1.0);
         }
+
+        // Built-in font for immediate use.
+        Font::load("Builtin-Regular", sourceSansProRegular());
     }
 
     ~Impl() override

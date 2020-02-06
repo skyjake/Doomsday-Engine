@@ -33,7 +33,7 @@
 
 namespace de {
 
-struct FontParams
+struct LIBGUI_PUBLIC FontParams
 {
     String           family;
     float            pointSize;
