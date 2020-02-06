@@ -97,9 +97,9 @@ static DotPath composeSurfacePath(const Surface &surface)
  * frequent case should be designed for. -ds
  */
 DE_PIMPL(Subsector)
-, DE_OBSERVES(Subsector, Deletion)
-, DE_OBSERVES(Plane,     Deletion)
 
+//, DE_OBSERVES(Subsector, Deletion)
+//, DE_OBSERVES(Plane,  Deletion)
 //, DE_OBSERVES(Sector, LightColorChange)
 //, DE_OBSERVES(Sector, LightLevelChange)
 
@@ -227,11 +227,11 @@ DE_PIMPL(Subsector)
     Impl(Public *i) : Base(i)
     {}
 
-    ~Impl() override
-    {
-        unlinkVisPlane(Sector::Floor);
-        unlinkVisPlane(Sector::Ceiling);
-    }
+//    ~Impl() override
+//    {
+//        unlinkVisPlane(Sector::Floor);
+//        unlinkVisPlane(Sector::Ceiling);
+//    }
 
 #if 0
     inline bool floorIsMapped()
@@ -323,7 +323,7 @@ DE_PIMPL(Subsector)
 
         if (yes)
         {
-            plane->audienceForDeletion() += this;
+//            plane->audienceForDeletion() += this;
             if (observeHeight)
             {
                 plane->audienceForHeightChange() += this;
@@ -334,10 +334,11 @@ DE_PIMPL(Subsector)
         {
             plane->audienceForHeightSmoothedChange -= this;
             plane->audienceForHeightChange() -= this;
-            plane->audienceForDeletion() -= this;
+//            plane->audienceForDeletion() -= this;
         }
     }
 
+#if 0
     void observeSubsector(Subsector *subsec, bool yes = true)
     {
         if (!subsec || subsec == thisPublic)
@@ -346,6 +347,7 @@ DE_PIMPL(Subsector)
         if (yes) subsec->audienceForDeletion += this;
         else     subsec->audienceForDeletion -= this;
     }
+#endif
 
     void linkVisPlane(dint planeIdx, Subsector *newSubsector)
     {
@@ -366,11 +368,11 @@ DE_PIMPL(Subsector)
                 observePlane(oldPlane, false);
             }
         }
-        observeSubsector(visp->current, false);
+//        observeSubsector(visp->current, false);
 
         visp->current = newSubsector;
 
-        observeSubsector(visp->current);
+//        observeSubsector(visp->current);
         if (visp->current != thisPublic)
         {
             if (Plane *newPlane = linkedPlane(planeIdx))
@@ -1256,6 +1258,7 @@ DE_PIMPL(Subsector)
         markDependentSurfacesForRedecoration(animator.material());
     }
 
+#if 0
     void planeBeingDeleted(const world::Plane &plane) override
     {
         LOG_AS("Subsector");
@@ -1265,6 +1268,7 @@ DE_PIMPL(Subsector)
             decorSurfaces.remove(maybeAs<Surface>(plane.surfacePtr()));
         }
     }
+#endif
 
     void planeHeightChanged(world::Plane &plane) override
     {
@@ -1373,11 +1377,13 @@ DE_PIMPL(Subsector)
         }
     }
 
+#if 0
     void subsectorBeingDeleted(const world::Subsector &subsec) override
     {
         if (visPlaneLinks[Sector::Floor  ].current == &subsec) unlinkVisPlane(Sector::Floor);
         if (visPlaneLinks[Sector::Ceiling].current == &subsec) unlinkVisPlane(Sector::Ceiling);
     }
+#endif
 };
 
 Subsector::Subsector(const List<world::ConvexSubspace *> &subspaces)
