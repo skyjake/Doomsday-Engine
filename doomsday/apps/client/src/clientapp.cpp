@@ -702,8 +702,13 @@ void ClientApp::initialize()
     #endif
 
     // Create the world system.
+#if 0
     d->classicWorld = new ClientWorld;
     addSystem(*d->classicWorld);
+#else
+    d->gloomWorld = new GloomWorld;
+    addSystem(*d->gloomWorld);
+#endif
 
     // Create the render system.
     d->rendSys = new RenderSystem;
@@ -1040,10 +1045,18 @@ ClientResources &ClientApp::resources()
     return *a.d->resources;
 }
 
-ClientWorld &ClientApp::world()
+world::World &ClientApp::world()
 {
     ClientApp &a = ClientApp::app();
-    DE_ASSERT(a.d->classicWorld != 0);
+    DE_ASSERT(a.d->gloomWorld || a.d->classicWorld);
+    if (a.d->gloomWorld) return *a.d->gloomWorld;
+    return *a.d->classicWorld;
+}
+
+ClientWorld &ClientApp::classicWorld()
+{
+    ClientApp &a = ClientApp::app();
+    DE_ASSERT(a.d->classicWorld);
     return *a.d->classicWorld;
 }
 

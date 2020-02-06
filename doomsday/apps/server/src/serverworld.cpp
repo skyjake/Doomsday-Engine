@@ -71,43 +71,9 @@ using namespace res;
 
 ServerWorld::ServerWorld()
 {
-    using world::Factory;
-            
     world::DmuArgs::setPointerToIndexFunc(P_ToIndex);
+    useDefaultConstructors();
 
-    Factory::setConvexSubspaceConstructor([](mesh::Face &f, world::BspLeaf *bl) {
-        return new world::ConvexSubspace(f, bl);
-    });
-    Factory::setLineConstructor([](world::Vertex &s, world::Vertex &t, int flg,
-                                   world::Sector *fs, world::Sector *bs) {
-        return new world::Line(s, t, flg, fs, bs);
-    });
-    Factory::setLineSideConstructor([](world::Line &ln, world::Sector *s) {
-        return new world::LineSide(ln, s);
-    });
-    Factory::setLineSideSegmentConstructor([](world::LineSide &ls, mesh::HEdge &he) {
-        return new world::LineSideSegment(ls, he);
-    });
-    Factory::setMapConstructor([]() { return new world::Map(); });
-    Factory::setMobjThinkerDataConstructor([](const Id &id) { return new MobjThinkerData(id); });
-    Factory::setMaterialConstructor([] (world::MaterialManifest &m) {
-        return new world::Material(m);
-    });
-    Factory::setPlaneConstructor([](world::Sector &sec, const Vec3f &norm, double hgt) {
-        return new world::Plane(sec, norm, hgt);
-    });
-    Factory::setPolyobjDataConstructor([]() { return new world::PolyobjData(); });
-    Factory::setSkyConstructor([](const defn::Sky *def) { return new world::Sky(def); });
-    Factory::setSubsectorConstructor([] (const List<world::ConvexSubspace *> &sl) {
-        return new world::Subsector(sl);
-    });
-    Factory::setSurfaceConstructor([](world::MapElement &me, float opac, const Vec3f &clr) {
-        return new world::Surface(me, opac, clr);
-    });
-    Factory::setVertexConstructor([](mesh::Mesh &m, const Vec2d &p) -> world::Vertex * {
-        return new world::Vertex(m, p);
-    });
-    
     audienceForMapChange() += [this]() {
         if (hasMap())
         {

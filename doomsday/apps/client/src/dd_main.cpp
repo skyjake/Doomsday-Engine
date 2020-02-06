@@ -628,7 +628,7 @@ ClientResources &App_Resources()
 
 ClientWorld &App_World()
 {
-    return static_cast<ClientWorld &>(world::World::get());
+    return ClientApp::classicWorld();
 }
 #else
 Resources &App_Resources()

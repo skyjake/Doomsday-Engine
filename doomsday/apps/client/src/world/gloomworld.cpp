@@ -20,6 +20,15 @@
 
 #include <doomsday/resource/lumpcatalog.h>
 #include <doomsday/world/map.h>
+#include <doomsday/world/convexsubspace.h>
+#include <doomsday/world/subsector.h>
+#include <doomsday/world/plane.h>
+#include <doomsday/world/sector.h>
+#include <doomsday/world/material.h>
+#include <doomsday/world/mobjthinkerdata.h>
+#include <doomsday/world/polyobjdata.h>
+#include <doomsday/world/sky.h>
+#include <doomsday/world/surface.h>
 #include <gloom/world/mapimport.h>
 #include <de/PackageLoader>
 
@@ -35,7 +44,10 @@ DE_PIMPL(GloomWorld)
 
 GloomWorld::GloomWorld()
     : d(new Impl(this))
-{}
+{
+    world::DmuArgs::setPointerToIndexFunc(P_ToIndex);
+    useDefaultConstructors();
+}
 
 void GloomWorld::mapFinalized()
 {

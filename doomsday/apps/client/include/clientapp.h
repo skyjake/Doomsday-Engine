@@ -20,8 +20,9 @@
 #ifndef CLIENTAPP_H
 #define CLIENTAPP_H
 
-#include <de/BaseGuiApp>
 #include <doomsday/doomsdayapp.h>
+#include <doomsday/world/world.h>
+#include <de/BaseGuiApp>
 
 class AudioSystem;
 class ClientPlayer;
@@ -90,7 +91,8 @@ public:
     static AudioSystem &    audioSystem();
     static RenderSystem &   renderSystem();
     static ClientResources &resources();
-    static ClientWorld &    world();
+    static world::World &   world();
+    static ClientWorld &    classicWorld();
 
 #if defined (DE_HAVE_BUSYRUNNER)
     static BusyRunner &     busyRunner();

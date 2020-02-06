@@ -54,6 +54,8 @@ public:
 public:
     World();
 
+    void useDefaultConstructors();
+
     /**
      * Returns the effective map-info definition Record associated with the given
      * @a mapUri (which may be the default definition, if invalid/unknown).

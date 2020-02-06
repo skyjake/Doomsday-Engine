@@ -17,13 +17,18 @@
  */
 
 #include "doomsday/world/world.h"
-#include "doomsday/world/materials.h"
+#include "doomsday/world/convexsubspace.h"
+#include "doomsday/world/line.h"
 #include "doomsday/world/map.h"
 #include "doomsday/world/mapbuilder.h"
 #include "doomsday/world/mapconversionreporter.h"
+#include "doomsday/world/materials.h"
+#include "doomsday/world/mobjthinkerdata.h"
+#include "doomsday/world/polyobjdata.h"
 #include "doomsday/world/sector.h"
-#include "doomsday/world/line.h"
+#include "doomsday/world/sky.h"
 #include "doomsday/world/thinkers.h"
+#include "doomsday/world/surface.h"
 #include "doomsday/console/exec.h"
 #include "doomsday/defs/ded.h"
 #include "doomsday/defs/mapinfo.h"
@@ -272,6 +277,42 @@ World::World() : d(new Impl(this))
     {
         plr.setWorld(this);
         return LoopContinue;
+    });
+}
+
+void World::useDefaultConstructors()
+{
+    Factory::setConvexSubspaceConstructor([](mesh::Face &f, world::BspLeaf *bl) {
+        return new world::ConvexSubspace(f, bl);
+    });
+    Factory::setLineConstructor([](world::Vertex &s, world::Vertex &t, int flg,
+                                   world::Sector *fs, world::Sector *bs) {
+        return new world::Line(s, t, flg, fs, bs);
+    });
+    Factory::setLineSideConstructor([](world::Line &ln, world::Sector *s) {
+        return new world::LineSide(ln, s);
+    });
+    Factory::setLineSideSegmentConstructor([](world::LineSide &ls, mesh::HEdge &he) {
+        return new world::LineSideSegment(ls, he);
+    });
+    Factory::setMapConstructor([]() { return new world::Map(); });
+    Factory::setMobjThinkerDataConstructor([](const Id &id) { return new MobjThinkerData(id); });
+    Factory::setMaterialConstructor([] (world::MaterialManifest &m) {
+        return new world::Material(m);
+    });
+    Factory::setPlaneConstructor([](world::Sector &sec, const Vec3f &norm, double hgt) {
+        return new world::Plane(sec, norm, hgt);
+    });
+    Factory::setPolyobjDataConstructor([]() { return new world::PolyobjData(); });
+    Factory::setSkyConstructor([](const defn::Sky *def) { return new world::Sky(def); });
+    Factory::setSubsectorConstructor([] (const List<world::ConvexSubspace *> &sl) {
+        return new world::Subsector(sl);
+    });
+    Factory::setSurfaceConstructor([](world::MapElement &me, float opac, const Vec3f &clr) {
+        return new world::Surface(me, opac, clr);
+    });
+    Factory::setVertexConstructor([](mesh::Mesh &m, const Vec2d &p) -> world::Vertex * {
+        return new world::Vertex(m, p);
     });
 }
 

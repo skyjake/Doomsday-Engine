@@ -42,9 +42,9 @@ extern int isDedicated; // true if __SERVER__
 extern int symbolicEchoMode;
 #endif
 
-int DD_EarlyInit();
-void     DD_FinishInitializationAfterWindowReady();
-void     DD_ConsoleRegister();
+int     DD_EarlyInit();
+void    DD_FinishInitializationAfterWindowReady();
+void    DD_ConsoleRegister();
 
 /**
  * Print an error message and quit.
