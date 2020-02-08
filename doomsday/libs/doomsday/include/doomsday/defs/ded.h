@@ -219,6 +219,74 @@ protected:
 typedef ded_s ded_t;
 
 #ifdef __cplusplus
+
+template <typename PODType>
+struct Array : public std::vector<PODType>
+{
+    Array()
+        : _elements(nullptr)
+    {}
+
+    bool isEmpty() const { return !size(); }
+    int  size() const { return (int) std::vector<PODType>::size(); }
+
+    void clear()
+    {
+        _elements = nullptr;
+        std::vector<PODType>::clear();
+    }
+
+    PODType *append(int count = 1)
+    {
+        DE_ASSERT(count >= 0);
+        for (int i = 0; i < count; ++i)
+        {
+            std::vector<PODType>::push_back(PODType());
+        }
+        if (!isEmpty())
+        {
+            _elements = &(*this)[0];
+            return &_elements[size() - count];
+        }
+        return nullptr;
+    }
+
+    /// Determine the index of element @a elem. Performance is O(1).
+    int indexOf(const PODType *elem) const
+    {
+        if (!elem) return 0;
+        int index = elem - elements();
+        if (index < 0 || index >= size()) return 0; // Not in this array.
+        return index;
+    }
+
+    PODType *      elements() { return _elements; }
+    const PODType *elements() const { return _elements; }
+    PODType **     elementsPtr() { return &_elements; }
+
+private:
+    PODType *_elements;
+};
+
+/**
+ * Definitions that have been preprocessed for runtime use.
+ */
+struct RuntimeDefs
+{
+    Array<mobjinfo_t>  mobjInfo;   ///< Map object info database.
+    Array<state_t>     states;     ///< State list.
+    Array<stateinfo_t> stateInfo;
+    Array<sfxinfo_t>   sounds;     ///< Sound effect list.
+    Array<ddtext_t>    texts;      ///< Text string list.
+
+    void clear();
+};
+
+LIBDOOMSDAY_PUBLIC extern RuntimeDefs runtimeDefs;
+
+#endif
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 

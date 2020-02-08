@@ -31,6 +31,7 @@
 #define __ACTION_LINK_H__
 
 #include "dd_share.h"
+#include <doomsday/world/actions.h>
 
 DE_EXTERN_C actionlink_t actionlinks[];
 

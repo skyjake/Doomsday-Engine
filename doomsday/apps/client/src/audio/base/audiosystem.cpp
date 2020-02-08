@@ -25,7 +25,7 @@
 #include "dd_share.h"      // SF_* flags
 #include "dd_main.h"       // ::isDedicated
 #include "def_main.h"      // ::defs
-#include "api_map.h"
+#include <doomsday/api_map.h>
 #include "world/p_players.h"
 #include "audio/s_cache.h"
 
@@ -87,8 +87,6 @@ dint sfxRate = 11025;
 DE_EXTERN_C audiointerface_music_t audiodQuickTimeMusic;
 #  endif
 #endif
-
-static AudioSystem *theAudioSystem;
 
 static byte sfxOneSoundPerEmitter;  //< @c false= Traditional Doomsday behavior: allow sounds to overlap.
 
@@ -654,8 +652,6 @@ DE_PIMPL(AudioSystem)
 
     Impl(Public *i) : Base(i)
     {
-        theAudioSystem = thisPublic;
-
         // Script bindings.
         {
             ScriptSystem::get().addNativeModule("Audio", module);
@@ -675,12 +671,6 @@ DE_PIMPL(AudioSystem)
     ~Impl()
     {
         sfxClearLogical();
-//#ifdef __CLIENT__
-//        sfxSampleCache.audienceForSampleRemove() -= this;
-//        DoomsdayApp::app().audienceForGameUnload() -= this;
-//#endif
-
-        theAudioSystem = nullptr;
     }
 
 #ifdef __CLIENT__
@@ -1485,13 +1475,7 @@ AudioSystem::AudioSystem() : d(new Impl(this))
 
 AudioSystem &AudioSystem::get()
 {
-    DE_ASSERT(theAudioSystem);
-    return *theAudioSystem;
-}
-
-void AudioSystem::timeChanged(const Clock &)
-{
-    // Nothing to do.
+    return static_cast<AudioSystem &>(Audio::get());
 }
 
 void AudioSystem::reinitialize()

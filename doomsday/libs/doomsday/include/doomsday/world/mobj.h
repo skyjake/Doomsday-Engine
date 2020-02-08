@@ -21,6 +21,7 @@
 #define LIBDOOMSDAY_MOBJ_H
 
 #include "dd_share.h" /// @todo dd_share.h is not part of libdoomsday.
+#include "../api_map.h"
 #include "../players.h"
 
 // This macro can be used to calculate a mobj-specific 'random' number.
@@ -29,6 +30,7 @@
 // Forward declaration.
 struct mobj_s;
 typedef struct mobj_s mobj_t;
+typedef struct mobjinfo_s mobjinfo_t;
 
 // Game plugins define their own mobj_s/t.
 /// @todo Plugin mobjs should be derived from a class in libdoomsday, and
@@ -42,6 +44,11 @@ typedef struct mobj_s {
 
 #endif // LIBDOOMSDAY_CUSTOM_MOBJ
 
+/**
+ * Returns the size of the game-defined mobj_t struct.
+ */
+LIBDOOMSDAY_PUBLIC DE_EXTERN_C size_t Mobj_Sizeof(void);
+
 #ifdef __cplusplus
 
 #include <de/Vector>
@@ -51,6 +58,15 @@ namespace world
     class BspLeaf;
     class Map;
 }
+
+LIBDOOMSDAY_PUBLIC mobj_t *P_MobjCreate(thinkfunc_t function, const de::Vec3d &origin, angle_t angle,
+                                        coord_t radius, coord_t height, int ddflags);
+
+/**
+ * Called when a mobj is actually removed (when it's thinking turn comes around).
+ * The mobj is moved to the unused list to be reused later.
+ */
+LIBDOOMSDAY_PUBLIC void P_MobjRecycle(mobj_t* mo);
 
 /**
  * Returns a copy of the map-object's origin in map space.

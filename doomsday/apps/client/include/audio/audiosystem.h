@@ -28,6 +28,7 @@
 #  include "audio/audiodriver.h"
 #  include "audio/sfxchannel.h"
 #endif
+#include <doomsday/audio/audio.h>
 #include <de/Record>
 #include <de/String>
 #include <de/System>
@@ -41,7 +42,7 @@
  *
  * @ingroup audio
  */
-class AudioSystem : public de::System
+class AudioSystem : public audio::Audio
 {
 public:
     static AudioSystem &get();
@@ -53,9 +54,6 @@ public:
 
 public:
     AudioSystem();
-
-    // Systems observe the passage of time.
-    void timeChanged(const de::Clock &) override;
 
     void reinitialize();
 
@@ -184,7 +182,7 @@ public:  // Sound effect playback: ---------------------------------------------
      *                 and @a emitter must match.
      * @param flags    @ref soundStopFlags.
      */
-    void stopSound(int soundId, const struct mobj_s *emitter, int flags = 0);
+    void stopSound(int soundId, const struct mobj_s *emitter, int flags = 0) override;
 
 #ifdef __CLIENT__
 

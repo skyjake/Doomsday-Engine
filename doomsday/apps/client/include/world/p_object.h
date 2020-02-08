@@ -32,7 +32,7 @@
 #include <doomsday/world/thinker.h>
 #include <doomsday/world/mobj.h>
 #include <doomsday/world/bspleaf.h>
-#include "api_map.h"
+#include <doomsday/api_map.h>
 #include "dd_def.h"
 #ifdef __CLIENT__
 #  include "resource/framemodeldef.h"
@@ -43,18 +43,6 @@ namespace world
     class Subsector;
     class Plane;
 }
-
-#define MOBJ_SIZE               gx.GetInteger(DD_MOBJ_SIZE)
-
-class MobjThinker : public ThinkerT<mobj_t>
-{
-public:
-    MobjThinker(AllocMethod alloc = AllocateStandard) : ThinkerT(MOBJ_SIZE, alloc) {}
-    MobjThinker(const mobj_t &existingToCopy) : ThinkerT(existingToCopy, MOBJ_SIZE) {}
-    MobjThinker(mobj_t *existingToTake) : ThinkerT(existingToTake, MOBJ_SIZE) {}
-
-    static void zap(mobj_t &mob) { ThinkerT::zap(mob, MOBJ_SIZE); }
-};
 
 #define DEFAULT_FRICTION        FIX2FLT(0xe800)
 #define NOMOMENTUM_THRESHOLD    (0.0001)
@@ -67,11 +55,6 @@ DE_EXTERN_C int useSRVO, useSRVOAngle;
  * To be called to register the commands and variables of this module.
  */
 void Mobj_ConsoleRegister();
-
-mobj_t *P_MobjCreate(thinkfunc_t function, const de::Vec3d &origin, angle_t angle,
-    coord_t radius, coord_t height, int ddflags);
-
-void P_MobjRecycle(mobj_t *mob);
 
 /**
  * Set the origin of the map-object in map space.
@@ -117,6 +100,14 @@ world_Subsector *Mobj_SubsectorPtr(const mobj_t &mob);
 void Mobj_SpawnParticleGen(mobj_t *source, const ded_ptcgen_t *def);
 
 #ifdef __CLIENT__
+
+/**
+ * Calculate the visible @a origin of @a mob in world space, including
+ * any short range offset.
+ */
+void Mobj_OriginSmoothed(const mobj_t *mob, coord_t origin[3]);
+
+angle_t Mobj_AngleSmoothed(const mobj_t *mob);
 
 /**
  * Determines whether the Z origin of the mobj lies above the visual ceiling, or below the
@@ -173,6 +164,8 @@ FrameModelDef *Mobj_ModelDef(const mobj_t &mob, FrameModelDef **nextModef = null
  * @return Radius for shadow.
  */
 coord_t Mobj_ShadowRadius(const mobj_t &mob);
+
+void Mobj_SpawnDamageParticleGen(const mobj_t *mob, const mobj_t *inflictor, int amount);
 
 #endif // __CLIENT__
 

@@ -60,7 +60,6 @@ set (SHARED_WITH_CLIENT
 
     ${src}/src/api_console.cpp
     ${src}/src/api_filesys.cpp
-    ${src}/src/api_map.cpp
     ${src}/src/api_mapedit.cpp
     ${src}/src/api_thinker.cpp
     ${src}/src/api_uri.cpp

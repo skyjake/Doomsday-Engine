@@ -44,12 +44,11 @@
 #include <doomsday/player.h>
 #include <doomsday/console/var.h>
 #include <doomsday/console/cmd.h>
+#include <doomsday/api_map.h>
 #include "dengproject.h"
 #include "dd_version.h"
 #include "dd_types.h"
-#include "def_share.h"
 #include "api_thinker.h"
-#include "api_map.h"
 #include "api_gl.h"
 #include "api_busy.h"
 #include "api_event.h"

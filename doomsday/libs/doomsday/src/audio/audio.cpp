@@ -1,6 +1,6 @@
-/** @file importudmf.h  Importer plugin for UDMF maps.
+/** @file audio.cpp
  *
- * @authors Copyright (c) 2016-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -12,17 +12,30 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef IMPORTUDMF_H
-#define IMPORTUDMF_H
+#include "doomsday/audio/audio.h"
 
-#include <doomsday.h> // Doomsday's Public API
+namespace audio {
 
-DE_USING_API(Material);
-DE_USING_API(MPE);
+static Audio *theAudio;
 
-#endif // IMPORTUDMF_H
+Audio::Audio()
+{
+    theAudio = this;
+}
+
+Audio::~Audio()
+{
+    theAudio = nullptr;
+}
+
+Audio &Audio::get() // static
+{
+    DE_ASSERT(theAudio);
+    return *theAudio;
+}
+
+} // namespace audio

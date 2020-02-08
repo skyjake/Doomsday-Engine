@@ -74,116 +74,6 @@ dint useSRVOAngle = 1;
 static byte mobjAutoLights = true;
 #endif
 
-/**
- * All mobjs must be allocated through this routine. Part of the public API.
- */
-mobj_t *P_MobjCreate(thinkfunc_t function, const Vec3d &origin, angle_t angle,
-    coord_t radius, coord_t height, dint ddflags)
-{
-    if (!function)
-        App_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
-
-#ifdef DE_DEBUG
-    if (::isClient)
-    {
-        LOG_VERBOSE("P_MobjCreate: Client creating mobj at %s")
-            << origin.asText();
-    }
-#endif
-
-    // Do we have any unused mobjs we can reuse?
-    mobj_t *mob = world::World::get().takeUnusedMobj();
-    if (!mob)
-    {
-        // No, we need to allocate another.
-        mob = MobjThinker(Thinker::AllocateMemoryZone).take();
-    }
-
-    V3d_Set(mob->origin, origin.x, origin.y, origin.z);
-    mob->angle    = angle;
-    mob->visAngle = mob->angle >> 16; // "angle-servo"; smooth actor turning.
-    mob->radius   = radius;
-    mob->height   = height;
-    mob->ddFlags  = ddflags;
-    mob->lumIdx   = -1;
-    mob->thinker.function = function;
-    Mobj_Map(*mob).thinkers().add(mob->thinker);
-
-    return mob;
-}
-
-/**
- * All mobjs must be destroyed through this routine. Part of the public API.
- *
- * @note Does not actually destroy the mobj. Instead, mobj is marked as
- * awaiting removal (which occurs when its turn for thinking comes around).
- */
-#undef Mobj_Destroy
-DE_EXTERN_C void Mobj_Destroy(mobj_t *mo)
-{
-#ifdef _DEBUG
-    if (mo->ddFlags & DDMF_MISSILE)
-    {
-        LOG_AS("Mobj_Destroy");
-        LOG_MAP_XVERBOSE("Destroying missile %i", mo->thinker.id);
-    }
-#endif
-
-    // Unlink from sector and block lists.
-    Mobj_Unlink(mo);
-
-    S_StopSound(0, mo);
-
-    Mobj_Map(*mo).thinkers().remove(reinterpret_cast<thinker_t &>(*mo));
-}
-
-/**
- * Called when a mobj is actually removed (when it's thinking turn comes around).
- * The mobj is moved to the unused list to be reused later.
- */
-void P_MobjRecycle(mobj_t* mo)
-{
-    // Release the private data.
-    MobjThinker::zap(*mo);
-
-    // The sector next link is used as the unused mobj list links.
-    world::World::get().putUnusedMobj(mo);
-}
-
-#undef Mobj_SetState
-DE_EXTERN_C void Mobj_SetState(mobj_t *mob, int statenum)
-{
-    if (!mob) return;
-
-    const state_t *oldState = mob->state;
-
-    DE_ASSERT(statenum >= 0 && statenum < DED_Definitions()->states.size());
-
-    mob->state  = &runtimeDefs.states[statenum];
-    mob->tics   = mob->state->tics;
-    mob->sprite = mob->state->sprite;
-    mob->frame  = mob->state->frame;
-
-    if (!(mob->ddFlags & DDMF_REMOTE))
-    {
-        const String exec = DED_Definitions()->states[statenum].gets("execute");
-        if (!exec.isEmpty())
-        {
-            Con_Execute(CMDS_SCRIPT, exec, true, false);
-        }
-    }
-
-    // Notify private data about the changed state.
-    if (!mob->thinker.d)
-    {
-        Thinker_InitPrivateData(&mob->thinker);
-    }
-    if (MobjThinkerData *data = THINKER_DATA_MAYBE(mob->thinker, MobjThinkerData))
-    {
-        data->stateChanged(oldState);
-    }
-}
-
 dd_bool Mobj_SetOrigin(struct mobj_s *mob, coord_t x, coord_t y, coord_t z)
 {
     if(!gx.MobjTryMoveXYZ)
@@ -191,47 +81,6 @@ dd_bool Mobj_SetOrigin(struct mobj_s *mob, coord_t x, coord_t y, coord_t z)
         return false;
     }
     return gx.MobjTryMoveXYZ(mob, x, y, z);
-}
-
-#undef Mobj_OriginSmoothed
-DE_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mob, coord_t origin[3])
-{
-    if (!origin) return;
-
-    V3d_Set(origin, 0, 0, 0);
-    if (!mob) return;
-
-    V3d_Copy(origin, mob->origin);
-
-    // Apply a Short Range Visual Offset?
-    if (useSRVO && mob->state && mob->tics >= 0)
-    {
-        const ddouble mul = mob->tics / dfloat( mob->state->tics );
-        vec3d_t srvo;
-
-        V3d_Copy(srvo, mob->srvo);
-        V3d_Scale(srvo, mul);
-        V3d_Sum(origin, origin, srvo);
-    }
-
-#ifdef __CLIENT__
-    if (mob->dPlayer)
-    {
-        /// @todo What about splitscreen? We have smoothed origins for all local players.
-        if (P_GetDDPlayerIdx(mob->dPlayer) == consolePlayer
-            // $voodoodolls: Must be a real player to use the smoothed origin.
-            && mob->dPlayer->mo == mob)
-        {
-            const viewdata_t *vd = &DD_Player(consolePlayer)->viewport();
-            V3d_Set(origin, vd->current.origin.x, vd->current.origin.y, vd->current.origin.z);
-        }
-        // The client may have a Smoother for this object.
-        else if (isClient)
-        {
-            Smoother_Evaluate(DD_Player(P_GetDDPlayerIdx(mob->dPlayer))->smoother(), origin);
-        }
-    }
-#endif
 }
 
 bool Mobj_HasSubsector(const mobj_t &mob)
@@ -289,8 +138,7 @@ void Mobj_SpawnParticleGen(mobj_t *mob, const ded_ptcgen_t *def)
 #endif
 }
 
-#undef Mobj_SpawnDamageParticleGen
-DE_EXTERN_C void Mobj_SpawnDamageParticleGen(const mobj_t *mob, const mobj_t *inflictor, int amount)
+void Mobj_SpawnDamageParticleGen(const mobj_t *mob, const mobj_t *inflictor, int amount)
 {
 #ifdef __CLIENT__
     if (!mob || !inflictor || amount <= 0) return;
@@ -338,7 +186,70 @@ DE_EXTERN_C void Mobj_SpawnDamageParticleGen(const mobj_t *mob, const mobj_t *in
 #endif
 }
 
-#ifdef __CLIENT__
+#if defined(__CLIENT__)
+
+void Mobj_OriginSmoothed(const mobj_t *mob, coord_t origin[3])
+{
+    if (!origin) return;
+
+    V3d_Set(origin, 0, 0, 0);
+    if (!mob) return;
+
+    V3d_Copy(origin, mob->origin);
+
+    // Apply a Short Range Visual Offset?
+    if (useSRVO && mob->state && mob->tics >= 0)
+    {
+        const ddouble mul = mob->tics / dfloat( mob->state->tics );
+        vec3d_t srvo;
+
+        V3d_Copy(srvo, mob->srvo);
+        V3d_Scale(srvo, mul);
+        V3d_Sum(origin, origin, srvo);
+    }
+
+    if (mob->dPlayer)
+    {
+        /// @todo What about splitscreen? We have smoothed origins for all local players.
+        if (P_GetDDPlayerIdx(mob->dPlayer) == consolePlayer
+            // $voodoodolls: Must be a real player to use the smoothed origin.
+            && mob->dPlayer->mo == mob)
+        {
+            const viewdata_t *vd = &DD_Player(consolePlayer)->viewport();
+            V3d_Set(origin, vd->current.origin.x, vd->current.origin.y, vd->current.origin.z);
+        }
+        // The client may have a Smoother for this object.
+        else if (isClient)
+        {
+            Smoother_Evaluate(DD_Player(P_GetDDPlayerIdx(mob->dPlayer))->smoother(), origin);
+        }
+    }
+}
+
+angle_t Mobj_AngleSmoothed(const mobj_t *mob)
+{
+    if (!mob) return 0;
+
+    if (mob->dPlayer)
+    {
+        /// @todo What about splitscreen? We have smoothed angles for all local players.
+        if (P_GetDDPlayerIdx(mob->dPlayer) == ::consolePlayer
+            // $voodoodolls: Must be a real player to use the smoothed angle.
+            && mob->dPlayer->mo == mob)
+        {
+            const viewdata_t *vd = &DD_Player(::consolePlayer)->viewport();
+            return vd->current.angle();
+        }
+    }
+
+    // Apply a Short Range Visual Offset?
+    if (::useSRVOAngle && !::netGame && !::playback)
+    {
+        return mob->visAngle << 16;
+    }
+
+    return mob->angle;
+}
 
 dd_bool Mobj_OriginBehindVisPlane(mobj_t *mob)
 {
@@ -740,35 +651,23 @@ FrameModelDef *Mobj_ModelDef(const mobj_t &mo, FrameModelDef **retNextModef, flo
     return modef;
 }
 
-#endif // __CLIENT__
-
-#undef Mobj_AngleSmoothed
-DE_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t *mob)
+coord_t Mobj_ShadowRadius(const mobj_t &mobj)
 {
-    if (!mob) return 0;
-
-#ifdef __CLIENT__
-    if (mob->dPlayer)
+    if (useModels)
     {
-        /// @todo What about splitscreen? We have smoothed angles for all local players.
-        if (P_GetDDPlayerIdx(mob->dPlayer) == ::consolePlayer
-            // $voodoodolls: Must be a real player to use the smoothed angle.
-            && mob->dPlayer->mo == mob)
+        if (FrameModelDef *modef = Mobj_ModelDef(mobj))
         {
-            const viewdata_t *vd = &DD_Player(::consolePlayer)->viewport();
-            return vd->current.angle();
+            if (modef->shadowRadius > 0)
+            {
+                return modef->shadowRadius;
+            }
         }
     }
-
-    // Apply a Short Range Visual Offset?
-    if (::useSRVOAngle && !::netGame && !::playback)
-    {
-        return mob->visAngle << 16;
-    }
-#endif
-
-    return mob->angle;
+    // Fall back to the visual radius.
+    return Mobj_VisualRadius(mobj);
 }
+
+#endif // __CLIENT__
 
 coord_t Mobj_ApproxPointDistance(const mobj_t *mob, const coord_t *point)
 {
@@ -809,24 +708,6 @@ dfloat Mobj_Alpha(const mobj_t &mob)
     }
     return alpha;
 }
-
-#ifdef __CLIENT__
-coord_t Mobj_ShadowRadius(const mobj_t &mobj)
-{
-    if (useModels)
-    {
-        if (FrameModelDef *modef = Mobj_ModelDef(mobj))
-        {
-            if (modef->shadowRadius > 0)
-            {
-                return modef->shadowRadius;
-            }
-        }
-    }
-    // Fall back to the visual radius.
-    return Mobj_VisualRadius(mobj);
-}
-#endif
 
 coord_t Mobj_VisualRadius(const mobj_t &mob)
 {

@@ -20,7 +20,6 @@
 #ifndef LIBDOOMSDAY_DEFINITION_TYPES_H
 #define LIBDOOMSDAY_DEFINITION_TYPES_H
 
-#include <vector>
 #include <de/libcore.h>
 #include <de/Vector>
 #include <de/legacy/memory.h>

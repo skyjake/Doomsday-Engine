@@ -26,7 +26,7 @@
 #include <de/legacy/types.h>
 #include <doomsday/uri.h>
 #include "api_uri.h"
-#include "api_map.h"
+#include <doomsday/api_map.h>
 
 // If true we are in the process of setting up a map.
 DE_EXTERN_C dd_bool mapSetup;
@@ -74,16 +74,16 @@ void P_SpawnAllMaterialOriginScrollers(void);
 void P_SetLineAutomapVisibility(int player, int lineIdx, dd_bool visible);
 
 struct xline_s *P_GetXLine(int idx);
-struct xline_s *P_ToXLine(Line *line);
+struct xline_s *P_ToXLine(world_Line *line);
 
 struct xsector_s *P_GetXSector(int index);
 
 /**
  * Converts a sector to an xsector.
  */
-struct xsector_s *P_ToXSector(Sector *sector);
+struct xsector_s *P_ToXSector(world_Sector *sector);
 
-const struct xsector_s *P_ToXSector_const(const Sector *sector);
+const struct xsector_s *P_ToXSector_const(const world_Sector *sector);
 
 #ifdef __cplusplus
 } // extern "C"

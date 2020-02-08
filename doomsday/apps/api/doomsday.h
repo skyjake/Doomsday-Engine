@@ -41,7 +41,7 @@
 #include "api_filesys.h"
 #include "api_fontrender.h"
 #include "api_internaldata.h"
-#include "api_map.h"
+#include <doomsday/api_map.h>
 #include "api_mapedit.h"
 #include "api_material.h"
 #include "api_render.h"

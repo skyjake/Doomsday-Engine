@@ -20,7 +20,7 @@
 #ifndef LIBDOOMSDAY_XG_CLASSES_H
 #define LIBDOOMSDAY_XG_CLASSES_H
 
-#include "api_map.h"
+#include "../api_map.h"
 
 // When the common playsim is in place - Doomsday will call the
 // the XG Class Funcs which are owned by the game.

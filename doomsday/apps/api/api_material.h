@@ -23,7 +23,7 @@
 
 #include "api_base.h"
 #include "api_uri.h"
-#include "api_map.h"
+#include <doomsday/api_map.h>
 
 /**
  * @defgroup material Materials

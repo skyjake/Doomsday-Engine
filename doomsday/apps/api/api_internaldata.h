@@ -23,6 +23,7 @@
 
 #include "apis.h"
 #include "dd_share.h"
+#include "def_share.h"
 
 /**
  * Data exported out of the Doomsday engine.

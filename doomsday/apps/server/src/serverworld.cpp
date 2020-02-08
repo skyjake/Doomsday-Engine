@@ -87,6 +87,20 @@ ServerWorld::ServerWorld()
 
 void ServerWorld::aboutToChangeMap()
 {
+    // Initialize the logical sound manager.
+    App_AudioSystem().aboutToUnloadMap();
+
+    // Whenever the map changes, remote players must tell us when they're
+    // ready to begin receiving frames.
+    for (uint i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        if (DD_Player(i)->isConnected())
+        {
+            LOG_DEBUG("Client %i marked as 'not ready' to receive frames.") << i;
+            DD_Player(i)->ready = false;
+        }
+    }
+
     if (hasMap())
     {
         map().thinkers().audienceForRemoval() -= this;

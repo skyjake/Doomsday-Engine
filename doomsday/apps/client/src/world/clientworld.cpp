@@ -145,6 +145,9 @@ Map &ClientWorld::map() const
 
 void ClientWorld::aboutToChangeMap()
 {
+    App_AudioSystem().aboutToUnloadMap();
+    App_Resources().purgeCacheQueue();
+
     if (hasMap())
     {
         // Remove the current map from our audiences.

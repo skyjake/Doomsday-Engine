@@ -22,20 +22,17 @@
 #define DE_NO_API_MACROS_CLIENT
 
 #include "de_base.h"
-#include "client/cl_mobj.h"
-
 #include "api_client.h"
+#include "api_sound.h"
+#include "client/cl_mobj.h"
 #include "client/cl_player.h"
 #include "client/cl_world.h"
-
 #include "network/net_main.h"
 #include "network/protocol.h"
-
 #include "world/map.h"
 #include "world/p_players.h"
 
-#include "api_sound.h"
-
+#include <doomsday/world/mobjthinker.h>
 #include <de/legacy/timer.h>
 #include <de/legacy/vector1.h>
 #include <de/LogBuffer>

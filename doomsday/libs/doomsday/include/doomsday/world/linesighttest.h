@@ -30,11 +30,11 @@ namespace world {
 /**
  * Models the logic, parameters and state of a line (of) sight (LOS) test.
  *
- * @todo fixme: The state of a discrete trace is not fully encapsulated here
+ * FIXME: The state of a discrete trace is not fully encapsulated here
  * due to the manipulation of the validCount properties of the various map data elements.
  * (Which is used to avoid testing the same element multiple times during a trace.)
  *
- * @todo optimize: Make use of the blockmap to take advantage of the inherent spatial
+ * @todo Optimize: Make use of the blockmap to take advantage of the inherent spatial
  * locality in this data structure.
  */
 class LIBDOOMSDAY_PUBLIC LineSightTest

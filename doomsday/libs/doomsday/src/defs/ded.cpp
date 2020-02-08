@@ -41,6 +41,8 @@
 
 using namespace de;
 
+RuntimeDefs runtimeDefs; // public
+
 float ded_ptcstage_t::particleRadius(int ptcIDX) const
 {
     if (radiusVariance != 0.f)

@@ -62,6 +62,7 @@
 #include <doomsday/world/lineowner.h>
 #include <doomsday/world/polyobjdata.h>
 #include <doomsday/world/materials.h>
+#include <doomsday/world/mobjthinker.h>
 #include <doomsday/world/polyobj.h>
 #include <doomsday/world/sector.h>
 #include <doomsday/world/sky.h>

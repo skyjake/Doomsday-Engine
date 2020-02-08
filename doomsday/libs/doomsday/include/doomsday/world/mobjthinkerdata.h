@@ -22,6 +22,7 @@
 
 #include "thinkerdata.h"
 #include "mobj.h"
+#include "def_share.h"
 
 /**
  * Private mobj data common to both client and server.

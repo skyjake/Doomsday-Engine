@@ -20,8 +20,8 @@
 #pragma once
 
 #include "../libdoomsday.h"
+#include "../api_map.h" // traverser_t
 #include "map.h"
-#include "api_map.h" // traverser_t
 
 #include <de/Vector>
 

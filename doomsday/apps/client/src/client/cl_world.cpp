@@ -21,7 +21,7 @@
 #include "de_base.h"
 #include "client/cl_world.h"
 #include "client/cl_player.h"
-#include "api_map.h"
+#include <doomsday/api_map.h>
 #include "world/map.h"
 #include "world/surface.h"
 #include "network/net_msg.h"

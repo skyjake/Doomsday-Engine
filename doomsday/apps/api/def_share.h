@@ -75,7 +75,7 @@ typedef enum {
     SOUNDNAMES_COUNT
 } soundname_t;
 
-typedef struct {
+typedef struct mobjinfo_s {
     int             doomEdNum;
     int             spawnHealth;
     float           speed;
@@ -183,6 +183,32 @@ typedef struct {
     float           ceilMul, ceilOff;
     int             ceilInterval[2];
 } sectortype_t;
+
+struct stateinfo_t
+{
+    mobjinfo_t *owner;
+    struct ded_light_s *light;
+    struct ded_ptcgen_s *ptcGens;
+};
+
+typedef struct sfxinfo_s
+{
+    void *data;           ///< Pointer to sound data.
+    lumpnum_t lumpNum;
+    char lumpName[9];     ///< Actual lump name of the sound (full name).
+    char id[32];          ///< Identifier name (from the def).
+    char name[32];        ///< Long name.
+    struct sfxinfo_s *link;      ///< Link to another sound.
+    int linkPitch;
+    int linkVolume;
+    int priority;
+    int channels;         ///< Max. channels for the sound to occupy.
+    int usefulness;       ///< Used to determine when to cache out.
+    int flags;
+    int group;
+    ddstring_t external;  ///< Path to external file.
+}
+sfxinfo_t;
 
 ///@}
 

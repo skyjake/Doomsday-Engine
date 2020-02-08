@@ -64,6 +64,7 @@
 
 #include <doomsday/world/bspleaf.h>
 #include <doomsday/world/linesighttest.h>
+#include <doomsday/world/mobjthinker.h>
 #include <doomsday/world/thinkers.h>
 #include <doomsday/filesys/fs_util.h>
 #include <doomsday/tab_tables.h>

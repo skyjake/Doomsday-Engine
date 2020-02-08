@@ -115,7 +115,6 @@ void DD_PublishAPIs(const char *plugName)
         PUBLISH(_api_F);
         PUBLISH(_api_Infine);
         PUBLISH(_api_InternalData);
-        PUBLISH(_api_Map);
         PUBLISH(_api_MPE);
         PUBLISH(_api_Material);
         PUBLISH(_api_Player);

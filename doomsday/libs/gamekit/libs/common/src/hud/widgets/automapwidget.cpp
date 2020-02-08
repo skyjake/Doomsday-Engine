@@ -190,8 +190,9 @@ namespace internal
         mobj_t *plrMob = player->plr->mo;
         if (!plrMob) return;
 
-        coord_t origin[3]; Mobj_OriginSmoothed(plrMob, origin);
-        const dfloat angle = Mobj_AngleSmoothed(plrMob) / (dfloat) ANGLE_MAX * 360; /* $unifiedangles */
+        coord_t origin[3]; //Mobj_OriginSmoothed(plrMob, origin);
+        memcpy(origin, plrMob->origin, sizeof(origin));
+        const float angle = plrMob->angle /*Mobj_AngleSmoothed(plrMob)*/ / (float) ANGLE_MAX * 360; /* $unifiedangles */
 
         dfloat color[3]; R_GetColorPaletteRGBf(0, playerPaletteColor(consoleNum), color, false);
 
@@ -999,13 +1000,14 @@ DE_PIMPL(AutomapWidget)
             if (!isVisible)
             {
                 isVisible = !!(p->flags & AWF_SHOW_THINGS);
-                angle = Mobj_AngleSmoothed(mob) / float(ANGLE_MAX) * 360;  // In degrees.
+                angle = mob->angle /*Mobj_AngleSmoothed(mob)*/ / float(ANGLE_MAX) * 360;  // In degrees.
             }
 
             if (isVisible)
             {
                 /* $unifiedangles */
-                coord_t origin[3]; Mobj_OriginSmoothed(mob, origin);
+                coord_t origin[3]; //Mobj_OriginSmoothed(mob, origin);
+                memcpy(origin, mob->origin, sizeof(origin));
 
                 drawVectorGraphic(vgId, Vec2d(origin), angle, 16 /*radius*/,
                                   Vec3f(color), p->opacity, BM_NORMAL);
@@ -1495,8 +1497,7 @@ void AutomapWidget::open(bool yes, bool instantly)
             // The map's target player is available.
             if (d->follow || cfg.common.automapPanResetOnOpen)
             {
-                coord_t origin[3]; Mobj_OriginSmoothed(mob, origin);
-                setCameraOrigin(Vec2d(origin));
+                setCameraOrigin(Vec2d(mob->origin));
             }
 
             if (!d->follow && cfg.common.automapPanResetOnOpen)
@@ -1602,8 +1603,8 @@ void AutomapWidget::tick(timespan_t elapsed)
         // Camera follow mode.
         const dfloat angle = (d->rotate ? (followMob->angle - ANGLE_90) / (dfloat) ANGLE_MAX * 360
                                         : 0); /* $unifiedangles */
-        coord_t origin[3]; Mobj_OriginSmoothed(followMob, origin);
-        setCameraOrigin(Vec2d(origin));
+        //coord_t origin[3]; //Mobj_OriginSmoothed(followMob, origin);
+        setCameraOrigin(Vec2d(followMob->origin));
         setCameraAngle(angle);
     }
 

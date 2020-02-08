@@ -122,8 +122,7 @@ enum {
     DE_API_MAP_v3               = 1102,    // 1.13
     DE_API_MAP_v4               = 1103,    // 1.15
     DE_API_MAP_v5               = 1104,    // 2.0
-    DE_API_MAP_v6               = 1105,    // 3.0
-    DE_API_MAP = DE_API_MAP_v6,
+    DE_API_MAP_REMOVED          = 1105,    // 3.0 (API removed; now in libdoomsday)
 
     DE_API_MAP_EDIT_v1          = 1200,    // 1.10
     DE_API_MAP_EDIT_v2          = 1201,    // 1.11

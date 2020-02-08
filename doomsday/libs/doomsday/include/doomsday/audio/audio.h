@@ -1,4 +1,4 @@
-/** @file
+/** @file audio.h
  *
  * @authors Copyright (c) 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -19,31 +19,27 @@
 #pragma once
 
 #include "../libdoomsday.h"
-#include "../api_map.h"
+#include <de/System>
 
-/**
- * Describes the @em sharp coordinates of the opening between sectors which
- * interface at a given map line. The open range is defined as the gap between
- * foor and ceiling on the front side clipped by the floor and ceiling planes on
- * the back side (if present).
- */
-struct LIBDOOMSDAY_PUBLIC lineopening_s
+struct mobj_s;
+
+namespace audio {
+
+class LIBDOOMSDAY_PUBLIC Audio : public de::System
 {
-    /// Top and bottom z of the opening.
-    float top, bottom;
+public:
+    Audio();
+    virtual ~Audio() override;
 
-    /// Distance from top to bottom.
-    float range;
+    static Audio &get();
 
-    /// Z height of the lowest Plane at the opening on the X|Y axis.
-    /// @todo Does not belong here?
-    float lowFloor;
-
-#ifdef __cplusplus
-    lineopening_s() : top(0), bottom(0), range(0), lowFloor(0) {}
-    lineopening_s(const world_Line &line);
-    lineopening_s &operator=(const lineopening_s &other);
-#endif
+    /**
+     * @param soundId  @c 0: stops all sounds originating from the given @a emitter.
+     * @param emitter  @c nullptr: stops all sounds with the ID. Otherwise both @a soundId
+     *                 and @a emitter must match.
+     * @param flags    @ref soundStopFlags.
+     */
+    virtual void stopSound(int soundId, const struct mobj_s *emitter, int flags = 0) = 0;
 };
 
-typedef struct lineopening_s LineOpening;
+} // namespace audio

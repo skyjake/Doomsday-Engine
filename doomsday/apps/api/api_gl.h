@@ -24,7 +24,7 @@
 #define DOOMSDAY_GL_H
 
 #include <de/legacy/rect.h>
-#include "api_map.h"
+#include <doomsday/api_map.h>
 #include "dd_types.h"
 
 #ifdef __cplusplus

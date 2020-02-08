@@ -23,7 +23,6 @@
 
 #include "apis.h"
 #include "dd_share.h" // DDMAXPLAYERS
-#include "def_share.h"
 #include <de/legacy/smoother.h>
 #include <doomsday/player.h>
 
