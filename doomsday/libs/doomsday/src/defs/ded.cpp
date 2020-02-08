@@ -720,3 +720,17 @@ ded_t *DED_Definitions()
     }
     return defs;
 }
+
+void RuntimeDefs::clear()
+{
+    for (int i = 0; i < sounds.size(); ++i)
+    {
+        Str_Free(&sounds[i].external);
+    }
+    sounds.clear();
+
+    mobjInfo.clear();
+    states.clear();
+    texts.clear();
+    stateInfo.clear();
+}

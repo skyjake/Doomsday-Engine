@@ -73,28 +73,12 @@ using namespace res;
 #define LOOPi(n)    for (i = 0; i < (n); ++i)
 #define LOOPk(n)    for (k = 0; k < (n); ++k)
 
-RuntimeDefs runtimeDefs;
-
 static bool defsInited;
 static mobjinfo_t *gettingFor;
 
 static inline FS1 &fileSys()
 {
     return App_FileSystem();
-}
-
-void RuntimeDefs::clear()
-{
-    for (int i = 0; i < sounds.size(); ++i)
-    {
-        Str_Free(&sounds[i].external);
-    }
-    sounds.clear();
-
-    mobjInfo.clear();
-    states.clear();
-    texts.clear();
-    stateInfo.clear();
 }
 
 void Def_Init()

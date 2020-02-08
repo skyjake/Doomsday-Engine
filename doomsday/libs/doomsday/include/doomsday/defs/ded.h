@@ -271,7 +271,7 @@ private:
 /**
  * Definitions that have been preprocessed for runtime use.
  */
-struct RuntimeDefs
+struct LIBDOOMSDAY_PUBLIC RuntimeDefs
 {
     Array<mobjinfo_t>  mobjInfo;   ///< Map object info database.
     Array<state_t>     states;     ///< State list.
