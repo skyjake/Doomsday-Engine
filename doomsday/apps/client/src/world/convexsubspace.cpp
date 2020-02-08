@@ -22,9 +22,9 @@
 #include "world/audioenvironment.h"
 #include "world/line.h"
 #include "world/surface.h"
-#include "audio/s_environ.h"
 #include "ClientMaterial"
 
+#include <doomsday/audio/s_environ.h>
 #include <doomsday/mesh/face.h>
 
 #include <de/Set>
@@ -42,20 +42,16 @@ static double triangleArea(const Vec2d &v1, const Vec2d &v2, const Vec2d &v3)
 
 DE_PIMPL(ConvexSubspace)
 {
-    Vec2d worldGridOffset;                 // For aligning the materials to the map space grid.
+    Vec2d           worldGridOffset; // For aligning the materials to the map space grid.
+    Set<Lumobj *>   lumobjs;         // Linked lumobjs (not owned).
+    Set<LineSide *> shadowLines;     // Linked map lines for fake radio shadowing.
 
-    typedef Set<Lumobj *> Lumobjs;
-    Lumobjs lumobjs;                       // Linked lumobjs (not owned).
+    mesh::HEdge *fanBase = nullptr; // Trifan base Half-edge (otherwise the center point is used).
+    bool         needUpdateFanBase = true; // true: need to rechoose a fan base half-edge.
 
-    typedef Set<LineSide *> ShadowLines;
-    ShadowLines shadowLines;               // Linked map lines for fake radio shadowing.
+    int lastSpriteProjectFrame = 0; // Frame number of last R_AddSprites.
 
-    mesh::HEdge *fanBase = nullptr;              // Trifan base Half-edge (otherwise the center point is used).
-    bool needUpdateFanBase = true;         // true: need to rechoose a fan base half-edge.
-
-    world::AudioEnvironment audioEnvironment;     // Cached audio characteristics.
-
-    dint lastSpriteProjectFrame = 0;       // Frame number of last R_AddSprites.
+    world::AudioEnvironment audioEnvironment; // Cached audio characteristics.
 
     Impl(Public *i) : Base(i)
     {}
@@ -148,7 +144,7 @@ const Vec2d &ConvexSubspace::worldGridOffset() const
     return d->worldGridOffset;
 }
 
-dint ConvexSubspace::shadowLineCount() const
+int ConvexSubspace::shadowLineCount() const
 {
     return d->shadowLines.size();
 }
@@ -172,7 +168,7 @@ LoopResult ConvexSubspace::forAllShadowLines(const std::function<LoopResult (Lin
     return LoopContinue;
 }
 
-dint ConvexSubspace::lumobjCount() const
+int ConvexSubspace::lumobjCount() const
 {
     return d->lumobjs.size();
 }
@@ -201,12 +197,12 @@ void ConvexSubspace::link(Lumobj &lumobj)
     d->lumobjs.insert(&lumobj);
 }
 
-dint ConvexSubspace::lastSpriteProjectFrame() const
+int ConvexSubspace::lastSpriteProjectFrame() const
 {
     return d->lastSpriteProjectFrame;
 }
 
-void ConvexSubspace::setLastSpriteProjectFrame(dint newFrameNumber)
+void ConvexSubspace::setLastSpriteProjectFrame(int newFrameNumber)
 {
     d->lastSpriteProjectFrame = newFrameNumber;
 }
@@ -220,7 +216,7 @@ mesh::HEdge *ConvexSubspace::fanBase() const
     return d->fanBase;
 }
 
-dint ConvexSubspace::fanVertexCount() const
+int ConvexSubspace::fanVertexCount() const
 {
     // Are we to use one of the half-edge vertexes as the fan base?
     return poly().hedgeCount() + (fanBase()? 0 : 2);
@@ -266,7 +262,7 @@ bool ConvexSubspace::updateAudioEnvironment()
 
     // Space is the rough volume of the bounding box.
     const AABoxd &bounds = poly().bounds();
-    env.space = dint(subsector().sector().ceiling().height() - subsector().sector().floor().height())
+    env.space = int(subsector().sector().ceiling().height() - subsector().sector().floor().height())
                 * ((bounds.maxX - bounds.minX) * (bounds.maxY - bounds.minY));
 
     // The other reverb properties can be found out by taking a look at the
@@ -295,16 +291,16 @@ bool ConvexSubspace::updateAudioEnvironment()
     }
 
     // Average the results.
-    for (dint i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
+    for (int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
     {
         contrib[i] /= coverage;
     }
 
     // Accumulate contributions and clamp the results.
-    dint volume  = 0;
-    dint decay   = 0;
-    dint damping = 0;
-    for (dint i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
+    int volume  = 0;
+    int decay   = 0;
+    int damping = 0;
+    for (int i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
     {
         const auto &envDef = S_AudioEnvironment(AudioEnvironmentId(i));
         volume  += envDef.volume  * contrib[i];

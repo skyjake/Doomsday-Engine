@@ -75,7 +75,7 @@ namespace world
  */
 class Map
     : public world::Map
-    , DE_OBSERVES(ClientWorld, FrameBegin)
+    , DE_OBSERVES(world::World, FrameState)
 {
     DE_NO_COPY  (Map)
     DE_NO_ASSIGN(Map)
@@ -336,8 +336,7 @@ public:  //- Particle generators -----------------------------------------------
     const ClMobjHash &clMobjHash() const;
 
 protected:
-    /// Observes WorldSystem FrameBegin
-    void worldSystemFrameBegins(bool resetNextViewer);
+    void worldFrameState(world::World::FrameState) override;
 
 private:
     DE_PRIVATE(d)

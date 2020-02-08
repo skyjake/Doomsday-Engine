@@ -21,6 +21,7 @@
 #pragma once
 
 #include "../res/Texture"
+#include "../audio/s_environ.h"
 #include "mapelement.h"
 
 #include <de/List>
@@ -113,6 +114,16 @@ public:
     }
 
     virtual bool isAnimated() const;
+
+    /**
+     * Returns the attributed audio environment identifier for the material.
+     */
+    AudioEnvironmentId audioEnvironment() const;
+
+    /**
+     * Change the attributed audio environment for the material to @a newEnvironment.
+     */
+    void setAudioEnvironment(AudioEnvironmentId newEnvironment);
 
     /**
      * Change the do-not-draw property of the material according to @a yes.

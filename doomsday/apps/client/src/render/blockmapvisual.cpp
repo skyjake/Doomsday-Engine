@@ -509,7 +509,7 @@ void Rend_BlockmapDebug()
     // Disabled?
     if (!bmapShowDebug || bmapShowDebug > 4) return;
 
-    if (!App_World().hasMap()) return;
+    if (!world::World::get().hasMap()) return;
     auto &map = App_World().map();
 
     const world::Blockmap *blockmap;

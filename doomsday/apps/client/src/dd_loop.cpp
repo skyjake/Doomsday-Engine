@@ -281,7 +281,7 @@ static void advanceTime(timespan_t delta)
     }
 
     // World time always advances unless a local game is paused on client-side.
-    App_World().advanceTime(delta);
+    world::World::get().advanceTime(delta);
 }
 
 void DD_ResetTimer()

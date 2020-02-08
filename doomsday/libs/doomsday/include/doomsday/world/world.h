@@ -46,14 +46,33 @@ public:
     static int ddMapSetup; // map setup is in progress
     static int validCount;
 
+    enum FrameState
+    {
+        /**
+         * To be called at the beginning of a render frame, so that we can prepare for
+         * drawing view(s) of the current map.
+         */
+        FrameBegins,
+
+        /**
+         * To be called at the end of a render frame, so that we can finish up any tasks
+         * that must be completed after view(s) have been drawn.
+         */
+        FrameEnds
+    };
+
     DE_AUDIENCE(MapChange, void worldMapChanged())
+
+    /// Notified when a frame begins or ends.
+    DE_AUDIENCE(FrameState, void worldFrameState(FrameState frameState))
 
     /// No map is currently loaded. @ingroup errors
     DE_ERROR(MapError);
 
-public:
-    World();
+protected:
+    World(); // build using one of the derived classes
 
+public:
     void useDefaultConstructors();
 
     /**
@@ -128,6 +147,8 @@ public:
      */
     void update();
     
+    void notifyFrameState(FrameState frameState);
+
 public:
     /// Scripting helper: get pointer to current instance mobj_t based on the script callstack.
     static mobj_t &contextMobj(const de::Context &);

@@ -161,7 +161,7 @@ void N_NETicker(timespan_t time)
 
         // Update master periodically.
         if(::serverPublic && App_ServerSystem().isListening() &&
-           App_World().hasMap() && ::masterHeartbeat < 0)
+           world::World::get().hasMap() && ::masterHeartbeat < 0)
         {
             ::masterHeartbeat = MASTER_HEARTBEAT;
             N_MasterAnnounceServer(true);

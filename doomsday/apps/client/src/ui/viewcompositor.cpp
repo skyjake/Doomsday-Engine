@@ -292,7 +292,7 @@ void ViewCompositor::drawCompositedLayers()
         {
             dgl_borderedprojectionstate_t bp;
             GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_CLIP |
-                                           (!App_World().hasMap()? BPF_OVERDRAW_MASK : 0),
+                                                    (!world::World::get().hasMap() ? BPF_OVERDRAW_MASK : 0),
                                            SCREENWIDTH, SCREENHEIGHT,
                                            DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT,
                                            scalemode_t(Con_GetByte("rend-finale-stretch")));
@@ -325,7 +325,7 @@ void ViewCompositor::drawCompositedLayers()
         SBE_DrawGui();
 
         // Debug visualizations.
-        if (App_World().hasMap() && App_World().map().hasLightGrid())
+        if (world::World::get().hasMap() && App_World().map().hasLightGrid())
         {
             Rend_LightGridVisual(App_World().map().lightGrid());
         }

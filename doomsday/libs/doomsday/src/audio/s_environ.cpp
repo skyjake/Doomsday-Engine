@@ -2,7 +2,7 @@
  *
  * Calculation of the aural properties of sectors.
  *
- * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "audio/s_environ.h"
+#include "doomsday/audio/s_environ.h"
+#include "doomsday/defs/ded.h"
 
 using namespace de;
 

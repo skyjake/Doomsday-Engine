@@ -24,7 +24,6 @@ set (src ../client)
 set (SHARED_WITH_CLIENT
     ${src}/include/audio/audiosystem.h
     ${src}/include/audio/s_cache.h
-    ${src}/include/audio/s_environ.h
     ${src}/include/con_config.h
     ${src}/include/dd_def.h
     ${src}/include/dd_loop.h

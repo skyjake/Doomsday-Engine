@@ -1355,8 +1355,12 @@ void Map::redecorate()
     });
 }
 
-void Map::worldSystemFrameBegins(bool resetNextViewer)
+void Map::worldFrameState(world::World::FrameState frameState)
 {
+    if (frameState != world::World::FrameBegins) return;
+
+    const bool resetNextViewer = R_IsViewerResetPending();
+
     DE_ASSERT(&App_World().map() == this); // Sanity check.
 
     // Interpolate the map ready for drawing view(s) of it.

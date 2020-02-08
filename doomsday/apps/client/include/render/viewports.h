@@ -154,7 +154,7 @@ void R_UpdateViewer(int consoleNum);
 
 void R_ResetViewer();
 
-int R_NextViewer();
+int R_IsViewerResetPending();
 
 void R_ClearViewData();
 

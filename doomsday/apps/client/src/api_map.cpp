@@ -1366,7 +1366,7 @@ DE_EXTERN_C dd_bool P_MapChange(const char *uriCString)
 #undef P_CountMapObjs
 DE_EXTERN_C uint P_CountMapObjs(int entityId)
 {
-    if(!App_World().hasMap()) return 0;
+    if(!world::World::get().hasMap()) return 0;
     EntityDatabase &entities = World::get().map().entityDatabase();
     return entities.entityCount(P_MapEntityDef(entityId));
 }
@@ -1374,7 +1374,7 @@ DE_EXTERN_C uint P_CountMapObjs(int entityId)
 #undef Mobj_Link
 DE_EXTERN_C void Mobj_Link(mobj_t *mobj, int flags)
 {
-    if(!mobj || !App_World().hasMap()) return; // Huh?
+    if(!mobj || !world::World::get().hasMap()) return; // Huh?
     World::get().map().link(*mobj, flags);
 }
 
@@ -1432,7 +1432,7 @@ DE_EXTERN_C int Sector_TouchingMobjsIterator(world_Sector *sector, int (*callbac
 #undef Sector_AtPoint_FixedPrecision
 DE_EXTERN_C world_Sector *Sector_AtPoint_FixedPrecision(const_pvec2d_t point)
 {
-    if(!App_World().hasMap()) return 0;
+    if(!world::World::get().hasMap()) return 0;
     return World::get().map().bspLeafAt_FixedPrecision(Vec2d(point)).sectorPtr();
 }
 
@@ -1443,7 +1443,7 @@ DE_EXTERN_C int Mobj_BoxIterator(const AABoxd *box,
     DE_ASSERT(box && callback);
 
     LoopResult result = LoopContinue;
-    if(App_World().hasMap())
+    if(world::World::get().hasMap())
     {
         const auto &map           = World::get().map();
         const int localValidCount = World::validCount;
@@ -1469,7 +1469,7 @@ DE_EXTERN_C int Polyobj_BoxIterator(const AABoxd *box,
     DE_ASSERT(box && callback);
 
     LoopResult result = LoopContinue;
-    if(App_World().hasMap())
+    if(world::World::get().hasMap())
     {
         const auto &map            = World::get().map();
         const dint localValidCount = World::validCount;
@@ -1493,7 +1493,7 @@ DE_EXTERN_C int Line_BoxIterator(const AABoxd *box, int flags,
     int (*callback) (world_Line *, void *), void *context)
 {
     DE_ASSERT(box && callback);
-    if(!App_World().hasMap()) return LoopContinue;
+    if(!world::World::get().hasMap()) return LoopContinue;
 
     return World::get().map().forAllLinesInBox(*box, flags, [&callback, &context] (world::Line &line)
     {
@@ -1506,7 +1506,7 @@ DE_EXTERN_C int Subspace_BoxIterator(const AABoxd *box,
     int (*callback) (struct convexsubspace_s *, void *), void *context)
 {
     DE_ASSERT(box && callback);
-    if (!App_World().hasMap()) return LoopContinue;
+    if (!world::World::get().hasMap()) return LoopContinue;
 
     const dint localValidCount = World::validCount;
 
@@ -1535,7 +1535,7 @@ DE_EXTERN_C int Subspace_BoxIterator(const AABoxd *box,
 DE_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
     int flags, traverser_t callback, void *context)
 {
-    if(!App_World().hasMap()) return false;  // Continue iteration.
+    if(!world::World::get().hasMap()) return false;  // Continue iteration.
 
     return world::Interceptor(callback, Vec2d(from), Vec2d(to), flags, context)
                 .trace(World::get().map());
@@ -1545,7 +1545,7 @@ DE_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
 DE_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
     traverser_t callback, void *context)
 {
-    if(!App_World().hasMap()) return false;  // Continue iteration.
+    if(!world::World::get().hasMap()) return false;  // Continue iteration.
 
     return world::Interceptor(callback, Vec2d(from), Vec2d(to), PTF_ALL, context)
                 .trace(World::get().map());
@@ -1555,7 +1555,7 @@ DE_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
 DE_EXTERN_C dd_bool P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coord_t bottomSlope,
     coord_t topSlope, int flags)
 {
-    if(!App_World().hasMap()) return false;  // Continue iteration.
+    if(!world::World::get().hasMap()) return false;  // Continue iteration.
 
     return world::LineSightTest(Vec3d(from), Vec3d(to), bottomSlope, topSlope, flags)
                 .trace(World::get().map().bspTree());
@@ -1627,7 +1627,7 @@ DE_EXTERN_C void Polyobj_Link(Polyobj *po)
 #undef Polyobj_ById
 DE_EXTERN_C Polyobj *Polyobj_ById(int index)
 {
-    if(!App_World().hasMap()) return nullptr;
+    if(!world::World::get().hasMap()) return nullptr;
     return World::get().map().polyobjPtr(index);
 }
 
@@ -1635,7 +1635,7 @@ DE_EXTERN_C Polyobj *Polyobj_ById(int index)
 DE_EXTERN_C Polyobj *Polyobj_ByTag(int tag)
 {
     Polyobj *found = nullptr; // not found.
-    if(App_World().hasMap())
+    if(world::World::get().hasMap())
     {
         World::get().map().forAllPolyobjs([&tag, &found] (Polyobj &pob)
         {

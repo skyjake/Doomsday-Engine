@@ -111,8 +111,6 @@ String ClientMaterial::Decoration::description() const
 
 DE_PIMPL(ClientMaterial)
 {
-    AudioEnvironmentId audioEnvironment { AE_NONE };
-
     /// Decorations (owned), to be projected into the world (relative to a Surface).
     List<Decoration *> decorations;
 
@@ -166,16 +164,6 @@ bool ClientMaterial::isAnimated() const
         }
     }
     return false;
-}
-
-AudioEnvironmentId ClientMaterial::audioEnvironment() const
-{
-    return (isDrawable()? d->audioEnvironment : AE_NONE);
-}
-
-void ClientMaterial::setAudioEnvironment(AudioEnvironmentId newEnvironment)
-{
-    d->audioEnvironment = newEnvironment;
 }
 
 int ClientMaterial::decorationCount() const

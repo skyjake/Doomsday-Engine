@@ -265,10 +265,10 @@ DE_PIMPL(World)
         return bool(map);
     }
 
-    DE_PIMPL_AUDIENCE(MapChange)
+    DE_PIMPL_AUDIENCES(MapChange, FrameState)
 };
 
-DE_AUDIENCE_METHOD(World, MapChange)
+DE_AUDIENCE_METHODS(World, MapChange, FrameState)
 
 World::World() : d(new Impl(this))
 {
@@ -496,6 +496,14 @@ void World::update()
     if (hasMap())
     {
         map().update();
+    }
+}
+
+void World::notifyFrameState(FrameState frameState)
+{
+    DE_NOTIFY(FrameState, i)
+    {
+        i->worldFrameState(frameState);
     }
 }
 

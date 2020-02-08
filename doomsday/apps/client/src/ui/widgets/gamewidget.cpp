@@ -134,8 +134,10 @@ DE_PIMPL(GameWidget)
 
         if (needFrames)
         {
+            using namespace world;
+
             // Notify the world that a new render frame has begun.
-            App_World().beginFrame(CPP_BOOL(R_NextViewer()));
+            ClientApp::world().notifyFrameState(World::FrameBegins);
 
             // Each players' view is rendered into an FBO first. What is seen on screen
             // is then composited using the player view as a texture with additional layers
@@ -147,7 +149,7 @@ DE_PIMPL(GameWidget)
             DGL_Flush();
 
             // Notify the world that we've finished rendering the frame.
-            App_World().endFrame();
+            ClientApp::world().notifyFrameState(World::FrameEnds);
 
             needFrames = false;
         }
@@ -192,6 +194,8 @@ void GameWidget::drawComposited()
 
 void GameWidget::renderCubeMap(uint size, const String &outputImagePath)
 {
+    using namespace world;
+
     const int player = consolePlayer;
     Vec2ui fbSize(size, size);
 
@@ -207,10 +211,9 @@ void GameWidget::renderCubeMap(uint size, const String &outputImagePath)
     plr.publicData().flags |= DDPF_CAMERA;
 
     // Notify the world that a new render frame has begun.
-    App_World().beginFrame(CPP_BOOL(R_NextViewer()));
+    World::get().notifyFrameState(World::FrameBegins);
 
     Image composited(Image::Size(6 * size, size), Image::RGB_888);
-//    QPainter painter(&composited);
 
     const int baseYaw = 180;
 
@@ -236,7 +239,7 @@ void GameWidget::renderCubeMap(uint size, const String &outputImagePath)
     }
     destFb.glDeinit();
 
-    App_World().endFrame();
+    World::get().notifyFrameState(World::FrameEnds);
 
     // Write the composited image to a file.
     {

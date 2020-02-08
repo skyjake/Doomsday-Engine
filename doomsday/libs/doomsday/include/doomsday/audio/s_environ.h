@@ -1,7 +1,7 @@
 /** @file s_environ.h Audio environment management.
  * @ingroup audio
  *
- * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -19,9 +19,9 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_SOUND_ENVIRON
-#define DE_SOUND_ENVIRON
+#pragma once
 
+#include "../libdoomsday.h"
 #include <doomsday/uri.h>
 
 enum AudioEnvironmentId
@@ -49,17 +49,15 @@ struct AudioEnvironment
 /**
  * Lookup the symbolic name of the identified audio environment.
  */
-const char *S_AudioEnvironmentName(AudioEnvironmentId id);
+LIBDOOMSDAY_PUBLIC const char *S_AudioEnvironmentName(AudioEnvironmentId id);
 
 /**
  * Lookup the identified audio environment.
  */
-const AudioEnvironment &S_AudioEnvironment(AudioEnvironmentId id);
+LIBDOOMSDAY_PUBLIC const AudioEnvironment &S_AudioEnvironment(AudioEnvironmentId id);
 
 /**
  * Lookup the audio environment associated with material @a uri. If no environment
  * is defined then @c AE_NONE is returned.
  */
-AudioEnvironmentId S_AudioEnvironmentId(const res::Uri *uri);
-
-#endif // DE_SOUND_ENVIRON
+LIBDOOMSDAY_PUBLIC AudioEnvironmentId S_AudioEnvironmentId(const res::Uri *uri);

@@ -128,7 +128,7 @@ void ShellUser::sendGameState()
     // Check the map's information.
     String mapId;
     String mapTitle;
-    if (App_World().hasMap())
+    if (world::World::get().hasMap())
     {
         world::Map &map = App_World().map();
 
@@ -145,7 +145,7 @@ void ShellUser::sendGameState()
 
 void ShellUser::sendMapOutline()
 {
-    if (!App_World().hasMap()) return;
+    if (!world::World::get().hasMap()) return;
 
     network::MapOutlinePacket packet;
     App_World().map().initMapOutlinePacket(packet);
@@ -154,7 +154,7 @@ void ShellUser::sendMapOutline()
 
 void ShellUser::sendPlayerInfo()
 {
-    if (!App_World().hasMap()) return;
+    if (!world::World::get().hasMap()) return;
 
     std::unique_ptr<network::PlayerInfoPacket> packet(new network::PlayerInfoPacket);
 

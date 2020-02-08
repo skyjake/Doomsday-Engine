@@ -4901,7 +4901,7 @@ void Rend_UpdateLightModMatrix()
 
     de::zap(lightModRange);
 
-    if (!App_World().hasMap())
+    if (!world::World::get().hasMap())
     {
         rAmbient = 0;
         return;

@@ -46,11 +46,11 @@ class Map;
 class ClientWorld : public world::World
 {
 public:
-    /// Notified when a new frame begins.
-    DE_DEFINE_AUDIENCE(FrameBegin, void worldSystemFrameBegins(bool resetNextViewer))
+//    /// Notified when a new frame begins.
+//    DE_DEFINE_AUDIENCE(FrameBegin, void worldSystemFrameBegins(bool resetNextViewer))
 
-    /// Notified when the "current" frame ends.
-    DE_DEFINE_AUDIENCE(FrameEnd, void worldSystemFrameEnds())
+//    /// Notified when the "current" frame ends.
+//    DE_DEFINE_AUDIENCE(FrameEnd, void worldSystemFrameEnds())
 
 public:
     /**
@@ -72,16 +72,4 @@ public:
     void mapFinalized() override;
     bool allowAdvanceTime() const override;
     void tick(timespan_t) override;
-    
-    /**
-     * To be called at the beginning of a render frame, so that we can prepare for
-     * drawing view(s) of the current map.
-     */
-    void beginFrame(bool resetNextViewer = false);
-
-    /**
-     * To be called at the end of a render frame, so that we can finish up any tasks
-     * that must be completed after view(s) have been drawn.
-     */
-    void endFrame();
 };

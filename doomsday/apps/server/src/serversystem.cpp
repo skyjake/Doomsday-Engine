@@ -144,7 +144,7 @@ DE_PIMPL(ServerSystem)
             lastBeaconUpdateAt = clock.time();
 
             // Update the status message in the server's presence beacon.
-            if (serverSock && App_World().hasMap())
+            if (serverSock && world::World::get().hasMap())
             {
                 Block msg;
                 de::Writer(msg).withHeader() << ServerApp::currentServerInfo().strippedForBroadcast();

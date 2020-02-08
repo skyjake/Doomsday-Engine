@@ -149,7 +149,7 @@ void ClientWorld::aboutToChangeMap()
     {
         // Remove the current map from our audiences.
         /// @todo Map should handle this.
-        audienceForFrameBegin -= map();
+        audienceForFrameState() -= map();
     }
 
     // As the memory zone does not provide the mechanisms to prepare another
@@ -200,7 +200,7 @@ void ClientWorld::mapFinalized()
 
     auto &rendSys = ClientApp::renderSystem();
 
-    audienceForFrameBegin += map();
+    audienceForFrameState() += map();
 
     // Set up the SkyDrawable to get its config from the map's Sky.
     map().skyAnimator().setSky(&ClientApp::renderSystem().sky().configure(&map().sky().as<Sky>()));
@@ -286,16 +286,4 @@ void ClientWorld::tick(timespan_t elapsed)
             });
         }
     }
-}
-
-void ClientWorld::beginFrame(bool resetNextViewer)
-{
-    // Notify interested parties that a new frame has begun.
-    DE_NOTIFY_VAR(FrameBegin, i) i->worldSystemFrameBegins(resetNextViewer);
-}
-
-void ClientWorld::endFrame()
-{
-    // Notify interested parties that the current frame has ended.
-    DE_NOTIFY_VAR(FrameEnd, i) i->worldSystemFrameEnds();
 }

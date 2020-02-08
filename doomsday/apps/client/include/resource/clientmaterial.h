@@ -22,7 +22,6 @@
 #define DE_RESOURCE_CLIENTMATERIAL_H
 
 #include <doomsday/world/Material>
-#include "audio/s_environ.h"
 #include "MaterialVariantSpec"
 
 class MaterialAnimator;
@@ -53,16 +52,6 @@ public:
      * Returns a human-friendly, textual description of the full material configuration.
      */
     de::String description() const override;
-
-    /**
-     * Returns the attributed audio environment identifier for the material.
-     */
-    AudioEnvironmentId audioEnvironment() const;
-
-    /**
-     * Change the attributed audio environment for the material to @a newEnvironment.
-     */
-    void setAudioEnvironment(AudioEnvironmentId newEnvironment);
 
 //- Decorations -------------------------------------------------------------------------
 

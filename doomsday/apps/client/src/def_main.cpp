@@ -934,10 +934,7 @@ static void configureMaterial(world::Material &mat, const Record &definition)
     mat.setDimensions(Vec2ui(matDef.geta("dimensions")));
     mat.markDontDraw((matDef.geti("flags") & MATF_NO_DRAW) != 0);
     mat.markSkyMasked((matDef.geti("flags") & MATF_SKYMASK) != 0);
-
-#ifdef __CLIENT__
-    static_cast<ClientMaterial &>(mat).setAudioEnvironment(S_AudioEnvironmentId(&materialUri));
-#endif
+    mat.setAudioEnvironment(S_AudioEnvironmentId(&materialUri));
 
     // Reconfigure the layers.
     mat.clearAllLayers();
@@ -1099,7 +1096,10 @@ static void configureMaterial(world::Material &mat, const Record &definition)
     }
 
 #ifdef __CLIENT__
-    redecorateMaterial(static_cast<ClientMaterial &>(mat), definition);
+    if (is<ClientMaterial>(mat))
+    {
+        redecorateMaterial(static_cast<ClientMaterial &>(mat), definition);
+    }
 #endif
 
     // At this point we know the material is usable.

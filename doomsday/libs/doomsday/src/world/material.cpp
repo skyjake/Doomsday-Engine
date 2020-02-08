@@ -77,8 +77,9 @@ DE_PIMPL(Material)
 , DE_OBSERVES(res::Texture, Deletion)
 , DE_OBSERVES(res::Texture, DimensionsChange)
 {
-    MaterialManifest *manifest = nullptr;  ///< Source manifest (always valid, not owned).
-    Vec2ui dimensions;                  ///< World dimensions in map coordinate space units.
+    MaterialManifest * manifest = nullptr; // Source manifest (always valid, not owned).
+    Vec2ui             dimensions;         // World dimensions in map coordinate space units.
+    AudioEnvironmentId audioEnvironment = AE_NONE;
 
     Impl(Public *i) : Base(i) {}
 
@@ -286,6 +287,16 @@ void Material::addLayerAt(Layer *layer, int position)
             tex->audienceForDimensionsChange += d;
         }
     }
+}
+
+AudioEnvironmentId Material::audioEnvironment() const
+{
+    return (isDrawable()? d->audioEnvironment : AE_NONE);
+}
+
+void Material::setAudioEnvironment(AudioEnvironmentId newEnvironment)
+{
+    d->audioEnvironment = newEnvironment;
 }
 
 /*Material::Layer &Material::layer(int index) const

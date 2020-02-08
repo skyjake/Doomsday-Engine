@@ -476,7 +476,7 @@ void Cl_Ticker(timespan_t ticLength)
 #endif
     }
 
-    if (App_World().hasMap())
+    if (world::World::get().hasMap())
     {
         App_World().map().as<Map>().expireClMobjs();
     }

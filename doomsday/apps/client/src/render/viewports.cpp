@@ -408,7 +408,7 @@ void R_ResetViewer()
     resetNextViewer = 1;
 }
 
-dint R_NextViewer()
+dint R_IsViewerResetPending()
 {
     return resetNextViewer;
 }

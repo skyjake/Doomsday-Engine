@@ -31,6 +31,7 @@ file (GLOB_RECURSE HEADERS include/doomsday/*)
 file (GLOB SOURCES src/c_wrapper/*.cpp)
 
 deng_merge_sources (libdoomsday src/*.cpp)
+deng_merge_sources (audio       src/audio/*.cpp)
 deng_merge_sources (defs        src/defs/*.cpp)
 deng_merge_sources (console     src/console/*.cpp)
 deng_merge_sources (filesys     src/filesys/*.cpp)
