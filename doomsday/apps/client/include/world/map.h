@@ -124,11 +124,6 @@ public:
     void deserializeInternalState(de::Reader &                  from,
                                   const world::IThinkerMapping &thinkerMapping) override;
 
-    de::String objectsDescription() const;
-
-    void restoreObjects(const de::Info &              objState,
-                        const world::IThinkerMapping &thinkerMapping) const;
-
     /**
      * Force an update on all decorated surfaces.
      */

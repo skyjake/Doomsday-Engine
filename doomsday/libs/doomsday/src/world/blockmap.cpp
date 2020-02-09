@@ -150,8 +150,9 @@ DE_PIMPL(Blockmap)
         Cell cell;   ///< Cell coordinates for this node.
         duint size;  ///< Size of the cell at this node (width=height).
         union {
-            Node *children[4];   ///< One per quadrant (if any, not owned).
-            CellData *leafData;  ///< Data associated with the leaf cell.
+            Node *children[4];   /* One per quadrant (if any, not owned). */
+            CellData *leafData;  /* Data associated with the leaf cell.
+                                    Allocated from the zone; not freed by BlockMap. */
         };
 
         /**
@@ -165,11 +166,6 @@ DE_PIMPL(Blockmap)
             , size(size)
         {
             zap(children);
-        }
-
-        ~Node()
-        {
-            if(isLeaf()) Z_Free(leafData);
         }
 
         /**

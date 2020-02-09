@@ -38,6 +38,7 @@
 #include "api_render.h"
 #include "render/angleclipper.h"
 #include "render/cameralensfx.h"
+#include "render/classicworldrenderer.h"
 #include "render/fx/bloom.h"
 #include "render/playerweaponanimator.h"
 #include "render/r_draw.h"
@@ -516,11 +517,10 @@ void R_NewSharpWorld()
         R_CheckViewerLimits(vd->lastSharp, &sharpView);
     }
 
-    if(ClientApp::world().hasMap())
+    if (auto *map = maybeAs<Map>(ClientApp::world().mapPtr()))
     {
-        auto &map = World::get().map().as<Map>();
-        map.updateTrackedPlanes();
-        map.updateScrollingSurfaces();
+        map->updateTrackedPlanes();
+        map->updateScrollingSurfaces();
     }
 }
 
@@ -785,7 +785,7 @@ static void setupPlayerSprites()
     mobj_t *mob = ddpl->mo;
 
     if(!Mobj_HasSubsector(*mob)) return;
-    auto &subsec = Mobj_Subsector(*mob).as<Subsector>();
+    auto &subsec = Mobj_Subsector(*mob);
 
     // Determine if we should be drawing all the psprites full bright?
     bool fullBright = CPP_BOOL(::levelFullBright);
@@ -856,8 +856,16 @@ static void setupPlayerSprites()
             spr->data.model.flags       = 0;
             // 32 is the raised weapon height.
             spr->data.model.topZ        = viewData->current.origin.z;
-            spr->data.model.secFloor    = subsec.visFloor().heightSmoothed();
-            spr->data.model.secCeil     = subsec.visCeiling().heightSmoothed();
+            if (auto *vsub = maybeAs<Subsector>(subsec))
+            {
+                spr->data.model.secFloor = vsub->visFloor().heightSmoothed();
+                spr->data.model.secCeil  = vsub->visCeiling().heightSmoothed();
+            }
+            else
+            {
+                spr->data.model.secFloor = subsec.sector().floor().height();
+                spr->data.model.secCeil  = subsec.sector().ceiling().height();
+            }
             spr->data.model.pClass      = 0;
             spr->data.model.floorClip   = 0;
 
@@ -1014,28 +1022,9 @@ static void changeViewState(ViewState viewState) //, const viewport_t *port, con
 
 }
 
-#undef R_RenderPlayerView
-DE_EXTERN_C void R_RenderPlayerView(dint num)
+void ClassicWorldRenderer::renderPlayerView(int num)
 {
-    if (num < 0 || num >= DDMAXPLAYERS) return; // Huh?
     player_t *player = DD_Player(num);
-
-    if (!player->publicData().inGame) return;
-    if (!player->publicData().mo) return;
-    if (!ClientApp::world().hasMap()) return;
-
-    if (firstFrameAfterLoad)
-    {
-        // Don't let the clock run yet.  There may be some texture
-        // loading still left to do that we have been unable to
-        // predetermine.
-        firstFrameAfterLoad = false;
-        DD_ResetTimer();
-    }
-
-    // Too early? Game has not configured the view window?
-    viewdata_t *vd = &player->viewport();
-    if (vd->window.isNull()) return;
 
     // Setup for rendering the frame.
     R_SetupFrame(player);
@@ -1135,6 +1124,32 @@ DE_EXTERN_C void R_RenderPlayerView(dint num)
     }
 
     R_PrintRendPoolInfo();
+}
+
+#undef R_RenderPlayerView
+DE_EXTERN_C void R_RenderPlayerView(dint num)
+{
+    if (num < 0 || num >= DDMAXPLAYERS) return; // Huh?
+    player_t *player = DD_Player(num);
+
+    if (!player->publicData().inGame) return;
+    if (!player->publicData().mo) return;
+    if (!ClientApp::world().hasMap()) return;
+
+    if (firstFrameAfterLoad)
+    {
+        // Don't let the clock run yet.  There may be some texture
+        // loading still left to do that we have been unable to
+        // predetermine.
+        firstFrameAfterLoad = false;
+        DD_ResetTimer();
+    }
+
+    // Too early? Game has not configured the view window?
+    viewdata_t *vd = &player->viewport();
+    if (vd->window.isNull()) return;
+
+    ClientApp::worldRenderer().renderPlayerView(num);
 }
 
 /**

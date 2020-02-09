@@ -526,6 +526,11 @@ public:
      */
     virtual de::String objectSummaryAsStyledText() const;
 
+    de::String objectsDescription() const;
+
+    void restoreObjects(const de::Info &              objState,
+                        const world::IThinkerMapping &thinkerMapping) const;
+
 //- Editing --------------------------------------------------------------------
 
     /**

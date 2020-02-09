@@ -21,6 +21,7 @@
 #include "doomsday/world/mobj.h"
 #include "doomsday/world/sector.h"
 #include "doomsday/world/blockmap.h"
+#include "doomsday/world/ithinkermapping.h"
 #include "doomsday/world/line.h"
 #include "doomsday/world/lineblockmap.h"
 #include "doomsday/world/lineowner.h"
@@ -29,6 +30,8 @@
 #include "doomsday/world/bsp/partitioner.h"
 #include "doomsday/world/factory.h"
 #include "doomsday/world/thinkers.h"
+#include "doomsday/world/thinkerdata.h"
+#include "doomsday/world/mobjthinkerdata.h"
 #include "doomsday/world/sky.h"
 #include "doomsday/world/world.h"
 #include "doomsday/mesh/face.h"
@@ -40,6 +43,7 @@
 #include <de/legacy/nodepile.h>
 #include <de/legacy/memory.h>
 #include <de/legacy/memoryzone.h>
+#include <de/charsymbols.h>
 #include <de/Rectangle>
 #include <de/LogBuffer>
 
@@ -198,8 +202,12 @@ DE_PIMPL(Map)
         deleteAll(lines);
         lines.clear();
 
-        /// @todo fixme: Free all memory we have ownership of.
-        // mobjNodes/lineNodes/lineLinks
+        // Note: These free allocations from the memory zone, so this needs to be done before
+        // a tag-based purge of the zone.
+        mobjBlockmap.reset();
+        polyobjBlockmap.reset();
+        lineBlockmap.reset();
+        subspaceBlockmap.reset();
     }
 
     void recordBeingDeleted(Record &record)
@@ -2305,6 +2313,117 @@ String Map::elementSummaryAsStyledText() const
 #undef TABBED
 
     return str.rightStrip();
+}
+
+String Map::objectsDescription() const
+{
+    auto &gx = DoomsdayApp::plugins().gameExports();
+
+    String str;
+    if (gx.MobjStateAsInfo)
+    {
+        // Print out a state description for each thinker.
+        thinkers().forAll(0x3, [&gx, &str](thinker_t *th) {
+            if (Thinker_IsMobj(th))
+            {
+                str += gx.MobjStateAsInfo(reinterpret_cast<const mobj_t *>(th));
+            }
+            return LoopContinue;
+        });
+    }
+    return str;
+}
+
+void Map::restoreObjects(const Info &objState, const world::IThinkerMapping &thinkerMapping) const
+{
+    /// @todo Generalize from mobjs to all thinkers?
+    LOG_AS("Map::restoreObjects");
+
+    auto &gx = DoomsdayApp::app().plugins().gameExports();
+
+    if (!gx.MobjStateAsInfo || !gx.MobjRestoreState) return;
+
+    bool problemsDetected = false;
+
+    // Look up all the mobjs.
+    List<const thinker_t *> mobjs;
+    thinkers().forAll(0x3, [&mobjs] (thinker_t *th) {
+        if (Thinker_IsMobj(th)) mobjs << th;
+        return LoopContinue;
+    });
+
+    // Check that all objects are found in the state description.
+    if (objState.root().contents().size() != mobjs.size())
+    {
+        LOGDEV_MAP_WARNING("Different number of objects: %i in map, but got %i in restore data")
+            << mobjs.size()
+            << objState.root().contents().size();
+    }
+
+    // Check the cross-references.
+    for (auto i  = objState.root().contentsInOrder().begin();
+         i != objState.root().contentsInOrder().end();
+         ++i)
+    {
+        const Info::BlockElement &state = (*i)->as<Info::BlockElement>();
+        const Id::Type privateId = state.name().toUInt32();
+        DE_ASSERT(privateId != 0);
+
+        if (thinker_t *th = thinkerMapping.thinkerForPrivateId(privateId))
+        {
+            if (ThinkerData *found = ThinkerData::find(privateId))
+            {
+                DE_ASSERT(&found->thinker() == th);
+
+                // Restore the state according to the serialized info.
+                gx.MobjRestoreState(found->as<MobjThinkerData>().mobj(), state);
+
+#if defined (DE_DEBUG)
+                {
+                    // Verify that the state is now correct.
+                    Info const currentDesc(gx.MobjStateAsInfo(found->as<MobjThinkerData>().mobj()));
+                    const Info::BlockElement &currentState =
+                        currentDesc.root().contentsInOrder().first()->as<Info::BlockElement>();
+                    DE_ASSERT(currentState.name() == state.name());
+                    for (const auto &i : state.contents())
+                    {
+                        if (state.keyValue(i.first).text != currentState.keyValue(i.first).text)
+                        {
+                            problemsDetected = true;
+                            const String msg =
+                                Stringf("Object %u has mismatching '%s' (current:%s != arch:%s)",
+                                        privateId,
+                                        i.first.c_str(),
+                                        currentState.keyValue(i.first).text.c_str(),
+                                        state.keyValue(i.first).text.c_str());
+                            LOGDEV_MAP_WARNING("%s") << msg;
+                        }
+                    }
+                }
+#endif
+            }
+            else
+            {
+                LOGDEV_MAP_ERROR("Map does not have a thinker matching ID 0x%x")
+                    << privateId;
+            }
+        }
+        else
+        {
+            LOGDEV_MAP_ERROR("Thinker mapping does not have a thinker matching ID 0x%x")
+                << privateId;
+        }
+    }
+
+    if (problemsDetected)
+    {
+        LOG_MAP_WARNING("Map objects were not fully restored " DE_CHAR_MDASH
+                        " gameplay may be affected (enable Developer log entries for details)");
+    }
+    else
+    {
+        LOGDEV_MAP_MSG("State of map objects has been restored");
+    }
 }
 
 void Map::initDummyElements() // static

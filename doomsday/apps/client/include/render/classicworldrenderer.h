@@ -35,4 +35,6 @@ class ClassicWorldRenderer : public IWorldRenderer
 {
 public:
     ClassicWorldRenderer();
+
+    void renderPlayerView(int num) override;
 };

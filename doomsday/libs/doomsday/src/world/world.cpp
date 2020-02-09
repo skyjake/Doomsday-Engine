@@ -82,6 +82,7 @@ DE_PIMPL(World)
 
     ~Impl()
     {
+        map.reset();
         theWorld = nullptr;
     }
     

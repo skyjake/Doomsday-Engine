@@ -158,22 +158,31 @@ DE_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
 
     if (::novideo) return true;  // We can't prepare the material.
 
-    /// @todo fixme: We should not be using the PSprite spec here. -ds
-    MaterialAnimator &matAnimator = reinterpret_cast<world::Material *>(info->material)->as<ClientMaterial>()
-            .getAnimator(pspriteMaterialSpec_GetSpriteInfo());
-    matAnimator.prepare();  // Ensure we have up-to-date info.
+    auto *material = reinterpret_cast<world::Material *>(info->material);
+    if (auto *clMat = maybeAs<ClientMaterial>(material))
+    {
+        /// @todo fixme: We should not be using the PSprite spec here. -ds
+        MaterialAnimator &matAnimator = clMat->getAnimator(pspriteMaterialSpec_GetSpriteInfo());
+        matAnimator.prepare(); // Ensure we have up-to-date info.
 
-    const Vec2ui &matDimensions = matAnimator.dimensions();
-    TextureVariant *tex            = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
-    const Vec2i &texDimensions  = tex->base().origin();
-    const dint texBorder           = tex->spec().variant.border;
+        const Vec2ui &  matDimensions = matAnimator.dimensions();
+        TextureVariant *tex           = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+        const Vec2i &   texDimensions = tex->base().origin();
+        const dint      texBorder     = tex->spec().variant.border;
 
-    info->geometry.origin.x    = -texDimensions.x + -texBorder;
-    info->geometry.origin.y    = -texDimensions.y +  texBorder;
-    info->geometry.size.width  = matDimensions.x + texBorder * 2;
-    info->geometry.size.height = matDimensions.y + texBorder * 2;
+        info->geometry.origin.x    = -texDimensions.x + -texBorder;
+        info->geometry.origin.y    = -texDimensions.y +  texBorder;
+        info->geometry.size.width  = matDimensions.x + texBorder * 2;
+        info->geometry.size.height = matDimensions.y + texBorder * 2;
 
-    tex->glCoords(&info->texCoord[0], &info->texCoord[1]);
+        tex->glCoords(&info->texCoord[0], &info->texCoord[1]);
+    }
+    else
+    {
+        // TODO: Figure out the metrics some other way.
+        zap(info->geometry);
+        zap(info->texCoord);
+    }
 
     return true;
 }

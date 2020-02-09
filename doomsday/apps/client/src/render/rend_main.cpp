@@ -389,15 +389,10 @@ static void reportWallDrawn(world::Line &line)
 void Rend_Reset()
 {
     R_ClearViewData();
-    if (World::get().hasMap())
+    if (auto *map = maybeAs<Map>(World::get().mapPtr()))
     {
-        World::get().map().as<Map>().removeAllLumobjs();
+        map->removeAllLumobjs();
     }
-//    if (dlBBox)
-//    {
-//        GL_DeleteLists(dlBBox, 1);
-//        dlBBox = 0;
-//    }
 }
 
 bool Rend_IsMTexLights()

@@ -594,11 +594,10 @@ DE_PIMPL(ClientResources)
                 defn::Sprite const spriteDef(sprite.second);
                 for (const auto &view : spriteDef.def().compiled().views)
                 {
-                    //const res::Uri &viewMaterial = ; // spriteDef.viewMaterial(iter->first.value->asInt());
-                    if (world::Material *material = world::Materials::get().materialPtr(view.uri))
+                    if (auto *material =
+                            maybeAs<ClientMaterial>(world::Materials::get().materialPtr(view.uri)))
                     {
-                        queueCacheTasksForMaterial(material->as<ClientMaterial>(),
-                                                   contextSpec, cacheGroups);
+                        queueCacheTasksForMaterial(*material, contextSpec, cacheGroups);
                     }
                 }
             }

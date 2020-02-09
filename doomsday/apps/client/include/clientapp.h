@@ -32,6 +32,7 @@ class ClientWindow;
 class ConfigProfiles;
 class InFineSystem;
 class InputSystem;
+class IWorldRenderer;
 class RenderSystem;
 class ServerLink;
 class Updater;
@@ -93,6 +94,7 @@ public:
     static ClientResources &resources();
     static world::World &   world();
     static ClientWorld &    classicWorld();
+    static IWorldRenderer & worldRenderer();
 
 #if defined (DE_HAVE_BUSYRUNNER)
     static BusyRunner &     busyRunner();

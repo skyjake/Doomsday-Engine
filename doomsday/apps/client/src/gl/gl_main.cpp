@@ -801,14 +801,15 @@ void GL_SetMaterialUI(world::Material *mat)
 
 void GL_SetPSprite(world::Material *material, dint tClass, dint tMap)
 {
-    if(!material) return;
+    if (auto *clMat = maybeAs<ClientMaterial>(material))
+    {
+        MaterialAnimator &matAnimator = clMat->getAnimator(pspriteMaterialSpec(tClass, tMap));
 
-    MaterialAnimator &matAnimator = static_cast<ClientMaterial *>(material)->getAnimator(pspriteMaterialSpec(tClass, tMap));
+        // Ensure we have up to date info about the material.
+        matAnimator.prepare();
 
-    // Ensure we have up to date info about the material.
-    matAnimator.prepare();
-
-    GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
+        GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
+    }
 }
 
 void GL_SetRawImage(lumpnum_t lumpNum, gfx::Wrapping wrapS, gfx::Wrapping wrapT)

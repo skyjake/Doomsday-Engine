@@ -1,4 +1,4 @@
-/** @file irenderer.h  Interface for a world renderer implementation.
+/** @file gloomworldrenderer.cpp
  *
  * @authors Copyright (c) 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,27 +16,24 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#pragma once
+#include "render/gloomworldrenderer.h"
 
-#include <de/String>
+using namespace de;
 
-/**
- * Interface for a world renderer implementation.
- *
- * This is the highest level API for the world renderer.
- *
- * @ingroup render
- */
-class IWorldRenderer
-{
-public:
-    virtual ~IWorldRenderer() = default;
+GloomWorldRenderer::GloomWorldRenderer()
+{}
 
-    virtual void init() = 0;
-    virtual void deinit() = 0;
+void GloomWorldRenderer::init()
+{}
 
-    virtual void loadMap(const de::String &mapId) = 0;
-    virtual void setCamera() = 0;
+void GloomWorldRenderer::deinit()
+{}
 
-    virtual void renderPlayerView(int num) = 0;
-};
+void GloomWorldRenderer::setCamera()
+{}
+
+void GloomWorldRenderer::loadMap(const String &mapId)
+{}
+
+void GloomWorldRenderer::renderPlayerView(int num)
+{}

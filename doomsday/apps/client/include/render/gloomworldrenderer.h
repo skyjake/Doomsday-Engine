@@ -27,4 +27,12 @@ class GloomWorldRenderer : public IWorldRenderer
 {
 public:
     GloomWorldRenderer();
+
+    void init() override;
+    void deinit() override;
+
+    void setCamera() override;
+    void loadMap(const de::String &mapId) override;
+
+    void renderPlayerView(int num) override;
 };

@@ -241,8 +241,11 @@ void Thinker::destroy(thinker_s *thinkerBase)
 
 void Thinker::release(thinker_s &thinkerBase)
 {
-    delete reinterpret_cast<IData *>(thinkerBase.d);
-    thinkerBase.d = 0;
+    if (thinkerBase.d)
+    {
+        delete reinterpret_cast<IData *>(thinkerBase.d);
+        thinkerBase.d = 0;
+    }
 }
 
 void Thinker::zap(thinker_s &thinkerBase, dsize sizeInBytes)

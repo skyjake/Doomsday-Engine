@@ -39,6 +39,8 @@
 #include "render/rend_main.h"
 #include "render/rend_particle.h"
 #include "render/rendersystem.h"
+#include "render/classicworldrenderer.h"
+#include "render/gloomworldrenderer.h"
 #include "sys_system.h"
 #include "ui/alertmask.h"
 #include "ui/b_main.h"
@@ -201,8 +203,11 @@ DE_PIMPL(ClientApp)
     ClientResources *resources = nullptr;
     InFineSystem     infineSys; // instantiated at construction time
     ServerLink *     svLink       = nullptr;
-    ClientWorld *    classicWorld = nullptr;
-    GloomWorld *     gloomWorld   = nullptr;
+
+    ClientWorld *         classicWorld         = nullptr;
+    ClassicWorldRenderer *classicWorldRenderer = nullptr;
+    GloomWorld *          gloomWorld           = nullptr;
+    GloomWorldRenderer *  gloomWorldRenderer   = nullptr;
 
     /**
      * Log entry sink that passes warning messages to the main window's alert
@@ -309,7 +314,9 @@ DE_PIMPL(ClientApp)
         delete resources;
         delete audioSys;
         delete rendSys;
+        delete classicWorldRenderer;
         delete classicWorld;
+        delete gloomWorldRenderer;
         delete gloomWorld;
         delete svLink;
         clientAppSingleton = 0;
@@ -436,6 +443,8 @@ DE_PIMPL(ClientApp)
 
         if (newGame.isNull())
         {
+            world().unloadMap();
+
             // The mouse is free while in the Home.
             ClientWindow::main().eventHandler().trapMouse(false);
         }
@@ -705,9 +714,13 @@ void ClientApp::initialize()
 #if 0
     d->classicWorld = new ClientWorld;
     addSystem(*d->classicWorld);
+
+    d->classicWorldRenderer = new ClassicWorldRenderer;
 #else
     d->gloomWorld = new GloomWorld;
     addSystem(*d->gloomWorld);
+
+    d->gloomWorldRenderer = new GloomWorldRenderer;
 #endif
 
     // Create the render system.
@@ -843,7 +856,7 @@ void ClientApp::gameSessionWasSaved(const AbstractSession &session,
         // Object state.
         {
             File &file = toFolder.replaceFile(d->mapObjectStatePath(mapId));
-            file << world().map().as<Map>().objectsDescription().toUtf8(); // plain text
+            file << world().map().objectsDescription().toUtf8(); // plain text
         }
     }
     catch (const Error &er)
@@ -882,7 +895,7 @@ void ClientApp::gameSessionWasLoaded(const AbstractSession &session,
         if (const File *file = fromFolder.tryLocate<File const>(d->mapObjectStatePath(mapId)))
         {
             // Parse the info and cross-check with current state.
-            world().map().as<Map>().restoreObjects(Info(*file), *session.thinkerMapping());
+            world().map().restoreObjects(Info(*file), *session.thinkerMapping());
         }
         else
         {
@@ -1058,6 +1071,13 @@ ClientWorld &ClientApp::classicWorld()
     ClientApp &a = ClientApp::app();
     DE_ASSERT(a.d->classicWorld);
     return *a.d->classicWorld;
+}
+
+IWorldRenderer &ClientApp::worldRenderer()
+{
+    ClientApp &a = ClientApp::app();
+    if (a.d->classicWorldRenderer) return *a.d->classicWorldRenderer;
+    return *a.d->gloomWorldRenderer;
 }
 
 void ClientApp::openHomepageInBrowser()
