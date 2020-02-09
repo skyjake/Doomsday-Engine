@@ -22,12 +22,10 @@
 
 #include <de/Async>
 #include <de/FileSystem>
+#include <de/RegExp>
 #include <de/RemoteFile>
 #include <de/WebRequest>
 #include <de/data/gzip.h>
-
-#include <de/RegExp>
-//#include <QUrl>
 
 using namespace de;
 

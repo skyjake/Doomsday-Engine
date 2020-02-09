@@ -103,10 +103,6 @@ static bool readNextPost(Post &post, Reader &reader)
 static Columns readPosts(const ColumnOffsets &offsets, Reader &reader)
 {
     Columns columns;
-#ifdef DE_QT_4_7_OR_NEWER
-    columns.reserve(offsets.size());
-#endif
-
     Post post;
     DE_FOR_EACH_CONST(ColumnOffsets, i, offsets)
     {
@@ -125,7 +121,6 @@ static Columns readPosts(const ColumnOffsets &offsets, Reader &reader)
             reader.seek(1 + post.length + 1); // A byte of unsed junk either side of the pixel palette indices.
         }
     }
-
     return columns;
 }
 
@@ -135,10 +130,6 @@ static Columns readPosts(const ColumnOffsets &offsets, Reader &reader)
 static ColumnOffsets readColumnOffsets(int width, Reader &reader)
 {
     ColumnOffsets offsets;
-#ifdef DE_QT_4_7_OR_NEWER
-    offsets.reserve(width);
-#endif
-
     for (int col = 0; col < width; ++col)
     {
         dint32 offset; reader >> offset;
