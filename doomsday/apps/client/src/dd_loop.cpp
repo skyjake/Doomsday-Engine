@@ -414,11 +414,11 @@ void Loop_RunTics()
 
 #ifdef __CLIENT__
         // Process input events.
-        ClientApp::inputSystem().processEvents(::ticLength);
+        ClientApp::input().processEvents(::ticLength);
         if(!::processSharpEventsAfterTickers)
         {
             // We are allowed to process sharp events before tickers.
-            ClientApp::inputSystem().processSharpEvents(::ticLength);
+            ClientApp::input().processSharpEvents(::ticLength);
         }
 #endif
 
@@ -429,7 +429,7 @@ void Loop_RunTics()
         if(::processSharpEventsAfterTickers)
         {
             // This is done after tickers for compatibility with ye olde game logic.
-            ClientApp::inputSystem().processSharpEvents(::ticLength);
+            ClientApp::input().processSharpEvents(::ticLength);
         }
 #endif
 

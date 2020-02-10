@@ -273,7 +273,7 @@ DE_PIMPL(ModelLoader)
             i->newProgramCreated(*prog);
         }
 
-        auto &render = ClientApp::renderSystem();
+        auto &render = ClientApp::render();
 
         // Built-in special uniforms.
         if (prog->def->hasMember(VAR_U_MAP_TIME()))

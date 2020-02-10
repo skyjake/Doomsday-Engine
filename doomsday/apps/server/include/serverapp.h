@@ -61,8 +61,8 @@ public:
 
     static ServerApp &   app();
     static ServerSystem &serverSystem();
-    static InFineSystem &infineSystem();
-    static AudioSystem & audioSystem();
+    static InFineSystem &infine();
+    static AudioSystem & audio();
     static Resources &   resources();
     static ServerWorld & world();
 

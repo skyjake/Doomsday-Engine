@@ -59,7 +59,7 @@ DE_GUI_PIMPL(RendererAppearanceEditor)
 
     Impl(Public *i)
         : Base(i)
-        , settings(ClientApp::renderSystem().appearanceSettings())
+        , settings(ClientApp::render().appearanceSettings())
     {
         settings.audienceForProfileChange += this;
 

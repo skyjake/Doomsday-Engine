@@ -149,7 +149,7 @@ void InFineSystem::initBindingContext() // static
     if (inited) return;
 
     inited = true;
-    BindContext &context = ClientApp::inputSystem().context("finale");
+    BindContext &context = ClientApp::input().context("finale");
     context.setDDFallbackResponder(de::function_cast<int (*)(const ddevent_t *)>(gx.FinaleResponder));
     context.activate(); // always on
 }
@@ -159,7 +159,7 @@ void InFineSystem::deinitBindingContext() // static
     // Not yet initialized?
     if (!inited) return;
 
-    BindContext &context = ClientApp::inputSystem().context("finale");
+    BindContext &context = ClientApp::input().context("finale");
     context.setDDFallbackResponder(nullptr);
     context.deactivate();
     inited = false;

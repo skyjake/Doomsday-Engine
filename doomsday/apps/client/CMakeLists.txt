@@ -107,6 +107,7 @@ list (APPEND DE_REQUIRED_PACKAGES
     net.dengine.stdlib
     net.dengine.stdlib.gui
     net.dengine.base
+    net.dengine.gloom
 )
 deng_add_package (net.dengine.client)
 

@@ -608,13 +608,13 @@ AudioSystem &App_AudioSystem()
     if (App::appExists())
     {
 #ifdef __CLIENT__
-        if (ClientApp::hasAudioSystem())
+        if (ClientApp::hasAudio())
         {
-            return ClientApp::audioSystem();
+            return ClientApp::audio();
         }
 #endif
 #ifdef __SERVER__
-        return ServerApp::audioSystem();
+        return ServerApp::audio();
 #endif
     }
     throw Error("App_AudioSystem", "App not yet initialized");
@@ -647,10 +647,10 @@ InFineSystem &App_InFineSystem()
     if (App::appExists())
     {
 #ifdef __CLIENT__
-        return ClientApp::infineSystem();
+        return ClientApp::infine();
 #endif
 #ifdef __SERVER__
-        return ServerApp::infineSystem();
+        return ServerApp::infine();
 #endif
     }
     throw Error("App_InFineSystem", "App not yet initialized");
@@ -811,7 +811,7 @@ int DD_ActivateGameWorker(void *context)
 
 #ifdef __CLIENT__
         // Apply default control bindings for this game.
-        ClientApp::inputSystem().bindGameDefaults();
+        ClientApp::input().bindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
         if ((configFile = FS::tryLocate<const File>(App_CurrentGame().bindingConfig()))
@@ -1519,7 +1519,7 @@ static dint DD_UpdateEngineStateWorker(void *context)
     Rend_UpdateLightModMatrix();
     // The rendering lists have persistent data that has changed during the
     // re-initialization.
-    ClientApp::renderSystem().clearDrawLists();
+    ClientApp::render().clearDrawLists();
 #endif
 
     /// @todo fixme: Update the game title and the status.
@@ -1666,7 +1666,7 @@ dint DD_GetInteger(dint ddvalue)
     {
 #ifdef __CLIENT__
     case DD_SHIFT_DOWN:
-        return dint( ClientApp::inputSystem().shiftDown() );
+        return dint( ClientApp::input().shiftDown() );
 
     case DD_WINDOW_WIDTH:
         return DE_GAMEVIEW_WIDTH;

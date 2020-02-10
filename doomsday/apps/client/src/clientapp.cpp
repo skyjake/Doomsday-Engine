@@ -203,11 +203,8 @@ DE_PIMPL(ClientApp)
     ClientResources *resources = nullptr;
     InFineSystem     infineSys; // instantiated at construction time
     ServerLink *     svLink       = nullptr;
-
-    ClientWorld *         classicWorld         = nullptr;
-    ClassicWorldRenderer *classicWorldRenderer = nullptr;
-    GloomWorld *          gloomWorld           = nullptr;
-    GloomWorldRenderer *  gloomWorldRenderer   = nullptr;
+    ClientWorld *    classicWorld = nullptr;
+    GloomWorld *     gloomWorld   = nullptr;
 
     /**
      * Log entry sink that passes warning messages to the main window's alert
@@ -314,9 +311,7 @@ DE_PIMPL(ClientApp)
         delete resources;
         delete audioSys;
         delete rendSys;
-        delete classicWorldRenderer;
         delete classicWorld;
-        delete gloomWorldRenderer;
         delete gloomWorld;
         delete svLink;
         clientAppSingleton = 0;
@@ -403,7 +398,7 @@ DE_PIMPL(ClientApp)
         Rend_ParticleLoadSystemTextures();
         GL_ResetViewEffects();
 
-        infineSystem().reset();
+        infine().reset();
 
         if (App_GameLoaded())
         {
@@ -629,7 +624,7 @@ ClientApp::ClientApp(const StringList &args)
         {
             FontParams fp{};
             fp.family = "Builtin";
-            fp.pointSize = 14;
+            fp.pointSize = 16;
             fp.spec.weight = 50;
             Font font(fp);
             const Image rasterized = font.rasterize(Version::currentBuild().asHumanReadableText(),
@@ -714,13 +709,9 @@ void ClientApp::initialize()
 #if 0
     d->classicWorld = new ClientWorld;
     addSystem(*d->classicWorld);
-
-    d->classicWorldRenderer = new ClassicWorldRenderer;
 #else
     d->gloomWorld = new GloomWorld;
     addSystem(*d->gloomWorld);
-
-    d->gloomWorldRenderer = new GloomWorldRenderer;
 #endif
 
     // Create the render system.
@@ -1008,45 +999,45 @@ ServerLink &ClientApp::serverLink()
     return *a.d->svLink;
 }
 
-InFineSystem &ClientApp::infineSystem()
+InFineSystem &ClientApp::infine()
 {
     ClientApp &a = ClientApp::app();
     //DE_ASSERT(a.d->infineSys != 0);
     return a.d->infineSys;
 }
 
-InputSystem &ClientApp::inputSystem()
+InputSystem &ClientApp::input()
 {
     ClientApp &a = ClientApp::app();
     DE_ASSERT(a.d->inputSys != 0);
     return *a.d->inputSys;
 }
 
-bool ClientApp::hasInputSystem()
+bool ClientApp::hasInput()
 {
     return ClientApp::app().d->inputSys != nullptr;
 }
 
-RenderSystem &ClientApp::renderSystem()
+RenderSystem &ClientApp::render()
 {
     ClientApp &a = ClientApp::app();
-    DE_ASSERT(hasRenderSystem());
+    DE_ASSERT(hasRender());
     return *a.d->rendSys;
 }
 
-bool ClientApp::hasRenderSystem()
+bool ClientApp::hasRender()
 {
     return ClientApp::app().d->rendSys != nullptr;
 }
 
-AudioSystem &ClientApp::audioSystem()
+AudioSystem &ClientApp::audio()
 {
     ClientApp &a = ClientApp::app();
-    DE_ASSERT(hasAudioSystem());
+    DE_ASSERT(hasAudio());
     return *a.d->audioSys;
 }
 
-bool ClientApp::hasAudioSystem()
+bool ClientApp::hasAudio()
 {
     return ClientApp::app().d->audioSys != nullptr;
 }
@@ -1073,13 +1064,6 @@ ClientWorld &ClientApp::classicWorld()
     return *a.d->classicWorld;
 }
 
-IWorldRenderer &ClientApp::worldRenderer()
-{
-    ClientApp &a = ClientApp::app();
-    if (a.d->classicWorldRenderer) return *a.d->classicWorldRenderer;
-    return *a.d->gloomWorldRenderer;
-}
-
 void ClientApp::openHomepageInBrowser()
 {
     openInBrowser(DOOMSDAY_HOMEURL);
@@ -1088,6 +1072,18 @@ void ClientApp::openHomepageInBrowser()
 void ClientApp::showLocalFile(const NativePath &path)
 {
     revealFile(path);
+}
+
+IWorldRenderer *ClientApp::makeWorldRenderer() const
+{
+    if (d->classicWorld)
+    {
+        return new ClassicWorldRenderer;
+    }
+    else
+    {
+        return new GloomWorldRenderer;
+    }
 }
 
 void ClientApp::openInBrowser(const String &url)

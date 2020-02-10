@@ -1370,7 +1370,7 @@ void ClientResources::releaseAllSystemGLTextures()
 
     // The rendering lists contain persistent references to texture names.
     // Which, obviously, can't persist any longer...
-    ClientApp::renderSystem().clearDrawLists();
+    ClientApp::render().clearDrawLists();
 
     GL_ReleaseAllLightingSystemTextures();
     GL_ReleaseAllFlareTextures();
@@ -1391,7 +1391,7 @@ void ClientResources::releaseAllRuntimeGLTextures()
 
     // The rendering lists contain persistent references to texture names.
     // Which, obviously, can't persist any longer...
-    ClientApp::renderSystem().clearDrawLists();
+    ClientApp::render().clearDrawLists();
 
     // texture-wrapped GL textures; textures, flats, sprites...
     releaseGLTexturesByScheme("Flats");

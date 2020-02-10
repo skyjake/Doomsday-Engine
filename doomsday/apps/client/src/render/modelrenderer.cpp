@@ -103,7 +103,7 @@ DE_PIMPL(ModelRenderer)
         // Ambient color and lighting vectors.
         setAmbientLight(lighting.ambientColor * .6f, alpha);
         clearLights();
-        ClientApp::renderSystem().forAllVectorLights(lighting.vLightListIdx,
+        ClientApp::render().forAllVectorLights(lighting.vLightListIdx,
                                                      [this, excludeSourceMobj]
                                                      (const VectorLightData &vlight)
         {
@@ -196,7 +196,7 @@ DE_PIMPL(ModelRenderer)
             Rend_GetProjectionMatrix(
                 useFixedFov ? weaponFixedFOV : 0.0f,
                 usePSpriteClipPlane ? 0.1f /* near plane distance: IssueID #2373 */ : 1.0f) *
-            ClientApp::renderSystem().uViewMatrix().toMat4f();
+            ClientApp::render().uViewMatrix().toMat4f();
 
         const Mat4f localToScreen = viewProj * localToWorld;
 
@@ -228,7 +228,7 @@ DE_PIMPL(ModelRenderer)
 
     void setReflectionForSubsector(const world::Subsector *subsec)
     {
-        uReflectionTex = ClientApp::renderSystem()
+        uReflectionTex = ClientApp::render()
                             .environment().reflectionInSubsector(subsec);
     }
 
@@ -240,7 +240,7 @@ DE_PIMPL(ModelRenderer)
         }
         else
         {
-            uReflectionTex = ClientApp::renderSystem()
+            uReflectionTex = ClientApp::render()
                                  .environment().defaultReflection();
         }
     }

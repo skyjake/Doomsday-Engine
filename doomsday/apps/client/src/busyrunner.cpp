@@ -131,7 +131,7 @@ DE_PIMPL_NOREF(BusyRunner)
         }
 
         fadeFromBlack        = (firstTask.mode & BUSYF_STARTUP) != 0;
-        busyWasIgnoringInput = ClientApp::inputSystem().ignoreEvents();
+        busyWasIgnoringInput = ClientApp::input().ignoreEvents();
 
         // Limit frame rate to 60, no point pushing it any faster while busy.
         ClientApp::app().loop().setRate(60);
@@ -148,7 +148,7 @@ DE_PIMPL_NOREF(BusyRunner)
         DD_ResetTimer();
 
         // Discard input events so that any and all accumulated input events are ignored.
-        ClientApp::inputSystem().ignoreEvents(busyWasIgnoringInput);
+        ClientApp::input().ignoreEvents(busyWasIgnoringInput);
 
         // Back to unlimited frame rate.
         ClientApp::app().loop().setRate(0);
@@ -330,8 +330,8 @@ void BusyRunner::loop()
     const bool canUpload = !(busyTask->mode & BUSYF_NO_UPLOADS);
 
     // Post and discard all input events.
-    ClientApp::inputSystem().processEvents(0);
-    ClientApp::inputSystem().processSharpEvents(0);
+    ClientApp::input().processEvents(0);
+    ClientApp::input().processSharpEvents(0);
 
     ClientWindow::main().glActivate();
 

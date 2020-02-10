@@ -74,7 +74,7 @@ DE_GUI_PIMPL(InputSettingsDialog)
         area.add(mouseDisableY = new ToggleWidget);
 
         gamepad->items() << new ChoiceItem("None", TextValue());
-        StringList ids = ClientApp::inputSystem().gameControllerPresets().ids();
+        StringList ids = ClientApp::input().gameControllerPresets().ids();
         std::sort(ids.begin(), ids.end(), [](const String &a, const String &b) {
             return a.compareWithoutCase(b) < 0; });
         for (const String &id : ids)
@@ -108,7 +108,7 @@ DE_GUI_PIMPL(InputSettingsDialog)
         enableOrDisable();
 
         gamepad->setSelected(gamepad->items().findData(
-            TextValue(ClientApp::inputSystem().gameControllerPresets().currentPreset())));
+            TextValue(ClientApp::input().gameControllerPresets().currentPreset())));
     }
 
     void enableOrDisable()
@@ -243,7 +243,7 @@ InputSettingsDialog::InputSettingsDialog(const String &name)
 
 void InputSettingsDialog::resetToDefaults()
 {
-    ClientApp::inputSystem().settings().resetToDefaults();
+    ClientApp::input().settings().resetToDefaults();
 
     d->fetch();
 }
@@ -256,5 +256,5 @@ void InputSettingsDialog::mouseTogglesChanged()
 void InputSettingsDialog::applyControllerPreset()
 {
     const String presetId = d->gamepad->selectedItem().data().asText();
-    ClientApp::inputSystem().gameControllerPresets().applyPreset(presetId);
+    ClientApp::input().gameControllerPresets().applyPreset(presetId);
 }

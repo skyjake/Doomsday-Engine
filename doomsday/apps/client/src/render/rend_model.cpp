@@ -556,7 +556,7 @@ static void Mod_VertexColors(Vec4ub *out, dint count, const Vec3f *normCoords,
         // Accumulate contributions from all affecting lights.
         dint numProcessed = 0;
         Vec3f accum[2];  // Begin with total darkness [color, extra].
-        ClientApp::renderSystem().forAllVectorLights(lightListIdx, [&maxLights, &invert, &rotateYaw
+        ClientApp::render().forAllVectorLights(lightListIdx, [&maxLights, &invert, &rotateYaw
                                                       , &rotatePitch, &normal
                                                       , &accum, &numProcessed] (const VectorLightData &vlight)
         {
@@ -1140,7 +1140,7 @@ void Rend_DrawModel(const vissprite_t &spr)
         DGL_Translatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
 
         const coord_t distFromViewer = de::abs(spr.pose.distance);
-        ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (const VectorLightData &vlight)
+        ClientApp::render().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (const VectorLightData &vlight)
         {
             if (distFromViewer < 1600 - 8)
             {

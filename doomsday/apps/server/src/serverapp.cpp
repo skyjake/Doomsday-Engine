@@ -114,7 +114,7 @@ DE_PIMPL(ServerApp)
         {
             N_ServerClose();
         }
-        infineSystem().reset();
+        infine().reset();
         if (App_GameLoaded())
         {
             Con_SaveDefaults();
@@ -366,12 +366,12 @@ ServerSystem &ServerApp::serverSystem()
     return *app().d->serverSystem;
 }
 
-InFineSystem &ServerApp::infineSystem()
+InFineSystem &ServerApp::infine()
 {
     return app().d->infineSys;
 }
 
-AudioSystem &ServerApp::audioSystem()
+AudioSystem &ServerApp::audio()
 {
     return *app().d->audioSys;
 }

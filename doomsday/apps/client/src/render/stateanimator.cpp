@@ -545,7 +545,7 @@ DE_PIMPL(StateAnimator)
                           const de::String &passName,
                           BindOperation operation) const
     {
-        const auto &modelLoader = ClientApp::renderSystem().modelRenderer().loader();
+        const auto &modelLoader = ClientApp::render().modelRenderer().loader();
 
         const auto vars = passVars.find(passName);
         if (vars != passVars.end())

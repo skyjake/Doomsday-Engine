@@ -190,7 +190,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, const Point
         // Use the symbolic name.
         label = button.name();
     }
-    else if (&device == ClientApp::inputSystem().devicePtr(IDEV_KEYBOARD))
+    else if (&device == ClientApp::input().devicePtr(IDEV_KEYBOARD))
     {
         // Perhaps a printable ASCII character?
         // Apply all active modifiers to the key.

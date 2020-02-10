@@ -882,7 +882,7 @@ void Rend_AddMaskedPoly(const Vec3f *rvertices, const Vec4f *rcolors,
     {
         // The dynlights will have already been sorted so that the brightest
         // and largest of them is first in the list. So grab that one.
-        ClientApp::renderSystem().forAllSurfaceProjections(lightListIdx, [&vis] (const ProjectedTextureData &tp)
+        ClientApp::render().forAllSurfaceProjections(lightListIdx, [&vis] (const ProjectedTextureData &tp)
         {
             VS_WALL(vis)->modTex = tp.texture;
             VS_WALL(vis)->modTexCoord[0][0] = tp.topLeft.x;
@@ -1474,7 +1474,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
     Vec2f *modTexCoords = nullptr;
     if (useLights && Rend_IsMTexLights())
     {
-        ClientApp::renderSystem().forAllSurfaceProjections(p.lightListIdx, [&mod] (const ProjectedTextureData &dyn)
+        ClientApp::render().forAllSurfaceProjections(p.lightListIdx, [&mod] (const ProjectedTextureData &dyn)
         {
             mod.texture     = dyn.texture;
             mod.color       = dyn.color;
@@ -1513,7 +1513,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
         const bool skipFirst = Rend_IsMTexLights();
 
         uint32_t numProcessed = 0;
-        ClientApp::renderSystem().forAllSurfaceProjections(p.lightListIdx,
+        ClientApp::render().forAllSurfaceProjections(p.lightListIdx,
                                            [&p, &mustSubdivide, &rvertices, &numVertices
                                            , &skipFirst, &numProcessed] (const ProjectedTextureData &tp)
         {
@@ -1524,7 +1524,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
                 listSpec.group = LightGeom;
                 listSpec.texunits[TU_PRIMARY] =
                     GLTextureUnit(tp.texture, gfx::ClampToEdge, gfx::ClampToEdge);
-                DrawList &lightList = ClientApp::renderSystem().drawLists().find(listSpec);
+                DrawList &lightList = ClientApp::render().drawLists().find(listSpec);
 
                 // Make geometry.
                 Geometry verts;
@@ -1554,7 +1554,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
                     const uint32_t numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
                     const uint32_t numRightVerts = 3 + p.wall.rightEdge->divisionCount();
 
-                    Store &buffer = ClientApp::renderSystem().buffer();
+                    Store &buffer = ClientApp::render().buffer();
                     {
                         uint32_t base = buffer.allocateVertices(numRightVerts);
                         DrawList::reserveSpace(indices, numRightVerts);
@@ -1582,7 +1582,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
                 }
                 else
                 {
-                    Store &buffer = ClientApp::renderSystem().buffer();
+                    Store &buffer = ClientApp::render().buffer();
                     uint32_t base = buffer.allocateVertices(numVertices);
                     DrawList::reserveSpace(indices, numVertices);
                     for (uint32_t i = 0; i < numVertices; ++i)
@@ -1615,9 +1615,9 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
         listSpec.group                = ShadowGeom;
         listSpec.texunits[TU_PRIMARY] = GLTextureUnit(
             GL_PrepareLSTexture(LST_DYNAMIC), gfx::ClampToEdge, gfx::ClampToEdge);
-        DrawList &shadowList = ClientApp::renderSystem().drawLists().find(listSpec);
+        DrawList &shadowList = ClientApp::render().drawLists().find(listSpec);
 
-        ClientApp::renderSystem().forAllSurfaceProjections(p.shadowListIdx,
+        ClientApp::render().forAllSurfaceProjections(p.shadowListIdx,
                                            [&p, &mustSubdivide, &rvertices, &numVertices, &shadowList]
                                            (const ProjectedTextureData &tp)
         {
@@ -1649,7 +1649,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
                 const uint32_t numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
                 const uint32_t numRightVerts = 3 + p.wall.rightEdge->divisionCount();
 
-                Store &buffer = ClientApp::renderSystem().buffer();
+                Store &buffer = ClientApp::render().buffer();
                 {
                     uint32_t base = buffer.allocateVertices(numRightVerts);
                     DrawList::reserveSpace(indices, numRightVerts);
@@ -1677,7 +1677,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
             }
             else
             {
-                Store &buffer = ClientApp::renderSystem().buffer();
+                Store &buffer = ClientApp::render().buffer();
                 uint32_t base = buffer.allocateVertices(numVerts);
                 DrawList::reserveSpace(indices, numVerts);
                 for (uint32_t i = 0; i < numVerts; ++i)
@@ -1736,9 +1736,9 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
 
         if (p.skyMasked)
         {
-            DrawList &skyMaskList = ClientApp::renderSystem().drawLists().find(DrawListSpec(SkyMaskGeom));
+            DrawList &skyMaskList = ClientApp::render().drawLists().find(DrawListSpec(SkyMaskGeom));
 
-            Store &buffer = ClientApp::renderSystem().buffer();
+            Store &buffer = ClientApp::render().buffer();
             {
                 uint32_t base = buffer.allocateVertices(numRightVerts);
                 DrawList::reserveSpace(indices, numRightVerts);
@@ -1805,7 +1805,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
                     listSpec.texunits[TU_INTER_DETAIL].offset += *p.materialOrigin;
                 }
             }
-            DrawList &drawList = ClientApp::renderSystem().drawLists().find(listSpec);
+            DrawList &drawList = ClientApp::render().drawLists().find(listSpec);
             // Is the geometry lit?
             Flags primFlags;
             //bool oneLight   = false;
@@ -1820,7 +1820,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
                 primFlags |= Parm::ManyLights;
             }
 
-            Store &buffer = ClientApp::renderSystem().buffer();
+            Store &buffer = ClientApp::render().buffer();
             {
                 uint32_t base = buffer.allocateVertices(numRightVerts);
                 DrawList::reserveSpace(indices, numRightVerts);
@@ -1905,7 +1905,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
     {
         if (p.skyMasked)
         {
-            Store &buffer = ClientApp::renderSystem().buffer();
+            Store &buffer = ClientApp::render().buffer();
             uint32_t base = buffer.allocateVertices(numVerts);
             DrawList::reserveSpace(indices, numVerts);
             for (uint32_t i = 0; i < numVerts; ++i)
@@ -1913,7 +1913,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
                 indices[i] = base + i;
                 buffer.posCoords[indices[i]] = verts.pos[i];
             }
-            ClientApp::renderSystem()
+            ClientApp::render()
                 .drawLists().find(DrawListSpec(SkyMaskGeom))
                     .write(buffer, indices.data(), numVerts, p.isWall?  gfx::TriangleStrip :  gfx::TriangleFan);
         }
@@ -1976,7 +1976,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
                 primFlags |= Parm::ManyLights; //manyLights = true;
             }
 
-            Store &buffer = ClientApp::renderSystem().buffer();
+            Store &buffer = ClientApp::render().buffer();
             uint32_t base = buffer.allocateVertices(numVertices);
             DrawList::reserveSpace(indices, numVertices);
             static Vec4ub const white(255, 255, 255, 255);
@@ -2006,7 +2006,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
                     buffer.modCoords[indices[i]] = modTexCoords[i];
                 }
             }
-            ClientApp::renderSystem()
+            ClientApp::render()
                 .drawLists().find(listSpec)
                     .write(buffer, indices.data(), numVertices,
                            Parm(p.isWall?  gfx::TriangleStrip  :  gfx::TriangleFan,
@@ -2062,7 +2062,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
                 listSpec.texunits[TU_INTER].offset *= *p.materialScale;
             }
         }
-        DrawList &shineList = ClientApp::renderSystem().drawLists().find(listSpec);
+        DrawList &shineList = ClientApp::render().drawLists().find(listSpec);
 
         Parm shineParams(gfx::TriangleFan,
                          listSpec.unit(TU_INTER).scale,
@@ -2088,7 +2088,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
                 R_DivVertColors(shineVerts.color, orig, *p.wall.leftEdge, *p.wall.rightEdge);
             }
 
-            Store &buffer = ClientApp::renderSystem().buffer();
+            Store &buffer = ClientApp::render().buffer();
             {
                 uint32_t base = buffer.allocateVertices(numRightVerts);
                 DrawList::reserveSpace(indices, numRightVerts);
@@ -2124,7 +2124,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, uint32_t numVertices,
         }
         else
         {
-            Store &buffer = ClientApp::renderSystem().buffer();
+            Store &buffer = ClientApp::render().buffer();
             uint32_t base = buffer.allocateVertices(numVertices);
             DrawList::reserveSpace(indices, numVertices);
             for (uint32_t i = 0; i < numVertices; ++i)
@@ -2398,7 +2398,7 @@ static void projectDynamics(const Surface &surface, float glowStrength,
                 if (projectDynlight(topLeft, bottomRight, lum, surface, blendFactor,
                                    projected))
                 {
-                    ClientApp::renderSystem().findSurfaceProjectionList(&lightListIdx, sortLights)
+                    ClientApp::render().findSurfaceProjectionList(&lightListIdx, sortLights)
                                 << projected;  // a copy is made.
                 }
                 return LoopContinue;
@@ -2419,7 +2419,7 @@ static void projectDynamics(const Surface &surface, float glowStrength,
                 if (projectPlaneGlow(topLeft, bottomRight, plane, pointOnPlane, blendFactor,
                                     projected))
                 {
-                    ClientApp::renderSystem().findSurfaceProjectionList(&lightListIdx, sortLights)
+                    ClientApp::render().findSurfaceProjectionList(&lightListIdx, sortLights)
                                 << projected;  // a copy is made.
                 }
             }
@@ -2444,7 +2444,7 @@ static void projectDynamics(const Surface &surface, float glowStrength,
                 if (projectShadow(topLeft, bottomRight, mob, surface, blendFactor,
                                  projected))
                 {
-                    ClientApp::renderSystem().findSurfaceProjectionList(&shadowListIdx)
+                    ClientApp::render().findSurfaceProjectionList(&shadowListIdx)
                                 << projected;  // a copy is made.
                 }
                 return LoopContinue;
@@ -2557,7 +2557,7 @@ uint32_t Rend_CollectAffectingLights(const Vec3d &point, const Vec3f &ambientCol
         VectorLightData vlight;
         if (lightWithWorldLight(point, ambientColor, starkLight, vlight))
         {
-            ClientApp::renderSystem().findVectorLightList(&lightListIdx)
+            ClientApp::render().findVectorLightList(&lightListIdx)
                     << vlight;  // a copy is made.
         }
     }
@@ -2572,7 +2572,7 @@ uint32_t Rend_CollectAffectingLights(const Vec3d &point, const Vec3f &ambientCol
             VectorLightData vlight;
             if (lightWithLumobj(point, lum, vlight))
             {
-                ClientApp::renderSystem().findVectorLightList(&lightListIdx)
+                ClientApp::render().findVectorLightList(&lightListIdx)
                         << vlight;  // a copy is made.
             }
             return LoopContinue;
@@ -2586,7 +2586,7 @@ uint32_t Rend_CollectAffectingLights(const Vec3d &point, const Vec3f &ambientCol
             VectorLightData vlight;
             if (lightWithPlaneGlow(point, subsec, i, vlight))
             {
-                ClientApp::renderSystem().findVectorLightList(&lightListIdx)
+                ClientApp::render().findVectorLightList(&lightListIdx)
                         << vlight;  // a copy is made.
             }
         }
@@ -3016,7 +3016,7 @@ static void writeSkyMaskStrip(int vertCount, const Vec3f *posCoords, const Vec2f
 
     if (!devRendSkyMode)
     {
-        Store &buffer = ClientApp::renderSystem().buffer();
+        Store &buffer = ClientApp::render().buffer();
         uint32_t base = buffer.allocateVertices(vertCount);
         DrawList::reserveSpace(indices, vertCount);
         for (int i = 0; i < vertCount; ++i)
@@ -3024,7 +3024,7 @@ static void writeSkyMaskStrip(int vertCount, const Vec3f *posCoords, const Vec2f
             indices[i] = base + i;
             buffer.posCoords[indices[i]] = posCoords[i];
         }
-        ClientApp::renderSystem().drawLists().find(DrawListSpec(SkyMaskGeom))
+        ClientApp::render().drawLists().find(DrawListSpec(SkyMaskGeom))
                       .write(buffer, indices.data(), vertCount, gfx::TriangleStrip);
     }
     else
@@ -3048,7 +3048,7 @@ static void writeSkyMaskStrip(int vertCount, const Vec3f *posCoords, const Vec2f
             listSpec.texunits[TU_INTER_DETAIL]   = matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER);
         }
 
-        Store &buffer = ClientApp::renderSystem().buffer();
+        Store &buffer = ClientApp::render().buffer();
         uint32_t base = buffer.allocateVertices(vertCount);
         DrawList::reserveSpace(indices, vertCount);
         for (int i = 0; i < vertCount; ++i)
@@ -3059,7 +3059,7 @@ static void writeSkyMaskStrip(int vertCount, const Vec3f *posCoords, const Vec2f
             buffer.colorCoords [indices[i]] = Vec4ub(255, 255, 255, 255);
         }
 
-        ClientApp::renderSystem().drawLists().find(listSpec)
+        ClientApp::render().drawLists().find(listSpec)
                       .write(buffer, indices.data(), vertCount,
                              DrawList::PrimitiveParams(gfx::TriangleStrip,
                                                        listSpec.unit(TU_PRIMARY       ).scale,
@@ -3255,7 +3255,7 @@ static void writeSubspaceSkyMask(int skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
     auto &subsec = curSubspace->subsector().as<Subsector>();
     Map &map = subsec.sector().map().as<Map>();
 
-    DrawList &dlist = ClientApp::renderSystem().drawLists().find(DrawListSpec(SkyMaskGeom));
+    DrawList &dlist = ClientApp::render().drawLists().find(DrawListSpec(SkyMaskGeom));
     static DrawList::Indices indices;
 
     // Lower?
@@ -3272,7 +3272,7 @@ static void writeSubspaceSkyMask(int skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
                 P_IsInVoid(::viewPlayer) ? subsec.visFloor().heightSmoothed() : skyFloor.height();
 
             // Make geometry.
-            Store &verts = ClientApp::renderSystem().buffer();
+            Store &verts = ClientApp::render().buffer();
              gfx::Primitive primitive;
             uint vertCount = makeFlatSkyMaskGeometry(indices, verts, primitive, *curSubspace, height, Clockwise);
 
@@ -3295,7 +3295,7 @@ static void writeSubspaceSkyMask(int skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
                 P_IsInVoid(::viewPlayer) ? subsec.visCeiling().heightSmoothed() : skyCeiling.height();
 
             // Make geometry.
-            Store &verts = ClientApp::renderSystem().buffer();
+            Store &verts = ClientApp::render().buffer();
              gfx::Primitive primitive;
             uint vertCount = makeFlatSkyMaskGeometry(indices, verts, primitive, *curSubspace, height, CounterClockwise);
 
@@ -3444,7 +3444,7 @@ static void writeAllWalls(mesh::HEdge &hedge)
                 }
             }
         }
-        ClientApp::renderSystem().angleClipper()
+        ClientApp::render().angleClipper()
             .addRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin());
     }
 }
@@ -3549,7 +3549,7 @@ static void occludeSubspace(bool frontFacing)
     if (devNoCulling) return;
     if (P_IsInVoid(viewPlayer)) return;
 
-    AngleClipper &clipper = ClientApp::renderSystem().angleClipper();
+    AngleClipper &clipper = ClientApp::render().angleClipper();
 
     const auto &subsec = ::curSubspace->subsector().as<Subsector>();
     const auto *base   = ::curSubspace->poly().hedge();
@@ -3647,7 +3647,7 @@ static void clipFrontFacingWalls(mesh::HEdge &hedge)
     auto &seg = hedge.mapElementAs<LineSideSegment>();
     if (seg.isFrontFacing())
     {
-        if (!ClientApp::renderSystem().angleClipper().checkRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin()))
+        if (!ClientApp::render().angleClipper().checkRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin()))
         {
             seg.setFrontFacing(false);
         }
@@ -3818,7 +3818,7 @@ static void makeCurrent(ConvexSubspace &subspace)
 static void traverseBspTreeAndDrawSubspaces(const world::BspTree *bspTree)
 {
     DE_ASSERT(bspTree);
-    const AngleClipper &clipper = ClientApp::renderSystem().angleClipper();
+    const AngleClipper &clipper = ClientApp::render().angleClipper();
 
     while (!bspTree->isLeaf())
     {
@@ -4405,7 +4405,7 @@ static void drawLists(const DrawLists::FoundLists &lists, DrawMode mode)
 static void drawSky()
 {
     DrawLists::FoundLists lists;
-    ClientApp::renderSystem().drawLists().findAll(SkyMaskGeom, lists);
+    ClientApp::render().drawLists().findAll(SkyMaskGeom, lists);
     if (!devRendSkyAlways && lists.isEmpty())
     {
         return;
@@ -4441,7 +4441,7 @@ static void drawSky()
             .setStencilFunc(gfx::Equal, 1, 0xff)
             .setStencilOp(gfx::StencilOp::Keep,  gfx::StencilOp::Keep,  gfx::StencilOp::Keep);
     
-    ClientApp::renderSystem().sky().draw(&World::get().map().as<Map>().skyAnimator());
+    ClientApp::render().sky().draw(&World::get().map().as<Map>().skyAnimator());
 
     if (!devRendSkyAlways)
     {
@@ -4528,7 +4528,7 @@ static void drawMasked()
 
             case VSPR_MODELDRAWABLE:
                 DGL_Flush();
-                ClientApp::renderSystem().modelRenderer().render(*spr);
+                ClientApp::render().modelRenderer().render(*spr);
                 break;
 
             case VSPR_FLARE:
@@ -4579,7 +4579,7 @@ static void drawAllLists(Map &map)
     // Pass: Unlit geometries (all normal lists).
     //
     DrawLists::FoundLists lists;
-    ClientApp::renderSystem().drawLists().findAll(UnlitGeom, lists);
+    ClientApp::render().drawLists().findAll(UnlitGeom, lists);
     if (IS_MTEX_DETAILS)
     {
         // Draw details for unblended surfaces in this pass.
@@ -4597,7 +4597,7 @@ static void drawAllLists(Map &map)
     //
     // Pass: Lit geometries.
     //
-    ClientApp::renderSystem().drawLists().findAll(LitGeom, lists);
+    ClientApp::render().drawLists().findAll(LitGeom, lists);
 
     // If multitexturing is available, we'll use it to our advantage when
     // rendering lights.
@@ -4658,7 +4658,7 @@ static void drawAllLists(Map &map)
     //
     if (dynlightBlend != 2)
     {
-        ClientApp::renderSystem().drawLists().findAll(LightGeom, lists);
+        ClientApp::render().drawLists().findAll(LightGeom, lists);
         drawLists(lists, DM_LIGHTS);
     }
 
@@ -4668,7 +4668,7 @@ static void drawAllLists(Map &map)
     if (IS_MUL)
     {
         // Finish the lit surfaces that didn't yet get a texture.
-        ClientApp::renderSystem().drawLists().findAll(LitGeom, lists);
+        ClientApp::render().drawLists().findAll(LitGeom, lists);
         if (IS_MTEX_DETAILS)
         {
             drawLists(lists, DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL);
@@ -4697,7 +4697,7 @@ static void drawAllLists(Map &map)
     if (r_detail)
     {
         // Render detail textures for all surfaces that need them.
-        ClientApp::renderSystem().drawLists().findAll(UnlitGeom, lists);
+        ClientApp::render().drawLists().findAll(UnlitGeom, lists);
         if (IS_MTEX_DETAILS)
         {
             // Blended detail textures.
@@ -4707,7 +4707,7 @@ static void drawAllLists(Map &map)
         {
             drawLists(lists, DM_ALL_DETAILS);
 
-            ClientApp::renderSystem().drawLists().findAll(LitGeom, lists);
+            ClientApp::render().drawLists().findAll(LitGeom, lists);
             drawLists(lists, DM_ALL_DETAILS);
         }
     }
@@ -4721,7 +4721,7 @@ static void drawAllLists(Map &map)
     // produce areas without shine.
     //
 
-    ClientApp::renderSystem().drawLists().findAll(ShineGeom, lists);
+    ClientApp::render().drawLists().findAll(ShineGeom, lists);
 
     // Render masked shiny surfaces in a separate pass.
     drawLists(lists, DM_SHINY);
@@ -4734,7 +4734,7 @@ static void drawAllLists(Map &map)
 
     renderTextures = true;
 
-    ClientApp::renderSystem().drawLists().findAll(ShadowGeom, lists);
+    ClientApp::render().drawLists().findAll(ShadowGeom, lists);
     drawLists(lists, DM_SHADOW);
 
     renderTextures = oldRenderTextures;
@@ -4778,7 +4778,7 @@ void Rend_RenderMap(Map &map)
     if (!freezeRLs)
     {
         // Prepare for rendering.
-        ClientApp::renderSystem().beginFrame();
+        ClientApp::render().beginFrame();
 
         // Make vissprites of all the visible decorations.
         generateDecorationFlares(map);
@@ -4789,7 +4789,7 @@ void Rend_RenderMap(Map &map)
         // Add the backside clipping range (if vpitch allows).
         if (vpitch <= 90 - yfov / 2 && vpitch >= -90 + yfov / 2)
         {
-            AngleClipper &clipper = ClientApp::renderSystem().angleClipper();
+            AngleClipper &clipper = ClientApp::render().angleClipper();
 
             float a = de::abs(vpitch) / (90 - yfov / 2);
             binangle_t startAngle = binangle_t(BANG_45 * Rend_FieldOfView() / 90) * (1 + a);

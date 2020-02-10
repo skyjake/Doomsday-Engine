@@ -39,7 +39,7 @@ using namespace de;
 #ifdef __CLIENT__
 static inline InputSystem &inputSys()
 {
-    return ClientApp::inputSystem();
+    return ClientApp::input();
 }
 
 static int pimpDoubleClickThreshold = 300; ///< Milliseconds, cvar

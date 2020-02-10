@@ -82,7 +82,7 @@ String CommandBinding::composeDescriptor()
 static bool doConfigure(CommandBinding &bind, const char *eventDesc, const char *command)
 {
     DE_ASSERT(eventDesc);
-    //InputSystem &isys = ClientApp::inputSystem();
+    //InputSystem &isys = ClientApp::input();
 
     bind.resetToDefaults();
     // Take a copy of the command string.

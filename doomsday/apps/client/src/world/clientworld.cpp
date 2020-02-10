@@ -199,14 +199,14 @@ void ClientWorld::mapFinalized()
     Cl_ResetFrame();
     Cl_InitPlayers();  // Player data, too (reset to zero).
 
-    auto &rendSys = ClientApp::renderSystem();
+    auto &rendSys = ClientApp::render();
 
     audienceForFrameState() += map();
 
     // Set up the SkyDrawable to get its config from the map's Sky.
-    map().skyAnimator().setSky(&ClientApp::renderSystem().sky().configure(&map().sky().as<Sky>()));
+    map().skyAnimator().setSky(&ClientApp::render().sky().configure(&map().sky().as<Sky>()));
 
-    ClientApp::audioSystem().worldMapChanged();
+    ClientApp::audio().worldMapChanged();
 
     GL_SetupFogFromMapInfo(map().mapInfo().accessedRecordPtr());
     
@@ -248,7 +248,7 @@ void ClientWorld::mapFinalized()
     R_ResetViewer();
 
     // Clear any input events that might have accumulated during setup.
-    ClientApp::inputSystem().clearEvents();
+    ClientApp::input().clearEvents();
 
     // Inform the timing system to suspend the starting of the clock.
     firstFrameAfterLoad = true;

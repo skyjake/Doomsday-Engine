@@ -184,7 +184,7 @@ static Value *Function_InputSystem_BindEvent(Context &, const Function::Argument
     String eventDesc = args[0]->asText();
     String command   = args[1]->asText();
 
-    if (ClientApp::inputSystem().bindCommand(eventDesc, command))
+    if (ClientApp::input().bindCommand(eventDesc, command))
     {
         // Success.
         return new NumberValue(true);
@@ -199,7 +199,7 @@ static Value *Function_InputSystem_BindControl(Context &, const Function::Argume
     String control = args[0]->asText();
     String impulse = args[1]->asText();
 
-    if (ClientApp::inputSystem().bindImpulse(control, impulse))
+    if (ClientApp::input().bindImpulse(control, impulse))
     {
         return new NumberValue(true);
     }
@@ -1541,7 +1541,7 @@ LoopResult InputSystem::forAllContexts(std::function<LoopResult (BindContext &)>
 
 InputSystem &InputSystem::get() // static
 {
-    return ClientApp::inputSystem();
+    return ClientApp::input();
 }
 
 // ---------------------------------------------------------------------------
@@ -1675,7 +1675,7 @@ void InputSystem::removeBindingsForDevice(int deviceId)
 D_CMD(ListDevices)
 {
     DE_UNUSED(src, argc, argv);
-    InputSystem &isys = ClientApp::inputSystem();
+    InputSystem &isys = ClientApp::input();
 
     LOG_INPUT_MSG(_E(b) "%i input devices initalized:") << isys.deviceCount();
     isys.forAllDevices([] (InputDevice &device)
@@ -1689,7 +1689,7 @@ D_CMD(ListDevices)
 D_CMD(InspectDevice)
 {
     DE_UNUSED(src, argc);
-    if (const InputDevice *device = ClientApp::inputSystem().findDevice(argv[1]))
+    if (const InputDevice *device = ClientApp::input().findDevice(argv[1]))
     {
         LOG_INPUT_MSG("") << device->description();
         return true;
@@ -1714,7 +1714,7 @@ D_CMD(ReleaseMouse)
 D_CMD(ListContexts)
 {
     DE_UNUSED(src, argc, argv);
-    InputSystem &isys = ClientApp::inputSystem();
+    InputSystem &isys = ClientApp::input();
 
     LOG_INPUT_MSG(_E(b) "%i binding contexts defined:") << isys.contextCount();
     int idx = 0;
@@ -1732,7 +1732,7 @@ D_CMD(ListContexts)
 /*
 D_CMD(ClearContexts)
 {
-    ClientApp::inputSystem().clearAllContexts();
+    ClientApp::input().clearAllContexts();
     return true;
 }
 */
@@ -1740,7 +1740,7 @@ D_CMD(ClearContexts)
 D_CMD(ActivateContext)
 {
     DE_UNUSED(src, argc);
-    InputSystem &isys = ClientApp::inputSystem();
+    InputSystem &isys = ClientApp::input();
 
     const bool doActivate = !String(argv[0]).compareWithoutCase("activatebcontext");
     const String name     = argv[1];
@@ -1767,19 +1767,19 @@ D_CMD(ActivateContext)
 D_CMD(BindCommand)
 {
     DE_UNUSED(src, argc);
-    return ClientApp::inputSystem().bindCommand(argv[1], argv[2]) != nullptr;
+    return ClientApp::input().bindCommand(argv[1], argv[2]) != nullptr;
 }
 
 D_CMD(BindImpulse)
 {
     DE_UNUSED(src, argc);
-    return ClientApp::inputSystem().bindImpulse(argv[2], argv[1]) != nullptr;
+    return ClientApp::input().bindImpulse(argv[2], argv[1]) != nullptr;
 }
 
 D_CMD(ListBindings)
 {
     DE_UNUSED(src, argc, argv);
-    InputSystem &isys = ClientApp::inputSystem();
+    InputSystem &isys = ClientApp::input();
 
     int totalBindCount = 0;
     isys.forAllContexts([&totalBindCount] (BindContext &context)
@@ -1845,7 +1845,7 @@ D_CMD(ListBindings)
 D_CMD(ClearBindings)
 {
     DE_UNUSED(src, argc, argv);
-    ClientApp::inputSystem().removeAllBindings();
+    ClientApp::input().removeAllBindings();
     return true;
 }
 
@@ -1854,7 +1854,7 @@ D_CMD(RemoveBinding)
     DE_UNUSED(src, argc);
 
     const int id = String(argv[1]).toInt();
-    if (ClientApp::inputSystem().removeBinding(id))
+    if (ClientApp::input().removeBinding(id))
     {
         LOG_INPUT_MSG("Binding " _E(b) "%i" _E(.) " deleted") << id;
     }
@@ -1869,7 +1869,7 @@ D_CMD(RemoveBinding)
 D_CMD(DefaultBindings)
 {
     DE_UNUSED(src, argc, argv);
-    InputSystem &isys = ClientApp::inputSystem();
+    InputSystem &isys = ClientApp::input();
     isys.bindDefaults();
     isys.bindGameDefaults();
     return true;
@@ -1912,7 +1912,7 @@ void InputSystem::consoleRegister() // static
 #undef B_SetContextFallback
 DE_EXTERN_C void B_SetContextFallback(const char *name, int (*responderFunc)(event_t *))
 {
-    InputSystem &isys = ClientApp::inputSystem();
+    InputSystem &isys = ClientApp::input();
     if (isys.hasContext(name))
     {
         isys.context(name).setFallbackResponder(responderFunc);
@@ -1930,7 +1930,7 @@ DE_EXTERN_C int B_BindingsForCommand(const char *commandCString, char *outBuf, s
     if (command.isEmpty()) return 0;
     if (!outBufSize) return 0;
 
-    InputSystem &isys = ClientApp::inputSystem();
+    InputSystem &isys = ClientApp::input();
 
     String out;
     int numFound = 0;
@@ -1971,7 +1971,7 @@ DE_EXTERN_C int B_BindingsForControl(int localPlayer, const char *impulseNameCSt
     if (impulseName.isEmpty()) return 0;
     if (!outBufSize) return 0;
 
-    InputSystem &isys = ClientApp::inputSystem();
+    InputSystem &isys = ClientApp::input();
 
     String out;
     int numFound = 0;

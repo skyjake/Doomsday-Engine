@@ -142,7 +142,7 @@ DE_PIMPL_NOREF(ControllerPresets)
 
     void applyPreset(const Record *preset)
     {
-        ClientApp::inputSystem().removeBindingsForDevice(deviceId);
+        ClientApp::input().removeBindingsForDevice(deviceId);
 
         if (preset)
         {

@@ -130,7 +130,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
         asset = App::asset(id);
 
         // Collect some information about the model asset.
-        const render::Model &model = ClientApp::renderSystem().modelRenderer()
+        const render::Model &model = ClientApp::render().modelRenderer()
                 .bank().model<render::Model>(id);
 
         StringList animNames;
@@ -429,7 +429,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
 
             // Look up the shader.
             const auto &pass = animator.model().passes.at(passIndex);
-            auto &modelLoader = ClientApp::renderSystem().modelRenderer().loader();
+            auto &modelLoader = ClientApp::render().modelRenderer().loader();
             String shaderName = modelLoader.shaderName(*pass.program);
             const Record &shaderDef = modelLoader.shaderDefinition(*pass.program);
 

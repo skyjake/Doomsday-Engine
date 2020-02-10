@@ -65,7 +65,7 @@ using namespace de;
 
 DE_PIMPL(GameWidget)
 {
-    bool needFrames = true; // Rendering a new frame is necessary.
+    bool          needFrames   = true; // Rendering a new frame is necessary.
     VRConfig::Eye lastFrameEye = VRConfig::NeitherEye;
 
     Impl(Public *i) : Base(i) {}

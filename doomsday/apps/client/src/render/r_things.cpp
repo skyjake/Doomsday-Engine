@@ -263,7 +263,7 @@ void R_ProjectSprite(mobj_t &mob)
                                 v1, v2);
 
     // Not visible?
-    if(!ClientApp::renderSystem().angleClipper().checkRangeFromViewRelPoints(v1, v2))
+    if(!ClientApp::render().angleClipper().checkRangeFromViewRelPoints(v1, v2))
     {
         const coord_t MAX_OBJECT_RADIUS = 128;
 

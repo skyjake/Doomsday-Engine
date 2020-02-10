@@ -258,7 +258,7 @@ static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normals
             Vec3f const normal(normals[i].xyz);
             Vec3f accum[2];  // Begin with total darkness [color, extra].
             dint numProcessed = 0;
-            ClientApp::renderSystem().forAllVectorLights(lightListIdx, [&maxLights, &normal
+            ClientApp::render().forAllVectorLights(lightListIdx, [&maxLights, &normal
                                          , &accum, &numProcessed](const VectorLightData &vlight)
             {
                 numProcessed += 1;
@@ -616,7 +616,7 @@ void Rend_DrawSprite(const vissprite_t &spr)
         DGL_Translatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
 
         const coord_t distFromViewer = de::abs(spr.pose.distance);
-        ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (const VectorLightData &vlight)
+        ClientApp::render().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (const VectorLightData &vlight)
         {
             if(distFromViewer < 1600 - 8)
             {

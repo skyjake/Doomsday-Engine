@@ -753,7 +753,7 @@ static void drawWallShadow(const Vec3f *posCoords, const WallEdge &leftEdge, con
     listSpec.group = ShadowGeom;
     listSpec.texunits[TU_PRIMARY] =
         GLTextureUnit(GL_PrepareLSTexture(tp.texture), gfx::ClampToEdge, gfx::ClampToEdge);
-    DrawList &shadowList = ClientApp::renderSystem().drawLists().find(listSpec);
+    DrawList &shadowList = ClientApp::render().drawLists().find(listSpec);
 
     static DrawList::Indices indices;
     if (indices.size() < 64) indices.resize(64);
@@ -761,7 +761,7 @@ static void drawWallShadow(const Vec3f *posCoords, const WallEdge &leftEdge, con
     // Walls with edge divisions mean two trifans.
     if(leftEdge.divisionCount() || rightEdge.divisionCount())
     {
-        Store &buffer = ClientApp::renderSystem().buffer();
+        Store &buffer = ClientApp::render().buffer();
         // Right fan.
         {
             const duint numVerts = 3 + rightEdge.divisionCount();
@@ -845,7 +845,7 @@ static void drawWallShadow(const Vec3f *posCoords, const WallEdge &leftEdge, con
     }
     else
     {
-        Store &buffer = ClientApp::renderSystem().buffer();
+        Store &buffer = ClientApp::render().buffer();
         duint base = buffer.allocateVertices(4);
         for(duint i = 0; i < 4; ++i)
         {
@@ -1033,7 +1033,7 @@ void Rend_DrawFlatRadio(const ConvexSubspace &subspace)
     const auto eyeToSubspace = Vec2f(Rend_EyeOrigin().xz() - subspace.poly().center());
 
     // All shadow geometry uses the same texture (i.e., none) - use the same list.
-    DrawList &shadowList = ClientApp::renderSystem().drawLists().find(
+    DrawList &shadowList = ClientApp::render().drawLists().find(
 #if defined (DE_OPENGL)
         DrawListSpec(renderWireframe? UnlitGeom : ShadowGeom)
 #else
@@ -1069,7 +1069,7 @@ void Rend_DrawFlatRadio(const ConvexSubspace &subspace)
                         const bool haveFloor = plane.surface().normal()[2] > 0;
 
                         // Build geometry.
-                        Store &buffer = ClientApp::renderSystem().buffer();
+                        Store &buffer = ClientApp::render().buffer();
                         gfx::Primitive primitive;
                         uint              vertCount = makeFlatShadowGeometry(
                             indices, buffer, primitive, shadowEdges, shadowDark, haveFloor);

@@ -72,5 +72,5 @@ void ClientRootWidget::addOnTop(GuiWidget *widget)
 void ClientRootWidget::handleEventAsFallback(const Event &event)
 {
     // The bindings might have use for this event.
-    ClientApp::inputSystem().tryEvent(event, "global");
+    ClientApp::input().tryEvent(event, "global");
 }

@@ -61,7 +61,7 @@ static int globalContextFallback(const ddevent_t *ddev)
 /// @note Called once on init.
 void B_Init()
 {
-    InputSystem &isys = ClientApp::inputSystem();
+    InputSystem &isys = ClientApp::input();
 
     // In dedicated mode we have fewer binding contexts available.
 

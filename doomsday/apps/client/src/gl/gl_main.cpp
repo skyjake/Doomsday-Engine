@@ -256,7 +256,7 @@ void GL_EarlyInit()
 
     LOG_GL_VERBOSE("Initializing Render subsystem...");
 
-    ClientApp::renderSystem().glInit();
+    ClientApp::render().glInit();
 
     isGammaRampEnabled = !CommandLine_Check("-noramp");
 
@@ -345,7 +345,7 @@ void GL_Shutdown()
             GL_FinishFrame();
         } while(++i < 3);
     }*/
-    ClientApp::renderSystem().glDeinit();
+    ClientApp::render().glDeinit();
     GL_ShutdownDeferredTask();
     FR_Shutdown();
     Rend_ModelShutdown();

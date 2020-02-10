@@ -275,15 +275,15 @@ void N_MasterAnnounceServer(bool isOpen)
 
 void N_MasterRequestList(void)
 {
-    DE_ASSERT(worker);
-    worker->newJob(MasterWorker::REQUEST_SERVERS);
+    if (worker)
+    {
+        worker->newJob(MasterWorker::REQUEST_SERVERS);
+    }
 }
 
 int N_MasterGet(int index, ServerInfo *info)
 {
-    DE_ASSERT(worker);
-
-    if (!worker->isAllDone())
+    if (!worker || !worker->isAllDone())
     {
         // Not done yet.
         return -1;

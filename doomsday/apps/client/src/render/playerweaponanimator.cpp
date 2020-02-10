@@ -79,7 +79,7 @@ DE_PIMPL_NOREF(PlayerWeaponAnimator)
 
     static ModelBank &modelBank()
     {
-        return ClientApp::renderSystem().modelRenderer().bank();
+        return ClientApp::render().modelRenderer().bank();
     }
 };
 

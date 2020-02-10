@@ -59,7 +59,7 @@ DE_GUI_PIMPL(RendererSettingsDialog)
     {
         ScrollAreaWidget &area = self().area();
 
-        area.add(appear = new ProfilePickerWidget(ClientApp::renderSystem().appearanceSettings(),
+        area.add(appear = new ProfilePickerWidget(ClientApp::render().appearanceSettings(),
                                                   "appearance",
                                                   "profile-picker"));
         appear->setOpeningDirection(ui::Down);
@@ -199,7 +199,7 @@ RendererSettingsDialog::RendererSettingsDialog(const String &name)
 
 void RendererSettingsDialog::resetToDefaults()
 {
-    ClientApp::renderSystem().settings().resetToDefaults();
+    ClientApp::render().settings().resetToDefaults();
 
     d->fetch();
 }

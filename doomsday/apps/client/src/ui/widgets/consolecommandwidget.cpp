@@ -70,13 +70,13 @@ ConsoleCommandWidget::ConsoleCommandWidget(const String &name)
 void ConsoleCommandWidget::focusGained()
 {
     CommandWidget::focusGained();
-    ClientApp::inputSystem().context("console").activate();
+    ClientApp::input().context("console").activate();
 }
 
 void ConsoleCommandWidget::focusLost()
 {
     CommandWidget::focusLost();
-    ClientApp::inputSystem().context("console").deactivate();
+    ClientApp::input().context("console").deactivate();
 }
 
 bool ConsoleCommandWidget::handleEvent(const Event &event)
@@ -86,7 +86,7 @@ bool ConsoleCommandWidget::handleEvent(const Event &event)
     if (hasFocus())
     {
         // Console bindings override normal event handling.
-        if (ClientApp::inputSystem().tryEvent(event, "console"))
+        if (ClientApp::input().tryEvent(event, "console"))
         {
             // Eaten by bindings.
             return true;

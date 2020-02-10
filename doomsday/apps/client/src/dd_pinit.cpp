@@ -223,9 +223,9 @@ void DD_ShutdownAll()
     R_ShutdownSvgs();
 #ifdef __CLIENT__
     R_ShutdownViewWindow();
-    if(ClientApp::hasRenderSystem())
+    if(ClientApp::hasRender())
     {
-        ClientApp::renderSystem().clearDrawLists();
+        ClientApp::render().clearDrawLists();
     }
 #endif
     Def_Destroy();

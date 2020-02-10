@@ -94,7 +94,7 @@ DE_PIMPL(ClientMobjThinkerData)
 
     static ModelBank &modelBank()
     {
-        return ClientApp::renderSystem().modelRenderer().bank();
+        return ClientApp::render().modelRenderer().bank();
     }
 
     void assetBeingDeleted(Asset &)

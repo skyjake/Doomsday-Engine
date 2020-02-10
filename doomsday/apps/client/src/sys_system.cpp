@@ -140,16 +140,16 @@ void Sys_Shutdown()
     Net_Shutdown();
 
 #ifdef __CLIENT__
-    if (ClientApp::hasAudioSystem())
+    if (ClientApp::hasAudio())
     {
         // Let's shut down sound first, so Windows' HD-hogging doesn't jam
         // the MUS player (would produce horrible bursts of notes).
         App_AudioSystem().deinitPlayback();
     }
     GL_Shutdown();
-    if(ClientApp::hasInputSystem())
+    if(ClientApp::hasInput())
     {
-        ClientApp::inputSystem().clearEvents();
+        ClientApp::input().clearEvents();
     }
 #endif
 

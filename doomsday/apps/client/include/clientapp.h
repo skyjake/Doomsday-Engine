@@ -68,6 +68,8 @@ public:
     void openHomepageInBrowser();
     void showLocalFile(const de::NativePath &path);
 
+    IWorldRenderer *makeWorldRenderer() const;
+
 public:
     /**
      * Reports a new alert to the user.
@@ -87,14 +89,13 @@ public:
     static ConfigProfiles & windowSettings();
     static ConfigProfiles & uiSettings();
     static ServerLink &     serverLink();
-    static InFineSystem &   infineSystem();
-    static InputSystem &    inputSystem();
-    static AudioSystem &    audioSystem();
-    static RenderSystem &   renderSystem();
+    static InFineSystem &   infine();
+    static InputSystem &    input();
+    static AudioSystem &    audio();
+    static RenderSystem &   render();
     static ClientResources &resources();
     static world::World &   world();
     static ClientWorld &    classicWorld();
-    static IWorldRenderer & worldRenderer();
 
 #if defined (DE_HAVE_BUSYRUNNER)
     static BusyRunner &     busyRunner();
@@ -102,9 +103,9 @@ public:
 
     static ClientWindow *mainWindow();
 
-    static bool hasInputSystem();
-    static bool hasRenderSystem();
-    static bool hasAudioSystem();
+    static bool hasInput();
+    static bool hasRender();
+    static bool hasAudio();
 
 #if defined (DE_HAVE_UPDATER)
     static Updater &updater();

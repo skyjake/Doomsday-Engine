@@ -901,7 +901,7 @@ static Mat4f frameViewerMatrix;
 
 static void setupViewMatrix()
 {
-    auto &rend = ClientApp::renderSystem();
+    auto &rend = ClientApp::render();
 
     // These will be the matrices for the current frame.
     rend.uProjectionMatrix() = Rend_GetProjectionMatrix();
@@ -1019,6 +1019,26 @@ static void changeViewState(ViewState viewState) //, const viewport_t *port, con
 
     /*ClientWindow::main().game().glApplyViewport(Rectanglei::fromSize(Vec2i(viewpx, viewpy),
                                                                      Vec2ui(viewpw, viewph)));*/
+
+}
+
+void ClassicWorldRenderer::glInit()
+{
+
+}
+
+void ClassicWorldRenderer::glDeinit()
+{
+
+}
+
+void ClassicWorldRenderer::setCamera()
+{
+
+}
+
+void ClassicWorldRenderer::advanceTime(TimeSpan /*elapsed*/)
+{
 
 }
 
@@ -1149,7 +1169,7 @@ DE_EXTERN_C void R_RenderPlayerView(dint num)
     viewdata_t *vd = &player->viewport();
     if (vd->window.isNull()) return;
 
-    ClientApp::worldRenderer().renderPlayerView(num);
+    ClientApp::render().world().renderPlayerView(num);
 }
 
 /**
@@ -1409,7 +1429,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
 
     if (!P_IsInVoid(DD_Player(displayPlayer)) && !devNoCulling)
     {
-        if (!ClientApp::renderSystem().angleClipper().isPointVisible(origin))
+        if (!ClientApp::render().angleClipper().isPointVisible(origin))
         {
             markLumobjClipped(*lum); // Won't have a halo.
         }

@@ -208,7 +208,7 @@ static bool writeBindingsState(const Path &filePath)
         File &file = App::rootFolder().replaceFile(filePath);
         de::Writer out(file);
 
-        InputSystem &isys = ClientApp::inputSystem();
+        InputSystem &isys = ClientApp::input();
 
         LOG_SCR_VERBOSE("Writing input bindings to %s...") << file.description();
 

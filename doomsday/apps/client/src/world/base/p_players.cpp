@@ -312,7 +312,7 @@ D_CMD(ClearImpulseAccumulation)
 {
     DE_UNUSED(argv, argc, src);
 
-    ClientApp::inputSystem().forAllDevices([] (InputDevice &device)
+    ClientApp::input().forAllDevices([] (InputDevice &device)
     {
         device.reset();
         return LoopContinue;
@@ -394,7 +394,7 @@ DE_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
 
     if(const PlayerImpulse *imp = P_PlayerImpulsePtr(impulseId))
     {
-        InputSystem &isys = ClientApp::inputSystem();
+        InputSystem &isys = ClientApp::input();
 
         BindContext *bindContext = isys.contextPtr(imp->bindContextName);
         if(!bindContext)
