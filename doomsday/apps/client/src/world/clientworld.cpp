@@ -89,8 +89,6 @@ ClientWorld::ClientWorld()
 {
     using world::Factory;
 
-    world::DmuArgs::setPointerToIndexFunc(P_ToIndex);
-
     Factory::setConvexSubspaceConstructor([](mesh::Face &f, world::BspLeaf *bl) -> world::ConvexSubspace * {
         return new ConvexSubspace(f, bl);
     });

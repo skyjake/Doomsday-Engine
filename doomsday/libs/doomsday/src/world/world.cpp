@@ -273,6 +273,8 @@ DE_AUDIENCE_METHODS(World, MapChange, FrameState)
 
 World::World() : d(new Impl(this))
 {
+    DmuArgs::setPointerToIndexFunc(P_ToIndex);
+
     // Let players know that a world exists.
     DoomsdayApp::players().forAll([this] (Player &plr)
     {

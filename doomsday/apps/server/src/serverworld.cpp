@@ -71,7 +71,6 @@ using namespace res;
 
 ServerWorld::ServerWorld()
 {
-    world::DmuArgs::setPointerToIndexFunc(P_ToIndex);
     useDefaultConstructors();
 
     audienceForMapChange() += [this]() {
