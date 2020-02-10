@@ -1,4 +1,4 @@
-/** @file gloomworldrenderer.h  World renderer based on libgloom.
+/** @file classicworldrenderer.cpp
  *
  * @authors Copyright (c) 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,27 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#pragma once
+#include "render/classicworldrenderer.h"
 
-#include "iworldrenderer.h"
+ClassicWorldRenderer::ClassicWorldRenderer()
+{}
 
-/**
- * World renderer based on libgloom.
- */
-class GloomWorldRenderer : public IWorldRenderer
-{
-public:
-    GloomWorldRenderer();
-
-    void glInit() override;
-    void glDeinit() override;
-    void setCamera() override;
-
-    void loadMap(const de::String &mapId);
-
-    void advanceTime(de::TimeSpan elapsed) override;
-    void renderPlayerView(int num) override;
-
-private:
-    DE_PRIVATE(d)
-};
+// other methods elsewhere...

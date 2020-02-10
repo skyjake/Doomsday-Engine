@@ -36,5 +36,10 @@ class ClassicWorldRenderer : public IWorldRenderer
 public:
     ClassicWorldRenderer();
 
+    void glInit() override;
+    void glDeinit() override;
+    void setCamera() override;
+
+    void advanceTime(de::TimeSpan elapsed) override;
     void renderPlayerView(int num) override;
 };

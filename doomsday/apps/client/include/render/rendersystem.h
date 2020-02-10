@@ -33,6 +33,7 @@
 #include "vectorlightlist.h"
 
 class AngleClipper;
+class IWorldRenderer;
 class ModelRenderer;
 class SkyDrawable;
 namespace render { class Environment; }
@@ -54,6 +55,7 @@ public:
     void glInit();
     void glDeinit();
 
+    IWorldRenderer &world();
     de::GLShaderBank &shaders();
 //    de::ImageBank &images();
     const de::GLUniform &uMapTime() const;

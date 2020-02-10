@@ -33,6 +33,7 @@
 #include "render/rend_main.h"
 #include "render/rend_halo.h"
 #include "render/angleclipper.h"
+#include "render/iworldrenderer.h"
 #include "render/modelrenderer.h"
 #include "render/skydrawable.h"
 #include "render/store.h"
@@ -58,8 +59,11 @@ DE_PIMPL(RenderSystem)
     Record renderModule;
 
     render::Environment environment;
+    std::unique_ptr<IWorldRenderer> worldRenderer;
+    Time prevWorldUpdateAt = Time::invalidTime();
     ModelRenderer models;
     SkyDrawable sky;
+
     ConfigProfiles settings;
     ConfigProfiles appearanceSettings;
 //    ImageBank images;
@@ -235,8 +239,12 @@ DE_PIMPL(RenderSystem)
         // Load the required packages.
         pkgLoader.load("net.dengine.client.renderer");
         pkgLoader.load("net.dengine.client.renderer.lensflares");
+        pkgLoader.load("net.dengine.gloom");
 
         loadImages();
+
+        // Create a world renderer.
+        worldRenderer.reset(ClientApp::app().makeWorldRenderer());
 
         typedef ConfigProfiles SReg;
 
@@ -409,12 +417,19 @@ void RenderSystem::glInit()
     }
 
     d->models.glInit();
+    d->worldRenderer->glInit();
 }
 
 void RenderSystem::glDeinit()
 {
+    d->worldRenderer->glDeinit();
     d->models.glDeinit();
     d->environment.glDeinit();
+}
+
+IWorldRenderer &RenderSystem::world()
+{
+    return *d->worldRenderer;
 }
 
 GLShaderBank &RenderSystem::shaders()
@@ -461,6 +476,20 @@ void RenderSystem::timeChanged(const Clock &)
 {
     // Update the current map time for shaders.
     d->uMapTime = ClientApp::world().time();
+
+    // Update the world rendering time.
+    TimeSpan elapsed = 0.0;
+    const Time now = Time::currentHighPerformanceTime();
+    if (d->prevWorldUpdateAt.isValid())
+    {
+        elapsed = now - d->prevWorldUpdateAt;
+    }
+    d->prevWorldUpdateAt = now;
+
+    if (d->worldRenderer)
+    {
+        d->worldRenderer->advanceTime(elapsed);
+    }
 }
 
 ConfigProfiles &RenderSystem::settings()

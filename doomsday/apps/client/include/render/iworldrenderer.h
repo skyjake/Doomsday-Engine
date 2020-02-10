@@ -19,6 +19,7 @@
 #pragma once
 
 #include <de/String>
+#include <de/Time>
 
 /**
  * Interface for a world renderer implementation.
@@ -32,11 +33,11 @@ class IWorldRenderer
 public:
     virtual ~IWorldRenderer() = default;
 
-    virtual void init() = 0;
-    virtual void deinit() = 0;
+    virtual void glInit() = 0;
+    virtual void glDeinit() = 0;
 
-    virtual void loadMap(const de::String &mapId) = 0;
     virtual void setCamera() = 0;
 
+    virtual void advanceTime(de::TimeSpan elapsed) = 0;
     virtual void renderPlayerView(int num) = 0;
 };
