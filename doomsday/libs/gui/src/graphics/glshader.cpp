@@ -139,6 +139,17 @@ void GLShader::compile(Type shaderType, const IByteArray &shaderSource)
     {
         preamble += DEFAULT_VERSION;
     }
+    else
+    {
+        // Move the #version line to the preamble.
+        const auto versionPos = source.indexOf("#version ");
+        const auto endPos = source.indexOf("\n", versionPos);
+        const auto len = endPos - versionPos + 1;
+        const String versionLine = source.substr(versionPos, len);
+        source.remove(versionPos, len);
+        preamble += versionLine;
+    }
+
     preamble += PREFIX;
 
 //     Keep a copy of the source for possible recompilation.

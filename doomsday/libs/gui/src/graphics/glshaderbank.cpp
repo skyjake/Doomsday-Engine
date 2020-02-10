@@ -202,7 +202,7 @@ DE_PIMPL(GLShaderBank)
                                .toLatin1();
             }
             predefs += "#line 1\n";
-            sourceText = predefs + sourceText;
+            sourceText = GLShader::prefixToSource(sourceText, predefs);
         }
         return sourceText;
     }
@@ -291,36 +291,36 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(const String &id)
     for (int i = 0; i < 3; ++i)
     {
         if (def.has(typeTokens[i]))
-    {
+        {
             sources[i] = ShaderSource(def[typeTokens[i]], ShaderSource::ShaderSourceText);
-    }
+        }
         else if (def.has(pathTokens[i]))
-    {
+        {
             sources[i] = ShaderSource(absolutePathInContext(def, def[pathTokens[i]]),
                                       ShaderSource::FilePath);
-    }
-    else if (def.has("path"))
-    {
+        }
+        else if (def.has("path"))
+        {
             String spath = absolutePathInContext(def, def.gets("path") + fileExt[i]);
             if (i == GLShader::Geometry && !FS::tryLocate<File const>(spath))
-    {
+            {
                 continue; // Geometry shader not provided.
-    }
+            }
             sources[i] = ShaderSource(spath, ShaderSource::FilePath);
-    }
+        }
 
-    // Additional shaders to append to the main source.
+        // Additional shaders to append to the main source.
         if (def.has(includeTokens[i]))
-    {
-        // Including in reverse to retain order -- each one is prepended.
+        {
+            // Including in reverse to retain order -- each one is prepended.
             const auto &incs = def[includeTokens[i]].value<ArrayValue>().elements();
             for (int j = incs.sizei() - 1; j >= 0; --j)
-        {
+            {
                 sources[i].insertFromFile(absolutePathInContext(def, incs.at(j)->asText()));
+            }
         }
-    }
 
-    // Handle #include directives in the source.
+        // Handle #include directives in the source.
         sources[i].insertIncludes(*this, def);
     }
 
