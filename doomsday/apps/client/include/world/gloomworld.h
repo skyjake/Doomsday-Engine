@@ -28,6 +28,9 @@ class GloomWorld : public world::World
 public:
     GloomWorld();
 
+    de::String mapPackageId() const;
+
+    void aboutToChangeMap() override;
     void mapFinalized() override;
 
 private:

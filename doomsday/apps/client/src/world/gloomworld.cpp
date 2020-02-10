@@ -17,6 +17,9 @@
  */
 
 #include "world/gloomworld.h"
+#include "render/rendersystem.h"
+#include "render/gloomworldrenderer.h"
+#include "clientapp.h"
 
 #include <doomsday/resource/lumpcatalog.h>
 #include <doomsday/world/map.h>
@@ -45,8 +48,18 @@ DE_PIMPL(GloomWorld)
 GloomWorld::GloomWorld()
     : d(new Impl(this))
 {
-    world::DmuArgs::setPointerToIndexFunc(P_ToIndex);
     useDefaultConstructors();
+}
+
+String GloomWorld::mapPackageId() const
+{
+    return Package::identifierForFile(FS::locate<const File>(d->exportedPath));
+}
+
+void GloomWorld::aboutToChangeMap()
+{
+    PackageLoader::get().unload(mapPackageId());
+    d->exportedPath.clear();
 }
 
 void GloomWorld::mapFinalized()
@@ -58,10 +71,12 @@ void GloomWorld::mapFinalized()
     const auto     pos      = lumps.find(mapId);
     const uint32_t checksum = crc32(Block(*pos.first /* DataBundle */));
 
-    d->exportedPath = Stringf("/home/cache/maps/net.dengine.exported.%s.%s.%08x.pack",
+    DE_ASSERT(!mapPackageId() || !PackageLoader::get().isLoaded(mapPackageId()));
+
+    d->exportedPath = Stringf("/home/cache/maps/net.dengine.exported.%s.%08x.pack/%s.pack",
                               String(pos.first->asFile().name().fileNameWithoutExtension()).c_str(),
-                              mapId.c_str(),
-                              checksum)
+                              checksum,
+                              mapId.c_str())
                           .lower();
 
     // If this already exists, no need to re-export.
@@ -74,4 +89,12 @@ void GloomWorld::mapFinalized()
             importer.exportPackage(d->exportedPath);
         }
     }
+
+    PackageLoader::get().load(mapPackageId());
+    
+    // We are likely in a busy thread now, so we shouldn't do GL operations.
+    // Load the map in the main thread instead.
+    Loop::mainCall([mapId]() {
+        static_cast<GloomWorldRenderer &>(ClientApp::render().world()).loadMap(mapId.lower());
+    });
 }
