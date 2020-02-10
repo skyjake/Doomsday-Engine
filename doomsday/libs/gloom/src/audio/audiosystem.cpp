@@ -511,6 +511,11 @@ AudioSystem &AudioSystem::get()
     return *theAudioSystem;
 }
 
+bool AudioSystem::isAvailable()
+{
+    return theAudioSystem != nullptr;
+}
+
 Sound &AudioSystem::newSound(const Waveform &waveform)
 {
     return d->load(waveform);

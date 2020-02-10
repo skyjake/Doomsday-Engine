@@ -16,12 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOMWORLD_H
-#define GLOOMWORLD_H
+#pragma once
 
 #include "gloom/render/icamera.h"
 #include "gloom/world/user.h"
-#include "gloom/world/world.h"
+#include "gloom/world/iworld.h"
 
 #include <de/GLShaderBank>
 #include <de/ImageBank>
@@ -32,10 +31,10 @@ using namespace de;
 
 class Map;
 
-class LIBGLOOM_PUBLIC GloomWorld : public World
+class LIBGLOOM_PUBLIC World : public IWorld
 {
 public:
-    GloomWorld(GLShaderBank &shaders, ImageBank &images);
+    World(GLShaderBank &shaders, ImageBank &images);
 
     /**
      * Loads a map.
@@ -55,9 +54,10 @@ public:
     void update(TimeSpan elapsed);
     void render(const ICamera &camera);
 
-    User *    localUser() const;
-    POI       initialViewPosition() const;
-    List<POI> pointsOfInterest() const;
+    const Map &map() const;
+    User *     localUser() const;
+    POI        initialViewPosition() const;
+    List<POI>  pointsOfInterest() const;
 
     /**
      * Determines the height of the ground at a given world coordinates.
@@ -71,5 +71,3 @@ private:
 };
 
 } // namespace gloom
-
-#endif // GLOOMWORLD_H

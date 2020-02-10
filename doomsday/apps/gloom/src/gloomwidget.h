@@ -24,7 +24,7 @@
 
 namespace gloom {
 
-class World;
+class IWorld;
 class User;
 
 class GloomWidget
@@ -32,12 +32,12 @@ class GloomWidget
     , public ICamera
 {
 public:
-    DE_DEFINE_AUDIENCE(Change, void currentWorldChanged(const World *old, World *current))
+    DE_DEFINE_AUDIENCE(Change, void currentWorldChanged(const IWorld *old, IWorld *current))
 
 public:
     GloomWidget();
 
-    World *world() const;
+    IWorld *world() const;
     User & user();
 
     void setCameraPosition(const de::Vec3f &pos);
@@ -56,7 +56,7 @@ public:
     de::Mat4f cameraProjection() const;
 
 public:
-    void setWorld(World *world);
+    void setWorld(IWorld *world);
 
 protected:
     void glInit();

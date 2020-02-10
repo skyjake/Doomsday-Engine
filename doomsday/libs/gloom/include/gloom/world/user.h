@@ -29,7 +29,7 @@ namespace gloom {
 
 using namespace de;
 
-class World;
+class IWorld;
 
 class LIBGLOOM_PUBLIC User
 {
@@ -56,7 +56,7 @@ public:
 public:
     User();
 
-    void setWorld(const World *world);
+    void setWorld(const IWorld *world);
     void setPosition(const Vec3f &pos);
     void setYaw(float yaw);
     void setPain(float pain);

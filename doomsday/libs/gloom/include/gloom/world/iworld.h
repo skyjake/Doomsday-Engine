@@ -1,4 +1,4 @@
-/** @file world.h
+/** @file iworld.h
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef WORLD_H
-#define WORLD_H
+#pragma once
 
 #include <de/AtlasTexture>
 #include <de/Matrix>
@@ -30,11 +29,11 @@ using namespace de;
 
 class User;
 
-class LIBGLOOM_PUBLIC World : public de::Deletable
+class LIBGLOOM_PUBLIC IWorld : public de::Deletable
 {
 public:
-    World();
-    virtual ~World();
+    IWorld();
+    virtual ~IWorld();
 
     virtual void setLocalUser(User *) = 0;
 
@@ -63,9 +62,7 @@ public:
     DE_CAST_METHODS()
 
 public:
-    DE_DEFINE_AUDIENCE(Ready, void worldReady(World &))
+    DE_DEFINE_AUDIENCE(Ready, void worldReady(IWorld &))
 };
 
 } // namespace gloom
-
-#endif // WORLD_H

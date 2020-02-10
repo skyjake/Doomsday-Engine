@@ -23,6 +23,7 @@ public:
     AudioSystem();
 
     static AudioSystem &get();
+    static bool isAvailable();
 
     /**
      * Prepares an audio waveform for playback. The returned ISound instance is in

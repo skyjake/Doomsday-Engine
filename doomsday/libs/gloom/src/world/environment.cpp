@@ -17,7 +17,7 @@
  */
 
 #include "gloom/world/environment.h"
-#include "gloom/world/world.h"
+#include "gloom/world/iworld.h"
 #include "gloom/audio/audiosystem.h"
 
 #include <de/Set>
@@ -28,7 +28,7 @@ namespace gloom {
 
 DE_PIMPL(Environment)
 {
-    World *      world;
+    IWorld *     world;
     Set<Sound *> sounds;
     float        maxDist;
     TimeSpan     sinceLastUpdate;
@@ -52,6 +52,8 @@ DE_PIMPL(Environment)
 
     void killDistantSounds()
     {
+        if (!AudioSystem::isAvailable()) return;
+
         if (const auto *cam = AudioSystem::get().listener())
         {
             const Vec3f pos = cam->cameraPosition();
@@ -68,6 +70,8 @@ DE_PIMPL(Environment)
 
     void startNewSound()
     {
+        if (!AudioSystem::isAvailable()) return;
+
         const auto *cam = AudioSystem::get().listener();
         if (!cam) return;
 
@@ -140,7 +144,7 @@ void Environment::enable(bool enabled)
     }
 }
 
-void Environment::setWorld(World *world)
+void Environment::setWorld(IWorld *world)
 {
     d->world = world;
 }

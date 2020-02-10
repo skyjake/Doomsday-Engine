@@ -19,9 +19,8 @@
 #include "gloomwidget.h"
 
 #include <gloom/audio/audiosystem.h>
-#include <gloom/gloomworld.h>
+#include <gloom/world.h>
 #include <gloom/world/user.h>
-#include <gloom/world/world.h>
 #include <de/Drawable>
 #include <de/GLBuffer>
 #include <de/KeyEvent>
@@ -35,7 +34,7 @@ namespace gloom {
 DE_GUI_PIMPL(GloomWidget)
 {
     Mat4f            modelView;
-    SafePtr<World>   world;
+    SafePtr<IWorld>  world;
     Time             previousUpdateAt;
     User             user;
     User::InputState inputs;
@@ -74,7 +73,7 @@ GloomWidget::GloomWidget()
     , d(new Impl(this))
 {}
 
-World *GloomWidget::world() const
+IWorld *GloomWidget::world() const
 {
     return d->world;
 }
@@ -94,9 +93,9 @@ void GloomWidget::setCameraYaw(float yaw)
     d->user.setYaw(yaw);
 }
 
-void GloomWidget::setWorld(World *world)
+void GloomWidget::setWorld(IWorld *world)
 {
-    const World *oldWorld = d->world;
+    const IWorld *oldWorld = d->world;
 
     if (d->world)
     {
@@ -172,7 +171,7 @@ bool GloomWidget::handleEvent(const Event &event)
         {
             if (key.ddKey() >= '0' && key.ddKey() <= '9')
             {
-                d->world->as<GloomWorld>().setDebugMode(key.ddKey() - '0');
+                d->world->as<World>().setDebugMode(key.ddKey() - '0');
                 return true;
             }
         }

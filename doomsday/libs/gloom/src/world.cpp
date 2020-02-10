@@ -1,4 +1,4 @@
-/** @file gloomworld.cpp
+/** @file world.cpp
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "gloom/gloomworld.h"
+#include "gloom/world.h"
 #include "gloom/render/light.h"
 #include "gloom/audio/audiosystem.h"
 #include "gloom/render/context.h"
@@ -72,7 +72,7 @@ enum {
     PerfTimerCount
 };
 
-DE_PIMPL(GloomWorld), public Asset
+DE_PIMPL(World), public Asset
 , DE_OBSERVES(User, Warp)
 {
     GLShaderBank &       shaders;
@@ -144,9 +144,9 @@ DE_PIMPL(GloomWorld), public Asset
     {
         if (isReady()) return false;
 
-        debug("[GloomWorld] glInit");
+        debug("[World] glInit");
 
-        DE_ASSERT(localUser);
+//        DE_ASSERT(localUser);
 
         // Cube maps are used for 360-degree env maps, so prefer seamless edge filtering.
         glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -200,7 +200,10 @@ DE_PIMPL(GloomWorld), public Asset
 
         for (auto *atl : textureAtlas) atl->clear();
 
-        localUser->audienceForWarp -= this;
+        if (localUser)
+        {
+            localUser->audienceForWarp -= this;
+        }
     }
 
     void rebuildMap()
@@ -249,11 +252,26 @@ DE_PIMPL(GloomWorld), public Asset
     }
 };
 
-GloomWorld::GloomWorld(GLShaderBank &shaders, ImageBank &images)
+World::World(GLShaderBank &shaders, ImageBank &images)
     : d(new Impl(this, shaders, images))
 {}
 
-void GloomWorld::glInit()
+void World::loadMap(const String &mapId)
+{
+    Map loadedMap;
+    {
+        const auto &asset = App::asset(DE_STR("map.") + mapId);
+        loadedMap.deserialize(FS::locate<const File>(asset.absolutePath("path")));
+    }
+    setMap(loadedMap);
+}
+
+const Map &World::map() const
+{
+    return d->map;
+}
+
+void World::glInit()
 {
     if (d->glInit())
     {
@@ -264,12 +282,12 @@ void GloomWorld::glInit()
     }
 }
 
-void GloomWorld::glDeinit()
+void World::glDeinit()
 {
     d->glDeinit();
 }
 
-void GloomWorld::update(TimeSpan elapsed)
+void World::update(TimeSpan elapsed)
 {
     d->update(elapsed);
     d->environ.advanceTime(elapsed);
@@ -277,7 +295,7 @@ void GloomWorld::update(TimeSpan elapsed)
     d->tonemap.advanceTime(elapsed);
 }
 
-void GloomWorld::render(const ICamera &camera)
+void World::render(const ICamera &camera)
 {
     if (!d->isReady()) return;
 
@@ -384,22 +402,22 @@ void GloomWorld::render(const ICamera &camera)
 #endif
 }
 
-User *GloomWorld::localUser() const
+User *World::localUser() const
 {
     return d->localUser;
 }
 
-World::POI GloomWorld::initialViewPosition() const
+World::POI World::initialViewPosition() const
 {
     return {Vec3f(0.f), 90};
 }
 
-List<World::POI> GloomWorld::pointsOfInterest() const
+List<World::POI> World::pointsOfInterest() const
 {
     return {POI(initialViewPosition())};
 }
 
-double GloomWorld::groundSurfaceHeight(const Vec3d &posMeters) const
+double World::groundSurfaceHeight(const Vec3d &posMeters) const
 {
     const auto sec_vol = d->map.findSectorAndVolumeAt(posMeters / d->map.metersPerUnit());
     if (sec_vol.first)
@@ -411,12 +429,12 @@ double GloomWorld::groundSurfaceHeight(const Vec3d &posMeters) const
     return 0;
 }
 
-double GloomWorld::ceilingHeight(const Vec3d &) const
+double World::ceilingHeight(const Vec3d &) const
 {
     return 1000;
 }
 
-void GloomWorld::setLocalUser(User *user)
+void World::setLocalUser(User *user)
 {
     if (d->localUser)
     {
@@ -430,13 +448,13 @@ void GloomWorld::setLocalUser(User *user)
     }
 }
 
-void GloomWorld::setMap(const Map &map)
+void World::setMap(const Map &map)
 {
     d->map = map;
     d->rebuildMap();
 }
 
-void GloomWorld::setDebugMode(int debugMode)
+void World::setDebugMode(int debugMode)
 {
     d->renderContext.uDebugMode = debugMode;
     /*

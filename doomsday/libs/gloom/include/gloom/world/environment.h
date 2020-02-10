@@ -23,14 +23,14 @@
 
 namespace gloom {
 
-class World;
+class IWorld;
 
 class Environment
 {
 public:
     Environment();
 
-    void setWorld(World *world);
+    void setWorld(IWorld *world);
 
     void enable(bool enabled = true);
     void disable() { enable(false); }

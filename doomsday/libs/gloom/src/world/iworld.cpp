@@ -1,4 +1,4 @@
-/** @file world.cpp
+/** @file iworld.cpp
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,46 +16,46 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "gloom/world/world.h"
+#include "gloom/world/iworld.h"
 
 using namespace de;
 
 namespace gloom {
 
-World::World()
+IWorld::IWorld()
 {}
 
-World::~World()
+IWorld::~IWorld()
 {}
 
-void World::glInit()
+void IWorld::glInit()
 {}
 
-void World::glDeinit()
+void IWorld::glDeinit()
 {}
 
-void World::update(TimeSpan)
+void IWorld::update(TimeSpan)
 {}
 
-void World::render(const ICamera &)
+void IWorld::render(const ICamera &)
 {}
 
-World::POI World::initialViewPosition() const
+IWorld::POI IWorld::initialViewPosition() const
 {
     return Vec3f();
 }
 
-List<World::POI> World::pointsOfInterest() const
+List<IWorld::POI> IWorld::pointsOfInterest() const
 {
     return List<POI>();
 }
 
-double World::groundSurfaceHeight(const Vec3d &) const
+double IWorld::groundSurfaceHeight(const Vec3d &) const
 {
     return 0.0;
 }
 
-double World::ceilingHeight(const Vec3d &) const
+double IWorld::ceilingHeight(const Vec3d &) const
 {
     return 1000.0;
 }

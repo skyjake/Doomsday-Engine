@@ -107,6 +107,7 @@ void Tonemap::render()
 
     // Tone map the frame (with exposure adjustment based on sampled values).
     {
+        d->tonemapQuad.state().setTarget(GLState::current().target());
         d->tonemapQuad.render();
     }
 }

@@ -30,6 +30,7 @@ DE_PIMPL_NOREF(SkyBox)
 {
     typedef GLBufferT<Vertex3> VBuf;
 
+    String    imageId{"sky.morning"};
     GLTexture envTex;
     Drawable  skyBox;
     GLUniform uSkyMvpMatrix{"uSkyMvpMatrix", GLUniform::Mat4};
@@ -50,9 +51,16 @@ void SkyBox::glInit(Context &context)
 
     using VBuf = Impl::VBuf;
 
+    if (!context.images->has(d->imageId))
+    {
+        LOG_RES_WARNING("SkyBox cannot find image \"%s\"") << d->imageId;
+        d->skyBox.clear();
+        return;
+    }
+
     // Load the cube map.
     {
-        const Image img = context.images->image("sky.morning");
+        const Image img = context.images->image(d->imageId);
         const Image::Size size{img.width() / 6, img.height()};
 
         d->envTex.setFilter(gfx::Linear, gfx::Linear, gfx::MipLinear);
@@ -108,9 +116,9 @@ void SkyBox::glDeinit()
 
 void SkyBox::render()
 {
-    GLState::push().setDepthWrite(false);
+    if (!d->skyBox.program().isReady()) return;
 
-    DE_ASSERT(d->skyBox.program().isReady());
+    GLState::push().setDepthWrite(false);
 
     d->uSkyMvpMatrix = context().view.uCameraMvpMatrix.toMat4f() *
                     Mat4f::translate(context().view.camera->cameraPosition()) *

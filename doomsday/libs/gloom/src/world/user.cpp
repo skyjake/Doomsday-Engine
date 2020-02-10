@@ -17,7 +17,7 @@
  */
 
 #include "gloom/world/user.h"
-#include "gloom/world/world.h"
+#include "gloom/world/iworld.h"
 #include "gloom/audio/audiosystem.h"
 
 #include <de/Animation>
@@ -29,7 +29,7 @@ namespace gloom {
 
 DE_PIMPL(User)
 {
-    const World *world = nullptr;
+    const IWorld *world = nullptr;
 
     InputState input;
     Vec3f      pos;                // Current position of the user (feet).
@@ -343,14 +343,14 @@ DE_PIMPL(User)
 User::User() : d(new Impl(this))
 {}
 
-void User::setWorld(const World *world)
+void User::setWorld(const IWorld *world)
 {
     d->world       = world;
     d->firstUpdate = true;
 
     if (d->world)
     {
-        World::POI initial = world->initialViewPosition();
+        IWorld::POI initial = world->initialViewPosition();
         setPosition(initial.position);
         setYaw(initial.yaw);
     }

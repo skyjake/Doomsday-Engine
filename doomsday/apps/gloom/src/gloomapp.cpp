@@ -21,7 +21,7 @@
 #include "mainwindow.h"
 #include "gloomwidget.h"
 
-#include <gloom/gloomworld.h>
+#include <gloom/world.h>
 #include <gloom/world/user.h>
 #include <gloom/world/map.h>
 
@@ -44,12 +44,12 @@ static const duint16 COMMAND_PORT = 14666;
 
 DE_PIMPL(GloomApp)
 {
-    ImageBank                        images;
-    tF::ref<iDatagram>               commandSocket;
-    Beacon                           beacon{{COMMAND_PORT, COMMAND_PORT + 4}};
-    std::unique_ptr<AudioSystem>     audioSys;
-    std::unique_ptr<GloomWorld>      world;
-    String                           currentMap;
+    ImageBank                    images;
+    tF::ref<iDatagram>           commandSocket;
+    Beacon                       beacon{{COMMAND_PORT, COMMAND_PORT + 4}};
+    std::unique_ptr<AudioSystem> audioSys;
+    std::unique_ptr<World>       world;
+    String                       currentMap;
 
     Impl(Public *i) : Base(i)
     {
@@ -154,13 +154,7 @@ DE_PIMPL(GloomApp)
         pld.refresh();
         currentMap = packageId;
 
-        // Load the map.
-        gloom::Map loadedMap;
-        {
-            const auto &asset = App::asset(DE_STR("map.") + mapId);
-            loadedMap.deserialize(FS::locate<const File>(asset.absolutePath("path")));
-        }
-        world->setMap(loadedMap);
+        world->loadMap(mapId);
     }
 };
 
@@ -176,7 +170,7 @@ void GloomApp::initialize()
 {
     using gloom::Map;
 
-    d->world.reset(new GloomWorld(shaders(), images()));
+    d->world.reset(new World(shaders(), images()));
 
 #if 0
     // Set up the editor.

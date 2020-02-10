@@ -73,6 +73,13 @@ DE_PIMPL(EntityRender)
 
     void loadModels()
     {
+        // TODO: This is test code; needs cleanup.
+
+        if (!PackageLoader::get().isLoaded("net.dengine.gloom.test"))
+        {
+            return;
+        }
+
         auto &context = self().context();
         const auto &pkg = PackageLoader::get().package("net.dengine.gloom.test"); // XXX
 
