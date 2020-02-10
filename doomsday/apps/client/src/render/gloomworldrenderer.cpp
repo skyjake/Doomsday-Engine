@@ -47,8 +47,10 @@ DE_PIMPL(GloomWorldRenderer)
             pos     = vd->current.origin.xzy() * metersPerUnit;
             up      = vd->upVec;
             front   = vd->frontVec;
-            mvMat   = Rend_GetModelViewMatrix(console);
-            projMat = Rend_GetProjectionMatrix(0.0f, metersPerUnit.x /* clip planes in meters */) * Mat4f::scale(metersPerUnit);
+            mvMat   = Mat4f::scale(metersPerUnit) * Rend_GetModelViewMatrix(console) *
+                      Mat4f::scale(Vec3f(1.0f) / metersPerUnit) *
+                      Mat4f::scale(Vec3f(1, 1, -1));
+            projMat = Rend_GetProjectionMatrix(0.0f, metersPerUnit.x /* clip planes in meters */);
         }
 
         Vec3f cameraPosition() const
@@ -121,6 +123,12 @@ void GloomWorldRenderer::advanceTime(TimeSpan elapsed)
 
 void GloomWorldRenderer::renderPlayerView(int num)
 {
+    // Gloom assumes counterclockwise front faces.
+    glFrontFace(GL_CCW);
+
     d->playerCamera.update(num, d->glWorld->map().metersPerUnit().toVec3f());
     d->glWorld->render(d->playerCamera);
+
+    // Classic renderer assumes clockwise.
+    glFrontFace(GL_CW);
 }
