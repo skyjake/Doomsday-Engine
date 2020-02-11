@@ -18,7 +18,15 @@
 
 #include "render/classicworldrenderer.h"
 
+using namespace de;
+
 ClassicWorldRenderer::ClassicWorldRenderer()
+{}
+
+void ClassicWorldRenderer::loadMap(const String &/*mapId*/)
+{}
+
+void ClassicWorldRenderer::unloadMap()
 {}
 
 // other methods elsewhere...

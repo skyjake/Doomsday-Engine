@@ -58,6 +58,7 @@ String GloomWorld::mapPackageId() const
 
 void GloomWorld::aboutToChangeMap()
 {
+    ClientApp::render().world().unloadMap();
     PackageLoader::get().unload(mapPackageId());
     d->exportedPath.clear();
 }
@@ -95,6 +96,6 @@ void GloomWorld::mapFinalized()
     // We are likely in a busy thread now, so we shouldn't do GL operations.
     // Load the map in the main thread instead.
     Loop::mainCall([mapId]() {
-        static_cast<GloomWorldRenderer &>(ClientApp::render().world()).loadMap(mapId.lower());
+        ClientApp::render().world().loadMap(mapId.lower());
     });
 }

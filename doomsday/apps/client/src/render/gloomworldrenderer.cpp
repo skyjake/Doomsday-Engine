@@ -22,10 +22,15 @@
 #include "world/p_players.h"
 #include "clientapp.h"
 
+#include <doomsday/world/map.h>
+#include <doomsday/world/sector.h>
+#include <doomsday/world/world.h>
 #include <gloom/world.h>
 #include <gloom/world/map.h>
 #include <gloom/render/icamera.h>
 #include <de/ImageBank>
+#include <de/FS>
+#include <de/data/json.h>
 
 using namespace de;
 
@@ -81,6 +86,7 @@ DE_PIMPL(GloomWorldRenderer)
 
     PlayerCamera                  playerCamera;
     std::unique_ptr<gloom::World> glWorld;
+    List<gloom::ID>               sectorLut; // sector number => gloom ID
     ImageBank                     images;
 
     Impl(Public *i) : Base(i)
@@ -111,12 +117,51 @@ void GloomWorldRenderer::setCamera()
 void GloomWorldRenderer::loadMap(const String &mapId)
 {
     d->glWorld->loadMap(mapId);
+
+    // Read the lookup tables.
+    {
+        const auto & asset = App::asset("map." + mapId);
+        const Record lut =
+            parseJSON(String::fromUtf8(FS::locate<const File>(asset.absolutePath("lookupPath"))));
+
+        const auto &sectorIds = lut["sectorIds"].array();
+        d->sectorLut.resize(sectorIds.size());
+        auto i = d->sectorLut.begin();
+        for (const auto *value : sectorIds.elements())
+        {
+            *i++ = value->asUInt();
+        }
+    }
+}
+
+void GloomWorldRenderer::unloadMap()
+{
+    d->sectorLut.clear();
 }
 
 void GloomWorldRenderer::advanceTime(TimeSpan elapsed)
 {
     if (d->glWorld)
     {
+        // Update changed plane heights.
+        if (world::World::get().hasMap() && !d->sectorLut.isEmpty())
+        {
+            const auto &map   = world::World::get().map();
+            const auto &glMap = d->glWorld->map();
+            for (int sectorIndex = 0; sectorIndex < map.sectorCount(); ++sectorIndex)
+            {
+                const auto &    sector    = map.sector(sectorIndex);
+                const gloom::ID sectorId  = d->sectorLut[sectorIndex];
+                const gloom::ID floorId   = glMap.floorPlaneId(sectorId);
+                const gloom::ID ceilingId = glMap.ceilingPlaneId(sectorId);
+
+                d->glWorld->setPlaneY(floorId,   sector.floor().height());
+                d->glWorld->setPlaneY(ceilingId, sector.ceiling().height());
+
+                // TODO: Pass the target height and speed to glWorld and let the shaders update
+                // the heights on the GPU. Only update the plane heights buffer when a move begins.
+            }
+        }
         d->glWorld->update(elapsed);
     }
 }

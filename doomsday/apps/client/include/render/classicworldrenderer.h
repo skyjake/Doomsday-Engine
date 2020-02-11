@@ -38,6 +38,8 @@ public:
 
     void glInit() override;
     void glDeinit() override;
+    void loadMap(const de::String &mapId) override;
+    void unloadMap() override;
     void setCamera() override;
 
     void advanceTime(de::TimeSpan elapsed) override;

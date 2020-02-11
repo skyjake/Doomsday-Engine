@@ -32,7 +32,8 @@ public:
     void glDeinit() override;
     void setCamera() override;
 
-    void loadMap(const de::String &mapId);
+    void loadMap(const de::String &mapId) override;
+    void unloadMap() override;
 
     void advanceTime(de::TimeSpan elapsed) override;
     void renderPlayerView(int num) override;

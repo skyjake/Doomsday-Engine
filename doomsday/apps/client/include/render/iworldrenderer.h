@@ -36,6 +36,8 @@ public:
     virtual void glInit() = 0;
     virtual void glDeinit() = 0;
 
+    virtual void loadMap(const de::String &mapId) = 0;
+    virtual void unloadMap() = 0;
     virtual void setCamera() = 0;
 
     virtual void advanceTime(de::TimeSpan elapsed) = 0;
