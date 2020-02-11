@@ -104,7 +104,7 @@ DE_PIMPL(World), public Asset
         : Base(i)
         , shaders(shaders)
         , images(images)
-        , visibleDistance(1.4f * 512 /*500*/) // 500+ meters in all directions
+        , visibleDistance(400) // 500+ meters in all directions
     {
         for (auto &atlas : textureAtlas)
         {
@@ -260,7 +260,7 @@ void World::loadMap(const String &mapId)
 {
     Map loadedMap;
     {
-        const auto &asset = App::asset(DE_STR("map.") + mapId);
+        const auto &asset = App::asset("map." + mapId);
         loadedMap.deserialize(FS::locate<const File>(asset.absolutePath("path")));
     }
     setMap(loadedMap);
@@ -470,6 +470,11 @@ void World::setDebugMode(int debugMode)
             d->renderContext.uDebugTex = d->mapRender.lights().shadowMap();
             break;
     }*/
+}
+
+void World::setPlaneY(ID planeId, double y)
+{
+    d->mapRender.setPlaneY(planeId, y);
 }
 
 } // namespace gloom

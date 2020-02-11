@@ -196,6 +196,16 @@ void MapRender::rebuild()
     d->buildMap();
     d->ents.createEntities();
     d->lights.createLights();
+
+    // Update initial plane heights.
+    {
+        const Vec3d metersPerUnit = context().map->metersPerUnit();
+        for (const auto &i : d->planeMapper)
+        {
+            const double planeY = context().map->plane(i.first).point.y;
+            d->planes.setData(i.second, float(planeY * metersPerUnit.y));
+        }
+    }
 }
 
 LightRender &MapRender::lights()
@@ -208,21 +218,15 @@ MaterialLib &MapRender::materialLibrary()
     return d->matLib;
 }
 
+void MapRender::setPlaneY(ID planeId, double y)
+{
+    DE_ASSERT(d->planeMapper.contains(planeId));
+    d->planes.setData(d->planeMapper[planeId], float(y * context().map->metersPerUnit().y));
+}
+
 void MapRender::advanceTime(TimeSpan elapsed)
 {
     d->lights.advanceTime(elapsed);
-
-    // Update plane heights.
-    {
-        const Vec3d metersPerUnit = context().map->metersPerUnit();
-
-        for (const auto &i : d->planeMapper)
-        {
-            const double planeY = context().map->plane(i.first).point.y; // +
-                                 //std::sin(i.value() + now * .1f);
-            d->planes.setData(i.second, float(planeY * metersPerUnit.y));
-        }
-    }
 
     // Testing: Scroll offsets.
 #if 0

@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "gloom/identity.h"
 #include "gloom/render/icamera.h"
 #include "gloom/world/user.h"
 #include "gloom/world/iworld.h"
@@ -48,6 +49,7 @@ public:
     void setLocalUser(User *user);
     void setMap(const Map &map);
     void setDebugMode(int debugMode);
+    void setPlaneY(ID planeId, double y);
 
     void glInit();
     void glDeinit();

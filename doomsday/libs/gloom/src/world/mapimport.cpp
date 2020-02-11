@@ -28,6 +28,7 @@
 #include <de/Folder>
 #include <de/Version>
 
+#include <nlohmann/json.hpp>
 #include <iomanip>
 #include <sstream>
 
@@ -58,6 +59,7 @@ DE_PIMPL_NOREF(MapImport)
     res::IdTech1TextureLib  textureLib;
     String                  mapId;
     Map                     map;
+    List<ID>                sectorLut; // id1 sector number => Gloom sector ID
     Set<String>             textures;
     Vec3d                   metersPerUnit;
     double                  worldAspectRatio = 1.2;
@@ -343,10 +345,14 @@ DE_PIMPL_NOREF(MapImport)
         }
 
         SectorPolygonizer builder(map);
+        sectorLut.clear();
+        sectorLut.resize(mappedSectors.size());
 
         for (dsize secIndex = 0; secIndex < mappedSectors.size(); ++secIndex)
         {
             const auto &ms = mappedSectors[secIndex];
+
+            sectorLut[secIndex] = ms.sector;
 
             debug("Sector %i: boundary lines %zu, points %zu",
                    secIndex,
@@ -438,11 +444,12 @@ void MapImport::exportPackage(const String &packageRootPath) const
     // Maps included in the pacakge.
     {
         File & f   = root.replaceFile("maps.dei");
-        String dei = "asset map." + mapId() + " {\n"
-                     "    path = \"maps/" + d->mapId + ".gloommap\"\n"
-                     "    metersPerUnit " +
-                     Stringf(
-                         "<%.16f, %.16f, %.16f>", d->metersPerUnit.x, d->metersPerUnit.y, d->metersPerUnit.z) +
+        String dei = "asset map." + mapId() + " {"
+                     "\n    path = \"maps/" + d->mapId + ".gloommap\""
+                     "\n    lookupPath = \"maps/" + d->mapId + ".lookup.json\""
+                     "\n    metersPerUnit " +
+                     Stringf("<%.16f, %.16f, %.16f>",
+                             d->metersPerUnit.x, d->metersPerUnit.y, d->metersPerUnit.z) +
                      "\n}\n";
         f << dei.toUtf8();
         f.flush();
@@ -455,9 +462,23 @@ void MapImport::exportPackage(const String &packageRootPath) const
         f.flush();
     }
 
+    // Source index lookup tables.
+    {
+        nlohmann::json lut;
+        lut["sectorIds"] = nlohmann::json::array();
+        for (const uint32_t id : d->sectorLut)
+        {
+            lut["sectorIds"].push_back(id);
+        }
+        File &f = maps.replaceFile(d->mapId + ".lookup.json");
+        std::ostringstream os;
+        os << lut;
+        f << String(os.str()).toUtf8();
+        f.flush();
+    }
+
     // Materials used in the map.
     {
-//        Block dei;
         std::ostringstream os;
 
         for (const String &name : materials())

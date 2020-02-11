@@ -39,10 +39,11 @@ public:
     void glInit(Context &) override;
     void glDeinit() override;
     void advanceTime(de::TimeSpan elapsed) override;
-    void render() override;
+    void render() override;        
     void renderTransparent();
 
     void rebuild();
+    void setPlaneY(ID planeId, double y);
 
     LightRender &lights();
     MaterialLib &materialLibrary();
