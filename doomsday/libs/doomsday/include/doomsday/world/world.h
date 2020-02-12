@@ -66,6 +66,8 @@ public:
     /// Notified when a frame begins or ends.
     DE_AUDIENCE(FrameState, void worldFrameState(FrameState frameState))
 
+    DE_AUDIENCE(PlaneMovement, void planeMovementBegan(const Plane &))
+
     /// No map is currently loaded. @ingroup errors
     DE_ERROR(MapError);
 
@@ -148,6 +150,7 @@ public:
     void update();
     
     void notifyFrameState(FrameState frameState);
+    void notifyBeginPlaneMovement(const Plane &);
 
 public:
     /// Scripting helper: get pointer to current instance mobj_t based on the script callstack.

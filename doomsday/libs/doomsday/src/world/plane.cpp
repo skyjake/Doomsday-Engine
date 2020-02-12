@@ -37,10 +37,12 @@ DE_PIMPL(Plane)
     std::unique_ptr<Surface> surface;
     ThinkerT<SoundEmitter>   soundEmitter;
 
-    int indexInSector = -1;           ///< Index in the owning sector.
+    int indexInSector = -1;     // Index in the owning sector.
 
-    double heightTarget = 0;          ///< Target @em sharp height.
-    double speed = 0;                 ///< Movement speed (map space units per tic).
+    double heightTarget = 0;    // Target height.
+    double targetSetAt = 0;     // When the target was set.
+    double initialHeight = 0;   // Height when the target was set.
+    double speed = 0;           // Movement speed (map space units per tic).
 
     Impl(Public *i)
         : Base(i)
@@ -53,6 +55,20 @@ DE_PIMPL(Plane)
     }
 
     inline world::Map &map() const { return self().map(); }
+
+    void maybeBeginNewMovement(double target)
+    {
+        if (!fequal(target, heightTarget))
+        {
+            auto &wld = world::World::get();
+
+            heightTarget  = target;
+            targetSetAt   = wld.time();
+            initialHeight = self().height();
+
+            wld.notifyBeginPlaneMovement(self());
+        }
+    }
 
     void applySharpHeightChange(ddouble newHeight)
     {
@@ -175,6 +191,17 @@ void Plane::updateSoundEmitterOrigin()
 void Plane::setHeight(double newHeight)
 {
     _height = d->heightTarget = newHeight;
+    d->maybeBeginNewMovement(newHeight);
+}
+
+double Plane::movementBeganAt() const
+{
+    return d->targetSetAt;
+}
+
+double Plane::initialHeightOfMovement() const
+{
+    return d->initialHeight;
 }
 
 ddouble Plane::height() const
@@ -194,27 +221,22 @@ ddouble Plane::speed() const
 
 dint Plane::property(DmuArgs &args) const
 {
-    switch(args.prop)
+    switch (args.prop)
     {
-    case DMU_EMITTER: {
-        const SoundEmitter *emitterPtr = &soundEmitter();
-        args.setValue(DMT_PLANE_EMITTER, &emitterPtr, 0);
-        break; }
-    case DMU_SECTOR: {
-        const Sector *secPtr = &sector();
-        args.setValue(DMT_PLANE_SECTOR, &secPtr, 0);
-        break; }
-    case DMU_HEIGHT:
-        args.setValue(DMT_PLANE_HEIGHT, &_height, 0);
-        break;
-    case DMU_TARGET_HEIGHT:
-        args.setValue(DMT_PLANE_TARGET, &d->heightTarget, 0);
-        break;
-    case DMU_SPEED:
-        args.setValue(DMT_PLANE_SPEED, &d->speed, 0);
-        break;
-    default:
-        return MapElement::property(args);
+        case DMU_EMITTER: {
+            const SoundEmitter *emitterPtr = &soundEmitter();
+            args.setValue(DMT_PLANE_EMITTER, &emitterPtr, 0);
+            break;
+        }
+        case DMU_SECTOR: {
+            const Sector *secPtr = &sector();
+            args.setValue(DMT_PLANE_SECTOR, &secPtr, 0);
+            break;
+        }
+        case DMU_HEIGHT:        args.setValue(DMT_PLANE_HEIGHT, &_height, 0); break;
+        case DMU_TARGET_HEIGHT: args.setValue(DMT_PLANE_TARGET, &d->heightTarget, 0); break;
+        case DMU_SPEED:         args.setValue(DMT_PLANE_SPEED, &d->speed, 0); break;
+        default: return MapElement::property(args);
     }
 
     return false;  // Continue iteration.
@@ -222,23 +244,26 @@ dint Plane::property(DmuArgs &args) const
 
 dint Plane::setProperty(const DmuArgs &args)
 {
-    switch(args.prop)
+    switch (args.prop)
     {
-    case DMU_HEIGHT: {
-        ddouble newHeight = _height;
-        args.value(DMT_PLANE_HEIGHT, &newHeight, 0);
-        d->applySharpHeightChange(newHeight);
-        break; }
-    case DMU_TARGET_HEIGHT:
-        args.value(DMT_PLANE_TARGET, &d->heightTarget, 0);
-        break;
-    case DMU_SPEED:
-        args.value(DMT_PLANE_SPEED, &d->speed, 0);
-        break;
-    default:
-        return MapElement::setProperty(args);
+        case DMU_HEIGHT: {
+            ddouble newHeight = _height;
+            args.value(DMT_PLANE_HEIGHT, &newHeight, 0);
+            d->applySharpHeightChange(newHeight);
+            break;
+        }
+        case DMU_TARGET_HEIGHT: {
+            double newTarget;
+            args.value(DMT_PLANE_TARGET, &newTarget, 0);
+            d->maybeBeginNewMovement(newTarget);
+            break;
+        }
+        case DMU_SPEED: {
+            args.value(DMT_PLANE_SPEED, &d->speed, 0);
+            break;
+        }
+        default: return MapElement::setProperty(args);
     }
-
     return false;  // Continue iteration.
 }
 

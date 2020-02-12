@@ -147,6 +147,9 @@ public:
      */
     double heightTarget() const;
 
+    double movementBeganAt() const;
+    double initialHeightOfMovement() const;
+
     /**
      * Returns the rate at which the plane height will be updated (units per tic)
      * when moving to the target height in the map coordinate space.

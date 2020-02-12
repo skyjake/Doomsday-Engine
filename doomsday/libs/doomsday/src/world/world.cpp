@@ -266,10 +266,10 @@ DE_PIMPL(World)
         return bool(map);
     }
 
-    DE_PIMPL_AUDIENCES(MapChange, FrameState)
+    DE_PIMPL_AUDIENCES(MapChange, FrameState, PlaneMovement)
 };
 
-DE_AUDIENCE_METHODS(World, MapChange, FrameState)
+DE_AUDIENCE_METHODS(World, MapChange, FrameState, PlaneMovement)
 
 World::World() : d(new Impl(this))
 {
@@ -507,6 +507,14 @@ void World::notifyFrameState(FrameState frameState)
     DE_NOTIFY(FrameState, i)
     {
         i->worldFrameState(frameState);
+    }
+}
+
+void World::notifyBeginPlaneMovement(const Plane &plane)
+{
+    DE_NOTIFY(PlaneMovement, i)
+    {
+        i->planeMovementBegan(plane);
     }
 }
 
