@@ -28,13 +28,16 @@
 #include <gloom/world.h>
 #include <gloom/world/map.h>
 #include <gloom/render/icamera.h>
+#include <gloom/render/maprender.h>
 #include <de/ImageBank>
 #include <de/FS>
 #include <de/data/json.h>
+#include <de/legacy/timer.h>
 
 using namespace de;
 
 DE_PIMPL(GloomWorldRenderer)
+, DE_OBSERVES(world::World, PlaneMovement)
 {
     /**
      * Gloom camera for rendering a specific player's view.
@@ -86,6 +89,7 @@ DE_PIMPL(GloomWorldRenderer)
 
     PlayerCamera                  playerCamera;
     std::unique_ptr<gloom::World> glWorld;
+    Set<const world::Plane *>     planesToUpdate;
     List<gloom::ID>               sectorLut; // sector number => gloom ID
     ImageBank                     images;
 
@@ -93,11 +97,18 @@ DE_PIMPL(GloomWorldRenderer)
     {
         images.add("sky.morning", "/home/sky-morning.jpg");
     }
+
+    void planeMovementBegan(const world::Plane &plane) override
+    {
+        planesToUpdate.insert(&plane);
+    }
 };
 
 GloomWorldRenderer::GloomWorldRenderer()
     : d(new Impl(this))
-{}
+{
+    world::World::get().audienceForPlaneMovement() += d;
+}
 
 void GloomWorldRenderer::glInit()
 {
@@ -144,25 +155,30 @@ void GloomWorldRenderer::advanceTime(TimeSpan elapsed)
     if (d->glWorld)
     {
         // Update changed plane heights.
-        if (world::World::get().hasMap() && !d->sectorLut.isEmpty())
+        if (!d->sectorLut.isEmpty())
         {
-            const auto &map   = world::World::get().map();
             const auto &glMap = d->glWorld->map();
-            for (int sectorIndex = 0; sectorIndex < map.sectorCount(); ++sectorIndex)
+            for (const auto &plane : d->planesToUpdate)
             {
-                const auto &    sector    = map.sector(sectorIndex);
-                const gloom::ID sectorId  = d->sectorLut[sectorIndex];
-                const gloom::ID floorId   = glMap.floorPlaneId(sectorId);
-                const gloom::ID ceilingId = glMap.ceilingPlaneId(sectorId);
+                const gloom::ID sectorId  = d->sectorLut[plane->sector().indexInArchive()];
+                const gloom::ID planeId   = plane->isSectorFloor() ? glMap.floorPlaneId(sectorId)
+                                                                   : glMap.ceilingPlaneId(sectorId);
 
-                d->glWorld->setPlaneY(floorId,   sector.floor().height());
-                d->glWorld->setPlaneY(ceilingId, sector.ceiling().height());
+                d->glWorld->mapRender().setPlaneY(planeId,
+                                                  plane->heightTarget(),
+                                                  plane->initialHeightOfMovement(),
+                                                  plane->movementBeganAt(),
+                                                  plane->speed() * TICSPERSEC);
 
                 // TODO: Pass the target height and speed to glWorld and let the shaders update
                 // the heights on the GPU. Only update the plane heights buffer when a move begins.
             }
         }
         d->glWorld->update(elapsed);
+        d->glWorld->setCurrentTime(world::World::get().time());
+        // TODO: time sync should happen once, and after that `elapsed` should be scaled
+        // according to tic length.
+        d->planesToUpdate.clear();
     }
 }
 
