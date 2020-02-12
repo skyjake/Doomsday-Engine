@@ -42,12 +42,19 @@ DE_PIMPL(MapRender)
     MapBuild::Mapper  planeMapper;
     MapBuild::Mapper  texOffsetMapper;
 
+    struct PlaneMoveData {
+        float target;
+        float initial;
+        float startTime;
+        float speed;
+    };
+
     struct TexOffsetData {
         Vec2f offset;
         Vec2f speed;
     };
 
-    DataBuffer<float>         planes    {"uPlanes",     Image::R_32f};
+    DataBuffer<PlaneMoveData> planes    {"uPlanes",     Image::RGBA_32f};
     DataBuffer<TexOffsetData> texOffsets{"uTexOffsets", Image::RGBA_32f};
 
     Drawable  surfaces;
@@ -96,7 +103,9 @@ DE_PIMPL(MapRender)
 
             for (const auto &i : planeMapper)
             {
-                planes.setData(i.second, float(map->plane(i.first).point.y));
+                PlaneMoveData mov{};
+                mov.target = mov.initial = float(map->plane(i.first).point.y);
+                planes.setData(i.second, mov);
             }
         }
 
@@ -199,11 +208,13 @@ void MapRender::rebuild()
 
     // Update initial plane heights.
     {
-        const Vec3d metersPerUnit = context().map->metersPerUnit();
+        const double metersPerUnit = context().map->metersPerUnit().y;
         for (const auto &i : d->planeMapper)
         {
             const double planeY = context().map->plane(i.first).point.y;
-            d->planes.setData(i.second, float(planeY * metersPerUnit.y));
+            Impl::PlaneMoveData mov{};
+            mov.target = mov.initial = float(planeY * metersPerUnit);
+            d->planes.setData(i.second, mov);
         }
     }
 }
@@ -218,10 +229,16 @@ MaterialLib &MapRender::materialLibrary()
     return d->matLib;
 }
 
-void MapRender::setPlaneY(ID planeId, double y)
+void MapRender::setPlaneY(ID planeId, double destY, double srcY, double startTime, double speed)
 {
     DE_ASSERT(d->planeMapper.contains(planeId));
-    d->planes.setData(d->planeMapper[planeId], float(y * context().map->metersPerUnit().y));
+    const double metersPerUnit = context().map->metersPerUnit().y;
+    Impl::PlaneMoveData mov;
+    mov.target    = float(destY * metersPerUnit);
+    mov.initial   = float(srcY * metersPerUnit);
+    mov.speed     = abs(float(speed * metersPerUnit)) * asNumber<float>(sign(mov.target - mov.initial));
+    mov.startTime = float(startTime);
+    d->planes.setData(d->planeMapper[planeId], mov);
 }
 
 void MapRender::advanceTime(TimeSpan elapsed)

@@ -31,6 +31,7 @@ namespace gloom {
 using namespace de;
 
 class Map;
+class MapRender;
 
 class LIBGLOOM_PUBLIC World : public IWorld
 {
@@ -49,7 +50,7 @@ public:
     void setLocalUser(User *user);
     void setMap(const Map &map);
     void setDebugMode(int debugMode);
-    void setPlaneY(ID planeId, double y);
+    void setCurrentTime(double time);
 
     void glInit();
     void glDeinit();
@@ -57,6 +58,7 @@ public:
     void render(const ICamera &camera);
 
     const Map &map() const;
+    MapRender &mapRender();
     User *     localUser() const;
     POI        initialViewPosition() const;
     List<POI>  pointsOfInterest() const;

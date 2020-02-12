@@ -40,7 +40,15 @@ vec4 Gloom_FetchTexOffset(uint offsetIndex) {
 }
 
 float Gloom_FetchPlaneY(uint planeIndex) {
-    return texelFetch(uPlanes, int(planeIndex)).r;
+    vec4 mov = texelFetch(uPlanes, int(planeIndex));
+    float target    = mov.x;
+    float initial   = mov.y;
+    float startTime = mov.z;
+    float speed     = mov.w;
+    float y = initial + (uCurrentTime - startTime) * speed;
+    if (speed > 0.0) return min(y, target);
+    if (speed < 0.0) return max(y, target);
+    return y;
 }
 
 Surface Gloom_LoadVertexSurface(void) {

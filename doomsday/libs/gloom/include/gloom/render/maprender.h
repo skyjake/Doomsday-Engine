@@ -31,7 +31,7 @@ class ICamera;
 class LightRender;
 class MaterialLib;
 
-class MapRender : public Render
+class LIBGLOOM_PUBLIC MapRender : public Render
 {
 public:
     MapRender();
@@ -43,7 +43,7 @@ public:
     void renderTransparent();
 
     void rebuild();
-    void setPlaneY(ID planeId, double y);
+    void setPlaneY(ID planeId, double destY, double srcY,  double startTime, double speed);
 
     LightRender &lights();
     MaterialLib &materialLibrary();

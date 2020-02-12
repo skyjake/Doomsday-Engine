@@ -271,6 +271,11 @@ const Map &World::map() const
     return d->map;
 }
 
+MapRender &World::mapRender()
+{
+    return d->mapRender;
+}
+
 void World::glInit()
 {
     if (d->glInit())
@@ -472,9 +477,9 @@ void World::setDebugMode(int debugMode)
     }*/
 }
 
-void World::setPlaneY(ID planeId, double y)
+void World::setCurrentTime(double time)
 {
-    d->mapRender.setPlaneY(planeId, y);
+    d->currentTime = time;
 }
 
 } // namespace gloom
