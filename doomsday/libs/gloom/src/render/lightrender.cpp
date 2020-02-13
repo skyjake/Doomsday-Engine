@@ -144,9 +144,11 @@ DE_PIMPL(LightRender)
             .setStencilTest(true)
             .setStencilFunc(gfx::NotEqual, 0, 0xff);
 
+#if 0
         skyLight.reset(new Light);
         skyLight->setType(Light::Directional);
         skyLight->setCastShadows(true);
+#endif
 
         // Create shadow maps. These will be assigned to lights as needed.
         {
@@ -288,7 +290,10 @@ DE_PIMPL(LightRender)
             using ProxEntry = std::pair<double, Light *>;
             const Vec3d camPos = ctx.view.camera->cameraPosition(); // TODO: Get complete frustum.
 
-            shadowCasters << skyLight.get();
+            if (skyLight)
+            {
+                shadowCasters << skyLight.get();
+            }
 
             List<ProxEntry> proxLights;
             proxLights.reserve(activeLights.size());
@@ -424,12 +429,14 @@ void LightRender::advanceTime(TimeSpan elapsed)
     // Pick the shadow casters.
     d->selectShadowCasters();
 
+#if 0
     // Testing.
     {
         Vec3d rotPos = Mat4d::rotate(4.0 * elapsed, Vec3d(0, 1, 0)) * d->skyLight->origin();
         d->skyLight->setOrigin(rotPos);
         d->skyLight->setDirection(-rotPos);
     }
+#endif
 }
 
 void LightRender::bindLighting(GLProgram &program)
@@ -444,6 +451,7 @@ void LightRender::renderLighting()
     const auto vp     = GLState::current().viewport();
 
     // Directional lights.
+    if (d->skyLight)
     {
         const auto &lightMatrix = d->skyLight->lightMatrix();
 
@@ -457,6 +465,10 @@ void LightRender::renderLighting()
         {
             d->uShadowMap = d->activeShadows[d->skyLight.get()]->shadowMap();
         }
+    }
+    else
+    {
+        d->uLightIntensity = Vec3f();
     }
 
     // Select omni lights for global pass.
@@ -551,7 +563,10 @@ void LightRender::createLights()
 {
     d->lights.clear();
     d->activeLights.clear();
-    d->activeLights.insert(d->skyLight.get());
+    if (d->skyLight)
+    {
+        d->activeLights.insert(d->skyLight.get());
+    }
 
     const auto &map = *context().map;
     for (const auto &i : map.entities())
