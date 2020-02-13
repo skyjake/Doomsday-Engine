@@ -68,8 +68,8 @@ Surface Gloom_LoadVertexSurface(void) {
 
     surface.expander = aDirection; //(surface.isFrontSide? aDirection : -aDirection);
 
-    surface.normal     = (surface.isFrontSide? aNormal  : -aNormal);
-    surface.tangent    = (surface.isFrontSide? aTangent : -aTangent);
+    surface.normal     = (surface.isFrontSide? -aNormal  : aNormal);
+    surface.tangent    = (surface.isFrontSide? -aTangent : aTangent);
     surface.bitangent  = cross(surface.tangent, surface.normal);
     surface.wallLength = aUV.z;
 
