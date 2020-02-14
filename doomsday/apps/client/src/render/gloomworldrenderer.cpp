@@ -74,10 +74,10 @@ DE_PIMPL(GloomWorldRenderer)
             // Gloom uses counterclockwise (OpenGL default). We need to invert the coordinate
             // axes accordingly.
 
-            mvMat   = Mat4f::scale(metersPerUnit) *
+            mvMat   = Mat4f::scale(metersPerUnit.x) *
                       Mat4f::rotate(180, Vec3f(0, 1, 0)) *
                       Rend_GetModelViewMatrix(console) *
-                      Mat4f::scale(Vec3f(1.0f) / metersPerUnit) *
+                      Mat4f::scale(1.0f / metersPerUnit.x) *
                       Mat4f::scale(worldMirror);
 
             projMat = Rend_GetProjectionMatrix(0.0f, metersPerUnit.x /* clip planes in meters */) *

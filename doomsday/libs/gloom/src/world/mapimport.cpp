@@ -155,7 +155,7 @@ DE_PIMPL_NOREF(MapImport)
         const double humanEyeHeight = 1.74;
         const double mpu = humanEyeHeight / (levelFormat == DoomFormat ? 41.0 : 48.0);
 
-        metersPerUnit = {mpu, mpu * 1.2, mpu}; // VGA aspect ratio for vertical
+        metersPerUnit = {mpu, mpu * worldAspectRatio, mpu}; // VGA aspect ratio for vertical
         map.setMetersPerUnit(metersPerUnit);
 
         const auto linedefData = lumps.read(headerPos + 2);

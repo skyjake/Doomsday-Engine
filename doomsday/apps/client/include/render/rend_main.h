@@ -199,7 +199,7 @@ float Rend_FieldOfView();
  */
 void Rend_ModelViewMatrix(bool inWorldSpace = true);
 
-de::Mat4f Rend_GetModelViewMatrix(int consoleNum, bool inWorldSpace = true);
+de::Mat4f Rend_GetModelViewMatrix(int consoleNum, bool inWorldSpace = true, bool vgaAspect = true);
 
 de::Vec3d Rend_EyeOrigin();
 

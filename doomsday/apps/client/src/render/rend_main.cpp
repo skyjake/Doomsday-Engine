@@ -456,7 +456,7 @@ void Rend_UnsetFixedView()
     fixedView.reset();
 }
 
-Mat4f Rend_GetModelViewMatrix(int consoleNum, bool inWorldSpace)
+Mat4f Rend_GetModelViewMatrix(int consoleNum, bool inWorldSpace, bool vgaAspect)
 {
     const viewdata_t *viewData = &DD_Player(consoleNum)->viewport();
 
@@ -528,7 +528,7 @@ Mat4f Rend_GetModelViewMatrix(int consoleNum, bool inWorldSpace)
     }
 
     return (modelView
-            * Mat4f::scale(Vec3f(1.0f, 1.2f, 1.0f)) // This is the aspect correction.
+            * Mat4f::scale(Vec3f(1.0f, vgaAspect ? 1.2f : 1.0f, 1.0f)) // This is the aspect correction.
             * Mat4f::translate(-vOrigin));
 }
 
