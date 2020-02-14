@@ -193,7 +193,7 @@ DE_PIMPL(Bloom)
         // Spread out or contract the texture sampling of the Gaussian blur kernel.
         // If dispersion is too large, the quality of the blur will suffer.
         uBlurStep = Vec2f(bloomDispersion / workFB.size().x,
-                             bloomDispersion / workFB.size().y);
+                          bloomDispersion / workFB.size().y);
 
         bloom.setProgram(bloom.program()); // horizontal shader
         bloom.draw();
