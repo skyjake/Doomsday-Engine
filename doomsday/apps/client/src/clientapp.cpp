@@ -287,6 +287,7 @@ DE_PIMPL(ClientApp)
         try
         {
             ClientWindow::glActivateMain(); // for GL deinit
+                        
             self().players().forAll([](Player &p) {
                 p.as<ClientPlayer>().viewCompositor().glDeinit();
                 return LoopContinue;
@@ -294,6 +295,10 @@ DE_PIMPL(ClientApp)
             LogBuffer::get().removeSink(logAlarm);
 
             Sys_Shutdown();
+            
+            delete classicWorld; classicWorld = nullptr;
+            delete gloomWorld;   gloomWorld   = nullptr;
+            
             DD_Shutdown();
 
             self().glDeinit();
@@ -311,8 +316,6 @@ DE_PIMPL(ClientApp)
         delete resources;
         delete audioSys;
         delete rendSys;
-        delete classicWorld;
-        delete gloomWorld;
         delete svLink;
         clientAppSingleton = 0;
     }
