@@ -68,6 +68,7 @@ public:
         //duint32 ATI_texture_env_combine3 : 1;
         duint32 NV_framebuffer_multisample_coverage : 1;
         //duint32 NV_texture_env_combine4 : 1;
+        duint32 NV_texture_barrier : 1;
         //duint32 SGIS_generate_mipmap : 1;
 
         duint32 KHR_debug : 1;
@@ -120,6 +121,7 @@ public:
 #if defined (DENG_OPENGL)
     static QOpenGLExtension_NV_framebuffer_multisample_coverage
                                                         *NV_framebuffer_multisample_coverage();
+    static QOpenGLExtension_NV_texture_barrier *NV_texture_barrier();
 #endif
 
     static void setSwapInterval(int interval);

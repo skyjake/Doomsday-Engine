@@ -62,6 +62,7 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
     //std::unique_ptr<QOpenGLExtension_EXT_framebuffer_object>      EXT_framebuffer_object;
 #if defined (DENG_OPENGL)
     std::unique_ptr<QOpenGLExtension_NV_framebuffer_multisample_coverage> NV_framebuffer_multisample_coverage;
+    std::unique_ptr<QOpenGLExtension_NV_texture_barrier>                  NV_texture_barrier;
 #endif
 
 #ifdef WIN32
@@ -218,6 +219,7 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
         //ext.ATI_texture_env_combine3       = query("GL_ATI_texture_env_combine3");
         ext.NV_framebuffer_multisample_coverage
                                            = query("GL_NV_framebuffer_multisample_coverage");
+        ext.NV_texture_barrier             = query("GL_NV_texture_barrier");
         //ext.NV_texture_env_combine4        = query("GL_NV_texture_env_combine4");
         //ext.SGIS_generate_mipmap           = query("GL_SGIS_generate_mipmap");
 
@@ -381,6 +383,11 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
                 NV_framebuffer_multisample_coverage.reset(new QOpenGLExtension_NV_framebuffer_multisample_coverage);
                 NV_framebuffer_multisample_coverage->initializeOpenGLFunctions();
             }
+            if (ext.NV_texture_barrier)
+            {
+                NV_texture_barrier.reset(new QOpenGLExtension_NV_texture_barrier);
+                NV_texture_barrier->initializeOpenGLFunctions();
+            }
         }
         #endif
 
@@ -494,6 +501,12 @@ QOpenGLExtension_NV_framebuffer_multisample_coverage *GLInfo::NV_framebuffer_mul
 {
     DENG2_ASSERT(info.d->inited);
     return info.d->NV_framebuffer_multisample_coverage.get();
+}
+
+QOpenGLExtension_NV_texture_barrier *GLInfo::NV_texture_barrier()
+{
+    DENG2_ASSERT(info.d->inited);
+    return info.d->NV_texture_barrier.get();
 }
 #endif
 
