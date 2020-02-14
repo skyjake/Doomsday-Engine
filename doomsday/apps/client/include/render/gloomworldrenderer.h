@@ -20,6 +20,8 @@
 
 #include "iworldrenderer.h"
 
+namespace gloom { class World; }
+
 /**
  * World renderer based on libgloom.
  */
@@ -37,6 +39,8 @@ public:
 
     void advanceTime(de::TimeSpan elapsed) override;
     void renderPlayerView(int num) override;
+
+    gloom::World &glWorld();
 
 private:
     DE_PRIVATE(d)

@@ -31,14 +31,25 @@
 #include <gloom/render/maprender.h>
 #include <de/ImageBank>
 #include <de/FS>
+#include <de/Value>
+#include <de/ScriptSystem>
 #include <de/data/json.h>
 #include <de/legacy/timer.h>
 
 using namespace de;
 
+Value *Function_Render_SetDebugMode(Context &, const Function::ArgumentValues &args)
+{
+    auto &wr = static_cast<GloomWorldRenderer &>(ClientApp::render().world());
+    wr.glWorld().setDebugMode(args.at(0)->asInt());
+    return nullptr;
+}
+
 DE_PIMPL(GloomWorldRenderer)
 , DE_OBSERVES(world::World, PlaneMovement)
 {
+    Binder binder;
+
     /**
      * Gloom camera for rendering a specific player's view.
      */
@@ -107,6 +118,9 @@ DE_PIMPL(GloomWorldRenderer)
 
     Impl(Public *i) : Base(i)
     {
+        binder.init(ScriptSystem::get().nativeModule("Render"))
+            << DE_FUNC(Render_SetDebugMode, "setDebugMode", "mode");
+
         images.add("sky.morning", "/home/sky-morning.jpg");
     }
 
@@ -204,4 +218,10 @@ void GloomWorldRenderer::renderPlayerView(int num)
 
     // Classic renderer assumes clockwise.
     glFrontFace(GL_CW);
+}
+
+gloom::World &GloomWorldRenderer::glWorld()
+{
+    DE_ASSERT(d->glWorld);
+    return *d->glWorld;
 }
