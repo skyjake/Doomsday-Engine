@@ -53,6 +53,7 @@ public:
 
         // Vendor-specific extensions:
         duint32 NV_framebuffer_multisample_coverage : 1;
+        duint32 NV_texture_barrier : 1;
 
         duint32 KHR_debug : 1;
 
@@ -92,19 +93,6 @@ public:
     static void glInit();
 
     static void glDeinit();
-
-//    static QOpenGLFunctions_Doomsday &api();
-
-    // Extensions:
-    //static QOpenGLExtension_ARB_draw_instanced          *ARB_draw_instanced();
-    //static QOpenGLExtension_ARB_instanced_arrays        *ARB_instanced_arrays();
-    //static QOpenGLExtension_EXT_framebuffer_blit        *EXT_framebuffer_blit();
-    //static QOpenGLExtension_EXT_framebuffer_multisample *EXT_framebuffer_multisample();
-    //static QOpenGLExtension_EXT_framebuffer_object      *EXT_framebuffer_object();
-//#if defined (DE_OPENGL)
-//    static QOpenGLExtension_NV_framebuffer_multisample_coverage
-//                                                        *NV_framebuffer_multisample_coverage();
-//#endif
 
     static void setSwapInterval(int interval);
 

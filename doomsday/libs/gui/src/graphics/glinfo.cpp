@@ -312,11 +312,11 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
         debug("[GLInfo] querying extensions and caps");
 
         // Extensions.
-        ext.EXT_texture_compression_s3tc   = query("GL_EXT_texture_compression_s3tc");
-        ext.EXT_texture_filter_anisotropic = query("GL_EXT_texture_filter_anisotropic");
-        ext.NV_framebuffer_multisample_coverage
-                                           = query("GL_NV_framebuffer_multisample_coverage");
-        ext.KHR_debug                      = query("GL_KHR_debug");
+        ext.EXT_texture_compression_s3tc        = query("GL_EXT_texture_compression_s3tc");
+        ext.EXT_texture_filter_anisotropic      = query("GL_EXT_texture_filter_anisotropic");
+        ext.NV_framebuffer_multisample_coverage = query("GL_NV_framebuffer_multisample_coverage");
+        ext.NV_texture_barrier                  = query("GL_NV_texture_barrier");
+        ext.KHR_debug                           = query("GL_KHR_debug");
 
         // #ifdef WIN32
         // {

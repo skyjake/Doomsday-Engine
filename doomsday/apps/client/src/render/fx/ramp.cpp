@@ -91,6 +91,11 @@ void Ramp::draw()
         d->uContrast   = de::max(0.1f, vid_contrast);
         d->uBrightness = de::clamp(-0.8f, vid_bright, 0.8f);
 
+        if (GLInfo::extensions().NV_texture_barrier)
+        {
+            gl::glTextureBarrierNV();
+        }
+
         d->ramp.draw();
     }
 }
