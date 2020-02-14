@@ -49,16 +49,28 @@ DE_PIMPL(GloomWorldRenderer)
 
         void update(int console, const Vec3f &metersPerUnit)
         {
+            const Vec3f worldMirror{1.0f, 1.0f, -1.0f};
+
             player_t *player = DD_Player(console);
             viewdata_t *vd   = &player->viewport();
 
-            pos     = vd->current.origin.xzy() * metersPerUnit;
-            up      = vd->upVec;
-            front   = vd->frontVec;
-            mvMat   = Mat4f::scale(metersPerUnit) * Rend_GetModelViewMatrix(console) *
+            pos     = vd->current.origin.xzy() * metersPerUnit * worldMirror;
+            up      = vd->upVec * worldMirror;
+            front   = vd->frontVec * worldMirror;
+
+            // These axis flips are a bit silly, but they are here because the view matrices
+            // come from Doomsday's old renderer. They also assume clockwise triangle winding.
+            // Gloom uses counterclockwise (OpenGL default). We need to invert the coordinate
+            // axes accordingly.
+
+            mvMat   = Mat4f::scale(metersPerUnit) *
+                      Mat4f::rotate(180, Vec3f(0, 1, 0)) *
+                      Rend_GetModelViewMatrix(console) *
                       Mat4f::scale(Vec3f(1.0f) / metersPerUnit) *
-                      Mat4f::scale(Vec3f(1, 1, -1));
-            projMat = Rend_GetProjectionMatrix(0.0f, metersPerUnit.x /* clip planes in meters */);
+                      Mat4f::scale(worldMirror);
+
+            projMat = Rend_GetProjectionMatrix(0.0f, metersPerUnit.x /* clip planes in meters */) *
+                      Mat4f::scale(Vec3f(-1, 1, -1));
         }
 
         Vec3f cameraPosition() const
@@ -184,7 +196,7 @@ void GloomWorldRenderer::advanceTime(TimeSpan elapsed)
 
 void GloomWorldRenderer::renderPlayerView(int num)
 {
-    // Gloom assumes counterclockwise front faces.
+    // Gloom assumes counterclockwise front faces (default for OpenGL).
     glFrontFace(GL_CCW);
 
     d->playerCamera.update(num, d->glWorld->map().metersPerUnit().toVec3f());
