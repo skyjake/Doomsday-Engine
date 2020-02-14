@@ -104,14 +104,12 @@ Vignette::Vignette(int console) : ConsoleEffect(console)
 
 void Vignette::draw()
 {
-    if (!ClientApp::world().hasMap())
+    if (ClientApp::world().hasMap())
     {
-        return;
+        /// @todo Field of view should be console-specific.
+
+        Vignette_Render(viewRect(), Rend_FieldOfView());
     }
-
-    /// @todo Field of view should be console-specific.
-
-    Vignette_Render(viewRect(), Rend_FieldOfView());
 }
 
 void Vignette::consoleRegister()

@@ -1045,6 +1045,11 @@ bool ClientApp::hasAudio()
     return ClientApp::app().d->audioSys != nullptr;
 }
 
+bool ClientApp::hasClassicWorld()
+{
+    return ClientApp::app().d->classicWorld != nullptr;
+}
+
 ClientResources &ClientApp::resources()
 {
     ClientApp &a = ClientApp::app();

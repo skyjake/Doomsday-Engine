@@ -106,6 +106,7 @@ public:
     static bool hasInput();
     static bool hasRender();
     static bool hasAudio();
+    static bool hasClassicWorld();
 
 #if defined (DE_HAVE_UPDATER)
     static Updater &updater();

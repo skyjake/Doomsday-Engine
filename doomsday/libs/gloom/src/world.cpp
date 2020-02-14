@@ -393,6 +393,7 @@ void World::render(const ICamera &camera)
 
     if (d->renderContext.uDebugMode.toInt() != 0)
     {
+        d->debugQuad.state().setTarget(GLState::current().target());
         d->debugQuad.render();
     }
 

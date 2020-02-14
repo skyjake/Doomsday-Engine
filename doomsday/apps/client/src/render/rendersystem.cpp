@@ -238,7 +238,7 @@ DE_PIMPL(RenderSystem)
 
         // Load the required packages.
         pkgLoader.load("net.dengine.client.renderer");
-        pkgLoader.load("net.dengine.client.renderer.lensflares");
+//        pkgLoader.load("net.dengine.client.renderer.lensflares");
         pkgLoader.load("net.dengine.gloom");
 
         loadImages();
