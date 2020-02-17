@@ -57,6 +57,7 @@ public:
     void update(TimeSpan elapsed);
     void render(const ICamera &camera);
 
+    Map &      map();
     const Map &map() const;
     MapRender &mapRender();
     User *     localUser() const;

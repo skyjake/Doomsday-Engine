@@ -92,7 +92,8 @@ Vec3d Light::origin() const
     if (d->entity)
     {
         const auto p = d->entity->position();
-        return p + Vec3d(0, 2, 0); // <---TESTING---
+        // TODO: Add the light origin within entity.
+        return p; // + Vec3d(0, 2, 0); // <---TESTING---
     }
     return d->origin;
 }

@@ -237,9 +237,10 @@ DE_PIMPL(World), public Asset
         currentTime += elapsed;
         renderContext.uCurrentTime = float(currentTime);
 
-        updateEntities(elapsed);
+//        updateEntities(elapsed);
     }
 
+#if 0
     void updateEntities(TimeSpan)
     {
         for (const auto &i : map.entities())
@@ -250,6 +251,7 @@ DE_PIMPL(World), public Asset
             ent.setPosition(pos);
         }
     }
+#endif
 };
 
 World::World(GLShaderBank &shaders, ImageBank &images)
@@ -406,6 +408,11 @@ void World::render(const ICamera &camera)
         }
     }
 #endif
+}
+
+Map &World::map()
+{
+    return d->map;
 }
 
 User *World::localUser() const

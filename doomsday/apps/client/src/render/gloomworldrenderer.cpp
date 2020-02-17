@@ -29,6 +29,7 @@
 #include <gloom/world/map.h>
 #include <gloom/render/icamera.h>
 #include <gloom/render/maprender.h>
+#include <gloom/render/lightrender.h>
 #include <de/ImageBank>
 #include <de/FS>
 #include <de/Value>
@@ -66,22 +67,27 @@ DE_PIMPL(GloomWorldRenderer)
             viewdata_t *vd   = &player->viewport();
 
             pos     = vd->current.origin.xzy() * metersPerUnit * worldMirror;
-            up      = vd->upVec * worldMirror;
-            front   = vd->frontVec * worldMirror;
+            up      = vd->upVec; // * worldMirror;
+            front   = vd->frontVec; // * worldMirror;
 
             // These axis flips are a bit silly, but they are here because the view matrices
             // come from Doomsday's old renderer. They also assume clockwise triangle winding.
             // Gloom uses counterclockwise (OpenGL default). We need to invert the coordinate
             // axes accordingly.
 
-            mvMat   = Mat4f::scale(metersPerUnit.x) *
+            /*mvMat   = Mat4f::scale(metersPerUnit.x) * // matrix applied VGA aspect
                       Mat4f::rotate(180, Vec3f(0, 1, 0)) *
                       Rend_GetModelViewMatrix(console) *
                       Mat4f::scale(Vec3f(1.0f) / metersPerUnit) *
-                      Mat4f::scale(worldMirror);
+                      Mat4f::scale(worldMirror);*/
+
+            mvMat = Mat4f::rotate(vd->current.pitch * 85.0f / 110.0f, Vec3f(-1, 0, 0)) *
+                    Mat4f::rotate(float(vd->current.angle()) / float(ANG180) * 180 - 90.0f,
+                                  Vec3f(0, -1, 0)) *
+                    Mat4f::translate(-pos);
 
             projMat = Rend_GetProjectionMatrix(0.0f, metersPerUnit.x /* clip planes in meters */) *
-                      Mat4f::scale(Vec3f(-1, 1, -1));
+                      Mat4f::scale(Vec3f(1, 1, -1));
         }
 
         Vec3f cameraPosition() const
@@ -110,11 +116,12 @@ DE_PIMPL(GloomWorldRenderer)
         }
     };
 
-    PlayerCamera                  playerCamera;
-    std::unique_ptr<gloom::World> glWorld;
-    Set<const world::Plane *>     planesToUpdate;
-    List<gloom::ID>               sectorLut; // sector number => gloom ID
-    ImageBank                     images;
+    PlayerCamera                   playerCamera;
+    std::unique_ptr<gloom::World>  glWorld;
+    Set<const world::Plane *>      planesToUpdate;
+    List<gloom::ID>                sectorLut; // sector number => gloom ID
+    ImageBank                      images;
+    std::shared_ptr<gloom::Entity> testLight;
 
     Impl(Public *i) : Base(i)
     {
@@ -169,10 +176,21 @@ void GloomWorldRenderer::loadMap(const String &mapId)
             *i++ = value->asUInt();
         }
     }
+
+    // Test light.
+    {
+        d->testLight = std::make_shared<gloom::Entity>();
+        d->testLight->setType(gloom::Entity::Light);
+        auto &map = d->glWorld->map();
+        map.append(map.entities(), d->testLight);
+
+        d->glWorld->mapRender().rebuild();
+    }
 }
 
 void GloomWorldRenderer::unloadMap()
 {
+    d->testLight.reset();
     d->sectorLut.clear();
 }
 
@@ -195,11 +213,17 @@ void GloomWorldRenderer::advanceTime(TimeSpan elapsed)
                                                   plane->initialHeightOfMovement(),
                                                   plane->movementBeganAt(),
                                                   plane->speed() * TICSPERSEC);
-
-                // TODO: Pass the target height and speed to glWorld and let the shaders update
-                // the heights on the GPU. Only update the plane heights buffer when a move begins.
             }
         }
+
+        // Test light.
+        if (d->testLight)
+        {
+            Vec3d delta = d->playerCamera.cameraPosition() - d->testLight->position();
+
+            d->testLight->setPosition(d->testLight->position() + delta * elapsed * 0.5);
+        }
+
         d->glWorld->update(elapsed);
         d->glWorld->setCurrentTime(world::World::get().time());
         // TODO: time sync should happen once, and after that `elapsed` should be scaled

@@ -32,7 +32,7 @@ class Light;
 /**
  * Renders light source shadow maps and the deferred shading pass.
  */
-class LightRender : public Render
+class LIBGLOOM_PUBLIC LightRender : public Render
 {
 public:
     LightRender();
