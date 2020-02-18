@@ -316,6 +316,7 @@ void GLWindow::setMinimumSize(const Size &minSize)
 
 void GLWindow::makeCurrent()
 {
+    DE_ASSERT_IN_MAIN_THREAD();
     DE_ASSERT(d->glContext);
     currentWindow = this;
     SDL_GL_MakeCurrent(d->window, d->glContext);
@@ -325,6 +326,7 @@ void GLWindow::makeCurrent()
 
 void GLWindow::doneCurrent()
 {
+    DE_ASSERT_IN_MAIN_THREAD();
     currentWindow = nullptr;
     SDL_GL_MakeCurrent(d->window, nullptr);
 }
@@ -781,6 +783,10 @@ void GLWindow::glActivateMain()
 
 GLWindow &GLWindow::current() // static
 {
+    // if (currentWindow == nullptr) 
+    // {
+    //     debug("no window: %p", SDL_GL_GetCurrentContext());
+    // }
     DE_ASSERT(currentWindow != nullptr);
     return *currentWindow;
 }

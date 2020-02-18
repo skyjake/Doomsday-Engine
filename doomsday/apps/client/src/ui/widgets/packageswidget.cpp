@@ -738,6 +738,8 @@ DE_GUI_PIMPL(PackagesWidget)
 
     void updateFilterTerms(bool immediately = false)
     {
+        GLWindow::glActivateMain();
+
         if (!immediately)
         {
             if (!refilterTimer.isActive())

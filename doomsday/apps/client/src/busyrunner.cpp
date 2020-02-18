@@ -277,9 +277,10 @@ BusyRunner::Result BusyRunner::runTask(BusyTask *task)
     delete d->eventLoop;
     d->eventLoop = nullptr;
 
-    ClientWindow::main().glActivate(); // after processing other events
+    GLWindow::glActivateMain(); // after processing other events
 
-#ifdef WIN32
+#if 0
+#  ifdef WIN32
     /*
      * Pretty big kludge here: it seems that with Qt 5.6-5.8 on Windows 10,
      * Nvidia drivers 376.33 (and many other versions), swap interval
@@ -300,6 +301,7 @@ BusyRunner::Result BusyRunner::runTask(BusyTask *task)
         }
         ClientWindow::main().glDone();
     });
+#  endif
 #endif
 
     // Teardown.

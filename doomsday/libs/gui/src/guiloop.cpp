@@ -69,6 +69,10 @@ void GuiLoop::nextLoopIteration()
     {
         d->window->glActivate();
     }
+    else
+    {
+        GLWindow::glActivateMain();
+    }
 
     Loop::nextLoopIteration();
 

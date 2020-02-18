@@ -22,6 +22,7 @@
 #include "de/Timer"
 #include "de/Log"
 #include "de/math.h"
+#include "de/Garbage"
 
 #include "../src/core/callbacktimer.h"
 
@@ -59,7 +60,10 @@ DE_AUDIENCE_METHOD(Loop, Iteration)
 Loop::Loop() : d(new Impl(this))
 {}
 
-Loop::~Loop() {}
+Loop::~Loop()
+{
+    Garbage_Recycle();
+}
 
 void Loop::setRate(double freqHz)
 {

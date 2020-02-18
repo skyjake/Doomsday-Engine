@@ -735,19 +735,19 @@ Rectanglef GuiWidget::normalizedRect(const Rectanglei &viewSpaceRect) const
 Rectanglef GuiWidget::normalizedContentRect() const
 {
     const Rectanglef rect = rule().rect().adjusted( Vec2f(margins().left().value(),
-                                                             margins().top().value()),
+                                                          margins().top().value()),
                                                    -Vec2f(margins().right().value(),
-                                                             margins().bottom().value()));
+                                                          margins().bottom().value()));
     const GuiRootWidget::Size &viewSize = root().viewSize();
     return Rectanglef(Vec2f(float(rect.left())   / float(viewSize.x),
-                               float(rect.top())    / float(viewSize.y)),
+                            float(rect.top())    / float(viewSize.y)),
                       Vec2f(float(rect.right())  / float(viewSize.x),
-                               float(rect.bottom()) / float(viewSize.y)));
+                            float(rect.bottom()) / float(viewSize.y)));
 }
 
 static void deleteGuiWidget(void *ptr)
 {
-    GuiWidget::destroy(reinterpret_cast<GuiWidget *>(ptr));
+    Loop::mainCall([ptr]() { GuiWidget::destroy(reinterpret_cast<GuiWidget *>(ptr)); });
 }
 
 void GuiWidget::guiDeleteLater()
