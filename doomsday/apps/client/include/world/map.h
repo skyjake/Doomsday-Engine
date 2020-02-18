@@ -22,7 +22,7 @@
 #pragma once
 
 #ifdef __SERVER__
-#  error Client's map.h included from Server app
+#  error "Client's map.h included from Server app"
 #endif
 
 #include "client/clplanemover.h"

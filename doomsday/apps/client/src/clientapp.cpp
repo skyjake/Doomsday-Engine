@@ -589,7 +589,7 @@ ClientApp::ClientApp(const StringList &args)
 
     // Script bindings.
     {
-    d->binder.init(scriptSystem()["App"])
+        d->binder.init(scriptSystem()["App"])
                 << DE_FUNC_NOARG (App_ConsolePlayer, "consolePlayer")
                 << DE_FUNC_NOARG (App_GamePlugin,    "gamePlugin")
                 << DE_FUNC_NOARG (App_Quit,          "quit");
@@ -609,6 +609,7 @@ ClientApp::ClientApp(const StringList &args)
 #endif*/
 
     // Show the splash image in a separate window.
+#if 0
     {
         SDL_Surface *splashSurface = createSDLSurfaceFromImage(Image::fromXpmData(doomsdaySplashXpm));
 
@@ -645,6 +646,7 @@ ClientApp::ClientApp(const StringList &args)
         SDL_RaiseWindow(d->splashWindow);
         SDL_PumpEvents(); // allow it to appear immediately
     }
+#endif
 }
 
 void ClientApp::initialize()

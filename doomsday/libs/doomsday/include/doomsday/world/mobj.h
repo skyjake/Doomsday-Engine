@@ -47,7 +47,7 @@ typedef struct mobj_s {
 /**
  * Returns the size of the game-defined mobj_t struct.
  */
-LIBDOOMSDAY_PUBLIC DE_EXTERN_C size_t Mobj_Sizeof(void);
+DE_EXTERN_C LIBDOOMSDAY_PUBLIC size_t Mobj_Sizeof(void);
 
 #ifdef __cplusplus
 
@@ -142,6 +142,6 @@ LIBDOOMSDAY_PUBLIC world::Map &Mobj_Map(const mobj_t &mob);
  *
  * @param mobj  Mobj instance.
  */
-LIBDOOMSDAY_PUBLIC DE_EXTERN_C world_Sector *Mobj_Sector(const mobj_t *mobj);
+DE_EXTERN_C LIBDOOMSDAY_PUBLIC world_Sector *Mobj_Sector(const mobj_t *mobj);
 
 #endif // LIBDOOMSDAY_MOBJ_H

@@ -23,7 +23,15 @@
 #include <de/legacy/types.h>
 #include <de/legacy/fixedpoint.h>
 
-LIBDOOMSDAY_PUBLIC DE_EXTERN_C fixed_t  finesine[5 * FINEANGLES / 4];
-LIBDOOMSDAY_PUBLIC DE_EXTERN_C fixed_t *finecosine;
-LIBDOOMSDAY_PUBLIC DE_EXTERN_C int      finetangent[4096];
-LIBDOOMSDAY_PUBLIC DE_EXTERN_C angle_t  tantoangle[SLOPERANGE + 1];
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+extern LIBDOOMSDAY_PUBLIC fixed_t  finesine[5 * FINEANGLES / 4];
+extern LIBDOOMSDAY_PUBLIC fixed_t *finecosine;
+extern LIBDOOMSDAY_PUBLIC int      finetangent[4096];
+extern LIBDOOMSDAY_PUBLIC angle_t  tantoangle[SLOPERANGE + 1];
+
+#if defined(__cplusplus)
+} // extern "C"
+#endif

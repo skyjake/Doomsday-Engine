@@ -49,7 +49,7 @@ typedef enum {
     AUDIO_IMUSIC_OR_ICD // forAllInterfaces() special value
 } audiointerfacetype_t;
 
-#ifdef WIN32
+#if defined(DE_WINDOWS)
 #  define VALID_AUDIODRIVER_IDENTIFIER(id)    ((id) >= AUDIOD_DUMMY && (id) < AUDIODRIVER_COUNT)
 #else
 #  define VALID_AUDIODRIVER_IDENTIFIER(id)    ((id) >= AUDIOD_DUMMY && (id) <= AUDIOD_FLUIDSYNTH)

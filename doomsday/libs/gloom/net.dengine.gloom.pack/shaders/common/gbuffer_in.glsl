@@ -1,9 +1,9 @@
 #ifndef GLOOM_GBUFFER_IN_H
 #define GLOOM_GBUFFER_IN_H
 
-#include "gbuffer.glsl"
-
 layout (pixel_center_integer) in vec4 gl_FragCoord;
+
+#include "gbuffer.glsl"
 
 uniform sampler2D uGBufferDiffuse;
 uniform sampler2D uGBufferEmissive;

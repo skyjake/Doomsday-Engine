@@ -32,6 +32,7 @@
 #include <doomsday/world/sector.h>
 #include <doomsday/world/lineowner.h>
 #include <doomsday/mesh/face.h>
+#include <doomsday/mesh/mesh.h>
 
 using namespace de;
 
@@ -577,7 +578,7 @@ struct WallEdge::Impl : public IHPlane
             if (!hedge->hasFace() || !hedge->hasMapElement())
                 break;
 
-            const auto &backSpace = hedge->face().mesh::Mesh::Element::mapElementAs<ConvexSubspace>();
+            const auto &backSpace = hedge->face().mapElementAs<ConvexSubspace>();
             const auto &subsec    = backSpace.subsector().as<Subsector>();
 
             if (subsec.hasWorldVolume())

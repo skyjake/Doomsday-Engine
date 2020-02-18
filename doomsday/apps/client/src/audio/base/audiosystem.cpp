@@ -227,7 +227,7 @@ DE_PIMPL(AudioSystem)
         if (cmdLine.has("-oal") || cmdLine.has("-openal"))
             return AUDIOD_OPENAL;
 
-#ifdef WIN32
+#if defined(DE_WINDOWS)
         if (cmdLine.has("-dsound"))
             return AUDIOD_DSOUND;
 
@@ -277,7 +277,7 @@ DE_PIMPL(AudioSystem)
                 driver.load(idStr);
                 break;
 #endif
-#ifdef WIN32
+#if defined(DE_WINDOWS)
             case AUDIOD_DSOUND:
             case AUDIOD_WINMM:
                 driver.load(idStr);
