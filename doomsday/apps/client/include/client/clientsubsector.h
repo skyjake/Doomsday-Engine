@@ -248,10 +248,11 @@ public:
 
 //- Visual Planes (mapped) --------------------------------------------------------------
 
-    enum VisPlaneLinkMode {
-        LinkWhenLowerThanTarget  = 0x1,
-        LinkWhenHigherThanTarget = 0x2,
-        LinkAlways               = 0x3,
+    enum VisPlaneLinkMode { // flags
+        LinkWhenLowerThanTarget     = 0x1,
+        LinkWhenHigherThanTarget    = 0x2,
+        LinkWhenDifferentThanTarget = 0x3,
+        LinkAlways                  = 0x4,
     };
 
     void linkVisPlane(int planeIndex, ClientSubsector &target, VisPlaneLinkMode linkMode);
