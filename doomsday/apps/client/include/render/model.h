@@ -84,9 +84,10 @@ struct Model : public de::ModelDrawable
 
     std::unique_ptr<de::MultiAtlas::AllocGroup> textures;
 
-    Flags flags          = DefaultFlags;
+    Flags     flags      = DefaultFlags;
     Alignment alignYaw   = NotAligned;
     Alignment alignPitch = NotAligned;
+    float     pspriteFOV = 0.0f; // Custom override of the fixed psprite FOV.
 
     /// Combined scaling and rotation of the model.
     de::Matrix4f transformation;
