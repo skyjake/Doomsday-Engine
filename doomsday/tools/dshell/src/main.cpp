@@ -20,14 +20,14 @@
 #include <de/Counted>
 #include "shellapp.h"
 
-#if defined (__CYGWIN__)
+#if defined (DE_CYGWIN) || defined (DE_MSYS)
 #  include <the_Foundation/path.h>
 #endif
 
 int main(int argc, char *argv[])
 {
     init_Foundation();
-#if defined (__CYGWIN__)
+#if defined (DE_CYGWIN) || defined (DE_MSYS)
     {
         // Curses needs to have terminfo.
         de::NativePath exePath(de::String::take(unixToWindows_Path(argv[0])));

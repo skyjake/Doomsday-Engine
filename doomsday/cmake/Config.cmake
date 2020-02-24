@@ -36,7 +36,9 @@ list (APPEND CMAKE_MODULE_PATH "${DE_DEPENDS_DIR}/products/lib/cmake/assimp-4.1"
 
 # Platform-Specific Configuration --------------------------------------------
 
-if (CYGWIN)
+if (MSYS)
+    include (PlatformMsys)
+elseif (CYGWIN)
     include (PlatformCygwin)
 elseif (IOS)
     include (PlatformiOS)

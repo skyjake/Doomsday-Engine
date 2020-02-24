@@ -8,11 +8,14 @@ def print_config(cfg):
 
 
 IS_CYGWIN = platform.system().startswith('CYGWIN_NT')
+IS_MSYS = os.getenv('MSYSTEM') == 'MSYS'
 IS_MINGW = os.getenv('MSYSTEM') == 'MINGW64'
 
 PATCH_DIR = os.path.abspath(os.path.dirname(__file__))
 
-if IS_MINGW:
+if IS_MSYS:
+    UNISTRING_DIR = '-DUNISTRING_DIR=' + os.getenv('MSYSTEM_PREFIX')
+elif IS_MINGW:
     UNISTRING_DIR = '-DUNISTRING_DIR=' + os.getenv('MINGW_PREFIX')
 elif platform.system() == 'Darwin':
     UNISTRING_DIR = '-DUNISTRING_DIR=/usr/local'    
@@ -54,7 +57,8 @@ dependencies = [
         ['-Wno-dev',
          '-DOPTION_BUILD_EXAMPLES=NO',
          '-DOPTION_BUILD_TOOLS=NO',
-         '-DOPTION_BUILD_TESTS=NO']
+         '-DOPTION_BUILD_TESTS=NO',
+         '-DCMAKE_CXX_FLAGS=-Wno-deprecated-copy' if IS_MSYS else '']
     )
 ]
 
@@ -72,7 +76,7 @@ cfg = {
             os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'deps'
         )
     ),
-    'generator': 'Unix Makefiles' if IS_MINGW or IS_CYGWIN else 'Ninja'
+    'generator': 'Unix Makefiles' if (IS_MSYS or IS_MINGW or IS_CYGWIN) else 'Ninja'
 }
 if os.path.exists(CFG_PATH):
     cfg = json.load(open(CFG_PATH, 'rt'))
@@ -147,7 +151,7 @@ for long_name, git_url, git_tag, cmake_opts in dependencies:
     else:
         os.chdir(src_dir)
         subprocess.check_call(['git', 'fetch', '--tags'])
-    print(os.getcwd())
+    print('Current directory:', os.getcwd())
     subprocess.check_call(['git', 'reset', '--hard'])
     subprocess.check_call(['git', 'checkout', git_tag])
     if patch_file:

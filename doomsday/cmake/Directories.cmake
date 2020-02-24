@@ -28,7 +28,7 @@ else ()
     set (DE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
 endif ()
 
-if (UNIX AND NOT (APPLE OR CYGWIN))
+if (UNIX AND NOT (APPLE OR MSYS OR CYGWIN))
     set (UNIX_LINUX YES)
     include (GNUInstallDirs)
 else ()

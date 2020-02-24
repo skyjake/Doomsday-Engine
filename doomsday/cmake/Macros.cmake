@@ -135,7 +135,7 @@ macro (deng_target_defaults target)
     if (APPLE)
         deng_xcode_attribs (${target})
         # macOS version numbers come from the Info.plist, we don't need version symlinks.
-    elseif (CYGWIN)
+    elseif (MSYS OR CYGWIN)
         #set_target_properties (${target} PROPERTIES
         #    VERSION ${DE_VERSION}
         #)
@@ -173,7 +173,7 @@ function (deng_filter_platform_sources outName)
             set (filtered YES)
         elseif ("${fn}" MATCHES ".*_windows\\..*" OR
             "${fn}" MATCHES ".*/windows/.*") # Windows-specific
-            if (NOT WIN32 AND NOT CYGWIN)
+            if (NOT (WIN32 OR CYGWIN OR MSYS))
                 set (filtered YES)
             endif ()
         elseif ("${fn}" MATCHES ".*_macx\\..*") # macOS specific
@@ -186,7 +186,7 @@ function (deng_filter_platform_sources outName)
                 set (filtered YES)
             endif ()
         elseif ("${fn}" MATCHES ".*_x11\\..*") # X11 specific files
-            if (APPLE OR CYGWIN OR NOT UNIX)
+            if (APPLE OR MSYS OR CYGWIN OR NOT UNIX)
                 set (filtered YES)
             endif ()
         endif ()
@@ -797,7 +797,7 @@ macro (deng_install_library library)
             DESTINATION ${DE_INSTALL_PLUGIN_DIR}
             PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
         )
-    elseif (CYGWIN OR MINGW)
+    elseif (MSYS OR CYGWIN OR MINGW)
         message (STATUS "Library will be installed: ${library}")
         install (PROGRAMS ${library} DESTINATION bin)
     elseif (MSVC)

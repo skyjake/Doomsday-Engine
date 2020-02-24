@@ -95,6 +95,10 @@ if (WIN32)
     install (PROGRAMS ${the_Foundation_DIR}/../../lib_Foundation.dll
              DESTINATION bin)
 endif ()
+if (MSYS)
+    install (PROGRAMS ${the_Foundation_DIR}/../../msys-Foundation.dll
+             DESTINATION bin)
+endif ()
 if (CYGWIN)
     install (PROGRAMS ${the_Foundation_DIR}/../../cyg_Foundation.dll
              DESTINATION bin)

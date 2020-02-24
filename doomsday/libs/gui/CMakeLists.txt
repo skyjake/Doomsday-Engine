@@ -66,8 +66,9 @@ if (WIN32)
     # Direct2D was used for DPI information.
     # target_link_libraries (libgui PRIVATE d2d1.lib)
 endif ()
-if (CYGWIN)
+if (MSYS OR CYGWIN)
     target_compile_options (libgui PUBLIC -mwindows)
+    target_link_options (libgui PUBLIC -mwindows)
     target_link_libraries (libgui PUBLIC ole32)
 endif ()
 if (IOS)
@@ -84,6 +85,15 @@ if (WIN32)
         PROGRAMS ${ASSIMP_ROOT_DIR}/bin/libassimp.dll
                  ${glbinding_DIR}/libglbinding.dll
                  ${glbinding_DIR}/libglbinding-aux.dll
+        DESTINATION bin
+        COMPONENT client
+    )
+endif ()
+if (MSYS)
+    install (
+        PROGRAMS ${ASSIMP_ROOT_DIR}/bin/msys-assimp-4.dll
+                 ${glbinding_DIR}/msys-glbinding-3.dll
+                 ${glbinding_DIR}/msys-glbinding-aux-3.dll
         DESTINATION bin
         COMPONENT client
     )
