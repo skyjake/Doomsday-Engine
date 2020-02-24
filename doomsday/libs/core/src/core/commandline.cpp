@@ -159,7 +159,7 @@ CommandLine::CommandLine(const StringList &args) : d(new Impl(*this))
             d->appendArg(args.at(i));
         }
     }
-#if defined (DE_CYGWIN)
+#if defined (DE_CYGWIN) || defined (DE_MSYS)
     makeAbsolutePath(0); // convert to a Windows path
 #endif
 }
@@ -332,7 +332,7 @@ void CommandLine::makeAbsolutePath(dsize pos)
     {
         bool converted = false;
 
-#if defined (DE_CYGWIN)
+#if defined (DE_CYGWIN) || defined (DE_MSYS)
         // Cygwin gives us UNIX-like paths on the command line, so let's convert
         // to our expected Windows paths.
         arg = String::take(unixToWindows_Path(arg));
