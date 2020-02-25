@@ -111,7 +111,8 @@ int Sys_MessageBox3(messageboxtype_t type,
         buttonData.push_back(
             SDL_MessageBoxButtonData{SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 0, "OK"});
     }
-    box.buttons = buttonData.data();
+    box.buttons    = buttonData.data();
+    box.numbuttons = int(buttonData.size());
     int rc;
     SDL_ShowMessageBox(&box, &rc);
     return rc;
