@@ -267,10 +267,10 @@ if (UNIX_LINUX)
         net.dengine.Doomsday.desktop)
     install (PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/net.dengine.Doomsday.desktop
         DESTINATION share/applications)
-    install (FILES res/linux/deng-logo-256.png
-        DESTINATION ${DE_INSTALL_DATA_DIR}
-        DESTINATION share/icons/hicolor/256x256/apps
-        RENAME net.dengine.Doomsday.png)
+    foreach (dest ${DE_INSTALL_DATA_DIR};share/icons/hicolor/256x256/apps)
+        install (FILES res/linux/deng-logo-256.png DESTINATION ${dest}
+                 RENAME net.dengine.Doomsday.png)
+    endforeach (dest)
     install (FILES res/linux/net.dengine.Doomsday.metainfo.xml
         DESTINATION share/metainfo
         RENAME net.dengine.Doomsday.appdata.xml)
