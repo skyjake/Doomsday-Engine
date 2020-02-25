@@ -34,6 +34,11 @@ Render::~Render()
     DE_ASSERT(d->context == nullptr);
 }
 
+bool Render::isInitialized() const
+{
+    return d->context != nullptr;
+}
+
 const Context &Render::context() const
 {
     DE_ASSERT(d->context);
@@ -54,7 +59,6 @@ void Render::glInit(Context &context)
 
 void Render::glDeinit()
 {
-    DE_ASSERT(d->context != nullptr);
     d->context = nullptr;
 }
 

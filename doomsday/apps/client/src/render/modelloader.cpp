@@ -109,7 +109,8 @@ DE_PIMPL(ModelLoader)
 #endif
             // Everything should have been unloaded, because all models
             // have been destroyed at this point.
-            DE_ASSERT(empty());
+            // (Does not apply during abnormal shutdown.)
+            //DE_ASSERT(empty());
         }
     };
     Programs programs;

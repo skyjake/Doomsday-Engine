@@ -137,6 +137,7 @@ DE_PIMPL(World), public Asset
 
     ~Impl() override
     {
+        glDeinit();
         for (auto &a : textureAtlas) delete a;
     }
 
@@ -296,10 +297,13 @@ void World::glDeinit()
 
 void World::update(TimeSpan elapsed)
 {
-    d->update(elapsed);
-    d->environ.advanceTime(elapsed);
-    d->mapRender.advanceTime(elapsed);
-    d->tonemap.advanceTime(elapsed);
+    if (d->isReady())
+    {
+        d->update(elapsed);
+        d->environ.advanceTime(elapsed);
+        d->mapRender.advanceTime(elapsed);
+        d->tonemap.advanceTime(elapsed);
+    }
 }
 
 void World::render(const ICamera &camera)

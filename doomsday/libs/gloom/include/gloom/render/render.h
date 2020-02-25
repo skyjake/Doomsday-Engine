@@ -33,6 +33,8 @@ public:
     Render();
     virtual ~Render();
 
+    bool isInitialized() const;
+
     const Context &context() const;
     Context &context();
 

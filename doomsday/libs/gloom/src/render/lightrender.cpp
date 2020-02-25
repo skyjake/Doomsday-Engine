@@ -424,8 +424,10 @@ void LightRender::render()
     }
 }
 
-void LightRender::advanceTime(TimeSpan elapsed)
+void LightRender::advanceTime(TimeSpan /*elapsed*/)
 {
+    DE_ASSERT(isInitialized());
+
     // Pick the shadow casters.
     d->selectShadowCasters();
 

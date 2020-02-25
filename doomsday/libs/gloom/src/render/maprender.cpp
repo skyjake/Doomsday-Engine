@@ -243,6 +243,8 @@ void MapRender::setPlaneY(ID planeId, double destY, double srcY, double startTim
 
 void MapRender::advanceTime(TimeSpan elapsed)
 {
+    DE_ASSERT(isInitialized());
+
     d->lights.advanceTime(elapsed);
 
     // Testing: Scroll offsets.
