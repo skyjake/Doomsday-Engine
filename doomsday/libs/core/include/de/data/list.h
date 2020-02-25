@@ -100,9 +100,9 @@ public:
     const T &last() const { return Base::back(); }
     T &      first() { return Base::front(); }
     T &      last() { return Base::back(); }
-    T        takeFirst() { T v = first(); pop_front(); return std::move(v); }
-    T        takeLast()  { T v = last();  Base::pop_back();  return std::move(v); }
-    T        takeAt(size_t pos) { T v = std::move(at(pos)); Base::erase(Base::begin() + pos); return std::move(v); }
+    T        takeFirst() { T v = first(); pop_front(); return v; }
+    T        takeLast()  { T v = last(); Base::pop_back(); return v; }
+    T        takeAt(size_t pos) { T v = std::move(at(pos)); Base::erase(Base::begin() + pos); return v; }
     void     removeFirst() { Base::erase(Base::begin()); }
     void     removeLast()  { Base::erase(Base::begin() + size() - 1); }
     void     removeAt(size_t pos) { Base::erase(Base::begin() + pos); }

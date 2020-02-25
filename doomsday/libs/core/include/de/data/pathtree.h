@@ -525,7 +525,7 @@ public:
     }
 
     inline int findAll(FoundNodes &found, bool (*predicate)(const Type &node, void *context),
-                       void *context = 0) const {
+                       void *context = nullptr) const {
         int numFoundSoFar = found.size();
         PathTreeIterator<PathTreeT> iter(leafNodes());
         while (iter.hasNext())
@@ -540,9 +540,9 @@ public:
     }
 
     inline int traverse(ComparisonFlags flags, const Type *parent,
-                        int (*callback) (Type &node, void *context), void *context = 0) const {
+                        int (*callback) (Type &node, void *context), void *context = nullptr) const {
         return PathTree::traverse(flags, parent,
-                                  reinterpret_cast<int (*)(PathTree::Node &, void *)>(callback),
+                                  function_cast<int (*)(PathTree::Node &, void *)>(callback),
                                   context);
     }
 

@@ -88,7 +88,7 @@ static dd_bool initGLOk;
 static dd_bool initFullGLOk;
 
 static dd_bool isGammaRampEnabled;
-static dfloat oldgamma, oldcontrast, oldbright;
+//static dfloat oldgamma, oldcontrast, oldbright;
 
 static dint fogModeDefault;
 
