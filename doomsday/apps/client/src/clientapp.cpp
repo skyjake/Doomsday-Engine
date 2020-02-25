@@ -609,7 +609,7 @@ ClientApp::ClientApp(const StringList &args)
 #endif*/
 
     // Show the splash image in a separate window.
-#if 0
+#if !defined (DE_MSYS)
     {
         SDL_Surface *splashSurface = createSDLSurfaceFromImage(Image::fromXpmData(doomsdaySplashXpm));
 
@@ -948,7 +948,7 @@ void ClientApp::alert(const String &msg, LogEntry::Level level)
 
 ClientApp &ClientApp::app()
 {
-    DE_ASSERT(clientAppSingleton != 0);
+    DE_ASSERT(clientAppSingleton != nullptr);
     return *clientAppSingleton;
 }
 
@@ -1000,7 +1000,7 @@ ConfigProfiles &ClientApp::uiSettings()
 ServerLink &ClientApp::serverLink()
 {
     ClientApp &a = ClientApp::app();
-    DE_ASSERT(a.d->svLink != 0);
+    DE_ASSERT(a.d->svLink != nullptr);
     return *a.d->svLink;
 }
 
@@ -1014,7 +1014,7 @@ InFineSystem &ClientApp::infine()
 InputSystem &ClientApp::input()
 {
     ClientApp &a = ClientApp::app();
-    DE_ASSERT(a.d->inputSys != 0);
+    DE_ASSERT(a.d->inputSys != nullptr);
     return *a.d->inputSys;
 }
 
@@ -1055,7 +1055,7 @@ bool ClientApp::hasClassicWorld()
 ClientResources &ClientApp::resources()
 {
     ClientApp &a = ClientApp::app();
-    DE_ASSERT(a.d->resources != 0);
+    DE_ASSERT(a.d->resources != nullptr);
     return *a.d->resources;
 }
 
@@ -1109,8 +1109,10 @@ void ClientApp::openInBrowser(const String &url)
 
 #if defined (MACOSX)
     CommandLine({"/usr/bin/open", url}).execute();
+#elif defined (DE_WINDOWS)
+    DE_ASSERT_FAIL("Open URL in web browser");
 #else
-    DE_ASSERT_FAIL("Open a browser");
+    CommandLine({"/usr/bin/xdg-open", url}).execute();
 #endif
 }
 
