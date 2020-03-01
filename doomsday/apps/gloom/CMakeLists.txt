@@ -29,12 +29,11 @@ set (SOURCES
 )
 
 # Deploy the FMOD library.
-if (NOT TARGET fmodex)
-    message (FATAL_ERROR "FMOD is required to build Gloom - Set the FMOD_DIR variable")
-endif ()
 if (APPLE)
-    get_property (fmodLibPath TARGET fmodex PROPERTY INTERFACE_LINK_LIBRARIES)
-    deng_find_resources (${fmodLibPath},Frameworks)
+    if (TARGET fmodex)
+        get_property (fmodLibPath TARGET fmodex PROPERTY INTERFACE_LINK_LIBRARIES)
+        deng_find_resources (${fmodLibPath},Frameworks)
+    endif ()
 endif ()
 
 deng_add_application (gloom ${SOURCES} ${HEADERS})
@@ -47,7 +46,6 @@ if (APPLE)
      )
     set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "Gloom")
     deng_install_bundle_deps (gloom
-        #fmodex
         the_Foundation::the_Foundation
         Deng::libcore
         Deng::libgui

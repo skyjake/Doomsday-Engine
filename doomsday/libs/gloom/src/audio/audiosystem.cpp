@@ -7,13 +7,17 @@
 #include <de/Hash>
 #include <de/Log>
 #include <de/Set>
-#include <fmod.h>
-#include <fmod_errors.h>
+
+#if defined (LIBGLOOM_HAVE_FMOD)
+#  include <fmod.h>
+#  include <fmod_errors.h>
+#endif
 
 using namespace de;
 
 namespace gloom {
 
+#if defined (LIBGLOOM_HAVE_FMOD)
 /**
  * Adapter that allows FMOD to read files via Doomsday.
  */
@@ -85,11 +89,14 @@ struct FileAdapter
         return FMOD_OK;
     }
 };
+#endif
 
 static AudioSystem *theAudioSystem = {nullptr};
 
 DE_PIMPL(AudioSystem)
 {
+#if defined (LIBGLOOM_HAVE_FMOD)
+
     struct AudibleSound;
 
     /**
@@ -501,6 +508,40 @@ DE_PIMPL(AudioSystem)
         }
         return *new AudibleSound(*cached);
     }
+    
+#else
+    // Dummy implementation.
+    struct DummySound : public de::Sound
+    {
+        void play(PlayingMode) {}
+        void stop() {}
+        void pause() {}
+        void resume() {}
+        PlayingMode mode() const { return NotPlaying; }
+        bool isPaused() const { return true; }
+        void update() {}
+    };
+    DummySound dummy;
+    const ICamera *listenerCamera = nullptr;
+    
+    Impl(Public *i) : Base(i)
+    {
+        theAudioSystem = i;
+    }
+    
+    ~Impl()
+    {
+        theAudioSystem = nullptr;
+    }
+    
+    void refresh() {}
+    
+    Sound &load(const Waveform &)
+    {
+        return dummy;
+    }
+       
+#endif
 };
 
 AudioSystem::AudioSystem() : d(new Impl(this))
