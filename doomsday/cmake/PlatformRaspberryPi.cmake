@@ -1,35 +1,25 @@
-# Linux / BSD / other Unix
+# Raspberry Pi (no X11)
 include (PlatformGenericUnix)
 
-if (NOT CMAKE_CXX_COMPILER_ID)
-    if (CMAKE_CXX_COMPILER MATCHES ".*g\\+\\+.*")
-        message (STATUS "CMake did not detect the compiler; based on name we assume GNU C++")
-        set (CMAKE_CXX_COMPILER_ID "GNU")
-        set (CMAKE_COMPILER_IS_GNUCXX YES)
-    endif ()
-endif ()
-
-set (DE_X11 ON)
-set (DE_PLATFORM_SUFFIX x11)
+set (RASPBERRYPI YES)
+set (DE_PLATFORM_SUFFIX raspi)
 set (DE_AMETHYST_PLATFORM UNIX)
 
 set (DE_BASE_DIR    "" CACHE STRING "Base directory path (defaults to {prefix}/${DE_INSTALL_DATA_DIR})")
 set (DE_LIBRARY_DIR "" CACHE STRING "Plugin directory path (defaults to {prefix}/${DE_INSTALL_PLUGIN_DIR})")
 
 add_definitions (
-    -DDE_X11
+    -DDE_RASPBERRYPI
     -D__USE_BSD
     -D_GNU_SOURCE=1
+    -DDE_PLATFORM_ID="source"
 )
 
-if (DE_UPDATER_PLATFORM)
-    add_definitions (-DDE_PLATFORM_ID="${DE_UPDATER_PLATFORM}-${DE_ARCH}")
-else ()
-    add_definitions (-DDE_PLATFORM_ID="source")
-endif ()
-
 if (CMAKE_COMPILER_IS_GNUCXX)
-    foreach (cxxOpt -Wno-deprecated-copy;-Wno-class-memaccess;-Wno-address-of-packed-member;-Wno-psabi)
+    set (cxxOpts
+        -Wno-psabi
+    )
+    foreach (cxxOpt ${cxxOpts})
         append_unique (CMAKE_CXX_FLAGS ${cxxOpt})
     endforeach (cxxOpt)
 
@@ -42,3 +32,16 @@ endif ()
 # All symbols are hidden by default.
 append_unique (CMAKE_C_FLAGS   "-fvisibility=hidden")
 append_unique (CMAKE_CXX_FLAGS "-fvisibility=hidden")
+
+# Broadcom Videocore IV OpenGL ES library.
+if (NOT TARGET bcm)
+    add_library (bcm INTERFACE)
+    target_link_libraries (bcm INTERFACE 
+        -L/opt/vc/lib 
+        /opt/vc/lib/libGLESv2_static.a 
+        brcmEGL 
+        brcmGLESv2 
+        vcos 
+        m
+    )
+endif ()

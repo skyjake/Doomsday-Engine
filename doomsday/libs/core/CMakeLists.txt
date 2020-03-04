@@ -88,6 +88,7 @@ if (UNIX AND NOT APPLE)
         -DDE_BASE_DIR="${baseDir}"
         -DDE_LIBRARY_DIR="${libDir}"
     )
+    target_link_libraries (libcore PRIVATE atomic)
 endif ()
 if (WIN32)
     # timeBeginPeriod, timeEndPeriod

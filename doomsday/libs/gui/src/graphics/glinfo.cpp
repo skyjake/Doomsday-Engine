@@ -27,8 +27,10 @@
 #include <de/math.h>
 #include <de/c_wrapper.h>
 
-#include <glbinding/gl33ext/enum.h>
-#include <glbinding/Binding.h>
+#if (DE_OPENGL == 330)
+#  include <glbinding/gl33ext/enum.h>
+#  include <glbinding/Binding.h>
+#endif
 
 #if defined(DE_DEBUG)
 //#  define DE_ENABLE_OPENGL_DEBUG_LOGGER
@@ -263,8 +265,9 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
         
         if (inited) return;
 
-        #if defined (DE_OPENGL_ES)
+#if defined (DE_OPENGL_ES)
         {
+            /*
             initializeOpenGLFunctions();
 
             static OpenGLFeature const requiredFeatures[] =
@@ -287,8 +290,9 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
                     //                String("%1").arg(feature));
                 }
             }
+            */
         }
-        #else
+#elif defined (DE_OPENGL)
         {
             try
             {
@@ -305,7 +309,7 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
                                 "Failed to initialize OpenGL: " + std::string(x.what()));
             }
         }
-        #endif
+#endif
 
         inited = true;
 
@@ -318,44 +322,7 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
         ext.NV_texture_barrier                  = query("GL_NV_texture_barrier");
         ext.KHR_debug                           = query("GL_KHR_debug");
 
-        // #ifdef WIN32
-        // {
-        //     //ext.Windows_ARB_multisample        = query("WGL_ARB_multisample");
-        //     ext.Windows_EXT_swap_control       = query("WGL_EXT_swap_control");
-
-        //     if (ext.Windows_EXT_swap_control)
-        //     {
-        //         wglSwapIntervalEXT = de::function_cast<decltype(wglSwapIntervalEXT)>
-        //                 (wglGetProcAddress("wglSwapIntervalEXT"));
-        //     }
-        // }
-        // #endif
-
-//        #ifdef DE_X11
-//        {
-//            ext.X11_EXT_swap_control           = query("GLX_EXT_swap_control");
-//            ext.X11_SGI_swap_control           = query("GLX_SGI_swap_control");
-//            ext.X11_MESA_swap_control          = query("GLX_MESA_swap_control");
-
-//            if (ext.X11_EXT_swap_control)
-//            {
-//                glXSwapIntervalEXT = de::function_cast<decltype(glXSwapIntervalEXT)>
-//                        (glXGetProcAddress(reinterpret_cast<const GLubyte *>("glXSwapIntervalEXT")));
-//            }
-//            if (ext.X11_SGI_swap_control)
-//            {
-//                glXSwapIntervalSGI = de::function_cast<decltype(glXSwapIntervalSGI)>
-//                        (glXGetProcAddress(reinterpret_cast<const GLubyte *>("glXSwapIntervalSGI")));
-//            }
-//            if (ext.X11_MESA_swap_control)
-//            {
-//                glXSwapIntervalMESA = de::function_cast<decltype(glXSwapIntervalMESA)>
-//                        (glXGetProcAddress(reinterpret_cast<const GLubyte *>("glXSwapIntervalMESA")));
-//            }
-//        }
-//        #endif
-
-        #ifdef DE_ENABLE_OPENGL_DEBUG_LOGGER
+#if defined (DE_ENABLE_OPENGL_DEBUG_LOGGER)
         {
             gl::glDebugMessageCallback(debugMessageCallback, nullptr);
             glEnable(gl::GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -370,21 +337,21 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
                 debug("[GLInfo] debug output enabled");
             }
         }
-        #endif
+#endif
 
         // Limits.
         glGetIntegerv(GL_MAX_TEXTURE_SIZE,        reinterpret_cast<GLint *>(&lim.maxTexSize));
         glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, reinterpret_cast<GLint *>(&lim.maxTexUnits)); // at least 16
         LIBGUI_ASSERT_GL_OK();
         
-        #if defined (DE_OPENGL)
+#if defined (DE_OPENGL)
         {
             glGetFloatv(GL_SMOOTH_LINE_WIDTH_RANGE,       &lim.smoothLineWidth.start);
             LIBGUI_ASSERT_GL_OK();
             glGetFloatv(GL_SMOOTH_LINE_WIDTH_GRANULARITY, &lim.smoothLineWidthGranularity);
             LIBGUI_ASSERT_GL_OK();
         }
-        #endif
+#endif
         LIBGUI_ASSERT_GL_OK();
 
         if (ext.EXT_texture_filter_anisotropic)

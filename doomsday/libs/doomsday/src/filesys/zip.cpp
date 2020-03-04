@@ -627,7 +627,7 @@ size_t Zip::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
     LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s) [%u +%u]",
                NativePath(composePath()).pretty()
             << NativePath(lumpFile.composePath()).pretty()
-            << (unsigned long) lumpFile.size()
+            << dsize(lumpFile.size())
             << (lumpFile.isCompressed()? ", compressed" : "")
             << startOffset
             << length);

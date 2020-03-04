@@ -30,12 +30,6 @@
 #  include <glbinding/gl33core/gl.h>
 #  include <glbinding/gl33ext/enum.h>
 using namespace gl33core;
-//#  include <QOpenGLFunctions_3_3_Core>
-//#  include <QOpenGLExtensions>
-//#  define QOpenGLFunctions_Doomsday QOpenGLFunctions_3_3_Core
-//#  ifndef GL_VERSION_3_3
-//#    error "OpenGL 3.3 (or newer) headers not found"
-//#  endif
 #  define DE_HAVE_TIMER_QUERY
 
 #elif (DE_OPENGL_ES == 30)
@@ -44,9 +38,7 @@ using namespace gl33core;
 #  define QOpenGLFunctions_Doomsday QOpenGLExtraFunctions
 
 #elif (DE_OPENGL_ES == 20)
-#  include <QOpenGLFunctions>
-#  include <QOpenGLExtensions>
-#  define QOpenGLFunctions_Doomsday QOpenGLFunctions
+#  include <SDL_opengles2.h>
 #endif
 
 // Defined in GLES2.
@@ -58,6 +50,9 @@ using namespace gl33core;
 #  define DE_HAVE_VAOS
 #  define DE_HAVE_INSTANCES
 #  define DE_HAVE_BLIT_FRAMEBUFFER
+#  define DE_HAVE_COLOR_ATTACHMENTS
+#  define DE_HAVE_DEPTH_STENCIL_ATTACHMENT
+#  define DE_HAVE_TEXTURE_BUFFER
 #endif
 
 #endif // LIBGUI_GRAPHICS_OPENGL_H

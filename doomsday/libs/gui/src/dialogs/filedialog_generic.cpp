@@ -1,4 +1,4 @@
-/** @file filedialog_x11.cpp  Native file chooser dialog.
+/** @file filedialog_generic.cpp  File chooser dialog using Doomsday widgets.
  *
  * @authors Copyright (c) 2019 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

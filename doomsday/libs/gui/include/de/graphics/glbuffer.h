@@ -358,7 +358,9 @@ public:
 
     enum Type {
         VertexArray, // array buffer, or an array buffer with element array buffer
+#if defined (DE_HAVE_TEXTURE_BUFFER)
         Texture,     // texture buffer
+#endif
     };
 
 public:

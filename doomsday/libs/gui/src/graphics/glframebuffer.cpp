@@ -33,14 +33,22 @@ namespace de {
 static const Vec2ui nullSize;
 static GLuint       defaultFramebuffer = 0;
 
+#if defined (DE_HAVE_COLOR_ATTACHMENTS)        
+static const int    MAX_COLOR_ATTACHMENTS = 4;
+#else
+static const int    MAX_COLOR_ATTACHMENTS = 1;
+#endif
+
 DE_PIMPL(GLFramebuffer)
 , DE_OBSERVES(Asset, Deletion)
 {
     enum AttachmentId {
         ColorBuffer0,
+#if defined (DE_HAVE_COLOR_ATTACHMENTS)        
         ColorBuffer1,
         ColorBuffer2,
         ColorBuffer3,
+#endif
         DepthBuffer,
         StencilBuffer,
         DepthStencilBuffer,
@@ -54,6 +62,7 @@ DE_PIMPL(GLFramebuffer)
         case GL_COLOR_ATTACHMENT0:
             return ColorBuffer0;
 
+#if defined (DE_HAVE_COLOR_ATTACHMENTS)        
         case GL_COLOR_ATTACHMENT1:
             return ColorBuffer1;
 
@@ -62,6 +71,7 @@ DE_PIMPL(GLFramebuffer)
 
         case GL_COLOR_ATTACHMENT3:
             return ColorBuffer3;
+#endif
 
         case GL_DEPTH_ATTACHMENT:
             return DepthBuffer;
@@ -69,8 +79,10 @@ DE_PIMPL(GLFramebuffer)
         case GL_STENCIL_ATTACHMENT:
             return StencilBuffer;
 
+#if defined (DE_HAVE_DEPTH_STENCIL_ATTACHMENT)
         case GL_DEPTH_STENCIL_ATTACHMENT:
             return DepthStencilBuffer;
+#endif
 
         default:
             DE_ASSERT_FAIL("Invalid GLFramebuffer attachment");
@@ -85,12 +97,16 @@ DE_PIMPL(GLFramebuffer)
         DE_ASSERT(!flags.testFlag(ColorDepthStencil));
 
         return flags == Color0?  GL_COLOR_ATTACHMENT0  :
+#if defined (DE_HAVE_COLOR_ATTACHMENTS)               
                flags == Color1?  GL_COLOR_ATTACHMENT1  :
                flags == Color2?  GL_COLOR_ATTACHMENT2  :
                flags == Color3?  GL_COLOR_ATTACHMENT3  :
-               flags == Depth?   GL_DEPTH_ATTACHMENT   :
+#endif
+#if defined (DE_HAVE_DEPTH_STENCIL_ATTACHMENT)
+               flags == DepthStencil? GL_DEPTH_STENCIL_ATTACHMENT :
+#endif
                flags == Stencil? GL_STENCIL_ATTACHMENT :
-                                 GL_DEPTH_STENCIL_ATTACHMENT;
+                                 GL_DEPTH_ATTACHMENT;
     }
 
     GLuint      fbo;
@@ -158,6 +174,7 @@ DE_PIMPL(GLFramebuffer)
         {
             return ColorBuffer0;
         }
+#if defined (DE_HAVE_COLOR_ATTACHMENTS)        
         if (flags == Color1)
         {
             return ColorBuffer1;
@@ -170,6 +187,7 @@ DE_PIMPL(GLFramebuffer)
         {
             return ColorBuffer3;
         }
+#endif
         if (flags == Depth)
         {
             return DepthBuffer;
@@ -187,9 +205,9 @@ DE_PIMPL(GLFramebuffer)
     }
 
     int colorAttachmentCount() const
-    {
+    {    
         int count = 0;
-        for (int i = 0; i < 4; ++i)
+        for (int i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
         {
             if (flags & (Color0 << i)) count++;
         }
@@ -235,7 +253,7 @@ DE_PIMPL(GLFramebuffer)
         DE_ASSERT(tex.isReady());
         if (tex.isCubeMap())
         {
-            glFramebufferTexture(GL_FRAMEBUFFER, attachment, tex.glName(), level);
+            glFramebufferTexture(FRAMEBUFFER_GL, attachment, tex.glName(), level);
         }
         else
         {
@@ -307,8 +325,10 @@ DE_PIMPL(GLFramebuffer)
             attachTexture(*texture,
                           textureAttachment == Color0?  GL_COLOR_ATTACHMENT0  :
                           textureAttachment == Depth?   GL_DEPTH_ATTACHMENT   :
-                          textureAttachment == Stencil? GL_STENCIL_ATTACHMENT :
-                                                        GL_DEPTH_STENCIL_ATTACHMENT);
+#if defined (DE_HAVE_DEPTH_STENCIL_ATTACHMENT)
+                          textureAttachment == DepthStencil? GL_DEPTH_STENCIL_ATTACHMENT :
+#endif
+                                                        GL_STENCIL_ATTACHMENT);
         }
 
         if (size != nullSize) // A non-default target: size must be specified.
@@ -336,6 +356,7 @@ DE_PIMPL(GLFramebuffer)
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
 
+#if defined (DE_HAVE_DEPTH_STENCIL_ATTACHMENT)
     void allocDepthStencilRenderBuffers()
     {
         if (flags.testFlag(DepthStencil) && !flags.testFlag(SeparateDepthAndStencil) &&
@@ -362,6 +383,7 @@ DE_PIMPL(GLFramebuffer)
 #endif
         }
     }
+#endif // DE_HAVE_DEPTH_STENCIL_ATTACHMENT
 
     void deallocRenderBuffers()
     {
@@ -592,19 +614,28 @@ void GLFramebuffer::configure(const Vec2ui &size, Flags flags, int sampleCount)
 }
 
 void GLFramebuffer::configure(GLTexture *colorTex,
-                              GLTexture *depthStencilTex,
+                              GLTexture *depthTex,
+                              GLTexture *stencilTex,
                               Flags      missingRenderBuffers)
 {
-    configure(List<GLTexture *>({colorTex}), depthStencilTex, missingRenderBuffers);
+    configure(List<GLTexture *>({colorTex}), depthTex, stencilTex, missingRenderBuffers);
 }
 
 void GLFramebuffer::configure(const List<GLTexture *> &colorTextures,
-                              GLTexture *              depthStencilTex,
+                              GLTexture *              depthTex,
+                              GLTexture *              stencilTex,
                               Flags                    missingRenderBuffers)
 {
-    LOG_AS("GLFramebuffer");
+    LOG_AS("GLFramebuffer");    
 
     DE_ASSERT(colorTextures.size() >= 1);
+    
+    GLTexture *depthStencilTex = (depthTex && stencilTex && depthTex == stencilTex ? 
+                                  depthTex : nullptr);
+                                  
+#if !defined (DE_HAVE_DEPTH_STENCIL_ATTACHMENT)
+    DE_ASSERT(depthStencilTex == nullptr);
+#endif
 
     d->deallocAndReset();
 
@@ -618,6 +649,19 @@ void GLFramebuffer::configure(const List<GLTexture *> &colorTextures,
     {
         d->flags |= DepthStencil;
         d->size = depthStencilTex->size();
+    }
+    else
+    {
+        if (depthTex)
+        {
+            d->flags |= Depth;
+            d->size = depthTex->size();
+        }    
+        if (stencilTex)
+        {
+            d->flags |= Stencil;
+            d->size = stencilTex->size();
+        }
     }
 
     d->allocFBO();
@@ -635,6 +679,7 @@ void GLFramebuffer::configure(const List<GLTexture *> &colorTextures,
         d->attachRenderbuffer(Impl::ColorBuffer0, GL_RGBA8, GL_COLOR_ATTACHMENT0);
     }
 
+#if defined (DE_HAVE_DEPTH_STENCIL_ATTACHMENT)
     // The depth attachment.
     if (depthStencilTex)
     {
@@ -647,6 +692,29 @@ void GLFramebuffer::configure(const List<GLTexture *> &colorTextures,
         d->attachRenderbuffer(
             Impl::DepthStencilBuffer, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
     }
+#else
+    if (depthTex)
+    {
+        DE_ASSERT(depthTex->isReady());
+        DE_ASSERT(d->size == depthTex->size());
+        d->attachTexture(*depthTex, GL_DEPTH_ATTACHMENT);
+    }
+    else if (missingRenderBuffers & Depth)
+    {
+        d->attachRenderBuffer(Impl::DepthBuffer, GL_DEPTH24_OES, GL_DEPTH_ATTACHMENT);
+    }
+    
+    if (stencilTex)
+    {
+        DE_ASSERT(stencilTex->isReady());
+        DE_ASSERT(d->size == stencilTex->size());
+        d->attachTexture(*stencilTex, GL_STENCIL_ATTACHMENT);
+    }
+    else if (missingRenderBuffers & Stencil)
+    {
+        d->attachRenderBuffer(Impl::StencilBuffer, GL_RED, GL_STENCIL_ATTACHMENT);
+    }
+#endif
 
     LIBGUI_ASSERT_GL_OK();
 
@@ -879,9 +947,9 @@ void GLFramebuffer::blit(GLFramebuffer &dest, Flags attachments, gfx::Filter fil
 
 #else
 
-    qDebug() << "need to implement glBlitFramebuffer:" << glName() << "->" << dest.glName();
-    qDebug() << "\t- from texture:" << attachedTexture(Color);
-    qDebug() << "\t- to texture:" << dest.attachedTexture(Color);
+    debug("[GLFramebuffer] TODO: need to implement glBlitFramebuffer: %u -> %u", glName(), dest.glName());
+    debug("\t- from texture: %d", attachedTexture(Color0));
+    debug("\t- to texture: %d", dest.attachedTexture(Color0));
 
 #endif
 
@@ -915,8 +983,8 @@ void GLFramebuffer::blit(gfx::Filter filtering) const
 
 #else
 
-    qDebug() << "need to implement glBlitFramebuffer:" << glName() << "-> 0";
-    qDebug() << "\t- texture:" << attachedTexture(Color);
+    debug("[GLFramebuffer] TODO: need to implement glBlitFramebuffer: %u -> 0", glName());
+    debug("\t- texture: %d", attachedTexture(Color0));
 
 #endif
 

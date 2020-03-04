@@ -45,15 +45,19 @@ public:
 
     enum Flag {
         Color0   = 0x001, ///< Target has a color attachment.
+#if defined (DE_HAVE_COLOR_ATTACHMENTS)        
         Color1   = 0x002,
         Color2   = 0x004,
         Color3   = 0x008,
+#endif
         Depth    = 0x100, ///< Target has a depth attachment.
         Stencil  = 0x200, ///< Target has a stencil attachment.
 
         Changed = 0x1000, ///< Draw/clear has occurred on the target.
 
+#if defined (DE_HAVE_COLOR_ATTACHMENTS)        
         ColorAny          = Color0 | Color1 | Color2 | Color3,
+#endif
         ColorDepth        = Color0 | Depth,
         ColorDepthStencil = Color0 | Depth | Stencil,
         ColorStencil      = Color0 | Stencil,
@@ -138,18 +142,22 @@ public:
      * Reconfigures the render target with two textures, one for the color
      * values and one for depth/stencil values.
      *
-     * If @a colorTex or @a depthStencilTex is omitted, a renderbuffer will be
-     * created in its place (depending on @a missingRenderBuffers).
+     * If @a colorTex, @a depthTex, or @a stencilTex is omitted, a renderbuffer
+     * will be created in its place (depending on @a missingRenderBuffers).
+     * @a depthTex and @a stencilTex can point to the same texture, in which
+     * case a combined depth/stencil attachment is used.
      *
      * Any previous attachments are released.
      *
      * @param colorTex              Texture for color values.
-     * @param depthStencilTex       Texture for depth/stencil values.
+     * @param depthTex              Texture for depth values.
+     * @param stencilTex            Texture for stencil values.
      * @param missingRenderBuffers  Create renderbuffers for attachments where
      *                              texture has not been specified.
      */
     void configure(GLTexture *colorTex,
-                   GLTexture *depthStencilTex,
+                   GLTexture *depthTex,
+                   GLTexture *stencilTex,
                    Flags      missingRenderBuffers = ColorDepthStencil);
 
     /**
@@ -159,12 +167,14 @@ public:
      * created in its place (depending on @a missingRenderBuffers).
      *
      * @param colorTextures         Textures for color attachments.
-     * @param depthStencilTex       Texture for depth/stencil values.
+     * @param depthTex              Texture for depth values.
+     * @param stencilTex            Texture for stencil values.
      * @param missingRenderBuffers  Create renderbuffers for attachments where
      *                              texture has not been specified.
      */
     void configure(const List<GLTexture *> &colorTextures,
-                   GLTexture *              depthStencilTex,
+                   GLTexture *              depthTex,
+                   GLTexture *              stencilTex,
                    Flags                    missingRenderBuffers = ColorDepthStencil);
 
     /**

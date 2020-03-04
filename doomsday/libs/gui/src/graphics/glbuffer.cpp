@@ -140,7 +140,9 @@ DE_PIMPL(GLBuffer)
 
     Impl(Public *i, Type type)
         : Base(i)
+#if defined (DE_HAVE_TEXTURE_BUFFER)
         , bufferType(type == Texture? GL_TEXTURE_BUFFER : GL_ARRAY_BUFFER)
+#endif
     {}
 
     ~Impl()
@@ -215,15 +217,28 @@ DE_PIMPL(GLBuffer)
     {
         switch (u)
         {
-        case Static:      return GL_STATIC_DRAW;
-        case StaticRead:  return GL_STATIC_READ;
-        case StaticCopy:  return GL_STATIC_COPY;
-        case Dynamic:     return GL_DYNAMIC_DRAW;
-        case DynamicRead: return GL_DYNAMIC_READ;
-        case DynamicCopy: return GL_DYNAMIC_COPY;
-        case Stream:      return GL_STREAM_DRAW;
-        case StreamRead:  return GL_STREAM_READ;
-        case StreamCopy:  return GL_STREAM_COPY;
+#if defined (DE_OPENGL)
+            case Static:      return GL_STATIC_DRAW;
+            case StaticRead:  return GL_STATIC_READ;
+            case StaticCopy:  return GL_STATIC_COPY;
+            case Dynamic:     return GL_DYNAMIC_DRAW;
+            case DynamicRead: return GL_DYNAMIC_READ;
+            case DynamicCopy: return GL_DYNAMIC_COPY;
+            case Stream:      return GL_STREAM_DRAW;
+            case StreamRead:  return GL_STREAM_READ;
+            case StreamCopy:  return GL_STREAM_COPY;        
+#endif
+#if defined (DE_OPENGL_ES)
+            case Static:      return GL_STATIC_DRAW;
+            case StaticRead:  return GL_STATIC_DRAW;
+            case StaticCopy:  return GL_STATIC_DRAW;
+            case Dynamic:     return GL_DYNAMIC_DRAW;
+            case DynamicRead: return GL_DYNAMIC_DRAW;
+            case DynamicCopy: return GL_DYNAMIC_DRAW;
+            case Stream:      return GL_STREAM_DRAW;
+            case StreamRead:  return GL_STREAM_DRAW;
+            case StreamCopy:  return GL_STREAM_DRAW;        
+#endif
         }
         DE_ASSERT_FAIL("Invalid glUsage");
         return GL_STATIC_DRAW;
@@ -520,12 +535,13 @@ void GLBuffer::draw(const DrawRanges *ranges) const
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
         DE_ASSERT(GLProgram::programInUse()->validate());
+#if defined (DE_OPENGL)
         if (drawRanges.size() == 1)
         {
             glDrawElements(d->prim,
-                              drawRanges.count[0],
-                              GL_UNSIGNED_SHORT,
-                              reinterpret_cast<const void *>(dintptr(drawRanges.first[0] * 2)));
+                           drawRanges.count[0],
+                           GL_UNSIGNED_SHORT,
+                           reinterpret_cast<const void *>(dintptr(drawRanges.first[0] * 2)));
             LIBGUI_ASSERT_GL_OK();
         }
         else
@@ -537,20 +553,32 @@ void GLBuffer::draw(const DrawRanges *ranges) const
             }
 
             glMultiDrawElements(d->prim,
-                                   drawRanges.count.data(),
-                                   GL_UNSIGNED_SHORT,
-                                   indices,
+                                drawRanges.count.data(),
+                                GL_UNSIGNED_SHORT,
+                                indices,
                                 GLsizei(drawRanges.size()));
             LIBGUI_ASSERT_GL_OK();
 
             delete [] indices;
         }
+#endif
+#if defined (DE_OPENGL_ES)
+        for (duint i = 0; i < drawRanges.size(); ++i)
+        {
+            glDrawElements(d->prim,
+                           drawRanges.count[i],
+                           GL_UNSIGNED_SHORT,
+                           reinterpret_cast<const void *>(dintptr(drawRanges.first[i] * 2)));
+            LIBGUI_ASSERT_GL_OK();
+        }            
+#endif
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
     else
     {
         DE_ASSERT(GLProgram::programInUse()->validate());
+#if defined (DE_OPENGL)
         if (drawRanges.size() == 1)
         {
             glDrawArrays(d->prim, drawRanges.first[0], drawRanges.count[0]);
@@ -564,6 +592,14 @@ void GLBuffer::draw(const DrawRanges *ranges) const
                               GLsizei(drawRanges.size()));
             LIBGUI_ASSERT_GL_OK();
         }
+#endif
+#if defined (DE_OPENGL_ES)
+        for (duint i = 0; i < drawRanges.size(); ++i)
+        {
+            glDrawArrays(d->prim, drawRanges.first[i], drawRanges.count[i]);
+            LIBGUI_ASSERT_GL_OK();
+        }
+#endif
     }
     ++drawCounter;
 

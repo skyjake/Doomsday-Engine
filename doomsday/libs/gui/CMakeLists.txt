@@ -38,29 +38,36 @@ deng_merge_sources (text     src/text/*.cpp)
 deng_merge_sources (vr       src/vr/*.cpp)
 deng_merge_sources (widgets  src/widgets/*.cpp)
 
-list (APPEND SOURCES src/dialogs/filedialog_${DE_PLATFORM_SUFFIX})
+if (DE_X11 OR RASPBERRYPI)
+    list (APPEND SOURCES src/dialogs/filedialog_generic.cpp)
+else ()
+    list (APPEND SOURCES src/dialogs/filedialog_${DE_PLATFORM_SUFFIX})
+endif ()
 
 deng_add_library (libgui ${SOURCES} ${HEADERS})
 
 if (DE_OPENGL_API STREQUAL "3.3")
     target_compile_definitions (libgui PUBLIC -DDE_OPENGL=330)
     message (STATUS "Using OpenGL 3.3")
+    set (DE_HAVE_OPENGL_ES NO)
 elseif (DE_OPENGL_API STREQUAL "GLES3")
     target_compile_definitions (libgui PUBLIC -DDE_OPENGL_ES=30)
     message (STATUS "Using OpenGL ES 3.0")
+    set (DE_HAVE_OPENGL_ES YES)
 elseif (DE_OPENGL_API STREQUAL "GLES2")
     target_compile_definitions (libgui PUBLIC -DDE_OPENGL_ES=20)
     message (STATUS "Using OpenGL ES 2.0")
+    set (DE_HAVE_OPENGL_ES YES)
 else ()
     message (FATAL_ERROR "Invalid value for OpenGL API: ${DE_OPENGL_API}")
 endif ()
 
 # Link libraries.
 deng_link_libraries (libgui PUBLIC DengCore)
-target_link_libraries (libgui
-    PUBLIC  glbinding::glbinding
-    PRIVATE SDL2 stb assimp
-)
+target_link_libraries (libgui PRIVATE SDL2 stb assimp)
+if (NOT DE_HAVE_OPENGL_ES)
+    target_link_libraries (libgui PUBLIC glbinding::glbinding)    
+endif ()
 if (WIN32)
     target_link_libraries (libgui PUBLIC opengl32.lib)
     # Direct2D was used for DPI information.
@@ -76,6 +83,9 @@ if (IOS)
 elseif (APPLE)
     link_framework (libgui PRIVATE Cocoa)
     link_framework (libgui PRIVATE OpenGL)
+endif ()
+if (RASPBERRYPI)
+    target_link_libraries (libgui PRIVATE bcm)
 endif ()
 
 deng_deploy_library (libgui DengGui)
