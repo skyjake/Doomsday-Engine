@@ -299,6 +299,21 @@ static de::Value *Function_Player_ArmorType(de::Context &ctx, const de::Function
 }
 #endif
 
+static de::Value *Function_Player_GiveArmor(de::Context &ctx, const de::Function::ArgumentValues &args)
+{
+    player_t *plr = &contextPlayer(ctx);
+    const int type = args.at(0)->asInt();
+    const int points = args.at(1)->asInt();
+
+#if defined(__JHEXEN__)
+    const bool ok = P_GiveArmorAlt(plr, armortype_t(type), points) != 0;
+#else
+    const bool ok = P_GiveArmor(plr, type, points) != 0;
+#endif
+
+    return new de::NumberValue(ok);
+}
+
 static de::Value *Function_Player_Power(de::Context &ctx, const de::Function::ArgumentValues &args)
 {
     int power = args.at(0)->asInt();
@@ -404,7 +419,8 @@ void Common_Load()
             gameBindings->init(playerClass)
                 << DENG2_FUNC_NOARG (Player_Health, "health")
                 << DENG2_FUNC       (Player_Power, "power", "type")
-                << DENG2_FUNC_NOARG (Player_ShotAmmo, "shotAmmo");
+                << DENG2_FUNC_NOARG (Player_ShotAmmo, "shotAmmo")
+                << DENG2_FUNC       (Player_GiveArmor, "giveArmor", "type" << "points");
 
 #if defined(HAVE_DOOM_ARMOR_BINDINGS)
             *gameBindings
