@@ -3,8 +3,6 @@
 cmake_minimum_required (VERSION 3.1)
 project (DENG_LIBGUI)
 
-option (DENG_ASSIMP_EMBEDDED "Use the Assimp from 'external/assimp' instead of system libraries" YES)
-
 set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME)
 
 #----------------------------------------------------------------------------------------

@@ -12,7 +12,7 @@ set (CPACK_DEBIAN_PACKAGE_MAINTAINER "Jaakko Keränen (skyjake) <jaakko.keranen@
 set (CPACK_DEBIAN_PACKAGE_SECTION universe/games)
 set (CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5gui5, libqt5x11extras5, libsdl2-mixer-2.0-0, libxrandr2, libxxf86vm1, libncurses5, libfluidsynth1, libminizip1")
 if (NOT DENG_ASSIMP_EMBEDDED)
-    string (APPEND CPACK_DEBIAN_PACKAGE_DEPENDS ", libassimp")
+    string (APPEND CPACK_DEBIAN_PACKAGE_DEPENDS ", libassimp4")
 endif ()
 
 set (CPACK_RPM_PACKAGE_SUMMARY ${summary})
