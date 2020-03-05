@@ -51,6 +51,9 @@ public:
         duint32 EXT_texture_compression_s3tc : 1;
         duint32 EXT_texture_filter_anisotropic : 1;
 
+        // OpenGL ES extensions:
+        duint32 OES_rgb8_rgba8 : 1;
+
         // Vendor-specific extensions:
         duint32 NV_framebuffer_multisample_coverage : 1;
         duint32 NV_texture_barrier : 1;

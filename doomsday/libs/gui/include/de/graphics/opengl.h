@@ -39,6 +39,7 @@ using namespace gl33core;
 
 #elif (DE_OPENGL_ES == 20)
 #  include <SDL_opengles2.h>
+#  include <GLES2/gl2ext.h>
 #endif
 
 // Defined in GLES2.

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GLTIMER_H
-#define LIBGUI_GLTIMER_H
+#pragma once
 
 #include <de/Id>
 #include "de/libgui.h"
@@ -72,5 +71,3 @@ private:
 };
 
 } // namespace de
-
-#endif // LIBGUI_GLTIMER_H

@@ -29,7 +29,6 @@ DE_PIMPL(GLShader)
 {
     GLuint name = 0;
     Type   type = Vertex;
-    //Block  compiledSource;
 
     Impl(Public *i) : Base(i)
     {}
@@ -44,9 +43,14 @@ DE_PIMPL(GLShader)
         LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
         if (!name)
         {
+#if defined (DE_OPENGL)
             name = glCreateShader(type == Vertex   ? GL_VERTEX_SHADER
-                                          : type == Geometry ? GL_GEOMETRY_SHADER
-                                                             : GL_FRAGMENT_SHADER);
+                                : type == Geometry ? GL_GEOMETRY_SHADER
+                                                   : GL_FRAGMENT_SHADER);
+#elif defined (DE_OPENGL_ES)
+            DE_ASSERT(type != Geometry);
+            name = glCreateShader(type == Vertex ? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER);
+#endif
             LIBGUI_ASSERT_GL_OK();
             if (!name)
             {

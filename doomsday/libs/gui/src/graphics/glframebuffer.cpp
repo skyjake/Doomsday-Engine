@@ -39,6 +39,12 @@ static const int    MAX_COLOR_ATTACHMENTS = 4;
 static const int    MAX_COLOR_ATTACHMENTS = 1;
 #endif
 
+#if (DE_OPENGL_ES == 20)
+#  define GL_DRAW_FRAMEBUFFER   GL_FRAMEBUFFER
+#  define GL_READ_FRAMEBUFFER   GL_FRAMEBUFFER
+#  define GL_RGBA8              GL_RGBA8_OES
+#endif
+
 DE_PIMPL(GLFramebuffer)
 , DE_OBSERVES(Asset, Deletion)
 {
@@ -253,7 +259,11 @@ DE_PIMPL(GLFramebuffer)
         DE_ASSERT(tex.isReady());
         if (tex.isCubeMap())
         {
-            glFramebufferTexture(FRAMEBUFFER_GL, attachment, tex.glName(), level);
+#if defined (DE_OPENGL)
+            glFramebufferTexture(GL_FRAMEBUFFER, attachment, tex.glName(), level);
+#else
+            DE_ASSERT_FAIL("Cannot attach cube map texture to framebuffer");
+#endif            
         }
         else
         {
@@ -273,7 +283,7 @@ DE_PIMPL(GLFramebuffer)
         glBindRenderbuffer(GL_RENDERBUFFER, renderBufs[id]);
         LIBGUI_ASSERT_GL_OK();
 
-#if !defined(DE_OPENGL_ES)
+#if !defined (DE_OPENGL_ES)
         if (sampleCount > 1)
         {
             if (GLInfo::extensions().NV_framebuffer_multisample_coverage)
@@ -342,11 +352,13 @@ DE_PIMPL(GLFramebuffer)
     void allocRenderBuffers()
     {
         DE_ASSERT(size != nullSize);
-
+        
         // Fill in all the other requested attachments.
         if (flags.testFlag(Color0) && !textureAttachment.testFlag(Color0))
         {
-            /// @todo Note that for GLES, GL_RGBA8 is not supported (without an extension).
+#if defined (DE_OPENGL_ES)
+            DE_ASSERT(GLInfo::extensions().OES_rgb8_rgba8);
+#endif
             LOG_GL_VERBOSE("FBO %i: color renderbuffer %s") << fbo << size.asText();
             attachRenderbuffer(ColorBuffer0, GL_RGBA8, GL_COLOR_ATTACHMENT0);
         }
@@ -356,9 +368,9 @@ DE_PIMPL(GLFramebuffer)
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
     }
 
-#if defined (DE_HAVE_DEPTH_STENCIL_ATTACHMENT)
     void allocDepthStencilRenderBuffers()
     {
+#if defined (DE_HAVE_DEPTH_STENCIL_ATTACHMENT)
         if (flags.testFlag(DepthStencil) && !flags.testFlag(SeparateDepthAndStencil) &&
             (!texture || textureAttachment == Color0))
         {
@@ -367,6 +379,7 @@ DE_PIMPL(GLFramebuffer)
             attachRenderbuffer(DepthStencilBuffer, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
         }
         else
+#endif // DE_HAVE_DEPTH_STENCIL_ATTACHMENT
         {
             // Separate depth and stencil, then.
             if (flags.testFlag(Depth) && !textureAttachment.testFlag(Depth))
@@ -374,16 +387,13 @@ DE_PIMPL(GLFramebuffer)
                 LOG_GL_VERBOSE("FBO %i: depth renderbuffer %s") << fbo << size.asText();
                 attachRenderbuffer(DepthBuffer, GL_DEPTH_COMPONENT, GL_DEPTH_ATTACHMENT);
             }
-#if defined (DE_OPENGL)
             if (flags.testFlag(Stencil) && !textureAttachment.testFlag(Stencil))
             {
                 LOG_GL_VERBOSE("FBO %i: stencil renderbuffer %s") << fbo << size.asText();
                 attachRenderbuffer(StencilBuffer, GL_STENCIL_INDEX, GL_STENCIL_ATTACHMENT);
             }
-#endif
         }
     }
-#endif // DE_HAVE_DEPTH_STENCIL_ATTACHMENT
 
     void deallocRenderBuffers()
     {
@@ -479,28 +489,31 @@ DE_PIMPL(GLFramebuffer)
     {
         DE_ASSERT(fbo);
 
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo); LIBGUI_ASSERT_GL_OK();
-//        glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo); LIBGUI_ASSERT_GL_OK();
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
+        LIBGUI_ASSERT_GL_OK();
 
+#if defined (DE_HAVE_COLOR_ATTACHMENTS)
         const int count = colorAttachmentCount();
 
         static const GLenum drawBufs[4] = {
             GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3
         };
-        glDrawBuffers(count, drawBufs); LIBGUI_ASSERT_GL_OK();
-//        glReadBuffer(count > 0? GL_COLOR_ATTACHMENT0 : GL_NONE); LIBGUI_ASSERT_GL_OK();
+        glDrawBuffers(count, drawBufs);
+        LIBGUI_ASSERT_GL_OK();
+#endif
     }
 
     void glRelease() const
     {
         LIBGUI_ASSERT_GL_OK();
 
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defaultFramebuffer); // both read and write FBOs
-//        glBindFramebuffer(GL_READ_FRAMEBUFFER, defaultFramebuffer); // both read and write FBOs
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, defaultFramebuffer);
         LIBGUI_ASSERT_GL_OK();
 
-        glDrawBuffer(GL_BACK);   LIBGUI_ASSERT_GL_OK();
-//        glReadBuffer(GL_BACK);   LIBGUI_ASSERT_GL_OK();
+#if defined (DE_HAVE_COLOR_ATTACHMENTS)
+        glDrawBuffer(GL_BACK);
+        LIBGUI_ASSERT_GL_OK();
+#endif        
     }
 
     void validate()
@@ -512,9 +525,7 @@ DE_PIMPL(GLFramebuffer)
         }
 
         DE_ASSERT(fbo != 0);
-
-        //glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
+        
         glBind();
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -679,8 +690,8 @@ void GLFramebuffer::configure(const List<GLTexture *> &colorTextures,
         d->attachRenderbuffer(Impl::ColorBuffer0, GL_RGBA8, GL_COLOR_ATTACHMENT0);
     }
 
+    // The depth/stencil attachment(s).
 #if defined (DE_HAVE_DEPTH_STENCIL_ATTACHMENT)
-    // The depth attachment.
     if (depthStencilTex)
     {
         DE_ASSERT(depthStencilTex->isReady());
@@ -701,7 +712,7 @@ void GLFramebuffer::configure(const List<GLTexture *> &colorTextures,
     }
     else if (missingRenderBuffers & Depth)
     {
-        d->attachRenderBuffer(Impl::DepthBuffer, GL_DEPTH24_OES, GL_DEPTH_ATTACHMENT);
+        d->attachRenderbuffer(Impl::DepthBuffer, GL_DEPTH_COMPONENT24_OES, GL_DEPTH_ATTACHMENT);
     }
     
     if (stencilTex)
@@ -712,7 +723,7 @@ void GLFramebuffer::configure(const List<GLTexture *> &colorTextures,
     }
     else if (missingRenderBuffers & Stencil)
     {
-        d->attachRenderBuffer(Impl::StencilBuffer, GL_RED, GL_STENCIL_ATTACHMENT);
+        d->attachRenderbuffer(Impl::StencilBuffer, GL_STENCIL_INDEX, GL_STENCIL_ATTACHMENT);
     }
 #endif
 
@@ -830,11 +841,18 @@ void GLFramebuffer::clear(Flags attachments)
     glClearColor(d->clearColor.x, d->clearColor.y, d->clearColor.z, d->clearColor.w);
 
     // Only clear what we have.
-    Flags which = attachments & d->flags;
+    const Flags which = attachments & d->flags;
+
+#if defined (DE_HAVE_COLOR_ATTACHMENTS)
     glClear((which & (Color0 | Color1 | Color2 | Color3) ?
                                ClearBufferMask::GL_COLOR_BUFFER_BIT : ClearBufferMask::GL_NONE_BIT) |
             (which & Depth ?   ClearBufferMask::GL_DEPTH_BUFFER_BIT : ClearBufferMask::GL_NONE_BIT) |
             (which & Stencil ? ClearBufferMask::GL_STENCIL_BUFFER_BIT : ClearBufferMask::GL_NONE_BIT));
+#else
+    glClear((which & Color0  ? GL_COLOR_BUFFER_BIT : 0) |
+            (which & Depth   ? GL_DEPTH_BUFFER_BIT : 0) |
+            (which & Stencil ? GL_STENCIL_BUFFER_BIT: 0));
+#endif            
 
     // Restore previous state.
     if (attachments & FullClear)

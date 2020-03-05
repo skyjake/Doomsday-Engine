@@ -321,6 +321,7 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
         ext.NV_framebuffer_multisample_coverage = query("GL_NV_framebuffer_multisample_coverage");
         ext.NV_texture_barrier                  = query("GL_NV_texture_barrier");
         ext.KHR_debug                           = query("GL_KHR_debug");
+        ext.OES_rgb8_rgba8                      = query("GL_OES_rgb8_rgba8");
 
 #if defined (DE_ENABLE_OPENGL_DEBUG_LOGGER)
         {
@@ -351,13 +352,13 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
             glGetFloatv(GL_SMOOTH_LINE_WIDTH_GRANULARITY, &lim.smoothLineWidthGranularity);
             LIBGUI_ASSERT_GL_OK();
         }
-#endif
         LIBGUI_ASSERT_GL_OK();
 
         if (ext.EXT_texture_filter_anisotropic)
         {
             glGetIntegerv(gl33ext::GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &lim.maxTexFilterAniso);
         }
+#endif
 
         // Set a custom maximum size?
         if (CommandLine_CheckWith("-maxtex", 1))
@@ -368,23 +369,6 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
             LOG_GL_NOTE("Using requested maximum texture size of %i x %i")
                 << lim.maxTexSize << lim.maxTexSize;
         }
-
-#if 0
-        // Check default OpenGL format attributes.
-        const QOpenGLContext *ctx = QOpenGLContext::currentContext();
-        QSurfaceFormat form = ctx->format();
-
-        LOGDEV_GL_MSG("Initial OpenGL format:");
-        LOGDEV_GL_MSG(" - version: %i.%i") << form.majorVersion() << form.minorVersion();
-        LOGDEV_GL_MSG(" - profile: %s") << (form.profile() == QSurfaceFormat::CompatibilityProfile? "Compatibility" : "Core");
-        LOGDEV_GL_MSG(" - color: R%i G%i B%i A%i bits") << form.redBufferSize() << form.greenBufferSize() << form.blueBufferSize() << form.alphaBufferSize();
-        LOGDEV_GL_MSG(" - depth: %i bits") << form.depthBufferSize();
-        LOGDEV_GL_MSG(" - stencil: %i bits") << form.stencilBufferSize();
-        LOGDEV_GL_MSG(" - samples: %i") << form.samples();
-        LOGDEV_GL_MSG(" - swap behavior: %i") << form.swapBehavior();
-
-        LIBGUI_ASSERT_GL_OK();
-#endif
     }
 };
 

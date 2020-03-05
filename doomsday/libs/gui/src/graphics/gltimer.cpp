@@ -24,6 +24,8 @@
 
 namespace de {
 
+#if defined (DE_OPENGL)
+
 DE_PIMPL_NOREF(GLTimer)
 {
     static const int BUF_COUNT = 2;
@@ -141,5 +143,18 @@ TimeSpan GLTimer::elapsedTime(const Id &id) const
     }
     return 0.0;
 }
+
+#endif // DE_OPENGL
+
+#if defined (DE_OPENGL_ES)
+
+// dummy implementation
+DE_PIMPL_NOREF(GLTimer) {};
+GLTimer::GLTimer() : d(new Impl) {}
+void GLTimer::beginTimer(const Id &) {}
+void GLTimer::endTimer(const Id &) {}
+TimeSpan GLTimer::elapsedTime(const Id &) const { return 0.0; }
+
+#endif
 
 } // namespace de
