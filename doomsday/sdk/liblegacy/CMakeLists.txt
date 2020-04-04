@@ -25,7 +25,8 @@ endif ()
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/de/*)
 file (GLOB_RECURSE SOURCES src/*.cpp src/*.c)
-#file (GLOB_RECURSE C_SOURCES src/*.c)
+
+set_property (SOURCE include/de/str.hh PROPERTY SKIP_AUTOMOC ON) # see CMP0100
 
 include_directories (include include/de)
 

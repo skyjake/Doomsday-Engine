@@ -4,7 +4,7 @@
 # project configuration.
 
 if (POLICY CMP0068)
-    cmake_policy (SET CMP0068 OLD)  # macOS: RPATH affects install_name
+    cmake_policy (SET CMP0068 NEW)  # macOS: RPATH affects install_name
 endif ()
 
 get_filename_component (_where "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
