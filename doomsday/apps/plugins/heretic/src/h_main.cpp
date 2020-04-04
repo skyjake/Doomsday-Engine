@@ -25,6 +25,8 @@
 #include <cstring>
 #include <de/App>
 #include <de/CommandLine>
+#include <de/Function>
+#include <de/NumberValue>>
 #include "d_netsv.h"
 #include "g_defs.h"
 #include "gamesession.h"
@@ -70,6 +72,11 @@ char const *borderGraphics[] = {
     "BORDBR", // Bottom right.
     "BORDBL" // Bottom left.
 };
+
+#if defined(HAVE_EARTHQUAKE)
+int localQuakeHappening[MAXPLAYERS];
+int localQuakeTimeout[MAXPLAYERS];
+#endif
 
 int H_GetInteger(int id)
 {

@@ -338,6 +338,18 @@ static de::Value *Function_Player_SetFlameCount(de::Context &ctx, const de::Func
 }
 #endif
 
+#if defined(HAVE_EARTHQUAKE)
+// Script function to control earthquakes.
+static de::Value *Function_Player_SetLocalQuake(de::Context &ctx, const de::Function::ArgumentValues &args)
+{
+    const auto plr = &contextPlayer(ctx) - players;
+    localQuakeHappening[plr] = args.at(0)->asInt();
+    localQuakeTimeout[plr] = args.at(1)->asInt();
+    players[plr].update |= PSF_LOCAL_QUAKE;
+    return nullptr;
+}
+#endif
+
 //-------------------------------------------------------------------------------------------------
 
 void Common_Load()
@@ -426,6 +438,13 @@ void Common_Load()
             *gameBindings
                 << DENG2_FUNC_NOARG (Player_Armor, "armor")
                 << DENG2_FUNC_NOARG (Player_ArmorType, "armorType");
+#endif
+
+#if defined(HAVE_EARTHQUAKE)
+            Function::Defaults setLocalQuakeArgs;
+            setLocalQuakeArgs["duration"] = new NumberValue(0);
+            *gameBindings
+                << DENG2_FUNC_DEFS (Player_SetLocalQuake, "setLocalQuake", "intensity" << "duration", setLocalQuakeArgs);
 #endif
 
 #if defined(__JHERETIC__)
