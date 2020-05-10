@@ -182,6 +182,7 @@ void H_PreInit()
     cfg.common.hudIconAlpha = 1;
     cfg.common.xhairAngle = 0;
     cfg.common.xhairSize = .5f;
+    cfg.common.xhairLineWidth = 1;
     cfg.common.xhairVitality = false;
     cfg.common.xhairColor[0] = 1;
     cfg.common.xhairColor[1] = 1;
