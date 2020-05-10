@@ -162,6 +162,8 @@ DENG2_PIMPL(App)
         #ifdef UNIX
         {
             // We wish to use U.S. English formatting for time and numbers (in libc).
+            setenv("LC_ALL", "en_US.UTF-8", 1);
+            setenv("LC_NUMERIC", "C", 1);
             setlocale(LC_ALL, "en_US.UTF-8");
             setlocale(LC_NUMERIC, "C");
         }
