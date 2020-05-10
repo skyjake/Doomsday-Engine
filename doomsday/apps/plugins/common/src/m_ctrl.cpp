@@ -185,6 +185,7 @@ static controlconfig_t controlConfig[] =
     { "Msg Refresh", 0, 0, "impulse msgrefresh", 0 },
 
     { "Shortcuts", 0, 0, 0, 0 },
+    { "Show Taskbar", 0, 0, "taskbar", 0 },
     { "Pause Game", 0, 0, "pause", 0 },
 #if !__JDOOM64__
     { "Help Screen", "shortcut", 0, "helpscreen", 0 },
