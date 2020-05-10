@@ -96,6 +96,9 @@ record PS3Gamepad(Gamepad)
         # Common controls, suitable for all games.
         event('shortcut', play, 'menu')
 
+        event('message', o, 'messageno')
+        event('message', x, 'messageyes')
+
         event('menu', o, 'menuback')
         event('menu', x, 'menuselect')
         event('menu', up, 'menuup', repeat=True)
@@ -178,6 +181,9 @@ record PS4Gamepad(Gamepad)
         # Common controls, suitable for all games.
         event('shortcut', options, 'menu')
 
+        event('message', o, 'messageno')
+        event('message', x, 'messageyes')
+
         event('menu', o, 'menuback')
         event('menu', x, 'menuselect')
         event('menu', up, 'menuup', repeat=True)
@@ -257,6 +263,9 @@ record XboxWindowsGamepad(Gamepad)
         
         # Common controls, suitable for all games.
         event('shortcut', menu, 'menu')
+
+        event('message', b, 'messageno')
+        event('message', a, 'messageyes')
 
         event('menu', b, 'menuback')
         event('menu', a, 'menuselect')
@@ -343,6 +352,9 @@ record XboxMacGamepad(Gamepad)
         # Common controls, suitable for all games.
         event('shortcut', menu, 'menu')
         event('shortcut', xbox, 'menu')
+
+        event('message', b, 'messageno')
+        event('message', a, 'messageyes')
 
         event('menu', b, 'menuback')
         event('menu', a, 'menuselect')
