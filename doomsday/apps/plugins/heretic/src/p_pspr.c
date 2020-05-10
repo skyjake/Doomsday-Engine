@@ -1254,6 +1254,9 @@ void C_DECL A_FirePhoenixPL2(player_t* player, pspdef_t* psp)
 
 void C_DECL A_ShutdownPhoenixPL2(player_t *player, pspdef_t *psp)
 {
+    if(IS_CLIENT)
+        return;
+    
     P_ShotAmmo(player);
 }
 
