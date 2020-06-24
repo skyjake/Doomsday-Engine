@@ -22,6 +22,7 @@
 #include "g_common.h"
 #include "g_defs.h"
 #include "g_update.h"
+#include "gamesession.h"
 #include "p_map.h"
 #include "p_start.h"
 #include "polyobjs.h"
@@ -220,11 +221,16 @@ static int playerNumberArgument(const de::Value &arg)
     return plrNum;
 }
 
-static de::Value *Function_SetMessage(de::Context &, const de::Function::ArgumentValues &args)
+static de::Value *Function_Game_SetMessage(de::Context &, const de::Function::ArgumentValues &args)
 {
     const int plrNum = playerNumberArgument(*args.at(1));
     P_SetMessage(&players[plrNum], args.at(0)->asText().toLatin1());
     return nullptr;
+}
+
+static de::Value *Function_Game_Rules(de::Context &, const de::Function::ArgumentValues &args)
+{
+    return new de::RecordValue(gfw_Session()->rules().asRecord());
 }
 
 #if defined (__JHEXEN__)
@@ -372,7 +378,8 @@ void Common_Load()
             setMessageArgs["player"] = new NoneValue;
 
             gameBindings->init(*gameModule)
-                << DENG2_FUNC_DEFS(SetMessage, "setMessage", "message" << "player", setMessageArgs);
+                << DENG2_FUNC_DEFS (Game_SetMessage, "setMessage", "message" << "player", setMessageArgs)
+                << DENG2_FUNC_NOARG(Game_Rules, "rules");
 
 #if defined(__JHEXEN__)
             {
