@@ -22,6 +22,7 @@
 #include "g_common.h"
 #include "g_defs.h"
 #include "g_update.h"
+#include "gamesession.h"
 #include "p_map.h"
 #include "p_start.h"
 #include "polyobjs.h"
@@ -221,11 +222,16 @@ static int playerNumberArgument(const de::Value &arg)
     return plrNum;
 }
 
-static de::Value *Function_SetMessage(de::Context &, const de::Function::ArgumentValues &args)
+static de::Value *Function_Game_SetMessage(de::Context &, const de::Function::ArgumentValues &args)
 {
     const int plrNum = playerNumberArgument(*args.at(1));
     P_SetMessage(&players[plrNum], args.at(0)->asText());
     return nullptr;
+}
+
+static de::Value *Function_Game_Rules(de::Context &, const de::Function::ArgumentValues &args)
+{
+    return new de::RecordValue(gfw_Session()->rules().asRecord());
 }
 
 #if defined (__JHEXEN__)
@@ -300,6 +306,21 @@ static de::Value *Function_Player_ArmorType(de::Context &ctx, const de::Function
 }
 #endif
 
+static de::Value *Function_Player_GiveArmor(de::Context &ctx, const de::Function::ArgumentValues &args)
+{
+    player_t *plr = &contextPlayer(ctx);
+    const int type = args.at(0)->asInt();
+    const int points = args.at(1)->asInt();
+
+#if defined(__JHEXEN__)
+    const bool ok = P_GiveArmorAlt(plr, armortype_t(type), points) != 0;
+#else
+    const bool ok = P_GiveArmor(plr, type, points) != 0;
+#endif
+
+    return new de::NumberValue(ok);
+}
+
 static de::Value *Function_Player_Power(de::Context &ctx, const de::Function::ArgumentValues &args)
 {
     int power = args.at(0)->asInt();
@@ -320,6 +341,18 @@ static de::Value *Function_Player_ShotAmmo(de::Context &ctx, const de::Function:
 static de::Value *Function_Player_SetFlameCount(de::Context &ctx, const de::Function::ArgumentValues &args)
 {
     contextPlayer(ctx).flameCount = args.at(0)->asInt();
+    return nullptr;
+}
+#endif
+
+#if defined(HAVE_EARTHQUAKE)
+// Script function to control earthquakes.
+static de::Value *Function_Player_SetLocalQuake(de::Context &ctx, const de::Function::ArgumentValues &args)
+{
+    const auto plr = &contextPlayer(ctx) - players;
+    localQuakeHappening[plr] = args.at(0)->asInt();
+    localQuakeTimeout[plr] = args.at(1)->asInt();
+    players[plr].update |= PSF_LOCAL_QUAKE;
     return nullptr;
 }
 #endif
@@ -346,7 +379,8 @@ void Common_Load()
             setMessageArgs["player"] = new NoneValue;
 
             gameBindings->init(*gameModule)
-                << DE_FUNC_DEFS(SetMessage, "setMessage", "message" << "player", setMessageArgs);
+                << DE_FUNC_DEFS(Game_SetMessage, "setMessage", "message" << "player", setMessageArgs);
+                << DE_FUNC_NOARG(Game_Rules, "rules");
 
 #if defined(__JHEXEN__)
             {
@@ -406,11 +440,19 @@ void Common_Load()
                 << DE_FUNC_NOARG (Player_Health, "health")
                 << DE_FUNC       (Player_Power, "power", "type")
                 << DE_FUNC_NOARG (Player_ShotAmmo, "shotAmmo");
+                << DE_FUNC       (Player_GiveArmor, "giveArmor", "type" << "points");
 
 #if defined(HAVE_DOOM_ARMOR_BINDINGS)
         *gameBindings
                 << DE_FUNC_NOARG (Player_Armor, "armor")
                 << DE_FUNC_NOARG (Player_ArmorType, "armorType");
+#endif
+
+#if defined(HAVE_EARTHQUAKE)
+            Function::Defaults setLocalQuakeArgs;
+            setLocalQuakeArgs["duration"] = new NumberValue(0);
+            *gameBindings
+                << DENG2_FUNC_DEFS (Player_SetLocalQuake, "setLocalQuake", "intensity" << "duration", setLocalQuakeArgs);
 #endif
 
 #if defined(__JHERETIC__)

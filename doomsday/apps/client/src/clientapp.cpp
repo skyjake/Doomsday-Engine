@@ -150,8 +150,6 @@ static Value *Function_App_GamePlugin(Context &, const Function::ArgumentValues 
         // The null game has no plugin.
         return 0;
     }
-//            .name().fileNameWithoutExtension();
-//    if (name.beginsWith("lib")) name.remove(BytePos(0), 3);
     return new TextValue(DoomsdayApp::plugins().extensionName(App_CurrentGame().pluginId()));
 }
 
@@ -161,11 +159,34 @@ static Value *Function_App_Quit(Context &, const Function::ArgumentValues &)
     return 0;
 }
 
+static Value *Function_App_GetInteger(Context &, const Function::ArgumentValues &args)
+{
+    const int valueId = args.at(0)->asInt();
+    if (valueId >= DD_FIRST_VALUE && valueId < DD_LAST_VALUE)
+    {
+        return new NumberValue(DD_GetInteger(valueId));
+    }
+    throw Error("Function_App_GetInteger", "Invalid value ID");
+}
+
+static Value *Function_App_SetInteger(Context &, const Function::ArgumentValues &args)
+{
+    const int valueId = args.at(0)->asInt();
+    if (valueId >= DD_FIRST_VALUE && valueId < DD_LAST_VALUE)
+    {
+        DD_SetInteger(valueId, args.at(1)->asInt());
+    }
+    else
+    {
+        throw Error("Function_App_SetInteger", "Invalid value ID");
+    }
+    return nullptr;
+}
+
 static SDL_Surface *createSDLSurfaceFromImage(const Image &image)
 {
     const int imageWidth  = int(image.width());
     const int imageHeight = int(image.height());
-
     return SDL_CreateRGBSurfaceWithFormatFrom(const_cast<uint8_t *>(image.bits()),
                                               imageWidth,
                                               imageHeight,
@@ -588,11 +609,15 @@ ClientApp::ClientApp(const StringList &args)
     setGame(games().nullGame());
 
     // Script bindings.
+    /// @todo ServerApp is missing these, but they belong in DoomsdayApp.
     {
-        d->binder.init(scriptSystem()["App"])
+        auto &appModule = scriptSystem()["App"];
+        d->binder.init(appModule)
                 << DE_FUNC_NOARG (App_ConsolePlayer, "consolePlayer")
                 << DE_FUNC_NOARG (App_GamePlugin,    "gamePlugin")
-                << DE_FUNC_NOARG (App_Quit,          "quit");
+                << DE_FUNC_NOARG (App_Quit,          "quit")
+                << DE_FUNC       (App_GetInteger,    "getInteger", "id")
+                << DE_FUNC       (App_SetInteger,    "setInteger", "id" << "value");
     }
 
 /*#if !defined (DE_MOBILE)

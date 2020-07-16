@@ -10,6 +10,7 @@ include (../common/Common.cmake)
 add_definitions (
     -D__JHEXEN__=1
     -DLIBDOOMSDAY_CUSTOM_MOBJ=1
+    -DHAVE_EARTHQUAKE=1
 )
 
 include_directories (include)

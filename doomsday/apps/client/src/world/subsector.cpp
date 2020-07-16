@@ -398,12 +398,12 @@ DE_PIMPL(Subsector)
 
             // The actual height of the plane.
             const double planeZ = self().sector().plane(planeIdx).as<Plane>().heightSmoothed();
+            const coord_t targetZ = visp->target->visPlane(planeIdx).heightSmoothed();
 
-            if ((visp->linkMode == LinkAlways) ||
-                (visp->linkMode == LinkWhenLowerThanTarget &&
-                 planeZ < visp->target->visPlane(planeIdx).heightSmoothed()) ||
-                (visp->linkMode == LinkWhenHigherThanTarget &&
-                 planeZ > visp->target->visPlane(planeIdx).heightSmoothed()))
+            if ( visp->linkMode == LinkAlways ||
+                (visp->linkMode == LinkWhenDifferentThanTarget && !fequal(planeZ, targetZ)) ||
+                (visp->linkMode == LinkWhenLowerThanTarget     && planeZ < targetZ) ||
+                (visp->linkMode == LinkWhenHigherThanTarget    && planeZ > targetZ))
             {
                 linkVisPlane(planeIdx, visp->target);
             }

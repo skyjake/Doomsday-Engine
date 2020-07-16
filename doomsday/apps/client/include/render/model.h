@@ -82,6 +82,7 @@ struct Model : public ModelDrawable
     Flags     flags      = DefaultFlags;
     Alignment alignYaw   = NotAligned;
     Alignment alignPitch = NotAligned;
+    float     pspriteFOV = 0.0f; // Custom override of the fixed psprite FOV.
 
     /// Combined scaling and rotation of the model.
     Mat4f transformation;

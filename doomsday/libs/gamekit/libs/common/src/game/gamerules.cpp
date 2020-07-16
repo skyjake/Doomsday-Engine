@@ -74,38 +74,11 @@ GameRules::GameRules(const GameRules &other)
 GameRules *GameRules::fromRecord(const Record &record, const GameRules *defaults) // static
 {
     GameRules *gr = new GameRules;
-
-    /*Record rec = &record;
-    if (defaults)
-    {
-        Record merged = defaults->d->rules; // defaults->toRecord();
-        merged.copyMembersFrom(record);
-        rec = merged;
-    }*/
-
     if (defaults)
     {
         gr->d->rules.copyMembersFrom(defaults->asRecord(), Record::IgnoreDoubleUnderscoreMembers);
     }
-
     gr->d->rules.copyMembersFrom(record, Record::IgnoreDoubleUnderscoreMembers);
-
-//    if(!defaults || rec->has("skill"))           rules->skill           = rec->geti("skill");
-//#if !__JHEXEN__
-//    if(!defaults || rec->has("fast"))            rules->fast            = byte( rec->getb("fast") );
-//#endif
-//    if(!defaults || rec->has("deathmatch"))      rules->deathmatch      = byte( rec->geti("deathmatch") );
-//    if(!defaults || rec->has("noMonsters"))      rules->noMonsters      = byte( rec->getb("noMonsters") );
-//#if __JHEXEN__
-//    if(!defaults || rec->has("randomClasses"))   rules->randomClasses   = byte( rec->getb("randomClasses") );
-//#else
-//    if(!defaults || rec->has("respawnMonsters")) rules->respawnMonsters = byte( rec->getb("respawnMonsters") );
-//#endif
-
-    //if(rec != &record) delete rec;
-
-    //qDebug() << "GameRules from Record:\n" << gr->d->rules.asText();
-
     return gr;
 }
 
@@ -117,39 +90,12 @@ Record &GameRules::asRecord()
 const Record &GameRules::asRecord() const
 {
     return d->rules;
-
-//    Record *rec = new Record;
-
-//    rec->addNumber ("skill",           skill);
-//#if !__JHEXEN__
-//    rec->addBoolean("fast",            CPP_BOOL(fast));
-//#endif
-//    rec->addNumber ("deathmatch",      deathmatch);
-//    rec->addBoolean("noMonsters",      CPP_BOOL(noMonsters));
-//#if __JHEXEN__
-//    rec->addBoolean("randomClasses",   CPP_BOOL(randomClasses));
-//#else
-//    rec->addBoolean("respawnMonsters", CPP_BOOL(respawnMonsters));
-//#endif
-
-//    return rec;
 }
 
 GameRules &GameRules::operator = (const GameRules &other)
 {
     d->rules = other.d->rules;
-
     update();
-
-//    skill           = other.skill;
-//    fast            = other.fast;
-//    deathmatch      = other.deathmatch;
-//    noMonsters      = other.noMonsters;
-//#if __JHEXEN__
-//    randomClasses   = other.randomClasses;
-//#else
-//    respawnMonsters = other.respawnMonsters;
-//#endif
     return *this;
 }
 

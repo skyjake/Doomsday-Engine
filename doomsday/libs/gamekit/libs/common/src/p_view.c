@@ -74,8 +74,8 @@
  */
 void P_CalcHeight(player_t *plr)
 {
-#if __JHEXEN__
-    int plrNum = plr - players;
+#if defined(HAVE_EARTHQUAKE)
+    const int plrNum = (int) (plr - players);
 #endif
     dd_bool airborne;
     dd_bool morphed = false;
@@ -210,17 +210,31 @@ void P_CalcHeight(player_t *plr)
     // Set the plr's eye-level Z coordinate.
     plr->viewZ = pmo->origin[VZ] + (P_MobjIsCamera(pmo)? 0 : plr->viewHeight);
 
-#if __JHEXEN__
-    // How about a bit of quake?
-    if(localQuakeHappening[plrNum] && !Pause_IsPaused())
+#if defined(HAVE_EARTHQUAKE)
+    if (!Pause_IsPaused() && DD_IsSharpTick())
     {
-        int intensity = localQuakeHappening[plrNum];
-        plr->viewOffset[VX] = (coord_t) ((M_Random() % (intensity << 2)) - (intensity << 1));
-        plr->viewOffset[VY] = (coord_t) ((M_Random() % (intensity << 2)) - (intensity << 1));
-    }
-    else
-    {
-        plr->viewOffset[VX] = plr->viewOffset[VY] = 0;
+        // How about a bit of quake?
+        if (localQuakeHappening[plrNum])
+        {
+            int intensity = localQuakeHappening[plrNum];
+            plr->viewOffset[VX] = (coord_t) ((M_Random() % (intensity << 2)) - (intensity << 1));
+            plr->viewOffset[VY] = (coord_t) ((M_Random() % (intensity << 2)) - (intensity << 1));
+        }
+        else
+        {
+            plr->viewOffset[VX] = plr->viewOffset[VY] = 0;
+        }
+
+        // Earthquakes will time out.
+        if (localQuakeTimeout[plrNum] > 0)
+        {
+            if (--localQuakeTimeout[plrNum] <= 0)
+            {
+                localQuakeTimeout[plrNum]   = 0;
+                localQuakeHappening[plrNum] = false;
+                players[plrNum].update |= PSF_LOCAL_QUAKE;
+            }
+        }
     }
 #endif
 }

@@ -257,14 +257,14 @@ static void tickNoState()
     }
 }
 
-static void drawBackground()
+static void drawBackground(patchid_t patch)
 {
     if(!haveLocationMap) return;
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
 
-    GL_DrawPatch(pBackground, Vec2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
+    GL_DrawPatch(patch, Vec2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -793,18 +793,28 @@ static void drawStats()
         }
     }
 
-    // Draw the background.
-    DGL_SetMaterialUI((world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(bgMaterial)), DGL_REPEAT, DGL_REPEAT);
+    if (bgMaterial.startsWith("Flats:") || bgMaterial.startsWith("flats:"))
+    {
+        // Draw a background flat.
+        DGL_SetMaterialUI(
+            (world_Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(bgMaterial)),
+            DGL_REPEAT,
+            DGL_REPEAT);
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
     DGL_DrawRectf2Tiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
     DGL_Disable(DGL_TEXTURE_2D);
-
-    switch(gameType)
+    }
+    else if (bgMaterial.startsWith("Patches:") || bgMaterial.startsWith("patches:"))
     {
-    case SINGLE:      drawSinglePlayerStats(); break;
-    case COOPERATIVE: drawNetgameStats();      break;
-    case DEATHMATCH:  drawDeathmatchStats();   break;
+        drawBackground(R_DeclarePatch(bgMaterial.constData() + strlen("Patches:")));
+    }
+
+    switch (gameType)
+    {
+        case SINGLE: drawSinglePlayerStats(); break;
+        case COOPERATIVE: drawNetgameStats(); break;
+        case DEATHMATCH: drawDeathmatchStats(); break;
     }
 }
 
@@ -997,19 +1007,19 @@ void IN_Drawer()
         break;
 
     case 1: // Leaving old level.
-        drawBackground();
+        drawBackground(pBackground);
         drawLocationMarks();
         drawFinishedTitle();
         break;
 
     case 2: // Going to the next level.
-        drawBackground();
+        drawBackground(pBackground);
         drawLocationMarks(!(interTime & 16) || inState == 3, false /*don't flash current location mark*/);
         drawEnteringTitle();
         break;
 
     case 3: // Waiting before going to the next level.
-        drawBackground();
+        drawBackground(pBackground);
         break;
 
     default:

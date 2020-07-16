@@ -44,6 +44,7 @@ DE_STATIC_STRING(DEF_BLENDFUNC          , "blendFunc");
 DE_STATIC_STRING(DEF_BLENDOP            , "blendOp");
 DE_STATIC_STRING(DEF_DEPTHFUNC          , "depthFunc");
 DE_STATIC_STRING(DEF_DEPTHWRITE         , "depthWrite");
+static String const DEF_FOV             ("fov");
 DE_STATIC_STRING(DEF_FRONT_VECTOR       , "front");
 DE_STATIC_STRING(DEF_MESHES             , "meshes");
 DE_STATIC_STRING(DEF_MIRROR             , "mirror");
@@ -462,6 +463,9 @@ DE_PIMPL(ModelLoader)
         // Alignment modes.
         model.alignYaw   = parseAlignment(asset, DEF_ALIGNMENT_YAW());
         model.alignPitch = parseAlignment(asset, DEF_ALIGNMENT_PITCH());
+
+        // Custom field of view (psprite only).
+        model.pspriteFOV = asset.getf(DEF_FOV, 0.0f);
 
         // Custom texture maps and additional materials.
         model.materialIndexForName.insert(MATERIAL_DEFAULT(), 0);

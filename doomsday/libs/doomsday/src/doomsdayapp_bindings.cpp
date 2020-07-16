@@ -82,6 +82,25 @@ void DoomsdayApp::initBindings(Binder &binder)
     binder.init(appModule)
             << DE_FUNC(App_Download, "download", "packageId");
 
+    // Value constants for App.getInteger() and App.setInteger().
+    {
+        appModule.addNumber("NO_VIDEO", DD_NOVIDEO).setReadOnly();
+        appModule.addNumber("NETGAME", DD_NETGAME).setReadOnly();
+        appModule.addNumber("SERVER", DD_SERVER).setReadOnly();
+        appModule.addNumber("CLIENT", DD_CLIENT).setReadOnly();
+        appModule.addNumber("CONSOLE_PLAYER", DD_CONSOLEPLAYER).setReadOnly();
+        appModule.addNumber("DISPLAY_PLAYER", DD_DISPLAYPLAYER).setReadOnly();
+        appModule.addNumber("GOT_FRAME", DD_GOTFRAME).setReadOnly();
+        appModule.addNumber("NUM_SOUNDS", DD_NUMSOUNDS).setReadOnly();
+        appModule.addNumber("SERVER_ALLOW_FRAMES", DD_SERVER_ALLOW_FRAMES).setReadOnly();
+        appModule.addNumber("RENDER_FULLBRIGHT", DD_RENDER_FULLBRIGHT).setReadOnly();
+        appModule.addNumber("GAME_READY", DD_GAME_READY).setReadOnly();
+        appModule.addNumber("CLIENT_PAUSED", DD_CLIENT_PAUSED).setReadOnly();
+        appModule.addNumber("WEAPON_OFFSET_SCALE_Y", DD_WEAPON_OFFSET_SCALE_Y).setReadOnly();
+        appModule.addNumber("GAME_DRAW_HUD_HINT", DD_GAME_DRAW_HUD_HINT).setReadOnly();
+        appModule.addNumber("FIXEDCOLORMAP_ATTENUATE", DD_FIXEDCOLORMAP_ATTENUATE).setReadOnly();
+    }
+
     // Player
     {
         Record &player = appModule.addSubrecord("Player");

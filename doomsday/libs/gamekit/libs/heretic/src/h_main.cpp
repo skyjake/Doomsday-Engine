@@ -25,6 +25,8 @@
 #include <cstring>
 #include <de/App>
 #include <de/CommandLine>
+#include <de/Function>
+#include <de/NumberValue>>
 #include "d_netsv.h"
 #include "g_defs.h"
 #include "gamesession.h"
@@ -70,6 +72,11 @@ const char *borderGraphics[] = {
     "BORDBR", // Bottom right.
     "BORDBL" // Bottom left.
 };
+
+#if defined(HAVE_EARTHQUAKE)
+int localQuakeHappening[MAXPLAYERS];
+int localQuakeTimeout[MAXPLAYERS];
+#endif
 
 int H_GetInteger(int id)
 {
@@ -175,6 +182,7 @@ void H_PreInit()
     cfg.common.hudIconAlpha = 1;
     cfg.common.xhairAngle = 0;
     cfg.common.xhairSize = .5f;
+    cfg.common.xhairLineWidth = 1;
     cfg.common.xhairVitality = false;
     cfg.common.xhairColor[0] = 1;
     cfg.common.xhairColor[1] = 1;

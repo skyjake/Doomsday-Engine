@@ -125,6 +125,7 @@ enum {
 #define PSF_ARMOR_TYPE      0x0001 // Upper four bits of the 1st byte.
 #define PSF_HEALTH          0x0002
 #define PSF_ARMOR_POINTS    0x0004
+#define PSF_INVENTORY       0x0008
 #define PSF_POWERS          0x0010
 #define PSF_KEYS            0x0020
 #define PSF_FRAGS           0x0040
@@ -135,6 +136,8 @@ enum {
 #define PSF_COUNTERS        0x0800 // Kill, item and secret counts.
 #define PSF_PENDING_WEAPON  0x1000
 #define PSF_READY_WEAPON    0x2000
+#define PSF_MORPH_TIME      0x4000
+#define PSF_LOCAL_QUAKE     0x8000
 
 // Player state update II flags.
 #define PSF2_OWNED_WEAPONS  0x00000001
@@ -145,22 +148,13 @@ enum {
 #endif
 
 #ifdef __JHERETIC__
-#define PSF_INVENTORY       0x0008
-#define PSF_MORPH_TIME      0x4000
 #define PSF_REBORN          0x77ff
 #endif
 
 #ifdef __JHEXEN__
 #define PSF_ARMOR           PSF_ARMOR_POINTS    // For convenience.
 #define PSF_WEAPONS         (PSF_PENDING_WEAPON | PSF_READY_WEAPON)
-#define PSF_INVENTORY       0x0008
-#define PSF_MORPH_TIME      0x4000
-#define PSF_LOCAL_QUAKE     0x8000
 #define PSF_REBORN          0xf7ff
-#endif
-
-#ifdef __JDOOM64__
-#define PSF_INVENTORY       0x0008
 #endif
 
 // Intermission flags.

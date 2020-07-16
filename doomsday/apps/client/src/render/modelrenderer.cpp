@@ -165,7 +165,7 @@ DE_PIMPL(ModelRenderer)
                    const Vec3f &modelOffset,
                    float yawAngle,
                    float pitchAngle,
-                   bool useFixedFov,
+                   float fixedFOVAngle, /* zero to use default FOV */
                    bool usePSpriteClipPlane,
                    const Mat4f *preModelToLocal = nullptr)
     {
@@ -194,7 +194,7 @@ DE_PIMPL(ModelRenderer)
 
         const Mat4f viewProj =
             Rend_GetProjectionMatrix(
-                useFixedFov ? weaponFixedFOV : 0.0f,
+                fixedFOVAngle,
                 usePSpriteClipPlane ? 0.1f /* near plane distance: IssueID #2373 */ : 1.0f) *
             ClientApp::render().uViewMatrix().toMat4f();
 
@@ -316,7 +316,7 @@ void ModelRenderer::render(const vissprite_t &spr)
                  p.model->offset,
                  spr.pose.yaw + spr.pose.yawAngleOffset,
                  spr.pose.pitch + spr.pose.pitchAngleOffset,
-                 false, /* regular FOV */
+                 0.0f, /* regular FOV */
                  false, /* regular clip planes */
                  mobjData ? &mobjData->modelTransformation() : nullptr);
 
@@ -349,7 +349,7 @@ void ModelRenderer::render(const vispsprite_t &pspr, const mobj_t *playerMobj)
                  eyeSpace * p.model->offset,
                  -90 - yaw,
                  pitch,
-                 true, /* fixed FOV for psprites */
+                 p.model->pspriteFOV > 0 ? p.model->pspriteFOV : weaponFixedFOV,
                  true, /* nearby clip planes */
                  &xform);
 

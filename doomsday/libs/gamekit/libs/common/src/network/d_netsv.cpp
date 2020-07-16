@@ -1044,7 +1044,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, dd_bool /*r
     }
 #endif
 
-#if __JHEXEN__ || __JSTRIFE__
+#if defined(HAVE_EARTHQUAKE) || __JSTRIFE__
     if(flags & PSF_LOCAL_QUAKE)
     {
         // Send the "quaking" state.

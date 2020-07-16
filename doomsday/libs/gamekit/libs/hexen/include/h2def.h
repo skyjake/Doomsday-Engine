@@ -368,6 +368,7 @@ DE_EXTERN_C dd_bool  modifiedgame;
 #define MAX_PLAYER_STARTS   (8)
 
 DE_EXTERN_C int localQuakeHappening[MAXPLAYERS];
+DENG_EXTERN_C int localQuakeTimeout[MAXPLAYERS]; // zero for unlimited
 
 #ifdef __cplusplus
 extern "C" {

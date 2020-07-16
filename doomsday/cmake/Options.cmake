@@ -52,3 +52,5 @@ option (DE_ENABLE_COUNTED_TRACING
 if (DE_ENABLE_COUNTED_TRACING)
     add_definitions (-DDE_USE_COUNTED_TRACING=1)
 endif ()
+
+option (DE_ASSIMP_EMBEDDED "Use the Assimp from 'external/assimp' instead of system libraries" YES)

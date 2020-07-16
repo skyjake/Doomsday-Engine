@@ -618,7 +618,7 @@ void NetCl_UpdatePlayerState(reader_s *msg, int plrNum)
     }
 #endif
 
-#if __JHEXEN__ || __JSTRIFE__
+#if defined(HAVE_EARTHQUAKE) || __JSTRIFE__
     if(flags & PSF_LOCAL_QUAKE)
     {
         localQuakeHappening[plrNum] = Reader_ReadByte(msg);
