@@ -38,6 +38,7 @@ deng_merge_sources (text     src/text/*.cpp)
 deng_merge_sources (vr       src/vr/*.cpp)
 deng_merge_sources (widgets  src/widgets/*.cpp)
 
+list (FILTER SOURCES EXCLUDE REGEX ".*/filedialog_.*")
 if (DE_X11 OR RASPBERRYPI)
     list (APPEND SOURCES src/dialogs/filedialog_generic.cpp)
 else ()

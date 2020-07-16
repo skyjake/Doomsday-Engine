@@ -274,7 +274,7 @@ void       *G_GetVariable(int id);
 
 #define DEFAULT_PLAYER_VIEWHEIGHT (41)
 
-DENG_EXTERN_C int localQuakeHappening[MAXPLAYERS];
-DENG_EXTERN_C int localQuakeTimeout[MAXPLAYERS];
+DE_EXTERN_C int localQuakeHappening[MAXPLAYERS];
+DE_EXTERN_C int localQuakeTimeout[MAXPLAYERS];
 
 #endif /* LIBHERETIC_DEFS_H */

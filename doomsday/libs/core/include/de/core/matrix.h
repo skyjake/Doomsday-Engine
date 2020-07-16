@@ -504,8 +504,6 @@ typedef Matrix4<dfloat>  Mat4f;
 typedef Matrix4<ddouble> Mat4d;
 ///@}
 
-using Mat4f = Matrix4f;
-
 } // namespace de
 
 #endif // LIBCORE_MATRIX_H

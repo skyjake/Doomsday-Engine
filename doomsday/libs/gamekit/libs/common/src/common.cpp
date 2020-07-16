@@ -229,7 +229,7 @@ static de::Value *Function_Game_SetMessage(de::Context &, const de::Function::Ar
     return nullptr;
 }
 
-static de::Value *Function_Game_Rules(de::Context &, const de::Function::ArgumentValues &args)
+static de::Value *Function_Game_Rules(de::Context &, const de::Function::ArgumentValues &)
 {
     return new de::RecordValue(gfw_Session()->rules().asRecord());
 }
@@ -379,7 +379,7 @@ void Common_Load()
             setMessageArgs["player"] = new NoneValue;
 
             gameBindings->init(*gameModule)
-                << DE_FUNC_DEFS(Game_SetMessage, "setMessage", "message" << "player", setMessageArgs);
+                << DE_FUNC_DEFS(Game_SetMessage, "setMessage", "message" << "player", setMessageArgs)
                 << DE_FUNC_NOARG(Game_Rules, "rules");
 
 #if defined(__JHEXEN__)
@@ -439,7 +439,7 @@ void Common_Load()
             gameBindings->init(playerClass)
                 << DE_FUNC_NOARG (Player_Health, "health")
                 << DE_FUNC       (Player_Power, "power", "type")
-                << DE_FUNC_NOARG (Player_ShotAmmo, "shotAmmo");
+                << DE_FUNC_NOARG (Player_ShotAmmo, "shotAmmo")
                 << DE_FUNC       (Player_GiveArmor, "giveArmor", "type" << "points");
 
 #if defined(HAVE_DOOM_ARMOR_BINDINGS)
@@ -452,7 +452,7 @@ void Common_Load()
             Function::Defaults setLocalQuakeArgs;
             setLocalQuakeArgs["duration"] = new NumberValue(0);
             *gameBindings
-                << DENG2_FUNC_DEFS (Player_SetLocalQuake, "setLocalQuake", "intensity" << "duration", setLocalQuakeArgs);
+                << DE_FUNC_DEFS (Player_SetLocalQuake, "setLocalQuake", "intensity" << "duration", setLocalQuakeArgs);
 #endif
 
 #if defined(__JHERETIC__)

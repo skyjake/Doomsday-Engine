@@ -793,21 +793,21 @@ static void drawStats()
         }
     }
 
-    if (bgMaterial.startsWith("Flats:") || bgMaterial.startsWith("flats:"))
+    if (bgMaterial.beginsWith("Flats:") || bgMaterial.beginsWith("flats:"))
     {
         // Draw a background flat.
         DGL_SetMaterialUI(
             (world_Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(bgMaterial)),
             DGL_REPEAT,
             DGL_REPEAT);
-    DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4f(1, 1, 1, 1);
-    DGL_DrawRectf2Tiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
-    DGL_Disable(DGL_TEXTURE_2D);
+        DGL_Enable(DGL_TEXTURE_2D);
+        DGL_Color4f(1, 1, 1, 1);
+        DGL_DrawRectf2Tiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
+        DGL_Disable(DGL_TEXTURE_2D);
     }
-    else if (bgMaterial.startsWith("Patches:") || bgMaterial.startsWith("patches:"))
+    else if (bgMaterial.beginsWith("Patches:") || bgMaterial.beginsWith("patches:"))
     {
-        drawBackground(R_DeclarePatch(bgMaterial.constData() + strlen("Patches:")));
+        drawBackground(R_DeclarePatch(bgMaterial.c_str() + strlen("Patches:")));
     }
 
     switch (gameType)

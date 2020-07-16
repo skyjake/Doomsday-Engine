@@ -123,7 +123,7 @@ DE_PIMPL(GLTextureFramebuffer)
         if (isMultisampled())
         {
             self().configure(size, ColorDepthStencil, sampleCount());
-            resolvedFbo.configure(color[0].texture.get(), &depthStencil);
+            resolvedFbo.configure(color[0].texture.get(), &depthStencil, &depthStencil);
         }
         else
         {
@@ -131,11 +131,11 @@ DE_PIMPL(GLTextureFramebuffer)
             {
                 if (color.size() == 1)
                 {
-                    self().configure(color[0].texture.get(), &depthStencil);
+                    self().configure(color[0].texture.get(), &depthStencil, &depthStencil);
                 }
                 else
                 {
-                    self().configure(colorAttachments(), &depthStencil);
+                    self().configure(colorAttachments(), &depthStencil, &depthStencil);
                 }
                 resolvedFbo.setState(NotReady);
             }
