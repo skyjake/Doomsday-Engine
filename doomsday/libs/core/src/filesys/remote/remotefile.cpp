@@ -16,16 +16,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/RemoteFile"
+#include "de/remotefile.h"
 
-#include "de/App"
-#include "de/DirectoryFeed"
-#include "de/FileSystem"
-#include "de/RecordValue"
-#include "de/RemoteFeedRelay"
-#include "de/ScriptSystem"
-#include "de/TextValue"
-#include "de/TimeValue"
+#include "de/app.h"
+#include "de/directoryfeed.h"
+#include "de/filesystem.h"
+#include "de/filesys/remotefeedrelay.h"
+#include "de/dscript.h"
+#include "de/timevalue.h"
 
 namespace de {
 

@@ -21,15 +21,15 @@
 #define LIBDOOMSDAY_WORLD_MAP_H
 
 #include "../libdoomsday.h"
-#include "../resource/mapmanifest.h"
+#include "../res/mapmanifest.h"
 #include "mapelement.h"
 #include "bspnode.h"
 #include "api_mapedit.h"
 
-#include <de/Id>
-#include <de/Observers>
-#include <de/Reader>
-#include <de/Writer>
+#include <de/id.h>
+#include <de/observers.h>
+#include <de/reader.h>
+#include <de/writer.h>
 
 class EntityDatabase;
 struct polyobj_s;

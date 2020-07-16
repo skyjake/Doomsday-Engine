@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/VariableToggleWidget"
+#include "de/variabletogglewidget.h"
 
-#include <de/NumberValue>
+#include <de/numbervalue.h>
 
 namespace de {
 

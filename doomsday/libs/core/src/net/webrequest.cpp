@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/WebRequest"
-#include "de/RegExp"
-#include "de/Async"
+#include "de/webrequest.h"
+#include "de/regexp.h"
+#include "de/async.h"
 
 #include <the_Foundation/webrequest.h>
 

@@ -22,9 +22,9 @@
 #include "render/billboard.h"
 
 #include "clientapp.h"
-#include "ClientTexture"
+#include "resource/clienttexture.h"
 #include "gl/gl_main.h"
-#include "MaterialVariantSpec"
+#include "resource/materialvariantspec.h"
 #include "misc/r_util.h"
 #include "render/rend_main.h"
 #include "render/rendersystem.h"
@@ -34,9 +34,9 @@
 #include <de/legacy/vector1.h>
 #include <de/legacy/concurrency.h>
 #include <de/legacy/binangle.h>
-#include <de/GLInfo>
+#include <de/glinfo.h>
 #include <doomsday/console/var.h>
-#include <doomsday/world/Materials>
+#include <doomsday/world/materials.h>
 
 using namespace de;
 

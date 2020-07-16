@@ -25,8 +25,8 @@
 #include "gloom/render/shadow.h"
 #include "gloom/world/map.h"
 
-#include <de/Hash>
-#include <de/Set>
+#include <de/hash.h>
+#include <de/set.h>
 
 using namespace de;
 

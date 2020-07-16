@@ -27,21 +27,21 @@
 #include "dd_main.h"
 
 #include <doomsday/console/exec.h>
-#include <doomsday/DoomsdayApp>
-#include <doomsday/Games>
-#include <doomsday/LumpCatalog>
-#include <doomsday/LumpDirectory>
-#include <doomsday/res/Bundles>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/games.h>
+#include <doomsday/res/lumpcatalog.h>
+#include <doomsday/res/lumpdirectory.h>
+#include <doomsday/res/bundles.h>
 
-#include <de/App>
-#include <de/CallbackAction>
-#include <de/ChildWidgetOrganizer>
-#include <de/Config>
-#include <de/FileSystem>
-#include <de/Loop>
-#include <de/PopupMenuWidget>
-#include <de/ui/FilteredData>
-#include <de/TaskPool>
+#include <de/app.h>
+#include <de/callbackaction.h>
+#include <de/childwidgetorganizer.h>
+#include <de/config.h>
+#include <de/filesystem.h>
+#include <de/loop.h>
+#include <de/popupmenuwidget.h>
+#include <de/ui/filtereddata.h>
+#include <de/taskpool.h>
 
 using namespace de;
 

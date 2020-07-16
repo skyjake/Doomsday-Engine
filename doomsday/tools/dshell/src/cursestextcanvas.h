@@ -20,7 +20,7 @@
 #define CURSESTEXTCANVAS_H
 
 #include <curses.h>
-#include <de/term/TextCanvas>
+#include <de/term/textcanvas.h>
 
 class CursesTextCanvas : public de::term::TextCanvas
 {

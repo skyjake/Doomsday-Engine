@@ -26,10 +26,10 @@
 #include "plane.h"
 
 #include <de/legacy/aabox.h>
-#include <de/List>
-#include <de/Id>
-#include <de/Observers>
-#include <de/Vector>
+#include <de/list.h>
+#include <de/id.h>
+#include <de/observers.h>
+#include <de/vector.h>
 
 struct mobj_s;
 

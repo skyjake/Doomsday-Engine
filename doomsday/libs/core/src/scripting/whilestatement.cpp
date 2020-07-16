@@ -17,13 +17,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/WhileStatement"
-#include "de/Expression"
-#include "de/Evaluator"
-#include "de/Context"
-#include "de/Value"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/scripting/whilestatement.h"
+#include "de/scripting/expression.h"
+#include "de/scripting/evaluator.h"
+#include "de/scripting/context.h"
+#include "de/value.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 using namespace de;
 

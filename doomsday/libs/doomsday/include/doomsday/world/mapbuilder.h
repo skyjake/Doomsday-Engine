@@ -22,8 +22,8 @@
 
 #include "../libdoomsday.h"
 #include "map.h"
-#include <de/String>
-#include <de/StringPool>
+#include <de/string.h>
+#include <de/stringpool.h>
 
 namespace world {
 

@@ -23,12 +23,9 @@
 #include "doomsday/world/mobjthinkerdata.h"
 #include "doomsday/defs/ded.h"
 
-#include <de/DictionaryValue>
-#include <de/NativePointerValue>
-#include <de/Process>
-#include <de/String>
-#include <de/TextValue>
-#include <de/KeyMap>
+#include <de/dscript.h>
+#include <de/nativepointervalue.h>
+#include <de/keymap.h>
 
 using namespace de;
 

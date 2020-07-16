@@ -24,9 +24,9 @@
 #include "ui/nativeui.h"
 #include "ui/clientwindow.h"
 
-#include <de/App>
-#include <de/ByteArrayFile>
-#include <de/FileSystem>
+#include <de/app.h>
+#include <de/bytearrayfile.h>
+#include <de/filesystem.h>
 #include <SDL_messagebox.h>
 #include <stdarg.h>
 

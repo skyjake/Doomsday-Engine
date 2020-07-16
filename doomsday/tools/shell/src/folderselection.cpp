@@ -18,9 +18,9 @@
 
 #include "folderselection.h"
 
-#include <de/ButtonWidget>
-#include <de/FileDialog>
-#include <de/LineEditWidget>
+#include <de/buttonwidget.h>
+#include <de/filedialog.h>
+#include <de/lineeditwidget.h>
 
 using namespace de;
 

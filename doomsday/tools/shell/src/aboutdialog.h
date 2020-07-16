@@ -1,7 +1,7 @@
 #ifndef ABOUTDIALOG_H
 #define ABOUTDIALOG_H
 
-#include <de/MessageDialog>
+#include <de/messagedialog.h>
 
 class AboutDialog : public de::MessageDialog
 {

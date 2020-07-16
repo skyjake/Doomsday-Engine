@@ -21,7 +21,7 @@
 #include "ui/axisinputcontrol.h"
 #include <de/legacy/smoother.h>
 #include <de/legacy/timer.h> // SECONDSPERTIC
-#include <de/Block>
+#include <de/block.h>
 #include <doomsday/console/var.h>
 #include "ui/joystick.h"
 #include "dd_loop.h" // DD_LatestRunTicsStartTime()

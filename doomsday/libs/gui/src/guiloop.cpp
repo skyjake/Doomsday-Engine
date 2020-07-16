@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GuiLoop"
-#include "de/GLWindow"
-#include "de/EventLoop"
-#include "de/CoreEvent"
-#include "de/WindowSystem"
+#include "de/guiloop.h"
+#include "de/glwindow.h"
+#include "de/eventloop.h"
+#include "de/coreevent.h"
+#include "de/windowsystem.h"
 
 namespace de {
 

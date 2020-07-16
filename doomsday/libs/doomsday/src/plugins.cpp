@@ -22,13 +22,13 @@
 #include "doomsday/world/actions.h"
 #include "doomsday/doomsdayapp.h"
 
-//#include <de/NativeFile>
+//#include <de/nativefile.h>
 //#include <de/legacy/findfile.h>
 //#include <de/legacy/strutil.h>
 
-#include <de/Extension>
-#include <de/List>
-#include <de/ThreadLocal>
+#include <de/extension.h>
+#include <de/list.h>
+#include <de/threadlocal.h>
 
 using namespace de;
 

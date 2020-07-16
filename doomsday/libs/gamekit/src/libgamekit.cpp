@@ -17,8 +17,8 @@
  */
 
 //#include "gamekit/libgamekit.h"
-#include <de/Extension>
-#include <de/Log>
+#include <de/extension.h>
+#include <de/log.h>
 #include <de/liblegacy.h>
 
 DE_EXTENSION(doom);

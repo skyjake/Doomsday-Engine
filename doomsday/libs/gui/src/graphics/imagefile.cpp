@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ImageFile"
-#include "de/HeightMap"
-#include <de/App>
-#include <de/Folder>
-#include <de/LogBuffer>
-#include <de/Hash>
+#include "de/imagefile.h"
+#include "de/heightmap.h"
+#include <de/app.h>
+#include <de/folder.h>
+#include <de/logbuffer.h>
+#include <de/hash.h>
 
 namespace de {
 

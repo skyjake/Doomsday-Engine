@@ -25,7 +25,7 @@
 #include "doomsday/world/sector.h"
 #include "doomsday/world/world.h"
 
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 #include <array>
 
 namespace world {

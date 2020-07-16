@@ -21,7 +21,7 @@
 #ifndef LIBCOMMON_UI_COLOREDITWIDGET
 #define LIBCOMMON_UI_COLOREDITWIDGET
 
-#include <de/Vector>
+#include <de/vector.h>
 #include "widget.h"
 
 namespace common {

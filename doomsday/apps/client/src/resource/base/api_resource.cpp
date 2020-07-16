@@ -26,10 +26,10 @@
 #  include "render/r_main.h" // texGammaLut
 #endif
 
-#include <doomsday/resource/animgroups.h>
-#include <doomsday/resource/colorpalettes.h>
-#include <doomsday/resource/resources.h>
-#include <doomsday/res/Textures>
+#include <doomsday/res/animgroups.h>
+#include <doomsday/res/colorpalettes.h>
+#include <doomsday/res/resources.h>
+#include <doomsday/res/textures.h>
 #include <de/legacy/texgamma.h>
 
 using namespace de;

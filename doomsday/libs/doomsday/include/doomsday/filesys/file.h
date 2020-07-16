@@ -31,8 +31,8 @@
 #include "fileinfo.h"
 #include "../uri.h"
 
-#include <de/Error>
-#include <de/PathTree>
+#include <de/error.h>
+#include <de/pathtree.h>
 #include <de/legacy/str.h>
 #include "dd_share.h"
 

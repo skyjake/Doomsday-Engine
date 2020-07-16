@@ -18,7 +18,7 @@
  */
 
 #include "de_base.h"
-#include "MaterialAnimator"
+#include "resource/materialanimator.h"
 #include "world/surface.h"
 #include "world/p_players.h" // viewPlayer
 #include "render/rend_main.h"

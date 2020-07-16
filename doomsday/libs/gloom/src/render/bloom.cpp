@@ -21,7 +21,7 @@
 #include "gloom/render/tonemap.h"
 #include "gloom/render/defs.h"
 
-#include <de/GLUniform>
+#include <de/gluniform.h>
 
 using namespace de;
 

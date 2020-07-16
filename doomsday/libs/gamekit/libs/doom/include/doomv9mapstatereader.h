@@ -26,7 +26,7 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#include <doomsday/GameStateFolder>
+#include <doomsday/gamestatefolder.h>
 
 /**
  * Doom ver 1.9 saved game map state reader.

@@ -19,9 +19,9 @@
  * 02110-1301 USA</small>
  */
 
-#include "doomsday/resource/texturemanifest.h"
-#include "doomsday/resource/textures.h"
-#include "doomsday/resource/resources.h"
+#include "doomsday/res/texturemanifest.h"
+#include "doomsday/res/textures.h"
+#include "doomsday/res/resources.h"
 
 using namespace de;
 

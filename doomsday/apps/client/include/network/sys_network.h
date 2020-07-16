@@ -32,7 +32,7 @@
 #include "monitor.h"
 #include "serverlink.h"
 
-#include <de/ServerInfo>
+#include <de/serverinfo.h>
 
 extern dd_bool  allowSending;
 extern int      maxQueuePackets;

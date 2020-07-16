@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include <de/String>
-#include <de/Time>
+#include <de/string.h>
+#include <de/time.h>
 
 /**
  * Interface for a world renderer implementation.

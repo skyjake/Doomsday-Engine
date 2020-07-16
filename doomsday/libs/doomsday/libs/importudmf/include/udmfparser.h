@@ -20,9 +20,9 @@
 #define IMPORTUDMF_UDMFPARSER_H
 
 #include "udmflex.h"
-#include <de/TokenRange>
-#include <de/Hash>
-#include <de/Value>
+#include <de/scripting/tokenrange.h>
+#include <de/hash.h>
+#include <de/value.h>
 #include <functional>
 
 /**

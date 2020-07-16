@@ -23,12 +23,12 @@
 #include "updater/updatersettings.h"
 #include "updater.h"
 #include "clientapp.h"
-#include <de/LabelWidget>
-#include <de/ChoiceWidget>
-#include <de/VariableToggleWidget>
-#include <de/GridLayout>
-//#include <de/SignalAction>
-#include <de/Log>
+#include <de/labelwidget.h>
+#include <de/choicewidget.h>
+#include <de/variabletogglewidget.h>
+#include <de/gridlayout.h>
+//#include <de/signalaction.h>
+#include <de/log.h>
 //#include <QDesktopServices>
 
 using namespace de;

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "de/Operator"
-#include "de/String"
+#include "de/scripting/operator.h"
+#include "de/string.h"
 
 namespace de {
 

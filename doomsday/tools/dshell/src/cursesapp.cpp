@@ -18,16 +18,16 @@
 
 #include "cursesapp.h"
 #include "cursestextcanvas.h"
-#include <de/Clock>
-#include <de/Timer>
-#include <de/Error>
-#include <de/Animation>
-#include <de/Rule>
-#include <de/Vector>
-#include <de/LogBuffer>
-#include <de/term/TextRootWidget>
-#include <de/term/Widget>
-#include <de/term/KeyEvent>
+#include <de/clock.h>
+#include <de/timer.h>
+#include <de/error.h>
+#include <de/animation.h>
+#include <de/rule.h>
+#include <de/vector.h>
+#include <de/logbuffer.h>
+#include <de/term/textrootwidget.h>
+#include <de/term/widget.h>
+#include <de/term/keyevent.h>
 #include <curses.h>
 #include <stdio.h>
 #include <sstream>

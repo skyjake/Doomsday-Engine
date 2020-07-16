@@ -19,10 +19,10 @@
 #ifndef GLOOM_MAP_H
 #define GLOOM_MAP_H
 
-#include <de/Rectangle>
-#include <de/Vector>
-#include <de/Hash>
-#include <de/List>
+#include <de/rectangle.h>
+#include <de/vector.h>
+#include <de/hash.h>
+#include <de/list.h>
 
 #include "gloom/identity.h"
 #include "gloom/geo/geomath.h"

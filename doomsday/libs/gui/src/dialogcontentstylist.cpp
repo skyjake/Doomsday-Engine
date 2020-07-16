@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/DialogContentStylist"
-#include "de/DialogWidget"
-#include "de/ToggleWidget"
-#include "de/LabelWidget"
-#include "de/LineEditWidget"
-#include "de/AuxButtonWidget"
+#include "de/dialogcontentstylist.h"
+#include "de/dialogwidget.h"
+#include "de/togglewidget.h"
+#include "de/labelwidget.h"
+#include "de/lineeditwidget.h"
+#include "de/auxbuttonwidget.h"
 
 namespace de {
 

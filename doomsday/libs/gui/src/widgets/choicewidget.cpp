@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ChoiceWidget"
-#include "de/PopupMenuWidget"
-#include "de/TextValue"
-#include "de/NumberValue"
+#include "de/choicewidget.h"
+#include "de/popupmenuwidget.h"
+#include "de/textvalue.h"
+#include "de/numbervalue.h"
 
 namespace de {
 

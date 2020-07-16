@@ -28,8 +28,8 @@
 
 #include "api_audiod_sfx.h"  // sfxbuffer_t
 #include "world/p_object.h"  // mobj_t
-#include <de/Error>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/vector.h>
 #include <functional>
 
 // Channel flags.

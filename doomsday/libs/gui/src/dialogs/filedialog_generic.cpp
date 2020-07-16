@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/FileDialog"
-#include "de/DirectoryBrowserWidget"
-#include "de/MessageDialog"
+#include "de/filedialog.h"
+#include "de/directorybrowserwidget.h"
+#include "de/messagedialog.h"
 
 namespace de {
 

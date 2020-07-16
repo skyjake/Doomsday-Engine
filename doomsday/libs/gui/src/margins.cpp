@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ui/Margins"
-#include "de/Style"
+#include "de/ui/margins.h"
+#include "de/ui/style.h"
 
-#include <de/IndirectRule>
-#include <de/OperatorRule>
+#include <de/indirectrule.h>
+#include <de/operatorrule.h>
 
 namespace de {
 namespace ui {

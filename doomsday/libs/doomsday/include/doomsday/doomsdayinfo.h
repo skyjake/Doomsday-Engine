@@ -19,8 +19,8 @@
 #pragma once
 
 #include "libdoomsday.h"
-#include <de/String>
-#include <de/NativePath>
+#include <de/string.h>
+#include <de/nativepath.h>
 
 /**
  * Information about Doomsday Engine and its plugins.

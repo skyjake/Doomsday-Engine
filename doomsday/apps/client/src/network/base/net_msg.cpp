@@ -26,7 +26,7 @@
 #include "de_base.h"
 #include "network/net_msg.h"
 
-#include <de/List>
+#include <de/list.h>
 #include "network/net_buf.h"
 
 using namespace de;

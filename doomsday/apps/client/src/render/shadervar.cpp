@@ -18,8 +18,7 @@
 
 #include "render/shadervar.h"
 
-#include <de/ScriptedInfo>
-#include <de/ScriptSystem>
+#include <de/dscript.h>
 
 using namespace de;
 

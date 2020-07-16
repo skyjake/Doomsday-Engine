@@ -21,7 +21,7 @@
 #define LIBCORE_EVALUATOR_H
 
 #include "../libcore.h"
-#include "../NoneValue"
+#include "de/nonevalue.h"
 
 #include <vector>
 #include <list>

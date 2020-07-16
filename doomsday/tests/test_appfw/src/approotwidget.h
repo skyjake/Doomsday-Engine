@@ -19,8 +19,8 @@
 #ifndef APPROOTWIDGET_H
 #define APPROOTWIDGET_H
 
-#include <de/GuiRootWidget>
-#include <de/GLWindow>
+#include <de/guirootwidget.h>
+#include <de/glwindow.h>
 
 class MainWindow;
 

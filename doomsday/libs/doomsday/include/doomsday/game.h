@@ -24,12 +24,12 @@
 #ifdef __cplusplus
 
 #include <doomsday/plugins.h>
-#include <doomsday/resource/resourceclass.h>
-#include <doomsday/GameProfiles>
-#include <de/Error>
-#include <de/Path>
-#include <de/Date>
-#include <de/String>
+#include <doomsday/resourceclass.h>
+#include <doomsday/gameprofiles.h>
+#include <de/error.h>
+#include <de/path.h>
+#include <de/date.h>
+#include <de/string.h>
 #include <map>
 
 class ResourceManifest;

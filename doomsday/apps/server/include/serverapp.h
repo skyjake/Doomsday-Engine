@@ -20,11 +20,11 @@
 #ifndef SERVERAPP_H
 #define SERVERAPP_H
 
-#include <de/TextApp>
-#include <de/ServerInfo>
+#include <de/textapp.h>
+#include <de/serverinfo.h>
 #include <doomsday/doomsdayapp.h>
-#include <doomsday/Games>
-#include <doomsday/resource/resources.h>
+#include <doomsday/games.h>
+#include <doomsday/res/resources.h>
 #include "serversystem.h"
 #include "ui/infine/infinesystem.h"
 #include "audio/audiosystem.h"

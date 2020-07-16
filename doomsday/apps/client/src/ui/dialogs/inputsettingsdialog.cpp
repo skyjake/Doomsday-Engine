@@ -26,10 +26,10 @@
 #include "clientapp.h"
 #include "api_console.h"
 
-#include <de/VariableToggleWidget>
-#include <de/ChoiceWidget>
-#include <de/GridPopupWidget>
-#include <de/TextValue>
+#include <de/variabletogglewidget.h>
+#include <de/choicewidget.h>
+#include <de/gridpopupwidget.h>
+#include <de/textvalue.h>
 
 using namespace de;
 using namespace de::ui;

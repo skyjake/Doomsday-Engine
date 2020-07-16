@@ -21,7 +21,7 @@
 #include "gloom/render/gbuffer.h"
 #include "gloom/render/databuffer.h"
 
-#include <de/GLState>
+#include <de/glstate.h>
 
 using namespace de;
 

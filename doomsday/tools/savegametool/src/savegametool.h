@@ -19,7 +19,7 @@
 #ifndef SAVEGAMETOOL_H
 #define SAVEGAMETOOL_H
 
-#include <de/String>
+#include <de/string.h>
 
 extern de::String fallbackGameId;
 

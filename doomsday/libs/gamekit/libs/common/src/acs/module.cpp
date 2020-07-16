@@ -22,9 +22,9 @@
 #include "common.h"           // IS_CLIENT
 #include "acs/module.h"
 
-#include <de/List>
-#include <de/KeyMap>
-#include <de/Log>
+#include <de/list.h>
+#include <de/keymap.h>
+#include <de/log.h>
 #include "acs/interpreter.h"  // ACS_INTERPRETER_MAX_SCRIPT_ARGS
 #include "gamesession.h"
 

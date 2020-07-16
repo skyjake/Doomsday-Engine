@@ -20,10 +20,10 @@
 
 #include "mapstatereader.h"
 
-#include <de/ArrayValue>
-#include <de/NativePath>
-#include <de/String>
-#include <doomsday/world/MaterialArchive>
+#include <de/arrayvalue.h>
+#include <de/nativepath.h>
+#include <de/string.h>
+#include <doomsday/world/materialarchive.h>
 
 #include "d_netsv.h"           /// @todo remove me
 #include "dmu_lib.h"

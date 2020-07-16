@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ModelBank"
-#include <de/App>
-#include <de/Folder>
+#include "de/modelbank.h"
+#include <de/app.h>
+#include <de/folder.h>
 
 namespace de {
 

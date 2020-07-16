@@ -24,14 +24,14 @@
 
 #if !defined (DE_MOBILE)
 
-#include "de/PersistentGLWindow"
-#include "de/GuiApp"
+#include "de/persistentglwindow.h"
+#include "de/guiapp.h"
 
-#include <de/ArrayValue>
-#include <de/CommandLine>
-#include <de/Config>
-#include <de/LogBuffer>
-#include <de/NumberValue>
+#include <de/arrayvalue.h>
+#include <de/commandline.h>
+#include <de/config.h>
+#include <de/logbuffer.h>
+#include <de/numbervalue.h>
 
 namespace de {
 

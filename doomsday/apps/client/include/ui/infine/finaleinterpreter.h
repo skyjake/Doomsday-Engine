@@ -20,8 +20,8 @@
 #ifndef DE_UI_INFINE_FINALEINTERPRETER_H
 #define DE_UI_INFINE_FINALEINTERPRETER_H
 
-#include <de/Error>
-#include <de/String>
+#include <de/error.h>
+#include <de/string.h>
 #include "../ddevent.h"
 #include "api_infine.h"  // finaleid_t
 

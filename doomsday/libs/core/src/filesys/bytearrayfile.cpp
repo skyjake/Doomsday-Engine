@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "de/ByteArrayFile"
+#include "de/bytearrayfile.h"
 
 namespace de {
 

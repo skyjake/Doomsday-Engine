@@ -19,11 +19,11 @@
 
 #include "world/contactspreader.h"
 
-#include "Contact"
+#include "world/contact.h"
 #include "world/subsector.h"
 #include "render/rend_main.h"  // Rend_mapSurfaceMaterialSpec
-#include "MaterialAnimator"
-#include "WallEdge"
+#include "resource/materialanimator.h"
+#include "render/walledge.h"
 
 #include <doomsday/mesh/face.h>
 #include <de/legacy/vector1.h>

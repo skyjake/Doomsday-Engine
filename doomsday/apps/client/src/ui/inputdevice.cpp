@@ -23,8 +23,8 @@
 #include "ui/axisinputcontrol.h"
 #include "ui/buttoninputcontrol.h"
 #include "ui/hatinputcontrol.h"
-#include <de/List>
-#include <de/Log>
+#include <de/list.h>
+#include <de/log.h>
 
 using namespace de;
 

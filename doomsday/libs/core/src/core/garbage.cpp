@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Garbage"
-#include "de/Guard"
-#include "de/Lockable"
-#include "de/Log"
-#include "de/Thread"
+#include "de/garbage.h"
+#include "de/guard.h"
+#include "de/lockable.h"
+#include "de/log.h"
+#include "de/thread.h"
 
 #include <map>
 #include <set>

@@ -31,7 +31,7 @@
 #include <cassert>
 #include <iostream>
 #include <fluidsynth.h>
-#include <de/Log>
+#include <de/log.h>
 #include "api_console.h"
 #include "api_audiod_sfx.h"
 

@@ -21,9 +21,9 @@
 #define CLIENT_INPUTSYSTEM_BINDCONTEXT_H
 
 #include <functional>
-#include <de/Observers>
-#include <de/Record>
-#include "ImpulseBinding" // ibcontroltype_t
+#include <de/observers.h>
+#include <de/record.h>
+#include "ui/impulsebinding.h" // ibcontroltype_t
 
 /// @todo: Move to public API
 typedef int (*FallbackResponderFunc)(event_t *);

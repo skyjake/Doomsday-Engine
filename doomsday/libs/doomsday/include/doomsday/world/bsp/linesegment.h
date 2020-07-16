@@ -26,8 +26,8 @@
 #ifndef DE_WORLD_BSP_LINESEGMENT_H
 #define DE_WORLD_BSP_LINESEGMENT_H
 
-#include <de/Error>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/vector.h>
 
 #include "../../mesh/hedge.h"
 #include "../line.h"

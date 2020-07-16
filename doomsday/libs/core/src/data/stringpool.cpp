@@ -17,11 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/StringPool"
-#include "de/Reader"
-#include "de/Writer"
-#include "de/Lockable"
-#include "de/Guard"
+#include "de/stringpool.h"
+#include "de/reader.h"
+#include "de/writer.h"
+#include "de/lockable.h"
+#include "de/guard.h"
 
 #include <vector>
 #include <list>

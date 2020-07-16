@@ -23,8 +23,8 @@
 #ifndef DE_CLIENT_UPDATEAVAILABLEDIALOG_H
 #define DE_CLIENT_UPDATEAVAILABLEDIALOG_H
 
-#include <de/MessageDialog>
-#include <de/Version>
+#include <de/messagedialog.h>
+#include <de/version.h>
 
 class UpdateAvailableDialog : public de::MessageDialog
 {

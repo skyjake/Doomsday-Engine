@@ -20,9 +20,9 @@
 #ifndef DE_UI_INFINESYSTEM_H
 #define DE_UI_INFINESYSTEM_H
 
-#include <de/List>
-#include <de/Error>
-#include <de/String>
+#include <de/list.h>
+#include <de/error.h>
+#include <de/string.h>
 #include "finale.h"
 
 /**

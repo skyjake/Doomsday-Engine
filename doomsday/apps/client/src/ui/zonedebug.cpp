@@ -27,11 +27,11 @@
 #if defined (DE_DEBUG) && defined (DE_OPENGL)
 
 #include <cmath>
-#include <de/GLState>
-#include <de/GLInfo>
+#include <de/glstate.h>
+#include <de/glinfo.h>
 #include <de/legacy/concurrency.h>
-#include <de/Rectangle>
-#include <de/Vector>
+#include <de/rectangle.h>
+#include <de/vector.h>
 
 /// @todo Find a better way to access the private data of the zone
 /// (e.g., move this into the library and use an abstract graphics interface).

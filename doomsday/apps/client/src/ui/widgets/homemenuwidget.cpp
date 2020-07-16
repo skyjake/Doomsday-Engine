@@ -20,7 +20,7 @@
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/home/columnwidget.h"
 
-#include <de/FocusWidget>
+#include <de/focuswidget.h>
 
 using namespace de;
 

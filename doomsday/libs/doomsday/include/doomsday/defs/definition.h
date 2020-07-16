@@ -21,7 +21,7 @@
 #define LIBDOOMSDAY_DEFN_DEFINITION_H
 
 #include "../libdoomsday.h"
-#include <de/RecordAccessor>
+#include <de/recordaccessor.h>
 
 namespace defn {
 

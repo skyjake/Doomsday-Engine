@@ -24,7 +24,7 @@
 #include "../game.h"
 #include "dd_share.h"
 #include "dd_types.h"
-#include <de/Lexicon>
+#include <de/lexicon.h>
 
 typedef enum {
     WT_ANY = -1,

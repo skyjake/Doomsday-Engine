@@ -20,7 +20,7 @@
 #ifndef LIBCORE_EXPRESSIONSTATEMENT_H
 #define LIBCORE_EXPRESSIONSTATEMENT_H
 
-#include "../Statement"
+#include "statement.h"
 
 namespace de {
 

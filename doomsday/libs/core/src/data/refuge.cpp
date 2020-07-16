@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Refuge"
-#include "de/App"
-#include "de/Archive"
-#include "de/ArchiveFolder"
-#include "de/Reader"
-#include "de/Writer"
+#include "de/refuge.h"
+#include "de/app.h"
+#include "de/archive.h"
+#include "de/archivefolder.h"
+#include "de/reader.h"
+#include "de/writer.h"
 
 namespace de {
 

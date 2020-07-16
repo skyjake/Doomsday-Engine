@@ -16,17 +16,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/DialogWidget"
-#include "de/ToggleWidget"
-#include "de/ChoiceWidget"
-#include "de/GuiRootWidget"
-#include "de/DialogContentStylist"
-#include "de/ui/FilteredData"
+#include "de/dialogwidget.h"
+#include "de/togglewidget.h"
+#include "de/choicewidget.h"
+#include "de/guirootwidget.h"
+#include "de/dialogcontentstylist.h"
+#include "de/ui/filtereddata.h"
 
-#include <de/KeyEvent>
-#include <de/MouseEvent>
-#include <de/Untrapper>
-#include <de/EventLoop>
+#include <de/keyevent.h>
+#include <de/mouseevent.h>
+#include <de/untrapper.h>
+#include <de/eventloop.h>
 
 namespace de {
 

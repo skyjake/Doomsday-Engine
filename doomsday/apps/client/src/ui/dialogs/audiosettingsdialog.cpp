@@ -27,16 +27,15 @@
 #include "audio/audiosystem.h"
 
 #include "clientapp.h"
-#include "ConfigProfiles"
+#include "configprofiles.h"
 
-#include <de/FoldPanelWidget>
-#include <de/GridPopupWidget>
-#include <de/ScriptSystem>
-#include <de/SequentialLayout>
-#include <de/TextValue>
-#include <de/VariableChoiceWidget>
-#include <de/VariableSliderWidget>
-#include <de/VariableToggleWidget>
+#include <de/foldpanelwidget.h>
+#include <de/gridpopupwidget.h>
+#include <de/dscript.h>
+#include <de/sequentiallayout.h>
+#include <de/variablechoicewidget.h>
+#include <de/variablesliderwidget.h>
+#include <de/variabletogglewidget.h>
 
 using namespace de;
 using namespace de::ui;

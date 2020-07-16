@@ -20,13 +20,13 @@
 #include "con_config.h"
 #include "ui/inputsystem.h"
 
-#include <de/App>
-#include <de/DirectoryFeed>
-#include <de/FileSystem>
-#include <de/Log>
-#include <de/NativeFile>
-#include <de/Path>
-#include <de/Writer>
+#include <de/app.h>
+#include <de/directoryfeed.h>
+#include <de/filesystem.h>
+#include <de/log.h>
+#include <de/nativefile.h>
+#include <de/path.h>
+#include <de/writer.h>
 #include <de/c_wrapper.h>
 #include <cctype>
 
@@ -37,19 +37,17 @@
 #include <doomsday/console/knownword.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
-#include <doomsday/Games>
+#include <doomsday/games.h>
 
 #include "dd_main.h"
 #include "dd_def.h"
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
-
 #  include "world/p_players.h"
-
-#  include "BindContext"
-#  include "CommandBinding"
-#  include "ImpulseBinding"
+#  include "ui/bindcontext.h"
+#  include "ui/commandbinding.h"
+#  include "ui/impulsebinding.h"
 #endif
 
 using namespace de;

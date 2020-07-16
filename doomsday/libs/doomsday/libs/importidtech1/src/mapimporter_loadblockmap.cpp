@@ -21,7 +21,7 @@
  */
 
 #include "importidtech1.h"
-#include <de/Log>
+#include <de/log.h>
 
 using namespace de;
 

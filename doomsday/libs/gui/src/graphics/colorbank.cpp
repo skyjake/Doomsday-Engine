@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ColorBank"
+#include "de/colorbank.h"
 #include <de/math.h>
-#include <de/ArrayValue>
+#include <de/arrayvalue.h>
 
 namespace de {
 

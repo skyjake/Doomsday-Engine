@@ -21,8 +21,8 @@
 #pragma once
 
 #include "map.h"
-#include <de/String>
-#include <de/Vector>
+#include <de/string.h>
+#include <de/vector.h>
 #include <map>
 
 namespace world {

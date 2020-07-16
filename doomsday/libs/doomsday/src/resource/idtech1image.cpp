@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/idtech1image.h"
-#include "doomsday/resource/patch.h"
-#include "doomsday/Game"
+#include "doomsday/res/idtech1image.h"
+#include "doomsday/res/patch.h"
+#include "doomsday/game.h"
 
 using namespace de;
 

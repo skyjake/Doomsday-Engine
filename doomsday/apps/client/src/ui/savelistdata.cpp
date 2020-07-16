@@ -20,10 +20,10 @@
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
-#include <doomsday/AbstractSession>
-#include <doomsday/SaveGames>
-#include <de/Loop>
-#include <de/TextValue>
+#include <doomsday/abstractsession.h>
+#include <doomsday/savegames.h>
+#include <de/loop.h>
+#include <de/textvalue.h>
 
 using namespace de;
 

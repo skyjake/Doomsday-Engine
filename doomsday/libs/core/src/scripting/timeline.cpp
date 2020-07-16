@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Timeline"
-#include "de/ScriptedInfo"
-#include "de/Record"
-#include "de/Script"
-#include "de/Process"
+#include "de/scripting/timeline.h"
+#include "de/scripting/scriptedinfo.h"
+#include "de/record.h"
+#include "de/scripting/script.h"
+#include "de/scripting/process.h"
 
 #include <queue>
 #include <deque>

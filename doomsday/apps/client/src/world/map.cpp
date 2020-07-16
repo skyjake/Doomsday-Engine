@@ -41,19 +41,19 @@
 #include "client/cl_mobj.h"
 #include "api_sound.h"
 #include "client/clskyplane.h"
-#include "Contact"
-#include "ContactSpreader"
-#include "LightDecoration"
-#include "Lumobj"
-#include "WallEdge"
-#include "render/viewports.h"
+#include "world/contact.h"
+#include "world/contactspreader.h"
+#include "render/lightdecoration.h"
+#include "render/lumobj.h"
 #include "render/rend_main.h"
 #include "render/rend_particle.h"
+#include "render/viewports.h"
+#include "render/walledge.h"
 
 #include <doomsday/defs/mapinfo.h>
 #include <doomsday/defs/sky.h>
-#include <doomsday/EntityDatabase>
-#include <doomsday/BspNode>
+#include <doomsday/world/entitydatabase.h>
+#include <doomsday/world/bspnode.h>
 #include <doomsday/mesh/face.h>
 #include <doomsday/world/blockmap.h>
 #include <doomsday/world/bspleaf.h>
@@ -69,10 +69,10 @@
 #include <doomsday/world/thinkers.h>
 #include <doomsday/world/bsp/partitioner.h>
 
-#include <de/BitArray>
-#include <de/LogBuffer>
-#include <de/Hash>
-#include <de/Rectangle>
+#include <de/bitarray.h>
+#include <de/logbuffer.h>
+#include <de/hash.h>
+#include <de/rectangle.h>
 #include <de/charsymbols.h>
 #include <de/legacy/aabox.h>
 #include <de/legacy/nodepile.h>

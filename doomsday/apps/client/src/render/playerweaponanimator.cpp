@@ -27,8 +27,8 @@
 #include "render/rendersystem.h"
 
 #include <de/legacy/timer.h>
-#include <de/Garbage>
-#include <de/AnimationVector>
+#include <de/garbage.h>
+#include <de/animationvector.h>
 
 using namespace de;
 

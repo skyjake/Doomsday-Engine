@@ -18,8 +18,8 @@
 
 #include "gloom/world/map.h"
 
-#include <de/Block>
-#include <de/Set>
+#include <de/block.h>
+#include <de/set.h>
 #include <nlohmann/json.hpp>
 #include <string>
 

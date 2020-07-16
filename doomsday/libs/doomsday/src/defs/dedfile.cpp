@@ -20,9 +20,9 @@
 
 #include "doomsday/defs/dedfile.h"
 
-#include <de/App>
-#include <de/Folder>
-#include <de/LogBuffer>
+#include <de/app.h>
+#include <de/folder.h>
+#include <de/logbuffer.h>
 #include "doomsday/defs/dedparser.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"

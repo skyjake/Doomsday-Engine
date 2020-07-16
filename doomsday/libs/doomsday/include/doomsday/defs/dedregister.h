@@ -20,8 +20,8 @@
 #define LIBDOOMSDAY_DEDREGISTER_H
 
 #include "../libdoomsday.h"
-#include <de/DictionaryValue>
-#include <de/Record>
+#include <de/dictionaryvalue.h>
+#include <de/record.h>
 
 /**
  * General purpose register of DED definitions.

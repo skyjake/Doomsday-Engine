@@ -21,9 +21,9 @@
 #define CLIENT_INPUTSYSTEM_INPUTDEVICE_H
 
 #include <functional>
-#include <de/Error>
-#include <de/Observers>
-#include <de/String>
+#include <de/error.h>
+#include <de/observers.h>
+#include <de/string.h>
 
 class BindContext;
 class AxisInputControl;

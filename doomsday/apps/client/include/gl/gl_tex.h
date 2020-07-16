@@ -27,7 +27,7 @@
 
 #include "misc/color.h"
 
-#include <doomsday/resource/colorpalette.h>
+#include <doomsday/res/colorpalette.h>
 
 typedef struct colorpalette_analysis_s {
     colorpaletteid_t paletteId;

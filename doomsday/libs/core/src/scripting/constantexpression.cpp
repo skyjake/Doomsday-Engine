@@ -17,11 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ConstantExpression"
-#include "de/NumberValue"
-#include "de/NoneValue"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/scripting/constantexpression.h"
+#include "de/numbervalue.h"
+#include "de/nonevalue.h"
+#include "de/writer.h"
+#include "de/reader.h"
 #include "de/math.h"
 
 using namespace de;

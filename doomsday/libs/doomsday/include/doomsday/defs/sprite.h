@@ -24,10 +24,10 @@
 #include "definition.h"
 #include "../uri.h"
 
-#include <de/CompiledRecord>
-#include <de/Error>
-#include <de/RecordAccessor>
-#include <de/DictionaryValue>
+#include <de/compiledrecord.h>
+#include <de/error.h>
+#include <de/recordaccessor.h>
+#include <de/dictionaryvalue.h>
 
 namespace defn {
 

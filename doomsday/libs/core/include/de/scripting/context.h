@@ -20,8 +20,8 @@
 #ifndef LIBCORE_CONTEXT_H
 #define LIBCORE_CONTEXT_H
 
-#include "../Evaluator"
-#include "../Record"
+#include "evaluator.h"
+#include "de/record.h"
 
 namespace de {
 

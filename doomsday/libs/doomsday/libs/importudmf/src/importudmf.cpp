@@ -22,9 +22,9 @@
 
 #include <doomsday/filesys/lumpindex.h>
 #include <doomsday/gamefw/mapspot.h>
-#include <de/App>
-#include <de/Extension>
-#include <de/Log>
+#include <de/app.h>
+#include <de/extension.h>
+#include <de/log.h>
 
 using namespace de;
 using namespace res;

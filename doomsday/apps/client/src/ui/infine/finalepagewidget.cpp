@@ -20,17 +20,17 @@
 
 #include "ui/infine/finalepagewidget.h"
 
-#include <doomsday/world/Material>
+#include <doomsday/world/material.h>
 #include <de/legacy/vector1.h>
 #include "dd_main.h" // App_Resources()
 
 #ifdef __CLIENT__
-#  include <de/GLInfo>
-#  include <de/GLState>
+#  include <de/glinfo.h>
+#  include <de/glstate.h>
 #  include "gl/gl_draw.h"
 #  include "gl/gl_main.h"
 #  include "render/rend_main.h" // renderWireframe
-#  include "MaterialAnimator"
+#  include "resource/materialanimator.h"
 #endif
 
 using namespace de;

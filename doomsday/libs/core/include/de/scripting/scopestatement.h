@@ -19,10 +19,10 @@
 #ifndef LIBCORE_SCOPESTATEMENT_H
 #define LIBCORE_SCOPESTATEMENT_H
 
-#include "../Statement"
-#include "../Expression"
-#include "../Compound"
-#include "../String"
+#include "statement.h"
+#include "expression.h"
+#include "compound.h"
+#include "de/string.h"
 
 namespace de {
 

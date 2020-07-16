@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GLTexture"
-#include "de/GLInfo"
-#include "de/graphics/opengl.h"
+#include "de/gltexture.h"
+#include "de/glinfo.h"
+#include "de/opengl.h"
 
 namespace de {
 

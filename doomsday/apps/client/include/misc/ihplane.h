@@ -20,9 +20,9 @@
 #ifndef DE_MATH_IHPLANE
 #define DE_MATH_IHPLANE
 
-#include <de/Error>
-#include <de/Partition>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/partition.h>
+#include <de/vector.h>
 
 namespace de {
 

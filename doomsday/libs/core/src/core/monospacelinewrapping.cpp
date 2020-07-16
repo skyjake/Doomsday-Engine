@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/MonospaceLineWrapping"
+#include "de/monospacelinewrapping.h"
 #include <de/math.h>
 
 namespace de {

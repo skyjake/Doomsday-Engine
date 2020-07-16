@@ -19,7 +19,7 @@
 #ifndef LIBCORE_BINDINGS_MATH_H
 #define LIBCORE_BINDINGS_MATH_H
 
-#include "de/Binder"
+#include "de/scripting/function.h"
 
 namespace de {
 

@@ -66,15 +66,15 @@
  * @see Protocol_Receive()
  */
 
-#include "de/Socket"
+#include "de/socket.h"
 
-#include "de/Loop"
-#include "de/Message"
-#include "de/Reader"
-#include "de/TaskPool"
-#include "de/Waitable"
-#include "de/Writer"
-#include "de/data/huffman.h"
+#include "de/loop.h"
+#include "de/message.h"
+#include "de/reader.h"
+#include "de/taskpool.h"
+#include "de/waitable.h"
+#include "de/writer.h"
+#include "de/huffman.h"
 
 #include <the_Foundation/object.h>
 

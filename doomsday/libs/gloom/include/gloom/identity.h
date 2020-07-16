@@ -19,7 +19,7 @@
 #ifndef GLOOM_IDENT_H
 #define GLOOM_IDENT_H
 
-#include <de/List>
+#include <de/list.h>
 #include "libgloom.h"
 
 namespace gloom {

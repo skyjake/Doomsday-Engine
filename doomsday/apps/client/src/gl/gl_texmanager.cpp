@@ -26,8 +26,8 @@
 #include <de/legacy/concurrency.h>
 #include <de/legacy/memory.h>
 #include <de/legacy/memoryzone.h>
-#include <de/GLInfo>
-#include <doomsday/res/Textures>
+#include <de/glinfo.h>
+#include <doomsday/res/textures.h>
 #include <doomsday/filesys/fs_main.h>
 
 #include "clientapp.h"

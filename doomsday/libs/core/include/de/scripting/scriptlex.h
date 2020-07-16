@@ -20,9 +20,9 @@
 #ifndef LIBCORE_SCRIPTLEX_H
 #define LIBCORE_SCRIPTLEX_H
 
-#include "../Lex"
-#include "../TokenBuffer"
-#include "../Set"
+#include "lex.h"
+#include "tokenbuffer.h"
+#include "de/set.h"
 
 namespace de {
 

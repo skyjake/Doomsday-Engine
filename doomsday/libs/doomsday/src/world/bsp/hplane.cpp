@@ -33,8 +33,8 @@
 
 #include <de/legacy/mathutil.h> // M_InverseAngle
 #include <de/legacy/vector1.h>  // remove me
-#include <de/Error>
-#include <de/Log>
+#include <de/error.h>
+#include <de/log.h>
 
 #include <memory>
 

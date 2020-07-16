@@ -17,18 +17,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/RecordValue"
-#include "de/TextValue"
-#include "de/RefValue"
-#include "de/NoneValue"
-#include "de/FunctionValue"
-#include "de/Process"
-#include "de/Context"
-#include "de/Evaluator"
-#include "de/Variable"
-#include "de/Writer"
-#include "de/Reader"
-#include "de/ScopeStatement"
+#include "de/recordvalue.h"
+#include "de/textvalue.h"
+#include "de/refvalue.h"
+#include "de/nonevalue.h"
+#include "de/scripting/functionvalue.h"
+#include "de/scripting/process.h"
+#include "de/scripting/context.h"
+#include "de/scripting/evaluator.h"
+#include "de/scripting/scopestatement.h"
+#include "de/variable.h"
+#include "de/writer.h"
+#include "de/reader.h"
 #include "de/math.h"
 
 namespace de {

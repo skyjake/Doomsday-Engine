@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/WindowTransform"
-#include "de/BaseWindow"
+#include "de/windowtransform.h"
+#include "de/basewindow.h"
 
 namespace de {
 

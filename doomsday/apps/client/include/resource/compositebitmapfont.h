@@ -22,9 +22,9 @@
 
 #include "abstractfont.h"
 #include "resource/clienttexture.h"
-#include <de/Rectangle>
-#include <de/String>
-#include <de/Vector>
+#include <de/rectangle.h>
+#include <de/string.h>
+#include <de/vector.h>
 
 struct ded_compositefont_s;
 

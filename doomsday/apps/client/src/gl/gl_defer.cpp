@@ -26,7 +26,7 @@
 #include <de/legacy/concurrency.h>
 #include <de/legacy/timer.h>
 #include <doomsday/doomsdayapp.h>
-#include <de/GLInfo>
+#include <de/glinfo.h>
 #include "dd_main.h"
 #include "sys_system.h"  // Sys_Sleep(), novideo
 

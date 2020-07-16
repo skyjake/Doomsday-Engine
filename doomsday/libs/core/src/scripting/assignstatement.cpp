@@ -17,13 +17,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/AssignStatement"
-#include "de/Context"
-#include "de/Expression"
-#include "de/ArrayValue"
-#include "de/RefValue"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/scripting/assignstatement.h"
+#include "de/scripting/context.h"
+#include "de/scripting/expression.h"
+#include "de/arrayvalue.h"
+#include "de/refvalue.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 using namespace de;
 

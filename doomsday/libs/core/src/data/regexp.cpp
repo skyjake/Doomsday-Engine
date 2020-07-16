@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/RegExp"
+#include "de/regexp.h"
 
 #include <the_Foundation/object.h>
 

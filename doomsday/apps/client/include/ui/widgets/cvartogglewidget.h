@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_CVARTOGGLEWIDGET_H
 #define DE_CLIENT_CVARTOGGLEWIDGET_H
 
-#include <de/ToggleWidget>
+#include <de/togglewidget.h>
 #include "icvarwidget.h"
 
 /**

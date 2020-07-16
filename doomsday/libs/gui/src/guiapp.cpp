@@ -16,26 +16,23 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GuiApp"
-#include "de/graphics/opengl.h"
-#include "de/text/builtinfont.h"
-#include "de/ImageFile"
-#include "de/GLWindow"
+#include "de/guiapp.h"
+#include "de/opengl.h"
+#include "de/builtinfont.h"
+#include "de/imagefile.h"
+#include "de/glwindow.h"
 
-#include <de/CommandLine>
-#include <de/Config>
-#include <de/ConstantRule>
-#include <de/DictionaryValue>
-#include <de/EventLoop>
-#include <de/FileSystem>
-#include <de/Log>
-#include <de/NativeFont>
-#include <de/NativePath>
-#include <de/NumberValue>
-#include <de/ScriptSystem>
-#include <de/TextValue>
-#include <de/Thread>
-#include <de/WindowSystem>
+#include <de/commandline.h>
+#include <de/config.h>
+#include <de/constantrule.h>
+#include <de/eventloop.h>
+#include <de/filesystem.h>
+#include <de/log.h>
+#include <de/nativefont.h>
+#include <de/nativepath.h>
+#include <de/dscript.h>
+#include <de/thread.h>
+#include <de/windowsystem.h>
 
 #include <SDL.h>
 

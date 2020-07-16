@@ -17,19 +17,19 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Config"
-#include "de/App"
-#include "de/Archive"
-#include "de/ArrayValue"
-#include "de/CommandLine"
-#include "de/Folder"
-#include "de/Log"
-#include "de/NumberValue"
-#include "de/Package"
-#include "de/Reader"
-#include "de/Refuge"
-#include "de/Version"
-#include "de/Writer"
+#include "de/config.h"
+#include "de/app.h"
+#include "de/archive.h"
+#include "de/arrayvalue.h"
+#include "de/commandline.h"
+#include "de/folder.h"
+#include "de/log.h"
+#include "de/numbervalue.h"
+#include "de/package.h"
+#include "de/reader.h"
+#include "de/refuge.h"
+#include "de/version.h"
+#include "de/writer.h"
 
 namespace de {
 

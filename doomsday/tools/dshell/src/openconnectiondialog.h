@@ -19,7 +19,7 @@
 #ifndef OPENCONNECTIONDIALOG_H
 #define OPENCONNECTIONDIALOG_H
 
-#include <de/term/InputDialogWidget>
+#include <de/term/inputdialog.h>
 
 /**
  * Dialog for specifying address for opening a connection.

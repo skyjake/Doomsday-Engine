@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/System"
+#include "de/system.h"
 
 namespace de {
 

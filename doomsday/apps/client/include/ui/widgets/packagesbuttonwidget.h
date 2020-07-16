@@ -21,8 +21,8 @@
 
 #include "ui/dialogs/packagesdialog.h"
 
-#include <doomsday/GameProfiles>
-#include <de/ButtonWidget>
+#include <doomsday/gameprofiles.h>
+#include <de/buttonwidget.h>
 
 /**
  * Button for selecting packages.

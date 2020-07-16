@@ -21,7 +21,7 @@
 #include "common.h"
 #include "g_defs.h"
 
-#include <de/RecordValue>
+#include <de/recordvalue.h>
 #include <doomsday/defs/episode.h>
 
 using namespace de;

@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include <de/Error>
-#include <de/List>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/list.h>
+#include <de/vector.h>
 
 #include "../world/mapelement.h"
 

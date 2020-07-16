@@ -21,7 +21,7 @@
 #define LIBDOOMSDAY_URIVALUE_H
 
 #include "uri.h"
-#include <de/Value>
+#include <de/value.h>
 
 /**
  * Subclass of Value that holds an URI.

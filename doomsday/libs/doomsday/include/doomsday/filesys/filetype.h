@@ -25,16 +25,16 @@
 #define DE_FILETYPE_H
 
 #include "../libdoomsday.h"
-#include "../resource/resourceclass.h"
+#include "../resourceclass.h"
 
 #ifdef __cplusplus
 #ifndef DE_C_API_ONLY
 
-#include <de/String>
-#include <de/KeyMap>
-#include <de/Log>
-#include <de/NativePath>
-#include <de/String>
+#include <de/string.h>
+#include <de/keymap.h>
+#include <de/log.h>
+#include <de/nativepath.h>
+#include <de/string.h>
 #include "filehandle.h"
 
 namespace res {

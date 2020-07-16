@@ -21,8 +21,8 @@
 #ifndef DE_CLIENT_RENDER_DRAWLISTS_H
 #define DE_CLIENT_RENDER_DRAWLISTS_H
 
-#include "DrawList"
-#include <de/Vector>
+#include "render/drawlist.h"
+#include <de/vector.h>
 
 class DrawLists
 {

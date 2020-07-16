@@ -29,8 +29,8 @@
 #undef main
 
 #include <de/legacy/timer.h>
-#include <de/Log>
-#include <de/BitArray>
+#include <de/log.h>
+#include <de/bitarray.h>
 
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"

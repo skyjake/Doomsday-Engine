@@ -16,17 +16,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/BaseWindow"
+#include "de/basewindow.h"
 
-#include "de/BaseGuiApp"
-#include "de/GLBuffer"
-#include "de/GLState"
-#include "de/GuiRootWidget"
-#include "de/VRConfig"
-#include "de/WindowSystem"
-#include "de/WindowTransform"
+#include "de/baseguiapp.h"
+#include "de/glbuffer.h"
+#include "de/glstate.h"
+#include "de/guirootwidget.h"
+#include "de/vrconfig.h"
+#include "de/windowsystem.h"
+#include "de/windowtransform.h"
 
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 
 namespace de {
 

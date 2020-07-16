@@ -17,18 +17,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/LogBuffer"
-#include "de/App"
-#include "de/DebugLogSink"
-#include "de/FileLogSink"
-#include "de/FixedByteArray"
-#include "de/Folder"
-#include "de/Guard"
-#include "de/LogSink"
-#include "de/SimpleLogFilter"
-#include "de/TextStreamLogSink"
-#include "de/Timer"
-#include "de/Writer"
+#include "de/logbuffer.h"
+#include "de/app.h"
+#include "de/debuglogsink.h"
+#include "de/filelogsink.h"
+#include "de/fixedbytearray.h"
+#include "de/folder.h"
+#include "de/guard.h"
+#include "de/logsink.h"
+#include "de/logfilter.h"
+#include "de/textstreamlogsink.h"
+#include "de/timer.h"
+#include "de/writer.h"
 
 #include <iostream>
 

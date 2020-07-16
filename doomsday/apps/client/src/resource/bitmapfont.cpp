@@ -22,9 +22,9 @@
 #include "dd_main.h" // isDedicated
 #include "gl/gl_main.h" // GL_NewTextureWithParams
 #include "sys_system.h" // novideo
-#include "FontManifest"
+#include "resource/fontmanifest.h"
 #include <doomsday/uri.h>
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 #include <de/legacy/mathutil.h> // M_CeilPow2()
 #include <de/legacy/memory.h>
 #include <doomsday/busymode.h>
@@ -293,7 +293,7 @@ const Rectanglei &BitmapFont::glyphTexCoords(dbyte ch) const
 
 void BitmapFont::glInit() const
 {
-    LOG_AS("BitmapFont");
+    LOG_AS("resource/bitmapfont.h");
 
     if(!d->needGLInit) return;
     if(novideo || BusyMode_Active()) return;
@@ -349,7 +349,7 @@ void BitmapFont::glInit() const
 
 void BitmapFont::glDeinit() const
 {
-    LOG_AS("BitmapFont");
+    LOG_AS("resource/bitmapfont.h");
 
     if(novideo || isDedicated) return;
 

@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/FlowLayout"
+#include "de/flowlayout.h"
 
 namespace de {
 

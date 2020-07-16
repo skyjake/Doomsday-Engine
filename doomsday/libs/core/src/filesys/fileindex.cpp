@@ -16,11 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/FileIndex"
-#include "de/ReadWriteLockable"
-#include "de/PackageLoader"
-#include "de/App"
-#include "de/LogBuffer"
+#include "de/fileindex.h"
+#include "de/packageloader.h"
+#include "de/app.h"
+#include "de/logbuffer.h"
 
 namespace de {
 

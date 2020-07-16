@@ -18,7 +18,7 @@
  */
 
 #include "doomsday/defs/definition.h"
-#include <de/Record>
+#include <de/record.h>
 
 using namespace de;
 

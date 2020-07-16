@@ -20,15 +20,15 @@
 
 #include "mapimporter.h"
 
-#include <de/List>
-#include <de/KeyMap>
+#include <de/list.h>
+#include <de/keymap.h>
 #include <de/libcore.h>
-#include <de/Error>
-#include <de/ByteRefArray>
-#include <de/LogBuffer>
-#include <de/Reader>
-#include <de/Time>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/byterefarray.h>
+#include <de/logbuffer.h>
+#include <de/reader.h>
+#include <de/time.h>
+#include <de/vector.h>
 #include "importidtech1.h"
 
 #include <list>

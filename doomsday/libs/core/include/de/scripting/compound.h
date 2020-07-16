@@ -22,7 +22,7 @@
 #define LIBCORE_COMPOUND_H
 
 #include "../libcore.h"
-#include "../ISerializable"
+#include "de/iserializable.h"
 
 #include <list>
 

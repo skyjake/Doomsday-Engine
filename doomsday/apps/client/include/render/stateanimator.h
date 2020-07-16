@@ -22,10 +22,10 @@
 #include "render/modelrenderer.h"
 
 #include <doomsday/world/mobj.h>
-#include <de/ModelDrawable>
-#include <de/GLProgram>
-#include <de/IObject>
-#include <de/Scheduler>
+#include <de/modeldrawable.h>
+#include <de/glprogram.h>
+#include <de/scripting/iobject.h>
+#include <de/scripting/scheduler.h>
 
 namespace render {
 

@@ -20,7 +20,7 @@
 #ifndef LIBCORE_EXPRESSION_H
 #define LIBCORE_EXPRESSION_H
 
-#include "../ISerializable"
+#include "de/iserializable.h"
 
 namespace de {
 

@@ -19,9 +19,9 @@
 #ifndef STATUSWIDGET_H
 #define STATUSWIDGET_H
 
-#include <de/GuiWidget>
-#include <de/String>
-#include <doomsday/network/Link>
+#include <de/guiwidget.h>
+#include <de/string.h>
+#include <doomsday/network/link.h>
 
 /**
  * Widget for showing server's status.

@@ -23,9 +23,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
-#include <de/GLState>
-#include <de/GLInfo>
-#include <de/Vector>
+#include <de/glstate.h>
+#include <de/glinfo.h>
+#include <de/vector.h>
 #include <de/legacy/concurrency.h>
 #include <doomsday/console/exec.h>
 

@@ -26,8 +26,8 @@
 #include <de/legacy/concurrency.h>
 #include <de/legacy/timer.h>
 #include <de/charsymbols.h>
-#include <de/Value>
-#include <de/Version>
+#include <de/value.h>
+#include <de/version.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
@@ -57,7 +57,7 @@
 
 #ifdef __CLIENT__
 #  include "gl/gl_main.h"
-#  include <de/GLInfo>
+#  include <de/glinfo.h>
 
 #  include "render/rend_main.h"
 #  include "render/blockmapvisual.h"

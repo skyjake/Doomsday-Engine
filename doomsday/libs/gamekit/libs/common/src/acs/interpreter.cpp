@@ -21,7 +21,7 @@
 
 #include "acs/interpreter.h"
 
-#include <de/Log>
+#include <de/log.h>
 #include "acs/system.h"
 #include "dmu_lib.h"
 #include "g_common.h"

@@ -18,8 +18,8 @@
 
 #include "gloom/render/shadow.h"
 
-#include <de/GLFramebuffer>
-#include <de/GLTexture>
+#include <de/glframebuffer.h>
+#include <de/gltexture.h>
 
 using namespace de;
 

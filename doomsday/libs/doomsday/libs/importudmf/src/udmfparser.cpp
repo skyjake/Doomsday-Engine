@@ -18,8 +18,8 @@
 
 #include "udmfparser.h"
 
-#include <de/NumberValue>
-#include <de/TextValue>
+#include <de/numbervalue.h>
+#include <de/textvalue.h>
 
 using namespace de;
 

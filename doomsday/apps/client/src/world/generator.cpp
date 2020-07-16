@@ -37,8 +37,8 @@
 #include <doomsday/world/bspleaf.h>
 #include <doomsday/world/thinkers.h>
 #include <doomsday/tab_tables.h>
-#include <de/String>
-#include <de/Time>
+#include <de/string.h>
+#include <de/time.h>
 #include <de/legacy/fixedpoint.h>
 #include <de/legacy/memoryzone.h>
 #include <de/legacy/timer.h>

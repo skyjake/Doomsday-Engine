@@ -17,13 +17,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/DirectoryFeed"
-#include "de/Folder"
-#include "de/NativeFile"
-#include "de/NativePath"
-#include "de/FS"
-#include "de/Date"
-#include "de/App"
+#include "de/directoryfeed.h"
+#include "de/folder.h"
+#include "de/nativefile.h"
+#include "de/nativepath.h"
+#include "de/filesystem.h"
+#include "de/date.h"
+#include "de/app.h"
 
 #include <fstream>
 #include <the_Foundation/object.h>

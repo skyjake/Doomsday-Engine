@@ -22,8 +22,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/DoomsdayInfo"
-#include <de/NativePath>
+#include "doomsday/doomsdayinfo.h"
+#include <de/nativepath.h>
 #include <utility>
 
 using namespace de;

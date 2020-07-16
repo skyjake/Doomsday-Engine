@@ -21,10 +21,10 @@
 #ifndef DE_RESOURCE_CLIENTTEXTURE_H
 #define DE_RESOURCE_CLIENTTEXTURE_H
 
-#include "resource/image.h" // res::Source
-#include "TextureVariantSpec"
+#include "image.h" // res::Source
+#include "texturevariantspec.h"
 
-#include <doomsday/res/Texture>
+#include <doomsday/res/texture.h>
 
 /**
  * Logical texture resource.

@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_RENDERERAPPEARANCEEDITOR_H
 #define DE_CLIENT_RENDERERAPPEARANCEEDITOR_H
 
-#include <de/IPersistent>
+#include <de/ipersistent.h>
 #include "ui/widgets/sidebarwidget.h"
 
 /**

@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/term/DialogWidget"
-#include "de/term/TextRootWidget"
-#include "de/term/KeyEvent"
+#include "de/term/dialogwidget.h"
+#include "de/term/textrootwidget.h"
+#include "de/term/keyevent.h"
 
-#include <de/EventLoop>
+#include "de/eventloop.h"
 
 namespace de { namespace term {
 

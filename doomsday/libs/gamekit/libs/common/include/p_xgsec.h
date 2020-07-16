@@ -23,8 +23,8 @@
 
 #include "g_common.h"
 #ifdef __cplusplus
-#  include <de/Vector>
-#  include <doomsday/world/Material>
+#  include <de/vector.h>
+#  include <doomsday/world/material.h>
 #endif
 
 #ifdef __cplusplus

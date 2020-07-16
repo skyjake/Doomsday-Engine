@@ -18,7 +18,7 @@
 
 #include "doomsday/filesys/datafile.h"
 
-#include <de/Reader>
+#include <de/reader.h>
 
 using namespace de;
 

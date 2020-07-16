@@ -19,9 +19,9 @@
 #ifndef REMOTEUSER_H
 #define REMOTEUSER_H
 
-#include <de/Id>
-#include <de/Socket>
-#include <de/Transmitter>
+#include <de/id.h>
+#include <de/socket.h>
+#include <de/transmitter.h>
 
 /**
  * User that is communicating with the server over a network socket.

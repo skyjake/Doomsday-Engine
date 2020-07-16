@@ -28,7 +28,7 @@
 #include "api_sound.h"
 
 #ifdef __CLIENT__
-#  include "Generator"
+#  include "world/generator.h"
 #  include "render/rend_particle.h"
 #  include "resource/lightmaterialdecoration.h"
 #endif
@@ -43,26 +43,25 @@
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
-#include <doomsday/res/Bundles>
-#include <doomsday/res/DoomsdayPackage>
-#include <doomsday/res/Textures>
-#include <doomsday/resource/animgroups.h>
-#include <doomsday/resource/manifest.h>
-#include <doomsday/world/MaterialManifest>
-#include <doomsday/world/Materials>
+#include <doomsday/manifest.h>
+#include <doomsday/res/bundles.h>
+#include <doomsday/res/doomsdaypackage.h>
+#include <doomsday/res/textures.h>
+#include <doomsday/res/animgroups.h>
+#include <doomsday/world/materialmanifest.h>
+#include <doomsday/world/materials.h>
 #include <doomsday/world/detailtexturemateriallayer.h>
 #include <doomsday/world/shinetexturemateriallayer.h>
 #include <doomsday/world/texturemateriallayer.h>
 #include <doomsday/world/xg.h>
 
-#include <de/KeyMap>
+#include <de/keymap.h>
 #include <de/legacy/findfile.h>
 #include <de/c_wrapper.h>
-#include <de/App>
-#include <de/PackageLoader>
-#include <de/ScriptSystem>
-#include <de/NativePath>
-#include <de/RecordValue>
+#include <de/app.h>
+#include <de/packageloader.h>
+#include <de/dscript.h>
+#include <de/nativepath.h>
 
 #include <cwctype>
 #include <cstring>

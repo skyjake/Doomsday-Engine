@@ -18,7 +18,7 @@
 
 #include "ui/dialogs/coloradjustmentdialog.h"
 #include "ui/widgets/cvarsliderwidget.h"
-#include <de/GridLayout>
+#include <de/gridlayout.h>
 #include "api_console.h"
 
 using namespace de;

@@ -21,7 +21,7 @@
 #ifndef __DOOMSDAY_MUS2MIDI_H__
 #define __DOOMSDAY_MUS2MIDI_H__
 
-#include <de/Block>
+#include <de/block.h>
 
 /**
  * Converts DOOM MUS format music into MIDI music. The output is written to a

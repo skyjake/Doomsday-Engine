@@ -16,14 +16,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ScopeStatement"
-#include "de/Evaluator"
-#include "de/Context"
-#include "de/RecordValue"
-#include "de/ArrayValue"
-#include "de/Process"
-#include "de/Reader"
-#include "de/Writer"
+#include "de/scripting/scopestatement.h"
+#include "de/scripting/evaluator.h"
+#include "de/scripting/context.h"
+#include "de/recordvalue.h"
+#include "de/arrayvalue.h"
+#include "de/scripting/process.h"
+#include "de/reader.h"
+#include "de/writer.h"
 
 namespace de {
 

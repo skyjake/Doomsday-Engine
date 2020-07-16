@@ -20,7 +20,7 @@
 #define LIBDOOMSDAY_CONSOLE_ALIAS_H
 
 #include "../libdoomsday.h"
-#include <de/String>
+#include <de/string.h>
 
 typedef struct calias_s {
     /// Name of this alias.

@@ -20,9 +20,9 @@
 #define DE_CLIENT_FX_POSTPROCESSING_H
 
 #include "render/consoleeffect.h"
-#include <de/Matrix>
-#include <de/Time>
-#include <de/GLTexture>
+#include <de/matrix.h>
+#include <de/time.h>
+#include <de/gltexture.h>
 
 /**
  * Post-processing of rendered camera lens frames. Maintains an offscreen

@@ -23,7 +23,7 @@
 
 #include <de/legacy/concurrency.h>
 #include <de/legacy/memoryzone.h>
-#include <de/GLInfo>
+#include <de/glinfo.h>
 #include "clientapp.h"
 #include "gl/gl_main.h"
 #include "render/rend_main.h"

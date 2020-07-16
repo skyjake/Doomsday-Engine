@@ -19,8 +19,8 @@
 
 #include "shellusers.h"
 #include "dd_main.h"
-#include <de/Garbage>
-#include <de/Timer>
+#include <de/garbage.h>
+#include <de/timer.h>
 
 using namespace de;
 

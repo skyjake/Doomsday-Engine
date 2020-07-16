@@ -20,7 +20,7 @@
 
 #include "hud/widgets/keyslotwidget.h"
 
-#include <de/Vector>
+#include <de/vector.h>
 #include "common.h"
 #include "gl_drawpatch.h"
 #if __JHERETIC__ || __JHEXEN__

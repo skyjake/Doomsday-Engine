@@ -17,11 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/CommandLine"
-#include "de/String"
-#include "de/NativePath"
-#include "de/Log"
-#include "de/App"
+#include "de/commandline.h"
+#include "de/string.h"
+#include "de/nativepath.h"
+#include "de/log.h"
+#include "de/app.h"
 
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/stringlist.h>

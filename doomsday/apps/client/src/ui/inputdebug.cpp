@@ -28,8 +28,8 @@
 #include <de/legacy/timer.h> // SECONDSPERTIC
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
-#include <de/KeyEvent>
-#include <de/GLInfo>
+#include <de/keyevent.h>
+#include <de/glinfo.h>
 #include "clientapp.h"
 #include "dd_def.h"
 #include "dd_main.h"

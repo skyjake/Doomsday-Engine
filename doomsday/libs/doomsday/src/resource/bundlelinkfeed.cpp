@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/bundlelinkfeed.h"
+#include "doomsday/res/bundlelinkfeed.h"
 
-#include <de/LinkFile>
+#include <de/linkfile.h>
 
 using namespace de;
 

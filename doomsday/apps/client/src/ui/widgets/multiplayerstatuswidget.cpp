@@ -19,11 +19,11 @@
 #include "ui/widgets/multiplayerstatuswidget.h"
 #include "network/serverlink.h"
 #include "clientapp.h"
-#include "CommandAction"
+#include "ui/commandaction.h"
 
-#include <de/ui/ActionItem>
-#include <de/ui/SubwidgetItem>
-#include <de/Timer>
+#include <de/ui/actionitem.h>
+#include <de/ui/subwidgetitem.h>
+#include <de/timer.h>
 
 using namespace de;
 

@@ -17,11 +17,11 @@
  */
 
 #include "statuswidget.h"
-#include <de/String>
-#include <de/LabelWidget>
-#include <de/KeyMap>
-#include <doomsday/DoomsdayInfo>
-#include <doomsday/MapOutlineWidget>
+#include <de/string.h>
+#include <de/labelwidget.h>
+#include <de/keymap.h>
+#include <doomsday/doomsdayinfo.h>
+#include <doomsday/gui/mapoutlinewidget.h>
 
 using namespace de;
 

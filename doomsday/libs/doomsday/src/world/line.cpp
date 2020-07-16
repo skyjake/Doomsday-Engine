@@ -31,8 +31,8 @@
 
 #include <doomsday/console/cmd.h>
 #include <de/legacy/vector1.h>
-#include <de/List>
-#include <de/KeyMap>
+#include <de/list.h>
+#include <de/keymap.h>
 #include <array>
 #include <cwctype>
 

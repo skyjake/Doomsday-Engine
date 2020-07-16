@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/MultiAtlas"
-#include <de/Deletable>
+#include "de/multiatlas.h"
+#include <de/deletable.h>
 
-#include <de/Hash>
-#include <de/List>
-#include <de/Set>
+#include <de/hash.h>
+#include <de/list.h>
+#include <de/set.h>
 
 namespace de {
 

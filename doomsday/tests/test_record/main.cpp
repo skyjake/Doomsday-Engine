@@ -17,14 +17,14 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/TextApp>
-#include <de/Record>
-#include <de/Reader>
-#include <de/Writer>
-#include <de/TextValue>
-#include <de/NumberValue>
-#include <de/Variable>
-#include <de/data/json.h>
+#include <de/textapp.h>
+#include <de/record.h>
+#include <de/reader.h>
+#include <de/writer.h>
+#include <de/textvalue.h>
+#include <de/numbervalue.h>
+#include <de/variable.h>
+#include <de/json.h>
 
 using namespace de;
 

@@ -25,9 +25,9 @@
 #include <doomsday/filesys/lumpindex.h>
 #include <doomsday/uri.h>
 #include <de/libcore.h>
-#include <de/Error>
-#include <de/String>
-#include <de/StringPool>
+#include <de/error.h>
+#include <de/string.h>
+#include <de/stringpool.h>
 
 namespace idtech1 {
 

@@ -20,10 +20,10 @@
 #include "ui/commandbinding.h"
 
 #include <de/legacy/str.hh>
-#include <de/Block>
-#include <de/Log>
-#include <de/RecordValue>
-#include "CommandAction"
+#include <de/block.h>
+#include <de/log.h>
+#include <de/recordvalue.h>
+#include "ui/commandaction.h"
 #include "clientapp.h"
 
 #include "world/p_players.h" // P_ConsoleToLocal
@@ -52,7 +52,7 @@ void CommandBinding::resetToDefaults()
 
 String CommandBinding::composeDescriptor()
 {
-    LOG_AS("CommandBinding");
+    LOG_AS("ui/commandbinding.h");
     if (!*this) return "";
 
     String str = B_ControlDescToString(geti("deviceId"), ddeventtype_t(geti("type")), geti("controlId"));
@@ -230,7 +230,7 @@ static bool doConfigure(CommandBinding &bind, const char *eventDesc, const char 
 void CommandBinding::configure(const char *eventDesc, const char *command, bool assignNewId)
 {
     DE_ASSERT(eventDesc);
-    LOG_AS("CommandBinding");
+    LOG_AS("ui/commandbinding.h");
 
     // The first part specifies the event condition.
     AutoStr *str = AutoStr_NewStd();

@@ -21,8 +21,8 @@
 
 #include "gloom/render/light.h"
 
-#include <de/GLFramebuffer>
-#include <de/GLTexture>
+#include <de/glframebuffer.h>
+#include <de/gltexture.h>
 
 namespace gloom {
 

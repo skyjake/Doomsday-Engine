@@ -21,9 +21,9 @@
 #include "common.h"
 #include "p_saveio.h"
 
-#include <de/Error>
-#include <de/FixedByteArray>
-#include <de/ByteRefArray>
+#include <de/error.h>
+#include <de/fixedbytearray.h>
+#include <de/byterefarray.h>
 
 // Used during write:
 static de::Writer *writer;

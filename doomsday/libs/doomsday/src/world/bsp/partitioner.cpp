@@ -39,8 +39,8 @@
 
 #include <de/legacy/vector1.h>
 
-#include <de/Hash>
-#include <de/LogBuffer>
+#include <de/hash.h>
+#include <de/logbuffer.h>
 #include <algorithm>
 
 using namespace de;

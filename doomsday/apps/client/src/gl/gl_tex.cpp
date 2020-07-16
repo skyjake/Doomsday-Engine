@@ -26,7 +26,7 @@
 #include "resource/clientresources.h"
 #include "gl/sys_opengl.h"
 
-#include <doomsday/resource/colorpalette.h>
+#include <doomsday/res/colorpalette.h>
 #include <de/legacy/memory.h>
 #include <de/legacy/memoryzone.h>
 #include <de/legacy/vector1.h>

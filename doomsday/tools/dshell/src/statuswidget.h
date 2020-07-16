@@ -19,8 +19,8 @@
 #ifndef STATUSWIDGET_H
 #define STATUSWIDGET_H
 
-#include <de/term/Widget>
-#include <doomsday/network/Link>
+#include <de/term/widget.h>
+#include <doomsday/network/link.h>
 
 class StatusWidget : public de::term::Widget
 {

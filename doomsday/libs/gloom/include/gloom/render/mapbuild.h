@@ -22,9 +22,9 @@
 #include "gloom/world/map.h"
 #include "gloom/render/materiallib.h"
 
-#include <de/GLBuffer>
-#include <de/Id>
-#include <de/Hash>
+#include <de/glbuffer.h>
+#include <de/id.h>
+#include <de/hash.h>
 
 namespace gloom {
 

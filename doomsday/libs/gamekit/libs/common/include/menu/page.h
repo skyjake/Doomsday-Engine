@@ -21,8 +21,8 @@
 #ifndef LIBCOMMON_UI_PAGE
 #define LIBCOMMON_UI_PAGE
 
-#include <de/List>
-#include <de/String>
+#include <de/list.h>
+#include <de/string.h>
 #include "widgets/widget.h"
 
 namespace common {

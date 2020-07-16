@@ -21,8 +21,8 @@
 #ifndef DE_UI_INFINE_FINALETEXTWIDGET_H
 #define DE_UI_INFINE_FINALETEXTWIDGET_H
 
-#include <de/String>
-#include <de/Vector>
+#include <de/string.h>
+#include <de/vector.h>
 #include "ui/infine/finalewidget.h"
 
 /**

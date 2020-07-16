@@ -33,16 +33,16 @@
 #include "gloom/world/map.h"
 #include "gloom/world/user.h"
 
-#include <de/Drawable>
-#include <de/File>
-#include <de/Folder>
-#include <de/GLState>
-#include <de/GLTimer>
-#include <de/GLWindow>
-#include <de/Hash>
-#include <de/ModelDrawable>
-#include <de/PackageLoader>
-#include <de/TextureBank>
+#include <de/drawable.h>
+#include <de/file.h>
+#include <de/folder.h>
+#include <de/glstate.h>
+#include <de/gltimer.h>
+#include <de/glwindow.h>
+#include <de/hash.h>
+#include <de/modeldrawable.h>
+#include <de/packageloader.h>
+#include <de/texturebank.h>
 
 #undef environ
 

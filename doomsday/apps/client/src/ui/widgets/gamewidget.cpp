@@ -48,11 +48,11 @@
 #include "gl/gl_defer.h"
 
 #include <doomsday/console/exec.h>
-#include <de/FileSystem>
-#include <de/GLState>
-#include <de/GLTextureFramebuffer>
-#include <de/LogBuffer>
-#include <de/VRConfig>
+#include <de/filesystem.h>
+#include <de/glstate.h>
+#include <de/gltextureframebuffer.h>
+#include <de/logbuffer.h>
+#include <de/vrconfig.h>
 
 /**
  * Maximum number of milliseconds spent uploading textures at the beginning

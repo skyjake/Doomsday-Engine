@@ -25,9 +25,9 @@
 #include "../defs/sky.h"
 #include "material.h"
 
-#include <de/Error>
-#include <de/Observers>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/observers.h>
+#include <de/vector.h>
 
 namespace world {
 

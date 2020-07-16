@@ -18,16 +18,16 @@
  */
 
 #include <cstring> // memcpy
-#include <de/TextApp>
-#include <de/ArrayValue>
-#include <de/FileSystem>
-#include <de/FixedByteArray>
-#include <de/LogBuffer>
-#include <de/NativeFile>
-#include <de/NumberValue>
-#include <de/Reader>
-#include <de/Writer>
-#include <de/ZipArchive>
+#include <de/textapp.h>
+#include <de/arrayvalue.h>
+#include <de/filesystem.h>
+#include <de/fixedbytearray.h>
+#include <de/logbuffer.h>
+#include <de/nativefile.h>
+#include <de/numbervalue.h>
+#include <de/reader.h>
+#include <de/writer.h>
+#include <de/ziparchive.h>
 #include "id1translator.h"
 #include "savegametool.h"
 

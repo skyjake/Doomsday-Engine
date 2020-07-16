@@ -23,19 +23,19 @@
 #include "ui/widgets/packagesbuttonwidget.h"
 #include "network/serverlink.h"
 
-#include <doomsday/Games>
+#include <doomsday/games.h>
 #include <doomsday/gui/mapoutlinewidget.h>
 
 #include <de/charsymbols.h>
-#include <de/ButtonWidget>
-#include <de/CallbackAction>
-#include <de/Config>
-#include <de/DictionaryValue>
-#include <de/PackageLoader>
-#include <de/SequentialLayout>
-#include <de/ProgressWidget>
-#include <de/Timer>
-#include <de/ui/SubwidgetItem>
+#include <de/buttonwidget.h>
+#include <de/callbackaction.h>
+#include <de/config.h>
+#include <de/dictionaryvalue.h>
+#include <de/packageloader.h>
+#include <de/sequentiallayout.h>
+#include <de/progresswidget.h>
+#include <de/timer.h>
+#include <de/ui/subwidgetitem.h>
 
 using namespace de;
 

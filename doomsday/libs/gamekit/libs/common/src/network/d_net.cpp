@@ -21,7 +21,7 @@
 #include "common.h"
 #include "d_net.h"
 
-#include <de/RecordValue>
+#include <de/recordvalue.h>
 #include "d_netcl.h"
 #include "d_netsv.h"
 #include "fi_lib.h"

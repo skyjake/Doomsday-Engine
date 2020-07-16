@@ -19,9 +19,9 @@
 #ifndef DE_CLIENT_UI_CREATEPROFILEDIALOG_H
 #define DE_CLIENT_UI_CREATEPROFILEDIALOG_H
 
-#include <doomsday/GameProfiles>
-#include <de/InputDialog>
-#include <de/IPersistent>
+#include <doomsday/gameprofiles.h>
+#include <de/inputdialog.h>
+#include <de/ipersistent.h>
 
 /**
  * Dialog for creating a game profile.

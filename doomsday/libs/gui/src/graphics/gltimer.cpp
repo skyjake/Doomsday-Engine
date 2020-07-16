@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GLTimer"
-#include "de/graphics/opengl.h"
-#include "de/GLInfo"
+#include "de/gltimer.h"
+#include "de/opengl.h"
+#include "de/glinfo.h"
 
-#include <de/Hash>
+#include <de/hash.h>
 
 namespace de {
 

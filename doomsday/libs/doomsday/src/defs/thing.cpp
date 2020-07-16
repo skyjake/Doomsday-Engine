@@ -19,7 +19,7 @@
 #include "doomsday/defs/thing.h"
 #include "doomsday/defs/ded.h"
 
-#include <de/TextValue>
+#include <de/textvalue.h>
 
 using namespace de;
 

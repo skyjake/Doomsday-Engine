@@ -20,11 +20,11 @@
 
 #include "doomsday/world/materialarchive.h"
 #include "doomsday/world/materials.h"
-#include "doomsday/world/MaterialManifest"
-#include "doomsday/resource/resources.h"
+#include "doomsday/world/materialmanifest.h"
+#include "doomsday/res/resources.h"
 #include "doomsday/uri.h"
 
-#include <de/StringPool>
+#include <de/stringpool.h>
 #include <de/legacy/reader.h>
 #include <de/legacy/writer.h>
 

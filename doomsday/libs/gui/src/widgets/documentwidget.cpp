@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/DocumentWidget"
-#include "de/ProgressWidget"
-#include "de/TextDrawable"
+#include "de/documentwidget.h"
+#include "de/progresswidget.h"
+#include "de/textdrawable.h"
 
-#include <de/Drawable>
+#include <de/drawable.h>
 
 namespace de {
 

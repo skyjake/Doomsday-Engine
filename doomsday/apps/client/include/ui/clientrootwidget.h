@@ -19,9 +19,9 @@
 #ifndef DE_CLIENTROOTWIDGET_H
 #define DE_CLIENTROOTWIDGET_H
 
-#include <de/GuiRootWidget>
-#include <de/GLWindow>
-#include <de/PackageIconBank>
+#include <de/guirootwidget.h>
+#include <de/glwindow.h>
+#include <de/packageiconbank.h>
 
 class ClientWindow;
 

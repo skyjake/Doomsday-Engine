@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_COLORADJUSTMENTDIALOG_H
 #define DE_CLIENT_COLORADJUSTMENTDIALOG_H
 
-#include <de/DialogWidget>
+#include <de/dialogwidget.h>
 
 /**
  * Dialog for gamma, etc. adjustments.

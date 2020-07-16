@@ -24,17 +24,17 @@
 #include "opendialog.h"
 #include "preferences.h"
 
-#include <de/Config>
-#include <de/EscapeParser>
-#include <de/FileSystem>
-#include <de/Garbage>
-#include <de/Id>
-#include <de/PackageLoader>
-#include <de/ServerFinder>
-#include <de/TextValue>
-#include <de/Timer>
-#include <de/WindowSystem>
-#include <doomsday/network/LocalServer>
+#include <de/config.h>
+#include <de/escapeparser.h>
+#include <de/filesystem.h>
+#include <de/garbage.h>
+#include <de/id.h>
+#include <de/packageloader.h>
+#include <de/serverfinder.h>
+#include <de/textvalue.h>
+#include <de/timer.h>
+#include <de/windowsystem.h>
+#include <doomsday/network/localserver.h>
 #include <SDL_messagebox.h>
 
 using namespace de;

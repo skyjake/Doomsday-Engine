@@ -20,7 +20,7 @@
 #define LIBDOOMSDAY_DEFN_DECORATION_H
 
 #include "definition.h"
-#include <de/RecordAccessor>
+#include <de/recordaccessor.h>
 
 // Flags for decoration definitions.
 #define DCRF_NO_IWAD   0x1  ///< Don't use if from IWAD.

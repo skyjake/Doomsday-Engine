@@ -17,9 +17,9 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/TextApp>
+#include <de/textapp.h>
 #include <de/math.h>
-#include <de/WebRequest>
+#include <de/webrequest.h>
 
 using namespace de;
 

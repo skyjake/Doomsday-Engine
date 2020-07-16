@@ -20,8 +20,8 @@
 #ifndef LIBCORE_CONSTANTEXPRESSION_H
 #define LIBCORE_CONSTANTEXPRESSION_H
 
-#include "../Expression"
-#include "../Value"
+#include "expression.h"
+#include "de/value.h"
 
 namespace de {
 

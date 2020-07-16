@@ -22,8 +22,8 @@
 #ifndef LIBCOMMON_UI_CHATWIDGET_H
 #define LIBCOMMON_UI_CHATWIDGET_H
 
-#include <de/Error>
-#include <de/String>
+#include <de/error.h>
+#include <de/string.h>
 
 #include "hu_lib.h"
 

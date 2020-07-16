@@ -18,17 +18,17 @@
  * 02110-1301 USA</small>
  */
 
-#include "doomsday/resource/texture.h"
-#include "doomsday/resource/resources.h"
-#include "doomsday/resource/composite.h"
-#include "doomsday/resource/texturemanifest.h"
-#include "doomsday/resource/textures.h"
+#include "doomsday/res/texture.h"
+#include "doomsday/res/resources.h"
+#include "doomsday/res/composite.h"
+#include "doomsday/res/texturemanifest.h"
+#include "doomsday/res/textures.h"
 #include "doomsday/console/cmd.h"
 
-#include <de/Error>
-#include <de/Log>
+#include <de/error.h>
+#include <de/log.h>
 #include <de/legacy/memory.h>
-#include <de/KeyMap>
+#include <de/keymap.h>
 
 using namespace de;
 

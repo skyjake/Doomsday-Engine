@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/AnimationRule"
-#include "de/Clock"
+#include "de/animationrule.h"
+#include "de/clock.h"
 
 namespace de {
 

@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/TimeValue"
-#include "de/NumberValue"
-#include "de/Reader"
-#include "de/Writer"
-#include "de/Log"
+#include "de/timevalue.h"
+#include "de/numbervalue.h"
+#include "de/reader.h"
+#include "de/writer.h"
+#include "de/log.h"
 
 namespace de {
 

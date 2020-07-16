@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/MouseEventSource"
+#include "de/mouseeventsource.h"
 
 namespace de {
 

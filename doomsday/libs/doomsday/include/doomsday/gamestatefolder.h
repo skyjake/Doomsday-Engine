@@ -23,12 +23,12 @@
 #include "libdoomsday.h"
 #include "world/ithinkermapping.h"
 
-#include <de/Error>
-#include <de/Observers>
-#include <de/ArchiveFolder>
-#include <de/Record>
-#include <de/String>
-#include <de/filesys/IInterpreter>
+#include <de/error.h>
+#include <de/observers.h>
+#include <de/archivefolder.h>
+#include <de/record.h>
+#include <de/string.h>
+#include <de/filesys/iinterpreter.h>
 
 /**
  * Specialized ArchiveFolder that hosts a serialized game session.

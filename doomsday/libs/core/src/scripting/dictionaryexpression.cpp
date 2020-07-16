@@ -17,11 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/DictionaryExpression"
-#include "de/DictionaryValue"
-#include "de/Evaluator"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/scripting/dictionaryexpression.h"
+#include "de/scripting/evaluator.h"
+#include "de/dictionaryvalue.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 #include <list>
 

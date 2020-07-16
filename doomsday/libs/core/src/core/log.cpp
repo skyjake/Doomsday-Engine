@@ -17,14 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Log"
-#include "de/Time"
-#include "de/Date"
-#include "de/LogBuffer"
-#include "de/Guard"
-#include "de/Reader"
-#include "de/Writer"
-#include "de/FIFO"
+#include "de/log.h"
+#include "de/time.h"
+#include "de/date.h"
+#include "de/logbuffer.h"
+#include "de/guard.h"
+#include "de/reader.h"
+#include "de/writer.h"
+#include "de/fifo.h"
 #include "../src/core/logtextstyle.h"
 
 #include <array>

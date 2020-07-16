@@ -19,11 +19,11 @@
 #ifndef DE_CLIENT_UI_SIDEBARWIDGET_H
 #define DE_CLIENT_UI_SIDEBARWIDGET_H
 
-#include <de/ButtonWidget>
-#include <de/ConstantRule>
-#include <de/PanelWidget>
-#include <de/ScrollAreaWidget>
-#include <de/SequentialLayout>
+#include <de/buttonwidget.h>
+#include <de/constantrule.h>
+#include <de/panelwidget.h>
+#include <de/scrollareawidget.h>
+#include <de/sequentiallayout.h>
 
 /**
  * Editor for changing model asset parameters.

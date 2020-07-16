@@ -21,9 +21,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/StringPool>
-#include <de/Reader>
-#include <de/Writer>
+#include <de/stringpool.h>
+#include <de/reader.h>
+#include <de/writer.h>
 #include <iostream>
 
 using namespace de;

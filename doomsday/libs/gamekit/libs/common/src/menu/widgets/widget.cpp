@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/KeyMap>
-#include <de/NoneValue>
+#include <de/keymap.h>
+#include <de/nonevalue.h>
 #include "common.h"
 #include "menu/widgets/widget.h"
 #include "menu/page.h"

@@ -20,16 +20,16 @@
 #ifndef LIBCORE_PROCESS_H
 #define LIBCORE_PROCESS_H
 
-#include "../Script"
-#include "../Time"
-#include "../Context"
-#include "../Evaluator"
-#include "../Function"
-#include "../String"
-#include "../Variable"
-#include "../RecordValue"
-#include "../IObject"
-#include "../ScriptLex"
+#include "script.h"
+#include "context.h"
+#include "evaluator.h"
+#include "function.h"
+#include "iobject.h"
+#include "scriptlex.h"
+#include "../time.h"
+#include "../string.h"
+#include "../variable.h"
+#include "../recordvalue.h"
 
 #include <list>
 

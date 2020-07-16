@@ -24,8 +24,8 @@
 #include "de_platform.h"
 
 #include <de/legacy/concurrency.h>
-#include <de/GLInfo>
-#include <de/GuiApp>
+#include <de/glinfo.h>
+#include <de/guiapp.h>
 #include "gl/gl_defer.h"
 
 static dd_bool __inline mustDefer(void)

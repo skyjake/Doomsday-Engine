@@ -16,14 +16,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/EventLoop"
+#include "de/eventloop.h"
 
-#include "de/CoreEvent"
-#include "de/Garbage"
-#include "de/Log"
-#include "de/NumberValue"
-#include "de/ThreadLocal"
-#include "de/WaitableFIFO"
+#include "de/coreevent.h"
+#include "de/garbage.h"
+#include "de/log.h"
+#include "de/numbervalue.h"
+#include "de/threadlocal.h"
+#include "de/waitablefifo.h"
 
 namespace de {
 namespace internal {

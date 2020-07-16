@@ -25,14 +25,11 @@
 
 #include <doomsday/world/thinkerdata.h>
 
-#include <de/ConditionalTrigger>
-#include <de/ScriptedInfo>
-#include <de/ScriptSystem>
-#include <de/RecordValue>
-#include <de/NoneValue>
-#include <de/NativePointerValue>
-#include <de/GLUniform>
-#include <de/Set>
+#include <de/conditionaltrigger.h>
+#include <de/dscript.h>
+#include <de/nativepointervalue.h>
+#include <de/gluniform.h>
+#include <de/set.h>
 
 using namespace de;
 

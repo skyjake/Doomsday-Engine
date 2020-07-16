@@ -16,16 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/PopupWidget"
-#include "de/ButtonWidget"
-#include "de/GuiRootWidget"
-#include "de/Style"
-#include "de/BaseGuiApp"
+#include "de/popupwidget.h"
+#include "de/buttonwidget.h"
+#include "de/guirootwidget.h"
+#include "de/ui/style.h"
+#include "de/baseguiapp.h"
 
-#include <de/Drawable>
-#include <de/MouseEvent>
-#include <de/AnimationRule>
-#include <de/Garbage>
+#include <de/drawable.h>
+#include <de/mouseevent.h>
+#include <de/animationrule.h>
+#include <de/garbage.h>
 #include <de/math.h>
 
 namespace de {

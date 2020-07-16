@@ -20,10 +20,10 @@
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/home/columnwidget.h"
 
-#include <doomsday/LumpCatalog>
-#include <doomsday/Game>
-#include <de/SequentialLayout>
-#include <de/Timer>
+#include <doomsday/res/lumpcatalog.h>
+#include <doomsday/game.h>
+#include <de/sequentiallayout.h>
+#include <de/timer.h>
 
 using namespace de;
 

@@ -36,7 +36,7 @@
 #include "menu/widgets/labelwidget.h"
 #include "menu/widgets/mobjpreviewwidget.h"
 
-#include <de/Animation>
+#include <de/animation.h>
 
 using namespace de;
 

@@ -22,12 +22,12 @@
 #include "world/audioenvironment.h"
 #include "world/line.h"
 #include "world/surface.h"
-#include "ClientMaterial"
+#include "resource/clientmaterial.h"
 
 #include <doomsday/audio/s_environ.h>
 #include <doomsday/mesh/face.h>
 
-#include <de/Set>
+#include <de/set.h>
 
 using namespace de;
 using Vertex = world::Vertex;

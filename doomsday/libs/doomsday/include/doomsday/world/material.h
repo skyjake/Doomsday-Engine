@@ -20,14 +20,14 @@
 
 #pragma once
 
-#include "../res/Texture"
+#include "../res/texture.h"
 #include "../audio/s_environ.h"
 #include "mapelement.h"
 
-#include <de/List>
-#include <de/Error>
-#include <de/Observers>
-#include <de/Vector>
+#include <de/list.h>
+#include <de/error.h>
+#include <de/observers.h>
+#include <de/vector.h>
 #include <functional>
 
 namespace world {

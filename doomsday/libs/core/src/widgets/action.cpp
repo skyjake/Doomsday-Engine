@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "de/Action"
+#include "de/action.h"
 
 namespace de {
 

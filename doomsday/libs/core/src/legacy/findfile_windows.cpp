@@ -26,7 +26,7 @@
 #include <assert.h>
 
 #include <string>
-#include <de/String>
+#include "de/string.h"
 
 #include "de/legacy/memory.h"
 #include "de/legacy/findfile.h"

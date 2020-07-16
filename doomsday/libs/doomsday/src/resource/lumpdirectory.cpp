@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/lumpdirectory.h"
+#include "doomsday/res/lumpdirectory.h"
 
 #include <de/legacy/mathutil.h>
-#include <de/MetadataBank>
-#include <de/Reader>
-#include <de/RegExp>
+#include <de/metadatabank.h>
+#include <de/reader.h>
+#include <de/regexp.h>
 
 using namespace de;
 

@@ -24,7 +24,7 @@
 #include "server/sv_pool.h"
 #include "world/p_players.h"
 
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 
 using namespace de;
 

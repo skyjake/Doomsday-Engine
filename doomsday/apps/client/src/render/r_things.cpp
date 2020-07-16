@@ -24,9 +24,9 @@
 #include "render/r_things.h"
 
 #include <de/legacy/vector1.h>
-#include <de/ModelDrawable>
+#include <de/modeldrawable.h>
 #include <doomsday/defs/sprite.h>
-#include <doomsday/world/Materials>
+#include <doomsday/world/materials.h>
 
 #include "clientapp.h"
 #include "dd_main.h"  // App_World()

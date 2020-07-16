@@ -19,8 +19,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Version"
-#include "de/List"
+#include "de/version.h"
+#include "de/list.h"
 
 #ifdef __GNUC__
 #  undef major

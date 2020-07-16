@@ -1,7 +1,7 @@
 #include "aboutdialog.h"
 #include "guishellapp.h"
 
-#include <de/LabelWidget>
+#include <de/labelwidget.h>
 #include <de/charsymbols.h>
 
 using namespace de;

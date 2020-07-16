@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/MessageDialog"
-#include "de/SequentialLayout"
-#include "de/DialogContentStylist"
+#include "de/messagedialog.h"
+#include "de/sequentiallayout.h"
+#include "de/dialogcontentstylist.h"
 
 namespace de {
 

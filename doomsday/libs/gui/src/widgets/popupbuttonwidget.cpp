@@ -20,7 +20,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/PopupButtonWidget"
+#include "de/popupbuttonwidget.h"
 
 namespace de {
 

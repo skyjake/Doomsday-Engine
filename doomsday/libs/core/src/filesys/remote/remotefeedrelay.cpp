@@ -16,19 +16,19 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/RemoteFeedRelay"
+#include "de/filesys/remotefeedrelay.h"
 
-#include "de/App"
-#include "de/Async"
-#include "de/Date"
-#include "de/DictionaryValue"
-#include "de/filesys/Link"
-#include "de/filesys/NativeLink"
-#include "de/Loop"
-#include "de/Message"
-#include "de/RemoteFeedProtocol"
-#include "de/RegExp"
-#include "de/Version"
+#include "de/app.h"
+#include "de/async.h"
+#include "de/date.h"
+#include "de/dictionaryvalue.h"
+#include "de/filesys/link.h"
+#include "de/filesys/nativelink.h"
+#include "de/loop.h"
+#include "de/message.h"
+#include "de/remotefeedprotocol.h"
+#include "de/regexp.h"
+#include "de/version.h"
 #include "de/charsymbols.h"
 
 namespace de {

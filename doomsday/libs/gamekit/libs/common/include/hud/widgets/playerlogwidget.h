@@ -22,7 +22,7 @@
 #ifndef LIBCOMMON_UI_PLAYERLOGWIDGET_H
 #define LIBCOMMON_UI_PLAYERLOGWIDGET_H
 
-#include <de/String>
+#include <de/string.h>
 #include "hud/hudwidget.h"
 
 /// Maximum number of messages each log will buffer.

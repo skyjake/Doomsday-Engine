@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/VariableLineEditWidget"
+#include "de/variablelineeditwidget.h"
 
-#include <de/TextValue>
+#include <de/textvalue.h>
 
 namespace de {
 

@@ -22,12 +22,12 @@
 
 #include <doomsday/filesys/filehandle.h>
 #ifdef __CLIENT__
-#  include "ClientTexture"
+#  include "resource/clienttexture.h"
 #endif
-#include <de/Error>
-#include <de/String>
-#include <de/BitArray>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/string.h>
+#include <de/bitarray.h>
+#include <de/vector.h>
 
 /// Unique identifier associated with each model.
 typedef uint modelid_t;

@@ -19,7 +19,7 @@
 #ifndef GLOOMED_EDITORAPP_H
 #define GLOOMED_EDITORAPP_H
 
-#include <doomsday/DoomsdayApp>
+#include <doomsday/doomsdayapp.h>
 #include <de/EmbeddedApp>
 #include <QApplication>
 

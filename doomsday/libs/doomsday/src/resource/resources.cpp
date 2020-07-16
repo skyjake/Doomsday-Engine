@@ -16,26 +16,26 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/resources.h"
-#include "doomsday/resource/animgroups.h"
-#include "doomsday/resource/mapmanifests.h"
-#include "doomsday/resource/colorpalettes.h"
-#include "doomsday/resource/sprites.h"
-#include "doomsday/resource/textures.h"
+#include "doomsday/res/resources.h"
+#include "doomsday/res/animgroups.h"
+#include "doomsday/res/mapmanifests.h"
+#include "doomsday/res/colorpalettes.h"
+#include "doomsday/res/sprites.h"
+#include "doomsday/res/textures.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/defs/music.h"
-#include "doomsday/world/Materials"
-#include "doomsday/DoomsdayApp"
-#include "doomsday/SaveGames"
-#include "doomsday/DataBundle"
-#include "doomsday/res/DoomsdayPackage"
+#include "doomsday/world/materials.h"
+#include "doomsday/doomsdayapp.h"
+#include "doomsday/savegames.h"
+#include "doomsday/res/databundle.h"
+#include "doomsday/res/doomsdaypackage.h"
 
-#include <de/App>
-#include <de/CommandLine>
-#include <de/Loop>
-#include <de/PackageLoader>
-#include <de/Config>
+#include <de/app.h>
+#include <de/commandline.h>
+#include <de/loop.h>
+#include <de/packageloader.h>
+#include <de/config.h>
 
 using namespace de;
 using namespace res;

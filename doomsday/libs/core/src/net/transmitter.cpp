@@ -17,11 +17,11 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "de/Transmitter"
-#include "de/Block"
-#include "de/Packet"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/transmitter.h"
+#include "de/block.h"
+#include "de/packet.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 namespace de {
 

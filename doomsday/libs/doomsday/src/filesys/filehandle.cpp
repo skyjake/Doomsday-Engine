@@ -30,8 +30,8 @@
 
 #include <de/legacy/memory.h>
 #include <de/legacy/memoryblockset.h>
-#include <de/LogBuffer>
-#include <de/NativePath>
+#include <de/logbuffer.h>
+#include <de/nativepath.h>
 
 namespace res {
 

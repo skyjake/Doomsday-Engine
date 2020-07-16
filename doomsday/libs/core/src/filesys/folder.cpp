@@ -17,21 +17,19 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Folder"
+#include "de/folder.h"
 
-#include "de/App"
-#include "de/Async"
-#include "de/DirectoryFeed"
-#include "de/FS"
-#include "de/Feed"
-#include "de/Guard"
-#include "de/LogBuffer"
-#include "de/NumberValue"
-#include "de/ScriptedInfo"
-#include "de/ScriptSystem"
-#include "de/Task"
-#include "de/TaskPool"
-#include "de/UnixInfo"
+#include "de/app.h"
+#include "de/async.h"
+#include "de/directoryfeed.h"
+#include "de/filesystem.h"
+#include "de/feed.h"
+#include "de/guard.h"
+#include "de/logbuffer.h"
+#include "de/dscript.h"
+#include "de/task.h"
+#include "de/taskpool.h"
+#include "de/unixinfo.h"
 
 namespace de {
 

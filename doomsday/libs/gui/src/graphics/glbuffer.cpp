@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GLBuffer"
-#include "de/GLState"
-#include "de/GLFramebuffer"
-#include "de/GLProgram"
-#include "de/GLInfo"
+#include "de/glbuffer.h"
+#include "de/glstate.h"
+#include "de/glframebuffer.h"
+#include "de/glprogram.h"
+#include "de/glinfo.h"
 
 namespace de {
 

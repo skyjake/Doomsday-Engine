@@ -16,18 +16,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Bank"
-#include "de/Folder"
-#include "de/App"
-#include "de/Loop"
-#include "de/FS"
-#include "de/PathTree"
-#include "de/WaitableFIFO"
-#include "de/Task"
-#include "de/TaskPool"
-#include "de/LogBuffer"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/bank.h"
+#include "de/folder.h"
+#include "de/app.h"
+#include "de/loop.h"
+#include "de/filesystem.h"
+#include "de/pathtree.h"
+#include "de/waitablefifo.h"
+#include "de/task.h"
+#include "de/taskpool.h"
+#include "de/logbuffer.h"
+#include "de/writer.h"
+#include "de/reader.h"
 #include "de/math.h"
 
 namespace de {

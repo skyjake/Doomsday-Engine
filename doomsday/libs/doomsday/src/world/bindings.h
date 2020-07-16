@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <de/Binder>
+#include <de/scripting/function.h>
 
 namespace world {
 

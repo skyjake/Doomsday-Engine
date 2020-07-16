@@ -21,8 +21,8 @@
 #define LIBCORE_OPERATOREXPRESSION_H
 
 #include "../libcore.h"
-#include "../Operator"
-#include "../Expression"
+#include "operator.h"
+#include "expression.h"
 
 namespace de {
 

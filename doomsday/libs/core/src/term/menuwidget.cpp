@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/term/MenuWidget"
-#include "de/term/TextRootWidget"
-#include <de/ConstantRule>
+#include "de/term/menuwidget.h"
+#include "de/term/textrootwidget.h"
+#include "de/constantrule.h"
 
 namespace de { namespace term {
 

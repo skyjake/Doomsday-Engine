@@ -20,8 +20,8 @@
 #define CLIENT_COMMANDACTION_H
 
 #include "dd_share.h"
-#include <de/Action>
-#include <de/String>
+#include <de/action.h>
+#include <de/string.h>
 
 /**
  * Action that executes a console command.

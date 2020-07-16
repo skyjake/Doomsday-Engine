@@ -25,7 +25,7 @@
 #include "world/maputil.h"
 #include "world/surface.h"
 #include "world/subsector.h"
-#include "MaterialAnimator"
+#include "resource/materialanimator.h"
 #include "render/rend_main.h"  /// devRendSkyMode @todo remove me
 
 #include <doomsday/world/bspleaf.h>

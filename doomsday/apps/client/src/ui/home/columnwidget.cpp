@@ -18,12 +18,12 @@
 
 #include "ui/home/columnwidget.h"
 
-#include <de/App>
-#include <de/GLProgram>
-#include <de/Image>
-#include <de/LabelWidget>
-#include <de/Range>
-#include <de/StyleProceduralImage>
+#include <de/app.h>
+#include <de/glprogram.h>
+#include <de/image.h>
+#include <de/labelwidget.h>
+#include <de/range.h>
+#include <de/styleproceduralimage.h>
 #include <de/math.h>
 
 using namespace de;

@@ -16,19 +16,19 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/MenuWidget"
+#include "de/menuwidget.h"
 
-#include "de/ChildWidgetOrganizer"
-#include "de/FocusWidget"
-#include "de/GridLayout"
-#include "de/PopupButtonWidget"
-#include "de/PopupMenuWidget"
-#include "de/StyleProceduralImage"
-#include "de/VariableToggleWidget"
-#include "de/ui/ActionItem"
-#include "de/ui/ListData"
-#include "de/ui/SubwidgetItem"
-#include "de/ui/VariantActionItem"
+#include "de/childwidgetorganizer.h"
+#include "de/focuswidget.h"
+#include "de/gridlayout.h"
+#include "de/popupbuttonwidget.h"
+#include "de/popupmenuwidget.h"
+#include "de/styleproceduralimage.h"
+#include "de/variabletogglewidget.h"
+#include "de/ui/actionitem.h"
+#include "de/ui/listdata.h"
+#include "de/ui/subwidgetitem.h"
+#include "de/ui/variantactionitem.h"
 
 namespace de {
 

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ui/ImageItem"
-#include "de/Style"
+#include "de/ui/imageitem.h"
+#include "de/ui/style.h"
 
 namespace de {
 namespace ui {

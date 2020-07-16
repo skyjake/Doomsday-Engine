@@ -23,12 +23,12 @@
 #include "render/vr.h"
 #include "clientapp.h"
 #include "api_console.h"
-#include "CommandAction"
+#include "ui/commandaction.h"
 
 #include <doomsday/console/exec.h>
 
-#include <de/VariableSliderWidget>
-#include <de/Config>
+#include <de/variablesliderwidget.h>
+#include <de/config.h>
 
 using namespace de;
 using namespace de::ui;

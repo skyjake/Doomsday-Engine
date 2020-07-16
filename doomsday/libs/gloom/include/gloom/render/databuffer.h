@@ -19,11 +19,11 @@
 #ifndef GLOOM_DATABUFFER_H
 #define GLOOM_DATABUFFER_H
 
-#include <de/GLBuffer>
-#include <de/GLTexture>
-#include <de/GLUniform>
-#include <de/Image>
-#include <de/Vector>
+#include <de/glbuffer.h>
+#include <de/gltexture.h>
+#include <de/gluniform.h>
+#include <de/image.h>
+#include <de/vector.h>
 
 namespace gloom {
 

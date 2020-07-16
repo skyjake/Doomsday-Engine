@@ -19,10 +19,10 @@
 #ifndef DE_CLIENT_CONSOLEWIDGET_H
 #define DE_CLIENT_CONSOLEWIDGET_H
 
-#include <de/GuiWidget>
-#include <de/ButtonWidget>
-#include <de/LogWidget>
-#include <de/IPersistent>
+#include <de/guiwidget.h>
+#include <de/buttonwidget.h>
+#include <de/logwidget.h>
+#include <de/ipersistent.h>
 
 #include "consolecommandwidget.h"
 

@@ -23,7 +23,7 @@
 
 #include <doomsday/mesh/hedge.h>
 #include <de/legacy/types.h>
-#include <de/Vector>
+#include <de/vector.h>
 
 static const coord_t SHADOWEDGE_OPEN_THRESHOLD = 8;  ///< World units (Z axis).
 

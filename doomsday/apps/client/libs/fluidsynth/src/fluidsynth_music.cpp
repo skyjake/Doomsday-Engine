@@ -23,7 +23,7 @@
 #include "doomsday.h"
 #include <de/legacy/concurrency.h>
 #include <de/c_wrapper.h>
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 #include <string.h>
 #include <atomic>
 #include <vector>

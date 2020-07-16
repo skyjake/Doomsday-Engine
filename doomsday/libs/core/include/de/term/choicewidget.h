@@ -19,8 +19,8 @@
 #ifndef LIBSHELL_CHOICETEDGET_H
 #define LIBSHELL_CHOICETEDGET_H
 
-#include "LabelWidget"
-#include <de/List>
+#include "labelwidget.h"
+#include "de/list.h"
 
 namespace de { namespace term {
 

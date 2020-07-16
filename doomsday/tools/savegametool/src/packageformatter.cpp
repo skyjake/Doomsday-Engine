@@ -19,9 +19,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/NativePath>
-#include <de/Time>
-#include <de/Writer>
+#include <de/nativepath.h>
+#include <de/time.h>
+#include <de/writer.h>
 #include "packageformatter.h"
 #include "savegametool.h"
 

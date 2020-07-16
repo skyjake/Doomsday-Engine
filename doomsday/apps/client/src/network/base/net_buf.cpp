@@ -25,8 +25,8 @@
 #include <de/legacy/concurrency.h>
 #include <de/legacy/memory.h>
 #include <de/legacy/timer.h>
-#include <de/ByteRefArray>
-#include <de/Loop>
+#include <de/byterefarray.h>
+#include <de/loop.h>
 
 #ifdef __CLIENT__
 #  include "network/sys_network.h"

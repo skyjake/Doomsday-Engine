@@ -17,17 +17,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/OperatorExpression"
-#include "de/Evaluator"
-#include "de/Value"
-#include "de/NumberValue"
-#include "de/TextValue"
-#include "de/ArrayValue"
-#include "de/RefValue"
-#include "de/RecordValue"
-#include "de/NoneValue"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/scripting/operatorexpression.h"
+#include "de/scripting/evaluator.h"
+#include "de/value.h"
+#include "de/numbervalue.h"
+#include "de/textvalue.h"
+#include "de/arrayvalue.h"
+#include "de/refvalue.h"
+#include "de/recordvalue.h"
+#include "de/nonevalue.h"
+#include "de/writer.h"
+#include "de/reader.h"
 #include "de/math.h"
 
 namespace de {

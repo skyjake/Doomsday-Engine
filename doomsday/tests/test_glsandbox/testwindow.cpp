@@ -19,19 +19,19 @@
 
 #include "testwindow.h"
 
-#include <de/AtlasTexture>
-#include <de/Drawable>
-#include <de/EscapeParser>
-#include <de/FileSystem>
-#include <de/GLBuffer>
-#include <de/GLInfo>
-#include <de/GLShader>
-#include <de/GLState>
-#include <de/GLFramebuffer>
-#include <de/GLTexture>
-#include <de/GuiApp>
-#include <de/ImageBank>
-#include <de/ModelDrawable>
+#include <de/atlastexture.h>
+#include <de/drawable.h>
+#include <de/escapeparser.h>
+#include <de/filesystem.h>
+#include <de/glbuffer.h>
+#include <de/glinfo.h>
+#include <de/glshader.h>
+#include <de/glstate.h>
+#include <de/glframebuffer.h>
+#include <de/gltexture.h>
+#include <de/guiapp.h>
+#include <de/imagebank.h>
+#include <de/modeldrawable.h>
 
 #include <SDL_messagebox.h>
 

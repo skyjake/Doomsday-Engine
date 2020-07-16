@@ -17,12 +17,12 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "de/ArrayExpression"
-#include "de/Evaluator"
-#include "de/Expression"
-#include "de/ArrayValue"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/scripting/arrayexpression.h"
+#include "de/scripting/evaluator.h"
+#include "de/scripting/expression.h"
+#include "de/arrayvalue.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 using namespace de;
 

@@ -20,8 +20,8 @@
 #ifndef CLIENT_INPUTSYSTEM_BINDING_H
 #define CLIENT_INPUTSYSTEM_BINDING_H
 
-#include <de/Error>
-#include <de/CompiledRecord>
+#include <de/error.h>
+#include <de/compiledrecord.h>
 
 /**
  * Base class for binding record accessors.

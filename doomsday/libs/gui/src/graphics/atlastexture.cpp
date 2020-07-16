@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/AtlasTexture"
-#include "de/RowAtlasAllocator"
-#include "de/KdTreeAtlasAllocator"
+#include "de/atlastexture.h"
+#include "de/rowatlasallocator.h"
+#include "de/kdtreeatlasallocator.h"
 
 namespace de {
 

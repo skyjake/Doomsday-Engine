@@ -17,23 +17,23 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ZipArchive"
-#include "de/Block"
-#include "de/ByteArrayFile"
-#include "de/ByteSubArray"
-#include "de/Date"
-#include "de/File"
-#include "de/FixedByteArray"
-#include "de/ISerializable"
-#include "de/LittleEndianByteOrder"
-#include "de/LogBuffer"
-#include "de/MetadataBank"
-#include "de/Reader"
-#include "de/Writer"
-#include "de/Zeroed"
+#include "de/ziparchive.h"
+#include "de/block.h"
+#include "de/bytearrayfile.h"
+#include "de/bytesubarray.h"
+#include "de/date.h"
+#include "de/file.h"
+#include "de/fixedbytearray.h"
+#include "de/iserializable.h"
+#include "de/byteorder.h"
+#include "de/logbuffer.h"
+#include "de/metadatabank.h"
+#include "de/reader.h"
+#include "de/writer.h"
+#include "de/zeroed.h"
 
 // Interpretations:
-#include "de/ArchiveFolder"
+#include "de/archivefolder.h"
 
 #include <cstring>
 #include <zlib.h>

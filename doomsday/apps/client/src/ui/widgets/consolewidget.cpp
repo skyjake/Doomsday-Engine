@@ -17,29 +17,29 @@
  */
 
 #include "ui/widgets/consolewidget.h"
-#include "CommandAction"
+#include "ui/commandaction.h"
 #include "ui/widgets/consolecommandwidget.h"
 #include "ui/widgets/inputbindingwidget.h"
 #include "ui/dialogs/logsettingsdialog.h"
 #include "ui/clientwindow.h"
 
-#include <de/AnimationRule>
-#include <de/App>
-#include <de/Config>
-#include <de/FileSystem>
-#include <de/KeyEvent>
-#include <de/LogBuffer>
-#include <de/LogWidget>
-#include <de/MouseEvent>
-#include <de/NativeFile>
-#include <de/PersistentState>
-#include <de/PopupButtonWidget>
-#include <de/PopupMenuWidget>
-#include <de/ScriptCommandWidget>
-#include <de/StyledLogSinkFormatter>
-#include <de/ToggleWidget>
-#include <de/ui/SubwidgetItem>
-#include <de/ui/VariableToggleItem>
+#include <de/animationrule.h>
+#include <de/app.h>
+#include <de/config.h>
+#include <de/filesystem.h>
+#include <de/keyevent.h>
+#include <de/logbuffer.h>
+#include <de/logwidget.h>
+#include <de/mouseevent.h>
+#include <de/nativefile.h>
+#include <de/persistentstate.h>
+#include <de/popupbuttonwidget.h>
+#include <de/popupmenuwidget.h>
+#include <de/scriptcommandwidget.h>
+#include <de/styledlogsinkformatter.h>
+#include <de/togglewidget.h>
+#include <de/ui/subwidgetitem.h>
+#include <de/ui/variabletoggleitem.h>
 #include <doomsday/doomsdayapp.h>
 
 #include <SDL_clipboard.h>

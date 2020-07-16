@@ -19,12 +19,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ScrollAreaWidget"
+#include "de/scrollareawidget.h"
 
-#include <de/KeyEvent>
-#include <de/MouseEvent>
-#include <de/Lockable>
-#include <de/Drawable>
+#include <de/keyevent.h>
+#include <de/mouseevent.h>
+#include <de/lockable.h>
+#include <de/drawable.h>
 
 #include <utility>
 

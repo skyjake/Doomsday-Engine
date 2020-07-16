@@ -23,10 +23,10 @@
 
 #include <de/legacy/aabox.h>
 
-#include <de/Vector>
+#include <de/vector.h>
 
-#include "MapObject"
-#include "ClientTexture"
+#include "world/mapobject.h"
+#include "resource/clienttexture.h"
 
 /**
  * Luminous object. @ingroup render

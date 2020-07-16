@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ChildWidgetOrganizer"
-#include "de/LabelWidget"
-#include "de/ui/Item"
+#include "de/childwidgetorganizer.h"
+#include "de/labelwidget.h"
+#include "de/ui/item.h"
 
-#include <de/App>
-#include <de/KeyMap>
+#include <de/app.h>
+#include <de/keymap.h>
 
 namespace de {
 

@@ -23,15 +23,11 @@
 #include "ui/inputsystem.h"
 
 #include <de/legacy/timer.h> // SECONDSPERTIC
-#include <de/Context>
-#include <de/Function>
-#include <de/KeyEvent>
-#include <de/LogBuffer>
-#include <de/MouseEvent>
-#include <de/NumberValue>
-#include <de/Record>
-#include <de/ScriptSystem>
-#include <de/WindowSystem>
+#include <de/dscript.h>
+#include <de/keyevent.h>
+#include <de/logbuffer.h>
+#include <de/mouseevent.h>
+#include <de/windowsystem.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <doomsday/console/exec.h>
@@ -44,9 +40,9 @@
 #include "render/vr.h"
 #include "world/p_players.h"
 
-#include "BindContext"
-#include "CommandBinding"
-#include "ImpulseBinding"
+#include "ui/bindcontext.h"
+#include "ui/commandbinding.h"
+#include "ui/impulsebinding.h"
 #include "ui/ddevent.h"
 #include "ui/b_util.h"
 #include "ui/clientwindow.h"

@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/WaveformBank"
-#include "de/App"
-#include "de/Folder"
+#include "de/waveformbank.h"
+#include "de/app.h"
+#include "de/folder.h"
 
-#include <de/ScriptedInfo>
+#include <de/scripting/scriptedinfo.h>
 
 namespace de {
 

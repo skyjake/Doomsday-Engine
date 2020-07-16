@@ -30,8 +30,8 @@
 #include <doomsday/world/bspleaf.h>
 #include <doomsday/world/sector.h>
 
-#include <de/LogBuffer>
-#include <de/Vector>
+#include <de/logbuffer.h>
+#include <de/vector.h>
 
 using namespace de;
 using world::World;

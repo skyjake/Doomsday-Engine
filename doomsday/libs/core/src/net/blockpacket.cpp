@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/BlockPacket"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/blockpacket.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 namespace de {
 

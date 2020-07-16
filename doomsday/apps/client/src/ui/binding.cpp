@@ -19,7 +19,7 @@
 
 #include "ui/binding.h"
 
-#include <de/RecordValue>
+#include <de/recordvalue.h>
 
 using namespace de;
 

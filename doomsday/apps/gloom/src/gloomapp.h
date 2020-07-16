@@ -19,8 +19,8 @@
 #ifndef GLOOM_TEST_APP_H
 #define GLOOM_TEST_APP_H
 
-#include <de/BaseGuiApp>
-#include <de/ImageBank>
+#include <de/baseguiapp.h>
+#include <de/imagebank.h>
 #include <gloom/audio/audiosystem.h>
 
 class MainWindow;

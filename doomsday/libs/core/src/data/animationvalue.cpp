@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/AnimationValue"
-#include "de/Reader"
-#include "de/ScriptSystem"
-#include "de/Writer"
+#include "de/animationvalue.h"
+#include "de/reader.h"
+#include "de/scripting/scriptsystem.h"
+#include "de/writer.h"
 
 namespace de {
 

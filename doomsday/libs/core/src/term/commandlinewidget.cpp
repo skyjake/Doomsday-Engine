@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/term/CommandLineWidget"
-#include "de/term/TextRootWidget"
-#include "de/term/KeyEvent"
-#include "de/EditorHistory"
+#include "de/term/commandlinewidget.h"
+#include "de/term/textrootwidget.h"
+#include "de/term/keyevent.h"
+#include "de/editorhistory.h"
 
-#include <de/String>
+#include "de/string.h"
 
 namespace de { namespace term {
 

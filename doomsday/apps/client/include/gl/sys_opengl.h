@@ -33,7 +33,7 @@
 #endif
 
 #ifdef __CLIENT__
-#  include <de/graphics/opengl.h>
+#  include <de/opengl.h>
 #  ifdef WIN32
 #    define GL_CALL __stdcall
 #  else

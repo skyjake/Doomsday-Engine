@@ -20,7 +20,7 @@
 #include "resource/lightmaterialdecoration.h"
 
 #include <doomsday/defs/material.h>
-#include <doomsday/res/Textures>
+#include <doomsday/res/textures.h>
 #include "clientapp.h"
 
 using namespace de;

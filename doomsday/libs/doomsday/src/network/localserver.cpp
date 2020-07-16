@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/network/LocalServer"
-#include "doomsday/network/Link"
-#include "doomsday/DoomsdayInfo"
-#include <de/CommandLine>
-#include <de/NativePath>
-#include <de/App>
+#include "doomsday/network/localserver.h"
+#include "doomsday/network/link.h"
+#include "doomsday/doomsdayinfo.h"
+#include <de/commandline.h>
+#include <de/nativepath.h>
+#include <de/app.h>
 
 namespace network {
 

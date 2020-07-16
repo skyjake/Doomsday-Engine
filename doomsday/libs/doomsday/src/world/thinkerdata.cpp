@@ -20,7 +20,7 @@
 #include "doomsday/world/thinkerdata.h"
 #include "doomsday/world/map.h"
 
-#include <de/Hash>
+#include <de/hash.h>
 
 using namespace de;
 

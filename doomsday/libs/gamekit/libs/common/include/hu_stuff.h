@@ -28,7 +28,7 @@
 #include "gl_drawpatch.h"
 
 #ifdef __cplusplus
-#  include <de/Vector>
+#  include <de/vector.h>
 #endif
 
 #if __JHERETIC__ || __JHEXEN__

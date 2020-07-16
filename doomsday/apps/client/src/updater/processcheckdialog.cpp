@@ -22,8 +22,8 @@
 #include "ui/clientwindow.h"
 
 //#include <QProcess>
-#include <de/CommandLine>
-#include <de/MessageDialog>
+#include <de/commandline.h>
+#include <de/messagedialog.h>
 #include <SDL_messagebox.h>
 
 using namespace de;

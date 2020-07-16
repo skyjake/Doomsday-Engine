@@ -16,15 +16,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/filesys/WebHostedLink"
+#include "de/filesys/webhostedlink.h"
 
-#include "de/Async"
-#include "de/Folder"
-#include "de/PathTree"
-#include "de/RecordValue"
-#include "de/RemoteFeedRelay"
-#include "de/TextValue"
-#include "de/WebRequest"
+#include "de/async.h"
+#include "de/folder.h"
+#include "de/pathtree.h"
+#include "de/recordvalue.h"
+#include "de/filesys/remotefeedrelay.h"
+#include "de/textvalue.h"
+#include "de/webrequest.h"
 
 namespace de {
 namespace filesys {

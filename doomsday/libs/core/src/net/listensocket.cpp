@@ -17,10 +17,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ListenSocket"
-#include "de/Address"
-#include "de/Socket"
-#include "de/Lockable"
+#include "de/listensocket.h"
+#include "de/address.h"
+#include "de/socket.h"
+#include "de/lockable.h"
 
 #include <the_Foundation/service.h>
 

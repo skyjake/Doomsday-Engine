@@ -27,11 +27,11 @@
 #include "gl/texturecontent.h"
 #include "render/rend_main.h"  // misc global vars awaiting new home
 
-#include <doomsday/resource/colorpalettes.h>
+#include <doomsday/res/colorpalettes.h>
 #include <de/legacy/concurrency.h>
 #include <de/legacy/memory.h>
 #include <de/legacy/texgamma.h>
-#include <de/GLInfo>
+#include <de/glinfo.h>
 #include <cstring>
 
 using namespace de;

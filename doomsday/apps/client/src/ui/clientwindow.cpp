@@ -30,20 +30,20 @@
 #include "clientapp.h"
 #include "clientplayer.h"
 
-#include <de/CompositorWidget>
-#include <de/Config>
-#include <de/ConstantRule>
-#include <de/Drawable>
-#include <de/FadeToBlackWidget>
-#include <de/FileSystem>
-#include <de/GLTextureFramebuffer>
-#include <de/GLState>
-#include <de/GLInfo>
-#include <de/LogBuffer>
-#include <de/NotificationAreaWidget>
-#include <de/NumberValue>
-#include <de/VRWindowTransform>
-#include <de/WindowSystem>
+#include <de/compositorwidget.h>
+#include <de/config.h>
+#include <de/constantrule.h>
+#include <de/drawable.h>
+#include <de/fadetoblackwidget.h>
+#include <de/filesystem.h>
+#include <de/gltextureframebuffer.h>
+#include <de/glstate.h>
+#include <de/glinfo.h>
+#include <de/logbuffer.h>
+#include <de/notificationareawidget.h>
+#include <de/numbervalue.h>
+#include <de/vrwindowtransform.h>
+#include <de/windowsystem.h>
 #include <de/legacy/concurrency.h>
 #include <doomsday/console/exec.h>
 #include "api_console.h"
@@ -59,7 +59,7 @@
 #include "ui/dialogs/alertdialog.h"
 #include "ui/inputdevice.h"
 #include "ui/inputsystem.h"
-#include "CommandAction"
+#include "ui/commandaction.h"
 #include "dd_main.h"
 #include "render/vr.h"
 

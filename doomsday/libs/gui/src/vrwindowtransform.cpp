@@ -17,15 +17,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/VRWindowTransform"
-#include "de/VRConfig"
-#include "de/BaseGuiApp"
-#include "de/BaseWindow"
-#include "de/GuiWidget"
+#include "de/vrwindowtransform.h"
+#include "de/baseguiapp.h"
+#include "de/basewindow.h"
+#include "de/guiwidget.h"
+#include "de/vrconfig.h"
 
-#include <de/Drawable>
-#include <de/GLInfo>
-#include <de/GLTextureFramebuffer>
+#include <de/drawable.h>
+#include <de/glinfo.h>
+#include <de/gltextureframebuffer.h>
 
 namespace de {
 

@@ -32,7 +32,7 @@
 #include "menu/widgets/widget.h"
 
 #undef Set
-#include <de/Set>
+#include <de/set.h>
 
 using namespace de;
 

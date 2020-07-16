@@ -21,9 +21,9 @@
 #ifndef DE_CLIENT_GLTEXTUREUNIT_H
 #define DE_CLIENT_GLTEXTUREUNIT_H
 
-#include "ClientTexture"
-#include <de/GLTexture>
-#include <de/Vector>
+#include "resource/clienttexture.h"
+#include <de/gltexture.h>
+#include <de/vector.h>
 
 namespace de {
 

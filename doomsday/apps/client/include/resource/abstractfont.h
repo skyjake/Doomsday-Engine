@@ -20,9 +20,9 @@
 #ifndef CLIENT_RESOURCE_ABSTRACTFONT_H
 #define CLIENT_RESOURCE_ABSTRACTFONT_H
 
-#include <de/Observers>
-#include <de/Rectangle>
-#include <de/Vector>
+#include <de/observers.h>
+#include <de/rectangle.h>
+#include <de/vector.h>
 
 namespace de {
 class FontManifest;

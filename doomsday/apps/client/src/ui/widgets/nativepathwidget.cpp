@@ -20,8 +20,8 @@
 #include "ui/clientwindow.h"
 #include "clientapp.h"
 
-#include <de/PopupMenuWidget>
-#include <de/FileDialog>
+#include <de/popupmenuwidget.h>
+#include <de/filedialog.h>
 
 using namespace de;
 

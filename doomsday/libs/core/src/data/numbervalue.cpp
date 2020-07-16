@@ -17,9 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/NumberValue"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/numbervalue.h"
+#include "de/writer.h"
+#include "de/reader.h"
 #include "de/math.h"
 
 #include <sstream>

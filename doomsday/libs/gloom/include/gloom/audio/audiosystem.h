@@ -1,10 +1,10 @@
 #ifndef AUDIOSYSTEM_H
 #define AUDIOSYSTEM_H
 
-#include <de/System>
-#include <de/Waveform>
-#include <de/Sound>
-#include <de/DotPath>
+#include <de/system.h>
+#include <de/waveform.h>
+#include <de/sound.h>
+#include <de/path.h>
 #include "../libgloom.h"
 
 namespace gloom {

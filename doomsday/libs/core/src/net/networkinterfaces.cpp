@@ -17,9 +17,9 @@
  */
 
 #include "../src/net/networkinterfaces.h"
-#include "de/Task"
-#include "de/TaskPool"
-#include "de/Address"
+#include "de/task.h"
+#include "de/taskpool.h"
+#include "de/address.h"
 
 #include <the_Foundation/object.h>
 #include <the_Foundation/objectlist.h>

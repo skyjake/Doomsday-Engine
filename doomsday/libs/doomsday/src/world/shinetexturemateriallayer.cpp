@@ -18,8 +18,8 @@
  */
 
 #include "doomsday/world/shinetexturemateriallayer.h"
-#include "doomsday/res/TextureScheme"
-#include "doomsday/res/Textures"
+#include "doomsday/res/texturescheme.h"
+#include "doomsday/res/textures.h"
 
 using namespace de;
 

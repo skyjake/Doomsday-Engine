@@ -20,7 +20,7 @@
 #ifndef GLSANDBOX_TESTWINDOW_H
 #define GLSANDBOX_TESTWINDOW_H
 
-#include <de/GLWindow>
+#include <de/glwindow.h>
 
 class TestWindow : public de::GLWindow
 {

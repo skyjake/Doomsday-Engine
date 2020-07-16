@@ -16,15 +16,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/filesys/NativeLink"
+#include "de/filesys/nativelink.h"
 
-#include "de/App"
-#include "de/FileSystem"
-#include "de/Loop"
-#include "de/Message"
-#include "de/RemoteFeed"
-#include "de/RemoteFeedProtocol"
-#include "de/Socket"
+#include "de/app.h"
+#include "de/filesystem.h"
+#include "de/loop.h"
+#include "de/message.h"
+#include "de/remotefeed.h"
+#include "de/remotefeedprotocol.h"
+#include "de/socket.h"
 
 namespace de { namespace filesys {
 

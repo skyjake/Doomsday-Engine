@@ -19,8 +19,8 @@
 #ifndef APPFW_TEST_APP_H
 #define APPFW_TEST_APP_H
 
-#include <de/BaseGuiApp>
-#include <de/ImageBank>
+#include <de/baseguiapp.h>
+#include <de/imagebank.h>
 
 #define OVR_FOV         122.f
 #define OVR_NEAR_CLIP   .1f

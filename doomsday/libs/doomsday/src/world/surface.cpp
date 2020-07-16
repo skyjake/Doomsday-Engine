@@ -29,7 +29,7 @@
 
 //#include "misc/r_util.h" // R_NameForBlendMode()
 
-#include <de/Log>
+#include <de/log.h>
 #include <de/legacy/vector1.h>
 
 namespace world {

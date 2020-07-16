@@ -24,10 +24,10 @@
 #include "de/legacy/concurrency.h"
 #include "de/legacy/timer.h"
 #include "de/legacy/texgamma.h"
+#include "de/garbage.h"
 #include "memoryzone_private.h"
 
 #include <stdlib.h>
-#include <de/Garbage>
 
 void Libdeng_Init(void)
 {

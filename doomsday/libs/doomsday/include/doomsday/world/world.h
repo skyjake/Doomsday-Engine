@@ -23,8 +23,8 @@
 #include "factory.h"
 #include "mobj.h"
 
-#include <de/Observers>
-#include <de/System>
+#include <de/observers.h>
+#include <de/system.h>
 
 namespace de { class Context; class Scheduler; }
 

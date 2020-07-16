@@ -30,8 +30,8 @@
 
 #include "world/p_object.h"
 #include "clientworld.h"
-#include "Generator"
-#include "Lumobj"
+#include "generator.h"
+#include "render/lumobj.h"
 #include "render/skydrawable.h"
 
 #include <doomsday/mesh/mesh.h>
@@ -39,19 +39,19 @@
 #include <doomsday/world/bspnode.h>
 #include <doomsday/world/line.h>
 #include <doomsday/world/polyobj.h>
-#include <doomsday/network/Protocol>
+#include <doomsday/network/protocol.h>
 #include <doomsday/uri.h>
 #include <doomsday/world/map.h>
 #include <doomsday/world/ithinkermapping.h>
 
-#include <de/Hash>
-#include <de/List>
-#include <de/Set>
-#include <de/BinaryTree>
-#include <de/Id>
-#include <de/Info>
-#include <de/Observers>
-#include <de/Vector>
+#include <de/hash.h>
+#include <de/list.h>
+#include <de/set.h>
+#include <de/binarytree.h>
+#include <de/id.h>
+#include <de/info.h>
+#include <de/observers.h>
+#include <de/vector.h>
 
 class ClSkyPlane;
 class Plane;

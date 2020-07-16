@@ -21,8 +21,8 @@
 #define LIBCORE_TOKENBUFFER_H
 
 #include "../libcore.h"
-#include "../Range"
-#include "../CString"
+#include "de/range.h"
+#include "de/cstring.h"
 
 #include <vector>
 

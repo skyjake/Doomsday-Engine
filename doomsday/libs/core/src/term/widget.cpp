@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/term/Widget"
-#include "de/term/TextRootWidget"
-#include "de/term/Action"
+#include "de/term/widget.h"
+#include "de/term/textrootwidget.h"
+#include "de/term/action.h"
 
 namespace de { namespace term {
 

@@ -17,16 +17,16 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/List>
-#include <de/ArrayValue>
-#include <de/FileSystem>
-#include <de/LogBuffer>
-#include <de/NativeFile>
-#include <de/NumberValue>
-#include <de/Reader>
-#include <de/TextApp>
-#include <de/Writer>
-#include <de/ZipArchive>
+#include <de/list.h>
+#include <de/arrayvalue.h>
+#include <de/filesystem.h>
+#include <de/logbuffer.h>
+#include <de/nativefile.h>
+#include <de/numbervalue.h>
+#include <de/reader.h>
+#include <de/textapp.h>
+#include <de/writer.h>
+#include <de/ziparchive.h>
 #include "lzss.h"
 #include "nativetranslator.h"
 #include "savegametool.h"

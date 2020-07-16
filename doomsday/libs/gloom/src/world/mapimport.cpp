@@ -18,15 +18,15 @@
 
 #include "gloom/world/mapimport.h"
 #include "gloom/world/sectorpolygonizer.h"
-#include <doomsday/resource/idtech1flatlib.h>
-#include <doomsday/resource/idtech1texturelib.h>
-#include <doomsday/resource/idtech1util.h>
+#include <doomsday/res/idtech1flatlib.h>
+#include <doomsday/res/idtech1texturelib.h>
+#include <doomsday/res/idtech1util.h>
 
-#include <de/ByteOrder>
-#include <de/DataArray>
-#include <de/FileSystem>
-#include <de/Folder>
-#include <de/Version>
+#include <de/byteorder.h>
+#include <de/dataarray.h>
+#include <de/filesystem.h>
+#include <de/folder.h>
+#include <de/version.h>
 
 #include <nlohmann/json.hpp>
 #include <iomanip>

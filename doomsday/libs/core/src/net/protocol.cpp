@@ -17,12 +17,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Protocol"
-#include "de/RecordPacket"
-#include "de/TextValue"
-#include "de/Record"
-#include "de/Transmitter"
-#include "de/Log"
+#include "de/protocol.h"
+#include "de/recordpacket.h"
+#include "de/textvalue.h"
+#include "de/record.h"
+#include "de/transmitter.h"
+#include "de/log.h"
 
 namespace de {
 

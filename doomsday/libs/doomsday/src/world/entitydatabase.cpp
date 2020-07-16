@@ -20,7 +20,7 @@
 
 #include "doomsday/world/entitydatabase.h"
 
-#include <de/Log>
+#include <de/log.h>
 #include <map>
 
 using namespace de;

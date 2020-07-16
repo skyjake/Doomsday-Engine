@@ -17,13 +17,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/TextValue"
-#include "de/NumberValue"
-#include "de/ArrayValue"
-#include "de/CString"
-#include "de/Writer"
-#include "de/Reader"
-#include "de/ScriptSystem"
+#include "de/textvalue.h"
+#include "de/numbervalue.h"
+#include "de/arrayvalue.h"
+#include "de/cstring.h"
+#include "de/writer.h"
+#include "de/reader.h"
+#include "de/scripting/scriptsystem.h"
 
 #include <list>
 #include <cmath>

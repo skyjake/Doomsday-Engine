@@ -22,8 +22,8 @@
 #include "gl/gl_draw.h"
 #include "api_gl.h"
 
-#include <de/GLInfo>
-#include <de/LogBuffer>
+#include <de/glinfo.h>
+#include <de/logbuffer.h>
 
 using namespace de;
 

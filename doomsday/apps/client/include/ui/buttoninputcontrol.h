@@ -20,7 +20,7 @@
 #ifndef CLIENT_UI_BUTTONINPUTCONTROL_H
 #define CLIENT_UI_BUTTONINPUTCONTROL_H
 
-#include <de/String>
+#include <de/string.h>
 #include "inputdevice.h"
 
 /**

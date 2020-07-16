@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_INPUTBINDINGWIDGET_H
 #define DE_CLIENT_INPUTBINDINGWIDGET_H
 
-#include <de/AuxButtonWidget>
+#include <de/auxbuttonwidget.h>
 
 /**
  * Widget for viewing and changing an input binding.

@@ -17,9 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/KdTreeAtlasAllocator"
-#include <de/BinaryTree>
-#include <de/List>
+#include "de/kdtreeatlasallocator.h"
+#include <de/binarytree.h>
+#include <de/list.h>
 
 namespace de {
 

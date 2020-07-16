@@ -18,9 +18,9 @@
 
 #if 0
 
-#include "de/GLFramebuffer"
-#include "de/GLTexture"
-#include "de/GLInfo"
+#include "de/glframebuffer.h"
+#include "de/gltexture.h"
+#include "de/glinfo.h"
 
 namespace de {
 

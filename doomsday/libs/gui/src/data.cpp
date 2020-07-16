@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ui/Data"
-#include "de/ui/Item"
-#include "de/LabelWidget"
+#include "de/ui/data.h"
+#include "de/ui/item.h"
+#include "de/labelwidget.h"
 
 #include <algorithm>
 

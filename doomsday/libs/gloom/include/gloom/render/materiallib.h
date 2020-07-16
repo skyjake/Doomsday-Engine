@@ -21,7 +21,7 @@
 
 #include "gloom/render/render.h"
 
-#include <de/GLUniform>
+#include <de/gluniform.h>
 
 namespace gloom {
 

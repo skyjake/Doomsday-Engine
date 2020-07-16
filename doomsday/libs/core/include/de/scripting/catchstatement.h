@@ -20,9 +20,9 @@
 #ifndef LIBCORE_CATCHSTATEMENT_H
 #define LIBCORE_CATCHSTATEMENT_H
 
-#include "../Statement"
-#include "../ArrayExpression"
-#include "../Compound"
+#include "statement.h"
+#include "arrayexpression.h"
+#include "compound.h"
 
 namespace de {
 

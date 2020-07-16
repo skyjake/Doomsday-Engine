@@ -18,11 +18,11 @@
 
 #include "ui/home/headerwidget.h"
 
-#include <de/Config>
-#include <de/LabelWidget>
-#include <de/ButtonWidget>
-#include <de/PanelWidget>
-#include <de/CallbackAction>
+#include <de/config.h>
+#include <de/labelwidget.h>
+#include <de/buttonwidget.h>
+#include <de/panelwidget.h>
+#include <de/callbackaction.h>
 
 using namespace de;
 

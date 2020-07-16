@@ -26,11 +26,11 @@
 #include "de_platform.h"
 #include "api_render.h"
 
-#include <de/Log>
+#include <de/log.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/defs/sprite.h>
-#include <doomsday/res/Sprites>
-#include <doomsday/world/Materials>
+#include <doomsday/res/sprites.h>
+#include <doomsday/world/materials.h>
 
 #include "dd_main.h"  // App_Resources
 #include "def_main.h"
@@ -42,7 +42,7 @@
 #include "render/rend_model.h"
 
 #include "resource/clientresources.h"
-#include "MaterialVariantSpec"
+#include "resource/materialvariantspec.h"
 
 using namespace de;
 

@@ -19,10 +19,10 @@
 #include "testapp.h"
 #include "mainwindow.h"
 
-#include <de/FileSystem>
-#include <de/PackageLoader>
-#include <de/ScriptSystem>
-#include <de/WindowSystem>
+#include <de/dscript.h>
+#include <de/filesystem.h>
+#include <de/packageloader.h>
+#include <de/windowsystem.h>
 
 using namespace de;
 

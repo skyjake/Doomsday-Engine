@@ -19,8 +19,8 @@
 #ifndef SERVER_USERS_H
 #define SERVER_USERS_H
 
-#include <de/Address>
-#include <de/Observers>
+#include <de/address.h>
+#include <de/observers.h>
 
 /**
  * Abstract base class representing a connected client.

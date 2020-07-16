@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <de/Vector>
+#include <de/vector.h>
 #include <doomsday/defs/dedtypes.h>
 #include "map.h"
 

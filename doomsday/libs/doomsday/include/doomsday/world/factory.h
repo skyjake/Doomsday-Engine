@@ -21,9 +21,9 @@
 #include "../libdoomsday.h"
 #include "../defs/sky.h"
 
-#include <de/Id>
-#include <de/List>
-#include <de/Vector>
+#include <de/id.h>
+#include <de/list.h>
+#include <de/vector.h>
 
 class MobjThinkerData;
 struct polyobj_s;

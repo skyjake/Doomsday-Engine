@@ -22,8 +22,8 @@
 #define CLIENT_RENDER_DRAWLIST_H
 
 #include <array>
-#include <de/GLBuffer>
-#include <de/Vector>
+#include <de/glbuffer.h>
+#include <de/vector.h>
 #include "api_gl.h" // blendmode_e
 #include "gl/gltextureunit.h"
 

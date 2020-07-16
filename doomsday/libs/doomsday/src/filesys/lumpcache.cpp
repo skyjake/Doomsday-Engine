@@ -20,8 +20,8 @@
 #include "doomsday/filesys/lumpcache.h"
 #include <de/legacy/memory.h>
 #include <de/legacy/memoryzone.h>
-#include <de/Error>
-#include <de/Log>
+#include <de/error.h>
+#include <de/log.h>
 
 using namespace de;
 

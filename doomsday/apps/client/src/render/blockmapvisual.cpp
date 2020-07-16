@@ -27,7 +27,7 @@
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
-#include "ConvexSubspace"
+#include "world/convexsubspace.h"
 #include "api_fontrender.h"
 #include "render/rend_font.h"
 #include "ui/ui_main.h"
@@ -38,8 +38,8 @@
 #include <doomsday/mesh/hedge.h>
 #include <de/legacy/aabox.h>
 #include <de/legacy/concurrency.h>
-#include <de/GLInfo>
-#include <de/Vector>
+#include <de/glinfo.h>
+#include <de/vector.h>
 
 using namespace de;
 using world::World;

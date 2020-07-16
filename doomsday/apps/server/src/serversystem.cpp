@@ -39,12 +39,12 @@
 #include <doomsday/world/map.h>
 #include <de/c_wrapper.h>
 #include <de/legacy/timer.h>
-#include <de/Address>
-#include <de/Beacon>
-#include <de/ByteRefArray>
-#include <de/Garbage>
-#include <de/ListenSocket>
-#include <de/TextApp>
+#include <de/address.h>
+#include <de/beacon.h>
+#include <de/byterefarray.h>
+#include <de/garbage.h>
+#include <de/listensocket.h>
+#include <de/textapp.h>
 
 using namespace de;
 

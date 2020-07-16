@@ -20,8 +20,8 @@
 #define LIBCORE_NETWORKINTERFACES_H
 
 #include "de/libcore.h"
-#include "de/List"
-#include "de/Address"
+#include "de/list.h"
+#include "de/address.h"
 
 namespace de {
 namespace internal {

@@ -18,13 +18,13 @@
  */
 
 #include "world/sky.h"
-#include "ClientMaterial"
-#include "MaterialAnimator"
+#include "resource/clientmaterial.h"
+#include "resource/materialanimator.h"
 #include "render/skydrawable.h"
 #include "gl/gl_tex.h"
 #include "render/rend_main.h"
 
-#include <doomsday/res/TextureManifest>
+#include <doomsday/res/texturemanifest.h>
 
 using namespace de;
 

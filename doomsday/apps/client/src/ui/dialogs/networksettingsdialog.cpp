@@ -22,12 +22,12 @@
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
 
-#include "ConfigProfiles"
+#include "configprofiles.h"
 #include "clientapp.h"
 
-#include <de/GridPopupWidget>
-#include <de/VariableLineEditWidget>
-#include <de/VariableToggleWidget>
+#include <de/gridpopupwidget.h>
+#include <de/variablelineeditwidget.h>
+#include <de/variabletogglewidget.h>
 
 using namespace de;
 using namespace de::ui;

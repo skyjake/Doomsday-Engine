@@ -33,13 +33,13 @@
 #include "dd_main.h"
 #include "gl/gl_main.h"
 
-#include <de/Config>
-#include <de/CommandLine>
-#include <de/GLState>
-#include <de/GLShaderBank>
-#include <de/Drawable>
-#include <de/VRConfig>
-#include <de/WindowTransform>
+#include <de/config.h>
+#include <de/commandline.h>
+#include <de/glstate.h>
+#include <de/glshaderbank.h>
+#include <de/drawable.h>
+#include <de/vrconfig.h>
+#include <de/windowtransform.h>
 
 using namespace de;
 

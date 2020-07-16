@@ -30,7 +30,7 @@
 #include "thinkerinfo.h"
 #include "acs/system.h"
 
-#include <doomsday/world/MaterialArchive>
+#include <doomsday/world/materialarchive.h>
 #include <doomsday/world/thinkerdata.h>
 
 namespace internal

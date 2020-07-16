@@ -21,8 +21,8 @@
 #define LIBCORE_BUILTINEXPRESSION_H
 
 #include "../libcore.h"
-#include "../Expression"
-#include "../String"
+#include "../string.h"
+#include "expression.h"
 
 namespace de {
 

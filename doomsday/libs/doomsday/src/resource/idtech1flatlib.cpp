@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/idtech1flatlib.h"
-#include "doomsday/resource/idtech1util.h"
+#include "doomsday/res/idtech1flatlib.h"
+#include "doomsday/res/idtech1util.h"
 
 namespace res {
 

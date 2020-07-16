@@ -16,20 +16,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/BaseGuiApp"
-#include "de/VRConfig"
+#include "de/baseguiapp.h"
+#include "de/vrconfig.h"
 
-#include <de/ArrayValue>
-#include <de/BaseWindow>
-#include <de/CommandLine>
-#include <de/Config>
-#include <de/DictionaryValue>
-#include <de/FileSystem>
-#include <de/Font>
-#include <de/Function>
-#include <de/NativeFont>
-#include <de/ScriptSystem>
-#include <de/WindowSystem>
+#include <de/basewindow.h>
+#include <de/commandline.h>
+#include <de/config.h>
+#include <de/dscript.h>
+#include <de/filesystem.h>
+#include <de/font.h>
+#include <de/nativefont.h>
+#include <de/windowsystem.h>
 
 namespace de {
 

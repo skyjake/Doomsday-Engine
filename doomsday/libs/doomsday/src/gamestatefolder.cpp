@@ -17,22 +17,22 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/GameStateFolder"
-#include "doomsday/AbstractSession"
-#include "doomsday/DataBundle"
+#include "doomsday/gamestatefolder.h"
+#include "doomsday/abstractsession.h"
+#include "doomsday/res/databundle.h"
 
-#include <de/App>
-#include <de/ArchiveFolder>
-#include <de/ArrayValue>
-#include <de/Info>
-#include <de/LogBuffer>
-#include <de/NativePath>
-#include <de/NumberValue>
-#include <de/PackageLoader>
-#include <de/RegExp>
-#include <de/TextValue>
-#include <de/Writer>
-#include <de/ZipArchive>
+#include <de/app.h>
+#include <de/archivefolder.h>
+#include <de/arrayvalue.h>
+#include <de/info.h>
+#include <de/logbuffer.h>
+#include <de/nativepath.h>
+#include <de/numbervalue.h>
+#include <de/packageloader.h>
+#include <de/regexp.h>
+#include <de/textvalue.h>
+#include <de/writer.h>
+#include <de/ziparchive.h>
 
 using namespace de;
 

@@ -32,18 +32,17 @@
 #include "doomsday/console/exec.h"
 #include "doomsday/defs/ded.h"
 #include "doomsday/defs/mapinfo.h"
-#include "doomsday/resource/mapmanifests.h"
-#include "doomsday/resource/resources.h"
+#include "doomsday/res/mapmanifests.h"
+#include "doomsday/res/resources.h"
 #include "doomsday/filesys/lumpindex.h"
-#include "doomsday/DoomsdayApp"
+#include "doomsday/doomsdayapp.h"
 #include "doomsday/busymode.h"
 #include "doomsday/players.h"
 #include "api_player.h"
 #include "bindings.h"
 
-#include <de/Context>
-#include <de/Scheduler>
-#include <de/ScriptSystem>
+#include <de/dscript.h>
+#include <de/scripting/scheduler.h>
 #include <de/legacy/memoryzone.h>
 
 namespace world {

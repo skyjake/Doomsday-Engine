@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libcore
  *
- * Copyright © 2011-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2011-2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -21,7 +21,7 @@
 #define LIBCORE_H
 
 /**
- * @file libcore.h  Common definitions for Doomsday 2.
+ * @file libcore.h  Common definitions for Doomsday Engine Core Library
  */
 
 /**
@@ -41,9 +41,9 @@
  */
 
 /**
- * @mainpage Doomsday 2 SDK
+ * @mainpage Doomsday SDK
  *
- * <p>This documentation covers all the functions and data that Doomsday 2 makes
+ * <p>This documentation covers all the functions and data that Doomsday makes
  * available for games and other plugins.</p>
  *
  * @section Overview
@@ -889,8 +889,6 @@ typedef duint32 dintptr;
 //@}
 
 } // namespace de
-
-#include "Error"
 
 #else // !__cplusplus
 

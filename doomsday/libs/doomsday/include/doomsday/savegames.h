@@ -20,8 +20,8 @@
 #define LIBDOOMSDAY_SAVEGAMES_H
 
 #include "libdoomsday.h"
-#include <de/String>
-#include <de/FileIndex>
+#include <de/string.h>
+#include <de/fileindex.h>
 
 class Games;
 

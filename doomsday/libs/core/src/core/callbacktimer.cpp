@@ -19,7 +19,7 @@
  */
 
 #include "../src/core/callbacktimer.h"
-#include "de/Garbage"
+#include "de/garbage.h"
 
 namespace de {
 namespace internal {

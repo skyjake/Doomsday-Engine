@@ -21,10 +21,10 @@
 #include "world/maputil.h"
 #include "world/line.h"
 #include "world/plane.h"
-#include "Surface"
-#include "MaterialVariantSpec"
-#include "MaterialAnimator"
-#include "WallEdge"
+#include "world/surface.h"
+#include "resource/materialvariantspec.h"
+#include "resource/materialanimator.h"
+#include "render/walledge.h"
 #include "render/rend_main.h" // Rend_MapSurfacematerialSpec
 
 #include <doomsday/world/sector.h>

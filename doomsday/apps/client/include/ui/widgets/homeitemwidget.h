@@ -19,8 +19,8 @@
 #ifndef DE_CLIENT_UI_HOME_HOMEITEMWIDGET_H
 #define DE_CLIENT_UI_HOME_HOMEITEMWIDGET_H
 
-#include <de/Asset>
-#include <de/ButtonWidget>
+#include <de/asset.h>
+#include <de/buttonwidget.h>
 
 class Game;
 namespace res { class LumpCatalog; }

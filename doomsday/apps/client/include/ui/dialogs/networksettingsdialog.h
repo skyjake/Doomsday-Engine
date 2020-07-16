@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_NETWORKSETTINGSDIALOG_H
 #define DE_CLIENT_NETWORKSETTINGSDIALOG_H
 
-#include <de/DialogWidget>
+#include <de/dialogwidget.h>
 
 /**
  * Dialog for modifying network settings.

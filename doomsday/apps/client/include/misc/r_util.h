@@ -20,9 +20,9 @@
 #ifndef DE_REFRESH_UTIL_H
 #define DE_REFRESH_UTIL_H
 
-#include <de/Matrix>
-#include <de/String>
-#include <de/Vector>
+#include <de/matrix.h>
+#include <de/string.h>
+#include <de/vector.h>
 
 #include "api_gl.h"
 

@@ -20,12 +20,12 @@
  */
 
 #include "updater/updatersettings.h"
-#include <de/App>
-#include <de/Record>
-#include <de/Config>
-#include <de/TextValue>
-#include <de/NumberValue>
-#include <de/TimeValue>
+#include <de/app.h>
+#include <de/record.h>
+#include <de/config.h>
+#include <de/textvalue.h>
+#include <de/numbervalue.h>
+#include <de/timevalue.h>
 
 using namespace de;
 

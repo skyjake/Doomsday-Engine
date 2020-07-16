@@ -20,15 +20,15 @@
 #include "resource/materialanimator.h"
 
 #include <array>
-#include <de/Log>
-#include <doomsday/res/Textures>
+#include <de/log.h>
+#include <doomsday/res/textures.h>
 #include <doomsday/world/detailtexturemateriallayer.h>
 #include <doomsday/world/shinetexturemateriallayer.h>
 #include <doomsday/world/texturemateriallayer.h>
 
 #include "clientapp.h"
 #include "client/cl_def.h"      // playback / clientPaused
-#include "MaterialVariantSpec"
+#include "resource/materialvariantspec.h"
 #include "gl/gl_texmanager.h"
 #include "render/r_main.h"      // frameCount, frameTimePos
 #include "render/rend_main.h"

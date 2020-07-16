@@ -16,16 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/NotificationAreaWidget"
-#include "de/SequentialLayout"
-#include "de/RelayWidget"
+#include "de/notificationareawidget.h"
+#include "de/sequentiallayout.h"
+#include "de/relaywidget.h"
 
-#include <de/Drawable>
-#include <de/Matrix>
-#include <de/AnimationRule>
+#include <de/drawable.h>
+#include <de/matrix.h>
+#include <de/animationrule.h>
 
-#include <de/KeyMap>
-#include <de/Timer>
+#include <de/keymap.h>
+#include <de/timer.h>
 
 namespace de {
 

@@ -22,7 +22,7 @@
 #include "ui/progress.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/busywidget.h"
-#include <de/ProgressWidget>
+#include <de/progresswidget.h>
 
 using namespace de;
 

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/KeyActions"
-#include <de/KeyMap>
+#include "de/keyactions.h"
+#include <de/keymap.h>
 
 namespace de {
 

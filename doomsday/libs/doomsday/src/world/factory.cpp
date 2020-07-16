@@ -20,7 +20,7 @@
 
 // For Polyobj constructor:
 #include "doomsday/world/polyobj.h"
-#include "doomsday/DoomsdayApp"
+#include "doomsday/doomsdayapp.h"
 #include <de/legacy/memory.h>
 
 namespace world {

@@ -17,10 +17,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ScriptLex"
-#include "de/TokenBuffer"
-#include "de/Vector"
-#include "de/Set"
+#include "de/scripting/scriptlex.h"
+#include "de/scripting/tokenbuffer.h"
+#include "de/vector.h"
+#include "de/set.h"
 
 using namespace de;
 

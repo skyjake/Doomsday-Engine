@@ -22,10 +22,10 @@
 #include "gl/sys_opengl.h"
 
 #include <de/legacy/concurrency.h>
-#include <de/GLInfo>
-#include <de/GLState>
-#include <de/Set>
-#include <de/RegExp>
+#include <de/glinfo.h>
+#include <de/glstate.h>
+#include <de/set.h>
+#include <de/regexp.h>
 #include "sys_system.h"
 #include "gl/gl_main.h"
 

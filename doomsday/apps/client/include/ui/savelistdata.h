@@ -19,9 +19,9 @@
 #ifndef DE_CLIENT_UI_SAVELISTDATA_H
 #define DE_CLIENT_UI_SAVELISTDATA_H
 
-#include <de/ui/ListData>
-#include <de/ui/ImageItem>
-#include <doomsday/GameStateFolder>
+#include <de/ui/listdata.h>
+#include <de/ui/imageitem.h>
+#include <doomsday/gamestatefolder.h>
 
 /**
  * List data model for available saved sessions.

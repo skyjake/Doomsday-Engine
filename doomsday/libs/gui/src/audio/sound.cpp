@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Sound"
+#include "de/sound.h"
 
 namespace de {
 

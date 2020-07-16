@@ -20,15 +20,15 @@
 #include "folderselection.h"
 #include "guishellapp.h"
 
-#include <de/ChoiceWidget>
-#include <de/CommandLine>
-#include <de/Config>
-#include <de/LineEditWidget>
-#include <de/Socket>
-#include <de/TextValue>
-#include <de/ToggleWidget>
-#include <de/FoldPanelWidget>
-#include <doomsday/DoomsdayInfo>
+#include <de/choicewidget.h>
+#include <de/commandline.h>
+#include <de/config.h>
+#include <de/lineeditwidget.h>
+#include <de/socket.h>
+#include <de/textvalue.h>
+#include <de/togglewidget.h>
+#include <de/foldpanelwidget.h>
+#include <doomsday/doomsdayinfo.h>
 
 #include "preferences.h"
 

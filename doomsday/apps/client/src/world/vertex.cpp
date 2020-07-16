@@ -20,7 +20,7 @@
 
 #include <doomsday/world/line.h>
 #include <doomsday/world/lineowner.h>
-#include <de/Partition>
+#include <de/partition.h>
 
 Vertex::Vertex(mesh::Mesh &mesh, const de::Vec2d &origin)
     : world::Vertex(mesh, origin)

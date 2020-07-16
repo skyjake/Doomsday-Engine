@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/network/Protocol"
+#include "doomsday/network/protocol.h"
 
-#include <de/LogBuffer>
-#include <de/ArrayValue>
-#include <de/TextValue>
-#include <de/Reader>
-#include <de/Writer>
+#include <de/logbuffer.h>
+#include <de/arrayvalue.h>
+#include <de/textvalue.h>
+#include <de/reader.h>
+#include <de/writer.h>
 
 namespace network {
 

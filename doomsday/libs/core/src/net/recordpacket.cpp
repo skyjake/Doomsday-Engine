@@ -17,11 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/RecordPacket"
-#include "de/Record"
-#include "de/Writer"
-#include "de/Reader"
-#include "de/Block"
+#include "de/recordpacket.h"
+#include "de/record.h"
+#include "de/writer.h"
+#include "de/reader.h"
+#include "de/block.h"
 
 namespace de {
 

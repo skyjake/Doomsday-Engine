@@ -19,13 +19,13 @@
 #include "doomsday/defs/dedregister.h"
 #include "doomsday/defs/definition.h"
 
-#include <de/ArrayValue>
-#include <de/DictionaryValue>
-#include <de/TextValue>
-#include <de/RecordValue>
-#include <de/RegExp>
-#include <de/Set>
-#include <de/KeyMap>
+#include <de/arrayvalue.h>
+#include <de/dictionaryvalue.h>
+#include <de/textvalue.h>
+#include <de/recordvalue.h>
+#include <de/regexp.h>
+#include <de/set.h>
+#include <de/keymap.h>
 
 using namespace de;
 

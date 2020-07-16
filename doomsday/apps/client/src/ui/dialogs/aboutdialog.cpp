@@ -24,11 +24,11 @@
 #include "dd_main.h"
 #include "dd_def.h"
 
-#include <de/Version>
-#include <de/SequentialLayout>
-#include <de/LabelWidget>
-#include <de/DocumentPopupWidget>
-#include <de/Style>
+#include <de/version.h>
+#include <de/sequentiallayout.h>
+#include <de/labelwidget.h>
+#include <de/documentpopupwidget.h>
+#include <de/ui/style.h>
 
 using namespace de;
 

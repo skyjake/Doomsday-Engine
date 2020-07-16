@@ -18,13 +18,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ButtonWidget"
-#include "de/GuiRootWidget"
-#include "de/CallbackAction"
+#include "de/buttonwidget.h"
+#include "de/guirootwidget.h"
+#include "de/callbackaction.h"
 
-#include <de/FocusWidget>
-#include <de/MouseEvent>
-#include <de/Animation>
+#include <de/focuswidget.h>
+#include <de/mouseevent.h>
+#include <de/animation.h>
 
 namespace de {
 

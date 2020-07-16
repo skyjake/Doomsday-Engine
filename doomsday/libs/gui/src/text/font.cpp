@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Font"
+#include "de/font.h"
 
-#include <de/ConstantRule>
-#include <de/Hash>
-#include <de/ThreadLocal>
+#include <de/constantrule.h>
+#include <de/hash.h>
+#include <de/threadlocal.h>
 
 #include "stbttnativefont.h"
 namespace de { using PlatformFont = StbTtNativeFont; }

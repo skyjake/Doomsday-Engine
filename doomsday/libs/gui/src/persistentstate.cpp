@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/PersistentState"
-#include "de/IPersistent"
+#include "de/persistentstate.h"
+#include "de/ipersistent.h"
 
 namespace de {
 

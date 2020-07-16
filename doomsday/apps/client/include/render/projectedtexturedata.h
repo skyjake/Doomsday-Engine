@@ -20,7 +20,7 @@
 #ifndef CLIENT_RENDER_PROJECTEDTEXTUREDATA_H
 #define CLIENT_RENDER_PROJECTEDTEXTUREDATA_H
 
-#include <de/Vector>
+#include <de/vector.h>
 #include "api_gl.h"  // DGLuint
 
 /**

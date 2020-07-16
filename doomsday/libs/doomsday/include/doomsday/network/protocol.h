@@ -19,11 +19,11 @@
 #ifndef LIBSHELL_PROTOCOL_H
 #define LIBSHELL_PROTOCOL_H
 
-#include "de/Lexicon"
-#include "de/Protocol"
-#include "de/RecordPacket"
-#include "de/Vector"
-#include "de/KeyMap"
+#include "de/lexicon.h"
+#include "de/protocol.h"
+#include "de/recordpacket.h"
+#include "de/vector.h"
+#include "de/keymap.h"
 
 namespace network {
 

@@ -20,9 +20,9 @@
 #ifndef CLIENT_INPUTSYSTEM_COMMANDBINDING_H
 #define CLIENT_INPUTSYSTEM_COMMANDBINDING_H
 
-#include <de/Action>
-#include <de/String>
-#include "Binding"
+#include <de/action.h>
+#include <de/string.h>
+#include "ui/binding.h"
 #include "ddevent.h"
 
 class BindContext;

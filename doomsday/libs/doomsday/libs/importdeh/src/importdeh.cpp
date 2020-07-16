@@ -21,14 +21,14 @@
 #include "importdeh.h"
 
 #include <doomsday/filesys/lumpindex.h>
-#include <doomsday/resource/bundles.h>
-#include <doomsday/DoomsdayApp>
-#include <de/App>
-#include <de/CommandLine>
-#include <de/Block>
-#include <de/Extension>
-#include <de/Log>
-#include <de/String>
+#include <doomsday/res/bundles.h>
+#include <doomsday/doomsdayapp.h>
+#include <de/app.h>
+#include <de/commandline.h>
+#include <de/block.h>
+#include <de/extension.h>
+#include <de/log.h>
+#include <de/string.h>
 
 #include "dehreader.h"
 

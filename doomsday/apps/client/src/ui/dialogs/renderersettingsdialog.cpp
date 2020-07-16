@@ -30,12 +30,12 @@
 
 #include <doomsday/console/exec.h>
 
-#include <de/GridPopupWidget>
-#include <de/GridLayout>
-#include <de/DialogContentStylist>
-#include <de/InputDialog>
-#include <de/VariableSliderWidget>
-#include <de/VariableToggleWidget>
+#include <de/gridpopupwidget.h>
+#include <de/gridlayout.h>
+#include <de/dialogcontentstylist.h>
+#include <de/inputdialog.h>
+#include <de/variablesliderwidget.h>
+#include <de/variabletogglewidget.h>
 
 using namespace de;
 using namespace de::ui;

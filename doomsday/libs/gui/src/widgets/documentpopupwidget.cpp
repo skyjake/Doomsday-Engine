@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/DocumentPopupWidget"
-#include "de/ButtonWidget"
+#include "de/documentpopupwidget.h"
+#include "de/buttonwidget.h"
 
 namespace de {
 

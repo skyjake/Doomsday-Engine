@@ -20,7 +20,7 @@
 #ifndef LIBCORE_PRINTSTATEMENT_H
 #define LIBCORE_PRINTSTATEMENT_H
 
-#include "../Statement"
+#include "statement.h"
 
 namespace de {
 

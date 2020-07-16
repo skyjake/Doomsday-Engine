@@ -28,16 +28,16 @@
 #include "client/clskyplane.h"
 #include "client/cledgeloop.h"
 #include "render/rend_main.h" // Rend_SkyLightColor(), useBias
-#include "LightDecoration"
-#include "MaterialAnimator"
-#include "WallEdge"
+#include "render/lightdecoration.h"
+#include "resource/materialanimator.h"
+#include "render/walledge.h"
 #include "dd_main.h"  // verbose
 
 #include <doomsday/mesh/face.h>
 #include <doomsday/world/blockmap.h>
-#include <de/LogBuffer>
-#include <de/KeyMap>
-#include <de/Set>
+#include <de/logbuffer.h>
+#include <de/keymap.h>
+#include <de/set.h>
 
 using namespace de;
 using mesh::HEdge;

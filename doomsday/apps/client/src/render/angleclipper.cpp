@@ -20,9 +20,9 @@
 
 #include "render/angleclipper.h"
 
-#include <de/List>
-#include <de/Error>
-#include <de/Log>
+#include <de/list.h>
+#include <de/error.h>
+#include <de/log.h>
 #include <doomsday/console/var.h>
 #include <doomsday/mesh/hedge.h>
 #include <doomsday/tab_tables.h>

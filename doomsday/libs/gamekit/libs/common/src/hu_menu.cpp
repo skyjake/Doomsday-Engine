@@ -26,11 +26,11 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-#include <de/KeyMap>
+#include <de/keymap.h>
 #include <de/legacy/memory.h>
-#include <de/RecordValue>
-#include <de/TextValue>
-#include <de/NativePointerValue>
+#include <de/recordvalue.h>
+#include <de/textvalue.h>
+#include <de/nativepointervalue.h>
 #include "g_common.h"
 #include "g_controls.h"
 #include "g_defs.h"

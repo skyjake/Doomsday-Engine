@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/term/Action"
+#include "de/term/action.h"
 
 namespace de { namespace term {
 

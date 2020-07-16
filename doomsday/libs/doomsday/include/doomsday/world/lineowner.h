@@ -21,7 +21,7 @@
 #pragma once
 
 #include <de/legacy/binangle.h>
-#include <de/Vector>
+#include <de/vector.h>
 
 namespace world {
 

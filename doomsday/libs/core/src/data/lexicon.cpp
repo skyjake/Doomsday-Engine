@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Lexicon"
+#include "de/lexicon.h"
 
 namespace de {
 

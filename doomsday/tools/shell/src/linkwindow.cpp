@@ -22,23 +22,23 @@
 #include "optionspage.h"
 #include "preferences.h"
 
-#include <de/CommandWidget>
-#include <de/EventLoop>
-#include <de/Garbage>
-#include <de/InputDialog>
-#include <de/KeyActions>
-#include <de/LogBuffer>
-#include <de/LogWidget>
-#include <de/MessageDialog>
-#include <de/NativeFile>
-#include <de/PopupMenuWidget>
-#include <de/SequentialLayout>
-#include <de/StyledLogSinkFormatter>
-#include <de/ui/SubwidgetItem>
-#include <de/TabWidget>
-#include <de/Timer>
-#include <de/term/CommandLineWidget>
-#include <de/term/LogWidget>
+#include <de/commandwidget.h>
+#include <de/eventloop.h>
+#include <de/garbage.h>
+#include <de/inputdialog.h>
+#include <de/keyactions.h>
+#include <de/logbuffer.h>
+#include <de/logwidget.h>
+#include <de/messagedialog.h>
+#include <de/nativefile.h>
+#include <de/popupmenuwidget.h>
+#include <de/sequentiallayout.h>
+#include <de/styledlogsinkformatter.h>
+#include <de/ui/subwidgetitem.h>
+#include <de/tabwidget.h>
+#include <de/timer.h>
+#include <de/term/commandlinewidget.h>
+#include <de/term/logwidget.h>
 
 //#ifndef MACOSX
 //#  define MENU_IN_LINK_WINDOW

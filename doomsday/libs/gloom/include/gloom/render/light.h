@@ -19,10 +19,10 @@
 #ifndef GLOOM_RENDER_LIGHT_H
 #define GLOOM_RENDER_LIGHT_H
 
-#include <de/GLFramebuffer>
-#include <de/GLTexture>
-#include <de/Matrix>
-#include <de/Vector>
+#include <de/glframebuffer.h>
+#include <de/gltexture.h>
+#include <de/matrix.h>
+#include <de/vector.h>
 
 #include "gloom/world/entity.h"
 #include "gloom/render/icamera.h"

@@ -22,7 +22,7 @@
 #define DE_CORE_SYSTEM_H
 
 #include <de/libcore.h>
-#include <de/NativePath>
+#include <de/nativepath.h>
 #include "dd_types.h"
 
 extern int novideo;

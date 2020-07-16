@@ -51,14 +51,14 @@
 #include "updater/updatersettings.h"
 #include "updater/updatersettingsdialog.h"
 
-#include <de/App>
-#include <de/CommandLine>
-#include <de/Date>
-#include <de/LogBuffer>
-#include <de/NotificationAreaWidget>
-#include <de/Time>
-#include <de/WebRequest>
-#include <de/data/json.h>
+#include <de/app.h>
+#include <de/commandline.h>
+#include <de/date.h>
+#include <de/logbuffer.h>
+#include <de/notificationareawidget.h>
+#include <de/time.h>
+#include <de/webrequest.h>
+#include <de/json.h>
 #include <doomsday/console/exec.h>
 
 using namespace de;

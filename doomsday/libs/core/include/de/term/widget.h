@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include "../Widget"
-#include "../RuleRectangle"
-#include "TextCanvas"
+#include "../widget.h"
+#include "../rulerectangle.h"
+#include "textcanvas.h"
 
 namespace de { namespace term {
 

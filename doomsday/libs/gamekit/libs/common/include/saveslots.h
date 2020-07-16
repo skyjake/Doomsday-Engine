@@ -20,10 +20,10 @@
 #ifndef LIBCOMMON_SAVESLOTS_H
 #define LIBCOMMON_SAVESLOTS_H
 
-#include <de/Error>
-#include <de/Path>
-#include <de/String>
-#include <doomsday/GameStateFolder>
+#include <de/error.h>
+#include <de/path.h>
+#include <de/string.h>
+#include <doomsday/gamestatefolder.h>
 
 /**
  * Maps saved game session file names into a finite set of "save slots".

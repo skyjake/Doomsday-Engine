@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/data/gzip.h"
+#include "de/gzip.h"
 
 #include <zlib.h>
 

@@ -19,7 +19,7 @@
 #ifndef GLOOM_VIEW_H
 #define GLOOM_VIEW_H
 
-#include <de/GLUniform>
+#include <de/gluniform.h>
 #include "gloom/render/icamera.h"
 
 namespace gloom {

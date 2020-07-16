@@ -17,9 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/RefValue"
-#include "de/Variable"
-#include "de/Writer"
+#include "de/refvalue.h"
+#include "de/variable.h"
+#include "de/writer.h"
 
 namespace de {
 

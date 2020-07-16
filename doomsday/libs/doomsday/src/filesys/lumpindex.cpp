@@ -24,10 +24,10 @@
  */
 
 #include "doomsday/filesys/lumpindex.h"
-#include <de/BitArray>
-#include <de/Hash>
-#include <de/List>
-#include <de/LogBuffer>
+#include <de/bitarray.h>
+#include <de/hash.h>
+#include <de/list.h>
+#include <de/logbuffer.h>
 
 namespace res {
 namespace internal {

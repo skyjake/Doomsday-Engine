@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ui/Item"
-#include <de/NoneValue>
+#include "de/ui/item.h"
+#include <de/nonevalue.h>
 
 namespace de {
 namespace ui {

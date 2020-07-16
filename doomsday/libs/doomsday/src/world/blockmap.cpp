@@ -21,7 +21,7 @@
 
 #include "doomsday/world/blockmap.h"
 
-#include <de/Vector>
+#include <de/vector.h>
 #include <de/legacy/memoryzone.h>
 #include <de/legacy/vector1.h>
 #include <cmath>

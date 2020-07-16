@@ -26,11 +26,11 @@
 #include <sstream>
 #include <map>
 
-#include <doomsday/Game>
+#include <doomsday/game.h>
 #include <doomsday/doomsdayapp.h>
-#include <de/App>
-#include <de/Error>
-#include <de/Record>
+#include <de/app.h>
+#include <de/error.h>
+#include <de/record.h>
 #include "hexlex.h"
 
 using namespace de;

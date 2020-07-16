@@ -19,7 +19,7 @@
 #ifndef LIBCORE_SCHEDULER_H
 #define LIBCORE_SCHEDULER_H
 
-#include "../Timeline"
+#include "de/scripting/timeline.h"
 
 namespace de {
 

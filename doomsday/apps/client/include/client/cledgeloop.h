@@ -21,7 +21,7 @@
 #ifndef DE_CLIENT_WORLD_CLEDGELOOP_H
 #define DE_CLIENT_WORLD_CLEDGELOOP_H
 
-#include <de/String>
+#include <de/string.h>
 #include <doomsday/mesh/hedge.h>
 #include "world/subsector.h"
 

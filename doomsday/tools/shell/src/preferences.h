@@ -19,8 +19,8 @@
 #ifndef PREFERENCES_H
 #define PREFERENCES_H
 
-#include <de/DialogWidget>
-#include <de/NativePath>
+#include <de/dialogwidget.h>
+#include <de/nativepath.h>
 
 class Preferences : public de::DialogWidget
 {

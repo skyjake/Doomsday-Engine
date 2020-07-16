@@ -16,19 +16,19 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/LogWidget"
-#include "de/TextDrawable"
-#include "de/Style"
+#include "de/logwidget.h"
+#include "de/textdrawable.h"
+#include "de/ui/style.h"
 
-#include <de/KeyEvent>
-#include <de/MouseEvent>
-#include <de/MemoryLogSink>
-#include <de/LogBuffer>
-#include <de/AtlasTexture>
-#include <de/Drawable>
-#include <de/VertexBuilder>
-#include <de/App>
-#include <de/Image>
+#include <de/keyevent.h>
+#include <de/mouseevent.h>
+#include <de/memorylogsink.h>
+#include <de/logbuffer.h>
+#include <de/atlastexture.h>
+#include <de/drawable.h>
+#include <de/vertexbuilder.h>
+#include <de/app.h>
+#include <de/image.h>
 
 namespace de {
 

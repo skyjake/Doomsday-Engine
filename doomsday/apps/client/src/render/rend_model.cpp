@@ -38,15 +38,15 @@
 #include "render/modelrenderer.h"
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
-#include "MaterialVariantSpec"
-#include "ClientTexture"
-#include "ClientMaterial"
+#include "resource/materialvariantspec.h"
+#include "resource/clienttexture.h"
+#include "resource/clientmaterial.h"
 
 #include <doomsday/console/var.h>
-#include <doomsday/world/Materials>
-#include <de/Log>
-#include <de/ArrayValue>
-#include <de/GLInfo>
+#include <doomsday/world/materials.h>
+#include <de/log.h>
+#include <de/arrayvalue.h>
+#include <de/glinfo.h>
 #include <de/legacy/binangle.h>
 #include <de/legacy/memory.h>
 #include <de/legacy/concurrency.h>

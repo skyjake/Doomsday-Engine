@@ -19,11 +19,11 @@
 #ifndef DE_CLIENT_RENDER_MODEL_H
 #define DE_CLIENT_RENDER_MODEL_H
 
-#include <de/Record>
-#include <de/ModelDrawable>
-#include <de/Timeline>
-#include <de/MultiAtlas>
-#include <de/KeyMap>
+#include <de/record.h>
+#include <de/modeldrawable.h>
+#include <de/scripting/timeline.h>
+#include <de/multiatlas.h>
+#include <de/keymap.h>
 
 namespace render {
 

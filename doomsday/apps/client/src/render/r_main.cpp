@@ -38,12 +38,12 @@
 
 #include <doomsday/defs/sprite.h>
 #include <doomsday/world/bspleaf.h>
-#include <doomsday/world/Materials>
-#include <doomsday/res/Sprites>
+#include <doomsday/world/materials.h>
+#include <doomsday/res/sprites.h>
 #include <de/legacy/vector1.h>
-#include <de/GLInfo>
-#include <de/GLState>
-#include <de/GLFramebuffer>
+#include <de/glinfo.h>
+#include <de/glstate.h>
+#include <de/glframebuffer.h>
 
 using namespace de;
 

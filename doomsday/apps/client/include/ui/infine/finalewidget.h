@@ -22,10 +22,10 @@
 #define DE_UI_INFINE_FINALEWIDGET_H
 
 #include <de/legacy/animator.h>
-#include <de/Id>
-#include <de/Observers>
-#include <de/String>
-#include <de/Vector>
+#include <de/id.h>
+#include <de/observers.h>
+#include <de/string.h>
+#include <de/vector.h>
 
 class FinalePageWidget;
 

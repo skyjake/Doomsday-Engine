@@ -21,8 +21,8 @@
 #ifndef DE_CLIENT_RENDER_LIGHTDECORATION_H
 #define DE_CLIENT_RENDER_LIGHTDECORATION_H
 
-#include "Decoration"
-#include "Lumobj"
+#include "decoration.h"
+#include "lumobj.h"
 
 /**
  * World surface light decoration.

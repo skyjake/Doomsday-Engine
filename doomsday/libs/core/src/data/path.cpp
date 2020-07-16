@@ -17,12 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Path"
-#include "de/Reader"
-#include "de/Writer"
-
-#include <de/math.h>
-#include <de/ByteRefArray>
+#include "de/path.h"
+#include "de/reader.h"
+#include "de/writer.h"
+#include "de/math.h"
+#include "de/byterefarray.h"
 #include <array>
 
 namespace de {

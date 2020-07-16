@@ -17,10 +17,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/TryStatement"
-#include "de/Context"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/scripting/trystatement.h"
+#include "de/scripting/context.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 using namespace de;
 

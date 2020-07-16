@@ -17,9 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/NativeFile"
-#include "de/DirectoryFeed"
-#include "de/Guard"
+#include "de/nativefile.h"
+#include "de/directoryfeed.h"
+#include "de/guard.h"
 #include "de/math.h"
 
 namespace de {

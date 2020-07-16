@@ -23,7 +23,7 @@
 
 #include "../libdoomsday.h"
 #include <de/legacy/aabox.h>
-#include <de/Vector>
+#include <de/vector.h>
 
 #ifdef WIN32
 #  undef max

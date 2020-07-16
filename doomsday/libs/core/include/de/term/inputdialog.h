@@ -19,7 +19,7 @@
 #ifndef LIBSHELL_INPUTDIALOGTEDGET_H
 #define LIBSHELL_INPUTDIALOGTEDGET_H
 
-#include "DialogWidget"
+#include "dialogwidget.h"
 
 namespace de { namespace term {
 

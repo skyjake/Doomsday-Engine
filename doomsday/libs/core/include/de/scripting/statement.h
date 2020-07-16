@@ -20,7 +20,7 @@
 #ifndef LIBCORE_STATEMENT_H
 #define LIBCORE_STATEMENT_H
 
-#include "../ISerializable"
+#include "de/iserializable.h"
 
 namespace de {
 

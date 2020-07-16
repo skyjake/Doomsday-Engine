@@ -46,8 +46,8 @@ if (GIT_FOUND)
 endif ()
 
 # Source and header files.
-file (GLOB_RECURSE HEADERS include/de/[a-zA-Z]*)
-file (GLOB SOURCES src/*.cpp src/*.h src/core/*.h)
+file (GLOB_RECURSE HEADERS include/de/*.h)
+file (GLOB SOURCES src/*.cpp src/*.h)
 
 deng_merge_sources (concurrency    src/concurrency/*.cpp)
 deng_merge_sources (core           src/core/*.cpp)

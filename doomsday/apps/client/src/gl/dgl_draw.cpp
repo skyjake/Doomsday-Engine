@@ -25,11 +25,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <de/legacy/concurrency.h>
-#include <de/GLInfo>
-#include <de/GLBuffer>
-#include <de/GLState>
-#include <de/GLProgram>
-#include <de/Matrix>
+#include <de/glinfo.h>
+#include <de/glbuffer.h>
+#include <de/glstate.h>
+#include <de/glprogram.h>
+#include <de/matrix.h>
 #include "sys_system.h"
 #include "gl/gl_draw.h"
 #include "gl/sys_opengl.h"

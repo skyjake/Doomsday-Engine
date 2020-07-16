@@ -25,7 +25,7 @@
 
 #include <functional>
 #include <de/legacy/aabox.h>
-#include <de/Vector>
+#include <de/vector.h>
 
 #include "world/map.h"
 #include "world/convexsubspace.h"

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ArchiveFolder"
-#include "de/ArchiveFeed"
+#include "de/archivefolder.h"
+#include "de/archivefeed.h"
 
 namespace de {
 

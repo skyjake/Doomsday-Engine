@@ -20,8 +20,8 @@
 #ifndef DE_UI_INFINE_FINALE_H
 #define DE_UI_INFINE_FINALE_H
 
-#include <de/Observers>
-#include <de/String>
+#include <de/observers.h>
+#include <de/string.h>
 #include "../ddevent.h"
 #include "api_infine.h"  // finaleid_t
 

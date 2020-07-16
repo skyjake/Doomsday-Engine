@@ -31,7 +31,7 @@
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
 #include <doomsday/gamefw/defs.h>
-#include <de/Extension>
+#include <de/extension.h>
 
 #include "doomsday.h"
 

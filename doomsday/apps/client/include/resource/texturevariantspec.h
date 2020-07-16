@@ -26,8 +26,8 @@
 
 #include "dd_types.h"
 
-#include <de/String>
-#include <de/graphics/opengl.h>
+#include <de/string.h>
+#include <de/opengl.h>
 
 typedef enum {
     TC_UNKNOWN = -1,

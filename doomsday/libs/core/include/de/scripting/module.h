@@ -20,7 +20,7 @@
 #ifndef LIBCORE_MODULE_H
 #define LIBCORE_MODULE_H
 
-#include "../String"
+#include "de/string.h"
 
 namespace de {
 

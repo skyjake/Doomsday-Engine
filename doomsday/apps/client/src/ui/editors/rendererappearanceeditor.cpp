@@ -27,11 +27,11 @@
 #include "render/rendersystem.h"
 #include "clientapp.h"
 
-#include <de/ButtonWidget>
-#include <de/ScrollAreaWidget>
-#include <de/DialogContentStylist>
-#include <de/SequentialLayout>
-#include <de/VariableSliderWidget>
+#include <de/buttonwidget.h>
+#include <de/scrollareawidget.h>
+#include <de/dialogcontentstylist.h>
+#include <de/sequentiallayout.h>
+#include <de/variablesliderwidget.h>
 
 using namespace de;
 using namespace de::ui;

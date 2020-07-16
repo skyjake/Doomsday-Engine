@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/FontBank"
-#include "de/Font"
-#include <de/ScriptedInfo>
-#include <de/Block>
-#include <de/Time>
-#include <de/Config>
+#include "de/fontbank.h"
+#include "de/font.h"
+#include <de/scripting/scriptedinfo.h>
+#include <de/block.h>
+#include <de/time.h>
+#include <de/config.h>
 
 namespace de {
 

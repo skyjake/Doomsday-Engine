@@ -23,9 +23,9 @@
 
 #include "doomsday.h"
 
-#include <de/Rectangle>
-#include <de/String>
-#include <de/Deletable>
+#include <de/rectangle.h>
+#include <de/string.h>
+#include <de/deletable.h>
 #include "common.h"
 
 namespace common {

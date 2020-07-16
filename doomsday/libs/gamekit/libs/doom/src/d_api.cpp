@@ -29,8 +29,8 @@
 #include <assert.h>
 #include <string.h>
 
-#include <de/Extension>
-#include <de/String>
+#include <de/extension.h>
+#include <de/string.h>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
 #include <doomsday/gamefw/defs.h>

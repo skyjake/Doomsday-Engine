@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_INPUTSETTINGSDIALOG_H
 #define DE_CLIENT_INPUTSETTINGSDIALOG_H
 
-#include <de/DialogWidget>
+#include <de/dialogwidget.h>
 
 /**
  * Dialog for modifying input settings.

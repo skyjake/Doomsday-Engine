@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_KEYGRABBERWIDGET_H
 #define DE_CLIENT_KEYGRABBERWIDGET_H
 
-#include <de/LabelWidget>
+#include <de/labelwidget.h>
 
 /**
  * When focused, grabs key events and shows the key event data. However, Esc is

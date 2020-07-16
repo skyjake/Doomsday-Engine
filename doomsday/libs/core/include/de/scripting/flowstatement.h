@@ -20,7 +20,7 @@
 #ifndef LIBCORE_FLOWSTATEMENT_H
 #define LIBCORE_FLOWSTATEMENT_H
 
-#include "../Statement"
+#include "statement.h"
 
 namespace de {
 

@@ -21,7 +21,7 @@
 #ifndef DE_UI_INFINE_FINALEANIMWIDGET_H
 #define DE_UI_INFINE_FINALEANIMWIDGET_H
 
-#include <doomsday/world/Material>
+#include <doomsday/world/material.h>
 #include "finalewidget.h"
 
 /**

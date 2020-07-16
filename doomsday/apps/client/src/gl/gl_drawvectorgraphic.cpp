@@ -25,7 +25,7 @@
 #include <string.h>
 #include <assert.h>
 #include <de/legacy/memory.h>
-#include <de/Log>
+#include <de/log.h>
 
 #define DEFAULT_SCALE               (1)
 #define DEFAULT_ANGLE               (0)

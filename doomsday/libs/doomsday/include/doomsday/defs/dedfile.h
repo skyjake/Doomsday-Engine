@@ -24,7 +24,7 @@
 
 #include "../libdoomsday.h"
 #include "ded.h"
-#include <de/String>
+#include <de/string.h>
 
 LIBDOOMSDAY_PUBLIC void Def_ReadProcessDED(ded_t *defs, const de::String& path);
 

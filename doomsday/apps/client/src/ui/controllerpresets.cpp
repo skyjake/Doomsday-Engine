@@ -21,13 +21,9 @@
 #include "ui/inputsystem.h"
 #include "clientapp.h"
 
-#include <de/App>
-#include <de/DictionaryValue>
-#include <de/Process>
-#include <de/RecordValue>
-#include <de/RegExp>
-#include <de/Script>
-#include <de/ScriptSystem>
+#include <de/app.h>
+#include <de/dscript.h>
+#include <de/regexp.h>
 
 #include <doomsday/console/var.h>
 

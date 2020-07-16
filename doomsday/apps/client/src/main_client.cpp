@@ -47,7 +47,7 @@
 #include "dd_loop.h"
 #include "dd_version.h"
 
-#include <de/EscapeParser>
+#include <de/escapeparser.h>
 #include <SDL_main.h>
 #include <SDL_messagebox.h>
 

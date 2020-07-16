@@ -34,9 +34,9 @@
 #include <de/legacy/concurrency.h>
 #include <de/legacy/timer.h>    // TICSPERSEC
 #include <de/legacy/vector1.h>  // remove me
-#include <de/GLInfo>
-#include <de/List>
-#include <de/Log>
+#include <de/glinfo.h>
+#include <de/list.h>
+#include <de/log.h>
 
 using namespace de;
 

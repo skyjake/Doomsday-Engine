@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Thread"
-#include "de/Hash"
-#include "de/Garbage"
+#include "de/thread.h"
+#include "de/hash.h"
+#include "de/garbage.h"
 
 #include <the_Foundation/thread.h>
 

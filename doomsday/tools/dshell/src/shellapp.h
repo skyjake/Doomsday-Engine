@@ -20,7 +20,7 @@
 #define SHELLAPP_H
 
 #include "cursesapp.h"
-#include <de/Address>
+#include <de/address.h>
 
 class ShellApp : public CursesApp
 {

@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/mapmanifests.h"
+#include "doomsday/res/mapmanifests.h"
 #include "doomsday/filesys/fs_main.h"
-#include "doomsday/resource/resources.h" // MissingResourceManifestError
+#include "doomsday/res/resources.h" // MissingResourceManifestError
 
 using namespace de;
 

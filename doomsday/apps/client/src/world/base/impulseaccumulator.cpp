@@ -20,7 +20,7 @@
 #include "world/impulseaccumulator.h"
 
 #include <de/legacy/timer.h>
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 #include <doomsday/console/var.h>
 #ifdef __CLIENT__
 #  include "ui/inputsystem.h"
@@ -30,7 +30,7 @@
 #include "world/p_players.h"
 
 #ifdef __CLIENT__
-#  include "BindContext"
+#  include "ui/bindcontext.h"
 #  include "ui/b_util.h"
 #endif
 

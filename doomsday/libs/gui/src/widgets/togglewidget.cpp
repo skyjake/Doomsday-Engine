@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ToggleWidget"
-#include "de/ProceduralImage"
-#include "de/GuiRootWidget"
-#include "de/Style"
+#include "de/togglewidget.h"
+#include "de/proceduralimage.h"
+#include "de/guirootwidget.h"
+#include "de/ui/style.h"
 
-#include <de/Animation>
+#include <de/animation.h>
 
 namespace de {
 

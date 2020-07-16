@@ -30,7 +30,7 @@
 
 #ifdef __CLIENT__
 #  include "gl/gl_main.h"
-#  include <de/GLInfo>
+#  include <de/glinfo.h>
 #endif
 
 using namespace de;

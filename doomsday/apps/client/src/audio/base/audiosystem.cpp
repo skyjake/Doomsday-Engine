@@ -51,20 +51,19 @@
 #include <doomsday/world/thinkers.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
-#include <de/App>
-#include <de/Binder>
-#include <de/Config>
-#include <de/CommandLine>
-#include <de/FileSystem>
-#include <de/LogBuffer>
-#include <de/NativeFile>
-#include <de/ScriptSystem>
+#include <de/app.h>
+#include <de/config.h>
+#include <de/commandline.h>
+#include <de/dscript.h>
+#include <de/filesystem.h>
+#include <de/logbuffer.h>
+#include <de/nativefile.h>
 #include <de/legacy/timer.h>
 #include <de/c_wrapper.h>
 #include <de/legacy/concurrency.h>
 #include <de/legacy/memory.h>
 
-#include <de/Hash>
+#include <de/hash.h>
 
 using namespace de;
 using namespace res;

@@ -21,11 +21,11 @@
 #include <gloom/audio/audiosystem.h>
 #include <gloom/world.h>
 #include <gloom/world/user.h>
-#include <de/Drawable>
-#include <de/GLBuffer>
-#include <de/KeyEvent>
-#include <de/Matrix>
-#include <de/VRConfig>
+#include <de/drawable.h>
+#include <de/glbuffer.h>
+#include <de/keyevent.h>
+#include <de/matrix.h>
+#include <de/vrconfig.h>
 
 using namespace de;
 

@@ -19,12 +19,12 @@
 
 #define DE_NO_API_MACROS_INFINE
 
-#include <de/Log>
+#include <de/log.h>
 #include <doomsday/console/var.h>
 
 #include "de_base.h"
 #include "ui/infine/infinesystem.h"
-#include "BindContext"
+#include "ui/bindcontext.h"
 #include "ui/infine/finale.h"
 #include "ui/infine/finaleinterpreter.h"
 

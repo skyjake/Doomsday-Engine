@@ -20,7 +20,7 @@
 #include "gloom/world/iworld.h"
 #include "gloom/audio/audiosystem.h"
 
-#include <de/Set>
+#include <de/set.h>
 
 using namespace de;
 

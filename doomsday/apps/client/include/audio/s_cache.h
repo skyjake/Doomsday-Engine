@@ -22,7 +22,7 @@
 #define AUDIO_SFXSAMPLECACHE_H
 
 #include "api_audiod_sfx.h"  // sfxsample_t
-#include <de/Observers>
+#include <de/observers.h>
 
 namespace audio {
 

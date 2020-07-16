@@ -23,7 +23,7 @@
 #include "../api_map.h" // traverser_t
 #include "map.h"
 
-#include <de/Vector>
+#include <de/vector.h>
 
 namespace world {
 

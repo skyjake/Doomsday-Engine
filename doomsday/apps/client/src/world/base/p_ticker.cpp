@@ -21,8 +21,8 @@
 #include "world/p_ticker.h"
 
 #ifdef __CLIENT__
-#  include "MaterialAnimator"
-#  include <doomsday/world/Materials>
+#  include "resource/materialanimator.h"
+#  include <doomsday/world/materials.h>
 #endif
 
 using namespace de;

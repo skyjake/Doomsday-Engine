@@ -17,12 +17,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Widget"
-#include "de/RootWidget"
-#include "de/Asset"
-#include "de/LogBuffer"
-#include "de/List"
-#include "de/KeyMap"
+#include "de/widget.h"
+#include "de/rootwidget.h"
+#include "de/asset.h"
+#include "de/logbuffer.h"
+#include "de/list.h"
+#include "de/keymap.h"
 
 namespace de {
 

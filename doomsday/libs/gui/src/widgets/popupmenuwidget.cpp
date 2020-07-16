@@ -16,19 +16,19 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/PopupMenuWidget"
-#include "de/MenuWidget"
-#include "de/ToggleWidget"
-#include "de/GuiRootWidget"
-#include "de/ChildWidgetOrganizer"
-#include "de/AtlasProceduralImage"
-#include "de/ui/Item"
+#include "de/popupmenuwidget.h"
+#include "de/menuwidget.h"
+#include "de/togglewidget.h"
+#include "de/guirootwidget.h"
+#include "de/childwidgetorganizer.h"
+#include "de/atlasproceduralimage.h"
+#include "de/ui/item.h"
 
-#include <de/App>
-#include <de/BaseWindow>
-#include <de/Config>
-#include <de/IndirectRule>
-#include <de/OperatorRule>
+#include <de/app.h>
+#include <de/basewindow.h>
+#include <de/config.h>
+#include <de/indirectrule.h>
+#include <de/operatorrule.h>
 
 namespace de {
 

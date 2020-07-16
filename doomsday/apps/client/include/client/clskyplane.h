@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <de/Observers>
+#include <de/observers.h>
 
 class ClSkyPlane
 {

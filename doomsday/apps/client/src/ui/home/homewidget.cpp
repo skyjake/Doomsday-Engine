@@ -27,20 +27,20 @@
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
 
-#include <doomsday/DoomsdayApp>
-#include <doomsday/Games>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/games.h>
 
-#include <de/App>
-#include <de/FadeToBlackWidget>
-#include <de/LabelWidget>
-#include <de/Loop>
-#include <de/PackageLoader>
-#include <de/PersistentState>
-#include <de/PopupMenuWidget>
-#include <de/SequentialLayout>
-#include <de/StyleProceduralImage>
-#include <de/TabWidget>
-#include <de/Timer>
+#include <de/app.h>
+#include <de/fadetoblackwidget.h>
+#include <de/labelwidget.h>
+#include <de/loop.h>
+#include <de/packageloader.h>
+#include <de/persistentstate.h>
+#include <de/popupmenuwidget.h>
+#include <de/sequentiallayout.h>
+#include <de/styleproceduralimage.h>
+#include <de/tabwidget.h>
+#include <de/timer.h>
 
 using namespace de;
 

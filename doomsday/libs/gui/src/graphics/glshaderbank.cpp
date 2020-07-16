@@ -16,18 +16,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GLShaderBank"
-#include "de/GLProgram"
-#include "de/GLShader"
-#include "de/GLUniform"
+#include "de/glshaderbank.h"
+#include "de/glprogram.h"
+#include "de/glshader.h"
+#include "de/gluniform.h"
 
-#include <de/ArrayValue>
-#include <de/ByteArrayFile>
-#include <de/DictionaryValue>
-#include <de/FS>
-#include <de/KeyMap>
-#include <de/RegExp>
-#include <de/ScriptedInfo>
+#include <de/arrayvalue.h>
+#include <de/bytearrayfile.h>
+#include <de/dictionaryvalue.h>
+#include <de/filesystem.h>
+#include <de/keymap.h>
+#include <de/regexp.h>
+#include <de/scripting/scriptedinfo.h>
 #include <de/math.h>
 
 namespace de {

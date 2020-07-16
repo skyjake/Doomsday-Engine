@@ -29,8 +29,8 @@
 
 #include <doomsday/world/subsector.h>
 #include <doomsday/world/sector.h>
-#include <de/BitArray>
-#include <de/List>
+#include <de/bitarray.h>
+#include <de/list.h>
 
 class ClEdgeLoop;
 

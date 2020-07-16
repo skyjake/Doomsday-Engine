@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/filesys/AssetObserver"
-#include "de/App"
-#include "de/FileSystem"
-#include "de/LinkFile"
-#include "de/Loop"
-#include "de/RegExp"
+#include "de/filesys/assetobserver.h"
+#include "de/app.h"
+#include "de/filesystem.h"
+#include "de/linkfile.h"
+#include "de/loop.h"
+#include "de/regexp.h"
 
 namespace de {
 namespace filesys {

@@ -26,7 +26,7 @@
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/filesys/fs_util.h>
 #include <de/c_wrapper.h>
-#include <de/App>
+#include <de/app.h>
 
 #include "de_base.h"
 #include "init_unix.h"

@@ -22,9 +22,9 @@
 #define DE_CLIENT_RENDER_BILLBOARD_H
 
 #include "dd_types.h"
-#include "ClientMaterial"
-#include "MaterialAnimator"
-#include "MaterialVariantSpec"
+#include "resource/clientmaterial.h"
+#include "resource/materialanimator.h"
+#include "resource/materialvariantspec.h"
 
 namespace world { class BspLeaf; }
 struct vissprite_t;

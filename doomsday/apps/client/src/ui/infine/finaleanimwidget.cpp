@@ -19,7 +19,7 @@
  */
 
 #include <de/legacy/vector1.h>
-#include <doomsday/res/Textures>
+#include <doomsday/res/textures.h>
 #include "ui/infine/finaleanimwidget.h"
 
 #include "dd_main.h"   // App_Resources()
@@ -30,8 +30,8 @@
 #  include "gl/gl_texmanager.h" // GL_PrepareRawTexture()
 #  include "render/r_draw.h"    // Rend_PatchTextureSpec()
 #  include "render/rend_main.h" // filterUI
-#  include "MaterialAnimator"
-#  include <de/GLInfo>
+#  include "resource/materialanimator.h"
+#  include <de/glinfo.h>
 #endif
 
 using namespace de;

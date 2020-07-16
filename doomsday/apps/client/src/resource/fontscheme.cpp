@@ -20,8 +20,8 @@
 
 #include "resource/fontscheme.h"
 #include "dd_types.h"
-#include <de/Log>
-#include <de/List>
+#include <de/log.h>
+#include <de/list.h>
 
 using namespace de;
 

@@ -19,14 +19,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GLFramebuffer"
-#include "de/GLTexture"
-#include "de/GLState"
-#include "de/GLInfo"
-#include "de/GLWindow"
+#include "de/glframebuffer.h"
+#include "de/gltexture.h"
+#include "de/glstate.h"
+#include "de/glinfo.h"
+#include "de/glwindow.h"
 
-#include <de/Asset>
-#include <de/LogBuffer>
+#include <de/asset.h>
+#include <de/logbuffer.h>
 
 namespace de {
 

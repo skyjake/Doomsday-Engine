@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ElapsedTimer"
+#include "de/elapsedtimer.h"
 
 namespace de {
 

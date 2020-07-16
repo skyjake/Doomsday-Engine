@@ -16,13 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/DoomsdayApp"
+#include "doomsday/doomsdayapp.h"
 #include "doomsday/world/mobj.h"
 #include "doomsday/world/thinkerdata.h"
 
-#include <de/Context>
-#include <de/Folder>
-#include <de/ScriptSystem>
+#include <de/dscript.h>
+#include <de/folder.h>
 
 using namespace de;
 

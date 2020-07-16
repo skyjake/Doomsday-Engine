@@ -27,7 +27,7 @@
 #endif
 
 #include <de/libcore.h>
-#include <de/Record>
+#include <de/record.h>
 #include "dd_def.h"
 #include "network/protocol.h"
 

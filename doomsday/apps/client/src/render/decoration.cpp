@@ -23,7 +23,7 @@
 
 #include "world/surface.h"
 #include "world/clientworld.h"
-#include <doomsday/world/MaterialManifest>
+#include <doomsday/world/materialmanifest.h>
 
 using namespace de;
 

@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_CONSOLECOMMANDWIDGET_H
 #define DE_CLIENT_CONSOLECOMMANDWIDGET_H
 
-#include <de/CommandWidget>
+#include <de/commandwidget.h>
 
 /**
  * Text editor with a history buffer. Entered commands are executed as console

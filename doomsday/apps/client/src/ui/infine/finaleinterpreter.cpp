@@ -21,16 +21,16 @@
 #include "de_base.h"
 #include "ui/infine/finaleinterpreter.h"
 
-#include <de/List>
+#include <de/list.h>
 #include <de/legacy/memory.h>
 #include <de/legacy/timer.h>
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/filesys/fs_main.h>
-#include <doomsday/world/Materials>
-#include <doomsday/Game>
+#include <doomsday/world/materials.h>
+#include <doomsday/game.h>
 
 #include "dd_def.h"
 #include "def_main.h"  // ::defs

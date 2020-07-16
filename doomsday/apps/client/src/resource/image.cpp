@@ -25,16 +25,16 @@
 #include "gl/gl_tex.h"
 #include "render/rend_main.h" // misc global vars awaiting new home
 
-#include <doomsday/resource/patch.h>
-#include <doomsday/resource/colorpalettes.h>
+#include <doomsday/res/patch.h>
+#include <doomsday/res/colorpalettes.h>
 #include <doomsday/filesys/fs_main.h>
-#include <doomsday/res/Composite>
-#include <doomsday/resource/pcx.h>
+#include <doomsday/res/composite.h>
+#include <doomsday/pcx.h>
 
 #include <de/legacy/memory.h>
-#include <de/LogBuffer>
-#include <de/Image>
-#include <de/NativePath>
+#include <de/logbuffer.h>
+#include <de/image.h>
+#include <de/nativepath.h>
 
 //#ifndef DE_QT_4_7_OR_NEWER // older than 4.7?
 //#  define constBits bits

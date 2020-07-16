@@ -18,7 +18,7 @@
  */
 
 #include "doomsday/world/materialmanifest.h"
-#include "doomsday/world/MaterialScheme"
+#include "doomsday/world/materialscheme.h"
 #include "doomsday/world/materials.h"
 #include "doomsday/world/factory.h"
 

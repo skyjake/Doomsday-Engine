@@ -19,9 +19,9 @@
 #include "ui/widgets/profilepickerwidget.h"
 #include "ui/clientwindow.h"
 
-#include <de/PopupMenuWidget>
-#include <de/InputDialog>
-#include <de/TextValue>
+#include <de/popupmenuwidget.h>
+#include <de/inputdialog.h>
+#include <de/textvalue.h>
 
 using namespace de;
 using namespace de::ui;

@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Animation"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/animation.h"
+#include "de/writer.h"
+#include "de/reader.h"
 #include "de/math.h"
 
 #include <atomic>

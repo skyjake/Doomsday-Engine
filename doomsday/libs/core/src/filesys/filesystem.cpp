@@ -17,22 +17,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/FS"
+#include "de/filesystem.h"
 
-#include "de/App"
-#include "de/ArchiveFeed"
-//#include "de/ArchiveFolder"
-#include "de/DirectoryFeed"
-#include "de/DictionaryValue"
-#include "de/Guard"
-//#include "de/LibraryFile"
-#include "de/Log"
-#include "de/LogBuffer"
-#include "de/Loop"
-#include "de/NativePath"
-#include "de/ScriptSystem"
-#include "de/TextValue"
-#include "de/ZipArchive"
+#include "de/app.h"
+#include "de/archivefeed.h"
+#include "de/directoryfeed.h"
+#include "de/dictionaryvalue.h"
+#include "de/guard.h"
+#include "de/log.h"
+#include "de/logbuffer.h"
+#include "de/loop.h"
+#include "de/nativepath.h"
+#include "de/scripting/scriptsystem.h"
+#include "de/textvalue.h"
+#include "de/ziparchive.h"
 
 #include <condition_variable>
 

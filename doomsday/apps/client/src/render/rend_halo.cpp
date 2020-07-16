@@ -27,8 +27,8 @@
 #include "world/p_players.h"
 
 #include <de/legacy/concurrency.h>
-#include <de/GLState>
-#include <de/GLInfo>
+#include <de/glstate.h>
+#include <de/glinfo.h>
 #include <doomsday/console/var.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/doomsdayapp.h>

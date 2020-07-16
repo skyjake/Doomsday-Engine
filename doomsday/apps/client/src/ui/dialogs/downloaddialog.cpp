@@ -20,7 +20,7 @@
 
 #include "ui/dialogs/downloaddialog.h"
 
-#include <de/CallbackAction>
+#include <de/callbackaction.h>
 
 using namespace de;
 

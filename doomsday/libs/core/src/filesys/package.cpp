@@ -16,19 +16,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Package"
+#include "de/package.h"
 
-#include "de/App"
-#include "de/DotPath"
-#include "de/LogBuffer"
-#include "de/PackageLoader"
-#include "de/Process"
-#include "de/RegExp"
-#include "de/Script"
-#include "de/ScriptSystem"
-#include "de/ScriptedInfo"
-#include "de/TextValue"
-#include "de/TimeValue"
+#include "de/app.h"
+#include "de/path.h"
+#include "de/logbuffer.h"
+#include "de/packageloader.h"
+#include "de/dscript.h"
+#include "de/regexp.h"
+#include "de/timevalue.h"
 
 namespace de {
 

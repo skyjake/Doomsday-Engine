@@ -23,7 +23,7 @@
 #include "lightninganimator.h"
 #include "g_common.h"
 
-#include <de/List>
+#include <de/list.h>
 #include "dmu_lib.h"
 #include "gamesession.h"
 

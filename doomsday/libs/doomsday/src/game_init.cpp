@@ -20,21 +20,21 @@
 #include "doomsday/doomsdayapp.h"
 #include "doomsday/games.h"
 #include "doomsday/busymode.h"
-#include "doomsday/AbstractSession"
+#include "doomsday/abstractsession.h"
 #include "doomsday/console/var.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/virtualmappings.h"
 #include "doomsday/filesys/wad.h"
-#include "doomsday/resource/bundles.h"
-#include "doomsday/resource/manifest.h"
+#include "doomsday/res/bundles.h"
+#include "doomsday/manifest.h"
 #include "doomsday/world/entitydef.h"
 
-#include <de/App>
-#include <de/ArchiveFeed>
-#include <de/ArchiveEntryFile>
-#include <de/LogBuffer>
-#include <de/NativeFile>
-#include <de/PackageLoader>
+#include <de/app.h>
+#include <de/archivefeed.h>
+#include <de/archiveentryfile.h>
+#include <de/logbuffer.h>
+#include <de/nativefile.h>
+#include <de/packageloader.h>
 #include <de/legacy/findfile.h>
 #include <de/legacy/memory.h>
 

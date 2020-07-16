@@ -35,7 +35,7 @@
 #include <doomsday/world/mobjthinker.h>
 #include <de/legacy/timer.h>
 #include <de/legacy/vector1.h>
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 #include <cmath>
 
 using namespace de;

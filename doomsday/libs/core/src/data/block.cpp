@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Block"
-#include "de/File"
+#include "de/block.h"
+#include "de/file.h"
 
 #include <cstring>
 

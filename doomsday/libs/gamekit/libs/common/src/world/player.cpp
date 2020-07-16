@@ -25,8 +25,8 @@
 #include <cstring>
 #include <cstdio>
 #include <de/legacy/memory.h>
-#include <de/Slope>
-#include <de/Matrix>
+#include <de/slope.h>
+#include <de/matrix.h>
 #include <doomsday/plugins.h>
 #include "d_net.h"
 #include "d_netcl.h"

@@ -18,11 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#include "doomsday/resource/colorpalette.h"
+#include "doomsday/res/colorpalette.h"
 
-#include <de/Log>
-#include <de/Range>
-#include <de/KeyMap>
+#include <de/log.h>
+#include <de/range.h>
+#include <de/keymap.h>
 #include <de/legacy/reader.h>
 #include <de/legacy/mathutil.h>
 

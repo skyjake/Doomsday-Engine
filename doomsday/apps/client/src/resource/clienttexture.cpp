@@ -22,9 +22,9 @@
 #include "resource/clientresources.h"
 
 #include <doomsday/console/cmd.h>
-#include <doomsday/res/TextureManifest>
-#include <de/Error>
-#include <de/Log>
+#include <doomsday/res/texturemanifest.h>
+#include <de/error.h>
+#include <de/log.h>
 #include <de/legacy/memory.h>
 
 using namespace de;

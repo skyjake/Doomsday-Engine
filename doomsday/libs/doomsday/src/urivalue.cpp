@@ -17,11 +17,11 @@
  * 02110-1301 USA</small>
  */
 
-#include "doomsday/UriValue"
+#include "doomsday/urivalue.h"
 
-#include <de/TextValue>
-#include <de/Reader>
-#include <de/Writer>
+#include <de/textvalue.h>
+#include <de/reader.h>
+#include <de/writer.h>
 
 using namespace de;
 

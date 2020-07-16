@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_UI_VIEWCOMPOSITOR_H
 #define DE_CLIENT_UI_VIEWCOMPOSITOR_H
 
-#include <de/GLTextureFramebuffer>
+#include <de/gltextureframebuffer.h>
 
 class PostProcessing;
 

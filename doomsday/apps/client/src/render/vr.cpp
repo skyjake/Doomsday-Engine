@@ -22,7 +22,7 @@
 #include "render/vr.h"
 
 #include <de/legacy/timer.h>
-#include <de/BaseGuiApp>
+#include <de/baseguiapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include "ui/clientwindow.h"

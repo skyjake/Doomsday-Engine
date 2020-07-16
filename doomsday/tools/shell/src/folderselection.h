@@ -19,8 +19,8 @@
 #ifndef FOLDERSELECTION_H
 #define FOLDERSELECTION_H
 
-#include <de/GuiWidget>
-#include <de/NativePath>
+#include <de/guiwidget.h>
+#include <de/nativepath.h>
 
 /**
  * Widget for selecting a folder.

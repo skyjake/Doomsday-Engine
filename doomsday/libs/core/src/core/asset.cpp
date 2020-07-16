@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Asset"
-#include "de/Waitable"
-#include "de/Widget"
+#include "de/asset.h"
+#include "de/waitable.h"
+#include "de/widget.h"
 
 namespace de {
 

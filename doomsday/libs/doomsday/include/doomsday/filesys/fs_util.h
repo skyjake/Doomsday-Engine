@@ -36,8 +36,8 @@
 
 #ifdef __cplusplus
 
-#include <de/Block>
-#include <de/File>
+#include <de/block.h>
+#include <de/file.h>
 
 extern "C" {
 #endif

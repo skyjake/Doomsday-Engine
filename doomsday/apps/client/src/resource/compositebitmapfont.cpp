@@ -21,7 +21,7 @@
 #include "clientapp.h"
 #include "resource/compositebitmapfont.h"
 
-#include <doomsday/res/Textures>
+#include <doomsday/res/textures.h>
 
 #include "api_resource.h" // R_GetPatchInfo
 #include "dd_main.h" // App_Resources(), isDedicated
@@ -144,7 +144,7 @@ void CompositeBitmapFont::glInit() const
     if(!d->needGLInit) return;
     if(novideo || BusyMode_Active()) return;
 
-    LOG_AS("CompositeBitmapFont");
+    LOG_AS("resource/compositebitmapfont.h");
 
     glDeinit();
 

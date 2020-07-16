@@ -20,12 +20,12 @@
 #ifndef CLIENT_INPUTSYSTEM_H
 #define CLIENT_INPUTSYSTEM_H
 
-#include <de/Error>
-#include <de/Record>
-#include <de/System>
+#include <de/error.h>
+#include <de/record.h>
+#include <de/system.h>
 
 #include "ddevent.h"
-#include "ConfigProfiles"
+#include "configprofiles.h"
 
 class BindContext;
 class InputDevice;

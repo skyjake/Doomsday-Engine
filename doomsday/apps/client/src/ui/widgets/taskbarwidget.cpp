@@ -18,7 +18,7 @@
 
 #include "ui/widgets/taskbarwidget.h"
 
-#include "CommandAction"
+#include "ui/commandaction.h"
 #include "clientapp.h"
 #include "dd_main.h"
 #include "network/serverlink.h"
@@ -47,19 +47,19 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/console/exec.h>
 
-#include <de/AnimationRule>
-#include <de/BlurWidget>
-#include <de/ButtonWidget>
-#include <de/CallbackAction>
-#include <de/Config>
-#include <de/DirectoryListDialog>
-#include <de/Drawable>
-#include <de/GLBuffer>
-#include <de/KeyEvent>
-#include <de/Painter>
-#include <de/PopupMenuWidget>
-#include <de/SequentialLayout>
-#include <de/ui/SubwidgetItem>
+#include <de/animationrule.h>
+#include <de/blurwidget.h>
+#include <de/buttonwidget.h>
+#include <de/callbackaction.h>
+#include <de/config.h>
+#include <de/directorylistdialog.h>
+#include <de/drawable.h>
+#include <de/glbuffer.h>
+#include <de/keyevent.h>
+#include <de/painter.h>
+#include <de/popupmenuwidget.h>
+#include <de/sequentiallayout.h>
+#include <de/ui/subwidgetitem.h>
 
 using namespace de;
 using namespace de::ui;

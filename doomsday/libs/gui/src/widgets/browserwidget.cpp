@@ -16,14 +16,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/BrowserWidget"
-#include "de/ButtonWidget"
-#include "de/DialogContentStylist"
-#include "de/FlowLayout"
-#include "de/MenuWidget"
-#include "de/ProgressWidget"
-#include "de/ScrollAreaWidget"
-#include "de/SequentialLayout"
+#include "de/browserwidget.h"
+#include "de/buttonwidget.h"
+#include "de/dialogcontentstylist.h"
+#include "de/flowlayout.h"
+#include "de/menuwidget.h"
+#include "de/progresswidget.h"
+#include "de/scrollareawidget.h"
+#include "de/sequentiallayout.h"
 
 namespace de {
 

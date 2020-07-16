@@ -20,18 +20,18 @@
 
 #include "gamesession.h"
 
-#include <de/App>
-#include <de/CommandLine>
-#include <de/ArrayValue>
-#include <de/NumberValue>
-#include <de/RecordValue>
-#include <de/PackageLoader>
-#include <de/Time>
-#include <de/TextValue>
-#include <de/ZipArchive>
-#include <doomsday/DoomsdayApp>
-#include <doomsday/GameStateFolder>
-#include <doomsday/SaveGames>
+#include <de/app.h>
+#include <de/commandline.h>
+#include <de/arrayvalue.h>
+#include <de/numbervalue.h>
+#include <de/recordvalue.h>
+#include <de/packageloader.h>
+#include <de/time.h>
+#include <de/textvalue.h>
+#include <de/ziparchive.h>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/gamestatefolder.h>
+#include <doomsday/savegames.h>
 #include <doomsday/defs/episode.h>
 #include "acs/system.h"
 #include "api_gl.h"

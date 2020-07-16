@@ -24,9 +24,9 @@
 #include "../game.h"
 #include "dd_share.h"
 #include "dd_types.h"
-#include <de/Path>
-#include <de/File>
-#include <de/Lexicon>
+#include <de/path.h>
+#include <de/file.h>
+#include <de/lexicon.h>
 #include <cstdio>
 
 #define CMDLINE_SIZE        256

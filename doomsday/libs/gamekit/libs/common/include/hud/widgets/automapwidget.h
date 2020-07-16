@@ -21,7 +21,7 @@
 #define LIBCOMMON_UI_AUTOMAPWIDGET_H
 
 #include <functional>
-#include <de/Error>
+#include <de/error.h>
 #include "hud/hudwidget.h"
 
 /**

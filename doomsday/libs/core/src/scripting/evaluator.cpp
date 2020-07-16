@@ -17,11 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Evaluator"
-#include "de/Expression"
-#include "de/Value"
-#include "de/Context"
-#include "de/Process"
+#include "de/scripting/evaluator.h"
+#include "de/scripting/expression.h"
+#include "de/scripting/context.h"
+#include "de/scripting/process.h"
+#include "de/value.h"
 
 namespace de {
 

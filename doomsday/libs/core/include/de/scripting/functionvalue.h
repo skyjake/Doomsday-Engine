@@ -20,8 +20,8 @@
 #ifndef LIBCORE_FUNCTIONVALUE_H
 #define LIBCORE_FUNCTIONVALUE_H
 
-#include "../Value"
-#include "../Function"
+#include "de/value.h"
+#include "function.h"
 
 namespace de {
 

@@ -17,8 +17,8 @@
  */
 
 #include "statuswidget.h"
-#include <de/Timer>
-#include <de/term/TextRootWidget>
+#include <de/timer.h>
+#include <de/term/textrootwidget.h>
 
 using namespace de;
 

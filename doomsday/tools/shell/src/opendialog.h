@@ -1,8 +1,8 @@
 #ifndef OPENDIALOG_H
 #define OPENDIALOG_H
 
-#include <de/DialogWidget>
-#include <de/Address>
+#include <de/dialogwidget.h>
+#include <de/address.h>
 
 /**
  * Dialog for specifying the server connection to open.

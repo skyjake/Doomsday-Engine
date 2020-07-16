@@ -19,12 +19,12 @@
 #ifndef DE_CLIENT_UI_EDITORS_VARIABLEGROUPEDITOR_H
 #define DE_CLIENT_UI_EDITORS_VARIABLEGROUPEDITOR_H
 
-#include <de/FoldPanelWidget>
-#include <de/ScrollAreaWidget>
-#include <de/VariableToggleWidget>
-#include <de/VariableChoiceWidget>
-#include <de/VariableSliderWidget>
-#include <de/VariableLineEditWidget>
+#include <de/foldpanelwidget.h>
+#include <de/scrollareawidget.h>
+#include <de/variabletogglewidget.h>
+#include <de/variablechoicewidget.h>
+#include <de/variablesliderwidget.h>
+#include <de/variablelineeditwidget.h>
 
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/cvarchoicewidget.h"

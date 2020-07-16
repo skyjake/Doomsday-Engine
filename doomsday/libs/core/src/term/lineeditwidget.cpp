@@ -16,15 +16,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/term/LineEditWidget"
-#include "de/term/TextRootWidget"
-#include "de/term/KeyEvent"
-#include "de/Lexicon"
-#include "de/MonospaceLineWrapping"
-#include "de/Rule"
-#include "de/RuleRectangle"
-#include "de/String"
-#include "de/Log"
+#include "de/term/lineeditwidget.h"
+#include "de/term/textrootwidget.h"
+#include "de/term/keyevent.h"
+#include "de/lexicon.h"
+#include "de/monospacelinewrapping.h"
+#include "de/rule.h"
+#include "de/rulerectangle.h"
+#include "de/string.h"
+#include "de/log.h"
 
 namespace de { namespace term {
 

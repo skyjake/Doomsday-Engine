@@ -22,7 +22,7 @@
 #define DE_RESOURCE_FRAMEMODELDEF_H
 
 #include <vector>
-#include <de/Vector>
+#include <de/vector.h>
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/model.h>
 

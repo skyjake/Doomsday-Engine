@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/data/byteorder.h"
+#include "de/byteorder.h"
 
 namespace de {
 

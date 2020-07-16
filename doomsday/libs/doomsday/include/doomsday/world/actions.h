@@ -42,7 +42,7 @@ LIBDOOMSDAY_PUBLIC void      P_SetCurrentActionState(int state);
 
 #ifdef __cplusplus
 
-#include <de/String>
+#include <de/string.h>
 LIBDOOMSDAY_PUBLIC acfnptr_t P_GetAction(const de::String &name);
 LIBDOOMSDAY_PUBLIC void      P_SetCurrentAction(const de::String &name);
 

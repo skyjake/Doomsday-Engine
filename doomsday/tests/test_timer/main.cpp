@@ -17,10 +17,10 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/CommandLine>
-#include <de/Timer>
-#include <de/Log>
-#include <de/TextApp>
+#include <de/commandline.h>
+#include <de/timer.h>
+#include <de/log.h>
+#include <de/textapp.h>
 
 #include <iostream>
 

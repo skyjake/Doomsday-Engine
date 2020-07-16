@@ -22,11 +22,11 @@
 
 #include "doomsday/defs/sprite.h"
 #include "doomsday/defs/ded.h"
-#include "doomsday/UriValue"
+#include "doomsday/urivalue.h"
 
-#include <de/Record>
-#include <de/RecordValue>
-#include <de/DictionaryValue>
+#include <de/record.h>
+#include <de/recordvalue.h>
+#include <de/dictionaryvalue.h>
 
 using namespace de;
 

@@ -21,7 +21,7 @@
 
 #include "mesh.h"
 
-#include <de/Vector>
+#include <de/vector.h>
 #include <de/legacy/aabox.h>
 
 namespace mesh {

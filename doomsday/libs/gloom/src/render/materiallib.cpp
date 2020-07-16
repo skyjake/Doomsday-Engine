@@ -21,10 +21,10 @@
 #include "gloom/render/defs.h"
 #include "gloom/render/databuffer.h"
 
-#include <de/FileSystem>
-#include <de/ImageFile>
-#include <de/ScriptedInfo>
-#include <de/filesys/AssetObserver>
+#include <de/filesystem.h>
+#include <de/imagefile.h>
+#include <de/scripting/scriptedinfo.h>
+#include <de/filesys/assetobserver.h>
 #include <array>
 
 using namespace de;

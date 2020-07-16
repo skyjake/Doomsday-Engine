@@ -21,7 +21,7 @@
 #include "render/gloomworldrenderer.h"
 #include "clientapp.h"
 
-#include <doomsday/resource/lumpcatalog.h>
+#include <doomsday/res/lumpcatalog.h>
 #include <doomsday/world/map.h>
 #include <doomsday/world/convexsubspace.h>
 #include <doomsday/world/subsector.h>
@@ -33,7 +33,7 @@
 #include <doomsday/world/sky.h>
 #include <doomsday/world/surface.h>
 #include <gloom/world/mapimport.h>
-#include <de/PackageLoader>
+#include <de/packageloader.h>
 
 using namespace de;
 

@@ -22,7 +22,7 @@
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/world/world.h>
-#include <de/BaseGuiApp>
+#include <de/baseguiapp.h>
 
 class AudioSystem;
 class ClientPlayer;

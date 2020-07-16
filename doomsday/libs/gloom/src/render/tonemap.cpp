@@ -21,8 +21,8 @@
 #include "gloom/render/gbuffer.h"
 #include "gloom/render/bloom.h"
 
-#include <de/Animation>
-#include <de/GLFramebuffer>
+#include <de/animation.h>
+#include <de/glframebuffer.h>
 
 using namespace de;
 

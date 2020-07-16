@@ -19,12 +19,12 @@
 #ifndef GUISHELLAPP_H
 #define GUISHELLAPP_H
 
-#include <de/BaseGuiApp>
-#include <de/ImageBank>
-#include <de/PopupMenuWidget>
-#include <de/ServerFinder>
-#include <de/ui/ListData>
-#include <de/ui/ActionItem>
+#include <de/baseguiapp.h>
+#include <de/imagebank.h>
+#include <de/popupmenuwidget.h>
+#include <de/serverfinder.h>
+#include <de/ui/listdata.h>
+#include <de/ui/actionitem.h>
 
 class LinkWindow;
 

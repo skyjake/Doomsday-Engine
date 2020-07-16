@@ -19,8 +19,8 @@
 #ifndef CURSESAPP_H
 #define CURSESAPP_H
 
-#include <de/TextApp>
-#include <de/term/TextRootWidget>
+#include <de/textapp.h>
+#include <de/term/textrootwidget.h>
 
 class CursesApp : public de::TextApp
 {

@@ -17,15 +17,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Writer"
-#include "de/String"
-#include "de/Block"
-#include "de/ISerializable"
-#include "de/IOStream"
-#include "de/FixedByteArray"
-#include "de/ByteRefArray"
-#include "de/ByteArrayFile"
-#include "de/data/byteorder.h"
+#include "de/writer.h"
+#include "de/string.h"
+#include "de/block.h"
+#include "de/iserializable.h"
+#include "de/iostream.h"
+#include "de/fixedbytearray.h"
+#include "de/byterefarray.h"
+#include "de/bytearrayfile.h"
+#include "de/byteorder.h"
 
 namespace de {
 

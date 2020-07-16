@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ByteSubArray"
+#include "de/bytesubarray.h"
 #include "de/math.h"
 
 namespace de {

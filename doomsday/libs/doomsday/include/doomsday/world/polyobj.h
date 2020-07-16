@@ -24,9 +24,9 @@
 #include "../mesh/mesh.h"
 #include "dd_share.h"  // SoundEmitter
 
-#include <de/List>
-#include <de/Error>
-#include <de/Vector>
+#include <de/list.h>
+#include <de/error.h>
+#include <de/vector.h>
 
 namespace world
 {

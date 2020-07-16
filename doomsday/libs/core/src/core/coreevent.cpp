@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/CoreEvent"
-#include "de/NoneValue"
+#include "de/coreevent.h"
+#include "de/nonevalue.h"
 
 namespace de {
 

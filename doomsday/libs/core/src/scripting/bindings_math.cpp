@@ -19,7 +19,7 @@
 #include "../src/scripting/bindings_math.h"
 #include "de/math.h"
 
-#include <de/NumberValue>
+#include "de/numbervalue.h"
 
 namespace de {
 

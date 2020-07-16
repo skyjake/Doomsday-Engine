@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/HighPerformanceTimer"
-#include "de/Guard"
-#include "de/Lockable"
-#include "de/ElapsedTimer"
+#include "de/highperformancetimer.h"
+#include "de/guard.h"
+#include "de/lockable.h"
+#include "de/elapsedtimer.h"
 
 #include <chrono>
 

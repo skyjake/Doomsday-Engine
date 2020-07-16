@@ -26,8 +26,8 @@
  * The script runtime parses and executes scripts. @ingroup core
  */
 
-#include "../Compound"
-#include "../String"
+#include "compound.h"
+#include "de/string.h"
 
 #include <vector>
 

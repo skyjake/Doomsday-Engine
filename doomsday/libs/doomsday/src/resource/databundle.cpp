@@ -16,27 +16,27 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/databundle.h"
+#include "doomsday/res/databundle.h"
 #include "doomsday/filesys/datafolder.h"
 #include "doomsday/filesys/datafile.h"
-#include "doomsday/resource/bundles.h"
-#include "doomsday/resource/resources.h"
-#include "doomsday/resource/lumpdirectory.h"
+#include "doomsday/res/bundles.h"
+#include "doomsday/res/resources.h"
+#include "doomsday/res/lumpdirectory.h"
 #include "doomsday/doomsdayapp.h"
-#include "doomsday/Games"
+#include "doomsday/games.h"
 
 #include <de/charsymbols.h>
-#include <de/App>
-#include <de/ArchiveFeed>
-#include <de/Info>
-#include <de/LinkFile>
-#include <de/LogBuffer>
-#include <de/MetadataBank>
-#include <de/Package>
-#include <de/PackageLoader>
-#include <de/Path>
-#include <de/TextValue>
-#include <de/RegExp>
+#include <de/app.h>
+#include <de/archivefeed.h>
+#include <de/info.h>
+#include <de/linkfile.h>
+#include <de/logbuffer.h>
+#include <de/metadatabank.h>
+#include <de/package.h>
+#include <de/packageloader.h>
+#include <de/path.h>
+#include <de/textvalue.h>
+#include <de/regexp.h>
 
 using namespace de;
 

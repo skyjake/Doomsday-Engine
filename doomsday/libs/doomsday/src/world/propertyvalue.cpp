@@ -20,7 +20,7 @@
 
 #include "doomsday/world/propertyvalue.h"
 
-#include <de/Error>
+#include <de/error.h>
 
 using namespace de;
 

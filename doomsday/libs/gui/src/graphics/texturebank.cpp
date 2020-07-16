@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/TextureBank"
+#include "de/texturebank.h"
 
-#include <de/Hash>
+#include <de/hash.h>
 
 namespace de {
 

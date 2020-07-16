@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include "dd_share.h"
 #include "net_msg.h"
-#include <de/Record>
+#include <de/record.h>
 #include <de/legacy/smoother.h>
 
 #ifdef __cplusplus

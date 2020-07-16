@@ -20,8 +20,8 @@
 #ifndef LIBCORE_IFSTATEMENT_H
 #define LIBCORE_IFSTATEMENT_H
 
-#include "../Statement"
-#include "../Compound"
+#include "statement.h"
+#include "compound.h"
 
 #include <list>
 

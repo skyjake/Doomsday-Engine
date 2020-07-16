@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/TextApp"
-#include "de/EventLoop"
-#include "de/Log"
-#include "de/Garbage"
-#include "de/NativePath"
+#include "de/textapp.h"
+#include "de/eventloop.h"
+#include "de/log.h"
+#include "de/garbage.h"
+#include "de/nativepath.h"
 #include "de/math.h"
 
 namespace de {

@@ -26,8 +26,8 @@
 #include "world/subsector.h"
 
 #include "render/rend_main.h"
-#include "MaterialAnimator"
-#include "WallEdge"
+#include "resource/materialanimator.h"
+#include "render/walledge.h"
 
 #include <doomsday/mesh/face.h>
 #include <doomsday/world/lineowner.h>

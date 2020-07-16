@@ -25,28 +25,28 @@
 #include "ui/clientrootwidget.h"
 #include "clientapp.h"
 
-#include <de/AtlasProceduralImage>
-#include <de/CallbackAction>
-#include <de/ChildWidgetOrganizer>
-#include <de/DocumentPopupWidget>
-#include <de/FileSystem>
-#include <de/LineEditWidget>
-#include <de/Loop>
-#include <de/MenuWidget>
-#include <de/NativeFile>
-#include <de/PackageIconBank>
-#include <de/PackageLoader>
-#include <de/PopupButtonWidget>
-#include <de/ProgressWidget>
-#include <de/RegExp>
-#include <de/SequentialLayout>
-#include <de/Timer>
-#include <de/TextValue>
-#include <de/ui/FilteredData>
-#include <de/ui/VariantActionItem>
+#include <de/atlasproceduralimage.h>
+#include <de/callbackaction.h>
+#include <de/childwidgetorganizer.h>
+#include <de/documentpopupwidget.h>
+#include <de/filesystem.h>
+#include <de/lineeditwidget.h>
+#include <de/loop.h>
+#include <de/menuwidget.h>
+#include <de/nativefile.h>
+#include <de/packageiconbank.h>
+#include <de/packageloader.h>
+#include <de/popupbuttonwidget.h>
+#include <de/progresswidget.h>
+#include <de/regexp.h>
+#include <de/sequentiallayout.h>
+#include <de/timer.h>
+#include <de/textvalue.h>
+#include <de/ui/filtereddata.h>
+#include <de/ui/variantactionitem.h>
 
-#include <doomsday/DoomsdayApp>
-#include <doomsday/resource/bundles.h>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/res/bundles.h>
 
 using namespace de;
 

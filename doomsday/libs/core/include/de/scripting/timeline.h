@@ -20,8 +20,8 @@
 #define LIBCORE_TIMELINE_H
 
 #include "../libcore.h"
-#include "../Time"
-#include "../String"
+#include "de/time.h"
+#include "de/string.h"
 
 namespace de {
 

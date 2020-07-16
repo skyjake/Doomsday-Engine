@@ -28,7 +28,7 @@
 #include <de/c_wrapper.h>
 
 #ifdef __CLIENT__
-#include <de/String>
+#include <de/string.h>
 
 /**
  * Compose the title for the main window.

@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Lex"
-#include "de/TokenBuffer"
+#include "de/scripting/lex.h"
+#include "de/scripting/tokenbuffer.h"
 
 #include <cctype>
 #include <cwctype>

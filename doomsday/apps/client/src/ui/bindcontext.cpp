@@ -21,14 +21,14 @@
 
 #include "clientapp.h"
 #include "world/p_players.h"
-#include "CommandBinding"
-#include "ImpulseBinding"
+#include "ui/commandbinding.h"
+#include "ui/impulsebinding.h"
 #include "ui/inputdevice.h"
 #include "ui/inputsystem.h"
 
 #include <doomsday/console/exec.h>
-#include <de/Set>
-#include <de/Log>
+#include <de/set.h>
+#include <de/log.h>
 
 using namespace de;
 
@@ -223,7 +223,7 @@ void BindContext::activate(bool yes)
 {
     if (d->active == yes) return;
 
-    LOG_AS("BindContext");
+    LOG_AS("ui/bindcontext.h");
     LOG_INPUT_VERBOSE("%s " _E(b) "'%s'") << (yes? "Activating" : "Deactivating") << d->name;
     d->active = yes;
 
@@ -279,7 +279,7 @@ void BindContext::setFallbackResponder(FallbackResponderFunc newResponderFunc)
 
 void BindContext::clearAllBindings()
 {
-    LOG_AS("BindContext");
+    LOG_AS("ui/bindcontext.h");
     deleteAll(d->commandBinds);
     d->commandBinds.clear();
     for (int i = 0; i < DDMAXPLAYERS; ++i)
@@ -320,7 +320,7 @@ void BindContext::clearBindingsForDevice(int deviceId)
 Record *BindContext::bindCommand(const char *eventDesc, const char *command)
 {
     DE_ASSERT(eventDesc && command && command[0]);
-    LOG_AS("BindContext");
+    LOG_AS("ui/bindcontext.h");
     try
     {
         std::unique_ptr<Record> newBind(new Record);
@@ -353,7 +353,7 @@ Record *BindContext::bindImpulse(const char *ctrlDesc, const PlayerImpulse &impu
 {
     DE_ASSERT(ctrlDesc);
     DE_ASSERT(localPlayer >= 0 && localPlayer < DDMAXPLAYERS);
-    LOG_AS("BindContext");
+    LOG_AS("ui/bindcontext.h");
     try
     {
         std::unique_ptr<CompiledImpulseBindingRecord> newBind(new CompiledImpulseBindingRecord);
@@ -449,7 +449,7 @@ bool BindContext::deleteBinding(int id)
 
 bool BindContext::tryEvent(const ddevent_t &event, bool respectHigherContexts) const
 {
-    LOG_AS("BindContext");
+    LOG_AS("ui/bindcontext.h");
 
     // Inactive contexts never respond.
     if (!isActive()) return false;

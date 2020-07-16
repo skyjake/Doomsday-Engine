@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "de/BlurWidget"
+#include "de/blurwidget.h"
 
 namespace de {
 

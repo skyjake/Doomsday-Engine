@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/FileLogSink"
-#include "de/FileSystem"
+#include "de/filelogsink.h"
+#include "de/filesystem.h"
 
 namespace de {
 

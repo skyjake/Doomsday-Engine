@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Atlas"
+#include "de/atlas.h"
 
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 
 namespace de {
 

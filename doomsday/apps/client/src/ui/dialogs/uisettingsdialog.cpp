@@ -18,13 +18,13 @@
 
 #include "ui/dialogs/uisettingsdialog.h"
 #include "clientapp.h"
-#include "ConfigProfiles"
+#include "configprofiles.h"
 
-#include <de/CallbackAction>
-#include <de/Config>
-#include <de/GridLayout>
-#include <de/VariableChoiceWidget>
-#include <de/VariableToggleWidget>
+#include <de/callbackaction.h>
+#include <de/config.h>
+#include <de/gridlayout.h>
+#include <de/variablechoicewidget.h>
+#include <de/variabletogglewidget.h>
 
 using namespace de;
 

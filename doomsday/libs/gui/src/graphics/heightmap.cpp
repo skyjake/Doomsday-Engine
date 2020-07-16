@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/HeightMap"
+#include "de/heightmap.h"
 
 namespace de {
 

@@ -26,7 +26,7 @@
 #define LIBDEHREAD_DEHREADER_H
 
 #include "importdeh.h"
-#include <de/Block>
+#include <de/block.h>
 
 /// Maximum number of nested patch file inclussions. Set to zero to disable.
 #define DEHREADER_INCLUDE_DEPTH_MAX         2

@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GLTextureFramebuffer"
-#include "de/GuiApp"
+#include "de/gltextureframebuffer.h"
+#include "de/guiapp.h"
 
-#include <de/Log>
-#include <de/Drawable>
-#include <de/GLInfo>
-#include <de/Property>
+#include <de/log.h>
+#include <de/drawable.h>
+#include <de/glinfo.h>
+#include <de/property.h>
 
 namespace de {
 

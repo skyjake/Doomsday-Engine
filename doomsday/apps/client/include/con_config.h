@@ -23,8 +23,8 @@
 
 #include "dd_share.h"
 
-#include <de/File>
-#include <de/NativePath>
+#include <de/file.h>
+#include <de/nativepath.h>
 
 // Flags for Con_ParseCommands:
 #define CPCF_SILENT                 0x1

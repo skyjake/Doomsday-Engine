@@ -17,16 +17,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Expression"
-#include "de/Evaluator"
-#include "de/ArrayExpression"
-#include "de/BuiltInExpression"
-#include "de/ConstantExpression"
-#include "de/DictionaryExpression"
-#include "de/NameExpression"
-#include "de/OperatorExpression"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/scripting/expression.h"
+#include "de/scripting/evaluator.h"
+#include "de/scripting/arrayexpression.h"
+#include "de/scripting/builtinexpression.h"
+#include "de/scripting/constantexpression.h"
+#include "de/scripting/dictionaryexpression.h"
+#include "de/scripting/nameexpression.h"
+#include "de/scripting/operatorexpression.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 using namespace de;
 

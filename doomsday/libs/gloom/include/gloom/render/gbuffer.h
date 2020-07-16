@@ -19,8 +19,8 @@
 #ifndef GLOOM_GBUFFER_H
 #define GLOOM_GBUFFER_H
 
-#include <de/GLFramebuffer>
-#include <de/GLTexture>
+#include <de/glframebuffer.h>
+#include <de/gltexture.h>
 
 #include "gloom/render/render.h"
 

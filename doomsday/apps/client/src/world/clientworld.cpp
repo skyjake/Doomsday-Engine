@@ -42,13 +42,13 @@
 #include "world/polyobjdata.h"
 #include "world/subsector.h"
 #include "world/vertex.h"
-#include "Lumobj"
+#include "render/lumobj.h"
 #include "render/viewports.h"  // R_ResetViewer
 #include "render/rend_fakeradio.h"
 #include "render/rend_main.h"
 #include "render/rendersystem.h"
 #include "render/rendpoly.h"
-#include "MaterialAnimator"
+#include "resource/materialanimator.h"
 #include "ui/progress.h"
 #include "ui/inputsystem.h"
 
@@ -58,26 +58,23 @@
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
 #include <doomsday/defs/mapinfo.h>
-#include <doomsday/resource/mapmanifests.h>
+#include <doomsday/res/mapmanifests.h>
 #include <doomsday/world/mapbuilder.h>
-#include <doomsday/world/MaterialManifest>
-#include <doomsday/world/Materials>
+#include <doomsday/world/materialmanifest.h>
+#include <doomsday/world/materials.h>
 #include <doomsday/world/plane.h>
 #include <doomsday/world/polyobjdata.h>
 #include <doomsday/world/subsector.h>
 #include <doomsday/world/surface.h>
 #include <doomsday/world/thinkers.h>
 
-#include <de/KeyMap>
+#include <de/keymap.h>
 #include <de/legacy/memoryzone.h>
 #include <de/legacy/timer.h>
-#include <de/Binder>
-#include <de/Context>
-#include <de/Error>
-#include <de/Log>
-#include <de/Scheduler>
-#include <de/ScriptSystem>
-#include <de/Time>
+#include <de/dscript.h>
+#include <de/error.h>
+#include <de/log.h>
+#include <de/time.h>
 
 #include <map>
 #include <utility>

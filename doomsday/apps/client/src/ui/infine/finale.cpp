@@ -17,10 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 #include "ui/infine/finale.h"
-
-#include "BindContext"
+#include "ui/bindcontext.h"
 #include "ui/infine/finaleinterpreter.h"
 #include "network/net_main.h"
 #ifdef __SERVER__

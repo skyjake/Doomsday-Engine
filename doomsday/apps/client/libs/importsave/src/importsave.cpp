@@ -17,15 +17,15 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/App>
-#include <de/CommandLine>
-#include <de/DirectoryFeed>
-#include <de/Error>
-#include <de/Extension>
-#include <de/Folder>
-#include <de/Log>
-#include <de/NativeFile>
-#include <de/NativePath>
+#include <de/app.h>
+#include <de/commandline.h>
+#include <de/directoryfeed.h>
+#include <de/error.h>
+#include <de/extension.h>
+#include <de/folder.h>
+#include <de/log.h>
+#include <de/nativefile.h>
+#include <de/nativepath.h>
 
 #include "importsave.h"
 

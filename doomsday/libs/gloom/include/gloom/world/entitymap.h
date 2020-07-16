@@ -19,8 +19,8 @@
 #ifndef GLOOM_ENTITYMAP_H
 #define GLOOM_ENTITYMAP_H
 
-#include <de/Rectangle>
-#include <de/Vector>
+#include <de/rectangle.h>
+#include <de/vector.h>
 
 #include "gloom/world/entity.h"
 

@@ -54,9 +54,9 @@
 
 #include <doomsday/console/cmd.h>
 #include <de/libcore.h>
-#include <de/Rectangle>
-#include <de/Drawable>
-#include <de/GLFramebuffer>
+#include <de/rectangle.h>
+#include <de/drawable.h>
+#include <de/glframebuffer.h>
 
 using namespace de;
 

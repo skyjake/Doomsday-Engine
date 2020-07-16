@@ -19,8 +19,8 @@
 #ifndef DE_CLIENT_UI_HOME_SAVELISTWIDGET_H
 #define DE_CLIENT_UI_HOME_SAVELISTWIDGET_H
 
-#include <de/MenuWidget>
-#include <de/ui/Data>
+#include <de/menuwidget.h>
+#include <de/ui/data.h>
 
 class GamePanelButtonWidget;
 

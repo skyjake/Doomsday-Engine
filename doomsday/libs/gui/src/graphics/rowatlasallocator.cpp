@@ -30,9 +30,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/RowAtlasAllocator"
+#include "de/rowatlasallocator.h"
 
-#include <de/List>
+#include <de/list.h>
 #include <set>
 
 namespace de {

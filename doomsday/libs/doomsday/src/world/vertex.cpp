@@ -23,7 +23,7 @@
 #include "doomsday/world/lineowner.h"  /// @todo remove me
 #include "doomsday/world/sector.h"
 
-#include <de/Vector>
+#include <de/vector.h>
 
 namespace world {
 

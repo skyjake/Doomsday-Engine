@@ -20,7 +20,7 @@
 #ifndef CLIENT_RENDER_VECTORLIGHTDATA_H
 #define CLIENT_RENDER_VECTORLIGHTDATA_H
 
-#include <de/Vector>
+#include <de/vector.h>
 
 /**
  * POD for a vector light source affection.

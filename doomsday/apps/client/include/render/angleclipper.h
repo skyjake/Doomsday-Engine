@@ -22,7 +22,7 @@
 #define CLIENT_RENDER_ANGLECLIPPER
 
 #include <de/legacy/binangle.h>
-#include <de/Vector>
+#include <de/vector.h>
 #include <doomsday/mesh/face.h>
 
 /**

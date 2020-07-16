@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Extension"
+#include "de/extension.h"
 
 #include <map>
 

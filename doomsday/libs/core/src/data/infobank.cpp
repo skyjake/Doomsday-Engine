@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/InfoBank"
-#include "de/App"
-#include "de/Folder"
-#include "de/Package"
-#include "de/ScriptedInfo"
+#include "de/infobank.h"
+#include "de/app.h"
+#include "de/folder.h"
+#include "de/package.h"
+#include "de/scripting/scriptedinfo.h"
 
 namespace de {
 

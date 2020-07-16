@@ -17,9 +17,9 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "de/Script"
-#include "de/Parser"
-#include "de/File"
+#include "de/scripting/script.h"
+#include "de/scripting/parser.h"
+#include "de/file.h"
 
 namespace de {
 

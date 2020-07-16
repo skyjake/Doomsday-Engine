@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_UI_PACKAGEINFODIALOG_H
 #define DE_CLIENT_UI_PACKAGEINFODIALOG_H
 
-#include <de/DialogWidget>
+#include <de/dialogwidget.h>
 
 /**
  * Dialog showing information about a package.

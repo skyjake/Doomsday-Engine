@@ -25,7 +25,7 @@
 #include "dd_main.h" // App_GameLoaded
 #include "dd_def.h"
 #include "clientapp.h"
-#include "BindContext"
+#include "ui/bindcontext.h"
 
 using namespace de;
 

@@ -20,10 +20,10 @@
 
 #include "de_platform.h"
 #include "resource/fontmanifest.h"
+#include "resource/fontscheme.h"
 
 #include "dd_main.h" // App_Fonts(), remove me
-#include "FontScheme"
-#include <de/Log>
+#include <de/log.h>
 
 using namespace de;
 
@@ -56,7 +56,7 @@ FontManifest::FontManifest(const PathTree::NodeArgs &args)
 
 FontScheme &FontManifest::scheme() const
 {
-    LOG_AS("FontManifest");
+    LOG_AS("resource/fontmanifest.h");
     /// @todo Optimize: FontManifest should contain a link to the owning FontScheme.
     for (const auto &scheme : App_Resources().allFontSchemes())
     {
@@ -85,7 +85,7 @@ int FontManifest::uniqueId() const
 
 bool FontManifest::setUniqueId(int newUniqueId)
 {
-    LOG_AS("FontManifest");
+    LOG_AS("resource/fontmanifest.h");
 
     if (d->uniqueId == newUniqueId) return false;
 
@@ -114,7 +114,7 @@ AbstractFont &FontManifest::resource() const
 
 void FontManifest::setResource(AbstractFont *newResource)
 {
-    LOG_AS("FontManifest");
+    LOG_AS("resource/fontmanifest.h");
 
     if (d->resource.get() != newResource)
     {

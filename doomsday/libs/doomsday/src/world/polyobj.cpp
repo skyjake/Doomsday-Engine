@@ -30,8 +30,8 @@
 #include "doomsday/tab_tables.h"
 
 #include <de/legacy/vector1.h>
-#include <de/Set>
-#include <de/List>
+#include <de/set.h>
+#include <de/list.h>
 
 using namespace de;
 using namespace world;

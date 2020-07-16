@@ -19,8 +19,8 @@
 #ifndef IMPORTUDMF_UDMFLEX_H
 #define IMPORTUDMF_UDMFLEX_H
 
-#include <de/Lex>
-#include <de/TokenBuffer>
+#include <de/scripting/lex.h>
+#include <de/scripting/tokenbuffer.h>
 
 class UDMFLex : public de::Lex
 {

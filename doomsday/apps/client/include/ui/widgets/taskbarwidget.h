@@ -19,9 +19,9 @@
 #ifndef DE_CLIENT_TASKBARWIDGET_H
 #define DE_CLIENT_TASKBARWIDGET_H
 
-#include <de/Action>
-#include <de/GuiWidget>
-#include <de/ButtonWidget>
+#include <de/action.h>
+#include <de/guiwidget.h>
+#include <de/buttonwidget.h>
 
 #include "consolewidget.h"
 

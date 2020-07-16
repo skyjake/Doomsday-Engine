@@ -23,8 +23,8 @@
 #include "gloom/world/user.h"
 #include "gloom/world/iworld.h"
 
-#include <de/GLShaderBank>
-#include <de/ImageBank>
+#include <de/glshaderbank.h>
+#include <de/imagebank.h>
 
 namespace gloom {
 

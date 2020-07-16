@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/filesys/Node"
+#include "de/filesys/node.h"
 
 namespace de {
 namespace filesys {

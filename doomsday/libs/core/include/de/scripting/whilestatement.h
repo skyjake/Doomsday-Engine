@@ -20,8 +20,8 @@
 #ifndef LIBCORE_WHILESTATEMENT_H
 #define LIBCORE_WHILESTATEMENT_H
 
-#include "../Statement"
-#include "../Compound"
+#include "statement.h"
+#include "compound.h"
 
 namespace de {
 

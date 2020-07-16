@@ -20,7 +20,7 @@
 #define LIBDOOMSDAY_DEFN_MAPINFO_H
 
 #include "definition.h"
-#include <de/RecordAccessor>
+#include <de/recordaccessor.h>
 
 /// @todo These values should be tweaked a bit.
 #define DEFAULT_FOG_START       0

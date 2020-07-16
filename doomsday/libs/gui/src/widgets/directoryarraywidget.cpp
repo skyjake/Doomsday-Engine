@@ -16,16 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/DirectoryArrayWidget"
-#include "de/BaseGuiApp"
-#include "de/BaseWindow"
+#include "de/directoryarraywidget.h"
+#include "de/baseguiapp.h"
+#include "de/basewindow.h"
 
-#include <de/Config>
-#include <de/Garbage>
-#include <de/NativePath>
-#include <de/TextValue>
-#include <de/FileDialog>
-#include <de/ToggleWidget>
+#include <de/config.h>
+#include <de/garbage.h>
+#include <de/nativepath.h>
+#include <de/textvalue.h>
+#include <de/filedialog.h>
+#include <de/togglewidget.h>
 
 namespace de {
 

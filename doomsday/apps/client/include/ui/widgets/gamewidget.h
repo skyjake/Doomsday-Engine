@@ -20,7 +20,7 @@
 #ifndef CLIENT_GAMEWIDGET_H
 #define CLIENT_GAMEWIDGET_H
 
-#include <de/GuiWidget>
+#include <de/guiwidget.h>
 
 /**
  * Widget for drawing the game world.

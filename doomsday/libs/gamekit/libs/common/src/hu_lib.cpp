@@ -21,7 +21,7 @@
 #include "common.h"
 #include "hu_lib.h"
 
-#include <de/List>
+#include <de/list.h>
 
 /// @todo remove me:
 #include "hud/widgets/automapwidget.h"

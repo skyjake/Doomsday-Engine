@@ -26,7 +26,7 @@
 #include <array>
 #include <de/legacy/reader.h>
 #include <de/legacy/writer.h>
-#include <de/String>
+#include <de/string.h>
 #include "acs/module.h"
 
 namespace acs {

@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/OperatorRule"
+#include "de/operatorrule.h"
 #include "de/math.h"
 
 namespace de {

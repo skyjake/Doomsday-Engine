@@ -18,8 +18,8 @@
 
 #include "doomsday/defs/decoration.h"
 
-#include <de/Record>
-#include <de/RecordValue>
+#include <de/record.h>
+#include <de/recordvalue.h>
 #include "doomsday/defs/ded.h"
 #include "doomsday/defs/material.h"
 

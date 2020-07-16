@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ui/ListData"
+#include "de/ui/listdata.h"
 #include <algorithm>
 
 namespace de {

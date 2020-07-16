@@ -20,8 +20,8 @@
 #define DE_CLIENT_CONSOLEEFFECT_H
 
 #include <de/libcore.h>
-#include <de/Rectangle>
-#include <de/GLShaderBank>
+#include <de/rectangle.h>
+#include <de/glshaderbank.h>
 
 /**
  * Draws camera lens effects for a particular player console. Maintains

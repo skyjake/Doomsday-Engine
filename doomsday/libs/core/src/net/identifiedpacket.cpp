@@ -17,9 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/IdentifiedPacket"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/identifiedpacket.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 namespace de {
 

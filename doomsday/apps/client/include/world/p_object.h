@@ -26,8 +26,8 @@
 #endif
 
 #include <de/legacy/aabox.h>
-#include <de/Record>
-#include <de/Vector>
+#include <de/record.h>
+#include <de/vector.h>
 #include <doomsday/defs/ded.h>
 #include <doomsday/world/thinker.h>
 #include <doomsday/world/mobj.h>

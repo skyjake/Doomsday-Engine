@@ -17,14 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ExpressionStatement"
-#include "de/Expression"
-#include "de/Context"
-#include "de/Evaluator"
-#include "de/Writer"
-#include "de/ArrayValue"
-#include "de/RefValue"
-#include "de/Reader"
+#include "de/scripting/expressionstatement.h"
+#include "de/scripting/expression.h"
+#include "de/scripting/context.h"
+#include "de/scripting/evaluator.h"
+#include "de/writer.h"
+#include "de/arrayvalue.h"
+#include "de/refvalue.h"
+#include "de/reader.h"
 
 using namespace de;
 

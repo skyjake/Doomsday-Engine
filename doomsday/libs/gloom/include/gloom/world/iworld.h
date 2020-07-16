@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include <de/AtlasTexture>
-#include <de/Matrix>
-#include <de/List>
+#include <de/atlastexture.h>
+#include <de/matrix.h>
+#include <de/list.h>
 #include "gloom/render/icamera.h"
 
 namespace gloom {

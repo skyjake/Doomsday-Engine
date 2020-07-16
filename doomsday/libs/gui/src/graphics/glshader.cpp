@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GLShader"
-#include "de/GLInfo"
-#include "de/GuiApp"
-#include "de/graphics/opengl.h"
-#include <de/Block>
-#include <de/String>
+#include "de/glshader.h"
+#include "de/glinfo.h"
+#include "de/guiapp.h"
+#include "de/opengl.h"
+#include <de/block.h>
+#include <de/string.h>
 
 namespace de {
 

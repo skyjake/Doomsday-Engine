@@ -19,7 +19,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <de/BaseWindow>
+#include <de/basewindow.h>
 
 #include "approotwidget.h"
 

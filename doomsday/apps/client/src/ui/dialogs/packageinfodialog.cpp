@@ -22,26 +22,26 @@
 #include "clientapp.h"
 #include "dd_main.h"
 
-#include <doomsday/DataBundle>
-#include <doomsday/DoomsdayApp>
-#include <doomsday/Games>
-#include <doomsday/LumpCatalog>
+#include <doomsday/res/databundle.h>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/games.h>
+#include <doomsday/res/lumpcatalog.h>
 
-#include <de/App>
-#include <de/ArchiveEntryFile>
-#include <de/CallbackAction>
-#include <de/DirectoryFeed>
-#include <de/DocumentWidget>
-#include <de/Folder>
-#include <de/ImageFile>
-#include <de/LabelWidget>
-#include <de/Loop>
-#include <de/NativeFile>
-#include <de/PackageLoader>
-#include <de/PopupMenuWidget>
-#include <de/ProgressWidget>
-#include <de/RegExp>
-#include <de/SequentialLayout>
+#include <de/app.h>
+#include <de/archiveentryfile.h>
+#include <de/callbackaction.h>
+#include <de/directoryfeed.h>
+#include <de/documentwidget.h>
+#include <de/folder.h>
+#include <de/imagefile.h>
+#include <de/labelwidget.h>
+#include <de/loop.h>
+#include <de/nativefile.h>
+#include <de/packageloader.h>
+#include <de/popupmenuwidget.h>
+#include <de/progresswidget.h>
+#include <de/regexp.h>
+#include <de/sequentiallayout.h>
 
 using namespace de;
 

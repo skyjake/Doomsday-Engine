@@ -22,9 +22,9 @@
 #include "world/subsector.h"
 #include "clientapp.h"
 
-#include <de/FileSystem>
-#include <de/ImageFile>
-#include <de/filesys/AssetObserver>
+#include <de/filesystem.h>
+#include <de/imagefile.h>
+#include <de/filesys/assetobserver.h>
 #include <doomsday/world/world.h>
 
 using namespace de;

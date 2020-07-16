@@ -34,16 +34,16 @@
 #include <doomsday/world/map.h>
 #include <doomsday/world/thinkers.h>
 
-#include <de/CommandLine>
-#include <de/Config>
-#include <de/Error>
-#include <de/FileSystem>
-#include <de/Garbage>
-#include <de/Log>
-#include <de/LogBuffer>
-#include <de/PackageFeed>
-#include <de/PackageLoader>
-#include <de/ScriptSystem>
+#include <de/commandline.h>
+#include <de/config.h>
+#include <de/error.h>
+#include <de/filesystem.h>
+#include <de/garbage.h>
+#include <de/log.h>
+#include <de/logbuffer.h>
+#include <de/packagefeed.h>
+#include <de/packageloader.h>
+#include <de/dscript.h>
 #include <de/c_wrapper.h>
 
 #include <stdlib.h>

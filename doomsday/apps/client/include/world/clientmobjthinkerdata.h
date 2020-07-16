@@ -21,8 +21,8 @@
 
 #include <doomsday/world/mobjthinkerdata.h>
 #include <de/legacy/timer.h>
-#include <de/ModelDrawable>
-#include <de/GLState>
+#include <de/modeldrawable.h>
+#include <de/glstate.h>
 
 #include "render/modelrenderer.h"
 

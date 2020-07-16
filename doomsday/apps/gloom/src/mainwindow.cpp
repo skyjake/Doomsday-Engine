@@ -22,11 +22,11 @@
 #include "globalshortcuts.h"
 #include "gloomwidget.h"
 
-#include <de/CommandLine>
-#include <de/GLState>
-#include <de/Garbage>
-#include <de/LabelWidget>
-#include <de/LogBuffer>
+#include <de/commandline.h>
+#include <de/glstate.h>
+#include <de/garbage.h>
+#include <de/labelwidget.h>
+#include <de/logbuffer.h>
 
 using namespace de;
 using namespace gloom;

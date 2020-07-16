@@ -32,8 +32,8 @@
 #include "api_audiod.h"
 #include "api_audiod_mus.h"
 #include "api_audiod_sfx.h"
-#include <de/Error>
-#include <de/String>
+#include <de/error.h>
+#include <de/string.h>
 
 /**
  * Models a logical audio driver, suitable for both built-in drivers and plugins.

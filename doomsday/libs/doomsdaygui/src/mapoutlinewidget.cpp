@@ -18,9 +18,9 @@
 
 #include "doomsday/gui/mapoutlinewidget.h"
 
-#include <de/ProgressWidget>
-#include <de/Drawable>
-#include <de/Image>
+#include <de/progresswidget.h>
+#include <de/drawable.h>
+#include <de/image.h>
 
 using namespace de;
 

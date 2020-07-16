@@ -22,7 +22,7 @@
 #include "common.h"
 #include "hud/widgets/chatwidget.h"
 
-#include <de/Log>
+#include <de/log.h>
 #include "d_net.h"
 #include "hu_stuff.h"  // shiftXForm
 #include "p_tick.h"

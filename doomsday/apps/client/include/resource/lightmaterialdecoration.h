@@ -24,12 +24,12 @@
 #  error "LightMaterialDecoration only exists in the Client"
 #endif
 
-#include <de/String>
+#include <de/string.h>
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/dedtypes.h>
 #include "misc/r_util.h"  // LightRange
-#include "ClientTexture"
-#include "ClientMaterial"
+#include "resource/clienttexture.h"
+#include "resource/clientmaterial.h"
 
 /**
  * @ingroup resource

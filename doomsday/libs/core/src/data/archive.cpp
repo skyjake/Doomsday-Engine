@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Archive"
+#include "de/archive.h"
 
 namespace de {
 

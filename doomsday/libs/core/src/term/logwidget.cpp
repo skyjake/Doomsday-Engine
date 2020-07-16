@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/term/LogWidget"
-#include "de/term/KeyEvent"
-#include "de/term/TextRootWidget"
-#include "de/MonospaceLogSinkFormatter"
-#include "de/MemoryLogSink"
-#include "de/LogBuffer"
+#include "de/term/logwidget.h"
+#include "de/term/keyevent.h"
+#include "de/term/textrootwidget.h"
+#include "de/monospacelogsinkformatter.h"
+#include "de/memorylogsink.h"
+#include "de/logbuffer.h"
 
 namespace de { namespace term {
 

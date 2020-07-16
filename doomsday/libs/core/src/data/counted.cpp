@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Counted"
+#include "de/counted.h"
 
 namespace de {
 

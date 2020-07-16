@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/WindowSystem"
-#include "de/GuiRootWidget"
-#include "de/Style"
-#include "de/BaseGuiApp" // for updating pixel ratio
+#include "de/windowsystem.h"
+#include "de/guirootwidget.h"
+#include "de/ui/style.h"
+#include "de/baseguiapp.h" // for updating pixel ratio
 
-#include <de/KeyMap>
+#include <de/keymap.h>
 
 #include <SDL_events.h>
 

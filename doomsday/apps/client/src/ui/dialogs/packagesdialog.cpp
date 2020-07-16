@@ -28,24 +28,24 @@
 #include "ui/clientstyle.h"
 #include "clientapp.h"
 
-#include <doomsday/Games>
-#include <doomsday/LumpCatalog>
-#include <doomsday/res/Bundles>
+#include <doomsday/games.h>
+#include <doomsday/res/lumpcatalog.h>
+#include <doomsday/res/bundles.h>
 
 #include <de/charsymbols.h>
-#include <de/CallbackAction>
-#include <de/ChildWidgetOrganizer>
-#include <de/FileSystem>
-#include <de/DocumentPopupWidget>
-#include <de/MenuWidget>
-#include <de/NativeFile>
-#include <de/PackageLoader>
-#include <de/PopupButtonWidget>
-#include <de/PopupMenuWidget>
-#include <de/SequentialLayout>
-#include <de/TextValue>
-#include <de/ui/SubwidgetItem>
-#include <de/ui/VariantActionItem>
+#include <de/callbackaction.h>
+#include <de/childwidgetorganizer.h>
+#include <de/filesystem.h>
+#include <de/documentpopupwidget.h>
+#include <de/menuwidget.h>
+#include <de/nativefile.h>
+#include <de/packageloader.h>
+#include <de/popupbuttonwidget.h>
+#include <de/popupmenuwidget.h>
+#include <de/sequentiallayout.h>
+#include <de/textvalue.h>
+#include <de/ui/subwidgetitem.h>
+#include <de/ui/variantactionitem.h>
 
 using namespace de;
 

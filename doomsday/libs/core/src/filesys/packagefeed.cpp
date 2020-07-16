@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/PackageFeed"
-#include "de/LinkFile"
-//#include "de/ArchiveFolder"
-#include "de/PackageLoader"
-#include "de/FS"
+#include "de/packagefeed.h"
+#include "de/linkfile.h"
+//#include "de/archivefolder.h"
+#include "de/packageloader.h"
+#include "de/filesystem.h"
 
 namespace de {
 

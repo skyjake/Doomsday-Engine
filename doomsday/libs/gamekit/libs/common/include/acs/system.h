@@ -25,10 +25,10 @@
 #include "common.h"
 #include <array>
 #include <functional>
-#include <de/Error>
-#include <de/Block>
-#include <de/Reader>
-#include <de/Writer>
+#include <de/error.h>
+#include <de/block.h>
+#include <de/reader.h>
+#include <de/writer.h>
 #include <doomsday/uri.h>
 #include "acs/module.h"
 #include "acs/script.h"

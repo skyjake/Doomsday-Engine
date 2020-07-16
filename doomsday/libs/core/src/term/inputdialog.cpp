@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/term/InputDialogWidget"
-#include "de/term/LabelWidget"
-#include "de/term/LineEditWidget"
-#include "de/term/MenuWidget"
-#include "de/term/TextRootWidget"
+#include "de/term/inputdialog.h"
+#include "de/term/labelwidget.h"
+#include "de/term/lineeditwidget.h"
+#include "de/term/menuwidget.h"
+#include "de/term/textrootwidget.h"
 
 namespace de { namespace term {
 

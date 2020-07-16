@@ -19,8 +19,8 @@
 #ifndef LIBSHELL_LABELTEDGET_H
 #define LIBSHELL_LABELTEDGET_H
 
-#include "Widget"
-#include "TextCanvas"
+#include "widget.h"
+#include "textcanvas.h"
 
 namespace de { namespace term {
 

@@ -17,10 +17,10 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "de/Compound"
-#include "de/Statement"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/scripting/compound.h"
+#include "de/scripting/statement.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 using namespace de;
 

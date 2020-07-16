@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GLUniform"
-#include "de/GLTexture"
-#include "de/GLProgram"
-#include "de/GLInfo"
-#include <de/Block>
-#include <de/Log>
+#include "de/gluniform.h"
+#include "de/gltexture.h"
+#include "de/glprogram.h"
+#include "de/glinfo.h"
+#include <de/block.h>
+#include <de/log.h>
 #include <cstring>
 
 namespace de {

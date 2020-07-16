@@ -24,9 +24,9 @@
 
 #include <de/c_wrapper.h>
 #include <de/legacy/memory.h>
-#include <de/Function>
-#include <de/PathTree>
-#include <de/TextValue>
+#include <de/pathtree.h>
+#include <de/scripting/function.h>
+#include <de/textvalue.h>
 
 using namespace de;
 

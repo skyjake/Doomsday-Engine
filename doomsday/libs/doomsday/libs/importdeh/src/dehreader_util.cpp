@@ -19,7 +19,7 @@
  */
 
 #include "dehreader_util.h"
-#include <de/Block>
+#include <de/block.h>
 
 using namespace de;
 

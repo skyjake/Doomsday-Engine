@@ -19,8 +19,8 @@
 #ifndef LIBGUI_STBTTNATIVEFONT_H
 #define LIBGUI_STBTTNATIVEFONT_H
 
-#include "de/NativeFont"
-#include "de/Image"
+#include "de/nativefont.h"
+#include "de/image.h"
 
 namespace de {
 

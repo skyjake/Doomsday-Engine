@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/BitField"
-#include "de/KeyMap"
-#include "de/List"
+#include "de/bitfield.h"
+#include "de/keymap.h"
+#include "de/list.h"
 
 namespace de {
 

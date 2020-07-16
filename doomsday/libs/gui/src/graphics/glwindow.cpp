@@ -18,21 +18,21 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GLWindow"
-#include "de/GuiApp"
-#include "de/GLTimer"
-#include "de/ElapsedTimer"
-#include "de/EventLoop"
-#include "de/CoreEvent"
-#include "de/Image"
+#include "de/glwindow.h"
+#include "de/guiapp.h"
+#include "de/gltimer.h"
+#include "de/elapsedtimer.h"
+#include "de/eventloop.h"
+#include "de/coreevent.h"
+#include "de/image.h"
 
-#include <de/Garbage>
-#include <de/GLBuffer>
-#include <de/GLState>
-#include <de/GLFramebuffer>
-#include <de/Id>
-#include <de/Log>
-#include <de/WindowSystem>
+#include <de/garbage.h>
+#include <de/glbuffer.h>
+#include <de/glstate.h>
+#include <de/glframebuffer.h>
+#include <de/id.h>
+#include <de/log.h>
+#include <de/windowsystem.h>
 #include <de/c_wrapper.h>
 
 #include <SDL_events.h>

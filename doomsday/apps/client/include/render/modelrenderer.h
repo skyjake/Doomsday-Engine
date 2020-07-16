@@ -21,12 +21,12 @@
 
 #include "model.h"
 
-#include <de/Function>
-#include <de/ModelDrawable>
-#include <de/ModelBank>
-#include <de/GLState>
-#include <de/Timeline>
-#include <de/MultiAtlas>
+#include <de/scripting/function.h>
+#include <de/scripting/timeline.h>
+#include <de/modeldrawable.h>
+#include <de/modelbank.h>
+#include <de/glstate.h>
+#include <de/multiatlas.h>
 
 #include <functional>
 

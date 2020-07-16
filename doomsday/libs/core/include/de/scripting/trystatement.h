@@ -20,8 +20,8 @@
 #ifndef LIBCORE_TRYSTATEMENT_H
 #define LIBCORE_TRYSTATEMENT_H
 
-#include "../Statement"
-#include "../Compound"
+#include "statement.h"
+#include "compound.h"
 
 namespace de {
 

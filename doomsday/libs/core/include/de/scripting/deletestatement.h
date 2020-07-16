@@ -21,8 +21,8 @@
 #define LIBCORE_DELETESTATEMENT_H
 
 #include "../libcore.h"
-#include "../Statement"
-#include "../ArrayExpression"
+#include "statement.h"
+#include "arrayexpression.h"
 #include <string>
 #include <vector>
 

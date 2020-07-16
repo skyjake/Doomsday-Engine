@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_ABOUTDIALOG_H
 #define DE_CLIENT_ABOUTDIALOG_H
 
-#include <de/DialogWidget>
+#include <de/dialogwidget.h>
 
 /**
  * Dialog that shows information about the client.

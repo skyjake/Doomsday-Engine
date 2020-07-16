@@ -16,15 +16,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/LabelWidget"
-#include "de/TextDrawable"
-#include "de/AtlasProceduralImage"
-#include "de/StyleProceduralImage"
+#include "de/labelwidget.h"
+#include "de/textdrawable.h"
+#include "de/atlasproceduralimage.h"
+#include "de/styleproceduralimage.h"
 
-#include <de/AtlasTexture>
-#include <de/ConstantRule>
-#include <de/Drawable>
-#include <de/GridLayout>
+#include <de/atlastexture.h>
+#include <de/constantrule.h>
+#include <de/drawable.h>
+#include <de/gridlayout.h>
 
 namespace de {
 

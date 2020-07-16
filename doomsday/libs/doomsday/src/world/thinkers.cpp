@@ -24,10 +24,10 @@
 #include "doomsday/world/mobj.h"
 #include "doomsday/world/world.h"
 #include "doomsday/world/thinkerdata.h"
-#include "doomsday/DoomsdayApp"
+#include "doomsday/doomsdayapp.h"
 
 #include <de/legacy/memoryzone.h>
-#include <de/List>
+#include <de/list.h>
 
 using namespace de;
 

@@ -17,12 +17,12 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/DirectoryFeed>
-#include <de/TextApp>
-#include <de/CommandLine>
-#include <de/LogBuffer>
-#include <de/FileSystem>
-#include <de/Time>
+#include <de/directoryfeed.h>
+#include <de/textapp.h>
+#include <de/commandline.h>
+#include <de/logbuffer.h>
+#include <de/filesystem.h>
+#include <de/time.h>
 #include "id1translator.h"
 #include "nativetranslator.h"
 

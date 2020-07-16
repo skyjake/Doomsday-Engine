@@ -18,8 +18,8 @@
 
 #include "doomsday/filesys/datafolder.h"
 
-#include <de/ArchiveFeed>
-#include <de/ZipArchive>
+#include <de/archivefeed.h>
+#include <de/ziparchive.h>
 
 using namespace de;
 

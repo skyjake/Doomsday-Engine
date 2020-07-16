@@ -19,7 +19,7 @@
 #ifndef LIBCORE_IOBJECT_H
 #define LIBCORE_IOBJECT_H
 
-#include "../Record"
+#include "de/record.h"
 
 namespace de {
 

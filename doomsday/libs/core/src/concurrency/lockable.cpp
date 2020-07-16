@@ -18,7 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Lockable"
+#include "de/lockable.h"
 #include "de/error.h"
 
 namespace de {

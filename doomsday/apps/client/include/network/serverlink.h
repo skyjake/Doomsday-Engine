@@ -19,13 +19,13 @@
 #ifndef CLIENT_SERVERLINK_H
 #define CLIENT_SERVERLINK_H
 
-#include <doomsday/network/Protocol>
-#include <de/Transmitter>
-#include <de/Address>
-#include <de/Observers>
-#include <de/AbstractLink>
-#include <de/ServerInfo>
-#include <de/PackageDownloader>
+#include <doomsday/network/protocol.h>
+#include <de/transmitter.h>
+#include <de/address.h>
+#include <de/observers.h>
+#include <de/abstractlink.h>
+#include <de/serverinfo.h>
+#include <de/packagedownloader.h>
 #include "network/net_main.h"
 
 /**

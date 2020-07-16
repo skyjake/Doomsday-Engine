@@ -21,9 +21,9 @@
 #pragma once
 
 #include <functional>
-#include <de/Error>
-#include <de/Id>
-#include <de/Observers>
+#include <de/error.h>
+#include <de/id.h>
+#include <de/observers.h>
 #include "api_thinker.h"
 
 namespace world {

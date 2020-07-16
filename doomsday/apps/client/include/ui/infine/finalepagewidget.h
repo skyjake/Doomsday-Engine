@@ -21,8 +21,8 @@
 #ifndef DE_UI_INFINE_FINALEPAGEWIDGET_H
 #define DE_UI_INFINE_FINALEPAGEWIDGET_H
 
-#include <de/List>
-#include <de/Error>
+#include <de/list.h>
+#include <de/error.h>
 #include "finalewidget.h"
 
 namespace world { class Material; }

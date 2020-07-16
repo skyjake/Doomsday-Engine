@@ -34,14 +34,14 @@
 #  include "client/cl_mobj.h"
 #  include "gl/gl_tex.h"
 #  include "world/subsector.h"
+#  include "world/generator.h"
 #  include "network/net_demo.h"
 #  include "render/viewports.h"
 #  include "render/rend_main.h"
 #  include "render/rend_model.h"
 #  include "render/rend_halo.h"
 #  include "render/billboard.h"
-#  include "Generator"
-#  include "Lumobj"
+#  include "render/lumobj.h"
 #endif
 
 #include <doomsday/world/bspleaf.h>
@@ -51,15 +51,15 @@
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
 #include <doomsday/defs/sprite.h>
-#include <doomsday/res/Textures>
-#include <doomsday/res/Sprites>
+#include <doomsday/res/textures.h>
+#include <doomsday/res/sprites.h>
 #include <doomsday/world/mobjthinkerdata.h>
-#include <doomsday/world/Materials>
+#include <doomsday/world/materials.h>
 #include <doomsday/world/thinkers.h>
 
 #include <de/legacy/vector1.h>
-#include <de/Error>
-#include <de/LogBuffer>
+#include <de/error.h>
+#include <de/logbuffer.h>
 #include <cmath>
 
 using namespace de;

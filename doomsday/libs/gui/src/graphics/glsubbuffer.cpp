@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GLSubBuffer"
+#include "de/glsubbuffer.h"
 
 namespace de {
 

@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/RemoteFeedProtocol"
-#include "de/BlockValue"
-#include "de/TextValue"
-#include "de/RecordValue"
-#include "de/Folder"
+#include "de/remotefeedprotocol.h"
+#include "de/blockvalue.h"
+#include "de/textvalue.h"
+#include "de/recordvalue.h"
+#include "de/folder.h"
 
 namespace de {
 

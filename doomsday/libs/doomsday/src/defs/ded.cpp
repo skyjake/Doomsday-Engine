@@ -24,9 +24,9 @@
 #include <cstring>
 #include <de/legacy/memory.h>
 #include <de/legacy/strutil.h>
-#include <de/ArrayValue>
-#include <de/NumberValue>
-#include <de/RecordValue>
+#include <de/arrayvalue.h>
+#include <de/numbervalue.h>
+#include <de/recordvalue.h>
 
 #include "doomsday/defs/decoration.h"
 #include "doomsday/defs/episode.h"

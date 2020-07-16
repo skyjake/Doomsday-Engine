@@ -21,12 +21,12 @@
 #define LIBCORE_PARSER_H
 
 #include "../libcore.h"
-#include "../IParser"
-#include "../TokenBuffer"
-#include "../TokenRange"
-#include "../ScriptLex"
-#include "../Operator"
-#include "../Expression"
+#include "tokenbuffer.h"
+#include "tokenrange.h"
+#include "iparser.h"
+#include "scriptlex.h"
+#include "operator.h"
+#include "expression.h"
 
 namespace de {
 

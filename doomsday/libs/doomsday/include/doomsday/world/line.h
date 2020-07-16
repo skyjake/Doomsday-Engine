@@ -21,16 +21,16 @@
 
 #pragma once
 
-#include <doomsday/world/MapElement>
+#include <doomsday/world/mapelement.h>
 #include <doomsday/world/polyobj.h>
 #include <doomsday/world/vertex.h>
 #include <doomsday/mesh/hedge.h>
 
 #include <de/legacy/binangle.h>
-#include <de/Error>
-#include <de/Observers>
-#include <de/String>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/observers.h>
+#include <de/string.h>
+#include <de/vector.h>
 
 namespace world {
 

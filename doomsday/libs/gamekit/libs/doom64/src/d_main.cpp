@@ -24,8 +24,8 @@
 #include "jdoom64.h"
 
 #include <cstring>
-#include <de/App>
-#include <de/CommandLine>
+#include <de/app.h>
+#include <de/commandline.h>
 #include "d_netsv.h"
 #include "g_defs.h"
 #include "gamesession.h"

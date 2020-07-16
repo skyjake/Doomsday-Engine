@@ -23,10 +23,9 @@
 #include "jheretic.h"
 
 #include <cstring>
-#include <de/App>
-#include <de/CommandLine>
-#include <de/Function>
-#include <de/NumberValue>
+#include <de/app.h>
+#include <de/commandline.h>
+#include <de/dscript.h>
 #include "d_netsv.h"
 #include "g_defs.h"
 #include "gamesession.h"

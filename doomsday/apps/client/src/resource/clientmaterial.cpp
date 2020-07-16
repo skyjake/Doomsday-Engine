@@ -20,14 +20,14 @@
 
 #include "resource/clientmaterial.h"
 #include "dd_main.h"
-#include "MaterialAnimator"
+#include "resource/materialanimator.h"
 
 #include <doomsday/console/cmd.h>
-#include <doomsday/res/Textures>
-#include <doomsday/world/Materials>
-#include <doomsday/world/MaterialManifest>
-#include <de/Log>
-#include "MaterialAnimator"
+#include <doomsday/res/textures.h>
+#include <doomsday/world/materials.h>
+#include <doomsday/world/materialmanifest.h>
+#include <de/log.h>
+#include "resource/materialanimator.h"
 
 using namespace de;
 

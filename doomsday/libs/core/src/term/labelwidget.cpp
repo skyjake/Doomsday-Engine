@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/term/LabelWidget"
-#include "de/term/TextRootWidget"
-#include "de/MonospaceLineWrapping"
-#include <de/ConstantRule>
+#include "de/term/labelwidget.h"
+#include "de/term/textrootwidget.h"
+#include "de/monospacelinewrapping.h"
+#include "de/constantrule.h"
 
 namespace de { namespace term {
 

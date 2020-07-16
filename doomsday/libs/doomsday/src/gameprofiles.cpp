@@ -16,17 +16,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/GameProfiles"
-#include "doomsday/Games"
-#include "doomsday/DoomsdayApp"
-#include "doomsday/GameStateFolder"
+#include "doomsday/gameprofiles.h"
+#include "doomsday/games.h"
+#include "doomsday/doomsdayapp.h"
+#include "doomsday/gamestatefolder.h"
 
-#include <de/App>
-#include <de/Folder>
-#include <de/NoneValue>
-#include <de/PackageLoader>
-#include <de/Record>
-#include <de/RegExp>
+#include <de/app.h>
+#include <de/folder.h>
+#include <de/nonevalue.h>
+#include <de/packageloader.h>
+#include <de/record.h>
+#include <de/regexp.h>
 
 #include <sstream>
 

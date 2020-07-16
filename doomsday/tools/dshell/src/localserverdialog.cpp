@@ -17,14 +17,14 @@
  */
 
 #include "localserverdialog.h"
-#include <de/term/TextRootWidget>
-#include <de/term/LabelWidget>
-#include <de/term/MenuWidget>
-#include <de/term/ChoiceWidget>
-#include <de/term/LineEditWidget>
-#include <doomsday/DoomsdayInfo>
-#include <de/Config>
-#include <de/ServerInfo>
+#include <de/term/textrootwidget.h>
+#include <de/term/labelwidget.h>
+#include <de/term/menuwidget.h>
+#include <de/term/choicewidget.h>
+#include <de/term/lineeditwidget.h>
+#include <doomsday/doomsdayinfo.h>
+#include <de/config.h>
+#include <de/serverinfo.h>
 
 using namespace de;
 using namespace de::term;

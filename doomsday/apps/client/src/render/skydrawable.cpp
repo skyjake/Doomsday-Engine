@@ -24,22 +24,22 @@
 #include "client/cl_def.h" // clientPaused
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
-#include "MaterialVariantSpec"
+#include "resource/materialvariantspec.h"
 #include "resource/clientresources.h"
 #include "resource/framemodeldef.h"
 #include "render/rend_main.h"
 #include "render/rend_model.h"
 #include "render/vissprite.h"
 #include "world/sky.h"
-#include "ClientTexture"
+#include "resource/clienttexture.h"
 
 #include <doomsday/console/var.h>
 #include <doomsday/console/exec.h>
-#include <doomsday/world/Materials>
+#include <doomsday/world/materials.h>
 #include <de/legacy/concurrency.h>
 #include <de/legacy/timer.h>
-#include <de/Log>
-#include <de/GLInfo>
+#include <de/log.h>
+#include <de/glinfo.h>
 #include <cmath>
 
 #define MAX_LAYERS  2

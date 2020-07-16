@@ -19,7 +19,7 @@
 #ifndef CLIENT_RENDER_PLAYERWEAPONANIMATOR_H
 #define CLIENT_RENDER_PLAYERWEAPONANIMATOR_H
 
-#include <de/ModelDrawable>
+#include <de/modeldrawable.h>
 #include "stateanimator.h"
 
 class ClientPlayer;

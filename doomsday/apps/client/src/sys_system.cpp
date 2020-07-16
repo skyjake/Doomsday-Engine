@@ -35,9 +35,9 @@
 
 #include <de/legacy/concurrency.h>
 #include <de/legacy/timer.h>
-#include <de/App>
-#include <de/PackageLoader>
-#include <de/Loop>
+#include <de/app.h>
+#include <de/packageloader.h>
+#include <de/loop.h>
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
@@ -46,7 +46,7 @@
 #endif
 
 #ifdef __SERVER__
-#  include <de/TextApp>
+#  include <de/textapp.h>
 #endif
 
 #include "dd_main.h"

@@ -25,9 +25,9 @@
 #include "render/modelrenderer.h"
 #include "rend_main.h"
 
-#include <de/Vector>
-#include <de/ModelBank>
-#include <de/ModelDrawable>
+#include <de/vector.h>
+#include <de/modelbank.h>
+#include <de/modeldrawable.h>
 
 class TextureVariantSpec;
 namespace render { class StateAnimator; }

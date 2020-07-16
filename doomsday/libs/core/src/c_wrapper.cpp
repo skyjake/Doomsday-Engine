@@ -19,18 +19,18 @@
 
 #include "de/c_wrapper.h"
 
-#include "de/Address"
-#include "de/App"
-#include "de/Block"
-#include "de/ByteOrder"
-#include "de/ByteRefArray"
-#include "de/CommandLine"
-#include "de/Error"
-#include "de/Info"
-#include "de/LogBuffer"
-#include "de/Loop"
-#include "de/String"
-#include "de/UnixInfo"
+#include "de/address.h"
+#include "de/app.h"
+#include "de/block.h"
+#include "de/byteorder.h"
+#include "de/byterefarray.h"
+#include "de/commandline.h"
+#include "de/error.h"
+#include "de/info.h"
+#include "de/logbuffer.h"
+#include "de/loop.h"
+#include "de/string.h"
+#include "de/unixinfo.h"
 
 #include <cstring>
 #include <stdarg.h>

@@ -26,9 +26,9 @@
 #ifndef DE_WORLD_BSP_LINESEGMENTBLOCK_H
 #define DE_WORLD_BSP_LINESEGMENTBLOCK_H
 
-#include <de/List>
+#include <de/list.h>
 #include <de/legacy/aabox.h>
-#include <de/BinaryTree>
+#include <de/binarytree.h>
 #include "linesegment.h"
 
 namespace world {

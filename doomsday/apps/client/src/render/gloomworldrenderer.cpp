@@ -30,11 +30,10 @@
 #include <gloom/render/icamera.h>
 #include <gloom/render/maprender.h>
 #include <gloom/render/lightrender.h>
-#include <de/ImageBank>
-#include <de/FS>
-#include <de/Value>
-#include <de/ScriptSystem>
-#include <de/data/json.h>
+#include <de/imagebank.h>
+#include <de/filesystem.h>
+#include <de/dscript.h>
+#include <de/json.h>
 #include <de/legacy/timer.h>
 
 using namespace de;

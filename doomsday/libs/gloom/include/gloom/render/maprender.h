@@ -19,7 +19,7 @@
 #ifndef GLOOM_MAPRENDER_H
 #define GLOOM_MAPRENDER_H
 
-#include <de/AtlasTexture>
+#include <de/atlastexture.h>
 
 #include "gloom/world/map.h"
 #include "gloom/render/render.h"

@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ByteRefArray"
+#include "de/byterefarray.h"
 #include <cstring>
 
 namespace de {

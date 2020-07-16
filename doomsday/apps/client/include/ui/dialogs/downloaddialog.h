@@ -22,8 +22,8 @@
 #ifndef DE_CLIENT_DOWNLOADDIALOG_H
 #define DE_CLIENT_DOWNLOADDIALOG_H
 
-#include <de/DialogWidget>
-#include <de/ProgressWidget>
+#include <de/dialogwidget.h>
+#include <de/progresswidget.h>
 
 /**
  * Dialog for downloading content.

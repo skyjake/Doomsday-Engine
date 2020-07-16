@@ -17,14 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Reader"
-#include "de/CString"
-#include "de/Block"
-#include "de/ISerializable"
-#include "de/IIStream"
-#include "de/FixedByteArray"
-#include "de/ByteRefArray"
-#include "de/data/byteorder.h"
+#include "de/reader.h"
+#include "de/cstring.h"
+#include "de/block.h"
+#include "de/iserializable.h"
+#include "de/iistream.h"
+#include "de/fixedbytearray.h"
+#include "de/byterefarray.h"
+#include "de/byteorder.h"
 
 #include <cstring>
 

@@ -20,12 +20,12 @@
 #define LIBSHELL_LINK_H
 
 #include "../libdoomsday.h"
-#include <de/Address>
-#include <de/Socket>
-#include <de/Time>
-#include <de/Transmitter>
-#include <de/AbstractLink>
-#include "Protocol"
+#include "protocol.h"
+#include <de/address.h>
+#include <de/socket.h>
+#include <de/time.h>
+#include <de/transmitter.h>
+#include <de/abstractlink.h>
 
 namespace network {
 

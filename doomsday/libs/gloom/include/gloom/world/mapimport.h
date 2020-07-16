@@ -22,9 +22,9 @@
 #include "gloom/world/map.h"
 #include "../libgloom.h"
 
-#include <de/Image>
-#include <de/String>
-#include <doomsday/LumpCatalog>
+#include <de/image.h>
+#include <de/string.h>
+#include <doomsday/res/lumpcatalog.h>
 
 namespace gloom {
 

@@ -34,7 +34,7 @@
 #include <cstdlib>
 #include <tchar.h>
 
-#include <de/App>
+#include <de/app.h>
 #ifdef __CLIENT__
 #  include "gl/sys_opengl.h"
 #endif

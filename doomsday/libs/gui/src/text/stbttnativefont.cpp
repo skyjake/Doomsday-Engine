@@ -18,10 +18,10 @@
 
 #include "stbttnativefont.h"
 
-#include <de/KeyMap>
-#include <de/String>
-#include <de/ThreadLocal>
-#include <de/NativePath>
+#include <de/keymap.h>
+#include <de/string.h>
+#include <de/threadlocal.h>
+#include <de/nativepath.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"

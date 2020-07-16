@@ -21,7 +21,7 @@
 #define LIBDOOMSDAY_WORLD_ENTITYDATABASE_H
 
 #include <de/libcore.h>
-#include <de/Error>
+#include <de/error.h>
 
 #include "valuetype.h"
 #include "entitydef.h"

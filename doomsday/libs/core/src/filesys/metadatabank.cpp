@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/MetadataBank"
-#include "de/App"
-#include "de/FileSystem"
-#include "de/Folder"
+#include "de/metadatabank.h"
+#include "de/app.h"
+#include "de/filesystem.h"
+#include "de/folder.h"
 
 namespace de {
 

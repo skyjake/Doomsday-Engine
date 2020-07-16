@@ -40,7 +40,7 @@
 #include "doomsday/filesys/fs_main.h"
 #include "lzss.h"
 
-#include <de/App>
+#include <de/app.h>
 #include <de/legacy/str.h>
 #include <de/legacy/memoryzone.h>
 #include <cstdlib>

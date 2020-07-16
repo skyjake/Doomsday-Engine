@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_RENDER_STORE_H
 #define DE_CLIENT_RENDER_STORE_H
 
-#include <de/Vector>
+#include <de/vector.h>
 
 /**
  * Geometry backing store (arrays).

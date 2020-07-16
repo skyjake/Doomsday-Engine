@@ -17,14 +17,14 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/TextApp>
-#include <de/ZipArchive>
-#include <de/Block>
-#include <de/Date>
-#include <de/FixedByteArray>
-#include <de/Reader>
-#include <de/Writer>
-#include <de/FS>
+#include <de/textapp.h>
+#include <de/ziparchive.h>
+#include <de/block.h>
+#include <de/date.h>
+#include <de/fixedbytearray.h>
+#include <de/reader.h>
+#include <de/writer.h>
+#include <de/filesystem.h>
 
 using namespace de;
 

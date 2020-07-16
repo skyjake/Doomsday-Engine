@@ -17,14 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Process"
-#include "de/Variable"
-#include "de/ArrayValue"
-#include "de/RecordValue"
-#include "de/TextValue"
-#include "de/NoneValue"
-#include "de/TryStatement"
-#include "de/CatchStatement"
+#include "de/scripting/process.h"
+#include "de/variable.h"
+#include "de/arrayvalue.h"
+#include "de/recordvalue.h"
+#include "de/textvalue.h"
+#include "de/nonevalue.h"
+#include "de/scripting/trystatement.h"
+#include "de/scripting/catchstatement.h"
 
 #include <sstream>
 

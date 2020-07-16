@@ -20,7 +20,7 @@
 
 #include "hud/widgets/weaponslotwidget.h"
 
-#include <de/Vector>
+#include <de/vector.h>
 #include "hu_stuff.h"
 #include "player.h"
 

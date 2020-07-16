@@ -25,10 +25,10 @@
 #include "doomsday/world/bsp/partitioner.h"
 #include "doomsday/world/world.h" // validCount
 
-#include <de/Log>
-#include <de/String>
-#include <de/Task>
-#include <de/TaskPool>
+#include <de/log.h>
+#include <de/string.h>
+#include <de/task.h>
+#include <de/taskpool.h>
 
 namespace world {
 namespace bsp {

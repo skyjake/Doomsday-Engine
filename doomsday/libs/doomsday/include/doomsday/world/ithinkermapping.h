@@ -21,7 +21,7 @@
 
 #include "../libdoomsday.h"
 #include "thinker.h"
-#include <de/Id>
+#include <de/id.h>
 
 namespace world {
 

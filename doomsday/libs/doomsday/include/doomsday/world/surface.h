@@ -24,11 +24,11 @@
 #include "../uri.h"
 #include "material.h"
 
-#include <de/Id>
-#include <de/Matrix>
-#include <de/Observers>
-#include <de/String>
-#include <de/Vector>
+#include <de/id.h>
+#include <de/matrix.h>
+#include <de/observers.h>
+#include <de/string.h>
+#include <de/vector.h>
 
 namespace world {
 

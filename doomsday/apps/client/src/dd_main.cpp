@@ -42,19 +42,19 @@
 #include <de/legacy/memoryzone.h>
 #include <de/legacy/memory.h>
 #include <de/legacy/timer.h>
-#include <de/ArrayValue>
-#include <de/CommandLine>
-#include <de/Garbage>
-#include <de/NativeFile>
-#include <de/PackageLoader>
-#include <de/LinkFile>
-#include <de/LogBuffer>
-#include <de/DictionaryValue>
-#include <de/Log>
-#include <de/EscapeParser>
-#include <de/NativePath>
+#include <de/arrayvalue.h>
+#include <de/commandline.h>
+#include <de/garbage.h>
+#include <de/nativefile.h>
+#include <de/packageloader.h>
+#include <de/linkfile.h>
+#include <de/logbuffer.h>
+#include <de/dictionaryvalue.h>
+#include <de/log.h>
+#include <de/escapeparser.h>
+#include <de/nativepath.h>
 
-#include <doomsday/AbstractSession>
+#include <doomsday/abstractsession.h>
 #include <doomsday/console/alias.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
@@ -64,15 +64,15 @@
 #include <doomsday/filesys/virtualmappings.h>
 #include <doomsday/filesys/wad.h>
 #include <doomsday/filesys/zip.h>
-#include <doomsday/resource/databundle.h>
-#include <doomsday/resource/manifest.h>
-#include <doomsday/resource/resources.h>
-#include <doomsday/res/Bundles>
-#include <doomsday/res/DoomsdayPackage>
-#include <doomsday/res/MapManifests>
-#include <doomsday/res/Sprites>
-#include <doomsday/res/Textures>
-#include <doomsday/world/Materials>
+#include <doomsday/res/databundle.h>
+#include <doomsday/manifest.h>
+#include <doomsday/res/resources.h>
+#include <doomsday/res/bundles.h>
+#include <doomsday/res/doomsdaypackage.h>
+#include <doomsday/res/mapmanifests.h>
+#include <doomsday/res/sprites.h>
+#include <doomsday/res/textures.h>
+#include <doomsday/world/materials.h>
 #include <doomsday/world/entitydef.h>
 #include <doomsday/world/sector.h>
 #include <doomsday/help.h>
@@ -116,8 +116,8 @@
 #  include "render/rend_particle.h" // Rend_ParticleLoadSystemTextures
 #  include "render/vr.h"
 
-#  include "Contact"
-#  include "MaterialAnimator"
+#  include "world/contact.h"
+#  include "resource/materialanimator.h"
 
 #  include "ui/ui_main.h"
 #  include "ui/inputsystem.h"
@@ -131,8 +131,8 @@
 #  include "updater/updatedownloaddialog.h"
 
 #  include <de/legacy/texgamma.h>
-#  include <de/GLWindow>
-#  include <de/WindowSystem>
+#  include <de/glwindow.h>
+#  include <de/windowsystem.h>
 #endif
 
 #ifdef __SERVER__

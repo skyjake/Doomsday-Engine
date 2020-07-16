@@ -20,7 +20,7 @@
 #ifndef LIBCORE_MATH_H
 #define LIBCORE_MATH_H
 
-#include "de/IByteArray"
+#include "de/ibytearray.h"
 #include <cmath>
 
 #ifdef min

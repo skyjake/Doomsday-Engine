@@ -26,8 +26,8 @@
 #include "subsector.h"
 #include "../mesh/mesh.h"
 
-#include <de/Error>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/vector.h>
 
 namespace world {
 

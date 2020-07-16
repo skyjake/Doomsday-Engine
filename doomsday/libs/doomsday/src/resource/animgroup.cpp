@@ -18,9 +18,9 @@
  * 02110-1301 USA</small>
  */
 
-#include "doomsday/resource/animgroup.h"
+#include "doomsday/res/animgroup.h"
 
-#include <de/Log>
+#include <de/log.h>
 
 namespace res {
 

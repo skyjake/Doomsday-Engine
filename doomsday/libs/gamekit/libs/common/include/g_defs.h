@@ -25,7 +25,7 @@
 #  error "g_defs.h requires C++"
 #endif
 
-#include <de/String>
+#include <de/string.h>
 #include <doomsday/defs/ded.h>
 #include <doomsday/uri.h>
 

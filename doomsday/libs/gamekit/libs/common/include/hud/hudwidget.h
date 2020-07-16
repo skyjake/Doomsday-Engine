@@ -21,7 +21,7 @@
 #ifndef LIBCOMMON_UI_HUDWIDGET_H
 #define LIBCOMMON_UI_HUDWIDGET_H
 
-#include <de/Vector>
+#include <de/vector.h>
 #include "doomsday.h"
 
 typedef int uiwidgetid_t;

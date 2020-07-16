@@ -18,11 +18,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ui/FilteredData"
-#include "de/ui/Item"
+#include "de/ui/filtereddata.h"
+#include "de/ui/item.h"
 
-#include <de/Hash>
-#include <de/List>
+#include <de/hash.h>
+#include <de/list.h>
 
 namespace de {
 namespace ui {

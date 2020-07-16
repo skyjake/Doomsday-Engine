@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/InputDialog"
+#include "de/inputdialog.h"
 
 namespace de {
 

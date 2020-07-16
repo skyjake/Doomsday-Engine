@@ -21,11 +21,11 @@
 #include "gloom/render/ssao.h"
 #include "gloom/render/lightrender.h"
 
-#include <de/Drawable>
-#include <de/GLTextureFramebuffer>
-#include <de/GLProgram>
-#include <de/GLState>
-#include <de/GLUniform>
+#include <de/drawable.h>
+#include <de/gltextureframebuffer.h>
+#include <de/glprogram.h>
+#include <de/glstate.h>
+#include <de/gluniform.h>
 
 using namespace de;
 

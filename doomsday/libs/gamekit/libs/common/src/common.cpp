@@ -28,12 +28,9 @@
 #include "polyobjs.h"
 #include "r_common.h"
 
-#include <de/Binder>
-#include <de/Hash>
-#include <de/Context>
-#include <de/NoneValue>
-#include <de/ScriptSystem>
-#include <doomsday/DoomsdayApp>
+#include <de/dscript.h>
+#include <de/hash.h>
+#include <doomsday/doomsdayapp.h>
 #include <doomsday/defs/thing.h>
 #include <doomsday/players.h>
 #include <doomsday/world/map.h>

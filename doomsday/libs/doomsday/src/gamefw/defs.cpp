@@ -17,7 +17,7 @@
  */
 
 #include "doomsday/gamefw/defs.h"
-#include <de/Extension>
+#include <de/extension.h>
 
 static gfw_game_id_t theCurrentGame = GFW_GAME_ID_COUNT;
 

@@ -21,7 +21,7 @@
 #define CLIENT_UI_AXISINPUTCONTROL_H
 
 #include <de/legacy/types.h>
-#include <de/String>
+#include <de/string.h>
 #include "inputdevice.h"
 
 // Input device axis flags for use with cvars:

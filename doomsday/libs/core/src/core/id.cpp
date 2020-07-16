@@ -17,10 +17,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Id"
-#include "de/String"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/id.h"
+#include "de/string.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 #include <atomic>
 #include <cstdlib>

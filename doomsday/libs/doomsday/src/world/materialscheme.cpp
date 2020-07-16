@@ -18,7 +18,7 @@
  */
 
 #include "doomsday/world/materialscheme.h"
-#include "doomsday/world/MaterialManifest"
+#include "doomsday/world/materialmanifest.h"
 
 using namespace de;
 

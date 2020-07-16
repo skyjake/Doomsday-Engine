@@ -19,14 +19,14 @@
 #include "ui/widgets/inputbindingwidget.h"
 
 #include "clientapp.h"
-#include "BindContext"
-#include "CommandBinding"
-// #include "ImpulseBinding"
+#include "ui/bindcontext.h"
+#include "ui/commandbinding.h"
+// #include "ui/impulsebinding.h"
 #include "ui/inputsystem.h"
 #include "ui/b_util.h"
 
 #include <de/charsymbols.h>
-#include <de/AuxButtonWidget>
+#include <de/auxbuttonwidget.h>
 
 using namespace de;
 

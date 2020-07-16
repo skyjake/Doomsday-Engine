@@ -25,7 +25,7 @@
 #include <cmath>
 #include <cctype>
 #include <cstring>
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 #include "p_mapsetup.h"
 #include "hu_stuff.h"
 #include "player.h"

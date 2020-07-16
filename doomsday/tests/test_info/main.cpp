@@ -17,11 +17,11 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/TextApp>
-#include <de/LogBuffer>
-#include <de/ScriptedInfo>
-#include <de/EscapeParser>
-#include <de/FS>
+#include <de/textapp.h>
+#include <de/logbuffer.h>
+#include <de/dscript.h>
+#include <de/escapeparser.h>
+#include <de/filesystem.h>
 
 using namespace de;
 

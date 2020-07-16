@@ -19,7 +19,7 @@
 #include "doomsday/player.h"
 #include "doomsday/world/world.h"
 
-#include <de/ScriptSystem>
+#include <de/scripting/scriptsystem.h>
 
 using namespace de;
 

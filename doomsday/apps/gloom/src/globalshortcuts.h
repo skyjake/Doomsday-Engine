@@ -19,7 +19,7 @@
 #ifndef GLOBALSHORTCUTS_H
 #define GLOBALSHORTCUTS_H
 
-#include <de/Widget>
+#include <de/widget.h>
 
 class GlobalShortcuts : public de::Widget
 {

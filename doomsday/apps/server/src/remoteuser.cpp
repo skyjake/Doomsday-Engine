@@ -25,13 +25,13 @@
 #include "serverapp.h"
 
 #include <doomsday/world/map.h>
-#include <doomsday/network/Protocol>
+#include <doomsday/network/protocol.h>
 
-#include <de/data/json.h>
+#include <de/json.h>
 #include <de/legacy/memory.h>
-#include <de/Message>
-#include <de/ByteRefArray>
-#include <de/Garbage>
+#include <de/message.h>
+#include <de/byterefarray.h>
+#include <de/garbage.h>
 
 using namespace de;
 

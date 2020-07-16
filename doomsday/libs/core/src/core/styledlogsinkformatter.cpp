@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/StyledLogSinkFormatter"
-#include "de/Config"
+#include "de/styledlogsinkformatter.h"
+#include "de/config.h"
 
 namespace de {
 

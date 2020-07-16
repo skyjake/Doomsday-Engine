@@ -25,8 +25,8 @@
 #include <cmath>
 #include <de/legacy/concurrency.h>
 #include <de/legacy/timer.h>
-#include <de/GLState>
-#include <de/GLInfo>
+#include <de/glstate.h>
+#include <de/glinfo.h>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/var.h>
 #include "gl/gl_main.h"

@@ -34,8 +34,8 @@
 #include "dd_types.h"
 
 #include <de/libcore.h>
-#include <de/App>
-#include <de/ProgressWidget>
+#include <de/app.h>
+#include <de/progresswidget.h>
 
 /**
  * Automatic updater. Communicates with dengine.net and coordinates the

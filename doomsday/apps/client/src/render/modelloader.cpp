@@ -22,11 +22,11 @@
 #include "clientapp.h"
 #include "busyrunner.h"
 
-#include <de/Hash>
-#include <de/MultiAtlas>
-#include <de/ScriptedInfo>
-#include <de/Set>
-#include <de/filesys/AssetObserver>
+#include <de/hash.h>
+#include <de/multiatlas.h>
+#include <de/scripting/scriptedinfo.h>
+#include <de/set.h>
+#include <de/filesys/assetobserver.h>
 
 namespace render {
 

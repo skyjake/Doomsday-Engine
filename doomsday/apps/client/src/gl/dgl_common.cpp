@@ -25,13 +25,13 @@
 #include "gl/gl_draw.h"
 #include "render/r_draw.h"
 
-#include <doomsday/res/Textures>
+#include <doomsday/res/textures.h>
 
 #include <de/legacy/concurrency.h>
-#include <de/GLInfo>
-#include <de/GLState>
-#include <de/GLUniform>
-#include <de/Matrix>
+#include <de/glinfo.h>
+#include <de/glstate.h>
+#include <de/gluniform.h>
+#include <de/matrix.h>
 
 #include <cmath>
 #include <cstdlib>

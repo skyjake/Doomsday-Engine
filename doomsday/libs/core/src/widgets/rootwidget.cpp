@@ -17,9 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/RootWidget"
-#include "de/ConstantRule"
-#include "de/RuleRectangle"
+#include "de/rootwidget.h"
+#include "de/constantrule.h"
+#include "de/rulerectangle.h"
 #include "de/math.h"
 
 namespace de {

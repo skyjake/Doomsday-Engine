@@ -23,7 +23,7 @@
 
 #include "api_gl.h"
 #include "gl/gl_defer.h"
-#include <doomsday/res/TextureManifest>
+#include <doomsday/res/texturemanifest.h>
 
 /**
  * @defgroup textureContentFlags  Texture Content Flags

@@ -19,7 +19,7 @@
 #ifndef LIBDOOMSDAY_FILESYS_IDGAMESLINK_H
 #define LIBDOOMSDAY_FILESYS_IDGAMESLINK_H
 
-#include <de/filesys/WebHostedLink>
+#include <de/filesys/webhostedlink.h>
 
 class IdgamesLink : public de::filesys::WebHostedLink
 {

@@ -29,8 +29,8 @@
 
 #include <de/legacy/vector1.h> /// @todo remove me
 #include <de/legacy/aabox.h> // M_BoxOnLineSide2
-#include <de/Observers>
-#include <de/Vector>
+#include <de/observers.h>
+#include <de/vector.h>
 
 using namespace de;
 

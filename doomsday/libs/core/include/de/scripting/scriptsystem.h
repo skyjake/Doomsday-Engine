@@ -19,10 +19,10 @@
 #ifndef LIBCORE_SCRIPTSYSTEM_H
 #define LIBCORE_SCRIPTSYSTEM_H
 
-#include "../Error"
-#include "../System"
-#include "../Record"
-#include "../File"
+#include "de/error.h"
+#include "de/system.h"
+#include "de/record.h"
+#include "de/file.h"
 
 namespace de {
 

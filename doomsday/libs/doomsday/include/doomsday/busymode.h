@@ -22,9 +22,9 @@
 #define LIBDOOMSDAY_BUSYMODE_H
 
 #include "libdoomsday.h"
-#include <de/Observers>
-#include <de/Time>
-#include <de/String>
+#include <de/observers.h>
+#include <de/time.h>
+#include <de/string.h>
 #include <functional>
 
 /// Busy mode worker function.

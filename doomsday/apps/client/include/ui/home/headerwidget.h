@@ -19,8 +19,8 @@
 #ifndef DE_CLIENT_UI_HEADERWIDGET_H
 #define DE_CLIENT_UI_HEADERWIDGET_H
 
-#include <de/PopupButtonWidget>
-#include <de/PanelWidget>
+#include <de/popupbuttonwidget.h>
+#include <de/panelwidget.h>
 
 /**
  * Home column header.

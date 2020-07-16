@@ -19,9 +19,9 @@
  */
 
 #include <de/legacy/concurrency.h>
-#include <doomsday/res/Textures>
-#include <doomsday/world/Materials>
-#include <de/GLInfo>
+#include <doomsday/res/textures.h>
+#include <doomsday/world/materials.h>
+#include <de/glinfo.h>
 
 #include "clientapp.h"
 #include "sys_system.h"
@@ -33,7 +33,7 @@
 #include "gl/sys_opengl.h"
 
 #include "api_resource.h"
-#include "MaterialAnimator"
+#include "resource/materialanimator.h"
 
 #include "world/p_players.h" // displayPlayer
 

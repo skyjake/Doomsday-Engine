@@ -21,7 +21,7 @@
 #define DE_RENDER_TRIANGLE_STRIP_BUILDER
 
 #include <de/libcore.h>
-#include <de/Vector>
+#include <de/vector.h>
 
 /**
  * Abstract interface for a component that can be interpreted as an "edge"

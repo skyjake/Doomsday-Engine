@@ -35,17 +35,17 @@
 #include "doomsday/world/sky.h"
 #include "doomsday/world/world.h"
 #include "doomsday/mesh/face.h"
-#include "doomsday/EntityDatabase"
+#include "doomsday/world/entitydatabase.h"
 #include "doomsday/console/var.h"
-#include "doomsday/DoomsdayApp"
+#include "doomsday/doomsdayapp.h"
 #include "doomsday/network/protocol.h"
 
 #include <de/legacy/nodepile.h>
 #include <de/legacy/memory.h>
 #include <de/legacy/memoryzone.h>
 #include <de/charsymbols.h>
-#include <de/Rectangle>
-#include <de/LogBuffer>
+#include <de/rectangle.h>
+#include <de/logbuffer.h>
 
 using namespace de;
 

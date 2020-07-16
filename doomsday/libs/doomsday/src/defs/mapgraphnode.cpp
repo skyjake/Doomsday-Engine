@@ -19,8 +19,8 @@
 #include "doomsday/defs/mapgraphnode.h"
 #include "doomsday/defs/ded.h"
 
-#include <de/Record>
-#include <de/RecordValue>
+#include <de/record.h>
+#include <de/recordvalue.h>
 
 using namespace de;
 

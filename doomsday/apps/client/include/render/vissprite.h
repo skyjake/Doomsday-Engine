@@ -21,8 +21,8 @@
 #ifndef DE_CLIENT_RENDER_VISSPRITE_H
 #define DE_CLIENT_RENDER_VISSPRITE_H
 
-#include <de/Vector>
-#include <de/GLState>
+#include <de/vector.h>
+#include <de/glstate.h>
 
 #include "render/billboard.h"
 #include "rend_model.h"

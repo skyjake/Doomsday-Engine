@@ -20,7 +20,7 @@
 #define DE_CLIENT_UI_MULTIPLAYERSERVERMENUWIDGET_H
 
 #include "homemenuwidget.h"
-#include <de/ServerInfo>
+#include <de/serverinfo.h>
 
 /**
  * Menu for listing available multiplayer servers.

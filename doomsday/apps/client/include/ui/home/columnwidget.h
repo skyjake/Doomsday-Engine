@@ -20,7 +20,7 @@
 #define DE_CLIENT_UI_COLUMNWIDGET_H
 
 #include "headerwidget.h"
-#include <de/ScrollAreaWidget>
+#include <de/scrollareawidget.h>
 
 /**
  * Home column.

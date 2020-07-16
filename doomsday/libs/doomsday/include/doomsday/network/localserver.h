@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include "Link"
-#include <de/Error>
-#include <de/NativePath>
+#include "link.h"
+#include <de/error.h>
+#include <de/nativepath.h>
 
 namespace network {
 

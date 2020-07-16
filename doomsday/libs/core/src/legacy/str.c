@@ -36,8 +36,8 @@
 #include "de/legacy/memory.h"
 #include "de/legacy/memoryzone.h"
 #include "de/legacy/strutil.h"
+#include "de/garbage.h"
 #include <de/c_wrapper.h>
-#include <de/Garbage>
 
 static void *zoneAlloc(size_t n) {
     return Z_Malloc(n, PU_APPSTATIC, 0);

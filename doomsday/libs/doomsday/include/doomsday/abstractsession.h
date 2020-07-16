@@ -22,10 +22,10 @@
 #include "libdoomsday.h"
 #include "uri.h"
 #include "world/ithinkermapping.h"
-#include <de/Error>
-#include <de/Observers>
-#include <de/String>
-#include <de/KeyMap>
+#include <de/error.h>
+#include <de/observers.h>
+#include <de/string.h>
+#include <de/keymap.h>
 
 class GameStateFolder;
 

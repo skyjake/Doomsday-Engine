@@ -21,9 +21,9 @@
 
 #include "acs/system.h"
 
-#include <de/ISerializable>
-#include <de/Log>
-#include <de/NativePath>
+#include <de/iserializable.h>
+#include <de/log.h>
+#include <de/nativepath.h>
 #include "acs/module.h"
 #include "acs/script.h"
 #include "gamesession.h"

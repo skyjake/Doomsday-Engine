@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Waitable"
-#include "de/Time"
+#include "de/waitable.h"
+#include "de/time.h"
 
 #include <mutex>
 #include <condition_variable>

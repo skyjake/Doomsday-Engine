@@ -19,9 +19,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/UnixInfo"
-#include "de/Info"
-#include "de/App"
+#include "de/unixinfo.h"
+#include "de/info.h"
+#include "de/app.h"
 
 namespace de {
 namespace internal {

@@ -21,7 +21,7 @@
 
 #include "columnwidget.h"
 
-#include <de/IPersistent>
+#include <de/ipersistent.h>
 
 class SaveListData;
 

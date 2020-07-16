@@ -19,8 +19,8 @@
 #ifndef DE_CLIENT_UI_HOMEWIDGET_H
 #define DE_CLIENT_UI_HOMEWIDGET_H
 
-#include <de/PopupWidget>
-#include <de/IPersistent>
+#include <de/popupwidget.h>
+#include <de/ipersistent.h>
 
 /**
  * Root widget for the Home UI.

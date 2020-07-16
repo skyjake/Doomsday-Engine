@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/LinkFile"
-#include "de/Folder"
+#include "de/linkfile.h"
+#include "de/folder.h"
 
 namespace de {
 

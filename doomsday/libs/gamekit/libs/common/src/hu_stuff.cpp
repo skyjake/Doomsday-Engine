@@ -28,7 +28,7 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
-#include <de/String>
+#include <de/string.h>
 #include "fi_lib.h"
 #include "g_common.h"
 #include "g_defs.h"

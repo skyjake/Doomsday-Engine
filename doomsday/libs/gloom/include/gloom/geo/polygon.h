@@ -22,10 +22,10 @@
 #include "gloom/geo/geomath.h"
 #include "gloom/identity.h"
 
-#include <de/Hash>
-#include <de/List>
-#include <de/Rectangle>
-#include <de/Vector>
+#include <de/hash.h>
+#include <de/list.h>
+#include <de/rectangle.h>
+#include <de/vector.h>
 
 namespace gloom { namespace geo {
 

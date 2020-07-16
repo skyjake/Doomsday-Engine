@@ -17,15 +17,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Info"
-#include "de/App"
-#include "de/Folder"
-#include "de/Log"
-#include "de/LogBuffer"
-#include "de/RecordValue"
-#include "de/ScriptLex"
-#include "de/SourceLineTable"
-#include <de/TextValue>
+#include "de/info.h"
+#include "de/app.h"
+#include "de/folder.h"
+#include "de/log.h"
+#include "de/logbuffer.h"
+#include "de/recordvalue.h"
+#include "de/scripting/scriptlex.h"
+#include "de/sourcelinetable.h"
+#include "de/textvalue.h"
 
 #include <fstream>
 

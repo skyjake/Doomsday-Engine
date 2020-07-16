@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Matrix"
+#include "de/matrix.h"
 
 namespace de {
 

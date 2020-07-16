@@ -17,23 +17,22 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/SaveGames"
-#include "doomsday/DoomsdayApp"
-#include "doomsday/Games"
-#include "doomsday/AbstractSession"
-#include "doomsday/GameStateFolder"
+#include "doomsday/savegames.h"
+#include "doomsday/doomsdayapp.h"
+#include "doomsday/games.h"
+#include "doomsday/abstractsession.h"
+#include "doomsday/gamestatefolder.h"
 #include "doomsday/console/cmd.h"
 
-#include <de/Binder>
-#include <de/DirectoryFeed>
-#include <de/FileSystem>
-#include <de/Folder>
-#include <de/LogBuffer>
-#include <de/Loop>
-#include <de/RegExp>
-#include <de/ScriptSystem>
-#include <de/Task>
-#include <de/TaskPool>
+#include <de/dscript.h>
+#include <de/directoryfeed.h>
+#include <de/filesystem.h>
+#include <de/folder.h>
+#include <de/logbuffer.h>
+#include <de/loop.h>
+#include <de/regexp.h>
+#include <de/task.h>
+#include <de/taskpool.h>
 
 using namespace de;
 

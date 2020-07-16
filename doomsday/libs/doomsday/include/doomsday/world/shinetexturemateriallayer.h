@@ -20,7 +20,7 @@
 #ifndef LIBDOOMSDAY_WORLD_SHINETEXTUREMATERIALLAYER_H
 #define LIBDOOMSDAY_WORLD_SHINETEXTUREMATERIALLAYER_H
 
-#include <de/String>
+#include <de/string.h>
 #include <doomsday/defs/dedtypes.h>
 #include "texturemateriallayer.h"
 

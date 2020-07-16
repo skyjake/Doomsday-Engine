@@ -20,11 +20,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/FontLineWrapping"
-#include "de/BaseGuiApp"
-#include <de/Image>
+#include "de/fontlinewrapping.h"
+#include "de/baseguiapp.h"
+#include <de/image.h>
 
-#include <de/KeyMap>
+#include <de/keymap.h>
 #include <atomic>
 
 namespace de {

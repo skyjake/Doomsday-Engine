@@ -19,8 +19,8 @@
 #ifndef DE_CLIENT_PACKAGESDIALOG_H
 #define DE_CLIENT_PACKAGESDIALOG_H
 
-#include <de/DialogWidget>
-#include <doomsday/GameProfiles>
+#include <de/dialogwidget.h>
+#include <doomsday/gameprofiles.h>
 
 /**
  * Package selection UI.

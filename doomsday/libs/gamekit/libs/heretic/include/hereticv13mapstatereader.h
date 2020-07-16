@@ -26,7 +26,7 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include <doomsday/GameStateFolder>
+#include <doomsday/gamestatefolder.h>
 
 /**
  * Heretic ver 1.3 saved game map state reader.

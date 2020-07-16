@@ -35,8 +35,8 @@
 
 #include "gl/gltextureunit.h"
 #include "render/viewports.h"
-#include "ClientTexture"
-#include <de/Matrix>
+#include "resource/clienttexture.h"
+#include <de/matrix.h>
 
 struct ColorRawf_s;
 struct material_s;

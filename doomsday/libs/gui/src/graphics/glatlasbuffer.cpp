@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GLAtlasBuffer"
-#include "de/GLSubBuffer"
+#include "de/glatlasbuffer.h"
+#include "de/glsubbuffer.h"
 
-#include <de/List>
+#include <de/list.h>
 
 namespace de {
 

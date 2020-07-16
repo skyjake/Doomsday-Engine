@@ -28,10 +28,10 @@
 #include <zlib.h>
 #include <vector>
 
-#include <de/App>
-#include <de/ByteOrder>
-#include <de/NativePath>
-#include <de/LogBuffer>
+#include <de/app.h>
+#include <de/byteorder.h>
+#include <de/nativepath.h>
+#include <de/logbuffer.h>
 #include <de/legacy/memory.h>
 #include <de/legacy/memoryzone.h>
 #include <cstring> // memcpy

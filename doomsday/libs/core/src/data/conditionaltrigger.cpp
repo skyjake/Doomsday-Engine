@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ConditionalTrigger"
-#include "de/Set"
-#include "de/Value"
+#include "de/conditionaltrigger.h"
+#include "de/set.h"
+#include "de/value.h"
 
 namespace de {
 

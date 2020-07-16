@@ -20,8 +20,8 @@
 #ifndef SERVER_SHELLUSER_H
 #define SERVER_SHELLUSER_H
 
-#include <de/Socket>
-#include <doomsday/network/Link>
+#include <de/socket.h>
+#include <doomsday/network/link.h>
 #include "users.h"
 
 /**

@@ -28,7 +28,7 @@
 #  error Joystick is not available in a SERVER build
 #endif
 
-#include <de/String>
+#include <de/string.h>
 
 #define IJOY_AXISMIN    -10000
 #define IJOY_AXISMAX    10000

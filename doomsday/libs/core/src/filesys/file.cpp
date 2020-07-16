@@ -17,20 +17,19 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/File"
-#include "de/App"
-#include "de/Date"
-#include "de/DirectoryFeed"
-#include "de/FS"
-#include "de/Feed"
-#include "de/Folder"
-#include "de/Guard"
-#include "de/LinkFile"
-#include "de/NativeFile"
-#include "de/NativePointerValue"
-#include "de/NumberValue"
-#include "de/RecordValue"
-#include "de/ScriptSystem"
+#include "de/file.h"
+
+#include "de/app.h"
+#include "de/date.h"
+#include "de/directoryfeed.h"
+#include "de/dscript.h"
+#include "de/feed.h"
+#include "de/filesystem.h"
+#include "de/folder.h"
+#include "de/guard.h"
+#include "de/linkfile.h"
+#include "de/nativefile.h"
+#include "de/nativepointervalue.h"
 
 namespace de {
 

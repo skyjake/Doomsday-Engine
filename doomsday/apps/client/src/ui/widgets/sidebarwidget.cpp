@@ -23,8 +23,8 @@
 
 #include <doomsday/doomsdayapp.h>
 
-#include <de/DialogContentStylist>
-#include <de/SequentialLayout>
+#include <de/dialogcontentstylist.h>
+#include <de/sequentiallayout.h>
 
 using namespace de;
 using namespace de::ui;

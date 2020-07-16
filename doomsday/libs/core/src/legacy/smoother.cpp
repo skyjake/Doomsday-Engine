@@ -34,7 +34,7 @@
 #include <string.h>
 
 #include "de/legacy/smoother.h"
-#include <de/Log>
+#include "de/log.h"
 
 /**
  * Timed 3D point in space.

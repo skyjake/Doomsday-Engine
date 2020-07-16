@@ -17,10 +17,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Address"
-#include "de/String"
-#include "de/RegExp"
-#include "de/CString"
+#include "de/address.h"
+#include "de/string.h"
+#include "de/regexp.h"
+#include "de/cstring.h"
 #include "../src/net/networkinterfaces.h"
 
 #include <the_Foundation/address.h>

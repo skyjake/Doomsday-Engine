@@ -20,12 +20,12 @@
  * 02110-1301 USA</small>
  */
 
-#include "doomsday/resource/wav.h"
+#include "doomsday/wav.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
 
-#include <de/LogBuffer>
-#include <de/NativePath>
+#include <de/logbuffer.h>
+#include <de/nativepath.h>
 #include <de/legacy/memory.h>
 #include <de/legacy/memoryzone.h>
 #include "dd_share.h"

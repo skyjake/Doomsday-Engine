@@ -24,7 +24,7 @@
 #include "world/p_object.h"
 
 #ifdef __CLIENT__
-#  include "BindContext"
+#  include "ui/bindcontext.h"
 #  include "ui/b_util.h"
 #  include "ui/inputdevice.h"
 #  include "ui/inputsystem.h"
@@ -38,8 +38,8 @@
 #include <doomsday/console/var.h>
 #include <doomsday/world/subsector.h>
 #include <doomsday/world/surface.h>
-#include <de/List>
-#include <de/KeyMap>
+#include <de/list.h>
+#include <de/keymap.h>
 
 using namespace de;
 

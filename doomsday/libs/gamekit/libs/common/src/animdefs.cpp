@@ -23,8 +23,8 @@
 #include "common.h"
 #include "animdefs.h"
 
-#include <de/Log>
-#include <de/NativePath>
+#include <de/log.h>
+#include <de/nativepath.h>
 #if __JHEXEN__
 #  include "hexlex.h"
 #endif

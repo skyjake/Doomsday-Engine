@@ -52,7 +52,7 @@
 #include <stdio.h>
 #include <cassert>
 #include <iostream>
-#include <de/Log>
+#include <de/log.h>
 #include "api_console.h"
 
 #define DSFMOD_TRACE(args)  LOGDEV_AUDIO_XVERBOSE("[FMOD] ", args)

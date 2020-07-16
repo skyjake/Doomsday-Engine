@@ -24,9 +24,9 @@
 #include "../../mesh/mesh.h"
 #include "../sector.h"
 
-#include <de/List>
-#include <de/Error>
-#include <de/Log>
+#include <de/list.h>
+#include <de/error.h>
+#include <de/log.h>
 
 namespace world {
 namespace bsp {

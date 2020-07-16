@@ -19,7 +19,7 @@
 #ifndef ABOUTDIALOG_H
 #define ABOUTDIALOG_H
 
-#include <de/term/DialogWidget>
+#include <de/term/dialogwidget.h>
 
 /**
  * Dialog for information about the program.

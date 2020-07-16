@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ServerInfo"
-#include "de/TextValue"
-#include "de/Version"
-#include "de/Log"
-#include "de/data/json.h"
+#include "de/serverinfo.h"
+#include "de/textvalue.h"
+#include "de/version.h"
+#include "de/log.h"
+#include "de/json.h"
 
 namespace de {
 

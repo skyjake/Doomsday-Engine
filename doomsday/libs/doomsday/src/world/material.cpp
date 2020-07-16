@@ -20,15 +20,15 @@
 #include "doomsday/world/material.h"
 
 #include "doomsday/console/cmd.h"
-#include "doomsday/res/Textures"
-#include "doomsday/resource/resources.h"
+#include "doomsday/res/textures.h"
+#include "doomsday/res/resources.h"
 #include "doomsday/world/materials.h"
 #include "doomsday/world/materialmanifest.h"
 #include "doomsday/world/texturemateriallayer.h"
 #include "doomsday/world/detailtexturemateriallayer.h"
 #include "doomsday/world/shinetexturemateriallayer.h"
 
-#include <de/Log>
+#include <de/log.h>
 
 using namespace de;
 

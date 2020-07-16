@@ -32,23 +32,23 @@
 #include "dd_main.h"
 #include "clientapp.h"
 
-#include <doomsday/DoomsdayApp>
-#include <doomsday/Games>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/games.h>
 
-#include <de/Async>
-#include <de/BlockPacket>
-#include <de/ByteRefArray>
-#include <de/ByteSubArray>
-#include <de/ElapsedTimer>
-#include <de/GuiApp>
-#include <de/Message>
-#include <de/MessageDialog>
-#include <de/PackageLoader>
-#include <de/RecordValue>
-#include <de/ServerFinder>
-#include <de/Socket>
-#include <de/Timer>
-#include <de/data/json.h>
+#include <de/async.h>
+#include <de/blockpacket.h>
+#include <de/byterefarray.h>
+#include <de/bytesubarray.h>
+#include <de/elapsedtimer.h>
+#include <de/guiapp.h>
+#include <de/message.h>
+#include <de/messagedialog.h>
+#include <de/packageloader.h>
+#include <de/recordvalue.h>
+#include <de/serverfinder.h>
+#include <de/socket.h>
+#include <de/timer.h>
+#include <de/json.h>
 #include <de/legacy/memory.h>
 
 using namespace de;

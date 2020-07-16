@@ -27,11 +27,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <de/legacy/concurrency.h>
-#include <de/GLState>
-#include <de/GLInfo>
+#include <de/glstate.h>
+#include <de/glinfo.h>
 
-#include "BitmapFont"
-#include "CompositeBitmapFont"
+#include "resource/bitmapfont.h"
+#include "resource/compositebitmapfont.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_draw.h"

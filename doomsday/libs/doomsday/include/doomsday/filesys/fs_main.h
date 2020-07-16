@@ -54,13 +54,13 @@
 #include "fileinfo.h"
 #include "filetype.h"
 #include "searchpath.h"
-#include "../resource/resourceclass.h"
+#include "../resourceclass.h"
 #include "../filesys/lumpindex.h"
 
-#include <de/List>
-#include <de/String>
-#include <de/PathTree>
-#include <de/KeyMap>
+#include <de/list.h>
+#include <de/string.h>
+#include <de/pathtree.h>
+#include <de/keymap.h>
 
 /**
  * @defgroup fs File System

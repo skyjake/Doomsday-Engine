@@ -21,11 +21,11 @@
 
 #include "audio/m_mus2midi.h"
 
-#include <de/Log>
-#include <de/NativePath>
-#include <de/Block>
-#include <de/ByteRefArray>
-#include <de/Writer>
+#include <de/log.h>
+#include <de/nativepath.h>
+#include <de/block.h>
+#include <de/byterefarray.h>
+#include <de/writer.h>
 
 #include <cstdio>
 #include <cstring>

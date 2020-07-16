@@ -22,11 +22,11 @@
 #include "gloom/render/view.h"
 #include "gloom/world/map.h"
 
-#include <de/AtlasTexture>
-#include <de/ImageBank>
-#include <de/GLProgram>
-#include <de/GLShaderBank>
-#include <de/GLTextureFramebuffer>
+#include <de/atlastexture.h>
+#include <de/imagebank.h>
+#include <de/glprogram.h>
+#include <de/glshaderbank.h>
+#include <de/gltextureframebuffer.h>
 
 namespace gloom {
 

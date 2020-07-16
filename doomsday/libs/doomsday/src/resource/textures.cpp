@@ -17,15 +17,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/textures.h"
-#include "doomsday/resource/resources.h"
-#include "doomsday/res/Composite"
-#include "doomsday/res/TextureScheme"
-#include "doomsday/res/Patch"
-#include "doomsday/res/PatchName"
-#include "doomsday/res/Sprites"
+#include "doomsday/res/textures.h"
+#include "doomsday/res/resources.h"
+#include "doomsday/res/composite.h"
+#include "doomsday/res/texturescheme.h"
+#include "doomsday/res/patch.h"
+#include "doomsday/res/patchname.h"
+#include "doomsday/res/sprites.h"
 #include "doomsday/filesys/fs_main.h"
-#include "doomsday/DoomsdayApp"
+#include "doomsday/doomsdayapp.h"
 
 #include <de/legacy/mathutil.h>
 #include <de/legacy/types.h>

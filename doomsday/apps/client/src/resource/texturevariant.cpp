@@ -31,9 +31,9 @@
 
 #include "render/rend_main.h" // misc global vars awaiting new home
 
-#include <doomsday/resource/colorpalettes.h>
-#include <doomsday/res/Texture>
-#include <de/LogBuffer>
+#include <doomsday/res/colorpalettes.h>
+#include <doomsday/res/texture.h>
+#include <de/logbuffer.h>
 #include <de/legacy/mathutil.h> // M_CeilPow
 
 using namespace de;

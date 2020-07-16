@@ -23,9 +23,9 @@
 #include <de/legacy/concurrency.h>
 #include <de/legacy/timer.h>
 #include <de/legacy/vector1.h>
-#include <de/BitArray>
-#include <de/GLInfo>
-#include <de/GLState>
+#include <de/bitarray.h>
+#include <de/glinfo.h>
+#include <de/glstate.h>
 
 #include "clientapp.h"
 #include "api_console.h"
@@ -55,7 +55,7 @@
 #include "world/p_players.h"
 #include "world/convexsubspace.h"
 #include "world/surface.h"
-#include "Contact"
+#include "world/contact.h"
 #include "world/subsector.h"
 #include "world/sky.h"
 

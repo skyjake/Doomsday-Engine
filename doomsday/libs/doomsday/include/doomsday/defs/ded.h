@@ -22,9 +22,9 @@
 
 #include <vector>
 #include <de/libcore.h>
-#include <de/Record>
-#include <de/String>
-#include <de/Vector>
+#include <de/record.h>
+#include <de/string.h>
+#include <de/vector.h>
 #include "../uri.h"
 
 #include "dedtypes.h"

@@ -16,17 +16,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/LineEditWidget"
-#include "de/LabelWidget"
-#include "de/FontLineWrapping"
-#include "de/GuiRootWidget"
-#include "de/GLTextComposer"
-#include "de/Style"
+#include "de/lineeditwidget.h"
+#include "de/labelwidget.h"
+#include "de/fontlinewrapping.h"
+#include "de/guirootwidget.h"
+#include "de/gltextcomposer.h"
+#include "de/ui/style.h"
 
-#include <de/KeyEvent>
-#include <de/MouseEvent>
-#include <de/AnimationRule>
-#include <de/Drawable>
+#include <de/keyevent.h>
+#include <de/mouseevent.h>
+#include <de/animationrule.h>
+#include <de/drawable.h>
 
 #if defined (DE_MOBILE)
 #  include <QGuiApplication>

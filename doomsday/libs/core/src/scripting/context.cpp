@@ -17,10 +17,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Context"
-#include "de/Statement"
-#include "de/Process"
-#include "de/RecordValue"
+#include "de/scripting/context.h"
+#include "de/scripting/statement.h"
+#include "de/scripting/process.h"
+#include "de/recordvalue.h"
 
 namespace de {
 

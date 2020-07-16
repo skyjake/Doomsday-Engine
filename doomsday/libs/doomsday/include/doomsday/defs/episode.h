@@ -20,7 +20,7 @@
 #define LIBDOOMSDAY_DEFN_EPISODE_H
 
 #include "definition.h"
-#include <de/RecordAccessor>
+#include <de/recordaccessor.h>
 
 namespace defn {
 

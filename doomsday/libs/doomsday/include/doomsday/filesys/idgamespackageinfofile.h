@@ -20,8 +20,8 @@
 #ifndef LIBDOOMSDAY_IDGAMESPACKAGEINFOFILE_H
 #define LIBDOOMSDAY_IDGAMESPACKAGEINFOFILE_H
 
-#include <de/File>
-#include <de/RemoteFile>
+#include <de/file.h>
+#include <de/remotefile.h>
 
 /**
  * Generates a Doomsday 2 package metadata for mods downloaded from the idgames archive.

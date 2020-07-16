@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Clock"
+#include "de/clock.h"
 #include <atomic>
 
 namespace de {

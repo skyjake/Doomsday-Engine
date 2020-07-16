@@ -21,10 +21,10 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "clientapp.h"
 
-#include <de/ButtonWidget>
-#include <de/Config>
-#include <de/FileDialog>
-#include <de/TextValue>
+#include <de/buttonwidget.h>
+#include <de/config.h>
+#include <de/filedialog.h>
+#include <de/textvalue.h>
 
 using namespace de;
 

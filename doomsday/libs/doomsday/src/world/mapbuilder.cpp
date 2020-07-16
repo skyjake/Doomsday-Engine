@@ -21,7 +21,7 @@
 #include "doomsday/world/mapbuilder.h"
 #include "doomsday/world/factory.h"
 #include "doomsday/world/materials.h"
-#include "doomsday/resource/resources.h"
+#include "doomsday/res/resources.h"
 
 namespace world {
 

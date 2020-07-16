@@ -23,9 +23,9 @@
 #include "gloom/render/lightrender.h"
 #include "gloom/render/light.h"
 
-#include <de/PackageLoader>
-#include <de/ModelDrawable>
-#include <de/GLProgram>
+#include <de/packageloader.h>
+#include <de/modeldrawable.h>
+#include <de/glprogram.h>
 
 using namespace de;
 

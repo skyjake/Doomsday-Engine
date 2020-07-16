@@ -21,16 +21,16 @@
 #include "approotwidget.h"
 #include "globalshortcuts.h"
 
-#include <de/ButtonWidget>
-#include <de/CommandLine>
-#include <de/CompositorWidget>
-#include <de/FlowLayout>
-#include <de/GLState>
-#include <de/Garbage>
-#include <de/LabelWidget>
-#include <de/LogBuffer>
-#include <de/VRConfig>
-#include <de/VRWindowTransform>
+#include <de/buttonwidget.h>
+#include <de/commandline.h>
+#include <de/compositorwidget.h>
+#include <de/flowlayout.h>
+#include <de/glstate.h>
+#include <de/garbage.h>
+#include <de/labelwidget.h>
+#include <de/logbuffer.h>
+#include <de/vrconfig.h>
+#include <de/vrwindowtransform.h>
 
 using namespace de;
 

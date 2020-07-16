@@ -21,10 +21,10 @@
 #ifndef CLIENT_CLIENTWINDOW_H
 #define CLIENT_CLIENTWINDOW_H
 
-#include <de/PersistentGLWindow>
-#include <de/BaseWindow>
-#include <de/NotificationAreaWidget>
-#include <de/FadeToBlackWidget>
+#include <de/persistentglwindow.h>
+#include <de/basewindow.h>
+#include <de/notificationareawidget.h>
+#include <de/fadetoblackwidget.h>
 
 #include "ui/clientrootwidget.h"
 #include "resource/image.h"

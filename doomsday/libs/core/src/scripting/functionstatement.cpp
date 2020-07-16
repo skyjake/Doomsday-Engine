@@ -17,18 +17,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/FunctionStatement"
-#include "de/Function"
-#include "de/Context"
-#include "de/ConstantExpression"
-#include "de/TextValue"
-#include "de/ArrayValue"
-#include "de/DictionaryValue"
-#include "de/FunctionValue"
-#include "de/RefValue"
-#include "de/Process"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/scripting/functionstatement.h"
+#include "de/scripting/function.h"
+#include "de/scripting/context.h"
+#include "de/scripting/constantexpression.h"
+#include "de/scripting/functionvalue.h"
+#include "de/scripting/process.h"
+#include "de/textvalue.h"
+#include "de/arrayvalue.h"
+#include "de/dictionaryvalue.h"
+#include "de/writer.h"
+#include "de/refvalue.h"
+#include "de/reader.h"
 
 using namespace de;
 

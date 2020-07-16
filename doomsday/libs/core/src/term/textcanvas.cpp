@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/term/TextCanvas"
+#include "de/term/textcanvas.h"
 
 namespace de { namespace term {
 

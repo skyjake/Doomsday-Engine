@@ -23,11 +23,11 @@
 #include <de/legacy/memoryblockset.h>
 #include <de/legacy/memoryzone.h>
 #include <de/c_wrapper.h>
-#include <de/App>
-#include <de/Log>
-#include <de/Config>
-#include <de/TextValue>
-#include <de/KeyMap>
+#include <de/app.h>
+#include <de/log.h>
+#include <de/config.h>
+#include <de/textvalue.h>
+#include <de/keymap.h>
 
 using namespace de;
 

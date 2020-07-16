@@ -16,19 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ScriptCommandWidget"
-#include "de/PopupWidget"
+#include "de/scriptcommandwidget.h"
+#include "de/popupwidget.h"
 
 #include <de/charsymbols.h>
-#include <de/Lexicon>
-#include <de/App>
-#include <de/Script>
-#include <de/ScriptLex>
-#include <de/ScriptSystem>
-#include <de/BuiltInExpression>
-#include <de/Process>
-#include <de/RecordValue>
-#include <de/RefValue>
+#include <de/lexicon.h>
+#include <de/app.h>
+#include <de/dscript.h>
+#include <de/scripting/scriptlex.h>
+#include <de/scripting/builtinexpression.h>
+#include <de/refvalue.h>
 
 namespace de {
 

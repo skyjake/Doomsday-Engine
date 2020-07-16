@@ -21,12 +21,12 @@
 
 #include "de_platform.h"
 #include "resource/framemodel.h"
-#include "ClientTexture"
+#include "resource/clienttexture.h"
 
-#include <doomsday/res/TextureManifest>
+#include <doomsday/res/texturemanifest.h>
 #include <doomsday/filesys/file.h>
-#include <de/Range>
-#include <de/BitArray>
+#include <de/range.h>
+#include <de/bitarray.h>
 #include <de/legacy/memory.h>
 
 using namespace de;

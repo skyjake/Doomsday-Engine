@@ -23,22 +23,22 @@
 #include "ui/dialogs/createprofiledialog.h"
 #include "clientapp.h"
 
-#include <doomsday/DoomsdayApp>
-#include <doomsday/Games>
-#include <doomsday/GameProfiles>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/games.h>
+#include <doomsday/gameprofiles.h>
 
-#include <de/CallbackAction>
-#include <de/ChildWidgetOrganizer>
-#include <de/Config>
-#include <de/DirectoryListDialog>
-#include <de/FileSystem>
-#include <de/GridPopupWidget>
-#include <de/Loop>
-#include <de/MenuWidget>
-#include <de/PersistentState>
-#include <de/PopupMenuWidget>
-#include <de/VariableChoiceWidget>
-#include <de/VariableToggleWidget>
+#include <de/callbackaction.h>
+#include <de/childwidgetorganizer.h>
+#include <de/config.h>
+#include <de/directorylistdialog.h>
+#include <de/filesystem.h>
+#include <de/gridpopupwidget.h>
+#include <de/loop.h>
+#include <de/menuwidget.h>
+#include <de/persistentstate.h>
+#include <de/popupmenuwidget.h>
+#include <de/variablechoicewidget.h>
+#include <de/variabletogglewidget.h>
 
 using namespace de;
 

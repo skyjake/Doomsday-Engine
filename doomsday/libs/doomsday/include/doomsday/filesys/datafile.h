@@ -19,8 +19,8 @@
 #ifndef LIBDOOMSDAY_DATAFILE_H
 #define LIBDOOMSDAY_DATAFILE_H
 
-#include "../resource/databundle.h"
-#include <de/ByteArrayFile>
+#include "../res/databundle.h"
+#include <de/bytearrayfile.h>
 
 /**
  * FS2 File for for classic data files: LMP, DED, DEH.

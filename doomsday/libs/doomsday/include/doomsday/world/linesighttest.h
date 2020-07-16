@@ -23,7 +23,7 @@
 
 #include "map.h"
 #include "bspnode.h"
-#include <de/Vector>
+#include <de/vector.h>
 
 namespace world {
 

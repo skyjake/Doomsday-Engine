@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include <doomsday/network/Protocol>
-#include <de/GuiWidget>
+#include <doomsday/network/protocol.h>
+#include <de/guiwidget.h>
 
 /**
  * Map outline visualizing information from a shell::MapOutlinePacket.

@@ -21,11 +21,11 @@
 #ifndef DE_CLIENT_RENDER_DECORATION_H
 #define DE_CLIENT_RENDER_DECORATION_H
 
-#include <de/Error>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/vector.h>
 
-#include "MapObject"
-#include "MaterialAnimator"
+#include "world/mapobject.h"
+#include "resource/materialanimator.h"
 
 /// No decorations are visible beyond this.
 #define MAX_DECOR_DISTANCE      (2048)

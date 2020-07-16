@@ -24,9 +24,9 @@
 
 #include <functional>
 #include <doomsday/filesys/file.h>
-#include <de/Block>
-#include <de/Error>
-#include <de/String>
+#include <de/block.h>
+#include <de/error.h>
+#include <de/string.h>
 
 namespace acs {
 

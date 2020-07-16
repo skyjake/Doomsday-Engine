@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/TextStreamLogSink"
+#include "de/textstreamlogsink.h"
 
 namespace de {
 

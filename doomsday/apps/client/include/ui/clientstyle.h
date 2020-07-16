@@ -19,12 +19,12 @@
 #ifndef DE_CLIENT_UI_CLIENTSTYLE_H
 #define DE_CLIENT_UI_CLIENTSTYLE_H
 
-#include <de/Image>
-#include <de/Style>
-#include <de/GuiWidget>
-#include <de/ui/Stylist>
-#include <doomsday/Game>
-#include <doomsday/LumpCatalog>
+#include <de/image.h>
+#include <de/ui/style.h>
+#include <de/guiwidget.h>
+#include <de/ui/stylist.h>
+#include <doomsday/game.h>
+#include <doomsday/res/lumpcatalog.h>
 
 class ClientStyle : public de::Style
 {

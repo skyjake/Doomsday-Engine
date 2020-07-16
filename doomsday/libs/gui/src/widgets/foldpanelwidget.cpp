@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/FoldPanelWidget"
-#include "de/ProceduralImage"
-#include "de/DialogContentStylist"
+#include "de/foldpanelwidget.h"
+#include "de/proceduralimage.h"
+#include "de/dialogcontentstylist.h"
 
 namespace de {
 

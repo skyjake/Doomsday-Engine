@@ -21,7 +21,7 @@
 #define LIBCORE_LEX_H
 
 #include "../libcore.h"
-#include "../String"
+#include "de/string.h"
 
 namespace de {
 

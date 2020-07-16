@@ -32,8 +32,8 @@ typedef enum gfw_gamerule_e {
 #ifdef __cplusplus
 
 #include "gamesession.h"
-#include <de/Record>
-#include <de/String>
+#include <de/record.h>
+#include <de/string.h>
 
 /**
  * @todo Separate behaviors so that each rule is singular.

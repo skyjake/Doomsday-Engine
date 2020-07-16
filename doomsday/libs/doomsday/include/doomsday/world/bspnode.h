@@ -21,8 +21,8 @@
 #define LIBDOOMSDAY_WORLD_BSPNODE_H
 
 #include "../libdoomsday.h"
-#include <de/BinaryTree>
-#include <de/Partition>
+#include <de/binarytree.h>
+#include <de/partition.h>
 
 namespace world {
 

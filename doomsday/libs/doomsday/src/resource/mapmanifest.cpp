@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "doomsday/resource/mapmanifest.h"
-#include <de/NativePath>
+#include "doomsday/res/mapmanifest.h"
+#include <de/nativepath.h>
 
 using namespace de;
 

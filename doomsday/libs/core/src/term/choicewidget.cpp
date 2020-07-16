@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/term/ChoiceWidget"
-#include "de/term/MenuWidget"
-#include "de/term/TextRootWidget"
+#include "de/term/choicewidget.h"
+#include "de/term/menuwidget.h"
+#include "de/term/textrootwidget.h"
 
 namespace de { namespace term {
 

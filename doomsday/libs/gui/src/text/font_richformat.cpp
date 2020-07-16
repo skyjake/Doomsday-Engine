@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Font"
+#include "de/font.h"
 
-#include <de/EscapeParser>
-#include <de/CString>
+#include <de/escapeparser.h>
+#include <de/cstring.h>
 
 namespace de {
 

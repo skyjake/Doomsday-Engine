@@ -20,11 +20,11 @@
 #ifndef LIBCORE_FUNCTIONSTATEMENT_H
 #define LIBCORE_FUNCTIONSTATEMENT_H
 
-#include "de/Statement"
-#include "de/Function"
-#include "de/Compound"
-#include "de/DictionaryExpression"
-#include "de/String"
+#include "statement.h"
+#include "function.h"
+#include "compound.h"
+#include "dictionaryexpression.h"
+#include "de/string.h"
 
 #include <list>
 

@@ -20,7 +20,7 @@
 #ifndef LIBCORE_DICTIONARYEXPRESSION_H
 #define LIBCORE_DICTIONARYEXPRESSION_H
 
-#include "../Expression"
+#include "expression.h"
 
 #include <vector>
 

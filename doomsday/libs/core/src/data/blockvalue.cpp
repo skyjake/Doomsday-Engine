@@ -17,9 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/BlockValue"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/blockvalue.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 #include <sstream>
 

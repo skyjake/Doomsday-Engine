@@ -18,21 +18,17 @@
 
 #include "de_platform.h"
 #include "api_console.h"
-#include "ConfigProfiles"
+#include "configprofiles.h"
 
-#include <de/App>
-#include <de/Config>
-#include <de/Info>
-#include <de/NumberValue>
-#include <de/Process>
-#include <de/RecordValue>
-#include <de/Script>
-#include <de/TextValue>
-#include <de/ZipArchive>
+#include <de/app.h>
+#include <de/config.h>
+#include <de/info.h>
+#include <de/dscript.h>
+#include <de/ziparchive.h>
 
 #include <doomsday/doomsdayapp.h>
-#include <doomsday/Game>
-#include <de/KeyMap>
+#include <doomsday/game.h>
+#include <de/keymap.h>
 #include <sstream>
 
 using namespace de;
@@ -272,7 +268,7 @@ DE_PIMPL(ConfigProfiles)
 
     void changeTo(const String &profileName)
     {
-        LOG_AS("ConfigProfiles");
+        LOG_AS("configprofiles.h");
         DE_ASSERT(tryFind(profileName));
 
         if (current == profileName) return;
@@ -369,7 +365,7 @@ DE_PIMPL(ConfigProfiles)
     {
         if (!self().isPersistent() || newGame.isNull()) return;
 
-        LOG_AS("ConfigProfiles");
+        LOG_AS("configprofiles.h");
         LOG_DEBUG("Game has been loaded, deserializing %s profiles") << self().persistentName();
 
         self().deserialize();
@@ -415,7 +411,7 @@ DE_PIMPL(ConfigProfiles)
     {
         if (!self().isPersistent() || gameBeingUnloaded.isNull()) return;
 
-        LOG_AS("ConfigProfiles");
+        LOG_AS("configprofiles.h");
         LOG_DEBUG("Game being unloaded, serializing %s profiles") << self().persistentName();
 
         // Update the current profile.

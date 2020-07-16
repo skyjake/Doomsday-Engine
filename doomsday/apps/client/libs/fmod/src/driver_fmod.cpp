@@ -49,13 +49,10 @@
 
 #include "doomsday.h"
 #include <de/c_wrapper.h>
-#include <de/ArrayValue>
-#include <de/Config>
-#include <de/DictionaryValue>
-#include <de/Extension>
-#include <de/LogBuffer>
-#include <de/ScriptSystem>
-#include <de/TextValue>
+#include <de/config.h>
+#include <de/extension.h>
+#include <de/logbuffer.h>
+#include <de/dscript.h>
 
 struct Driver
 {

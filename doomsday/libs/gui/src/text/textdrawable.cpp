@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/TextDrawable"
+#include "de/textdrawable.h"
 
-#include <de/Task>
-#include <de/TaskPool>
+#include <de/task.h>
+#include <de/taskpool.h>
 
 namespace de {
 

@@ -16,15 +16,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/PanelWidget"
-#include "de/GuiRootWidget"
+#include "de/panelwidget.h"
+#include "de/guirootwidget.h"
 
-#include <de/AnimationRule>
-#include <de/Drawable>
-#include <de/Garbage>
-#include <de/LogBuffer>
-#include <de/MouseEvent>
-#include <de/Timer>
+#include <de/animationrule.h>
+#include <de/drawable.h>
+#include <de/garbage.h>
+#include <de/logbuffer.h>
+#include <de/mouseevent.h>
+#include <de/timer.h>
 #include <de/math.h>
 
 namespace de {

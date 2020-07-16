@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_UI_PACKAGECONTENTOPTIONSWIDGET_H
 #define DE_CLIENT_UI_PACKAGECONTENTOPTIONSWIDGET_H
 
-#include <de/GuiWidget>
+#include <de/guiwidget.h>
 
 /**
  * Widget for package content options.

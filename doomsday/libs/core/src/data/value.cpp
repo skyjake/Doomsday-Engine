@@ -17,19 +17,19 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Value"
+#include "de/value.h"
 
-#include "de/AnimationValue"
-#include "de/ArrayValue"
-#include "de/BlockValue"
-#include "de/DictionaryValue"
-#include "de/FunctionValue"
-#include "de/NoneValue"
-#include "de/NumberValue"
-#include "de/Reader"
-#include "de/RecordValue"
-#include "de/TextValue"
-#include "de/TimeValue"
+#include "de/animationvalue.h"
+#include "de/arrayvalue.h"
+#include "de/blockvalue.h"
+#include "de/dictionaryvalue.h"
+#include "de/scripting/functionvalue.h"
+#include "de/nonevalue.h"
+#include "de/numbervalue.h"
+#include "de/reader.h"
+#include "de/recordvalue.h"
+#include "de/textvalue.h"
+#include "de/timevalue.h"
 
 namespace de {
 

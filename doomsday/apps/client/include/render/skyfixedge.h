@@ -21,9 +21,9 @@
 #define DE_RENDER_SKY_FIX_EDGE
 
 #include <doomsday/mesh/hedge.h>
-#include <de/Vector>
+#include <de/vector.h>
 
-#include "TriangleStripBuilder" /// @todo remove me
+#include "trianglestripbuilder.h" /// @todo remove me
 
 /**
  * @ingroup render

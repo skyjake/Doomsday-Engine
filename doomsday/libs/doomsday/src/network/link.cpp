@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/network/Link"
-#include "doomsday/network/Protocol"
-#include <de/Message>
-#include <de/Socket>
-#include <de/Time>
-#include <de/Log>
-#include <de/ByteRefArray>
+#include "doomsday/network/link.h"
+#include "doomsday/network/protocol.h"
+#include <de/message.h>
+#include <de/socket.h>
+#include <de/time.h>
+#include <de/log.h>
+#include <de/byterefarray.h>
 
 namespace network {
 

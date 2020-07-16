@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/SourceLineTable"
-#include "de/PathTree"
-#include "de/Hash"
+#include "de/sourcelinetable.h"
+#include "de/pathtree.h"
+#include "de/hash.h"
 
 #include <atomic>
 

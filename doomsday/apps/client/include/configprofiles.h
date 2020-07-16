@@ -19,13 +19,13 @@
 #ifndef DE_CONFIGPROFILES_H
 #define DE_CONFIGPROFILES_H
 
-#include <de/String>
-#include <de/Observers>
-#include <de/Profiles>
-#include <de/List>
-#include <de/NoneValue>
-#include <de/NumberValue>
-#include <de/TextValue>
+#include <de/string.h>
+#include <de/observers.h>
+#include <de/profiles.h>
+#include <de/list.h>
+#include <de/nonevalue.h>
+#include <de/numbervalue.h>
+#include <de/textvalue.h>
 
 /**
  * Collection of settings (cvars, Config variables) of which there can be

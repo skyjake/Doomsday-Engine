@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_UISETTINGSDIALOG_H
 #define DE_CLIENT_UISETTINGSDIALOG_H
 
-#include <de/DialogWidget>
+#include <de/dialogwidget.h>
 
 /**
  * Dialog for user interface settings.

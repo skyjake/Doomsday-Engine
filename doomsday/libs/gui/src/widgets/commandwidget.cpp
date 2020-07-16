@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/CommandWidget"
-#include "de/DocumentPopupWidget"
-#include "de/PersistentState"
-#include "de/Style"
+#include "de/commandwidget.h"
+#include "de/documentpopupwidget.h"
+#include "de/persistentstate.h"
+#include "de/ui/style.h"
 
-#include <de/EditorHistory>
-#include <de/KeyEvent>
+#include <de/editorhistory.h>
+#include <de/keyevent.h>
 
 namespace de {
 

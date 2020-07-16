@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_UI_HOME_HOMEMENUWIDGET_H
 #define DE_CLIENT_UI_HOME_HOMEMENUWIDGET_H
 
-#include <de/MenuWidget>
+#include <de/menuwidget.h>
 
 class HomeItemWidget;
 class ColumnWidget;

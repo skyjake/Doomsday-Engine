@@ -19,7 +19,7 @@
 #ifndef ICAMERA_H
 #define ICAMERA_H
 
-#include <de/Matrix>
+#include <de/matrix.h>
 #include "../libgloom.h"
 
 namespace gloom {

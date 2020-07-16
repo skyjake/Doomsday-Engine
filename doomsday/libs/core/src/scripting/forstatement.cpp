@@ -17,16 +17,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ForStatement"
-#include "de/Expression"
-#include "de/Context"
-#include "de/Evaluator"
-#include "de/Process"
-#include "de/Value"
-#include "de/Variable"
-#include "de/RefValue"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/scripting/forstatement.h"
+#include "de/scripting/expression.h"
+#include "de/scripting/context.h"
+#include "de/scripting/evaluator.h"
+#include "de/scripting/process.h"
+#include "de/value.h"
+#include "de/variable.h"
+#include "de/refvalue.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 using namespace de;
 

@@ -19,9 +19,9 @@
 
 #include "testwindow.h"
 
-#include <de/GuiApp>
-#include <de/LogBuffer>
-#include <de/WindowSystem>
+#include <de/guiapp.h>
+#include <de/logbuffer.h>
+#include <de/windowsystem.h>
 
 #define SDL_MAIN_HANDLED
 #include <SDL_main.h>

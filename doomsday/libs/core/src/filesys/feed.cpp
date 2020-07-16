@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "de/Feed"
+#include "de/feed.h"
 
 namespace de {
 

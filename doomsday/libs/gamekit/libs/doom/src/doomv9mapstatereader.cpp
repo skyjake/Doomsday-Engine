@@ -22,9 +22,9 @@
 #include "jdoom.h"
 #include "doomv9mapstatereader.h"
 
-#include <de/ArrayValue>
-#include <de/NativePath>
-#include <de/NumberValue>
+#include <de/arrayvalue.h>
+#include <de/nativepath.h>
+#include <de/numbervalue.h>
 #include "dmu_lib.h"
 #include "g_game.h"
 #include "p_ceiling.h"

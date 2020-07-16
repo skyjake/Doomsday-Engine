@@ -17,14 +17,14 @@
  */
 
 #include "doomsday/world/materials.h"
-#include "doomsday/world/MaterialScheme"
-#include "doomsday/world/MaterialManifest"
+#include "doomsday/world/materialscheme.h"
+#include "doomsday/world/materialmanifest.h"
 #include "doomsday/world/world.h"
-#include "doomsday/resource/resources.h"
+#include "doomsday/res/resources.h"
 
 #include <de/legacy/memory.h>
-#include <de/KeyMap>
-#include <de/List>
+#include <de/keymap.h>
+#include <de/list.h>
 #include <unordered_set>
 
 using namespace de;

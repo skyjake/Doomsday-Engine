@@ -19,8 +19,8 @@
 #ifndef LIBSHELL_LINEEDITTEDGET_H
 #define LIBSHELL_LINEEDITTEDGET_H
 
-#include "Widget"
-#include "../AbstractLineEditor"
+#include "widget.h"
+#include "../abstractlineeditor.h"
 
 namespace de { namespace term {
 

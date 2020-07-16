@@ -19,12 +19,12 @@
 #include "opendialog.h"
 #include "guishellapp.h"
 
-#include <de/ChoiceWidget>
-#include <de/Config>
-#include <de/GridLayout>
-#include <de/PopupButtonWidget>
-#include <de/PopupMenuWidget>
-#include <de/LineEditWidget>
+#include <de/choicewidget.h>
+#include <de/config.h>
+#include <de/gridlayout.h>
+#include <de/popupbuttonwidget.h>
+#include <de/popupmenuwidget.h>
+#include <de/lineeditwidget.h>
 
 using namespace de;
 

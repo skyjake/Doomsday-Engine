@@ -32,9 +32,9 @@
 //#include "dd_main.h"  // App_World()
 
 #include <doomsday/console/cmd.h>
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 #include <de/legacy/vector1.h>
-#include <de/Rectangle>
+#include <de/rectangle.h>
 
 namespace world {
 

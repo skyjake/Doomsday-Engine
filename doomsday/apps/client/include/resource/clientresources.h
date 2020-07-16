@@ -21,33 +21,33 @@
 #ifndef DE_CLIENT_RESOURCES_H
 #define DE_CLIENT_RESOURCES_H
 
-#include <de/List>
-#include <de/KeyMap>
-#include <de/Set>
-#include <de/Error>
-#include <de/Record>
-#include <de/String>
-#include <de/System>
+#include <de/list.h>
+#include <de/keymap.h>
+#include <de/set.h>
+#include <de/error.h>
+#include <de/record.h>
+#include <de/string.h>
+#include <de/system.h>
 
 #include <doomsday/defs/ded.h>
 #include <doomsday/filesys/wad.h>
 #include <doomsday/filesys/zip.h>
 #include <doomsday/uri.h>
-#include <doomsday/resource/animgroup.h>
-#include <doomsday/resource/mapmanifest.h>
-#include <doomsday/resource/resources.h>
-#include <doomsday/resource/colorpalette.h>
-#include <doomsday/res/Texture>
-#include <doomsday/res/TextureScheme>
+#include <doomsday/res/animgroup.h>
+#include <doomsday/res/mapmanifest.h>
+#include <doomsday/res/resources.h>
+#include <doomsday/res/colorpalette.h>
+#include <doomsday/res/texture.h>
+#include <doomsday/res/texturescheme.h>
 
-#include "resource/rawtexture.h"
-#include "AbstractFont"
-#include "BitmapFont"
-#include "CompositeBitmapFont"
-#include "FontScheme"
-#include "MaterialVariantSpec"
-#include "resource/framemodel.h"
-#include "resource/framemodeldef.h"
+#include "abstractfont.h"
+#include "bitmapfont.h"
+#include "compositebitmapfont.h"
+#include "fontscheme.h"
+#include "framemodel.h"
+#include "framemodeldef.h"
+#include "materialvariantspec.h"
+#include "rawtexture.h"
 
 class ClientMaterial;
 

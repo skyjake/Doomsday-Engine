@@ -20,9 +20,9 @@
 #ifndef CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
 #define CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
 
-#include <de/String>
-#include <de/CompiledRecord>
-#include "Binding"
+#include <de/string.h>
+#include <de/compiledrecord.h>
+#include "binding.h"
 #include "ddevent.h"
 
 enum ibcontroltype_t

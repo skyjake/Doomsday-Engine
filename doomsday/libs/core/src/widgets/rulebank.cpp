@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/RuleBank"
-#include <de/ConstantRule>
-#include <de/OperatorRule>
-#include <de/ScriptedInfo>
+#include "de/rulebank.h"
+#include "de/constantrule.h"
+#include "de/operatorrule.h"
+#include "de/scripting/scriptedinfo.h"
 
 namespace de {
 

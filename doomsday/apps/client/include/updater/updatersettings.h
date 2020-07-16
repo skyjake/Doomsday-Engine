@@ -23,9 +23,9 @@
 #ifndef DE_CLIENT_UPDATERSETTINGS_H
 #define DE_CLIENT_UPDATERSETTINGS_H
 
-#include <de/Time>
-#include <de/String>
-#include <de/NativePath>
+#include <de/time.h>
+#include <de/string.h>
+#include <de/nativepath.h>
 
 /**
  * Convenient interface to the Updater settings. All changes to the settings

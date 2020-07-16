@@ -24,10 +24,10 @@
 #include "sector.h"
 
 #include <de/legacy/aabox.h>
-#include <de/Id>
-#include <de/List>
-#include <de/Observers>
-#include <de/Vector>
+#include <de/id.h>
+#include <de/list.h>
+#include <de/observers.h>
+#include <de/vector.h>
 
 namespace world {
 

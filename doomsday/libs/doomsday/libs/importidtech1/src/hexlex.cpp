@@ -22,7 +22,7 @@
 #include <cstdio>
 #include <cstring>
 #include "hexlex.h"
-#include <de/Log>
+#include <de/log.h>
 
 using namespace de;
 

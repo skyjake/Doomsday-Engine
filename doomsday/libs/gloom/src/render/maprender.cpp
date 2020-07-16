@@ -26,8 +26,8 @@
 #include "gloom/render/icamera.h"
 #include "gloom/render/gbuffer.h"
 
-#include <de/Drawable>
-#include <de/GLUniform>
+#include <de/drawable.h>
+#include <de/gluniform.h>
 
 #include <array>
 

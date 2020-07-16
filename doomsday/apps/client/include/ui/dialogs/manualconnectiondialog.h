@@ -19,8 +19,8 @@
 #ifndef DE_CLIENT_MANUALCONNECTIONDIALOG_H
 #define DE_CLIENT_MANUALCONNECTIONDIALOG_H
 
-#include <de/InputDialog>
-#include <de/IPersistent>
+#include <de/inputdialog.h>
+#include <de/ipersistent.h>
 
 /**
  * Dialog for connecting to a multiplayer server manually using an IP address or domain

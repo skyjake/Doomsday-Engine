@@ -19,8 +19,8 @@
 #ifndef LIBSHELL_DIALOGTEDGET_H
 #define LIBSHELL_DIALOGTEDGET_H
 
-#include "Widget"
-#include "TextRootWidget"
+#include "widget.h"
+#include "textrootwidget.h"
 
 namespace de { namespace term {
 

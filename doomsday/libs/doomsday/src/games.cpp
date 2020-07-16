@@ -20,19 +20,16 @@
 
 #include "doomsday/games.h"
 
-#include <doomsday/DoomsdayApp>
+#include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/filesys/fs_main.h>
-#include <doomsday/resource/manifest.h>
-#include <doomsday/resource/bundles.h>
+#include <doomsday/manifest.h>
+#include <doomsday/res/bundles.h>
 
-#include <de/App>
-#include <de/ArrayValue>
-#include <de/DictionaryValue>
-#include <de/Log>
-#include <de/Loop>
-#include <de/ScriptSystem>
-#include <de/TextValue>
+#include <de/app.h>
+#include <de/log.h>
+#include <de/loop.h>
+#include <de/dscript.h>
 #include <de/charsymbols.h>
 #include <algorithm>
 

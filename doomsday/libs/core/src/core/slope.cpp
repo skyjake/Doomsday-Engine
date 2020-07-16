@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/core/slope.h"
+#include "de/slope.h"
 
 #include <cmath>
 

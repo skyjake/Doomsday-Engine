@@ -26,10 +26,10 @@
 #include "doomsday/defs/ded.h"
 #include "doomsday/console/exec.h"
 #include "doomsday/audio/audio.h"
-#include "doomsday/DoomsdayApp"
+#include "doomsday/doomsdayapp.h"
 
 #include <de/legacy/vector1.h>
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 
 using namespace de;
 

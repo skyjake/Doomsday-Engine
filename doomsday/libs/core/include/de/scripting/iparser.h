@@ -20,7 +20,7 @@
 #ifndef LIBCORE_IPARSER_H
 #define LIBCORE_IPARSER_H
 
-#include "../String"
+#include "de/string.h"
 
 namespace de {
 

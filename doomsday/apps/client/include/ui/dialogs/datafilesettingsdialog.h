@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_DATAFILESETTINGSDIALOG_H
 #define DE_CLIENT_DATAFILESETTINGSDIALOG_H
 
-#include <de/DirectoryListDialog>
+#include <de/directorylistdialog.h>
 
 /**
  * Dialog for data file settings.

@@ -22,7 +22,7 @@
 #define LIBCOMMON_GRAPHICS_DRAW_PATCH_H
 #ifdef __cplusplus
 
-#include <de/Vector>
+#include <de/vector.h>
 #include "doomsday.h"
 
 /**

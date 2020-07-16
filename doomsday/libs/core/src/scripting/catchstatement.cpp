@@ -17,13 +17,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/CatchStatement"
-#include "de/NameExpression"
-#include "de/Writer"
-#include "de/Reader"
-#include "de/Context"
-#include "de/TextValue"
-#include "de/RefValue"
+#include "de/scripting/catchstatement.h"
+#include "de/scripting/nameexpression.h"
+#include "de/writer.h"
+#include "de/reader.h"
+#include "de/scripting/context.h"
+#include "de/textvalue.h"
+#include "de/refvalue.h"
 
 using namespace de;
 

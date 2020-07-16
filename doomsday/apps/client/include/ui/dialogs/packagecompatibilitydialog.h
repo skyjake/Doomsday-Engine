@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_UI_PACKAGECOMPATIBILITYDIALOG_H
 #define DE_CLIENT_UI_PACKAGECOMPATIBILITYDIALOG_H
 
-#include <de/MessageDialog>
+#include <de/messagedialog.h>
 
 /**
  * Dialog for resolving package incompatibilities.

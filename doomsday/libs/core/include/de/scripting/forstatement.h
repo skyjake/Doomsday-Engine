@@ -20,9 +20,9 @@
 #ifndef LIBCORE_FORSTATEMENT_H
 #define LIBCORE_FORSTATEMENT_H
 
-#include "../Statement"
-#include "../Compound"
-#include "../String"
+#include "statement.h"
+#include "compound.h"
+#include "de/string.h"
 
 #include <string>
 

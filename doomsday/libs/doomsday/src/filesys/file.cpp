@@ -24,7 +24,7 @@
 #include "doomsday/filesys/file.h"
 #include "doomsday/filesys/fs_main.h"
 
-#include <de/NativePath>
+#include <de/nativepath.h>
 
 namespace res {
 

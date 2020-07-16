@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_RENDER_ENVIRON_H
 #define DE_CLIENT_RENDER_ENVIRON_H
 
-#include <de/GLTexture>
+#include <de/gltexture.h>
 
 namespace world { class Subsector; }
 

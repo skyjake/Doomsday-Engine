@@ -2,9 +2,9 @@
 #include "folderselection.h"
 #include "guishellapp.h"
 
-#include <de/Config>
-#include <de/SequentialLayout>
-#include <de/ToggleWidget>
+#include <de/config.h>
+#include <de/sequentiallayout.h>
+#include <de/togglewidget.h>
 
 //#ifdef MACOSX
 //#  define PREFS_APPLY_IMMEDIATELY

@@ -29,7 +29,7 @@
 
 #include <de/legacy/aabox.h>
 #include <de/legacy/vector1.h>
-#include <de/Rectangle>
+#include <de/rectangle.h>
 
 using namespace de;
 

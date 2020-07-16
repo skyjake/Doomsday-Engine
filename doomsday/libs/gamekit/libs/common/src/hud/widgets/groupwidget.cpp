@@ -20,7 +20,7 @@
 
 #include "hud/widgets/groupwidget.h"
 
-#include <de/List>
+#include <de/list.h>
 #include "common.h"
 
 using namespace de;

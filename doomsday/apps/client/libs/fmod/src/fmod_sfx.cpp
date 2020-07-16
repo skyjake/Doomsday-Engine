@@ -41,8 +41,8 @@
 
 #include "driver_fmod.h"
 #include "dd_share.h"
-#include <de/LogBuffer>
-#include <de/Lockable>
+#include <de/logbuffer.h>
+#include <de/lockable.h>
 #include <stdlib.h>
 #include <cmath>
 #include <vector>

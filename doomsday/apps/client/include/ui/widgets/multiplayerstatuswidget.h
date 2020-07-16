@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_MULTIPLAYERSTATUSWIDGET_H
 #define DE_CLIENT_MULTIPLAYERSTATUSWIDGET_H
 
-#include <de/PopupMenuWidget>
+#include <de/popupmenuwidget.h>
 
 /**
  * Popup menu that appears in the task bar when joined to a multiplayer game.

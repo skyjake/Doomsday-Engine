@@ -19,11 +19,11 @@
 #ifndef DE_CLIENT_RENDER_SHADERVAR_H
 #define DE_CLIENT_RENDER_SHADERVAR_H
 
-#include <de/AnimationValue>
-#include <de/GLUniform>
-#include <de/Range>
-#include <de/List>
-#include <de/Hash>
+#include <de/animationvalue.h>
+#include <de/gluniform.h>
+#include <de/range.h>
+#include <de/list.h>
+#include <de/hash.h>
 
 /**
  * Animatable variable bound to a GL uniform. The value can have 1...4 float

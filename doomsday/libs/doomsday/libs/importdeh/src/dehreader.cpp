@@ -31,13 +31,13 @@
 #include <doomsday/defs/state.h>
 #include <doomsday/defs/ded.h>
 #include <doomsday/game.h>
-#include <de/App>
-#include <de/ArrayValue>
-#include <de/Block>
-#include <de/Error>
-#include <de/Log>
-#include <de/String>
-#include <de/RegExp>
+#include <de/app.h>
+#include <de/arrayvalue.h>
+#include <de/block.h>
+#include <de/error.h>
+#include <de/log.h>
+#include <de/string.h>
+#include <de/regexp.h>
 
 #include <fstream>
 

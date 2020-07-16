@@ -21,11 +21,11 @@
 #include "ui/savelistdata.h"
 
 #include <doomsday/game.h>
-#include <doomsday/GameStateFolder>
+#include <doomsday/gamestatefolder.h>
 
-#include <de/CallbackAction>
-#include <de/DocumentPopupWidget>
-#include <de/FileSystem>
+#include <de/callbackaction.h>
+#include <de/documentpopupwidget.h>
+#include <de/filesystem.h>
 
 using namespace de;
 

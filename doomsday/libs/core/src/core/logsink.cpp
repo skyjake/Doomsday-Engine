@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/LogSink"
+#include "de/logsink.h"
 
 namespace de {
 

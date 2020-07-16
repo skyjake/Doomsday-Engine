@@ -26,13 +26,13 @@
 #include "menu/page.h"
 #include "menu/widgets/lineeditwidget.h"
 
-#include <doomsday/SaveGames>
-#include <de/App>
-#include <de/Folder>
-#include <de/LogBuffer>
-#include <de/Observers>
-#include <de/Writer>
-#include <de/Loop>
+#include <doomsday/savegames.h>
+#include <de/app.h>
+#include <de/folder.h>
+#include <de/logbuffer.h>
+#include <de/observers.h>
+#include <de/writer.h>
+#include <de/loop.h>
 
 #include <map>
 #include <utility>

@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GridLayout"
-#include "de/SequentialLayout"
+#include "de/gridlayout.h"
+#include "de/sequentiallayout.h"
 
-#include <de/KeyMap>
+#include <de/keymap.h>
 
 namespace de {
 

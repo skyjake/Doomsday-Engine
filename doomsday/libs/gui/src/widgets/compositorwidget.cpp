@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/CompositorWidget"
+#include "de/compositorwidget.h"
 
-#include <de/Drawable>
+#include <de/drawable.h>
 
 namespace de {
 

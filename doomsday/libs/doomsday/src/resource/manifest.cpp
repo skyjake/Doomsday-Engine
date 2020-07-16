@@ -18,17 +18,17 @@
  * 02110-1301 USA</small>
  */
 
-#include "doomsday/resource/manifest.h"
-#include "doomsday/resource/resources.h"
+#include "doomsday/manifest.h"
+#include "doomsday/res/resources.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/lumpindex.h"
 #include "doomsday/filesys/wad.h"
 #include "doomsday/filesys/zip.h"
 
-#include <de/App>
-#include <de/FileSystem>
-#include <de/NativeFile>
-#include <de/Path>
+#include <de/app.h>
+#include <de/filesystem.h>
+#include <de/nativefile.h>
+#include <de/path.h>
 
 using namespace de;
 using namespace res;

@@ -21,12 +21,12 @@
 #ifndef DE_RESOURCE_FONTMANIFEST_H
 #define DE_RESOURCE_FONTMANIFEST_H
 
-#include "AbstractFont"
+#include "abstractfont.h"
 #include <doomsday/uri.h>
-#include <de/Error>
-#include <de/Observers>
-#include <de/PathTree>
-#include <de/String>
+#include <de/error.h>
+#include <de/observers.h>
+#include <de/pathtree.h>
+#include <de/string.h>
 
 namespace de {
 

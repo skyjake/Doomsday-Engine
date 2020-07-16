@@ -26,10 +26,10 @@
 #include "dd_version.h"
 #include "network/net_main.h"
 
-#include <de/ProgressWidget>
-#include <de/Log>
-#include <de/Version>
-#include <de/WebRequest>
+#include <de/progresswidget.h>
+#include <de/log.h>
+#include <de/version.h>
+#include <de/webrequest.h>
 
 #include <fstream>
 

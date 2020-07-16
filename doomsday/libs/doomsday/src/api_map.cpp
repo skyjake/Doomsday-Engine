@@ -31,15 +31,15 @@
 //#include "world/map.h"
 //#include "world/clientworld.h"
 //#include "render/rend_fakeradio.h"
-//#include "ConvexSubspace"
-//#include "Surface"
+//#include "world/convexsubspace.h"
+//#include "world/surface.h"
 //#endif
 
 //#if defined(__SERVER__)
 #include "doomsday/api_map.h"
 //#include "dd_main.h"
 //#include "world/p_players.h"
-#include <doomsday/resource/resources.h>
+#include <doomsday/res/resources.h>
 #include <doomsday/world/convexsubspace.h>
 #include <doomsday/world/map.h>
 #include <doomsday/world/surface.h>
@@ -50,19 +50,19 @@
 
 #include <de/legacy/memoryzone.h>
 #include <doomsday/filesys/fs_main.h>
-#include <doomsday/resource/mapmanifests.h>
+#include <doomsday/res/mapmanifests.h>
 #include <doomsday/mesh/face.h>
 #include <doomsday/world/blockmap.h>
 #include <doomsday/world/bspleaf.h>
+#include <doomsday/world/entitydatabase.h>
 #include <doomsday/world/interceptor.h>
-#include <doomsday/world/linesighttest.h>
 #include <doomsday/world/lineopening.h>
-#include <doomsday/world/MaterialManifest>
-#include <doomsday/world/Materials>
+#include <doomsday/world/linesighttest.h>
+#include <doomsday/world/materialmanifest.h>
+#include <doomsday/world/materials.h>
 #include <doomsday/world/plane.h>
 #include <doomsday/world/sector.h>
 #include <doomsday/world/thinkers.h>
-#include <doomsday/EntityDatabase>
 
 using namespace de;
 using namespace world;

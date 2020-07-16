@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/DirectoryListDialog"
-#include "de/DirectoryArrayWidget"
+#include "de/directorylistdialog.h"
+#include "de/directoryarraywidget.h"
 
 namespace de {
 

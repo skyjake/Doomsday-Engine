@@ -32,7 +32,7 @@
 #include "de/legacy/timer.h"
 #include "de/legacy/concurrency.h"
 
-#include <de/Time>
+#include "de/time.h"
 
 static float ticksPerSecond = TICSPERSEC;
 static double timeOffset = 0;

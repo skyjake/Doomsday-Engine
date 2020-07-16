@@ -23,12 +23,12 @@
 #include "doomsday/help.h"
 #include "doomsday/console/cmd.h"
 
-#include <de/App>
-#include <de/PackageLoader>
-#include <de/LogBuffer>
-#include <de/Reader>
+#include <de/app.h>
+#include <de/packageloader.h>
+#include <de/logbuffer.h>
+#include <de/reader.h>
 
-#include <de/KeyMap>
+#include <de/keymap.h>
 
 using namespace de;
 

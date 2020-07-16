@@ -17,13 +17,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GLInfo"
-#include "de/GLWindow"
-#include "de/graphics/opengl.h"
+#include "de/glinfo.h"
+#include "de/glwindow.h"
+#include "de/opengl.h"
 
 #include <cstring>
-#include <de/String>
-#include <de/Log>
+#include <de/string.h>
+#include <de/log.h>
 #include <de/math.h>
 #include <de/c_wrapper.h>
 

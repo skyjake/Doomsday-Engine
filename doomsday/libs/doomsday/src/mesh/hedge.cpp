@@ -22,8 +22,8 @@
 #include "doomsday/world/subsector.h"
 #include "doomsday/world/convexsubspace.h"
 
-#include <de/Log>
-#include <de/String>
+#include <de/log.h>
+#include <de/string.h>
 
 namespace mesh {
 

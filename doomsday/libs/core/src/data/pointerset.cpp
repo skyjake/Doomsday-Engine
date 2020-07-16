@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/PointerSet"
+#include "de/pointerset.h"
 #include <cstdlib>
 
 namespace de {

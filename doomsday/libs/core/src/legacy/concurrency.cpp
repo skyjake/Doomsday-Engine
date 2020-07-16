@@ -22,11 +22,11 @@
  */
 
 #include "de/legacy/concurrency.h"
-#include <de/App>
-#include <de/Time>
-#include <de/Log>
-#include <de/Loop>
-#include <de/Garbage>
+#include "de/app.h"
+#include "de/time.h"
+#include "de/log.h"
+#include "de/loop.h"
+#include "de/garbage.h"
 #include <assert.h>
 
 CallbackThread::CallbackThread(systhreadfunc_t func, void *param)

@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GridPopupWidget"
-#include "de/GridLayout"
-#include "de/DialogContentStylist"
+#include "de/gridpopupwidget.h"
+#include "de/gridlayout.h"
+#include "de/dialogcontentstylist.h"
 
 namespace de {
 

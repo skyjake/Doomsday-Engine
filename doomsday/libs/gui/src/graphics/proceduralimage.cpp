@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ProceduralImage"
+#include "de/proceduralimage.h"
 
 namespace de {
 

@@ -16,21 +16,21 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GuiWidget"
-#include "de/GuiRootWidget"
-#include "de/BlurWidget"
-#include "de/Style"
-#include "de/BaseGuiApp"
-#include "de/IPersistent"
+#include "de/guiwidget.h"
+#include "de/guirootwidget.h"
+#include "de/blurwidget.h"
+#include "de/ui/style.h"
+#include "de/baseguiapp.h"
+#include "de/ipersistent.h"
 
-#include <de/Garbage>
-#include <de/MouseEvent>
-#include <de/Drawable>
-#include <de/GLTexture>
-#include <de/GLTextureFramebuffer>
-#include <de/LogBuffer>
-#include <de/FocusWidget>
-#include <de/PopupWidget>
+#include <de/garbage.h>
+#include <de/mouseevent.h>
+#include <de/drawable.h>
+#include <de/gltexture.h>
+#include <de/gltextureframebuffer.h>
+#include <de/logbuffer.h>
+#include <de/focuswidget.h>
+#include <de/popupwidget.h>
 
 namespace de {
 

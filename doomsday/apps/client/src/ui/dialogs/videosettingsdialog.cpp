@@ -20,17 +20,17 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
 #include "ui/clientwindow.h"
-#include "CommandAction"
-#include "ConfigProfiles"
+#include "ui/commandaction.h"
+#include "configprofiles.h"
 #include "clientapp.h"
 #include "dd_main.h"
 
 #include <doomsday/console/exec.h>
-#include <de/VariableToggleWidget>
-#include <de/VariableSliderWidget>
-#include <de/ChoiceWidget>
-#include <de/SequentialLayout>
-#include <de/GridLayout>
+#include <de/variabletogglewidget.h>
+#include <de/variablesliderwidget.h>
+#include <de/choicewidget.h>
+#include <de/sequentiallayout.h>
+#include <de/gridlayout.h>
 
 using namespace de;
 using namespace de::ui;

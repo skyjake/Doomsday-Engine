@@ -17,7 +17,7 @@
  */
 
 #include <de/libcore.h>
-#include <de/Counted>
+#include <de/counted.h>
 #include "shellapp.h"
 
 #if defined (DE_CYGWIN) || defined (DE_MSYS)

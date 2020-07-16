@@ -27,10 +27,10 @@
 #include "sys_system.h"
 
 #include <de/legacy/concurrency.h>
-#include <de/Drawable>
-#include <de/GLTextureFramebuffer>
-#include <de/GuiRootWidget>
-#include <de/ProgressWidget>
+#include <de/drawable.h>
+#include <de/gltextureframebuffer.h>
+#include <de/guirootwidget.h>
+#include <de/progresswidget.h>
 
 using namespace de;
 

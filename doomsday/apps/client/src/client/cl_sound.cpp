@@ -27,7 +27,7 @@
 #include "world/p_players.h"
 
 #include <doomsday/world/sector.h>
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 
 using namespace de;
 

@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GLDrawQueue"
-#include "de/GLInfo"
-#include "de/GLProgram"
-#include "de/GLShader"
-#include "de/GLState"
-#include "de/GLSubBuffer"
-#include "de/GLUniform"
+#include "de/gldrawqueue.h"
+#include "de/glinfo.h"
+#include "de/glprogram.h"
+#include "de/glshader.h"
+#include "de/glstate.h"
+#include "de/glsubbuffer.h"
+#include "de/gluniform.h"
 
 namespace de {
 

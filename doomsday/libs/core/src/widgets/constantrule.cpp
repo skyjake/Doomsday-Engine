@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ConstantRule"
+#include "de/constantrule.h"
 #include "de/math.h"
 
 namespace de {

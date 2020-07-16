@@ -24,7 +24,7 @@
 #include <de/legacy/types.h>
 
 #ifdef __cplusplus
-#  include <de/String>
+#  include <de/string.h>
 #endif
 
 #define DE_MAX_ARGS            256

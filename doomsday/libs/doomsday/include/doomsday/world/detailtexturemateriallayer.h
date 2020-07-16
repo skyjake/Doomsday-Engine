@@ -20,7 +20,7 @@
 #ifndef LIBDOOMSDAY_WORLD_DETAILTEXTUREMATERIALLAYER_H
 #define LIBDOOMSDAY_WORLD_DETAILTEXTUREMATERIALLAYER_H
 
-#include <de/String>
+#include <de/string.h>
 #include "../defs/dedtypes.h"
 #include "texturemateriallayer.h"
 

@@ -20,8 +20,8 @@
 #ifndef CLIENT_INPUTSYSTEM_DDEVENT_H
 #define CLIENT_INPUTSYSTEM_DDEVENT_H
 
-#include <de/Event>
-#include <de/String>
+#include <de/event.h>
+#include <de/string.h>
 #include "api_event.h"
 
 // Input device identifiers:

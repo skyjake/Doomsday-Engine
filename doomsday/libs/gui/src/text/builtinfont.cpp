@@ -21,7 +21,7 @@
 
 #include "de/libgui.h"
 
-#include <de/ZipArchive>
+#include <de/ziparchive.h>
 
 namespace de {
 

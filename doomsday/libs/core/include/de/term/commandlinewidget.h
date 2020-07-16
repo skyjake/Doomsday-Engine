@@ -19,7 +19,7 @@
 #ifndef LIBSHELL_COMMANDLINEWIDGET_H
 #define LIBSHELL_COMMANDLINEWIDGET_H
 
-#include "LineEditWidget"
+#include "lineeditwidget.h"
 
 namespace de { namespace term {
 

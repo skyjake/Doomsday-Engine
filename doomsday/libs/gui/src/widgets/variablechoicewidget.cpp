@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/VariableChoiceWidget"
+#include "de/variablechoicewidget.h"
 
-#include <de/NumberValue>
-#include <de/TextValue>
+#include <de/numbervalue.h>
+#include <de/textvalue.h>
 
 namespace de {
 

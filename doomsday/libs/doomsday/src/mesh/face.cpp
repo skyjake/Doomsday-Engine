@@ -21,7 +21,7 @@
 
 #include <de/legacy/mathutil.h>
 #include <de/legacy/vector1.h> /// @todo remove me
-#include <de/Log>
+#include <de/log.h>
 
 namespace mesh {
 

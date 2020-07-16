@@ -19,7 +19,7 @@
 #ifndef GLOOM_GEOMATH_H
 #define GLOOM_GEOMATH_H
 
-#include <de/Vector>
+#include <de/vector.h>
 #include "../libgloom.h"
 
 namespace gloom { namespace geo {

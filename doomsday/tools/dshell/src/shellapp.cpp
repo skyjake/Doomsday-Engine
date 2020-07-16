@@ -22,19 +22,19 @@
 #include "localserverdialog.h"
 #include "aboutdialog.h"
 
-#include <doomsday/network/Link>
-#include <doomsday/network/LocalServer>
-#include <de/term/LabelWidget>
-#include <de/term/MenuWidget>
-#include <de/term/CommandLineWidget>
-#include <de/term/LogWidget>
-#include <de/term/Action>
-#include <de/CommandLine>
-#include <de/Config>
-#include <de/Garbage>
-#include <de/LogBuffer>
-#include <de/RegExp>
-#include <de/ServerFinder>
+#include <doomsday/network/link.h>
+#include <doomsday/network/localserver.h>
+#include <de/term/labelwidget.h>
+#include <de/term/menuwidget.h>
+#include <de/term/commandlinewidget.h>
+#include <de/term/logwidget.h>
+#include <de/term/action.h>
+#include <de/commandline.h>
+#include <de/config.h>
+#include <de/garbage.h>
+#include <de/logbuffer.h>
+#include <de/regexp.h>
+#include <de/serverfinder.h>
 
 using namespace de;
 using namespace de::term;

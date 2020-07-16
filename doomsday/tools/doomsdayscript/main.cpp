@@ -17,15 +17,14 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/CommandLine>
-#include <de/DirectoryFeed>
-#include <de/EscapeParser>
-#include <de/FS>
-#include <de/LogBuffer>
-#include <de/NativeFile>
-#include <de/Process>
-#include <de/Script>
-#include <de/TextApp>
+#include <de/commandline.h>
+#include <de/directoryfeed.h>
+#include <de/escapeparser.h>
+#include <de/filesystem.h>
+#include <de/logbuffer.h>
+#include <de/nativefile.h>
+#include <de/dscript.h>
+#include <de/textapp.h>
 
 using namespace de;
 

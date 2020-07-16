@@ -58,7 +58,7 @@
 #include "doomsday.h"
 
 #include <de/c_wrapper.h>
-#include <de/Extension>
+#include <de/extension.h>
 
 DE_USING_API(Con);
 //DE_DECLARE_API(Con);

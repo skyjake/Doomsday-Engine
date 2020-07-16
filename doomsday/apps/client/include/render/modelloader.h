@@ -19,8 +19,8 @@
 #ifndef DE_CLIENT_MODELLOADER_H
 #define DE_CLIENT_MODELLOADER_H
 
-#include <de/GLProgram>
-#include <de/ModelBank>
+#include <de/glprogram.h>
+#include <de/modelbank.h>
 
 namespace render {
 

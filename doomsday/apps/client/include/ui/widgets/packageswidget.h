@@ -19,10 +19,10 @@
 #ifndef DE_CLIENT_UI_HOME_PACKAGESWIDGET_H
 #define DE_CLIENT_UI_HOME_PACKAGESWIDGET_H
 
-#include <de/ButtonWidget>
-#include <de/LineEditWidget>
-#include <de/IPersistent>
-#include <de/ProgressWidget>
+#include <de/buttonwidget.h>
+#include <de/lineeditwidget.h>
+#include <de/ipersistent.h>
+#include <de/progresswidget.h>
 
 class HomeItemWidget;
 class HomeMenuWidget;

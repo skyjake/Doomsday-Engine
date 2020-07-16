@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/idtech1util.h"
+#include "doomsday/res/idtech1util.h"
 
-#include <de/CString>
+#include <de/cstring.h>
 
 namespace res {
 

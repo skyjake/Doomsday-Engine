@@ -20,14 +20,14 @@
 #include "ui/dialogs/packageinfodialog.h"
 #include "ui/widgets/packageswidget.h"
 
-#include <doomsday/DoomsdayApp>
-#include <doomsday/DataBundle>
-#include <de/CallbackAction>
-#include <de/Package>
-#include <de/PackageLoader>
-#include <de/ui/SubwidgetItem>
-#include <de/ToggleWidget>
-#include <de/Loop>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/res/databundle.h>
+#include <de/callbackaction.h>
+#include <de/package.h>
+#include <de/packageloader.h>
+#include <de/ui/subwidgetitem.h>
+#include <de/togglewidget.h>
+#include <de/loop.h>
 
 #include "dd_main.h"
 

@@ -20,7 +20,7 @@
 #define LOCALSERVERDIALOG_H
 
 #include <de/libcore.h>
-#include <de/term/InputDialogWidget>
+#include <de/term/inputdialog.h>
 
 class LocalServerDialog : public de::term::InputDialogWidget
 {

@@ -19,13 +19,13 @@
 #ifndef LIBDOOMSDAY_WORLD_MATERIALS_H
 #define LIBDOOMSDAY_WORLD_MATERIALS_H
 
-#include "Material"
-#include "MaterialManifest"
-#include "MaterialScheme"
+#include "material.h"
+#include "materialmanifest.h"
+#include "materialscheme.h"
 #include "../uri.h"
 
-#include <de/Set>
-#include <de/List>
+#include <de/set.h>
+#include <de/list.h>
 
 namespace world {
 

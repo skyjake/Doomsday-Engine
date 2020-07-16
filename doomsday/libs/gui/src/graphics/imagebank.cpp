@@ -16,14 +16,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ImageBank"
-#include "de/App"
-#include "de/FileSystem"
-#include "de/ImageFile"
+#include "de/imagebank.h"
+#include "de/app.h"
+#include "de/filesystem.h"
+#include "de/imagefile.h"
 
-#include <de/Folder>
-#include <de/FileSystem>
-#include <de/ScriptedInfo>
+#include <de/folder.h>
+#include <de/filesystem.h>
+#include <de/scripting/scriptedinfo.h>
 
 namespace de {
 

@@ -29,11 +29,11 @@
 #include <de/legacy/reader.h>
 #include <de/legacy/writer.h>
 #include <de/legacy/unittest.h>
-#include <de/NativePath>
-#include <de/Reader>
-#include <de/RegExp>
-#include <de/Writer>
-#include <de/App>
+#include <de/nativepath.h>
+#include <de/reader.h>
+#include <de/regexp.h>
+#include <de/writer.h>
+#include <de/app.h>
 
 namespace res {
 

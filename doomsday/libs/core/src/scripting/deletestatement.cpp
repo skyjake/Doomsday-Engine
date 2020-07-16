@@ -17,12 +17,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/DeleteStatement"
-#include "de/Context"
-#include "de/ArrayValue"
-#include "de/RefValue"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/scripting/deletestatement.h"
+#include "de/scripting/context.h"
+#include "de/arrayvalue.h"
+#include "de/refvalue.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 using namespace de;
 

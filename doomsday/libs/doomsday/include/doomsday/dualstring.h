@@ -28,7 +28,7 @@
 #ifdef __cplusplus
 
 #include "libdoomsday.h"
-#include <de/String>
+#include <de/string.h>
 #include <de/legacy/str.h>
 
 /**

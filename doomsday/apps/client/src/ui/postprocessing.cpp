@@ -22,11 +22,11 @@
 #include "clientapp.h"
 #include "clientplayer.h"
 
-#include <de/Animation>
-#include <de/Drawable>
-#include <de/GLInfo>
-#include <de/GLTextureFramebuffer>
-#include <de/LogBuffer>
+#include <de/animation.h>
+#include <de/drawable.h>
+#include <de/glinfo.h>
+#include <de/gltextureframebuffer.h>
+#include <de/logbuffer.h>
 
 using namespace de;
 

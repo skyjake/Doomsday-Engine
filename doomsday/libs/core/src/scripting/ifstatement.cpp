@@ -17,12 +17,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/IfStatement"
-#include "de/Context"
-#include "de/Expression"
-#include "de/Value"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/scripting/ifstatement.h"
+#include "de/scripting/context.h"
+#include "de/scripting/expression.h"
+#include "de/value.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 using namespace de;
 

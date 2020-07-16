@@ -21,7 +21,7 @@
 #ifndef LIBDOOMSDAY_WORLD_MATERIALARCHIVE_H
 #define LIBDOOMSDAY_WORLD_MATERIALARCHIVE_H
 
-#include <de/Error>
+#include <de/error.h>
 #include <dd_share.h>  // materialarchive_serialid_t
 
 struct reader_s; // legacy

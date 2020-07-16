@@ -18,7 +18,7 @@
 
 #include "udmflex.h"
 
-#include <de/Set>
+#include <de/set.h>
 
 using namespace de;
 

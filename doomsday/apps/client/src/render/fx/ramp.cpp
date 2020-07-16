@@ -20,9 +20,9 @@
 #include "gl/gl_main.h"
 #include "clientapp.h"
 
-#include <de/GLProgram>
-#include <de/GLUniform>
-#include <de/Drawable>
+#include <de/glprogram.h>
+#include <de/gluniform.h>
+#include <de/drawable.h>
 
 namespace fx {
 

@@ -19,7 +19,7 @@
 #pragma once
 
 #include "../libdoomsday.h"
-#include <de/System>
+#include <de/system.h>
 
 struct mobj_s;
 

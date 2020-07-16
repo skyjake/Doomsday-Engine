@@ -18,8 +18,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/KeyEvent"
-#include <de/Log>
+#include "de/keyevent.h"
+#include <de/log.h>
 
 #include <SDL_keycode.h>
 

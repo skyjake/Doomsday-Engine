@@ -23,7 +23,7 @@
 #ifdef __cplusplus
 
 #include <doomsday/filesys/filehandle.h>
-#include <de/Vector>
+#include <de/vector.h>
 
 /**
  * Loads a 24-bit or a 32-bit image (24-bit color + 8-bit alpha).

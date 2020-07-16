@@ -23,7 +23,7 @@
 #include "ui/widgets/packagesbuttonwidget.h"
 #include "ui/dialogs/packagesdialog.h"
 
-#include <de/CallbackAction>
+#include <de/callbackaction.h>
 
 using namespace de;
 

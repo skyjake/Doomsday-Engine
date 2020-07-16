@@ -22,8 +22,8 @@
 #include "ui/widgets/packageswidget.h"
 #include "ui/widgets/taskbarwidget.h"
 
-#include <doomsday/DoomsdayApp>
-#include <de/Config>
+#include <doomsday/doomsdayapp.h>
+#include <de/config.h>
 
 using namespace de;
 

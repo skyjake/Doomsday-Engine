@@ -20,11 +20,11 @@
 #ifndef DE_MAIN_H
 #define DE_MAIN_H
 
-#include <de/String>
-#include <doomsday/resource/resources.h>
+#include <de/string.h>
+#include <doomsday/res/resources.h>
 #include <doomsday/gameapi.h>
 #include <doomsday/plugins.h>
-#include <doomsday/Games>
+#include <doomsday/games.h>
 
 #ifdef __CLIENT__
 #  include "resource/clientresources.h"

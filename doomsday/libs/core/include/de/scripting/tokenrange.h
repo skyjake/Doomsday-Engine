@@ -20,8 +20,8 @@
 #ifndef LIBCORE_TOKENRANGE_H
 #define LIBCORE_TOKENRANGE_H
 
-#include "../String"
-#include "../TokenBuffer"
+#include "de/string.h"
+#include "tokenbuffer.h"
 
 namespace de {
 

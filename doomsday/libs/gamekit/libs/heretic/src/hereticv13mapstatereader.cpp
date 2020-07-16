@@ -24,9 +24,9 @@
 
 #include <cstdio>
 #include <cstring>
-#include <de/ArrayValue>
-#include <de/NativePath>
-#include <de/NumberValue>
+#include <de/arrayvalue.h>
+#include <de/nativepath.h>
+#include <de/numbervalue.h>
 #include "dmu_lib.h"
 #include "hu_inventory.h"
 #include "p_ceiling.h"

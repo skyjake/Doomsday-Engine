@@ -26,7 +26,7 @@
 #include "world/convexsubspace.h"
 #include "world/plane.h"
 #include "world/surface.h"
-#include "MaterialAnimator"
+#include "resource/materialanimator.h"
 
 #include "render/rend_main.h"
 

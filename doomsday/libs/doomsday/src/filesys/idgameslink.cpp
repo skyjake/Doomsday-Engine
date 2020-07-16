@@ -18,14 +18,14 @@
 
 #include "doomsday/filesys/idgameslink.h"
 #include "doomsday/filesys/idgamespackageinfofile.h"
-#include "doomsday/DataBundle"
+#include "doomsday/res/databundle.h"
 
-#include <de/Async>
-#include <de/FileSystem>
-#include <de/RegExp>
-#include <de/RemoteFile>
-#include <de/WebRequest>
-#include <de/data/gzip.h>
+#include <de/async.h>
+#include <de/filesystem.h>
+#include <de/regexp.h>
+#include <de/remotefile.h>
+#include <de/webrequest.h>
+#include <de/gzip.h>
 
 using namespace de;
 

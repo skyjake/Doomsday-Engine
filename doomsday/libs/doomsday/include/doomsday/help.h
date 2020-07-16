@@ -22,7 +22,7 @@
 #define LIBDOOMSDAY_HELP_H
 
 #include "libdoomsday.h"
-#include <de/File>
+#include <de/file.h>
 
 typedef const void *HelpId;
 

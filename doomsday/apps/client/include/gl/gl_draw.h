@@ -25,8 +25,8 @@
 #ifndef DE_GRAPHICS_DRAW_H
 #define DE_GRAPHICS_DRAW_H
 
-#include <de/Rectangle>
-#include <de/Vector>
+#include <de/rectangle.h>
+#include <de/vector.h>
 #include <de/legacy/rect.h>
 
 #ifdef __cplusplus

@@ -16,14 +16,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/AbstractLink"
-#include "de/App"
-#include "de/Log"
-#include "de/Message"
-#include "de/Packet"
-#include "de/ServerInfo"
-#include "de/Socket"
-#include "de/Time"
+#include "de/abstractlink.h"
+#include "de/app.h"
+#include "de/log.h"
+#include "de/message.h"
+#include "de/packet.h"
+#include "de/serverinfo.h"
+#include "de/socket.h"
+#include "de/time.h"
 
 namespace de {
 

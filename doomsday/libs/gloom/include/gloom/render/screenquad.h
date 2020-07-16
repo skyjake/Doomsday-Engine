@@ -21,7 +21,7 @@
 
 #include "gloom/render/render.h"
 
-#include <de/Drawable>
+#include <de/drawable.h>
 
 namespace gloom {
 

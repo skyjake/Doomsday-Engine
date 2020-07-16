@@ -17,11 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ArchiveEntryFile"
-#include "de/ArchiveFeed"
-#include "de/Archive"
-#include "de/Block"
-#include "de/Guard"
+#include "de/archiveentryfile.h"
+#include "de/archivefeed.h"
+#include "de/archive.h"
+#include "de/block.h"
+#include "de/guard.h"
 
 namespace de {
 

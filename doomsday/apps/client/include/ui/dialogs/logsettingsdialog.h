@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_LOGSETTINGSDIALOG_H
 #define DE_CLIENT_LOGSETTINGSDIALOG_H
 
-#include <de/DialogWidget>
+#include <de/dialogwidget.h>
 
 /**
  * Dialog for modifying log filter and alert settings.

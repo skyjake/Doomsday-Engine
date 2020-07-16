@@ -25,7 +25,7 @@
 #ifndef LIBDEHREAD_DEHREADER_UTIL_H
 #define LIBDEHREAD_DEHREADER_UTIL_H
 
-#include <de/String>
+#include <de/string.h>
 #include <doomsday/defs/mapinfo.h>
 #include "dehreader.h"
 

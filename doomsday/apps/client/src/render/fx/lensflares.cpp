@@ -27,13 +27,13 @@
 
 #include <de/legacy/concurrency.h>
 #include <doomsday/console/cmd.h>
-#include <de/Drawable>
-#include <de/FileSystem>
-#include <de/KdTreeAtlasAllocator>
-#include <de/LogBuffer>
-#include <de/Range>
-#include <de/Shared>
-#include <de/Hash>
+#include <de/drawable.h>
+#include <de/filesystem.h>
+#include <de/kdtreeatlasallocator.h>
+#include <de/logbuffer.h>
+#include <de/range.h>
+#include <de/shared.h>
+#include <de/hash.h>
 
 #include <cmath>
 

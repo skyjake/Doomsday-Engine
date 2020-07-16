@@ -17,9 +17,9 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/TextApp>
-#include <de/Log>
-#include <de/LogFilter>
+#include <de/textapp.h>
+#include <de/log.h>
+#include <de/logfilter.h>
 
 using namespace de;
 

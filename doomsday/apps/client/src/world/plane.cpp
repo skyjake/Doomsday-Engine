@@ -19,7 +19,7 @@
  */
 
 #include "world/plane.h"
-#include "MaterialAnimator"
+#include "resource/materialanimator.h"
 #include "render/rend_main.h"
 #include "world/map.h"
 #include <doomsday/world/materialmanifest.h>
@@ -29,7 +29,7 @@
 #include "dd_loop.h"  // frameTimePos
 #include "dd_main.h"  // App_Resources()
 
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 
 using namespace de;
 

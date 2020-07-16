@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/FileDialog"
-#include "de/BaseGuiApp"
+#include "de/filedialog.h"
+#include "de/baseguiapp.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

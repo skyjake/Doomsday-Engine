@@ -23,7 +23,7 @@
 #include "common.h"
 #include "p_sound.h"
 
-#include <de/Log>
+#include <de/log.h>
 #include "dmu_lib.h"
 #include "g_defs.h"
 #ifdef __JHEXEN__

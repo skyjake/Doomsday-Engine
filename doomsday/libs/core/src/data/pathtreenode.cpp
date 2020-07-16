@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/PathTree"
-#include "de/Log"
+#include "de/pathtree.h"
+#include "de/log.h"
 
 namespace de {
 

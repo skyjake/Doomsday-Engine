@@ -17,11 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/FunctionValue"
-#include "de/Process"
-#include "de/ArrayValue"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/scripting/functionvalue.h"
+#include "de/scripting/process.h"
+#include "de/arrayvalue.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 using namespace de;
 

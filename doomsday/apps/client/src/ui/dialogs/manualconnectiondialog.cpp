@@ -22,9 +22,9 @@
 #include "network/serverlink.h"
 #include "clientapp.h"
 
-#include <de/FoldPanelWidget>
-#include <de/PersistentState>
-#include <de/ProgressWidget>
+#include <de/foldpanelwidget.h>
+#include <de/persistentstate.h>
+#include <de/progresswidget.h>
 
 using namespace de;
 

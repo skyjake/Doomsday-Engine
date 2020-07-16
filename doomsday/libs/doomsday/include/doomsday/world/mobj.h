@@ -51,7 +51,7 @@ DE_EXTERN_C LIBDOOMSDAY_PUBLIC size_t Mobj_Sizeof(void);
 
 #ifdef __cplusplus
 
-#include <de/Vector>
+#include <de/vector.h>
 
 namespace world
 {

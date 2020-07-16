@@ -19,8 +19,8 @@
 #include "ui/clientstyle.h"
 #include "ui/clientwindow.h"
 
-#include <doomsday/res/IdTech1Image>
-#include <de/Async>
+#include <doomsday/res/idtech1image.h>
+#include <de/async.h>
 
 using namespace de;
 

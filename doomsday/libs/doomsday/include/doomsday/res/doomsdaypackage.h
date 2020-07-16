@@ -19,7 +19,7 @@
 #ifndef LIBDOOMSDAY_DOOMSDAYPACKAGE_H
 #define LIBDOOMSDAY_DOOMSDAYPACKAGE_H
 
-#include <de/Package>
+#include <de/package.h>
 #include "../uri.h"
 
 namespace res {

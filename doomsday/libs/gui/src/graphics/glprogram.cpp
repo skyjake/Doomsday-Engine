@@ -16,15 +16,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GLProgram"
-#include "de/GLInfo"
-#include "de/GLUniform"
-#include "de/GLBuffer"
-#include "de/GLShader"
-#include "de/GLTexture"
-#include "de/GuiApp"
-#include <de/Block>
-#include <de/Log>
+#include "de/glprogram.h"
+#include "de/glinfo.h"
+#include "de/gluniform.h"
+#include "de/glbuffer.h"
+#include "de/glshader.h"
+#include "de/gltexture.h"
+#include "de/guiapp.h"
+#include <de/block.h>
+#include <de/log.h>
 
 namespace de {
 

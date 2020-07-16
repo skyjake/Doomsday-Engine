@@ -41,7 +41,7 @@
 #if 0
 
 #include "driver_fmod.h"
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 
 static int numDrives;
 static FMOD::Sound *cdSound;

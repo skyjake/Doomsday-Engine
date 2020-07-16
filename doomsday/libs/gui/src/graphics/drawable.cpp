@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Drawable"
-#include <de/KeyMap>
+#include "de/drawable.h"
+#include <de/keymap.h>
 
 namespace de {
 

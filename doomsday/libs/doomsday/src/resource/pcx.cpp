@@ -18,7 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/pcx.h"
+#include "doomsday/pcx.h"
 #include "dd_share.h"
 
 #include <de/legacy/memory.h>

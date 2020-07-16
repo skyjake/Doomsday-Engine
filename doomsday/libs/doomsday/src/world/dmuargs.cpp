@@ -21,7 +21,7 @@
 #include "doomsday/world/mapelement.h"
 #include "dd_share.h"
 
-#include <de/Log>
+#include <de/log.h>
 #include <de/c_wrapper.h>
 
 using namespace de;

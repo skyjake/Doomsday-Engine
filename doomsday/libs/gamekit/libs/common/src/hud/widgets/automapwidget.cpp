@@ -21,9 +21,9 @@
 #include "common.h"
 #include "hud/widgets/automapwidget.h"
 
-#include <de/LogBuffer>
-#include <de/ScriptSystem>
-#include <de/Vector>
+#include <de/logbuffer.h>
+#include <de/dscript.h>
+#include <de/vector.h>
 
 #include "dmu_lib.h"
 #include "g_common.h"

@@ -21,9 +21,9 @@
 #define CLIENT_RESOURCE_BITMAPFONT_H
 
 #include "abstractfont.h"
-#include <de/Rectangle>
-#include <de/String>
-#include <de/Vector>
+#include <de/rectangle.h>
+#include <de/string.h>
+#include <de/vector.h>
 
 /**
  * Bitmap font.

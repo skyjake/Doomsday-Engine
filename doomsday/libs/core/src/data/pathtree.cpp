@@ -17,11 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Error"
-#include "de/Log"
-#include "de/StringPool"
-#include "de/PathTree"
-#include "de/Guard"
+#include "de/error.h"
+#include "de/log.h"
+#include "de/stringpool.h"
+#include "de/pathtree.h"
+#include "de/guard.h"
 
 namespace de {
 

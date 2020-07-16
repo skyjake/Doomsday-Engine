@@ -17,23 +17,24 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/BuiltInExpression"
-#include "de/App"
-#include "de/ArrayValue"
-#include "de/BlockValue"
-#include "de/DictionaryValue"
-#include "de/Evaluator"
-#include "de/Folder"
-#include "de/NumberValue"
-#include "de/Process"
-#include "de/Reader"
-#include "de/RecordValue"
-#include "de/RefValue"
-#include "de/Script"
-#include "de/TextValue"
-#include "de/TimeValue"
-#include "de/Writer"
+#include "de/scripting/builtinexpression.h"
+
+#include "de/app.h"
+#include "de/arrayvalue.h"
+#include "de/blockvalue.h"
+#include "de/dictionaryvalue.h"
+#include "de/folder.h"
 #include "de/math.h"
+#include "de/numbervalue.h"
+#include "de/reader.h"
+#include "de/recordvalue.h"
+#include "de/refvalue.h"
+#include "de/scripting/evaluator.h"
+#include "de/scripting/process.h"
+#include "de/scripting/script.h"
+#include "de/textvalue.h"
+#include "de/timevalue.h"
+#include "de/writer.h"
 
 namespace de {
 

@@ -26,7 +26,7 @@
 
 #include <doomsday/world/sector.h>
 #include <doomsday/world/thinkers.h>
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 
 using namespace de;
 

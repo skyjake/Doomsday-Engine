@@ -20,7 +20,7 @@
 
 #include "doomsday/filesys/fs_windows.h"
 #include <stdio.h>
-#include <de/String>
+#include <de/string.h>
 
 using namespace de;
 

@@ -20,9 +20,9 @@
 #define SERVERSYSTEM_H
 
 #include <de/libcore.h>
-#include <de/System>
-#include <de/Id>
-#include <de/Error>
+#include <de/system.h>
+#include <de/id.h>
+#include <de/error.h>
 #include "remoteuser.h"
 #include "dd_types.h"
 

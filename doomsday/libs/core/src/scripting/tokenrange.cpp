@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/TokenRange"
-#include "de/TokenBuffer"
+#include "de/scripting/tokenrange.h"
+#include "de/scripting/tokenbuffer.h"
 
 namespace de {
 

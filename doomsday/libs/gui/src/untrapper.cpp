@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Untrapper"
+#include "de/untrapper.h"
 
 namespace de {
 

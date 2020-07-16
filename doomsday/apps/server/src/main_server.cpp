@@ -20,7 +20,7 @@
  */
 
 #include "serverapp.h"
-#include <de/EscapeParser>
+#include <de/escapeparser.h>
 
 using namespace de;
 

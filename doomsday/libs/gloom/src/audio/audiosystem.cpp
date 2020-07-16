@@ -1,12 +1,12 @@
 #include "gloom/audio/audiosystem.h"
 #include "gloom/render/icamera.h"
 
-#include <de/BaseGuiApp>
-#include <de/ByteArrayFile>
-#include <de/Folder>
-#include <de/Hash>
-#include <de/Log>
-#include <de/Set>
+#include <de/baseguiapp.h>
+#include <de/bytearrayfile.h>
+#include <de/folder.h>
+#include <de/hash.h>
+#include <de/log.h>
+#include <de/set.h>
 
 #if defined (LIBGLOOM_HAVE_FMOD)
 #  include <fmod.h>

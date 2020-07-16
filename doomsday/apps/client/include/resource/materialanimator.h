@@ -25,13 +25,13 @@
 #  error "MaterialAnimator only exists in the Client"
 #endif
 
-#include <de/Error>
-#include <de/Observers>
-#include <de/Vector>
-#include "ClientTexture"
-#include "ClientMaterial"
-#include "MaterialContext"
-#include "MaterialVariantSpec"
+#include <de/error.h>
+#include <de/observers.h>
+#include <de/vector.h>
+#include "resource/clienttexture.h"
+#include "resource/clientmaterial.h"
+#include "render/materialcontext.h"
+#include "resource/materialvariantspec.h"
 #include "gl/gltextureunit.h"
 
 /**

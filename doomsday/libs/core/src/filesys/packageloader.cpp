@@ -16,22 +16,22 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/PackageLoader"
+#include "de/packageloader.h"
 
-#include "de/App"
-#include "de/ArchiveFolder"
-#include "de/CommandLine"
-#include "de/Config"
-#include "de/DictionaryValue"
-#include "de/FS"
-#include "de/Info"
-#include "de/LinkFile"
-#include "de/LogBuffer"
-#include "de/PackageFeed"
-#include "de/Parser"
-#include "de/TextValue"
-#include "de/Version"
-#include "de/RegExp"
+#include "de/app.h"
+#include "de/archivefolder.h"
+#include "de/commandline.h"
+#include "de/config.h"
+#include "de/dictionaryvalue.h"
+#include "de/filesystem.h"
+#include "de/info.h"
+#include "de/linkfile.h"
+#include "de/logbuffer.h"
+#include "de/packagefeed.h"
+#include "de/scripting/parser.h"
+#include "de/textvalue.h"
+#include "de/version.h"
+#include "de/regexp.h"
 
 namespace de {
 

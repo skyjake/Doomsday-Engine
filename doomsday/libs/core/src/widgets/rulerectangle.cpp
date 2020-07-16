@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/RuleRectangle"
-#include "de/App"
+#include "de/rulerectangle.h"
+#include "de/app.h"
 #include "de/math.h"
 
 namespace de {

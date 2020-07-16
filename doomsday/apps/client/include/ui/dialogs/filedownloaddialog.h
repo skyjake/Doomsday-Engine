@@ -20,7 +20,7 @@
 #define DE_CLIENT_FILEDOWNLOADDIALOG_H
 
 #include "downloaddialog.h"
-#include <de/PackageDownloader>
+#include <de/packagedownloader.h>
 
 /**
  * Dialog for monitoring file downloads.

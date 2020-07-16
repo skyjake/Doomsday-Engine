@@ -18,12 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#include "doomsday/resource/patch.h"
+#include "doomsday/res/patch.h"
 
-#include <de/List>
-#include <de/Rectangle>
+#include <de/list.h>
+#include <de/rectangle.h>
 #include <de/libcore.h>
-#include <de/Log>
+#include <de/log.h>
 #include <de/math.h>
 
 using namespace de;

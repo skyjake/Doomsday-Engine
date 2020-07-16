@@ -21,13 +21,13 @@
 #define RENDER_WALLEDGE
 
 #include "world/line.h"
-#include "WallSpec"
-#include "TriangleStripBuilder"
-#include "IHPlane"
+#include "wallspec.h"
+#include "trianglestripbuilder.h"
+#include "misc/ihplane.h"
 
 #include <doomsday/mesh/hedge.h>
-#include <de/Error>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/vector.h>
 
 class Surface;
 

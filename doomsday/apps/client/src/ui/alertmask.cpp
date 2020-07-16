@@ -19,7 +19,7 @@
 #include "ui/alertmask.h"
 #include "clientapp.h"
 
-#include <de/Config>
+#include <de/config.h>
 
 using namespace de;
 

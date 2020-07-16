@@ -19,9 +19,9 @@
 #ifndef LIBSHELL_TEXTCANVAS_H
 #define LIBSHELL_TEXTCANVAS_H
 
-#include "../ILineWrapping"
-#include "../Vector"
-#include "../Rectangle"
+#include "../ilinewrapping.h"
+#include "../vector.h"
+#include "../rectangle.h"
 
 namespace de { namespace term {
 

@@ -22,8 +22,8 @@
 #include "mesh.h"
 #include "../world/vertex.h"
 
-#include <de/Error>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/vector.h>
 
 namespace world { class Subsector; }
 

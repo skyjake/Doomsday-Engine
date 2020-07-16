@@ -21,17 +21,17 @@
 #include "ui/clientwindow.h"
 #include "clientapp.h"
 
-#include <de/App>
-#include <de/ChoiceWidget>
-#include <de/Config>
-#include <de/DialogContentStylist>
-#include <de/FIFO>
-#include <de/NotificationAreaWidget>
-#include <de/SequentialLayout>
-#include <de/Timer>
-#include <de/ui/ActionItem>
-#include <de/ui/ListData>
-#include <de/WindowSystem>
+#include <de/app.h>
+#include <de/choicewidget.h>
+#include <de/config.h>
+#include <de/dialogcontentstylist.h>
+#include <de/fifo.h>
+#include <de/notificationareawidget.h>
+#include <de/sequentiallayout.h>
+#include <de/timer.h>
+#include <de/ui/actionitem.h>
+#include <de/ui/listdata.h>
+#include <de/windowsystem.h>
 
 using namespace de;
 

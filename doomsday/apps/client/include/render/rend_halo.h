@@ -20,9 +20,9 @@
 #ifndef DE_CLIENT_RENDER_HALO_H
 #define DE_CLIENT_RENDER_HALO_H
 
-#include <de/Vector>
+#include <de/vector.h>
 
-#include "TextureVariantSpec"
+#include "resource/texturevariantspec.h"
 
 DE_EXTERN_C int   haloOccludeSpeed;
 DE_EXTERN_C int   haloMode, haloRealistic, haloBright, haloSize;

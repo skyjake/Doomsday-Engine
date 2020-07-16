@@ -20,9 +20,9 @@
 #ifndef LIBCOMMON_GAMESESSION_H
 #define LIBCOMMON_GAMESESSION_H
 
-#include <de/String>
-#include <doomsday/AbstractSession>
-#include <doomsday/GameProfiles>
+#include <de/string.h>
+#include <doomsday/abstractsession.h>
+#include <doomsday/gameprofiles.h>
 #include <doomsday/uri.h>
 
 //#include "doomsday.h"

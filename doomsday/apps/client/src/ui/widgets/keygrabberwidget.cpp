@@ -22,7 +22,7 @@
 #include "ui/b_util.h"
 #include "ui/inputsystem.h"
 
-#include <de/KeyEvent>
+#include <de/keyevent.h>
 #include <de/legacy/ddstring.h>
 
 using namespace de;

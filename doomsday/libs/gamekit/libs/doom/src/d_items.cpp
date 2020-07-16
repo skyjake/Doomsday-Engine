@@ -20,7 +20,7 @@
 
 #include "jdoom.h"
 
-#include <de/String>
+#include <de/string.h>
 #include "g_defs.h"
 #include "player.h"
 

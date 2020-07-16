@@ -36,13 +36,13 @@
 #include <doomsday/console/exec.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/wad.h>
-#include <doomsday/world/MaterialArchive>
+#include <doomsday/world/materialarchive.h>
 
 #include <de/legacy/stringarray.h>
 #include <de/legacy/timer.h>
-#include <de/ArrayValue>
-#include <de/NumberValue>
-#include <de/LogBuffer>
+#include <de/arrayvalue.h>
+#include <de/numbervalue.h>
+#include <de/logbuffer.h>
 
 #include <cmath>
 

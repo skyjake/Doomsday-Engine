@@ -26,10 +26,10 @@
 #  include "audio/sys_audiod_sdlmixer.h"
 #endif
 
-#include <de/Extension>
-//#include <de/Library>
-//#include <de/LibraryFile>
-//#include <de/NativeFile>
+#include <de/extension.h>
+//#include <de/library.h>
+//#include <de/libraryfile.h>
+//#include <de/nativefile.h>
 
 using namespace de;
 

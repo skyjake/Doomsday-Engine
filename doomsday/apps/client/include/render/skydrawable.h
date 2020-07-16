@@ -22,11 +22,11 @@
 #define DE_CLIENT_RENDER_SKYDRAWABLE_H
 
 #include <de/libcore.h>
-#include <de/Error>
-#include <de/Observers>
+#include <de/error.h>
+#include <de/observers.h>
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/sky.h>
-#include "MaterialVariantSpec"
+#include "resource/materialvariantspec.h"
 #include "resource/framemodeldef.h"
 #include "world/sky.h"
 

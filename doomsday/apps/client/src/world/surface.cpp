@@ -22,11 +22,11 @@
 #include "world/map.h"
 #include "gl/gl_tex.h"
 #include "render/rend_main.h"
+#include "render/decoration.h"
 #include "resource/clienttexture.h"
 #include "dd_loop.h" // frameTimePos
-#include "Decoration"
 
-#include <doomsday/resource/texturemanifest.h>
+#include <doomsday/res/texturemanifest.h>
 
 using namespace de;
 

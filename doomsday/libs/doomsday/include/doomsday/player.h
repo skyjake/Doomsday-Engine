@@ -96,8 +96,8 @@ typedef struct ddplayer_s {
 
 #ifdef __cplusplus
 
-#include <de/IObject>
-#include <de/Record>
+#include <de/scripting/iobject.h>
+#include <de/record.h>
 
 namespace world { class World; }
 

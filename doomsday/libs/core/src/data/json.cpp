@@ -18,16 +18,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/data/json.h"
-#include <de/ArrayValue>
-#include <de/Block>
-#include <de/DictionaryValue>
-#include <de/Error>
-#include <de/Log>
-#include <de/NoneValue>
-#include <de/NumberValue>
-#include <de/RecordValue>
-#include <de/TextValue>
+#include "de/json.h"
+#include "de/arrayvalue.h"
+#include "de/block.h"
+#include "de/dictionaryvalue.h"
+#include "de/error.h"
+#include "de/log.h"
+#include "de/nonevalue.h"
+#include "de/numbervalue.h"
+#include "de/recordvalue.h"
+#include "de/textvalue.h"
 
 namespace de {
 

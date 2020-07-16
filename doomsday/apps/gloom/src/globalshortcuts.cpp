@@ -19,7 +19,7 @@
 #include "globalshortcuts.h"
 #include "gloomapp.h"
 
-#include <de/KeyEvent>
+#include <de/keyevent.h>
 
 using namespace de;
 

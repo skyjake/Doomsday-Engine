@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/VariableSliderWidget"
+#include "de/variablesliderwidget.h"
 
-#include <de/AnimationValue>
-#include <de/NumberValue>
+#include <de/animationvalue.h>
+#include <de/numbervalue.h>
 
 namespace de {
 

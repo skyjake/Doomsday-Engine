@@ -22,7 +22,7 @@
 #pragma once
 
 #include "blockmap.h"
-#include <de/List>
+#include <de/list.h>
 
 namespace world {
 

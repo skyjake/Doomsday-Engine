@@ -22,7 +22,7 @@
 
 #include "dd_share.h"
 #include "dmuargs.h"
-#include <de/Error>
+#include <de/error.h>
 
 namespace world {
 

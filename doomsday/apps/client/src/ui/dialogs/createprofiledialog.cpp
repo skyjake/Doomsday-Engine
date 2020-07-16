@@ -21,23 +21,23 @@
 #include "ui/widgets/packageswidget.h"
 #include "ui/dialogs/datafilesettingsdialog.h"
 
-#include <doomsday/DoomsdayApp>
-#include <doomsday/Games>
-#include <doomsday/GameProfiles>
-#include <doomsday/DataBundle>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/games.h>
+#include <doomsday/gameprofiles.h>
+#include <doomsday/res/databundle.h>
 
-#include <de/AuxButtonWidget>
-#include <de/CallbackAction>
-#include <de/ChoiceWidget>
-#include <de/DialogContentStylist>
-#include <de/FoldPanelWidget>
-#include <de/GridLayout>
-#include <de/PackageLoader>
-#include <de/PersistentState>
-#include <de/ScriptedInfo>
-#include <de/SliderWidget>
-#include <de/TextValue>
-#include <de/ToggleWidget>
+#include <de/auxbuttonwidget.h>
+#include <de/callbackaction.h>
+#include <de/choicewidget.h>
+#include <de/dialogcontentstylist.h>
+#include <de/foldpanelwidget.h>
+#include <de/gridlayout.h>
+#include <de/packageloader.h>
+#include <de/persistentstate.h>
+#include <de/scripting/scriptedinfo.h>
+#include <de/sliderwidget.h>
+#include <de/textvalue.h>
+#include <de/togglewidget.h>
 
 using namespace de;
 

@@ -17,14 +17,14 @@
  */
 
 #include "optionspage.h"
-#include <de/ButtonWidget>
-#include <de/ChoiceWidget>
-#include <de/DialogContentStylist>
-#include <de/GridLayout>
-#include <de/LineEditWidget>
-#include <de/ToggleWidget>
-#include <de/Hash>
-#include <doomsday/DoomsdayInfo>
+#include <de/buttonwidget.h>
+#include <de/choicewidget.h>
+#include <de/dialogcontentstylist.h>
+#include <de/gridlayout.h>
+#include <de/lineeditwidget.h>
+#include <de/togglewidget.h>
+#include <de/hash.h>
+#include <doomsday/doomsdayinfo.h>
 
 using namespace de;
 

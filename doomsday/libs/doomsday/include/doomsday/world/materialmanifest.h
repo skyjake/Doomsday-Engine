@@ -20,13 +20,13 @@
 #ifndef LIBDOOMSDAY_WORLD_MATERIALMANIFEST_H
 #define LIBDOOMSDAY_WORLD_MATERIALMANIFEST_H
 
-#include <de/Error>
-#include <de/Observers>
-#include <de/PathTree>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/observers.h>
+#include <de/pathtree.h>
+#include <de/vector.h>
 
 #include "../uri.h"
-#include "Material"
+#include "material.h"
 
 namespace world {
 

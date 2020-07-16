@@ -22,24 +22,24 @@
 #include "de_platform.h"
 #include "render/rend_main.h"
 
-#include "MaterialVariantSpec"
-#include "ClientTexture"
+#include "resource/materialvariantspec.h"
+#include "resource/clienttexture.h"
 
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
 #include "world/sky.h"
 #include "world/surface.h"
-#include "Contact"
+#include "world/contact.h"
 #include "world/convexsubspace.h"
 #include "world/subsector.h"
 #include "world/vertex.h"
 #include "client/clskyplane.h"
-#include "LightDecoration"
-#include "Lumobj"
-#include "SkyFixEdge"
-#include "TriangleStripBuilder"
-#include "WallEdge"
+#include "render/lightdecoration.h"
+#include "render/lumobj.h"
+#include "render/skyfixedge.h"
+#include "render/trianglestripbuilder.h"
+#include "render/walledge.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"  // pointlight_analysis_t
@@ -83,20 +83,20 @@
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <doomsday/defs/sprite.h>
-#include <doomsday/res/TextureManifest>
+#include <doomsday/res/texturemanifest.h>
 #include <doomsday/mesh/face.h>
 #include <doomsday/world/blockmap.h>
 #include <doomsday/world/bspleaf.h>
 #include <doomsday/world/lineowner.h>
 #include <doomsday/world/materials.h>
 #include <doomsday/world/thinkers.h>
-#include <doomsday/BspNode>
+#include <doomsday/world/bspnode.h>
 #include <de/legacy/concurrency.h>
 #include <de/legacy/timer.h>
 #include <de/legacy/texgamma.h>
 #include <de/legacy/vector1.h>
-#include <de/GLInfo>
-#include <de/GLState>
+#include <de/glinfo.h>
+#include <de/glstate.h>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>

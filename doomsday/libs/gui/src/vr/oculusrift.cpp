@@ -17,16 +17,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/OculusRift"
-#include "de/BaseWindow"
-#include "de/VRWindowTransform"
+#include "de/oculusrift.h"
+#include "de/basewindow.h"
+#include "de/vrwindowtransform.h"
 
-#include <de/GLTextureFramebuffer>
-#include <de/GLState>
-#include <de/Lockable>
-#include <de/Guard>
-#include <de/App>
-#include <de/Log>
+#include <de/gltextureframebuffer.h>
+#include <de/glstate.h>
+#include <de/lockable.h>
+#include <de/guard.h>
+#include <de/app.h>
+#include <de/log.h>
 
 #ifdef DE_HAVE_OCULUS_API
 #  include <OVR.h>

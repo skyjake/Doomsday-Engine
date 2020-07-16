@@ -24,11 +24,11 @@
 #include "ui/clientstyle.h"
 #include "network/serverlink.h"
 
-#include <doomsday/Games>
-#include <de/CallbackAction>
-#include <de/PopupButtonWidget>
-#include <de/PopupMenuWidget>
-#include <de/ui/SubwidgetItem>
+#include <doomsday/games.h>
+#include <de/callbackaction.h>
+#include <de/popupbuttonwidget.h>
+#include <de/popupmenuwidget.h>
+#include <de/ui/subwidgetitem.h>
 
 using namespace de;
 

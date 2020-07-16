@@ -28,7 +28,7 @@
 #include "p_saveio.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
-#include <de/String>
+#include <de/string.h>
 #include <de/legacy/memory.h>
 #include <cstdio>
 #include <cstring>

@@ -21,8 +21,8 @@
 #ifndef DE_RESOURCE_CLIENTMATERIAL_H
 #define DE_RESOURCE_CLIENTMATERIAL_H
 
-#include <doomsday/world/Material>
-#include "MaterialVariantSpec"
+#include <doomsday/world/material.h>
+#include "resource/materialvariantspec.h"
 
 class MaterialAnimator;
 

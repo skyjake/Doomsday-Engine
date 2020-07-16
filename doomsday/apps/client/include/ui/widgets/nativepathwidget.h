@@ -19,8 +19,8 @@
 #ifndef DE_CLIENT_UI_NATIVEPATHWIDGET_H
 #define DE_CLIENT_UI_NATIVEPATHWIDGET_H
 
-#include <de/AuxButtonWidget>
-#include <de/FileDialog>
+#include <de/auxbuttonwidget.h>
+#include <de/filedialog.h>
 
 /**
  * Console variable that contains a native path.

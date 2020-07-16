@@ -24,8 +24,8 @@
 
 #include "gl/gl_texmanager.h"
 
-#include "MaterialAnimator"
-#include "MaterialVariantSpec"
+#include "resource/materialanimator.h"
+#include "resource/materialvariantspec.h"
 
 #include "world/map.h"
 #include "world/convexsubspace.h"
@@ -33,7 +33,7 @@
 #include "world/surface.h"
 #include "world/subsector.h"
 
-#include "WallEdge"
+#include "render/walledge.h"
 
 #include "render/rend_main.h"
 #include "render/rendersystem.h"
@@ -46,7 +46,7 @@
 #include <doomsday/console/var.h>
 #include <doomsday/mesh/face.h>
 #include <doomsday/mesh/hedge.h>
-#include <de/Vector>
+#include <de/vector.h>
 
 using namespace de;
 

@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/BitArray"
+#include "de/bitarray.h"
 
 namespace de {
 

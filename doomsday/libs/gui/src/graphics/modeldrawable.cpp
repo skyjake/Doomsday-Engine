@@ -16,21 +16,21 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ModelDrawable"
-#include "de/HeightMap"
-#include "de/ImageFile"
+#include "de/modeldrawable.h"
+#include "de/heightmap.h"
+#include "de/imagefile.h"
 
-#include <de/Animation>
-#include <de/App>
-#include <de/ByteArrayFile>
-#include <de/Folder>
-#include <de/GLBuffer>
-#include <de/GLProgram>
-#include <de/GLState>
-#include <de/GLUniform>
-#include <de/Matrix>
-#include <de/TextureBank>
-#include <de/Hash>
+#include <de/animation.h>
+#include <de/app.h>
+#include <de/bytearrayfile.h>
+#include <de/folder.h>
+#include <de/glbuffer.h>
+#include <de/glprogram.h>
+#include <de/glstate.h>
+#include <de/gluniform.h>
+#include <de/matrix.h>
+#include <de/texturebank.h>
+#include <de/hash.h>
 
 #include <assimp/IOStream.hpp>
 #include <assimp/IOSystem.hpp>

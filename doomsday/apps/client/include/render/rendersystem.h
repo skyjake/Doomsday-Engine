@@ -20,13 +20,13 @@
 #define CLIENT_RENDERSYSTEM_H
 
 #include <functional>
-#include <de/GLShaderBank>
-#include <de/GLUniform>
-#include <de/ImageBank>
-#include <de/Vector>
-#include <de/System>
-#include "DrawLists"
-#include "ConfigProfiles"
+#include <de/glshaderbank.h>
+#include <de/gluniform.h>
+#include <de/imagebank.h>
+#include <de/vector.h>
+#include <de/system.h>
+#include "drawlists.h"
+#include "configprofiles.h"
 #include "projectedtexturedata.h"
 #include "vectorlightdata.h"
 #include "projectionlist.h"

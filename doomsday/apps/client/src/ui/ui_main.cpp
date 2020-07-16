@@ -23,11 +23,11 @@
 #include "sys_system.h"
 
 #include <cmath>
-#include <de/GLState>
-#include <de/GLInfo>
+#include <de/glstate.h>
+#include <de/glinfo.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/filesys/fs_util.h>
-//#include <doomsday/world/Materials>
+//#include <doomsday/world/materials.h>
 
 #include "api_fontrender.h"
 #include "gl/gl_main.h"
@@ -36,7 +36,7 @@
 //#include "resource/image.h"
 #include "render/rend_main.h"
 #include "render/rend_font.h"
-//#include "MaterialAnimator"
+//#include "resource/materialanimator.h"
 
 using namespace de;
 

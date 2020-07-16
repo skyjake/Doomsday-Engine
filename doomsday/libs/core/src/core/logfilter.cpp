@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/LogFilter"
+#include "de/logfilter.h"
 
 namespace de {
 

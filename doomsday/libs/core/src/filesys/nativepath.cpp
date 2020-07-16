@@ -19,8 +19,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/NativePath"
-#include "de/App"
+#include "de/nativepath.h"
+#include "de/app.h"
 
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/path.h>

@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/RelayWidget"
+#include "de/relaywidget.h"
 
 namespace de {
 

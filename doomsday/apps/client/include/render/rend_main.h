@@ -25,13 +25,13 @@
 #endif
 
 #include "dd_types.h"
-#include <de/Matrix>
-#include <de/Record>
-#include <de/Vector>
-#include <de/graphics/opengl.h>
+#include <de/matrix.h>
+#include <de/record.h>
+#include <de/vector.h>
+#include <de/opengl.h>
 
 #include "def_main.h"
-#include "MaterialVariantSpec"
+#include "resource/materialvariantspec.h"
 
 struct VectorLightData;
 class Lumobj;

@@ -20,12 +20,12 @@
 #ifndef SAVEGAMETOOL_PACKAGEFORMATER_H
 #define SAVEGAMETOOL_PACKAGEFORMATER_H
 
-#include <de/String>
-#include <de/Error>
-#include <de/Block>
-#include <de/Path>
-#include <de/String>
-#include <doomsday/GameStateFolder>
+#include <de/string.h>
+#include <de/error.h>
+#include <de/block.h>
+#include <de/path.h>
+#include <de/string.h>
+#include <doomsday/gamestatefolder.h>
 
 /**
  * Base class for .save package formatters.

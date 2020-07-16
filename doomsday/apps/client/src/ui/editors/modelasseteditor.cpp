@@ -32,16 +32,16 @@
 
 #include <doomsday/world/thinkers.h>
 
-#include <de/AnimationValue>
-#include <de/FS>
-#include <de/DialogContentStylist>
-#include <de/NativePointerValue>
-#include <de/NumberValue>
-#include <de/PackageLoader>
-#include <de/RegExp>
-#include <de/ScriptedInfo>
-#include <de/SequentialLayout>
-#include <de/TextValue>
+#include <de/animationvalue.h>
+#include <de/filesystem.h>
+#include <de/dialogcontentstylist.h>
+#include <de/nativepointervalue.h>
+#include <de/numbervalue.h>
+#include <de/packageloader.h>
+#include <de/regexp.h>
+#include <de/scripting/scriptedinfo.h>
+#include <de/sequentiallayout.h>
+#include <de/textvalue.h>
 
 using namespace de;
 using namespace de::ui;

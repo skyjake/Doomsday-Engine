@@ -45,7 +45,7 @@ typedef enum systhreadexitstatus_e {
 typedef std::function<int (void *)> systhreadfunc_t;
 
 #ifdef __DE__ // libdeng internal
-#include <de/Thread>
+#include <de/thread.h>
 /**
  * Thread that runs a user-specified callback function. Exceptions from the callback
  * function are caught.

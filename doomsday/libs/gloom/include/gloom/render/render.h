@@ -20,7 +20,7 @@
 #define GLOOM_RENDER_H
 
 #include "gloom/render/context.h"
-#include <de/Time>
+#include <de/time.h>
 
 namespace gloom {
 

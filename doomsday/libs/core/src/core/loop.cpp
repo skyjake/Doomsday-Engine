@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Loop"
-#include "de/App"
-#include "de/Time"
-#include "de/Timer"
-#include "de/Log"
+#include "de/loop.h"
+#include "de/app.h"
+#include "de/time.h"
+#include "de/timer.h"
+#include "de/log.h"
 #include "de/math.h"
-#include "de/Garbage"
+#include "de/garbage.h"
 
 #include "../src/core/callbacktimer.h"
 

@@ -24,11 +24,11 @@
 #include "updater/updatersettings.h"
 #include "updater/updatersettingsdialog.h"
 #include "clientapp.h"
-#include <de/GuiApp>
-#include <de/Log>
-#include <de/ProgressWidget>
-#include <de/ToggleWidget>
-//#include <de/SignalAction>
+#include <de/guiapp.h>
+#include <de/log.h>
+#include <de/progresswidget.h>
+#include <de/togglewidget.h>
+//#include <de/signalaction.h>
 //#include <QUrl>
 //#include <QDesktopServices>
 

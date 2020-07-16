@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Profiles"
-#include "de/App"
-#include "de/FileSystem"
-#include "de/Folder"
-#include "de/String"
+#include "de/profiles.h"
+#include "de/app.h"
+#include "de/filesystem.h"
+#include "de/folder.h"
+#include "de/string.h"
 
 namespace de {
 

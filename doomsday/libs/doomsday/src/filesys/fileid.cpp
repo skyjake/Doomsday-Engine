@@ -22,8 +22,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/App>
-#include <de/Log>
+#include <de/app.h>
+#include <de/log.h>
 
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fileid.h"

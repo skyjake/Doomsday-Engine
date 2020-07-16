@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Waveform"
-#include <de/FixedByteArray>
-#include <de/Reader>
+#include "de/waveform.h"
+#include <de/fixedbytearray.h>
+#include <de/reader.h>
 
 namespace de {
 

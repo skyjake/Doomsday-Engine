@@ -21,8 +21,8 @@
 #ifndef DE_WORLD_MAPOBJECT_H
 #define DE_WORLD_MAPOBJECT_H
 
-#include <de/Error>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/vector.h>
 
 namespace world {
 

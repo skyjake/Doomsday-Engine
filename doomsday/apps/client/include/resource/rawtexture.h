@@ -22,7 +22,7 @@
 #define DE_RESOURCE_RAWTEXTURE
 
 #include "dd_share.h" // For lumpnum_t
-#include <de/String>
+#include <de/string.h>
 
 /**
  * A rawtex is a lump raw graphic that has been prepared for render.

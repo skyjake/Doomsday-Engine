@@ -21,7 +21,7 @@
 #include "dd_share.h"
 
 #include <de/legacy/memory.h>
-#include <de/Image>
+#include <de/image.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>

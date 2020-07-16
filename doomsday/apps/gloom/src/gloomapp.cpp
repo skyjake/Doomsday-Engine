@@ -25,15 +25,15 @@
 #include <gloom/world/user.h>
 #include <gloom/world/map.h>
 
-#include <doomsday/DataBundle>
+#include <doomsday/res/databundle.h>
 
-#include <de/Beacon>
-#include <de/DirectoryFeed>
-#include <de/FileSystem>
-#include <de/Info>
-#include <de/PackageLoader>
-#include <de/ScriptSystem>
-#include <de/WindowSystem>
+#include <de/beacon.h>
+#include <de/directoryfeed.h>
+#include <de/dscript.h>
+#include <de/filesystem.h>
+#include <de/info.h>
+#include <de/packageloader.h>
+#include <de/windowsystem.h>
 
 #include <the_Foundation/datagram.h>
 

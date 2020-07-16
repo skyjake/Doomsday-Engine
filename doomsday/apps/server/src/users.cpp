@@ -17,8 +17,8 @@
  */
 
 #include "users.h"
-#include <de/Garbage>
-#include <de/Set>
+#include <de/garbage.h>
+#include <de/set.h>
 
 using namespace de;
 

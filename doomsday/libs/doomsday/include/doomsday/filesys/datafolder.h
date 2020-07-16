@@ -19,8 +19,8 @@
 #ifndef LIBDOOMSDAY_DATAFOLDER_H
 #define LIBDOOMSDAY_DATAFOLDER_H
 
-#include "../resource/databundle.h"
-#include <de/Folder>
+#include "../res/databundle.h"
+#include <de/folder.h>
 
 /**
  * FS2 file for classic container-like data files: PK3, Snowberry Box.

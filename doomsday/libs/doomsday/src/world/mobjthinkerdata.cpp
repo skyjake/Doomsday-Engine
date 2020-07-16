@@ -19,8 +19,7 @@
 
 #include "doomsday/world/mobjthinkerdata.h"
 
-#include <de/ScriptSystem>
-#include <de/RecordValue>
+#include <de/dscript.h>
 
 using namespace de;
 

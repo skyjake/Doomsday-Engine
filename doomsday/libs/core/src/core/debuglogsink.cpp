@@ -17,7 +17,7 @@
  */
 
 #if 0
-#include "de/DebugLogSink"
+#include "de/debuglogsink.h"
 
 namespace de {
 

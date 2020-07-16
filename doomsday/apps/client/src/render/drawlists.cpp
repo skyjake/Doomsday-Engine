@@ -21,9 +21,9 @@
 #include "de_platform.h"
 #include "render/drawlists.h"
 
-#include <de/Log>
+#include <de/log.h>
 #include <de/legacy/memoryzone.h>
-#include <de/Hash>
+#include <de/hash.h>
 
 using namespace de;
 

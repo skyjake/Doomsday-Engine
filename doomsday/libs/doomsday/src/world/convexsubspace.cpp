@@ -27,8 +27,8 @@
 #include "doomsday/mesh/face.h"
 #include "doomsday/mesh/hedge.h"
 
-#include <de/Log>
-#include <de/Set>
+#include <de/log.h>
+#include <de/set.h>
 
 using namespace de;
 
@@ -105,7 +105,7 @@ bool ConvexSubspace::contains(const Vec2d &point) const
 
 void ConvexSubspace::assignExtraMesh(mesh::Mesh &newMesh)
 {
-    LOG_AS("ConvexSubspace");
+    LOG_AS("world/convexsubspace.h");
 
     const dint sizeBefore = d->extraMeshes.size();
 

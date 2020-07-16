@@ -17,11 +17,11 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/Vector>
-#include <de/Matrix>
-#include <de/Writer>
-#include <de/Reader>
-#include <de/Block>
+#include <de/vector.h>
+#include <de/matrix.h>
+#include <de/writer.h>
+#include <de/reader.h>
+#include <de/block.h>
 #include <iostream>
 
 using namespace de;

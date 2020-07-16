@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/NativeFont"
-#include <de/KeyMap>
-#include <de/Hash>
-#include <de/Property>
+#include "de/nativefont.h"
+#include <de/keymap.h>
+#include <de/hash.h>
+#include <de/property.h>
 
 namespace de {
 

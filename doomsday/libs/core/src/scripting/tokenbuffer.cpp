@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/TokenBuffer"
-#include "de/String"
+#include "de/scripting/tokenbuffer.h"
+#include "de/string.h"
 #include "de/math.h"
 
 #include <sstream>

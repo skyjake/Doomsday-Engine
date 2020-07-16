@@ -21,7 +21,7 @@
 #ifndef LIBCOMMON_UI_LINEEDITWIDGET
 #define LIBCOMMON_UI_LINEEDITWIDGET
 
-#include <de/String>
+#include <de/string.h>
 #include "widget.h"
 
 namespace common {

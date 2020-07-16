@@ -22,11 +22,11 @@
 
 #include "doomsday/filesys/wad.h"
 
-#include "doomsday/DoomsdayApp"
+#include "doomsday/doomsdayapp.h"
 #include "doomsday/filesys/lumpcache.h"
-#include <de/ByteOrder>
-#include <de/NativePath>
-#include <de/LogBuffer>
+#include <de/byteorder.h>
+#include <de/nativepath.h>
+#include <de/logbuffer.h>
 #include <de/legacy/memoryzone.h>
 #include <cstring> // memcpy
 

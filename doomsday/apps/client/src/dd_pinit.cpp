@@ -28,13 +28,13 @@
 #include "dd_pinit.h"
 
 #include <cstdarg>
-#include <de/Extension>
-#include <de/String>
+#include <de/extension.h>
+#include <de/string.h>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/knownword.h>
 #include <doomsday/filesys/fs_main.h>
-#include <doomsday/world/MaterialArchive>
+#include <doomsday/world/materialarchive.h>
 #ifdef __SERVER__
 #  include "server/sv_def.h"
 #endif

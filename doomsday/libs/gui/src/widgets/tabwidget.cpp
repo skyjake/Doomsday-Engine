@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/TabWidget"
-#include "de/ui/ListData"
-#include "de/MenuWidget"
+#include "de/tabwidget.h"
+#include "de/ui/listdata.h"
+#include "de/menuwidget.h"
 
-#include <de/AnimationRule>
+#include <de/animationrule.h>
 
 namespace de {
 

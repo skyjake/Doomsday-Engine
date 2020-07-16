@@ -22,10 +22,10 @@
 
 #include "thinker.h"
 
-#include <de/Process>
-#include <de/Id>
-#include <de/IObject>
-#include <de/ISerializable>
+#include <de/scripting/process.h>
+#include <de/id.h>
+#include <de/scripting/iobject.h>
+#include <de/iserializable.h>
 
 /**
  * Base class for thinker private data.

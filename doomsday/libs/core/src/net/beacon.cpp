@@ -16,15 +16,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Beacon"
+#include "de/beacon.h"
 
-#include "de/Garbage"
-#include "de/LogBuffer"
-#include "de/Loop"
-#include "de/KeyMap"
-#include "de/Reader"
-#include "de/Timer"
-#include "de/Writer"
+#include "de/garbage.h"
+#include "de/logbuffer.h"
+#include "de/loop.h"
+#include "de/keymap.h"
+#include "de/reader.h"
+#include "de/timer.h"
+#include "de/writer.h"
 
 #include <the_Foundation/address.h>
 #include <the_Foundation/datagram.h>

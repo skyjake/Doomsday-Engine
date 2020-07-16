@@ -17,13 +17,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/PrintStatement"
-#include "de/Context"
-#include "de/ArrayValue"
-#include "de/ArrayExpression"
-#include "de/Writer"
-#include "de/Reader"
-#include "de/Log"
+#include "de/scripting/printstatement.h"
+#include "de/scripting/context.h"
+#include "de/scripting/arrayexpression.h"
+#include "de/arrayvalue.h"
+#include "de/writer.h"
+#include "de/reader.h"
+#include "de/log.h"
 
 using namespace de;
 

@@ -31,12 +31,12 @@
 #  include "server/sv_def.h"
 #endif
 
-#include <de/App>
-#include <de/Config>
-#include <de/LogBuffer>
-#include <de/WebRequest>
-#include <de/ServerInfo>
-#include <de/data/json.h>
+#include <de/app.h>
+#include <de/config.h>
+#include <de/logbuffer.h>
+#include <de/webrequest.h>
+#include <de/serverinfo.h>
+#include <de/json.h>
 #include <de/legacy/memory.h>
 #include <vector>
 #include <list>

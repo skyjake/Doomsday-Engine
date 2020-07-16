@@ -17,9 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "de/Guard"
-#include "de/Lockable"
-#include "de/ReadWriteLockable"
+#include "de/guard.h"
+#include "de/lockable.h"
 
 namespace de {
 

@@ -19,11 +19,11 @@
 #ifndef LINKWINDOW_H
 #define LINKWINDOW_H
 
-#include <de/BaseWindow>
-#include <de/GuiRootWidget>
-#include <de/NativePath>
-#include <de/String>
-#include <doomsday/network/Link>
+#include <de/basewindow.h>
+#include <de/guirootwidget.h>
+#include <de/nativepath.h>
+#include <de/string.h>
+#include <doomsday/network/link.h>
 
 /**
  * Window for a server link.

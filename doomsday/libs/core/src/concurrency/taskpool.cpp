@@ -16,16 +16,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/TaskPool"
-#include "de/Task"
-#include "de/Guard"
-#include "de/Set"
-
-#include <de/App>
-#include <de/Garbage>
-#include <de/Lockable>
-#include <de/Loop>
-#include <de/Waitable>
+#include "de/taskpool.h"
+#include "de/task.h"
+#include "de/guard.h"
+#include "de/set.h"
+#include "de/app.h"
+#include "de/garbage.h"
+#include "de/lockable.h"
+#include "de/loop.h"
+#include "de/waitable.h"
 
 #include <the_Foundation/threadpool.h>
 

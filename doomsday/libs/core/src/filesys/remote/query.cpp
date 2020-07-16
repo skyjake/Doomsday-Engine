@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/filesys/Query"
+#include "de/filesys/query.h"
 
 namespace de {
 namespace filesys {

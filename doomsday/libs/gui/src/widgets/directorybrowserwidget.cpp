@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/DirectoryBrowserWidget"
-#include "de/DirectoryTreeData"
-#include "de/ChildWidgetOrganizer"
+#include "de/directorybrowserwidget.h"
+#include "de/directorytreedata.h"
+#include "de/childwidgetorganizer.h"
 
 namespace de {
 

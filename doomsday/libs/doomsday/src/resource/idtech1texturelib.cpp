@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/idtech1texturelib.h"
-#include "doomsday/resource/idtech1util.h"
-#include "doomsday/resource/patch.h"
+#include "doomsday/res/idtech1texturelib.h"
+#include "doomsday/res/idtech1util.h"
+#include "doomsday/res/patch.h"
 
-#include <de/ByteOrder>
-#include <de/ByteSubArray>
-#include <de/KeyMap>
+#include <de/byteorder.h>
+#include <de/bytesubarray.h>
+#include <de/keymap.h>
 
 using namespace de;
 

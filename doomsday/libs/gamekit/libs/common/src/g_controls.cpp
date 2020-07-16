@@ -35,7 +35,7 @@
 #  include "p_inventory.h"
 #endif
 
-#include <de/Path>
+#include <de/path.h>
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 #  define GOTWPN(x)         (plr->weaponOwned[x])

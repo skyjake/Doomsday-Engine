@@ -21,9 +21,9 @@
 #ifndef LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 #define LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
 
-#include <de/File>
-#include <de/Reader>
-#include <de/Writer>
+#include <de/file.h>
+#include <de/reader.h>
+#include <de/writer.h>
 #include <de/legacy/reader.h>
 #include <de/legacy/writer.h>
 

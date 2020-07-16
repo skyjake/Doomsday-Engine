@@ -17,14 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Time"
+#include "de/time.h"
 
-#include "de/Date"
-#include "de/HighPerformanceTimer"
-#include "de/Reader"
-#include "de/CString"
-#include "de/Thread"
-#include "de/Writer"
+#include "de/date.h"
+#include "de/highperformancetimer.h"
+#include "de/reader.h"
+#include "de/cstring.h"
+#include "de/thread.h"
+#include "de/writer.h"
 
 #include <atomic>
 #include <ctime>

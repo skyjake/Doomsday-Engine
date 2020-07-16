@@ -26,7 +26,7 @@
 
 #ifdef __cplusplus
 
-#include <de/String>
+#include <de/string.h>
 
 extern "C" {
 #endif

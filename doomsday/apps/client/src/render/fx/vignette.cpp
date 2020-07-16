@@ -26,7 +26,7 @@
 #include "render/rend_main.h"
 #include "world/clientworld.h"
 
-#include <de/GLInfo>
+#include <de/glinfo.h>
 #include <de/legacy/vector1.h>
 #include <doomsday/console/var.h>
 #include <cmath>

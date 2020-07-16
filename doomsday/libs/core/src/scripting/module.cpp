@@ -17,12 +17,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Module"
-#include "de/File"
-#include "de/Process"
-#include "de/App"
-#include "de/Folder"
-#include "de/Script"
+#include "de/scripting/module.h"
+#include "de/scripting/process.h"
+#include "de/scripting/script.h"
+#include "de/file.h"
+#include "de/app.h"
+#include "de/folder.h"
 
 using namespace de;
 

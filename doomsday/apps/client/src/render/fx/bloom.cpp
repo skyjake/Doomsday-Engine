@@ -21,9 +21,9 @@
 #include "clientapp.h"
 
 #include <doomsday/console/var.h>
-#include <de/Drawable>
-#include <de/GLTextureFramebuffer>
-#include <de/WindowTransform>
+#include <de/drawable.h>
+#include <de/gltextureframebuffer.h>
+#include <de/windowtransform.h>
 
 using namespace de;
 

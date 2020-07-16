@@ -23,7 +23,7 @@
 #ifndef DE_CLIENT_UPDATERSETTINGSDIALOG_H
 #define DE_CLIENT_UPDATERSETTINGSDIALOG_H
 
-#include <de/DialogWidget>
+#include <de/dialogwidget.h>
 
 /**
  * Dialog for configuring the settings of the automatic updater.

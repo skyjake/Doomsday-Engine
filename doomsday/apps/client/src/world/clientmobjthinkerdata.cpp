@@ -26,8 +26,7 @@
 #include "render/modelrenderer.h"
 #include "render/stateanimator.h"
 
-#include <de/RecordValue>
-#include <de/Process>
+#include <de/dscript.h>
 
 using namespace de;
 using namespace world;

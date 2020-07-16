@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/FileDialog"
-
+#include "de/filedialog.h"
 #if 0
+// Testing: use the generic dialog instead.
 #  include "filedialog_x11.cpp"
 #else
 

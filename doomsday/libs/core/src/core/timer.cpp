@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Timer"
-#include "de/CoreEvent"
-#include "de/EventLoop"
-#include "de/Thread"
+#include "de/timer.h"
+#include "de/coreevent.h"
+#include "de/eventloop.h"
+#include "de/thread.h"
 
 #include <chrono>
 #include <queue>

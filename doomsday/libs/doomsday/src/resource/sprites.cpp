@@ -18,9 +18,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/sprites.h"
-#include "doomsday/resource/resources.h"
-#include "doomsday/resource/textures.h"
+#include "doomsday/res/sprites.h"
+#include "doomsday/res/resources.h"
+#include "doomsday/res/textures.h"
 #include "doomsday/defs/ded.h"
 #include "doomsday/defs/sprite.h"
 

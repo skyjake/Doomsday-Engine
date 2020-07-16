@@ -21,7 +21,7 @@
 #ifndef LIBCORE_CALLBACKTIMER_H
 #define LIBCORE_CALLBACKTIMER_H
 
-#include "de/Timer"
+#include "de/timer.h"
 
 namespace de {
 namespace internal {

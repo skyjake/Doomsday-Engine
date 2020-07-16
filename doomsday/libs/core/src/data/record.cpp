@@ -17,25 +17,25 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Record"
-#include "de/ArrayValue"
-#include "de/BlockValue"
-#include "de/DictionaryValue"
-#include "de/FunctionValue"
-#include "de/Info"
-#include "de/LogBuffer"
-#include "de/NumberValue"
-#include "de/Reader"
-#include "de/RecordValue"
-#include "de/RegExp"
-#include "de/String"
-#include "de/TextValue"
-#include "de/TimeValue"
-#include "de/Variable"
-#include "de/Vector"
-#include "de/Writer"
+#include "de/record.h"
+#include "de/arrayvalue.h"
+#include "de/blockvalue.h"
+#include "de/dictionaryvalue.h"
+#include "de/scripting/functionvalue.h"
+#include "de/info.h"
+#include "de/logbuffer.h"
+#include "de/numbervalue.h"
+#include "de/reader.h"
+#include "de/recordvalue.h"
+#include "de/regexp.h"
+#include "de/string.h"
+#include "de/textvalue.h"
+#include "de/timevalue.h"
+#include "de/variable.h"
+#include "de/vector.h"
+#include "de/writer.h"
 
-#include "de/CompiledRecord"
+#include "de/compiledrecord.h"
 
 #include <functional>
 #include <atomic>

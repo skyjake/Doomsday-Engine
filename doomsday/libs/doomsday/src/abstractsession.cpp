@@ -16,16 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/AbstractSession"
-#include "doomsday/GameStateFolder"
+#include "doomsday/abstractsession.h"
+#include "doomsday/gamestatefolder.h"
 
-#include <de/App>
-#include <de/FileSystem>
-#include <de/Log>
-#include <de/Writer>
+#include <de/app.h>
+#include <de/filesystem.h>
+#include <de/log.h>
+#include <de/writer.h>
 #include <doomsday/uri.h>
-#include <doomsday/DoomsdayApp>
-#include <doomsday/GameProfiles>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/gameprofiles.h>
 
 using namespace de;
 

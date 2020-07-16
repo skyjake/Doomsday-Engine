@@ -21,7 +21,7 @@
 #define LIBDOOMSDAY_DEFINITION_ARRAY_H
 
 #include "../libdoomsday.h"
-#include <de/Vector>
+#include <de/vector.h>
 #include <de/legacy/memory.h>
 #include <cstring>
 

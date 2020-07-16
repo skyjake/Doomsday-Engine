@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_REPOSITORYBROWSERDIALOG_H
 #define DE_CLIENT_REPOSITORYBROWSERDIALOG_H
 
-#include <de/DialogWidget>
+#include <de/dialogwidget.h>
 
 /**
  * Remote package repository browser.

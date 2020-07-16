@@ -17,15 +17,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ArchiveFeed"
-#include "de/ArchiveEntryFile"
-//#include "de/ArchiveFolder"
-#include "de/ByteArrayFile"
-#include "de/ZipArchive"
-#include "de/Writer"
-#include "de/Folder"
-#include "de/FS"
-#include "de/LogBuffer"
+#include "de/archivefeed.h"
+#include "de/archiveentryfile.h"
+//#include "de/archivefolder.h"
+#include "de/bytearrayfile.h"
+#include "de/ziparchive.h"
+#include "de/writer.h"
+#include "de/folder.h"
+#include "de/filesystem.h"
+#include "de/logbuffer.h"
 
 namespace de {
 

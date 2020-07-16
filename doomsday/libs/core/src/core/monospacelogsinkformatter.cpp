@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/MonospaceLogSinkFormatter"
-#include "de/EscapeParser"
-#include "de/CString"
+#include "de/monospacelogsinkformatter.h"
+#include "de/escapeparser.h"
+#include "de/cstring.h"
 #include "de/math.h"
-#include "de/Vector"
+#include "de/vector.h"
 
 namespace de {
 

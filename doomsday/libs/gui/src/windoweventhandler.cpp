@@ -16,14 +16,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/WindowEventHandler"
-#include "de/GLWindow"
+#include "de/windoweventhandler.h"
+#include "de/glwindow.h"
 
-#include <de/App>
-#include <de/LogBuffer>
-#include <de/Loop>
-#include <de/Rule>
-#include <de/WindowSystem>
+#include <de/app.h>
+#include <de/logbuffer.h>
+#include <de/loop.h>
+#include <de/rule.h>
+#include <de/windowsystem.h>
 
 #include <SDL_events.h>
 

@@ -31,8 +31,8 @@
 #include <de/legacy/memory.h>
 #include <de/c_wrapper.h>
 #include <de/legacy/strutil.h>
-#include <de/List>
-#include <de/RegExp>
+#include <de/list.h>
+#include <de/regexp.h>
 
 using namespace de;
 

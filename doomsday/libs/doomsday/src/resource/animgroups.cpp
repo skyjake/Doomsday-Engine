@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/animgroups.h"
-#include "doomsday/resource/resources.h"
+#include "doomsday/res/animgroups.h"
+#include "doomsday/res/resources.h"
 
-#include <de/Log>
+#include <de/log.h>
 
 namespace res {
 

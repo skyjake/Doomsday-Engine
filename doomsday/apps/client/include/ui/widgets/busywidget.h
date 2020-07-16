@@ -19,8 +19,8 @@
 #ifndef CLIENT_BUSYWIDGET_H
 #define CLIENT_BUSYWIDGET_H
 
-#include <de/ProgressWidget>
-#include <de/GLTexture>
+#include <de/progresswidget.h>
+#include <de/gltexture.h>
 
 class GameWidget;
 

@@ -19,8 +19,8 @@
 #ifndef LIBSHELL_TEXTROOTWIDGET_H
 #define LIBSHELL_TEXTROOTWIDGET_H
 
-#include "../RootWidget"
-#include "TextCanvas"
+#include "../rootwidget.h"
+#include "textcanvas.h"
 
 namespace de { namespace term {
 

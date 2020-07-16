@@ -19,8 +19,8 @@
 #ifndef LOCALSERVERGUIDIALOG_H
 #define LOCALSERVERGUIDIALOG_H
 
-#include <de/DialogWidget>
-#include <de/NativePath>
+#include <de/dialogwidget.h>
+#include <de/nativepath.h>
 
 class LocalServerDialog : public de::DialogWidget
 {

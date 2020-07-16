@@ -21,9 +21,9 @@
 #include "ui/dialogs/packageinfodialog.h"
 #include "ui/widgets/homeitemwidget.h"
 
-#include <de/CallbackAction>
-#include <de/FileSystem>
-#include <de/ui/ActionItem>
+#include <de/callbackaction.h>
+#include <de/filesystem.h>
+#include <de/ui/actionitem.h>
 
 using namespace de;
 

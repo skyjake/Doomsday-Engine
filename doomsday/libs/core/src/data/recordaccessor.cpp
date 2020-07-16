@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/RecordAccessor"
-#include "de/RecordValue"
-#include "de/DictionaryValue"
+#include "de/recordaccessor.h"
+#include "de/recordvalue.h"
+#include "de/dictionaryvalue.h"
 
 namespace de {
 

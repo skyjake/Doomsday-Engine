@@ -24,8 +24,8 @@
 #  error "viewports.h is for the client only"
 #endif
 
-#include <de/Rectangle>
-#include <de/Matrix>
+#include <de/rectangle.h>
+#include <de/matrix.h>
 #include <de/legacy/rect.h>
 
 namespace world { class ConvexSubspace; }

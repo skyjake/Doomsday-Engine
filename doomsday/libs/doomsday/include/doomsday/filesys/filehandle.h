@@ -28,7 +28,7 @@
 
 #include "../libdoomsday.h"
 #include <de/libcore.h>
-#include <de/List>
+#include <de/list.h>
 #include <de/legacy/types.h>
 #include <stdio.h>
 

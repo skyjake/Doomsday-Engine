@@ -19,8 +19,8 @@
 #include "gloom/render/skybox.h"
 #include "gloom/render/gbuffer.h"
 
-#include <de/Drawable>
-#include <de/ImageFile>
+#include <de/drawable.h>
+#include <de/imagefile.h>
 
 using namespace de;
 

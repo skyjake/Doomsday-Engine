@@ -19,8 +19,8 @@
 #ifndef OPTIONSPAGE_H
 #define OPTIONSPAGE_H
 
-#include <de/GuiWidget>
-#include <de/Record>
+#include <de/guiwidget.h>
+#include <de/record.h>
 
 class OptionsPage : public de::GuiWidget
 {

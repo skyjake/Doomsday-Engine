@@ -22,12 +22,9 @@
 
 #include <de/legacy/memory.h>
 #include <de/legacy/memoryzone.h>
-#include <de/Function>
-#include <de/GLUniform>
-#include <de/PackageLoader>
-#include <de/ScriptSystem>
-#include <de/ScriptedInfo>
-#include <de/TextValue>
+#include <de/gluniform.h>
+#include <de/packageloader.h>
+#include <de/dscript.h>
 #include "clientapp.h"
 #include "render/environ.h"
 #include "render/rend_main.h"
@@ -46,7 +43,7 @@
 #include "world/subsector.h"
 #include "world/surface.h"
 
-#include "Contact"
+#include "world/contact.h"
 #include "misc/r_util.h"
 
 using namespace de;

@@ -16,20 +16,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GuiRootWidget"
-#include "de/BaseGuiApp"
-#include "de/BaseWindow"
-#include "de/FocusWidget"
-#include "de/GuiWidget"
-#include "de/Painter"
-#include "de/Style"
+#include "de/guirootwidget.h"
+#include "de/baseguiapp.h"
+#include "de/basewindow.h"
+#include "de/focuswidget.h"
+#include "de/guiwidget.h"
+#include "de/painter.h"
+#include "de/ui/style.h"
 
-#include <de/GLFramebuffer>
-#include <de/GLState>
-#include <de/GLUniform>
-#include <de/GLWindow>
-#include <de/Image>
-#include <de/TextureBank>
+#include <de/glframebuffer.h>
+#include <de/glstate.h>
+#include <de/gluniform.h>
+#include <de/glwindow.h>
+#include <de/image.h>
+#include <de/texturebank.h>
 
 namespace de {
 

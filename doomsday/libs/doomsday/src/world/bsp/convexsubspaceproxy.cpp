@@ -28,8 +28,8 @@
 #include "doomsday/mesh/hedge.h"
 #include "doomsday/mesh/mesh.h"
 
-#include <de/Set>
-#include <de/Log>
+#include <de/set.h>
+#include <de/log.h>
 
 #include <list>
 

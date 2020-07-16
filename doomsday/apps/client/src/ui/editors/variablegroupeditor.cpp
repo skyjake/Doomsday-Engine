@@ -18,8 +18,8 @@
 
 #include "ui/editors/variablegroupeditor.h"
 
-#include <de/PopupMenuWidget>
-#include <de/SequentialLayout>
+#include <de/popupmenuwidget.h>
+#include <de/sequentiallayout.h>
 
 using namespace de;
 

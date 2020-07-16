@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_UI_CONTROLLERPRESETS_H
 #define DE_CLIENT_UI_CONTROLLERPRESETS_H
 
-#include <de/String>
+#include <de/string.h>
 
 /**
  * Game controller presets.

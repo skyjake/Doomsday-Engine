@@ -25,7 +25,7 @@
 #include "audio/audiosystem.h"
 
 #include <doomsday/filesys/fs_main.h>
-#include <doomsday/resource/wav.h>
+#include <doomsday/wav.h>
 #include <de/legacy/timer.h>
 #include <cstring>
 

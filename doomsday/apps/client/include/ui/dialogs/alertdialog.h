@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_ALERTDIALOG_H
 #define DE_CLIENT_ALERTDIALOG_H
 
-#include <de/DialogWidget>
+#include <de/dialogwidget.h>
 
 /**
  * Dialog for listing recent alerts.

@@ -21,7 +21,7 @@
 #define LIBDOOMSDAY_DEFINITION_TYPES_H
 
 #include <de/libcore.h>
-#include <de/Vector>
+#include <de/vector.h>
 #include <de/legacy/memory.h>
 #include "../uri.h"
 

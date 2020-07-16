@@ -25,8 +25,8 @@
 #include "../filesys/lumpindex.h"
 #include "file.h"
 #include "fileinfo.h"
-#include <de/Error>
-#include <de/PathTree>
+#include <de/error.h>
+#include <de/pathtree.h>
 
 namespace res {
 

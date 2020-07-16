@@ -23,7 +23,7 @@
 #ifndef LIBDEHREAD_INFO_H
 #define LIBDEHREAD_INFO_H
 
-#include <de/String>
+#include <de/string.h>
 #include "importdeh.h"
 
 struct FinaleBackgroundMapping

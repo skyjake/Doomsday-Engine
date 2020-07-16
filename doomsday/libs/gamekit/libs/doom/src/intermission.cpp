@@ -33,8 +33,8 @@
 #include <cstdio>
 #include <cctype>
 #include <cstring>
-#include <de/List>
-#include <de/Set>
+#include <de/list.h>
+#include <de/set.h>
 
 using namespace de;
 

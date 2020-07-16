@@ -20,7 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/PointerSet>
+#include <de/pointerset.h>
 #include <iostream>
 
 using namespace de;

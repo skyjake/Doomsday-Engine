@@ -17,14 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ArrayValue"
-#include "de/FunctionValue"
-#include "de/NumberValue"
-#include "de/Process"
-#include "de/Reader"
-#include "de/RecordValue"
-#include "de/TextValue"
-#include "de/Writer"
+#include "de/arrayvalue.h"
+#include "de/scripting/functionvalue.h"
+#include "de/numbervalue.h"
+#include "de/scripting/process.h"
+#include "de/reader.h"
+#include "de/recordvalue.h"
+#include "de/textvalue.h"
+#include "de/writer.h"
 
 #include <algorithm>
 

@@ -19,10 +19,10 @@
 #ifndef LIBCORE_FILESYS_NODE_H
 #define LIBCORE_FILESYS_NODE_H
 
-#include "../String"
-#include "../Path"
-#include "../Lockable"
-#include "../Deletable"
+#include "../string.h"
+#include "../path.h"
+#include "../lockable.h"
+#include "../deletable.h"
 
 namespace de {
 namespace filesys {

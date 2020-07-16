@@ -16,17 +16,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Image"
-#include "de/graphics/opengl.h"
+#include "de/image.h"
+#include "de/opengl.h"
 
-#include <de/Block>
-#include <de/File>
-#include <de/FixedByteArray>
-#include <de/Log>
-#include <de/Reader>
-#include <de/Vector>
-#include <de/Writer>
-#include <de/Zeroed>
+#include <de/block.h>
+#include <de/file.h>
+#include <de/fixedbytearray.h>
+#include <de/log.h>
+#include <de/reader.h>
+#include <de/vector.h>
+#include <de/writer.h>
+#include <de/zeroed.h>
 
 #include <stb/stb_image.h>
 #include <stb/stb_image_write.h>

@@ -23,7 +23,7 @@
 
 #include <de/legacy/concurrency.h>
 #include <de/liblegacy.h>
-#include <de/GLInfo>
+#include <de/glinfo.h>
 #include "sys_system.h"
 #include "gl/gl_main.h"
 #include "gl/sys_opengl.h"

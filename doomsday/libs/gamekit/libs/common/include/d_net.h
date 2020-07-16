@@ -27,7 +27,7 @@
 #include <de/legacy/reader.h>
 #include <de/legacy/writer.h>
 #ifdef __cplusplus
-#  include <de/String>
+#  include <de/string.h>
 #  include <doomsday/uri.h>
 #endif
 

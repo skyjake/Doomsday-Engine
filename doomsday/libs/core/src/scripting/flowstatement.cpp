@@ -17,14 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/FlowStatement"
-#include "de/Evaluator"
-#include "de/Context"
-#include "de/Process"
-#include "de/Expression"
-#include "de/Value"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/scripting/flowstatement.h"
+#include "de/scripting/evaluator.h"
+#include "de/scripting/context.h"
+#include "de/scripting/process.h"
+#include "de/scripting/expression.h"
+#include "de/value.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 using namespace de;
 

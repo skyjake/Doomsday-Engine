@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/FadeToBlackWidget"
+#include "de/fadetoblackwidget.h"
 
 namespace de {
 

@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/filesys/Link"
-#include "de/RemoteFeedRelay"
-#include "de/FileSystem"
+#include "de/filesys/link.h"
+#include "de/filesys/remotefeedrelay.h"
+#include "de/filesystem.h"
 
-#include <de/App>
-#include <de/Async>
-#include <de/Garbage>
+#include "de/app.h"
+#include "de/async.h"
+#include "de/garbage.h"
 #include <de/charsymbols.h>
 
 namespace de { namespace filesys {

@@ -19,8 +19,8 @@
 #ifndef DE_CLIENT_PROFILEPICKERWIDGET_H
 #define DE_CLIENT_PROFILEPICKERWIDGET_H
 
-#include <de/ChoiceWidget>
-#include "ConfigProfiles"
+#include <de/choicewidget.h>
+#include "configprofiles.h"
 
 /**
  * Widget for selecting/manipulating settings profiles.

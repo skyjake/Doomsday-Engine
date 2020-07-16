@@ -20,21 +20,21 @@
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/widgets/homeitemwidget.h"
 
-#include <de/Async>
-#include <de/ChoiceWidget>
-#include <de/Config>
-#include <de/DictionaryValue>
-#include <de/DocumentWidget>
-#include <de/FileSystem>
-#include <de/Folder>
-#include <de/LineEditWidget>
-#include <de/ProgressWidget>
-#include <de/RemoteFeedRelay>
-#include <de/SequentialLayout>
-#include <de/TaskPool>
-#include <de/ToggleWidget>
-#include <de/ui/FilteredData>
-#include <de/WebRequest>
+#include <de/async.h>
+#include <de/choicewidget.h>
+#include <de/config.h>
+#include <de/dictionaryvalue.h>
+#include <de/documentwidget.h>
+#include <de/filesystem.h>
+#include <de/folder.h>
+#include <de/lineeditwidget.h>
+#include <de/progresswidget.h>
+#include <de/filesys/remotefeedrelay.h>
+#include <de/sequentiallayout.h>
+#include <de/taskpool.h>
+#include <de/togglewidget.h>
+#include <de/ui/filtereddata.h>
+#include <de/webrequest.h>
 
 using namespace de;
 

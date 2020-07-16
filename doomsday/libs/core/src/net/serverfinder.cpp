@@ -16,18 +16,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ServerFinder"
+#include "de/serverfinder.h"
 
-#include "de/App"
-#include "de/Beacon"
-#include "de/CommandLine"
-#include "de/LogBuffer"
-#include "de/Loop"
-#include "de/KeyMap"
-#include "de/NumberValue"
-#include "de/Reader"
-#include "de/TextValue"
-#include "de/Timer"
+#include "de/app.h"
+#include "de/beacon.h"
+#include "de/commandline.h"
+#include "de/logbuffer.h"
+#include "de/loop.h"
+#include "de/keymap.h"
+#include "de/numbervalue.h"
+#include "de/reader.h"
+#include "de/textvalue.h"
+#include "de/timer.h"
 
 namespace de {
 

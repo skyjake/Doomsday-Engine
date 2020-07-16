@@ -20,7 +20,7 @@
 #ifndef LIBCORE_ARRAYEXPRESSION_H
 #define LIBCORE_ARRAYEXPRESSION_H
 
-#include "../Expression"
+#include "expression.h"
 
 #include <vector>
 

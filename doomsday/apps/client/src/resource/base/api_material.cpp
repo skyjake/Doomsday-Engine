@@ -22,9 +22,9 @@
 #include "de_base.h"
 #include "api_material.h"
 
-#include <doomsday/res/Textures>
-#include <doomsday/world/Materials>
-#include <doomsday/world/MaterialManifest>
+#include <doomsday/res/textures.h>
+#include <doomsday/world/materials.h>
+#include <doomsday/world/materialmanifest.h>
 
 using namespace de;
 

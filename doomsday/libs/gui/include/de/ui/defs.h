@@ -22,7 +22,7 @@
 #define LIBAPPFW_UI_DEFS_H
 
 #include "../libgui.h"
-#include <de/Vector>
+#include <de/vector.h>
 
 namespace de { namespace ui {
 

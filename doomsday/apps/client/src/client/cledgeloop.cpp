@@ -24,9 +24,9 @@
 #include "world/convexsubspace.h"
 
 #include <doomsday/mesh/face.h>
-#include <doomsday/world/Material>
-#include <doomsday/world/Materials>
-#include <de/Log>
+#include <doomsday/world/material.h>
+#include <doomsday/world/materials.h>
+#include <de/log.h>
 
 using namespace de;
 

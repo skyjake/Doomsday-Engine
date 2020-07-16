@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/PackageIconBank"
-#include <de/FileSystem>
-#include <de/ImageFile>
+#include "de/packageiconbank.h"
+#include <de/filesystem.h>
+#include <de/imagefile.h>
 
 namespace de {
 

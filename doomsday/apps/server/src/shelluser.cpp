@@ -28,13 +28,13 @@
 #include <doomsday/console/exec.h>
 #include <doomsday/console/knownword.h>
 #include <doomsday/games.h>
-#include <doomsday/network/Protocol>
+#include <doomsday/network/protocol.h>
 #include <doomsday/world/map.h>
-#include <de/Lexicon>
-#include <de/Log>
-#include <de/LogBuffer>
-#include <de/LogSink>
-#include <de/Loop>
+#include <de/lexicon.h>
+#include <de/log.h>
+#include <de/logbuffer.h>
+#include <de/logsink.h>
+#include <de/loop.h>
 
 using namespace de;
 

@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/VariableArrayWidget"
-#include <de/TextValue>
+#include "de/variablearraywidget.h"
+#include <de/textvalue.h>
 
 namespace de {
 

@@ -18,11 +18,11 @@
 
 #include "remotefeeduser.h"
 
-#include <de/Async>
-#include <de/FileSystem>
-#include <de/Folder>
-#include <de/Message>
-#include <de/RemoteFeedProtocol>
+#include <de/async.h>
+#include <de/filesystem.h>
+#include <de/folder.h>
+#include <de/message.h>
+#include <de/remotefeedprotocol.h>
 
 using namespace de;
 

@@ -22,8 +22,8 @@
 #include "thinker.h"
 #include "polyobj.h"
 
-#include <de/List>
-#include <de/Vector>
+#include <de/list.h>
+#include <de/vector.h>
 
 namespace world {
 

@@ -20,8 +20,8 @@
 #ifndef LIBCORE_NAMEEXPRESSION_H
 #define LIBCORE_NAMEEXPRESSION_H
 
-#include "../Expression"
-#include "../String"
+#include "expression.h"
+#include "de/string.h"
 
 namespace de {
 

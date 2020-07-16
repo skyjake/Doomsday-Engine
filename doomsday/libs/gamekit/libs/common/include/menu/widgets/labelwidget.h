@@ -21,7 +21,7 @@
 #ifndef LIBCOMMON_UI_LABELWIDGET
 #define LIBCOMMON_UI_LABELWIDGET
 
-#include <de/String>
+#include <de/string.h>
 #include "widget.h"
 
 namespace common {

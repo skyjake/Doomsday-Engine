@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/EmbeddedApp"
+#include "de/embeddedapp.h"
 
 namespace de {
 

@@ -19,10 +19,10 @@
 #ifndef GLOOM_USER_H
 #define GLOOM_USER_H
 
-#include <de/Vector>
-#include <de/Time>
-#include <de/Observers>
-#include <de/Sound>
+#include <de/vector.h>
+#include <de/time.h>
+#include <de/observers.h>
+#include <de/sound.h>
 #include "../libgloom.h"
 
 namespace gloom {

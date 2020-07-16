@@ -18,17 +18,17 @@
  * 02110-1301 USA</small>
  */
 
-#include "doomsday/resource/composite.h"
+#include "doomsday/res/composite.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/lumpindex.h"
-#include "doomsday/resource/patch.h"
-#include "doomsday/resource/patchname.h"
+#include "doomsday/res/patch.h"
+#include "doomsday/res/patchname.h"
 
-#include <de/List>
-#include <de/Rectangle>
-#include <de/ByteRefArray>
-#include <de/String>
-#include <de/Reader>
+#include <de/list.h>
+#include <de/rectangle.h>
+#include <de/byterefarray.h>
+#include <de/string.h>
+#include <de/reader.h>
 
 using namespace de;
 

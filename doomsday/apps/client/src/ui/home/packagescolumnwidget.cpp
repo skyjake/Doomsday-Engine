@@ -24,19 +24,19 @@
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 
-#include <doomsday/DoomsdayApp>
-#include <doomsday/Games>
-#include <doomsday/resource/databundle.h>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/games.h>
+#include <doomsday/res/databundle.h>
 
-#include <de/CallbackAction>
-#include <de/Config>
-#include <de/DirectoryListDialog>
-#include <de/FileSystem>
-#include <de/Loop>
-#include <de/Package>
-#include <de/PopupMenuWidget>
-#include <de/ui/ActionItem>
-#include <de/ui/SubwidgetItem>
+#include <de/callbackaction.h>
+#include <de/config.h>
+#include <de/directorylistdialog.h>
+#include <de/filesystem.h>
+#include <de/loop.h>
+#include <de/package.h>
+#include <de/popupmenuwidget.h>
+#include <de/ui/actionitem.h>
+#include <de/ui/subwidgetitem.h>
 
 using namespace de;
 

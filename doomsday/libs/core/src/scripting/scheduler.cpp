@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Scheduler"
-#include "de/Hash"
+#include "de/scripting/scheduler.h"
+#include "de/hash.h"
 
 namespace de {
 

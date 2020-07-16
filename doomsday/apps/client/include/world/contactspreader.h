@@ -24,7 +24,7 @@
 
 #include <doomsday/world/blockmap.h>
 #include <de/legacy/aabox.h>
-#include <de/BitArray>
+#include <de/bitarray.h>
 
 /**
  * Performs contact spreading for the specified @a blockmap.

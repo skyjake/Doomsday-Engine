@@ -22,10 +22,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/data/huffman.h"
-#include "de/App"
-#include "de/Log"
-#include "de/ByteRefArray"
+#include "de/huffman.h"
+#include "de/app.h"
+#include "de/log.h"
+#include "de/byterefarray.h"
 
 // Heap relations.
 #define HEAP_PARENT(i)  (((i) + 1)/2 - 1)

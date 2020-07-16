@@ -30,9 +30,9 @@
 #include "fileinfo.h"
 
 #include <list>
-#include <de/List>
-#include <de/KeyMap>
-#include <de/Error>
+#include <de/list.h>
+#include <de/keymap.h>
+#include <de/error.h>
 
 namespace res {
 

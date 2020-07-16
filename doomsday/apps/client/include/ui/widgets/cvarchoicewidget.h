@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_CVARCHOICEWIDGET_H
 #define DE_CLIENT_CVARCHOICEWIDGET_H
 
-#include <de/ChoiceWidget>
+#include <de/choicewidget.h>
 #include "icvarwidget.h"
 
 /**

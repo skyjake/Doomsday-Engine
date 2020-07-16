@@ -20,8 +20,8 @@
 #include "gloom/world/iworld.h"
 #include "gloom/audio/audiosystem.h"
 
-#include <de/Animation>
-#include <de/Variable>
+#include <de/animation.h>
+#include <de/variable.h>
 
 using namespace de;
 

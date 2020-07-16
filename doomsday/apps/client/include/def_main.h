@@ -27,7 +27,7 @@
 #endif
 
 #include <vector>
-#include <de/String>
+#include <de/string.h>
 #include <doomsday/defs/ded.h>  // ded_t
 #include <doomsday/defs/dedtypes.h>
 #include <doomsday/uri.h>

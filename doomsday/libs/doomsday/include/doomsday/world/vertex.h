@@ -24,8 +24,8 @@
 #include "mapelement.h"
 #include "../mesh/mesh.h"
 
-#include <de/Observers>
-#include <de/Vector>
+#include <de/observers.h>
+#include <de/vector.h>
 
 namespace world {
 

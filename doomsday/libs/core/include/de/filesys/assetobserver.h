@@ -19,7 +19,7 @@
 #ifndef LIBCORE_FILESYS_ASSETOBSERVER_H
 #define LIBCORE_FILESYS_ASSETOBSERVER_H
 
-#include "de/FileIndex"
+#include "de/fileindex.h"
 
 namespace de {
 namespace filesys {

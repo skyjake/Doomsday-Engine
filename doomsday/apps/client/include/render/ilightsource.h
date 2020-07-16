@@ -20,7 +20,7 @@
 #define DE_CLIENT_ILIGHTSOURCE_H
 
 #include <de/libcore.h>
-#include <de/Vector>
+#include <de/vector.h>
 
 /**
  * Interface for a light source.

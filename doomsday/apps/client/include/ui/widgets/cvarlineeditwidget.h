@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_CVARLINEEDITWIDGET_H
 #define DE_CLIENT_CVARLINEEDITWIDGET_H
 
-#include <de/LineEditWidget>
+#include <de/lineeditwidget.h>
 #include "icvarwidget.h"
 
 /**

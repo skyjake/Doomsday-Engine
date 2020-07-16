@@ -22,8 +22,8 @@
 
 #include "jdoom.h"
 
-#include <de/App>
-#include <de/CommandLine>
+#include <de/app.h>
+#include <de/commandline.h>
 #include "d_netsv.h"
 #include "doomv9mapstatereader.h"
 #include "g_defs.h"

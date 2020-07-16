@@ -19,8 +19,8 @@
 #ifndef LIBSHELL_ACTION_H
 #define LIBSHELL_ACTION_H
 
-#include "KeyEvent"
-#include <de/Action>
+#include "keyevent.h"
+#include "de/action.h"
 
 namespace de { namespace term {
 

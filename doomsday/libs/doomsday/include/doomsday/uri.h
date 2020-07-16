@@ -25,15 +25,15 @@
 #ifdef __cplusplus
 
 #include "libdoomsday.h"
-#include "resource/resourceclass.h"
+#include "resourceclass.h"
 
 /// Schemes must be at least this many characters.
 #define DE_URI_MIN_SCHEME_LENGTH     2
 
-#include <de/Log>
-#include <de/Error>
-#include <de/NativePath>
-#include <de/String>
+#include <de/log.h>
+#include <de/error.h>
+#include <de/nativepath.h>
+#include <de/string.h>
 
 // liblegacy types
 struct reader_s;

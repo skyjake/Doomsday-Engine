@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Painter"
-#include "de/BaseGuiApp"
+#include "de/painter.h"
+#include "de/baseguiapp.h"
 
-#include <de/GLDrawQueue>
-#include <de/GLFramebuffer>
-#include <de/GLProgram>
-#include <de/GLState>
+#include <de/gldrawqueue.h>
+#include <de/glframebuffer.h>
+#include <de/glprogram.h>
+#include <de/glstate.h>
 
 namespace de {
 

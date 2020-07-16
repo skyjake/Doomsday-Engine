@@ -20,12 +20,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/GLState"
-#include "de/GLFramebuffer"
-#include "de/graphics/opengl.h"
-#include <de/GLInfo>
-#include <de/BitField>
-#include <de/Log>
+#include "de/glstate.h"
+#include "de/glframebuffer.h"
+#include "de/opengl.h"
+#include <de/glinfo.h>
+#include <de/bitfield.h>
+#include <de/log.h>
 
 namespace de {
 

@@ -19,9 +19,9 @@
 #ifndef LIBSHELL_MENUTEDGET_H
 #define LIBSHELL_MENUTEDGET_H
 
-#include "Widget"
-#include "Action"
-#include "TextCanvas"
+#include "widget.h"
+#include "action.h"
+#include "textcanvas.h"
 
 namespace de { namespace term {
 

@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/m_decomp64.h"
+#include "doomsday/m_decomp64.h"
 
 static short mapA[629], mapB[629];
 static short tableA[1258], tableB[1258];

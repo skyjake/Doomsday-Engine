@@ -18,7 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/CallbackAction"
+#include "de/callbackaction.h"
 
 namespace de {
 

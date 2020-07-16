@@ -19,7 +19,7 @@
 #ifndef SERVER_SERVERPLAYER_H
 #define SERVER_SERVERPLAYER_H
 
-#include <de/Id>
+#include <de/id.h>
 #include <doomsday/player.h>
 #include "server/sv_pool.h"
 

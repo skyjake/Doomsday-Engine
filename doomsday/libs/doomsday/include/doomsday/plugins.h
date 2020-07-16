@@ -103,8 +103,8 @@ typedef struct {
 
 #ifdef __cplusplus
 
-#include <de/Observers>
-#include <de/Info>
+#include <de/observers.h>
+#include <de/info.h>
 #include "libdoomsday.h"
 #include "gameapi.h"
 

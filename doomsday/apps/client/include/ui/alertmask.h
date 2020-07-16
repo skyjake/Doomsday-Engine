@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_ALERTMASK_H
 #define DE_CLIENT_ALERTMASK_H
 
-#include <de/LogFilter>
+#include <de/logfilter.h>
 
 class AlertMask
 {

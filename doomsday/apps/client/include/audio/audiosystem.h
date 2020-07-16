@@ -29,9 +29,9 @@
 #  include "audio/sfxchannel.h"
 #endif
 #include <doomsday/audio/audio.h>
-#include <de/Record>
-#include <de/String>
-#include <de/System>
+#include <de/record.h>
+#include <de/string.h>
+#include <de/system.h>
 
 #define SFX_LOWEST_PRIORITY     ( -1000 )
 

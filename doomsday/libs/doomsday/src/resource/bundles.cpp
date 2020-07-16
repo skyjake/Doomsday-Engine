@@ -16,18 +16,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/bundles.h"
+#include "doomsday/res/bundles.h"
 #include "doomsday/filesys/datafile.h"
 #include "doomsday/filesys/datafolder.h"
 
-#include <de/App>
-#include <de/Config>
-#include <de/DictionaryValue>
-#include <de/PackageLoader>
-#include <de/LinkFile>
-#include <de/Loop>
-#include <de/TaskPool>
-#include <de/RegExp>
+#include <de/app.h>
+#include <de/config.h>
+#include <de/dictionaryvalue.h>
+#include <de/packageloader.h>
+#include <de/linkfile.h>
+#include <de/loop.h>
+#include <de/taskpool.h>
+#include <de/regexp.h>
 
 using namespace de;
 

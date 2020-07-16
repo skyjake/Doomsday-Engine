@@ -17,12 +17,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Packet"
+#include "de/packet.h"
 
-#include "de/ByteRefArray"
-#include "de/Reader"
-#include "de/String"
-#include "de/Writer"
+#include "de/byterefarray.h"
+#include "de/reader.h"
+#include "de/string.h"
+#include "de/writer.h"
 
 namespace de {
 

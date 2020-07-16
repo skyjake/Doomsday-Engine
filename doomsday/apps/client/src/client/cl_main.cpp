@@ -36,8 +36,8 @@
 
 #include <doomsday/console/exec.h>
 #include <doomsday/filesys/fs_main.h>
-#include <de/CommandLine>
-#include <de/Config>
+#include <de/commandline.h>
+#include <de/config.h>
 #include <de/legacy/timer.h>
 #include <cstdio>
 #include <cstdlib>

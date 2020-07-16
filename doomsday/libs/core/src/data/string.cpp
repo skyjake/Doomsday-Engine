@@ -17,11 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/App"
-#include "de/String"
-#include "de/Block"
-#include "de/RegExp"
-#include "de/Path"
+#include "de/app.h"
+#include "de/string.h"
+#include "de/block.h"
+#include "de/regexp.h"
+#include "de/path.h"
 #include "de/charsymbols.h"
 
 #include <the_Foundation/path.h>

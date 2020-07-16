@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/FocusWidget"
+#include "de/focuswidget.h"
 
-#include <de/Timer>
+#include <de/timer.h>
 
 namespace de {
 

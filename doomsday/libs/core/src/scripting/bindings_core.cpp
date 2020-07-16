@@ -16,21 +16,21 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Animation"
-#include "de/AnimationValue"
-#include "de/App"
-#include "de/BlockValue"
-#include "de/Context"
-#include "de/DictionaryValue"
-#include "de/Folder"
-#include "de/Function"
-#include "de/NativePointerValue"
-#include "de/Path"
-#include "de/Record"
-#include "de/RecordValue"
-#include "de/RemoteFile"
-#include "de/TextValue"
-#include "de/TimeValue"
+#include "de/animation.h"
+#include "de/animationvalue.h"
+#include "de/app.h"
+#include "de/blockvalue.h"
+#include "de/scripting/context.h"
+#include "de/dictionaryvalue.h"
+#include "de/folder.h"
+#include "de/scripting/function.h"
+#include "de/nativepointervalue.h"
+#include "de/path.h"
+#include "de/record.h"
+#include "de/recordvalue.h"
+#include "de/remotefile.h"
+#include "de/textvalue.h"
+#include "de/timevalue.h"
 
 namespace de {
 

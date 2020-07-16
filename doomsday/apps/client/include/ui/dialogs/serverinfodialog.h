@@ -19,8 +19,8 @@
 #ifndef DE_CLIENT_UI_SERVERINFODIALOG_H
 #define DE_CLIENT_UI_SERVERINFODIALOG_H
 
-#include <de/DialogWidget>
-#include <de/ServerInfo>
+#include <de/dialogwidget.h>
+#include <de/serverinfo.h>
 
 /**
  * Multiplayer server information and a mini-Shell connection.

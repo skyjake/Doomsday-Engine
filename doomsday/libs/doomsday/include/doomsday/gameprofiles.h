@@ -21,8 +21,8 @@
 
 #include "libdoomsday.h"
 
-#include <de/IObject>
-#include <de/Profiles>
+#include <de/scripting/iobject.h>
+#include <de/profiles.h>
 
 class Game;
 class Games;

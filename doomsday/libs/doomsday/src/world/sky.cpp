@@ -20,10 +20,10 @@
 
 #include "doomsday/world/sky.h"
 
-#include <doomsday/res/TextureManifest>
-#include <doomsday/world/Materials>
+#include <doomsday/res/texturemanifest.h>
+#include <doomsday/world/materials.h>
 #include <cmath>
-#include <de/Log>
+#include <de/log.h>
 
 DE_STATIC_STRING(DEFAULT_SKY_SPHERE_MATERIAL, "Textures:SKY1")
 

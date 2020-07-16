@@ -22,7 +22,7 @@
 #define DOOMSDAY_API_BASE_H
 
 #include <de/legacy/str.h>
-#include <doomsday/resource/resourceclass.h>
+#include <doomsday/resourceclass.h>
 #include <doomsday/game.h>
 #include "apis.h"
 #include "api_uri.h"

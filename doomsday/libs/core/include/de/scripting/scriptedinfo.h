@@ -19,10 +19,10 @@
 #ifndef LIBCORE_SCRIPTEDINFO_H
 #define LIBCORE_SCRIPTEDINFO_H
 
-#include "../Info"
-#include "../File"
-#include "../IObject"
-#include "../Set"
+#include "de/info.h"
+#include "de/file.h"
+#include "de/scripting/iobject.h"
+#include "de/set.h"
 
 namespace de {
 

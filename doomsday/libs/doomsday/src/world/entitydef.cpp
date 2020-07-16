@@ -23,15 +23,15 @@
 #include "doomsday/world/world.h"
 #include "doomsday/world/map.h"
 #include "doomsday/world/propertyvalue.h"
-#include "doomsday/EntityDatabase"
+#include "doomsday/world/entitydatabase.h"
 
 #include <cmath>
 #include <map>
 #include <de/legacy/memory.h>
-#include <de/Error>
-#include <de/Log>
-#include <de/String>
-#include <de/StringPool>
+#include <de/error.h>
+#include <de/log.h>
+#include <de/string.h>
+#include <de/stringpool.h>
 
 using namespace de;
 using World = world::World;

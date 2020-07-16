@@ -21,7 +21,7 @@
 #include "clientapp.h"
 
 #include <doomsday/console/var.h>
-#include <de/PopupMenuWidget>
+#include <de/popupmenuwidget.h>
 
 using namespace de;
 

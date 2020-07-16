@@ -25,8 +25,8 @@
 
 #include <de/legacy/types.h>
 #include <de/legacy/str.h>
-#include <de/Observers>
-#include <de/List>
+#include <de/observers.h>
+#include <de/list.h>
 
 /**
  * Encapsulates a collection of Game instances and the logical operations

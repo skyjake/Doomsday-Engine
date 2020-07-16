@@ -21,7 +21,7 @@
 #ifndef LIBCOMMON_UI_CVARTEXTUALSLIDERWIDGET
 #define LIBCOMMON_UI_CVARTEXTUALSLIDERWIDGET
 
-#include <de/String>
+#include <de/string.h>
 #include "cvarsliderwidget.h"
 
 namespace common {

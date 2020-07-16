@@ -18,15 +18,15 @@
  */
 
 #include "doomsday/filesys/idgamespackageinfofile.h"
-#include "doomsday/res/Bundles"
-#include "doomsday/DoomsdayApp"
+#include "doomsday/res/bundles.h"
+#include "doomsday/doomsdayapp.h"
 
-#include <de/ArrayValue>
-#include <de/FileSystem>
-#include <de/Folder>
-#include <de/Package>
-#include <de/TextValue>
-#include <de/RegExp>
+#include <de/arrayvalue.h>
+#include <de/filesystem.h>
+#include <de/folder.h>
+#include <de/package.h>
+#include <de/textvalue.h>
+#include <de/regexp.h>
 
 using namespace de;
 

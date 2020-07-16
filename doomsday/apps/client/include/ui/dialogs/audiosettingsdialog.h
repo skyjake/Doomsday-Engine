@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_AUDIOSETTINGSDIALOG_H
 #define DE_CLIENT_AUDIOSETTINGSDIALOG_H
 
-#include <de/DialogWidget>
+#include <de/dialogwidget.h>
 
 /**
  * Dialog for modifying video settings.

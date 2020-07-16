@@ -17,10 +17,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/colorpalettes.h"
-#include "doomsday/resource/resources.h"
+#include "doomsday/res/colorpalettes.h"
+#include "doomsday/res/resources.h"
 
-#include <de/KeyMap>
+#include <de/keymap.h>
 
 using namespace de;
 

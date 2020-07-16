@@ -25,10 +25,10 @@
 #include "players.h"
 #include "gameprofiles.h"
 
-#include <de/Binder>
-#include <de/Info>
-#include <de/NativePath>
-#include <de/PackageDownloader>
+#include <de/scripting/function.h>
+#include <de/info.h>
+#include <de/nativepath.h>
+#include <de/packagedownloader.h>
 
 #include <string>
 

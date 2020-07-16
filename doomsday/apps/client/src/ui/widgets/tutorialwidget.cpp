@@ -25,13 +25,13 @@
 
 #include <doomsday/doomsdayapp.h>
 
-#include <de/MessageDialog>
-#include <de/Untrapper>
-#include <de/PopupMenuWidget>
-#include <de/ProgressWidget>
-#include <de/NotificationAreaWidget>
-#include <de/StyleProceduralImage>
-#include <de/Timer>
+#include <de/messagedialog.h>
+#include <de/untrapper.h>
+#include <de/popupmenuwidget.h>
+#include <de/progresswidget.h>
+#include <de/notificationareawidget.h>
+#include <de/styleproceduralimage.h>
+#include <de/timer.h>
 
 using namespace de;
 

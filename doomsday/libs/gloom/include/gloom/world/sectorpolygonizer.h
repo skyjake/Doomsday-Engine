@@ -21,7 +21,7 @@
 
 #include "gloom/world/map.h"
 
-#include <de/List>
+#include <de/list.h>
 
 namespace gloom {
 

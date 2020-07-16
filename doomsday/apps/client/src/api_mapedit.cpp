@@ -25,8 +25,8 @@
 #include "world/map.h"
 #include "world/polyobjdata.h"
 #include "world/line.h"
-#include "Plane"
-#include "Surface"
+#include "world/plane.h"
+#include "world/surface.h"
 #include "edit_map.h"
 #include "dd_main.h"
 #endif
@@ -35,19 +35,19 @@
 #include <doomsday/world/map.h>
 #include <doomsday/world/surface.h>
 #include <doomsday/world/polyobjdata.h>
-#include <doomsday/resource/resources.h>
+#include <doomsday/res/resources.h>
 #include <doomsday/gamefw/defs.h>
 #endif
 
 #include <doomsday/world/entitydef.h>
 #include <doomsday/world/factory.h>
 #include <doomsday/world/mapbuilder.h>
-#include <doomsday/world/Materials>
+#include <doomsday/world/materials.h>
 #include <doomsday/world/sector.h>
-#include <doomsday/EntityDatabase>
-#include <de/Error>
-#include <de/Log>
-#include <de/StringPool>
+#include <doomsday/world/entitydatabase.h>
+#include <de/error.h>
+#include <de/log.h>
+#include <de/stringpool.h>
 
 using namespace de;
 using world::editMap;

@@ -40,16 +40,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "doomsday/DoomsdayApp"
+#include "doomsday/doomsdayapp.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/filesys/lumpindex.h"
 
-#include <de/App>
-#include <de/FileSystem>
-#include <de/Folder>
-#include <de/Log>
-#include <de/NativeFile>
+#include <de/app.h>
+#include <de/filesystem.h>
+#include <de/folder.h>
+#include <de/log.h>
+#include <de/nativefile.h>
 #include <de/legacy/findfile.h>
 
 using namespace de;

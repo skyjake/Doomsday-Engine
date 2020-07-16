@@ -20,8 +20,8 @@
 #define DE_CLIENT_UI_HOME_MULTIPLAYERPANELBUTTONWIDGET_H
 
 #include "../widgets/panelbuttonwidget.h"
-#include <de/ButtonWidget>
-#include <de/ServerInfo>
+#include <de/buttonwidget.h>
+#include <de/serverinfo.h>
 
 class MultiplayerPanelButtonWidget : public PanelButtonWidget
 {

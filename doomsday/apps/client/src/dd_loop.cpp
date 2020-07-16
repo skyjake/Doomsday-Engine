@@ -21,10 +21,10 @@
 #include "dd_loop.h"
 
 #include <de/legacy/timer.h>
-#include <de/App>
-#include <de/LogBuffer>
+#include <de/app.h>
+#include <de/logbuffer.h>
 #ifdef __SERVER__
-#  include <de/TextApp>
+#  include <de/textapp.h>
 #endif
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/exec.h>

@@ -25,7 +25,7 @@
 
 #include <doomsday/world/bspleaf.h>
 #include <de/legacy/memoryzone.h>
-#include <de/Error>
+#include <de/error.h>
 
 using namespace de;
 

@@ -31,16 +31,16 @@
 #include "api_gl.h"
 
 #include <de/legacy/concurrency.h>
-#include <de/App>
-#include <de/Config>
-#include <de/GLInfo>
-#include <de/GLState>
-#include <de/LogBuffer>
+#include <de/app.h>
+#include <de/config.h>
+#include <de/glinfo.h>
+#include <de/glstate.h>
+#include <de/logbuffer.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <doomsday/defs/mapinfo.h>
 #include <doomsday/filesys/fs_main.h>
-#include <doomsday/resource/colorpalettes.h>
+#include <doomsday/res/colorpalettes.h>
 #include "clientapp.h"
 #include "sys_system.h"  // novideo
 
@@ -53,9 +53,9 @@
 #include "gl/texturecontent.h"
 
 #include "resource/hq2x.h"
-#include "MaterialAnimator"
-#include "MaterialVariantSpec"
-#include "ClientTexture"
+#include "resource/materialanimator.h"
+#include "resource/materialvariantspec.h"
+#include "resource/clienttexture.h"
 
 #include "api_render.h"
 #include "render/rend_main.h"

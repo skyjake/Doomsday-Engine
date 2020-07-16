@@ -19,10 +19,10 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/App>
-#include <de/Log>
-#include <de/NativePath>
-#include <de/PathTree>
+#include <de/app.h>
+#include <de/log.h>
+#include <de/nativepath.h>
+#include <de/pathtree.h>
 #include <de/legacy/findfile.h>
 
 #include "doomsday/filesys/fs_main.h"

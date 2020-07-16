@@ -49,9 +49,9 @@
 #include <doomsday/world/bspleaf.h>
 #include <de/legacy/concurrency.h>
 #include <de/legacy/vector1.h>
-#include <de/Folder>
-#include <de/GLInfo>
-#include <de/ImageFile>
+#include <de/folder.h>
+#include <de/glinfo.h>
+#include <de/imagefile.h>
 #include <cstdlib>
 
 using namespace de;

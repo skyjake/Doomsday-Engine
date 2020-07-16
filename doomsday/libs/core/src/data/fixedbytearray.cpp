@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "de/FixedByteArray"
+#include "de/fixedbytearray.h"
 
 namespace de {
 

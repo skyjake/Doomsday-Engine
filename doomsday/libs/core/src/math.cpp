@@ -17,9 +17,9 @@
  */
 
 #include "de/math.h"
-#include "de/IByteArray"
-#include "de/Reader"
-#include "de/Vector"
+#include "de/ibytearray.h"
+#include "de/reader.h"
+#include "de/vector.h"
 
 #include <the_Foundation/process.h>
 #include <chrono>

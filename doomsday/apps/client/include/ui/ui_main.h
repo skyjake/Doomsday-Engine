@@ -25,7 +25,7 @@
 #include <de/legacy/rect.h>
 #include "ddevent.h"
 #ifdef __CLIENT__
-#  include "MaterialVariantSpec"
+#  include "resource/materialvariantspec.h"
 #endif
 
 /*enum fontstyle_t {

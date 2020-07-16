@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ProgressWidget"
-#include "de/GuiRootWidget"
+#include "de/progresswidget.h"
+#include "de/guirootwidget.h"
 
-#include <de/Animation>
-#include <de/Lockable>
+#include <de/animation.h>
+#include <de/lockable.h>
 
 namespace de {
 

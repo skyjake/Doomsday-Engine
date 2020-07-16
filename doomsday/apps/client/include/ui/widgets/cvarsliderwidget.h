@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_CVARSLIDERWIDGET_H
 #define DE_CLIENT_CVARSLIDERWIDGET_H
 
-#include <de/SliderWidget>
+#include <de/sliderwidget.h>
 #include "icvarwidget.h"
 
 /**

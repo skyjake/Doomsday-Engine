@@ -18,14 +18,14 @@
 
 #include "ui/widgets/consolecommandwidget.h"
 
-#include <de/App>
-#include <de/KeyEvent>
+#include <de/app.h>
+#include <de/keyevent.h>
 #include <doomsday/console/knownword.h>
 #include <doomsday/console/exec.h>
 #include "ui/inputsystem.h"
 #include "clientapp.h"
 #include "dd_main.h"
-#include "BindContext"
+#include "ui/bindcontext.h"
 
 using namespace de;
 

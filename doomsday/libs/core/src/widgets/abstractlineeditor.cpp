@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/AbstractLineEditor"
-#include "de/Lexicon"
-#include "de/ConstantRule"
+#include "de/abstractlineeditor.h"
+#include "de/lexicon.h"
+#include "de/constantrule.h"
 
 namespace de {
 

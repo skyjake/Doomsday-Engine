@@ -16,20 +16,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Style"
-#include "de/BaseGuiApp"
-#include "de/GuiRootWidget"
-#include "de/LabelWidget"
-#include "de/ui/Stylist"
+#include "de/ui/style.h"
+#include "de/baseguiapp.h"
+#include "de/guirootwidget.h"
+#include "de/labelwidget.h"
+#include "de/ui/stylist.h"
 
-#include <de/CommandLine>
-#include <de/Config>
-#include <de/Folder>
-#include <de/Package>
-#include <de/Record>
-#include <de/RecordValue>
-#include <de/ScriptSystem>
-#include <de/Variable>
+#include <de/commandline.h>
+#include <de/config.h>
+#include <de/folder.h>
+#include <de/package.h>
+#include <de/record.h>
+#include <de/recordvalue.h>
+#include <de/scripting/scriptsystem.h>
+#include <de/variable.h>
 
 namespace de {
 

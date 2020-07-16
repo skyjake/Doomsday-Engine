@@ -21,21 +21,21 @@
 #include "doomsday/game.h"
 #include "doomsday/games.h"
 #include "doomsday/doomsdayapp.h"
-#include "doomsday/GameProfiles"
-#include "doomsday/GameStateFolder"
+#include "doomsday/gameprofiles.h"
+#include "doomsday/gamestatefolder.h"
 #include "doomsday/console/cmd.h"
 #include "doomsday/filesys/file.h"
-#include "doomsday/resource/manifest.h"
-#include "doomsday/resource/resources.h"
+#include "doomsday/manifest.h"
+#include "doomsday/res/resources.h"
 
-#include <de/App>
-#include <de/CommandLine>
-#include <de/Config>
-#include <de/DictionaryValue>
-#include <de/Error>
-#include <de/Log>
-#include <de/PackageLoader>
-#include <de/TextValue>
+#include <de/app.h>
+#include <de/commandline.h>
+#include <de/config.h>
+#include <de/dictionaryvalue.h>
+#include <de/error.h>
+#include <de/log.h>
+#include <de/packageloader.h>
+#include <de/textvalue.h>
 #include <de/charsymbols.h>
 #include <algorithm>
 

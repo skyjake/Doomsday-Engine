@@ -20,10 +20,10 @@
 #ifndef CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 #define CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 
-#include <de/Record>
+#include <de/record.h>
 #include "dd_types.h"
 #include "ddevent.h"
-#include "Binding"
+#include "ui/binding.h"
 
 class BindContext;
 

@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include <de/Error>
-#include <de/Observers>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/observers.h>
+#include <de/vector.h>
 #include <doomsday/world/thinkers.h>
 #include <doomsday/world/world.h>
 #include <doomsday/uri.h>

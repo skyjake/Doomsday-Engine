@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "de/Message"
+#include "de/message.h"
 
 namespace de {
 

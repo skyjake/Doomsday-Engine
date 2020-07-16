@@ -42,7 +42,7 @@
 #include "driver_fmod.h"
 #include <string.h>
 #include <string>
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 
 struct SongBuffer
 {

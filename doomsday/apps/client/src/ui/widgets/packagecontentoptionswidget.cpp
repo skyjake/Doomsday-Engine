@@ -18,16 +18,16 @@
 
 #include "ui/widgets/packagecontentoptionswidget.h"
 
-#include <de/ButtonWidget>
-#include <de/Config>
-#include <de/DictionaryValue>
-#include <de/LabelWidget>
-#include <de/MenuWidget>
-#include <de/PackageLoader>
-#include <de/PopupWidget>
-#include <de/SequentialLayout>
-#include <de/ToggleWidget>
-#include <de/TextValue>
+#include <de/buttonwidget.h>
+#include <de/config.h>
+#include <de/dictionaryvalue.h>
+#include <de/labelwidget.h>
+#include <de/menuwidget.h>
+#include <de/packageloader.h>
+#include <de/popupwidget.h>
+#include <de/sequentiallayout.h>
+#include <de/togglewidget.h>
+#include <de/textvalue.h>
 
 using namespace de;
 

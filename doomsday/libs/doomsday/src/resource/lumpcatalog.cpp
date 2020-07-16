@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/resource/lumpcatalog.h"
-#include "doomsday/resource/lumpdirectory.h"
-#include "doomsday/resource/databundle.h"
+#include "doomsday/res/lumpcatalog.h"
+#include "doomsday/res/lumpdirectory.h"
+#include "doomsday/res/databundle.h"
 
-#include <de/App>
-#include <de/LinkFile>
-#include <de/PackageLoader>
+#include <de/app.h>
+#include <de/linkfile.h>
+#include <de/packageloader.h>
 #include <utility>
 
 using namespace de;

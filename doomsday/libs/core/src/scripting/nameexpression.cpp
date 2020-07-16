@@ -17,19 +17,19 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/NameExpression"
-#include "de/App"
-#include "de/ArrayValue"
-#include "de/Evaluator"
-#include "de/Module"
-#include "de/Process"
-#include "de/Reader"
-#include "de/RecordValue"
-#include "de/RefValue"
-#include "de/ScopeStatement"
-#include "de/ScriptSystem"
-#include "de/TextValue"
-#include "de/Writer"
+#include "de/scripting/nameexpression.h"
+#include "de/app.h"
+#include "de/arrayvalue.h"
+#include "de/reader.h"
+#include "de/recordvalue.h"
+#include "de/refvalue.h"
+#include "de/scripting/evaluator.h"
+#include "de/scripting/module.h"
+#include "de/scripting/process.h"
+#include "de/scripting/scopestatement.h"
+#include "de/scripting/scriptsystem.h"
+#include "de/textvalue.h"
+#include "de/writer.h"
 
 namespace de {
 

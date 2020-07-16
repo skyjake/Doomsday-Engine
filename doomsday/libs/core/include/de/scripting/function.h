@@ -20,14 +20,14 @@
 #ifndef LIBCORE_FUNCTION_H
 #define LIBCORE_FUNCTION_H
 
-#include "../ISerializable"
-#include "../Counted"
-#include "../String"
-#include "../Compound"
-#include "../Record"
-#include "../List"
-#include "../KeyMap"
-#include "../Set"
+#include "compound.h"
+#include "de/iserializable.h"
+#include "de/counted.h"
+#include "de/string.h"
+#include "de/record.h"
+#include "de/list.h"
+#include "de/keymap.h"
+#include "de/set.h"
 
 namespace de {
 

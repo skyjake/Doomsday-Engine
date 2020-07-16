@@ -23,9 +23,9 @@
 #ifndef DE_CLIENT_RENDER_MISC_H
 #define DE_CLIENT_RENDER_MISC_H
 
-#include "ClientTexture"
-#include "TextureVariantSpec"
-#include <de/GLTexture>
+#include "resource/clienttexture.h"
+#include "resource/texturevariantspec.h"
+#include <de/gltexture.h>
 
 void R_InitViewWindow();
 void R_ShutdownViewWindow();

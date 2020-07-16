@@ -17,12 +17,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/DictionaryValue"
-#include "de/ArrayValue"
-#include "de/RecordValue"
-#include "de/ScriptSystem"
-#include "de/Writer"
-#include "de/Reader"
+#include "de/dictionaryvalue.h"
+#include "de/arrayvalue.h"
+#include "de/recordvalue.h"
+#include "de/scripting/scriptsystem.h"
+#include "de/writer.h"
+#include "de/reader.h"
 
 #include <sstream>
 

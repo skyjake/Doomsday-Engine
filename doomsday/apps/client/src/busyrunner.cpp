@@ -36,12 +36,12 @@
 #include "clientapp.h"
 
 #include <doomsday/doomsdayapp.h>
-#include <de/Config>
-#include <de/EventLoop>
-#include <de/GLInfo>
-#include <de/Log>
-#include <de/Loop>
-#include <de/Thread>
+#include <de/config.h>
+#include <de/eventloop.h>
+#include <de/glinfo.h>
+#include <de/log.h>
+#include <de/loop.h>
+#include <de/thread.h>
 
 #include <atomic>
 

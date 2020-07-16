@@ -21,10 +21,10 @@
 
 #include "m_cheat.h"
 
-#include <de/Log>
-#include <de/Range>
-#include <de/String>
-#include <de/Vector>
+#include <de/log.h>
+#include <de/range.h>
+#include <de/string.h>
+#include <de/vector.h>
 
 #include "jdoom.h"
 #include "d_net.h"

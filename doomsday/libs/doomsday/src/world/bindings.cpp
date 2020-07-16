@@ -18,14 +18,14 @@
 
 #include "bindings.h"
 #include "doomsday/defs/ded.h"
-#include "doomsday/DoomsdayApp"
+#include "doomsday/doomsdayapp.h"
 #include "doomsday/players.h"
 #include "doomsday/world/map.h"
 #include "doomsday/world/mobj.h"
 #include "doomsday/world/thinkers.h"
 #include "doomsday/world/world.h"
-#include <de/Context>
-#include <de/RecordValue>
+#include <de/scripting/context.h>
+#include <de/recordvalue.h>
 
 using namespace de;
 

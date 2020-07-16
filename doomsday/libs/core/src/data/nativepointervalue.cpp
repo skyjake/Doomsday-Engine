@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/NativePointerValue"
+#include "de/nativepointervalue.h"
 
 namespace de {
 

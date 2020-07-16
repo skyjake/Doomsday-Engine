@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include <de/Error>
-#include <doomsday/BspNode>
+#include <de/error.h>
+#include <doomsday/world/bspnode.h>
 
 namespace world {
 

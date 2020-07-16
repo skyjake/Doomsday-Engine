@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include <de/Error>
-#include <de/Observers>
-#include <de/String>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/observers.h>
+#include <de/string.h>
+#include <de/vector.h>
 #include "mapelement.h"
 
 #include "dd_share.h"  // SoundEmitter

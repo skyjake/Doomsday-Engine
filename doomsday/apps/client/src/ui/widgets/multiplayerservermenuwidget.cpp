@@ -22,10 +22,10 @@
 #include "network/serverlink.h"
 #include "clientapp.h"
 
-#include <doomsday/Games>
-#include <de/MenuWidget>
-#include <de/Address>
-#include <de/TextValue>
+#include <doomsday/games.h>
+#include <de/menuwidget.h>
+#include <de/address.h>
+#include <de/textvalue.h>
 
 using namespace de;
 

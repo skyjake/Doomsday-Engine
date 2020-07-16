@@ -29,9 +29,9 @@
 #define DE_FILEID_H
 
 #include "../libdoomsday.h"
-#include <de/Block>
-#include <de/Log>
-#include <de/String>
+#include <de/block.h>
+#include <de/log.h>
+#include <de/string.h>
 
 namespace de {
 

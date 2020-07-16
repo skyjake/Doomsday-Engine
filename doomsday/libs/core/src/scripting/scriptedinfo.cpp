@@ -16,16 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/ScriptedInfo"
-#include "de/App"
-#include "de/ArrayValue"
-#include "de/Folder"
-#include "de/LogBuffer"
-#include "de/NumberValue"
-#include "de/Process"
-#include "de/RecordValue"
-#include "de/Script"
-#include "de/TextValue"
+#include "de/scripting/scriptedinfo.h"
+#include "de/app.h"
+#include "de/arrayvalue.h"
+#include "de/folder.h"
+#include "de/logbuffer.h"
+#include "de/numbervalue.h"
+#include "de/scripting/process.h"
+#include "de/recordvalue.h"
+#include "de/scripting/script.h"
+#include "de/textvalue.h"
 
 #include <algorithm>
 

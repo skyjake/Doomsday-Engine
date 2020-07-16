@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/DirectoryTreeData"
-#include "de/ui/ListData"
+#include "de/directorytreedata.h"
+#include "de/ui/listdata.h"
 
-#include <de/DirectoryFeed>
-#include <de/FS>
-#include <de/Folder>
+#include <de/directoryfeed.h>
+#include <de/filesystem.h>
+#include <de/folder.h>
 
 namespace de {
 

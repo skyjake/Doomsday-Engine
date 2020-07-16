@@ -16,18 +16,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/PackageDownloader"
+#include "de/packagedownloader.h"
 
-#include "de/App"
-#include "de/FileSystem"
-#include "de/Folder"
-#include "de/Garbage"
-#include "de/LinkFile"
-#include "de/Loop"
-#include "de/filesys/NativeLink"
-#include "de/PackageLoader"
-#include "de/RemoteFeedRelay"
-#include "de/RemoteFile"
+#include "de/app.h"
+#include "de/filesystem.h"
+#include "de/folder.h"
+#include "de/garbage.h"
+#include "de/linkfile.h"
+#include "de/loop.h"
+#include "de/filesys/nativelink.h"
+#include "de/packageloader.h"
+#include "de/filesys/remotefeedrelay.h"
+#include "de/remotefile.h"
 
 namespace de {
 

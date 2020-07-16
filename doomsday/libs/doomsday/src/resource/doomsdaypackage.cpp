@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/res/DoomsdayPackage"
+#include "doomsday/res/doomsdaypackage.h"
 
-#include <de/NativeFile>
+#include <de/nativefile.h>
 
 using namespace de;
 

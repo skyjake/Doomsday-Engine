@@ -19,8 +19,8 @@
 #ifndef GLOOM_SKYBOX_H
 #define GLOOM_SKYBOX_H
 
-#include <de/AtlasTexture>
-#include <de/Matrix>
+#include <de/atlastexture.h>
+#include <de/matrix.h>
 
 #include "gloom/render/render.h"
 

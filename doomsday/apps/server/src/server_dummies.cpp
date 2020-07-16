@@ -19,7 +19,7 @@
 
 #include "server_dummies.h"
 #include "ui/nativeui.h"
-#include <doomsday/res/Texture>
+#include <doomsday/res/texture.h>
 
 void BusyMode_FreezeGameForBusyMode()
 {}

@@ -21,7 +21,7 @@
 #define DE_WORLD_P_PLAYERS_H
 
 #include "api_player.h"
-#include <de/String>
+#include <de/string.h>
 
 #ifdef __CLIENT__
 #  include "clientplayer.h"

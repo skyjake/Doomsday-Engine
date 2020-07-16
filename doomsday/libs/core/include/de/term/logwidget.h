@@ -19,8 +19,8 @@
 #ifndef LIBSHELL_LOGTEDGET_H
 #define LIBSHELL_LOGTEDGET_H
 
-#include "Widget"
-#include "../LogSink"
+#include "widget.h"
+#include "../logsink.h"
 
 namespace de { namespace term {
 

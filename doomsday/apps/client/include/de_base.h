@@ -30,7 +30,7 @@
 #include <de/legacy/reader.h>
 #include <de/legacy/writer.h>
 #include <de/c_wrapper.h>
-#include <de/Garbage>
+#include <de/garbage.h>
 
 #include "dd_def.h"
 #include "dd_share.h"

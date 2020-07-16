@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#include "de/Task"
-#include "de/TaskPool"
-#include "de/Log"
+#include "de/task.h"
+#include "de/taskpool.h"
+#include "de/log.h"
 
 namespace de {
 

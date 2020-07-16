@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/SliderWidget"
-#include "de/DialogWidget"
-#include "de/LineEditWidget"
-#include "de/TextDrawable"
+#include "de/sliderwidget.h"
+#include "de/dialogwidget.h"
+#include "de/lineeditwidget.h"
+#include "de/textdrawable.h"
 
-#include <de/Drawable>
-#include <de/MouseEvent>
+#include <de/drawable.h>
+#include <de/mouseevent.h>
 #include <cmath>
 
 namespace de {

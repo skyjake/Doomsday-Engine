@@ -18,7 +18,7 @@
 
 #include "gloom/world/sectorpolygonizer.h"
 
-#include <de/Set>
+#include <de/set.h>
 
 using namespace de;
 

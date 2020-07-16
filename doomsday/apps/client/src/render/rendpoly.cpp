@@ -22,7 +22,7 @@
 #include "render/rendpoly.h"
 
 #include "misc/color.h"
-#include "WallEdge"
+#include "render/walledge.h"
 
 using namespace de;
 

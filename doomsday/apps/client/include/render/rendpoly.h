@@ -23,7 +23,7 @@
 #define DE_RENDER_RENDPOLY_H
 
 #include <de/liblegacy.h>
-#include <de/Vector>
+#include <de/vector.h>
 
 DE_EXTERN_C byte rendInfoRPolys;
 

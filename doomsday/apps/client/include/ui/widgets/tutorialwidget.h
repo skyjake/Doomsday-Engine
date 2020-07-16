@@ -19,7 +19,7 @@
 #ifndef DE_CLIENT_TUTORIALWIDGET_H
 #define DE_CLIENT_TUTORIALWIDGET_H
 
-#include <de/GuiWidget>
+#include <de/guiwidget.h>
 
 class TutorialWidget : public de::GuiWidget
 {

@@ -17,20 +17,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/Statement"
-#include "de/AssignStatement"
-#include "de/CatchStatement"
-#include "de/DeleteStatement"
-#include "de/ExpressionStatement"
-#include "de/ForStatement"
-#include "de/FunctionStatement"
-#include "de/IfStatement"
-#include "de/FlowStatement"
-#include "de/PrintStatement"
-#include "de/ScopeStatement"
-#include "de/TryStatement"
-#include "de/WhileStatement"
-#include "de/Reader"
+#include "de/scripting/statement.h"
+#include "de/scripting/assignstatement.h"
+#include "de/scripting/catchstatement.h"
+#include "de/scripting/deletestatement.h"
+#include "de/scripting/expressionstatement.h"
+#include "de/scripting/forstatement.h"
+#include "de/scripting/functionstatement.h"
+#include "de/scripting/ifstatement.h"
+#include "de/scripting/flowstatement.h"
+#include "de/scripting/printstatement.h"
+#include "de/scripting/scopestatement.h"
+#include "de/scripting/trystatement.h"
+#include "de/scripting/whilestatement.h"
+#include "de/reader.h"
 
 using namespace de;
 

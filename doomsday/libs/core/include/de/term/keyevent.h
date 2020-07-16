@@ -21,8 +21,8 @@
 #ifndef LIBSHELL_KEYEVENT_H
 #define LIBSHELL_KEYEVENT_H
 
-#include <de/Event>
-#include <de/String>
+#include "de/event.h"
+#include "de/string.h"
 
 namespace de { namespace term {
 

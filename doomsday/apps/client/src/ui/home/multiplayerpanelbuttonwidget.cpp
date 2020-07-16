@@ -28,16 +28,16 @@
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
 #include <doomsday/console/exec.h>
-#include <doomsday/LumpCatalog>
-#include <doomsday/Games>
+#include <doomsday/res/lumpcatalog.h>
+#include <doomsday/games.h>
 
 #include <de/charsymbols.h>
-#include <de/CallbackAction>
-#include <de/MessageDialog>
-#include <de/PopupButtonWidget>
-#include <de/PopupMenuWidget>
-#include <de/RegExp>
-#include <de/TaskPool>
+#include <de/callbackaction.h>
+#include <de/messagedialog.h>
+#include <de/popupbuttonwidget.h>
+#include <de/popupmenuwidget.h>
+#include <de/regexp.h>
+#include <de/taskpool.h>
 
 using namespace de;
 

@@ -16,18 +16,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/RemoteFeed"
+#include "de/remotefeed.h"
 
-#include "de/BlockValue"
-#include "de/Folder"
-#include "de/Path"
-#include "de/RecordValue"
-#include "de/RemoteFeedProtocol"
-#include "de/RemoteFeedRelay"
-#include "de/RemoteFile"
-#include "de/Socket"
-#include "de/TimeValue"
-#include "de/Waitable"
+#include "de/blockvalue.h"
+#include "de/folder.h"
+#include "de/path.h"
+#include "de/recordvalue.h"
+#include "de/remotefeedprotocol.h"
+#include "de/filesys/remotefeedrelay.h"
+#include "de/remotefile.h"
+#include "de/socket.h"
+#include "de/timevalue.h"
+#include "de/waitable.h"
 #include "de/charsymbols.h"
 
 namespace de {

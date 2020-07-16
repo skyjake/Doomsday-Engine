@@ -32,10 +32,10 @@
 #include "clientapp.h"
 
 #include <doomsday/world/bspleaf.h>
-#include <de/App>
-#include <de/ModelBank>
-#include <de/NativePointerValue>
-#include <de/TextValue>
+#include <de/app.h>
+#include <de/modelbank.h>
+#include <de/nativepointervalue.h>
+#include <de/textvalue.h>
 
 using namespace de;
 

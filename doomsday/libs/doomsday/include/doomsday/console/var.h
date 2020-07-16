@@ -25,8 +25,8 @@
 #include "../uri.h"
 
 #ifdef __cplusplus
-#  include <de/String>
-#  include <de/Path>
+#  include <de/string.h>
+#  include <de/path.h>
 #endif
 
 /// Console variable types. @ingroup console

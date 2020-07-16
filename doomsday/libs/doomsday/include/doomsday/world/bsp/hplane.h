@@ -28,9 +28,9 @@
 
 #include "linesegment.h"
 
-#include <de/List>
-#include <de/Partition>
-#include <de/Vector>
+#include <de/list.h>
+#include <de/partition.h>
+#include <de/vector.h>
 
 /// Two intercepts whose distance is inclusive of this bound will be merged.
 #define HPLANE_INTERCEPT_MERGE_DISTANCE_EPSILON     1.0 / 128

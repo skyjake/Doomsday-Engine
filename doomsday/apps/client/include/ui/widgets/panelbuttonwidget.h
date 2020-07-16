@@ -21,7 +21,7 @@
 
 #include "ui/widgets/homeitemwidget.h"
 
-#include <de/PanelWidget>
+#include <de/panelwidget.h>
 
 /**
  * Home item with an extensible panel for additional widgets.

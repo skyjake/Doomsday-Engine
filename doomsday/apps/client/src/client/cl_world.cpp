@@ -27,7 +27,7 @@
 #include "network/net_msg.h"
 #include "network/protocol.h"
 
-#include <doomsday/world/MaterialArchive>
+#include <doomsday/world/materialarchive.h>
 #include <doomsday/world/sector.h>
 #include <de/legacy/stringarray.h>
 
