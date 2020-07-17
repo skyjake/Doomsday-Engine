@@ -355,6 +355,38 @@ void ServerApp::unloadGame(const GameProfile &upcomingGame)
     world::Map::initDummyElements();
 }
 
+void ServerApp::sendDataToPlayer(int player, const IByteArray &data)
+{
+    List<Id::Type> ids;
+
+    if (player >= 0 && player < DDMAXPLAYERS)
+    {
+        auto &plr = players().at(player).as<ServerPlayer>();
+        // Do not send anything to disconnected players.
+        if (plr.isConnected())
+        {
+            ids << plr.remoteUserId;
+        }
+    }
+    else
+    {
+        // Broadcast to all non-local players, using recursive calls.
+        for (dint i = 1; i < DDMAXPLAYERS; ++i)
+        {
+            auto &plr = players().at(player).as<ServerPlayer>();
+            if (plr.isConnected())
+            {
+                ids << plr.remoteUserId;
+            }
+        }
+    }
+
+    for (const auto &id : ids)
+    {
+        serverSystem().user(id) << data;
+    }
+}
+
 ServerApp &ServerApp::app()
 {
     DE_ASSERT(serverAppSingleton != nullptr);

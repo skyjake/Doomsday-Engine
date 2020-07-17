@@ -29,6 +29,7 @@
 #include <de/info.h>
 #include <de/nativepath.h>
 #include <de/packagedownloader.h>
+#include <de/transmitter.h>
 
 #include <string>
 
@@ -189,6 +190,13 @@ public:
      */
     virtual void gameSessionWasLoaded(const AbstractSession &session,
                                       const GameStateFolder &fromFolder);
+
+    /**
+     * Sends data to a player. Available during multiplayer games.
+     *
+     * @param player  Player number (0 is always the server).
+     */
+    virtual void sendDataToPlayer(int player, const de::IByteArray &data);
 
 public:
     static DoomsdayApp &          app();

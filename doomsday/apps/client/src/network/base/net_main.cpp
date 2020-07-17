@@ -146,7 +146,7 @@ void Net_SendBuffer(int toPlayer, int spFlags)
         return;
 
     // Send the packet to the network.
-    N_SendPacket(spFlags);
+    N_SendPacket();
 }
 
 /**

@@ -69,6 +69,7 @@ public:
 protected:
     void reset() override;
     void unloadGame(const GameProfile &upcomingGame) override;
+    void sendDataToPlayer(int player, const de::IByteArray &data) override;
 
 private:
     DE_PRIVATE(d)

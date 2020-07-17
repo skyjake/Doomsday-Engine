@@ -926,6 +926,12 @@ void ClientApp::gameSessionWasLoaded(const AbstractSession &session,
     }
 }
 
+void ClientApp::sendDataToPlayer(int, const de::IByteArray &data)
+{
+    // We can only send data to the server.
+    serverLink() << data;
+}
+
 ClientPlayer &ClientApp::player(int console) // static
 {
     return DoomsdayApp::players().at(console).as<ClientPlayer>();

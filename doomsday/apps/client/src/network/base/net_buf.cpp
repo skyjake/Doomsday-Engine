@@ -214,67 +214,22 @@ void N_ClearMessages()
     ::entryCount = 0;
 }
 
-void N_SendPacket(dint flags)
+void N_SendPacket(void)
 {
-#ifdef __SERVER__
-    duint dest = 0;
-#else
-    DE_UNUSED(flags);
-#endif
-
-    // Is the network available?
-    if(!::allowSending)
-        return;
-
-    // Figure out the destination DPNID.
-#ifdef __SERVER__
-    {
-        if(::netBuffer.player >= 0 && ::netBuffer.player < DDMAXPLAYERS)
-        {
-            if(!DD_Player(::netBuffer.player)->isConnected())
-            {
-                // Do not send anything to disconnected players.
-                return;
-            }
-
-            dest = DD_Player(::netBuffer.player)->remoteUserId;
-        }
-        else
-        {
-            // Broadcast to all non-local players, using recursive calls.
-            for(dint i = 0; i < DDMAXPLAYERS; ++i)
-            {
-                ::netBuffer.player = i;
-                N_SendPacket(flags);
-            }
-
-            // Reset back to -1 to notify of the broadcast.
-            ::netBuffer.player = NSP_BROADCAST;
-            return;
-        }
-    }
-#endif
-
     try
     {
-#ifdef __CLIENT__
-        de::Transmitter &out = Net_ServerLink();
-#else
-        de::Transmitter &out = App_ServerSystem().user(dest);
-#endif
-
-        out << de::ByteRefArray(&::netBuffer.msg, ::netBuffer.headerLength + ::netBuffer.length);
+        if (allowSending)
+        {
+            DoomsdayApp::app().sendDataToPlayer(
+                netBuffer.player,
+                ByteRefArray(&netBuffer.msg, netBuffer.headerLength + netBuffer.length));
+        }
     }
     catch(const Error &er)
     {
         LOGDEV_NET_WARNING("N_SendPacket failed: ") << er.asText();
     }
 }
-
-//void N_AddSentBytes(dsize bytes)
-//{
-//    ::numSentBytes += bytes;
-//}
 
 dint N_IdentifyPlayer(nodeid_t id)
 {

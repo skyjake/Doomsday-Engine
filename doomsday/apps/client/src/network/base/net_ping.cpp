@@ -88,7 +88,7 @@ void Net_SendPing(int player, int count)
 
     // Update the length of the message.
     ::netBuffer.player = player;
-    N_SendPacket(10000);
+    N_SendPacket();
 }
 
 // Called when a ping packet comes in.

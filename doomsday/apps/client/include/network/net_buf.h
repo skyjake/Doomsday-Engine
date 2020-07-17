@@ -102,7 +102,7 @@ void N_ClearMessages(void);
  * Handles broadcasts using recursion.
  * Clients can only send packets to the server.
  */
-void N_SendPacket(int flags);
+void N_SendPacket(void);
 
 /**
  * An attempt is made to extract a message from the message queue.

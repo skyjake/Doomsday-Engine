@@ -970,6 +970,11 @@ void DoomsdayApp::gameSessionWasLoaded(const AbstractSession &, const GameStateF
     //qDebug() << "App loading from" << fromFolder.description();
 }
 
+void DoomsdayApp::sendDataToPlayer(int, const de::IByteArray &)
+{
+    throw Error("DoomsdayApp::sendDataToPlayer", "Network transmission is not available");
+}
+
 void DoomsdayApp::setGame(const Game &game)
 {
     app().d->currentGame = const_cast<Game *>(&game);

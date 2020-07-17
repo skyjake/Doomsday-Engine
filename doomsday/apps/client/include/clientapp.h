@@ -118,6 +118,7 @@ protected:
     void unloadGame(const GameProfile &upcomingGame) override;
     void gameSessionWasSaved(const AbstractSession &session, GameStateFolder &toFolder) override;
     void gameSessionWasLoaded(const AbstractSession &session, const GameStateFolder &fromFolder) override;
+    void sendDataToPlayer(int player, const de::IByteArray &data) override;
 
 private:
     DE_PRIVATE(d)
