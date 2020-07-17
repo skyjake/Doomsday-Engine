@@ -1,7 +1,8 @@
 /**
  * @file color.h Color
  *
- * @author Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,8 +19,9 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_DATA_COLOR_H
-#define DE_DATA_COLOR_H
+#pragma once
+
+#include "libdoomsday.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,7 +34,7 @@ extern "C" {
  *
  * @ingroup data
  */
-typedef struct ColorRawf_s {
+typedef struct LIBDOOMSDAY_PUBLIC ColorRawf_s {
     union {
         // Straight RGBA vector representation.
         float rgba[4];
@@ -55,11 +57,9 @@ typedef struct ColorRawf_s {
 #endif
 } ColorRawf;
 
-float ColorRawf_AverageColor(ColorRawf* color);
-float ColorRawf_AverageColorMulAlpha(ColorRawf* color);
+LIBDOOMSDAY_PUBLIC float ColorRawf_AverageColor(ColorRawf* color);
+LIBDOOMSDAY_PUBLIC float ColorRawf_AverageColorMulAlpha(ColorRawf* color);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
-
-#endif // DE_DATA_COLOR_H

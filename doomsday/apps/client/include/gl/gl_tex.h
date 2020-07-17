@@ -25,8 +25,7 @@
 #ifndef DE_GL_IMAGE_MANIPULATION_H
 #define DE_GL_IMAGE_MANIPULATION_H
 
-#include "misc/color.h"
-
+#include <doomsday/color.h>
 #include <doomsday/res/colorpalette.h>
 
 typedef struct colorpalette_analysis_s {

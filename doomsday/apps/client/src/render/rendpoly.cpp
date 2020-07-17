@@ -20,9 +20,8 @@
 
 #include "de_base.h"
 #include "render/rendpoly.h"
-
-#include "misc/color.h"
 #include "render/walledge.h"
+#include <doomsday/color.h>
 
 using namespace de;
 

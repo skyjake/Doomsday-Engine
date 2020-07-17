@@ -135,7 +135,7 @@ static void *allocAndLoad(FileHandle &file, int offset, int len)
 // Precalculated normal LUT for use when loading MD2/DMD format models.
 #define NUMVERTEXNORMALS 162
 static float avertexnormals[NUMVERTEXNORMALS][3] = {
-#include "misc/tab_anorms.h"
+#include <doomsday/tab_anorms.h>
 };
 
 /**

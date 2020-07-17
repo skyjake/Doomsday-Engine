@@ -1,5 +1,6 @@
 /** @file color.cpp Color
  *
+ * @authors Copyright &copy; 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2007-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -17,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
-#include "misc/color.h"
+#include "doomsday/color.h"
 
 float ColorRawf_AverageColor(ColorRawf* c)
 {

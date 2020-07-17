@@ -20,12 +20,11 @@
 #include "de_platform.h"
 #include "gl/gl_tex.h"
 #include "dd_main.h"
-
-#include "misc/color.h"
 #include "render/r_main.h"
 #include "resource/clientresources.h"
 #include "gl/sys_opengl.h"
 
+#include <doomsday/color.h>
 #include <doomsday/res/colorpalette.h>
 #include <de/legacy/memory.h>
 #include <de/legacy/memoryzone.h>
