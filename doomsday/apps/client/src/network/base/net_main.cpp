@@ -69,8 +69,6 @@ using namespace de;
 #define ACK_THRESHOLD_MUL       1.5f  ///< The threshold is the average ack time * mul.
 #define ACK_MINIMUM_THRESHOLD   50    ///< Never wait a too short time for acks.
 
-char *playerName = (char *) "Player";
-
 netstate_t netState = {
     true, // first update
     0, 0, 0, 0.0f, 0
@@ -506,99 +504,6 @@ int Net_TimeDelta(byte now, byte then)
     return delta;
 }
 
-#ifdef __CLIENT__
-/**
- * Returns @c true if a demo is currently being recorded.
- */
-static dd_bool recordingDemo()
-{
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        if(DD_Player(i)->publicData().inGame && DD_Player(i)->recording)
-            return true;
-    }
-    return false;
-}
-#endif
-
-#ifdef __CLIENT__
-
-void Net_DrawDemoOverlay()
-{
-    const int x = DE_GAMEVIEW_WIDTH - 10;
-    const int y = 10;
-
-    if(!recordingDemo() || !(SECONDS_TO_TICKS(::gameTime) & 8))
-        return;
-
-    char buf[160];
-    strcpy(buf, "[");
-    {
-        int count = 0;
-        for(int i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            auto *plr = DD_Player(i);
-            if(plr->publicData().inGame && plr->recording)
-            {
-                // This is a "real" player (or camera).
-                if(count++)
-                    strcat(buf, ",");
-
-                char tmp[40]; sprintf(tmp, "%i:%s", i, plr->recordPaused ? "-P-" : "REC");
-                strcat(buf, tmp);
-            }
-        }
-    }
-    strcat(buf, "]");
-
-    DE_ASSERT_IN_MAIN_THREAD();
-    DE_ASSERT_GL_CONTEXT_ACTIVE();
-
-    // Go into screen projection mode.
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Ortho(0, 0, DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT, -1, 1);
-
-    DGL_Enable(DGL_TEXTURE_2D);
-
-    FR_SetFont(::fontFixed);
-    FR_LoadDefaultAttrib();
-    FR_SetColorAndAlpha(1, 1, 1, 1);
-    FR_DrawTextXY3(buf, x, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
-
-    DGL_Disable(DGL_TEXTURE_2D);
-
-    // Restore original matrix.
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PopMatrix();
-}
-
-#endif  // __CLIENT__
-
-void Net_Drawer()
-{
-#ifdef __CLIENT__
-    // Draw the blockmap debug display.
-    Rend_BlockmapDebug();
-
-    // Draw the light range debug display.
-    Rend_DrawLightModMatrix();
-
-# ifdef DE_DEBUG
-    // Draw the input debug display.
-    I_DebugDrawer();
-# endif
-
-    // Draw the demo recording overlay.
-    Net_DrawDemoOverlay();
-
-# if defined (DE_DEBUG) && defined (DE_OPENGL)
-    Z_DebugDrawer();
-# endif
-#endif  // __CLIENT__
-}
-
 void Net_Ticker(timespan_t time)
 {
     // Network event ticker.
@@ -666,103 +571,93 @@ void Net_WriteChatMessage(int from, int toMask, const char *message)
     Msg_End();
 }
 
+#ifdef __CLIENT__
+
 /**
- * All arguments are sent out as a chat message.
+ * Returns @c true if a demo is currently being recorded.
  */
-D_CMD(Chat)
+static dd_bool recordingDemo()
 {
-    DE_UNUSED(src);
-
-    int mode = !stricmp(argv[0], "chat") ||
-                !stricmp(argv[0], "say") ? 0 : !stricmp(argv[0], "chatNum") ||
-                !stricmp(argv[0], "sayNum") ? 1 : 2;
-
-    if(argc == 1)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        LOG_SCR_NOTE("Usage: %s %s(text)") << argv[0]
-                << (!mode ? "" : mode == 1 ? "(plr#) " : "(name) ");
-        LOG_SCR_MSG("Chat messages are max 80 characters long. Use quotes to get around "
-                    "arg processing.");
-        return true;
+        if(DD_Player(i)->publicData().inGame && DD_Player(i)->recording)
+            return true;
     }
-
-    LOG_AS("chat (Cmd)");
-
-    // Chatting is only possible when connected.
-    if(!netState.netGame) return false;
-
-    // Too few arguments?
-    if(mode && argc < 3) return false;
-
-    // Assemble the chat message.
-    std::string buffer;
-    buffer = argv[!mode ? 1 : 2];;
-    for(int i = (!mode ? 2 : 3); i < argc; ++i)
-    {
-        buffer += " ";
-        buffer += argv[i];
-    }
-
-    // Send the message.
-    dushort mask = 0;
-    switch(mode)
-    {
-    case 0: // chat
-        mask = ~0;
-        break;
-
-    case 1: // chatNum
-        mask = 1 << String(argv[1]).toInt();
-        break;
-
-    case 2: // chatTo
-        for(int i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            if(!stricmp(DD_Player(i)->name, argv[1]))
-            {
-                mask = 1 << i;
-                break;
-            }
-        }
-        break;
-
-    default:
-        LOG_SCR_ERROR("Invalid value, mode = %i") << mode;
-        return false;
-    }
-
-    Net_WriteChatMessage(::consolePlayer, mask, buffer.c_str());
-
-    if(!netState.isClient)
-    {
-        if(mask == (dushort) ~0)
-        {
-            Net_SendBuffer(NSP_BROADCAST, 0);
-        }
-        else
-        {
-            for(int i = 1; i < DDMAXPLAYERS; ++i)
-            {
-                if(DD_Player(i)->publicData().inGame && (mask & (1 << i)))
-                    Net_SendBuffer(i, 0);
-            }
-        }
-    }
-    else
-    {
-        Net_SendBuffer(0, 0);
-    }
-
-    // Show the message locally.
-    Net_ShowChatMessage(::consolePlayer, buffer.c_str());
-
-    // Inform the game, too.
-    gx.NetPlayerEvent(::consolePlayer, DDPE_CHAT_MESSAGE, (void *) buffer.c_str());
-
-    return true;
+    return false;
 }
 
-#ifdef __CLIENT__
+static void Net_DrawDemoOverlay()
+{
+    const int x = DE_GAMEVIEW_WIDTH - 10;
+    const int y = 10;
+
+    if(!recordingDemo() || !(SECONDS_TO_TICKS(::gameTime) & 8))
+        return;
+
+    char buf[160];
+    strcpy(buf, "[");
+    {
+        int count = 0;
+        for(int i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            auto *plr = DD_Player(i);
+            if(plr->publicData().inGame && plr->recording)
+            {
+                // This is a "real" player (or camera).
+                if(count++)
+                    strcat(buf, ",");
+
+                char tmp[40]; sprintf(tmp, "%i:%s", i, plr->recordPaused ? "-P-" : "REC");
+                strcat(buf, tmp);
+            }
+        }
+    }
+    strcat(buf, "]");
+
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
+
+    // Go into screen projection mode.
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT, -1, 1);
+
+    DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetFont(::fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetColorAndAlpha(1, 1, 1, 1);
+    FR_DrawTextXY3(buf, x, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+
+    // Restore original matrix.
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
+}
+
+void Net_Drawer()
+{
+    // Draw the blockmap debug display.
+    Rend_BlockmapDebug();
+
+    // Draw the light range debug display.
+    Rend_DrawLightModMatrix();
+
+# ifdef DE_DEBUG
+    // Draw the input debug display.
+    I_DebugDrawer();
+# endif
+
+    // Draw the demo recording overlay.
+    Net_DrawDemoOverlay();
+
+# if defined (DE_DEBUG) && defined (DE_OPENGL)
+    Z_DebugDrawer();
+# endif
+}
+
 D_CMD(SetName)
 {
     DE_UNUSED(src, argc);
@@ -781,57 +676,6 @@ D_CMD(SetName)
     Net_SendPlayerInfo(::consolePlayer, 0);
     return true;
 }
-#endif
-
-D_CMD(SetTicks)
-{
-    DE_UNUSED(src, argc);
-
-    netState.firstUpdate = true;
-    Timer_SetTicksPerSecond(String(argv[1]).toDouble());
-    return true;
-}
-
-// Create a new local player.
-D_CMD(MakeCamera)
-{
-    DE_UNUSED(src, argc);
-
-    LOG_AS("makecam (Cmd)");
-
-    int cp = String(argv[1]).toInt();
-    if(cp < 0 || cp >= DDMAXPLAYERS)
-        return false;
-
-    /// @todo Should make a LocalPlayer; 'connected' is server-side.
-/*    if(::clients[cp].connected)
-    {
-        LOG_ERROR("Client %i already connected") << cp;
-        return false;
-    }
-
-    ::clients[cp].connected   = true;*/
-    //DD_Player(cp)->ready       = true;
-    DD_Player(cp)->viewConsole = cp;
-
-    DD_Player(cp)->publicData().flags |= DDPF_LOCAL;
-    Smoother_Clear(DD_Player(cp)->smoother());
-
-#ifdef __SERVER__
-    Sv_InitPoolForClient(cp);
-#endif
-
-#ifdef __CLIENT__
-    R_SetupDefaultViewWindow(cp);
-
-    // Update the viewports.
-    R_SetViewGrid(0, 0);
-#endif
-
-    return true;
-}
-
-#ifdef __CLIENT__
 
 D_CMD(SetConsole)
 {
@@ -902,6 +746,150 @@ D_CMD(Connect)
 }
 
 #endif // __CLIENT__
+
+/**
+ * All arguments are sent out as a chat message.
+ */
+D_CMD(Chat)
+{
+    DE_UNUSED(src);
+
+    int mode = !stricmp(argv[0], "chat") ||
+                       !stricmp(argv[0], "say") ? 0 : !stricmp(argv[0], "chatNum") ||
+                             !stricmp(argv[0], "sayNum") ? 1 : 2;
+
+    if(argc == 1)
+    {
+        LOG_SCR_NOTE("Usage: %s %s(text)") << argv[0]
+                                           << (!mode ? "" : mode == 1 ? "(plr#) " : "(name) ");
+        LOG_SCR_MSG("Chat messages are max 80 characters long. Use quotes to get around "
+                    "arg processing.");
+        return true;
+    }
+
+    LOG_AS("chat (Cmd)");
+
+    // Chatting is only possible when connected.
+    if(!netState.netGame) return false;
+
+    // Too few arguments?
+    if(mode && argc < 3) return false;
+
+    // Assemble the chat message.
+    std::string buffer;
+    buffer = argv[!mode ? 1 : 2];;
+    for(int i = (!mode ? 2 : 3); i < argc; ++i)
+    {
+        buffer += " ";
+        buffer += argv[i];
+    }
+
+    // Send the message.
+    dushort mask = 0;
+    switch(mode)
+    {
+        case 0: // chat
+            mask = ~0;
+            break;
+
+        case 1: // chatNum
+            mask = 1 << String(argv[1]).toInt();
+            break;
+
+        case 2: // chatTo
+            for(int i = 0; i < DDMAXPLAYERS; ++i)
+            {
+                if(!stricmp(DD_Player(i)->name, argv[1]))
+                {
+                    mask = 1 << i;
+                    break;
+                }
+            }
+            break;
+
+        default:
+            LOG_SCR_ERROR("Invalid value, mode = %i") << mode;
+            return false;
+    }
+
+    Net_WriteChatMessage(::consolePlayer, mask, buffer.c_str());
+
+    if(!netState.isClient)
+    {
+        if(mask == (dushort) ~0)
+        {
+            Net_SendBuffer(NSP_BROADCAST, 0);
+        }
+        else
+        {
+            for(int i = 1; i < DDMAXPLAYERS; ++i)
+            {
+                if(DD_Player(i)->publicData().inGame && (mask & (1 << i)))
+                    Net_SendBuffer(i, 0);
+            }
+        }
+    }
+    else
+    {
+        Net_SendBuffer(0, 0);
+    }
+
+    // Show the message locally.
+    Net_ShowChatMessage(::consolePlayer, buffer.c_str());
+
+    // Inform the game, too.
+    gx.NetPlayerEvent(::consolePlayer, DDPE_CHAT_MESSAGE, (void *) buffer.c_str());
+
+    return true;
+}
+
+D_CMD(SetTicks)
+{
+    DE_UNUSED(src, argc);
+
+    netState.firstUpdate = true;
+    Timer_SetTicksPerSecond(String(argv[1]).toDouble());
+    return true;
+}
+
+// Create a new local player.
+D_CMD(MakeCamera)
+{
+    DE_UNUSED(src, argc);
+
+    LOG_AS("makecam (Cmd)");
+
+    int cp = String(argv[1]).toInt();
+    if(cp < 0 || cp >= DDMAXPLAYERS)
+        return false;
+
+    /// @todo Should make a LocalPlayer; 'connected' is server-side.
+    /*    if(::clients[cp].connected)
+    {
+        LOG_ERROR("Client %i already connected") << cp;
+        return false;
+    }
+
+    ::clients[cp].connected   = true;*/
+        //DD_Player(cp)->ready       = true;
+        DD_Player(cp)->viewConsole = cp;
+
+    DD_Player(cp)->publicData().flags |= DDPF_LOCAL;
+    Smoother_Clear(DD_Player(cp)->smoother());
+
+#ifdef __SERVER__
+    Sv_InitPoolForClient(cp);
+#endif
+
+#ifdef __CLIENT__
+    R_SetupDefaultViewWindow(cp);
+
+    // Update the viewports.
+    R_SetViewGrid(0, 0);
+#endif
+
+    return true;
+}
 
 /**
  * The 'net' console command.
@@ -987,9 +975,9 @@ D_CMD(Net)
         }
     }
 
+#ifdef __CLIENT__
     if(argc == 3) // Two arguments?
     {
-#ifdef __CLIENT__
         if(!stricmp(argv[1], "search"))
         {
             Net_ServerLink().discover(argv[2]);
@@ -1023,10 +1011,7 @@ D_CMD(Net)
             }
             else return false;
         }
-#endif
     }
-
-#ifdef __CLIENT__
     if(argc == 4)
     {
         if(!stricmp(argv[1], "search"))
@@ -1040,9 +1025,6 @@ D_CMD(Net)
 }
 
 D_CMD(Ping);  // net_ping.cpp
-#ifdef __CLIENT__
-D_CMD(Login);  // cl_main.cpp
-#endif
 
 void Net_Register()
 {
@@ -1052,7 +1034,6 @@ void Net_Register()
 
     C_VAR_BYTE      ("net-queue-show",          &monitorMsgQueue, 0, 0, 1);
     C_VAR_BYTE      ("net-dev",                 &netDev, 0, 0, 1);
-    C_VAR_CHARPTR   ("net-name",                &playerName, 0, 0, 0);
 
     C_CMD_FLAGS ("chat",    nullptr,    Chat, CMDF_NO_NULLGAME);
     C_CMD_FLAGS ("chatnum", nullptr,    Chat, CMDF_NO_NULLGAME);

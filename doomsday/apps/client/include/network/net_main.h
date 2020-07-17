@@ -135,8 +135,6 @@ enum {
 #define SVINFO_TOKEN_LEN        128
 #define SVINFO_VALID_LABEL_LEN  16
 
-extern char    *playerName;
-
 typedef struct netstate_s
 {
     dd_bool firstUpdate;

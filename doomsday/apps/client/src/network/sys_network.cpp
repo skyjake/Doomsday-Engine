@@ -31,8 +31,12 @@
 
 using namespace de;
 
+char *playerName = (char *) "Player";
+
 void N_Register(void)
-{}
+{
+    C_VAR_CHARPTR("net-name", &playerName, 0, 0, 0);
+}
 
 ServerLink &Net_ServerLink(void)
 {

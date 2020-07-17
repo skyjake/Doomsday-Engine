@@ -22,6 +22,7 @@
 #include "network/net_buf.h"
 #include "network/net_demo.h"
 #include "network/net_event.h"
+#include "network/sys_network.h"
 #include "client/cl_def.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
@@ -695,7 +696,7 @@ void ServerLink::initiateCommunications()
         gx.NetConnect(true);
 
         // Connect by issuing: "Join (myname)"
-        String pName = (playerName? playerName : "");
+        String pName = (playerName ? playerName : "");
         if (pName.isEmpty())
         {
             pName = "Player";

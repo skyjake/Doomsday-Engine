@@ -34,6 +34,7 @@
 
 #include <de/serverinfo.h>
 
+extern char *   playerName;
 extern dd_bool  allowSending;
 extern int      maxQueuePackets;
 
