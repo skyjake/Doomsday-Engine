@@ -474,7 +474,7 @@ function (deng_deploy_target target)
         get_property (outName TARGET ${target} PROPERTY OUTPUT_NAME)
         install (CODE "
             execute_process (COMMAND ${PYTHON_EXECUTABLE}
-                ${DE_SOURCE_DIR}/build/scripts/apple_deps.py
+                ${DE_SOURCE_DIR}/build/scripts/deploy_apple.py
                 \"${DE_DISTRIB_DIR}/${outName}.app\"
             )")
     endif ()
