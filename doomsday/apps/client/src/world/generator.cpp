@@ -1053,7 +1053,7 @@ void Generator::runTick()
             {
 #ifdef __CLIENT__
                 // Client's should also check the client mobjs.
-                if(isClient)
+                if(netState.isClient)
                 {
                     map().clMobjIterator(newGeneratorParticlesWorker, this);
                 }

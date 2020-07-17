@@ -20,7 +20,7 @@
 #ifndef DE_CLIENT_SOUND_H
 #define DE_CLIENT_SOUND_H
 
-#include "network/protocol.h"
+#include <doomsday/network/protocol.h>
 
 /**
  * Read a sound delta from the message buffer and play it.

@@ -1621,12 +1621,12 @@ struct ddvalue_t
 
 static ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE] = {
     {&novideo, 0},
-    {&netGame, 0},
-    {&isServer, 0}, // An *open* server?
-    {&isClient, 0},
+    {&netState.netGame, 0},
+    {&netState.isServer, 0}, // An *open* server?
+    {&netState.isClient, 0},
     {&consolePlayer, &consolePlayer},
     {&displayPlayer, 0}, // use R_SetViewPortPlayer() to change
-    {&gotFrame, 0},
+    {&netState.gotFrame, 0},
     {0, 0}, // pointer updated when queried (DED sound def count)
 
 #ifdef __SERVER__

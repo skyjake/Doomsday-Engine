@@ -67,7 +67,7 @@ void Sv_Sound(dint soundId, const mobj_t *origin, dint toPlr)
 
 void Sv_SoundAtVolume(dint soundIDAndFlags, const mobj_t *origin, dfloat volume, dint toPlr)
 {
-    if (::isClient) return;
+    if (netState.isClient) return;
 
     dint soundID = (soundIDAndFlags & ~DDSF_FLAG_MASK);
     if (!soundID) return;
@@ -106,7 +106,7 @@ void Sv_SoundAtVolume(dint soundIDAndFlags, const mobj_t *origin, dfloat volume,
 
 void Sv_StopSound(dint soundId, const mobj_t *origin)
 {
-    if (::isClient) return;
+    if (netState.isClient) return;
 
     world::Sector *sector;
     world::Plane *plane;

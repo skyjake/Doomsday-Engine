@@ -135,20 +135,19 @@ enum {
 #define SVINFO_TOKEN_LEN        128
 #define SVINFO_VALID_LABEL_LEN  16
 
-extern char    *serverName, *serverInfo, *playerName;
-//extern int      serverData[];
+extern char    *playerName;
 
-extern dd_bool  firstNetUpdate;
-extern int      resendStart;      // set when server needs our tics
-extern int      resendCount;
-extern int      oldEnterTics;
-extern int      numClMobjs;
-extern int      netGame;
-extern int      realTics, availableTics;
-extern int      isServer, isClient;
-extern dd_bool  allowNetTraffic; // Should net traffic be allowed?
-extern float    netSimulatedLatencySeconds;
-extern int      gotFrame;
+typedef struct netstate_s
+{
+    dd_bool firstUpdate;
+    int     netGame;  // a networked game is in progress
+    int     isServer; // this computer is an open server
+    int     isClient; // this computer is a client
+    float   simulatedLatencySeconds;
+    int     gotFrame; // a frame packet has been received
+} netstate_t;
+
+extern netstate_t netState;
 
 void            Net_Register(void);
 void            Net_Init(void);
@@ -175,16 +174,6 @@ void            Net_Ticker(timespan_t time);
 void Net_Drawer(void);
 
 dd_bool Net_IsLocalPlayer(int pNum);
-
-//void ServerInfo_Print(const serverinfo_t *info, int index);
-
-/**
- * Converts textual data to a serverinfo struct. Returns true if the
- * label/value pair is recognized.
- */
-//dd_bool ServerInfo_FromString(serverinfo_t *info, const char *valuePair);
-
-//void ServerInfo_FromRecord(serverinfo_t *info, const de::Record &rec);
 
 #ifdef __cplusplus
 } // extern "C"

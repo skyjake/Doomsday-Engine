@@ -268,7 +268,7 @@ DE_PIMPL(ConfigProfiles)
 
     void changeTo(const String &profileName)
     {
-        LOG_AS("configprofiles.h");
+        LOG_AS("ConfigProfiles");
         DE_ASSERT(tryFind(profileName));
 
         if (current == profileName) return;
@@ -365,7 +365,7 @@ DE_PIMPL(ConfigProfiles)
     {
         if (!self().isPersistent() || newGame.isNull()) return;
 
-        LOG_AS("configprofiles.h");
+        LOG_AS("ConfigProfiles");
         LOG_DEBUG("Game has been loaded, deserializing %s profiles") << self().persistentName();
 
         self().deserialize();
@@ -411,7 +411,7 @@ DE_PIMPL(ConfigProfiles)
     {
         if (!self().isPersistent() || gameBeingUnloaded.isNull()) return;
 
-        LOG_AS("configprofiles.h");
+        LOG_AS("ConfigProfiles");
         LOG_DEBUG("Game being unloaded, serializing %s profiles") << self().persistentName();
 
         // Update the current profile.

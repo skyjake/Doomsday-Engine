@@ -49,7 +49,7 @@ using namespace de;
 
 static bool animatedTransitionActive(int busyMode)
 {
-    return (!novideo && !netGame && !(busyMode & BUSYF_STARTUP) && rTransitionTics > 0 &&
+    return (!novideo && !netState.netGame && !(busyMode & BUSYF_STARTUP) && rTransitionTics > 0 &&
             (busyMode & BUSYF_TRANSITION));
 }
 

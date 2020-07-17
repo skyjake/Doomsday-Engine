@@ -219,7 +219,7 @@ void Mobj_OriginSmoothed(const mobj_t *mob, coord_t origin[3])
             V3d_Set(origin, vd->current.origin.x, vd->current.origin.y, vd->current.origin.z);
         }
         // The client may have a Smoother for this object.
-        else if (isClient)
+        else if (netState.isClient)
         {
             Smoother_Evaluate(DD_Player(P_GetDDPlayerIdx(mob->dPlayer))->smoother(), origin);
         }
@@ -243,7 +243,7 @@ angle_t Mobj_AngleSmoothed(const mobj_t *mob)
     }
 
     // Apply a Short Range Visual Offset?
-    if (::useSRVOAngle && !::netGame && !::playback)
+    if (::useSRVOAngle && !netState.netGame && !::playback)
     {
         return mob->visAngle << 16;
     }

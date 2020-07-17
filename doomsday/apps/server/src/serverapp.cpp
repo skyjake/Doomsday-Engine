@@ -110,7 +110,7 @@ DE_PIMPL(ServerApp)
 
     void aboutToUnloadGame(const Game &/*gameBeingUnloaded*/) override
     {
-        if (netGame && isServer)
+        if (netState.netGame && netState.isServer)
         {
             N_ServerClose();
         }
@@ -304,7 +304,7 @@ ServerInfo ServerApp::currentServerInfo() // static
 
     Flags flags = 0;
     if (CVar_Byte(Con_FindVariable("server-allowjoin"))
-            && isServer != 0
+            && netState.isServer != 0
             && Sv_GetNumPlayers() < svMaxPlayers)
     {
         flags |= ServerInfo::AllowJoin;

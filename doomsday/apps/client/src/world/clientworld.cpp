@@ -259,7 +259,7 @@ bool ClientWorld::allowAdvanceTime() const
 void ClientWorld::reset()
 {
     World::reset();
-    if (isClient)
+    if (netState.isClient)
     {
         Cl_ResetFrame();
         Cl_InitPlayers();

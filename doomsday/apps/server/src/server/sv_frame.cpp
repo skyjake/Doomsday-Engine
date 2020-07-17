@@ -68,12 +68,12 @@ static dint lastTransmitTic;
 void Sv_TransmitFrame()
 {
     // Obviously clients don't transmit anything.
-    if (!::allowFrames || ::isClient || Sys_IsShuttingDown())
+    if (!::allowFrames || netState.isClient || Sys_IsShuttingDown())
     {
         return;
     }
 
-    if (!::netGame)
+    if (!netState.netGame)
     {
         // Only generate deltas when somebody is recording a demo.
         dint i = 0;

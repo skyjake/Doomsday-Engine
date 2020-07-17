@@ -18,12 +18,10 @@
 
 #include "de_platform.h"
 #include "network/serverlink.h"
-#include <doomsday/network/masterserver.h>
 #include "network/net_main.h"
 #include "network/net_buf.h"
 #include "network/net_demo.h"
 #include "network/net_event.h"
-#include "network/protocol.h"
 #include "client/cl_def.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
@@ -34,6 +32,8 @@
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
+#include <doomsday/network/masterserver.h>
+#include <doomsday/network/protocol.h>
 
 #include <de/async.h>
 #include <de/blockpacket.h>
@@ -219,9 +219,9 @@ DE_PIMPL(ServerLink)
 
         handshakeReceived = false;
         allowSending = true;
-        netGame = true;             // Allow sending/receiving of packets.
-        isServer = false;
-        isClient = true;
+        netState.netGame = true;             // Allow sending/receiving of packets.
+        netState.isServer = false;
+        netState.isClient = true;
 
         // Call game's NetConnect.
         gx.NetConnect(false);
@@ -364,7 +364,7 @@ void ServerLink::clear()
 void ServerLink::connectToServerAndChangeGameAsync(const ServerInfo& info)
 {
     // Automatically leave the current MP game.
-    if (netGame && isClient)
+    if (netState.netGame && netState.isClient)
     {
         disconnect();
     }

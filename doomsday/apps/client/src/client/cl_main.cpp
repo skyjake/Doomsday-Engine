@@ -185,8 +185,8 @@ void Cl_AnswerHandshake()
     Smoother_Clear(DD_Player(consolePlayer)->smoother());
     DD_Player(consolePlayer)->publicData().flags &= ~DDPF_USE_VIEW_FILTER;
 
-    isClient = true;
-    isServer = false;
+    netState.isClient = true;
+    netState.isServer = false;
     netLoggedIn = false;
     clientPaused = false;
 
@@ -402,7 +402,7 @@ static void assertPlayerIsValid(int plrNum)
 {
     LOG_AS("Client.assertPlayerIsValid");
 
-    if (!isClient || !Cl_GameReady() || clientPaused) return;
+    if (!netState.isClient || !Cl_GameReady() || clientPaused) return;
     if (plrNum < 0 || plrNum >= DDMAXPLAYERS) return;
 
     player_t *plr = DD_Player(plrNum);
@@ -439,7 +439,7 @@ static void assertPlayerIsValid(int plrNum)
 
 void Cl_Ticker(timespan_t ticLength)
 {
-    if (!isClient || !Cl_GameReady() || clientPaused)
+    if (!netState.isClient || !Cl_GameReady() || clientPaused)
         return;
 
     // On clientside, players are represented by two mobjs: the real mobj,
@@ -490,7 +490,7 @@ D_CMD(Login)
     DE_UNUSED(src);
 
     // Only clients can log in.
-    if (!isClient)
+    if (!netState.isClient)
         return false;
 
     Msg_Begin(PKT_LOGIN);

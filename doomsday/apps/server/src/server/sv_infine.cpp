@@ -28,7 +28,7 @@ using namespace de;
 
 void Sv_Finale(finaleid_t id, dint flags, const char *script)
 {
-    if (::isClient) return;
+    if (netState.isClient) return;
 
     // How much memory do we need?
     dsize scriptLen = 0;

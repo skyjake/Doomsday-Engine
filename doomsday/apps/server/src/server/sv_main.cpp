@@ -843,14 +843,14 @@ void Sv_StartNetGame(void)
         Smoother_Clear(plr->smoother());
     }
     gameTime = 0;
-    firstNetUpdate = true;
+    netState.firstUpdate = true;
     netRemoteUser = 0;
 
     // The server is always player number zero.
     consolePlayer = displayPlayer = 0;
 
-    netGame = true;
-    isServer = true;
+    netState.netGame = true;
+    netState.isServer = true;
     allowSending = true;
 
     // Prepare the material dictionary we'll be using with clients.
@@ -1022,7 +1022,7 @@ int Sv_GetNumPlayers(void)
     int i, count;
 
     // Clients can't count.
-    if (isClient)
+    if (netState.isClient)
         return 1;
 
     for (i = count = 0; i < DDMAXPLAYERS; ++i)
@@ -1042,7 +1042,7 @@ int Sv_GetNumConnected(void)
     int                 i, count = 0;
 
     // Clients can't count.
-    if (isClient)
+    if (netState.isClient)
         return 1;
 
     for (i = isDedicated ? 1 : 0; i < DDMAXPLAYERS; ++i)
@@ -1193,7 +1193,7 @@ D_CMD(Logout)
     DE_UNUSED(src, argc, argv);
 
     // Only servers can execute this command.
-    if (!netRemoteUser || !isServer)
+    if (!netRemoteUser || !netState.isServer)
         return false;
     // Notice that the server WILL execute this command when a client
     // is logged in and types "logout".

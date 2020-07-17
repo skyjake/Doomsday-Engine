@@ -28,10 +28,10 @@
 #include "client/cl_player.h"
 #include "client/cl_world.h"
 #include "network/net_main.h"
-#include "network/protocol.h"
 #include "world/map.h"
 #include "world/p_players.h"
 
+#include <doomsday/network/protocol.h>
 #include <doomsday/world/mobjthinker.h>
 #include <de/legacy/timer.h>
 #include <de/legacy/vector1.h>
@@ -96,7 +96,7 @@ void ClMobj_EnableLocalActions(mobj_t *mo, dd_bool enable)
     LOG_AS("ClMobj_EnableLocalActions");
 
     ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
-    if (!isClient || !info) return;
+    if (!netState.isClient || !info) return;
     if (enable)
     {
         LOGDEV_NET_VERBOSE("Enabled for clmobj %i") << mo->thinker.id;
@@ -113,7 +113,7 @@ void ClMobj_EnableLocalActions(mobj_t *mo, dd_bool enable)
 dd_bool ClMobj_LocalActionsEnabled(mobj_t *mo)
 {
     ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
-    if (!isClient || !info) return true;
+    if (!netState.isClient || !info) return true;
     return (info->flags & CLMF_LOCAL_ACTIONS) != 0;
 }
 

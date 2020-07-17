@@ -155,7 +155,7 @@ void N_NETicker(timespan_t time)
 #endif
 
 #ifdef __SERVER__
-    if(::netGame)
+    if(netState.netGame)
     {
         ::masterHeartbeat -= time;
 

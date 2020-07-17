@@ -59,7 +59,7 @@ void Net_SendPing(dint player, dint count)
     Pinger &ping = DD_Player(player)->pinger();
 
     // Valid destination?
-    if(player == ::consolePlayer || (::isClient && player))
+    if(player == ::consolePlayer || (netState.isClient && player))
         return;
 
     if(count)
@@ -122,13 +122,13 @@ D_CMD(Ping)
 {
     DE_UNUSED(src);
 
-    if(!::netGame)
+    if(!netState.netGame)
     {
         LOG_SCR_ERROR("Ping is only for netgames");
         return true;
     }
 
-    if(::isServer && argc == 1)
+    if(netState.isServer && argc == 1)
     {
         LOG_SCR_NOTE("Usage: %s (plrnum) (count)") << argv[0];
         LOG_SCR_MSG("(count) is optional. 4 pings are sent by default.");
@@ -136,7 +136,7 @@ D_CMD(Ping)
     }
 
     dint dest = 0, count = 4;
-    if(::isServer)
+    if(netState.isServer)
     {
         dest = String(argv[1]).toInt();
         if(argc >= 3)

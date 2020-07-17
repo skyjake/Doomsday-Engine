@@ -47,9 +47,14 @@
 
 using namespace de;
 
+char *  serverName   = (char *) "Doomsday";
+char *  serverInfo   = (char *) "Multiplayer Host";
 dd_bool serverPublic = false;       // cvar
 char *  nptIPAddress = (char *) ""; // Public domain for clients to connect to (cvar).
 int     nptIPPort    = 0;           // Server TCP port (cvar).
+
+static byte netShowLatencies = false;
+static byte netAllowJoin     = true;
 
 static constexpr TimeSpan BEACON_UPDATE_INTERVAL = 2.0_s;
 
@@ -365,10 +370,72 @@ ServerSystem &App_ServerSystem()
 
 //---------------------------------------------------------------------------
 
+D_CMD(Kick)
+{
+    DE_UNUSED(src, argc);
+
+    LOG_AS("kick (Cmd)")
+
+    if(!netState.netGame)
+    {
+        LOG_SCR_ERROR("This is not a network game");
+        return false;
+    }
+
+    if(!netState.isServer)
+    {
+        LOG_SCR_ERROR("Only allowed on the server");
+        return false;
+    }
+
+    int num = String(argv[1]).toInt();
+    if(num < 1 || num >= DDMAXPLAYERS)
+    {
+        LOG_NET_ERROR("Invalid client number");
+        return false;
+    }
+
+    if(::netRemoteUser == num)
+    {
+        LOG_NET_ERROR("Can't kick the client who's logged in");
+        return false;
+    }
+
+    Sv_Kick(num);
+    return true;
+}
+
+static void serverPublicChanged()
+{
+    if (netState.isServer)
+    {
+        N_MasterAnnounceServer(serverPublic);
+    }
+}
+
+static void serverAllowJoinChanged()
+{
+    if (netState.isServer && serverPublic)
+    {
+        N_MasterAnnounceServer(true);
+    }
+}
+
 void Server_Register()
 {
-    C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
-    C_VAR_INT    ("net-ip-port",    &nptIPPort, CVF_NO_MAX, 0, 0);
+    C_VAR_CHARPTR   ("server-name",             &::serverName, 0, 0, 0);
+    C_VAR_CHARPTR   ("server-info",             &::serverInfo, 0, 0, 0);
+    C_VAR_INT2      ("server-public",           &::serverPublic, 0, 0, 1, serverPublicChanged);
+    C_VAR_BYTE2     ("server-allowjoin",        &netAllowJoin,  0, 0, 1, serverAllowJoinChanged);
+    C_VAR_CHARPTR   ("server-password",         &::netPassword, 0, 0, 0);
+    C_VAR_BYTE      ("server-latencies",        &::netShowLatencies, 0, 0, 1);
+    C_VAR_INT       ("server-frame-interval",   &::frameInterval, CVF_NO_MAX, 0, 0);
+    C_VAR_INT       ("server-player-limit",     &::svMaxPlayers, 0, 0, DDMAXPLAYERS);
+
+    C_VAR_CHARPTR   ("net-ip-address", &nptIPAddress, 0, 0, 0);
+    C_VAR_INT       ("net-ip-port",    &nptIPPort, CVF_NO_MAX, 0, 0);
+
+    C_CMD_FLAGS     ("kick", "i", Kick, CMDF_NO_NULLGAME);
 }
 
 dd_bool N_ServerOpen()

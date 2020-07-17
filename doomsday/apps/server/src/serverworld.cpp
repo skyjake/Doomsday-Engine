@@ -129,7 +129,7 @@ void ServerWorld::mapFinalized()
         gameTime = 0;
     }
 
-    if (::isServer)
+    if (netState.isServer)
     {
         // Init server data.
         Sv_InitPools();

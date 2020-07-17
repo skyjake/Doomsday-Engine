@@ -19,14 +19,11 @@
 
 #include "de_base.h"
 #include "client/cl_player.h"
-
 #include "api_client.h"
-
 #include "network/net_main.h"
-#include "network/protocol.h"
-
 #include "world/map.h"
 #include "world/p_players.h"
+#include <doomsday/network/protocol.h>
 #include <doomsday/world/bspleaf.h>
 #include <doomsday/world/sector.h>
 

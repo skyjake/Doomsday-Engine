@@ -26,10 +26,10 @@
 #  error "server/sv_def.h requires C++"
 #endif
 
+#include <doomsday/network/protocol.h>
 #include <de/libcore.h>
 #include <de/record.h>
 #include "dd_def.h"
-#include "network/protocol.h"
 
 struct material_s;
 

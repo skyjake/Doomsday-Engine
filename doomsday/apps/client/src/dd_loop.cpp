@@ -127,7 +127,7 @@ DE_EXTERN_C dd_bool DD_IsSharpTick()
 dd_bool DD_IsFrameTimeAdvancing()
 {
     if(BusyMode_Active()) return false;
-    return ::tickFrame || ::netGame;
+    return ::tickFrame || netState.netGame;
 }
 
 static void checkSharpTick(timespan_t time)
@@ -184,7 +184,7 @@ static void baseTicker(timespan_t time)
             R_ViewWindowTicker(i, time);
         }
 
-        if(isClient)
+        if(netState.isClient)
         {
             Cl_Ticker(time);
         }

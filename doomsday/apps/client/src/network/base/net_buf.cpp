@@ -149,8 +149,8 @@ static netmessage_t *N_GetMessage()
         msg = ::msgHead;
 
         // Check for simulated latency.
-        if(::netSimulatedLatencySeconds > 0 &&
-           (Timer_RealSeconds() - msg->receivedAt < ::netSimulatedLatencySeconds))
+        if(netState.simulatedLatencySeconds > 0 &&
+           (Timer_RealSeconds() - msg->receivedAt < netState.simulatedLatencySeconds))
         {
             // This message has not been received yet.
             msg = nullptr;
@@ -196,10 +196,10 @@ void N_ClearMessages()
 {
     if(!msgMutex) return;  // Not initialized yet.
 
-    const dfloat oldSim = ::netSimulatedLatencySeconds;
+    const dfloat oldSim = netState.simulatedLatencySeconds;
 
     // No simulated latency now.
-    ::netSimulatedLatencySeconds = 0;
+    netState.simulatedLatencySeconds = 0;
 
     netmessage_t *msg;
     while((msg = N_GetMessage()) != nullptr)
@@ -207,7 +207,7 @@ void N_ClearMessages()
         N_ReleaseMessage(msg);
     }
 
-    ::netSimulatedLatencySeconds = oldSim;
+    netState.simulatedLatencySeconds = oldSim;
 
     // The queue is now empty.
     ::msgHead = ::msgTail = nullptr;

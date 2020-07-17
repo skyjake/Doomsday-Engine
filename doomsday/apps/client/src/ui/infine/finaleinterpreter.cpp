@@ -480,7 +480,7 @@ DE_PIMPL(FinaleInterpreter)
         LOGDEV_SCR_MSG("Finale End - id:%i '%.30s'") << id << scriptBegin;
 
 #ifdef __SERVER__
-        if (::isServer && !(FI_ScriptFlags(id) & FF_LOCAL))
+        if (netState.isServer && !(FI_ScriptFlags(id) & FF_LOCAL))
         {
             // Tell clients to stop the finale.
             Sv_Finale(id, FINF_END, 0);
@@ -1140,7 +1140,7 @@ int FinaleInterpreter::handleEvent(const ddevent_t &ev)
     if (d->timer < 20)
         return false;
 
-    if (!::isClient)
+    if (!netState.isClient)
     {
 #ifdef __CLIENT__
         // Any handlers for this event?
@@ -1168,7 +1168,7 @@ int FinaleInterpreter::handleEvent(const ddevent_t &ev)
         return false;
 
 #ifdef __CLIENT__
-    if (::isClient)
+    if (netState.isClient)
     {
         // Request skip from the server.
         Cl_RequestFinaleSkip();
@@ -1520,7 +1520,7 @@ DEFFC(If)
     // Built-in conditions.
     if (!iCmpStrCase(token, "netgame"))
     {
-        val = netGame;
+        val = netState.netGame;
     }
     else if (!iCmpStrNCase(token, "mode:", 5))
     {

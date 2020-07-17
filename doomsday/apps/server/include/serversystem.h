@@ -118,6 +118,7 @@ void    N_PrintNetworkStatus(void);
 void N_MasterAnnounceServer(bool isOpen);
 
 extern dd_bool  serverPublic;
+extern char    *serverName, *serverInfo;
 extern char *   nptIPAddress; // cvar
 extern int      nptIPPort;    // cvar
 

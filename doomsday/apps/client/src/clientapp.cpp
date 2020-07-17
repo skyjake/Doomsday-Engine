@@ -404,7 +404,7 @@ DE_PIMPL(ClientApp)
         DE_ASSERT(ClientWindow::mainExists());
 
         // Quit netGame if one is in progress.
-        if (netGame)
+        if (netState.netGame)
         {
             Con_Execute(CMDS_DDAY, "net disconnect", true, false);
         }

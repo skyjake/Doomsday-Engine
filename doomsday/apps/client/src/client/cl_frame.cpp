@@ -33,8 +33,6 @@
 #define RESEND_HISTORY_SIZE 50
 #endif
 
-extern int gotFrame;
-
 // Set to true when the PSV_FIRST_FRAME2 packet is received.
 // Until then, all PSV_FRAME2 packets are ignored (they must be
 // from the wrong map).
@@ -96,7 +94,7 @@ void Cl_InitFrame(void)
  */
 void Cl_ResetFrame()
 {
-    gotFrame = false;
+    netState.gotFrame = false;
 
     // All frames received before the PSV_FIRST_FRAME2 are ignored.
     // They must be from the wrong map.
@@ -180,11 +178,11 @@ void Cl_Frame2Received(int packetType)
         }
     }
 
-    if (!gotFrame)
+    if (!netState.gotFrame)
     {
         LOGDEV_NET_NOTE("First frame received");
     }
 
     // We have now received a frame.
-    gotFrame = true;
+    netState.gotFrame = true;
 }

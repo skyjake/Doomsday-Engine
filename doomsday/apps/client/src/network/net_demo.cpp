@@ -119,7 +119,7 @@ dd_bool Demo_BeginRecording(const char * /*fileName*/, dint /*plrNum*/)
     ::writeInfo[plrNum].cameratimer = 0;
     ::writeInfo[plrNum].fov         = -1;  // Must be written in the first packet.
 
-    if(::isServer)
+    if(netState.isServer)
     {
         // Playing demos alters gametic. This'll make sure we're going to get updates.
         ::clients[0].lastTransmit = -1;
@@ -274,7 +274,7 @@ dd_bool Demo_BeginPlayback(const char *fileName)
     // Already in playback?
     if(::playback) return false;
     // Playback not possible?
-    if(::netGame || ::isClient) return false;
+    if(netState.netGame || netState.isClient) return false;
 
     // Check that we aren't recording anything.
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
@@ -305,8 +305,8 @@ dd_bool Demo_BeginPlayback(const char *fileName)
 
     // OK, let's begin the demo.
     ::playback       = true;
-    ::isServer       = false;
-    ::isClient       = true;
+    netState.isServer       = false;
+    netState.isClient       = true;
     ::readInfo.first = true;
     ::viewangleDelta = 0;
     ::lookdirDelta   = 0;
@@ -590,19 +590,19 @@ D_CMD(RecordDemo)
 {
     DE_UNUSED(src);
 
-    if(argc == 3 && ::isClient)
+    if(argc == 3 && netState.isClient)
     {
         LOG_ERROR("Clients can only record the consolePlayer");
         return true;
     }
 
-    if(::isClient && argc != 2)
+    if(netState.isClient && argc != 2)
     {
         LOG_SCR_NOTE("Usage: %s (fileName)") << argv[0];
         return true;
     }
 
-    if(::isServer && (argc < 2 || argc > 3))
+    if(netState.isServer && (argc < 2 || argc > 3))
     {
         LOG_SCR_NOTE("Usage: %s (fileName) (plnum)") << argv[0];
         LOG_SCR_MSG("(plnum) is the player which will be recorded.");

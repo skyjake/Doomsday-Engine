@@ -437,7 +437,7 @@ bool B_CheckCondition(const Binding::CompiledConditionRecord *condRec, int local
     switch (cond.type)
     {
     case Binding::GlobalState:
-        if (cond.multiplayer && netGame)
+        if (cond.multiplayer && netState.netGame)
             return fulfilled;
         break;
 

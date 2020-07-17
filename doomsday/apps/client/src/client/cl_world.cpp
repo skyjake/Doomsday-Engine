@@ -21,12 +21,11 @@
 #include "de_base.h"
 #include "client/cl_world.h"
 #include "client/cl_player.h"
-#include <doomsday/api_map.h>
 #include "world/map.h"
 #include "world/surface.h"
 #include "network/net_msg.h"
-#include "network/protocol.h"
-
+#include <doomsday/api_map.h>
+#include <doomsday/network/protocol.h>
 #include <doomsday/world/materialarchive.h>
 #include <doomsday/world/sector.h>
 #include <de/legacy/stringarray.h>

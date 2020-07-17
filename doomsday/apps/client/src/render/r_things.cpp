@@ -114,7 +114,7 @@ static Vec3d mobjOriginSmoothed(mobj_t *mob)
     coord_t origin[] = { mob->origin[0], mob->origin[1], mob->origin[2] };
 
     // The client may have a Smoother for this object.
-    if(isClient && mob->dPlayer && P_GetDDPlayerIdx(mob->dPlayer) != consolePlayer)
+    if(netState.isClient && mob->dPlayer && P_GetDDPlayerIdx(mob->dPlayer) != consolePlayer)
     {
         Smoother_Evaluate(DD_Player(P_GetDDPlayerIdx(mob->dPlayer))->smoother(), origin);
     }

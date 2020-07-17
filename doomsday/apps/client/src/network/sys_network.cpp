@@ -44,7 +44,7 @@ ServerLink &Net_ServerLink(void)
  */
 void N_PrintNetworkStatus(void)
 {
-    if (isClient)
+    if (netState.isClient)
     {
         LOG_NET_NOTE(_E(b) "CLIENT: " _E(.) "Connected to server at %s") << Net_ServerLink().address();
     }

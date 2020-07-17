@@ -56,7 +56,7 @@ DE_PIMPL(Finale)
         interpreter.loadScript(script);
 
 #ifdef __SERVER__
-        if (!(flags & FF_LOCAL) && ::isServer)
+        if (!(flags & FF_LOCAL) && netState.isServer)
         {
             // Instruct clients to start playing this Finale.
             Sv_Finale(id, FINF_BEGIN | FINF_SCRIPT, script);

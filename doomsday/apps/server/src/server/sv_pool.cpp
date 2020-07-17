@@ -106,7 +106,7 @@ void Sv_InitPools()
     Time startedAt;
 
     // Clients don't register anything.
-    if (::isClient) return;
+    if (netState.isClient) return;
 
     LOG_AS("Sv_InitPools");
 
