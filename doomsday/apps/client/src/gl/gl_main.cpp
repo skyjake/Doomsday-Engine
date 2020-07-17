@@ -30,17 +30,6 @@
 #include "gl/gl_main.h"
 #include "api_gl.h"
 
-#include <de/legacy/concurrency.h>
-#include <de/app.h>
-#include <de/config.h>
-#include <de/glinfo.h>
-#include <de/glstate.h>
-#include <de/logbuffer.h>
-#include <doomsday/console/cmd.h>
-#include <doomsday/console/var.h>
-#include <doomsday/defs/mapinfo.h>
-#include <doomsday/filesys/fs_main.h>
-#include <doomsday/res/colorpalettes.h>
 #include "clientapp.h"
 #include "sys_system.h"  // novideo
 
@@ -66,9 +55,21 @@
 #include "render/rend_model.h"
 #include "render/rend_particle.h"
 #include "render/vr.h"
-#include "misc/r_util.h"
 
 #include "ui/ui_main.h"
+
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/var.h>
+#include <doomsday/defs/mapinfo.h>
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/r_util.h>
+#include <doomsday/res/colorpalettes.h>
+#include <de/legacy/concurrency.h>
+#include <de/app.h>
+#include <de/config.h>
+#include <de/glinfo.h>
+#include <de/glstate.h>
+#include <de/logbuffer.h>
 
 #include <SDL_video.h>
 

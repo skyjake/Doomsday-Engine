@@ -21,9 +21,9 @@
 #define RENDER_WALLEDGE
 
 #include "world/line.h"
+#include "world/ihplane.h"
 #include "wallspec.h"
 #include "trianglestripbuilder.h"
-#include "misc/ihplane.h"
 
 #include <doomsday/mesh/hedge.h>
 #include <de/error.h>

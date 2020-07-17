@@ -47,7 +47,6 @@
 #include "gl/sys_opengl.h"
 
 #include "api_fontrender.h"
-#include "misc/r_util.h"
 #include "render/fx/bloom.h"
 #include "render/fx/vignette.h"
 #include "render/fx/lensflares.h"
@@ -84,6 +83,7 @@
 #include <doomsday/console/var.h>
 #include <doomsday/defs/sprite.h>
 #include <doomsday/res/texturemanifest.h>
+#include <doomsday/r_util.h>
 #include <doomsday/mesh/face.h>
 #include <doomsday/world/blockmap.h>
 #include <doomsday/world/bspleaf.h>

@@ -22,31 +22,20 @@
 
 #include "de_platform.h"
 #include "render/r_things.h"
-
-#include <de/legacy/vector1.h>
-#include <de/modeldrawable.h>
-#include <doomsday/defs/sprite.h>
-#include <doomsday/world/materials.h>
-
 #include "clientapp.h"
 #include "dd_main.h"  // App_World()
 #include "dd_loop.h"  // frameTimePos
 #include "def_main.h"  // states
-#include "misc/r_util.h"
-
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
 #include "gl/gl_texmanager.h"  // GL_PrepareFlaremap
-
 #include "network/net_main.h"  // clients[]
-
 #include "render/rendersystem.h"
 #include "render/r_main.h"
 #include "render/angleclipper.h"
 #include "render/stateanimator.h"
 #include "render/rend_halo.h"
 #include "render/vissprite.h"
-
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
@@ -54,7 +43,12 @@
 #include "world/convexsubspace.h"
 #include "world/subsector.h"
 
+#include <doomsday/defs/sprite.h>
+#include <doomsday/r_util.h>
 #include <doomsday/world/bspleaf.h>
+#include <doomsday/world/materials.h>
+#include <de/legacy/vector1.h>
+#include <de/modeldrawable.h>
 
 using namespace de;
 using world::World;

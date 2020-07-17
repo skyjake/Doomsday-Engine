@@ -47,18 +47,18 @@
 
 using namespace de;
 
-dint levelFullBright;
-dint weaponOffsetScaleY = 1000;
-dint psp3d;
+int levelFullBright;
+int weaponOffsetScaleY = 1000;
+int psp3d;
 
-dfloat pspLightLevelMultiplier = 1;
-dfloat pspOffset[2];
+float pspLightLevelMultiplier = 1;
+float pspOffset[2];
 
 /*
  * Console variables:
  */
-dfloat weaponFOVShift    = 45;
-dfloat weaponOffsetScale = 0.3183f;  // 1/Pi
+float weaponFOVShift    = 45;
+float weaponOffsetScale = 0.3183f;  // 1/Pi
 dbyte weaponScaleMode    = SCALEMODE_SMART_STRETCH;
 
 static const MaterialVariantSpec &pspriteMaterialSpec()
@@ -69,9 +69,9 @@ static const MaterialVariantSpec &pspriteMaterialSpec()
 
 static void setupPSpriteParams(rendpspriteparams_t &parm, const vispsprite_t &vs)
 {
-    static const dint WEAPONTOP = 32;  /// @todo Currently hardcoded here and in the plugins.
+    static const int WEAPONTOP = 32;  /// @todo Currently hardcoded here and in the plugins.
 
-    const dfloat offScaleY = ::weaponOffsetScaleY / 1000.0f;
+    const float offScaleY = ::weaponOffsetScaleY / 1000.0f;
 
     DE_ASSERT(vs.psp);
     const ddpsprite_t &psp = *vs.psp;
@@ -121,7 +121,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, const vispsprite_t &vs
             Vec4f color = map.lightGrid().evaluate(vs.origin);
 
             // Apply light range compression.
-            for (dint i = 0; i < 3; ++i)
+            for (int i = 0; i < 3; ++i)
             {
                 color[i] += Rend_LightAdaptationDelta(color[i]);
             }
@@ -135,7 +135,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, const vispsprite_t &vs
             const Vec4f color = subsec.lightSourceColorfIntensity();
 
             // No need for distance attentuation.
-            dfloat lightLevel = color.w;
+            float lightLevel = color.w;
 
             // Add extra light plus bonus.
             lightLevel += Rend_ExtraLightDelta();
@@ -146,7 +146,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, const vispsprite_t &vs
             Rend_ApplyLightAdaptation(lightLevel);
 
             // Determine the final ambientColor.
-            for (dint i = 0; i < 3; ++i)
+            for (int i = 0; i < 3; ++i)
             {
                 parm.ambientColor[i] = lightLevel * color[i];
             }
@@ -287,4 +287,154 @@ void Rend_Draw3DPlayerSprites()
 
     // Restore normal projection matrix.
     GL_ProjectionMatrix(false);
+}
+
+angle_t R_ViewPointToAngle(Vec2d point)
+{
+    const viewdata_t *viewData = &viewPlayer->viewport();
+    point -= Vec2d(viewData->current.origin);
+    return M_PointXYToAngle(point.x, point.y);
+}
+
+coord_t R_ViewPointDistance(coord_t x, coord_t y)
+{
+    const Vec3d &viewOrigin = viewPlayer->viewport().current.origin;
+    coord_t viewOriginv1[2] = { viewOrigin.x, viewOrigin.y };
+    coord_t pointv1[2] = { x, y };
+    return M_PointDistance(viewOriginv1, pointv1);
+}
+
+void R_ProjectViewRelativeLine2D(coord_t const center[2], dd_bool alignToViewPlane,
+                                 coord_t width, coord_t offset, coord_t start[2], coord_t end[2])
+{
+    const viewdata_t *viewData = &viewPlayer->viewport();
+    float sinrv, cosrv;
+
+    if(alignToViewPlane)
+    {
+        // Should be fully aligned to view plane.
+        sinrv = -viewData->viewCos;
+        cosrv =  viewData->viewSin;
+    }
+    else
+    {
+        // Transform the origin point.
+        coord_t trX   = center[VX] - viewData->current.origin.x;
+        coord_t trY   = center[VY] - viewData->current.origin.y;
+        float thangle = BANG2RAD(bamsAtan2(trY * 10, trX * 10)) - float(de::PI) / 2;
+        sinrv = sin(thangle);
+        cosrv = cos(thangle);
+    }
+
+    start[VX] = center[VX];
+    start[VY] = center[VY];
+
+    start[VX] -= cosrv * ((width / 2) + offset);
+    start[VY] -= sinrv * ((width / 2) + offset);
+    end[VX] = start[VX] + cosrv * width;
+    end[VY] = start[VY] + sinrv * width;
+}
+
+void R_ProjectViewRelativeLine2D(Vec2d const center, bool alignToViewPlane,
+                                 coord_t width, coord_t offset, Vec2d &start, Vec2d &end)
+{
+    const viewdata_t *viewData = &viewPlayer->viewport();
+    float sinrv, cosrv;
+
+    if(alignToViewPlane)
+    {
+        // Should be fully aligned to view plane.
+        sinrv = -viewData->viewCos;
+        cosrv =  viewData->viewSin;
+    }
+    else
+    {
+        // Transform the origin point.
+        coord_t trX   = center[VX] - viewData->current.origin.x;
+        coord_t trY   = center[VY] - viewData->current.origin.y;
+        float thangle = BANG2RAD(bamsAtan2(trY * 10, trX * 10)) - float(de::PI) / 2;
+        sinrv = sin(thangle);
+        cosrv = cos(thangle);
+    }
+
+    start = center - Vec2d(cosrv * ((width / 2) + offset),
+                           sinrv * ((width / 2) + offset));
+    end = start + Vec2d(cosrv * width, sinrv * width);
+}
+
+bool R_GenerateTexCoords(Vec2f &s, Vec2f &t, const Vec3d &point,
+                         float xScale, float yScale, const Vec3d &v1, const Vec3d &v2,
+                         const Mat3f &tangentMatrix)
+{
+    const Vec3d v1ToPoint = v1 - point;
+    s[0] = v1ToPoint.dot(tangentMatrix.column(0)/*tangent*/) * xScale + .5f;
+    t[0] = v1ToPoint.dot(tangentMatrix.column(1)/*bitangent*/) * yScale + .5f;
+
+    // Is the origin point visible?
+    if(s[0] >= 1 || t[0] >= 1)
+        return false; // Right on the X axis or below on the Y axis.
+
+    const Vec3d v2ToPoint = v2 - point;
+    s[1] = v2ToPoint.dot(tangentMatrix.column(0)) * xScale + .5f;
+    t[1] = v2ToPoint.dot(tangentMatrix.column(1)) * yScale + .5f;
+
+    // Is the end point visible?
+    if(s[1] <= 0 || t[1] <= 0)
+        return false; // Left on the X axis or above on the Y axis.
+
+    return true;
+}
+
+#undef R_ChooseAlignModeAndScaleFactor
+DE_EXTERN_C dd_bool R_ChooseAlignModeAndScaleFactor(float *scale, int width, int height,
+                                                    int availWidth, int availHeight, scalemode_t scaleMode)
+{
+    if(scaleMode == SCALEMODE_STRETCH)
+    {
+        if(scale) *scale = 1;
+        return true;
+    }
+    else
+    {
+        float heightAspectCorrected = height * 1.2f;
+
+        // First try scaling horizontally to fit the available width.
+        float factor = float(availWidth) / float(width);
+        if(factor * heightAspectCorrected <= availHeight)
+        {
+            // Fits, use letterbox.
+            if(scale) *scale = factor;
+            return false;
+        }
+
+        // Fit vertically instead.
+        if(scale) *scale = float(availHeight) / heightAspectCorrected;
+        return true; // Pillarbox.
+    }
+}
+
+#undef R_ChooseScaleMode2
+DE_EXTERN_C scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight,
+                                           scalemode_t overrideMode, float stretchEpsilon)
+{
+    const float availRatio = float(availWidth) / availHeight;
+    const float origRatio  = float(width) / (height * 1.2f);
+
+    // Considered identical?
+    if(INRANGE_OF(availRatio, origRatio, .001f))
+        return SCALEMODE_STRETCH;
+
+    if(SCALEMODE_STRETCH == overrideMode || SCALEMODE_NO_STRETCH  == overrideMode)
+        return overrideMode;
+
+    // Within tolerable stretch range?
+    return INRANGE_OF(availRatio, origRatio, stretchEpsilon)? SCALEMODE_STRETCH : SCALEMODE_NO_STRETCH;
+}
+
+#undef R_ChooseScaleMode
+DE_EXTERN_C scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight,
+                                          scalemode_t overrideMode)
+{
+    return R_ChooseScaleMode2(availWidth, availHeight, width, height, overrideMode,
+                              DEFAULT_SCALEMODE_STRETCH_EPSILON);
 }

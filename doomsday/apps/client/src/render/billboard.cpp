@@ -25,8 +25,8 @@
 #include "resource/clienttexture.h"
 #include "gl/gl_main.h"
 #include "resource/materialvariantspec.h"
-#include "misc/r_util.h"
 #include "render/rend_main.h"
+#include "render/r_main.h"
 #include "render/rendersystem.h"
 #include "render/vissprite.h"
 #include "world/p_players.h"  // viewPlayer, ddPlayers
@@ -36,6 +36,7 @@
 #include <de/legacy/binangle.h>
 #include <de/glinfo.h>
 #include <doomsday/console/var.h>
+#include <doomsday/r_util.h>
 #include <doomsday/world/materials.h>
 
 using namespace de;

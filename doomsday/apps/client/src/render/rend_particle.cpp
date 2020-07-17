@@ -41,11 +41,11 @@
 #include "render/vissprite.h"
 
 #include "clientapp.h"
-#include "misc/r_util.h"
 #include "sys_system.h"  // novideo
 
 #include <doomsday/console/var.h>
 #include <doomsday/filesys/fs_main.h>
+#include <doomsday/r_util.h>
 #include <doomsday/world/bspleaf.h>
 #include <de/legacy/concurrency.h>
 #include <de/legacy/vector1.h>

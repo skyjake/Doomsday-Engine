@@ -20,8 +20,6 @@
 
 #include "de_base.h"
 
-#include "misc/r_util.h"
-
 #include "gl/gl_defer.h"
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
@@ -33,6 +31,7 @@
 
 #include <doomsday/res/colorpalettes.h>
 #include <doomsday/res/texture.h>
+#include <doomsday/r_util.h>
 #include <de/logbuffer.h>
 #include <de/legacy/mathutil.h> // M_CeilPow
 

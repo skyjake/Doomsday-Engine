@@ -27,7 +27,7 @@
 #include <de/string.h>
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/dedtypes.h>
-#include "misc/r_util.h"  // LightRange
+#include "render/r_main.h"  // LightRange
 #include "resource/clienttexture.h"
 #include "resource/clientmaterial.h"
 

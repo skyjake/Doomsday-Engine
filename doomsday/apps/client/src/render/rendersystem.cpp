@@ -44,7 +44,7 @@
 #include "world/surface.h"
 
 #include "world/contact.h"
-#include "misc/r_util.h"
+#include <doomsday/r_util.h>
 
 using namespace de;
 

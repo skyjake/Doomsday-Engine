@@ -33,7 +33,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/de_base.h
     ${src}/include/de_platform.h
     ${src}/include/edit_map.h
-    ${src}/include/misc/r_util.h
     ${src}/include/m_profiler.h
     ${src}/include/network/net_buf.h
     ${src}/include/network/net_event.h
