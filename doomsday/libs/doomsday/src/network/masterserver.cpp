@@ -20,16 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
-#include "network/masterserver.h"
-#include "network/net_main.h"
-#include "network/protocol.h"
-#include "dd_main.h"
-
-#if defined (__SERVER__)
-#  include "serverapp.h"
-#  include "server/sv_def.h"
-#endif
+#include "doomsday/network/masterserver.h"
 
 #include <de/app.h>
 #include <de/config.h>
@@ -50,8 +41,6 @@ typedef struct job_s {
     MasterWorker::Action act;
     Record data;
 } job_t;
-
-dd_bool serverPublic = false; // cvar
 
 static String masterUrl(const char *suffix = nullptr)
 {
@@ -88,7 +77,6 @@ DE_PIMPL(MasterWorker)
         // Let's form an HTTP request.
         String uri = masterUrl(currentAction == REQUEST_SERVERS? "?op=list" : nullptr);
 
-#if defined (__SERVER__)
         if (currentAction == ANNOUNCE)
         {
             // Include the server info.
@@ -100,7 +88,6 @@ DE_PIMPL(MasterWorker)
             web.post(uri, msg, "application/x-deng-announce");
         }
         else
-#endif
         {
             LOGDEV_NET_VERBOSE("GET request ") << uri;
 
@@ -242,35 +229,10 @@ void N_MasterShutdown(void)
     worker = 0;
 }
 
-void N_MasterAnnounceServer(bool isOpen)
+void N_MasterExec(MasterWorker::Action action, const de::Record &data)
 {
-#ifdef __SERVER__
-    // Must be a server.
-    if (isClient) return;
-
-    LOG_AS("N_MasterAnnounceServer");
-
-    if (isOpen && !strlen(netPassword))
-    {
-        LOG_NET_WARNING("Cannot announce server as public: no shell password set! "
-                        "You must set one with the 'server-password' cvar.");
-        return;
-    }
-
-    LOG_NET_MSG("Announcing server (open:%b)") << isOpen;
-
-    // Let's figure out what we want to tell about ourselves.
-    ServerInfo info = ServerApp::currentServerInfo();
-    if (!isOpen)
-    {
-        info.setFlags(info.flags() & ~ServerInfo::AllowJoin);
-    }
-
     DE_ASSERT(worker);
-    worker->newJob(MasterWorker::ANNOUNCE, info.asRecord());
-#else
-    DE_UNUSED(isOpen);
-#endif
+    worker->newJob(action, data);
 }
 
 void N_MasterRequestList(void)

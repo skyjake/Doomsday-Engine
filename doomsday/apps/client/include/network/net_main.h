@@ -143,7 +143,6 @@ extern int      resendStart;      // set when server needs our tics
 extern int      resendCount;
 extern int      oldEnterTics;
 extern int      numClMobjs;
-extern dd_bool  serverPublic;
 extern int      netGame;
 extern int      realTics, availableTics;
 extern int      isServer, isClient;

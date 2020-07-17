@@ -29,8 +29,7 @@
 #include "network/net_main.h"
 #include "network/net_buf.h"
 #include "network/net_event.h"
-#include "network/monitor.h"
-#include "network/masterserver.h"
+#include <doomsday/network/masterserver.h>
 #include "dd_main.h"
 #include "dd_loop.h"
 #include "sys_system.h"
@@ -48,8 +47,9 @@
 
 using namespace de;
 
-char *nptIPAddress = (char *) ""; ///< Public domain for clients to connect to (cvar).
-int   nptIPPort    = 0; ///< Server TCP port (cvar).
+dd_bool serverPublic = false;       // cvar
+char *  nptIPAddress = (char *) ""; // Public domain for clients to connect to (cvar).
+int     nptIPPort    = 0;           // Server TCP port (cvar).
 
 static constexpr TimeSpan BEACON_UPDATE_INTERVAL = 2.0_s;
 
@@ -369,10 +369,6 @@ void Server_Register()
 {
     C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
     C_VAR_INT    ("net-ip-port",    &nptIPPort, CVF_NO_MAX, 0, 0);
-
-#ifdef _DEBUG
-    C_CMD("netfreq", NULL, NetFreqs);
-#endif
 }
 
 dd_bool N_ServerOpen()
@@ -433,4 +429,27 @@ dd_bool N_ServerClose()
 void N_PrintNetworkStatus()
 {
     App_ServerSystem().printStatus();
+}
+
+void N_MasterAnnounceServer(bool isOpen)
+{
+    LOG_AS("N_MasterAnnounceServer");
+
+    if (isOpen && !strlen(netPassword))
+    {
+        LOG_NET_WARNING("Cannot announce server as public: no shell password set! "
+                        "You must set one with the 'server-password' cvar.");
+        return;
+    }
+
+    LOG_NET_MSG("Announcing server (open:%b)") << isOpen;
+
+    // Let's figure out what we want to tell about ourselves.
+    ServerInfo info = ServerApp::currentServerInfo();
+    if (!isOpen)
+    {
+        info.setFlags(info.flags() & ~ServerInfo::AllowJoin);
+    }
+
+    N_MasterExec(MasterWorker::ANNOUNCE, info.asRecord());
 }

@@ -26,7 +26,7 @@
 #  include "dd_main.h"
 #endif
 
-#include "network/masterserver.h"
+#include <doomsday/network/masterserver.h>
 
 #include "world/p_players.h"
 

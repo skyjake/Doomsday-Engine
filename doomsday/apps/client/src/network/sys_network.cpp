@@ -31,16 +31,8 @@
 
 using namespace de;
 
-#ifdef _DEBUG
-D_CMD(NetFreqs);
-#endif
-
 void N_Register(void)
-{
-#ifdef _DEBUG
-    C_CMD("netfreq", NULL, NetFreqs);
-#endif
-}
+{}
 
 ServerLink &Net_ServerLink(void)
 {

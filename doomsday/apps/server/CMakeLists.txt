@@ -37,8 +37,6 @@ set (SHARED_WITH_CLIENT
     ${src}/include/misc/r_util.h
     ${src}/include/misc/tab_anorms.h
     ${src}/include/m_profiler.h
-    ${src}/include/network/masterserver.h
-    ${src}/include/network/monitor.h
     ${src}/include/network/net_buf.h
     ${src}/include/network/net_event.h
     ${src}/include/network/net_main.h

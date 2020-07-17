@@ -107,7 +107,18 @@ dd_bool N_ServerOpen(void);
 dd_bool N_ServerClose(void);
 void    N_PrintNetworkStatus(void);
 
-extern char *nptIPAddress; // cvar
-extern int   nptIPPort;    // cvar
+/**
+ * Sends a server announcement to the master. The announcement includes our
+ * IP address and other information.
+ *
+ * @param isOpen            If @c true, then the server will be
+ *                          visible on the server list for other clients to
+ *                          find by querying the server list.
+ */
+void N_MasterAnnounceServer(bool isOpen);
+
+extern dd_bool  serverPublic;
+extern char *   nptIPAddress; // cvar
+extern int      nptIPPort;    // cvar
 
 #endif // SERVERSYSTEM_H

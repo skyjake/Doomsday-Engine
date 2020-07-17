@@ -4,7 +4,7 @@
  *
  * The master server maintains a real-time list of running public servers.
  *
- * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,11 +21,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_MASTER_SERVER_H
-#define DE_MASTER_SERVER_H
+#pragma once
 
+#include "../libdoomsday.h"
 #include "dd_share.h"
-
 #include <de/libcore.h>
 #include <de/serverinfo.h>
 
@@ -33,7 +32,7 @@
  * Network request worker for communicating with the master server.
  * @ingroup network
  */
-class MasterWorker
+class LIBDOOMSDAY_PUBLIC MasterWorker
 {
 public:
     // Actions for the master worker.
@@ -42,7 +41,7 @@ public:
 public:
     MasterWorker();
 
-    void newJob(Action action, const de::Record &data = de::Record());
+    void newJob(Action action, const de::Record &data = {});
 
     bool isAllDone() const;
     bool isOngoing() const;
@@ -57,27 +56,19 @@ private:
 /**
  * Called while initializing the low-level network subsystem.
  */
-void N_MasterInit(void);
+LIBDOOMSDAY_PUBLIC void N_MasterInit(void);
 
 /**
  * Called during engine shutdown.
  */
-void N_MasterShutdown(void);
+LIBDOOMSDAY_PUBLIC void N_MasterShutdown(void);
 
-/**
- * Sends a server announcement to the master. The announcement includes our
- * IP address and other information.
- *
- * @param isOpen            If @c true, then the server will be
- *                          visible on the server list for other clients to
- *                          find by querying the server list.
- */
-void N_MasterAnnounceServer(bool isOpen);
+LIBDOOMSDAY_PUBLIC void N_MasterExec(MasterWorker::Action, const de::Record &data);
 
 /**
  * Requests the list of open servers from the master.
  */
-void N_MasterRequestList(void);
+LIBDOOMSDAY_PUBLIC void N_MasterRequestList(void);
 
 /**
  * Returns information about the server @em N.
@@ -87,6 +78,4 @@ void N_MasterRequestList(void);
  * return @c not zero, if param index was valid and the master returned info on
  * the requested server.
  */
-int N_MasterGet(int index, de::ServerInfo *info);
-
-#endif // DE_MASTER_SERVER_H
+LIBDOOMSDAY_PUBLIC int N_MasterGet(int index, de::ServerInfo *info);

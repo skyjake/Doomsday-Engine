@@ -21,24 +21,31 @@
  */
 
 #include "de_base.h"
-#include "network/net_main.h"
-
-#include <de/legacy/concurrency.h>
-#include <de/legacy/timer.h>
-#include <de/charsymbols.h>
-#include <de/value.h>
-#include <de/version.h>
-#include <doomsday/console/cmd.h>
-#include <doomsday/console/exec.h>
-#include <doomsday/console/var.h>
 #include "dd_def.h"
 #include "dd_loop.h"
 #include "dd_main.h"
-
 #include "api_console.h"
+#include "world/p_players.h"
+#include "network/net_main.h"
+#include "network/net_buf.h"
+#include "network/net_event.h"
 
 #ifdef __CLIENT__
 #  include "client/cl_def.h"
+#  include "network/net_demo.h"
+#  include "network/sys_network.h"
+#  include "gl/gl_main.h"
+#  include "render/rend_main.h"
+#  include "render/blockmapvisual.h"
+#  include "render/viewports.h"
+#  include "api_fontrender.h"
+#  include "ui/ui_main.h"
+#  include "ui/inputdebug.h"
+#  include "ui/widgets/taskbarwidget.h"
+#  ifdef DE_DEBUG
+#    include "ui/zonedebug.h"
+#  endif
+#  include <de/glinfo.h>
 #endif
 #ifdef __SERVER__
 #  include "serversystem.h"
@@ -47,34 +54,15 @@
 #  include "server/sv_pool.h"
 #endif
 
-#include "network/masterserver.h"
-#include "network/net_buf.h"
-#include "network/net_event.h"
-#ifdef __CLIENT__
-#  include "network/net_demo.h"
-#  include "network/sys_network.h"
-#endif
-
-#ifdef __CLIENT__
-#  include "gl/gl_main.h"
-#  include <de/glinfo.h>
-
-#  include "render/rend_main.h"
-#  include "render/blockmapvisual.h"
-//#  include "render/lightgrid.h"
-#  include "render/viewports.h"
-
-#  include "api_fontrender.h"
-//#  include "ui/editors/edit_bias.h"
-#  include "ui/ui_main.h"
-#  include "ui/inputdebug.h"
-#  include "ui/widgets/taskbarwidget.h"
-#  ifdef DE_DEBUG
-#    include "ui/zonedebug.h"
-#  endif
-#endif
-
-#include "world/p_players.h"
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/exec.h>
+#include <doomsday/console/var.h>
+#include <doomsday/network/masterserver.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/timer.h>
+#include <de/charsymbols.h>
+#include <de/value.h>
+#include <de/version.h>
 
 using namespace de;
 
@@ -84,8 +72,6 @@ using namespace de;
 char *serverName = (char *) "Doomsday";
 char *serverInfo = (char *) "Multiplayer Host";
 char *playerName = (char *) "Player";
-
-//dint serverData[3];  ///< Some parameters passed to master server.
 
 dint netGame;   ///< @c true if a networked game is in progress.
 dint isServer;  ///< @c true if this computer is an open server.
@@ -101,8 +87,6 @@ static byte netDev;
 static byte netShowLatencies;
 static byte netAllowJoin = true;
 #endif
-//static dfloat netConnectTime;
-//dint netCoordTime = 17;
 dfloat netSimulatedLatencySeconds;
 
 // Local packets are stored into this buffer.
@@ -677,163 +661,6 @@ void Net_Ticker(timespan_t time)
     }
 }
 
-#if 0
-/**
- * Extracts the label and value from a string.
- *
- * @param max  Maximum allowed length of a token, including terminating \0.
- */
-static dd_bool tokenize(const char *line, char *label, char *value, int valueSize)
-{
-    const char *src   = line;
-    const char *colon = strchr(src, ':');
-
-    // The colon must exist near the beginning.
-    if(!colon || colon - src >= SVINFO_VALID_LABEL_LEN || valueSize <= 0)
-        return false;
-
-    DE_ASSERT(label && value);
-
-    // Copy the label.
-    qstrncpy(label, src, de::min(int(colon - src + 1), valueSize));
-
-    // Copy the value.
-    const char *end = line + strlen(line);
-    qstrncpy(value, colon + 1, de::min(int(end - colon), valueSize));
-
-    // Everything is OK.
-    return true;
-}
-
-void ServerInfo_FromRecord(serverinfo_t *info, const de::Record &rec)
-{
-    DE_ASSERT(info);
-    de::zapPtr(info);
-
-    info->port           = (dint)  rec["port"].value().asNumber();
-    info->version        = (dint)  rec["ver" ].value().asNumber();
-    info->loadedFilesCRC = (duint) rec["wcrc"].value().asNumber();
-    info->numPlayers     = (dint)  rec["nump"].value().asNumber();
-    info->maxPlayers     = (dint)  rec["maxp"].value().asNumber();
-    info->canJoin        =         rec["open"].value().isTrue();
-
-#define COPY_STR(Member, VarName) \
-    qstrncpy(Member, rec[VarName].value().asText().toUtf8(), sizeof(Member) - 1);
-
-    COPY_STR(info->name,            "name" );
-    COPY_STR(info->description,     "info" );
-    COPY_STR(info->plugin,          "game" );
-    COPY_STR(info->gameIdentityKey, "mode" );
-    COPY_STR(info->gameConfig,      "setup");
-    COPY_STR(info->iwad,            "iwad" );
-    COPY_STR(info->pwads,           "pwads");
-    COPY_STR(info->map,             "map"  );
-    COPY_STR(info->clientNames,     "plrn" );
-
-#undef COPY_STR
-}
-#endif
-
-#if 0
-dd_bool ServerInfo_FromString(serverinfo_t *info, const char *valuePair)
-{
-    char label[SVINFO_TOKEN_LEN], value[SVINFO_TOKEN_LEN];
-
-    // Extract the label and value. The maximum length of a value is
-    // TOKEN_LEN. Labels are returned in lower case.
-    if(!tokenize(valuePair, label, value, sizeof(value)))
-    {
-        // Badly formed lines are ignored.
-        return false;
-    }
-
-    DE_ASSERT(info);
-
-    if(!strcmp(label, "at"))
-    {
-        strncpy(info->address, value, sizeof(info->address) - 1);
-    }
-    else if(!strcmp(label, "port"))
-    {
-        info->port = strtol(value, 0, 0);
-    }
-    else if(!strcmp(label, "ver"))
-    {
-        info->version = strtol(value, 0, 0);
-    }
-    else if(!strcmp(label, "map"))
-    {
-        strncpy(info->map, value, sizeof(info->map) - 1);
-    }
-    else if(!strcmp(label, "game"))
-    {
-        strncpy(info->plugin, value, sizeof(info->plugin) - 1);
-    }
-    else if(!strcmp(label, "name"))
-    {
-        strncpy(info->name, value, sizeof(info->name) - 1);
-    }
-    else if(!strcmp(label, "info"))
-    {
-        strncpy(info->description, value, sizeof(info->description) - 1);
-    }
-    else if(!strcmp(label, "nump"))
-    {
-        info->numPlayers = strtol(value, 0, 0);
-    }
-    else if(!strcmp(label, "maxp"))
-    {
-        info->maxPlayers = strtol(value, 0, 0);
-    }
-    else if(!strcmp(label, "open"))
-    {
-        info->canJoin = strtol(value, 0, 0);
-    }
-    else if(!strcmp(label, "mode"))
-    {
-        strncpy(info->gameIdentityKey, value, sizeof(info->gameIdentityKey) - 1);
-    }
-    else if(!strcmp(label, "setup"))
-    {
-        strncpy(info->gameConfig, value, sizeof(info->gameConfig) - 1);
-    }
-    else if(!strcmp(label, "iwad"))
-    {
-        strncpy(info->iwad, value, sizeof(info->iwad) - 1);
-    }
-    else if(!strcmp(label, "wcrc"))
-    {
-        info->loadedFilesCRC = strtol(value, 0, 0);
-    }
-    else if(!strcmp(label, "pwads"))
-    {
-        strncpy(info->pwads, value, sizeof(info->pwads) - 1);
-    }
-    else if(!strcmp(label, "plrn"))
-    {
-        strncpy(info->clientNames, value, sizeof(info->clientNames) - 1);
-    }
-    else if(!strcmp(label, "data0"))
-    {
-        info->data[0] = strtol(value, 0, 16);
-    }
-    else if(!strcmp(label, "data1"))
-    {
-        info->data[1] = strtol(value, 0, 16);
-    }
-    else if(!strcmp(label, "data2"))
-    {
-        info->data[2] = strtol(value, 0, 16);
-    }
-    else
-    {
-        // Unknown labels are ignored.
-        return false;
-    }
-    return true;
-}
-#endif
-
 /**
  * Composes a PKT_CHAT network message.
  */
@@ -1159,11 +986,14 @@ D_CMD(Net)
 
     if(argc == 2) // One argument?
     {
+#ifdef __SERVER__
         if(!stricmp(argv[1], "announce"))
         {
             N_MasterAnnounceServer(serverPublic? true : false);
         }
-        else if(!stricmp(argv[1], "request"))
+        else
+#endif
+        if(!stricmp(argv[1], "request"))
         {
             N_MasterRequestList();
         }
@@ -1303,10 +1133,6 @@ void Net_Register()
 #ifdef DE_DEBUG
     C_VAR_FLOAT     ("net-dev-latency",         &::netSimulatedLatencySeconds, CVF_NO_MAX, 0, 0);
 #endif
-    //C_VAR_BYTE      ("net-nosleep",             &::netDontSleep, 0, 0, 1);
-    //C_VAR_CHARPTR   ("net-master-address",      &::masterAddress, 0, 0, 0);
-    //C_VAR_INT       ("net-master-port",         &::masterPort, 0, 0, 65535);
-    //C_VAR_CHARPTR   ("net-master-path",         &::masterPath, 0, 0, 0);
     C_VAR_CHARPTR   ("net-name",                &::playerName, 0, 0, 0);
 
 #ifdef __SERVER__

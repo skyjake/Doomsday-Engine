@@ -20,28 +20,23 @@
 
 #include "de_base.h"
 #include "network/net_buf.h"
+#include "network/net_event.h"
+#include "world/p_players.h"
+#ifdef __CLIENT__
+#  include "network/sys_network.h"
+#  include "network/serverlink.h"
+#endif
+#ifdef __SERVER__
+#  include "serversystem.h"
+#endif
 
+#include <doomsday/network/masterserver.h>
 #include <de/c_wrapper.h>
 #include <de/legacy/concurrency.h>
 #include <de/legacy/memory.h>
 #include <de/legacy/timer.h>
 #include <de/byterefarray.h>
 #include <de/loop.h>
-
-#ifdef __CLIENT__
-#  include "network/sys_network.h"
-#endif
-#include "network/masterserver.h"
-#include "network/net_event.h"
-#ifdef __CLIENT__
-#  include "network/serverlink.h"
-#endif
-
-#ifdef __SERVER__
-#  include "serversystem.h"
-#endif
-
-#include "world/p_players.h"
 
 using namespace de;
 

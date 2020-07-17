@@ -18,7 +18,7 @@
 
 #include "de_platform.h"
 #include "network/serverlink.h"
-#include "network/masterserver.h"
+#include <doomsday/network/masterserver.h>
 #include "network/net_main.h"
 #include "network/net_buf.h"
 #include "network/net_demo.h"
