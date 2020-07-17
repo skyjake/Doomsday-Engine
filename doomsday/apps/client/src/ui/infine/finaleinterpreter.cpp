@@ -29,6 +29,7 @@
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/filesys/fs_main.h>
+#include <doomsday/network/net.h>
 #include <doomsday/world/materials.h>
 #include <doomsday/game.h>
 
@@ -38,8 +39,6 @@
 #include "api_material.h"
 #include "api_render.h"
 #include "api_resource.h"
-
-#include "network/net_main.h"
 
 #include "ui/infine/finalewidget.h"
 #include "ui/infine/finaleanimwidget.h"

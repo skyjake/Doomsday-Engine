@@ -31,6 +31,7 @@
 #endif
 
 #include <doomsday/network/masterserver.h>
+#include <doomsday/network/net.h>
 #include <de/c_wrapper.h>
 #include <de/legacy/concurrency.h>
 #include <de/legacy/memory.h>

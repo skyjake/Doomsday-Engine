@@ -57,6 +57,7 @@
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
+#include <doomsday/network/net.h>
 #include <doomsday/network/masterserver.h>
 #include <de/legacy/concurrency.h>
 #include <de/legacy/timer.h>
@@ -65,11 +66,6 @@
 #include <de/version.h>
 
 using namespace de;
-
-netstate_t netState = {
-    true, // first update
-    0, 0, 0, 0.0f, 0
-};
 
 // Local packets are stored into this buffer.
 static dd_bool     reboundPacket;

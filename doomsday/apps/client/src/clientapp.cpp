@@ -33,7 +33,6 @@
 #include "gl/gl_texmanager.h"
 #include "gl/svg.h"
 #include "network/net_demo.h"
-#include "network/net_main.h"
 #include "network/serverlink.h"
 #include "render/r_draw.h"
 #include "render/rend_main.h"
@@ -63,6 +62,7 @@
 #include <doomsday/console/exec.h>
 #include <doomsday/abstractsession.h>
 #include <doomsday/gamestatefolder.h>
+#include <doomsday/network/net.h>
 
 #include <de/legacy/timer.h>
 #include <de/c_wrapper.h>

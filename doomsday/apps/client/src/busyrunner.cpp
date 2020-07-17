@@ -24,7 +24,6 @@
 #include "dd_main.h"
 #include "dd_loop.h"
 #include "sys_system.h"
-#include "network/net_main.h"
 #include "clientapp.h"
 #include "gl/gl_defer.h"
 #include "ui/busyvisual.h"
@@ -36,6 +35,7 @@
 #include "clientapp.h"
 
 #include <doomsday/doomsdayapp.h>
+#include <doomsday/network/net.h>
 #include <de/config.h>
 #include <de/eventloop.h>
 #include <de/glinfo.h>

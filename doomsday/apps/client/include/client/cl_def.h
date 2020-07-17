@@ -20,10 +20,8 @@
 #ifndef DE_CLIENT_H
 #define DE_CLIENT_H
 
+#include <doomsday/network/net.h>
 #include "world/p_object.h"
-
-#define SHORTP(x)       (*(short*) (x))
-#define USHORTP(x)      (*(unsigned short*) (x))
 
 DE_EXTERN_C ident_t clientID;
 DE_EXTERN_C int serverTime;

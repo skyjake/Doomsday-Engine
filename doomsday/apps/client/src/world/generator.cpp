@@ -27,13 +27,13 @@
 #include "world/surface.h"
 #include "render/rend_model.h"
 #include "render/rend_particle.h"
-#include "network/net_main.h"
 #include "api_sound.h"
 #include "dd_def.h"
 #include "clientapp.h"
 
 #include <doomsday/console/var.h>
 #include <doomsday/mesh/face.h>
+#include <doomsday/network/net.h>
 #include <doomsday/world/bspleaf.h>
 #include <doomsday/world/thinkers.h>
 #include <doomsday/tab_tables.h>

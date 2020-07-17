@@ -26,6 +26,7 @@
 #  error "server/sv_def.h requires C++"
 #endif
 
+#include <doomsday/network/net.h>
 #include <doomsday/network/protocol.h>
 #include <de/libcore.h>
 #include <de/record.h>

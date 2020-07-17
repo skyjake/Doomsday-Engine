@@ -21,8 +21,7 @@
  * Network Subsystem.
  */
 
-#ifndef DE_NETWORK_H
-#define DE_NETWORK_H
+#pragma once
 
 #include <stdio.h>
 #include "dd_share.h"
@@ -35,18 +34,6 @@ extern "C" {
 #endif
 
 #define NSP_BROADCAST       -1     // For Net_SendBuffer.
-
-typedef struct netstate_s
-{
-    dd_bool firstUpdate;
-    int     netGame;  // a networked game is in progress
-    int     isServer; // this computer is an open server
-    int     isClient; // this computer is a client
-    float   simulatedLatencySeconds;
-    int     gotFrame; // a frame packet has been received
-} netstate_t;
-
-extern netstate_t netState;
 
 void            Net_Register(void);
 void            Net_Init(void);
@@ -71,5 +58,3 @@ dd_bool         Net_IsLocalPlayer(int pNum);
 #ifdef __cplusplus
 } // extern "C"
 #endif
-
-#endif /* DE_NETWORK_H */

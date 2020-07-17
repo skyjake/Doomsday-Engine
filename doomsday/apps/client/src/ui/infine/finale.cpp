@@ -17,7 +17,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/logbuffer.h>
 #include "ui/infine/finale.h"
 #include "ui/bindcontext.h"
 #include "ui/infine/finaleinterpreter.h"
@@ -25,6 +24,9 @@
 #ifdef __SERVER__
 #  include "server/sv_infine.h"
 #endif
+
+#include <doomsday/network/net.h>
+#include <de/logbuffer.h>
 
 using namespace de;
 

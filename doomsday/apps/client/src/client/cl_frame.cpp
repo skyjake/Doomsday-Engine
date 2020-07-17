@@ -17,9 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_base.h"
+#include "client/cl_def.h"
 #include "client/cl_frame.h"
-
 #include "client/cl_mobj.h"
 #include "client/cl_player.h"
 #include "client/cl_sound.h"

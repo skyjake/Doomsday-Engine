@@ -24,6 +24,7 @@
 #include "ui/infine/finale.h"
 
 #include <doomsday/network/protocol.h>
+#include <doomsday/network/net.h>
 
 using namespace de;
 

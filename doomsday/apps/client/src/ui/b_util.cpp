@@ -31,7 +31,8 @@
 #include "ui/axisinputcontrol.h"
 #include "ui/buttoninputcontrol.h"
 #include "ui/hatinputcontrol.h"
-#include "network/net_main.h" // netGame
+
+#include <doomsday/network/net.h>
 
 using namespace de;
 

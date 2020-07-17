@@ -45,6 +45,7 @@
 
 #include <doomsday/defs/sprite.h>
 #include <doomsday/r_util.h>
+#include <doomsday/network/net.h>
 #include <doomsday/world/bspleaf.h>
 #include <doomsday/world/materials.h>
 #include <de/legacy/vector1.h>

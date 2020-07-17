@@ -31,6 +31,7 @@
 #include "world/map.h"
 #include "world/p_players.h"
 
+#include <doomsday/network/net.h>
 #include <doomsday/network/protocol.h>
 #include <doomsday/world/mobjthinker.h>
 #include <de/legacy/timer.h>
