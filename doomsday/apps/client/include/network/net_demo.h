@@ -28,6 +28,10 @@
 #  error Demos are not available in a SERVER build
 #endif
 
+// The consolePlayer's camera position is written to the demo file
+// every 3rd tic.
+#define LOCALCAM_WRITE_TICS 3
+
 #ifdef __cplusplus
 extern "C" {
 #endif

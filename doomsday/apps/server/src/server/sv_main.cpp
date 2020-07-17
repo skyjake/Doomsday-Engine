@@ -65,152 +65,13 @@ char *netPassword = (char *) "";  ///< Remote login password.
 // This is the limit when accepting new clients.
 dint svMaxPlayers = DDMAXPLAYERS;
 
+#define MASTER_HEARTBEAT    120  ///< seconds.
+#define MASTER_UPDATETIME   3    ///< seconds.
+
+// Countdown for master updates.
+static timespan_t masterHeartbeat;
+
 static world::MaterialArchive *materialDict;
-
-#if 0
-/**
- * @defgroup pathToStringFlags  Path To String Flags
- * @ingroup flags
- */
-///@{
-#define PTSF_QUOTED                     0x1  ///< Add double quotes around the path.
-#define PTSF_TRANSFORM_EXCLUDE_PATH     0x2  ///< Exclude the path; e.g., c:/doom/myaddon.wad => myaddon.wad
-#define PTSF_TRANSFORM_EXCLUDE_EXT      0x4  ///< Exclude the extension; e.g., c:/doom/myaddon.wad => c:/doom/myaddon
-///@}
-
-#define DEFAULT_PATHTOSTRINGFLAGS       (PTSF_QUOTED)
-
-/**
- * @param files      List of files from which to compose the path string.
- * @param flags      @ref pathToStringFlags
- * @param delimiter  If not @c nullptr, path fragments in the resultant string
- * will be delimited by this.
- *
- * @return  New string containing a concatenated, possibly delimited set of all
- * file paths in the list.
- */
-static String composeFilePathString(FS1::FileList &files, dint flags = DEFAULT_PATHTOSTRINGFLAGS,
-    const String &delimiter = ";")
-{
-    String result;
-    DE_FOR_EACH_CONST(FS1::FileList, i, files)
-    {
-        File1 &file = (*i)->file();
-
-        if (flags & PTSF_QUOTED)
-            result.append('"');
-
-        if (flags & PTSF_TRANSFORM_EXCLUDE_PATH)
-        {
-            if (flags & PTSF_TRANSFORM_EXCLUDE_EXT)
-                result.append(file.name().fileNameWithoutExtension());
-            else
-                result.append(file.name());
-        }
-        else
-        {
-            String path = file.composePath();
-            if (flags & PTSF_TRANSFORM_EXCLUDE_EXT)
-            {
-                result.append(path.fileNamePath() + '/' + path.fileNameWithoutExtension());
-            }
-            else
-            {
-                result.append(path);
-            }
-        }
-
-        if (flags & PTSF_QUOTED)
-            result.append('"');
-
-        if (*i != files.last())
-            result.append(delimiter);
-    }
-
-    return result;
-}
-
-static bool findCustomFilesPredicate(File1 &file, void * /*parameters*/)
-{
-    return file.hasCustom();
-}
-
-/**
- * Compiles a list of file names, separated by @a delimiter.
- */
-static void composePWADFileList(char *outBuf, dsize outBufSize, const char *delimiter)
-{
-    if (!outBuf || 0 == outBufSize) return;
-    std::memset(outBuf, 0, outBufSize);
-
-    FS1::FileList foundFiles;
-    if (!App_FileSystem().findAll<de::Wad>(findCustomFilesPredicate, 0/*no params*/, foundFiles)) return;
-
-    String str = composeFilePathString(foundFiles, PTSF_TRANSFORM_EXCLUDE_PATH, delimiter);
-    QByteArray strUtf8 = str.toUtf8();
-    strncpy(outBuf, strUtf8.constData(), outBufSize);
-}
-#endif
-
-/*Record *Sv_InfoToRecord(serverinfo_t *info)
-{
-    DE_ASSERT(info);
-
-    auto *rec = new Record;
-
-    rec->addNumber ("port",  info->port);
-    rec->addText   ("name",  info->name);
-    rec->addText   ("info",  info->description);
-    rec->addNumber ("ver",   info->version);
-    rec->addText   ("game",  info->plugin);
-    rec->addText   ("mode",  info->gameIdentityKey);
-    rec->addText   ("setup", info->gameConfig);
-    rec->addText   ("iwad",  info->iwad);
-    rec->addNumber ("wcrc",  info->loadedFilesCRC);
-    rec->addText   ("pwads", info->pwads);
-    rec->addText   ("map",   info->map);
-    rec->addNumber ("nump",  info->numPlayers);
-    rec->addNumber ("maxp",  info->maxPlayers);
-    rec->addBoolean("open",  info->canJoin);
-    rec->addText   ("plrn",  info->clientNames);
-
-    ArrayValue &data = rec->addArray("data").value<ArrayValue>();
-    for (duint i = 0; i < sizeof(info->data) / sizeof(info->data[0]); ++i)
-    {
-        data << NumberValue(info->data[i]);
-    }
-
-    return rec;
-}*/
-
-/*
- * @return  Length of the string.
- */
-/*dsize Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
-{
-    DE_ASSERT(info && msg);
-
-    Str_Appendf(msg, "port:%i\n",  info->port);
-    Str_Appendf(msg, "name:%s\n",  info->name);
-    Str_Appendf(msg, "info:%s\n",  info->description);
-    Str_Appendf(msg, "ver:%i\n",   info->version);
-    Str_Appendf(msg, "game:%s\n",  info->plugin);
-    Str_Appendf(msg, "mode:%s\n",  info->gameIdentityKey);
-    Str_Appendf(msg, "setup:%s\n", info->gameConfig);
-    Str_Appendf(msg, "iwad:%s\n",  info->iwad);
-    Str_Appendf(msg, "wcrc:%i\n",  info->loadedFilesCRC);
-    Str_Appendf(msg, "pwads:%s\n", info->pwads);
-    Str_Appendf(msg, "map:%s\n",   info->map);
-    Str_Appendf(msg, "nump:%i\n",  info->numPlayers);
-    Str_Appendf(msg, "maxp:%i\n",  info->maxPlayers);
-    Str_Appendf(msg, "open:%i\n",  info->canJoin);
-    Str_Appendf(msg, "plrn:%s\n",  info->clientNames);
-    for (duint i = 0; i < sizeof(info->data) / sizeof(info->data[0]); ++i)
-    {
-        Str_Appendf(msg, "data%i:%x\n", i, info->data[i]);
-    }
-    return Str_Length(msg);
-}*/
 
 /**
  * @return  gametic - cmdtime.
@@ -219,41 +80,6 @@ dint Sv_Latency(byte cmdtime)
 {
     return Net_TimeDelta(SECONDS_TO_TICKS(gameTime), cmdtime);
 }
-
-/**
- * For local players.
- * $unifiedangles
- */
-/*
-void Sv_FixLocalAngles(bool clearFixAnglesFlag)
-{
-    for (dint i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        ddplayer_t &pl = players[i];
-
-        if (!pl.inGame || !(pl.flags & DDPF_LOCAL))
-            continue;
-
-        // This is not for clients.
-        if (::isDedicated && i == 0)
-            continue;
-
-        if (pl.flags & DDPF_FIXANGLES)
-        {
-            if (clearFixAnglesFlag)
-            {
-                pl.flags &= ~DDPF_FIXANGLES;
-            }
-            else
-            {
-                DE_ASSERT(pl.mo);
-                pl.clAngle   = pl.mo->angle;
-                pl.clLookDir = pl.lookDir;
-            }
-        }
-    }
-}
-*/
 
 void Sv_HandlePlayerInfoFromClient(ServerPlayer *sender)
 {
@@ -277,6 +103,25 @@ void Sv_HandlePlayerInfoFromClient(ServerPlayer *sender)
 
     // Relay to others.
     Net_SendPlayerInfo(console, DDSP_ALL_PLAYERS);
+}
+
+/**
+ * The client is removed from the game without delay. This is used when the server
+ * needs to terminate a client's connection abnormally.
+ */
+void Sv_TerminateClient(int console)
+{
+    DE_ASSERT(console >= 0 && console < DDMAXPLAYERS);
+    if(!DD_Player(console)->isConnected())
+        return;
+
+    LOG_NET_NOTE("Terminating connection to console %i (player '%s')")
+        << console << DD_Player(console)->name;
+
+    App_ServerSystem().terminateNode(DD_Player(console)->remoteUserId);
+
+    // Update the master.
+    masterHeartbeat = MASTER_UPDATETIME;
 }
 
 /**
@@ -312,7 +157,7 @@ void Sv_HandlePacket()
                     // Send a message to everybody.
                     LOG_NET_WARNING("New client connection refused: duplicate ID (%08x)") << id;
                     LOGDEV_NET_WARNING("ID conflict from=%i, i=%i") << from << i;
-                    N_TerminateClient(from);
+                    Sv_TerminateClient(from);
                     break;
                 }
             }
@@ -329,7 +174,7 @@ void Sv_HandlePacket()
             if (strnicmp(buf, App_CurrentGame().id(), 16))
             {
                 LOG_NET_ERROR("Client's game ID is incompatible: %-.16s") << buf;
-                N_TerminateClient(from);
+                Sv_TerminateClient(from);
                 break;
             }
         }
@@ -537,7 +382,7 @@ void Sv_GetPackets(void)
         {
         case PCL_GOODBYE:
             // The client is leaving.
-            N_TerminateClient(netBuffer.player);
+            Sv_TerminateClient(netBuffer.player);
             break;
 
         case PKT_COORDS:
@@ -609,7 +454,6 @@ void Sv_GetPackets(void)
 
 /**
  * Assign a new console to the player. Returns true if successful.
- * Called by N_Update().
  */
 dd_bool Sv_PlayerArrives(unsigned int nodeID, const char *name)
 {
@@ -657,7 +501,7 @@ dd_bool Sv_PlayerArrives(unsigned int nodeID, const char *name)
 }
 
 /**
- * Remove the specified player from the game. Called by N_Update().
+ * Remove the specified player from the game.
  */
 void Sv_PlayerLeaves(unsigned int nodeID)
 {
@@ -983,12 +827,53 @@ void Sv_SendPlayerFixes(int plrNum)
     Smoother_Clear(DD_Player(plrNum)->smoother());
 }
 
+void Sv_AnnouncePeriodically(timespan_t time)
+{
+    if (netState.netGame)
+    {
+        masterHeartbeat -= time;
+
+        // Update master periodically.
+        if (serverPublic && App_ServerSystem().isListening() && world::World::get().hasMap() &&
+            masterHeartbeat < 0)
+        {
+            masterHeartbeat = MASTER_HEARTBEAT;
+            N_MasterAnnounceServer(true);
+        }
+    }
+}
+
+void Sv_CheckEvents()
+{
+    netevent_t nevent;
+    while (N_NEGet(&nevent))
+    {
+        switch (nevent.type)
+        {
+            case NE_CLIENT_ENTRY: {
+                // Assign a console to the new player.
+                Sv_PlayerArrives(nevent.id, App_ServerSystem().user(nevent.id).name());
+                masterHeartbeat = MASTER_UPDATETIME;
+                break;
+            }
+            case NE_CLIENT_EXIT: {
+                Sv_PlayerLeaves(nevent.id);
+                masterHeartbeat = MASTER_UPDATETIME;
+                break;
+            }
+            default: DE_ASSERT_FAIL("[Sv_CheckEvents] Invalid value"); break;
+        }
+    }
+}
+
 void Sv_Ticker(timespan_t ticLength)
 {
     int i;
 
     DE_ASSERT(isDedicated);
     //if (!isDedicated) return;
+
+    Sv_AnnouncePeriodically(ticLength);
 
     // Note last angles for all players.
     for (i = 0; i < DDMAXPLAYERS; ++i)

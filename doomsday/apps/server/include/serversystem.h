@@ -26,6 +26,9 @@
 #include "remoteuser.h"
 #include "dd_types.h"
 
+#define DEFAULT_TCP_PORT    13209
+#define DEFAULT_UDP_PORT    13209
+
 /**
  * Subsystem for tending to clients.
  * @ingroup server

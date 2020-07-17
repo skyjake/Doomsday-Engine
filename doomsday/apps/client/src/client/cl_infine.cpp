@@ -19,11 +19,12 @@
 
 #include "de_base.h"
 #include "client/cl_infine.h"
-
-#include <de/legacy/memory.h>
 #include "network/net_main.h"
 #include "network/net_msg.h"
 #include "ui/infine/finaleinterpreter.h"
+
+#include <doomsday/network/protocol.h>
+#include <de/legacy/memory.h>
 
 static finaleid_t currentFinale;
 static finaleid_t remoteFinale;

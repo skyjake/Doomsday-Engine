@@ -54,7 +54,7 @@ typedef struct {
 #pragma pack()
 
 typedef struct netbuffer_s {
-    int             player;         // Recipient or sender.
+    int             player;         // Recipient or sender (can be NSP_BROADCAST).
     size_t          length;         // Number of bytes in the data buffer.
     size_t          headerLength;   // 1 byte at the moment.
 

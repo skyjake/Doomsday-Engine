@@ -324,6 +324,7 @@ void ServerSystem::timeChanged(const Clock &clock)
     /// @todo There's no need to queue packets via net_buf, just handle
     /// them right away.
     Sv_GetPackets();
+    Sv_CheckEvents();
 
     /// @todo Kick unjoined nodes who are silent for too long.
 }

@@ -21,8 +21,9 @@
 
 #include "network/net_main.h"
 #include "network/net_msg.h"
-
 #include "ui/infine/finale.h"
+
+#include <doomsday/network/protocol.h>
 
 using namespace de;
 

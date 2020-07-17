@@ -21,6 +21,7 @@
 #include "client/cl_player.h"
 #include "api_client.h"
 #include "network/net_main.h"
+#include "network/net_demo.h"
 #include "world/map.h"
 #include "world/p_players.h"
 #include <doomsday/network/protocol.h>

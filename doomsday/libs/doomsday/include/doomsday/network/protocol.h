@@ -16,20 +16,69 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_PROTOCOL_H
-#define LIBSHELL_PROTOCOL_H
+#pragma once
 
 #include "de/lexicon.h"
 #include "de/protocol.h"
 #include "de/recordpacket.h"
 #include "de/vector.h"
 #include "de/keymap.h"
+#include "dd_share.h"
 
 /**
  * Server protocol version number.
  * @deprecated Will be replaced with the libcore serialization protocol version.
  */
 #define SV_VERSION          24
+
+// Packet types.
+// PKT = sent by anyone
+// PSV = only sent by server
+// PCL = only sent by client
+enum {
+    // Messages and responses.
+    PCL_HELLO               = 0,
+    PKT_OK                  = 1,
+    PKT_CANCEL              = 2, // unused?
+    PKT_PLAYER_INFO         = 3,
+    PKT_CHAT                = 4,
+    PSV_FINALE              = 5,
+    PKT_PING                = 6,
+    PSV_HANDSHAKE           = 7,
+    PSV_SERVER_CLOSE        = 8,
+    PSV_FRAME               = 9, // obsolete
+    PSV_PLAYER_EXIT         = 10,
+    PSV_CONSOLE_TEXT        = 11,
+    PCL_ACK_SHAKE           = 12,
+    PSV_SYNC                = 13,
+    PSV_MATERIAL_ARCHIVE    = 14,
+    PCL_FINALE_REQUEST      = 15,
+    PKT_LOGIN               = 16,
+    PCL_ACK_SETS            = 17,
+    PKT_COORDS              = 18,
+    PKT_DEMOCAM             = 19,
+    PKT_DEMOCAM_RESUME      = 20,
+    PCL_HELLO2              = 21, // Includes game ID
+    PSV_FRAME2              = 22, // Frame packet v2
+    PSV_FIRST_FRAME2        = 23, // First PSV_FRAME2 after map change
+    PSV_SOUND2              = 24, // unused?
+    PSV_STOP_SOUND          = 25,
+    PCL_ACKS                = 26,
+    PSV_PLAYER_FIX_OBSOLETE = 27, // Fix angles/pos/mom (without console number).
+    PCL_ACK_PLAYER_FIX      = 28, // Acknowledge player fix. /* 28 */
+    PKT_COMMAND2            = 29,
+    PSV_PLAYER_FIX          = 30, // Fix angles/pos/mom.
+    PCL_GOODBYE             = 31,
+    PSV_MOBJ_TYPE_ID_LIST   = 32,
+    PSV_MOBJ_STATE_ID_LIST  = 33,
+
+    // Game specific events.
+    PKT_GAME_MARKER = DDPT_FIRST_GAME_EVENT, // 64
+};
+
+// Use the number defined in dd_share.h for sound packets.
+// This is for backwards compatibility.
+#define PSV_SOUND           71     /* DDPT_SOUND */
 
 // Prefer adding new flags inside the deltas instead of adding new delta types.
 typedef enum {
@@ -53,6 +102,9 @@ typedef enum {
 
     NUM_DELTA_TYPES
 } deltatype_t;
+
+// These DD-flags are packed (i.e. included in mobj deltas).
+#define DDMF_PACK_MASK      0x3cfff1ff
 
 // Mobj delta flags. These are used to determine what a delta contains.
 // (Which parts of a delta mobj_t are used.)
@@ -411,5 +463,3 @@ public:
 };
 
 } // namespace network
-
-#endif // LIBSHELL_PROTOCOL_H

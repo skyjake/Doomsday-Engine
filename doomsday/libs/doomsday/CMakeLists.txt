@@ -20,7 +20,6 @@ add_definitions (
 )
 
 # Set up the API.
-include_directories (${DE_API_DIR})
 configure_file (
     ${DE_API_DIR}/dd_version.h.in
     ${DE_API_DIR}/dd_version.h
@@ -48,7 +47,10 @@ deng_add_library (libdoomsday ${SOURCES} ${HEADERS})
 relaxed_warnings (libdoomsday)
 deng_link_libraries (libdoomsday PUBLIC DengCore)
 target_link_libraries (libdoomsday PRIVATE importdeh importidtech1 importudmf lzss)
-target_include_directories (libdoomsday PRIVATE ${ZLIB_INCLUDE_DIR})
+target_include_directories (libdoomsday
+    PUBLIC $<BUILD_INTERFACE:${DE_API_DIR}>
+    PRIVATE ${ZLIB_INCLUDE_DIR}
+)
 
 if (DE_ENABLE_SDK)
     install (DIRECTORY include/doomsday

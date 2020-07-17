@@ -248,7 +248,7 @@ static void baseTicker(timespan_t time)
     DoomsdayApp::plugins().callAllHooks(HOOK_TICKER, 0, &time);
 
     // The netcode gets to tick, too.
-    Net_Ticker(time);
+    Net_Ticker();
 }
 
 /**
@@ -378,7 +378,6 @@ timespan_t DD_CurrentTickDuration()
 void Loop_RunTics()
 {
     // Do a network update first.
-    N_Update();
     Net_Update();
 
     // Check the clock.

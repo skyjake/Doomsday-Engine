@@ -23,11 +23,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_base.h"
 #include "network/net_msg.h"
+#include "network/net_buf.h"
 
 #include <de/list.h>
-#include "network/net_buf.h"
 
 using namespace de;
 

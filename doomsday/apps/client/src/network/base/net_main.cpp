@@ -66,19 +66,13 @@
 
 using namespace de;
 
-#define ACK_THRESHOLD_MUL       1.5f  ///< The threshold is the average ack time * mul.
-#define ACK_MINIMUM_THRESHOLD   50    ///< Never wait a too short time for acks.
-
 netstate_t netState = {
     true, // first update
     0, 0, 0, 0.0f, 0
 };
 
-static byte monitorMsgQueue;
-static byte netDev;
-
 // Local packets are stored into this buffer.
-static dd_bool reboundPacket;
+static dd_bool     reboundPacket;
 static netbuffer_t reboundStore;
 
 #ifdef __CLIENT__
@@ -294,12 +288,6 @@ dd_bool Net_IsLocalPlayer(int plrNum)
     return pd.inGame && (pd.flags & DDPF_LOCAL);
 }
 
-/**
- * Send the local player(s) ticcmds to the server.
- */
-void Net_SendCommands()
-{}
-
 static void Net_DoUpdate()
 {
     static int lastTime = 0;
@@ -504,33 +492,10 @@ int Net_TimeDelta(byte now, byte then)
     return delta;
 }
 
-void Net_Ticker(timespan_t time)
+void Net_Ticker(void)
 {
     // Network event ticker.
-    N_NETicker(time);
-
-#ifdef __SERVER__
-    if(netDev)
-    {
-        static int printTimer = 0;
-
-        if(printTimer++ > TICSPERSEC)
-        {
-            printTimer = 0;
-            for(int i = 0; i < DDMAXPLAYERS; ++i)
-            {
-                if(Sv_IsFrameTarget(i))
-                {
-                    LOGDEV_NET_MSG("%i(rdy:%b): avg=%05ims thres=%05ims "
-                                   "maxfs=%05ib unakd=%05i")
-                        << i << DD_Player(i)->ready << 0 << 0
-                        << Sv_GetMaxFrameSize(i)
-                        << Sv_CountUnackedDeltas(i);
-                }
-            }
-        }
-    }
-#endif // __SERVER__
+    N_NETicker();
 
     // The following stuff is only for netgames.
     if(!netState.netGame) return;
@@ -858,9 +823,6 @@ void Net_Register()
 #ifdef DE_DEBUG
     C_VAR_FLOAT ("net-dev-latency",     &netState.simulatedLatencySeconds, CVF_NO_MAX, 0, 0);
 #endif
-
-    C_VAR_BYTE  ("net-queue-show",      &monitorMsgQueue, 0, 0, 1);
-    C_VAR_BYTE  ("net-dev",             &netDev, 0, 0, 1);
 
     C_CMD_FLAGS ("chat",    nullptr,    Chat, CMDF_NO_NULLGAME);
     C_CMD_FLAGS ("chatnum", nullptr,    Chat, CMDF_NO_NULLGAME);

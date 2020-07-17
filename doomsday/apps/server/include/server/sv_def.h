@@ -35,6 +35,9 @@ struct material_s;
 
 #define SV_WELCOME_STRING   "Doomsday " DOOMSDAY_VERSION_TEXT " Server (R22)"
 
+// Flags for console text from the server.
+#define SV_CONSOLE_PRINT_FLAGS    (CPF_WHITE|CPF_LIGHT|CPF_GREEN)
+
 // Anything closer than this is always taken into consideration when
 // deltas are being generated.
 #define CLOSE_MOBJ_DIST     512
@@ -61,6 +64,12 @@ void Sv_PlayerLeaves(nodeid_t nodeID);
 void Sv_Handshake(int playernum, dd_bool newplayer);
 
 void Sv_GetPackets();
+
+/**
+ * Network event queue is checked for arrivals and exits, and the 'clients' and 'players'
+ * arrays are updated accordingly.
+ */
+void Sv_CheckEvents();
 
 /**
  * Sends a console message to one or more clients.
