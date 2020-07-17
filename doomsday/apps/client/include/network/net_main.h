@@ -166,11 +166,6 @@ void            Net_Update(void);
 void            Net_ResetTimer(void);
 void            Net_Ticker(timespan_t time);
 
-/**
- * Does drawing for the engine's HUD, not just the net.
- */
-void Net_Drawer(void);
-
 dd_bool Net_IsLocalPlayer(int pNum);
 
 #ifdef __cplusplus
