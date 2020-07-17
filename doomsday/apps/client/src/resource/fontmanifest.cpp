@@ -56,7 +56,7 @@ FontManifest::FontManifest(const PathTree::NodeArgs &args)
 
 FontScheme &FontManifest::scheme() const
 {
-    LOG_AS("resource/fontmanifest.h");
+    LOG_AS("FontManifest");
     /// @todo Optimize: FontManifest should contain a link to the owning FontScheme.
     for (const auto &scheme : App_Resources().allFontSchemes())
     {
@@ -85,7 +85,7 @@ int FontManifest::uniqueId() const
 
 bool FontManifest::setUniqueId(int newUniqueId)
 {
-    LOG_AS("resource/fontmanifest.h");
+    LOG_AS("FontManifest");
 
     if (d->uniqueId == newUniqueId) return false;
 
@@ -114,7 +114,7 @@ AbstractFont &FontManifest::resource() const
 
 void FontManifest::setResource(AbstractFont *newResource)
 {
-    LOG_AS("resource/fontmanifest.h");
+    LOG_AS("FontManifest");
 
     if (d->resource.get() != newResource)
     {

@@ -223,7 +223,7 @@ void BindContext::activate(bool yes)
 {
     if (d->active == yes) return;
 
-    LOG_AS("ui/bindcontext.h");
+    LOG_AS("BindContext");
     LOG_INPUT_VERBOSE("%s " _E(b) "'%s'") << (yes? "Activating" : "Deactivating") << d->name;
     d->active = yes;
 
@@ -279,7 +279,7 @@ void BindContext::setFallbackResponder(FallbackResponderFunc newResponderFunc)
 
 void BindContext::clearAllBindings()
 {
-    LOG_AS("ui/bindcontext.h");
+    LOG_AS("BindContext");
     deleteAll(d->commandBinds);
     d->commandBinds.clear();
     for (int i = 0; i < DDMAXPLAYERS; ++i)
@@ -320,7 +320,7 @@ void BindContext::clearBindingsForDevice(int deviceId)
 Record *BindContext::bindCommand(const char *eventDesc, const char *command)
 {
     DE_ASSERT(eventDesc && command && command[0]);
-    LOG_AS("ui/bindcontext.h");
+    LOG_AS("BindContext");
     try
     {
         std::unique_ptr<Record> newBind(new Record);
@@ -353,7 +353,7 @@ Record *BindContext::bindImpulse(const char *ctrlDesc, const PlayerImpulse &impu
 {
     DE_ASSERT(ctrlDesc);
     DE_ASSERT(localPlayer >= 0 && localPlayer < DDMAXPLAYERS);
-    LOG_AS("ui/bindcontext.h");
+    LOG_AS("BindContext");
     try
     {
         std::unique_ptr<CompiledImpulseBindingRecord> newBind(new CompiledImpulseBindingRecord);
@@ -449,7 +449,7 @@ bool BindContext::deleteBinding(int id)
 
 bool BindContext::tryEvent(const ddevent_t &event, bool respectHigherContexts) const
 {
-    LOG_AS("ui/bindcontext.h");
+    LOG_AS("BindContext");
 
     // Inactive contexts never respond.
     if (!isActive()) return false;

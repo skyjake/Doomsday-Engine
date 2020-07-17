@@ -105,7 +105,7 @@ bool ConvexSubspace::contains(const Vec2d &point) const
 
 void ConvexSubspace::assignExtraMesh(mesh::Mesh &newMesh)
 {
-    LOG_AS("world/convexsubspace.h");
+    LOG_AS("ConvexSubspace");
 
     const dint sizeBefore = d->extraMeshes.size();
 

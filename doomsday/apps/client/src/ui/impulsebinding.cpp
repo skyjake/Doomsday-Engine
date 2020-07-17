@@ -66,7 +66,7 @@ void ImpulseBinding::resetToDefaults()
 
 String ImpulseBinding::composeDescriptor()
 {
-    LOG_AS("ui/impulsebinding.h");
+    LOG_AS("ImpulseBinding");
     if (!*this) return "";
 
     String str = B_ControlDescToString(geti("deviceId"), IBDTYPE_TO_EVTYPE(geti("type")), geti("controlId"));
@@ -191,7 +191,7 @@ void ImpulseBinding::configure(const char *ctrlDesc, int impulseId, int localPla
 {
     DE_ASSERT(ctrlDesc);
     DE_ASSERT(localPlayer >= 0 && localPlayer < DDMAXPLAYERS);
-    LOG_AS("ui/impulsebinding.h");
+    LOG_AS("ImpulseBinding");
 
     // The first part specifies the device-control condition.
     AutoStr *str = AutoStr_NewStd();

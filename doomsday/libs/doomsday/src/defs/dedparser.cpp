@@ -1445,7 +1445,7 @@ DE_PIMPL(DEDParser)
                 prevLightDefIdx = idx;
             }
 
-            if (ISTOKEN("material.h"))
+            if (ISTOKEN("Material"))
             {
                 Record dummyMat;
                 Record *mat  = nullptr;
@@ -1888,7 +1888,7 @@ DE_PIMPL(DEDParser)
                         for (;;)
                         {
                             READLABEL;
-                            RV_URI("material.h", layerDef["material"], 0)
+                            RV_URI("Material", layerDef["material"], 0)
                             RV_URI("Texture", layerDef["material"], "Textures" )
                             RV_FLAGS("Flags", layerDef["flags"], "slf_")
                             RV_FLT("Offset", layerDef["offset"])
@@ -2096,7 +2096,7 @@ DE_PIMPL(DEDParser)
                         for (;;)
                         {
                             READLABEL;
-                            RV_URI("material.h", layerDef["material"], 0)
+                            RV_URI("Material", layerDef["material"], 0)
                             RV_URI("Texture", layerDef["material"], "Textures" )
                             RV_FLAGS("Flags", layerDef["flags"], "slf_")
                             RV_FLT("Offset", layerDef["offset"])
@@ -2206,11 +2206,11 @@ DE_PIMPL(DEDParser)
 
                         READLABEL;
                         RV_STR("ID", tenv->id)
-                        if (ISLABEL("material.h") || ISLABEL("Texture") || ISLABEL("Flat"))
+                        if (ISLABEL("Material") || ISLABEL("Texture") || ISLABEL("Flat"))
                         {
                             // A new material path.
                             ddstring_t schemeName; Str_Init(&schemeName);
-                            Str_Set(&schemeName, ISLABEL("material.h")? "" : ISLABEL("Texture")? "Textures" : "Flats");
+                            Str_Set(&schemeName, ISLABEL("Material")? "" : ISLABEL("Texture")? "Textures" : "Flats");
                             mn = tenv->materials.append();
                             FINDBEGIN;
                             for (;;)
@@ -2231,7 +2231,7 @@ DE_PIMPL(DEDParser)
             if (ISTOKEN("Composite"))
             {
                 ReadToken();
-                if (ISTOKEN("resource/bitmapfont.h"))
+                if (ISTOKEN("BitmapFont"))
                 {
                     ded_compositefont_t* cfont;
 
@@ -2448,7 +2448,7 @@ DE_PIMPL(DEDParser)
                     RV_URI("Mask map", &ref->stage.maskTexture, "LightMaps")
                     RV_FLT("Mask width", ref->stage.maskWidth)
                     RV_FLT("Mask height", ref->stage.maskHeight)
-                    if (ISLABEL("material.h"))
+                    if (ISLABEL("Material"))
                     {
                         READURI(&ref->material, 0)
                     }
@@ -2466,7 +2466,7 @@ DE_PIMPL(DEDParser)
                 prevRefDefIdx = idx;
             }
 
-            if (ISTOKEN("generator.h")) // Particle Generator
+            if (ISTOKEN("Generator")) // Particle Generator
             {
                 ded_ptcgen_t* gen;
                 int sub = 0;
@@ -2485,7 +2485,7 @@ DE_PIMPL(DEDParser)
                 {
                     READLABEL;
                     RV_STR("State", gen->state)
-                    if (ISLABEL("material.h"))
+                    if (ISLABEL("Material"))
                     {
                         READURI(&gen->material, 0)
                     }
@@ -2612,7 +2612,7 @@ DE_PIMPL(DEDParser)
             }
 
             // An oldschool (light) decoration definition?
-            if (ISTOKEN("render/decoration.h"))
+            if (ISTOKEN("Decoration"))
             {
                 idx = ded->addDecoration();
                 Record &decor = ded->decorations[idx];
@@ -2630,7 +2630,7 @@ DE_PIMPL(DEDParser)
                 {
                     READLABEL;
                     RV_FLAGS("Flags", decor["flags"], "dcf_")
-                    if (ISLABEL("material.h"))
+                    if (ISLABEL("Material"))
                     {
                         READURI(decor["texture"], 0)
                     }

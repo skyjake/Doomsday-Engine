@@ -52,7 +52,7 @@ void CommandBinding::resetToDefaults()
 
 String CommandBinding::composeDescriptor()
 {
-    LOG_AS("ui/commandbinding.h");
+    LOG_AS("CommandBinding");
     if (!*this) return "";
 
     String str = B_ControlDescToString(geti("deviceId"), ddeventtype_t(geti("type")), geti("controlId"));
@@ -230,7 +230,7 @@ static bool doConfigure(CommandBinding &bind, const char *eventDesc, const char 
 void CommandBinding::configure(const char *eventDesc, const char *command, bool assignNewId)
 {
     DE_ASSERT(eventDesc);
-    LOG_AS("ui/commandbinding.h");
+    LOG_AS("CommandBinding");
 
     // The first part specifies the event condition.
     AutoStr *str = AutoStr_NewStd();

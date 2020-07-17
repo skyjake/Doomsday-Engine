@@ -293,7 +293,7 @@ const Rectanglei &BitmapFont::glyphTexCoords(dbyte ch) const
 
 void BitmapFont::glInit() const
 {
-    LOG_AS("resource/bitmapfont.h");
+    LOG_AS("BitmapFont");
 
     if(!d->needGLInit) return;
     if(novideo || BusyMode_Active()) return;
@@ -349,7 +349,7 @@ void BitmapFont::glInit() const
 
 void BitmapFont::glDeinit() const
 {
-    LOG_AS("resource/bitmapfont.h");
+    LOG_AS("BitmapFont");
 
     if(novideo || isDedicated) return;
 

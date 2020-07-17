@@ -144,7 +144,7 @@ void CompositeBitmapFont::glInit() const
     if(!d->needGLInit) return;
     if(novideo || BusyMode_Active()) return;
 
-    LOG_AS("resource/compositebitmapfont.h");
+    LOG_AS("CompositeBitmapFont");
 
     glDeinit();
 
