@@ -303,6 +303,12 @@ static de::Value *Function_Player_ArmorType(de::Context &ctx, const de::Function
 {
     return new de::NumberValue(contextPlayer(ctx).armorType);
 }
+
+static de::Value *Function_Player_GiveBackpack(de::Context &ctx, const de::Function::ArgumentValues &)
+{
+    P_GiveBackpack(&contextPlayer(ctx));
+    return nullptr;
+}
 #endif
 
 static de::Value *Function_Player_GiveArmor(de::Context &ctx, const de::Function::ArgumentValues &args)
@@ -328,6 +334,12 @@ static de::Value *Function_Player_Power(de::Context &ctx, const de::Function::Ar
         throw de::Error("Function_Player_Power", "invalid power type");
     }
     return new de::NumberValue(contextPlayer(ctx).powers[power]);
+}
+
+static de::Value *Function_Player_GivePower(de::Context &ctx, const de::Function::ArgumentValues &args)
+{
+    P_GivePower(&contextPlayer(ctx), powertype_t(args.at(0)->asInt()));
+    return nullptr;
 }
 
 static de::Value *Function_Player_ShotAmmo(de::Context &ctx, const de::Function::ArgumentValues &)
@@ -439,7 +451,12 @@ void Common_Load()
                 << DENG2_FUNC_NOARG (Player_Health, "health")
                 << DENG2_FUNC       (Player_Power, "power", "type")
                 << DENG2_FUNC_NOARG (Player_ShotAmmo, "shotAmmo")
-                << DENG2_FUNC       (Player_GiveArmor, "giveArmor", "type" << "points");
+                << DENG2_FUNC       (Player_GiveArmor, "giveArmor", "type" << "points")
+                << DE_FUNC          (Player_GivePower, "givePower", "type");
+#if !defined(__JHEXEN__)
+            *gameBindings
+                << DE_FUNC_NOARG    (Player_GiveBackpack, "giveBackpack");
+#endif
 
 #if defined(HAVE_DOOM_ARMOR_BINDINGS)
             *gameBindings
@@ -459,14 +476,14 @@ void Common_Load()
                 << DENG2_FUNC(Player_SetFlameCount, "setFlameCount", "tics");
 
             // Heretic: Powerup constants.
-            playerClass.set("PT_INVULNERABILITY", PT_INVULNERABILITY);
-            playerClass.set("PT_INVISIBILITY", PT_INVISIBILITY);
             playerClass.set("PT_ALLMAP", PT_ALLMAP);
-            playerClass.set("PT_INFRARED", PT_INFRARED);
-            playerClass.set("PT_WEAPONLEVEL2", PT_WEAPONLEVEL2);
             playerClass.set("PT_FLIGHT", PT_FLIGHT);
-            playerClass.set("PT_SHIELD", PT_SHIELD);
             playerClass.set("PT_HEALTH2", PT_HEALTH2);
+            playerClass.set("PT_INFRARED", PT_INFRARED);
+            playerClass.set("PT_INVISIBILITY", PT_INVISIBILITY);
+            playerClass.set("PT_INVULNERABILITY", PT_INVULNERABILITY);
+            playerClass.set("PT_SHIELD", PT_SHIELD);
+            playerClass.set("PT_WEAPONLEVEL2", PT_WEAPONLEVEL2);
 #endif
         }
     }

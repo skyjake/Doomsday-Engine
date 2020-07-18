@@ -260,6 +260,9 @@ private:
     de::NativeFunctionSpec(Function_ ## Name, # Name, ScriptMemberName, \
                            de::Function::Arguments() << Args, Defaults)
 
+#define DE_FUNC(Name, ScriptMemberName, Args)   DENG2_FUNC(Name, ScriptMemberName, Args) // omega
+#define DE_FUNC_NOARG(Name, ScriptMemberName)   DENG2_FUNC_NOARG(Name, ScriptMemberName) // omega
+
 /**
  * Utility that keeps track of which entry points have been bound and
  * unregisters them when the Binder instance is destroyed. For example, use as
