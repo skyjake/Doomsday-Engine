@@ -396,11 +396,13 @@ D_CMD(Kick)
         return false;
     }
 
+#if 0
     if(::netRemoteUser == num)
     {
         LOG_NET_ERROR("Can't kick the client who's logged in");
         return false;
     }
+#endif
 
     Sv_Kick(num);
     return true;

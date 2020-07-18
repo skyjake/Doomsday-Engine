@@ -364,10 +364,6 @@ void Net_Update()
  */
 void Net_InitGame()
 {
-#ifdef __CLIENT__
-    Cl_InitID();
-#endif
-
     // In single-player mode there is only player number zero.
     ::consolePlayer = ::displayPlayer = 0;
 
@@ -377,13 +373,15 @@ void Net_InitGame()
     // Netgame is true when we're aware of the network (i.e. other players).
     netState.netGame = false;
 
-    DD_Player(0)->publicData().inGame = true;
-    DD_Player(0)->publicData().flags |= DDPF_LOCAL;
+    auto *plr = DD_Player(0);
+    plr->publicData().inGame = true;
+    plr->publicData().flags |= DDPF_LOCAL;
+    plr->viewConsole = 0;
 
 #ifdef __CLIENT__
-    DD_Player(0)->id          = ::clientID;
+    Cl_InitID();
+    plr->id = clientID;
 #endif
-    DD_Player(0)->viewConsole = 0;
 }
 
 void Net_StopGame()
@@ -414,18 +412,13 @@ void Net_StopGame()
     Demo_StopRecording(::consolePlayer);
     Cl_CleanUp();
     netState.isClient    = false;
-    ::netLoggedIn = false;
+//    ::netLoggedIn = false;
 #endif
 
     // Netgame has ended.
     netState.netGame  = false;
     netState.isServer = true;
     allowSending      = false;
-
-#ifdef __SERVER__
-    // No more remote users.
-    ::netRemoteUser = 0;
-#endif
 
     // All remote players are forgotten.
     for(int i = 0; i < DDMAXPLAYERS; ++i)

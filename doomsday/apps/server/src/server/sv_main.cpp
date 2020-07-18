@@ -59,7 +59,7 @@ using namespace de;
 
 void Sv_ClientCoords(dint playerNum);
 
-dint netRemoteUser;  ///< The client who is currently logged in.
+//dint netRemoteUser;  ///< The client who is currently logged in.
 char *netPassword = (char *) "";  ///< Remote login password.
 
 // This is the limit when accepting new clients.
@@ -276,6 +276,7 @@ void Sv_HandlePacket()
     }
 }
 
+#if 0
 /**
  * Handles a login packet. If the password is OK and no other client
  * is current logged in, a response is sent.
@@ -314,7 +315,9 @@ void Sv_Login(void)
     Msg_End();
     Net_SendBuffer(netRemoteUser, 0);
 }
+#endif
 
+#if 0
 /**
  * Executes the command in the message buffer.
  * Usually sent by Con_Send.
@@ -367,6 +370,7 @@ void Sv_ExecuteCommand(void)
 
     M_Free(cmd);
 }
+#endif
 
 /**
  * Server's packet handler.
@@ -430,6 +434,7 @@ void Sv_GetPackets(void)
             Sv_HandlePacket();
             break;
 
+#if 0
         case PKT_LOGIN:
             Sv_Login();
             break;
@@ -438,6 +443,7 @@ void Sv_GetPackets(void)
         case PKT_COMMAND2:
             Sv_ExecuteCommand();
             break;
+#endif
 
         default:
             if (netBuffer.msg.type >= PKT_GAME_MARKER)
@@ -514,8 +520,8 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     LOG_AS("Sv_PlayerLeaves");
 
     // Log off automatically.
-    if (netRemoteUser == plrNum)
-        netRemoteUser = 0;
+//    if (netRemoteUser == plrNum)
+//        netRemoteUser = 0;
 
     plr = DD_Player(plrNum);
 
@@ -688,7 +694,7 @@ void Sv_StartNetGame(void)
     }
     gameTime = 0;
     netState.firstUpdate = true;
-    netRemoteUser = 0;
+//    netRemoteUser = 0;
 
     // The server is always player number zero.
     consolePlayer = displayPlayer = 0;
@@ -1070,6 +1076,7 @@ dd_bool Sv_CanTrustClientPos(int plrNum)
     return false;
 }
 
+#if 0
 /**
  * Console command for terminating a remote console connection.
  */
@@ -1091,6 +1098,7 @@ D_CMD(Logout)
     netRemoteUser = 0;
     return true;
 }
+#endif
 
 DE_DECLARE_API(Server) =
 {

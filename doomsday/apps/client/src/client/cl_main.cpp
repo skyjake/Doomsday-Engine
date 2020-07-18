@@ -51,7 +51,7 @@ ident_t clientID;
 bool handshakeReceived;
 int gameReady;
 int serverTime;
-bool netLoggedIn; // Logged in to the server.
+//bool netLoggedIn; // Logged in to the server.
 int clientPaused; // Set by the server.
 
 void Cl_InitID()
@@ -187,7 +187,7 @@ void Cl_AnswerHandshake()
 
     netState.isClient = true;
     netState.isServer = false;
-    netLoggedIn = false;
+    //netLoggedIn = false;
     clientPaused = false;
 
     if (handshakeReceived)
@@ -347,7 +347,7 @@ void Cl_GetPackets()
             break; }
 
         case PSV_SERVER_CLOSE:  // We should quit?
-            netLoggedIn = false;
+            //netLoggedIn = false;
             Con_Execute(CMDS_DDAY, "net disconnect", true, false);
             break;
 
@@ -362,10 +362,12 @@ void Cl_GetPackets()
             M_Free(text);
             break; }
 
+#if 0
         case PKT_LOGIN:
             // Server responds to our login request. Let's see if we were successful.
             netLoggedIn = CPP_BOOL(Reader_ReadByte(msgReader));
             break;
+#endif
 
         case PSV_FINALE:
             Cl_Finale(msgReader);
@@ -482,6 +484,7 @@ void Cl_Ticker(timespan_t ticLength)
     }
 }
 
+#if 0
 /**
  * Clients use this to establish a remote connection to the server.
  */
@@ -513,3 +516,4 @@ D_CMD(Login)
     Net_SendBuffer(0, 0);
     return true;
 }
+#endif

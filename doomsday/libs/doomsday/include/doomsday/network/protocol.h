@@ -53,7 +53,7 @@ enum {
     PSV_SYNC                = 13,
     PSV_MATERIAL_ARCHIVE    = 14,
     PCL_FINALE_REQUEST      = 15,
-    PKT_LOGIN               = 16,
+    //PKT_LOGIN               = 16, // obsolete (connections via Shell)
     PCL_ACK_SETS            = 17,
     PKT_COORDS              = 18,
     PKT_DEMOCAM             = 19,
@@ -64,38 +64,34 @@ enum {
     PSV_SOUND2              = 24, // unused?
     PSV_STOP_SOUND          = 25,
     PCL_ACKS                = 26,
-    PSV_PLAYER_FIX_OBSOLETE = 27, // Fix angles/pos/mom (without console number).
-    PCL_ACK_PLAYER_FIX      = 28, // Acknowledge player fix. /* 28 */
-    PKT_COMMAND2            = 29,
+//    PSV_PLAYER_FIX_OBSOLETE = 27, // Fix angles/pos/mom (without console number).
+    PCL_ACK_PLAYER_FIX      = 28, // Acknowledge player fix.
+//    PKT_COMMAND2            = 29, // obsolete (now via Shell)
     PSV_PLAYER_FIX          = 30, // Fix angles/pos/mom.
     PCL_GOODBYE             = 31,
     PSV_MOBJ_TYPE_ID_LIST   = 32,
     PSV_MOBJ_STATE_ID_LIST  = 33,
+    PSV_SOUND               = 71,
 
     // Game specific events.
     PKT_GAME_MARKER = DDPT_FIRST_GAME_EVENT, // 64
 };
 
-// Use the number defined in dd_share.h for sound packets.
-// This is for backwards compatibility.
-#define PSV_SOUND           71     /* DDPT_SOUND */
-
 // Prefer adding new flags inside the deltas instead of adding new delta types.
 typedef enum {
-    DT_MOBJ = 0,
-    DT_PLAYER = 1,
-    //DT_SECTOR_R6 = 2, // 2 bytes for flags.
-    DT_SIDE_SOUND = 3,
-    DT_POLY = 4,
-    DT_LUMP = 5,
-    DT_SOUND = 6, // No emitter
-    DT_MOBJ_SOUND = 7,
+    DT_MOBJ         = 0,
+    DT_PLAYER       = 1,
+    DT_SIDE_SOUND   = 3,
+    DT_POLY         = 4,
+    DT_LUMP         = 5,
+    DT_SOUND        = 6, // No emitter
+    DT_MOBJ_SOUND   = 7,
     DT_SECTOR_SOUND = 8,
-    DT_POLY_SOUND = 9,
-    DT_SECTOR = 10, // Flags in a packed long.
+    DT_POLY_SOUND   = 9,
+    DT_SECTOR       = 10, // Flags in a packed long.
 
     // Special types: (only in the PSV_FRAME2 packet when written to message)
-    DT_NULL_MOBJ = 11, // Mobj was removed (just type and ID).
+    DT_NULL_MOBJ   = 11, // Mobj was removed (just type and ID).
     DT_CREATE_MOBJ = 12, // Regular DT_MOBJ, but the mobj was just created.
 
     DT_SIDE = 13, // Flags in a packed long.

@@ -49,7 +49,7 @@ struct material_s;
 extern int svMaxPlayers;
 extern int allowFrames;    ///< Allow sending of frames.
 extern int frameInterval;  ///< In tics.
-extern int netRemoteUser;  ///< The client who is currently logged in.
+//extern int netRemoteUser;  ///< The client who is currently logged in.
 extern char *netPassword;       ///< Remote login password.
 
 void Sv_Shutdown();

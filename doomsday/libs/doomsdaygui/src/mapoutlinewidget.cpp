@@ -238,6 +238,8 @@ DE_GUI_PIMPL(MapOutlineWidget)
         DefaultVertexBuf::Builder verts;
         for (const auto &plr : players)
         {
+            DE_UNUSED(plr);
+
             // Position dot.
 
             // Gradient line to previous position.
