@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_H
-#define LIBCORE_H
+#pragma once
 
 /**
  * @file libcore.h  Common definitions for Doomsday Engine Core Library
@@ -919,5 +918,3 @@ typedef uint64_t        dsize;
 typedef int64_t         dsigsize;
 
 #endif // !__cplusplus
-
-#endif // LIBCORE_H

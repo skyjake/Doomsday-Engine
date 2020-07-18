@@ -24,7 +24,7 @@
 #include "world/p_players.h"
 
 #include <doomsday/network/protocol.h>
-#include <doomsday/network/net.h>
+#include <doomsday/net.h>
 #include <de/legacy/timer.h>
 
 using namespace de;

@@ -57,7 +57,7 @@
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
-#include <doomsday/network/net.h>
+#include <doomsday/net.h>
 #include <doomsday/network/masterserver.h>
 #include <de/legacy/concurrency.h>
 #include <de/legacy/timer.h>

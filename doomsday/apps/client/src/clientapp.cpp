@@ -62,7 +62,7 @@
 #include <doomsday/console/exec.h>
 #include <doomsday/abstractsession.h>
 #include <doomsday/gamestatefolder.h>
-#include <doomsday/network/net.h>
+#include <doomsday/net.h>
 
 #include <de/legacy/timer.h>
 #include <de/c_wrapper.h>
@@ -617,18 +617,11 @@ ClientApp::ClientApp(const StringList &args)
                 << DE_FUNC       (App_SetInteger,    "setInteger", "id" << "value");
     }
 
-/*#if !defined (DE_MOBILE)
-    /// @todo Remove the splash screen when file system indexing can be done as
-    /// a background task and the main window can be opened instantly. -jk
-    QPixmap const pixmap(doomsdaySplashXpm);
-    QSplashScreen *splash = new QSplashScreen(pixmap);
-    splash->show();
-    splash->showMessage(Version::currentBuild().asHumanReadableText(),
-                        Qt::AlignHCenter | Qt::AlignBottom,
-                        QColor(90, 110, 95));
-    processEvents();
-    splash->deleteLater();
-#endif*/
+    net().setTransmitterLookup([](int player) -> Transmitter * {
+        DE_ASSERT(player == 0);
+        DE_UNUSED(player);
+        return &serverLink();
+    });
 
     // Show the splash image in a separate window.
 #if !defined (DE_MSYS)
@@ -924,12 +917,6 @@ void ClientApp::gameSessionWasLoaded(const AbstractSession &session,
     {
         LOGDEV_MAP_WARNING("Object state check error: %s") << er.asText();
     }
-}
-
-void ClientApp::sendDataToPlayer(int, const de::IByteArray &data)
-{
-    // We can only send data to the server.
-    serverLink() << data;
 }
 
 ClientPlayer &ClientApp::player(int console) // static

@@ -20,8 +20,10 @@
 
 #pragma once
 
-#include "../libdoomsday.h"
+#include "libdoomsday.h"
+#include <de/ibytearray.h>
 #include <de/legacy/types.h>
+#include <de/transmitter.h>
 
 typedef struct netstate_s
 {
@@ -34,3 +36,25 @@ typedef struct netstate_s
 } netstate_t;
 
 LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC netstate_t netState;
+
+/**
+ * Network subsystem for game-level communication between the server and the client.
+ */
+class LIBDOOMSDAY_PUBLIC Net
+{
+public:
+    Net();
+
+    void setTransmitterLookup(const std::function<de::Transmitter *(int player)> &);
+
+    /**
+     * Sends data to a player. Available during multiplayer games.
+     *
+     * @param player  Player number (0 is always the server).
+     * @param data    Data to send.
+     */
+    void sendDataToPlayer(int player, const de::IByteArray &data);
+
+private:
+    DE_PRIVATE(d)
+};

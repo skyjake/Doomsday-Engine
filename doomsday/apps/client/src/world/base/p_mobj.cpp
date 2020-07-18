@@ -50,7 +50,7 @@
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
 #include <doomsday/defs/sprite.h>
-#include <doomsday/network/net.h>
+#include <doomsday/net.h>
 #include <doomsday/res/textures.h>
 #include <doomsday/res/sprites.h>
 #include <doomsday/world/mobjthinkerdata.h>

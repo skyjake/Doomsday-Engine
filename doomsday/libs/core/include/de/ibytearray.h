@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_IBYTEARRAY_H
-#define LIBCORE_IBYTEARRAY_H
+#pragma once
 
 #include "de/libcore.h"
 
@@ -36,16 +35,16 @@ public:
     DE_ERROR(OffsetError);
 
     /// Size of the array is indicated with this type.
-    typedef dsize Size;
+    typedef uint64_t Size;
 
     /// Array elements are indexed using this type.
-    typedef dsize Offset;
+    typedef uint64_t Offset;
 
     /// Difference between two offsets.
-    typedef dsigsize Delta;
+    typedef int64_t Delta;
 
     /// The elements of the array must be of type Byte.
-    typedef dbyte Byte;
+    typedef uint8_t Byte;
 
 public:
     virtual ~IByteArray() = default;
@@ -81,5 +80,3 @@ public:
 };
 
 } // namespace de
-
-#endif /* LIBCORE_IBYTEARRAY_H */

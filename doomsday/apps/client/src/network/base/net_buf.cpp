@@ -31,7 +31,7 @@
 #endif
 
 #include <doomsday/network/masterserver.h>
-#include <doomsday/network/net.h>
+#include <doomsday/net.h>
 #include <de/c_wrapper.h>
 #include <de/legacy/concurrency.h>
 #include <de/legacy/memory.h>
@@ -221,7 +221,7 @@ void N_SendPacket(void)
     {
         if (allowSending)
         {
-            DoomsdayApp::app().sendDataToPlayer(
+            DoomsdayApp::net().sendDataToPlayer(
                 netBuffer.player,
                 ByteRefArray(&netBuffer.msg, netBuffer.headerLength + netBuffer.length));
         }

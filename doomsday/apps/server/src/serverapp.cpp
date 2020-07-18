@@ -31,6 +31,7 @@
 #include "world/p_players.h"
 
 #include <doomsday/console/var.h>
+#include <doomsday/net.h>
 #include <doomsday/world/map.h>
 #include <doomsday/world/thinkers.h>
 
@@ -177,9 +178,6 @@ ServerApp::ServerApp(const StringList &args)
 {
     novideo = true;
 
-    // Use the host system's proxy configuration.
-//    QNetworkProxyFactory::setUseSystemConfiguration(true);
-
     // Metadata.
     setMetadata("Deng Team", "dengine.net", "Doomsday Server", DOOMSDAY_VERSION_BASE);
     setUnixHomeFolderName(".doomsday-server");
@@ -200,6 +198,15 @@ ServerApp::ServerApp(const StringList &args)
 
     // We must presently set the current game manually (the collection is global).
     setGame(games().nullGame());
+
+    net().setTransmitterLookup([](int player) -> Transmitter * {
+        auto &plr = players().at(player).as<ServerPlayer>();
+        if (plr.isConnected())
+        {
+            return &serverSystem().user(plr.remoteUserId);
+        }
+        return nullptr;
+    });
 }
 
 ServerApp::~ServerApp()
@@ -353,38 +360,6 @@ void ServerApp::unloadGame(const GameProfile &upcomingGame)
     DoomsdayApp::unloadGame(upcomingGame);
 
     world::Map::initDummyElements();
-}
-
-void ServerApp::sendDataToPlayer(int player, const IByteArray &data)
-{
-    List<Id::Type> ids;
-
-    if (player >= 0 && player < DDMAXPLAYERS)
-    {
-        auto &plr = players().at(player).as<ServerPlayer>();
-        // Do not send anything to disconnected players.
-        if (plr.isConnected())
-        {
-            ids << plr.remoteUserId;
-        }
-    }
-    else
-    {
-        // Broadcast to all non-local players, using recursive calls.
-        for (dint i = 1; i < DDMAXPLAYERS; ++i)
-        {
-            auto &plr = players().at(player).as<ServerPlayer>();
-            if (plr.isConnected())
-            {
-                ids << plr.remoteUserId;
-            }
-        }
-    }
-
-    for (const auto &id : ids)
-    {
-        serverSystem().user(id) << data;
-    }
 }
 
 ServerApp &ServerApp::app()

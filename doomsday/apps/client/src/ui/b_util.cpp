@@ -32,7 +32,7 @@
 #include "ui/buttoninputcontrol.h"
 #include "ui/hatinputcontrol.h"
 
-#include <doomsday/network/net.h>
+#include <doomsday/net.h>
 
 using namespace de;
 

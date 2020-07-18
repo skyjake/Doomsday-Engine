@@ -25,7 +25,7 @@
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/filesys/fs_util.h>
-#include <doomsday/network/net.h>
+#include <doomsday/net.h>
 #include <doomsday/network/protocol.h>
 
 #include "client/cl_player.h"

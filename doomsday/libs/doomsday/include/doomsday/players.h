@@ -50,6 +50,8 @@ public:
 
     Player &at(int index) const;
 
+    inline Player &operator[](int index) const { return at(index); }
+
     int count() const;
 
     de::LoopResult forAll(const std::function<de::LoopResult (Player &)>& func) const;

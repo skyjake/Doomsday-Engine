@@ -35,7 +35,7 @@
 #include "clientapp.h"
 
 #include <doomsday/doomsdayapp.h>
-#include <doomsday/network/net.h>
+#include <doomsday/net.h>
 #include <de/config.h>
 #include <de/eventloop.h>
 #include <de/glinfo.h>

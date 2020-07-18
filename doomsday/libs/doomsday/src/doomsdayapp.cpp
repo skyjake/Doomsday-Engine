@@ -29,6 +29,7 @@
 #include "doomsday/filesys/datafolder.h"
 #include "doomsday/filesys/virtualmappings.h"
 #include "doomsday/filesys/idgameslink.h"
+#include "doomsday/net.h"
 #include "doomsday/busymode.h"
 #include "doomsday/world/world.h"
 #include "doomsday/world/entitydef.h"
@@ -148,6 +149,7 @@ DE_PIMPL(DoomsdayApp)
     res::Bundles       dataBundles;
     PackageDownloader  packageDownloader;
     SaveGames          saveGames;
+    Net                net;
     Dispatch           mainCall;
     Timer              configSaveTimer;
 
@@ -970,9 +972,9 @@ void DoomsdayApp::gameSessionWasLoaded(const AbstractSession &, const GameStateF
     //qDebug() << "App loading from" << fromFolder.description();
 }
 
-void DoomsdayApp::sendDataToPlayer(int, const de::IByteArray &)
+Net &DoomsdayApp::net()
 {
-    throw Error("DoomsdayApp::sendDataToPlayer", "Network transmission is not available");
+    return app().d->net;
 }
 
 void DoomsdayApp::setGame(const Game &game)

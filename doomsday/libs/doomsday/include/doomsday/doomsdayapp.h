@@ -35,11 +35,12 @@
 
 namespace res { class Bundles; }
 
-class Game;
-class Games;
-class SaveGames;
-class GameStateFolder;
 class AbstractSession;
+class Game;
+class GameStateFolder;
+class Games;
+class Net;
+class SaveGames;
 
 /**
  * Common application-level state and components.
@@ -191,13 +192,6 @@ public:
     virtual void gameSessionWasLoaded(const AbstractSession &session,
                                       const GameStateFolder &fromFolder);
 
-    /**
-     * Sends data to a player. Available during multiplayer games.
-     *
-     * @param player  Player number (0 is always the server).
-     */
-    virtual void sendDataToPlayer(int player, const de::IByteArray &data);
-
 public:
     static DoomsdayApp &          app();
     static de::PackageDownloader &packageDownloader();
@@ -206,6 +200,7 @@ public:
     static Games &                games();
     static GameProfiles &         gameProfiles();
     static Players &              players();
+    static Net &                  net();
     static BusyMode &             busyMode();
     static SaveGames &            saveGames();
 

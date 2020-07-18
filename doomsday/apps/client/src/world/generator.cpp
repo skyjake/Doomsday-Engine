@@ -33,7 +33,7 @@
 
 #include <doomsday/console/var.h>
 #include <doomsday/mesh/face.h>
-#include <doomsday/network/net.h>
+#include <doomsday/net.h>
 #include <doomsday/world/bspleaf.h>
 #include <doomsday/world/thinkers.h>
 #include <doomsday/tab_tables.h>

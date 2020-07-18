@@ -25,7 +25,7 @@
 #  include "server/sv_infine.h"
 #endif
 
-#include <doomsday/network/net.h>
+#include <doomsday/net.h>
 #include <de/logbuffer.h>
 
 using namespace de;

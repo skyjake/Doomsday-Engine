@@ -20,7 +20,7 @@
 #ifndef DE_CLIENT_H
 #define DE_CLIENT_H
 
-#include <doomsday/network/net.h>
+#include <doomsday/net.h>
 #include "world/p_object.h"
 
 DE_EXTERN_C ident_t clientID;

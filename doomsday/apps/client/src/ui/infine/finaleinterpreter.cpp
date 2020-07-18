@@ -29,7 +29,7 @@
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/filesys/fs_main.h>
-#include <doomsday/network/net.h>
+#include <doomsday/net.h>
 #include <doomsday/world/materials.h>
 #include <doomsday/game.h>
 
