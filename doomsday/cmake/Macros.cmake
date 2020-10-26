@@ -506,6 +506,7 @@ macro (deng_codesign target)
                 if (NOT _skip)
                     message (STATUS \"Signing \${fn}...\")
                     execute_process (COMMAND ${CODESIGN_COMMAND} --verbose 
+                            --deep
                             --options runtime
                             --timestamp
                             --force -s \"${DENG_CODESIGN_APP_CERT}\"
