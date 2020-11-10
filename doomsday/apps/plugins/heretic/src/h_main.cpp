@@ -26,7 +26,7 @@
 #include <de/App>
 #include <de/CommandLine>
 #include <de/Function>
-#include <de/NumberValue>>
+#include <de/NumberValue>
 #include "d_netsv.h"
 #include "g_defs.h"
 #include "gamesession.h"
