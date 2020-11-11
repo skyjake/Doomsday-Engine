@@ -941,6 +941,8 @@ void P_AmbientSound()
     if(--AmbSfxTics)
         return;
 
+    LOG_AS("P_AmbientSound");
+
     forever
     {
         afxcmd_t cmd = afxcmd_t(*AmbSfxPtr++);
@@ -977,13 +979,14 @@ void P_AmbientSound()
             AmbSfxTics = P_Random() & (*AmbSfxPtr++);
             return;
 
+        default:
+            LOG_RES_ERROR("Unknown afxcmd %d, stopping ambient sequence %d")
+                << cmd << AmbSfxCurrentSeq;
+            /* fall through */
+
         case afxcmd_end:
             AmbSfxTics = 6 * TICSPERSEC + P_Random();
-            AmbSfxPtr  = LevelAmbientSfx[AmbSfxCurrentSeq = P_Random() % AmbSfxCount];
-            return;
-
-        default:
-            Con_Error("P_AmbientSound: Unknown afxcmd %d", cmd);
+            AmbSfxPtr  = LevelAmbientSfx[AmbSfxCurrentSeq = P_Random() % AmbSfxCount];           
             break;
         }
     }
