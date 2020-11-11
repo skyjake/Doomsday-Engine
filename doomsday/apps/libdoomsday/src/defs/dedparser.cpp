@@ -2082,6 +2082,7 @@ DENG2_PIMPL(DEDParser)
                     RV_FLT("Ambient light", (*mi)["ambient"])
                     RV_FLT("Gravity", (*mi)["gravity"])
                     RV_STR("Execute", (*mi)["execute"])
+                    RV_STR("On setup", (*mi)["onSetup"]) // script function
                     RV_STR("Sky", (*mi)["skyId"])
                     RV_FLT("Sky height", sky["height"])
                     RV_FLT("Horizon offset", sky["horizonOffset"])

@@ -31,7 +31,9 @@
 #include <de/Error>
 #include <de/Log>
 #include <de/Scheduler>
+#include <de/Script>
 #include <de/ScriptSystem>
+#include <de/Process>
 #include <de/Time>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
@@ -678,6 +680,15 @@ DENG2_PIMPL(ClientServerWorld)
             {
                 Con_Executef(CMDS_SCRIPT, false, "%s", cmd.toUtf8().constData());
             }
+        }
+
+        // Script to run after setup.
+        if (const String onSetupSrc = mapInfo.gets("onSetup"))
+        {
+            Script script(onSetupSrc);
+            Process proc;
+            proc.run(script);
+            proc.execute();
         }
 
         // Reset world time.

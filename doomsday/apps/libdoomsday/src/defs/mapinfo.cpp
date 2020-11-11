@@ -48,6 +48,7 @@ void MapInfo::resetToDefaults()
     def().addNumber("gravity", 1);
     def().addText  ("skyId", "");
     def().addText  ("execute", "");
+    def().addText  ("onSetup", "");
     def().addText  (QStringLiteral("intermissionBg"), "");
 
     QScopedPointer<Record> sky(new Record);
