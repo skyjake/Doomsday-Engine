@@ -139,7 +139,13 @@ void Common_Register()
 static de::Binder *gameBindings;
 static de::Record *gameModule;
 
-static mobj_t &instanceMobj(const de::Context &ctx)
+de::Binder &Common_GameBindings()
+{
+    DE_ASSERT(gameBindings);
+    return *gameBindings;
+}
+
+mobj_t &P_ContextMobj(const de::Context &ctx)
 {
     using namespace de;
 
@@ -148,7 +154,7 @@ static mobj_t &instanceMobj(const de::Context &ctx)
     {
         return *mo;
     }
-    throw world::BaseMap::MissingObjectError("instanceMobj",
+    throw world::BaseMap::MissingObjectError("P_ContextMobj",
                                              String::format("Mobj %d does not exist", id));
 }
 
@@ -156,7 +162,7 @@ static de::Value *Function_Thing_SpawnMissile(de::Context &ctx, const de::Functi
 {
     using namespace de;
 
-    mobj_t *src = &instanceMobj(ctx);
+    mobj_t *src = &P_ContextMobj(ctx);
 
     const mobjtype_t missileId = mobjtype_t(Defs().getMobjNum(args.at(0)->asText()));
 
@@ -192,20 +198,6 @@ static de::Value *Function_Thing_SpawnMissile(de::Context &ctx, const de::Functi
     }
     return nullptr;
 }
-
-#if defined(__JHERETIC__)
-static de::Value *Function_Thing_Attack(de::Context &ctx, const de::Function::ArgumentValues &args)
-{
-    using namespace de;
-
-    mobj_t *src = &instanceMobj(ctx);
-
-    const int meleeDamage = args.at(0)->asInt();
-    const mobjtype_t missileId = mobjtype_t(Defs().getMobjNum(args.at(1)->asText()));
-
-    return new NumberValue(P_Attack(src, meleeDamage, missileId));
-}
-#endif
 
 static int playerNumberArgument(const de::Value &arg)
 {
@@ -276,19 +268,19 @@ static de::Value *Function_World_SpawnThing(de::Context &, const de::Function::A
     return new NoneValue;
 }
 
-static player_t &contextPlayer(const de::Context &ctx)
+player_t &P_ContextPlayer(const de::Context &ctx)
 {
-    int num = ctx.selfInstance().geti("__id__", 0);
+    const int num = ctx.selfInstance().geti("__id__", 0);
     if (num < 0 || num >= MAXPLAYERS)
     {
-        throw de::Error("contextPlayer", "invalid player number");
+        throw de::Error("P_ContextPlayer", "invalid player number");
     }
     return players[num];
 }
 
 static de::Value *Function_Player_Health(de::Context &ctx, const de::Function::ArgumentValues &)
 {
-    return new de::NumberValue(contextPlayer(ctx).health);
+    return new de::NumberValue(P_ContextPlayer(ctx).health);
 }
 
 #if !defined (__JHEXEN__)
@@ -296,24 +288,24 @@ static de::Value *Function_Player_Health(de::Context &ctx, const de::Function::A
 
 static de::Value *Function_Player_Armor(de::Context &ctx, const de::Function::ArgumentValues &)
 {
-    return new de::NumberValue(contextPlayer(ctx).armorPoints);
+    return new de::NumberValue(P_ContextPlayer(ctx).armorPoints);
 }
 
 static de::Value *Function_Player_ArmorType(de::Context &ctx, const de::Function::ArgumentValues &)
 {
-    return new de::NumberValue(contextPlayer(ctx).armorType);
+    return new de::NumberValue(P_ContextPlayer(ctx).armorType);
 }
 
 static de::Value *Function_Player_GiveBackpack(de::Context &ctx, const de::Function::ArgumentValues &)
 {
-    P_GiveBackpack(&contextPlayer(ctx));
+    P_GiveBackpack(&P_ContextPlayer(ctx));
     return nullptr;
 }
 #endif
 
 static de::Value *Function_Player_GiveArmor(de::Context &ctx, const de::Function::ArgumentValues &args)
 {
-    player_t *plr = &contextPlayer(ctx);
+    player_t *plr = &P_ContextPlayer(ctx);
     const int type = args.at(0)->asInt();
     const int points = args.at(1)->asInt();
 
@@ -333,34 +325,26 @@ static de::Value *Function_Player_Power(de::Context &ctx, const de::Function::Ar
     {
         throw de::Error("Function_Player_Power", "invalid power type");
     }
-    return new de::NumberValue(contextPlayer(ctx).powers[power]);
+    return new de::NumberValue(P_ContextPlayer(ctx).powers[power]);
 }
 
 static de::Value *Function_Player_GivePower(de::Context &ctx, const de::Function::ArgumentValues &args)
 {
-    P_GivePower(&contextPlayer(ctx), powertype_t(args.at(0)->asInt()));
+    P_GivePower(&P_ContextPlayer(ctx), powertype_t(args.at(0)->asInt()));
     return nullptr;
 }
 
 static de::Value *Function_Player_ShotAmmo(de::Context &ctx, const de::Function::ArgumentValues &)
 {
-    P_ShotAmmo(&contextPlayer(ctx));
+    P_ShotAmmo(&P_ContextPlayer(ctx));
     return nullptr;
 }
-
-#if defined(__JHERETIC__)
-static de::Value *Function_Player_SetFlameCount(de::Context &ctx, const de::Function::ArgumentValues &args)
-{
-    contextPlayer(ctx).flameCount = args.at(0)->asInt();
-    return nullptr;
-}
-#endif
 
 #if defined(HAVE_EARTHQUAKE)
 // Script function to control earthquakes.
 static de::Value *Function_Player_SetLocalQuake(de::Context &ctx, const de::Function::ArgumentValues &args)
 {
-    const auto plr = &contextPlayer(ctx) - players;
+    const auto plr = &P_ContextPlayer(ctx) - players;
     localQuakeHappening[plr] = args.at(0)->asInt();
     localQuakeTimeout[plr] = args.at(1)->asInt();
     players[plr].update |= PSF_LOCAL_QUAKE;
@@ -419,10 +403,6 @@ void Common_Load()
             spawnMissileArgs["angle"] = new NoneValue;
             spawnMissileArgs["momz"] = new NumberValue(0.0);
 
-            Function::Defaults attackArgs;
-            attackArgs["damage"] = new NumberValue(0.0);
-            attackArgs["missile"] = new NoneValue;
-
             gameBindings->init(scr.builtInClass("World", "Thing"))
                 << DENG2_FUNC_DEFS(Thing_SpawnMissile,
                                    "spawnMissile",
@@ -437,10 +417,6 @@ void Common_Load()
 #endif
 #if defined(MSF_AMBUSH)
             world.set("MSF_AMBUSH", MSF_AMBUSH);
-#endif
-
-#if defined(__JHERETIC__)
-            *gameBindings << DENG2_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs);
 #endif
         }
 
@@ -470,21 +446,6 @@ void Common_Load()
             *gameBindings
                 << DENG2_FUNC_DEFS (Player_SetLocalQuake, "setLocalQuake", "intensity" << "duration", setLocalQuakeArgs);
 #endif
-
-#if defined(__JHERETIC__)
-            *gameBindings
-                << DENG2_FUNC(Player_SetFlameCount, "setFlameCount", "tics");
-
-            // Heretic: Powerup constants.
-            playerClass.set("PT_ALLMAP", PT_ALLMAP);
-            playerClass.set("PT_FLIGHT", PT_FLIGHT);
-            playerClass.set("PT_HEALTH2", PT_HEALTH2);
-            playerClass.set("PT_INFRARED", PT_INFRARED);
-            playerClass.set("PT_INVISIBILITY", PT_INVISIBILITY);
-            playerClass.set("PT_INVULNERABILITY", PT_INVULNERABILITY);
-            playerClass.set("PT_SHIELD", PT_SHIELD);
-            playerClass.set("PT_WEAPONLEVEL2", PT_WEAPONLEVEL2);
-#endif
         }
     }
 }
@@ -499,10 +460,6 @@ void Common_Unload()
     // other symbols need to be manually cleaned up.
     {
         scr["World"].removeMembersWithPrefix("MSF_");
-
-#if defined(__JHERETIC__)
-        scr.builtInClass("App", "Player").removeMembersWithPrefix("PT_");
-#endif
     }
 
     DENG2_ASSERT(gameBindings != nullptr);
