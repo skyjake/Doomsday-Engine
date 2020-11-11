@@ -158,6 +158,19 @@ static de::Value *Function_Thing_Attack(de::Context &ctx, const de::Function::Ar
     return new NumberValue(P_Attack(src, meleeDamage, missileId));
 }
 
+static de::Value *
+Function_Audio_SetAmbientSequence(de::Context &, const de::Function::ArgumentValues &args)
+{
+    std::vector<int> seq;
+    for (const auto *value : args.at(1)->as<ArrayValue>().elements())
+    {
+        seq.push_back(value->asInt());
+    }
+    seq.push_back(-1); // always undefined, treated as `afxcmd_end`
+    P_DefineAmbientSfx(args.at(0)->asInt(), seq.data(), seq.size());
+    return nullptr;
+}
+
 /**
  * Called right after the game plugin is selected into use.
  */
@@ -190,7 +203,10 @@ DENG_ENTRYPOINT void DP_Load(void)
         attackArgs["missile"] = new NoneValue;
 
         Common_GameBindings().init(scr.builtInClass("World", "Thing"))
-                << DENG2_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs);
+            << DENG2_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs);
+
+        Common_GameBindings().init(scr.nativeModule("Audio"))
+            << DE_FUNC(Audio_SetAmbientSequence, "setAmbientSequence", "id" << "cmds");
     }
 }
 

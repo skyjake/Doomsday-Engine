@@ -870,6 +870,7 @@ void P_InitAmbientSound()
     AmbSfxTics       = 10 * TICSPERSEC;
     AmbSfxPtr        = AmbSndSeqInit;
     AmbSfxCurrentSeq = -1;
+    AmbDynamicSndSeq.clear();
 }
 
 static const int *ambientSeqPtr(int sequence)
