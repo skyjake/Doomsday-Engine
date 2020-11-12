@@ -907,7 +907,8 @@ void P_DefineAmbientSfx(int sequence, const int *seq, size_t count)
     // Restart if this was the current sequence.
     if (AmbSfxCurrentSeq == sequence)
     {
-        AmbSfxPtr = ambientSeqPtr(sequence);
+        AmbSfxPtr  = ambientSeqPtr(sequence);
+        AmbSfxTics = 6 * TICSPERSEC + P_Random(); // not right away, though
     }
 }
 
