@@ -80,6 +80,7 @@ RuntimeDefs runtimeDefs;
 
 static bool defsInited;
 static mobjinfo_t *gettingFor;
+static Binder *defsBinder;
 
 static inline FS1 &fileSys()
 {
@@ -100,6 +101,11 @@ void RuntimeDefs::clear()
     stateInfo.clear();
 }
 
+static Value *Function_Defs_GetSoundNum(Context &, const Function::ArgumentValues &args)
+{
+    return new NumberValue(DED_Definitions()->getSoundNum(args.at(0)->asText()));
+}
+
 void Def_Init()
 {
     ::runtimeDefs.clear();
@@ -108,7 +114,14 @@ void Def_Init()
     auto &defs = *DED_Definitions();
 
     // Make the definitions visible in the global namespace.
-    App::app().scriptSystem().addNativeModule("Defs", defs.names);
+    auto &scr = ScriptSystem::get();
+    scr.addNativeModule("Defs", defs.names);
+
+    /// TODO: Add a DEDRegister for sounds so this lookup is not needed and can be converted
+    /// to a utility script function.
+    defsBinder = new Binder;
+    defsBinder->init(defs.names)
+        << DE_FUNC(Defs_GetSoundNum, "getSoundNum", "name");
 
     // Constants for definitions.
     DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_SPAWN);
@@ -130,6 +143,9 @@ void Def_Init()
 
 void Def_Destroy()
 {
+    delete defsBinder;
+    defsBinder = nullptr;
+
     App::app().scriptSystem().removeNativeModule("Defs");
 
     DED_Definitions()->clear();

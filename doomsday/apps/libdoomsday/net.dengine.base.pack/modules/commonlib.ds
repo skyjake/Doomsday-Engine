@@ -1,6 +1,6 @@
 # Additional functions for games
 
-import World, Math, Defs
+import World, Math, Defs, Audio
 
 def World.Thing.info()
     return Defs.things.order[self.type()]
@@ -29,4 +29,41 @@ end
 
 def World.Thing.setNoBlocking()
     self.changeFlags(1, 0x2, False)  # MF_SOLID in mo.flags
+end
+
+def Audio.setAmbientSequence(id, commands)
+    # Defines or redefines an ambient sound effect sequence (Heretic only).
+    # - id:       Sequence ID. The built-in ones are 0-9.
+    # - commands: Text and argument values specying the sequence.
+
+    # These are the afxcmds defined in Heretic's p_spec.cpp.
+    AFXCMD = {            # Parameters:
+        'play':       0,  # (sound)
+        'playabsvol': 1,  # (sound, volume)
+        'playrelvol': 2,  # (sound, volume)
+        'delay':      3,  # (ticks)
+        'delayrand':  4,  # (andbits)
+        'end':        5
+    }
+
+    # Convert the commands to the internal representation.
+    seq = []
+    i = 0
+    while i < len(commands)
+        cmd = commands[i]
+        seq += [AFXCMD[cmd]]
+        # Parameters.
+        if cmd == 'play'
+            seq += [Defs.getSoundNum(commands[i + 1])]
+            i += 1
+        elsif cmd in ['playabsvol', 'playrelvol']
+            seq += [Defs.getSoundNum(commands[i + 1]), commands[i + 2]]
+            i += 2
+        elsif cmd in ['delay', 'delayrand']
+            seq += [commands[i + 1]]
+            i += 1
+        end
+        i += 1
+    end
+    Audio.defineAmbientSfx(id, seq)
 end

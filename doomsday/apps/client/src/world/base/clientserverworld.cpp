@@ -682,15 +682,6 @@ DENG2_PIMPL(ClientServerWorld)
             }
         }
 
-        // Script to run after setup.
-        if (const String onSetupSrc = mapInfo.gets("onSetup"))
-        {
-            Script script(onSetupSrc);
-            Process proc;
-            proc.run(script);
-            proc.execute();
-        }
-
         // Reset world time.
         time = 0;
 
