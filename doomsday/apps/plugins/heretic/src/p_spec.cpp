@@ -914,12 +914,15 @@ void P_DefineAmbientSfx(int sequence, const int *seq, size_t count)
 
 void P_AddAmbientSfx(int sequence)
 {
+    LOG_AS("P_AddAmbientSfx");
+
     if (AmbSfxCount == MAX_AMBIENT_SFX)
     {
         LOG_MAP_ERROR("Too many ambient sound sequences per level (max: %d)") << MAX_AMBIENT_SFX;
         return;
     }
 
+    LOG_MAP_VERBOSE("Adding sequence %d for playback") << sequence;
     if (const int *seqPtr = ambientSeqPtr(sequence))
     {
         LevelAmbientSfx[AmbSfxCount++] = seqPtr;
@@ -988,8 +991,8 @@ void P_AmbientSound()
 
         case afxcmd_end:
             AmbSfxTics = 6 * TICSPERSEC + P_Random();
-            AmbSfxPtr  = LevelAmbientSfx[AmbSfxCurrentSeq = P_Random() % AmbSfxCount];           
-            break;
+            AmbSfxPtr  = LevelAmbientSfx[AmbSfxCurrentSeq = P_Random() % AmbSfxCount];
+            return;
         }
     }
 }
