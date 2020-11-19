@@ -67,14 +67,17 @@ InFine {
 
     Image back "HELP1"
     Pause
+    Sound DORCLS
 
     Del back
     Image back "HELP2"
     Pause
+    Sound DORCLS
 
     Del back
     Image back "CREDIT"
     Pause
+    Sound DORCLS
   };
 }
 
