@@ -283,6 +283,27 @@ static de::Value *Function_Player_Health(de::Context &ctx, const de::Function::A
     return new de::NumberValue(P_ContextPlayer(ctx).health);
 }
 
+static de::Value *Function_Player_SetHealth(de::Context &ctx, const de::Function::ArgumentValues &args)
+{
+    auto &player = P_ContextPlayer(ctx);
+    const int hp = de::max(0, args.at(0)->asInt());
+    if (hp <= 0)
+    {
+        // Kill the player.
+        P_DamageMobj(player.plr->mo, NULL, NULL, 10000, false);
+    }
+    else
+    {
+        player.health = hp;
+        if (player.plr->mo)
+        {
+            player.plr->mo->health = hp;
+        }
+        player.update |= PSF_HEALTH;
+    }
+    return nullptr;
+}
+
 #if !defined (__JHEXEN__)
 #  define HAVE_DOOM_ARMOR_BINDINGS 1
 
@@ -428,7 +449,8 @@ void Common_Load()
                 << DENG2_FUNC       (Player_Power, "power", "type")
                 << DENG2_FUNC_NOARG (Player_ShotAmmo, "shotAmmo")
                 << DENG2_FUNC       (Player_GiveArmor, "giveArmor", "type" << "points")
-                << DE_FUNC          (Player_GivePower, "givePower", "type");
+                << DE_FUNC          (Player_GivePower, "givePower", "type")
+                << DE_FUNC          (Player_SetHealth, "setHealth", "hp");
 #if !defined(__JHEXEN__)
             *gameBindings
                 << DE_FUNC_NOARG    (Player_GiveBackpack, "giveBackpack");
