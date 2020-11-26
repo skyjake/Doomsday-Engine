@@ -355,6 +355,17 @@ static de::Value *Function_Player_GivePower(de::Context &ctx, const de::Function
     return nullptr;
 }
 
+static de::Value *Function_Player_GiveAmmo(de::Context &ctx, const de::Function::ArgumentValues &args)
+{
+    const int type = args.at(0)->asInt();
+    if (type <= AT_FIRST || type > NUM_AMMO_TYPES)
+    {
+        throw de::Error("Function_Player_GiveAmmo", "Invalid ammo type");
+    }
+    P_GiveAmmo(&P_ContextPlayer(ctx), ammotype_t(type), args.at(1)->asInt());
+    return nullptr;
+}
+
 static de::Value *Function_Player_ShotAmmo(de::Context &ctx, const de::Function::ArgumentValues &)
 {
     P_ShotAmmo(&P_ContextPlayer(ctx));
@@ -448,6 +459,7 @@ void Common_Load()
                 << DENG2_FUNC_NOARG (Player_Health, "health")
                 << DENG2_FUNC       (Player_Power, "power", "type")
                 << DENG2_FUNC_NOARG (Player_ShotAmmo, "shotAmmo")
+                << DE_FUNC          (Player_GiveAmmo, "giveAmmo", "type" << "amount")
                 << DENG2_FUNC       (Player_GiveArmor, "giveArmor", "type" << "points")
                 << DE_FUNC          (Player_GivePower, "givePower", "type")
                 << DE_FUNC          (Player_SetHealth, "setHealth", "hp");
