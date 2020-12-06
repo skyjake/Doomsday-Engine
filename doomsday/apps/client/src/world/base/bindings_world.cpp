@@ -23,9 +23,11 @@
 #include "world/p_players.h"
 #include "audio/audiosystem.h"
 #include "dd_main.h"
+#include "def_main.h"
 
 #include <doomsday/defs/ded.h>
 #include <doomsday/world/mobj.h>
+#include <doomsday/world/mobjthinkerdata.h>
 #include <de/Context>
 #include <de/RecordValue>
 
@@ -34,6 +36,46 @@ using namespace de;
 namespace world {
 
 //-------------------------------------------------------------------------------------------------
+
+static Value *Function_World_FindThings(Context &, const Function::ArgumentValues &args)
+{
+    const int type = args.at(0)->asInt();
+
+    std::unique_ptr<ArrayValue> things(new ArrayValue);
+    App_World().map().thinkers().forAll(1 | 2, [&things, type](thinker_t *th) {
+        if (Thinker_IsMobj(th))
+        {
+            const mobj_t *mo = (mobj_t *) th;
+            if (mo->type == type)
+            {
+                things->add(new RecordValue(THINKER_DATA(*th, MobjThinkerData).objectNamespace()));
+            }
+        }
+        return LoopContinue;
+    });
+    return things.release();
+}
+
+//-------------------------------------------------------------------------------------------------
+
+static Value *Function_Thing_Init(Context &ctx, const Function::ArgumentValues &args)
+{
+    ctx.nativeSelf().as<RecordValue>().dereference().set("__id__", args.at(0)->asInt());
+    return nullptr;
+}
+
+static Value *Function_Thing_SetState(Context &ctx, const Function::ArgumentValues &args)
+{
+    auto &mo = ClientServerWorld::contextMobj(ctx);
+    Mobj_SetState(&mo, args.at(0)->asInt());
+    return nullptr;
+}
+
+static Value *Function_Thing_State(Context &ctx, const Function::ArgumentValues &)
+{
+    const auto &mo = ClientServerWorld::contextMobj(ctx);
+    return new NumberValue(runtimeDefs.states.indexOf(mo.state));
+}
 
 static Value *Function_Thing_AddMom(Context &ctx, const Function::ArgumentValues &args)
 {
@@ -145,6 +187,12 @@ static Value *Function_Thing_Type(Context &ctx, const Function::ArgumentValues &
 
 void initBindings(Binder &binder, Record &worldModule)
 {
+    // Functions
+    {
+        binder.init(worldModule)
+            << DE_FUNC(World_FindThings, "findThings", "typeIndex"); // TODO: add more params to make generic finder
+    }
+
     // Thing
     {
         Record &thing = worldModule.addSubrecord("Thing");
@@ -153,6 +201,7 @@ void initBindings(Binder &binder, Record &worldModule)
         startSoundArgs["volume"] = new NumberValue(1.0);
 
         binder.init(thing)
+                << DE_FUNC         (Thing_Init,       "__init__", "id")
                 << DENG2_FUNC      (Thing_AddMom,     "addMom", "delta")
                 << DENG2_FUNC      (Thing_ChangeFlags,"changeFlags", "index" << "flags" << "doSet")
                 << DENG2_FUNC      (Thing_Flags,      "flags", "index")
@@ -162,7 +211,9 @@ void initBindings(Binder &binder, Record &worldModule)
                 << DENG2_FUNC_NOARG(Thing_Mom,        "mom")
                 << DENG2_FUNC_NOARG(Thing_Player,     "player")
                 << DENG2_FUNC_NOARG(Thing_Pos,        "pos")
+                << DE_FUNC         (Thing_SetState,   "setState", "index")
                 << DENG2_FUNC_DEFS (Thing_StartSound, "startSound", "id" << "volume", startSoundArgs)
+                << DE_FUNC_NOARG   (Thing_State,      "state")
                 << DENG2_FUNC      (Thing_Recoil,     "recoil", "force")
                 << DENG2_FUNC_NOARG(Thing_Type,       "type");
     }

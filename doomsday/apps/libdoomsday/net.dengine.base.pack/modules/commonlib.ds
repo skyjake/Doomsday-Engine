@@ -2,6 +2,18 @@
 
 import World, Math, Defs, Audio
 
+def Defs.getStateNum(stateId)
+    return Defs.states.idLookup[stateId.lower()].__order__
+end
+
+def Defs.getThingNum(thingId)
+    return Defs.things.idLookup[thingId.lower()].__order__
+end
+
+def World.listThings(thingId)
+    return World.findThings(typeIndex=Defs.getThingNum(thingId))
+end
+
 def World.Thing.info()
     return Defs.things.order[self.type()]
 end
