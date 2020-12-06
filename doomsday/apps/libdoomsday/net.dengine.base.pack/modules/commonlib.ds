@@ -11,7 +11,7 @@ def Defs.getThingNum(thingId)
 end
 
 def World.listThings(thingId)
-    return World.findThings(typeIndex=Defs.getThingNum(thingId))
+    return World.findThings(typeIndex = Defs.getThingNum(thingId))
 end
 
 def World.Thing.info()

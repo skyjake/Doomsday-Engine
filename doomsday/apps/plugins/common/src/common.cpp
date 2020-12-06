@@ -225,6 +225,16 @@ static de::Value *Function_Thing_Target(de::Context &ctx, const de::Function::Ar
     return nullptr;
 }
 
+static de::Value *Function_Thing_Tracer(de::Context &ctx, const de::Function::ArgumentValues &)
+{
+    auto &mo = P_ContextMobj(ctx);
+    if (mo.tracer)
+    {
+        return new de::RecordValue(THINKER_DATA(mo.tracer->thinker, ThinkerData).objectNamespace());
+    }
+    return nullptr;
+}
+
 static int playerNumberArgument(const de::Value &arg)
 {
     if (de::is<de::NoneValue>(arg))
@@ -466,7 +476,8 @@ void Common_Load()
                                    "spawnMissile",
                                    "id" << "angle" << "momz",
                                    spawnMissileArgs)
-                << DE_FUNC_NOARG(Thing_Target, "target");
+                << DE_FUNC_NOARG(Thing_Target, "target")
+                << DE_FUNC_NOARG(Thing_Tracer, "tracer");
 
 #if defined (HAVE_SEEKER_MISSILE)
             *gameBindings << DE_FUNC(Thing_SeekerMissile, "seekerMissile", "thresh" << "turnMax");
