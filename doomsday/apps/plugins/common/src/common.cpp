@@ -191,7 +191,7 @@ static de::Value *Function_Thing_SpawnMissile(de::Context &ctx, const de::Functi
     else
     {
 #if defined(__JHERETIC__) || defined(__JHEXEN__)
-        const double angle = args.at(1)->asNumber();
+        const double angle = args.at(1)->asNumber() / 360.0;
         const double momZ  = args.at(2)->asNumber();
         P_SpawnMissileAngle(missileId, src, angle_t(angle * ANGLE_MAX), momZ);
 #endif
