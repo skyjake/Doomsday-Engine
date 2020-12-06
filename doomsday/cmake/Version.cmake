@@ -18,8 +18,8 @@ if (NOT DEFINED DENG_BUILD)
 endif ()
 
 set (DENG_RELEASE_TYPE
-    Unstable
-    #Candidate
+    #Unstable
+    Candidate
     #Stable
 )
 
