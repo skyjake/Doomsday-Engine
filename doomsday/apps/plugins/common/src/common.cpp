@@ -28,6 +28,11 @@
 #include "polyobjs.h"
 #include "r_common.h"
 
+#if defined (__JHERETIC__) || defined (__JHEXEN__)
+#  define HAVE_SEEKER_MISSILE 1
+#  include "p_local.h"
+#endif
+
 #include <de/Binder>
 #include <de/Context>
 #include <de/NoneValue>
@@ -198,6 +203,17 @@ static de::Value *Function_Thing_SpawnMissile(de::Context &ctx, const de::Functi
     }
     return nullptr;
 }
+
+#if defined (HAVE_SEEKER_MISSILE)
+static de::Value *Function_Thing_SeekerMissile(de::Context &ctx,
+                                               const de::Function::ArgumentValues &args)
+{
+    const angle_t thresh  = args.at(0)->asNumber() * ANGLE_1;
+    const angle_t turnMax = args.at(1)->asNumber() * ANGLE_1;
+    P_SeekerMissile(&P_ContextMobj(ctx), thresh, turnMax);
+    return nullptr;
+}
+#endif
 
 static int playerNumberArgument(const de::Value &arg)
 {
@@ -372,7 +388,7 @@ static de::Value *Function_Player_ShotAmmo(de::Context &ctx, const de::Function:
     return nullptr;
 }
 
-#if defined(HAVE_EARTHQUAKE)
+#if defined (HAVE_EARTHQUAKE)
 // Script function to control earthquakes.
 static de::Value *Function_Player_SetLocalQuake(de::Context &ctx, const de::Function::ArgumentValues &args)
 {
@@ -441,13 +457,17 @@ void Common_Load()
                                    "id" << "angle" << "momz",
                                    spawnMissileArgs);
 
+#if defined (HAVE_SEEKER_MISSILE)
+            *gameBindings << DE_FUNC(Thing_SeekerMissile, "seekerMissile", "thresh" << "turnMax");
+#endif
+
             auto &world = scr["World"];
             world.set("MSF_Z_FLOOR", MSF_Z_FLOOR);
             world.set("MSF_Z_CEIL", MSF_Z_CEIL);
-#if defined(MSF_DEAF)
+#if defined (MSF_DEAF)
             world.set("MSF_AMBUSH", MSF_DEAF);
 #endif
-#if defined(MSF_AMBUSH)
+#if defined (MSF_AMBUSH)
             world.set("MSF_AMBUSH", MSF_AMBUSH);
 #endif
         }
