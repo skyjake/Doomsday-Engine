@@ -215,6 +215,16 @@ static de::Value *Function_Thing_SeekerMissile(de::Context &ctx,
 }
 #endif
 
+static de::Value *Function_Thing_Target(de::Context &ctx, const de::Function::ArgumentValues &)
+{
+    auto &mo = P_ContextMobj(ctx);
+    if (mo.target)
+    {
+        return new de::RecordValue(THINKER_DATA(mo.target->thinker, ThinkerData).objectNamespace());
+    }
+    return nullptr;
+}
+
 static int playerNumberArgument(const de::Value &arg)
 {
     if (de::is<de::NoneValue>(arg))
@@ -455,7 +465,8 @@ void Common_Load()
                 << DENG2_FUNC_DEFS(Thing_SpawnMissile,
                                    "spawnMissile",
                                    "id" << "angle" << "momz",
-                                   spawnMissileArgs);
+                                   spawnMissileArgs)
+                << DE_FUNC_NOARG(Thing_Target, "target");
 
 #if defined (HAVE_SEEKER_MISSILE)
             *gameBindings << DE_FUNC(Thing_SeekerMissile, "seekerMissile", "thresh" << "turnMax");
