@@ -82,6 +82,14 @@ String operatorToText(Operator op)
         return "SLICE";
     case RESULT_TRUE:
         return "RESULT_TRUE";
+    case BITWISE_AND:
+        return "BITWISE_AND";
+    case BITWISE_OR:
+        return "BITWISE_OR";
+    case BITWISE_XOR:
+        return "BITWISE_XOR";
+    case BITWISE_NOT:
+        return "BITWISE_NOT";
     default:
         return "UNKNOWN";
     }        
@@ -105,12 +113,12 @@ bool leftOperandByReference(Operator op)
 
 bool isUnary(Operator op)
 {
-    return (op == PLUS || op == MINUS || op == NOT || op == RESULT_TRUE);
+    return (op == PLUS || op == MINUS || op == NOT || op == BITWISE_NOT || op == RESULT_TRUE);
 }
 
 bool isBinary(Operator op)
 {
-    return (op != NOT);
+    return (op != NOT && op != BITWISE_NOT);
 }
 
 } // namespace de
