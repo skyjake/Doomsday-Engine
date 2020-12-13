@@ -243,8 +243,11 @@ public:
     Vector2 abs() const {
         return Vector2(de::abs(x), de::abs(y));
     }
-    ddouble dot(Vector2 const &other) const {
+    double dot(const Vector2 &other) const {
         return x * other.x + y * other.y;
+    }
+    double cross(const Vector2 &other) const {
+        return x * other.y - y * other.x;
     }
     Vector2 min(Vector2 const &other) const {
         return Vector2(de::min(x, other.x), de::min(y, other.y));
@@ -487,6 +490,7 @@ public:
     inline void decompose(Type *array) const {
         for (int i = 0; i < 3; ++i) array[i] = (*this)[i];
     }
+    Vector2<Type> xy() const { return *this; }
     Vector2<Type> xz() const { return swizzle(*this, AxisX, AxisZ); }
     Vector3<Type> xzy() const { return swizzle(*this, AxisX, AxisZ, AxisY); }
     Vector3<Type> zyx() const { return swizzle(*this, AxisZ, AxisY, AxisX); }

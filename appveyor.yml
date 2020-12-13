@@ -10,6 +10,7 @@ before_build:
     - 7z x deps.7z
     - md build-ci
     - cd build-ci
+    - set PATH=C:\Python38;%PATH%
     - cmake -G "Visual Studio 15 2017" -DQMAKE=C:\Qt\5.6\msvc2015\bin\qmake.exe -DDENG_ENABLE_TESTS=ON -DDENG_ENABLE_TURBO=ON ..\doomsday
 build:
     parallel: true

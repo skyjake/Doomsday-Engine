@@ -40,6 +40,9 @@
 #include "p_user.h"
 #include "player.h"
 
+#include <map>
+#include <vector>
+
 #define MAX_AMBIENT_SFX  8 ///< Per level
 
 enum afxcmd_t
@@ -57,27 +60,28 @@ static void P_ShootSpecialLine(mobj_t *thing, Line *line);
 
 ThinkerT<mobj_t> LavaInflictor;
 
-int *LevelAmbientSfx[MAX_AMBIENT_SFX];
-int *AmbSfxPtr;
-int AmbSfxCount;
-int AmbSfxTics;
-int AmbSfxVolume;
+static const int *LevelAmbientSfx[MAX_AMBIENT_SFX];
+static const int *AmbSfxPtr;
+static int AmbSfxCurrentSeq; // corresponds to AmbSfxPtr
+static int AmbSfxCount;
+static int AmbSfxTics;
+static int AmbSfxVolume;
 
-int AmbSndSeqInit[] = { // Startup
+static int AmbSndSeqInit[] = { // Startup
     afxcmd_end
 };
 
-int AmbSndSeq1[] = { // Scream
+static int AmbSndSeq1[] = { // Scream
     afxcmd_play, SFX_AMB1,
     afxcmd_end
 };
 
-int AmbSndSeq2[] = { // Squish
+static int AmbSndSeq2[] = { // Squish
     afxcmd_play, SFX_AMB2,
     afxcmd_end
 };
 
-int AmbSndSeq3[] = { // Drops
+static int AmbSndSeq3[] = { // Drops
     afxcmd_play, SFX_AMB3,
     afxcmd_delay, 16,
     afxcmd_delayrand, 31,
@@ -99,7 +103,7 @@ int AmbSndSeq3[] = { // Drops
     afxcmd_end
 };
 
-int AmbSndSeq4[] = { // SlowFootSteps
+static int AmbSndSeq4[] = { // SlowFootSteps
     afxcmd_play, SFX_AMB4,
     afxcmd_delay, 15,
     afxcmd_playrelvol, SFX_AMB11, -3,
@@ -118,7 +122,7 @@ int AmbSndSeq4[] = { // SlowFootSteps
     afxcmd_end
 };
 
-int AmbSndSeq5[] = { // Heartbeat
+static int AmbSndSeq5[] = { // Heartbeat
     afxcmd_play, SFX_AMB5,
     afxcmd_delay, 35,
     afxcmd_play, SFX_AMB5,
@@ -129,7 +133,7 @@ int AmbSndSeq5[] = { // Heartbeat
     afxcmd_end
 };
 
-int AmbSndSeq6[] = { // Bells
+static int AmbSndSeq6[] = { // Bells
     afxcmd_play, SFX_AMB6,
     afxcmd_delay, 17,
     afxcmd_playrelvol, SFX_AMB6, -8,
@@ -140,17 +144,17 @@ int AmbSndSeq6[] = { // Bells
     afxcmd_end
 };
 
-int AmbSndSeq7[] = { // Growl
+static int AmbSndSeq7[] = { // Growl
     afxcmd_play, SFX_BSTSIT,
     afxcmd_end
 };
 
-int AmbSndSeq8[] = { // Magic
+static int AmbSndSeq8[] = { // Magic
     afxcmd_play, SFX_AMB8,
     afxcmd_end
 };
 
-int AmbSndSeq9[] = { // Laughter
+static int AmbSndSeq9[] = { // Laughter
     afxcmd_play, SFX_AMB9,
     afxcmd_delay, 16,
     afxcmd_playrelvol, SFX_AMB9, -4,
@@ -165,7 +169,7 @@ int AmbSndSeq9[] = { // Laughter
     afxcmd_end
 };
 
-int AmbSndSeq10[] = { // FastFootsteps
+static int AmbSndSeq10[] = { // FastFootsteps
     afxcmd_play, SFX_AMB4,
     afxcmd_delay, 8,
     afxcmd_playrelvol, SFX_AMB11, -3,
@@ -184,7 +188,7 @@ int AmbSndSeq10[] = { // FastFootsteps
     afxcmd_end
 };
 
-int* AmbientSfx[] = {
+static const int *AmbientSfx[] = {
     AmbSndSeq1, // Scream
     AmbSndSeq2, // Squish
     AmbSndSeq3, // Drops
@@ -196,6 +200,10 @@ int* AmbientSfx[] = {
     AmbSndSeq9, // Laughter
     AmbSndSeq10 // FastFootsteps
 };
+
+static constexpr int NUM_BUILTIN_AMBIENT_SFX = int(sizeof(AmbientSfx) / sizeof(AmbientSfx[0]));
+
+static std::map<int, std::vector<int>> AmbDynamicSndSeq;
 
 dd_bool P_ActivateLine(Line *ld, mobj_t *mo, int side, int actType)
 {
@@ -857,19 +865,72 @@ void P_PlayerInWindSector(player_t *player)
 
 void P_InitAmbientSound()
 {
-    AmbSfxCount  = 0;
-    AmbSfxVolume = 0;
-    AmbSfxTics   = 10 * TICSPERSEC;
-    AmbSfxPtr    = AmbSndSeqInit;
+    AmbSfxCount      = 0;
+    AmbSfxVolume     = 0;
+    AmbSfxTics       = 10 * TICSPERSEC;
+    AmbSfxPtr        = AmbSndSeqInit;
+    AmbSfxCurrentSeq = -1;
+    AmbDynamicSndSeq.clear();
+}
+
+static const int *ambientSeqPtr(int sequence)
+{
+    if (AmbDynamicSndSeq.find(sequence) != AmbDynamicSndSeq.end())
+    {
+        return AmbDynamicSndSeq[sequence].data();
+    }
+    else if (sequence < NUM_BUILTIN_AMBIENT_SFX)
+    {
+        return AmbientSfx[sequence];
+    }
+    return nullptr;
+}
+
+void P_DefineAmbientSfx(int sequence, const int *seq, size_t count)
+{
+    const int *oldSeq = ambientSeqPtr(sequence); // Becomes obsolete.
+
+    AmbDynamicSndSeq[sequence] = {seq, seq + count};
+
+    // If this is a previously existing sequence, it may need to be reset if active in the level.
+    if (oldSeq)
+    {
+        for (auto &ptr : LevelAmbientSfx)
+        {
+            if (ptr == oldSeq)
+            {
+                ptr = ambientSeqPtr(sequence);
+            }
+        }
+    }
+
+    // Restart if this was the current sequence.
+    if (AmbSfxCurrentSeq == sequence)
+    {
+        AmbSfxPtr  = ambientSeqPtr(sequence);
+        AmbSfxTics = 6 * TICSPERSEC + P_Random(); // not right away, though
+    }
 }
 
 void P_AddAmbientSfx(int sequence)
 {
-    if(AmbSfxCount == MAX_AMBIENT_SFX)
+    LOG_AS("P_AddAmbientSfx");
+
+    if (AmbSfxCount == MAX_AMBIENT_SFX)
     {
-        Con_Error("Too many ambient sound sequences");
+        LOG_MAP_ERROR("Too many ambient sound sequences per level (max: %d)") << MAX_AMBIENT_SFX;
+        return;
     }
-    LevelAmbientSfx[AmbSfxCount++] = AmbientSfx[sequence];
+
+    LOG_MAP_VERBOSE("Adding sequence %d for playback") << sequence;
+    if (const int *seqPtr = ambientSeqPtr(sequence))
+    {
+        LevelAmbientSfx[AmbSfxCount++] = seqPtr;
+    }
+    else
+    {
+        LOG_MAP_WARNING("Ambient sound sequence %d does not exist") << sequence;
+    }
 }
 
 void P_AmbientSound()
@@ -884,6 +945,8 @@ void P_AmbientSound()
 
     if(--AmbSfxTics)
         return;
+
+    LOG_AS("P_AmbientSound");
 
     forever
     {
@@ -921,14 +984,15 @@ void P_AmbientSound()
             AmbSfxTics = P_Random() & (*AmbSfxPtr++);
             return;
 
+        default:
+            LOG_RES_ERROR("Unknown afxcmd %d, stopping ambient sequence %d")
+                << cmd << AmbSfxCurrentSeq;
+            /* fall through */
+
         case afxcmd_end:
             AmbSfxTics = 6 * TICSPERSEC + P_Random();
-            AmbSfxPtr  = LevelAmbientSfx[P_Random() % AmbSfxCount];
+            AmbSfxPtr  = LevelAmbientSfx[AmbSfxCurrentSeq = P_Random() % AmbSfxCount];
             return;
-
-        default:
-            Con_Error("P_AmbientSound: Unknown afxcmd %d", cmd);
-            break;
         }
     }
 }

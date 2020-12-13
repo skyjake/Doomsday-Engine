@@ -29,7 +29,7 @@
 #include "world/maputil.h"
 #include "world/surface.h"
 #include "client/clientsubsector.h"
-
+#include "MaterialAnimator"
 #include "render/rend_main.h"  /// devRendSkyMode @todo remove me
 
 #include "Face"
@@ -342,6 +342,11 @@ struct WallEdge::Impl : public IHPlane
                 LineSide const &lineSide = seg.lineSide();
                 Surface const &middle    = lineSide.middle();
 
+                const bool isExtendedMasked = middle.hasMaterial() &&
+                                              !middle.materialAnimator()->isOpaque() &&
+                                              !lineSide.top().hasMaterial() &&
+                                              lineSide.sector().ceiling().surface().material().isSkyMasked();
+
                 if (!line.isSelfReferencing() && ffloor == &subsec.sector().floor())
                 {
                     lo = de::max(bfloor->heightSmoothed(), ffloor->heightSmoothed());
@@ -354,7 +359,7 @@ struct WallEdge::Impl : public IHPlane
 
                 if (!line.isSelfReferencing() && fceil == &subsec.sector().ceiling())
                 {
-                    hi = de::min(bceil->heightSmoothed(),  fceil->heightSmoothed());
+                    hi = de::min(bceil->heightSmoothed(), fceil->heightSmoothed());
                 }
                 else
                 {
@@ -416,6 +421,16 @@ struct WallEdge::Impl : public IHPlane
                         }
                     }
                 }
+
+                // Icarus map01: force fields use a masked middle texture that expands above the sector
+                if (isExtendedMasked)
+                {
+                    if (hi - lo < middle.material().height() + middle.originSmoothed().y)
+                    {
+                        hi = lo + middle.material().height() + middle.originSmoothed().y;
+                    }
+                }
+
                 break; }
             }
         }

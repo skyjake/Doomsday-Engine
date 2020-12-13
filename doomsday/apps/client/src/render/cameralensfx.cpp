@@ -44,6 +44,7 @@
 #include "render/fx/bloom.h"
 #include "render/fx/colorfilter.h"
 #include "render/fx/lensflares.h"
+#include "render/fx/ramp.h"
 #include "render/fx/vignette.h"
 #include "world/p_players.h"
 
@@ -73,7 +74,8 @@ void LensFx_Init()
                 << new fx::Bloom(i)
                 << new fx::Vignette(i)
                 << new fx::LensFlares(i)        // IDX_LENS_FLARES
-                << new fx::ColorFilter(i);
+                << new fx::ColorFilter(i)
+                << new fx::Ramp(i);
     }
 }
 

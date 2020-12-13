@@ -22,6 +22,8 @@
 #include "jhexen.h"
 #include "p_spec.h"
 
+#include <acs/interpreter.h>
+
 #include <cstdio>
 #include <cstring>
 #include "acs/system.h"
@@ -121,6 +123,20 @@ dd_bool EV_LineSearchForPuzzleItem(Line *line, byte * /*args*/, mobj_t *mo)
 
     // Search player's inventory for puzzle items
     return P_InventoryUse(mo->player - players, type, false);
+}
+
+static bool isThingSpawnEventAllowed()
+{
+    if (gameMode == hexen_deathkings && acs::Interpreter::currentScriptNumber == 255)
+    {
+        // This is the auto-respawn script.
+        if (randf() >= float(cfg.deathkingsAutoRespawnChance) / 100.0f)
+        {
+            App_Log(DE2_MAP_VERBOSE, "Monster autorespawn suppressed in ACS script 255");
+            return false;
+        }
+    }
+    return true;
 }
 
 dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mobj_t *mo)
@@ -551,7 +567,14 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         break;
 
     case 135: // Thing_Spawn
-        success = EV_ThingSpawn(args, 1);
+        if (isThingSpawnEventAllowed())
+        {
+            success = EV_ThingSpawn(args, 1);
+        }
+        else
+        {
+            success = 1;
+        }
         break;
 
     case 136: // Thing_ProjectileGravity
@@ -559,7 +582,14 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         break;
 
     case 137: // Thing_SpawnNoFog
-        success = EV_ThingSpawn(args, 0);
+        if (isThingSpawnEventAllowed())
+        {
+            success = EV_ThingSpawn(args, 0);
+        }
+        else
+        {
+            success = 1;
+        }
         break;
 
     case 138: // Floor_Waggle

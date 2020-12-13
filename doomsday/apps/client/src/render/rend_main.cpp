@@ -747,8 +747,54 @@ ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
     case 1:  // Normal mode.
         if (!(devNoTexFix && surface.hasFixMaterial()))
         {
+            if (!surface.hasMaterial() && surface.parent().type() == DMU_SIDE)
+            {
+                const Line::Side &side = surface.parent().as<Line::Side>();
+                if (side.hasSector())
+                {
+                    if (auto *midAnim = side.middle().materialAnimator())
+                    {
+                        DENG2_ASSERT(&surface != &side.middle());
+                        if (!midAnim->isOpaque())
+                        {
+                            return &midAnim->material();
+                        }
+                    }
+
+                    if (&surface != &side.top() && !side.hasAtLeastOneMaterial())
+                    {
+                        // Keep it blank.
+                        return nullptr;
+                    }
+
+                    // Use the ceiling for missing top section, and floor for missing bottom section.
+                    if (&surface == &side.bottom())
+                    {
+                        return static_cast<ClientMaterial *>(side.sector().floor().surface().materialPtr());
+                    }
+                    else if (&surface == &side.top())
+                    {
+                        /*
+                        // TNT map31: missing upper texture, high ceiling in the room
+                        if (side.back().hasSector())
+                        {
+                            const auto &backSector = side.back().sector();
+                            //const auto backCeilZ = backSector.ceiling().heightSmoothed();
+                            //const auto frontCeilZ = side.sector().ceiling().heightSmoothed();
+                            if (fequal(backSector.ceiling().height(), backSector.floor().height()))
+                            {
+                                return nullptr;
+                            }
+                        }*/
+
+                        return static_cast<ClientMaterial *>(side.sector().ceiling().surface().materialPtr());
+                    }
+                }
+            }
             if (surface.hasMaterial() || surface.parent().type() != DMU_PLANE)
+            {
                 return static_cast<ClientMaterial *>(surface.materialPtr());
+            }
         }
 
         // Use special "missing" material.
@@ -2717,20 +2763,20 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
     {
         if (glowFactor > .0001f)
         {
-            if (material == surface.materialPtr())
-            {
-                parm.glowing = matAnimator.glowStrength();
-            }
-            else
-            {
-                auto *actualMaterial =
-                    surface.hasMaterial() ? static_cast<ClientMaterial *>(surface.materialPtr())
-                                          : &ClientMaterial::find(de::Uri("System", Path("missing")));
+//            if (material == surface.materialPtr())
+//            {
+            parm.glowing = matAnimator.glowStrength();
+//            }
+//            else
+//            {
+//                auto *actualMaterial =
+//                    surface.hasMaterial() ? static_cast<ClientMaterial *>(surface.materialPtr())
+//                                          : &ClientMaterial::find(de::Uri("System", Path("missing")));
 
-                parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
-            }
+//                parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
+//            }
 
-            parm.glowing *= ::glowFactor;
+            parm.glowing *= glowFactor;
         }
 
         projectDynamics(surface, parm.glowing, *parm.topLeft, *parm.bottomRight,
@@ -3102,8 +3148,8 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
             bool endStrip = false;
             if (hedge->hasMapElement())
             {
-                scanMaterialOffset += hedge->mapElementAs<LineSideSegment>().length()
-                                    * (direction == Anticlockwise? -1 : 1);
+                scanMaterialOffset += hedge->mapElementAs<LineSideSegment>().length() *
+                                      (direction == Anticlockwise ? -1 : 1);
 
                 // Prepare the edge geometry
                 SkyFixEdge skyEdge(*hedge, fixType, (direction == Anticlockwise)? Line::From : Line::To,
@@ -3277,6 +3323,21 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
 {
     LineSide const &front = hedge.mapElementAs<LineSideSegment>().lineSide();
 
+    // TNT map09 transparent window: blank line
+    if (!front.hasAtLeastOneMaterial())
+    {
+        return false;
+    }
+
+    // TNT map02 window grille: transparent masked wall
+    if (auto *anim = front.middle().materialAnimator())
+    {
+        if (!anim->isOpaque())
+        {
+            return false;
+        }
+    }
+
     if (front.considerOneSided())
     {
         return wroteOpaqueMiddle;
@@ -3314,7 +3375,7 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
     if (wroteOpaqueMiddle && middleCoversOpening)
         return true;
 
-    if (   (bceil  <= ffloor && (front.top   ().hasMaterial() || front.middle().hasMaterial()))
+    if (  (bceil  <= ffloor && (front.top   ().hasMaterial() || front.middle().hasMaterial()))
        || (bfloor >= fceil  && (front.bottom().hasMaterial() || front.middle().hasMaterial())))
     {
         Surface const &ffloorSurface = subsec.visFloor  ().surface();
@@ -3396,7 +3457,8 @@ static void writeAllWalls(HEdge &hedge)
                 }
             }
         }
-        ClientApp::renderSystem().angleClipper().addRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin());
+        ClientApp::renderSystem().angleClipper()
+            .addRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin());
     }
 }
 
@@ -3531,25 +3593,11 @@ static void occludeSubspace(bool frontFacing)
         auto const &backSubsec   = backSubspace.subsector().as<world::ClientSubsector>();
 
         // Determine the opening between plane heights at this edge.
-        ddouble openBottom;
-        if (backSubsec.visFloor().heightSmoothed() > subsec.visFloor().heightSmoothed())
-        {
-            openBottom = backSubsec.visFloor().heightSmoothed();
-        }
-        else
-        {
-            openBottom = subsec.visFloor().heightSmoothed();
-        }
+        ddouble openBottom = de::max(backSubsec.visFloor().heightSmoothed(),
+                                     subsec    .visFloor().heightSmoothed());
 
-        ddouble openTop;
-        if (backSubsec.visCeiling().heightSmoothed() < subsec.visCeiling().heightSmoothed())
-        {
-            openTop = backSubsec.visCeiling().heightSmoothed();
-        }
-        else
-        {
-            openTop = subsec.visCeiling().heightSmoothed();
-        }
+        ddouble openTop = de::min(backSubsec.visCeiling().heightSmoothed(),
+                                  subsec    .visCeiling().heightSmoothed());
 
         // Choose start and end vertexes so that it's facing forward.
         Vertex const &from = frontFacing ? hedge->vertex() : hedge->twin().vertex();

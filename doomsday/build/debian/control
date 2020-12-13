@@ -2,7 +2,7 @@ Source: ${Package}
 Section: universe/games
 Priority: optional
 Maintainer: ${DEBFULLNAME} <${DEBEMAIL}>
-Build-Depends: debhelper (>= 8.0.0), python, libsdl2-dev, libsdl2-mixer-dev, libxrandr-dev, libxxf86vm-dev, qtchooser, qt5-qmake, qtbase5-dev, libqt5opengl5-dev, libqt5x11extras5-dev, zlib1g-dev, libfluidsynth-dev, libncurses5-dev, cmake (>= 3.1)
+Build-Depends: debhelper (>= 8.0.0), python3, libsdl2-dev, libsdl2-mixer-dev, libxrandr-dev, libxxf86vm-dev, qtchooser, qt5-qmake, qtbase5-dev, libqt5opengl5-dev, libqt5x11extras5-dev, zlib1g-dev, libfluidsynth-dev, libncurses5-dev, cmake (>= 3.1)
 Standards-Version: 3.9.3
 Homepage: https://dengine.net/
 Vcs-Git: https://github.com/skyjake/Doomsday-Engine.git
@@ -12,10 +12,10 @@ Package: ${Package}
 Architecture: ${Arch}
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Doom/Heretic/Hexen port with enhanced graphics
- The Doomsday Engine is a portable version of the classic first person 
+ The Doomsday Engine is a portable version of the classic first person
  shooters DOOM, Heretic, and Hexen. It lets you enjoy the original games
- using modern technology, including high-resolution OpenGL graphics, 3D 
+ using modern technology, including high-resolution OpenGL graphics, 3D
  models, and dynamic lighting effects. Data files from the original games
- are not included; you must acquire a copy of the original games from 
+ are not included; you must acquire a copy of the original games from
  id Software and/or Raven Software. You may also use free alternatives
  such as https://freedoom.github.io/.

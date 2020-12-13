@@ -690,6 +690,7 @@ DENG2_PIMPL(DataBundle), public Lockable
 
         bool foundVersion = false;
         bool foundTitle   = false;
+        bool foundAuthor  = false;
 
         foreach (String line, meta.gets(VAR_NOTES, "").split('\n'))
         {
@@ -733,11 +734,15 @@ DENG2_PIMPL(DataBundle), public Lockable
                 continue;
             }
 
-            match = reAuthor.match(line);
-            if (match.hasMatch())
+            if (!foundAuthor)
             {
-                meta.set(VAR_AUTHOR, match.captured(2).trimmed());
-                continue;
+                match = reAuthor.match(line);
+                if (match.hasMatch())
+                {
+                    meta.set(VAR_AUTHOR, match.captured(2).trimmed());
+                    foundAuthor = true;
+                    continue;
+                }
             }
 
             match = reContact.match(line);

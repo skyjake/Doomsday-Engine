@@ -229,7 +229,7 @@ void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
         else
         {
             Rend_SetFixedView(player, baseYaw, i == 4? -90 : 90, 90, fbSize);
-        }
+        }        
         d->renderPlayerViewToFramebuffer(player, destFb);
         painter.drawImage(i * size, 0, destFb.toImage());
 

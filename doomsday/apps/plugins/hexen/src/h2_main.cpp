@@ -147,6 +147,7 @@ void X_PreInit()
     cfg.common.turnSpeed = 1;
     cfg.common.xhairAngle = 0;
     cfg.common.xhairSize = .5f;
+    cfg.common.xhairLineWidth = 1;
     cfg.common.xhairVitality = false;
     cfg.common.xhairColor[0] = 1;
     cfg.common.xhairColor[1] = 1;
@@ -290,6 +291,8 @@ void X_PreInit()
 
     // Hexen's torch light attenuates with distance.
     DD_SetInteger(DD_FIXEDCOLORMAP_ATTENUATE, 1);
+
+    cfg.deathkingsAutoRespawnChance = 100; // 100% spawn chance
 
     // Do the common pre init routine.
     G_CommonPreInit();

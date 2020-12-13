@@ -30,6 +30,7 @@
 #endif
 
 #include "api_console.h"
+#include "api_mapedit.h"
 #ifdef __CLIENT__
 #  include "api_sound.h"
 #endif
@@ -3946,6 +3947,15 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
     }
 }
 
+enum {
+    LinkFloorBit           = 0x1,
+    LinkCeilingBit         = 0x2,
+    FlatBleedingFloorBit   = 0x4,
+    FlatBleedingCeilingBit = 0x8,
+    InvisibleFloorBit      = 0x10,
+    InvisibleCeilingBit    = 0x20,
+};
+
 bool Map::endEditing()
 {
     if (!d->editingEnabled) return true; // Huh?
@@ -3977,25 +3987,19 @@ bool Map::endEditing()
     //
     // Collate sectors:
     DENG2_ASSERT(d->sectors.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
     d->sectors.reserve(d->editable.sectors.count());
-#endif
     d->sectors.append(d->editable.sectors);
     d->editable.sectors.clear();
 
     // Collate lines:
     DENG2_ASSERT(d->lines.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
     d->lines.reserve(d->editable.lines.count());
-#endif
     d->lines.append(d->editable.lines);
     d->editable.lines.clear();
 
     // Collate polyobjs:
     DENG2_ASSERT(d->polyobjs.isEmpty());
-#ifdef DENG2_QT_4_7_OR_NEWER
     d->polyobjs.reserve(d->editable.polyobjs.count());
-#endif
     while (!d->editable.polyobjs.isEmpty())
     {
         d->polyobjs.append(d->editable.polyobjs.takeFirst());
@@ -4047,8 +4051,11 @@ bool Map::endEditing()
     }
 
     // Finish sectors.
+    std::map<int, Sector *> sectorsByArchiveIndex;
     for (Sector *sector : d->sectors)
     {
+        sectorsByArchiveIndex[sector->indexInArchive()] = sector;
+
         d->buildSubsectors(*sector);
         sector->buildSides();
         sector->chainSoundEmitters();
@@ -4057,6 +4064,55 @@ bool Map::endEditing()
     // Finish planes.
     for (Sector *sector : d->sectors)
     {
+#if defined(__CLIENT__)
+        if (sector->visPlaneLinkTargetSector() != MapElement::NoIndex)
+        {
+            if (Sector *target = sectorsByArchiveIndex[sector->visPlaneLinkTargetSector()])
+            {
+                // Use the first subsector as the target.
+                auto &targetSub = target->subsector(0).as<ClientSubsector>();
+
+                int linkModes[2]{};
+                if (sector->visPlaneBits() & FlatBleedingFloorBit)
+                {
+                    linkModes[Sector::Floor] |= ClientSubsector::LinkWhenLowerThanTarget;
+                }
+                if (sector->visPlaneBits() & FlatBleedingCeilingBit)
+                {
+                    linkModes[Sector::Ceiling] |= ClientSubsector::LinkWhenHigherThanTarget;
+                }
+                if (sector->visPlaneBits() & InvisibleFloorBit)
+                {
+                    linkModes[Sector::Floor] |= ClientSubsector::LinkWhenHigherThanTarget;
+                }
+                if (sector->visPlaneBits() & InvisibleCeilingBit)
+                {
+                    linkModes[Sector::Ceiling] |= ClientSubsector::LinkWhenLowerThanTarget;
+                }
+
+                // Fallback is to link always.
+                for (auto &lm : linkModes)
+                {
+                    if (lm == 0) lm = ClientSubsector::LinkAlways;
+                }
+
+                // Linking is done for each subsector separately. (Necessary, though?)
+                sector->forAllSubsectors([&targetSub, sector, linkModes](Subsector &sub) {
+                    auto &clsub = sub.as<ClientSubsector>();
+                    for (int plane = 0; plane < 2; ++plane)
+                    {
+                        if (sector->isVisPlaneLinked(plane))
+                        {
+                            clsub.linkVisPlane(plane,
+                                               targetSub,
+                                               ClientSubsector::VisPlaneLinkMode(linkModes[plane]));
+                        }
+                    }
+                    return LoopContinue;
+                });
+            }
+        }
+#endif
         sector->forAllPlanes([] (Plane &plane)
         {
             plane.updateSoundEmitterOrigin();
@@ -4084,7 +4140,6 @@ Vertex *Map::createVertex(Vector2d const &origin, dint archiveIndex)
     vtx->setMap(this);
     vtx->setIndexInArchive(archiveIndex);
 
-    /// @todo Don't do this here.
     vtx->setIndexInMap(d->mesh.vertexCount() - 1);
 
     return vtx;
@@ -4103,7 +4158,6 @@ Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
     line->setMap(this);
     line->setIndexInArchive(archiveIndex);
 
-    /// @todo Don't do this here.
     line->setIndexInMap(d->editable.lines.count() - 1);
     line->front().setIndexInMap(Map::toSideIndex(line->indexInMap(), Line::Front));
     line->back ().setIndexInMap(Map::toSideIndex(line->indexInMap(), Line::Back));
@@ -4111,7 +4165,8 @@ Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
     return line;
 }
 
-Sector *Map::createSector(dfloat lightLevel, Vector3f const &lightColor, dint archiveIndex)
+Sector *Map::createSector(float lightLevel, const Vector3f &lightColor, int archiveIndex,
+                          const struct de_api_sector_hacks_s *hacks)
 {
     if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
@@ -4123,7 +4178,24 @@ Sector *Map::createSector(dfloat lightLevel, Vector3f const &lightColor, dint ar
     sector->setMap(this);
     sector->setIndexInArchive(archiveIndex);
 
-    /// @todo Don't do this here.
+    // Render hacks.
+    if (hacks)
+    {
+        int linkFlags = 0;
+
+        // Which planes to link.
+        if (hacks->flags.linkFloorPlane)   linkFlags |= LinkFloorBit;
+        if (hacks->flags.linkCeilingPlane) linkFlags |= LinkCeilingBit;
+
+        // When to link the planes.
+        if (hacks->flags.missingInsideBottom)  linkFlags |= FlatBleedingFloorBit;
+        if (hacks->flags.missingInsideTop)     linkFlags |= FlatBleedingCeilingBit;
+        if (hacks->flags.missingOutsideBottom) linkFlags |= InvisibleFloorBit;
+        if (hacks->flags.missingOutsideTop)    linkFlags |= InvisibleCeilingBit;
+
+        sector->setVisPlaneLinks(hacks->visPlaneLinkTargetSector, linkFlags);
+    }
+
     sector->setIndexInMap(d->editable.sectors.count() - 1);
 
     return sector;

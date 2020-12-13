@@ -981,6 +981,8 @@ void P_KillMobj(mobj_t *source, mobj_t *target, dd_bool stomping)
     target->corpseTics = 0;
     target->height /= 2*2;
 
+    Mobj_RunScriptOnDeath(target, source);
+
     if(source && source->player)
     {
         // Count for intermission.

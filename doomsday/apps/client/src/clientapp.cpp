@@ -143,10 +143,34 @@ static Value *Function_App_GamePlugin(Context &, Function::ArgumentValues const 
     return new TextValue(name);
 }
 
+static Value *Function_App_GetInteger(Context &, const Function::ArgumentValues &args)
+{
+    const int valueId = args.at(0)->asInt();
+    if (valueId >= DD_FIRST_VALUE && valueId < DD_LAST_VALUE)
+    {
+        return new NumberValue(DD_GetInteger(valueId));
+    }
+    throw Error("Function_App_GetInteger", "Invalid value ID");
+}
+
+static Value *Function_App_SetInteger(Context &, const Function::ArgumentValues &args)
+{
+    const int valueId = args.at(0)->asInt();
+    if (valueId >= DD_FIRST_VALUE && valueId < DD_LAST_VALUE)
+    {
+        DD_SetInteger(valueId, args.at(1)->asInt());
+    }
+    else
+    {
+        throw Error("Function_App_SetInteger", "Invalid value ID");
+    }
+    return nullptr;
+}
+
 static Value *Function_App_Quit(Context &, Function::ArgumentValues const &)
 {
     Sys_Quit();
-    return 0;
+    return nullptr;
 }
 
 DENG2_PIMPL(ClientApp)
@@ -553,11 +577,15 @@ ClientApp::ClientApp(int &argc, char **argv)
     setGame(games().nullGame());
 
     // Script bindings.
+    /// @todo ServerApp is missing these, but they belong in DoomsdayApp.
     {
-        d->binder.init(scriptSystem()["App"])
+        auto &appModule = scriptSystem()["App"];
+        d->binder.init(appModule)
                 << DENG2_FUNC_NOARG (App_ConsolePlayer, "consolePlayer")
                 << DENG2_FUNC_NOARG (App_GamePlugin,    "gamePlugin")
-                << DENG2_FUNC_NOARG (App_Quit,          "quit");
+                << DENG2_FUNC_NOARG (App_Quit,          "quit")
+                << DENG2_FUNC       (App_GetInteger,    "getInteger", "id")
+                << DENG2_FUNC       (App_SetInteger,    "setInteger", "id" << "value");
     }
 
 #if !defined (DENG_MOBILE)

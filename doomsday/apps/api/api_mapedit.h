@@ -30,6 +30,26 @@
 /// @ingroup world
 ///@{
 
+struct de_api_side_section_s
+{
+    const char *material;
+    float       offset[2];
+    float       color[4];
+};
+
+struct de_api_sector_hacks_s
+{
+    struct {
+        int linkFloorPlane       : 1;
+        int linkCeilingPlane     : 1;
+        int missingInsideTop     : 1;
+        int missingInsideBottom  : 1;
+        int missingOutsideTop    : 1;
+        int missingOutsideBottom : 1;
+    } flags;
+    int visPlaneLinkTargetSector;
+};
+
 DENG_API_TYPEDEF(MPE)
 {
     de_api_t api;
@@ -99,9 +119,15 @@ DENG_API_TYPEDEF(MPE)
      * @return  Index of the newly created line else @c -1 if there was an error.
      */
     int             (*LineCreate)(int v1, int v2, int frontSector, int backSector, int flags, int archiveIndex);
-    void            (*LineAddSide)(int line, int side, short flags, ddstring_t const *topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, ddstring_t const *middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, const ddstring_t* bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue, int archiveIndex);
-    int             (*SectorCreate)(float lightlevel, float red, float green, float blue, int archiveIndex);
-    int             (*PlaneCreate)(int sector, coord_t height, ddstring_t const *materialUri, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ, int archiveIndex);
+    void            (*LineAddSide)(int line, int side, short flags,
+                        const struct de_api_side_section_s *top,
+                        const struct de_api_side_section_s *middle,
+                        const struct de_api_side_section_s *bottom,
+                        int archiveIndex);
+    int             (*SectorCreate)(float lightlevel, float red, float green, float blue,
+                        const struct de_api_sector_hacks_s *hacks,
+                        int archiveIndex);
+    int             (*PlaneCreate)(int sector, coord_t height, const char *materialUri, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ, int archiveIndex);
     int             (*PolyobjCreate)(int const *lines, int linecount, int tag, int sequenceType, coord_t originX, coord_t originY, int archiveIndex);
     dd_bool         (*GameObjProperty)(char const *objName, int idx, char const *propName, valuetype_t type, void *data);
 }

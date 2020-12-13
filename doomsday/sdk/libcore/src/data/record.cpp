@@ -566,6 +566,17 @@ Variable *Record::tryRemove(String const &variableName)
     return nullptr;
 }
 
+void Record::removeMembersWithPrefix(const String &prefix)
+{
+    for (const String &name : members().keys())
+    {
+        if (name.beginsWith(prefix))
+        {
+            remove(name);
+        }
+    }
+}
+
 Variable &Record::add(String const &name, Variable::Flags variableFlags)
 {
     return d->parentRecordByPath(name)

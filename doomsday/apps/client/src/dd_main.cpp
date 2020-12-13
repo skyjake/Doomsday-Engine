@@ -2540,6 +2540,7 @@ DENG_EXTERN_C void R_SetupMap(dint mode, dint flags)
 #endif
 
 #ifdef __CLIENT__
+    /*
     // Update all sectors.
     /// @todo Refactor away.
     map.forAllSectors([] (Sector &sector)
@@ -2553,6 +2554,7 @@ DENG_EXTERN_C void R_SetupMap(dint mode, dint flags)
             });
         });
     });
+    */
 #endif
 
     // Re-initialize polyobjs.

@@ -179,11 +179,11 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                     }
                     else if (type == UDMFLex::SECTOR)
                     {
-                        int const index = importState.sectorCount++;
+                        const int index = importState.sectorCount++;
+                        const int lightlevel = block.contains("lightlevel")? block["lightlevel"].toInt() : 160;
+                        const struct de_api_sector_hacks_s hacks{{0, 0}, -1};
 
-                        int lightlevel = block.contains("lightlevel")? block["lightlevel"].toInt() : 160;
-
-                        MPE_SectorCreate(float(lightlevel)/255.f, 1.f, 1.f, 1.f, index);
+                        MPE_SectorCreate(float(lightlevel)/255.f, 1.f, 1.f, 1.f, &hacks, index);
 
                         MPE_PlaneCreate(index,
                                         block["heightfloor"].toDouble(),
@@ -256,37 +256,52 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                         return "Textures:" + tex.toString();
                     };
 
-                    // Front side.
+                    auto addSide = [&texName, sideFlags](
+                                       int index, const UDMFParser::Block &side, int sideIndex)
                     {
-                        int const offsetx = front["offsetx"].toInt();
-                        int const offsety = front["offsety"].toInt();
-                        float opacity = 1.f;
+                        const int offsetx = side["offsetx"].toInt();
+                        const int offsety = side["offsety"].toInt();
+                        float     opacity = 1.f;
+
+                        const auto topTex = texName(side["texturetop"]   ).toUtf8();
+                        const auto midTex = texName(side["texturemiddle"]).toUtf8();
+                        const auto botTex = texName(side["texturebottom"]).toUtf8();
+
+                        struct de_api_side_section_s top = {
+                            topTex,
+                            {float(offsetx), float(offsety)},
+                            {1, 1, 1, 1}
+                        };
+
+                        struct de_api_side_section_s mid = {
+                            midTex,
+                            {float(offsetx), float(offsety)},
+                            {1, 1, 1, opacity}
+                        };
+
+                        struct de_api_side_section_s bot = {
+                            botTex,
+                            {float(offsetx), float(offsety)},
+                            {1, 1, 1, 1}
+                        };
 
                         MPE_LineAddSide(
                             index,
                             0 /* front */,
                             sideFlags,
-                            de::Str(texName(front["texturetop"]   )), offsetx, offsety, 1, 1, 1,
-                            de::Str(texName(front["texturemiddle"])), offsetx, offsety, 1, 1, 1, opacity,
-                            de::Str(texName(front["texturebottom"])), offsetx, offsety, 1, 1, 1,
-                            sidefront);
-                    }
+                            &top,
+                            &mid,
+                            &bot,
+                            sideIndex);
+                    };
+
+                    // Front side.
+                    addSide(index, front, sidefront);
 
                     // Back side.
                     if (back)
                     {
-                        int const offsetx = (*back)["offsetx"].toInt();
-                        int const offsety = (*back)["offsety"].toInt();
-                        float opacity = 1.f;
-
-                        MPE_LineAddSide(
-                            index,
-                            1 /* front */,
-                            sideFlags,
-                            de::Str(texName((*back)["texturetop"]   )), offsetx, offsety, 1, 1, 1,
-                            de::Str(texName((*back)["texturemiddle"])), offsetx, offsety, 1, 1, 1, opacity,
-                            de::Str(texName((*back)["texturebottom"])), offsetx, offsety, 1, 1, 1,
-                            sideback);
+                        addSide(index, *back, sideback);
                     }
 
                     // More line flags.

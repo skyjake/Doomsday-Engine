@@ -197,6 +197,25 @@ public:
      */
     Plane *addPlane(de::Vector3f const &normal, de::ddouble height);
 
+    /**
+     * Sets plane linking target and conditions. This is used for render hacks where the
+     * plane is drawn at a different height and appearance, usually borrowing state
+     * from a neighboring sector.
+     *
+     * @param sectorArchiveIndex  Target sector for plane linking.
+     * @param planeBits           Flags that determine what and when to link planes:
+     *                            - Bits 0...1: link the floor (bit 0), ceiling (bit 1) plane
+     *                            - Bits 2...3: flat bleeding in floor (bit 2) or ceiling (bit 3)
+     *                            - Bits 4...5: invisible platform (bit 4) or door (bit 5)
+     */
+    void setVisPlaneLinks(int sectorArchiveIndex, int planeBits);
+
+    int visPlaneLinkTargetSector() const;
+
+    bool isVisPlaneLinked(int planeIndex) const;
+
+    int visPlaneBits() const;
+
 //- Subsectors --------------------------------------------------------------------------
 
     typedef std::function<world::Subsector * (QVector<world::ConvexSubspace *> const &)> SubsectorConstructor;
@@ -232,6 +251,8 @@ public:
      * @see hasSubsectors()
      */
     de::dint subsectorCount() const;
+
+    world::Subsector &subsector(int index) const;
 
     /**
      * Iterate Subsectors of the sector.

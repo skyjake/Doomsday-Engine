@@ -69,6 +69,20 @@ int Value::asInt() const
     return round<int>(num);
 }
 
+int Value::asUInt() const
+{
+    const double num = asNumber();
+    if (num < 0)
+    {
+        throw ArithmeticError("Value::asUInt", "Cannot convert negative number to unsigned integer");
+    }
+    if (num > std::numeric_limits<uint32_t>::max())
+    {
+        throw ArithmeticError("Value::asUInt", "Value is too large to represent as uint32");
+    }
+    return uint32_t(num + 0.5);
+}
+
 StringList Value::asStringList() const
 {
     StringList str;

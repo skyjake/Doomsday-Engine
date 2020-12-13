@@ -41,6 +41,8 @@ namespace de {
  * however all 64-bit integers cannot be:
  * http://en.wikipedia.org/wiki/Floating_point#IEEE_754:_floating_point_in_modern_computers
  *
+ * @todo Consider adding uint64_t as alternative storage format.
+ *
  * @ingroup data
  */
 class DENG2_PUBLIC NumberValue : public Value

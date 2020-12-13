@@ -1452,8 +1452,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
     target->flags2 &= ~MF2_PASSMOBJ;
     target->height /= 2 * 2;
 
-    if((target->flags & MF_COUNTKILL || target->type == MT_ZBELL) &&
-       target->special)
+    if ((target->flags & MF_COUNTKILL || target->type == MT_ZBELL) && target->special)
     {
         // Initiate monster death actions.
         if(target->type == MT_SORCBOSS)
@@ -1465,6 +1464,8 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
             P_ExecuteLineSpecial(target->special, target->args, NULL, 0, target);
         }
     }
+
+    Mobj_RunScriptOnDeath(target, source);
 
     if(source && source->player)
     {

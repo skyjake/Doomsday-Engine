@@ -526,9 +526,12 @@ void P_GunShot(mobj_t *mo, dd_bool accurate)
     damage = 5 * (P_Random() % 3 + 1);
 
     angle = mo->angle;
-    if(!accurate)
+    if (!accurate)
     {
-        angle += (P_Random() - P_Random()) << 18;
+        // Original angle variation:
+        // angle += (P_Random() - P_Random()) << 18;
+
+        P_TrajectoryNoise(&angle, &bulletSlope, (float) (255 << 18) / (float) ANGLE_180 * 180, 0);
     }
 
     P_LineAttack(mo, angle, MISSILERANGE, bulletSlope, damage, MT_PUFF);
@@ -600,13 +603,27 @@ void C_DECL A_FireShotgun2(player_t *player, pspdef_t *psp)
 
     for(i = 0; i < 20; ++i)
     {
-        damage = 5 * (P_Random() % 3 + 1);
-        angle = player->plr->mo->angle;
-        angle += (P_Random() - P_Random()) << 19;
+        float modBulletSlope = bulletSlope;
 
-        P_LineAttack(player->plr->mo, angle, MISSILERANGE,
-                     bulletSlope + FIX2FLT((P_Random() - P_Random()) << 5),
-                     damage, MT_PUFF);
+        damage = 5 * (P_Random() % 3 + 1);
+        angle  = player->plr->mo->angle;
+
+#if 0
+        if (shotgunNoiseMode == 0) // vanilla behavior
+        {
+            angle += (P_Random() - P_Random()) << 19;
+            modBulletSlope = bulletSlope + FIX2FLT((P_Random() - P_Random()) << 5);
+        }
+        else
+#endif
+        {
+            P_TrajectoryNoise(&angle,
+                              &modBulletSlope,
+                              (float) (255 << 19) / (float) ANGLE_180 * 180,
+                              atanf(FIX2FLT(255 << 5)) / DD_PI * 180);
+        }
+
+        P_LineAttack(player->plr->mo, angle, MISSILERANGE, modBulletSlope, damage, MT_PUFF);
     }
 }
 

@@ -19,9 +19,6 @@
  */
 
 #include "mapimporter.h"
-#include <vector>
-#include <list>
-#include <QVector>
 #include <de/libcore.h>
 #include <de/Error>
 #include <de/ByteRefArray>
@@ -31,10 +28,46 @@
 #include <de/Vector>
 #include "importidtech1.h"
 
+#include <QVector>
+
+#include <vector>
+#include <list>
+#include <set>
+
 using namespace de;
 
 namespace idtech1 {
 namespace internal {
+
+/**
+ * Intersect an unbounded line with a bounded line segment.
+ *
+ * @todo This is from libgloom (geomath.h); should not duplicate it here but use
+ * that one in the future when it is available.
+ *
+ * @returns true, if line A-B intersects the line segment @a other.
+ */
+static bool lineSegmentIntersection(double &lineT,
+                                    const Vec2d &lineA, const Vec2d &lineB,
+                                    const Vec2d &segmentA, const Vec2d &segmentB)
+{
+    const auto &p = segmentA;
+    const auto  r = segmentB - segmentA;
+
+    const auto &q = lineA;
+    const auto  s = lineB - lineA;
+
+    const double r_s = r.cross(s);
+    if (std::abs(r_s) < EPSILON)
+    {
+        return false;
+    }
+    lineT = (q - p).cross(r) / r_s;
+
+    // It has to hit somewhere on `other`.
+    const double u = (q - p).cross(s) / r_s;
+    return u >= 0 && u < 1;
+}
 
 /// @todo kludge - remove me.
 class Id1MapElement
@@ -50,6 +83,12 @@ public:
     }
 
     MapImporter *_map;
+};
+
+struct Vertex
+{
+    Vec2d      pos;
+    std::set<int> lines; // lines connected to this vertex
 };
 
 struct SideDef : public Id1MapElement
@@ -121,7 +160,7 @@ struct SideDef : public Id1MapElement
 
 struct LineDef : public Id1MapElement
 {
-    enum Side {
+    enum Side {        
         Front,
         Back
     };
@@ -164,6 +203,7 @@ struct LineDef : public Id1MapElement
 
     inline bool hasFront() const { return hasSide(Front); }
     inline bool hasBack()  const { return hasSide(Back);  }
+    inline bool isTwoSided() const { return hasFront() && hasBack(); }
 
     inline dint front()    const { return sideIndex(Front); }
     inline dint back()     const { return sideIndex(Back); }
@@ -221,13 +261,13 @@ struct LineDef : public Id1MapElement
         ddFlags    = 0;
 
         // Translate the line flags for Doomsday:
-#define ML_BLOCKING              1 ///< Solid, is an obstacle.
-#define ML_DONTPEGTOP            8 ///< Upper texture unpegged.
-#define ML_DONTPEGBOTTOM        16 ///< Lower texture unpegged.
+        const int16_t ML_BLOCKING      = 1;  // Solid, is an obstacle.
+        const int16_t ML_DONTPEGTOP    = 8;  // Upper texture unpegged.
+        const int16_t ML_DONTPEGBOTTOM = 16; // Lower texture unpegged.
 
-/// If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load.
-#define ML_INVALID              2048
-#define DOOM_VALIDMASK          0x000001ff
+        /// If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load.
+        const int16_t ML_INVALID     = 2048;
+        const int16_t DOOM_VALIDMASK = 0x01ff;
 
         /**
          * Zero unused flags if ML_INVALID is set.
@@ -265,13 +305,27 @@ struct LineDef : public Id1MapElement
             ddFlags |= DDLF_DONTPEGBOTTOM;
             flags &= ~ML_DONTPEGBOTTOM;
         }
-
-#undef DOOM_VALIDMASK
-#undef ML_INVALID
-#undef ML_DONTPEGBOTTOM
-#undef ML_DONTPEGTOP
-#undef ML_BLOCKING
     }
+};
+
+inline LineDef::Side opposite(LineDef::Side side)
+{
+    return side == LineDef::Front ? LineDef::Back : LineDef::Front;
+}
+
+enum {
+    // Sector analysis flags.
+    SAF_NONE                                   = 0,
+    SAF_IS_LINK_TARGET                         = 0x1,
+    SAF_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE = 0x2,
+    SAF_HAS_SELF_REFERENCING_LOOP              = 0x4,
+
+    // Detected hacks.
+    HACK_SELF_REFERENCING                       = 0x01,
+    HACK_MISSING_OUTSIDE_TOP                    = 0x02, // invisible door
+    HACK_MISSING_OUTSIDE_BOTTOM                 = 0x04, // invisible platform
+    HACK_MISSING_INSIDE_TOP                     = 0x08, // flat bleeding in ceiling
+    HACK_MISSING_INSIDE_BOTTOM                  = 0x10, // flat bleeding in floor
 };
 
 struct SectorDef : public Id1MapElement
@@ -293,6 +347,14 @@ struct SectorDef : public Id1MapElement
     duint16 d64wallTopColor;
     duint16 d64wallBottomColor;
 
+    // Internal bookkeeping:
+    std::set<int> lines;
+    std::vector<int> selfRefLoop;
+    //int singleSidedCount = 0;
+    int aFlags = 0;
+    int foundHacks = 0;
+    struct de_api_sector_hacks_s hackParams{{}, -1};
+
     SectorDef(MapImporter &map) : Id1MapElement(map) {}
 
     void operator << (de::Reader &from)
@@ -308,7 +370,7 @@ struct SectorDef : public Id1MapElement
         case Id1MapRecognizer::HexenFormat: {
             Block name;
             from.readBytes(8, name);
-            floorMaterial= map().toMaterialId(name.constData(), PlaneMaterials);
+            floorMaterial = map().toMaterialId(name.constData(), PlaneMaterials);
 
             from.readBytes(8, name);
             ceilMaterial = map().toMaterialId(name.constData(), PlaneMaterials);
@@ -319,7 +381,7 @@ struct SectorDef : public Id1MapElement
         case Id1MapRecognizer::Doom64Format: {
             duint16 idx;
             from >> idx;
-            floorMaterial= map().toMaterialId(idx, PlaneMaterials);
+            floorMaterial = map().toMaterialId(idx, PlaneMaterials);
 
             from >> idx;
             ceilMaterial = map().toMaterialId(idx, PlaneMaterials);
@@ -603,6 +665,48 @@ struct Polyobj
     dint16 anchor[2];
 };
 
+struct MaterialDict
+{
+    StringPool dict;
+
+    String const &find(MaterialId id) const
+    {
+        return dict.stringRef(id);
+    }
+
+    MaterialId toMaterialId(String name, MaterialGroup group)
+    {
+        // In original DOOM, texture name references beginning with the
+        // hypen '-' character are always treated as meaning "no reference"
+        // or "invalid texture" and surfaces using them were not drawn.
+        if(group != PlaneMaterials && name[0] == '-')
+        {
+            return 0; // Not a valid id.
+        }
+
+        // Prepare the encoded URI for insertion into the dictionary.
+        // Material paths must be encoded.
+        AutoStr *path = Str_PercentEncode(AutoStr_FromText(name.toUtf8().constData()));
+        de::Uri uri(Str_Text(path), RC_NULL);
+        uri.setScheme(group == PlaneMaterials? "Flats" : "Textures");
+
+        // Intern this material URI in the dictionary.
+        return dict.intern(uri.compose());
+    }
+
+    MaterialId toMaterialId(dint uniqueId, MaterialGroup group)
+    {
+        // Prepare the encoded URI for insertion into the dictionary.
+        de::Uri textureUrn(String("urn:%1:%2").arg(group == PlaneMaterials? "Flats" : "Textures").arg(uniqueId), RC_NULL);
+        uri_s *uri = Materials_ComposeUri(P_ToIndex(DD_MaterialForTextureUri(reinterpret_cast<uri_s *>(&textureUrn))));
+        String uriComposedAsString = Str_Text(Uri_Compose(uri));
+        Uri_Delete(uri);
+
+        // Intern this material URI in the dictionary.
+        return dict.intern(uriComposedAsString);
+    }
+};
+
 } // namespace internal
 
 using namespace internal;
@@ -613,7 +717,7 @@ DENG2_PIMPL(MapImporter)
 {
     Id1MapRecognizer::Format format;
 
-    QVector<coord_t> vertCoords;  ///< Position coords [v0:X, vo:Y, v1:X, v1:Y, ...]
+    std::vector<Vertex> vertices;
 
     typedef std::vector<LineDef> Lines;
     Lines lines;
@@ -633,85 +737,40 @@ DENG2_PIMPL(MapImporter)
     typedef std::list<Polyobj> Polyobjs;
     Polyobjs polyobjs;
 
-    struct MaterialDict
-    {
-        StringPool dict;
-
-        String const &find(MaterialId id) const
-        {
-            return dict.stringRef(id);
-        }
-
-        MaterialId toMaterialId(String name, MaterialGroup group)
-        {
-            // In original DOOM, texture name references beginning with the
-            // hypen '-' character are always treated as meaning "no reference"
-            // or "invalid texture" and surfaces using them were not drawn.
-            if(group != PlaneMaterials && name[0] == '-')
-            {
-                return 0; // Not a valid id.
-            }
-
-            // Prepare the encoded URI for insertion into the dictionary.
-            // Material paths must be encoded.
-            AutoStr *path = Str_PercentEncode(AutoStr_FromText(name.toUtf8().constData()));
-            de::Uri uri(Str_Text(path), RC_NULL);
-            uri.setScheme(group == PlaneMaterials? "Flats" : "Textures");
-
-            // Intern this material URI in the dictionary.
-            return dict.intern(uri.compose());
-        }
-
-        MaterialId toMaterialId(dint uniqueId, MaterialGroup group)
-        {
-            // Prepare the encoded URI for insertion into the dictionary.
-            de::Uri textureUrn(String("urn:%1:%2").arg(group == PlaneMaterials? "Flats" : "Textures").arg(uniqueId), RC_NULL);
-            uri_s *uri = Materials_ComposeUri(P_ToIndex(DD_MaterialForTextureUri(reinterpret_cast<uri_s *>(&textureUrn))));
-            String uriComposedAsString = Str_Text(Uri_Compose(uri));
-            Uri_Delete(uri);
-
-            // Intern this material URI in the dictionary.
-            return dict.intern(uriComposedAsString);
-        }
-    } materials;
+    internal::MaterialDict materials;
 
     Impl(Public *i) : Base(i), format(Id1MapRecognizer::UnknownFormat)
     {}
 
-    inline dint vertexCount() const {
-        return vertCoords.count() / 2;
-    }
-
-    inline Vector2d vertexAsVector2d(dint vertexIndex) const {
-        return Vector2d(vertCoords[vertexIndex * 2], vertCoords[vertexIndex * 2 + 1]);
-    }
-
-    /// @todo fixme: A real performance killer...
-    inline AutoStr *composeMaterialRef(MaterialId id) {
-        return AutoStr_FromTextStd(materials.find(id).toUtf8().constData());
+    int indexOf(const SectorDef &sector) const
+    {
+        return int(&sector - sectors.data());
     }
 
     void readVertexes(de::Reader &from, dint numElements)
     {
-        Id1MapRecognizer::Format format = Id1MapRecognizer::Format(from.version());
-        for(dint n = 0; n < numElements; ++n)
-        {
-            switch(format)
-            {
-            default:
-            case Id1MapRecognizer::DoomFormat: {
-                dint16 x, y;
-                from >> x >> y;
-                vertCoords[n * 2]     = x;
-                vertCoords[n * 2 + 1] = y;
-                break; }
+        vertices.resize(size_t(numElements));
 
-            case Id1MapRecognizer::Doom64Format: {
-                dint32 x, y;
-                from >> x >> y;
-                vertCoords[n * 2]     = FIX2FLT(x);
-                vertCoords[n * 2 + 1] = FIX2FLT(y);
-                break; }
+        Id1MapRecognizer::Format format = Id1MapRecognizer::Format(from.version());
+        for (auto &vert : vertices)
+        {
+            switch (format)
+            {
+                case Id1MapRecognizer::Doom64Format: {
+                    // 16:16 fixed-point.
+                    dint32 x, y;
+                    from >> x >> y;
+                    vert.pos.x = FIX2FLT(x);
+                    vert.pos.y = FIX2FLT(y);
+                    break;
+                }
+                default: {
+                    dint16 x, y;
+                    from >> x >> y;
+                    vert.pos.x = x;
+                    vert.pos.y = y;
+                    break;
+                }
             }
         }
     }
@@ -781,11 +840,267 @@ DENG2_PIMPL(MapImporter)
         }
     }
 
+    void linkLines()
+    {
+        for (int i = 0; i < int(lines.size()); ++i)
+        {
+            const auto &line = lines[i];
+
+            // Link to vertices.
+            for (int p = 0; p < 2; ++p)
+            {
+                const int vertIndex = line.v[p];
+                if (vertIndex >= 0 && vertIndex < int(vertices.size()))
+                {
+                    vertices[vertIndex].lines.insert(i);
+                }
+            }
+
+            // Link to sectors.
+            for (auto s : {LineDef::Front, LineDef::Back})
+            {
+                if (line.hasSide(s))
+                {
+                    const auto sec = sides[line.sideIndex(s)].sector;
+                    if (sec >= 0 && sec < int(sectors.size()))
+                    {
+                        sectors[sec].lines.insert(i);
+                    }
+                }
+            }
+        }
+    }
+
+    bool isSelfReferencing(const LineDef &line) const
+    {
+        // Use of middle materials indicates that this is not a render hack.
+        const auto *s = line.sides;
+        return !(line.aFlags & LAF_POLYOBJ) &&
+               line.isTwoSided() &&
+               !sides[s[0]].middleMaterial &&
+               !sides[s[1]].middleMaterial &&
+               sides[s[0]].sector == sides[s[1]].sector &&
+               sides[s[0]].sector >= 0;
+    }
+
+    double lineLength(const LineDef &line) const
+    {
+        return (vertices[line.v[0]].pos - vertices[line.v[1]].pos).length();
+    }
+
+    int otherSector(const LineDef &line, int sectorIndex) const
+    {
+        DENG2_ASSERT(line.isTwoSided());
+        if (sides[line.sides[0]].sector == sectorIndex)
+        {
+            return sides[line.sides[1]].sector;
+        }
+        return sides[line.sides[0]].sector;
+    }
+
+    int sideOfSector(const LineDef &line, int sectorIndex) const
+    {
+        for (auto s : {LineDef::Front, LineDef::Back})
+        {
+            if (line.sides[s] >= 0)
+            {
+                if (sides[line.sides[s]].sector == sectorIndex)
+                {
+                    return s;
+                }
+            }
+        }
+        return -1;
+    }
+
+    std::set<int> sectorVertices(const SectorDef &sector) const
+    {
+        std::set<int> verts;
+        // If a self-referencing loop has been detected in the sector, we are only interested
+        // in the loop because it is being used for render hacks.
+        if (!sector.selfRefLoop.empty())
+        {
+            for (int i : sector.selfRefLoop)
+            {
+                verts.insert(lines[i].v[0]);
+                verts.insert(lines[i].v[1]);
+            }
+        }
+        else for (int i : sector.lines)
+        {
+            verts.insert(lines[i].v[0]);
+            verts.insert(lines[i].v[1]);
+        }
+        return verts;
+    }
+
+#if 0
+    Vec2d sectorBoundsMiddle(const SectorDef &sector) const
+    {
+        Vec2d mid;
+        int      count = 0;
+        for (int v : sectorVertices(sector))
+        {
+            mid += vertices[v].pos;
+            ++count;
+        }
+        if (count > 0) mid /= count;
+        return mid;
+    }
+#endif
+
+    std::vector<double> findSectorIntercepts(const SectorDef &sector, const Vec2d &start, const Vec2d &dir) const
+    {
+        const Vec2d end = start + dir;
+
+        std::vector<double> intercepts;
+        for (int i : sector.lines)
+        {
+            const auto &line = lines[i];
+            const Vec2d a    = vertices[line.v[0]].pos;
+            const Vec2d b    = vertices[line.v[1]].pos;
+
+            double t;
+            if (lineSegmentIntersection(t, start, end, a, b))
+            {
+                if (t > 0)
+                {
+                    intercepts.push_back(t);
+                }
+            }
+        }
+        return intercepts;
+    }
+
+    /**
+     * Finds a point that is inside the sector. The first option is to use the
+     * middle of the sector's bounding box, but if that is outside the sector,
+     * tries to intersect against the sector lines to find a valid point inside.
+     *
+     * @param sector  Sector.
+     *
+     * @return A point inside the sector.
+     */
+    Vec2d findPointInsideSector(const SectorDef &sector) const
+    {
+        Vec2d inside;
+        int count = 0;
+        for (int i : sectorVertices(sector))
+        {
+            inside += vertices[i].pos;
+            count++;
+        }
+        if (count > 0) inside /= count;
+
+        // Is this actually inside the sector? Need to do a polygon check.
+        {
+            Vec2d dir{1, 0};
+            std::vector<double> intercepts = findSectorIntercepts(sector, inside, dir);
+            if (intercepts.empty())
+            {
+                dir = {-1, 0};
+                intercepts = findSectorIntercepts(sector, inside, dir);
+            }
+            if (intercepts.empty())
+            {
+                dir = {0, -1};
+                intercepts = findSectorIntercepts(sector, inside, dir);
+            }
+
+            if (intercepts.size() > 0 && intercepts.size() % 2 == 0)
+            {
+                qDebug("(%f,%f) is not inside!", inside.x, inside.y);
+
+                const Vec2d first  = inside + dir * intercepts[0];
+                const Vec2d second = inside + dir * intercepts[1];
+
+                inside = (first + second) * 0.5f;
+
+                qDebug("  -> choosing (%f,%f) instead", inside.x, inside.y);
+            }
+        }
+
+        return inside;
+    }
+
+    struct IntersectionResult
+    {
+        bool          valid;
+        double        t;
+        LineDef::Side side;
+    };
+
+    IntersectionResult findIntersection(
+        const LineDef &line, const Vec2d &start, const Vec2d &end) const
+    {
+        const Vec2d a = vertices[line.v[0]].pos;
+        const Vec2d b = vertices[line.v[1]].pos;
+
+        double t;
+        if (lineSegmentIntersection(t, start, end, a, b))
+        {
+            const Vec2d dir        = (end - start).normalize();
+            const Vec2d lineDir    = (b - a).normalize();
+            const Vec2d lineNormal = {lineDir.y, -lineDir.x};
+
+            return {true, t, lineNormal.dot(dir) < 0 ? LineDef::Front : LineDef::Back};
+        }
+        return {false, 0.0, LineDef::Front};
+    }
+
+    void locateContainingSector(SectorDef &sector)
+    {
+        if (sector.lines.empty()) return;
+
+        const Vec2d start = findPointInsideSector(sector);
+        const Vec2d end   = start + Vec2d(0.001, 1.0);
+
+        std::pair<double, int> nearestContainer{std::numeric_limits<double>::max(), -1};
+
+        // Look for intersecting lines in other, normal sectors.
+        for (int lineIndex = 0; lineIndex < int(lines.size()); ++lineIndex)
+        {
+            const auto &line = lines[lineIndex];
+
+            if (!isSelfReferencing(line) &&
+                sector.lines.find(lineIndex) == sector.lines.end())
+            {
+                const auto hit = findIntersection(line, start, end);
+
+                if (hit.valid && hit.t > 0.0 && hit.t < nearestContainer.first)
+                {
+                    if (line.hasSide(hit.side))
+                    {
+                        const int sector = sides[line.sideIndex(hit.side)].sector;
+
+                        // It must be a regular sector, but multiple hacked sectors
+                        // can link to the same regular one.
+                        if (sector >= 0 && !sectors[sector].foundHacks)
+                        {
+                            nearestContainer = {hit.t, sector};
+                        }
+                    }
+                }
+            }
+        }
+
+        if (nearestContainer.second >= 0)
+        {
+            sectors[nearestContainer.second].aFlags |= SAF_IS_LINK_TARGET;
+
+            sector.hackParams.visPlaneLinkTargetSector = nearestContainer.second;
+            sector.hackParams.flags.linkFloorPlane     = true;
+            sector.hackParams.flags.linkCeilingPlane   = true;
+
+            qDebug("sector %i contained by %i", indexOf(sector), nearestContainer.second);
+        }
+    }
+
     /**
      * Create a temporary polyobj.
      */
     Polyobj *createPolyobj(Polyobj::LineIndices const &lineIndices, dint tag,
-        dint sequenceType, dint16 anchorX, dint16 anchorY)
+                           dint sequenceType, dint16 anchorX, dint16 anchorY)
     {
         // Allocate the new polyobj.
         polyobjs.push_back(Polyobj());
@@ -833,17 +1148,18 @@ DENG2_PIMPL(MapImporter)
         Polyobj::LineIndices polyLines;
 
         // First look for a PO_LINE_START linedef set with this tag.
-        DENG2_FOR_EACH(Lines, i, lines)
+        for (size_t i = 0; i < lines.size(); ++i)
         {
+            auto &line = lines[i];
+
             // Already belongs to another polyobj?
-            if(i->aFlags & LAF_POLYOBJ) continue;
+            if(line.aFlags & LAF_POLYOBJ) continue;
 
-            if(!(i->xType == PO_LINE_START && i->xArgs[0] == tag)) continue;
+            if(!(line.xType == PO_LINE_START && line.xArgs[0] == tag)) continue;
 
-            collectPolyobjLines(polyLines, i);
-            if(!polyLines.isEmpty())
+            if (collectPolyobjLines(polyLines, i))
             {
-                dint8 sequenceType = i->xArgs[2];
+                dint8 sequenceType = line.xArgs[2];
                 if(sequenceType >= SEQTYPE_NUMSEQ) sequenceType = 0;
 
                 createPolyobj(polyLines, tag, sequenceType, anchorX, anchorY);
@@ -920,11 +1236,123 @@ DENG2_PIMPL(MapImporter)
         return true;
     }
 
+    size_t collectPolyobjLines(Polyobj::LineIndices &lineList, size_t startLine)
+    {
+        validCount++;
+
+        LineDef &line   = lines[startLine];
+        line.xType      = 0;
+        line.xArgs[0]   = 0;
+        line.validCount = validCount;
+
+        // Keep going until we run out of possible lines.
+        for (int currentLine = int(startLine); currentLine >= 0; )
+        {
+            lineList.push_back(currentLine);
+
+            const int currentEnd = lines[currentLine].v[1];
+            int       nextLine   = -1;
+
+            // Look for a line starting where current line ends.
+            for (int i : vertices[currentEnd].lines)
+            {
+                auto &other = lines[i];
+                if ((other.aFlags & LAF_POLYOBJ) || other.validCount == validCount)
+                {
+                    continue;
+                }
+                if (other.v[0] == currentEnd)
+                {
+                    // Use this one.
+                    other.validCount = validCount;
+                    nextLine = i;
+                    break;
+                }
+            }
+
+            currentLine = nextLine;
+        }
+
+        return lineList.size();
+    }
+
+    struct LineDefSet : public std::set<const LineDef *>
+    {
+        using Base = std::set<const LineDef *>;
+
+        const LineDef *take()
+        {
+            if (empty()) return nullptr;
+
+            auto iter = begin();
+            const auto *line = *iter;
+            erase(iter);
+            return line;
+        }
+
+        bool contains(const LineDef &line) const
+        {
+            return Base::find(&line) != Base::end();
+        }
+    };
+
+    bool isLoopContainedWithinSameSector(const std::vector<int> &loop, int sector) const
+    {
+        LineDefSet loopSet;
+        for (int lineIndex : loop)
+        {
+            DE_ASSERT(isSelfReferencing(lines[lineIndex]));
+            loopSet.insert(&lines[lineIndex]);
+        }
+
+        LineDefSet regularSectorLines;
+        for (int lineIndex : sectors[sector].lines)
+        {
+            const auto &line = lines[lineIndex];
+            if (!isSelfReferencing(line))
+            {
+                DE_ASSERT(!loopSet.contains(line));
+                regularSectorLines.insert(&line);
+            }
+        }
+
+        const Vec2d interceptDirs[] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
+
+        // Check intercepts extending outward from the loop. They should all contact a
+        // regular sector line.
+        for (const auto *loopLine : loopSet)
+        {
+            const Vec2d midPoint = (vertices[loopLine->v[0]].pos + vertices[loopLine->v[1]].pos) / 2;
+
+            for (const auto &dir : interceptDirs)
+            {
+                bool intercepted = false;
+                for (const auto *regular : regularSectorLines)
+                {
+                    auto hit = findIntersection(*regular, midPoint, midPoint + dir);
+                    if (hit.valid && hit.t > 0.0)
+                    {
+                        intercepted = true;
+                        break;
+                    }
+                }
+                if (!intercepted)
+                {
+                    // No containment in this direction.
+                    return false;
+                }
+            }
+        }
+
+        // Fully contained in all directions.
+        return true;
+    }
+
     void analyze()
     {
         Time begunAt;
 
-        if(format == Id1MapRecognizer::HexenFormat)
+        if (format == Id1MapRecognizer::HexenFormat)
         {
             LOGDEV_MAP_XVERBOSE("Locating polyobjs...", "");
             DENG2_FOR_EACH(Things, i, things)
@@ -938,20 +1366,391 @@ DENG2_PIMPL(MapImporter)
             }
         }
 
+        // Detect self-referencing sectors: all lines of the sector are two-sided and both
+        // sides refer to the sector itself.
+        //
+        // For example:
+        // - TNT map02 deep water: single sector with self-referencing lines
+        // - AV map11 deep water (x=2736, y=8): multiple connected self-referencing sectors
+        {
+            // First look for potentially self-referencing sectors that have at least one
+            // self-referencing line. Also be on the lookout for line loops composed of
+            // self-referencing lines.
+            for (auto &sector : sectors)
+            {
+                const int sectorIndex = int(&sector - sectors.data());
+
+                LineDefSet selfRefLines;
+                bool hasSingleSided = false;
+                for (int lineIndex : sector.lines)
+                {
+                    auto &line = lines[lineIndex];
+                    if (!line.isTwoSided())
+                    {
+                        hasSingleSided = true;
+//                        sector.singleSidedCount++;
+                    }
+                    if (isSelfReferencing(line))
+                    {
+                        selfRefLines.insert(&line);
+                    }
+                }
+
+                // Detect loops in the self-referencing lines.
+                if (!selfRefLines.empty())
+                {
+                    std::vector<const LineDef *> loop;
+                    const LineDef *              atLine;
+                    auto                         remaining = selfRefLines;
+
+                    loop.push_back(atLine = remaining.take());
+                    int atVertex = atLine->v[0];
+
+                    for (;;)
+                    {
+                        const int nextVertex = atLine->v[atLine->v[0] == atVertex ? 1 : 0];
+                        const LineDef *nextLine = nullptr;
+
+                        // Was a loop completed?
+                        if (loop.size() >= 3)
+                        {
+                            if (nextVertex == loop.front()->v[0] || nextVertex == loop.front()->v[1])
+                            {
+                                qDebug("sector %d has a self-ref loop:", sectorIndex);
+                                for (const auto *ld : loop)
+                                {
+                                    const int lineIndex = int(ld - lines.data());
+                                    sector.selfRefLoop.push_back(lineIndex);
+                                    qDebug("    line %d", lineIndex);
+                                }
+                                sector.aFlags |= SAF_HAS_SELF_REFERENCING_LOOP;
+                                if (isLoopContainedWithinSameSector(sector.selfRefLoop, sectorIndex))
+                                {
+                                    qDebug("    but the loop is contained inside sector %d, so ignoring the loop",
+                                           sectorIndex);
+                                    sector.aFlags &= ~SAF_HAS_SELF_REFERENCING_LOOP;
+                                    sector.selfRefLoop.clear();
+                                }
+                                break;
+                            }
+                        }
+
+                        for (int lineIdx : vertices[nextVertex].lines)
+                        {
+                            const auto &check = lines[lineIdx];
+                            if (remaining.find(&check) != remaining.end())
+                            {
+                                if (check.v[0] == nextVertex || check.v[1] == nextVertex)
+                                {
+                                    if (nextLine)
+                                    {
+                                        // Multiple self-referencing lines of the same sector
+                                        // connect to this vertex. This is likely a 3D bridge.
+                                        qDebug("possible 3D bridge in sector %d", sectorIndex);
+                                        nextLine = nullptr;
+                                        break;
+                                    }
+                                    nextLine = &check;
+                                }
+                            }
+                        }
+                        if (!nextLine) break; // No more connected lines, give up.
+
+                        remaining.erase(nextLine);
+                        loop.push_back(nextLine);
+                        atLine   = nextLine;
+                        atVertex = nextVertex;
+                    }
+                }
+
+                if (!selfRefLines.empty() && !hasSingleSided)
+                {
+                    sector.aFlags |= SAF_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE;
+                    qDebug("possibly a self-referencing sector %d", int(&sector - sectors.data()));
+                }
+            }
+
+            bool foundSelfRefs = false;
+            for (int sectorIndex = 0; sectorIndex < int(sectors.size()); ++sectorIndex)
+            {
+                auto &sector = sectors[sectorIndex];
+
+                if (sector.lines.empty()) continue;
+
+                if (!(sector.aFlags & (SAF_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE |
+                                       SAF_HAS_SELF_REFERENCING_LOOP)))
+                {
+                    continue;
+                }
+
+                int numSelfRef = 0;
+
+                bool good = true;
+                for (int lineIndex : sector.lines)
+                {
+                    auto &     line      = lines[lineIndex];
+                    const bool isSelfRef = isSelfReferencing(line);
+
+                    if (isSelfRef) ++numSelfRef;
+
+                    // Sectors with a loop of self-referencing lines can contain any number
+                    // of other lines, we'll still consider them self-referencing.
+                    if (!isSelfRef && !(sector.aFlags & SAF_HAS_SELF_REFERENCING_LOOP))
+                    {
+                        if (!line.isTwoSided())
+                        {
+                            good = false;
+                            break;
+                        }
+                        // Combine multiple self-referencing sectors.
+                        const int other = otherSector(line, sectorIndex);
+                        if (other >= 0 && !(sectors[other].aFlags &
+                                            SAF_HAS_AT_LEAST_ONE_SELF_REFERENCING_LINE))
+                        {
+                            good = false;
+                            break;
+                        }
+                    }
+                }
+                if (!(sector.aFlags & SAF_HAS_SELF_REFERENCING_LOOP) &&
+                    float(numSelfRef) / float(sector.lines.size()) < 0.25f)
+                {
+                    // Mostly regular lines and no loops.
+                    good = false;
+                }
+                if (good)
+                {
+                    foundSelfRefs = true;
+                    sector.foundHacks |= HACK_SELF_REFERENCING;
+                    qDebug("self-referencing sector %d (ceil:%s floor:%s)", sectorIndex,
+                           materials.find(sector.ceilMaterial).toUtf8().constData(),
+                           materials.find(sector.floorMaterial).toUtf8().constData());
+                }
+            }
+
+            if (foundSelfRefs)
+            {
+                // Look for the normal sectors that contain the self-referencing sectors.
+                for (auto &sector : sectors)
+                {
+                    if (sector.foundHacks & HACK_SELF_REFERENCING)
+                    {
+                        locateContainingSector(sector);
+                    }
+                }
+            }
+        }
+
+        // Missing upper/lower textures are used for transparent doors and platform.
+        // Depending on the plane heights, they also cause flat bleeding.
+        // For example: TNT map31 suspended Arachnotrons.
+        {
+            for (int currentSector = 0; currentSector < int(sectors.size()); ++currentSector)
+            {
+                auto &sector = sectors[currentSector];
+                if (sector.foundHacks) continue;
+
+                int goodHacks = HACK_MISSING_INSIDE_TOP | HACK_MISSING_INSIDE_BOTTOM |
+                                HACK_MISSING_OUTSIDE_TOP | HACK_MISSING_OUTSIDE_BOTTOM;
+                int surroundingSector = -1;
+
+                for (int lineIndex : sector.lines)
+                {
+                    if (!goodHacks) break;
+
+                    const auto &line = lines[lineIndex];
+
+                    if (!line.isTwoSided() || line.aFlags & LAF_POLYOBJ)
+                    {
+                        goodHacks = 0;
+                        break;
+                    }
+                    if (sides[line.sides[0]].sector == sides[line.sides[1]].sector)
+                    {
+                        // Does not affect this hack.
+                        continue;
+                    }
+
+                    const auto innerSide = LineDef::Side(sideOfSector(line, currentSector));
+                    const auto outerSide = opposite(innerSide);
+
+                    if (sides[line.sides[outerSide]].topMaterial)
+                    {
+                        goodHacks &= ~HACK_MISSING_OUTSIDE_TOP;
+                    }
+                    if (sides[line.sides[outerSide]].bottomMaterial)
+                    {
+                        goodHacks &= ~HACK_MISSING_OUTSIDE_BOTTOM;
+                    }
+                    if (sides[line.sides[innerSide]].topMaterial)
+                    {
+                        goodHacks &= ~HACK_MISSING_INSIDE_TOP;
+                    }
+                    if (sides[line.sides[innerSide]].bottomMaterial)
+                    {
+                        goodHacks &= ~HACK_MISSING_INSIDE_BOTTOM;
+                    }
+
+                    const int other = otherSector(line, currentSector);
+                    if (surroundingSector < 0)
+                    {
+                        surroundingSector = other;
+                    }
+                    else if (other != surroundingSector)
+                    {
+                        goodHacks = 0;
+                        break;
+                    }
+                }
+
+                if (surroundingSector < 0 || surroundingSector == currentSector)
+                {
+                    goodHacks = 0;
+                }
+
+                if (goodHacks)
+                {
+                    sector.foundHacks |= goodHacks;
+                    sector.hackParams.visPlaneLinkTargetSector = surroundingSector;
+                    sector.hackParams.flags.linkCeilingPlane =
+                        (goodHacks & (HACK_MISSING_INSIDE_TOP | HACK_MISSING_OUTSIDE_TOP)) != 0;
+                    sector.hackParams.flags.linkFloorPlane =
+                        (goodHacks & (HACK_MISSING_INSIDE_BOTTOM | HACK_MISSING_OUTSIDE_BOTTOM)) != 0;
+                    sector.hackParams.flags.missingInsideTop =
+                        (goodHacks & HACK_MISSING_INSIDE_TOP) != 0;
+                    sector.hackParams.flags.missingInsideBottom =
+                        (goodHacks & HACK_MISSING_INSIDE_BOTTOM) != 0;
+                    sector.hackParams.flags.missingOutsideTop =
+                        (goodHacks & HACK_MISSING_OUTSIDE_TOP) != 0;
+                    sector.hackParams.flags.missingOutsideBottom =
+                        (goodHacks & HACK_MISSING_OUTSIDE_BOTTOM) != 0;
+
+                    StringList missDesc;
+                    if (sector.hackParams.flags.missingInsideTop) missDesc << "inside upper";
+                    if (sector.hackParams.flags.missingInsideBottom) missDesc << "inside lower";
+                    if (sector.hackParams.flags.missingOutsideTop) missDesc << "outside upper";
+                    if (sector.hackParams.flags.missingOutsideBottom) missDesc << "outside lower";
+
+                    qDebug("sector %d missing %s walls (surrounded by sector %d)",
+                           currentSector,
+                           String::join(missDesc, ", ").toLatin1().constData(),
+                           surroundingSector);
+                }
+            }
+        }
+
+        // Flat bleeding caused by sector without wall textures.
+        // For example: TNT map09 transparent window.
+        {
+            for (auto &sector : sectors)
+            {
+                const int currentSector = indexOf(sector);
+
+                if (sector.foundHacks) continue;
+
+                bool good           = true;
+                int  adjacentSector = -1;
+
+                for (int lineIndex : sector.lines)
+                {
+                    const auto &line = lines[lineIndex];
+
+                    if (!line.isTwoSided() || line.aFlags & LAF_POLYOBJ)
+                    {
+                        good = false;
+                        break;
+                    }
+
+                    const int otherSector = this->otherSector(line, currentSector);
+
+                    if (otherSector == currentSector || sectors[otherSector].foundHacks)
+                    {
+                        good = false;
+                        break;
+                    }
+
+                    if (lineLength(line) < 8.5)
+                    {
+                        // Very short line, probably inconsequential.
+                        // Bit of a kludge for TNT map09 transparent window.
+                        continue;
+                    }
+
+                    const auto innerSide    = LineDef::Side(sideOfSector(line, currentSector));
+                    const int  innerSideNum = line.sides[innerSide];
+                    const int  outerSideNum = line.sides[opposite(innerSide)];
+
+                    if (sides[innerSideNum].bottomMaterial ||
+                        sides[innerSideNum].topMaterial ||
+                        sides[innerSideNum].middleMaterial ||
+                        sides[outerSideNum].bottomMaterial ||
+                        sides[outerSideNum].topMaterial ||
+                        sides[outerSideNum].middleMaterial)
+                    {
+                        good = false;
+                        break;
+                    }
+
+                    if (adjacentSector < 0 &&
+                        sectors[otherSector].foundHacks == 0)
+                    {
+                        adjacentSector = otherSector;
+                    }
+                }
+
+                if (adjacentSector < 0)
+                {
+                    good = false;
+                }
+
+                if (good)
+                {
+                    qDebug("completely untextured lines in sector %d, linking floor to adjacent sector %d",
+                           currentSector,
+                           adjacentSector);
+
+                    sector.foundHacks |= HACK_MISSING_INSIDE_BOTTOM | HACK_MISSING_OUTSIDE_BOTTOM;
+                    sector.hackParams.visPlaneLinkTargetSector = adjacentSector;
+                    sector.hackParams.flags.linkFloorPlane = true;
+                }
+            }
+        }
+
+        // Cannot link to hacks.
+        {
+            for (auto &sector : sectors)
+            {
+                if (sector.foundHacks &&
+                    sectors[sector.hackParams.visPlaneLinkTargetSector].foundHacks)
+                {
+                    qDebug("sector %d is linked to hacked sector %d -> cancelling",
+                           indexOf(sector), sector.hackParams.visPlaneLinkTargetSector);
+
+                    sector.hackParams.visPlaneLinkTargetSector = -1;
+                    sector.foundHacks = 0;
+                }
+            }
+        }
+
         LOGDEV_MAP_MSG("Analyses completed in %.2f seconds") << begunAt.since();
     }
 
     void transferVertexes()
     {
         LOGDEV_MAP_XVERBOSE("Transfering vertexes...", "");
-        dint const numVertexes = vertexCount();
-        dint *indices = new dint[numVertexes];
-        for(int i = 0; i < numVertexes; ++i)
+        const int numVertexes = int(vertices.size());
+        int *     indices     = new dint[numVertexes];
+        coord_t * vertCoords  = new coord_t[numVertexes * 2];
+        coord_t * vert        = vertCoords;
+        for (int i = 0; i < numVertexes; ++i)
         {
             indices[i] = i;
-        }
-        MPE_VertexCreatev(numVertexes, vertCoords.constData(), indices, 0);
+            *vert++ = vertices[i].pos.x;
+            *vert++ = vertices[i].pos.y;
+        }        
+        MPE_VertexCreatev(numVertexes, vertCoords, indices, 0);
         delete[] indices;
+        delete[] vertCoords;
     }
 
     void transferSectors()
@@ -960,23 +1759,24 @@ DENG2_PIMPL(MapImporter)
 
         DENG2_FOR_EACH(Sectors, i, sectors)
         {
-            dint idx = MPE_SectorCreate(dfloat(i->lightLevel) / 255.0f, 1, 1, 1, i->index);
+            dint idx = MPE_SectorCreate(
+                dfloat(i->lightLevel) / 255.0f, 1, 1, 1, &i->hackParams, i->index);
 
-            MPE_PlaneCreate(idx, i->floorHeight, composeMaterialRef(i->floorMaterial),
+            MPE_PlaneCreate(idx, i->floorHeight, materials.find(i->floorMaterial).toUtf8(),
                             0, 0, 1, 1, 1, 1, 0, 0, 1, -1);
-            MPE_PlaneCreate(idx, i->ceilHeight, composeMaterialRef(i->ceilMaterial),
+            MPE_PlaneCreate(idx, i->ceilHeight, materials.find(i->ceilMaterial).toUtf8(),
                             0, 0, 1, 1, 1, 1, 0, 0, -1, -1);
 
-            MPE_GameObjProperty("XSector", idx, "Tag",    DDVT_SHORT, &i->tag);
-            MPE_GameObjProperty("XSector", idx, "Type",   DDVT_SHORT, &i->type);
+            MPE_GameObjProperty("XSector", idx, "Tag",                DDVT_SHORT, &i->tag);
+            MPE_GameObjProperty("XSector", idx, "Type",               DDVT_SHORT, &i->type);
 
             if(format == Id1MapRecognizer::Doom64Format)
             {
-                MPE_GameObjProperty("XSector", idx, "Flags",          DDVT_SHORT, &i->d64flags);
-                MPE_GameObjProperty("XSector", idx, "CeilingColor",   DDVT_SHORT, &i->d64ceilingColor);
-                MPE_GameObjProperty("XSector", idx, "FloorColor",     DDVT_SHORT, &i->d64floorColor);
-                MPE_GameObjProperty("XSector", idx, "UnknownColor",   DDVT_SHORT, &i->d64unknownColor);
-                MPE_GameObjProperty("XSector", idx, "WallTopColor",   DDVT_SHORT, &i->d64wallTopColor);
+                MPE_GameObjProperty("XSector", idx, "Flags",           DDVT_SHORT, &i->d64flags);
+                MPE_GameObjProperty("XSector", idx, "CeilingColor",    DDVT_SHORT, &i->d64ceilingColor);
+                MPE_GameObjProperty("XSector", idx, "FloorColor",      DDVT_SHORT, &i->d64floorColor);
+                MPE_GameObjProperty("XSector", idx, "UnknownColor",    DDVT_SHORT, &i->d64unknownColor);
+                MPE_GameObjProperty("XSector", idx, "WallTopColor",    DDVT_SHORT, &i->d64wallTopColor);
                 MPE_GameObjProperty("XSector", idx, "WallBottomColor", DDVT_SHORT, &i->d64wallBottomColor);
             }
         }
@@ -984,13 +1784,32 @@ DENG2_PIMPL(MapImporter)
 
     void transferLinesAndSides()
     {
+        auto transferSide = [this](int lineIdx, short sideFlags, SideDef *side, LineDef::Side sideIndex)
+        {
+            const auto topUri = materials.find(side->topMaterial).toUtf8();
+            const auto midUri = materials.find(side->middleMaterial).toUtf8();
+            const auto botUri = materials.find(side->bottomMaterial).toUtf8();
+
+            struct de_api_side_section_s top = {
+                topUri, {float(side->offset[VX]), float(side->offset[VY])}, {1, 1, 1, 1}};
+
+            auto middle = top;
+            middle.material = midUri;
+
+            auto bottom = top;
+            bottom.material = botUri;
+
+            MPE_LineAddSide(
+                lineIdx, sideIndex, sideFlags, &top, &middle, &bottom, side->index);
+        };
+
         LOGDEV_MAP_XVERBOSE("Transfering lines and sides...", "");
         DENG2_FOR_EACH(Lines, i, lines)
         {
             SideDef *front = (i->hasFront()? &sides[i->front()] : 0);
             SideDef *back  = (i->hasBack() ? &sides[i->back() ] : 0);
 
-            dint sideFlags = (format == Id1MapRecognizer::Doom64Format? SDF_MIDDLE_STRETCH : 0);
+            short sideFlags = (format == Id1MapRecognizer::Doom64Format? SDF_MIDDLE_STRETCH : 0);
 
             // Interpret the lack of a ML_TWOSIDED line flag to mean the
             // suppression of the side relative back sector.
@@ -999,27 +1818,14 @@ DENG2_PIMPL(MapImporter)
 
             dint lineIdx = MPE_LineCreate(i->v[0], i->v[1], front? front->sector : -1,
                                           back? back->sector : -1, i->ddFlags, i->index);
-            if(front)
+
+            if (front)
             {
-                MPE_LineAddSide(lineIdx, LineDef::Front, sideFlags,
-                                composeMaterialRef(front->topMaterial),
-                                front->offset[VX], front->offset[VY], 1, 1, 1,
-                                composeMaterialRef(front->middleMaterial),
-                                front->offset[VX], front->offset[VY], 1, 1, 1, 1,
-                                composeMaterialRef(front->bottomMaterial),
-                                front->offset[VX], front->offset[VY], 1, 1, 1,
-                                front->index);
+                transferSide(lineIdx, sideFlags, front, LineDef::Front);
             }
-            if(back)
+            if (back)
             {
-                MPE_LineAddSide(lineIdx, LineDef::Back, sideFlags,
-                                composeMaterialRef(back->topMaterial),
-                                back->offset[VX], back->offset[VY], 1, 1, 1,
-                                composeMaterialRef(back->middleMaterial),
-                                back->offset[VX], back->offset[VY], 1, 1, 1, 1,
-                                composeMaterialRef(back->bottomMaterial),
-                                back->offset[VX], back->offset[VY], 1, 1, 1,
-                                back->index);
+                transferSide(lineIdx, sideFlags, back, LineDef::Back);
             }
 
             MPE_GameObjProperty("XLinedef", lineIdx, "Flags", DDVT_SHORT, &i->flags);
@@ -1118,11 +1924,12 @@ DENG2_PIMPL(MapImporter)
         }
     }
 
+#if 0
     /**
      * @param lineList  @c NULL, will cause IterFindPolyLines to count the number
      *                  of lines in the polyobj.
      */
-    void collectPolyobjLinesWorker(Polyobj::LineIndices &lineList, Vector2d const &point)
+    void collectPolyobjLinesWorker(Polyobj::LineIndices &lineList, Vec2d const &point)
     {
         DENG2_FOR_EACH(Lines, i, lines)
         {
@@ -1132,31 +1939,15 @@ DENG2_PIMPL(MapImporter)
             // Have we already encounterd this?
             if(i->validCount == validCount) continue;
 
-            if(point == vertexAsVector2d(i->v[0]))
+            if(point == vertexAsVec2d(i->v[0]))
             {
                 i->validCount = validCount;
                 lineList.append( i - lines.begin() );
-                collectPolyobjLinesWorker(lineList, vertexAsVector2d(i->v[1]));
+                collectPolyobjLinesWorker(lineList, vertexAsVec2d(i->v[1]));
             }
         }
     }
-
-    /**
-     * @todo This terribly inefficent (naive) algorithm may need replacing
-     *       (it is far outside an acceptable polynomial range!).
-     */
-    void collectPolyobjLines(Polyobj::LineIndices &lineList, Lines::iterator lineIt)
-    {
-        LineDef &line = *lineIt;
-        line.xType    = 0;
-        line.xArgs[0] = 0;
-
-        validCount++;
-        // Insert the first line.
-        lineList.append(lineIt - lines.begin());
-        line.validCount = validCount;
-        collectPolyobjLinesWorker(lineList, vertexAsVector2d(line.v[1]));
-    }
+#endif
 };
 
 MapImporter::MapImporter(Id1MapRecognizer const &recognized)
@@ -1166,11 +1957,13 @@ MapImporter::MapImporter(Id1MapRecognizer const &recognized)
     if(d->format == Id1MapRecognizer::UnknownFormat)
         throw LoadError("MapImporter", "Format unrecognized");
 
+#if 0
     // Allocate the vertices first as a large contiguous array suitable for
     // passing directly to Doomsday's MapEdit interface.
     duint vertexCount = recognized.lumps().find(Id1MapRecognizer::VertexData).value()->size()
                       / Id1MapRecognizer::elementSizeForDataType(d->format, Id1MapRecognizer::VertexData);
     d->vertCoords.resize(vertexCount * 2);
+#endif
 
     DENG2_FOR_EACH_CONST(Id1MapRecognizer::Lumps, i, recognized.lumps())
     {
@@ -1203,7 +1996,7 @@ MapImporter::MapImporter(Id1MapRecognizer const &recognized)
         lump->unlock();
     }
 
-    // Perform post load analyses.
+    d->linkLines();
     d->analyze();
 }
 

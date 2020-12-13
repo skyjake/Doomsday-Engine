@@ -149,6 +149,8 @@ static QImage load(Block const &data)
 
 namespace tga {
 
+/// @todo Replace this Targa loader with stb_image.
+
 struct Header : public IReadable
 {
     enum Flag
@@ -168,8 +170,9 @@ struct Header : public IReadable
 
     enum ImageType
     {
-        RGB    = 2, ///< Uncompressed RGB.
-        RleRGB = 10 ///< Run length encoded RGB.
+        ColorMapped = 1, // Uncompressed and color-mapped.
+        RGB         = 2, // Uncompressed RGB.
+        RleRGB      = 10 // Run-length encoded RGB.
     };
 
     Block identification;
@@ -236,6 +239,15 @@ static bool recognize(Block const &data)
     {
         Header header;
         Reader(data) >> header;
+        if (header.size.x == 0 || header.size.y == 0)
+        {
+            return false;
+        }
+        if (header.imageType == Header::ColorMapped && header.colorMapType == Header::ColorMap256 &&
+            header.depth == 8)
+        {
+            return true;
+        }
         return (header.imageType == Header::RGB || header.imageType == Header::RleRGB) &&
                header.colorMapType == Header::ColorMapNone &&
                (header.depth == 24 || header.depth == 32);
@@ -254,7 +266,7 @@ static QImage load(Block const &data)
 
     int const pixelSize = header.depth / 8;
     QImage img(QSize(header.size.x, header.size.y),
-               pixelSize == 4? QImage::Format_ARGB32 : QImage::Format_RGB888);
+               pixelSize == 4 || header.attrib > 0? QImage::Format_ARGB32 : QImage::Format_RGB888);
     dbyte *base = img.bits();
 
     bool const isUpperOrigin = header.flags.testFlag(Header::ScreenOriginUpper);
@@ -317,8 +329,38 @@ static QImage load(Block const &data)
             }
         }
     }
+    else if (header.imageType == Header::ColorMapped)
+    {
+        DENG2_ASSERT(header.colorMapType == Header::ColorMap256);
+        DENG2_ASSERT(header.depth == 8);
 
-    if (pixelSize == 3)
+        // Read the colormap.
+        QVector<QRgb> colorTable(256);
+        for (int i = 0; i < header.mapCount; ++i)
+        {
+            uint8_t color[4] = {0, 0, 0, 255};
+            ByteRefArray buf(color, 4);
+            input.readBytes(header.mapEntrySize / 8, buf);
+
+            DENG2_ASSERT(header.mapIndex + i < 256);
+
+            // R/B swapped
+            colorTable[header.mapIndex + i] = qRgba(color[2], color[1], color[0], color[3]);
+        }
+
+        img = QImage(QSize(header.size.x, header.size.y), QImage::Format_Indexed8);
+        img.setColorTable(colorTable);
+
+        dbyte *base = img.bits();
+        for (int y = 0; y < header.size.y; y++)
+        {
+            int inY = (isUpperOrigin? y : (header.size.y - y - 1));
+            ByteRefArray line(base + inY * img.bytesPerLine(), header.size.x);
+            input.readBytesFixedSize(line);
+        }
+    }
+
+    if (pixelSize >= 3)
     {
         img = img.rgbSwapped();
     }

@@ -104,7 +104,7 @@ static void printMissingMaterialsInDict()
  *
  * @return  Pointer to the found material; otherwise @c 0.
  */
-static Material *findMaterialInDict(String const &materialUriStr)
+static Material *findMaterialInDict(const String &materialUriStr)
 {
     if(materialUriStr.isEmpty()) return 0;
 
@@ -158,10 +158,10 @@ static Material *findMaterialInDict(String const &materialUriStr)
     return material;
 }
 
-static inline Material *findMaterialInDict(ddstring_t const *materialUriStr)
+static inline Material *findMaterialInDict(const char *materialUriStr)
 {
-    if(!materialUriStr) return 0;
-    return findMaterialInDict(Str_Text(materialUriStr));
+    if (!materialUriStr) return nullptr;
+    return findMaterialInDict(String(materialUriStr));
 }
 
 Map *MPE_Map()
@@ -193,6 +193,8 @@ dd_bool MPE_End()
 {
     if(!editMapInited)
         return false;
+
+
 
     /*
      * Log warnings about any issues we encountered during conversion of
@@ -261,12 +263,11 @@ int MPE_LineCreate(int v1, int v2, int frontSectorIdx, int backSectorIdx, int fl
 }
 
 #undef MPE_LineAddSide
-void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *topMaterialUri,
-    float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue,
-    ddstring_t const *middleMaterialUri, float middleOffsetX, float middleOffsetY, float middleRed,
-    float middleGreen, float middleBlue, float middleOpacity, ddstring_t const *bottomMaterialUri,
-    float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen,
-    float bottomBlue, int archiveIndex)
+void MPE_LineAddSide(int lineIdx, int sideId, short flags,
+                     const de_api_side_section_s *top,
+                     const de_api_side_section_s *middle,
+                     const de_api_side_section_s *bottom,
+                     int archiveIndex)
 {
     ERROR_IF_NOT_INITIALIZED();
 
@@ -283,24 +284,24 @@ void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *top
 
     // Assign the resolved material if found.
     side.top()
-        .setMaterial(findMaterialInDict(topMaterialUri))
-        .setOrigin(Vector2f(topOffsetX, topOffsetY))
-        .setColor(Vector3f(topRed, topGreen, topBlue));
+        .setMaterial(findMaterialInDict(top->material))
+        .setOrigin(Vector2f(top->offset[VX], top->offset[VY]))
+        .setColor(Vector3f(top->color[CR], top->color[CG], top->color[CB]));
 
     side.middle()
-        .setMaterial(findMaterialInDict(middleMaterialUri))
-        .setOrigin(Vector2f(middleOffsetX, middleOffsetY))
-        .setColor(Vector3f(middleRed, middleGreen, middleBlue))
-        .setOpacity(middleOpacity);
+        .setMaterial(findMaterialInDict(middle->material))
+        .setOrigin(Vector2f(middle->offset[VX], middle->offset[VY]))
+        .setColor(Vector3f(middle->color[CR], middle->color[CG], middle->color[CB]))
+        .setOpacity(middle->color[CA]);
 
     side.bottom()
-        .setMaterial(findMaterialInDict(bottomMaterialUri))
-        .setOrigin(Vector2f(bottomOffsetX, bottomOffsetY))
-        .setColor(Vector3f(bottomRed, bottomGreen, bottomBlue));
+        .setMaterial(findMaterialInDict(bottom->material))
+        .setOrigin(Vector2f(bottom->offset[VX], bottom->offset[VY]))
+        .setColor(Vector3f(bottom->color[CR], bottom->color[CG], bottom->color[CB]));
 }
 
 #undef MPE_PlaneCreate
-int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri,
+int MPE_PlaneCreate(int sectorIdx, coord_t height, const char *materialUri,
     float matOffsetX, float matOffsetY, float tintRed, float tintGreen, float tintBlue, float opacity,
     float normalX, float normalY, float normalZ, int archiveIndex)
 {
@@ -315,8 +316,8 @@ int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri
 
     plane->surface()
         .setMaterial(findMaterialInDict(materialUri))
-        .setColor(Vector3f(tintRed, tintGreen, tintBlue))
-        .setOrigin(Vector2f(matOffsetX, matOffsetY));
+        .setColor({tintRed, tintGreen, tintBlue})
+        .setOrigin({matOffsetX, matOffsetY});
 
     if(!plane->isSectorFloor() && !plane->isSectorCeiling())
     {
@@ -328,11 +329,16 @@ int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri
 
 #undef MPE_SectorCreate
 int MPE_SectorCreate(float lightlevel, float red, float green, float blue,
+                     const struct de_api_sector_hacks_s *hacks,
                      int archiveIndex)
 {
     ERROR_IF_NOT_INITIALIZED();
-    return editMap->createSector(lightlevel, Vector3f(red, green, blue),
-                                 archiveIndex)->indexInMap();
+    return editMap
+        ->createSector(lightlevel,
+                       {red, green, blue},
+                       archiveIndex,
+                       hacks)
+        ->indexInMap();
 }
 
 #undef MPE_PolyobjCreate

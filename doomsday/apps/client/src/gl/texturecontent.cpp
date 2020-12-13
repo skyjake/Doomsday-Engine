@@ -176,7 +176,7 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
         }
         image.pixelSize = 2;
     }
-    else if (0 != image.paletteId)
+    else if (image.paletteId)
     {
         if (fillOutlines && (image.flags & IMGF_IS_MASKED))
         {
@@ -256,7 +256,12 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
         }
     }
     else if (image.pixelSize > 2)
-    {
+    {        
+        if (fillOutlines && image.pixelSize == 4)
+        {
+            ColorOutlinesRGBA(image.pixels, image.size.x, image.size.y);
+        }
+
         if (monochrome)
         {
             Image_ConvertToLuminance(image);

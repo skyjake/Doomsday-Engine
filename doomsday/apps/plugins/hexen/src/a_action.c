@@ -35,6 +35,7 @@ static coord_t* orbitTableY = NULL;
 coord_t* FloatBobOffset = NULL;
 
 int localQuakeHappening[MAXPLAYERS];
+int localQuakeTimeout[MAXPLAYERS];
 
 void X_CreateLUTs(void)
 {

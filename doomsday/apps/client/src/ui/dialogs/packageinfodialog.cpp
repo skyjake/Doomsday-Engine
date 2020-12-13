@@ -339,6 +339,11 @@ DENG_GUI_PIMPL(PackageInfoDialog)
                     QString("Contains %1 map%2: ").arg(mapCount).arg(DENG2_PLURAL_S(mapCount)) +
                     String::join(bundle->lumpDirectory()->mapsInContiguousRangesAsText(), ", ");
                 moreMsg += "\n";
+
+                if (bundle->lumpDirectory()->has("DEHACKED"))
+                {
+                    moreMsg += "Contains a DeHackEd patch\n";
+                }
             }
 
             if (lumpDirCrc32)

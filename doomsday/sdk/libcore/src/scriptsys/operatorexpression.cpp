@@ -200,6 +200,22 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
             result = newBooleanValue(rightValue->isTrue());
             break;
 
+        case BITWISE_AND:
+            result = new NumberValue(leftValue->asUInt() & rightValue->asUInt());
+            break;
+
+        case BITWISE_OR:
+            result = new NumberValue(leftValue->asUInt() | rightValue->asUInt());
+            break;
+
+        case BITWISE_XOR:
+            result = new NumberValue(leftValue->asUInt() ^ rightValue->asUInt());
+            break;
+
+        case BITWISE_NOT:
+            result = new NumberValue(~rightValue->asUInt());
+            break;
+
         case AND:
             if (!leftValue->isTrue())
             {

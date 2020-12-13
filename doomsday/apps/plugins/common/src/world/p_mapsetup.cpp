@@ -25,6 +25,8 @@
 
 #include <doomsday/world/entitydef.h>
 #include <gamefw/mapspot.h>
+#include <de/Script>
+#include <de/Process>
 
 #include <cmath>
 #include <cctype>  // isspace
@@ -913,6 +915,17 @@ void P_FinalizeMapChange(uri_s const *mapUri_)
 #if __JHEXEN__
     P_InitCorpseQueue();
 #endif
+
+    // Script to run during map setup. It is executed at this specific point so that it can
+    // initialize data for map spots and spawned things. Other script hooks could be added
+    // to be called at other points during map setup (before/after, for example).
+    if (const String onSetupSrc = G_MapInfoForMapUri(mapUri).gets("onSetup"))
+    {
+        Script script(onSetupSrc);
+        Process proc;
+        proc.run(script);
+        proc.execute();
+    }
 
     initMapSpots();
     spawnMapObjects();

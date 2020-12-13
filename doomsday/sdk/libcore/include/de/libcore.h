@@ -180,6 +180,8 @@
 #  define DENG2_DEBUG_ONLY(x)
 #endif
 
+#define DE_ASSERT(x) DENG2_ASSERT(x) // work/omega
+
 #ifdef DENG2_USE_QT
 #  ifdef UNIX
 #    include <execinfo.h>

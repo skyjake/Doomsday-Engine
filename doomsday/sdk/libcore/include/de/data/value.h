@@ -104,9 +104,14 @@ public:
     virtual Number asSafeNumber(Number const &defaultValue = 0.0) const;
 
     /**
-     * Convert the value to the nearest integer. Uses asNumber().
+     * Convert the value to the nearest 32-bit signed integer. Uses asNumber().
      */
     int asInt() const;
+
+    /**
+     * Convert the value to the nearest 32-bit unsigned integer. Uses asNumber().
+     */
+    int asUInt() const;
 
     /**
      * Convert the value to a list of strings using asText().

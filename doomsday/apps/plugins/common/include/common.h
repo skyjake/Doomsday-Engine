@@ -48,6 +48,8 @@
 
 #ifdef __cplusplus
 #  include <doomsday/filesys/lumpindex.h>
+#  include <de/Binder>
+#  include <de/Context>
 #endif
 #include "gamerules.h"
 #include "pause.h"
@@ -62,9 +64,14 @@ int     Common_GetInteger(int id);
 void    Common_Load();
 void    Common_Unload();
 void    Common_Register();
+void    Common_RegisterMapObjs();
 
 #ifdef __cplusplus
 } // extern "C"
+
+de::Binder &     Common_GameBindings();
+struct player_s &P_ContextPlayer(const de::Context &ctx);
+struct mobj_s &  P_ContextMobj(const de::Context &ctx);
 
 /**
  * Returns the central LumpIndex from the engine. For use with old subsystems

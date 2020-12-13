@@ -2,7 +2,7 @@
 @INCLUDE = ../../doomsday.doxy
 
 PROJECT_NAME        = "Doomsday Client"
-PROJECT_NUMBER      = 2.2
+PROJECT_NUMBER      = 2.3
 PROJECT_BRIEF       = "Internal documentation (Windows)"
 PROJECT_LOGO        = ../../doc/apidoc-logo.png
 HTML_STYLESHEET     = ../../doxygen.css

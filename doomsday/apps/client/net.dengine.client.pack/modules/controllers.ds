@@ -7,7 +7,7 @@ def event(context, button, command, repeat=False, condition=None)
     if condition: condition = ' + ' + condition
     else: condition = ''
     if 'hat' in button
-        Input.bindEvent('%s:%s%s' % [context, button, condition], command)        
+        Input.bindEvent('%s:%s%s' % [context, button, condition], command)
     else
         Input.bindEvent('%s:%s-down%s' % [context, button, condition], command)
         if repeat: Input.bindEvent('%s:%s-repeat%s' % [context, button, condition], command)
@@ -21,13 +21,13 @@ def control(ctl, impulse, inverse=False, condition=None)
     Input.bindControl(ctl, 'local1-%s' % impulse)
 end
 
-record Gamepad()        
+record Gamepad()
     def __init__(id, regex)
         # Arguments:
         #    id:     Identifier of the controller.
         #    regex:  One or more regexes (Text, or Array of Texts)
         #            for matching against the joystick name.
-        self.id = id        
+        self.id = id
         self.regex = regex
     end
 
@@ -40,7 +40,7 @@ record Gamepad()
             Input.controllerPresets[reg] = Record(self)
         end
     end
-    
+
     def resetDeadzones()
         for var in Console.listVars('input-joy-.*-deadzone')
             Console.set(var, Input.DEFAULT_STICK_DEADZONE)
@@ -63,14 +63,14 @@ end
 record GenericGamepad(Gamepad)
     def __init__(): self.Gamepad->__init__('Generic', '')
     def bind()
-        print 'Bindings for GenericGamePad:', self.id        
+        print 'Bindings for GenericGamePad:', self.id
         self.resetDeadzones()
     end
 end
 
 record PS3Gamepad(Gamepad)
     def __init__(id, regex): self.Gamepad->__init__(id, regex)
-    def bind()               
+    def bind()
         # Names for buttons and other controls.
         x = 'joy-button15'
         o = 'joy-button14'
@@ -92,9 +92,12 @@ record PS3Gamepad(Gamepad)
         leftVert = 'joy-y'
         rightHoriz = 'joy-z'
         rightVert = 'joy-w'
-        
+
         # Common controls, suitable for all games.
         event('shortcut', play, 'menu')
+
+        event('message', o, 'messageno')
+        event('message', x, 'messageyes')
 
         event('menu', o, 'menuback')
         event('menu', x, 'menuselect')
@@ -109,7 +112,7 @@ record PS3Gamepad(Gamepad)
         event('game', up, 'impulse nextweapon')
         event('game', down, 'impulse prevweapon')
         event('game', rightPress, 'impulse lookcenter', condition='modifier-2-up')
-        event('game', select, 'impulse automap')        
+        event('game', select, 'impulse automap')
 
         control(R1, 'flymode') # modifier 2
         control(rightVert, 'zfly', inverse=True, condition='modifier-2-down')
@@ -125,19 +128,19 @@ record PS3Gamepad(Gamepad)
 
         event('map', rightPress, 'impulse follow')
         event('map', leftPress, 'impulse rotate')
-        
+
         control(rightHoriz, 'mappanx')
         control(rightVert, 'mappany', inverse=True)
         control(R2, 'mapzoom')
         control(R1, 'mapzoom', inverse=True)
-                
+
         # Inventory controls for Heretic and Hexen.
         if App.gamePlugin() in ['heretic', 'hexen']
             event('game', left,  'impulse previtem')
             event('game', right, 'impulse nextitem')
             event('game', tri,   'impulse useitem')
         end
-                
+
         # Deadzones.
         self.resetDeadzones()
         self.disableAllAxes()
@@ -150,7 +153,7 @@ end
 
 record PS4Gamepad(Gamepad)
     def __init__(id, regex): self.Gamepad->__init__(id, regex)
-    def bind()               
+    def bind()
         # Names for buttons and other controls.
         sqr = 'joy-button1'
         x   = 'joy-button2'
@@ -174,9 +177,12 @@ record PS4Gamepad(Gamepad)
         leftVert   = 'joy-y'
         rightHoriz = 'joy-z'
         rightVert  = 'joy-axis06'
-        
+
         # Common controls, suitable for all games.
         event('shortcut', options, 'menu')
+
+        event('message', o, 'messageno')
+        event('message', x, 'messageyes')
 
         event('menu', o, 'menuback')
         event('menu', x, 'menuselect')
@@ -191,7 +197,7 @@ record PS4Gamepad(Gamepad)
         event('game', up, 'impulse nextweapon')
         event('game', down, 'impulse prevweapon')
         event('game', rightPress, 'impulse lookcenter', condition='modifier-2-up')
-        event('game', pad, 'impulse automap')        
+        event('game', pad, 'impulse automap')
 
         control(R1, 'flymode') # modifier 2
         control(rightVert, 'zfly', inverse=True, condition='modifier-2-down')
@@ -207,19 +213,19 @@ record PS4Gamepad(Gamepad)
 
         event('map', rightPress, 'impulse follow')
         event('map', leftPress, 'impulse rotate')
-        
+
         control(rightHoriz, 'mappanx')
         control(rightVert, 'mappany', inverse=True)
         control(R2, 'mapzoom')
         control(R1, 'mapzoom', inverse=True)
-                
+
         # Inventory controls for Heretic and Hexen.
         if App.gamePlugin() in ['heretic', 'hexen']
             event('game', left,  'impulse previtem')
             event('game', right, 'impulse nextitem')
             event('game', tri,   'impulse useitem')
         end
-                       
+
         # Deadzones.
         self.resetDeadzones()
         self.disableAllAxes()
@@ -233,7 +239,7 @@ end
 record XboxWindowsGamepad(Gamepad)
     # Xbox One controller with default Windows game controller setup.
     def __init__(id, regex): self.Gamepad->__init__(id, regex)
-    def bind()               
+    def bind()
         # Names for buttons and other controls.
         a = 'joy-button1'
         b = 'joy-button2'
@@ -249,14 +255,17 @@ record XboxWindowsGamepad(Gamepad)
         right = 'joy-hat1-angle2'
         LB = 'joy-button5'
         RB = 'joy-button6'
-        thruster = 'joy-z' 
+        thruster = 'joy-z'
         leftHoriz  = 'joy-x'
         leftVert   = 'joy-y'
         rightHoriz = 'joy-w'
         rightVert  = 'joy-axis05'
-        
+
         # Common controls, suitable for all games.
         event('shortcut', menu, 'menu')
+
+        event('message', b, 'messageno')
+        event('message', a, 'messageyes')
 
         event('menu', b, 'menuback')
         event('menu', a, 'menuselect')
@@ -316,7 +325,7 @@ record XboxMacGamepad(Gamepad)
     # the "360Controller" driver on macOS (driver defaults):
     # https://github.com/360Controller/360Controller
     def __init__(id, regex): self.Gamepad->__init__(id, regex)
-    def bind()               
+    def bind()
         # Names for buttons and other controls.
         a = 'joy-button1'
         b = 'joy-button2'
@@ -333,16 +342,19 @@ record XboxMacGamepad(Gamepad)
         right = 'joy-button15'
         LB = 'joy-button5'
         RB = 'joy-button6'
-        LT = 'joy-z' 
+        LT = 'joy-z'
         RT = 'joy-axis06'
         leftHoriz  = 'joy-x'
         leftVert   = 'joy-y'
         rightHoriz = 'joy-w'
         rightVert  = 'joy-axis05'
-        
+
         # Common controls, suitable for all games.
         event('shortcut', menu, 'menu')
         event('shortcut', xbox, 'menu')
+
+        event('message', b, 'messageno')
+        event('message', a, 'messageyes')
 
         event('menu', b, 'menuback')
         event('menu', a, 'menuselect')
@@ -393,7 +405,7 @@ record XboxMacGamepad(Gamepad)
             Console.set('input-joy-%s-deadzone' % axis, 0.15)
             Console.set('input-joy-%s-factor' % axis, 1)
         end
-        
+
         # Thrusters are stick axes, but we want them to go from 0 to 1.
         Console.set('input-%s-factor' % LT, Input.DEFAULT_STICK_FACTOR/2)
         Console.set('input-%s-offset' % LT, 0.5)

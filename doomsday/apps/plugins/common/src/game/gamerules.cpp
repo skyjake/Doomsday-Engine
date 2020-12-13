@@ -64,48 +64,14 @@ GameRules::GameRules(GameRules const &other)
     update();
 }
 
-//GameRules *GameRules::fromReader(reader_s *reader) // static
-//{
-//    GameRules *rules = new GameRules;
-//    rules->read(reader);
-//    return rules;
-//}
-
 GameRules *GameRules::fromRecord(Record const &record, GameRules const *defaults) // static
 {
     GameRules *gr = new GameRules;
-
-    /*Record rec = &record;
-    if (defaults)
-    {
-        Record merged = defaults->d->rules; // defaults->toRecord();
-        merged.copyMembersFrom(record);
-        rec = merged;
-    }*/
-
     if (defaults)
     {
         gr->d->rules.copyMembersFrom(defaults->asRecord(), Record::IgnoreDoubleUnderscoreMembers);
     }
-
     gr->d->rules.copyMembersFrom(record, Record::IgnoreDoubleUnderscoreMembers);
-
-//    if(!defaults || rec->has("skill"))           rules->skill           = rec->geti("skill");
-//#if !__JHEXEN__
-//    if(!defaults || rec->has("fast"))            rules->fast            = byte( rec->getb("fast") );
-//#endif
-//    if(!defaults || rec->has("deathmatch"))      rules->deathmatch      = byte( rec->geti("deathmatch") );
-//    if(!defaults || rec->has("noMonsters"))      rules->noMonsters      = byte( rec->getb("noMonsters") );
-//#if __JHEXEN__
-//    if(!defaults || rec->has("randomClasses"))   rules->randomClasses   = byte( rec->getb("randomClasses") );
-//#else
-//    if(!defaults || rec->has("respawnMonsters")) rules->respawnMonsters = byte( rec->getb("respawnMonsters") );
-//#endif
-
-    //if(rec != &record) delete rec;
-
-    //qDebug() << "GameRules from Record:\n" << gr->d->rules.asText().toUtf8().constData();
-
     return gr;
 }
 
@@ -117,39 +83,12 @@ Record &GameRules::asRecord()
 Record const &GameRules::asRecord() const
 {
     return d->rules;
-
-//    Record *rec = new Record;
-
-//    rec->addNumber ("skill",           skill);
-//#if !__JHEXEN__
-//    rec->addBoolean("fast",            CPP_BOOL(fast));
-//#endif
-//    rec->addNumber ("deathmatch",      deathmatch);
-//    rec->addBoolean("noMonsters",      CPP_BOOL(noMonsters));
-//#if __JHEXEN__
-//    rec->addBoolean("randomClasses",   CPP_BOOL(randomClasses));
-//#else
-//    rec->addBoolean("respawnMonsters", CPP_BOOL(respawnMonsters));
-//#endif
-
-//    return rec;
 }
 
 GameRules &GameRules::operator = (GameRules const &other)
 {
     d->rules = other.d->rules;
-
     update();
-
-//    skill           = other.skill;
-//    fast            = other.fast;
-//    deathmatch      = other.deathmatch;
-//    noMonsters      = other.noMonsters;
-//#if __JHEXEN__
-//    randomClasses   = other.randomClasses;
-//#else
-//    respawnMonsters = other.respawnMonsters;
-//#endif
     return *this;
 }
 
@@ -164,48 +103,6 @@ String GameRules::description() const
     }
     return "Singleplayer";
 }
-
-#if 0
-void GameRules::write(writer_s *writer) const
-{
-    DENG2_ASSERT(writer != 0);
-
-    Writer_WriteByte(writer, skill);
-    Writer_WriteByte(writer, deathmatch);
-#if !__JHEXEN__
-    Writer_WriteByte(writer, fast);
-#endif
-    Writer_WriteByte(writer, noMonsters);
-#if __JHEXEN__
-    Writer_WriteByte(writer, randomClasses);
-#else
-    Writer_WriteByte(writer, respawnMonsters);
-#endif
-}
-
-void GameRules::read(reader_s *reader)
-{
-    DENG2_ASSERT(reader != 0);
-
-    skill           = Reader_ReadByte(reader);
-    // Interpret skill modes outside the normal range as "spawn no things".
-    if(skill < SM_BABY || skill >= NUM_SKILL_MODES)
-    {
-        skill = SM_NOTHINGS;
-    }
-
-    deathmatch      = Reader_ReadByte(reader);
-#if !__JHEXEN__
-    fast            = Reader_ReadByte(reader);
-#endif
-    noMonsters      = Reader_ReadByte(reader);
-#if __JHEXEN__
-    randomClasses   = Reader_ReadByte(reader);
-#else
-    respawnMonsters = Reader_ReadByte(reader);
-#endif
-}
-#endif
 
 String GameRules::asText() const
 {

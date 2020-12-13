@@ -4,7 +4,7 @@
 # project configuration.
 
 if (POLICY CMP0068)
-    cmake_policy (SET CMP0068 OLD)  # macOS: RPATH affects install_name
+    cmake_policy (SET CMP0068 NEW)  # macOS: RPATH affects install_name
 endif ()
 
 get_filename_component (_where "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
@@ -120,8 +120,22 @@ endif ()
 
 # Helpers --------------------------------------------------------------------
 
-set (Python_ADDITIONAL_VERSIONS 2.7)
-find_package (PythonInterp REQUIRED)
+# CMake 3.12 adds a better Python finder, but older OS distros like Fedora 23
+# only come with older versions, and we don't want to require manually
+# installing a newer CMake.
+
+find_program (PYTHON_EXECUTABLE python3 HINTS "${PYTHON_DIR}")
+find_program (PYTHON_EXECUTABLE python HINTS "${PYTHON_DIR}")
+if (NOT PYTHON_EXECUTABLE)
+    message (FATAL_ERROR "Python 3 required; did not found a python on the path (set PYTHON_DIR)")
+endif ()
+execute_process (COMMAND ${PYTHON_EXECUTABLE} --version OUTPUT_VARIABLE pythonVer)
+string (REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" pythonVer ${pythonVer})
+#message (STATUS "Found Python: ${PYTHON_EXECUTABLE} (version: ${pythonVer})")
+
+if (pythonVer VERSION_LESS 3)
+    message (FATAL_ERROR "Python 3 required; found ${pythonVer}")
+endif ()
 
 if (DENG_ENABLE_COTIRE)
     include (cotire)

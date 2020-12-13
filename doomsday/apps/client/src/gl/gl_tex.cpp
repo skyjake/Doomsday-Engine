@@ -1261,6 +1261,51 @@ void ColorOutlinesIdx(uint8_t* buffer, int width, int height)
     }
 }
 
+void ColorOutlinesRGBA(uint8_t *buffer, int width, int height)
+{
+    using namespace de;
+
+    uint32_t *buffer32 = reinterpret_cast<uint32_t *>(buffer);
+
+    for (int y = 0; y < height; ++y)
+    {
+        uint32_t *row = buffer32 + y * width;
+        for (int x = 0; x < width; ++x)
+        {
+            if ((row[x] & 0xff000000) == 0) // transparent pixel
+            {
+                int average[3]{};
+                int count = 0;
+                for (int dy = -1; dy <= 1; ++dy)
+                {
+                    for (int dx = -1; dx <= 1; ++dx)
+                    {
+                        if (!(dx || dy)) continue; // the current pixel
+
+                        const Vec2i pos(x + dx, y + dy);
+                        if (pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height)
+                        {
+                            const uint32_t adjacent = buffer32[pos.y * width + pos.x];
+                            if (adjacent & 0xff000000) // non-transparent pixel
+                            {
+                                average[0] += adjacent & 0xff;
+                                average[1] += (adjacent >> 8) & 0xff;
+                                average[2] += (adjacent >> 16) & 0xff;
+                                ++count;
+                            }
+                        }
+                    }
+                }
+                if (count)
+                {
+                    for (int &c : average) c /= count;
+                }
+                row[x] = average[0] | (average[1] << 8) | (average[2] << 16);
+            }
+        }
+    }
+}
+
 void EqualizeLuma(uint8_t* pixels, int width, int height, float* rBaMul,
     float* rHiMul, float* rLoMul)
 {

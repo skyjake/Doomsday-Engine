@@ -496,6 +496,8 @@ typedef Matrix4<dfloat>  Matrix4f;
 typedef Matrix4<ddouble> Matrix4d;
 ///@}
 
+using Mat4f = Matrix4f;
+
 } // namespace de
 
 #endif // LIBDENG2_MATRIX_H

@@ -29,23 +29,7 @@
  */
 void P_RegisterMapObjs(void)
 {
-    P_RegisterMapObj(MO_THING, "Thing");
-    P_RegisterMapObjProperty(MO_THING, MO_X, "X", DDVT_DOUBLE);
-    P_RegisterMapObjProperty(MO_THING, MO_Y, "Y", DDVT_DOUBLE);
-    P_RegisterMapObjProperty(MO_THING, MO_Z, "Z", DDVT_DOUBLE);
-    P_RegisterMapObjProperty(MO_THING, MO_ANGLE, "Angle", DDVT_ANGLE);
-    P_RegisterMapObjProperty(MO_THING, MO_DOOMEDNUM, "DoomEdNum", DDVT_INT);
-    P_RegisterMapObjProperty(MO_THING, MO_SKILLMODES, "SkillModes", DDVT_INT);
-    P_RegisterMapObjProperty(MO_THING, MO_FLAGS, "Flags", DDVT_INT);
-
-    P_RegisterMapObj(MO_XLINEDEF, "XLinedef");
-    P_RegisterMapObjProperty(MO_XLINEDEF, MO_TAG, "Tag", DDVT_SHORT);
-    P_RegisterMapObjProperty(MO_XLINEDEF, MO_TYPE, "Type", DDVT_SHORT);
-    P_RegisterMapObjProperty(MO_XLINEDEF, MO_FLAGS, "Flags", DDVT_SHORT);
-
-    P_RegisterMapObj(MO_XSECTOR, "XSector");
-    P_RegisterMapObjProperty(MO_XSECTOR, MO_TAG, "Tag", DDVT_SHORT);
-    P_RegisterMapObjProperty(MO_XSECTOR, MO_TYPE, "Type", DDVT_SHORT);
+    Common_RegisterMapObjs();
 }
 
 /**

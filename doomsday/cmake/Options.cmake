@@ -51,3 +51,5 @@ option (DENG_ENABLE_COUNTED_TRACING
 if (DENG_ENABLE_COUNTED_TRACING)
     add_definitions (-DDENG_USE_COUNTED_TRACING=1)
 endif ()
+
+option (DENG_ASSIMP_EMBEDDED "Use the Assimp from 'external/assimp' instead of system libraries" YES)

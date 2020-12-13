@@ -1872,7 +1872,11 @@ void G_PlayerReborn(int player)
 #else
     p->readyWeapon = p->pendingWeapon = WT_FIRST;
     p->weapons[WT_FIRST].owned = true;
+#endif
+
+#if defined(HAVE_EARTHQUAKE)
     localQuakeHappening[player] = false;
+    localQuakeTimeout[player] = 0;
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__

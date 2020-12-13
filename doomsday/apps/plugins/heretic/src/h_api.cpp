@@ -31,6 +31,7 @@
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
 #include <gamefw/libgamefw.h>
+#include <de/ScriptSystem>
 
 #include "doomsday.h"
 
@@ -40,11 +41,13 @@
 #include "d_net.h"
 #include "fi_lib.h"
 #include "g_common.h"
+#include "g_defs.h"
 #include "g_update.h"
 #include "hu_menu.h"
 #include "p_mapsetup.h"
 #include "r_common.h"
 #include "p_map.h"
+#include "p_enemy.h"
 #include "polyobjs.h"
 
 using namespace de;
@@ -137,6 +140,37 @@ static int G_RegisterGames(int hookType, int param, void* data)
 #undef CONFIGDIR
 }
 
+static de::Value *Function_Player_SetFlameCount(de::Context &ctx, const de::Function::ArgumentValues &args)
+{
+    P_ContextPlayer(ctx).flameCount = args.at(0)->asInt();
+    return nullptr;
+}
+
+static de::Value *Function_Thing_Attack(de::Context &ctx, const de::Function::ArgumentValues &args)
+{
+    using namespace de;
+
+    mobj_t *src = &P_ContextMobj(ctx);
+
+    const int meleeDamage = args.at(0)->asInt();
+    const mobjtype_t missileId = mobjtype_t(Defs().getMobjNum(args.at(1)->asText()));
+
+    return new NumberValue(P_Attack(src, meleeDamage, missileId));
+}
+
+static de::Value *
+Function_Audio_DefineAmbientSfx(de::Context &, const de::Function::ArgumentValues &args)
+{
+    std::vector<int> seq;
+    for (const auto *value : args.at(1)->as<ArrayValue>().elements())
+    {
+        seq.push_back(value->asInt());
+    }
+    seq.push_back(-1); // always undefined, treated as `afxcmd_end` (with a warning)
+    P_DefineAmbientSfx(args.at(0)->asInt(), seq.data(), seq.size());
+    return nullptr;
+}
+
 /**
  * Called right after the game plugin is selected into use.
  */
@@ -145,6 +179,35 @@ DENG_ENTRYPOINT void DP_Load(void)
     Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
     gfw_SetCurrentGame(GFW_HERETIC);
     Common_Load();
+
+    // Scripting setup.
+    {
+        auto &scr = ScriptSystem::get();
+        auto &playerClass = scr.builtInClass("App", "Player");
+
+        Common_GameBindings().init(playerClass)
+            << DE_FUNC(Player_SetFlameCount, "setFlameCount", "tics");
+
+        // Powerup constants.
+        playerClass.set("PT_ALLMAP", PT_ALLMAP);
+        playerClass.set("PT_FLIGHT", PT_FLIGHT);
+        playerClass.set("PT_HEALTH2", PT_HEALTH2);
+        playerClass.set("PT_INFRARED", PT_INFRARED);
+        playerClass.set("PT_INVISIBILITY", PT_INVISIBILITY);
+        playerClass.set("PT_INVULNERABILITY", PT_INVULNERABILITY);
+        playerClass.set("PT_SHIELD", PT_SHIELD);
+        playerClass.set("PT_WEAPONLEVEL2", PT_WEAPONLEVEL2);
+
+        Function::Defaults attackArgs;
+        attackArgs["damage"]  = new NumberValue(0.0);
+        attackArgs["missile"] = new NoneValue;
+
+        Common_GameBindings().init(scr.builtInClass("World", "Thing"))
+            << DENG2_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs);
+
+        Common_GameBindings().init(scr.nativeModule("Audio"))
+            << DE_FUNC(Audio_DefineAmbientSfx, "defineAmbientSfx", "id" << "afxcmds");
+    }
 }
 
 /**
@@ -152,7 +215,13 @@ DENG_ENTRYPOINT void DP_Load(void)
  */
 DENG_ENTRYPOINT void DP_Unload(void)
 {
+    // Scripting cleanup.
+    {
+        ScriptSystem::get().builtInClass("App", "Player").removeMembersWithPrefix("PT_");
+    }
+
     Common_Unload();
+
     Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
 

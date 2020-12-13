@@ -198,16 +198,23 @@ DENG2_PIMPL(ClientSubsector)
 
     dint validFrame;
     bool hasWorldVolumeInValidFrame;
+    bool hasInvisibleTop = false;
 
-    bool needClassify = true;  ///< @c true= (Re)classification is necessary.
-    SubsectorFlags flags = 0;
-    ClientSubsector *mappedVisFloor   = nullptr;
-    ClientSubsector *mappedVisCeiling = nullptr;
+    bool           needClassify = true; ///< @c true= (Re)classification is necessary.
+    SubsectorFlags flags        = 0;
+
+    struct VisPlaneLink
+    {
+        VisPlaneLinkMode linkMode = LinkAlways;
+        ClientSubsector *target   = nullptr;
+        ClientSubsector *current  = nullptr; // current link in effect, perhaps nullptr
+    };
+    VisPlaneLink visPlaneLinks[2];
 
     std::unique_ptr<BoundaryData> boundaryData;
 
-    GeometryGroups geomGroups;
 #if 0
+    GeometryGroups geomGroups;
     QHash<Shard *, GeometryData *> shardToGeomData; ///< Reverse lookup.
 #endif
 
@@ -220,31 +227,33 @@ DENG2_PIMPL(ClientSubsector)
     bool needReverbUpdate = true;
 
     // Per surface lists of light decoration info and state.
-    //QHash<Id::Type, DecoratedSurface> decorSurfaces;
     QSet<Surface *> decorSurfaces;
 
     Impl(Public *i) : Base(i)
     {}
 
-    ~Impl()
+    ~Impl() override
     {
-        clearMapping(Sector::Floor);
-        clearMapping(Sector::Ceiling);
+        unlinkVisPlane(Sector::Floor);
+        unlinkVisPlane(Sector::Ceiling);
     }
 
+#if 0
     inline bool floorIsMapped()
     {
-        return mappedVisFloor != 0 && mappedVisFloor != thisPublic;
+        return visPlaneLinks[Sector::Floor].current &&
+               visPlaneLinks[Sector::Floor].current != thisPublic;
     }
 
     inline bool ceilingIsMapped()
     {
-        return mappedVisCeiling != 0 && mappedVisCeiling != thisPublic;
+        return visPlaneLinks[Sector::Ceiling].current &&
+               visPlaneLinks[Sector::Ceiling].current != thisPublic;
     }
 
     inline bool needRemapVisPlanes()
     {
-        return mappedVisFloor == 0 || mappedVisCeiling == 0;
+        return visPlaneLinks[Sector::Floor].target == 0 || mappedVisCeiling == 0;
     }
 
     ClientSubsector **mappedSubsectorAdr(dint planeIdx)
@@ -253,13 +262,15 @@ DENG2_PIMPL(ClientSubsector)
         if (planeIdx == Sector::Ceiling) return &mappedVisCeiling;
         return nullptr;
     }
+#endif
 
-    Plane *mappedPlane(dint planeIdx)
+    Plane *linkedPlane(dint planeIdx)
     {
-        ClientSubsector **subsecAdr = mappedSubsectorAdr(planeIdx);
-        if (subsecAdr && *subsecAdr)
+        DE_ASSERT(planeIdx >= Sector::Floor && planeIdx <= Sector::Ceiling);
+        const auto &visp = visPlaneLinks[planeIdx];
+        if (visp.current)
         {
-            return &(*subsecAdr)->sector().plane(planeIdx);
+            return &visp.current->sector().plane(planeIdx);
         }
         return nullptr;
     }
@@ -341,43 +352,73 @@ DENG2_PIMPL(ClientSubsector)
         else     subsec->audienceForDeletion -= this;
     }
 
-    void map(dint planeIdx, ClientSubsector *newSubsector, bool permanent = false)
+    void linkVisPlane(dint planeIdx, ClientSubsector *newSubsector)
     {
-        ClientSubsector **subsecAdr = mappedSubsectorAdr(planeIdx);
-        if (!subsecAdr || *subsecAdr == newSubsector)
-            return;
+        auto *visp = &visPlaneLinks[planeIdx];
 
-        if (*subsecAdr != thisPublic)
+        if (visp->current == newSubsector)
         {
-            if (Plane *oldPlane = mappedPlane(planeIdx))
+            // Already linked there.
+            return;
+        }
+
+        if (visp->current != thisPublic)
+        {
+            if (Plane *oldPlane = linkedPlane(planeIdx))
             {
                 observeMaterial(oldPlane->surface().materialPtr(), false);
                 observeSurface(&oldPlane->surface(), false);
                 observePlane(oldPlane, false);
             }
         }
-        observeSubsector(*subsecAdr, false);
+        observeSubsector(visp->current, false);
 
-        *subsecAdr = newSubsector;
+        visp->current = newSubsector;
 
-        observeSubsector(*subsecAdr);
-        if (*subsecAdr != thisPublic)
+        observeSubsector(visp->current);
+        if (visp->current != thisPublic)
         {
-            if (Plane *newPlane = mappedPlane(planeIdx))
+            if (Plane *newPlane = linkedPlane(planeIdx))
             {
-                observePlane(newPlane, true, !permanent);
+                observePlane(newPlane, true, true); // !permanent);
                 observeSurface(&newPlane->surface(), true);
                 observeMaterial(newPlane->surface().materialPtr(), true);
             }
         }
     }
 
-    void clearMapping(dint planeIdx)
+    void unlinkVisPlane(dint planeIdx)
     {
-        map(planeIdx, 0);
+        linkVisPlane(planeIdx, nullptr);
     }
 
-    /**
+    void relinkVisPlanes()
+    {
+        for (int planeIdx = 0; planeIdx < 2; ++planeIdx)
+        {
+            auto *visp = &visPlaneLinks[planeIdx];
+            if (!visp->target) continue; // Not linked to anything.
+
+            // The actual height of the plane.
+            const coord_t planeZ  = self().sector().plane(planeIdx).heightSmoothed();
+            const coord_t targetZ = visp->target->visPlane(planeIdx).heightSmoothed();
+
+            if ( visp->linkMode == LinkAlways ||
+                (visp->linkMode == LinkWhenDifferentThanTarget && !fequal(planeZ, targetZ)) ||
+                (visp->linkMode == LinkWhenLowerThanTarget     && planeZ < targetZ) ||
+                (visp->linkMode == LinkWhenHigherThanTarget    && planeZ > targetZ))
+            {
+                linkVisPlane(planeIdx, visp->target);
+            }
+            else
+            {
+                unlinkVisPlane(planeIdx);
+            }
+        }
+    }
+
+#if 0
+    /*
      * To be called when a plane moves to possibly invalidate mapped planes so
      * that they will be re-evaluated later.
      */
@@ -390,7 +431,7 @@ DENG2_PIMPL(ClientSubsector)
         if (!subsecAdr || *subsecAdr == thisPublic)
             return;
 
-        clearMapping(planeIdx);
+        unlinkVisPlane(planeIdx);
 
         if (classification() & (AllMissingBottom|AllMissingTop))
         {
@@ -398,6 +439,7 @@ DENG2_PIMPL(ClientSubsector)
             needClassify = true;
         }
     }
+#endif
 
     /**
      * Returns a copy of the classification flags for the subsector, performing
@@ -538,6 +580,7 @@ DENG2_PIMPL(ClientSubsector)
         }
     }
 
+#if 0
     void remapVisPlanes()
     {
         /// @todo Has performance issues -- disabled; needs reworking.
@@ -586,11 +629,11 @@ DENG2_PIMPL(ClientSubsector)
                         {
                             if (backSubsec.d->mappedVisFloor == thisPublic)
                             {
-                                backSubsec.d->clearMapping(Sector::Floor);
+                                backSubsec.d->unlinkVisPlane(Sector::Floor);
                             }
                             if (backSubsec.d->mappedVisCeiling == thisPublic)
                             {
-                                backSubsec.d->clearMapping(Sector::Ceiling);
+                                backSubsec.d->unlinkVisPlane(Sector::Ceiling);
                             }
                         }
                     }
@@ -670,18 +713,19 @@ DENG2_PIMPL(ClientSubsector)
                         if (doFloor && floorIsMapped()
                             && backSubsec.visFloor().height() >= self().sector().floor().height())
                         {
-                            backSubsec.d->clearMapping(Sector::Floor);
+                            backSubsec.d->unlinkVisPlane(Sector::Floor);
                         }
                         if (doCeiling && ceilingIsMapped()
                             && backSubsec.visCeiling().height() <= self().sector().ceiling().height())
                         {
-                            backSubsec.d->clearMapping(Sector::Ceiling);
+                            backSubsec.d->unlinkVisPlane(Sector::Ceiling);
                         }
                     }
                 } while (&it.next() != &loop->first());
             }
         }
     }
+#endif
 
 #if 0
     void updateBiasForWallSectionsAfterGeometryMove(HEdge *hedge)
@@ -705,6 +749,7 @@ DENG2_PIMPL(ClientSubsector)
     }
 #endif
 
+#if 0
     /**
      * Find the GeometryData for a MapElement by the element-unique @a group identifier.
      *
@@ -736,7 +781,6 @@ DENG2_PIMPL(ClientSubsector)
         return *foundGroup->insert(geomId, new GeometryData(&mapElement, geomId));
     }
 
-#if 0
     /**
      * Find the GeometryData for the given @a shard.
      */
@@ -1054,7 +1098,7 @@ DENG2_PIMPL(ClientSubsector)
         LOGDEV_MAP_XVERBOSE_DEBUGONLY("  decorating %s%s"
             , composeSurfacePath(surface)
                 << (surface.parent().type() == DMU_PLANE
-                    && &surface.parent() == mappedPlane(surface.parent().as<Plane>().indexInSector()) ? " (mapped)" : "")
+                    && &surface.parent() == linkedPlane(surface.parent().as<Plane>().indexInSector()) ? " (mapped)" : "")
         );
 
         ds.clear();
@@ -1171,8 +1215,7 @@ DENG2_PIMPL(ClientSubsector)
         }
     }
 
-    /// Observes Line FlagsChange
-    void lineFlagsChanged(Line &line, dint oldFlags)
+    void lineFlagsChanged(Line &line, dint oldFlags) override
     {
         LOG_AS("ClientSubsector");
         line.forAllSides([this, &oldFlags] (LineSide &side)
@@ -1198,46 +1241,45 @@ DENG2_PIMPL(ClientSubsector)
         });
     }
 
-    /// Observes Material DimensionsChange
-    void materialDimensionsChanged(Material &material)
+    void materialDimensionsChanged(Material &material) override
     {
         LOG_AS("ClientSubsector");
         markDependentSurfacesForRedecoration(material);
     }
 
-    /// Observes MaterialAnimator DecorationStageChange
-    void materialAnimatorDecorationStageChanged(MaterialAnimator &animator)
+    void materialAnimatorDecorationStageChanged(MaterialAnimator &animator) override
     {
         LOG_AS("ClientSubsector");
         markDependentSurfacesForRedecoration(animator.material());
     }
 
-    /// Observes Plane Deletion.
-    void planeBeingDeleted(Plane const &plane)
+    void planeBeingDeleted(Plane const &plane) override
     {
         LOG_AS("ClientSubsector");
-        if (&plane == mappedPlane(plane.indexInSector()))
+        if (&plane == linkedPlane(plane.indexInSector()))
         {
-            clearMapping(plane.indexInSector());
+            unlinkVisPlane(plane.indexInSector());
             decorSurfaces.remove(plane.surfacePtr());
         }
     }
 
-    /// Observes Plane HeightChange.
-    /// @todo Optimize: Process only the mapping-affected surfaces -ds
-    void planeHeightChanged(Plane &plane)
+    void planeHeightChanged(Plane &plane) override
     {
         LOG_AS("ClientSubsector");
 
         // We may need to update one or both mapped planes.
-        maybeInvalidateMapping(plane.indexInSector());
+//        maybeInvalidateMapping(plane.indexInSector());
 
+        relinkVisPlanes();
+
+        /*
         // We may need to fix newly revealed missing materials.
         self().forAllEdgeLoops([] (ClEdgeLoop &loop)
         {
             loop.fixSurfacesMissingMaterials();
             return LoopContinue;
         });
+        */
 
         // We may need to project new decorations.
         markDependentSurfacesForRedecoration(plane);
@@ -1295,13 +1337,14 @@ DENG2_PIMPL(ClientSubsector)
         }
     }
 
-    /// Observes Plane HeightSmoothedChange.
-    void planeHeightSmoothedChanged(Plane &plane)
+    void planeHeightSmoothedChanged(Plane &plane) override
     {
         LOG_AS("ClientSubsector");
 
         // We may need to update one or both mapped planes.
-        maybeInvalidateMapping(plane.indexInSector());
+//        maybeInvalidateMapping(plane.indexInSector());
+
+        relinkVisPlanes();
 
         // We may need to project new decorations.
         markDependentSurfacesForRedecoration(plane);
@@ -1331,8 +1374,7 @@ DENG2_PIMPL(ClientSubsector)
     }
 #endif
 
-    /// Observes Surface MaterialChange
-    void surfaceMaterialChanged(Surface &surface)
+    void surfaceMaterialChanged(Surface &surface) override
     {
         LOG_AS("ClientSubsector");
 
@@ -1362,8 +1404,7 @@ DENG2_PIMPL(ClientSubsector)
         observeMaterial(surface.materialPtr());
     }
 
-    /// Observes Surface OriginChange
-    void surfaceOriginChanged(Surface &surface)
+    void surfaceOriginChanged(Surface &surface) override
     {
         LOG_AS("ClientSubsector");
         if (surface.hasMaterial())
@@ -1372,8 +1413,7 @@ DENG2_PIMPL(ClientSubsector)
         }
     }
 
-    /// Observes Surface OriginChange
-    void surfaceOriginSmoothedChanged(Surface &surface)
+    void surfaceOriginSmoothedChanged(Surface &surface) override
     {
         LOG_AS("ClientSubsector");
         if (surface.hasMaterial())
@@ -1382,12 +1422,10 @@ DENG2_PIMPL(ClientSubsector)
         }
     }
 
-    /// Observes Subsector Deletion.
-    void subsectorBeingDeleted(Subsector const &subsec)
+    void subsectorBeingDeleted(Subsector const &subsec) override
     {
-        //LOG_AS("ClientSubsector");
-        if (  mappedVisFloor == &subsec) clearMapping(Sector::Floor);
-        if (mappedVisCeiling == &subsec) clearMapping(Sector::Ceiling);
+        if (visPlaneLinks[Sector::Floor  ].current == &subsec) unlinkVisPlane(Sector::Floor);
+        if (visPlaneLinks[Sector::Ceiling].current == &subsec) unlinkVisPlane(Sector::Ceiling);
     }
 };
 
@@ -1498,7 +1536,7 @@ String ClientSubsector::edgeLoopIdAsText(dint loopId) // static
     case InnerLoop: return "inner";
 
     default:
-        DENG2_ASSERT(!"ClientSubsector::edgeLoopIdAsText: Invalid loopId");
+        DE_ASSERT(nullptr != "ClientSubsector::edgeLoopIdAsText: Invalid loopId");
         throw Error("ClientSubsector::edgeLoopIdAsText", "Unknown loop ID " + QString::number(loopId));
     }
 }
@@ -1568,6 +1606,16 @@ bool ClientSubsector::hasSkyCeiling() const
     return hasSkyPlane(Sector::Ceiling);
 }
 
+void ClientSubsector::linkVisPlane(int planeIndex, ClientSubsector &target, VisPlaneLinkMode linkMode)
+{
+    DE_ASSERT(planeIndex >= Sector::Floor && planeIndex <= Sector::Ceiling);
+
+    d->visPlaneLinks[planeIndex].target   = &target;
+    d->visPlaneLinks[planeIndex].linkMode = linkMode;
+
+    d->relinkVisPlanes();
+}
+
 dint ClientSubsector::visPlaneCount() const
 {
     return sector().planeCount();
@@ -1582,14 +1630,17 @@ Plane const &ClientSubsector::visPlane(dint planeIndex) const
 {
     if (planeIndex >= Sector::Floor && planeIndex <= Sector::Ceiling)
     {
+#if 0
         // Time to remap the planes?
         if (d->needRemapVisPlanes())
         {
-            d->remapVisPlanes();
+            /// @todo This is broken. For instance in ICARUS.WAD map09, locks up for several
+            /// seconds while looping through the map. A better algorithm is needed.
+            //d->remapVisPlanes();
         }
+#endif
 
-        ClientSubsector *mapping = (planeIndex == Sector::Ceiling ? d->mappedVisCeiling
-                                                                  : d->mappedVisFloor);
+        ClientSubsector *mapping = d->visPlaneLinks[planeIndex].current;
         if (mapping && mapping != this)
         {
             return mapping->visPlane(planeIndex);
@@ -1680,11 +1731,13 @@ ClientSubsector::AudioEnvironment const &ClientSubsector::reverb() const
     return d->reverb;
 }
 
+#if 0
 void ClientSubsector::markVisPlanesDirty()
 {
     d->maybeInvalidateMapping(Sector::Floor);
     d->maybeInvalidateMapping(Sector::Ceiling);
 }
+#endif
 
 ClientSubsector::LightId ClientSubsector::lightSourceId() const
 {

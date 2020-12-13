@@ -127,7 +127,8 @@ enum {
     DE_API_MAP_EDIT_v1          = 1200,    // 1.10
     DE_API_MAP_EDIT_v2          = 1201,    // 1.11
     DE_API_MAP_EDIT_v3          = 1202,    // 2.0
-    DE_API_MAP_EDIT = DE_API_MAP_EDIT_v3,
+    DE_API_MAP_EDIT_v4          = 1203,    // 2.3
+    DE_API_MAP_EDIT = DE_API_MAP_EDIT_v4,
 
     DE_API_MATERIALS_v1         = 1300,    // 1.10
     DE_API_MATERIALS            = DE_API_MATERIALS_v1,

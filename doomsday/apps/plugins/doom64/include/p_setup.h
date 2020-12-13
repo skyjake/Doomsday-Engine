@@ -63,7 +63,7 @@ enum {
     MO_WALLBOTTOMCOLOR,
     MO_XX0,
     MO_XX1,
-    MO_XX2
+    MO_XX2,
 };
 
 #ifdef __cplusplus

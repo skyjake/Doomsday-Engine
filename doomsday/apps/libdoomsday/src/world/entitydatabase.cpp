@@ -25,6 +25,8 @@
 
 using namespace de;
 
+/// @todo Use Records instead of these.
+
 // An entity is a set of one or more properties.
 // Key is the unique identifier of said property in the
 // MapEntityPropertyDef it is derived from.

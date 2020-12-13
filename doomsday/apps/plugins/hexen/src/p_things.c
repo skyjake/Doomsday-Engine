@@ -200,7 +200,6 @@ dd_bool EV_ThingSpawn(byte *args, dd_bool fog)
     mobj_t *mobj, *newMobj, *fogMobj;
     mobjtype_t moType;
     dd_bool success;
-    //coord_t z;
 
     success = false;
     searcher = -1;

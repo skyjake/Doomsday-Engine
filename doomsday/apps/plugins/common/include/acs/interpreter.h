@@ -93,6 +93,8 @@ struct Interpreter
     static thinker_s *newThinker(Script &script, Script::Args const &scriptArgs,
         struct mobj_s *activator = nullptr, Line *line = nullptr, int side = 0,
         int delayCount = 0);
+
+    static int currentScriptNumber;
 };
 
 }  // namespace acs

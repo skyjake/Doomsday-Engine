@@ -61,7 +61,11 @@ enum Operator {
     PARENTHESIS,
     AND,
     OR,
-    RESULT_TRUE ///< Pop a result, check if it is True.
+    RESULT_TRUE, ///< Pop a result, check if it is True.
+    BITWISE_AND,
+    BITWISE_OR,
+    BITWISE_XOR,
+    BITWISE_NOT,
 };
 
 String operatorToText(Operator op);

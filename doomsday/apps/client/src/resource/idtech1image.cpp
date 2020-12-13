@@ -84,20 +84,28 @@ Image IdTech1Image::makeGameLogo(Game const &game,
     {
         if (flags.testFlag(AlwaysTryLoad) || game.isPlayableWithDefaultPackages())
         {
-            Block const playPal  = catalog.read("PLAYPAL");
-            Block const title    = catalog.read("TITLE");
-            Block const titlePic = catalog.read("TITLEPIC");
-            Block const interPic = catalog.read("INTERPIC");
+            const Block playPal  = catalog.read("PLAYPAL");
+            const Block title    = catalog.read("TITLE");
+            const Block titlePic = catalog.read("TITLEPIC");
+            const Block interPic = catalog.read("INTERPIC");
 
-            IdTech1Image img(title? title : (titlePic? titlePic : interPic), playPal);
+            const Block *imageToUse = &(title ? title : (titlePic ? titlePic : interPic));
 
-            float const scaleFactor = flags.testFlag(Downscale50Percent)? .5f : 1.f;
-            Image::Size const finalSize(img.width()  * scaleFactor,
-                                        img.height() * scaleFactor * 1.2f); // VGA aspect
+            // Maybe it's a modern image format?
+            Image logoImage = Image::fromData(*imageToUse);
 
-            Image logoImage(img.toQImage().scaled(finalSize.x, finalSize.y,
-                                                  Qt::IgnoreAspectRatio,
-                                                  Qt::SmoothTransformation));
+            if (logoImage.isNull())
+            {
+                // Try a raw image or graphic patch instead.
+                logoImage = IdTech1Image(*imageToUse, playPal);
+            }
+
+            const float scaleFactor = flags.testFlag(Downscale50Percent)? .5f : 1.f;
+            const Image::Size finalSize(logoImage.width()  * scaleFactor,
+                                        logoImage.height() * scaleFactor * 1.2f); // VGA aspect
+            logoImage = logoImage.toQImage().scaled(
+                finalSize.x, finalSize.y, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+
             if (flags & ColorizedByFamily)
             {
                 String const colorId = "home.icon." +

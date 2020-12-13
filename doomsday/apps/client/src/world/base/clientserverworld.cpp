@@ -31,7 +31,9 @@
 #include <de/Error>
 #include <de/Log>
 #include <de/Scheduler>
+#include <de/Script>
 #include <de/ScriptSystem>
+#include <de/Process>
 #include <de/Time>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
@@ -589,6 +591,7 @@ DENG2_PIMPL(ClientServerWorld)
         });
 
 #ifdef __CLIENT__
+        /*
         /// @todo Refactor away:
         map->forAllSectors([] (Sector &sector)
         {
@@ -601,6 +604,7 @@ DENG2_PIMPL(ClientServerWorld)
                 });
             });
         });
+        */
 #endif
 
         map->initPolyobjs();
