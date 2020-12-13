@@ -33,7 +33,7 @@ DE_PIMPL_NOREF(FileDialog)
     Behaviors  behavior = AcceptFiles;
     List<NativePath> selection;
     NativePath initialLocation;
-    FileTypes  fileTypes; // empty list: eveything allowed
+    FileTypes  fileTypes; // empty list: everything allowed
 };
 
 FileDialog::FileDialog() : d(new Impl)

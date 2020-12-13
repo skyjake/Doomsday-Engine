@@ -7,9 +7,10 @@ def print_config(cfg):
         print("  %-15s %s" % (key + ':', cfg[key]))
 
 
+IS_MACOS  = platform.system() == 'Darwin'
 IS_CYGWIN = platform.system().startswith('CYGWIN_NT')
-IS_MSYS = os.getenv('MSYSTEM') == 'MSYS'
-IS_MINGW = os.getenv('MSYSTEM') == 'MINGW64'
+IS_MSYS   = os.getenv('MSYSTEM') == 'MSYS'
+IS_MINGW  = os.getenv('MSYSTEM') == 'MINGW64'
 
 PATCH_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -53,7 +54,7 @@ dependencies = [
     ),
     (
         'cginternals/glbinding',
-        'https://github.com/cginternals/glbinding.git', 'v3.0.2',
+        'https://github.com/cginternals/glbinding.git', 'v2.1.4',
         ['-Wno-dev',
          '-DOPTION_BUILD_EXAMPLES=NO',
          '-DOPTION_BUILD_TOOLS=NO',
@@ -61,6 +62,8 @@ dependencies = [
          '-DCMAKE_CXX_FLAGS=-Wno-deprecated-copy' if IS_MSYS else '']
     )
 ]
+
+if IS_MACOS: del dependencies[2] # using glbinding from Homebrew
 
 import shutil
 import subprocess

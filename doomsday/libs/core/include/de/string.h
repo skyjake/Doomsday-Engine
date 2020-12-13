@@ -292,6 +292,7 @@ public:
     inline operator const char *() const { return c_str(); }
     inline operator const iString *() const { return &_str; }
     inline iString *i_str() { return &_str; }
+    inline const iString *i_str() const { return &_str; }
     inline operator std::string() const { return toStdString(); }
 
     inline std::string toStdString() const

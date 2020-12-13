@@ -85,6 +85,11 @@ bool RegExp::exactMatch(const String &subject, RegExpMatch &match) const
 
 bool RegExp::match(const String &subject, RegExpMatch &match) const
 {
+    // If the subject is switched, auto-reset the match.
+    if (match.subject.i_str()->chars.i != subject.i_str()->chars.i)
+    {
+        match.clear();
+    }
     match.subject = subject;
     return matchString_RegExp(_d, subject, &match.match);
 }

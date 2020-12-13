@@ -15,7 +15,7 @@ endif ()
 # Dependencies.
 find_package (SDL2Libs)
 find_package (Stb)
-find_package (glbinding REQUIRED)
+find_package (glbinding)
 find_package (Assimp)
 if (DE_X11)
     find_package (X11 REQUIRED)
@@ -61,6 +61,20 @@ elseif (DE_OPENGL_API STREQUAL "GLES2")
     set (DE_HAVE_OPENGL_ES YES)
 else ()
     message (FATAL_ERROR "Invalid value for OpenGL API: ${DE_OPENGL_API}")
+endif ()
+
+if (APPLE)
+    if (CLANG_VERSION_STRING VERSION_EQUAL 12.0 OR
+        CLANG_VERSION_STRING VERSION_GREATER 12.0)
+        # Lots of warnings from Obj-C++ files.
+        append_unique (CMAKE_CXX_FLAGS "-Wno-gnu-zero-variadic-macro-arguments")
+        append_unique (CMAKE_CXX_FLAGS "-Wno-four-char-constants")
+        append_unique (CMAKE_CXX_FLAGS "-Wno-deprecated-declarations")
+        append_unique (CMAKE_CXX_FLAGS "-Wno-variadic-macros")
+        append_unique (CMAKE_CXX_FLAGS "-Wno-zero-length-array")
+        append_unique (CMAKE_CXX_FLAGS "-Wno-missing-method-return-type")
+        append_unique (CMAKE_CXX_FLAGS "-Wno-availability")
+    endif ()
 endif ()
 
 # Link libraries.
@@ -130,14 +144,6 @@ if (UNIX_LINUX)
         COMPONENT client
     )
 endif ()
-
-# If Assimp is part of the build, ensure that it gets compiled before libgui.
-# if (TARGET assimp)
-#     add_dependencies (libgui assimp)
-#     if (MSVC)
-#         target_link_libraries (libgui PRIVATE zlibstatic)   # from assimp project
-#     endif ()
-# endif ()
 
 deng_cotire (libgui src/precompiled.h)
 
