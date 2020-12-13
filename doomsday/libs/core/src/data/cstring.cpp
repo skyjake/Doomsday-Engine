@@ -106,13 +106,13 @@ CString CString::rightStrip() const
 int CString::compare(const CString &other, Sensitivity cs) const
 {
     const iRangecc range{begin(), end()};
-    return cmpCStrNSc_Rangecc(&range, other.begin(), other.size(), cs);
+    return cmpCStrNSc_Rangecc(range, other.begin(), other.size(), cs);
 }
 
 int CString::compare(const char *cStr, Sensitivity cs) const
 {
     const iRangecc range{begin(), end()};
-    return cmpCStrSc_Rangecc(&range, cStr, cs);
+    return cmpCStrSc_Rangecc(range, cStr, cs);
 }
 
 String CString::lower() const

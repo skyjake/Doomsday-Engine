@@ -727,6 +727,7 @@ public:
 
 public:
     static String take(iString *str);
+    static String take(iBlock *data);
 
     /**
      * Builds a String out of an array of bytes that contains a UTF-8 string.

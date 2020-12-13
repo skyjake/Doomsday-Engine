@@ -48,6 +48,8 @@ static String processIncludes(String source, const String &sourceFolderPath)
         source = CString{source.begin(), found.begin()}
                + incSource
                + CString{found.end(), source.end()};
+
+        found.clear(); // `source` was modified
     }
     return source;
 }

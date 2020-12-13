@@ -761,7 +761,7 @@ void ServerLink::handleIncomingPackets()
                 if (d->pings.count())
                 {
                     TimeSpan average;
-                    for (const TimeSpan i : d->pings) average += i;
+                    for (const TimeSpan &i : d->pings) average += i;
                     average /= d->pings.count();
 
                     DE_NOTIFY(PingResponse, i)

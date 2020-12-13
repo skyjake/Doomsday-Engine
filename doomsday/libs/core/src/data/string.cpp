@@ -325,7 +325,7 @@ List<String> String::split(const char *separator) const
     List<String> parts;
     iRangecc seg{};
     iRangecc str{constBegin_String(&_str), constEnd_String(&_str)};
-    while (nextSplit_Rangecc(&str, separator, &seg))
+    while (nextSplit_Rangecc(str, separator, &seg))
     {
         parts << String(seg.start, seg.end);
     }
@@ -337,7 +337,7 @@ List<CString> String::splitRef(const char *separator) const
     List<CString> parts;
     iRangecc seg{};
     iRangecc str{constBegin_String(&_str), constEnd_String(&_str)};
-    while (nextSplit_Rangecc(&str, separator, &seg))
+    while (nextSplit_Rangecc(str, separator, &seg))
     {
         parts << CString(seg.start, seg.end);
     }
@@ -475,8 +475,8 @@ String &String::replace(const CString &before, const CString &after)
     while ((found = CString(remaining).indexOf(oldTerm)) != npos)
     {
         const iRangecc prefix{remaining.start, remaining.start + found};
-        appendRange_String(result.i_str(), &prefix);
-        appendRange_String(result.i_str(), &newTerm);
+        appendRange_String(result.i_str(), prefix);
+        appendRange_String(result.i_str(), newTerm);
         remaining.start += found + before.size();
     }
     if (size_Range(&remaining) == size())
@@ -484,7 +484,7 @@ String &String::replace(const CString &before, const CString &after)
         // No changes were applied.
         return *this;
     }
-    appendRange_String(result.i_str(), &remaining);
+    appendRange_String(result.i_str(), remaining);
     return *this = result;
 }
 
@@ -501,7 +501,7 @@ String &String::replace(const RegExp &before, const CString &after)
     {
         DE_ASSERT(found.end() > found.begin());
         const iRangecc prefix{remaining.start, found.begin()};
-        appendRange_String(result.i_str(), &prefix);
+        appendRange_String(result.i_str(), prefix);
         String replaced{newTerm};
         for (int cap = 0; cap < 8; ++cap)
         {
@@ -510,7 +510,7 @@ String &String::replace(const RegExp &before, const CString &after)
         append_String(result.i_str(), replaced);
         remaining.start = found.end();
     }
-    appendRange_String(result.i_str(), &remaining);
+    appendRange_String(result.i_str(), remaining);
     return *this = result;
 }
 
@@ -754,7 +754,7 @@ bool String::operator==(const CString &cstr) const
 int String::compare(const CString &str, Sensitivity cs) const
 {
     const iRangecc s = *this;
-    return cmpCStrNSc_Rangecc(&s, str.begin(), str.size(), cs);
+    return cmpCStrNSc_Rangecc(s, str.begin(), str.size(), cs);
 }
 
 dint String::compareWithCase(const String &other) const
@@ -818,6 +818,13 @@ String String::take(iString *str) // static
 {
     String s(str);
     delete_String(str);
+    return s;
+}
+
+String String::take(iBlock *data) // static
+{
+    String s(data);
+    delete_Block(data);
     return s;
 }
 
@@ -901,7 +908,7 @@ String String::addLinePrefix(const String &prefix) const
     String result;
     iRangecc str{constBegin_String(&_str), constEnd_String(&_str)};
     iRangecc range{};
-    while (nextSplit_Rangecc(&str, "\n", &range))
+    while (nextSplit_Rangecc(str, "\n", &range))
     {
         if (!result.empty()) result += '\n';
         result += prefix;

@@ -24,7 +24,7 @@ namespace de {
 
 RegExpMatch::RegExpMatch()
 {
-    clear();
+    init_RegExpMatch(&match);
 }
 
 const char *RegExpMatch::begin() const
@@ -41,7 +41,7 @@ const char *RegExpMatch::end() const
 
 void RegExpMatch::clear()
 {
-    zap(match);
+    init_RegExpMatch(&match);
     subject.clear();
 }
 
@@ -52,9 +52,7 @@ String RegExpMatch::captured(int index) const
 
 CString RegExpMatch::capturedCStr(int index) const
 {
-    iRangecc range;
-    capturedRange_RegExpMatch(&match, index, &range);
-    return range;
+    return capturedRange_RegExpMatch(&match, index);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -88,12 +86,13 @@ bool RegExp::exactMatch(const String &subject, RegExpMatch &match) const
 bool RegExp::match(const String &subject, RegExpMatch &match) const
 {
     match.subject = subject;
-    return matchString_RegExp(_d, match.subject, &match.match);
+    return matchString_RegExp(_d, subject, &match.match);
 }
 
 bool RegExp::hasMatch(const String &subject) const
 {
-    iRegExpMatch match{}; // not kept
+    iRegExpMatch match;
+    init_RegExpMatch(&match);
     return matchString_RegExp(_d, subject, &match);
 }
 

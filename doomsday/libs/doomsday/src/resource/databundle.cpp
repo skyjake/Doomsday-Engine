@@ -704,9 +704,9 @@ DE_PIMPL(DataBundle), public Lockable
 
         for (const auto &line : meta.gets(VAR_NOTES(), "").splitRef("\n"))
         {
-            RegExpMatch match;
             if (!foundTitle)
             {
+                RegExpMatch match;
                 if (reTitle.match(line, match))
                 {
                     meta.set(VAR_TITLE(), match.captured(1).strip());
@@ -717,6 +717,7 @@ DE_PIMPL(DataBundle), public Lockable
 
             if (!foundVersion)
             {
+                RegExpMatch match;
                 if (reReleaseDate.match(line, match))
                 {
                     const Date releaseDate = Date::fromText(match.captured(2).strip());
@@ -731,6 +732,7 @@ DE_PIMPL(DataBundle), public Lockable
                 }
             }
 
+            RegExpMatch match;
             if (reVersion.match(line, match))
             {
                 Version parsed(match.captured(1).strip());
@@ -744,6 +746,7 @@ DE_PIMPL(DataBundle), public Lockable
 
             if (!foundAuthor)
             {
+                match.clear();
                 if (reAuthor.match(line, match))
                 {
                     meta.set(VAR_AUTHOR(), match.captured(2).strip());
@@ -752,6 +755,7 @@ DE_PIMPL(DataBundle), public Lockable
                 }
             }
 
+            match.clear();
             if (reContact.match(line, match))
             {
                 meta.set("contact", match.captured(1).strip());

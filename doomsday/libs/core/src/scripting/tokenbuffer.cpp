@@ -41,14 +41,12 @@ const char *Token::SEMICOLON         = ";";
 
 bool Token::equals(const char *str) const
 {
-    const iRangecc r{_token.start, _token.end};
-    return cmpCStrSc_Rangecc(&r, str, &iCaseSensitive) == 0;
+    return cmpCStrSc_Rangecc({_token.start, _token.end}, str, &iCaseSensitive) == 0;
 }
 
 bool Token::beginsWith(const char *str) const
 {
-    const iRangecc r{_token.start, _token.end};
-    return startsWithSc_Rangecc(&r, str, &iCaseSensitive) == 0;
+    return startsWithSc_Rangecc({_token.start, _token.end}, str, &iCaseSensitive) == 0;
 }
 
 void Token::appendChar(Char c)
