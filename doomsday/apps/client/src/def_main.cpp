@@ -114,14 +114,17 @@ void Def_Init()
     auto &defs = *DED_Definitions();
 
     // Make the definitions visible in the global namespace.
-    auto &scr = ScriptSystem::get();
-    scr.addNativeModule("Defs", defs.names);
+    if (!defsBinder)
+    {
+        auto &scr = ScriptSystem::get();
+        scr.addNativeModule("Defs", defs.names);
 
-    /// TODO: Add a DEDRegister for sounds so this lookup is not needed and can be converted
-    /// to a utility script function.
-    defsBinder = new Binder;
-    defsBinder->init(defs.names)
-        << DE_FUNC(Defs_GetSoundNum, "getSoundNum", "name");
+        /// TODO: Add a DEDRegister for sounds so this lookup is not needed and can be converted
+        /// to a utility script function.
+        defsBinder = new Binder;
+        defsBinder->init(defs.names)
+            << DE_FUNC(Defs_GetSoundNum, "getSoundNum", "name");
+    }
 
     // Constants for definitions.
     DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_SPAWN);
@@ -152,6 +155,7 @@ void Def_Destroy()
 
     // Destroy the databases.
     ::runtimeDefs.clear();
+    DED_DestroyDefinitions();
 
     ::defsInited = false;
 }

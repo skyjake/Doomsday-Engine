@@ -703,18 +703,19 @@ int ded_s::getTextNum(char const *id) const
     return -1; // Not found.
 }
 
-static void destroyDefinitions()
+static ded_t *s_defs = nullptr;
+
+void DED_DestroyDefinitions()
 {
-    delete DED_Definitions();
+    delete s_defs;
+    s_defs = nullptr;
 }
 
 ded_t *DED_Definitions()
 {
-    static ded_t *defs = nullptr;
-    if (!defs)
+    if (!s_defs)
     {
-        defs = new ded_t;
-        atexit(destroyDefinitions);
+        s_defs = new ded_t;
     }
-    return defs;
+    return s_defs;
 }
