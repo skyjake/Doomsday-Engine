@@ -27,6 +27,7 @@
 #include "dd_main.h"
 
 #include <doomsday/console/exec.h>
+#include <de/Config>
 #include <de/VariableToggleWidget>
 #include <de/VariableSliderWidget>
 #include <de/ChoiceWidget>
@@ -99,23 +100,23 @@ DENG2_PIMPL(VideoSettingsDialog)
         win.audienceForAttributeChange() += this;
 #endif
 
+        area.add(fpsLimiter = new ToggleWidget);
+        fpsLimiter->margins().setTop("dialog.separator");
+        fpsLimiter->setText(tr("FPS Limiter"));
+        QObject::connect(fpsLimiter, &ToggleWidget::stateChangedByUser, [this] (ToggleWidget::ToggleState st) {
+            fpsMax->enable(st == ToggleWidget::Active);
+            applyFpsMax();
+        });
+
+        area.add(fpsMax = new SliderWidget);
+        fpsMax->margins().setTop("dialog.separator");
+        fpsMax->setRange(Ranged(35, 60));
+        fpsMax->setPrecision(0);
+        fpsMax->rule().setInput(Rule::Width, centered->rule().width());
+        QObject::connect(fpsMax, &SliderWidget::valueChangedByUser, [this] (double) { applyFpsMax(); });
+
         if (App_GameLoaded())
         {
-            area.add(fpsLimiter = new ToggleWidget);
-            fpsLimiter->margins().setTop("dialog.separator");
-            fpsLimiter->setText(tr("FPS Limiter"));
-            QObject::connect(fpsLimiter, &ToggleWidget::stateChangedByUser, [this] (ToggleWidget::ToggleState st) {
-                fpsMax->enable(st == ToggleWidget::Active);
-                applyFpsMax();
-            });
-
-            area.add(fpsMax = new SliderWidget);
-            fpsMax->margins().setTop("dialog.separator");
-            fpsMax->setRange(Ranged(35, 60));
-            fpsMax->setPrecision(0);
-            fpsMax->rule().setInput(Rule::Width, centered->rule().width());
-            QObject::connect(fpsMax, &SliderWidget::valueChangedByUser, [this] (double) { applyFpsMax(); });
-
             stretchChoices
                 << new ChoiceItem(tr("Smart"),        SCALEMODE_SMART_STRETCH)
                 << new ChoiceItem(tr("Original 1:1"), SCALEMODE_NO_STRETCH)
@@ -199,7 +200,7 @@ DENG2_PIMPL(VideoSettingsDialog)
         // FPS limit.
         if (fpsMax)
         {
-            int const max = CVar_Integer(Con_FindVariable("refresh-rate-maximum"));
+            const int max = Config::get().geti("window.main.maxFps", 0);
             fpsLimiter->setActive(max != 0);
             fpsMax->enable(max != 0);
             fpsMax->setValue(!max ? 35 : max);
@@ -223,8 +224,8 @@ DENG2_PIMPL(VideoSettingsDialog)
     {
         if (fpsMax)
         {
-            CVar_SetInteger(Con_FindVariable("refresh-rate-maximum"),
-                            fpsLimiter->isActive()? int(fpsMax->value()) : 0);
+            Config::get().set("window.main.maxFps",
+                              fpsLimiter->isActive() ? int(fpsMax->value()) : 0);
         }
     }
     
