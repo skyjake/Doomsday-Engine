@@ -227,6 +227,8 @@ extern "C" {
  */
 LIBDOOMSDAY_PUBLIC ded_t *DED_Definitions();
 
+LIBDOOMSDAY_PUBLIC void DED_DestroyDefinitions();
+
 // Routines for managing DED files:
 
 int             DED_AddSprite(ded_t* ded, char const* name);
