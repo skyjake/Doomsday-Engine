@@ -43,6 +43,7 @@ def setDefaults(d)
             # Configure the main window.
             record main()
                 showFps = False
+                maxFps  = 0
                 center  = True
                 fsaa    = False
                 vsync   = True

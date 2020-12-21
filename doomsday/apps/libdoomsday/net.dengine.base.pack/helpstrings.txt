@@ -448,9 +448,6 @@ desc = 1=Don't sleep while waiting for tics.
 [net-queue-show]
 desc = Monitor send queue.
 
-[refresh-rate-maximum]
-desc = Maximum limit for the frame rate (default: 200).
-
 [reject-build]
 desc = Automatically generate reject data when necessary, 0=Never, 1=When needed, 2=Always.
 

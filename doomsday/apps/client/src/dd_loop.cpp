@@ -22,6 +22,7 @@
 
 #include <de/timer.h>
 #include <de/App>
+#include <de/Config>
 #include <de/LogBuffer>
 #ifdef __SERVER__
 #  include <de/TextApp>
@@ -74,7 +75,6 @@ using namespace de;
 
 dfloat frameTimePos;  ///< 0...1: fractional part for sharp game tics.
 
-dint maxFrameRate = 0;  ///< Zero means 'unlimited'.
 // Refresh frame count (independant of the viewport-specific frameCount).
 dint rFrameCount;
 byte devShowFrameTimeDeltas;
@@ -325,9 +325,11 @@ void DD_WaitForOptimalUpdateTime()
 {
     static duint prevUpdateTime = 0;
 
+    const int maxFrameRate = Config::get().geti("window.main.maxFps");
+
     /// @var optimalDelta is integer on purpose: we're measuring time at a 1 ms accuracy,
     /// so we can't use fractions of a millisecond.
-    duint const optimalDelta = duint(::maxFrameRate > 0? 1000/::maxFrameRate : 1);
+    const duint optimalDelta = duint(maxFrameRate > 0 ? 1000 / maxFrameRate : 1);
 
     if (Sys_IsShuttingDown()) return; // No need for finesse.
 
@@ -441,7 +443,6 @@ void Loop_RunTics()
 void DD_RegisterLoop()
 {
     C_VAR_BYTE("input-sharp-lateprocessing", &::processSharpEventsAfterTickers, 0, 0, 1);
-    C_VAR_INT ("refresh-rate-maximum",       &::maxFrameRate, 0, 0, 1000);
     C_VAR_INT ("rend-dev-framecount",        &::rFrameCount, CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
     C_VAR_BYTE("rend-info-deltas-frametime", &::devShowFrameTimeDeltas, CVF_NO_ARCHIVE, 0, 1);
 }
