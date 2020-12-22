@@ -43,6 +43,10 @@ def World.Thing.setNoBlocking()
     self.changeFlags(1, 0x2, False)  # MF_SOLID in mo.flags
 end
 
+def World.Thing.startSound(id, volume=1.0)
+    return Audio.startSound(id, self, volume)
+end
+
 def Audio.setAmbientSequence(id, commands)
     # Defines or redefines an ambient sound effect sequence (Heretic only).
     # - id:       Sequence ID. The built-in ones are 0-9.

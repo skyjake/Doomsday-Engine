@@ -992,10 +992,6 @@ void P_AmbientSound()
             AmbSfxTics = 6 * TICSPERSEC + P_Random();
             AmbSfxPtr  = LevelAmbientSfx[AmbSfxCurrentSeq = P_Random() % AmbSfxCount];
             return;
-
-        default:
-            DE_ASSERT_FAIL("P_AmbientSound: Unknown afxcmd");
-            break;
         }
     }
 }

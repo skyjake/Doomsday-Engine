@@ -23,6 +23,7 @@
 #include "doomsday/world/map.h"
 #include "doomsday/world/mobj.h"
 #include "doomsday/world/thinkers.h"
+#include "doomsday/world/mobjthinkerdata.h"
 #include "doomsday/world/world.h"
 #include <de/scripting/context.h>
 #include <de/recordvalue.h>
@@ -38,7 +39,7 @@ static Value *Function_World_FindThings(Context &, const Function::ArgumentValue
     const int type = args.at(0)->asInt();
 
     std::unique_ptr<ArrayValue> things(new ArrayValue);
-    App_World().map().thinkers().forAll(1 | 2, [&things, type](thinker_t *th) {
+    World::get().map().thinkers().forAll(1 | 2, [&things, type](thinker_t *th) {
         if (Thinker_IsMobj(th))
         {
             const mobj_t *mo = (mobj_t *) th;
@@ -62,14 +63,14 @@ static Value *Function_Thing_Init(Context &ctx, const Function::ArgumentValues &
 
 static Value *Function_Thing_SetState(Context &ctx, const Function::ArgumentValues &args)
 {
-    auto &mo = ClientServerWorld::contextMobj(ctx);
+    auto &mo = World::get().contextMobj(ctx);
     Mobj_SetState(&mo, args.at(0)->asInt());
     return nullptr;
 }
 
 static Value *Function_Thing_State(Context &ctx, const Function::ArgumentValues &)
 {
-    const auto &mo = ClientServerWorld::contextMobj(ctx);
+    const auto &mo = World::get().contextMobj(ctx);
     return new NumberValue(runtimeDefs.states.indexOf(mo.state));
 }
 
@@ -181,7 +182,7 @@ void initBindings(Binder &binder, Record &worldModule)
         startSoundArgs["volume"] = new NumberValue(1.0);
 
         binder.init(thing)
-                << DE_FUNC         (Thing_Init,       "__init__", "id")
+                << DE_FUNC      (Thing_Init,       "__init__", "id")
                 << DE_FUNC      (Thing_AddMom,     "addMom", "delta")
                 << DE_FUNC      (Thing_ChangeFlags,"changeFlags", "index" << "flags" << "doSet")
                 << DE_FUNC      (Thing_Flags,      "flags", "index")
@@ -192,7 +193,6 @@ void initBindings(Binder &binder, Record &worldModule)
                 << DE_FUNC_NOARG(Thing_Player,     "player")
                 << DE_FUNC_NOARG(Thing_Pos,        "pos")
                 << DE_FUNC      (Thing_SetState,   "setState", "index")
-                << DE_FUNC_DEFS (Thing_StartSound, "startSound", "id" << "volume", startSoundArgs)
                 << DE_FUNC_NOARG(Thing_State,      "state")
                 << DE_FUNC      (Thing_Recoil,     "recoil", "force")
                 << DE_FUNC_NOARG(Thing_Type,       "type");

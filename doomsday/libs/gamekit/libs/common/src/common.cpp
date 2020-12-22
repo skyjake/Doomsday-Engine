@@ -473,7 +473,7 @@ void Common_Load()
                 << DE_FUNC_DEFS(Thing_SpawnMissile,
                                 "spawnMissile",
                                 "id" << "angle" << "momz",
-                                spawnMissileArgs);
+                                spawnMissileArgs)
                 << DE_FUNC_NOARG(Thing_Target, "target")
                 << DE_FUNC_NOARG(Thing_Tracer, "tracer");
 
@@ -490,10 +490,6 @@ void Common_Load()
 #if defined (MSF_AMBUSH)
             world.set("MSF_AMBUSH", MSF_AMBUSH);
 #endif
-
-#if defined(__JHERETIC__)
-            *gameBindings << DE_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs);
-#endif
         }
 
         // App.Player
@@ -504,7 +500,7 @@ void Common_Load()
                 << DE_FUNC       (Player_Power, "power", "type")
                 << DE_FUNC_NOARG (Player_ShotAmmo, "shotAmmo")
                 << DE_FUNC       (Player_GiveAmmo, "giveAmmo", "type" << "amount")
-                << DE_FUNC       (Player_GiveArmor, "giveArmor", "type" << "points");
+                << DE_FUNC       (Player_GiveArmor, "giveArmor", "type" << "points")
                 << DE_FUNC       (Player_GivePower, "givePower", "type")
                 << DE_FUNC       (Player_SetHealth, "setHealth", "hp");
 #if !defined(__JHEXEN__)
@@ -523,21 +519,6 @@ void Common_Load()
             setLocalQuakeArgs["duration"] = new NumberValue(0);
             *gameBindings
                 << DE_FUNC_DEFS (Player_SetLocalQuake, "setLocalQuake", "intensity" << "duration", setLocalQuakeArgs);
-#endif
-
-#if defined(__JHERETIC__)
-            *gameBindings
-                << DE_FUNC(Player_SetFlameCount, "setFlameCount", "tics");
-
-            // Heretic: Powerup constants.
-            playerClass.set("PT_INVULNERABILITY", PT_INVULNERABILITY);
-            playerClass.set("PT_INVISIBILITY", PT_INVISIBILITY);
-            playerClass.set("PT_ALLMAP", PT_ALLMAP);
-            playerClass.set("PT_INFRARED", PT_INFRARED);
-            playerClass.set("PT_WEAPONLEVEL2", PT_WEAPONLEVEL2);
-            playerClass.set("PT_FLIGHT", PT_FLIGHT);
-            playerClass.set("PT_SHIELD", PT_SHIELD);
-            playerClass.set("PT_HEALTH2", PT_HEALTH2);
 #endif
         }
     }

@@ -3028,7 +3028,7 @@ static Value *Function_Audio_LocalSound(Context &, const Function::ArgumentValue
     }
     else
     {
-        throw Error("Function_Thing_StartSound", "Undefined sound: " + args.at(0)->asText());
+        throw Error("Function_Audio_LocalSound", "Undefined sound: " + args.at(0)->asText());
     }
     return nullptr;
 }

@@ -31,6 +31,7 @@
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
 #include <doomsday/gamefw/defs.h>
+#include <de/scripting/scriptsystem.h>
 #include <de/extension.h>
 
 #include "doomsday.h"
@@ -203,7 +204,7 @@ static void DP_Load(void)
         attackArgs["missile"] = new NoneValue;
 
         Common_GameBindings().init(scr.builtInClass("World", "Thing"))
-            << DENG2_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs);
+            << DE_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs);
 
         Common_GameBindings().init(scr.nativeModule("Audio"))
             << DE_FUNC(Audio_DefineAmbientSfx, "defineAmbientSfx", "id" << "afxcmds");

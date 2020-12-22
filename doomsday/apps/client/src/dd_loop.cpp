@@ -22,6 +22,7 @@
 
 #include <de/legacy/timer.h>
 #include <de/app.h>
+#include <de/config.h>
 #include <de/logbuffer.h>
 #ifdef __SERVER__
 #  include <de/textapp.h>

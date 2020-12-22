@@ -26,11 +26,12 @@
 #include "dd_main.h"
 
 #include <doomsday/console/exec.h>
-#include <de/variabletogglewidget.h>
-#include <de/variablesliderwidget.h>
 #include <de/choicewidget.h>
-#include <de/sequentiallayout.h>
+#include <de/config.h>
 #include <de/gridlayout.h>
+#include <de/sequentiallayout.h>
+#include <de/variablesliderwidget.h>
+#include <de/variabletogglewidget.h>
 
 using namespace de;
 using namespace de::ui;

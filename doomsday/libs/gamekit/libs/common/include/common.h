@@ -48,8 +48,8 @@
 
 #ifdef __cplusplus
 #  include <doomsday/filesys/lumpindex.h>
-#  include <de/Binder>
-#  include <de/Context>
+#  include <de/scripting/function.h>
+#  include <de/scripting/context.h>
 #endif
 #include "gamerules.h"
 #include "pause.h"

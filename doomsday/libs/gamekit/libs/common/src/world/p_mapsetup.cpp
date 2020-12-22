@@ -25,8 +25,8 @@
 
 #include <doomsday/world/entitydef.h>
 #include <doomsday/gamefw/mapspot.h>
-#include <de/Script>
-#include <de/Process>
+#include <de/scripting/script.h>
+#include <de/scripting/process.h>
 
 #include <cmath>
 #include <cctype>  // isspace
