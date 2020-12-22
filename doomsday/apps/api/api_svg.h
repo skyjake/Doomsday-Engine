@@ -22,7 +22,7 @@
 #ifndef DOOMSDAY_API_VECTORGRAPHIC_H
 #define DOOMSDAY_API_VECTORGRAPHIC_H
 
-#include <de/point.h>
+#include <de/legacy/point.h>
 #include "apis.h"
 
 typedef uint32_t svgid_t;
@@ -32,7 +32,7 @@ typedef struct def_svgline_s {
     const Point2Rawf* points;
 } def_svgline_t;
 
-DENG_API_TYPEDEF(Svg)
+DE_API_TYPEDEF(Svg)
 {
     de_api_t api;
     void (*NewSvg)(svgid_t svgId, const def_svgline_t* lines, uint numLines);
@@ -40,9 +40,9 @@ DENG_API_TYPEDEF(Svg)
     void (*DrawSvg2)(svgid_t svgId, const Point2Rawf* origin, float scale);
     void (*DrawSvg3)(svgid_t svgId, const Point2Rawf* origin, float scale, float angle);
 }
-DENG_API_T(Svg);
+DE_API_T(Svg);
 
-#ifndef DENG_NO_API_MACROS_SVG
+#ifndef DE_NO_API_MACROS_SVG
 #define R_NewSvg        _api_Svg.NewSvg
 #define GL_DrawSvg      _api_Svg.DrawSvg
 #define GL_DrawSvg2     _api_Svg.DrawSvg2
@@ -50,7 +50,7 @@ DENG_API_T(Svg);
 #endif
 
 #if defined __DOOMSDAY__ && defined __CLIENT__
-DENG_USING_API(Svg);
+DE_USING_API(Svg);
 #endif
 
 #endif /* DOOMSDAY_API_VECTORGRAPHIC_H */

@@ -17,11 +17,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_PLANEMOVER_H
-#define DENG_CLIENT_PLANEMOVER_H
+#ifndef DE_CLIENT_PLANEMOVER_H
+#define DE_CLIENT_PLANEMOVER_H
+
+#if !defined(__CLIENT__)
+#  error clplanemover.h is client only
+#endif
 
 #include "api_thinker.h"
-#include "Plane"
+#include "world/plane.h"
 #include <doomsday/world/thinkerdata.h>
 
 /**
@@ -53,4 +57,4 @@ public:
     static thinker_s *newThinker(Plane &plane, coord_t dest, float speed);
 };
 
-#endif // DENG_CLIENT_PLANEMOVER_H
+#endif // DE_CLIENT_PLANEMOVER_H

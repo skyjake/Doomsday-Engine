@@ -16,17 +16,26 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_HOME_SAVELISTWIDGET_H
-#define DENG_CLIENT_UI_HOME_SAVELISTWIDGET_H
+#ifndef DE_CLIENT_UI_HOME_SAVELISTWIDGET_H
+#define DE_CLIENT_UI_HOME_SAVELISTWIDGET_H
 
-#include <de/MenuWidget>
-#include <de/ui/Data>
+#include <de/menuwidget.h>
+#include <de/ui/data.h>
 
 class GamePanelButtonWidget;
 
 class SaveListWidget : public de::MenuWidget
 {
-    Q_OBJECT
+public:
+    /**
+     * Emitted when the selected item changes.
+     *
+     * @param pos  Position of the selected item in the shared saved sessions
+     *             list data model.
+     */
+    DE_AUDIENCE(Selection, void saveListSelectionChanged(de::ui::DataPos pos))
+
+    DE_AUDIENCE(DoubleClick, void saveListDoubleClicked(de::ui::DataPos pos))
 
 public:
     SaveListWidget(GamePanelButtonWidget &owner);
@@ -35,19 +44,8 @@ public:
     void setSelectedPos(de::ui::DataPos pos);
     void clearSelection();
 
-signals:
-    /**
-     * Emitted when the selected item changes.
-     *
-     * @param pos  Position of the selected item in the shared saved sessions
-     *             list data model.
-     */
-    void selectionChanged(de::ui::DataPos pos);
-
-    void doubleClicked(de::ui::DataPos pos);
-
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_HOME_SAVELISTWIDGET_H
+#endif // DE_CLIENT_UI_HOME_SAVELISTWIDGET_H

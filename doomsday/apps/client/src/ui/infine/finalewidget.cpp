@@ -23,7 +23,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(FinaleWidget)
+DE_PIMPL_NOREF(FinaleWidget)
 {
     Id id;
     String name;
@@ -40,14 +40,14 @@ DENG2_PIMPL_NOREF(FinaleWidget)
     }
 };
 
-FinaleWidget::FinaleWidget(de::String const &name) : d(new Impl)
+FinaleWidget::FinaleWidget(const de::String &name) : d(new Impl)
 {
     setName(name);
 }
 
 FinaleWidget::~FinaleWidget()
 {
-    DENG2_FOR_AUDIENCE(Deletion, i) i->finaleWidgetBeingDeleted(*this);
+    DE_NOTIFY_VAR(Deletion, i) i->finaleWidgetBeingDeleted(*this);
 }
 
 Id FinaleWidget::id() const
@@ -60,18 +60,18 @@ String FinaleWidget::name() const
     return d->name;
 }
 
-FinaleWidget &FinaleWidget::setName(String const &newName)
+FinaleWidget &FinaleWidget::setName(const String &newName)
 {
     d->name = newName;
     return *this;
 }
 
-animatorvector3_t const &FinaleWidget::origin() const
+const animatorvector3_t &FinaleWidget::origin() const
 {
     return d->pos;
 }
 
-FinaleWidget &FinaleWidget::setOrigin(Vector3f const &newPos, int steps)
+FinaleWidget &FinaleWidget::setOrigin(const Vec3f &newPos, int steps)
 {
     AnimatorVector3_Set(d->pos, newPos.x, newPos.y, newPos.z, steps);
     return *this;
@@ -95,7 +95,7 @@ FinaleWidget &FinaleWidget::setOriginZ(float newZ, int steps)
     return *this;
 }
 
-animator_t const &FinaleWidget::angle() const
+const animator_t &FinaleWidget::angle() const
 {
     return d->angle;
 }
@@ -106,12 +106,12 @@ FinaleWidget &FinaleWidget::setAngle(float newAngle, int steps)
     return *this;
 }
 
-animatorvector3_t const &FinaleWidget::scale() const
+const animatorvector3_t &FinaleWidget::scale() const
 {
     return d->scale;
 }
 
-FinaleWidget &FinaleWidget::setScale(Vector3f const &newScale, int steps)
+FinaleWidget &FinaleWidget::setScale(const Vec3f &newScale, int steps)
 {
     AnimatorVector3_Set(d->scale, newScale.x, newScale.y, newScale.z, steps);
     return *this;

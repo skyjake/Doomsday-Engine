@@ -23,28 +23,28 @@
 #include "render/vr.h"
 #include "clientapp.h"
 #include "api_console.h"
+#include "ui/commandaction.h"
+
 #include <doomsday/console/exec.h>
 
-#include <de/VariableSliderWidget>
-#include <de/SignalAction>
-#include <de/Config>
-#include "CommandAction"
+#include <de/variablesliderwidget.h>
+#include <de/config.h>
 
 using namespace de;
 using namespace de::ui;
 
-DENG_GUI_PIMPL(VRSettingsDialog)
+DE_GUI_PIMPL(VRSettingsDialog)
 {
-    CVarChoiceWidget *mode;
-    CVarToggleWidget *swapEyes;
-    CVarSliderWidget *dominantEye;
-    CVarSliderWidget *humanHeight;
-    CVarSliderWidget *ipd;
+    CVarChoiceWidget *    mode;
+    CVarToggleWidget *    swapEyes;
+    CVarSliderWidget *    dominantEye;
+    CVarSliderWidget *    humanHeight;
+    CVarSliderWidget *    ipd;
     VariableSliderWidget *riftDensity;
-    CVarSliderWidget *riftSamples;
-    ButtonWidget *riftReset;
-    ButtonWidget *riftSetup;
-    ButtonWidget *desktopSetup;
+    CVarSliderWidget *    riftSamples;
+    ButtonWidget *        riftReset;
+    ButtonWidget *        riftSetup;
+    ButtonWidget *        desktopSetup;
 
     Impl(Public *i)
         : Base(i)
@@ -55,25 +55,25 @@ DENG_GUI_PIMPL(VRSettingsDialog)
 
         area.add(mode = new CVarChoiceWidget("rend-vr-mode"));
         mode->items()
-                << new ChoiceItem(tr("No stereo"),                VRConfig::Mono)
-                << new ChoiceItem(tr("Anaglyph (green/magenta)"), VRConfig::GreenMagenta)
-                << new ChoiceItem(tr("Anaglyph (red/cyan)"),      VRConfig::RedCyan)
-                << new ChoiceItem(tr("Left eye only"),            VRConfig::LeftOnly)
-                << new ChoiceItem(tr("Right eye only"),           VRConfig::RightOnly)
-                << new ChoiceItem(tr("Top/bottom"),               VRConfig::TopBottom)
-                << new ChoiceItem(tr("Side-by-side"),             VRConfig::SideBySide)
-                << new ChoiceItem(tr("Parallel"),                 VRConfig::Parallel)
-                << new ChoiceItem(tr("Cross-eye"),                VRConfig::CrossEye)
-                << new ChoiceItem(tr("Hardware stereo"),          VRConfig::QuadBuffered)
-                << new ChoiceItem(tr("Row interleaved"),          VRConfig::RowInterleaved)
+                << new ChoiceItem("No stereo",                VRConfig::Mono)
+                << new ChoiceItem("Anaglyph (green/magenta)", VRConfig::GreenMagenta)
+                << new ChoiceItem("Anaglyph (red/cyan)",      VRConfig::RedCyan)
+                << new ChoiceItem("Left eye only",            VRConfig::LeftOnly)
+                << new ChoiceItem("Right eye only",           VRConfig::RightOnly)
+                << new ChoiceItem("Top/bottom",               VRConfig::TopBottom)
+                << new ChoiceItem("Side-by-side",             VRConfig::SideBySide)
+                << new ChoiceItem("Parallel",                 VRConfig::Parallel)
+                << new ChoiceItem("Cross-eye",                VRConfig::CrossEye)
+                << new ChoiceItem("Hardware stereo",          VRConfig::QuadBuffered)
+                << new ChoiceItem("Row interleaved",          VRConfig::RowInterleaved)
                 ;
 
         if (vrCfg().oculusRift().isEnabled())
         {
-            mode->items() << new ChoiceItem(tr("Oculus Rift"), VRConfig::OculusRift);
+            mode->items() << new ChoiceItem("Oculus Rift", VRConfig::OculusRift);
         }
 
-        area.add(swapEyes    = new CVarToggleWidget("rend-vr-swap-eyes", tr("Swap Eyes")));
+        area.add(swapEyes    = new CVarToggleWidget("rend-vr-swap-eyes", "Swap Eyes"));
         area.add(dominantEye = new CVarSliderWidget("rend-vr-dominant-eye"));
         area.add(humanHeight = new CVarSliderWidget("rend-vr-player-height"));
         area.add(riftSamples = new CVarSliderWidget("rend-vr-rift-samples"));
@@ -89,22 +89,22 @@ DENG_GUI_PIMPL(VRSettingsDialog)
             riftDensity->setPrecision(2);
 
             area.add(riftReset = new ButtonWidget);
-            riftReset->setText(tr("Recenter Tracking"));
+            riftReset->setText("Recenter Tracking");
             riftReset->setAction(new CommandAction("resetriftpose"));
 
             area.add(riftSetup = new ButtonWidget);
-            riftSetup->setText(tr("Apply Rift Settings"));
-            riftSetup->setAction(new SignalAction(thisPublic, SLOT(autoConfigForOculusRift())));
+            riftSetup->setText("Apply Rift Settings");
+            riftSetup->setActionFn([this]() { self().autoConfigForOculusRift(); });
         }
 
         area.add(desktopSetup = new ButtonWidget);
-        desktopSetup->setText(tr("Apply Desktop Settings"));
-        desktopSetup->setAction(new SignalAction(thisPublic, SLOT(autoConfigForDesktop())));
+        desktopSetup->setText("Apply Desktop Settings");
+        desktopSetup->setActionFn([this]() { self().autoConfigForDesktop(); });
     }
 
     void fetch()
     {
-        foreach (GuiWidget *child, self().area().childWidgets())
+        for (GuiWidget *child : self().area().childWidgets())
         {
             if (ICVarWidget *w = maybeAs<ICVarWidget>(child))
             {
@@ -114,16 +114,16 @@ DENG_GUI_PIMPL(VRSettingsDialog)
     }
 };
 
-VRSettingsDialog::VRSettingsDialog(String const &name)
+VRSettingsDialog::VRSettingsDialog(const String &name)
     : DialogWidget(name, WithHeading), d(new Impl(this))
 {
-    heading().setText(tr("3D & VR Settings"));
+    heading().setText("3D & VR Settings");
     heading().setImage(style().images().image("vr"));
 
-    LabelWidget *modeLabel     = LabelWidget::newWithText(tr("Stereo Mode:"), &area());
-    LabelWidget *heightLabel   = LabelWidget::newWithText(tr("Height (m):"), &area());
-    LabelWidget *ipdLabel      = LabelWidget::newWithText(tr("IPD (mm):"), &area());
-    LabelWidget *dominantLabel = LabelWidget::newWithText(tr("Dominant Eye:"), &area());
+    LabelWidget *modeLabel     = LabelWidget::newWithText("Stereo Mode:", &area());
+    LabelWidget *heightLabel   = LabelWidget::newWithText("Height (m):", &area());
+    LabelWidget *ipdLabel      = LabelWidget::newWithText("IPD (mm):", &area());
+    LabelWidget *dominantLabel = LabelWidget::newWithText("Dominant Eye:", &area());
 
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
@@ -136,21 +136,21 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
            << *dominantLabel << *d->dominantEye
            << Const(0)       << *d->swapEyes;
 
-#ifdef DENG_HAVE_OCULUS_API
-    LabelWidget *ovrLabel    = LabelWidget::newWithText(_E(D) + tr("Oculus Rift"), &area());
-    LabelWidget *sampleLabel = LabelWidget::newWithText(tr("Multisampling:"), &area());
+#ifdef DE_HAVE_OCULUS_API
+    LabelWidget *ovrLabel    = LabelWidget::newWithText(_E(D) + "Oculus Rift", &area());
+    LabelWidget *sampleLabel = LabelWidget::newWithText("Multisampling:", &area());
     ovrLabel->setFont("separator.label");
     ovrLabel->margins().setTop("gap");
     sampleLabel->setTextLineAlignment(ui::AlignRight);
 
-    layout.setCellAlignment(Vector2i(0, 5), ui::AlignLeft);
+    layout.setCellAlignment(Vec2i(0, 5), ui::AlignLeft);
     layout.append(*ovrLabel, 2);
 
-    LabelWidget *utilLabel = LabelWidget::newWithText(tr("Utilities:"), &area());
+    LabelWidget *utilLabel = LabelWidget::newWithText("Utilities:", &area());
     if (vrCfg().oculusRift().isReady())
     {
         layout << *sampleLabel << *d->riftSamples
-               << *LabelWidget::newWithText(tr("Pixel Density:"), &area())
+               << *LabelWidget::newWithText("Pixel Density:", &area())
                << *d->riftDensity;
 
         layout << *utilLabel << *d->riftReset
@@ -166,9 +166,9 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
     area().setContentSize(layout);
 
     buttons()
-            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
-            << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
-                                    new SignalAction(this, SLOT(resetToDefaults())));
+            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, "Close")
+            << new DialogButtonItem(DialogWidget::Action, "Reset to Defaults",
+                                    [this]() { resetToDefaults(); });
 
     d->fetch();
 }

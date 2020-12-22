@@ -21,7 +21,7 @@
 #include "de_platform.h"
 #include "render/lumobj.h"
 
-#include <de/vector1.h>
+#include <de/legacy/vector1.h>
 #include <doomsday/console/var.h>
 
 #include "render/rend_halo.h"
@@ -34,17 +34,17 @@ using namespace de;
 static dint radiusMax     = 320;    ///< Absolute maximum lumobj radius (cvar).
 static dfloat radiusScale = 5.2f;  ///< Radius scale factor (cvar).
 
-dfloat Lumobj::Source::occlusion(Vector3d const & /*eye*/) const
+dfloat Lumobj::Source::occlusion(const Vec3d & /*eye*/) const
 {
     return 1;  // Fully visible.
 }
 
-DENG2_PIMPL_NOREF(Lumobj)
+DE_PIMPL_NOREF(Lumobj)
 {
-    Source const *source = nullptr;      ///< Source of the lumobj (if any, not owned).
-    mobj_t const *sourceMobj = nullptr;  ///< Mobj associated with the lumobj (if any).
+    const Source *source = nullptr;      ///< Source of the lumobj (if any, not owned).
+    const mobj_t *sourceMobj = nullptr;  ///< Mobj associated with the lumobj (if any).
     ddouble maxDistance = 0;             ///< Used when rendering to limit the number drawn lumobjs.
-    Vector3f color = Vector3f(1, 1, 1);  ///< Light color/intensity.
+    Vec3f color = Vec3f(1);  ///< Light color/intensity.
     ddouble radius = 256;                ///< Radius in map space units.
     ddouble zOffset = 0;                 ///< Z-axis origin offset in map space units.
     dfloat flareSize = 0;                ///< Scale factor.
@@ -57,7 +57,7 @@ DENG2_PIMPL_NOREF(Lumobj)
 
     Impl() {}
 
-    Impl(Impl const &other)
+    Impl(const Impl &other)
         : source     (other.source)
         , sourceMobj (other.sourceMobj)
         , maxDistance(other.maxDistance)
@@ -72,38 +72,38 @@ DENG2_PIMPL_NOREF(Lumobj)
     {}
 };
 
-Lumobj::Lumobj(Vector3d const &origin, ddouble radius, Vector3f const &color)
+Lumobj::Lumobj(const Vec3d &origin, ddouble radius, const Vec3f &color)
     : MapObject(origin), d(new Impl())
 {
     setRadius(radius);
     setColor(color);
 }
 
-Lumobj::Lumobj(Lumobj const &other)
+Lumobj::Lumobj(const Lumobj &other)
     : MapObject(other.origin()), d(new Impl(*other.d))
 {}
 
-void Lumobj::setSource(Source const *newSource)
+void Lumobj::setSource(const Source *newSource)
 {
     d->source = newSource;
 }
 
-void Lumobj::setSourceMobj(mobj_t const *mo)
+void Lumobj::setSourceMobj(const mobj_t *mo)
 {
     d->sourceMobj = mo;
 }
 
-mobj_t const *Lumobj::sourceMobj() const
+const mobj_t *Lumobj::sourceMobj() const
 {
     return d->sourceMobj;
 }
 
-Vector3f const &Lumobj::color() const
+const Vec3f &Lumobj::color() const
 {
     return d->color;
 }
 
-Lumobj &Lumobj::setColor(Vector3f const &newColor)
+Lumobj &Lumobj::setColor(const Vec3f &newColor)
 {
     if(d->color != newColor)
     {
@@ -168,7 +168,7 @@ ClientTexture *Lumobj::lightmap(LightmapSemantic semantic) const
     case Down: return d->downTex;
     case Up:   return d->upTex;
     };
-    DENG2_ASSERT(false);
+    DE_ASSERT(false);
     return d->sideTex;
 }
 
@@ -216,7 +216,7 @@ dfloat Lumobj::attenuation(ddouble distFromEye) const
     return 1;
 }
 
-void Lumobj::generateFlare(Vector3d const &eye, ddouble distFromEye)
+void Lumobj::generateFlare(const Vec3d &eye, ddouble distFromEye)
 {
     // Is the point in range?
     if(d->maxDistance > 0 && distFromEye > d->maxDistance)

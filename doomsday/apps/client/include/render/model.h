@@ -16,18 +16,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_MODEL_H
-#define DENG_CLIENT_RENDER_MODEL_H
+#ifndef DE_CLIENT_RENDER_MODEL_H
+#define DE_CLIENT_RENDER_MODEL_H
 
-#include <de/Record>
-#include <de/ModelDrawable>
-#include <de/Timeline>
-#include <de/MultiAtlas>
-
-#include <QHash>
-#include <QFlags>
+#include <de/record.h>
+#include <de/modeldrawable.h>
+#include <de/scripting/timeline.h>
+#include <de/multiatlas.h>
+#include <de/keymap.h>
 
 namespace render {
+
+using namespace de;
 
 /**
  * Drawable model with client-specific extra information, e.g., animation
@@ -35,28 +35,24 @@ namespace render {
  *
  * @todo Refactor: This could look more like a proper class, yes? -jk
  */
-struct Model : public de::ModelDrawable
+struct Model : public ModelDrawable
 {
-    static de::String const DEF_TIMELINE;
-
-//---------------------------------------------------------------------------------------
-
-    de::String identifier;
+    String identifier;
 
     /**
      * Animation sequence definition.
      */
     struct AnimSequence
     {
-        de::String name;        ///< Name of the sequence.
-        de::Record const *def;  ///< Record describing the sequence (in asset metadata).
-        de::Timeline *timeline = nullptr; ///< Script timeline (owned).
-        de::String sharedTimeline; ///< Name of shared timeline (if specified).
+        String name;        ///< Name of the sequence.
+        const Record *def;  ///< Record describing the sequence (in asset metadata).
+        Timeline *timeline = nullptr; ///< Script timeline (owned).
+        String sharedTimeline; ///< Name of shared timeline (if specified).
 
-        AnimSequence(de::String const &n, de::Record const &d);
+        AnimSequence(const String &n, const Record &d);
     };
 
-    struct StateAnims : public QMap<de::String, QList<AnimSequence>>
+    struct StateAnims : public KeyMap<String, List<AnimSequence>>
     {};
 
     enum Flag
@@ -66,7 +62,6 @@ struct Model : public de::ModelDrawable
         ThingFullBrightAsAmbientLight = 0x4,
         DefaultFlags = AutoscaleToThingHeight
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     enum Alignment
     {
@@ -82,7 +77,7 @@ struct Model : public de::ModelDrawable
 
 //---------------------------------------------------------------------------------------
 
-    std::unique_ptr<de::MultiAtlas::AllocGroup> textures;
+    std::unique_ptr<MultiAtlas::AllocGroup> textures;
 
     Flags     flags      = DefaultFlags;
     Alignment alignYaw   = NotAligned;
@@ -90,13 +85,13 @@ struct Model : public de::ModelDrawable
     float     pspriteFOV = 0.0f; // Custom override of the fixed psprite FOV.
 
     /// Combined scaling and rotation of the model.
-    de::Matrix4f transformation;
+    Mat4f transformation;
 
-    de::Vector3f offset;
+    Vec3f offset;
 
-    de::gl::Cull cull = de::gl::Back;
+    gfx::Face cull = gfx::Back;
 
-    QHash<de::String, de::duint> materialIndexForName;
+    Hash<String, duint> materialIndexForName;
 
     /// Rendering passes. Will not change after init.
     Passes passes;
@@ -105,12 +100,10 @@ struct Model : public de::ModelDrawable
     StateAnims animations;
 
     /// Shared timelines (not sequence-specific). Owned.
-    QHash<de::String, de::Timeline *> timelines;
+    Hash<String, Timeline *> timelines;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Model::Flags)
 
 } // namespace render
 
-#endif // DENG_CLIENT_RENDER_MODEL_H
+#endif // DE_CLIENT_RENDER_MODEL_H
 

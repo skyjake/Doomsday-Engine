@@ -20,29 +20,30 @@
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/widgets/homeitemwidget.h"
 
-#include <de/Async>
-#include <de/ChoiceWidget>
-#include <de/Config>
-#include <de/DictionaryValue>
-#include <de/DocumentWidget>
-#include <de/FileSystem>
-#include <de/Folder>
-#include <de/LineEditWidget>
-#include <de/ProgressWidget>
-#include <de/RemoteFeedRelay>
-#include <de/SequentialLayout>
-#include <de/ToggleWidget>
-#include <de/ui/FilteredData>
+#include <de/async.h>
+#include <de/choicewidget.h>
+#include <de/config.h>
+#include <de/dictionaryvalue.h>
+#include <de/documentwidget.h>
+#include <de/filesystem.h>
+#include <de/folder.h>
+#include <de/lineeditwidget.h>
+#include <de/progresswidget.h>
+#include <de/filesys/remotefeedrelay.h>
+#include <de/sequentiallayout.h>
+#include <de/taskpool.h>
+#include <de/togglewidget.h>
+#include <de/ui/filtereddata.h>
+#include <de/webrequest.h>
 
 using namespace de;
 
-static String const VAR_RESOURCE_BROWSER_REPOSITORY("resource.browserRepository");
-static String const ALL_CATEGORIES(QObject::tr("All Categories"));
+DE_STATIC_STRING(VAR_RESOURCE_BROWSER_REPOSITORY, "resource.browserRepository");
+DE_STATIC_STRING(ALL_CATEGORIES, "All Categories");
 
-DENG_GUI_PIMPL(RepositoryBrowserDialog)
-, DENG2_OBSERVES(filesys::RemoteFeedRelay, Status)
+DE_GUI_PIMPL(RepositoryBrowserDialog)
+, DE_OBSERVES(filesys::RemoteFeedRelay, Status)
 , public ChildWidgetOrganizer::IWidgetFactory
-, public AsyncScope
 {
     using RFRelay = filesys::RemoteFeedRelay;
 
@@ -61,7 +62,9 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
     DocumentWidget *description;
     String connectedRepository;
     String mountPath;
-    QSet<String> filterTerms;
+    Set<String> filterTerms;
+
+    TaskPool tasks;
 
     Impl(Public *i) : Base(i)
     {
@@ -78,7 +81,7 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         refreshProgress->setOpacity(0);
         refreshProgress->setColor("altaccent");
         refreshProgress->setTextColor("altaccent");
-        refreshProgress->setText(tr("Loading..."));
+        refreshProgress->setText("Loading...");
         refreshProgress->setTextAlignment(ui::AlignLeft);
         refreshProgress->setSizePolicy(ui::Expand, ui::Expand);
 
@@ -101,9 +104,10 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
                 repo->items()
                         << new ChoiceItem(i->first.value->asText(), i->second->asText());
             }
-            repo->setSelected(repo->items().findLabel(App::config().gets(VAR_RESOURCE_BROWSER_REPOSITORY, "")));
+            repo->setSelected(
+                repo->items().findLabel(App::config().gets(VAR_RESOURCE_BROWSER_REPOSITORY(), "")));
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_MSG("Remote repositories not listed in configuration; "
                     "set Config.resource.repositories: %s")
@@ -124,36 +128,30 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         nameList->layout().setRowPadding(Const(0));
         nameList->setBehavior(ChildVisibilityClipping);
 
-        QObject::connect(repo, &ChoiceWidget::selectionChangedByUser, [this] (uint)
-        {
-            updateSelectedRepository();
-        });
-        QObject::connect(search, &LineEditWidget::editorContentChanged, [this] ()
-        {
-            updateFilter();
-        });
+        repo->audienceForUserSelection() += [this]() { updateSelectedRepository(); };
+        search->audienceForContentChange() += [this]() { updateFilter(); };
         RFRelay::get().audienceForStatus() += this;
 
         updateSelectedRepository();
     }
 
-    ~Impl()
+    ~Impl() override
     {
         if (populating) populating->waitForFinished();
         disconnect();
     }
 
-    bool filterItem(ui::Item const &item) const
+    bool filterItem(const ui::Item &item) const
     {
         if (filterTerms.isEmpty()) return true;
 
         DotPath const path(item.label());
-        for (String const &term : filterTerms)
+        for (const String &term : filterTerms)
         {
             bool matched = false;
             for (int i = 0; i < path.segmentCount(); ++i)
             {
-                if (path.segment(i).toStringRef().contains(term))
+                if (path.segment(i).toLowercaseString().contains(term))
                 {
                     matched = true;
                     break;
@@ -168,17 +166,17 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
     {
         const auto oldTerms = filterTerms;
         filterTerms.clear();
-        foreach (String term, search->text().split(' '))
+        for (const auto &term : search->text().splitRef(' '))
         {
             if (auto cleaned = term.strip())
             {
-                filterTerms.insert(cleaned.toLower());
+                filterTerms.insert(cleaned.lower());
             }
         }
         if (oldTerms != filterTerms && shownData)
         {
             shownData->refilter();
-            shownData->stableSort([] (ui::Item const &a, ui::Item const &b)
+            shownData->stableSort([] (const ui::Item &a, const ui::Item &b)
             {
                 return a.label().compare(b.label()) < 0;
             });
@@ -186,17 +184,15 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         }
     }
 
-    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *parent) override
+    GuiWidget *makeItemWidget(const ui::Item &item, const GuiWidget *parent) override
     {
         if (parent == category)
         {
             auto *toggle = new ToggleWidget(ToggleWidget::WithoutIndicator);
-            QObject::connect(toggle, &ToggleWidget::stateChanged,
-                             [toggle, &item] (ToggleWidget::ToggleState state)
-            {
-                toggle->setColorTheme(state == ToggleWidget::Active? Inverted : Normal);
-            });
-            if (item.label() == ALL_CATEGORIES)
+            toggle->audienceForStateChange() += [toggle]() {
+                toggle->setColorTheme(toggle->isActive() ? Inverted : Normal);
+            };
+            if (item.label() == ALL_CATEGORIES())
             {
                 toggle->setToggleState(ToggleWidget::Active);
             }
@@ -206,7 +202,7 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
                                   HomeItemWidget::WithoutIcon);
     }
 
-    void updateItemWidget(GuiWidget &widget, ui::Item const &item) override
+    void updateItemWidget(GuiWidget &widget, const ui::Item &item) override
     {
         if (widget.parentGuiWidget() == category)
         {
@@ -231,33 +227,30 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
     {
         if (repo->isValidSelection())
         {
-            auto const &selItem = repo->selectedItem();
-            App::config().set(VAR_RESOURCE_BROWSER_REPOSITORY, selItem.label());
-            connect(selItem.data().toString());
+            const auto &selItem = repo->selectedItem();
+            App::config().set(VAR_RESOURCE_BROWSER_REPOSITORY(), selItem.label());
+            connect(selItem.data().asText());
         }
     }
 
-    void connect(String address)
+    void connect(const String& address)
     {
         refreshProgress->setOpacity(1, 0.5);
         repo->disable();
 
         // Disconnecting may involve waiting for an operation to finish first, so
         // we'll do it async.
-        *this += async([this] ()
-        {
+        tasks.async([this]() {
             disconnect();
-            return 0;
+            return Variant{};
         },
-        [this, address] (int)
-        {
-            QUrl const url(address);
-            RFRelay::get().addRepository(address, "/remote" / url.host());
+        [this, address](const Variant &) {
+            RFRelay::get().addRepository(address, "/remote" / WebRequest::hostNameFromUri(address));
             connectedRepository = address;
         });
     }
 
-    void remoteRepositoryStatusChanged(String const &repository, RFRelay::Status status) override
+    void remoteRepositoryStatusChanged(const String &repository, RFRelay::Status status) override
     {
         if (repository == connectedRepository)
         {
@@ -280,7 +273,7 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         populating.reset();
         if (connectedRepository)
         {
-            DENG2_GUARD(linkBusy);
+            DE_GUARD(linkBusy);
             mountPath.clear();
             connectedRepository.clear();
             RFRelay::get().removeRepository(connectedRepository);
@@ -290,7 +283,7 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
     filesys::Link &link()
     {
         auto *link = RFRelay::get().repository(connectedRepository);
-        DENG2_ASSERT(link);
+        DE_ASSERT(link);
         return *link;
     }
 
@@ -301,10 +294,10 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
 
         *populating += async([this] ()
         {
-            DENG2_GUARD(linkBusy);
+            DE_GUARD(linkBusy);
             // All packages from the remote repository are inserted to the data model.
             std::shared_ptr<ui::ListData> pkgs(new ui::ListData);
-            link().forPackageIds([&pkgs] (String const &id)
+            link().forPackageIds([&pkgs] (const String &id)
             {
                 pkgs->append(new ui::Item(ui::Item::DefaultSemantics, id));
                 return LoopContinue;
@@ -317,23 +310,23 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
         });
     }
 
-    void setData(std::shared_ptr<ui::ListData> newData)
+    void setData(const std::shared_ptr<ui::ListData>& newData)
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
         //qDebug() << "got new data with" << newData->size() << "items";
 
         nameList->useDefaultItems();
         shownData.reset(new ui::FilteredData(*newData));
-        shownData->setFilter([this] (ui::Item const &i) { return filterItem(i); });
+        shownData->setFilter([this] (const ui::Item &i) { return filterItem(i); });
         data = newData;
         shownData->sort();
         nameList->setItems(*shownData);
 
         categoryData.clear();
-        categoryData.append(new ui::Item(ui::Item::ShownAsButton, ALL_CATEGORIES));
+        categoryData.append(new ui::Item(ui::Item::ShownAsButton, ALL_CATEGORIES()));
         StringList tags = link().categoryTags();
-        qSort(tags);
-        foreach (String category, tags)
+        tags.sort();
+        for (const String &category : tags)
         {
             categoryData.append(new ui::Item(ui::Item::ShownAsButton, category));
         }
@@ -346,7 +339,7 @@ DENG_GUI_PIMPL(RepositoryBrowserDialog)
 
     void updateStatusText()
     {
-        statusText->setText(tr("showing %1 out of %2 mods").arg(shownData->size()).arg(data->size()));
+        statusText->setText(Stringf("showing %zu out of %zu mods", shownData->size(), data->size()));
     }
 };
 
@@ -354,7 +347,7 @@ RepositoryBrowserDialog::RepositoryBrowserDialog()
     : DialogWidget("repository-browser", WithHeading)
     , d(new Impl(this))
 {
-    heading().setText(tr("Install Mods"));
+    heading().setText("Install Mods");
     heading().setStyleImage("package.icon", heading().fontId());
 
     AutoRef<Rule> nameListWidth(new ConstantRule(2*175));
@@ -363,8 +356,8 @@ RepositoryBrowserDialog::RepositoryBrowserDialog()
 
     auto &acRule = area().contentRule();
 
-    auto *searchLabel = LabelWidget::newWithText(tr("Search:"), &area());
-    auto *repoLabel   = LabelWidget::newWithText(tr("Repository:"), &area());
+    auto *searchLabel = LabelWidget::newWithText("Search:", &area());
+    auto *repoLabel   = LabelWidget::newWithText("Repository:", &area());
 
     {
         SequentialLayout layout(acRule.left(),
@@ -406,9 +399,9 @@ RepositoryBrowserDialog::RepositoryBrowserDialog()
             .setInput(Rule::Right, rule().right() - area().margins().right())
             .setInput(Rule::Top,   rule().top() + area().margins().top());
 
-    buttons() << new DialogButtonItem(Default | Accept, tr("Close"))
-              << new DialogButtonItem(Action  | Id1,    tr("Download & Install"))
-              << new DialogButtonItem(Action  | Id2,    tr("Try in..."));
+    buttons() << new DialogButtonItem(Default | Accept, "Close")
+              << new DialogButtonItem(Action  | Id1,    "Download & Install")
+              << new DialogButtonItem(Action  | Id2,    "Try in...");
 
     // Actions are unavaiable until something is selected.
     buttonWidget(Id1)->disable();

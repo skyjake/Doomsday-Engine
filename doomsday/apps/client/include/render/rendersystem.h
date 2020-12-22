@@ -20,19 +20,20 @@
 #define CLIENT_RENDERSYSTEM_H
 
 #include <functional>
-#include <de/GLShaderBank>
-#include <de/GLUniform>
-#include <de/ImageBank>
-#include <de/Vector>
-#include <de/System>
-#include "DrawLists"
-#include "ConfigProfiles"
+#include <de/glshaderbank.h>
+#include <de/gluniform.h>
+#include <de/imagebank.h>
+#include <de/vector.h>
+#include <de/system.h>
+#include "drawlists.h"
+#include "configprofiles.h"
 #include "projectedtexturedata.h"
 #include "vectorlightdata.h"
 #include "projectionlist.h"
 #include "vectorlightlist.h"
 
 class AngleClipper;
+class IWorldRenderer;
 class ModelRenderer;
 class SkyDrawable;
 namespace render { class Environment; }
@@ -46,7 +47,7 @@ public:
     RenderSystem();
 
     // System.
-    void timeChanged(de::Clock const &);
+    void timeChanged(const de::Clock &);
 
     ConfigProfiles &settings();
     ConfigProfiles &appearanceSettings();
@@ -54,9 +55,10 @@ public:
     void glInit();
     void glDeinit();
 
+    IWorldRenderer &world();
     de::GLShaderBank &shaders();
-    de::ImageBank &images();
-    de::GLUniform const &uMapTime() const;
+//    de::ImageBank &images();
+    const de::GLUniform &uMapTime() const;
     de::GLUniform &uProjectionMatrix() const;
     de::GLUniform &uViewMatrix() const;
     render::Environment &environment();
@@ -113,7 +115,7 @@ public:  // Texture => surface projection lists --------------------------------
      * @param listIdx  Unique identifier of the projection list to process.
      * @param func     Callback to make for each TexProjection.
      */
-    de::LoopResult forAllSurfaceProjections(de::duint listIdx, std::function<de::LoopResult (ProjectedTextureData const &)> func) const;
+    de::LoopResult forAllSurfaceProjections(de::duint listIdx, std::function<de::LoopResult (const ProjectedTextureData &)> func) const;
 
 public:  // VectorLight affection lists -------------------------------------------
 
@@ -134,7 +136,7 @@ public:  // VectorLight affection lists ----------------------------------------
      * @param listIdx  Unique identifier of the list to process.
      * @param func     Callback to make for each VectorLight.
      */
-    de::LoopResult forAllVectorLights(de::duint listIdx, std::function<de::LoopResult (VectorLightData const &)> func);
+    de::LoopResult forAllVectorLights(de::duint listIdx, std::function<de::LoopResult (const VectorLightData &)> func);
 
 public:
     /**
@@ -143,7 +145,7 @@ public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // CLIENT_RENDERSYSTEM_H

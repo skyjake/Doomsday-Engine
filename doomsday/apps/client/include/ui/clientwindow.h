@@ -21,10 +21,10 @@
 #ifndef CLIENT_CLIENTWINDOW_H
 #define CLIENT_CLIENTWINDOW_H
 
-#include <de/PersistentGLWindow>
-#include <de/BaseWindow>
-#include <de/NotificationAreaWidget>
-#include <de/FadeToBlackWidget>
+#include <de/persistentglwindow.h>
+#include <de/basewindow.h>
+#include <de/notificationareawidget.h>
+#include <de/fadetoblackwidget.h>
 
 #include "ui/clientrootwidget.h"
 #include "resource/image.h"
@@ -32,15 +32,15 @@
 
 #undef main
 
-#define DENG_GAMEVIEW_X         ClientWindow::main().game().rule().left().valuei()
-#define DENG_GAMEVIEW_Y         ClientWindow::main().game().rule().top().valuei()
-#define DENG_GAMEVIEW_WIDTH     ClientWindow::main().game().rule().width().valuei()
-#define DENG_GAMEVIEW_HEIGHT    ClientWindow::main().game().rule().height().valuei()
+#define DE_GAMEVIEW_X           ClientWindow::main().game().rule().left().valuei()
+#define DE_GAMEVIEW_Y           ClientWindow::main().game().rule().top().valuei()
+#define DE_GAMEVIEW_WIDTH       ClientWindow::main().game().rule().width().valuei()
+#define DE_GAMEVIEW_HEIGHT      ClientWindow::main().game().rule().height().valuei()
 
 /**
  * A helpful macro that changes the origin of the window space coordinate system.
  */
-#define FLIP(y)             (ClientWindow::main().height() - ((y)+1))
+#define FLIP(y)                 (ClientWindow::main().height() - ((y) + 1))
 
 class ConsoleWidget;
 class TaskBarWidget;
@@ -53,29 +53,24 @@ class HomeWidget;
  */
 class ClientWindow : public de::BaseWindow
 {
-    Q_OBJECT
+public:
+    enum Mode { Normal, Busy };
+    enum SidebarLocation { RightEdge };
+    enum FadeDirection { FadeFromBlack, FadeToBlack };
 
 public:
-    enum Mode {
-        Normal,
-        Busy
-    };
+    ClientWindow(const de::String &id = "main");
 
-    enum SidebarLocation {
-        RightEdge
-    };
+    bool isUICreated() const;
 
-public:
-    ClientWindow(de::String const &id = "main");
-
-    ClientRootWidget &  root();
-    TaskBarWidget &     taskBar();
-    de::GuiWidget &     taskBarBlur();
-    ConsoleWidget &     console();
-    HomeWidget &        home();
-    GameWidget &        game();
-    BusyWidget &        busy();
-    AlertDialog &       alerts();
+    ClientRootWidget &root();
+    TaskBarWidget &   taskBar();
+    de::GuiWidget &   taskBarBlur();
+    ConsoleWidget &   console();
+    HomeWidget &      home();
+    GameWidget &      game();
+    BusyWidget &      busy();
+    AlertDialog &     alerts();
     de::NotificationAreaWidget &notifications();
 
     /**
@@ -111,7 +106,7 @@ public:
      *
      * @param mode  Mode.
      */
-    void setMode(Mode const &mode);
+    void setMode(const Mode &mode);
 
     /**
      * Minimizes or restores the game to full size. While minimized, the Home is
@@ -124,31 +119,15 @@ public:
 
     bool isGameMinimized() const;
 
-    /**
-     * Must be called before any canvas windows are created. Defines the
-     * default OpenGL format settings for the contained canvases.
-     *
-     * @return @c true, if the new format was applied. @c false, if the new
-     * format remains the same because none of the settings have changed.
-     */
-    static bool setDefaultGLFormat();
+    void fadeContent(FadeDirection fadeDirection, de::TimeSpan duration);
 
-    /**
-     * Grab the contents of the window into the supplied @a image. Ownership of
-     * the image passes to the window for the duration of this call.
-     *
-     * @param image      Image to fill with the grabbed frame contents.
-     * @param halfSized  If @c true, scales the image to half the full size.
-     */
-    void grab(image_t &image, bool halfSized = false) const;
-
-    enum FadeDirection { FadeFromBlack, FadeToBlack };
-
-    void fadeContent(FadeDirection fadeDirection, de::TimeSpan const &duration);
     de::FadeToBlackWidget *contentFade();
 
     void fadeInTaskBarBlur(de::TimeSpan span);
     void fadeOutTaskBarBlur(de::TimeSpan span);
+    void toggleFPSCounter();
+    void showColorAdjustments();
+    void hideTaskBarBlur();
 
     void updateRootSize();
 
@@ -156,25 +135,20 @@ public:
     bool isFPSCounterVisible() const;
 
     // Implements BaseWindow.
-    de::Vector2f windowContentSize() const override;
+    de::Vec2f windowContentSize() const override;
     void drawWindowContent() override;
     void preDraw() override;
     void postDraw() override;
-    bool handleFallbackEvent(de::Event const &event) override;
 
+public:
     static ClientWindow &main();
     static bool mainExists();
-
-public slots:
-    void toggleFPSCounter();
-    void showColorAdjustments();
-    void hideTaskBarBlur();
 
 protected:
     void windowAboutToClose() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CANVASWINDOW_H

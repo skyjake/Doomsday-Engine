@@ -1,0 +1,16 @@
+# Config for test_appfw
+
+import gui
+
+def setDefaults(d)
+    # Applies the apps's defaults.
+    # - d: Record where to set the values.
+    gui.setDefaults(d)
+
+    # Use a windowed mode instead of going to fullscreen.
+    d.window.main.fullscreen = False
+    d.window.main.maximize   = False
+    d.window.main.fsaa       = False
+
+    # TODO: Other default values set here.
+end

@@ -23,32 +23,32 @@
 #include "de_base.h"
 #include "audio/audiodriver.h"
 
-#include <de/timer.h>
+#include <de/legacy/timer.h>
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
 
-int         DS_DummyInit(void);
-void        DS_DummyShutdown(void);
-void        DS_DummyEvent(int type);
+int  DS_DummyInit(void);
+void DS_DummyShutdown(void);
+void DS_DummyEvent(int type);
 
-int         DS_Dummy_SFX_Init(void);
+int          DS_Dummy_SFX_Init(void);
 sfxbuffer_t *DS_Dummy_SFX_CreateBuffer(int flags, int bits, int rate);
-void        DS_Dummy_SFX_DestroyBuffer(sfxbuffer_t* buf);
-void        DS_Dummy_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample);
-void        DS_Dummy_SFX_Reset(sfxbuffer_t* buf);
-void        DS_Dummy_SFX_Play(sfxbuffer_t* buf);
-void        DS_Dummy_SFX_Stop(sfxbuffer_t* buf);
-void        DS_Dummy_SFX_Refresh(sfxbuffer_t* buf);
-void        DS_Dummy_SFX_Set(sfxbuffer_t* buf, int prop, float value);
-void        DS_Dummy_SFX_Setv(sfxbuffer_t* buf, int prop, float* values);
-void        DS_Dummy_SFX_Listener(int prop, float value);
-void        DS_Dummy_SFX_Listenerv(int prop, float* values);
-int         DS_Dummy_SFX_Getv(int prop, void* values);
+void         DS_Dummy_SFX_DestroyBuffer(sfxbuffer_t *buf);
+void         DS_Dummy_SFX_Load(sfxbuffer_t *buf, struct sfxsample_s *sample);
+void         DS_Dummy_SFX_Reset(sfxbuffer_t *buf);
+void         DS_Dummy_SFX_Play(sfxbuffer_t *buf);
+void         DS_Dummy_SFX_Stop(sfxbuffer_t *buf);
+void         DS_Dummy_SFX_Refresh(sfxbuffer_t *buf);
+void         DS_Dummy_SFX_Set(sfxbuffer_t *buf, int prop, float value);
+void         DS_Dummy_SFX_Setv(sfxbuffer_t *buf, int prop, float *values);
+void         DS_Dummy_SFX_Listener(int prop, float value);
+void         DS_Dummy_SFX_Listenerv(int prop, float *values);
+int          DS_Dummy_SFX_Getv(int prop, void *values);
 
-DENG_EXTERN_C audiodriver_t          audiod_dummy;
-DENG_EXTERN_C audiointerface_sfx_t   audiod_dummy_sfx;
-DENG_EXTERN_C audiointerface_music_t audiod_dummy_music;
-DENG_EXTERN_C audiointerface_cd_t    audiod_dummy_cd;
+DE_EXTERN_C audiodriver_t          audiod_dummy;
+DE_EXTERN_C audiointerface_sfx_t   audiod_dummy_sfx;
+DE_EXTERN_C audiointerface_music_t audiod_dummy_music;
+DE_EXTERN_C audiointerface_cd_t    audiod_dummy_cd;
 
 audiodriver_t audiod_dummy = {
     DS_DummyInit,
@@ -372,7 +372,7 @@ void *DS_Dummy_Music_SongBuffer(unsigned int length)
     return malloc(length);
 }
 
-int DS_Dummy_Music_PlayFile(char const *, int)
+int DS_Dummy_Music_PlayFile(const char *, int)
 {
     return true;
 }

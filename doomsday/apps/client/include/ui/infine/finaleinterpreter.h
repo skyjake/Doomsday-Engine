@@ -17,11 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_UI_INFINE_FINALEINTERPRETER_H
-#define DENG_UI_INFINE_FINALEINTERPRETER_H
+#ifndef DE_UI_INFINE_FINALEINTERPRETER_H
+#define DE_UI_INFINE_FINALEINTERPRETER_H
 
-#include <de/Error>
-#include <de/String>
+#include <de/error.h>
+#include <de/string.h>
 #include "../ddevent.h"
 #include "api_infine.h"  // finaleid_t
 
@@ -59,10 +59,10 @@ class FinaleInterpreter
 {
 public:
     /// An unknown widget was referenced. @ingroup errors
-    DENG2_ERROR(MissingWidgetError);
+    DE_ERROR(MissingWidgetError);
 
     /// An unknown page was referenced. @ingroup errors
-    DENG2_ERROR(MissingPageError);
+    DE_ERROR(MissingPageError);
 
     enum PageIndex
     {
@@ -76,9 +76,9 @@ public:
     finaleid_t id() const;
 
     bool runTicks(timespan_t timeDelta, bool processCommands);
-    int handleEvent(ddevent_t const &ev);
+    int handleEvent(const ddevent_t &ev);
 
-    void loadScript(char const *script);
+    void loadScript(const char *script);
 
     bool isSuspended() const;
 
@@ -93,21 +93,21 @@ public:
     void allowSkip(bool yes = true);
 
     bool skip();
-    bool skipToMarker(de::String const &marker);
+    bool skipToMarker(const de::String &marker);
     bool skipInProgress() const;
     bool lastSkipped() const;
 
 #ifdef __CLIENT__
-    void addEventHandler(ddevent_t const &evTemplate, de::String const &gotoMarker);
-    void removeEventHandler(ddevent_t const &evTemplate);
+    void addEventHandler(const ddevent_t &evTemplate, const de::String &gotoMarker);
+    void removeEventHandler(const ddevent_t &evTemplate);
 #endif
 
     FinalePageWidget &page(PageIndex index);
-    FinalePageWidget const &page(PageIndex index) const;
+    const FinalePageWidget &page(PageIndex index) const;
 
-    FinaleWidget *tryFindWidget(de::String const &name);
+    FinaleWidget *tryFindWidget(const de::String &name);
 
-    FinaleWidget &findWidget(fi_obtype_e type, de::String const &name);
+    FinaleWidget &findWidget(fi_obtype_e type, const de::String &name);
 
     /**
      * Find an object of the specified type with the type-unique name.
@@ -118,7 +118,7 @@ public:
      * @return  a) Existing object associated with unique @a name.
      *          b) New object with unique @a name.
      */
-    FinaleWidget &findOrCreateWidget(fi_obtype_e type, de::String const &name);
+    FinaleWidget &findOrCreateWidget(fi_obtype_e type, const de::String &name);
 
 public: /// Script-level flow/state control (@todo make private): --------------------
 
@@ -127,7 +127,7 @@ public: /// Script-level flow/state control (@todo make private): --------------
     void pause();
     void wait(int ticksToWait = 1);
     void foundSkipHere();
-    void foundSkipMarker(de::String const &marker);
+    void foundSkipMarker(const de::String &marker);
 
     int inTime() const;
     void setInTime(int seconds);
@@ -140,7 +140,7 @@ public: /// Script-level flow/state control (@todo make private): --------------
     void setWaitText(FinaleTextWidget *newWaitText);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_UI_INFINE_FINALEINTERPRETER_H
+#endif // DE_UI_INFINE_FINALEINTERPRETER_H

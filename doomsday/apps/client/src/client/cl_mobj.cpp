@@ -19,30 +19,31 @@
  * 02110-1301 USA</small>
  */
 
-#define DENG_NO_API_MACROS_CLIENT
+#define DE_NO_API_MACROS_CLIENT
 
 #include "de_base.h"
-#include "client/cl_mobj.h"
-
 #include "api_client.h"
+#include "api_sound.h"
+#include "client/cl_mobj.h"
 #include "client/cl_player.h"
 #include "client/cl_world.h"
-
 #include "network/net_main.h"
-#include "network/protocol.h"
-
 #include "world/map.h"
 #include "world/p_players.h"
 
-#include "api_sound.h"
-
-#include <de/timer.h>
-#include <de/vector1.h>
-#include <de/LogBuffer>
+#include <doomsday/net.h>
+#include <doomsday/network/protocol.h>
+#include <doomsday/world/mobjthinker.h>
+#include <de/legacy/timer.h>
+#include <de/legacy/vector1.h>
+#include <de/logbuffer.h>
 #include <cmath>
 
 using namespace de;
-using namespace world;
+
+using world::World;
+using world::Sector;
+using world::DmuArgs;
 
 /// Convert 8.8/10.6 fixed point to 16.16.
 #define UNFIXED8_8(x)   (((x) << 16) / 256)
@@ -62,8 +63,8 @@ ClMobjInfo::ClMobjInfo()
 
 mobj_t *ClMobjInfo::mobj()
 {
-    DENG2_ASSERT(startMagic == CLM_MAGIC1);
-    DENG2_ASSERT(endMagic == CLM_MAGIC2);
+    DE_ASSERT(startMagic == CLM_MAGIC1);
+    DE_ASSERT(endMagic == CLM_MAGIC2);
 
     return reinterpret_cast<mobj_t *>((char *)this + sizeof(ClMobjInfo));
 }
@@ -96,7 +97,7 @@ void ClMobj_EnableLocalActions(mobj_t *mo, dd_bool enable)
     LOG_AS("ClMobj_EnableLocalActions");
 
     ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
-    if (!isClient || !info) return;
+    if (!netState.isClient || !info) return;
     if (enable)
     {
         LOGDEV_NET_VERBOSE("Enabled for clmobj %i") << mo->thinker.id;
@@ -113,7 +114,7 @@ void ClMobj_EnableLocalActions(mobj_t *mo, dd_bool enable)
 dd_bool ClMobj_LocalActionsEnabled(mobj_t *mo)
 {
     ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
-    if (!isClient || !info) return true;
+    if (!netState.isClient || !info) return true;
     return (info->flags & CLMF_LOCAL_ACTIONS) != 0;
 }
 
@@ -211,9 +212,9 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
     }
 }
 
-dd_bool Cl_IsClientMobj(mobj_t const *mob)
+dd_bool Cl_IsClientMobj(const mobj_t *mob)
 {
-    DENG2_ASSERT(mob);
+    DE_ASSERT(mob);
     if (ClientMobjThinkerData *data = THINKER_DATA_MAYBE(mob->thinker, ClientMobjThinkerData))
     {
         return data->hasRemoteSync();
@@ -332,10 +333,10 @@ static dd_bool ClMobj_IsStuckInsideLocalPlayer(mobj_t *mo)
 void ClMobj_ReadDelta()
 {
     /// @todo Do not assume the CURRENT map.
-    world::Map &map = App_World().map();
+    Map &map = World::get().map().as<Map>();
 
-    thid_t const id = Reader_ReadUInt16(msgReader); // Read the ID.
-    dint const df   = Reader_ReadUInt16(msgReader); // Flags.
+    const thid_t id = Reader_ReadUInt16(msgReader); // Read the ID.
+    const dint df   = Reader_ReadUInt16(msgReader); // Flags.
 
     // More flags?
     byte moreFlags = 0, fastMom = false;
@@ -582,7 +583,7 @@ void ClMobj_ReadNullDelta()
     LOG_AS("ClMobj_ReadNullDelta");
 
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_World().map();
+    auto &map = World::get().map().as<Map>();
 
     // The delta only contains an ID.
     thid_t id = Reader_ReadUInt16(msgReader);
@@ -620,17 +621,17 @@ void ClMobj_ReadNullDelta()
 #undef ClMobj_Find
 mobj_t *ClMobj_Find(thid_t id)
 {
-    if (!App_World().hasMap()) return nullptr;
+    if (!world::World::get().hasMap()) return nullptr;
 
     /// @todo Do not assume the CURRENT map.
-    return App_World().map().clMobjFor(id);
+    return World::get().map().as<Map>().clMobjFor(id);
 }
 
 // cl_player.c
 #undef ClPlayer_ClMobj
-DENG_EXTERN_C mobj_t *ClPlayer_ClMobj(int plrNum);
+DE_EXTERN_C mobj_t *ClPlayer_ClMobj(int plrNum);
 
-DENG_DECLARE_API(Client) =
+DE_DECLARE_API(Client) =
 {
     { DE_API_CLIENT },
     ClMobj_Find,

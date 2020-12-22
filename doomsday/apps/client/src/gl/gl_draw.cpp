@@ -23,10 +23,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
-#include <de/GLState>
-#include <de/GLInfo>
-#include <de/Vector>
-#include <de/concurrency.h>
+#include <de/glstate.h>
+#include <de/glinfo.h>
+#include <de/vector.h>
+#include <de/legacy/concurrency.h>
 #include <doomsday/console/exec.h>
 
 #include "gl/gl_main.h"
@@ -39,9 +39,9 @@
 
 using namespace de;
 
-void GL_DrawRectWithCoords(Rectanglei const &rect, Vector2i const coords[4])
+void GL_DrawRectWithCoords(const Rectanglei &rect, Vec2i const coords[4])
 {
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_Begin(DGL_QUADS);
         // Top left.
@@ -62,23 +62,23 @@ void GL_DrawRectWithCoords(Rectanglei const &rect, Vector2i const coords[4])
     DGL_End();
 }
 
-void GL_DrawRect(Rectanglei const &rect)
+void GL_DrawRect(const Rectanglei &rect)
 {
-    Vector2i coords[4] = { Vector2i(0, 0), Vector2i(1, 0),
-                           Vector2i(1, 1), Vector2i(0, 1) };
+    Vec2i coords[4] = { Vec2i(0, 0), Vec2i(1, 0),
+                           Vec2i(1, 1), Vec2i(0, 1) };
     GL_DrawRectWithCoords(rect, coords);
 }
 
 void GL_DrawRect2(int x, int y, int w, int h)
 {
-    GL_DrawRect(Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h)));
+    GL_DrawRect(Rectanglei::fromSize(Vec2i(x, y), Vec2ui(w, h)));
 }
 
 void GL_DrawRectfWithCoords(const RectRawf* rect, Point2Rawf coords[4])
 {
     if(!rect) return;
 
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_Begin(DGL_QUADS);
         // Upper left.
@@ -135,7 +135,7 @@ void GL_DrawRectf2TextureColor(double x, double y, double width, double height,
 {
     if(topAlpha <= 0 && bottomAlpha <= 0) return;
 
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_Begin(DGL_QUADS);
         // Top color.
@@ -156,7 +156,7 @@ void GL_DrawRectf2TextureColor(double x, double y, double width, double height,
 
 void GL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
 {
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_Begin(DGL_QUADS);
         DGL_TexCoord2f(0, 0, 0);
@@ -184,7 +184,7 @@ void GL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int t
     float lefth = cutRect->origin.x - rect->origin.x;
     float righth = rect->origin.x + rect->size.width - (cutRect->origin.x + cutRect->size.width);
 
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_Begin(DGL_QUADS);
     if(toph > 0)
@@ -273,7 +273,7 @@ void GL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int t
 void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
                  float b, float a)
 {
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_Color4f(r, g, b, a);
     DGL_Begin(DGL_LINES);
@@ -283,7 +283,7 @@ void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
 }
 
 #undef GL_ResetViewEffects
-DENG_EXTERN_C void GL_ResetViewEffects()
+DE_EXTERN_C void GL_ResetViewEffects()
 {
     GL_SetFilter(false);
     Con_Executef(CMDS_DDAY, true, "postfx %i none", consolePlayer);
@@ -291,7 +291,7 @@ DENG_EXTERN_C void GL_ResetViewEffects()
 }
 
 #undef GL_ConfigureBorderedProjection2
-DENG_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t* bp, int flags,
+DE_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t* bp, int flags,
     int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,
     float stretchEpsilon)
 {
@@ -314,7 +314,7 @@ DENG_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t
 }
 
 #undef GL_ConfigureBorderedProjection
-DENG_EXTERN_C void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t* bp, int flags,
+DE_EXTERN_C void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t* bp, int flags,
     int width, int height, int availWidth, int availHeight, scalemode_t overrideMode)
 {
     GL_ConfigureBorderedProjection2(bp, flags, width, height, availWidth,
@@ -322,15 +322,15 @@ DENG_EXTERN_C void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t*
 }
 
 #undef GL_BeginBorderedProjection
-DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
+DE_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
 {
-    DENG_ASSERT(bp != 0);
+    DE_ASSERT(bp != 0);
     if (!bp) return;
 
     if (bp->scaleMode == SCALEMODE_STRETCH) return;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     /**
      * Use an orthographic projection in screenspace, translating and
@@ -377,15 +377,15 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
 }
 
 #undef GL_EndBorderedProjection
-DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
+DE_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
 {
-    DENG_ASSERT(bp != 0);
+    DE_ASSERT(bp != 0);
     if(!bp) return;
 
     if (SCALEMODE_STRETCH == bp->scaleMode) return;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_PopState();
 

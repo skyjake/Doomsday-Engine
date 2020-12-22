@@ -2,54 +2,42 @@
 
 script { import gui, DisplayMode }
 
+@include </packs/net.dengine.stdlib.gui/images.dei>
+
+#----------------------------------------------------------------------------
+# Widgets
+
 window {
-    image background { path = "graphics/background.jpg" }
-    image borderglow { path = "graphics/borderglow.png" }
-    image icon       { path = "graphics/window.png" }
-    image cursor     { path = "graphics/mouse.png" }
+    image icon { path = "graphics/window.png" }
 }
 
 logo {
+    image window { path = "graphics/deng-window.png" }
+
     image px128 { path = "graphics/deng-logo-128.png" }
     image px256 { path = "graphics/deng-logo-256.png" }
 
     # With HiDPI displays use the 2x versions of the logo.
-    group {    
+    group {
         condition: DisplayMode.PIXEL_RATIO >= 2
         image px128 { path = "graphics/deng-logo-256.png" pointRatio = 0.5 }
         image px256 { path = "graphics/deng-logo-512.png" pointRatio = 0.5 }
     }
-    
+
     game {
         image libdoom    { path = "graphics/doom/icon-small.png" }
         image libheretic { path = "graphics/heretic/icon-small.png" }
         image libhexen   { path = "graphics/hexen/icon-small.png" }
-        
+
         image doom    { path = "graphics/doom/logo.png" }
         image heretic { path = "graphics/heretic/logo.png" }
         image hexen   { path = "graphics/hexen/logo.png" }
     }
 }
 
-# Generic:
-image refresh  { path = "graphics/refresh.png" }
-image fold     { path = "graphics/fold.png" }
-image gauge    { path = "graphics/gauge.png" }
-image gear     { path = "graphics/gear.png" }
-image file     { path = "graphics/file.png" }
-package {
-    image icon  { path = "graphics/package.png" }
-    image large { path = "graphics/package-large.png" }
-}
-close {
-    image ring     { path = "graphics/close.png" }
-    image ringless { path = "graphics/close-ringless.png" }
-}
-image create   { path = "graphics/create.png" }
-image alert    { path = "graphics/alert.png" }
-image play     { path = "graphics/play.png" }
+#----------------------------------------------------------------------------
+# Subsystems
 
-# Subsystems:
 image log      { path = "graphics/log.png" }
 image display  { path = "graphics/display.png" }
 image network  { path = "graphics/network.png" }
@@ -59,18 +47,9 @@ image input    { path = "graphics/input.png" }
 image audio    { path = "graphics/audio.png" }
 image updater  { path = "graphics/updater.png" }
 
-# Widgets:
-image toggle.onoff {
-    path $= gui.dpiScaledImagePath("graphics/toggle-onoff.png")
-}
+#----------------------------------------------------------------------------
+# Home
 
-progress {
-    image wheel { path = "graphics/progress-wheel.png" }
-    image gear  { path = "graphics/progress-gear.png" }
-    image mini  { path = "graphics/progress-mini.png" }
-}
-
-# Home:
 home {
     image icon { path = "graphics/home.png" }
     background {

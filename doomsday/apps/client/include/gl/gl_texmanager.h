@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_GL_TEXMANAGER_H
-#define DENG_CLIENT_GL_TEXMANAGER_H
+#ifndef DE_CLIENT_GL_TEXMANAGER_H
+#define DE_CLIENT_GL_TEXMANAGER_H
 
 #ifndef __CLIENT__
 #  error "GL Texture Manager only exists in the Client"
@@ -69,7 +69,7 @@ GLuint GL_PrepareLSTexture(lightingtexid_t which);
 void GL_LoadFlareTextures();
 void GL_ReleaseAllFlareTextures();
 
-GLuint GL_PrepareFlaremap(de::Uri const &resourceUri);
+GLuint GL_PrepareFlaremap(const res::Uri &resourceUri);
 GLuint GL_PrepareSysFlaremap(flaretexid_t which);
 
 
@@ -81,7 +81,7 @@ void GL_ReleaseTexturesForRawImages();
 /**
  * Change the GL minification filter for all prepared "raw" textures.
  */
-void GL_SetRawTexturesMinFilter(int minFilter);
+void GL_SetRawTexturesMinFilter(GLenum minFilter);
 
 
-#endif // DENG_CLIENT_GL_TEXMANAGER_H
+#endif // DE_CLIENT_GL_TEXMANAGER_H

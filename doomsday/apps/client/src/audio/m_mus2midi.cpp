@@ -21,11 +21,11 @@
 
 #include "audio/m_mus2midi.h"
 
-#include <de/Log>
-#include <de/NativePath>
-#include <de/Block>
-#include <de/ByteRefArray>
-#include <de/Writer>
+#include <de/log.h>
+#include <de/nativepath.h>
+#include <de/block.h>
+#include <de/byterefarray.h>
+#include <de/writer.h>
 
 #include <cstdio>
 #include <cstring>
@@ -93,7 +93,7 @@ typedef struct midi_event_s {
 } midi_event_t;
 
 static int readTime; // In ticks.
-static dbyte const *readPos;
+static const dbyte *readPos;
 
 static dbyte chanVols[16]; // Last volume for each channel.
 
@@ -236,12 +236,12 @@ static bool getNextEvent(midi_event_t *ev)
     return true;
 }
 
-Block M_Mus2Midi(Block const &musData)
+Block M_Mus2Midi(const Block &musData)
 {
     Block buffer;
     Writer out(buffer, de::bigEndianByteOrder);
     duint32 trackSizeOffset, trackSize;
-    struct mus_header const *header;
+    const struct mus_header *header;
     midi_event_t ev;
 
     LOG_AS("M_Mus2Midi");
@@ -277,8 +277,8 @@ Block M_Mus2Midi(Block const &musData)
         << duint8(0x42)
         << duint8(0x40);
 
-    header = reinterpret_cast<struct mus_header const *>(musData.dataConst());
-    readPos = musData.dataConst() + littleEndianByteOrder.toHost(header->scoreStart);
+    header   = reinterpret_cast<const struct mus_header *>(musData.data());
+    readPos  = musData.data() + littleEndianByteOrder.toHost(header->scoreStart);
     readTime = 0;
 
     // Init channel volumes.

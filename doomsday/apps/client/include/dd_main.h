@@ -17,44 +17,41 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_MAIN_H
-#define DENG_MAIN_H
+#ifndef DE_MAIN_H
+#define DE_MAIN_H
 
-#include <QList>
-#include <QMap>
-#include <de/LibraryFile>
-#include <de/String>
-#include <doomsday/resource/resources.h>
+#include <de/string.h>
+#include <doomsday/res/resources.h>
 #include <doomsday/gameapi.h>
 #include <doomsday/plugins.h>
-#include <doomsday/Games>
+#include <doomsday/games.h>
 
 #ifdef __CLIENT__
 #  include "resource/clientresources.h"
+#  include "world/clientworld.h"
+#else
+#  include "serverworld.h"
 #endif
 #include "audio/audiosystem.h"
-#include "world/clientserverworld.h"
 #include "ui/infine/infinesystem.h"
 
-namespace de { class File1; }
+namespace res { class File1; }
 
-extern de::dint verbose;
-extern de::dint isDedicated; // true if __SERVER__
+extern int isDedicated; // true if __SERVER__
 #ifdef __CLIENT__
-extern de::dint symbolicEchoMode;
+extern int symbolicEchoMode;
 #endif
 
-de::dint DD_EarlyInit();
-void DD_FinishInitializationAfterWindowReady();
-
-void DD_ConsoleRegister();
+int     DD_EarlyInit();
+void    DD_FinishInitializationAfterWindowReady();
+void    DD_ConsoleRegister();
 
 /**
  * Print an error message and quit.
  */
-DENG2_NORETURN void App_Error(char const *error, ...);
+DE_NORETURN void App_Error(const char *error, ...);
 
-DENG2_NORETURN void App_AbnormalShutdown(char const *error);
+DE_NORETURN void App_AbnormalShutdown(const char *error);
 
 /// Returns the application's global audio subsystem.
 AudioSystem &App_AudioSystem();
@@ -65,13 +62,14 @@ InFineSystem &App_InFineSystem();
 #ifdef __CLIENT__
 /// Returns the application's resources.
 ClientResources &App_Resources();
+/// Returns the application's global WorldSystem.
+ClientWorld &App_World();
 #else
 /// Returns the application's resources.
 Resources &App_Resources();
-#endif
-
 /// Returns the application's global WorldSystem.
-ClientServerWorld &App_World();
+ServerWorld &App_World();
+#endif
 
 #undef Con_Open
 
@@ -79,7 +77,7 @@ ClientServerWorld &App_World();
  * Attempt to change the 'open' state of the console.
  * @note In dedicated mode the console cannot be closed.
  */
-void Con_Open(de::dint yes);
+void Con_Open(int yes);
 
 void DD_CheckTimeDemo();
 void DD_UpdateEngineState();
@@ -98,7 +96,7 @@ Games &App_Games();
 /**
  * Returns the current game from the application's global collection.
  */
-Game const &App_CurrentGame();
+const Game &App_CurrentGame();
 
 /**
  * Frees the info structures for all registered games.
@@ -115,13 +113,13 @@ void App_ClearGames();
 void DD_ReadGameHelp();
 
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
-AutoStr *DD_MaterialSchemeNameForTextureScheme(Str const *textureSchemeName);
+AutoStr *DD_MaterialSchemeNameForTextureScheme(const Str *textureSchemeName);
 
 /// @overload
-de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
+de::String DD_MaterialSchemeNameForTextureScheme(const de::String& textureSchemeName);
 
 #ifdef __CLIENT__
-fontschemeid_t DD_ParseFontSchemeName(char const *str);
+fontschemeid_t DD_ParseFontSchemeName(const char *str);
 #endif
 
-#endif  // DENG_MAIN_H
+#endif  // DE_MAIN_H

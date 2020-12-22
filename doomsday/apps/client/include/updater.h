@@ -24,8 +24,8 @@
  * @defgroup updater Automatic Updater
  */
 
-#ifndef LIBDENG_UPDATER_H
-#define LIBDENG_UPDATER_H
+#ifndef DE_UPDATER_H
+#define DE_UPDATER_H
 
 #ifndef __CLIENT__
 #  error "updater.h is only for the client"
@@ -34,25 +34,17 @@
 #include "dd_types.h"
 
 #include <de/libcore.h>
-#include <de/App>
-#include <QObject>
-#include <QNetworkReply>
-#include <de/ProgressWidget>
+#include <de/app.h>
+#include <de/progresswidget.h>
 
 /**
  * Automatic updater. Communicates with dengine.net and coordinates the
  * download and reinstall procedure.
  */
-class Updater : public QObject
+class Updater
 {
-    Q_OBJECT
-
 public:
-    enum CheckMode
-    {
-        AlwaysShowResult,
-        OnlyShowResultIfUpdateAvailable
-    };
+    enum CheckMode { AlwaysShowResult, OnlyShowResultIfUpdateAvailable };
 
 public:
     /**
@@ -65,12 +57,6 @@ public:
     void setupUI();
 
     de::ProgressWidget &progress();
-
-public slots:
-    void gotReply(QNetworkReply *);
-    void downloadProgressed(int percentage);
-    void downloadCompleted(int result);
-    void downloadFailed(QString);
 
     void recheck();
 
@@ -97,11 +83,8 @@ public slots:
      */
     void printLastUpdated();
 
-protected slots:
-    void downloadDialogClosed();
-
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // LIBDENG_UPDATER_H
+#endif // DE_UPDATER_H

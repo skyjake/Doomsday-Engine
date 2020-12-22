@@ -32,9 +32,8 @@
 #include "api_audiod.h"
 #include "api_audiod_mus.h"
 #include "api_audiod_sfx.h"
-#include <doomsday/library.h>
-#include <de/Error>
-#include <de/String>
+#include <de/error.h>
+#include <de/string.h>
 
 /**
  * Models a logical audio driver, suitable for both built-in drivers and plugins.
@@ -45,7 +44,7 @@ class AudioDriver
 {
 public:
     /// Base class for load related errors. @ingroup errors
-    DENG2_ERROR(LoadError);
+    DE_ERROR(LoadError);
 
     /**
      * Logical driver status.
@@ -87,7 +86,7 @@ public:
      *
      * @note Once loaded the driver must be @ref initialized before use.
      */
-    void load(de::String const &identifier);
+    void load(const de::String &identifier);
 
     /**
      * Unload the audio driver
@@ -108,9 +107,9 @@ public:
      * Returns the plugin library for the loaded audio driver, if any (may return
      * @c nullptr if not yet loaded, or this is a built-in driver).
      */
-    ::Library *library() const;
+    de::String extensionName() const;
 
-    static bool isAvailable(de::String const &identifier);
+    static bool isAvailable(const de::String &identifier);
 
 public:  // Interfaces: -----------------------------------------------------------
 
@@ -153,7 +152,7 @@ public:  // Interfaces: --------------------------------------------------------
     de::String interfaceName(void *anyAudioInterface) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 de::String AudioDriver_GetName(audiodriverid_t id);

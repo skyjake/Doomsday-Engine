@@ -22,24 +22,24 @@
 #include "gl/gl_draw.h"
 #include "api_gl.h"
 
-#include <de/GLInfo>
-#include <de/LogBuffer>
+#include <de/glinfo.h>
+#include <de/logbuffer.h>
 
 using namespace de;
 
 static bool drawFilter = false;
-static Vector4f filterColor;
+static Vec4f filterColor;
 
 #undef GL_SetFilter
-DENG_EXTERN_C void GL_SetFilter(dd_bool enabled)
+DE_EXTERN_C void GL_SetFilter(dd_bool enabled)
 {
     drawFilter = CPP_BOOL(enabled);
 }
 
 #undef GL_SetFilterColor
-DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a)
+DE_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a)
 {
-    Vector4f newColorClamped(de::clamp(0.f, r, 1.f),
+    Vec4f newColorClamped(de::clamp(0.f, r, 1.f),
                              de::clamp(0.f, g, 1.f),
                              de::clamp(0.f, b, 1.f),
                              de::clamp(0.f, a, 1.f));
@@ -62,7 +62,7 @@ void ColorFilter::draw()
 {
     if (drawFilter && filterColor.w > 0)
     {
-        Rectanglei const rect = viewRect();
+        const Rectanglei rect = viewRect();
 
         DGL_Color4f(filterColor.x, filterColor.y, filterColor.z, filterColor.w);
         DGL_Begin(DGL_QUADS);

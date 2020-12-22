@@ -29,7 +29,7 @@ class NativeTranslator : public PackageFormatter
 {
 public:
     /// The game ID of the source data is ambigous. @ingroup errors
-    DENG2_SUB_ERROR(ReadError, AmbigousGameIdError);
+    DE_SUB_ERROR(ReadError, AmbigousGameIdError);
 
     /// Identifiers for supported save formats.
     enum FormatId {
@@ -39,7 +39,7 @@ public:
     };
 
 public:
-    NativeTranslator(FormatId formatId, QStringList knownExtensions, QStringList baseGameIdKeys);
+    NativeTranslator(FormatId formatId, de::StringList knownExtensions, de::StringList baseGameIdKeys);
     virtual ~NativeTranslator();
 
     de::String formatName() const;
@@ -49,7 +49,7 @@ public:
     void convert(de::Path path);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // SAVEGAMETOOL_NATIVETRANSLATOR_H

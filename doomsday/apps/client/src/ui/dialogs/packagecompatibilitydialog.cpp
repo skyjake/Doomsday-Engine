@@ -20,20 +20,20 @@
 #include "ui/dialogs/packageinfodialog.h"
 #include "ui/widgets/packageswidget.h"
 
-#include <doomsday/DoomsdayApp>
-#include <doomsday/DataBundle>
-#include <de/CallbackAction>
-#include <de/Package>
-#include <de/PackageLoader>
-#include <de/ui/SubwidgetItem>
-#include <de/ToggleWidget>
-#include <de/Loop>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/res/databundle.h>
+#include <de/callbackaction.h>
+#include <de/package.h>
+#include <de/packageloader.h>
+#include <de/ui/subwidgetitem.h>
+#include <de/togglewidget.h>
+#include <de/loop.h>
 
 #include "dd_main.h"
 
 using namespace de;
 
-DENG2_PIMPL(PackageCompatibilityDialog)
+DE_PIMPL(PackageCompatibilityDialog)
 {
     String          message;
     StringList      wanted;
@@ -44,7 +44,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
     ui::ListData    actions;
     ProgressWidget *updating;
     bool            ignoreCheck = false;
-    LoopCallback    mainCall;
+    Dispatch    mainCall;
 
     Impl(Public *i) : Base(i)
     {
@@ -52,7 +52,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         self().area().enableIndicatorDraw(true);
         updating->setSizePolicy(ui::Expand, ui::Expand);
         updating->useMiniStyle("altaccent");
-        updating->setText(tr("Updating..."));
+        updating->setText("Updating...");
         updating->setTextAlignment(ui::AlignLeft);
         updating->setMode(ProgressWidget::Indefinite);
         updating->setOpacity(0);
@@ -67,13 +67,13 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         if (!list) return "";
         if (ignoreCheck)
         {
-            return _E(b)_E(D) + tr("Ignore and Continue");
+            return _E(b)_E(D) "Ignore and Continue";
         }
         if (list->itemCount() > 0)
         {
-            return _E(b) + tr("Load Mods");
+            return _E(b) "Load Mods";
         }
-        return _E(b) + tr("Unload Mods");
+        return _E(b) "Unload Mods";
     }
 
     void enableIgnore(bool yes)
@@ -111,8 +111,8 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         try
         {
             // The only action on the packages is to view information.
-            actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this]() -> PopupWidget * {
-                return new PackageInfoDialog(list->actionPackage(),
+            actions << new ui::SubwidgetItem("...", ui::Up, [this] () -> PopupWidget * {
+                 return new PackageInfoDialog(list->actionPackage(),
                                              PackageInfoDialog::InformationOnly);
             });
 
@@ -135,7 +135,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             // Check which of the wanted packages are actually available.
             StringList wantedUnavailable;
             StringList wantedAvailable;
-            QList<std::pair<String, Version>> wantedDifferentVersionAvailable;
+            List<std::pair<String, Version>> wantedDifferentVersionAvailable;
             {
                 auto &pkgLoader = PackageLoader::get();
 
@@ -231,7 +231,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
                     if (list->itemCount() > 0)
                     {
                         self().message().setText(message + "\n\n" + unavailNote +
-                                                 tr("All the mods listed below should be loaded."));
+                                                 "All the mods listed below should be loaded.");
                         self().buttons()
                                 << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
                                                         new CallbackAction([this] () { resolvePackages(); }));
@@ -239,17 +239,16 @@ DENG2_PIMPL(PackageCompatibilityDialog)
                     else
                     {
                         self().message().setText(message + "\n\n" + unavailNote +
-                                                 tr("All additional mods should be unloaded."));
+                                                 "All additional mods should be unloaded.");
                         self().buttons()
                                    << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
                                                            new CallbackAction([this] () { resolvePackages(); }));
                     }
                 }
-                self().buttons()
-                        << new DialogButtonItem(Reject, tr("Cancel"));
+                self().buttons() << new DialogButtonItem(Reject, "Cancel");
             }
         }
-        catch (PackagesWidget::UnavailableError const &er)
+        catch (const PackagesWidget::UnavailableError &er)
         {
             conflicted = true;
             self().message().setText(message + "\n\n" + er.asText());
@@ -259,7 +258,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         self().updateLayout();
     }
 
-    static bool containsIdentifier(String const &identifier, StringList const &ids)
+    static bool containsIdentifier(const String &identifier, const StringList &ids)
     {
         for (String i : ids)
         {
@@ -287,7 +286,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         int goodUntil = -1;
 
         // Check if all the loaded packages match the wanted ones.
-        for (int i = 0; i < loaded.size() && i < wanted.size(); ++i)
+        for (int i = 0; i < loaded.sizei() && i < wanted.sizei(); ++i)
         {
             if (Package::equals(loaded.at(i), wanted.at(i)))
             {
@@ -302,7 +301,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         LOG_RES_MSG("Good until %s") << goodUntil;
 
         // Unload excess.
-        for (int i = loaded.size() - 1; i > goodUntil; --i)
+        for (int i = loaded.sizei() - 1; i > goodUntil; --i)
         {
             LOG_RES_MSG("Unloading excess ") << loaded.at(i);
 
@@ -311,7 +310,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         }
 
         // Load the remaining wanted packages.
-        for (int i = goodUntil + 1; i < wanted.size(); ++i)
+        for (int i = goodUntil + 1; i < wanted.sizei(); ++i)
         {
             const auto &pkgId = wanted.at(i);
 
@@ -338,21 +337,21 @@ DENG2_PIMPL(PackageCompatibilityDialog)
     }
 };
 
-PackageCompatibilityDialog::PackageCompatibilityDialog(String const &name)
+PackageCompatibilityDialog::PackageCompatibilityDialog(const String &name)
     : MessageDialog(name)
     , d(new Impl(this))
 {
-    title().setText(tr("Incompatible Mods"));
+    title().setText("Incompatible Mods");
 }
 
-void PackageCompatibilityDialog::setMessage(String const &msg)
+void PackageCompatibilityDialog::setMessage(const String &msg)
 {
     d->message = msg;
 }
 
-void PackageCompatibilityDialog::setWantedPackages(StringList packages)
+void PackageCompatibilityDialog::setWantedPackages(const StringList& packages)
 {
-    DENG2_ASSERT(!packages.isEmpty());
+    DE_ASSERT(!packages.isEmpty());
 
     d->wanted = packages;
     d->update();
@@ -363,12 +362,12 @@ bool PackageCompatibilityDialog::isCompatible() const
     return !d->conflicted;
 }
 
-bool PackageCompatibilityDialog::handleEvent(Event const &event)
+bool PackageCompatibilityDialog::handleEvent(const Event &event)
 {
     // Hold Alt to skip the check.
     if (event.isKey())
     {
-        auto const &key = event.as<KeyEvent>();
+        const auto &key = event.as<KeyEvent>();
         if (key.ddKey() == DDKEY_LALT || key.ddKey() == DDKEY_RALT)
         {
             d->enableIgnore(key.type() != Event::KeyRelease);

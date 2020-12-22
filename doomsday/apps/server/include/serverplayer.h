@@ -19,7 +19,7 @@
 #ifndef SERVER_SERVERPLAYER_H
 #define SERVER_SERVERPLAYER_H
 
-#include <de/Id>
+#include <de/id.h>
 #include <doomsday/player.h>
 #include "server/sv_pool.h"
 
@@ -63,7 +63,7 @@ public:
     pool_t &deltaPool();
     
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // SERVER_SERVERPLAYER_H

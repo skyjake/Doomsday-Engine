@@ -21,135 +21,16 @@
  * Network Subsystem.
  */
 
-#ifndef LIBDENG_NETWORK_H
-#define LIBDENG_NETWORK_H
+#pragma once
 
-#include <stdio.h>
 #include "dd_share.h"
 #include "net_msg.h"
-#include <de/Record>
-#include <de/smoother.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define BIT(x)              (1 << (x))
-
 #define NSP_BROADCAST       -1     // For Net_SendBuffer.
-
-// Flags for console text from the server.
-// Change with server version?
-#define SV_CONSOLE_PRINT_FLAGS    (CPF_WHITE|CPF_LIGHT|CPF_GREEN)
-
-// A modest acktime used by default for new clients (1 sec ping).
-#define ACK_DEFAULT         1000
-
-#define MONITORTICS         7
-
-#define LOCALTICS           10     // Built ticcmds are stored here.
-#define BACKUPTICS          70     // Two seconds worth of tics.
-
-// The number of mobjs that can be stored in the input/visible buffer.
-// The server won't send more mobjs than this.
-#define MAX_CLMOBJS         80
-
-#define DEFAULT_TCP_PORT    13209
-#define DEFAULT_UDP_PORT    13209
-
-typedef void (*expectedresponder_t)(int, const byte*, int);
-
-// If a master action fails, the action queue is emptied.
-typedef enum {
-    MAC_REQUEST, // Retrieve the list of servers from the master.
-    MAC_WAIT, // Wait for the server list to arrive.
-    MAC_LIST // Print the server list in the console.
-} masteraction_t;
-
-// Packet types.
-// PKT = sent by anyone
-// PSV = only sent by server
-// PCL = only sent by client
-enum {
-    // Messages and responses.
-    PCL_HELLO = 0,
-    PKT_OK = 1,
-    PKT_CANCEL = 2,                 // unused?
-    PKT_PLAYER_INFO = 3,
-    PKT_CHAT = 4,
-    PSV_FINALE = 5,
-    PKT_PING = 6,
-    PSV_HANDSHAKE = 7,
-    PSV_SERVER_CLOSE = 8,
-    PSV_FRAME = 9,                  // obsolete
-    PSV_PLAYER_EXIT = 10,
-    PSV_CONSOLE_TEXT = 11,
-    PCL_ACK_SHAKE = 12,
-    PSV_SYNC = 13,
-    PSV_MATERIAL_ARCHIVE = 14,
-    PCL_FINALE_REQUEST = 15,
-    PKT_LOGIN = 16,
-    PCL_ACK_SETS = 17,
-    PKT_COORDS = 18,
-    PKT_DEMOCAM = 19,
-    PKT_DEMOCAM_RESUME = 20,
-    PCL_HELLO2 = 21,                // Includes game ID
-    PSV_FRAME2 = 22,                // Frame packet v2
-    PSV_FIRST_FRAME2 = 23,          // First PSV_FRAME2 after map change
-    PSV_SOUND2 = 24,                // unused?
-    PSV_STOP_SOUND = 25,
-    PCL_ACKS = 26,
-    PSV_PLAYER_FIX_OBSOLETE = 27,   // Fix angles/pos/mom (without console number).
-    PCL_ACK_PLAYER_FIX = 28,        // Acknowledge player fix. /* 28 */
-    PKT_COMMAND2 = 29,
-    PSV_PLAYER_FIX = 30,            // Fix angles/pos/mom.
-    PCL_GOODBYE = 31,
-    PSV_MOBJ_TYPE_ID_LIST = 32,
-    PSV_MOBJ_STATE_ID_LIST = 33,
-
-    // Game specific events.
-    PKT_GAME_MARKER = DDPT_FIRST_GAME_EVENT, // 64
-};
-
-// Use the number defined in dd_share.h for sound packets.
-// This is for backwards compatibility.
-#define PSV_SOUND           71     /* DDPT_SOUND */
-
-#define RESENDCOUNT         10
-#define HANDSHAKECOUNT      17
-//#define UPDATECOUNT         20
-
-// These dd-flags are packed (i.e. included in mobj deltas).
-#define DDMF_PACK_MASK      0x3cfff1ff
-
-// A client's acknowledgement threshold depends on the average of his
-// acknowledgement times.
-#define NUM_ACK_TIMES       8
-
-// The consolePlayer's camera position is written to the demo file
-// every 3rd tic.
-#define LOCALCAM_WRITE_TICS 3
-
-// Maximum length of a token in the textual representation of
-// serverinfo.
-#define SVINFO_TOKEN_LEN        128
-#define SVINFO_VALID_LABEL_LEN  16
-
-extern char    *serverName, *serverInfo, *playerName;
-//extern int      serverData[];
-
-extern dd_bool  firstNetUpdate;
-extern int      resendStart;      // set when server needs our tics
-extern int      resendCount;
-extern int      oldEnterTics;
-extern int      numClMobjs;
-extern dd_bool  serverPublic;
-extern int      netGame;
-extern int      realTics, availableTics;
-extern int      isServer, isClient;
-extern dd_bool  allowNetTraffic; // Should net traffic be allowed?
-extern float    netSimulatedLatencySeconds;
-extern int      gotFrame;
 
 void            Net_Register(void);
 void            Net_Init(void);
@@ -168,29 +49,9 @@ void            Net_ShowChatMessage(int plrNum, const char* message);
 int             Net_TimeDelta(byte now, byte then);
 void            Net_Update(void);
 void            Net_ResetTimer(void);
-void            Net_Ticker(timespan_t time);
-
-/**
- * Does drawing for the engine's HUD, not just the net.
- */
-void Net_Drawer(void);
-
-dd_bool Net_IsLocalPlayer(int pNum);
-
-//void ServerInfo_Print(serverinfo_t const *info, int index);
-
-/**
- * Converts textual data to a serverinfo struct. Returns true if the
- * label/value pair is recognized.
- */
-//dd_bool ServerInfo_FromString(serverinfo_t *info, char const *valuePair);
-
-//void ServerInfo_FromRecord(serverinfo_t *info, de::Record const &rec);
+void            Net_Ticker(void);
+dd_bool         Net_IsLocalPlayer(int pNum);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
-
-de::String Net_UserAgent();
-
-#endif /* LIBDENG_NETWORK_H */

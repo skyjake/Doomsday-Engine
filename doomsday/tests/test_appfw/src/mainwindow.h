@@ -19,20 +19,17 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <de/BaseWindow>
+#include <de/basewindow.h>
 
 #include "approotwidget.h"
 
 class MainWindow : public de::BaseWindow
 {
-    Q_OBJECT
-
 public:
-    MainWindow(de::String const &id = "main");
+    MainWindow(const de::String &id = "main");
 
-    AppRootWidget &root();
-
-    de::Vector2f windowContentSize() const override;
+    de::GuiRootWidget &root() override;
+    de::Vec2f windowContentSize() const override;
 
     void addOnTop(de::GuiWidget *widget);
     void drawWindowContent() override;
@@ -40,10 +37,10 @@ public:
     void postDraw() override;
 
 protected:
-    bool handleFallbackEvent(de::Event const &event) override;
+    void windowAboutToClose() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // MAINWINDOW_H

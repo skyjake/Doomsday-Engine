@@ -21,45 +21,43 @@
 #include "ui/home/gamepanelbuttonwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/dialogs/createprofiledialog.h"
+#include "clientapp.h"
 
-#include <doomsday/DoomsdayApp>
-#include <doomsday/Games>
-#include <doomsday/GameProfiles>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/games.h>
+#include <doomsday/gameprofiles.h>
 
-#include <de/CallbackAction>
-#include <de/ChildWidgetOrganizer>
-#include <de/Config>
-#include <de/DirectoryListDialog>
-#include <de/FileSystem>
-#include <de/GridPopupWidget>
-#include <de/Loop>
-#include <de/MenuWidget>
-#include <de/PersistentState>
-#include <de/PopupMenuWidget>
-#include <de/SignalAction>
-#include <de/VariableChoiceWidget>
-#include <de/VariableToggleWidget>
-
-#include <QDesktopServices>
+#include <de/callbackaction.h>
+#include <de/childwidgetorganizer.h>
+#include <de/config.h>
+#include <de/directorylistdialog.h>
+#include <de/filesystem.h>
+#include <de/gridpopupwidget.h>
+#include <de/loop.h>
+#include <de/menuwidget.h>
+#include <de/persistentstate.h>
+#include <de/popupmenuwidget.h>
+#include <de/variablechoicewidget.h>
+#include <de/variabletogglewidget.h>
 
 using namespace de;
 
-const String GameColumnWidget::SORT_GAME_ID("game");
-const String GameColumnWidget::SORT_MODS("mods");
-const String GameColumnWidget::SORT_RECENTLY_PLAYED("recent");
-const String GameColumnWidget::SORT_RELEASE_DATE("release");
-const String GameColumnWidget::SORT_TITLE("title");
+const char *GameColumnWidget::SORT_GAME_ID("game");
+const char *GameColumnWidget::SORT_MODS("mods");
+const char *GameColumnWidget::SORT_RECENTLY_PLAYED("recent");
+const char *GameColumnWidget::SORT_RELEASE_DATE("release");
+const char *GameColumnWidget::SORT_TITLE("title");
 
-static const String VAR_SORT_BY("home.sortBy");
-static const String VAR_SORT_ASCENDING("home.sortAscending");
-static const String VAR_SORT_CUSTOM_SEPARATELY("home.sortCustomSeparately");
+static const char *VAR_SORT_BY                = "home.sortBy";
+static const char *VAR_SORT_ASCENDING         = "home.sortAscending";
+static const char *VAR_SORT_CUSTOM_SEPARATELY = "home.sortCustomSeparately";
 
-DENG_GUI_PIMPL(GameColumnWidget)
-, DENG2_OBSERVES(Games, Readiness)
-, DENG2_OBSERVES(Profiles, Addition)
-, DENG2_OBSERVES(Variable, Change)
-, DENG2_OBSERVES(ButtonWidget, StateChange)
-, DENG2_OBSERVES(Profiles::AbstractProfile, Change)
+DE_GUI_PIMPL(GameColumnWidget)
+, DE_OBSERVES(Games, Readiness)
+, DE_OBSERVES(Profiles, Addition)
+, DE_OBSERVES(Variable, Change)
+, DE_OBSERVES(ButtonWidget, StateChange)
+, DE_OBSERVES(Profiles::AbstractProfile, Change)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     /**
@@ -67,7 +65,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
      */
     struct ProfileItem
             : public ui::Item
-            , DENG2_OBSERVES(Deletable, Deletion) // profile deletion
+            , DE_OBSERVES(Deletable, Deletion) // profile deletion
     {
         GameColumnWidget::Impl *d;
         GameProfile *profile;
@@ -80,9 +78,9 @@ DENG_GUI_PIMPL(GameColumnWidget)
             profile->audienceForDeletion += this;
         }
 
-        Game const &game() const
+        const Game &game() const
         {
-            DENG2_ASSERT(profile != nullptr);
+            DE_ASSERT(profile != nullptr);
             return profile->game();
         }
 
@@ -92,8 +90,8 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
         void objectWasDeleted(Deletable *obj)
         {
-            DENG2_ASSERT(static_cast<GameProfile *>(obj) == profile);
-            DENG2_UNUSED(obj);
+            DE_ASSERT(static_cast<GameProfile *>(obj) == profile);
+            DE_UNUSED(obj);
 
             profile = nullptr;
             d->addOrRemoveSubheading();
@@ -102,20 +100,20 @@ DENG_GUI_PIMPL(GameColumnWidget)
             items.remove(items.find(*this)); // item deleted
         }
 
-        DENG2_CAST_METHODS()
+        DE_CAST_METHODS()
     };
 
-    LoopCallback mainCall;
+    Dispatch dispatch;
     String gameFamily;
-    SaveListData const &savedItems;
+    const SaveListData &savedItems;
     HomeMenuWidget *menu;
     ButtonWidget *newProfileButton;
     int restoredSelected = -1;
     bool gotSubheading = false;
 
     Impl(Public *i,
-         String const &gameFamily,
-         SaveListData const &savedItems)
+         const String &gameFamily,
+         const SaveListData &savedItems)
         : Base(i)
         , gameFamily(gameFamily)
         , savedItems(savedItems)
@@ -132,7 +130,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
         area.add(newProfileButton = new ButtonWidget);
         newProfileButton->audienceForStateChange() += this;
-        newProfileButton->setText(tr("New Profile..."));
+        newProfileButton->setText("New Profile...");
         newProfileButton->setStyleImage("create");
         newProfileButton->setOverrideImageSize(style().fonts().font("default").height() * 1.5f);
         newProfileButton->set(Background());
@@ -168,7 +166,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         Config::get(VAR_SORT_CUSTOM_SEPARATELY).audienceForChange() += this;
     }
 
-    ui::Item *findProfileItem(GameProfile const &profile) const
+    ui::Item *findProfileItem(const GameProfile &profile) const
     {
         for (dsize i = 0; i < menu->items().size(); ++i)
         {
@@ -181,20 +179,20 @@ DENG_GUI_PIMPL(GameColumnWidget)
         return nullptr;
     }
 
-    GamePanelButtonWidget &widgetForItem(ui::Item const &item) const
+    GamePanelButtonWidget &widgetForItem(const ui::Item &item) const
     {
-        DENG2_ASSERT(menu->items().find(item) != ui::Data::InvalidPos);
+        DE_ASSERT(menu->items().find(item) != ui::Data::InvalidPos);
         return menu->itemWidget<GamePanelButtonWidget>(item);
     }
 
     int userProfileCount() const
     {
         int count = 0;
-        menu->items().forAll([this, &count] (ui::Item const &item)
+        menu->items().forAll([&count] (const ui::Item &item)
         {
             if (!item.semantics().testFlag(ui::Item::Separator))
             {
-                auto const *profile = item.as<ProfileItem>().profile;
+                const auto *profile = item.as<ProfileItem>().profile;
                 if (profile && profile->isUserCreated()) ++count;
             }
             return LoopContinue;
@@ -204,12 +202,12 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     bool addItemForProfile(GameProfile &profile)
     {
-        auto const &games = DoomsdayApp::games();
+        const auto &games = DoomsdayApp::games();
         if (games.contains(profile.gameId()))
         {
             if (profile.game().family() == gameFamily)
             {
-                DENG2_ASSERT(!findProfileItem(profile));
+                DE_ASSERT(!findProfileItem(profile));
                 profile.upgradePackages();
                 menu->items() << new ProfileItem(this, profile);
                 addOrRemoveSubheading();
@@ -223,18 +221,18 @@ DENG_GUI_PIMPL(GameColumnWidget)
     void profileAdded(Profiles::AbstractProfile &prof) override
     {
         // This may be called from another thread.
-        mainCall.enqueue([this, &prof] ()
+        dispatch += [this, &prof] ()
         {
             if (addItemForProfile(prof.as<GameProfile>()))
             {
                 sortItems();
 
                 // Highlight the newly added item.
-                auto const *newItem = findProfileItem(prof.as<GameProfile>());
-                DENG2_ASSERT(newItem);
+                const auto *newItem = findProfileItem(prof.as<GameProfile>());
+                DE_ASSERT(newItem);
                 menu->setSelectedIndex(menu->items().find(*newItem));
             }
-        });
+        };
     }
 
     void profileChanged(Profiles::AbstractProfile &) override
@@ -255,7 +253,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         if (subheadingVisible && !gotSubheading)
         {
             gotSubheading = true;
-            menu->items() << new ui::Item(ui::Item::Separator, tr("Custom Profiles"));
+            menu->items() << new ui::Item(ui::Item::Separator, "Custom Profiles");
         }
         else if (!subheadingVisible && gotSubheading)
         {
@@ -276,24 +274,23 @@ DENG_GUI_PIMPL(GameColumnWidget)
      */
     void populateItems()
     {
-        QSet<GameProfile *> profiles;
-        foreach (GameProfile *prof,
-                 DoomsdayApp::gameProfiles().profilesInFamily(gameFamily))
+        Set<GameProfile *> profiles;
+        for (GameProfile *prof : DoomsdayApp::gameProfiles().profilesInFamily(gameFamily))
         {
             profiles.insert(prof);
         }
-        QSet<GameProfile *> toAdd = profiles;
+        Set<GameProfile *> toAdd = profiles;
 
         // Update or remove profiles as needed.
         for (ui::DataPos i = 0; i < menu->items().size(); ++i)
         {
-            ui::Item const &item = menu->items().at(i);
+            const ui::Item &item = menu->items().at(i);
             if (item.semantics() & ui::Item::Separator)
             {
                 // Skip the subheading.
                 continue;
             }
-            auto const &profItem = item.as<ProfileItem>();
+            const auto &profItem = item.as<ProfileItem>();
             if (profiles.contains(profItem.profile))
             {
                 // Already existing item.
@@ -308,7 +305,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         }
 
         // Add new items.
-        foreach (GameProfile *newProf, toAdd)
+        for (GameProfile *newProf : toAdd)
         {
             addItemForProfile(*newProf);
         }
@@ -319,7 +316,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     enum Section { BuiltIn, Subheading, Custom };
 
-    static Section itemSection(ui::Item const &item)
+    static Section itemSection(const ui::Item &item)
     {
         // The list is divided into three sections.
         if (item.semantics().testFlag(ui::Item::Separator)) return Subheading;
@@ -336,8 +333,8 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
         menu->items().sort([&sortBy, sortAscending, sortCustomSeparately](const ui::Item &a,
                                                                           const ui::Item &b) {
-            Section const section1 = itemSection(a);
-            Section const section2 = itemSection(b);
+            const Section section1 = itemSection(a);
+            const Section section2 = itemSection(b);
 
             if (sortCustomSeparately)
             {
@@ -420,7 +417,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     void updateItems()
     {
-        menu->items().forAll([] (ui::Item const &item)
+        menu->items().forAll([] (const ui::Item &item)
         {
             if (!item.semantics().testFlag(ui::Item::Separator))
             {
@@ -446,7 +443,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         DoomsdayApp::gameProfiles().audienceForAddition() += this;
     }
 
-    void variableValueChanged(Variable &var, Value const &) override
+    void variableValueChanged(Variable &var, const Value &) override
     {
         if (var.name().beginsWith("sort"))
         {
@@ -461,11 +458,11 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
 //- ChildWidgetOrganizer::IWidgetFactory ------------------------------------------------
 
-    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *) override
+    GuiWidget *makeItemWidget(const ui::Item &item, const GuiWidget *) override
     {
         if (item.semantics().testFlag(ui::Item::Separator))
         {
-            auto *heading = LabelWidget::newWithText(tr("Custom Profiles"));
+            auto *heading = LabelWidget::newWithText("Custom Profiles");
             heading->setSizePolicy(ui::Filled, ui::Expand);
             heading->setFont("heading");
             //heading->setTextColor("accent");
@@ -475,23 +472,23 @@ DENG_GUI_PIMPL(GameColumnWidget)
             return heading;
         }
 
-        auto const *profileItem = &item.as<ProfileItem>();
+        const auto *profileItem = &item.as<ProfileItem>();
         auto *button = new GamePanelButtonWidget(*profileItem->profile, savedItems);
 
         // Right-clicking on game items shows additional functions.
-        QObject::connect(button, &HomeItemWidget::openContextMenu, [this, button, profileItem] ()
+        button->audienceForContextMenu() += [this, button, profileItem]()
         {
             auto *popup = new PopupMenuWidget;
             button->add(popup);
             popup->setDeleteAfterDismissed(true);
             popup->setAnchorAndOpeningDirection(button->label().rule(), ui::Down);
 
-            bool const isUserProfile = profileItem->profile->isUserCreated();
+            const bool isUserProfile = profileItem->profile->isUserCreated();
 
             if (isUserProfile)
             {
                 popup->items()
-                    << new ui::ActionItem(tr("Edit..."), new CallbackAction([this, button, profileItem] ()
+                    << new ui::ActionItem("Edit...", [this, button, profileItem]()
                     {
                         auto *dlg = CreateProfileDialog::editProfile(gameFamily, *profileItem->profile);
                         dlg->setAnchorAndOpeningDirection(button->label().rule(), ui::Up);
@@ -502,18 +499,16 @@ DENG_GUI_PIMPL(GameColumnWidget)
                             dlg->applyTo(*profileItem->profile);
                             profileItem->update();
                         }
-                    }));
+                    });
             }
 
             // Items suitable for all types of profiles.
             popup->items()
-                << new ui::ActionItem(tr("Select Mods..."),
-                                      new SignalAction(button, SLOT(selectPackages())))
-                << new ui::ActionItem(tr("Clear Mods"), new CallbackAction([this, button]() {
-                                          button->clearPackages();
-                                      }))
+                << new ui::ActionItem("Select Mods...",
+                                      [button]() { button->selectPackages(); })
+                << new ui::ActionItem("Clear Mods", [button]() { button->clearPackages(); })
                 << new ui::ActionItem(
-                       tr("Duplicate"), new CallbackAction([profileItem]() {
+                       "Duplicate", new CallbackAction([profileItem]() {
                            GameProfile *dup = new GameProfile(*profileItem->profile);
                            dup->setUserCreated(true);
                            dup->createSaveLocation();
@@ -523,9 +518,9 @@ DENG_GUI_PIMPL(GameColumnWidget)
                            {
                                String newName;
                                if (attempt > 1)
-                                   newName = String("%1 (Copy %2)").arg(dup->name()).arg(attempt);
+                                   newName = Stringf("%s (Copy %d)", dup->name().c_str(), attempt);
                                else
-                                   newName = String("%1 (Copy)").arg(dup->name());
+                                   newName = Stringf("%s (Copy)", dup->name().c_str());
                                if (!DoomsdayApp::gameProfiles().tryFind(newName))
                                {
                                    dup->setName(newName);
@@ -538,11 +533,10 @@ DENG_GUI_PIMPL(GameColumnWidget)
             if (const auto *loc = FS::tryLocate<const Folder>(profileItem->profile->savePath()))
             {
                 popup->items() << new ui::Item(ui::Item::Separator)
-                               << new ui::ActionItem(
-                                      "Show Save Folder", new CallbackAction([loc]() {
-                                          QDesktopServices::openUrl(
-                                              QUrl::fromLocalFile(loc->correspondingNativePath()));
-                                      }));
+                               << new ui::ActionItem("Show Save Folder", [loc]() {
+                                      ClientApp::app().showLocalFile(
+                                          loc->correspondingNativePath());
+                                  });
             }
 
             if (isUserProfile && !profileItem->profile->saveLocationId())
@@ -570,11 +564,11 @@ DENG_GUI_PIMPL(GameColumnWidget)
             if (isUserProfile)
             {
                 auto *deleteSub = new ui::SubmenuItem(style().images().image("close.ring"),
-                                                      tr("Delete"), ui::Left);
+                                                      "Delete", ui::Left);
                 deleteSub->items()
-                    << new ui::Item(ui::Item::Separator, tr("Are you sure?"))
+                    << new ui::Item(ui::Item::Separator, "Are you sure?")
                     << new ui::ActionItem(
-                           tr("Delete Profile"),
+                           "Delete Profile",
                            new CallbackAction([this, button, profileItem, popup]() {
                                if (profileItem->profile->saveLocationId())
                                {
@@ -603,10 +597,9 @@ DENG_GUI_PIMPL(GameColumnWidget)
                                            << new DialogButtonItem(
                                                   DialogWidget::Action,
                                                   "Show Folder",
-                                                  new CallbackAction([savePath]() {
-                                                      QDesktopServices::openUrl(
-                                                          QUrl::fromLocalFile(savePath));
-                                                  }));
+                                                  [savePath]() {
+                                                      ClientApp::app().showLocalFile(savePath);
+                                                  });
                                        if (!question->exec(root()))
                                        {
                                            // Cancelled.
@@ -627,19 +620,19 @@ DENG_GUI_PIMPL(GameColumnWidget)
                                Loop::get().timer(SPAN,
                                                  [profileItem]() { delete profileItem->profile; });
                            }))
-                    << new ui::ActionItem(tr("Cancel"), new Action);
+                    << new ui::ActionItem("Cancel", new Action);
 
                 popup->items()
                     << new ui::Item(ui::Item::Separator)
                     << deleteSub;
             }
             popup->open();
-        });
+        };
 
         return button;
     }
 
-    void updateItemWidget(GuiWidget &widget, ui::Item const &item) override
+    void updateItemWidget(GuiWidget &widget, const ui::Item &item) override
     {
         if (item.semantics().testFlag(ui::Item::Separator)) return; // Ignore.
 
@@ -665,7 +658,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
 
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state) override
     {
-        TimeSpan const SPAN = 0.25;
+        const TimeSpan SPAN = 0.25;
         switch (state)
         {
         case ButtonWidget::Up:
@@ -688,11 +681,11 @@ DENG_GUI_PIMPL(GameColumnWidget)
     }
 };
 
-GameColumnWidget::GameColumnWidget(String const &gameFamily,
-                                   SaveListData const &savedItems)
+GameColumnWidget::GameColumnWidget(const String &gameFamily,
+                                   const SaveListData &savedItems)
     : ColumnWidget(gameFamily.isEmpty()? "other-column"
-                                       : (gameFamily.toLower() + "-column"))
-    , d(new Impl(this, gameFamily.toLower(), savedItems))
+                                       : (gameFamily.lower() + "-column"))
+    , d(new Impl(this, gameFamily.lower(), savedItems))
 {
     scrollArea().setContentSize(maximumContentWidth(),
                                 header().rule().height() +
@@ -700,14 +693,12 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
                                 d->menu->rule().height() +
                                 d->newProfileButton->rule().height());
 
-    header().title().setText(String(_E(s)_E(C) "%1\n" _E(.)_E(.)_E(w) "%2")
-                             .arg( gameFamily == "DOOM"? "id Software" :
-                                  !gameFamily.isEmpty()? "Raven Software" : "")
-                             .arg(!gameFamily.isEmpty()? QString(gameFamily)
-                                                       : tr("Other Games")));
-    if (!gameFamily.isEmpty())
+    header().title().setText(Stringf(_E(s)_E(C) "%s\n" _E(.)_E(.)_E(w) "%s",
+                              gameFamily == "DOOM"? "id Software" : gameFamily ? "Raven Software" : "",
+                              gameFamily ? gameFamily.c_str() : "Other Games"));
+    if (gameFamily)
     {
-        header().setLogoImage("logo.game." + gameFamily.toLower());
+        header().setLogoImage("logo.game." + gameFamily.lower());
         header().setLogoBackground("home.background." + d->gameFamily);
         setBackgroundImage("home.background." + d->gameFamily);
     }
@@ -786,26 +777,26 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
                                 "projects.");
     }
     }
-
-    //d->populateItems();
 }
 
 String GameColumnWidget::tabHeading() const
 {
-    if (d->gameFamily.isEmpty()) return tr("Other");
-    return d->gameFamily.at(0).toUpper() + d->gameFamily.mid(1);
+    if (d->gameFamily.isEmpty()) return "Other";
+    return d->gameFamily.upperFirstChar();
 }
 
-String GameColumnWidget::tabShortcut() const
+int GameColumnWidget::tabShortcut() const
 {
-    if (name() == "hexen-column") return QStringLiteral("x");
-    return String();
+    if (name() == "doom-column")    return 'd';
+    if (name() == "heretic-column") return 'h';
+    if (name() == "hexen-column")   return 'x';
+    return 'o';
 }
 
 String GameColumnWidget::configVariableName() const
 {
-    return "home.columns." + (!d->gameFamily.isEmpty()? d->gameFamily
-                                                      : String("otherGames"));
+    return "home.columns." + (!d->gameFamily.isEmpty() ? d->gameFamily
+                                                      : DE_STR("otherGames"));
 }
 
 void GameColumnWidget::setHighlighted(bool highlighted)
@@ -830,8 +821,8 @@ void GameColumnWidget::operator>>(PersistentState &toState) const
     rec.set(name().concatenateMember("selected"), d->menu->selectedIndex());
 }
 
-void GameColumnWidget::operator<<(PersistentState const &fromState)
+void GameColumnWidget::operator<<(const PersistentState &fromState)
 {
-    Record const &rec = fromState.objectNamespace();
+    const Record &rec = fromState.objectNamespace();
     d->restoredSelected = rec.geti(name().concatenateMember("selected"), -1);
 }

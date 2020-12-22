@@ -1,0 +1,81 @@
+# Additional functions for games
+
+import Audio, World, Math, Defs
+
+def Defs.getStateNum(stateId)
+    return Defs.states.idLookup[stateId.lower()].__order__
+end
+
+def Defs.getThingNum(thingId)
+    return Defs.things.idLookup[thingId.lower()].__order__
+end
+
+def World.listThings(thingId)
+    return World.findThings(typeIndex = Defs.getThingNum(thingId))
+end
+
+def World.Thing.info()
+    return Defs.things.order[self.type()]
+end
+
+def World.Thing.dropItem(type, force=1.0, lift=0.0, height=0.5, prob=1.0)
+    # Spawns an item at the position of the thing.
+    # - type:   Thing ID of the dropped item (Text).
+    # - force:  XY momentum of the dropped item (random direction).
+    # - lift:   Z momentum of the dropped item.
+    # - height: spawn position Z offset.
+    # - prob:   chance of dropping (1.0 is 100% certainty).
+    # Returns the dropped item, or None.
+    if Math.random() > prob: return None
+    pos = self.pos()
+    pos[2] = pos[2] + height * self.height()
+    item = World.spawnThing(type, pos)
+    if item
+        # Throw the item a little bit.
+        angle = 2 * Pi * Math.random()
+        mom = [force * Math.cos(angle), force * Math.sin(angle), lift]
+        item.addMom(mom)
+    end
+    return item
+end
+
+def World.Thing.setNoBlocking()
+    self.changeFlags(1, 0x2, False)  # MF_SOLID in mo.flags
+end
+
+def Audio.setAmbientSequence(id, commands)
+    # Defines or redefines an ambient sound effect sequence (Heretic only).
+    # - id:       Sequence ID. The built-in ones are 0-9.
+    # - commands: Text and argument values specying the sequence.
+
+    # These are the afxcmds defined in Heretic's p_spec.cpp.
+    AFXCMD = {            # Parameters:
+        'play':       0,  # (sound)
+        'playabsvol': 1,  # (sound, volume)
+        'playrelvol': 2,  # (sound, volume)
+        'delay':      3,  # (ticks)
+        'delayrand':  4,  # (andbits)
+        'end':        5
+    }
+
+    # Convert the commands to the internal representation.
+    seq = []
+    i = 0
+    while i < len(commands)
+        cmd = commands[i]
+        seq += [AFXCMD[cmd]]
+        # Parameters.
+        if cmd == 'play'
+            seq += [Defs.getSoundNum(commands[i + 1])]
+            i += 1
+        elsif cmd in ['playabsvol', 'playrelvol']
+            seq += [Defs.getSoundNum(commands[i + 1]), commands[i + 2]]
+            i += 2
+        elsif cmd in ['delay', 'delayrand']
+            seq += [commands[i + 1]]
+            i += 1
+        end
+        i += 1
+    end
+    Audio.defineAmbientSfx(id, seq)
+end

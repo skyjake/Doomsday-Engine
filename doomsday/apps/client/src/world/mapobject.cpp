@@ -26,15 +26,15 @@ using namespace de;
 
 namespace world {
 
-DENG2_PIMPL_NOREF(MapObject)
+DE_PIMPL_NOREF(MapObject)
 {
     Map *map = nullptr;
     dint indexInMap = NoIndex;
     BspLeaf *bspLeaf = nullptr;  ///< BSP leaf at @ref origin in the map (not owned).
-    Vector3d origin;             ///< Position in map space.
+    Vec3d origin;             ///< Position in map space.
 };
 
-MapObject::MapObject(Vector3d const &origin) : d(new Impl)
+MapObject::MapObject(const Vec3d &origin) : d(new Impl)
 {
     d->origin = origin;
 }
@@ -42,12 +42,12 @@ MapObject::MapObject(Vector3d const &origin) : d(new Impl)
 MapObject::~MapObject()
 {}
 
-Vector3d const &MapObject::origin() const
+const Vec3d &MapObject::origin() const
 {
     return d->origin;
 }
 
-void MapObject::setOrigin(Vector3d const &newOrigin)
+void MapObject::setOrigin(const Vec3d &newOrigin)
 {
     if(d->origin != newOrigin)
     {
@@ -62,7 +62,7 @@ void MapObject::setOrigin(Vector3d const &newOrigin)
     }
 }
 
-void MapObject::move(Vector3d const &delta)
+void MapObject::move(const Vec3d &delta)
 {
     setOrigin(d->origin + delta);
 }

@@ -20,15 +20,8 @@
 
 #include "audio/sfxchannel.h"
 
-#include "world/thinkers.h"
 #include "dd_main.h"     // remove me
 #include "def_main.h"    // ::defs
-#include <de/Log>
-#include <de/GLInfo>
-#include <de/timer.h>    // TICSPERSEC
-#include <de/vector1.h>  // remove me
-#include <QList>
-#include <QtAlgorithms>
 
 // Debug visual headers:
 #include "audio/s_cache.h"
@@ -36,19 +29,26 @@
 #include "api_fontrender.h"
 #include "render/rend_font.h"
 #include "ui/ui_main.h"
-#include <de/concurrency.h>
+
+#include <doomsday/world/thinkers.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/timer.h>    // TICSPERSEC
+#include <de/legacy/vector1.h>  // remove me
+#include <de/glinfo.h>
+#include <de/list.h>
+#include <de/log.h>
 
 using namespace de;
 
 namespace audio {
 
-DENG2_PIMPL_NOREF(SfxChannel)
+DE_PIMPL_NOREF(SfxChannel)
 {
     dint flags = 0;                 ///< SFXCF_* flags.
     dfloat frequency = 0;           ///< Frequency adjustment: 1.0 is normal.
     dfloat volume = 0;              ///< Sound volume: 1.0 is max.
 
-    mobj_t const *emitter = nullptr;///< Mobj emitter for the sound, if any (not owned).
+    const mobj_t *emitter = nullptr;///< Mobj emitter for the sound, if any (not owned).
     coord_t origin[3];              ///< Emit from here (synced with emitter).
 
     sfxbuffer_t *buffer = nullptr;  ///< Assigned sound buffer, if any (not owned).
@@ -56,18 +56,18 @@ DENG2_PIMPL_NOREF(SfxChannel)
 
     Impl() { zap(origin); }
 
-    Vector3d findOrigin() const
+    Vec3d findOrigin() const
     {
         // Originless sounds have no fixed/moveable emission point.
         if (flags & SFXCF_NO_ORIGIN)
         {
-            return Vector3d();
+            return Vec3d();
         }
 
         // When tracking an emitter - use it's origin.
         if (emitter)
         {
-            Vector3d point(emitter->origin);
+            Vec3d point(emitter->origin);
 
             // Position on the Z axis at the map-object's center?
             if (Thinker_IsMobj(&emitter->thinker))
@@ -78,7 +78,7 @@ DENG2_PIMPL_NOREF(SfxChannel)
         }
 
         // Use the fixed origin.
-        return Vector3d(origin);
+        return Vec3d(origin);
     }
 
     inline void updateOrigin()
@@ -105,7 +105,7 @@ sfxbuffer_t &SfxChannel::buffer()
     throw MissingBufferError("SfxChannel::buffer", "No sound buffer is assigned");
 }
 
-sfxbuffer_t const &SfxChannel::buffer() const
+const sfxbuffer_t &SfxChannel::buffer() const
 {
     return const_cast<SfxChannel *>(this)->buffer();
 }
@@ -154,26 +154,26 @@ void SfxChannel::setVolume(dfloat newVolume)
     d->volume = newVolume;
 }
 
-mobj_t const *SfxChannel::emitter() const
+const mobj_t *SfxChannel::emitter() const
 {
     return d->emitter;
 }
 
-void SfxChannel::setEmitter(mobj_t const *newEmitter)
+void SfxChannel::setEmitter(const mobj_t *newEmitter)
 {
     d->emitter = newEmitter;
 }
 
-void SfxChannel::setFixedOrigin(Vector3d const &newOrigin)
+void SfxChannel::setFixedOrigin(const Vec3d &newOrigin)
 {
     d->origin[0] = newOrigin.x;
     d->origin[1] = newOrigin.y;
     d->origin[2] = newOrigin.z;
 }
 
-Vector3d SfxChannel::origin() const
+Vec3d SfxChannel::origin() const
 {
-    return d->origin;
+    return Vec3d(d->origin);
 }
 
 dfloat SfxChannel::priority() const
@@ -273,7 +273,7 @@ void SfxChannel::updatePriority()
             }
             else
             {
-                dfloat const normdist = (dist - ::soundMinDist) / (::soundMaxDist - ::soundMinDist);
+                const dfloat normdist = (dist - ::soundMinDist) / (::soundMaxDist - ::soundMinDist);
 
                 // Apply the linear factor so that at max distance there
                 // really is silence.
@@ -324,16 +324,16 @@ void SfxChannel::setStartTime(dint newStartTime)
     d->startTime = newStartTime;
 }
 
-DENG2_PIMPL(SfxChannels)
+DE_PIMPL(SfxChannels)
 {
-    QList<SfxChannel *> all;
+    List<SfxChannel *> all;
 
     Impl(Public *i) : Base(i) {}
     ~Impl() { clearAll(); }
 
     void clearAll()
     {
-        qDeleteAll(all);
+        deleteAll(all);
     }
 
     /// @todo support dynamically resizing in both directions. -ds
@@ -361,7 +361,7 @@ dint SfxChannels::count() const
 
 dint SfxChannels::countPlaying(dint id)
 {
-    DENG2_ASSERT( App_AudioSystem().sfxIsAvailable() );  // sanity check
+    DE_ASSERT( App_AudioSystem().sfxIsAvailable() );  // sanity check
 
     dint count = 0;
     forAll([&id, &count] (SfxChannel &ch)
@@ -384,7 +384,7 @@ SfxChannel *SfxChannels::tryFindVacant(bool use3D, dint bytes, dint rate, dint s
     for (SfxChannel *ch : d->all)
     {
         if (!ch->hasBuffer()) continue;
-        sfxbuffer_t const &sbuf = ch->buffer();
+        const sfxbuffer_t &sbuf = ch->buffer();
 
         if ((sbuf.flags & SFXBF_PLAYING)
            || use3D != ((sbuf.flags & SFXBF_3D) != 0)
@@ -424,7 +424,7 @@ void SfxChannels::refreshAll()
     });
 }
 
-LoopResult SfxChannels::forAll(std::function<LoopResult (SfxChannel &)> func) const
+LoopResult SfxChannels::forAll(const std::function<LoopResult (SfxChannel &)>& func) const
 {
     for (SfxChannel *ch : d->all)
     {
@@ -446,14 +446,14 @@ void Sfx_ChannelDrawer()
 {
     if (!::showSoundInfo) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Go into screen projection mode.
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
-    DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
+    DGL_Ortho(0, 0, DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT, -1, 1);
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -461,7 +461,7 @@ void Sfx_ChannelDrawer()
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(1, 1, 0, 1);
 
-    dint const lh = FR_SingleLineHeight("Q");
+    const dint lh = FR_SingleLineHeight("Q");
     if (!App_AudioSystem().sfxIsAvailable())
     {
         FR_DrawTextXY("Sfx disabled", 0, 0);
@@ -496,7 +496,7 @@ void Sfx_ChannelDrawer()
         Block emitterText;
         if (ch.emitter())
         {
-            emitterText = (  " mobj:" + String::number(ch.emitter()->thinker.id)
+            emitterText = (  " mobj:" + String::asText(ch.emitter()->thinker.id)
                            + " pos:"  + ch.origin().asText()
                           ).toLatin1();
         }

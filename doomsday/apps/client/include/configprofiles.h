@@ -16,14 +16,16 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CONFIGPROFILES_H
-#define DENG_CONFIGPROFILES_H
+#ifndef DE_CONFIGPROFILES_H
+#define DE_CONFIGPROFILES_H
 
-#include <de/String>
-#include <de/Observers>
-#include <de/Profiles>
-#include <QVariant>
-#include <QList>
+#include <de/string.h>
+#include <de/observers.h>
+#include <de/profiles.h>
+#include <de/list.h>
+#include <de/nonevalue.h>
+#include <de/numbervalue.h>
+#include <de/textvalue.h>
 
 /**
  * Collection of settings (cvars, Config variables) of which there can be
@@ -55,7 +57,7 @@ public:
     };
 
     /// Notified when the current profile has changed.
-    DENG2_DEFINE_AUDIENCE(ProfileChange, void currentProfileChanged(de::String const &name))
+    DE_DEFINE_AUDIENCE(ProfileChange, void currentProfileChanged(const de::String &name))
 
 public:
     ConfigProfiles();
@@ -72,9 +74,18 @@ public:
      *
      * @return Reference to this instance.
      */
-    ConfigProfiles &define(SettingType type,
-                           de::String const &settingName,
-                           QVariant const &defaultValue = QVariant());
+    ConfigProfiles &define(SettingType       type,
+                           const de::String &settingName,
+                           const de::Value & value = de::NoneValue());
+
+    inline ConfigProfiles &define(SettingType type, const de::String &settingName, int value)
+    {
+        return define(type, settingName, de::NumberValue(value));
+    }
+    inline ConfigProfiles &define(SettingType type, const de::String &settingName, float value)
+    {
+        return define(type, settingName, de::NumberValue(value));
+    }
 
     de::String currentProfile() const;
 
@@ -88,14 +99,14 @@ public:
      * @return @c true if a new profile was created. @c false, if the operation
      * failed (e.g., name already in use).
      */
-    bool saveAsProfile(de::String const &name);
+    bool saveAsProfile(const de::String &name);
 
     /**
      * Changes the current settings profile.
      *
      * @param name  Name of the profile to use.
      */
-    void setProfile(de::String const &name);
+    void setProfile(const de::String &name);
 
     /**
      * Resets the current profile to default values.
@@ -107,7 +118,7 @@ public:
      *
      * @param settingName  Name of the setting.
      */
-    void resetSettingToDefaults(de::String const &settingName);
+    void resetSettingToDefaults(const de::String &settingName);
 
     /**
      * Renames the current profile.
@@ -116,21 +127,21 @@ public:
      *
      * @return @c true, if renamed successfully.
      */
-    bool rename(de::String const &name);
+    bool rename(const de::String &name);
 
     /**
      * Deletes a profile. The current profile cannot be deleted.
      *
      * @param name  Name of the profile to delete.
      */
-    void deleteProfile(de::String const &name);
+    void deleteProfile(const de::String &name);
 
 protected:
     AbstractProfile *profileFromInfoBlock(
-            de::Info::BlockElement const &block) override;
+            const de::Info::BlockElement &block) override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CONFIGPROFILES_H
+#endif // DE_CONFIGPROFILES_H

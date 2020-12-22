@@ -19,11 +19,12 @@
 
 #include "de_base.h"
 #include "client/cl_infine.h"
-
-#include <de/memory.h>
 #include "network/net_main.h"
 #include "network/net_msg.h"
 #include "ui/infine/finaleinterpreter.h"
+
+#include <doomsday/network/protocol.h>
+#include <de/legacy/memory.h>
 
 static finaleid_t currentFinale;
 static finaleid_t remoteFinale;
@@ -39,8 +40,8 @@ void Cl_Finale(Reader1 *msg)
 
     byte *script = 0;
 
-    int const flags           = Reader_ReadByte(msg);
-    finaleid_t const finaleId = Reader_ReadUInt32(msg);
+    const int flags           = Reader_ReadByte(msg);
+    const finaleid_t finaleId = Reader_ReadUInt32(msg);
 
     if (flags & FINF_SCRIPT)
     {

@@ -22,20 +22,22 @@
 #include "render/billboard.h"
 
 #include "clientapp.h"
-#include "ClientTexture"
+#include "resource/clienttexture.h"
 #include "gl/gl_main.h"
-#include "MaterialVariantSpec"
-#include "misc/r_util.h"
+#include "resource/materialvariantspec.h"
 #include "render/rend_main.h"
+#include "render/r_main.h"
 #include "render/rendersystem.h"
 #include "render/vissprite.h"
 #include "world/p_players.h"  // viewPlayer, ddPlayers
 
-#include <de/vector1.h>
-#include <de/concurrency.h>
-#include <de/GLInfo>
+#include <de/legacy/vector1.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/binangle.h>
+#include <de/glinfo.h>
 #include <doomsday/console/var.h>
-#include <doomsday/world/Materials>
+#include <doomsday/r_util.h>
+#include <doomsday/world/materials.h>
 
 using namespace de;
 
@@ -73,16 +75,16 @@ static inline void drawQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t *tc)
     DGL_End();
 }
 
-void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
+void Rend_DrawMaskedWall(const drawmaskedwallparams_t &parms)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     TextureVariant *tex = nullptr;
     if(::renderTextures)
     {
         MaterialAnimator *matAnimator = parms.animator;
-        DENG2_ASSERT(matAnimator);
+        DE_ASSERT(matAnimator);
 
         // Ensure we have up to date info about the material.
         matAnimator->prepare();
@@ -114,9 +116,9 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
         DGL_SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL? 0 : 1);
         /// @todo modTex may be the name of a "managed" texture.
         GL_BindTextureUnmanaged(renderTextures ? parms.modTex : 0,
-                                gl::ClampToEdge, gl::ClampToEdge);
+                                gfx::ClampToEdge, gfx::ClampToEdge);
 
-        DGL_SetModulationColor(parms.modColor);
+        DGL_SetModulationColor(Vec4f(parms.modColor));
 
         // The actual texture.
         DGL_SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL? 1 : 0);
@@ -225,7 +227,7 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
 /**
  * Set all the colors in the array to that specified.
  */
-static void applyUniformColor(dint count, dgl_color_t *colors, dfloat const *rgba)
+static void applyUniformColor(dint count, dgl_color_t *colors, const dfloat *rgba)
 {
     for(; count-- > 0; colors++)
     {
@@ -240,25 +242,25 @@ static void applyUniformColor(dint count, dgl_color_t *colors, dfloat const *rgb
  * Calculate vertex lighting.
  */
 static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normals,
-    duint lightListIdx, dint maxLights, dfloat const *_ambient)
+    duint lightListIdx, dint maxLights, const dfloat *_ambient)
 {
-    DENG2_ASSERT(out && normals && _ambient);
+    DE_ASSERT(out && normals && _ambient);
 
-    dbyte const opacity = 255 * _ambient[3];
-    Vector3f const ambient(_ambient);
-    Vector3f const saturated(1, 1, 1);
+    const dbyte opacity = 255 * _ambient[3];
+    Vec3f const ambient(_ambient);
+    Vec3f const saturated(1, 1, 1);
 
-    Vector3ub colorClamped;
+    Vec3ub colorClamped;
     for(dint i = 0; i < count; ++i)
     {
         if(maxLights > 0)
         {
             // Accumulate contributions from all affecting lights.
-            Vector3f const normal(normals[i].xyz);
-            Vector3f accum[2];  // Begin with total darkness [color, extra].
+            Vec3f const normal(normals[i].xyz);
+            Vec3f accum[2];  // Begin with total darkness [color, extra].
             dint numProcessed = 0;
-            ClientApp::renderSystem().forAllVectorLights(lightListIdx, [&maxLights, &normal
-                                         , &accum, &numProcessed](VectorLightData const &vlight)
+            ClientApp::render().forAllVectorLights(lightListIdx, [&maxLights, &normal
+                                         , &accum, &numProcessed](const VectorLightData &vlight)
             {
                 numProcessed += 1;
 
@@ -274,11 +276,11 @@ static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normals
                 return (maxLights && numProcessed == maxLights);
             });
 
-            colorClamped = ((accum[0].max(ambient) + accum[1]).min(saturated) * 255).toVector3ub();
+            colorClamped = ((accum[0].max(ambient) + accum[1]).min(saturated) * 255).toVec3ub();
         }
         else if(i == 0)
         {
-            colorClamped = (ambient.min(saturated) * 255).toVector3ub();
+            colorClamped = (ambient.min(saturated) * 255).toVec3ub();
         }
 
         out[i].rgba[0] = colorClamped.x;
@@ -288,16 +290,16 @@ static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normals
     }
 }
 
-MaterialVariantSpec const &PSprite_MaterialSpec()
+const MaterialVariantSpec &PSprite_MaterialSpec()
 {
     return App_Resources().materialSpec(SpriteContext, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                              1, -2, 0, false, true, true, false);
 }
 
-void Rend_DrawPSprite(rendpspriteparams_t const &parms)
+void Rend_DrawPSprite(const rendpspriteparams_t &parms)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(::renderTextures == 1)
     {
@@ -307,7 +309,7 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
     else if(::renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri("System", Path("gray")))
+        MaterialAnimator &matAnimator = ClientMaterial::find(res::Uri("System", Path("gray")))
                 .getAnimator(PSprite_MaterialSpec());
 
         // Ensure we have up to date info about the material.
@@ -328,7 +330,7 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
 
     // All psprite vertices are co-plannar, so just copy the view front vector.
     // @todo: Can we do something better here?
-    Vector3f const &frontVec = viewPlayer->viewport().frontVec;
+    const Vec3f &frontVec = viewPlayer->viewport().frontVec;
     dgl_vertex_t quadNormals[4];
     for(dint i = 0; i < 4; ++i)
     {
@@ -385,21 +387,21 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
     }
 }
 
-MaterialVariantSpec const &Rend_SpriteMaterialSpec(dint tclass, dint tmap)
+const MaterialVariantSpec &Rend_SpriteMaterialSpec(dint tclass, dint tmap)
 {
     return App_Resources().materialSpec(SpriteContext, 0, 1, tclass, tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                         1, -2, -1, true, true, true, false);
 }
 
-void Rend_DrawSprite(vissprite_t const &spr)
+void Rend_DrawSprite(const vissprite_t &spr)
 {
-    drawspriteparams_t const &parm = *VS_SPRITE(&spr);
+    const drawspriteparams_t &parm = *VS_SPRITE(&spr);
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     TextureVariant *tex = nullptr;
-    Vector2f size;
+    Vec2f size;
     dfloat viewOffsetX = 0;  ///< View-aligned offset to center point.
     dfloat s = 1, t = 1;     ///< Bottom right coords.
 
@@ -410,9 +412,9 @@ void Rend_DrawSprite(vissprite_t const &spr)
         matAnimator->prepare();
 
         tex = matAnimator->texUnit(MaterialAnimator::TU_LAYER0).texture;
-        dint const texBorder = tex->spec().variant.border;
+        const dint texBorder = tex->spec().variant.border;
 
-        size        = matAnimator->dimensions() + Vector2ui(texBorder * 2, texBorder * 2);
+        size        = matAnimator->dimensions() + Vec2ui(texBorder * 2, texBorder * 2);
         viewOffsetX = -size.x / 2 + -tex->base().origin().x;
 
         tex->glCoords(&s, &t);
@@ -422,7 +424,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
     if(renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        ClientMaterial &debugMaterial = ClientMaterial::find(de::Uri("System", Path("gray")));
+        ClientMaterial &debugMaterial = ClientMaterial::find(res::Uri("System", Path("gray")));
         MaterialAnimator &matAnimator = debugMaterial.getAnimator(Rend_SpriteMaterialSpec());
 
         // Ensure we have up to date info about the material.
@@ -614,8 +616,8 @@ void Rend_DrawSprite(vissprite_t const &spr)
 
         DGL_Translatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
 
-        coord_t const distFromViewer = de::abs(spr.pose.distance);
-        ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (VectorLightData const &vlight)
+        const coord_t distFromViewer = de::abs(spr.pose.distance);
+        ClientApp::render().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (const VectorLightData &vlight)
         {
             if(distFromViewer < 1600 - 8)
             {

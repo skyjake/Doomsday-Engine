@@ -2,7 +2,7 @@
 @INCLUDE = ../../doomsday.doxy
 
 PROJECT_NAME        = "Doomsday Client"
-PROJECT_NUMBER      = 2.3
+PROJECT_NUMBER      = 3.0
 PROJECT_BRIEF       = "Internal documentation (Windows)"
 PROJECT_LOGO        = ../../doc/apidoc-logo.png
 HTML_STYLESHEET     = ../../doxygen.css
@@ -13,12 +13,12 @@ EXCLUDE             = include/unix include/macx src/unix src/macx
 
 MACRO_EXPANSION     = YES
 PREDEFINED          = __DOOMSDAY__ __CLIENT__ WIN32 __cplusplus \
-                      "DENG2_PIMPL(ClassName)=typedef ClassName Public; struct ClassName::Instance : public de::Private<ClassName>" \
-                      "DENG2_PIMPL_NOREF(C)=struct C::Instance : public de::IPrivate" \
-                      "DENG_GUI_PIMPL(C)=struct C::public de::GuiWidgetPrivate<C>" \
-                      "DENG2_PRIVATE(Var)=struct Instance; Instance *Var;" \
-                      "DENG2_ERROR(N)=class N : public de::Error {};" \
-                      "DENG2_SUB_ERROR(B,N)=class N : public B {};" \
-                      "DENG2_OBSERVES(C,A)=public C::I##Audience##Observer"
+                      "DE_PIMPL(ClassName)=typedef ClassName Public; struct ClassName::Instance : public de::Private<ClassName>" \
+                      "DE_PIMPL_NOREF(C)=struct C::Instance : public de::IPrivate" \
+                      "DE_GUI_PIMPL(C)=struct C::public de::GuiWidgetPrivate<C>" \
+                      "DE_PRIVATE(Var)=struct Instance; Instance *Var;" \
+                      "DE_ERROR(N)=class N : public de::Error {};" \
+                      "DE_SUB_ERROR(B,N)=class N : public B {};" \
+                      "DE_OBSERVES(C,A)=public C::I##Audience##Observer"
 
 EXTRACT_PRIVATE     = NO

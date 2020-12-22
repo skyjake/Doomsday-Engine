@@ -18,20 +18,20 @@
 
 #include "ui/widgets/packagecontentoptionswidget.h"
 
-#include <de/ButtonWidget>
-#include <de/Config>
-#include <de/DictionaryValue>
-#include <de/LabelWidget>
-#include <de/MenuWidget>
-#include <de/PackageLoader>
-#include <de/PopupWidget>
-#include <de/SequentialLayout>
-#include <de/ToggleWidget>
-#include <de/TextValue>
+#include <de/buttonwidget.h>
+#include <de/config.h>
+#include <de/dictionaryvalue.h>
+#include <de/labelwidget.h>
+#include <de/menuwidget.h>
+#include <de/packageloader.h>
+#include <de/popupwidget.h>
+#include <de/sequentiallayout.h>
+#include <de/togglewidget.h>
+#include <de/textvalue.h>
 
 using namespace de;
 
-DENG_GUI_PIMPL(PackageContentOptionsWidget)
+DE_GUI_PIMPL(PackageContentOptionsWidget)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     /**
@@ -43,17 +43,17 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
         String containerPackageId;
         String category;
 
-        Item(String const &packageId, bool selectedByDefault, String const &containerPackageId)
+        Item(const String &packageId, bool selectedByDefault, const String &containerPackageId)
             : selectedByDefault(selectedByDefault)
             , containerPackageId(containerPackageId)
         {
-            setData(packageId);
+            setData(TextValue(packageId));
 
-            if (File const *file = PackageLoader::get().select(packageId))
+            if (const File *file = PackageLoader::get().select(packageId))
             {
-                Record const &meta = file->objectNamespace();
+                const Record &meta = file->objectNamespace();
                 setLabel(meta.gets(Package::VAR_PACKAGE_TITLE));
-                category = meta.gets(QStringLiteral("package.category"), "");
+                category = meta.gets(DE_STR("package.category"), "");
             }
             else
             {
@@ -68,7 +68,7 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
 
         String packageId() const
         {
-            return data().toString();
+            return data().asText();
         }
 
         DictionaryValue &conf()
@@ -76,7 +76,7 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
             return Config::get("fs.selectedPackages").value<DictionaryValue>();
         }
 
-        DictionaryValue const &conf() const
+        const DictionaryValue &conf() const
         {
             return Config::get("fs.selectedPackages").value<DictionaryValue>();
         }
@@ -85,7 +85,7 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
         {
             if (conf().contains(TextValue(containerPackageId)))
             {
-                DictionaryValue const &sel = conf().element(TextValue(containerPackageId))
+                const DictionaryValue &sel = conf().element(TextValue(containerPackageId))
                                              .as<DictionaryValue>();
                 if (sel.contains(TextValue(packageId())))
                 {
@@ -119,7 +119,7 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
     LabelWidget *summary;
     MenuWidget *contents;
 
-    Impl(Public *i, String const &packageId, Rule const &maxHeight)
+    Impl(Public *i, const String &packageId, const Rule &maxHeight)
         : Base(i)
         , packageId(packageId)
     {
@@ -129,26 +129,26 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
         summary->setTextColor("altaccent");
         summary->setAlignment(ui::AlignLeft);
 
-        auto *label = LabelWidget::newWithText(tr("Select:"), thisPublic);
+        auto *label = LabelWidget::newWithText("Select:", thisPublic);
         label->setSizePolicy(ui::Expand, ui::Expand);
         label->setFont("small");
         label->setAlignment(ui::AlignLeft);
 
         auto *allButton = new ButtonWidget;
         allButton->setSizePolicy(ui::Expand, ui::Expand);
-        allButton->setText(tr("All"));
+        allButton->setText("All");
         allButton->setFont("small");
         self().add(allButton);
 
         auto *noneButton = new ButtonWidget;
         noneButton->setSizePolicy(ui::Expand, ui::Expand);
-        noneButton->setText(tr("None"));
+        noneButton->setText("None");
         noneButton->setFont("small");
         self().add(noneButton);
 
         auto *defaultsButton = new ButtonWidget;
         defaultsButton->setSizePolicy(ui::Expand, ui::Expand);
-        defaultsButton->setText(tr("Defaults"));
+        defaultsButton->setText("Defaults");
         defaultsButton->setFont("small");
         self().add(defaultsButton);
 
@@ -216,51 +216,49 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
     {
         contents->items().clear();
 
-        File const *file = PackageLoader::get().select(packageId);
+        const File *file = PackageLoader::get().select(packageId);
         if (!file) return;
 
-        Record const &meta = file->objectNamespace().subrecord(Package::VAR_PACKAGE);
+        const Record &meta = file->objectNamespace().subrecord(Package::VAR_PACKAGE);
 
-        ArrayValue const &requires   = meta.geta("requires");
-        ArrayValue const &recommends = meta.geta("recommends");
-        ArrayValue const &extras     = meta.geta("extras");
+        const ArrayValue &requires   = meta.geta("requires");
+        const ArrayValue &recommends = meta.geta("recommends");
+        const ArrayValue &extras     = meta.geta("extras");
 
-        auto const totalCount    = requires.size() + recommends.size() + extras.size();
-        auto const optionalCount = recommends.size() + extras.size();
+        const auto totalCount    = requires.size() + recommends.size() + extras.size();
+        const auto optionalCount = recommends.size() + extras.size();
 
-        summary->setText(tr("%1 package%2 (%3 optional)")
-                         .arg(totalCount)
-                         .arg(DENG2_PLURAL_S(totalCount))
-                         .arg(optionalCount));
+        summary->setText(Stringf(
+            "%u package%s (%u optional)", totalCount, DE_PLURAL_S(totalCount), optionalCount));
 
         makeItems(recommends, true);
         makeItems(extras,     false);
 
         // Create category headings.
-        QSet<QString> categories;
-        contents->items().forAll([&categories] (ui::Item const &i)
+        Set<String> categories;
+        contents->items().forAll([&categories](const ui::Item &i)
         {
-            String const cat = i.as<Item>().category;
+            const String cat = i.as<Item>().category;
             if (!cat.isEmpty()) categories.insert(cat);
             return LoopContinue;
         });
-        for (QString cat : categories)
+        for (const auto &cat : categories)
         {
             contents->items() << new ui::Item(ui::Item::Separator, cat);
         }
 
         // Sort all the items by category.
-        contents->items().sort([] (ui::Item const &s, ui::Item const &t)
+        contents->items().sort([] (const ui::Item &s, const ui::Item &t)
         {
             if (!s.isSeparator() && !t.isSeparator())
             {
-                Item const &a = s.as<Item>();
-                Item const &b = t.as<Item>();
+                const Item &a = s.as<Item>();
+                const Item &b = t.as<Item>();
 
-                int const catComp = a.category.compareWithoutCase(b.category);
+                const int catComp = a.category.compareWithoutCase(b.category);
                 if (!catComp)
                 {
-                    int const nameComp = a.label().compareWithoutCase(b.label());
+                    const int nameComp = a.label().compareWithoutCase(b.label());
                     return nameComp < 0;
                 }
                 return catComp < 0;
@@ -280,9 +278,9 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
         });
     }
 
-    void makeItems(ArrayValue const &ids, bool recommended)
+    void makeItems(const ArrayValue &ids, bool recommended)
     {
-        for (Value const *value : ids.elements())
+        for (const Value *value : ids.elements())
         {
             contents->items() << new Item(value->asText(), recommended, packageId);
         }
@@ -290,7 +288,7 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
 
 //- ChildWidgetOrganizer::IWidgetFactory ------------------------------------------------
 
-    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *) override
+    GuiWidget *makeItemWidget(const ui::Item &item, const GuiWidget *) override
     {
         if (item.semantics() & ui::Item::Separator)
         {
@@ -308,16 +306,13 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
         toggle->setAlignment(ui::AlignLeft);
         toggle->set(Background());
         toggle->margins().setTopBottom(RuleBank::UNIT);
-        QObject::connect(toggle, &ToggleWidget::stateChangedByUser,
-                         [&item] (ToggleWidget::ToggleState active)
-        {
-            const_cast<ui::Item &>(item).as<Item>()
-                    .setSelected(active == ToggleWidget::Active);
-        });
+        toggle->audienceForUserToggle() += [&item, toggle]() {
+            const_cast<ui::Item &>(item).as<Item>().setSelected(toggle->isActive());
+        };
         return toggle;
     }
 
-    void updateItemWidget(GuiWidget &widget, ui::Item const &item) override
+    void updateItemWidget(GuiWidget &widget, const ui::Item &item) override
     {
         LabelWidget &label = widget.as<LabelWidget>();
         label.setText(item.label());
@@ -329,18 +324,18 @@ DENG_GUI_PIMPL(PackageContentOptionsWidget)
     }
 };
 
-PackageContentOptionsWidget::PackageContentOptionsWidget(String const &packageId,
-                                                         Rule   const &maxHeight,
-                                                         String const &name)
+PackageContentOptionsWidget::PackageContentOptionsWidget(const String &packageId,
+                                                         const Rule &maxHeight,
+                                                         const String &name)
     : GuiWidget(name)
     , d(new Impl(this, packageId, maxHeight))
 {
     d->populate();
 }
 
-PopupWidget *PackageContentOptionsWidget::makePopup(String const &packageId,
-                                                    Rule const &width,
-                                                    Rule const &maxHeight)
+PopupWidget *PackageContentOptionsWidget::makePopup(const String &packageId,
+                                                    const Rule &width,
+                                                    const Rule &maxHeight)
 {
     PopupWidget *pop = new PopupWidget;
     pop->setOutlineColor("popup.outline");

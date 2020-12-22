@@ -37,8 +37,9 @@ precompiled.h.cpp
 *.xcuserdatad
 *.xcscmblueprint
 .vscode
+.vsbuild
 compile_commands.json
 /products
 /debian
-.vsbuild
-
+/build
+/deps

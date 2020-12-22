@@ -23,20 +23,20 @@
 #include "updater/updatersettings.h"
 #include "updater.h"
 #include "clientapp.h"
-#include <de/LabelWidget>
-#include <de/ChoiceWidget>
-#include <de/VariableToggleWidget>
-#include <de/GridLayout>
-#include <de/SignalAction>
-#include <de/Log>
-#include <QDesktopServices>
+#include <de/labelwidget.h>
+#include <de/choicewidget.h>
+#include <de/variabletogglewidget.h>
+#include <de/gridlayout.h>
+//#include <de/signalaction.h>
+#include <de/log.h>
+//#include <QDesktopServices>
 
 using namespace de;
 
 #if 0
 static QString defaultLocationName()
 {
-#ifdef DENG2_QT_5_0_OR_NEWER
+#ifdef DE_QT_5_0_OR_NEWER
     QString name = QStandardPaths::displayName(QStandardPaths::CacheLocation);
 #else
     QString name = QDesktopServices::displayName(QDesktopServices::CacheLocation);
@@ -49,17 +49,17 @@ static QString defaultLocationName()
 }
 #endif
 
-DENG2_PIMPL(UpdaterSettingsDialog),
-DENG2_OBSERVES(ToggleWidget, Toggle)
+DE_PIMPL(UpdaterSettingsDialog)
+, DE_OBSERVES(ToggleWidget, Toggle)
 {
     ToggleWidget *autoCheck;
     ChoiceWidget *freqs;
-    LabelWidget *lastChecked;
+    LabelWidget * lastChecked;
     ChoiceWidget *channels;
     //ChoiceWidget *paths;
     ToggleWidget *autoDown;
     ToggleWidget *deleteAfter;
-    bool didApply = false;
+    bool          didApply = false;
 
     Impl(Public *i, Mode mode) : Base(i)
     {
@@ -75,12 +75,19 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         area.add(deleteAfter = new ToggleWidget);
 
         // The updater Config is changed when the widget state is modified.
-        QObject::connect(autoCheck,   SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), thisPublic, SLOT(apply()));
-        QObject::connect(freqs,       SIGNAL(selectionChangedByUser(uint)),                  thisPublic, SLOT(apply()));
-        QObject::connect(channels,    SIGNAL(selectionChangedByUser(uint)),                  thisPublic, SLOT(apply()));
-        QObject::connect(autoDown,    SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), thisPublic, SLOT(apply()));
-        //QObject::connect(paths,       SIGNAL(selectionChangedByUser(uint)),                  thisPublic, SLOT(apply()));
-        QObject::connect(deleteAfter, SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), thisPublic, SLOT(apply()));
+        for (ToggleWidget *toggle : {autoCheck, autoDown, deleteAfter})
+        {
+            toggle->audienceForUserToggle() += [this]() { self().apply(); };
+        }
+        for (ChoiceWidget *choice : {freqs, channels})
+        {
+            choice->audienceForUserSelection() += [this]() { self().apply(); };
+        }
+//        QObject::connect(autoCheck,   SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), thisPublic, SLOT(apply()));
+//        QObject::connect(freqs,       SIGNAL(selectionChangedByUser(uint)),                  thisPublic, SLOT(apply()));
+//        QObject::connect(channels,    SIGNAL(selectionChangedByUser(uint)),                  thisPublic, SLOT(apply()));
+//        QObject::connect(autoDown,    SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), thisPublic, SLOT(apply()));
+//        QObject::connect(deleteAfter, SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)), thisPublic, SLOT(apply()));
 
         LabelWidget *releaseLabel = new LabelWidget;
         area.add(releaseLabel);
@@ -88,14 +95,14 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         /*LabelWidget *pathLabel = new LabelWidget;
         area.add(pathLabel);*/
 
-        autoCheck->setText(tr("Check for Updates:"));
+        autoCheck->setText("Check for Updates:");
 
         freqs->items()
-                << new ChoiceItem(tr("At startup"), UpdaterSettings::AtStartup)
-                << new ChoiceItem(tr("Daily"),      UpdaterSettings::Daily)
-                << new ChoiceItem(tr("Biweekly"),   UpdaterSettings::Biweekly)
-                << new ChoiceItem(tr("Weekly"),     UpdaterSettings::Weekly)
-                << new ChoiceItem(tr("Monthly"),    UpdaterSettings::Monthly);
+                << new ChoiceItem("At startup", UpdaterSettings::AtStartup)
+                << new ChoiceItem("Daily",      UpdaterSettings::Daily)
+                << new ChoiceItem("Biweekly",   UpdaterSettings::Biweekly)
+                << new ChoiceItem("Weekly",     UpdaterSettings::Weekly)
+                << new ChoiceItem("Monthly",    UpdaterSettings::Monthly);
 
         lastChecked->margins().setTop("");
         lastChecked->setFont("separator.annotation");
@@ -104,17 +111,17 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         releaseLabel->setText("Release Type:");
 
         channels->items()
-                << new ChoiceItem(tr("Stable only"),      UpdaterSettings::Stable)
-                << new ChoiceItem(tr("RC or stable"),     UpdaterSettings::StableOrCandidate)
-                << new ChoiceItem(tr("Unstable/nightly"), UpdaterSettings::Unstable);
+                << new ChoiceItem("Stable only",      UpdaterSettings::Stable)
+                << new ChoiceItem("RC or stable",     UpdaterSettings::StableOrCandidate)
+                << new ChoiceItem("Unstable/nightly", UpdaterSettings::Unstable);
 
-        /*pathLabel->setText(tr("Download location:"));
+        /*pathLabel->setText("Download location:");
         paths->items()
                 << new ChoiceItem(defaultLocationName(),
                                   UpdaterSettings::defaultDownloadPath().toString());*/
 
-        autoDown->setText(tr("Download Automatically"));
-        deleteAfter->setText(tr("Delete File After Install"));
+        autoDown->setText("Download Automatically");
+        deleteAfter->setText("Delete File After Install");
 
         fetch();
 
@@ -135,13 +142,13 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         area.setContentSize(layout);
 
         self().buttons()
-                << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"));
+                << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, "Close");
 
         if (mode == WithApplyAndCheckButton)
         {
             self().buttons()
-                    << new DialogButtonItem(DialogWidget::Action, tr("Check Now"),
-                                            new SignalAction(thisPublic, SLOT(applyAndCheckNow())));
+                    << new DialogButtonItem(DialogWidget::Action, "Check Now",
+                                            [this]() { self().applyAndCheckNow(); });
         }
     }
 
@@ -152,17 +159,17 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         String ago = st.lastCheckAgo();
         if (!ago.isEmpty())
         {
-            lastChecked->setText(tr("Last checked %1.").arg(st.lastCheckAgo()));
+            lastChecked->setText(Stringf("Last checked %s.", st.lastCheckAgo().c_str()));
         }
         else
         {
-            lastChecked->setText(tr("Never checked."));
+            lastChecked->setText("Never checked.");
         }
 
         autoCheck->setActive(!st.onlyCheckManually());
         freqs->enable(!st.onlyCheckManually());
-        freqs->setSelected(freqs->items().findData(st.frequency()));
-        channels->setSelected(channels->items().findData(st.channel()));
+        freqs->setSelected(freqs->items().findData(NumberValue(st.frequency())));
+        channels->setSelected(channels->items().findData(NumberValue(st.channel())));
         //setDownloadPath(st.downloadPath());
         autoDown->setActive(st.autoDownload());
         deleteAfter->setActive(st.deleteAfterUpdate());
@@ -184,12 +191,12 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         ui::Data::Pos sel = freqs->selected();
         if (sel != ui::Data::InvalidPos)
         {
-            st.setFrequency(UpdaterSettings::Frequency(freqs->items().at(sel).data().toInt()));
+            st.setFrequency(UpdaterSettings::Frequency(freqs->items().at(sel).data().asInt()));
         }
         sel = channels->selected();
         if (sel != ui::Data::InvalidPos)
         {
-            st.setChannel(UpdaterSettings::Channel(channels->items().at(sel).data().toInt()));
+            st.setChannel(UpdaterSettings::Channel(channels->items().at(sel).data().asInt()));
         }
         //st.setDownloadPath(pathList->itemData(pathList->currentIndex()).toString());
         st.setAutoDownload(autoDown->isActive());
@@ -197,7 +204,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     }
 
 #if 0
-    void setDownloadPath(QString const &/*dir*/)
+    void setDownloadPath(const QString &/*dir*/)
     {
         paths->setSelected(0);
         /*
@@ -219,10 +226,10 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
 #endif
 };
 
-UpdaterSettingsDialog::UpdaterSettingsDialog(Mode mode, String const &name)
+UpdaterSettingsDialog::UpdaterSettingsDialog(Mode mode, const String &name)
     : DialogWidget(name, WithHeading), d(new Impl(this, mode))
 {
-    heading().setText(tr("Updater Settings"));
+    heading().setText("Updater Settings");
     heading().setImage(style().images().image("updater"));
 }
 
@@ -259,7 +266,7 @@ void UpdaterSettingsDialog::pathActivated(int index)
     QString path = d->pathList->itemData(index).toString();
     if (path.isEmpty())
     {
-        QString dir = QFileDialog::getExistingDirectory(this, tr("Download Folder"), QDir::homePath());
+        QString dir = QFileDialog::getExistingDirectory(this, "Download Folder", QDir::homePath());
         if (!dir.isEmpty())
         {
             d->setDownloadPath(dir);

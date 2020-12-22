@@ -1,11 +1,7 @@
 /** @file api_uri.h  Public API for Universal Resource Identifiers.
  * @ingroup base
  *
- * @todo de::Uri will eventually be moved to libcore, at which point this API
- * is deprecated and the libcore c_wrapper will provide C API functions
- * equivalent to these.
- *
- * @author Copyright &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authores::Uriight &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2010-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
@@ -23,13 +19,13 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_API_URI_H
-#define LIBDENG_API_URI_H
+#ifndef DE_API_URI_H
+#define DE_API_URI_H
 
 #include "api_base.h"
-#include <de/str.h>
-#include <de/reader.h>
-#include <de/writer.h>
+#include <de/legacy/str.h>
+#include <de/legacy/reader.h>
+#include <de/legacy/writer.h>
 
 /// Schemes must be at least this many characters.
 #define URI_MINSCHEMELENGTH 2
@@ -74,7 +70,7 @@ struct uri_s; // The uri instance (opaque).
 typedef struct uri_s UriWrapper;
 typedef UriWrapper Uri;
 
-DENG_API_TYPEDEF(Uri) // v1
+DE_API_TYPEDEF(Uri) // v1
 {
     de_api_t api;
 
@@ -84,7 +80,7 @@ DENG_API_TYPEDEF(Uri) // v1
      */
     UriWrapper* (*New)(void);
 
-    UriWrapper* (*NewWithPath3)(char const *defaultScheme, char const *path);
+    UriWrapper* (*NewWithPath3)(const char *defaultScheme, const char *path);
 
     /**
      * Constructs a Uri instance from @a path. The uri should be destroyed with
@@ -94,9 +90,9 @@ DENG_API_TYPEDEF(Uri) // v1
      * @param defaultResourceClass  If no scheme is defined in @a path and this is not @c FC_NULL,
      *      look for an appropriate default scheme for this class of resource.
      */
-    UriWrapper* (*NewWithPath2)(char const *path, resourceclassid_t defaultResourceClass);
+    UriWrapper* (*NewWithPath2)(const char *path, resourceclassid_t defaultResourceClass);
 
-    UriWrapper* (*NewWithPath)(char const *path);
+    UriWrapper* (*NewWithPath)(const char *path);
 
     /**
      * Constructs a Uri instance by duplicating @a other. The uri should be destroyed
@@ -256,10 +252,10 @@ DENG_API_TYPEDEF(Uri) // v1
      */
     void (*ReadWithDefaultScheme)(UriWrapper* uri, Reader1* reader, char const* defaultScheme);
 
-} DENG_API_T(Uri);
+} DE_API_T(Uri);
 
 // Macros for accessing exported functions.
-#ifndef DENG_NO_API_MACROS_URI
+#ifndef DE_NO_API_MACROS_URI
 #define Uri_New                     _api_Uri.New
 #define Uri_NewWithPath3            _api_Uri.NewWithPath3
 #define Uri_NewWithPath2            _api_Uri.NewWithPath2
@@ -290,7 +286,7 @@ DENG_API_TYPEDEF(Uri) // v1
 
 // Internal access.
 #ifdef __DOOMSDAY__
-DENG_USING_API(Uri);
+DE_USING_API(Uri);
 #endif
 
-#endif /* LIBDENG_API_URI_H */
+#endif /* DE_API_URI_H */

@@ -17,32 +17,29 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_PLAYER
+#define DE_NO_API_MACROS_PLAYER
 
 #include "world/p_players.h"
-
 #include "world/impulseaccumulator.h"
-#include "world/map.h"
 #include "world/p_object.h"
-#include "Subsector"
-#include "Surface"
 
 #ifdef __CLIENT__
-#  include "BindContext"
+#  include "ui/bindcontext.h"
 #  include "ui/b_util.h"
 #  include "ui/inputdevice.h"
 #  include "ui/inputsystem.h"
-
-#  include "client/clientsubsector.h"
+#  include "world/map.h"
+#  include "world/subsector.h"
 #  include "client/clskyplane.h"
 #  include "clientapp.h"
 #endif
 
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
-#include <QList>
-#include <QMap>
-#include <QtAlgorithms>
+#include <doomsday/world/subsector.h>
+#include <doomsday/world/surface.h>
+#include <de/list.h>
+#include <de/keymap.h>
 
 using namespace de;
 
@@ -52,34 +49,48 @@ ClientPlayer *viewPlayer;
 int consolePlayer;
 int displayPlayer;
 
-typedef QMap<int, PlayerImpulse *> Impulses; // ID lookup.
-static Impulses impulses;
+typedef KeyMap<int, PlayerImpulse *> Impulses; // ID lookup.
+typedef KeyMap<String, PlayerImpulse *, String::InsensitiveLessThan> ImpulseNameMap; // Name lookup
+typedef KeyMap<int, ImpulseAccumulator *> ImpulseAccumulators; // ImpulseId lookup.
 
-typedef QMap<String, PlayerImpulse *> ImpulseNameMap; // Name lookup
-static ImpulseNameMap impulsesByName;
+struct ImpulseGlobals
+{
+    Impulses            impulses;
+    ImpulseNameMap      impulsesByName;
+    ImpulseAccumulators accumulators[DDMAXPLAYERS];
+};
 
-typedef QMap<int, ImpulseAccumulator *> ImpulseAccumulators; // ImpulseId lookup.
-static ImpulseAccumulators accumulators[DDMAXPLAYERS];
+static ImpulseGlobals *s_impulse;
 
-static PlayerImpulse *addImpulse(int id, impulsetype_t type, String name, String bindContextName)
+static ImpulseGlobals &impulseGlobals()
+{
+    if (!s_impulse)
+    {
+        s_impulse = new ImpulseGlobals;
+    }
+    return *s_impulse;
+}
+
+static PlayerImpulse *addImpulse(int id, impulsetype_t type, const String &name, const String &bindContextName)
 {
     auto *imp = new PlayerImpulse;
 
-    imp->id   = id;
-    imp->type = type;
-    imp->name = name;
+    imp->id              = id;
+    imp->type            = type;
+    imp->name            = name;
     imp->bindContextName = bindContextName;
 
-    impulses.insert(imp->id, imp);
-    impulsesByName.insert(imp->name.toLower(), imp);
+    impulseGlobals().impulses.insert(imp->id, imp);
+    impulseGlobals().impulsesByName.insert(imp->name.lower(), imp);
 
     // Generate impulse accumulators for each player.
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        ImpulseAccumulator::AccumulatorType accumType = (type == IT_BINARY? ImpulseAccumulator::Binary : ImpulseAccumulator::Analog);
+        ImpulseAccumulator::AccumulatorType accumType =
+            (type == IT_BINARY ? ImpulseAccumulator::Binary : ImpulseAccumulator::Analog);
         auto *accum = new ImpulseAccumulator(imp->id, accumType, type != IT_ANALOG);
         accum->setPlayerNum(i);
-        accumulators[i].insert(accum->impulseId(), accum);
+        impulseGlobals().accumulators[i].insert(accum->impulseId(), accum);
     }
 
     return imp;
@@ -90,10 +101,10 @@ static ImpulseAccumulator *accumulator(int impulseId, int playerNum)
     if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
         return nullptr;
 
-    if(!accumulators[playerNum].contains(impulseId))
+    if(!impulseGlobals().accumulators[playerNum].contains(impulseId))
         return nullptr;
 
-    return accumulators[playerNum][impulseId];
+    return impulseGlobals().accumulators[playerNum][impulseId];
 }
 
 AppPlayer *DD_Player(int number)
@@ -166,7 +177,7 @@ int P_GetDDPlayerIdx(ddplayer_t *ddpl)
 bool P_IsInVoid(player_t *player)
 {
     if (!player) return false;
-    ddplayer_t const *ddpl = &player->publicData();
+    const ddplayer_t *ddpl = &player->publicData();
 
     // Cameras are allowed to move completely freely (so check z height
     // above/below ceiling/floor).
@@ -175,14 +186,14 @@ bool P_IsInVoid(player_t *player)
         if (player->inVoid || !ddpl->mo)
             return true;
 
-        mobj_t const *mob = ddpl->mo;
+        const mobj_t *mob = ddpl->mo;
         if (!Mobj_HasSubsector(*mob))
             return true;
 
-        auto const &subsec = Mobj_Subsector(*mob).as<world::ClientSubsector>();
+        const auto &subsec = Mobj_Subsector(*mob).as<Subsector>();
         if (subsec.visCeiling().surface().hasSkyMaskedMaterial())
         {
-            world::ClSkyPlane const &skyCeiling = subsec.sector().map().skyCeiling();
+            const ClSkyPlane &skyCeiling = subsec.sector().map().as<Map>().skyCeiling();
             if (skyCeiling.height() < DDMAXFLOAT && mob->origin[2] > skyCeiling.height() - 4)
                 return true;
         }
@@ -192,7 +203,7 @@ bool P_IsInVoid(player_t *player)
         }
         if (subsec.visFloor().surface().hasSkyMaskedMaterial())
         {
-            world::ClSkyPlane const &skyFloor = subsec.sector().map().skyFloor();
+            const ClSkyPlane &skyFloor = subsec.sector().map().as<Map>().skyFloor();
             if (skyFloor.height() > DDMINFLOAT && mob->origin[2] < skyFloor.height() + 4)
                 return true;
         }
@@ -208,67 +219,66 @@ bool P_IsInVoid(player_t *player)
 
 void P_ClearPlayerImpulses()
 {
-    for(dint i = 0; i < DDMAXPLAYERS; ++i)
+    auto &g = impulseGlobals();
+    for (dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        qDeleteAll(accumulators[i]);
-        accumulators[i].clear();
+        g.accumulators[i].deleteAll();
+        g.accumulators[i].clear();
     }
-    qDeleteAll(impulses);
-    impulses.clear();
-    impulsesByName.clear();
+    g.impulses.deleteAll();
+    g.impulses.clear();
+    g.impulsesByName.clear();
 }
 
 PlayerImpulse *P_PlayerImpulsePtr(dint id)
 {
-    auto found = impulses.find(id);
-    if(found != impulses.end()) return *found;
+    auto found = impulseGlobals().impulses.find(id);
+    if (found != impulseGlobals().impulses.end()) return found->second;
     return nullptr;
 }
 
-PlayerImpulse *P_PlayerImpulseByName(String const &name)
+PlayerImpulse *P_PlayerImpulseByName(const String &name)
 {
-    if(!name.isEmpty())
+    if (!name.isEmpty())
     {
-        auto found = impulsesByName.find(name.toLower());
-        if(found != impulsesByName.end()) return *found;
+        auto found = impulseGlobals().impulsesByName.find(name);
+        if (found != impulseGlobals().impulsesByName.end()) return found->second;
     }
     return nullptr;
 }
 
 D_CMD(ListImpulses)
 {
-    DENG2_UNUSED3(argv, argc, src);
+    DE_UNUSED(argv, argc, src);
 
     // Group the defined impulses by binding context.
-    typedef QList<PlayerImpulse *> ImpulseList;
-    QMap<String, ImpulseList> contextGroups;
-    for(PlayerImpulse *imp : impulsesByName)
+    KeyMap<String, List<PlayerImpulse *>> contextGroups;
+    for (const auto &imp : impulseGlobals().impulsesByName)
     {
-        if(!contextGroups.contains(imp->bindContextName))
+        if (!contextGroups.contains(imp.second->bindContextName))
         {
-            contextGroups.insert(imp->bindContextName, ImpulseList());
+            contextGroups.insert(imp.second->bindContextName, {});
         }
-        contextGroups[imp->bindContextName].append(imp);
+        contextGroups[imp.second->bindContextName] << imp.second;
     }
 
     LOG_MSG(_E(b) "Player impulses");
     LOG_MSG("There are " _E(b) "%i" _E(.) " impulses, in " _E(b) "%i" _E(.) " contexts")
-            << impulses.count() << contextGroups.count();
+        << impulseGlobals().impulses.size() << contextGroups.size();
 
-    for(auto const &group : contextGroups)
+    for (const auto &group : contextGroups)
     {
-        if(group.isEmpty()) continue;
+        if (group.second.isEmpty()) continue;
 
-        LOG_MSG(_E(D)_E(b) "%s" _E(.) " context: " _E(l) "(%i)")
-                << group.first()->bindContextName
-                << group.count();
+        LOG_MSG(_E(D) _E(b) "%s" _E(.) " context: " _E(l) "(%i)")
+            << group.second.first()->bindContextName << group.second.size();
 
-        for(PlayerImpulse const *imp : group)
+        for (const auto *imp : group.second)
         {
             LOG_MSG("  [%4i] " _E(>) _E(b) "%s " _E(.) _E(2) "%s%s")
-                    << imp->id << imp->name
-                    << (imp->type == IT_BINARY? "binary" : "analog")
-                    << (IMPULSETYPE_IS_TRIGGERABLE(imp->type)? ", triggerable" : "");
+                << imp->id << imp->name
+                << (imp->type == IT_BINARY ? "binary" : "analog")
+                << (IMPULSETYPE_IS_TRIGGERABLE(imp->type) ? ", triggerable" : "");
         }
     }
     return true;
@@ -276,7 +286,7 @@ D_CMD(ListImpulses)
 
 D_CMD(Impulse)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(argc < 2 || argc > 3)
     {
@@ -287,7 +297,7 @@ D_CMD(Impulse)
 
     if(PlayerImpulse *imp = P_PlayerImpulseByName(argv[1]))
     {
-        int const playerNum = (argc == 3? P_LocalToConsole(String(argv[2]).toInt()) : consolePlayer);
+        const int playerNum = (argc == 3? P_LocalToConsole(String(argv[2]).toInt()) : consolePlayer);
         if(ImpulseAccumulator *accum = accumulator(imp->id, playerNum))
         {
             accum->receiveBinary();
@@ -300,21 +310,22 @@ D_CMD(Impulse)
 #ifdef __CLIENT__
 D_CMD(ClearImpulseAccumulation)
 {
-    DENG2_UNUSED3(argv, argc, src);
+    DE_UNUSED(argv, argc, src);
 
-    ClientApp::inputSystem().forAllDevices([] (InputDevice &device)
+    ClientApp::input().forAllDevices([] (InputDevice &device)
     {
         device.reset();
         return LoopContinue;
     });
 
     // For all players.
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
-    for(ImpulseAccumulator *accum : accumulators[i])
+    for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        accum->clearAll();
+        for (auto &accum : impulseGlobals().accumulators[i])
+        {
+            accum.second->clearAll();
+        }
     }
-
     return true;
 }
 #endif
@@ -332,7 +343,7 @@ void P_ConsoleRegister()
 }
 
 #undef DD_GetPlayer
-DENG_EXTERN_C ddplayer_t *DD_GetPlayer(int number)
+DE_EXTERN_C ddplayer_t *DD_GetPlayer(int number)
 {
     return &DD_Player(number)->publicData();
 }
@@ -341,26 +352,26 @@ DENG_EXTERN_C ddplayer_t *DD_GetPlayer(int number)
 #undef Net_GetPlayerName
 #undef Net_GetPlayerID
 #undef Net_PlayerSmoother
-DENG_EXTERN_C char const *Net_GetPlayerName(int player);
-DENG_EXTERN_C ident_t Net_GetPlayerID(int player);
-DENG_EXTERN_C Smoother *Net_PlayerSmoother(int player);
+DE_EXTERN_C const char *Net_GetPlayerName(int player);
+DE_EXTERN_C ident_t Net_GetPlayerID(int player);
+DE_EXTERN_C Smoother *Net_PlayerSmoother(int player);
 
 #undef P_NewPlayerControl
-DENG_EXTERN_C void P_NewPlayerControl(int id, impulsetype_t type, char const *name,
-    char const *bindContextName)
+DE_EXTERN_C void P_NewPlayerControl(int id, impulsetype_t type, const char *name,
+    const char *bindContextName)
 {
-    DENG2_ASSERT(name && bindContextName);
+    DE_ASSERT(name && bindContextName);
     LOG_AS("P_NewPlayerControl");
 
     // Ensure the given id is unique.
-    if(PlayerImpulse const *existing = P_PlayerImpulsePtr(id))
+    if(const PlayerImpulse *existing = P_PlayerImpulsePtr(id))
     {
         LOG_INPUT_WARNING("Id: %i is already in use by impulse '%s' - Won't replace")
                 << id << existing->name;
         return;
     }
     // Ensure the given name is unique.
-    if(PlayerImpulse const *existing = P_PlayerImpulseByName(name))
+    if(const PlayerImpulse *existing = P_PlayerImpulseByName(name))
     {
         LOG_INPUT_WARNING("Name: '%s' is already in use by impulse Id: %i - Won't replace")
                 << name << existing->id;
@@ -371,19 +382,19 @@ DENG_EXTERN_C void P_NewPlayerControl(int id, impulsetype_t type, char const *na
 }
 
 #undef P_IsControlBound
-DENG_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
+DE_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
 {
 #ifdef __CLIENT__
     LOG_AS("P_IsControlBound");
 
     // Impulse bindings are associated with local player numbers rather than
     // the player console number - translate.
-    int const localPlayer = P_ConsoleToLocal(playerNum);
+    const int localPlayer = P_ConsoleToLocal(playerNum);
     if(localPlayer < 0) return false;
 
-    if(PlayerImpulse const *imp = P_PlayerImpulsePtr(impulseId))
+    if(const PlayerImpulse *imp = P_PlayerImpulsePtr(impulseId))
     {
-        InputSystem &isys = ClientApp::inputSystem();
+        InputSystem &isys = ClientApp::input();
 
         BindContext *bindContext = isys.contextPtr(imp->bindContextName);
         if(!bindContext)
@@ -394,12 +405,12 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
 
         int found = bindContext->forAllImpulseBindings(localPlayer, [&isys, &impulseId] (CompiledImpulseBindingRecord &rec)
         {
-            auto const &bind = rec.compiled();
+            const auto &bind = rec.compiled();
 
             // Wrong impulse?
             if(bind.impulseId != impulseId) return LoopContinue;
 
-            if(InputDevice const *device = isys.devicePtr(bind.deviceId))
+            if(const InputDevice *device = isys.devicePtr(bind.deviceId))
             {
                 if(device->isActive())
                 {
@@ -414,13 +425,13 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
     return false;
 
 #else
-    DENG2_UNUSED2(playerNum, impulseId);
+    DE_UNUSED(playerNum, impulseId);
     return 0;
 #endif
 }
 
 #undef P_GetControlState
-DENG_EXTERN_C void P_GetControlState(int playerNum, int impulseId, float *pos,
+DE_EXTERN_C void P_GetControlState(int playerNum, int impulseId, float *pos,
     float *relativeOffset)
 {
 #ifdef __CLIENT__
@@ -437,12 +448,12 @@ DENG_EXTERN_C void P_GetControlState(int playerNum, int impulseId, float *pos,
         accum->takeAnalog(pos, relativeOffset);
     }
 #else
-    DENG2_UNUSED4(playerNum, impulseId, pos, relativeOffset);
+    DE_UNUSED(playerNum, impulseId, pos, relativeOffset);
 #endif
 }
 
 #undef P_GetImpulseControlState
-DENG_EXTERN_C int P_GetImpulseControlState(int playerNum, int impulseId)
+DE_EXTERN_C int P_GetImpulseControlState(int playerNum, int impulseId)
 {
     LOG_AS("P_GetImpulseControlState");
 
@@ -452,7 +463,8 @@ DENG_EXTERN_C int P_GetImpulseControlState(int playerNum, int impulseId)
     // Ensure this is really a binary accumulator.
     if(accum->type() != ImpulseAccumulator::Binary)
     {
-        LOG_INPUT_WARNING("ImpulseAccumulator '%s' is not binary") << impulses[impulseId]->name;
+        LOG_INPUT_WARNING("ImpulseAccumulator '%s' is not binary")
+            << impulseGlobals().impulses[impulseId]->name;
         return 0;
     }
 
@@ -460,7 +472,7 @@ DENG_EXTERN_C int P_GetImpulseControlState(int playerNum, int impulseId)
 }
 
 #undef P_Impulse
-DENG_EXTERN_C void P_Impulse(int playerNum, int impulseId)
+DE_EXTERN_C void P_Impulse(int playerNum, int impulseId)
 {
     LOG_AS("P_Impulse");
 
@@ -470,14 +482,15 @@ DENG_EXTERN_C void P_Impulse(int playerNum, int impulseId)
     // Ensure this is really a binary accumulator.
     if(accum->type() != ImpulseAccumulator::Binary)
     {
-        LOG_INPUT_WARNING("ImpulseAccumulator '%s' is not binary") << impulses[impulseId]->name;
+        LOG_INPUT_WARNING("ImpulseAccumulator '%s' is not binary")
+            << impulseGlobals().impulses[impulseId]->name;
         return;
     }
 
     accum->receiveBinary();
 }
 
-DENG_DECLARE_API(Player) =
+DE_DECLARE_API(Player) =
 {
     { DE_API_PLAYER },
     Net_GetPlayerName,

@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_MANUALCONNECTIONDIALOG_H
-#define DENG_CLIENT_MANUALCONNECTIONDIALOG_H
+#ifndef DE_CLIENT_MANUALCONNECTIONDIALOG_H
+#define DE_CLIENT_MANUALCONNECTIONDIALOG_H
 
-#include <de/InputDialog>
-#include <de/IPersistent>
+#include <de/inputdialog.h>
+#include <de/ipersistent.h>
 
 /**
  * Dialog for connecting to a multiplayer server manually using an IP address or domain
@@ -30,10 +30,11 @@
  */
 class ManualConnectionDialog : public de::InputDialog, public de::IPersistent
 {
-    Q_OBJECT
+public:
+    DE_AUDIENCE(Selection, void manualConnectionSelected(const de::ui::Item *))
 
 public:
-    ManualConnectionDialog(de::String const &name = "manualconnection");
+    ManualConnectionDialog(const de::String &name = "manualconnection");
 
     /**
      * Enables or disables joining the selected game when the user clicks on a
@@ -43,24 +44,19 @@ public:
      */
     void enableJoinWhenSelected(bool joinWhenSelected);
 
-    // Implements IPersistent.
-    void operator>>(de::PersistentState &toState) const;
-    void operator<<(de::PersistentState const &fromState);
-
-signals:
-    void selected(de::ui::Item const *);
-
-public slots:
     void queryOrConnect();
     void contentChanged();
     void validate();
-    //void serverSelected(de::ui::Item const *);
+
+    // Implements IPersistent.
+    void operator >> (de::PersistentState &toState) const;
+    void operator << (const de::PersistentState &fromState);
 
 protected:
     void finish(int result);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_MANUALCONNECTIONDIALOG_H
+#endif // DE_CLIENT_MANUALCONNECTIONDIALOG_H

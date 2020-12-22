@@ -17,11 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_WORLD_P_PLAYERS_H
-#define DENG_WORLD_P_PLAYERS_H
+#ifndef DE_WORLD_P_PLAYERS_H
+#define DE_WORLD_P_PLAYERS_H
 
 #include "api_player.h"
-#include <de/String>
+#include <de/string.h>
 
 #ifdef __CLIENT__
 #  include "clientplayer.h"
@@ -115,11 +115,11 @@ PlayerImpulse *P_PlayerImpulsePtr(int id);
  *
  * @return  The associated PlayerImpulse if found; otherwise @c nullptr.
  */
-PlayerImpulse *P_PlayerImpulseByName(de::String const &name);
+PlayerImpulse *P_PlayerImpulseByName(const de::String &name);
 
 /**
  * Register the console commands and variables of this module.
  */
 void P_ConsoleRegister();
 
-#endif // DENG_WORLD_P_PLAYERS_H
+#endif // DE_WORLD_P_PLAYERS_H

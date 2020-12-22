@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_SVG
+#define DE_NO_API_MACROS_SVG
 
 #include "de_platform.h"
 #include "dd_share.h"
@@ -24,8 +24,8 @@
 
 #include <string.h>
 #include <assert.h>
-#include <de/memory.h>
-#include <de/Log>
+#include <de/legacy/memory.h>
+#include <de/log.h>
 
 #define DEFAULT_SCALE               (1)
 #define DEFAULT_ANGLE               (0)
@@ -147,12 +147,12 @@ void R_UnloadSvgs(void)
     }
 }
 
-DENG_EXTERN_C void GL_DrawSvg3(svgid_t id, const Point2Rawf* origin, float scale, float angle)
+DE_EXTERN_C void GL_DrawSvg3(svgid_t id, const Point2Rawf* origin, float scale, float angle)
 {
     Svg* svg = svgForId(id);
 
-    DENG_ASSERT(origin != 0);
-    DENG_ASSERT(svg != 0);
+    DE_ASSERT(origin != 0);
+    DE_ASSERT(svg != 0);
 
     if(!Svg_Prepare(svg))
     {
@@ -178,22 +178,22 @@ DENG_EXTERN_C void GL_DrawSvg3(svgid_t id, const Point2Rawf* origin, float scale
     DGL_Translatef(-origin->x, -origin->y, 0);
 }
 
-DENG_EXTERN_C void GL_DrawSvg2(svgid_t id, const Point2Rawf* origin, float scale)
+DE_EXTERN_C void GL_DrawSvg2(svgid_t id, const Point2Rawf* origin, float scale)
 {
     GL_DrawSvg3(id, origin, scale, DEFAULT_ANGLE);
 }
 
-DENG_EXTERN_C void GL_DrawSvg(svgid_t id, const Point2Rawf* origin)
+DE_EXTERN_C void GL_DrawSvg(svgid_t id, const Point2Rawf* origin)
 {
     GL_DrawSvg2(id, origin, DEFAULT_SCALE);
 }
 
-DENG_EXTERN_C void R_NewSvg(svgid_t id, const def_svgline_t* lines, uint numLines)
+DE_EXTERN_C void R_NewSvg(svgid_t id, const def_svgline_t* lines, uint numLines)
 {
     Svg* svg, *oldSvg;
 
     // Valid id?
-    DENG_ASSERT(id != 0);
+    DE_ASSERT(id != 0);
 
     // A new vector graphic.
     svg = Svg_FromDef(id, lines, numLines);
@@ -215,7 +215,7 @@ DENG_EXTERN_C void R_NewSvg(svgid_t id, const def_svgline_t* lines, uint numLine
     insertSvg(svg);
 }
 
-DENG_DECLARE_API(Svg) =
+DE_DECLARE_API(Svg) =
 {
     { DE_API_SVG },
     R_NewSvg,

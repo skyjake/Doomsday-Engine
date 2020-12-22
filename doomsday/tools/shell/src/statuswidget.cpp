@@ -17,110 +17,130 @@
  */
 
 #include "statuswidget.h"
-#include <de/libcore.h>
-#include <de/String>
-#include <de/shell/DoomsdayInfo>
-#include <QPainter>
-#include <QPicture>
-#include <QTimer>
+#include <de/string.h>
+#include <de/labelwidget.h>
+#include <de/keymap.h>
+#include <doomsday/doomsdayinfo.h>
+#include <doomsday/gui/mapoutlinewidget.h>
 
 using namespace de;
 
-DENG2_PIMPL(StatusWidget)
+DE_GUI_PIMPL(StatusWidget)
 {
-    QFont smallFont;
-    QFont largeFont;
-    QFont playerFont;
-    String gameMode;
-    String map;
-    QPicture mapOutline;
-    QRect mapBounds;
-    shell::Link *link;
-
-    typedef shell::PlayerInfoPacket::Player Player;
-    shell::PlayerInfoPacket::Players players;
-    QMap<int, QPoint> oldPlayerPositions;
+    network::Link *   link;
+    String            gameMode;
+    String            map;
+    MapOutlineWidget *mapOutline;
+    LabelWidget *     stateLabel;
+    LabelWidget *     titleLabel;
+    Rectangled        mapBounds;
 
     Impl(Public &i) : Base(i), link(0)
-    {}
+    {
+        auto &rect = i.rule();
+
+        mapOutline = &i.addNew<MapOutlineWidget>("map");
+        mapOutline->setColors("accent", "inverted.accent");
+        mapOutline->rule()
+            .setInput(Rule::Left, rect.left() + i.margins().left())
+            .setInput(Rule::Right, rect.right() - i.margins().right())
+            .setInput(Rule::Bottom, rect.bottom() - i.margins().bottom());
+
+        stateLabel = &i.addNew<LabelWidget>("gamestate");
+        stateLabel->setOpacity(0.6f);
+        stateLabel->setSizePolicy(ui::Expand, ui::Expand);
+        //stateLabel->setFont("heading");
+        stateLabel->margins().setTop(rule("gap") * 2).setBottom(Const(0));
+        stateLabel->rule().setMidAnchorX(rect.midX()).setInput(Rule::Top, rect.top());
+
+        titleLabel = &i.addNew<LabelWidget>("title");
+        titleLabel->setSizePolicy(ui::Expand, ui::Expand);
+        titleLabel->margins().setTop(Const(0));
+        titleLabel->setFont("title");
+        titleLabel->rule()
+            .setMidAnchorX(rect.midX())
+            .setInput(Rule::Top, stateLabel->rule().bottom());
+
+        mapOutline->rule().setInput(Rule::Top, titleLabel->rule().bottom());
+    }
 
     void clear()
-    {
+    {        
         gameMode.clear();
         map.clear();
-        mapBounds = QRect();
-        mapOutline = QPicture();
-        oldPlayerPositions.clear();
-        players.clear();
+        stateLabel->setText({});
+        titleLabel->setText({});
+        mapBounds = {};
+        mapOutline->setOutline({});
     }
 };
 
-StatusWidget::StatusWidget(QWidget *parent)
-    : QWidget(parent), d(new Impl(*this))
+StatusWidget::StatusWidget()
+    : d(new Impl(*this))
 {
-    d->playerFont = d->smallFont = d->largeFont = font();
-    d->smallFont.setPointSize(font().pointSize() * 3 / 4);
-    d->largeFont.setPointSize(font().pointSize() * 3 / 2);
-    d->largeFont.setBold(true);
-    d->playerFont.setPointSizeF(font().pointSizeF() * .8f);
+//    d->playerFont = d->smallFont = d->largeFont = font();
+//    d->smallFont.setPointSize(font().pointSize() * 3 / 4);
+//    d->largeFont.setPointSize(font().pointSize() * 3 / 2);
+//    d->largeFont.setBold(true);
+//    d->playerFont.setPointSizeF(font().pointSizeF() * .8f);
 }
 
-void StatusWidget::setGameState(QString mode, QString rules, QString mapId, QString mapTitle)
+void StatusWidget::setGameState(String mode, String rules, String mapId, String mapTitle)
 {
-    d->gameMode = shell::DoomsdayInfo::titleForGame(mode);
+    d->gameMode = DoomsdayInfo::titleForGame(mode);
     if (!rules.isEmpty()) d->gameMode = rules + " - " + d->gameMode;
 
     d->map = mapTitle;
     if (!mapId.isEmpty() && !mapTitle.contains(mapId))
     {
-        d->map += " (" + mapId + ")";
+        d->map += " (" + mapId.upper() + ")";
     }
 
-    update();
+    d->stateLabel->setText(d->gameMode);
+    d->titleLabel->setText(d->map);
 }
 
-void StatusWidget::setMapOutline(shell::MapOutlinePacket const &outline)
+void StatusWidget::setMapOutline(const network::MapOutlinePacket &outline)
 {
-    d->mapBounds  = QRect();
-    d->mapOutline = QPicture();
+    d->mapOutline->setOutline(outline);
 
-    QPainter painter(&d->mapOutline);
-    for (int i = 0; i < outline.lineCount(); ++i)
-    {
-        shell::MapOutlinePacket::Line const &ln = outline.line(i);
-        QPen pen(ln.type == shell::MapOutlinePacket::OneSidedLine? Qt::black : Qt::gray);
-#ifdef DENG2_QT_5_0_OR_NEWER
-        pen.setCosmetic(true); // transformation will not affect line width
-#endif
-        painter.setPen(pen);
+    // Draw player positions.
 
-        QPoint a(ln.start.x, -ln.start.y);
-        QPoint b(ln.end.x,   -ln.end.y);
+//    d->mapBounds  = QRect();
+//    d->mapOutline = QPicture();
 
-        painter.drawLine(a, b);
+//    QPainter painter(&d->mapOutline);
+//    for (int i = 0; i < outline.lineCount(); ++i)
+//    {
+//        const shell::MapOutlinePacket::Line &ln = outline.line(i);
+//        QPen pen(ln.type == shell::MapOutlinePacket::OneSidedLine? Qt::black : Qt::gray);
+//#ifdef DE_QT_5_0_OR_NEWER
+//        pen.setCosmetic(true); // transformation will not affect line width
+//#endif
+//        painter.setPen(pen);
 
-        if (!i)
-            d->mapBounds = QRect(a, QSize(1, 1));
-        else
-            d->mapBounds = d->mapBounds.united(QRect(a, QSize(1, 1)));
+//        QPoint a(ln.start.x, -ln.start.y);
+//        QPoint b(ln.end.x,   -ln.end.y);
 
-        d->mapBounds = d->mapBounds.united(QRect(b, QSize(1, 1)));
-    }
+//        painter.drawLine(a, b);
 
-    update();
+//        if (!i)
+//            d->mapBounds = QRect(a, QSize(1, 1));
+//        else
+//            d->mapBounds = d->mapBounds.united(QRect(a, QSize(1, 1)));
+
+//        d->mapBounds = d->mapBounds.united(QRect(b, QSize(1, 1)));
+//    }
+
+//    update();
 }
 
-void StatusWidget::setPlayerInfo(shell::PlayerInfoPacket const &plrInfo)
+void StatusWidget::setPlayerInfo(const network::PlayerInfoPacket &plrInfo)
 {
-    foreach (Impl::Player const &plr, d->players)
-    {
-        d->oldPlayerPositions[plr.number] = QPoint(plr.position.x, -plr.position.y);
-    }
-
-    d->players = plrInfo.players();
-    update();
+    d->mapOutline->setPlayerInfo(plrInfo);
 }
 
+#if 0
 void StatusWidget::paintEvent(QPaintEvent *)
 {
     if (!d->link)
@@ -169,10 +189,12 @@ void StatusWidget::paintEvent(QPaintEvent *)
         painter.drawPicture(0, 0, d->mapOutline);
 
         // Draw player markers.
-        float const factor = float(d->mapBounds.width()) / float(viewSize.width());
+        const float factor = float(d->mapBounds.width()) / float(viewSize.width());
         QFontMetrics const metrics(d->playerFont);
-        foreach (Impl::Player const &plr, d->players.values())
+        for (const auto &iter : d->players)
         {
+            const auto &plr = iter.second;
+
             painter.save();
 
             QColor const color(plr.color.x, plr.color.y, plr.color.z);
@@ -184,13 +206,13 @@ void StatusWidget::paintEvent(QPaintEvent *)
 
             if (d->oldPlayerPositions.contains(plr.number))
             {
-                QPointF const start = d->oldPlayerPositions[plr.number];
-                QPointF const end   = plrPos;
-                QPointF const delta = end - start;
+                const QPointF start = d->oldPlayerPositions[plr.number];
+                const QPointF end   = plrPos;
+                const QPointF delta = end - start;
 
                 /// @todo Qt has no gradient support for drawing lines?
 
-                int const STOPS = 64;
+                const int STOPS = 64;
                 for (int i = 0; i < STOPS; ++i)
                 {
                     QColor grad = color;
@@ -214,11 +236,11 @@ void StatusWidget::paintEvent(QPaintEvent *)
             markColor.setAlpha(160);
             painter.setBrush(markColor);
 
-            QString label = QString("%1: %2").arg(plr.number).arg(plr.name);
+            QString label = QString("%1: %2").arg(plr.number).arg(convert(plr.name));
             if (label.size() > 20) label = label.left(20);
 
             QRect textBounds = metrics.boundingRect(label);
-            int const gap = 3;
+            const int gap = 3;
             textBounds.moveTopLeft(QPoint(-textBounds.width()/2, 10 + gap));
             QRect boxBounds = textBounds.adjusted(-gap, -gap, gap, metrics.descent() + gap);
             painter.setPen(Qt::NoPen);
@@ -227,7 +249,7 @@ void StatusWidget::paintEvent(QPaintEvent *)
             painter.setFont(d->playerFont);
 
             // Label text with a shadow.
-            bool const isDark = ((color.red() + color.green()*2 + color.blue())/3 < 140);
+            const bool isDark = ((color.red() + color.green()*2 + color.blue())/3 < 140);
             painter.setPen(isDark? Qt::black : Qt::white);
             painter.drawText(textBounds.topLeft() + QPoint(0, metrics.ascent()), label);
             painter.setPen(isDark? Qt::white : Qt::black);
@@ -237,6 +259,7 @@ void StatusWidget::paintEvent(QPaintEvent *)
         }
     }
 }
+#endif
 
 /*
 void StatusWidget::updateWhenConnected()
@@ -249,15 +272,13 @@ void StatusWidget::updateWhenConnected()
 }
 */
 
-void StatusWidget::linkConnected(shell::Link *link)
+void StatusWidget::linkConnected(network::Link *link)
 {
     d->link = link;
-    update();
 }
 
 void StatusWidget::linkDisconnected()
 {
-    d->link = 0;
+    d->link = nullptr;
     d->clear();
-    update();
 }

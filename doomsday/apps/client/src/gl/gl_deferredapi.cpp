@@ -19,13 +19,13 @@
  * 02110-1301 USA</small>
  */
 
-#define LIBDENG_DISABLE_DEFERRED_GL_API // using regular GL API calls
+#define DE_DISABLE_DEFERRED_GL_API // using regular GL API calls
 
 #include "de_platform.h"
 
-#include <de/concurrency.h>
-#include <de/GLInfo>
-#include <de/GuiApp>
+#include <de/legacy/concurrency.h>
+#include <de/glinfo.h>
+#include <de/guiapp.h>
 #include "gl/gl_defer.h"
 
 static dd_bool __inline mustDefer(void)
@@ -35,17 +35,17 @@ static dd_bool __inline mustDefer(void)
 
 static void GL_CALL deng_glEnable(GLenum e)
 {
-    LIBGUI_GL.glEnable(e);
+    glEnable(e);
 }
 
 static void GL_CALL deng_glDisable(GLenum e)
 {
-    LIBGUI_GL.glDisable(e);
+    glDisable(e);
 }
 
-static void GL_CALL deng_glDeleteTextures(GLsizei num, GLuint const *names)
+static void GL_CALL deng_glDeleteTextures(GLsizei num, const GLuint *names)
 {
-    LIBGUI_GL.glDeleteTextures(num, names);
+    glDeleteTextures(num, names);
 }
 
 #define GL_CALL1(form, func, x) \
@@ -53,17 +53,17 @@ static void GL_CALL deng_glDeleteTextures(GLsizei num, GLuint const *names)
 #define GL_CALL2(form, func, x, y) \
     if(mustDefer()) GL_Defer_##form(func, x, y); else func(x, y);
 
-DENG_EXTERN_C void Deferred_glEnable(GLenum e)
+DE_EXTERN_C void Deferred_glEnable(GLenum e)
 {
     GL_CALL1(e, deng_glEnable, e);
 }
 
-DENG_EXTERN_C void Deferred_glDisable(GLenum e)
+DE_EXTERN_C void Deferred_glDisable(GLenum e)
 {
     GL_CALL1(e, deng_glDisable, e);
 }
 
-DENG_EXTERN_C void Deferred_glDeleteTextures(GLsizei num, GLuint const *names)
+DE_EXTERN_C void Deferred_glDeleteTextures(GLsizei num, const GLuint *names)
 {
     GL_CALL2(uintArray, deng_glDeleteTextures, num, names);
 }

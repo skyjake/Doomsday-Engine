@@ -1,0 +1,91 @@
+# Gloom Renderer Shaders
+#
+# - sky
+# - surface
+# - entity
+# - light
+# - ssao
+# - tonemap
+
+group gloom {
+    shader debug {
+        path.vertex = "common/vertex_uv.vsh"
+        path.fragment = "debug.fsh"
+    }
+
+    shader sky { path = "sky" }
+
+    group surface {
+        shader material {
+            path = "surface_material"
+        }
+        shader shadow.dir {
+            path = "surface_shadow_dir"
+        }
+        shader shadow.omni {
+            path.vertex   = "surface_shadow_omni.vsh"
+            path.geometry = "surface_shadow_omni.gsh"
+            path.fragment = "surface_shadow_omni.fsh"
+        }
+        shader transparent {
+            path.vertex   = "surface_material.vsh"
+            path.fragment = "surface_transparent.fsh"
+        }
+    }
+
+    group entity {
+        shader material {
+            path = "entity_material"
+        }
+        shader shadow.dir {
+            path = "entity_shadow_dir"
+        }
+        shader shadow.omni {
+            path.vertex   = "entity_shadow_omni.vsh"
+            path.geometry = "common/cube_faces_uv.gsh"
+            path.fragment = "entity_shadow_omni.fsh"
+        }
+    }
+
+    group light {
+        shader global {
+            path = "light_global"
+        }
+        shader stencil {
+            path.vertex = "light_sources.vsh"
+            fragment = "void main(void) {}"
+        }
+        shader sources {
+            path.vertex = "light_sources.vsh"
+            path.fragment = "light_sources.fsh"
+        }
+    }
+
+    group ssao {
+        shader sample {
+            path.vertex = "ssao.vsh"
+            path.fragment = "ssao_sample.fsh"
+        }
+        shader denoise {
+            path.vertex   = "ssao.vsh"
+            path.fragment = "ssao_denoise.fsh"
+        }
+    }
+
+    group bloom {
+        shader blur_partial {
+            path.vertex = "common/vertex_uv.vsh"
+            path.fragment = "bloom_blur_partial.fsh"
+        }
+    }
+
+    group tonemap {
+        shader exposure {
+            path.vertex = "common/vertex_uv.vsh"
+            path.fragment = "tonemap_exposure.fsh"
+        }
+        shader sample inherits exposure {
+            path.fragment = "tonemap_sample.fsh"
+        }
+    }
+}

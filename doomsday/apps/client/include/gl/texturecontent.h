@@ -18,12 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_GL_TEXTURECONTENT_H
-#define DENG_CLIENT_GL_TEXTURECONTENT_H
+#ifndef DE_CLIENT_GL_TEXTURECONTENT_H
+#define DE_CLIENT_GL_TEXTURECONTENT_H
 
 #include "api_gl.h"
 #include "gl/gl_defer.h"
-#include <doomsday/res/TextureManifest>
+#include <doomsday/res/texturemanifest.h>
 
 /**
  * @defgroup textureContentFlags  Texture Content Flags
@@ -45,18 +45,18 @@
  * immediately or in deferred mode (when busy).
  */
 typedef struct texturecontent_s {
-    dgltexformat_t format;
-    GLuint name;
-    uint8_t const *pixels;
+    dgltexformat_t   format;
+    GLuint           name;
+    const uint8_t *  pixels;
     colorpaletteid_t paletteId;
-    int width;
-    int height;
-    int minFilter;
-    int magFilter;
-    int anisoFilter;
-    int wrap[2];
-    int grayMipmap;
-    int flags; /// @ref textureContentFlags
+    int              width;
+    int              height;
+    GLenum           minFilter;
+    GLenum           magFilter;
+    int              anisoFilter;
+    GLenum           wrap[2];
+    int              grayMipmap;
+    int              flags; /// @ref textureContentFlags
 } texturecontent_t;
 
 /**
@@ -64,7 +64,7 @@ typedef struct texturecontent_s {
  */
 void GL_InitTextureContent(texturecontent_t *content);
 
-texturecontent_t *GL_ConstructTextureContentCopy(texturecontent_t const *other);
+texturecontent_t *GL_ConstructTextureContentCopy(const texturecontent_t *other);
 
 void GL_DestroyTextureContent(texturecontent_t *content);
 
@@ -84,8 +84,8 @@ void GL_DestroyTextureContent(texturecontent_t *content);
 void GL_PrepareTextureContent(texturecontent_t &c,
                               GLuint glTexName,
                               image_t &image,
-                              TextureVariantSpec const &spec,
-                              res::TextureManifest const &textureManifest);
+                              const TextureVariantSpec &spec,
+                              const res::TextureManifest &textureManifest);
 
 /**
  * @param method  GL upload method. By default the upload is deferred.
@@ -93,7 +93,7 @@ void GL_PrepareTextureContent(texturecontent_t &c,
  * @note Can be rather time-consuming due to forced scaling operations and
  * the generation of mipmaps.
  */
-void GL_UploadTextureContent(texturecontent_t const &content,
-                             de::gl::UploadMethod method = de::gl::Deferred);
+void GL_UploadTextureContent(const texturecontent_t &content,
+                             de::gfx::UploadMethod method = de::gfx::Deferred);
 
-#endif // DENG_CLIENT_GL_TEXTURECONTENT_H
+#endif // DE_CLIENT_GL_TEXTURECONTENT_H

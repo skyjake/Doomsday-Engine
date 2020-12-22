@@ -1,0 +1,104 @@
+# Colors for the default UI style
+
+script { import gui, Version }
+
+#
+# THE BASIC COLOR PALETTE
+#
+
+color transparent { rgb <0.0, 0.0, 0.0, 0.0> }
+color text        { rgb <1.0, 1.0, 1.0> }
+color background  { rgb <0.0, 0.0, 0.0, 0.75> }
+color accent      { rgb <1.0, 0.8, 0.4> }
+color altaccent   { rgb <0.63, 0.75, 0.67> }
+color glow        { rgb <1.0, 1.0, 1.0, 0.14> }
+
+inverted {
+    color text       { rgb <0.0, 0.0, 0.0> }
+    color background { rgb <0.933, 0.933, 0.933, 0.75> }
+    color accent     { rgb <0.5, 0.4, 0.2> }
+    color altaccent  { rgb <0.34, 0.4, 0.34> }
+    color glow       { rgb <0.0, 0.0, 0.0, 0.15> }
+}
+
+#
+# COLORS FOR SPECIFIC WIDGETS
+#
+
+label {
+    color highlight { rgb <1.0, 1.0, 1.0> }
+    color dimmed    { rgb <0.72, 0.72, 0.68> }
+    color accent    { rgb $= accent.rgb }
+    color dimaccent { rgb <0.85, 0.68, 0.34> }
+    color altaccent { rgb $= altaccent.rgb }
+    color shadow    { rgb $= gui.colorAlpha(background.rgb, 0.34) }
+}
+
+focus {
+    color flash.on  { rgb $= accent.rgb }
+    color flash.off { rgb $= gui.colorMix(accent.rgb, [0, 0, 0], 0.75) }
+}
+
+popup {
+    color outline { rgb $= gui.colorAlpha(text.rgb, 0.5) }
+    info {
+        color background { rgb <0.933, 0.933, 0.933> }
+        color glow       { rgb $= inverted.glow.rgb }
+    }
+}
+
+choice {
+    color popup { rgb $= gui.colorAlpha(background.rgb, 1.0) }
+}
+
+tab {
+    color selected          { rgb $= text.rgb }
+    color inverted.selected { rgb $= inverted.text.rgb }
+}
+
+progress {
+    light {
+        color wheel  { rgb <1.0, 1.0, 1.0, 0.25> }
+        color shadow { rgb <0.0, 0.0, 0.0, 0.45> }
+    }
+    dark {
+        color wheel  { rgb <0.0, 0.0, 0.0, 0.25> }
+        color shadow { rgb <1.0, 1.0, 1.0, 0.54> }
+    }
+}
+
+dialog {
+    color background { rgb $= gui.colorAlpha(background.rgb, 0.9) }
+    color default    { rgb $= altaccent.rgb }
+}
+
+editor {
+    color cursor { rgb $= gui.colorAlpha(accent.rgb, 0.7) }
+    color hint   { rgb $= altaccent.rgb }
+}
+
+log {
+    color normal    { rgb <0.85, 0.85, 0.8> }
+    color highlight { rgb <1.0, 1.0, 1.0> }
+    color dimmed {
+        condition: Version.OS != 'windows'
+        rgb <0.65, 0.65, 0.62>
+    }
+    color dimmed {
+        # Apply some extra black because we don't have a Light style
+        # font on Windows.
+        condition: Version.OS == 'windows'
+        rgb <0.58, 0.58, 0.55>
+    }
+    color accent    { rgb $= accent.rgb }
+    color altaccent { rgb $= altaccent.rgb }
+    color dimaccent { rgb <0.76, 0.61, 0.30> }
+}
+
+document {
+    color normal    { rgb $= gui.colorMix(inverted.text.rgb, [1, 1, 1], 0.2) }
+    color highlight { rgb $= inverted.text.rgb }
+    color dimmed    { rgb <0.5, 0.5, 0.5> }
+    color accent    { rgb $= inverted.accent.rgb }
+    color dimaccent { rgb <0.85, 0.68, 0.34> }
+}

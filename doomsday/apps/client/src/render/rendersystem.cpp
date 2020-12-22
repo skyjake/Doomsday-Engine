@@ -20,49 +20,50 @@
 #include "de_platform.h"
 #include "render/rendersystem.h"
 
-#include <de/memory.h>
-#include <de/memoryzone.h>
-#include <de/Function>
-#include <de/GLUniform>
-#include <de/PackageLoader>
-#include <de/ScriptSystem>
-#include <de/ScriptedInfo>
-#include <de/TextValue>
+#include <de/legacy/memory.h>
+#include <de/legacy/memoryzone.h>
+#include <de/gluniform.h>
+#include <de/packageloader.h>
+#include <de/dscript.h>
 #include "clientapp.h"
 #include "render/environ.h"
 #include "render/rend_main.h"
 #include "render/rend_halo.h"
 #include "render/angleclipper.h"
+#include "render/iworldrenderer.h"
 #include "render/modelrenderer.h"
 #include "render/skydrawable.h"
 #include "render/store.h"
-#include "world/clientserverworld.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 
-#include "ConvexSubspace"
-#include "Subsector"
-#include "Surface"
+#include "world/clientworld.h"
+#include "world/convexsubspace.h"
+#include "world/subsector.h"
+#include "world/surface.h"
 
-#include "Contact"
-#include "misc/r_util.h"
+#include "world/contact.h"
+#include <doomsday/r_util.h>
 
 using namespace de;
 
-DENG2_PIMPL(RenderSystem)
-, DENG2_OBSERVES(PackageLoader, Load)
-, DENG2_OBSERVES(PackageLoader, Unload)
+DE_PIMPL(RenderSystem)
+, DE_OBSERVES(PackageLoader, Load)
+, DE_OBSERVES(PackageLoader, Unload)
 {
     Binder binder;
     Record renderModule;
 
     render::Environment environment;
+    std::unique_ptr<IWorldRenderer> worldRenderer;
+    Time prevWorldUpdateAt = Time::invalidTime();
     ModelRenderer models;
     SkyDrawable sky;
+
     ConfigProfiles settings;
     ConfigProfiles appearanceSettings;
-    ImageBank images;
+//    ImageBank images;
 
     AngleClipper clipper;
 
@@ -115,12 +116,12 @@ DENG2_PIMPL(RenderSystem)
         {
             if(ProjectionList *found = tryFindList(listIdx)) return *found;
             /// @throw MissingListError  Invalid index specified.
-            throw Error("RenderSystem::projector::findList", "Invalid index #" + String::number(listIdx));
+            throw Error("RenderSystem::projector::findList", "Invalid index #" + String::asText(listIdx));
         }
 
         ProjectionList &findOrCreateList(duint *listIdx, bool sortByLuma)
         {
-            DENG2_ASSERT(listIdx);
+            DE_ASSERT(listIdx);
 
             // Do we need to allocate a list?
             if(!(*listIdx))
@@ -187,12 +188,12 @@ DENG2_PIMPL(RenderSystem)
         {
             if(VectorLightList *found = tryFindList(listIdx)) return *found;
             /// @throw MissingListError  Invalid index specified.
-            throw Error("RenderSystem::vlights::findList", "Invalid index #" + String::number(listIdx));
+            throw Error("RenderSystem::vlights::findList", "Invalid index #" + String::asText(listIdx));
         }
 
         VectorLightList &findOrCreateList(duint *listIdx)
         {
-            DENG2_ASSERT(listIdx);
+            DE_ASSERT(listIdx);
 
             // Do we need to allocate a list?
             if(!(*listIdx))
@@ -220,18 +221,27 @@ DENG2_PIMPL(RenderSystem)
     {
         LOG_AS("RenderSystem");
 
+        auto &pkgLoader = App::packageLoader();
+
         ModelRenderer::initBindings(binder, renderModule);
-        ClientApp::scriptSystem().addNativeModule("Render", renderModule);
+        ClientApp::scriptSystem().addNativeModule("Render", renderModule);                
+
+        // General-purpose libgui shaders.
+        loadShaders(FS::locate<const File>("/packs/net.dengine.stdlib.gui/shaders.dei"));
 
         // Packages are checked for shaders when (un)loaded.
-        App::packageLoader().audienceForLoad() += this;
-        App::packageLoader().audienceForUnload() += this;
+        pkgLoader.audienceForLoad() += this;
+        pkgLoader.audienceForUnload() += this;
 
         // Load the required packages.
-        App::packageLoader().load("net.dengine.client.renderer");
-        App::packageLoader().load("net.dengine.client.renderer.lensflares");
+        pkgLoader.load("net.dengine.client.renderer");
+//        pkgLoader.load("net.dengine.client.renderer.lensflares");
+        pkgLoader.load("net.dengine.gloom");
 
         loadImages();
+
+        // Create a world renderer.
+        worldRenderer.reset(ClientApp::app().makeWorldRenderer());
 
         typedef ConfigProfiles SReg;
 
@@ -339,24 +349,18 @@ DENG2_PIMPL(RenderSystem)
                 .define(SReg::FloatCVar, "rend-sky-distance", 1600);
     }
 
-    //~Impl()
-    //{
-        //App::packageLoader().audienceForLoad()   -= this;
-        //App::packageLoader().audienceForUnload() -= this;
-    //}
-
-    void packageLoaded(String const &packageId)
+    void packageLoaded(const String &packageId)
     {
         FS::FoundFiles found;
         App::packageLoader().package(packageId).findPartialPath("shaders.dei", found);
-        DENG2_FOR_EACH(FS::FoundFiles, i, found)
+        DE_FOR_EACH(FS::FoundFiles, i, found)
         {
             // Load new shaders.
             loadShaders(**i);
         }
     }
 
-    void aboutToUnloadPackage(String const &packageId)
+    void aboutToUnloadPackage(const String &packageId)
     {
         ClientApp::shaders().removeAllFromPackage(packageId);
     }
@@ -373,13 +377,13 @@ DENG2_PIMPL(RenderSystem)
 //        // Load all the shader program definitions.
 //        FS::FoundFiles found;
 //        App::findInPackages("shaders.dei", found);
-//        DENG2_FOR_EACH(FS::FoundFiles, i, found)
+//        DE_FOR_EACH(FS::FoundFiles, i, found)
 //        {
 //            loadShaders(**i);
 //        }
 //    }
 
-    void loadShaders(File const &defs)
+    void loadShaders(const File &defs)
     {
         LOG_MSG("Loading shader definitions from %s") << defs.description();
         ClientApp::shaders().addFromInfo(defs);
@@ -391,7 +395,7 @@ DENG2_PIMPL(RenderSystem)
      */
     void loadImages()
     {
-        //Folder const &renderPack = App::fileSystem().find<Folder>("renderer.pack");
+        //const Folder &renderPack = App::fileSystem().find<Folder>("renderer.pack");
         //images.addFromInfo(renderPack.locate<File>("images.dei"));
     }
 };
@@ -410,12 +414,19 @@ void RenderSystem::glInit()
     }
 
     d->models.glInit();
+    d->worldRenderer->glInit();
 }
 
 void RenderSystem::glDeinit()
 {
+    d->worldRenderer->glDeinit();
     d->models.glDeinit();
     d->environment.glDeinit();
+}
+
+IWorldRenderer &RenderSystem::world()
+{
+    return *d->worldRenderer;
 }
 
 GLShaderBank &RenderSystem::shaders()
@@ -423,12 +434,12 @@ GLShaderBank &RenderSystem::shaders()
     return BaseGuiApp::shaders();
 }
 
-ImageBank &RenderSystem::images()
-{
-    return d->images;
-}
+//ImageBank &RenderSystem::images()
+//{
+//    return d->images;
+//}
 
-GLUniform const &RenderSystem::uMapTime() const
+const GLUniform &RenderSystem::uMapTime() const
 {
     return d->uMapTime;
 }
@@ -458,10 +469,24 @@ SkyDrawable &RenderSystem::sky()
     return d->sky;
 }
 
-void RenderSystem::timeChanged(Clock const &)
+void RenderSystem::timeChanged(const Clock &)
 {
     // Update the current map time for shaders.
     d->uMapTime = ClientApp::world().time();
+
+    // Update the world rendering time.
+    TimeSpan elapsed = 0.0;
+    const Time now = Time::currentHighPerformanceTime();
+    if (d->prevWorldUpdateAt.isValid())
+    {
+        elapsed = now - d->prevWorldUpdateAt;
+    }
+    d->prevWorldUpdateAt = now;
+
+    if (d->worldRenderer)
+    {
+        d->worldRenderer->advanceTime(elapsed);
+    }
 }
 
 ConfigProfiles &RenderSystem::settings()
@@ -524,7 +549,7 @@ ProjectionList &RenderSystem::findSurfaceProjectionList(duint *listIdx, bool sor
     return d->projector.findOrCreateList(listIdx, sortByLuma);
 }
 
-LoopResult RenderSystem::forAllSurfaceProjections(duint listIdx, std::function<LoopResult (ProjectedTextureData const &)> func) const
+LoopResult RenderSystem::forAllSurfaceProjections(duint listIdx, std::function<LoopResult (const ProjectedTextureData &)> func) const
 {
     if(ProjectionList *list = d->projector.tryFindList(listIdx))
     {
@@ -542,7 +567,7 @@ VectorLightList &RenderSystem::findVectorLightList(duint *listIdx)
     return d->vlights.findOrCreateList(listIdx);
 }
 
-LoopResult RenderSystem::forAllVectorLights(duint listIdx, std::function<LoopResult (VectorLightData const &)> func)
+LoopResult RenderSystem::forAllVectorLights(duint listIdx, std::function<LoopResult (const VectorLightData &)> func)
 {
     if(VectorLightList *list = d->vlights.tryFindList(listIdx))
     {

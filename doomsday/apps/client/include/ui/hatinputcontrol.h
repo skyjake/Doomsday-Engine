@@ -30,18 +30,18 @@
 class HatInputControl : public InputDevice::Control
 {
 public:
-    explicit HatInputControl(de::String const &name = de::String());
+    explicit HatInputControl(const de::String &name = de::String());
     virtual ~HatInputControl();
 
     /**
      * Returns the current position of the hat.
      */
-    de::dint position() const;
+    int position() const;
 
     /**
      * @param newPosition  @c -1= centered.
      */
-    void setPosition(de::dint newPosition);
+    void setPosition(int newPosition);
 
     /**
      * When the state of the control last changed, in milliseconds since app init.
@@ -52,7 +52,7 @@ public:
     bool inDefaultState() const;
 
 private:
-    de::dint _pos   = -1;  ///< Current position. @c -1= centered.
+    int _pos   = -1;  ///< Current position. @c -1= centered.
     de::duint _time = 0;   ///< Timestamp of the latest change.
 };
 

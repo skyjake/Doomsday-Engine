@@ -20,22 +20,22 @@
 #include "resource/tga.h"
 #include "dd_share.h"
 
-#include <de/memory.h>
-#include <de/Image>
+#include <de/legacy/memory.h>
+#include <de/image.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
 using namespace de;
 
-uint8_t *TGA_Load(FileHandle &file, Vector2ui &outSize, int &pixelSize)
+uint8_t *TGA_Load(res::FileHandle &file, Vec2ui &outSize, int &pixelSize)
 {
     const size_t initPos = file.tell();
 
     // Read the file into a memory buffer.
     Block fileContents(file.length() - initPos);
     file.read(fileContents.data(), fileContents.size());
-    file.seek(initPos, SeekSet);
+    file.seek(initPos, res::SeekSet);
 
     Image img = Image::fromData(fileContents, ".tga");
     if (img.isNull())
@@ -43,18 +43,9 @@ uint8_t *TGA_Load(FileHandle &file, Vector2ui &outSize, int &pixelSize)
         return nullptr;
     }
 
-    // De-index colormapped images.
-    if (img.toQImage().format() == QImage::Format_Indexed8)
-    {
-        img = img.toQImage().convertToFormat(QImage::Format_RGBA8888);
-    }
-
     outSize   = img.size();
     pixelSize = img.depth() / 8;
 
     // Return a copy of the pixel data.
-    const size_t numBytes = size_t(img.byteCount());
-    uint8_t *    retBuf   = reinterpret_cast<uint8_t *>(M_Malloc(numBytes));
-    memcpy(retBuf, img.bits(), numBytes);
-    return retBuf;
+    return (uint8_t *) M_MemDup(img.bits(), img.byteCount());
 }

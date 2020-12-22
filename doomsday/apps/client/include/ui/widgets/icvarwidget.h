@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_ICVARWIDGET_H
-#define DENG_CLIENT_ICVARWIDGET_H
+#ifndef DE_CLIENT_ICVARWIDGET_H
+#define DE_CLIENT_ICVARWIDGET_H
 
 /**
  * Interface for console variable widgets.
@@ -25,10 +25,10 @@
 class ICVarWidget
 {
 public:
-    virtual ~ICVarWidget() {}
+    virtual ~ICVarWidget() = default;
 
-    virtual char const *cvarPath() const = 0;
+    virtual const char *cvarPath() const = 0;
     virtual void updateFromCVar() = 0;
 };
 
-#endif // DENG_CLIENT_ICVARWIDGET_H
+#endif // DE_CLIENT_ICVARWIDGET_H

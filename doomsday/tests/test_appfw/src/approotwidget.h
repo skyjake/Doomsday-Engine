@@ -19,8 +19,8 @@
 #ifndef APPROOTWIDGET_H
 #define APPROOTWIDGET_H
 
-#include <de/GuiRootWidget>
-#include <de/GLWindow>
+#include <de/guirootwidget.h>
+#include <de/glwindow.h>
 
 class MainWindow;
 
@@ -30,16 +30,15 @@ class MainWindow;
 class AppRootWidget : public de::GuiRootWidget
 {
 public:
-    AppRootWidget(de::GLWindow *window = 0);
+    AppRootWidget(de::GLWindow *window = nullptr);
 
     MainWindow &window();
 
     void addOnTop(de::GuiWidget *widget);
-    void dispatchLatestMousePosition();
-    void handleEventAsFallback(de::Event const &event);
+    void handleEventAsFallback(const de::Event &event);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // APPROOTWIDGET_H

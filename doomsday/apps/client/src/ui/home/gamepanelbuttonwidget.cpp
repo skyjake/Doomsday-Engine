@@ -17,40 +17,39 @@
  */
 
 #include "ui/home/gamepanelbuttonwidget.h"
-#include "ui/widgets/homemenuwidget.h"
+#include "ui/clientstyle.h"
+#include "ui/dialogs/packagesdialog.h"
 #include "ui/home/savelistwidget.h"
 #include "ui/home/gamecolumnwidget.h"
 #include "ui/savelistdata.h"
-#include "ui/dialogs/packagesdialog.h"
+#include "ui/widgets/homemenuwidget.h"
 #include "ui/widgets/packagesbuttonwidget.h"
-#include "resource/idtech1image.h"
 #include "dd_main.h"
 
 #include <doomsday/console/exec.h>
-#include <doomsday/DoomsdayApp>
-#include <doomsday/Games>
-#include <doomsday/LumpCatalog>
-#include <doomsday/LumpDirectory>
-#include <doomsday/res/Bundles>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/games.h>
+#include <doomsday/res/lumpcatalog.h>
+#include <doomsday/res/lumpdirectory.h>
+#include <doomsday/res/bundles.h>
 
-#include <de/App>
-#include <de/Async>
-#include <de/CallbackAction>
-#include <de/ChildWidgetOrganizer>
-#include <de/Config>
-#include <de/FileSystem>
-#include <de/Loop>
-#include <de/PopupMenuWidget>
-#include <de/ui/FilteredData>
+#include <de/app.h>
+#include <de/callbackaction.h>
+#include <de/childwidgetorganizer.h>
+#include <de/config.h>
+#include <de/filesystem.h>
+#include <de/loop.h>
+#include <de/popupmenuwidget.h>
+#include <de/ui/filtereddata.h>
+#include <de/taskpool.h>
 
 using namespace de;
 
-DENG_GUI_PIMPL(GamePanelButtonWidget)
-, DENG2_OBSERVES(Profiles::AbstractProfile, Change)
-, DENG2_OBSERVES(res::Bundles, Identify)
-, DENG2_OBSERVES(Variable, Change)
-, DENG2_OBSERVES(ButtonWidget, StateChange)
-, public AsyncScope
+DE_GUI_PIMPL(GamePanelButtonWidget)
+, DE_OBSERVES(Profiles::AbstractProfile, Change)
+, DE_OBSERVES(res::Bundles, Identify)
+, DE_OBSERVES(Variable, Change)
+, DE_OBSERVES(ButtonWidget, StateChange)
 {
     GameProfile &gameProfile;
     ui::FilteredDataT<SaveListData::SaveItem> savedItems;
@@ -62,17 +61,18 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     LabelWidget *packagesCounter;
     res::LumpCatalog catalog;
     bool playHovering = false;
-
-    Impl(Public *i, GameProfile &profile, SaveListData const &allSavedItems)
+    TaskPool tasks;
+    
+    Impl(Public *i, GameProfile &profile, const SaveListData &allSavedItems)
         : Base(i)
         , gameProfile(profile)
         , savedItems(allSavedItems)
     {
         // Only show the savegames relevant for this game.
-        savedItems.setFilter([this] (ui::Item const &it)
+        savedItems.setFilter([this] (const ui::Item &it)
         {
             // Only saved sessions for this game are to be included.
-            auto const &item = it.as<SaveListData::SaveItem>();
+            const auto &item = it.as<SaveListData::SaveItem>();
             if (item.gameId() != gameProfile.gameId())
             {
                 return false;
@@ -84,12 +84,12 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
             }
 
             // The file must be in the right save folder.
-            if (item.savePath().fileNamePath().compareWithoutCase(gameProfile.savePath()))
+            if (item.savePath().fileNamePath().compare(gameProfile.savePath().c_str(), CaseInsensitive))
             {
                 return false;
             }
 
-            StringList const savePacks = item.loadedPackages();
+            const StringList savePacks = item.loadedPackages();
 
             // Fallback for older saves without package metadata.
             if (savePacks.isEmpty())
@@ -111,28 +111,24 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
         packagesButton = new PackagesButtonWidget;
         packagesButton->setGameProfile(gameProfile);
-        packagesButton->setDialogTitle(tr("Mods for %1").arg(profile.name()));
-        packagesButton->setSetupCallback([this] (PackagesDialog &dialog)
-        {
+        packagesButton->setDialogTitle(Stringf("Mods for %s", profile.name().c_str()));
+        packagesButton->setSetupCallback([this](PackagesDialog &dialog) {
             // Add a button for starting the game.
             dialog.buttons()
                     << new DialogButtonItem(DialogWidget::Action,
                                             style().images().image("play"),
-                                            tr("Play"),
-                                            new CallbackAction([this, &dialog] () {
+                                            "Play",
+                                            [this, &dialog]() {
                                                 dialog.accept();
                                                 playButtonPressed();
-                                            }));
+                                            });
         });
         self().addButton(packagesButton);
 
-        QObject::connect(packagesButton,
-                         &PackagesButtonWidget::packageSelectionChanged,
-                         [this] (QStringList ids)
-        {
-            gameProfile.setPackages(toStringList(ids));
+        packagesButton->audienceForSelection() += [this]() {
+            gameProfile.setPackages(packagesButton->packages());
             self().updateContent();
-        });
+        };
 
         playButton = new ButtonWidget;
         playButton->useInfoStyle();
@@ -188,17 +184,17 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         Config::get("home.sortBy").audienceForChange() += this;
     }
 
-    Game const &game() const
+    const Game &game() const
     {
         return gameProfile.game();
     }
 
     void updatePackagesIndicator()
     {
-        int const  count = gameProfile.packages().size();
-        bool const shown = !isMissingPackages() && count > 0 && !self().isSelected();
+        const int  count = gameProfile.packages().sizei();
+        const bool shown = !isMissingPackages() && count > 0 && !self().isSelected();
 
-        packagesCounter->setText(String::number(count));
+        packagesCounter->setText(String::asText(count));
         packagesCounter->show(shown);
 
         if (shown)
@@ -233,8 +229,8 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
             if (saves->selectedPos() != ui::Data::InvalidPos)
             {
                 // Load a saved game.
-                auto const &saveItem = savedItems.at(saves->selectedPos());
-                Con_Execute(CMDS_DDAY, ("loadgame " + saveItem.name() + " confirm").toLatin1(),
+                const auto &saveItem = savedItems.at(saves->selectedPos());
+                Con_Execute(CMDS_DDAY, "loadgame " + saveItem.name() + " confirm",
                             false, false);
             }
         }
@@ -242,33 +238,32 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
     void deleteButtonPressed()
     {
-        DENG2_ASSERT(saves->selectedPos() != ui::Data::InvalidPos);
+        DE_ASSERT(saves->selectedPos() != ui::Data::InvalidPos);
 
         // Popup to make sure.
         PopupMenuWidget *pop = new PopupMenuWidget;
         pop->setDeleteAfterDismissed(true);
         pop->setAnchorAndOpeningDirection(deleteSaveButton->rule(), ui::Down);
-        pop->items()
-                << new ui::Item(ui::Item::Separator, tr("Are you sure?"))
-                << new ui::ActionItem(tr("Delete Savegame"),
-                                      new CallbackAction([this, pop] ()
-                {
+        pop->items() << new ui::Item(ui::Item::Separator, "Are you sure?")
+                     << new ui::ActionItem("Delete Savegame",
+                                           [this, pop]() {
                     pop->detachAnchor();
                     // Delete the savegame file; the UI will be automatically updated.
-                    String const path = savedItems.at(saves->selectedPos()).savePath();
+                                               const String path =
+                                                   savedItems.at(saves->selectedPos()).savePath();
                     self().unselectSave();
                     App::rootFolder().destroyFile(path);
                     FS::get().refreshAsync();
-                }))
-                << new ui::ActionItem(tr("Cancel"), new Action /* nop */);
+                                           })
+                     << new ui::ActionItem("Cancel", new Action /* nop */);
         self().add(pop);
         pop->open();
     }
 
     void updateGameTitleImage()
     {
-        *this += async([this]() { return IdTech1Image::makeGameLogo(game(), catalog); },
-                       [this](const Image &gameLogo) { self().icon().setImage(gameLogo); });
+        tasks.async([this]() { return Variant(ClientStyle::makeGameLogo(game(), catalog)); },
+                    [this](const Variant &gameLogo) { self().icon().setImage(gameLogo.value<Image>()); });
     }
 
     void profileChanged(Profiles::AbstractProfile &) override
@@ -276,7 +271,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         self().updateContent();
     }
 
-    void variableValueChanged(Variable &, Value const &) override
+    void variableValueChanged(Variable &, const Value &) override
     {
         self().updateContent();
     }
@@ -301,20 +296,21 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         {
             return game().title();
         }
-        if (Config::get("home.sortBy") != GameColumnWidget::SORT_RECENTLY_PLAYED)
+        if (String(GameColumnWidget::SORT_RECENTLY_PLAYED) != Config::get("home.sortBy"))
         {
-            return String::number(game().releaseDate().year());
+            return String::asText(game().releaseDate().year());
         }
         return {};
     }
 };
 
-GamePanelButtonWidget::GamePanelButtonWidget(GameProfile &game, SaveListData const &savedItems)
+GamePanelButtonWidget::GamePanelButtonWidget(GameProfile &game, const SaveListData &savedItems)
     : d(new Impl(this, game, savedItems))
 {
-    connect(d->saves, SIGNAL(selectionChanged(de::ui::DataPos)), this, SLOT(saveSelected(de::ui::DataPos)));
-    connect(d->saves, SIGNAL(doubleClicked(de::ui::DataPos)), this, SLOT(saveDoubleClicked(de::ui::DataPos)));
-    connect(this, SIGNAL(doubleClicked()), this, SLOT(play()));
+    d->saves->audienceForSelection()   += [this](){ saveSelected(d->saves->selectedPos()); };
+    d->saves->audienceForDoubleClick() += [this](){ saveDoubleClicked(d->saves->selectedPos()); };
+
+    audienceForDoubleClick() += [this](){ play(); };
 
     game.audienceForChange() += d;
 }
@@ -338,8 +334,8 @@ void GamePanelButtonWidget::setSelected(bool selected)
 
 void GamePanelButtonWidget::updateContent()
 {
-    bool const isPlayable     = d->gameProfile.isPlayable();
-    bool const isGamePlayable = d->game().isPlayableWithDefaultPackages();
+    const bool isPlayable     = d->gameProfile.isPlayable();
+    const bool isGamePlayable = d->game().isPlayableWithDefaultPackages();
 
     playButton().enable(isPlayable);
     playButton().show(isPlayable);
@@ -369,7 +365,7 @@ void GamePanelButtonWidget::updateContent()
     {
         if (!isGamePlayable)
         {
-            meta = _E(D) + tr("Missing data files") + _E(.);
+            meta = _E(D) "Missing data files" _E(.);
         }
     }
 
@@ -377,11 +373,11 @@ void GamePanelButtonWidget::updateContent()
     {
         if (d->saves->selectedPos() != ui::Data::InvalidPos)
         {
-            meta = tr("Restore saved game");
+            meta = "Restore saved game";
         }
         else
         {
-            meta = tr("Start game");
+            meta = "Start game";
         }
     }
 
@@ -397,9 +393,8 @@ void GamePanelButtonWidget::updateContent()
         setKeepButtonsVisible(false);
     }
 
-    label().setText(String(_E(b) "%1\n" _E(l)_E(C) "%2")
-                    .arg(d->gameProfile.name())
-                    .arg(meta));
+    label().setText(
+        Stringf(_E(b) "%s\n" _E(l)_E(C) "%s", d->gameProfile.name().c_str(), meta.c_str()));
 
     d->packagesButton->setPackages(d->gameProfile.packages());
     d->updatePackagesIndicator();
@@ -420,11 +415,11 @@ ButtonWidget &GamePanelButtonWidget::playButton()
     return *d->playButton;
 }
 
-bool GamePanelButtonWidget::handleEvent(Event const &event)
+bool GamePanelButtonWidget::handleEvent(const Event &event)
 {
     if (hasFocus() && event.isKey())
     {
-        auto const &key = event.as<KeyEvent>();
+        const auto &key = event.as<KeyEvent>();
         if (event.isKeyDown() &&
             (key.ddKey() == DDKEY_ENTER || key.ddKey() == DDKEY_RETURN || key.ddKey() == ' '))
         {
@@ -463,7 +458,7 @@ void GamePanelButtonWidget::saveSelected(de::ui::DataPos savePos)
     if (savePos != ui::Data::InvalidPos)
     {
         // Ensure that this game is selected.
-        DENG2_ASSERT(parentMenu() != nullptr);
+        DE_ASSERT(parentMenu() != nullptr);
         parentMenu()->setSelectedIndex(parentMenu()->findItem(*this));
 
         // Position the save deletion button.

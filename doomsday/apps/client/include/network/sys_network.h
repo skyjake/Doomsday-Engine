@@ -32,8 +32,9 @@
 #include "monitor.h"
 #include "serverlink.h"
 
-#include <de/shell/ServerInfo>
+#include <de/serverinfo.h>
 
+extern char *   playerName;
 extern dd_bool  allowSending;
 extern int      maxQueuePackets;
 
@@ -42,5 +43,10 @@ ServerLink &Net_ServerLink(void);
 void    N_Register(void);
 void    N_PrintInfo(void);
 void    N_PrintNetworkStatus(void);
+
+/**
+ * Does drawing for the engine's HUD, not just the net.
+ */
+void Net_Drawer(void);
 
 #endif  // CLIENT_SYSTEM_NETWORK_H

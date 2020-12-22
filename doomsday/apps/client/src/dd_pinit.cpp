@@ -28,13 +28,13 @@
 #include "dd_pinit.h"
 
 #include <cstdarg>
-#include <de/String>
-#include <de/Library>
+#include <de/extension.h>
+#include <de/string.h>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/knownword.h>
 #include <doomsday/filesys/fs_main.h>
-#include <doomsday/world/MaterialArchive>
+#include <doomsday/world/materialarchive.h>
 #ifdef __SERVER__
 #  include "server/sv_def.h"
 #endif
@@ -72,13 +72,13 @@ using namespace de;
 /*
  * The game imports and exports.
  */
-DENG_DECLARE_API(InternalData) =
+DE_DECLARE_API(InternalData) =
 {
     { DE_API_INTERNAL_DATA },
-    runtimeDefs.mobjInfo.elementsPtr(),
-    runtimeDefs.states  .elementsPtr(),
-    runtimeDefs.texts   .elementsPtr(),
-    &validCount
+    nullptr,
+    nullptr,
+    nullptr,
+    &world::World::validCount
 };
 
 #ifdef __CLIENT__
@@ -95,14 +95,17 @@ de::String DD_ComposeMainWindowTitle()
 }
 #endif
 
-void DD_PublishAPIs(::Library *lib)
+void DD_PublishAPIs(const char *plugName)
 {
-    de::Library &library = Library_File(lib).library();
+    const auto setAPI = function_cast<void (*)(int, void *)>(extensionSymbol(plugName, "deng_API"));
 
-    if(library.hasSymbol("deng_API"))
+    // Initialize with up-to-date pointers to dynamic arrays.
+    _api_InternalData.mobjInfo = runtimeDefs.mobjInfo.elementsPtr();
+    _api_InternalData.states   = runtimeDefs.states.elementsPtr();
+    _api_InternalData.text     = runtimeDefs.texts.elementsPtr();
+
+    if (setAPI)
     {
-        de::Library::deng_API setAPI = library.DENG2_SYMBOL(deng_API);
-
 #define PUBLISH(X) setAPI(X.api.id, &X)
 
         PUBLISH(_api_Base);
@@ -112,7 +115,6 @@ void DD_PublishAPIs(::Library *lib)
         PUBLISH(_api_F);
         PUBLISH(_api_Infine);
         PUBLISH(_api_InternalData);
-        PUBLISH(_api_Map);
         PUBLISH(_api_MPE);
         PUBLISH(_api_Material);
         PUBLISH(_api_Player);
@@ -170,7 +172,7 @@ void DD_InitCommandLine()
 static void App_AddKnownWords()
 {
     // Add games as known words.
-    foreach(Game *game, App_Games().all())
+    for (Game *game : App_Games().all())
     {
         Con_AddKnownWord(WT_GAME, game);
     }
@@ -221,9 +223,9 @@ void DD_ShutdownAll()
     R_ShutdownSvgs();
 #ifdef __CLIENT__
     R_ShutdownViewWindow();
-    if(ClientApp::hasRenderSystem())
+    if(ClientApp::hasRender())
     {
-        ClientApp::renderSystem().clearDrawLists();
+        ClientApp::render().clearDrawLists();
     }
 #endif
     Def_Destroy();

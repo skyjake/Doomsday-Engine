@@ -22,9 +22,9 @@
 
 #include "abstractfont.h"
 #include "resource/clienttexture.h"
-#include <de/Rectangle>
-#include <de/String>
-#include <de/Vector>
+#include <de/rectangle.h>
+#include <de/string.h>
+#include <de/vector.h>
 
 struct ded_compositefont_s;
 
@@ -48,7 +48,7 @@ public:
 public:
     CompositeBitmapFont(de::FontManifest &manifest);
 
-    static CompositeBitmapFont *fromDef(de::FontManifest &manifest, struct ded_compositefont_s const &def);
+    static CompositeBitmapFont *fromDef(de::FontManifest &manifest, const struct ded_compositefont_s &def);
 
     struct ded_compositefont_s *definition() const;
     void setDefinition(struct ded_compositefont_s *newDef);
@@ -61,7 +61,7 @@ public:
      *
      * @todo Should observe engine reset.
      */
-    void rebuildFromDef(struct ded_compositefont_s const &def);
+    void rebuildFromDef(const struct ded_compositefont_s &def);
 
     int ascent() const override;
     int descent() const override;
@@ -70,16 +70,16 @@ public:
     void glInit() const override;
     void glDeinit() const override;
 
-    de::Rectanglei const &glyphPosCoords(uchar ch) const override;
-    de::Rectanglei const &glyphTexCoords(uchar ch) const override;
+    const de::Rectanglei &glyphPosCoords(de::dbyte ch) const override;
+    const de::Rectanglei &glyphTexCoords(de::dbyte ch) const override;
 
-    patchid_t glyphPatch(uchar ch) const;
-    void glyphSetPatch(uchar ch, de::String encodedPatchName);
-    TextureVariant *glyphTexture(uchar ch) const;
-    uint glyphTextureBorder(uchar ch) const;
+    patchid_t       glyphPatch(de::dbyte ch) const;
+    void            glyphSetPatch(de::dbyte ch, de::String encodedPatchName);
+    TextureVariant *glyphTexture(de::dbyte ch) const;
+    uint            glyphTextureBorder(de::dbyte ch) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CLIENT_RESOURCE_COMPOSITEBITMAPFONT_H

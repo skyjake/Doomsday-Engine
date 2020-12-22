@@ -18,15 +18,15 @@
 
 #include "remotefeeduser.h"
 
-#include <de/Async>
-#include <de/FileSystem>
-#include <de/Folder>
-#include <de/Message>
-#include <de/RemoteFeedProtocol>
+#include <de/async.h>
+#include <de/filesystem.h>
+#include <de/folder.h>
+#include <de/message.h>
+#include <de/remotefeedprotocol.h>
 
 using namespace de;
 
-DENG2_PIMPL(RemoteFeedUser)
+DE_PIMPL(RemoteFeedUser)
 {
     using QueryId = RemoteFeedQueryPacket::Id;
 
@@ -42,7 +42,7 @@ DENG2_PIMPL(RemoteFeedUser)
 
     std::unique_ptr<Socket> socket;
     RemoteFeedProtocol protocol;
-    LockableT<QList<Transfer>> transfers;
+    LockableT<List<Transfer>> transfers;
 
     Impl(Public *i, Socket *s) : Base(i), socket(s)
     {
@@ -51,15 +51,14 @@ DENG2_PIMPL(RemoteFeedUser)
         // The RemoteFeed protocol does not require ordered messages.
         socket->setRetainOrder(false);
 
-        QObject::connect(s, &Socket::messagesReady, [this] () { receiveMessages(); });
-        QObject::connect(s, &Socket::allSent, [this] () { continueFileTransfers(); });
-        QObject::connect(s, &Socket::disconnected, [this] ()
-        {
-            DENG2_FOR_PUBLIC_AUDIENCE(Disconnect, i)
+        s->audienceForMessage() += [this]() { receiveMessages(); };
+        s->audienceForAllSent() += [this]() { continueFileTransfers(); };
+        s->audienceForStateChange() += [this]() {
+            if (!socket->isOpen())
             {
-                i->userDisconnected(self());
+                DE_NOTIFY_PUBLIC_VAR(Disconnect, i) { i->userDisconnected(self()); }
             }
-        });
+        };
 
         // We took over an open socket, there may already be messages waiting.
         receiveMessages();
@@ -67,7 +66,7 @@ DENG2_PIMPL(RemoteFeedUser)
 
     void receiveMessages()
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
 
         LOG_AS("RemoteFeedUser");
         while (socket->hasIncoming())
@@ -98,7 +97,7 @@ DENG2_PIMPL(RemoteFeedUser)
                     });
                 }
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_NET_ERROR("Error during query: %s") << er.asText();
             }
@@ -107,7 +106,7 @@ DENG2_PIMPL(RemoteFeedUser)
 
     void continueFileTransfers()
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
         try
         {
             if (socket->bytesBuffered() > 0) return; // Too soon.
@@ -116,13 +115,13 @@ DENG2_PIMPL(RemoteFeedUser)
 
             // Send the next block of the first file in the transfer queue.
             {
-                DENG2_GUARD(transfers);
+                DE_GUARD(transfers);
 
                 if (transfers.value.isEmpty()) return;
 
                 response.reset(new RemoteFeedFileContentsPacket);
 
-                dsize const blockSize = 128 * 1024;
+                const dsize blockSize = 128 * 1024;
                 auto &xfer = transfers.value.front();
 
                 response->setId(xfer.queryId);
@@ -143,7 +142,7 @@ DENG2_PIMPL(RemoteFeedUser)
                 socket->sendPacket(*response);
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_NET_ERROR("Error during file transfer to %s: %s")
                     << socket->peerAddress().asText()
@@ -151,12 +150,13 @@ DENG2_PIMPL(RemoteFeedUser)
         }
     }
 
-    Packet *handleQueryAsync(RemoteFeedQueryPacket const &query)
+    Packet *handleQueryAsync(const RemoteFeedQueryPacket &query)
     {
         // Note: This is executed in a background thread.
         try
         {
-            // Make sure the file system is ready for use.
+            // Make sure the file system is ready for use. Waiting is ok because this is
+            // called via de::async.
             FS::waitForIdle();
 
             std::unique_ptr<RemoteFeedMetadataPacket> response;
@@ -166,7 +166,7 @@ DENG2_PIMPL(RemoteFeedUser)
             case RemoteFeedQueryPacket::ListFiles:
                 response.reset(new RemoteFeedMetadataPacket);
                 response->setId(query.id());
-                if (auto const *folder = FS::tryLocate<Folder const>(query.path()))
+                if (const auto *folder = FS::tryLocate<Folder const>(query.path()))
                 {
                     response->addFolder(*folder);
                 }
@@ -179,7 +179,7 @@ DENG2_PIMPL(RemoteFeedUser)
 
             case RemoteFeedQueryPacket::FileContents: {
                 Transfer xfer(query.id());
-                if (auto const *file = FS::tryLocate<File const>(query.path()))
+                if (const auto *file = FS::tryLocate<File const>(query.path()))
                 {
                     *file >> xfer.data;
                 }
@@ -190,12 +190,12 @@ DENG2_PIMPL(RemoteFeedUser)
                 LOG_NET_MSG("New file transfer: %s size:%i")
                         << query.path()
                         << xfer.data.size();
-                DENG2_GUARD(transfers);
+                DE_GUARD(transfers);
                 transfers.value.push_back(xfer);
                 break; }
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_NET_ERROR("Error while handling remote feed query from %s: %s")
                     << query.from().asText() << er.asText();
@@ -210,6 +210,6 @@ RemoteFeedUser::RemoteFeedUser(Socket *socket)
 
 Address RemoteFeedUser::address() const
 {
-    DENG2_ASSERT(d->socket);
+    DE_ASSERT(d->socket);
     return d->socket->peerAddress();
 }

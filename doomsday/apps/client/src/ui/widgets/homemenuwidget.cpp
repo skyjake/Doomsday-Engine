@@ -20,37 +20,78 @@
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/home/columnwidget.h"
 
-#include <de/FocusWidget>
+#include <de/focuswidget.h>
 
 using namespace de;
 
-DENG_GUI_PIMPL(HomeMenuWidget)
-, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
-, DENG2_OBSERVES(Asset, StateChange)
+DE_GUI_PIMPL(HomeMenuWidget)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+, DE_OBSERVES(Asset, StateChange)
+, DE_OBSERVES(HomeItemWidget, Activity)
+, DE_OBSERVES(HomeItemWidget, Selection)
 {
-    ui::DataPos selectedIndex = ui::Data::InvalidPos;
-    ui::DataPos previousSelectedIndex = 0;
-    ui::Item const *interacted = nullptr;
-    ui::Item const *interactedAction = nullptr;
+    ui::DataPos     selectedIndex         = ui::Data::InvalidPos;
+    ui::DataPos     previousSelectedIndex = 0;
+    const ui::Item *interacted            = nullptr;
+    const ui::Item *interactedAction      = nullptr;
 
     Impl(Public *i) : Base(i)
     {
         self().organizer().audienceForWidgetCreation() += this;
     }
 
-    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &)
+    void widgetCreatedForItem(GuiWidget &widget, const ui::Item &) override
     {
-        if (is<HomeItemWidget>(widget))
+        if (auto *w = maybeAs<HomeItemWidget>(widget))
         {
-            QObject::connect(&widget, SIGNAL(mouseActivity()),
-                             thisPublic, SLOT(mouseActivityInItem()));
-
-            QObject::connect(&widget, SIGNAL(selected()),
-                             thisPublic, SLOT(itemSelectionChanged()));
+            w->audienceForActivity()  += this;
+            w->audienceForSelection() += this;
         }
     }
 
-    void assetStateChanged(Asset &asset)
+    void mouseActivity(HomeItemWidget &widget) override
+    {
+        if (auto *clickedWidget = maybeAs<HomeItemWidget>(widget))
+        {
+            DE_NOTIFY_PUBLIC(Click, i)
+            {
+                i->menuItemClicked(self(), self().findItem(*clickedWidget));
+            }
+        }
+        if (auto *column = self().parentColumn())
+        {
+            DE_FOR_OBSERVERS(i, column->audienceForActivity())
+            {
+                i->mouseActivity(column);
+            }
+        }
+    }
+
+    void itemSelected(HomeItemWidget &widget) override
+    {
+        if (auto *clickedItem = maybeAs<HomeItemWidget>(widget))
+        {
+            const ui::DataPos newSelection = self().findItem(*clickedItem);
+
+            if (selectedIndex != newSelection)
+            {
+                // Deselect the previous selection.
+                if (auto *item = self().itemWidget<HomeItemWidget>(selectedIndex))
+                {
+                    item->setSelected(false);
+                }
+
+                selectedIndex = previousSelectedIndex = newSelection;
+
+                DE_NOTIFY_PUBLIC(Selection, i)
+                {
+                    i->selectedIndexChanged(self(), selectedIndex);
+                }
+            }
+        }
+    }
+
+    void assetStateChanged(Asset &asset) override
     {
         if (asset.state() == Asset::Ready)
         {
@@ -69,9 +110,13 @@ DENG_GUI_PIMPL(HomeMenuWidget)
             }
         }
     }
+
+    DE_PIMPL_AUDIENCES(Selection, Click)
 };
 
-HomeMenuWidget::HomeMenuWidget(String const &name)
+DE_AUDIENCE_METHODS(HomeMenuWidget, Selection, Click)
+
+HomeMenuWidget::HomeMenuWidget(const String &name)
     : MenuWidget(name)
     , d(new Impl(this))
 {
@@ -124,7 +169,7 @@ const ui::Item *HomeMenuWidget::selectedItem() const
 
 void HomeMenuWidget::setSelectedIndex(ui::DataPos index)
 {
-    DENG2_ASSERT(hasRoot());
+    DE_ASSERT(hasRoot());
 
     if (auto *widget = itemWidget<HomeItemWidget>(index))
     {
@@ -153,7 +198,7 @@ void HomeMenuWidget::setSelectedIndex(ui::DataPos index)
     }
 }
 
-void HomeMenuWidget::setInteractedItem(ui::Item const *menuItem, ui::Item const *actionItem)
+void HomeMenuWidget::setInteractedItem(const ui::Item *menuItem, const ui::Item *actionItem)
 {
     d->interacted       = menuItem;
     d->interactedAction = actionItem;
@@ -171,45 +216,12 @@ ColumnWidget *HomeMenuWidget::parentColumn() const
     return nullptr;
 }
 
-ui::Item const *HomeMenuWidget::interactedItem() const
+const ui::Item *HomeMenuWidget::interactedItem() const
 {
     return d->interacted;
 }
 
-ui::Item const *HomeMenuWidget::actionItem() const
+const ui::Item *HomeMenuWidget::actionItem() const
 {
     return d->interactedAction;
-}
-
-void HomeMenuWidget::mouseActivityInItem()
-{
-    if (auto *clickedWidget = dynamic_cast<HomeItemWidget *>(sender()))
-    {
-        emit itemClicked(findItem(*clickedWidget));
-    }
-
-    if (auto *column = parentColumn())
-    {
-        emit column->mouseActivity(column);
-    }
-}
-
-void HomeMenuWidget::itemSelectionChanged()
-{
-    if (auto *clickedItem = dynamic_cast<HomeItemWidget *>(sender()))
-    {
-        ui::DataPos const newSelection = findItem(*clickedItem);
-        if (d->selectedIndex != newSelection)
-        {
-            // Deselect the previous selection.
-            if (auto *item = itemWidget<HomeItemWidget>(d->selectedIndex))
-            {
-                item->setSelected(false);
-            }
-
-            d->selectedIndex = d->previousSelectedIndex = newSelection;
-
-            emit selectedIndexChanged(d->selectedIndex);
-        }
-    }
 }

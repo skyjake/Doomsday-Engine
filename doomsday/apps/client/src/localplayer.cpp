@@ -18,7 +18,7 @@
 
 #include "localplayer.h"
 
-DENG2_PIMPL_NOREF(LocalPlayer)
+DE_PIMPL_NOREF(LocalPlayer)
 {
     
 };

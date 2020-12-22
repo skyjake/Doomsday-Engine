@@ -19,11 +19,11 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_DOWNLOADDIALOG_H
-#define DENG_CLIENT_DOWNLOADDIALOG_H
+#ifndef DE_CLIENT_DOWNLOADDIALOG_H
+#define DE_CLIENT_DOWNLOADDIALOG_H
 
-#include <de/DialogWidget>
-#include <de/ProgressWidget>
+#include <de/dialogwidget.h>
+#include <de/progresswidget.h>
 
 /**
  * Dialog for downloading content.
@@ -31,7 +31,7 @@
 class DownloadDialog : public de::DialogWidget
 {
 public:
-    DownloadDialog(de::String const &name = de::String());
+    DownloadDialog(const de::String &name = de::String());
 
     ~DownloadDialog();
 
@@ -43,7 +43,7 @@ protected:
     void updateStyle() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_DOWNLOADDIALOG_H
+#endif // DE_CLIENT_DOWNLOADDIALOG_H

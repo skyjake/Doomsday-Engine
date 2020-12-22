@@ -20,8 +20,8 @@
 #ifndef CLIENT_INPUTSYSTEM_DDEVENT_H
 #define CLIENT_INPUTSYSTEM_DDEVENT_H
 
-#include <de/Event>
-#include <de/String>
+#include <de/event.h>
+#include <de/string.h>
 #include "api_event.h"
 
 // Input device identifiers:
@@ -88,7 +88,7 @@ struct ddevent_t
         } angle;
         struct {
             int id;                       ///< Console that originated the event.
-            char const *name;             ///< Symbolic name of the event.
+            const char *name;             ///< Symbolic name of the event.
         } symbolic;
         struct {
             dd_bool gained;                ///< Gained or lost focus.

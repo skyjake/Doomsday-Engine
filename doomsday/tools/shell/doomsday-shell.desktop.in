@@ -6,5 +6,4 @@ Categories=Game;ActionGame;
 Exec=${CMAKE_INSTALL_PREFIX}/bin/doomsday-shell
 Terminal=false
 Type=Application
-Icon=${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_DATA_DIR}/deng-shell-logo-256.png
-
+Icon=${CMAKE_INSTALL_PREFIX}/${DE_INSTALL_DATA_DIR}/deng-shell-logo-256.png

@@ -17,218 +17,84 @@
  * 02110-1301 USA</small>
  */
 
-#define DENG_NO_API_MACROS_MAP_EDIT
+#define DE_NO_API_MACROS_MAP_EDIT
 
+#if defined(__CLIENT__)
 #include "de_platform.h"
 #include "api_mapedit.h"
-
 #include "world/map.h"
 #include "world/polyobjdata.h"
-#include "Plane"
-#include "Sector"
-#include "Surface"
+#include "world/line.h"
+#include "world/plane.h"
+#include "world/surface.h"
 #include "edit_map.h"
 #include "dd_main.h"
+#endif
+
+#if defined(__SERVER__)
+#include <doomsday/world/map.h>
+#include <doomsday/world/surface.h>
+#include <doomsday/world/polyobjdata.h>
+#include <doomsday/res/resources.h>
+#include <doomsday/gamefw/defs.h>
+#endif
 
 #include <doomsday/world/entitydef.h>
-#include <doomsday/world/Materials>
-#include <doomsday/EntityDatabase>
-#include <de/Error>
-#include <de/Log>
-#include <de/StringPool>
+#include <doomsday/world/factory.h>
+#include <doomsday/world/mapbuilder.h>
+#include <doomsday/world/materials.h>
+#include <doomsday/world/sector.h>
+#include <doomsday/world/entitydatabase.h>
+#include <de/error.h>
+#include <de/log.h>
+#include <de/stringpool.h>
 
 using namespace de;
-using namespace world;
+using world::editMap;
 
-#define ERROR_IF_NOT_INITIALIZED() { \
-if(!editMapInited) \
-    throw Error(QString("%s").arg(__FUNCTION__), "Not active, did you forget to call MPE_Begin()?"); \
+world::Map *MPE_Map()
+{
+    return editMap;
 }
 
-static Map *editMap;
-static bool editMapInited;
-
-/**
- * Material name references specified during map conversion are recorded in
- * this dictionary. A dictionary is used to avoid repeatedly resolving the same
- * URIs and to facilitate a log of missing materials encountered during the
- * process.
- *
- * The pointer user value holds a pointer to the resolved Material (if found).
- * The integer user value tracks the number of times a reference occurs.
- */
-static StringPool *materialDict;
-
-/**
- * Destroy the missing material dictionary.
- */
-static void clearMaterialDict()
+world::Map *MPE_TakeMap()
 {
-    // Initialized?
-    if(!materialDict) return;
-
-    materialDict->clear();
-    delete materialDict; materialDict = 0;
-}
-
-/**
- * Print any "missing" materials in the dictionary to the log.
- */
-static void printMissingMaterialsInDict()
-{
-    if(!::materialDict) return;
-
-    ::materialDict->forAll([] (StringPool::Id id)
-    {
-        // A valid id?
-        if(::materialDict->string(id))
-        {
-            // An unresolved reference?
-            if(!::materialDict->userPointer(id))
-            {
-                LOG_RES_WARNING("Found %4i x unknown material \"%s\"")
-                    << ::materialDict->userValue(id)
-                    << ::materialDict->string(id);
-            }
-        }
-        return LoopContinue;
-    });
-}
-
-/**
- * Attempt to locate a material by its URI. A dictionary of previously
- * searched-for URIs is maintained to avoid repeated searching and to record
- * "missing" materials.
- *
- * @param materialUriStr  URI of the material to search for.
- *
- * @return  Pointer to the found material; otherwise @c 0.
- */
-static Material *findMaterialInDict(const String &materialUriStr)
-{
-    if(materialUriStr.isEmpty()) return 0;
-
-    // Time to create the dictionary?
-    if(!materialDict)
-    {
-        materialDict = new StringPool;
-    }
-
-    de::Uri materialUri(materialUriStr, RC_NULL);
-
-    // Intern this reference.
-    StringPool::Id internId = materialDict->intern(materialUri.compose());
-    Material *material = 0;
-
-    // Have we previously encountered this?.
-    uint refCount = materialDict->userValue(internId);
-    if(refCount)
-    {
-        // Yes, if resolved the user pointer holds the found material.
-        material = (Material *) materialDict->userPointer(internId);
-    }
-    else
-    {
-        // No, attempt to resolve this URI and update the dictionary.
-        // First try the preferred scheme, then any.
-        try
-        {
-            material = &world::Materials::get().material(materialUri);
-        }
-        catch(Resources::MissingResourceManifestError const &)
-        {
-            // Try any scheme.
-            try
-            {
-                materialUri.setScheme("");
-                material = &world::Materials::get().material(materialUri);
-            }
-            catch(Resources::MissingResourceManifestError const &)
-            {}
-        }
-
-        // Insert the possibly resolved material into the dictionary.
-        materialDict->setUserPointer(internId, material);
-    }
-
-    // There is now one more reference.
-    refCount++;
-    materialDict->setUserValue(internId, refCount);
-
-    return material;
-}
-
-static inline Material *findMaterialInDict(const char *materialUriStr)
-{
-    if (!materialUriStr) return nullptr;
-    return findMaterialInDict(String(materialUriStr));
-}
-
-Map *MPE_Map()
-{
-    return editMapInited? editMap : 0;
-}
-
-Map *MPE_TakeMap()
-{
-    editMapInited = false;
-    Map *retMap = editMap; editMap = 0;
-    return retMap;
+    return editMap.take();
 }
 
 #undef MPE_Begin
-dd_bool MPE_Begin(uri_s const * /*mapUri*/)
+dd_bool MPE_Begin(const uri_s * /*mapUri*/)
 {
-    if(!editMapInited)
-    {
-        delete editMap;
-        editMap = new Map;
-        editMapInited = true;
-    }
+    editMap.begin();
     return true;
 }
 
 #undef MPE_End
 dd_bool MPE_End()
 {
-    if(!editMapInited)
-        return false;
-
-
-
-    /*
-     * Log warnings about any issues we encountered during conversion of
-     * the basic map data elements.
-     */
-    printMissingMaterialsInDict();
-    clearMaterialDict();
-
-    // Note the map is left in an editable state in case the caller decides
-    // they aren't finished after all...
+    if (!editMap) return false;
+    editMap.end();
     return true;
 }
 
 #undef MPE_VertexCreate
 int MPE_VertexCreate(coord_t x, coord_t y, int archiveIndex)
 {
-    ERROR_IF_NOT_INITIALIZED();
-    return editMap->createVertex(Vector2d(x, y), archiveIndex)->indexInMap();
+    return editMap->createVertex(Vec2d(x, y), archiveIndex)->indexInMap();
 }
 
 #undef MPE_VertexCreatev
-dd_bool MPE_VertexCreatev(int num, coord_t const *values, int *archiveIndices, int *retIndices)
+dd_bool MPE_VertexCreatev(int num, const coord_t *values, int *archiveIndices, int *retIndices)
 {
-    ERROR_IF_NOT_INITIALIZED();
-
-    if(num <= 0 || !values)
+    if (num <= 0 || !values)
         return false;
 
     // Create many vertexes.
-    for(int n = 0; n < num; ++n)
+    for (int n = 0; n < num; ++n)
     {
-        Vertex *vertex = editMap->createVertex(Vector2d(values[n * 2], values[n * 2 + 1]),
-                                               archiveIndices[n]);
-        if(retIndices)
+        auto *vertex = editMap->createVertex(Vec2d(values[n * 2], values[n * 2 + 1]),
+                                             archiveIndices[n]);
+        if (retIndices)
         {
             retIndices[n] = vertex->indexInMap();
         }
@@ -241,8 +107,6 @@ dd_bool MPE_VertexCreatev(int num, coord_t const *values, int *archiveIndices, i
 int MPE_LineCreate(int v1, int v2, int frontSectorIdx, int backSectorIdx, int flags,
                    int archiveIndex)
 {
-    ERROR_IF_NOT_INITIALIZED();
-
     if(frontSectorIdx >= editMap->editableSectorCount()) return -1;
     if(backSectorIdx  >= editMap->editableSectorCount()) return -1;
     if(v1 < 0 || v1 >= editMap->vertexCount()) return -1;
@@ -251,12 +115,12 @@ int MPE_LineCreate(int v1, int v2, int frontSectorIdx, int backSectorIdx, int fl
 
     // Next, check the length is not zero.
     /// @todo fixme: We need to allow these... -ds
-    Vertex &vtx1 = editMap->vertex(v1);
-    Vertex &vtx2 = editMap->vertex(v2);
-    if(de::abs(Vector2d(vtx1.origin() - vtx2.origin()).length()) <= 0.0001) return -1;
+    auto &vtx1 = editMap->vertex(v1);
+    auto &vtx2 = editMap->vertex(v2);
+    if(de::abs(Vec2d(vtx1.origin() - vtx2.origin()).length()) <= 0.0001) return -1;
 
-    Sector *frontSector = (frontSectorIdx >= 0? editMap->editableSectors().at(frontSectorIdx) : 0);
-    Sector *backSector  = (backSectorIdx  >= 0? editMap->editableSectors().at(backSectorIdx) : 0);
+    auto *frontSector = (frontSectorIdx >= 0? editMap->editableSectors().at(frontSectorIdx) : 0);
+    auto *backSector  = (backSectorIdx  >= 0? editMap->editableSectors().at(backSectorIdx) : 0);
 
     return editMap->createLine(vtx1, vtx2, flags, frontSector, backSector, archiveIndex)
                         ->indexInMap();
@@ -269,12 +133,10 @@ void MPE_LineAddSide(int lineIdx, int sideId, short flags,
                      const de_api_side_section_s *bottom,
                      int archiveIndex)
 {
-    ERROR_IF_NOT_INITIALIZED();
-
     if(lineIdx < 0 || lineIdx >= editMap->editableLineCount()) return;
 
-    Line *line = editMap->editableLines().at(lineIdx);
-    LineSide &side = line->side(sideId);
+    auto *line = editMap->editableLines().at(lineIdx);
+    auto &side = line->side(sideId);
 
     side.setFlags(flags);
     side.setIndexInArchive(archiveIndex);
@@ -284,20 +146,20 @@ void MPE_LineAddSide(int lineIdx, int sideId, short flags,
 
     // Assign the resolved material if found.
     side.top()
-        .setMaterial(findMaterialInDict(top->material))
-        .setOrigin(Vector2f(top->offset[VX], top->offset[VY]))
-        .setColor(Vector3f(top->color[CR], top->color[CG], top->color[CB]));
+        .setMaterial(editMap.findMaterialInDict(top->material))
+        .setOrigin(Vec2f(top->offset[VX], top->offset[VY]))
+        .setColor(Vec3f(top->color[CR], top->color[CG], top->color[CB]));
 
     side.middle()
-        .setMaterial(findMaterialInDict(middle->material))
-        .setOrigin(Vector2f(middle->offset[VX], middle->offset[VY]))
-        .setColor(Vector3f(middle->color[CR], middle->color[CG], middle->color[CB]))
+        .setMaterial(editMap.findMaterialInDict(middle->material))
+        .setOrigin(Vec2f(middle->offset[VX], middle->offset[VY]))
+        .setColor(Vec3f(middle->color[CR], middle->color[CG], middle->color[CB]))
         .setOpacity(middle->color[CA]);
 
     side.bottom()
-        .setMaterial(findMaterialInDict(bottom->material))
-        .setOrigin(Vector2f(bottom->offset[VX], bottom->offset[VY]))
-        .setColor(Vector3f(bottom->color[CR], bottom->color[CG], bottom->color[CB]));
+        .setMaterial(editMap.findMaterialInDict(bottom->material))
+        .setOrigin(Vec2f(bottom->offset[VX], bottom->offset[VY]))
+        .setColor(Vec3f(bottom->color[CR], bottom->color[CG], bottom->color[CB]));
 }
 
 #undef MPE_PlaneCreate
@@ -305,21 +167,19 @@ int MPE_PlaneCreate(int sectorIdx, coord_t height, const char *materialUri,
     float matOffsetX, float matOffsetY, float tintRed, float tintGreen, float tintBlue, float opacity,
     float normalX, float normalY, float normalZ, int archiveIndex)
 {
-    ERROR_IF_NOT_INITIALIZED();
-
     if(sectorIdx < 0 || sectorIdx >= editMap->editableSectorCount()) return -1;
 
-    Sector *sector = editMap->editableSectors().at(sectorIdx);
-    Plane *plane = sector->addPlane(Vector3f(normalX, normalY, normalZ), height);
+    auto *sector = editMap->editableSectors().at(sectorIdx);
+    auto *plane = sector->addPlane(Vec3f(normalX, normalY, normalZ), height);
 
     plane->setIndexInArchive(archiveIndex);
 
     plane->surface()
-        .setMaterial(findMaterialInDict(materialUri))
+        .setMaterial(editMap.findMaterialInDict(materialUri))
         .setColor({tintRed, tintGreen, tintBlue})
         .setOrigin({matOffsetX, matOffsetY});
 
-    if(!plane->isSectorFloor() && !plane->isSectorCeiling())
+    if (!plane->isSectorFloor() && !plane->isSectorCeiling())
     {
         plane->surface().setOpacity(opacity);
     }
@@ -332,7 +192,6 @@ int MPE_SectorCreate(float lightlevel, float red, float green, float blue,
                      const struct de_api_sector_hacks_s *hacks,
                      int archiveIndex)
 {
-    ERROR_IF_NOT_INITIALIZED();
     return editMap
         ->createSector(lightlevel,
                        {red, green, blue},
@@ -342,12 +201,10 @@ int MPE_SectorCreate(float lightlevel, float red, float green, float blue,
 }
 
 #undef MPE_PolyobjCreate
-int MPE_PolyobjCreate(int const *lines, int lineCount, int tag, int sequenceType,
+int MPE_PolyobjCreate(const int *lines, int lineCount, int tag, int sequenceType,
     coord_t originX, coord_t originY, int archiveIndex)
 {
-    DENG_UNUSED(archiveIndex); /// @todo Use this!
-
-    ERROR_IF_NOT_INITIALIZED();
+    DE_UNUSED(archiveIndex); /// @todo Use this!
 
     if(lineCount <= 0 || !lines) return -1;
 
@@ -357,17 +214,17 @@ int MPE_PolyobjCreate(int const *lines, int lineCount, int tag, int sequenceType
     {
         if(lines[i] < 0 || lines[i] >= editMap->editableLineCount()) return -1;
 
-        Line *line = editMap->editableLines().at(lines[i]);
+        auto *line = editMap->editableLines().at(lines[i]);
         if(line->definesPolyobj()) return -1;
     }
 
-    Polyobj *po = editMap->createPolyobj(Vector2d(originX, originY));
+    Polyobj *po = editMap->createPolyobj(Vec2d(originX, originY));
     po->setSequenceType(sequenceType);
     po->setTag(tag);
 
     for(int i = 0; i < lineCount; ++i)
     {
-        Line *line = editMap->editableLines().at(lines[i]);
+        auto *line = editMap->editableLines().at(lines[i]);
 
         // This line belongs to a polyobj.
         line->setPolyobj(po);
@@ -378,12 +235,10 @@ int MPE_PolyobjCreate(int const *lines, int lineCount, int tag, int sequenceType
 }
 
 #undef MPE_GameObjProperty
-dd_bool MPE_GameObjProperty(char const *entityName, int elementIndex,
-    char const *propertyName, valuetype_t valueType, void *valueAdr)
+dd_bool MPE_GameObjProperty(const char *entityName, int elementIndex,
+    const char *propertyName, valuetype_t valueType, void *valueAdr)
 {
     LOG_AS("MPE_GameObjProperty");
-
-    ERROR_IF_NOT_INITIALIZED();
 
     if(!entityName || !propertyName || !valueAdr)
         return false; // Hmm...
@@ -411,14 +266,14 @@ dd_bool MPE_GameObjProperty(char const *entityName, int elementIndex,
         entities.setProperty(propertyDef, elementIndex, valueType, valueAdr);
         return true;
     }
-    catch(Error const &er)
+    catch(const Error &er)
     {
         LOG_WARNING("%s. Ignoring.") << er.asText();
     }
     return false;
 }
 
-DENG_DECLARE_API(MPE) =
+DE_DECLARE_API(MPE) =
 {
     { DE_API_MAP_EDIT },
 

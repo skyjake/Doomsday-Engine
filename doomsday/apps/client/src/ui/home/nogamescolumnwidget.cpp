@@ -21,11 +21,10 @@
 #include "ui/widgets/taskbarwidget.h"
 #include "clientapp.h"
 
-#include <de/ButtonWidget>
-#include <de/Config>
-#include <de/SignalAction>
-#include <de/TextValue>
-#include <QFileDialog>
+#include <de/buttonwidget.h>
+#include <de/config.h>
+#include <de/filedialog.h>
+#include <de/textvalue.h>
 
 using namespace de;
 
@@ -35,8 +34,8 @@ NoGamesColumnWidget::NoGamesColumnWidget()
     header().hide();
 
     LabelWidget *notice = LabelWidget::newWithText(
-                _E(b) + tr("No playable games were found.\n") + _E(.) +
-                tr("Please select the folder where you have one or more game WAD files."),
+                _E(b) "No playable games were found.\n" _E(.)
+                "Please select the folder where you have one or more game WAD files.",
                 this);
     notice->setMaximumTextWidth(maximumContentWidth());
     notice->setTextColor("text");
@@ -46,43 +45,38 @@ NoGamesColumnWidget::NoGamesColumnWidget()
             .setInput(Rule::Bottom, rule().midY());
 
     ButtonWidget *chooseIwad = new ButtonWidget;
-    chooseIwad->setText(tr("Select WAD Folder..."));
+    chooseIwad->setText("Select WAD Folder...");
     chooseIwad->setSizePolicy(ui::Expand, ui::Expand);
     chooseIwad->rule()
             .setMidAnchorX(rule().midX())
             .setInput(Rule::Top, notice->rule().bottom());
-    chooseIwad->setAction(new SignalAction(this, SLOT(browseForDataFiles())));
+    chooseIwad->setActionFn([this](){ browseForDataFiles(); });
     add(chooseIwad);
 }
 
 String NoGamesColumnWidget::tabHeading() const
 {
-    return tr("Data Files?");
+    return "Data Files?";
 }
 
 void NoGamesColumnWidget::browseForDataFiles()
 {
     bool reload = false;
 
-#if !defined (DENG_MOBILE)
-    // Use a native dialog to select the IWAD folder.
-    ClientApp::app().beginNativeUIMode();
+    auto &cfg = Config::get();
 
-    const auto folders = Config::get().getStringList("resource.packageFolder");
-    String lastDir;
-    if (!folders.isEmpty())
+    FileDialog dlg;
+    dlg.setTitle("Select IWAD Folder");
+    if (const auto folders = cfg.getStringList("resource.packageFolder"))
     {
-        lastDir = folders.back();
+        dlg.setInitialLocation(folders.back());
     }
-    QFileDialog dlg(nullptr, "Select IWAD Folder", lastDir);
-    dlg.setFileMode(QFileDialog::Directory);
-    dlg.setReadOnly(true);
-    //dlg.setNameFilter("*.wad");
-    dlg.setLabelText(QFileDialog::Accept, tr("Select"));
-    if (dlg.exec())
+    dlg.setBehavior(FileDialog::AcceptDirectories, ReplaceFlags);
+    dlg.setPrompt("Select");
+    if (dlg.exec(root()))
     {
-        Variable &      var = Config::get("resource.packageFolder");
-        const TextValue selDir{dlg.selectedFiles().at(0)};
+        Variable &var = Config::get("resource.packageFolder");
+        const TextValue selDir{dlg.selectedPath().toString()};
         if (is<ArrayValue>(var.value()))
         {
             auto &array = var.value<ArrayValue>();
@@ -99,9 +93,6 @@ void NoGamesColumnWidget::browseForDataFiles()
         }
         reload = true;
     }
-
-    ClientApp::app().endNativeUIMode();
-#endif
 
     // Reload packages and recheck for game availability.
     if (reload)

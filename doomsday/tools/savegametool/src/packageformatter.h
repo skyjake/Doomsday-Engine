@@ -20,12 +20,12 @@
 #ifndef SAVEGAMETOOL_PACKAGEFORMATER_H
 #define SAVEGAMETOOL_PACKAGEFORMATER_H
 
-#include <QStringList>
-#include <de/Error>
-#include <de/Block>
-#include <de/Path>
-#include <de/String>
-#include <doomsday/GameStateFolder>
+#include <de/string.h>
+#include <de/error.h>
+#include <de/block.h>
+#include <de/path.h>
+#include <de/string.h>
+#include <doomsday/gamestatefolder.h>
 
 /**
  * Base class for .save package formatters.
@@ -34,23 +34,23 @@ class PackageFormatter
 {
 public:
     /// An error occured when attempting to open the source file. @ingroup errors
-    DENG2_ERROR(FileOpenError);
+    DE_ERROR(FileOpenError);
 
     /// Base class for read-related errors. @ingroup errors
-    DENG2_ERROR(ReadError);
+    DE_ERROR(ReadError);
 
     /// The source file format is unknown/unsupported. @ingroup errors
-    DENG2_SUB_ERROR(ReadError, UnknownFormatError);
+    DE_SUB_ERROR(ReadError, UnknownFormatError);
 
-    QStringList knownExtensions;
-    QStringList baseGameIds;
+    de::StringList knownExtensions;
+    de::StringList baseGameIds;
 
 public:
     /**
      * @param knownExtensions  List of known file extensions for the format.
      * @param baseGameIdKeys   List of supported base game IDs for the format.
      */
-    PackageFormatter(QStringList knownExtensions, QStringList baseGameIds);
+    PackageFormatter(de::StringList knownExtensions, de::StringList baseGameIds);
 
     virtual ~PackageFormatter();
 
@@ -63,7 +63,7 @@ public:
      *
      * @return  Formated Info data.
      */
-    de::String composeInfo(GameStateMetadata const &metadata, de::Path const &sourceFile,
+    de::String composeInfo(const GameStateMetadata &metadata, const de::Path &sourceFile,
                            de::dint32 oldSaveVersion) const;
 
     /**

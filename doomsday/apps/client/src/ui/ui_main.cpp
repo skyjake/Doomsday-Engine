@@ -23,11 +23,11 @@
 #include "sys_system.h"
 
 #include <cmath>
-#include <de/GLState>
-#include <de/GLInfo>
+#include <de/glstate.h>
+#include <de/glinfo.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/filesys/fs_util.h>
-//#include <doomsday/world/Materials>
+//#include <doomsday/world/materials.h>
 
 #include "api_fontrender.h"
 #include "gl/gl_main.h"
@@ -36,7 +36,7 @@
 //#include "resource/image.h"
 #include "render/rend_main.h"
 #include "render/rend_font.h"
-//#include "MaterialAnimator"
+//#include "resource/materialanimator.h"
 
 using namespace de;
 
@@ -48,19 +48,19 @@ static ui_color_t ui_colors[NUM_UI_COLORS] = {
     /* UIC_TITLE */     { 1, 1, 1 },
 };
 
-char const *UI_ChooseFixedFont()
+const char *UI_ChooseFixedFont()
 {
-    if (DENG_GAMEVIEW_WIDTH < 300) return "console11";
-    if (DENG_GAMEVIEW_WIDTH > 768) return "console18";
+    if (DE_GAMEVIEW_WIDTH < 300) return "console11";
+    if (DE_GAMEVIEW_WIDTH > 768) return "console18";
     return "console14";
 }
 
-static AbstractFont *loadSystemFont(char const *name)
+static AbstractFont *loadSystemFont(const char *name)
 {
-    DENG2_ASSERT(name != 0 && name[0]);
+    DE_ASSERT(name != 0 && name[0]);
 
     // Compose the resource name.
-    de::Uri uri = de::makeUri("System:").setPath(name);
+    res::Uri uri = res::makeUri("System:").setPath(name);
 
     // Compose the resource data path.
     ddstring_t resourcePath; Str_InitStd(&resourcePath);
@@ -82,20 +82,20 @@ static AbstractFont *loadSystemFont(char const *name)
     return font;
 }
 
-static void loadFontIfNeeded(char const *uri, fontid_t *fid)
+static void loadFontIfNeeded(const char *uri, fontid_t *fid)
 {
     *fid = NOFONTID;
     if (uri && uri[0])
     {
         try
         {
-            FontManifest &manifest = ClientResources::get().fontManifest(de::makeUri(uri));
+            FontManifest &manifest = ClientResources::get().fontManifest(res::makeUri(uri));
             if (manifest.hasResource())
             {
                 *fid = fontid_t(manifest.uniqueId());
             }
         }
-        catch (Resources::MissingResourceManifestError const &)
+        catch (const Resources::MissingResourceManifestError &)
         {}
     }
 
@@ -151,7 +151,7 @@ void UI_TextOutEx(const char* text, const Point2Raw* origin, ui_color_t* color, 
     UI_TextOutEx2(text, origin, color, alpha, DEFAULT_ALIGNFLAGS, DEFAULT_DRAWFLAGS);
 }
 
-void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, float alpha)
+void UI_DrawDDBackground(const Point2Raw &origin, const Size2Raw &dimensions, float alpha)
 {
     //DGL_Disable(DGL_TEXTURE_2D);
     DGL_PushState();

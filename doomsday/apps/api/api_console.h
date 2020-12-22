@@ -27,7 +27,7 @@
 /// @addtogroup console
 ///@{
 
-DENG_API_TYPEDEF(Con)
+DE_API_TYPEDEF(Con)
 {
     de_api_t api;
 
@@ -75,9 +75,9 @@ DENG_API_TYPEDEF(Con)
     int (*Execute)(int silent, char const* command);
     int (*Executef)(int silent, char const* command, ...);
 }
-DENG_API_T(Con);
+DE_API_T(Con);
 
-#ifndef DENG_NO_API_MACROS_CONSOLE
+#ifndef DE_NO_API_MACROS_CONSOLE
 #define Con_Open                _api_Con.Open
 #define Con_AddCommand          _api_Con.AddCommand
 #define Con_AddVariable         _api_Con.AddVariable
@@ -111,7 +111,7 @@ DENG_API_T(Con);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(Con);
+DE_USING_API(Con);
 #endif
 
 ///@}

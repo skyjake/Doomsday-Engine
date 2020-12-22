@@ -20,9 +20,9 @@
 #ifndef CLIENT_INPUTSYSTEM_COMMANDBINDING_H
 #define CLIENT_INPUTSYSTEM_COMMANDBINDING_H
 
-#include <de/Action>
-#include <de/String>
-#include "Binding"
+#include <de/action.h>
+#include <de/string.h>
+#include "ui/binding.h"
 #include "ddevent.h"
 
 class BindContext;
@@ -36,11 +36,11 @@ class CommandBinding : public Binding
 {
 public:
     CommandBinding()                            : Binding() {}
-    CommandBinding(CommandBinding const &other) : Binding(other) {}
+    CommandBinding(const CommandBinding &other) : Binding(other) {}
     CommandBinding(de::Record &d)               : Binding(d) {}
-    CommandBinding(de::Record const &d)         : Binding(d) {}
+    CommandBinding(const de::Record &d)         : Binding(d) {}
 
-    CommandBinding &operator = (de::Record const *d) {
+    CommandBinding &operator = (const de::Record *d) {
         *static_cast<Binding *>(this) = d;
         return *this;
     }
@@ -62,7 +62,7 @@ public:
      * to be in an undefined state. The caller may choose to clear and then reconfigure
      * it using another descriptor.
      */
-    void configure(char const *eventDesc, char const *command = nullptr, bool assignNewId = true);
+    void configure(const char *eventDesc, const char *command = nullptr, bool assignNewId = true);
 
     /**
      * Evaluate the given @a event according to the binding configuration, and if all
@@ -74,7 +74,7 @@ public:
      *
      * @return Action instance (caller gets ownership), or @c nullptr if no matching.
      */
-    de::Action *makeAction(ddevent_t const &event, BindContext const &context,
+    de::Action *makeAction(const ddevent_t &event, const BindContext &context,
                            bool respectHigherContexts) const;
 };
 

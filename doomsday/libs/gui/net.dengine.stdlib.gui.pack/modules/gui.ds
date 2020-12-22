@@ -1,0 +1,136 @@
+# The Doomsday Engine Project -- libgui
+#
+# Copyright (c) 2013-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or (at
+# your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUTANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
+
+#----------------------------------------------------------------------------
+# GRAPHICAL USER INTERFACE
+
+import Version
+
+def setDefaults(d)
+    # Applies the default configuration settings.
+    # - d: Record where to set the values.
+    try
+        import DisplayMode
+
+        # The default audio and video subsystems.
+        d.video = 'opengl'
+
+        # Generic user interface settings.
+        record d.ui()
+            scaleFactor = 1.0  # Overall factor (both rules and fonts).
+            showAnnotations = True
+            translucency = True
+        end
+
+        # Window manager defaults.
+        record d.window()
+            fsaa = False   # Remove this (should be window-specific).
+
+            # Configure the main window.
+            record main()
+                showFps     = False
+                maxFps      = 0
+                center      = True
+                fsaa        = False
+                vsync       = True
+                refreshRate = 0.0    # match desktop rate
+            end
+        end
+
+        # The default window parameters depend on the original display mode.
+        mode = DisplayMode.originalMode()
+
+        # By default the fullscreen resolution is the desktop resolution.
+        mainWin = d.window.main
+        mainWin.fullSize = [mode['width'], mode['height']]
+
+        # In windowed mode mode, leave some space on the sides so that
+        # the first switch to windowed mode does not place the window in an
+        # inconvenient location. The reduction is done proportionally.
+        offx = mode['width'] * 0.15
+        offy = mode['height'] * 0.15
+        mainWin.rect = [offx, offy, mode['width'] - 2*offx, mode['height'] - 2*offy]
+        mainWin.colorDepth = mode['depth']
+
+        if Version.OS in ['windows', 'macx', 'ios']
+            mainWin.fullscreen = True
+            mainWin.maximize   = False
+        else
+            mainWin.fullscreen = False
+            mainWin.maximize   = True
+        end
+
+    catch NotFoundError
+        # DisplayMode isn't available on the server.
+    end
+end
+
+def scale(value, factor)
+    # Scales a value by 'factor'. If 'value' is a text string, the
+    # suffixes "pt" and "px" (point, pixel) are retained in the result.
+    # - src:    Value to scale. Number or Text, may have "pt" or "px"
+    #           as suffix.
+    # - factor: Scale factor (Number).
+
+    unit = ''
+    p = Text(value)
+    amount = p
+    if p[-2:] == 'pt' or p[-2:] == 'px'
+        unit = p[-2:]
+        amount = p[:-2]
+    end
+    return Text(floor(Number(amount) * factor)) + unit
+end
+
+def colorMix(a, b, amount)
+    # Returns a color where vectors 'a' and 'b' are interpolated by
+    # 'amount'. If 'amount' is 0, the result is 'a'; if 'amount' is 1,
+    # the result is 'b'.
+    if len(a) < 4: a += [1.0]
+    if len(b) < 4: b += [1.0]
+
+    for i in [0, 1, 2, 3]
+        a[i] = Number(a[i])
+        b[i] = Number(b[i])
+    end
+
+    inv = 1.0 - amount
+    return [a[0] * inv + b[0] * amount,
+            a[1] * inv + b[1] * amount,
+            a[2] * inv + b[2] * amount,
+            a[3] * inv + b[3] * amount]
+end
+
+def colorAlpha(colorVector, alpha)
+    # Returns a new color with the alpha value changed to 'alpha'.
+    v = colorVector
+    if len(v) >= 4: v[3] = alpha
+    elsif len(v) == 3: v += [alpha]
+    return v
+end
+
+def dpiScaledImagePath(path)
+    # Returns a version of 'path' where "@2x" is appended to the end
+    # if PIXEL_RATIO is 2 (approximately).
+    import DisplayMode
+    p = Text(path)
+    if DisplayMode.PIXEL_RATIO > 1.5
+        return (p.fileNameAndPathWithoutExtension() + "@2x" +
+                p.fileNameExtension())
+    end
+    return p
+end

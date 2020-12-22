@@ -20,7 +20,7 @@
 #ifndef CLIENT_PLAY_IMPULSEACCUMULATOR_H
 #define CLIENT_PLAY_IMPULSEACCUMULATOR_H
 
-#include <de/String>
+#include <de/string.h>
 
 /**
  * Receives player interaction impulses and normalizes them for later consumption
@@ -83,7 +83,7 @@ public:
 #endif
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CLIENT_PLAY_IMPULSEACCUMULATOR_H

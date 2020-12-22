@@ -29,7 +29,7 @@ extern "C" {
 /**
  * @param script  The script to be communicated to clients if any.
  */
-void Sv_Finale(finaleid_t id, int flags, char const *script);
+void Sv_Finale(finaleid_t id, int flags, const char *script);
 
 #ifdef __cplusplus
 }  // extern "C"

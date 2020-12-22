@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/vector1.h>
-#include <doomsday/res/Textures>
+#include <de/legacy/vector1.h>
+#include <doomsday/res/textures.h>
 #include "ui/infine/finaleanimwidget.h"
 
 #include "dd_main.h"   // App_Resources()
@@ -30,8 +30,8 @@
 #  include "gl/gl_texmanager.h" // GL_PrepareRawTexture()
 #  include "render/r_draw.h"    // Rend_PatchTextureSpec()
 #  include "render/rend_main.h" // filterUI
-#  include "MaterialAnimator"
-#  include <de/GLInfo>
+#  include "resource/materialanimator.h"
+#  include <de/glinfo.h>
 #endif
 
 using namespace de;
@@ -55,7 +55,7 @@ FinaleAnimWidget::Frame::~Frame()
 #endif
 }
 
-DENG2_PIMPL_NOREF(FinaleAnimWidget)
+DE_PIMPL_NOREF(FinaleAnimWidget)
 {
     bool animComplete = true;
     bool animLooping  = false;  ///< @c true= loop back to the start when the end is reached.
@@ -93,14 +93,14 @@ DENG2_PIMPL_NOREF(FinaleAnimWidget)
         case Frame::PFT_RAW:       f->texRef.lumpNum  = *((lumpnum_t *)texRef); break;
         case Frame::PFT_XIMAGE:    f->texRef.tex      = *((DGLuint *)texRef);   break;
 
-        default: throw Error("FinaleAnimWidget::makeFrame", "Unknown frame type #" + String::number(type));
+        default: throw Error("FinaleAnimWidget::makeFrame", "Unknown frame type #" + String::asText(type));
         }
 
         return f;
     }
 };
 
-FinaleAnimWidget::FinaleAnimWidget(String const &name)
+FinaleAnimWidget::FinaleAnimWidget(const String &name)
     : FinaleWidget(name)
     , d(new Impl)
 {}
@@ -122,7 +122,7 @@ FinaleAnimWidget &FinaleAnimWidget::setLooping(bool yes)
 }
 
 #ifdef __CLIENT__
-static void useColor(animator_t const *color, int components)
+static void useColor(const animator_t *color, int components)
 {
     if (components == 3)
     {
@@ -135,26 +135,26 @@ static void useColor(animator_t const *color, int components)
 }
 
 static int buildGeometry(float const /*dimensions*/[3], dd_bool flipTextureS,
-    Vector4f const &bottomColor, Vector4f const &topColor, Vector3f **posCoords,
-    Vector4f **colorCoords, Vector2f **texCoords)
+    const Vec4f &bottomColor, const Vec4f &topColor, Vec3f **posCoords,
+    Vec4f **colorCoords, Vec2f **texCoords)
 {
-    static Vector3f posCoordBuf[4];
-    static Vector4f colorCoordBuf[4];
-    static Vector2f texCoordBuf[4];
+    static Vec3f posCoordBuf[4];
+    static Vec4f colorCoordBuf[4];
+    static Vec2f texCoordBuf[4];
 
     // 0 - 1
     // | / |  Vertex layout
     // 2 - 3
 
-    posCoordBuf[0] = Vector3f(0, 0, 0);
-    posCoordBuf[1] = Vector3f(1, 0, 0);
-    posCoordBuf[2] = Vector3f(0, 1, 0);
-    posCoordBuf[3] = Vector3f(1, 1, 0);
+    posCoordBuf[0] = Vec3f(0.0f);
+    posCoordBuf[1] = Vec3f(1, 0, 0);
+    posCoordBuf[2] = Vec3f(0, 1, 0);
+    posCoordBuf[3] = Vec3f(1, 1, 0);
 
-    texCoordBuf[0] = Vector2f((flipTextureS? 1:0), 0);
-    texCoordBuf[1] = Vector2f((flipTextureS? 0:1), 0);
-    texCoordBuf[2] = Vector2f((flipTextureS? 1:0), 1);
-    texCoordBuf[3] = Vector2f((flipTextureS? 0:1), 1);
+    texCoordBuf[0] = Vec2f((flipTextureS? 1:0), 0);
+    texCoordBuf[1] = Vec2f((flipTextureS? 0:1), 0);
+    texCoordBuf[2] = Vec2f((flipTextureS? 1:0), 1);
+    texCoordBuf[3] = Vec2f((flipTextureS? 0:1), 1);
 
     colorCoordBuf[0] = bottomColor;
     colorCoordBuf[1] = bottomColor;
@@ -168,13 +168,13 @@ static int buildGeometry(float const /*dimensions*/[3], dd_bool flipTextureS,
     return 4;
 }
 
-static void drawGeometry(int numVerts, Vector3f const *posCoords,
-    Vector4f const *colorCoords, Vector2f const *texCoords)
+static void drawGeometry(int numVerts, const Vec3f *posCoords,
+    const Vec4f *colorCoords, const Vec2f *texCoords)
 {
     DGL_Begin(DGL_TRIANGLE_STRIP);
-    Vector3f const *posIt   = posCoords;
-    Vector4f const *colorIt = colorCoords;
-    Vector2f const *texIt   = texCoords;
+    const Vec3f *posIt   = posCoords;
+    const Vec4f *colorIt = colorCoords;
+    const Vec2f *texIt   = texCoords;
     for (int i = 0; i < numVerts; ++i, posIt++, colorIt++, texIt++)
     {
         if (texCoords)
@@ -188,7 +188,7 @@ static void drawGeometry(int numVerts, Vector3f const *posCoords,
     DGL_End();
 }
 
-static inline MaterialVariantSpec const &uiMaterialSpec_FinaleAnim()
+static inline const MaterialVariantSpec &uiMaterialSpec_FinaleAnim()
 {
     return App_Resources().materialSpec(UiContext, 0, 0, 0, 0,
                                              GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
@@ -197,7 +197,7 @@ static inline MaterialVariantSpec const &uiMaterialSpec_FinaleAnim()
 
 static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3],
     float /*const*/ scale[3], float const rgba[4], float const rgba2[4], float angle,
-    Vector3f const &worldOffset)
+    const Vec3f &worldOffset)
 {
     vec3f_t offset = { 0, 0, 0 }, dimensions, origin, originOffset, center;
     vec2f_t texScale = { 1, 1 };
@@ -206,9 +206,9 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
     dd_bool mustPopTextureMatrix = false;
     dd_bool textureEnabled = false;
     int numVerts;
-    Vector3f *posCoords;
-    Vector4f *colorCoords;
-    Vector2f *texCoords;
+    Vec3f *posCoords;
+    Vec4f *colorCoords;
+    Vec2f *texCoords;
 
     if (p->frameCount())
     {
@@ -231,8 +231,8 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
                 V3f_Set(dimensions, 320 /*rawTex->width*/, 200 /*rawTex->height*/, 0);
                 // Rotation occurs around the center of the screen.
                 V2f_Set(rotateCenter, 160, 100);
-                GL_BindTextureUnmanaged(glName, gl::ClampToEdge, gl::ClampToEdge,
-                                        (filterUI ? gl::Linear : gl::Nearest));
+                GL_BindTextureUnmanaged(glName, gfx::ClampToEdge, gfx::ClampToEdge,
+                                        (filterUI ? gfx::Linear : gfx::Nearest));
                 if (glName)
                 {
                     DGL_Enable(DGL_TEXTURE_2D);
@@ -245,8 +245,8 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
             V3f_Set(offset, 0, 0, 0);
             V3f_Set(dimensions, 1, 1, 0);
             V2f_Set(rotateCenter, .5f, .5f);
-            GL_BindTextureUnmanaged(f->texRef.tex, gl::ClampToEdge, gl::ClampToEdge,
-                                    (filterUI ? gl::Linear : gl::Nearest));
+            GL_BindTextureUnmanaged(f->texRef.tex, gfx::ClampToEdge, gfx::ClampToEdge,
+                                    (filterUI ? gfx::Linear : gfx::Nearest));
             if (f->texRef.tex)
             {
                 DGL_Enable(DGL_TEXTURE_2D);
@@ -263,9 +263,9 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
                 // Ensure we've up to date info about the material.
                 matAnimator.prepare();
 
-                Vector2ui const &matDimensions = matAnimator.dimensions();
+                const Vec2ui &matDimensions = matAnimator.dimensions();
                 TextureVariant *tex            = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
-                int const texBorder            = tex->spec().variant.border;
+                const int texBorder            = tex->spec().variant.border;
 
                 GL_BindTexture(tex);
                 DGL_Enable(DGL_TEXTURE_2D);
@@ -276,7 +276,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
                 tex->glCoords(&texScale[VX], &texScale[VY]);
 
                 // Apply a sprite-texture origin offset?
-                bool const texIsSprite = !tex->base().manifest().scheme().name().compareWithoutCase("Sprites");
+                const bool texIsSprite = !tex->base().manifest().scheme().name().compareWithoutCase("Sprites");
                 if (texIsSprite)
                 {
                     V3f_Set(offset, tex->base().origin().x, tex->base().origin().y, 0);
@@ -294,7 +294,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
             if (manifest.hasTexture())
             {
                 res::Texture &tex = manifest.texture();
-                TextureVariantSpec const &texSpec =
+                const TextureVariantSpec &texSpec =
                     Rend_PatchTextureSpec(0 | (tex.isFlagged(res::Texture::Monochrome)        ? TSF_MONOCHROME : 0)
                                             | (tex.isFlagged(res::Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
                 GL_BindTexture(static_cast<ClientTexture &>(tex).prepareVariant(texSpec));
@@ -331,7 +331,8 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
     offset[VX] *= scale[VX]; offset[VY] *= scale[VY]; offset[VZ] *= scale[VZ];
     V3f_Sum(originOffset, originOffset, offset);
 
-    numVerts = buildGeometry(dimensions, flipTextureS, rgba, rgba2, &posCoords, &colorCoords, &texCoords);
+    numVerts = buildGeometry(
+        dimensions, flipTextureS, Vec4f(rgba), Vec4f(rgba2), &posCoords, &colorCoords, &texCoords);
 
     // Setup the transformation.
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -406,7 +407,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
     DGL_PopMatrix();
 }
 
-void FinaleAnimWidget::draw(Vector3f const &offset)
+void FinaleAnimWidget::draw(const Vec3f &offset)
 {
     // Fully transparent pics will not be drawn.
     if (!(d->color[3].value > 0)) return;
@@ -484,14 +485,14 @@ int FinaleAnimWidget::newFrame(Frame::Type type, int tics, void *texRef, short s
     return d->frames.count();
 }
 
-FinaleAnimWidget::Frames const &FinaleAnimWidget::allFrames() const
+const FinaleAnimWidget::Frames &FinaleAnimWidget::allFrames() const
 {
     return d->frames;
 }
 
 FinaleAnimWidget &FinaleAnimWidget::clearAllFrames()
 {
-    qDeleteAll(d->frames); d->frames.clear();
+    deleteAll(d->frames); d->frames.clear();
     d->curFrame     = 0;
     d->animComplete = true;  // Nothing to animate.
     d->animLooping  = false; // Yeah?
@@ -510,12 +511,12 @@ FinaleAnimWidget &FinaleAnimWidget::resetAllColors()
     return *this;
 }
 
-animator_t const *FinaleAnimWidget::color() const
+const animator_t *FinaleAnimWidget::color() const
 {
     return d->color;
 }
 
-FinaleAnimWidget &FinaleAnimWidget::setColor(Vector3f const &newColor, int steps)
+FinaleAnimWidget &FinaleAnimWidget::setColor(const Vec3f &newColor, int steps)
 {
     AnimatorVector3_Set(d->color, newColor.x, newColor.y, newColor.z, steps);
     return *this;
@@ -527,18 +528,18 @@ FinaleAnimWidget &FinaleAnimWidget::setAlpha(float newAlpha, int steps)
     return *this;
 }
 
-FinaleAnimWidget &FinaleAnimWidget::setColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+FinaleAnimWidget &FinaleAnimWidget::setColorAndAlpha(const Vec4f &newColorAndAlpha, int steps)
 {
     AnimatorVector4_Set(d->color, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
     return *this;
 }
 
-animator_t const *FinaleAnimWidget::edgeColor() const
+const animator_t *FinaleAnimWidget::edgeColor() const
 {
     return d->edgeColor;
 }
 
-FinaleAnimWidget &FinaleAnimWidget::setEdgeColor(Vector3f const &newColor, int steps)
+FinaleAnimWidget &FinaleAnimWidget::setEdgeColor(const Vec3f &newColor, int steps)
 {
     AnimatorVector3_Set(d->edgeColor, newColor.x, newColor.y, newColor.z, steps);
     return *this;
@@ -550,18 +551,18 @@ FinaleAnimWidget &FinaleAnimWidget::setEdgeAlpha(float newAlpha, int steps)
     return *this;
 }
 
-FinaleAnimWidget &FinaleAnimWidget::setEdgeColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+FinaleAnimWidget &FinaleAnimWidget::setEdgeColorAndAlpha(const Vec4f &newColorAndAlpha, int steps)
 {
     AnimatorVector4_Set(d->edgeColor, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
     return *this;
 }
 
-animator_t const *FinaleAnimWidget::otherColor() const
+const animator_t *FinaleAnimWidget::otherColor() const
 {
     return d->otherColor;
 }
 
-FinaleAnimWidget &FinaleAnimWidget::setOtherColor(de::Vector3f const &newColor, int steps)
+FinaleAnimWidget &FinaleAnimWidget::setOtherColor(const de::Vec3f &newColor, int steps)
 {
     AnimatorVector3_Set(d->otherColor, newColor.x, newColor.y, newColor.z, steps);
     return *this;
@@ -573,18 +574,18 @@ FinaleAnimWidget &FinaleAnimWidget::setOtherAlpha(float newAlpha, int steps)
     return *this;
 }
 
-FinaleAnimWidget &FinaleAnimWidget::setOtherColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+FinaleAnimWidget &FinaleAnimWidget::setOtherColorAndAlpha(const Vec4f &newColorAndAlpha, int steps)
 {
     AnimatorVector4_Set(d->otherColor, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
     return *this;
 }
 
-animator_t const *FinaleAnimWidget::otherEdgeColor() const
+const animator_t *FinaleAnimWidget::otherEdgeColor() const
 {
     return d->otherEdgeColor;
 }
 
-FinaleAnimWidget &FinaleAnimWidget::setOtherEdgeColor(de::Vector3f const &newColor, int steps)
+FinaleAnimWidget &FinaleAnimWidget::setOtherEdgeColor(const de::Vec3f &newColor, int steps)
 {
     AnimatorVector3_Set(d->otherEdgeColor, newColor.x, newColor.y, newColor.z, steps);
     return *this;
@@ -596,7 +597,7 @@ FinaleAnimWidget &FinaleAnimWidget::setOtherEdgeAlpha(float newAlpha, int steps)
     return *this;
 }
 
-FinaleAnimWidget &FinaleAnimWidget::setOtherEdgeColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+FinaleAnimWidget &FinaleAnimWidget::setOtherEdgeColorAndAlpha(const Vec4f &newColorAndAlpha, int steps)
 {
     AnimatorVector4_Set(d->otherEdgeColor, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
     return *this;

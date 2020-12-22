@@ -18,23 +18,17 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_WORLD_CLSKYPLANE_H
-#define DENG_CLIENT_WORLD_CLSKYPLANE_H
+#pragma once
 
-#include <de/Observers>
+#include <de/observers.h>
 
-namespace world {
-
-/**
- *
- */
 class ClSkyPlane
 {
 public:
     /// Notified whenever a @em height change occurs.
-    DENG2_DEFINE_AUDIENCE2(HeightChange, void clSkyPlaneHeightChanged(ClSkyPlane &skyPlane))
+    DE_AUDIENCE(HeightChange, void clSkyPlaneHeightChanged(ClSkyPlane &skyPlane))
 
-    ClSkyPlane(bool isCeiling = false, de::ddouble defaultHeight = 0);
+    ClSkyPlane(bool isCeiling = false, double defaultHeight = 0);
 
     /**
      * Returns @c true if this sky plane is configured as the "ceiling".
@@ -55,7 +49,7 @@ public:
      *
      * @see setHeight()
      */
-    de::ddouble height() const;
+    double height() const;
 
     /**
      * Change the height of the sky plane to @a newHeight. The HeightChange audience will
@@ -63,12 +57,8 @@ public:
      *
      * @see height()
      */
-    void setHeight(de::ddouble newHeight);
+    void setHeight(double newHeight);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
-
-} // namespace world
-
-#endif // DENG_CLIENT_WORLD_CLSKYPLANE_H

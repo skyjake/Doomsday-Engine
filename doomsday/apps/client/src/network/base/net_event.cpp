@@ -26,7 +26,7 @@
 #  include "dd_main.h"
 #endif
 
-#include "network/masterserver.h"
+#include <doomsday/network/masterserver.h>
 
 #include "world/p_players.h"
 
@@ -39,8 +39,6 @@ using namespace de;
 
 #define MASTER_QUEUE_LEN    16
 #define NETEVENT_QUEUE_LEN  32
-#define MASTER_HEARTBEAT    120  ///< seconds.
-#define MASTER_UPDATETIME   3    ///< seconds.
 
 // The master action queue.
 static masteraction_t masterQueue[MASTER_QUEUE_LEN];
@@ -49,11 +47,6 @@ static dint mqHead, mqTail;
 // The net event queue (player arrive/leave).
 static netevent_t netEventQueue[NETEVENT_QUEUE_LEN];
 static dint neqHead, neqTail;
-
-#ifdef __SERVER__
-// Countdown for master updates.
-static timespan_t masterHeartbeat;
-#endif
 
 /**
  * Add a master action command to the queue. The master action stuff really
@@ -74,7 +67,7 @@ dd_bool N_MAGet(masteraction_t *act)
     if(::mqHead == ::mqTail)
         return false;
 
-    DENG2_ASSERT(act);
+    DE_ASSERT(act);
     *act = ::masterQueue[mqTail];
     return true;
 }
@@ -111,7 +104,7 @@ dd_bool N_MADone()
  */
 void N_NEPost(netevent_t *nev)
 {
-    DENG2_ASSERT(nev);
+    DE_ASSERT(nev);
     ::netEventQueue[::neqHead] = *nev;
     ::neqHead = (::neqHead + 1) % NETEVENT_QUEUE_LEN;
 }
@@ -139,7 +132,7 @@ dd_bool N_NEGet(netevent_t *nev)
     if(!N_NEPending())
         return false;
 
-    DENG2_ASSERT(nev);
+    DE_ASSERT(nev);
     *nev = ::netEventQueue[::neqTail];
     ::neqTail = (::neqTail + 1) % NETEVENT_QUEUE_LEN;
     return true;
@@ -148,27 +141,8 @@ dd_bool N_NEGet(netevent_t *nev)
 /**
  * Handles low-level net tick stuff: communication with the master server.
  */
-void N_NETicker(timespan_t time)
+void N_NETicker(void)
 {
-#if !defined(__SERVER__)
-    DENG2_UNUSED(time);
-#endif
-
-#ifdef __SERVER__
-    if(::netGame)
-    {
-        ::masterHeartbeat -= time;
-
-        // Update master periodically.
-        if(::serverPublic && App_ServerSystem().isListening() &&
-           App_World().hasMap() && ::masterHeartbeat < 0)
-        {
-            ::masterHeartbeat = MASTER_HEARTBEAT;
-            N_MasterAnnounceServer(true);
-        }
-    }
-#endif
-
     // Is there a master action to worry about?
     masteraction_t act;
     if(N_MAGet(&act))
@@ -191,11 +165,11 @@ void N_NETicker(timespan_t time)
             break;
 
         case MAC_LIST: {
-            dint const num = N_MasterGet(0, 0);
+            const dint num = N_MasterGet(0, 0);
             dint i = num;
             while(--i >= 0)
             {
-                shell::ServerInfo info;
+                ServerInfo info;
                 N_MasterGet(i, &info);
                 info.printToLog(i, i - 1 == num);
             }
@@ -203,65 +177,7 @@ void N_NETicker(timespan_t time)
             N_MARemove();
             break; }
 
-        default: DENG2_ASSERT(!"N_NETicker: Invalid value for 'act'"); break;
+        default: DE_ASSERT_FAIL("N_NETicker: Invalid value for 'act'"); break;
         }
     }
-}
-
-/**
- * The event list is checked for arrivals and exits, and the 'clients' and 'players'
- * arrays are updated accordingly.
- */
-void N_Update()
-{
-#ifdef __SERVER__
-    netevent_t  nevent;
-
-    // Are there any events to process?
-    while(N_NEGet(&nevent))
-    {
-        switch(nevent.type)
-        {
-        case NE_CLIENT_ENTRY: {
-            // Assign a console to the new player.
-            Sv_PlayerArrives(nevent.id, App_ServerSystem().user(nevent.id).name().toUtf8());
-
-            // Update the master.
-            ::masterHeartbeat = MASTER_UPDATETIME;
-            break; }
-
-        case NE_CLIENT_EXIT:
-            Sv_PlayerLeaves(nevent.id);
-
-            // Update the master.
-            ::masterHeartbeat = MASTER_UPDATETIME;
-            break;
-
-        default: DENG2_ASSERT(!"N_Update: Invalid value"); break;
-        }
-    }
-#endif  // __SERVER__
-}
-
-/**
- * The client is removed from the game without delay. This is used when the server
- * needs to terminate a client's connection abnormally.
- */
-void N_TerminateClient(dint console)
-{
-#ifdef __SERVER__
-    DENG2_ASSERT(console >= 0 && console < DDMAXPLAYERS);
-    if(!DD_Player(console)->isConnected())
-        return;
-
-    LOG_NET_NOTE("Terminating connection to console %i (player '%s')")
-        << console << DD_Player(console)->name;
-
-    App_ServerSystem().terminateNode(DD_Player(console)->remoteUserId);
-
-    // Update the master.
-    ::masterHeartbeat = MASTER_UPDATETIME;
-#else
-    DENG2_UNUSED(console);
-#endif
 }

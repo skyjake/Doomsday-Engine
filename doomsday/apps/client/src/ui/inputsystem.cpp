@@ -17,20 +17,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_BINDING
+#define DE_NO_API_MACROS_BINDING
 
 #include "de_platform.h" // strdup macro
 #include "ui/inputsystem.h"
 
-#include <QList>
-#include <QtAlgorithms>
-#include <de/timer.h> // SECONDSPERTIC
-#include <de/Record>
-#include <de/LogBuffer>
-#include <de/NumberValue>
-#include <de/Function>
-#include <de/Context>
-#include <de/ScriptSystem>
+#include <de/legacy/timer.h> // SECONDSPERTIC
+#include <de/dscript.h>
+#include <de/keyevent.h>
+#include <de/logbuffer.h>
+#include <de/mouseevent.h>
+#include <de/windowsystem.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <doomsday/console/exec.h>
@@ -41,16 +38,14 @@
 #include "dd_loop.h" // DD_IsFrameTimeAdvancing()
 
 #include "render/vr.h"
-
 #include "world/p_players.h"
 
-#include "BindContext"
-#include "CommandBinding"
-#include "ImpulseBinding"
+#include "ui/bindcontext.h"
+#include "ui/commandbinding.h"
+#include "ui/impulsebinding.h"
 #include "ui/ddevent.h"
 #include "ui/b_util.h"
 #include "ui/clientwindow.h"
-#include "ui/clientwindowsystem.h"
 #include "ui/inputdebug.h"  // Debug visualization.
 #include "ui/inputdevice.h"
 #include "ui/axisinputcontrol.h"
@@ -68,9 +63,9 @@ using namespace de;
 
 #define MAX_AXIS_FILTER  40
 
-static char *joyControllerPreset = (char *) "";
+static char *joyControllerPreset = const_cast<char *>("");
 
-static InputDevice *makeKeyboard(String const &name, String const &title = "")
+static InputDevice *makeKeyboard(const String &name, const String &title = "")
 {
     InputDevice *keyboard = new InputDevice(name);
 
@@ -79,11 +74,11 @@ static InputDevice *makeKeyboard(String const &name, String const &title = "")
     // DDKEYs are used as button indices.
     for (int i = 0; i < 256; ++i)
     {
-        char const *shortName = B_ShortNameForKey(i, true);
+        const char *shortName = B_ShortNameForKey(i, true);
         String keyName(shortName? shortName : "");
         if (keyName.isEmpty())
         {
-            keyName = String::format("unbindable%03i", i);
+            keyName = Stringf("unbindable%03i", i);
         }
         keyboard->addButton(new ButtonInputControl(keyName));
     }
@@ -91,7 +86,7 @@ static InputDevice *makeKeyboard(String const &name, String const &title = "")
     return keyboard;
 }
 
-static InputDevice *makeMouse(String const &name, String const &title = "")
+static InputDevice *makeMouse(const String &name, const String &title = "")
 {
     InputDevice *mouse = new InputDevice(name);
 
@@ -125,7 +120,7 @@ static InputDevice *makeMouse(String const &name, String const &title = "")
     return mouse;
 }
 
-static InputDevice *makeJoystick(String const &name, String const &title = "")
+static InputDevice *makeJoystick(const String &name, const String &title = "")
 {
     InputDevice *joy = new InputDevice(name);
 
@@ -133,7 +128,7 @@ static InputDevice *makeJoystick(String const &name, String const &title = "")
 
     for (int i = 0; i < IJOY_MAXBUTTONS; ++i)
     {
-        joy->addButton(new ButtonInputControl(String::format("button%i", i + 1)));
+        joy->addButton(new ButtonInputControl(Stringf("button%i", i + 1)));
     }
 
     for (int i = 0; i < IJOY_MAXAXES; ++i)
@@ -155,13 +150,13 @@ static InputDevice *makeJoystick(String const &name, String const &title = "")
 
     for (int i = 0; i < IJOY_MAXHATS; ++i)
     {
-        joy->addHat(new HatInputControl(String::format("hat%i", i + 1)));
+        joy->addHat(new HatInputControl(Stringf("hat%i", i + 1)));
     }
 
     return joy;
 }
 
-static InputDevice *makeHeadTracker(String const &name, String const &title)
+static InputDevice *makeHeadTracker(const String &name, const String &title)
 {
     InputDevice *head = new InputDevice(name);
 
@@ -180,12 +175,12 @@ static InputDevice *makeHeadTracker(String const &name, String const &title)
     return head;
 }
 
-static Value *Function_InputSystem_BindEvent(Context &, Function::ArgumentValues const &args)
+static Value *Function_InputSystem_BindEvent(Context &, const Function::ArgumentValues &args)
 {
     String eventDesc = args[0]->asText();
     String command   = args[1]->asText();
 
-    if (ClientApp::inputSystem().bindCommand(eventDesc.toLatin1(), command.toUtf8()))
+    if (ClientApp::input().bindCommand(eventDesc, command))
     {
         // Success.
         return new NumberValue(true);
@@ -195,12 +190,12 @@ static Value *Function_InputSystem_BindEvent(Context &, Function::ArgumentValues
     return new NumberValue(false);
 }
 
-static Value *Function_InputSystem_BindControl(Context &, Function::ArgumentValues const &args)
+static Value *Function_InputSystem_BindControl(Context &, const Function::ArgumentValues &args)
 {
     String control = args[0]->asText();
     String impulse = args[1]->asText();
 
-    if (ClientApp::inputSystem().bindImpulse(control.toLatin1(), impulse.toLatin1()))
+    if (ClientApp::input().bindImpulse(control, impulse))
     {
         return new NumberValue(true);
     }
@@ -241,14 +236,14 @@ static char *eventStrings[MAXEVENTS];
  * These are intended for strings in ddevent_t that are valid during the
  * processing of an event.
  */
-static char const *allocEventString(char const *str)
+static const char *allocEventString(const char *str)
 {
-    DENG2_ASSERT(str);
+    DE_ASSERT(str);
     static int eventStringRover = 0;
 
-    DENG2_ASSERT(eventStringRover >= 0 && eventStringRover < MAXEVENTS);
+    DE_ASSERT(eventStringRover >= 0 && eventStringRover < MAXEVENTS);
     M_Free(eventStrings[eventStringRover]);
-    char const *returnValue = eventStrings[eventStringRover] = strdup(str);
+    const char *returnValue = eventStrings[eventStringRover] = strdup(str);
 
     if (++eventStringRover >= MAXEVENTS)
     {
@@ -265,77 +260,77 @@ static void clearEventStrings()
     }
 }
 
-struct eventqueue_t
+struct EventQueue
 {
-    ddevent_t events[MAXEVENTS];
-    int head;
-    int tail;
-};
+    ddevent_t events[MAXEVENTS]{};
+    int head = 0;
+    int tail = 0;
 
-/**
- * Gets the next event from an input event queue.
- * @param q  Event queue.
- * @return @c NULL if no more events are available.
- */
-static ddevent_t *nextFromQueue(eventqueue_t *q)
-{
-    DENG2_ASSERT(q);
-
-    if (q->head == q->tail)
-        return nullptr;
-
-    ddevent_t *ev = &q->events[q->tail];
-    q->tail = (q->tail + 1) & (MAXEVENTS - 1);
-
-    return ev;
-}
-
-static void clearQueue(eventqueue_t *q)
-{
-    DENG2_ASSERT(q);
-    q->head = q->tail;
-}
-
-static void postToQueue(eventqueue_t *q, ddevent_t *ev)
-{
-    DENG2_ASSERT(q && ev);
-    q->events[q->head] = *ev;
-
-    if (ev->type == E_SYMBOLIC)
+    void clear()
     {
-        // Allocate a throw-away string from our buffer.
-        q->events[q->head].symbolic.name = allocEventString(ev->symbolic.name);
+        head = tail;
     }
 
-    q->head++;
-    q->head &= MAXEVENTS - 1;
-}
+    /**
+     * Gets the next event from an input event queue.
+     * @return @c nullptr if no more events are available. Caller does not get ownership.
+     */
+    ddevent_t *getNext()
+    {
+        if (head == tail)
+        {
+            return nullptr;
+        }
+        ddevent_t *ev = &events[tail];
+        tail = (tail + 1) & (MAXEVENTS - 1);
+        return ev;
+    }
 
-static eventqueue_t queue;
-static eventqueue_t sharpQueue;
+    void post(const ddevent_t &ev)
+    {
+        events[head] = ev;
 
-static byte useSharpInputEvents = true; ///< cvar
+        if (ev.type == E_SYMBOLIC)
+        {
+            // Allocate a throw-away string from our buffer.
+            events[head].symbolic.name = allocEventString(ev.symbolic.name);
+        }
 
-DENG2_PIMPL(InputSystem)
-, DENG2_OBSERVES(BindContext, ActiveChange)
-, DENG2_OBSERVES(BindContext, AcquireDeviceChange)
-, DENG2_OBSERVES(BindContext, BindingAddition)
+        head++;
+        head &= MAXEVENTS - 1;
+    }
+};
+
+static EventQueue queue;
+static EventQueue sharpQueue;
+
+static dbyte useSharpInputEvents = true; ///< cvar
+
+DE_PIMPL(InputSystem)
+, DE_OBSERVES(BindContext, ActiveChange)
+, DE_OBSERVES(BindContext, AcquireDeviceChange)
+, DE_OBSERVES(BindContext, BindingAddition)
 {
     bool ignoreInput = false;
+    bool enableMouse = true;
 
-    ConfigProfiles settings;
-    Binder binder;
-
-    typedef QList<InputDevice *> Devices;
-    Devices devices;
-
-    typedef QList<BindContext *> BindContexts;
-    BindContexts contexts;  ///< Ordered from highest to lowest priority.
+    ConfigProfiles      settings;
+    Binder              binder;
+    List<InputDevice *> devices;
+    List<BindContext *> contexts;  ///< Ordered from highest to lowest priority.
 
     std::unique_ptr<ControllerPresets> gameControllerPresets;
 
     Impl(Public *i) : Base(i)
     {
+        // Enabled devices.
+        {
+            if (CommandLine_Check("-nomouse") || novideo)
+            {
+                enableMouse = false;
+            }
+        }
+
         // Initialize settings.
         settings.define(ConfigProfiles::ConfigVariable, "input.mouse.syncSensitivity")
                 .define(ConfigProfiles::FloatCVar,      "input-mouse-x-scale", 1.f/1000.f)
@@ -347,8 +342,8 @@ DENG2_PIMPL(InputSystem)
 
         // Initialize script bindings.
         binder.initNew()
-                << DENG2_FUNC(InputSystem_BindEvent,   "bindEvent",   "event" << "command")
-                << DENG2_FUNC(InputSystem_BindControl, "bindControl", "control" << "impulse");
+                << DE_FUNC(InputSystem_BindEvent,   "bindEvent",   "event" << "command")
+                << DE_FUNC(InputSystem_BindControl, "bindControl", "control" << "impulse");
 
         binder.module().addNumber("DEFAULT_STICK_DEADZONE", DEFAULT_STICK_DEADZONE).setReadOnly();
         binder.module().addNumber("DEFAULT_STICK_FACTOR",   DEFAULT_STICK_FACTOR).setReadOnly();
@@ -372,7 +367,7 @@ DENG2_PIMPL(InputSystem)
 
     void clearAllDevices()
     {
-        qDeleteAll(devices);
+        deleteAll(devices);
         devices.clear();
     }
 
@@ -402,9 +397,9 @@ DENG2_PIMPL(InputSystem)
         return device;
     }
 
-    void echoSymbolicEvent(ddevent_t const &ev)
+    void echoSymbolicEvent(const ddevent_t &ev)
     {
-        DENG2_ASSERT(symbolicEchoMode);
+        DE_ASSERT(symbolicEchoMode);
 
         // Some event types are never echoed.
         if (ev.type == E_SYMBOLIC || ev.type == E_FOCUS) return;
@@ -430,24 +425,24 @@ DENG2_PIMPL(InputSystem)
 
         const Block nameUtf8 = name.toUtf8();
         ddevent_t echo{};
-        echo.device        = -1;
+        echo.device        = uint(-1);
         echo.type          = E_SYMBOLIC;
         echo.symbolic.id   = 0;
-        echo.symbolic.name = nameUtf8.constData();
+        echo.symbolic.name = name;
 
         LOG_INPUT_XVERBOSE("Symbolic echo: %s", name);
-        self().postEvent(&echo);
+        self().postEvent(echo);
     }
 
     /**
      * Send all the events of the given timestamp down the responder chain.
      */
-    void dispatchEvents(eventqueue_t *q, timespan_t ticLength, bool updateAxes = true)
+    void dispatchEvents(EventQueue *q, timespan_t ticLength, bool updateAxes = true)
     {
-        bool const callGameResponders = App_GameLoaded();
+        const bool callGameResponders = App_GameLoaded();
 
         ddevent_t *ddev;
-        while ((ddev = nextFromQueue(q)))
+        while ((ddev = q->getNext()))
         {
             // Update the state of the input device tracking table.
             self().trackEvent(*ddev);
@@ -517,12 +512,13 @@ DENG2_PIMPL(InputSystem)
      */
     void postEventsForAllDevices()
     {
-        readKeyboard();
+//        readKeyboard();
         readMouse();
         readJoystick();
         readHeadTracker();
     }
 
+#if 0
     /**
      * Check the current keyboard state, generate input events based on pressed/held
      * keys and poss them.
@@ -539,9 +535,9 @@ DENG2_PIMPL(InputSystem)
         ev.toggle.state = ETOG_REPEAT;
 
         // Read the new keyboard events, convert to ddevents and post them.
-        int const QUEUESIZE = 32;
+        const int QUEUESIZE = 32;
         keyevent_t keyevs[QUEUESIZE];
-        size_t const numkeyevs = Keyboard_GetEvents(keyevs, QUEUESIZE);
+        const size_t numkeyevs = Keyboard_GetEvents(keyevs, QUEUESIZE);
         for (size_t n = 0; n < numkeyevs; ++n)
         {
             keyevent_t *ke = &keyevs[n];
@@ -559,7 +555,7 @@ DENG2_PIMPL(InputSystem)
             ev.toggle.id = ke->ddkey;
 
             // Text content to insert?
-            DENG2_ASSERT(sizeof(ev.toggle.text) == sizeof(ke->text));
+            DE_ASSERT(sizeof(ev.toggle.text) == sizeof(ke->text));
             std::memcpy(ev.toggle.text, ke->text, sizeof(ev.toggle.text));
 
             LOG_INPUT_XVERBOSE("toggle.id: %i/%c [%s:%u] (state:%i)",
@@ -570,6 +566,7 @@ DENG2_PIMPL(InputSystem)
             self().postEvent(&ev);
         }
     }
+#endif
 
     /**
      * Check the current mouse state (axis, buttons and wheel).
@@ -579,6 +576,7 @@ DENG2_PIMPL(InputSystem)
      */
     void readMouse()
     {
+#if 0
         if (!Mouse_IsPresent())
             return;
 
@@ -677,6 +675,7 @@ DENG2_PIMPL(InputSystem)
                 }
             }
         }
+#endif
     }
 
     /**
@@ -695,7 +694,7 @@ DENG2_PIMPL(InputSystem)
         Joystick_GetState(&state);
 
         // Joystick buttons.
-        ddevent_t ev; de::zap(ev);
+        ddevent_t ev{};
         ev.device = IDEV_JOY1;
         ev.type   = E_TOGGLE;
 
@@ -707,13 +706,13 @@ DENG2_PIMPL(InputSystem)
                 if (state.buttonDowns[i]-- > 0)
                 {
                     ev.toggle.state = ETOG_DOWN;
-                    self().postEvent(&ev);
+                    self().postEvent(ev);
                     LOG_INPUT_XVERBOSE("Joy button %i down", i);
                 }
                 if (state.buttonUps[i]-- > 0)
                 {
                     ev.toggle.state = ETOG_UP;
-                    self().postEvent(&ev);
+                    self().postEvent(ev);
                     LOG_INPUT_XVERBOSE("Joy button %i up", i);
                 }
             }
@@ -740,7 +739,7 @@ DENG2_PIMPL(InputSystem)
                     }
                     LOG_INPUT_XVERBOSE("Joy hat %i angle %f", i << ev.angle.pos);
 
-                    self().postEvent(&ev);
+                    self().postEvent(ev);
 
                     oldPOV[i] = state.hatAngle[i];
                 }
@@ -755,7 +754,7 @@ DENG2_PIMPL(InputSystem)
             ev.axis.id   = i;
             ev.axis.pos  = state.axis[i];
             ev.axis.type = EAXIS_ABSOLUTE;
-            self().postEvent(&ev);
+            self().postEvent(ev);
         }
     }
 
@@ -778,26 +777,26 @@ DENG2_PIMPL(InputSystem)
         //vrCfg().oculusRift().allowUpdate();
         //vrCfg().oculusRift().update();
 
-        ddevent_t ev; de::zap(ev);
+        ddevent_t ev{};
         ev.device    = IDEV_HEAD_TRACKER;
         ev.type      = E_AXIS;
         ev.axis.type = EAXIS_ABSOLUTE;
 
-        Vector3f const pry = vrCfg().oculusRift().headOrientation();
+        const Vec3f pry = vrCfg().oculusRift().headOrientation();
 
         // Yaw (1.0 means 180 degrees).
         ev.axis.id  = 0; // Yaw.
         ev.axis.pos = de::radianToDegree(pry[2]) * 1.0 / 180.0;
-        self().postEvent(&ev);
+        self().postEvent(ev);
 
         ev.axis.id  = 1; // Pitch (1.0 means 85 degrees).
         ev.axis.pos = de::radianToDegree(pry[0]) * 1.0 / 85.0;
-        self().postEvent(&ev);
+        self().postEvent(ev);
 
         // So I'll assume that if roll ever gets used, 1.0 will mean 180 degrees there too.
         ev.axis.id  = 2; // Roll.
         ev.axis.pos = de::radianToDegree(pry[1]) * 1.0 / 180.0;
-        self().postEvent(&ev);
+        self().postEvent(ev);
     }
 
     /**
@@ -841,7 +840,7 @@ DENG2_PIMPL(InputSystem)
                 case E_SYMBOLIC: break;
 
                 default:
-                    DENG2_ASSERT(!"InputSystem::updateAllDeviceStateAssociations: Invalid bind.type");
+                    DE_ASSERT_FAIL("InputSystem::updateAllDeviceStateAssociations: Invalid bind.type");
                     break;
                 }
 
@@ -857,7 +856,7 @@ DENG2_PIMPL(InputSystem)
             context->forAllImpulseBindings([this, &context] (CompiledImpulseBindingRecord &rec)
             {
                 //ImpulseBinding bind(rec);
-                auto const &bind = rec.compiled();
+                const auto &bind = rec.compiled();
                 InputDevice &dev = self().device(bind.deviceId);
 
                 InputControl *ctrl = nullptr;
@@ -868,7 +867,7 @@ DENG2_PIMPL(InputSystem)
                 case IBD_ANGLE:  ctrl = &dev.hat   (bind.controlId); break;
 
                 default:
-                    DENG2_ASSERT(!"InputSystem::updateAllDeviceStateAssociations: Invalid bind.type");
+                    DE_ASSERT_FAIL("InputSystem::updateAllDeviceStateAssociations: Invalid bind.type");
                     break;
                 }
 
@@ -884,7 +883,7 @@ DENG2_PIMPL(InputSystem)
             for (int i = 0; i < devices.count(); ++i)
             {
                 InputDevice *device = devices.at(i);
-                int const deviceId = i;
+                const int deviceId = i;
 
                 if (device->isActive() && context->willAcquire(deviceId))
                 {
@@ -926,7 +925,7 @@ DENG2_PIMPL(InputSystem)
         for (int i = 0; i < devices.count(); ++i)
         {
             InputDevice *device = devices.at(i);
-            int const deviceId  = i;
+            const int deviceId  = i;
 
             if (context.willAcquire(deviceId))
             {
@@ -982,7 +981,7 @@ InputDevice &InputSystem::device(int id) const
         return *d->devices.at(id);
     }
     /// @throw MissingDeviceError  Given id is not valid.
-    throw MissingDeviceError("InputSystem::device", "Unknown id:" + String::number(id));
+    throw MissingDeviceError("InputSystem::device", "Unknown id:" + String::asText(id));
 }
 
 InputDevice *InputSystem::devicePtr(int id) const
@@ -994,7 +993,7 @@ InputDevice *InputSystem::devicePtr(int id) const
     return nullptr;
 }
 
-InputDevice *InputSystem::findDevice(String const &name) const
+InputDevice *InputSystem::findDevice(const String &name) const
 {
     for (auto *device : d->devices)
     {
@@ -1027,7 +1026,7 @@ void InputSystem::initAllDevices()
     // Initialize devices.
     d->addDevice(makeKeyboard("key", "Keyboard"))->activate(); // A keyboard is assumed to always be present.
 
-    d->addDevice(makeMouse("mouse", "Mouse"))->activate(Mouse_IsPresent()); // A mouse may not be present.
+    d->addDevice(makeMouse("mouse", "Mouse"))->activate(d->enableMouse); // A mouse may not be present.
 
     d->addDevice(makeJoystick("joy", "Controller"))->activate(Joystick_IsPresent()); // A joystick may not be present.
 
@@ -1045,7 +1044,7 @@ void InputSystem::initAllDevices()
 bool InputSystem::ignoreEvents(bool yes)
 {
     LOG_AS("InputSystem");
-    bool const oldIgnoreInput = d->ignoreInput;
+    const bool oldIgnoreInput = d->ignoreInput;
 
     d->ignoreInput = yes;
     LOG_INPUT_VERBOSE("Ignoring events: %b") << yes;
@@ -1064,30 +1063,139 @@ bool InputSystem::ignoreEvents(bool yes)
 
 void InputSystem::clearEvents()
 {
-    clearQueue(&queue);
-    clearQueue(&sharpQueue);
+    queue.clear();
+    sharpQueue.clear();
     clearEventStrings();
 }
 
-/// @note Called by the I/O functions when input is detected.
-void InputSystem::postEvent(ddevent_t *ev)
+void InputSystem::postKeyboardEvent(const KeyEvent &event)
 {
-    DENG2_ASSERT(ev);// && ev->device < NUM_INPUT_DEVICES);
+    ddevent_t ev{};
+    ev.device = IDEV_KEYBOARD;
+//    ev.type         = E_TOGGLE;
+//    ev.toggle.state = ETOG_REPEAT;
 
-    eventqueue_t *q = &queue;
-    if (useSharpInputEvents &&
-       (ev->type == E_TOGGLE || ev->type == E_AXIS || ev->type == E_ANGLE))
+    // Read the new keyboard events, convert to ddevents and post them.
+//    const int QUEUESIZE = 32;
+//    keyevent_t keyevs[QUEUESIZE];
+//    const size_t numkeyevs = Keyboard_GetEvents(keyevs, QUEUESIZE);
+//    for (size_t n = 0; n < numkeyevs; ++n)
+    {
+//        keyevent_t *ke = &keyevs[n];
+
+        // Check the type of the event.
+        switch (event.type())
+        {
+        case Event::KeyPress:   ev.toggle.state = ETOG_DOWN;   break;
+        case Event::KeyRepeat:  ev.toggle.state = ETOG_REPEAT; break;
+        case Event::KeyRelease: ev.toggle.state = ETOG_UP;     break;
+
+        default: break;
+        }
+
+        ev.toggle.id = event.ddKey(); //ke->ddkey;
+
+        // Text content to insert?
+//        DE_ASSERT(sizeof(ev.toggle.text) == sizeof(ke->text));
+        //std::memcpy(ev.toggle.text, ke->text, sizeof(ev.toggle.text));
+        DE_ASSERT(event.text().size() < sizeof(ev.toggle.text));
+        strcpy(ev.toggle.text, event.text().c_str());
+
+        LOG_INPUT_XVERBOSE("toggle.id: %i/%c [%s:%u] (state:%i)",
+                   ev.toggle.id << char(ev.toggle.id)
+                << ev.toggle.text << strlen(ev.toggle.text)
+                << ev.toggle.state);
+
+        postEvent(ev);
+    }
+}
+
+void InputSystem::postMouseEvent(const MouseEvent &event)
+{
+    if (!d->enableMouse) return; // Ignored completely.
+
+    ddevent_t ev{};
+    ev.device = IDEV_MOUSE;
+
+    switch (event.type())
+    {
+    case Event::MouseMotion:
+    {
+        ev.type      = E_AXIS;
+        ev.axis.type = EAXIS_RELATIVE;
+
+        // Post an event per axis.
+        if (event.pos().x)
+        {
+            ev.axis.id  = 0;
+            ev.axis.pos = event.pos().x;
+            postEvent(ev);
+        }
+        if (event.pos().y)
+        {
+            ev.axis.id  = 1;
+            ev.axis.pos = -event.pos().y;
+            postEvent(ev);
+        }
+        break;
+    }
+
+    case Event::MouseWheel:
+    {
+        break;
+    }
+
+    case Event::MouseButton:
+    {
+        ev.type = E_TOGGLE;
+
+        if (event.state() == MouseEvent::DoubleClick)
+            break;
+
+        const auto btn = event.button();
+
+        ev.toggle.id = (btn == MouseEvent::Left     ? IMB_LEFT   :
+                        btn == MouseEvent::Middle   ? IMB_MIDDLE :
+                        btn == MouseEvent::Right    ? IMB_RIGHT  :
+                        btn == MouseEvent::XButton1 ? IMB_EXTRA1 :
+                        btn == MouseEvent::XButton2 ? IMB_EXTRA2 : -1);
+
+        if (ev.toggle.id < 0) break;
+
+        ev.toggle.state = (event.state() == MouseEvent::Pressed ? ETOG_DOWN : ETOG_UP);
+
+        postEvent(ev);
+
+        break;
+    }
+    } // switch
+}
+
+/// @note Called by the I/O functions when input is detected.
+void InputSystem::postEvent(const ddevent_t &ev)
+{
+    EventQueue *q;
+
+    if (useSharpInputEvents && (ev.type == E_TOGGLE || ev.type == E_AXIS || ev.type == E_ANGLE))
     {
         q = &sharpQueue;
     }
-
-    // Cleanup: make sure only keyboard toggles can have a text insert.
-    if (ev->type == E_TOGGLE && ev->device != IDEV_KEYBOARD)
+    else
     {
-        std::memset(ev->toggle.text, 0, sizeof(ev->toggle.text));
+        q = &queue;
     }
 
-    postToQueue(q, ev);
+    // Cleanup: make sure only keyboard toggles can have a text insert.
+    if (ev.type == E_TOGGLE && ev.device != IDEV_KEYBOARD)
+    {
+        ddevent_t cleaned = ev;
+        zap(cleaned.toggle.text);
+        q->post(cleaned);
+    }
+    else
+    {
+        q->post(ev);
+    }
 }
 
 void InputSystem::processEvents(timespan_t ticLength)
@@ -1108,12 +1216,12 @@ void InputSystem::processSharpEvents(timespan_t ticLength)
     }
 }
 
-bool InputSystem::tryEvent(ddevent_t const &event, String const &namedContext)
+bool InputSystem::tryEvent(const ddevent_t &event, const String &namedContext)
 {
     if (namedContext.isEmpty())
     {
         // Try all active contexts in order.
-        for (BindContext const *context : d->contexts)
+        for (const BindContext *context : d->contexts)
         {
             if (context->tryEvent(event)) return true;
         }
@@ -1129,14 +1237,14 @@ bool InputSystem::tryEvent(ddevent_t const &event, String const &namedContext)
     return false;
 }
 
-bool InputSystem::tryEvent(Event const &event, String const &namedContext)
+bool InputSystem::tryEvent(const Event &event, const String &namedContext)
 {
     ddevent_t ddev;
     convertEvent(event, ddev);
     return tryEvent(ddev, namedContext);
 }
 
-void InputSystem::trackEvent(ddevent_t const &event)
+void InputSystem::trackEvent(const ddevent_t &event)
 {
     if (event.type == E_FOCUS || event.type == E_SYMBOLIC)
         return; // Not a tracked device state.
@@ -1192,27 +1300,27 @@ void InputSystem::trackEvent(ddevent_t const &event)
     }
 }
 
-void InputSystem::trackEvent(Event const &event)
+void InputSystem::trackEvent(const Event &event)
 {
     ddevent_t ddev;
     convertEvent(event, ddev);
     trackEvent(ddev);
 }
 
-bool InputSystem::convertEvent(Event const &from, ddevent_t &to) // static
+bool InputSystem::convertEvent(const Event &from, ddevent_t &to) // static
 {
     de::zap(to);
     switch (from.type())
     {
     case Event::KeyPress:
     case Event::KeyRelease: {
-        KeyEvent const &kev = from.as<KeyEvent>();
+        const KeyEvent &kev = from.as<KeyEvent>();
 
         to.device       = IDEV_KEYBOARD;
         to.type         = E_TOGGLE;
         to.toggle.id    = kev.ddKey();
         to.toggle.state = (kev.state() == KeyEvent::Pressed? ETOG_DOWN : ETOG_UP);
-        qstrcpy(to.toggle.text, kev.text().toLatin1());
+        strcpy(to.toggle.text, kev.text());
         break; }
 
     default: break;
@@ -1220,7 +1328,7 @@ bool InputSystem::convertEvent(Event const &from, ddevent_t &to) // static
     return true;
 }
 
-bool InputSystem::convertEvent(ddevent_t const &from, event_t &to) // static
+bool InputSystem::convertEvent(const ddevent_t &from, event_t &to) // static
 {
     // Copy the essentials into a cutdown version for the game.
     // Ensure the format stays the same for future compatibility!
@@ -1312,7 +1420,7 @@ bool InputSystem::convertEvent(ddevent_t const &from, event_t &to) // static
             return false;
 
         default:
-            DENG2_ASSERT(!"InputSystem::convertEvent: Unknown device ID in ddevent_t");
+            DE_ASSERT_FAIL("InputSystem::convertEvent: Unknown device ID in ddevent_t");
             return false;
         }
     }
@@ -1338,7 +1446,7 @@ void InputSystem::clearAllContexts()
 {
     if (d->contexts.isEmpty()) return;
 
-    qDeleteAll(d->contexts);
+    deleteAll(d->contexts);
     d->contexts.clear();
 
     // We can restart the id counter, all the old bindings were removed.
@@ -1355,12 +1463,12 @@ ControllerPresets &InputSystem::gameControllerPresets()
     return *d->gameControllerPresets;
 }
 
-bool InputSystem::hasContext(String const &name) const
+bool InputSystem::hasContext(const String &name) const
 {
     return contextPtr(name) != nullptr;
 }
 
-BindContext &InputSystem::context(String const &name) const
+BindContext &InputSystem::context(const String &name) const
 {
     if (BindContext *context = contextPtr(name))
     {
@@ -1371,9 +1479,9 @@ BindContext &InputSystem::context(String const &name) const
 }
 
 /// @todo: Optimize O(n) search...
-BindContext *InputSystem::contextPtr(String const &name) const
+BindContext *InputSystem::contextPtr(const String &name) const
 {
-    for (BindContext const *context : d->contexts)
+    for (const BindContext *context : d->contexts)
     {
         if (!context->name().compareWithoutCase(name))
         {
@@ -1390,7 +1498,7 @@ BindContext &InputSystem::contextAt(int position) const
         return *d->contexts.at(position);
     }
     /// @throw MissingContextError  Specified position is invalid.
-    throw MissingContextError("InputSystem::contextAt", "Invalid position:" + String::number(position));
+    throw MissingContextError("InputSystem::contextAt", "Invalid position:" + String::asText(position));
 }
 
 int InputSystem::contextPositionOf(BindContext *context) const
@@ -1398,7 +1506,7 @@ int InputSystem::contextPositionOf(BindContext *context) const
     return (context? d->contexts.indexOf(context) : -1);
 }
 
-BindContext *InputSystem::newContext(String const &name)
+BindContext *InputSystem::newContext(const String &name)
 {
     // Ensure the given name is unique.
     if (hasContext(name))
@@ -1429,7 +1537,7 @@ LoopResult InputSystem::forAllContexts(std::function<LoopResult (BindContext &)>
 
 InputSystem &InputSystem::get() // static
 {
-    return ClientApp::inputSystem();
+    return ClientApp::input();
 }
 
 // ---------------------------------------------------------------------------
@@ -1456,9 +1564,9 @@ void InputSystem::bindGameDefaults()
     Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
 }
 
-static char const *parseContext(String &context, char const *desc)
+static const char *parseContext(String &context, const char *desc)
 {
-    DENG2_ASSERT(desc);
+    DE_ASSERT(desc);
 
     if (!strchr(desc, ':'))
     {
@@ -1474,9 +1582,9 @@ static char const *parseContext(String &context, char const *desc)
     return desc;
 }
 
-Record *InputSystem::bindCommand(char const *eventDesc, char const *command)
+Record *InputSystem::bindCommand(const char *eventDesc, const char *command)
 {
-    DENG2_ASSERT(eventDesc && command);
+    DE_ASSERT(eventDesc && command);
     LOG_AS("InputSystem");
 
     // The event descriptor may begin with a symbolic binding context name.
@@ -1490,16 +1598,16 @@ Record *InputSystem::bindCommand(char const *eventDesc, char const *command)
     return nullptr;
 }
 
-Record *InputSystem::bindImpulse(char const *ctrlDesc, char const *impulseDesc)
+Record *InputSystem::bindImpulse(const char *ctrlDesc, const char *impulseDesc)
 {
-    DENG2_ASSERT(ctrlDesc && impulseDesc);
+    DE_ASSERT(ctrlDesc && impulseDesc);
     LOG_AS("InputSystem");
 
     // The impulse descriptor may begin with the local player number.
     int localPlayer = 0;
     AutoStr *str    = AutoStr_NewStd();
-    char const *ptr = Str_CopyDelim(str, impulseDesc, '-');
-    if (!qstrnicmp(Str_Text(str), "local", 5) && Str_Length(str) > 5)
+    const char *ptr = Str_CopyDelim(str, impulseDesc, '-');
+    if (!iCmpStrNCase(Str_Text(str), "local", 5) && Str_Length(str) > 5)
     {
         localPlayer = String((Str_Text(str) + 5)).toInt() - 1;
         if (localPlayer < 0 || localPlayer >= DDMAXPLAYERS)
@@ -1514,7 +1622,7 @@ Record *InputSystem::bindImpulse(char const *ctrlDesc, char const *impulseDesc)
 
     // The next part must be the impulse name.
     impulseDesc = Str_CopyDelim(str, impulseDesc, '-');
-    PlayerImpulse const *impulse = P_PlayerImpulseByName(Str_Text(str));
+    const PlayerImpulse *impulse = P_PlayerImpulseByName(Str_Text(str));
     if (!impulse)
     {
         LOG_INPUT_WARNING("Player impulse \"%s\" not defined") << Str_Text(str);
@@ -1526,7 +1634,7 @@ Record *InputSystem::bindImpulse(char const *ctrlDesc, char const *impulseDesc)
     {
         context = contextPtr(DEFAULT_BINDING_CONTEXT_NAME);
     }
-    DENG2_ASSERT(context);
+    DE_ASSERT(context);
 
     return context->bindImpulse(ctrlDesc, *impulse, localPlayer);
 }
@@ -1562,8 +1670,8 @@ void InputSystem::removeBindingsForDevice(int deviceId)
 
 D_CMD(ListDevices)
 {
-    DENG2_UNUSED3(src, argc, argv);
-    InputSystem &isys = ClientApp::inputSystem();
+    DE_UNUSED(src, argc, argv);
+    InputSystem &isys = ClientApp::input();
 
     LOG_INPUT_MSG(_E(b) "%i input devices initalized:") << isys.deviceCount();
     isys.forAllDevices([] (InputDevice &device)
@@ -1576,8 +1684,8 @@ D_CMD(ListDevices)
 
 D_CMD(InspectDevice)
 {
-    DENG2_UNUSED2(src, argc);
-    if (InputDevice const *device = ClientApp::inputSystem().findDevice(argv[1]))
+    DE_UNUSED(src, argc);
+    if (const InputDevice *device = ClientApp::input().findDevice(argv[1]))
     {
         LOG_INPUT_MSG("") << device->description();
         return true;
@@ -1590,10 +1698,10 @@ D_CMD(InspectDevice)
 
 D_CMD(ReleaseMouse)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
     if (WindowSystem::mainExists())
     {
-        ClientWindowSystem::main().eventHandler().trapMouse(false);
+        WindowSystem::getMain().eventHandler().trapMouse(false);
         return true;
     }
     return false;
@@ -1601,8 +1709,8 @@ D_CMD(ReleaseMouse)
 
 D_CMD(ListContexts)
 {
-    DENG2_UNUSED3(src, argc, argv);
-    InputSystem &isys = ClientApp::inputSystem();
+    DE_UNUSED(src, argc, argv);
+    InputSystem &isys = ClientApp::input();
 
     LOG_INPUT_MSG(_E(b) "%i binding contexts defined:") << isys.contextCount();
     int idx = 0;
@@ -1620,18 +1728,18 @@ D_CMD(ListContexts)
 /*
 D_CMD(ClearContexts)
 {
-    ClientApp::inputSystem().clearAllContexts();
+    ClientApp::input().clearAllContexts();
     return true;
 }
 */
 
 D_CMD(ActivateContext)
 {
-    DENG2_UNUSED2(src, argc);
-    InputSystem &isys = ClientApp::inputSystem();
+    DE_UNUSED(src, argc);
+    InputSystem &isys = ClientApp::input();
 
-    bool const doActivate = !String(argv[0]).compareWithoutCase("activatebcontext");
-    String const name     = argv[1];
+    const bool doActivate = !String(argv[0]).compareWithoutCase("activatebcontext");
+    const String name     = argv[1];
 
     if (!isys.hasContext(name))
     {
@@ -1654,20 +1762,20 @@ D_CMD(ActivateContext)
 
 D_CMD(BindCommand)
 {
-    DENG2_UNUSED2(src, argc);
-    return ClientApp::inputSystem().bindCommand(argv[1], argv[2]) != nullptr;
+    DE_UNUSED(src, argc);
+    return ClientApp::input().bindCommand(argv[1], argv[2]) != nullptr;
 }
 
 D_CMD(BindImpulse)
 {
-    DENG2_UNUSED2(src, argc);
-    return ClientApp::inputSystem().bindImpulse(argv[2], argv[1]) != nullptr;
+    DE_UNUSED(src, argc);
+    return ClientApp::input().bindImpulse(argv[2], argv[1]) != nullptr;
 }
 
 D_CMD(ListBindings)
 {
-    DENG2_UNUSED3(src, argc, argv);
-    InputSystem &isys = ClientApp::inputSystem();
+    DE_UNUSED(src, argc, argv);
+    InputSystem &isys = ClientApp::input();
 
     int totalBindCount = 0;
     isys.forAllContexts([&totalBindCount] (BindContext &context)
@@ -1682,8 +1790,8 @@ D_CMD(ListBindings)
 
     isys.forAllContexts([] (BindContext &context)
     {
-        int const cmdCount = context.commandBindingCount();
-        int const impCount = context.impulseBindingCount();
+        const int cmdCount = context.commandBindingCount();
+        const int impCount = context.impulseBindingCount();
 
         // Skip empty contexts.
         if (cmdCount + impCount == 0) return LoopContinue;
@@ -1715,8 +1823,8 @@ D_CMD(ListBindings)
         context.forAllImpulseBindings(pl, [&pl] (CompiledImpulseBindingRecord &rec)
         {
             ImpulseBinding bind(rec);
-            PlayerImpulse const *impulse = P_PlayerImpulsePtr(bind.geti("impulseId"));
-            DENG2_ASSERT(impulse);
+            const PlayerImpulse *impulse = P_PlayerImpulsePtr(bind.geti("impulseId"));
+            DE_ASSERT(impulse);
 
             LOG_INPUT_MSG("    [%3i] " _E(>) _E(b) "%s" _E(.) " player%i %s")
                     << bind.geti("id") << bind.composeDescriptor() << (pl + 1) << impulse->name;
@@ -1732,17 +1840,17 @@ D_CMD(ListBindings)
 
 D_CMD(ClearBindings)
 {
-    DENG2_UNUSED3(src, argc, argv);
-    ClientApp::inputSystem().removeAllBindings();
+    DE_UNUSED(src, argc, argv);
+    ClientApp::input().removeAllBindings();
     return true;
 }
 
 D_CMD(RemoveBinding)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
-    int const id = String(argv[1]).toInt();
-    if (ClientApp::inputSystem().removeBinding(id))
+    const int id = String(argv[1]).toInt();
+    if (ClientApp::input().removeBinding(id))
     {
         LOG_INPUT_MSG("Binding " _E(b) "%i" _E(.) " deleted") << id;
     }
@@ -1756,8 +1864,8 @@ D_CMD(RemoveBinding)
 
 D_CMD(DefaultBindings)
 {
-    DENG2_UNUSED3(src, argc, argv);
-    InputSystem &isys = ClientApp::inputSystem();
+    DE_UNUSED(src, argc, argv);
+    InputSystem &isys = ClientApp::input();
     isys.bindDefaults();
     isys.bindGameDefaults();
     return true;
@@ -1790,7 +1898,7 @@ void InputSystem::consoleRegister() // static
     //C_CMD_FLAGS("setaxis",            "ss",       AxisChangeOption, CMDF_NO_DEDICATED);
     //C_CMD_FLAGS("setaxis",            "sss",      AxisChangeValue,  CMDF_NO_DEDICATED);
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     I_DebugDrawerConsoleRegister();
 #endif
 
@@ -1798,9 +1906,9 @@ void InputSystem::consoleRegister() // static
 }
 
 #undef B_SetContextFallback
-DENG_EXTERN_C void B_SetContextFallback(char const *name, int (*responderFunc)(event_t *))
+DE_EXTERN_C void B_SetContextFallback(const char *name, int (*responderFunc)(event_t *))
 {
-    InputSystem &isys = ClientApp::inputSystem();
+    InputSystem &isys = ClientApp::input();
     if (isys.hasContext(name))
     {
         isys.context(name).setFallbackResponder(responderFunc);
@@ -1808,17 +1916,17 @@ DENG_EXTERN_C void B_SetContextFallback(char const *name, int (*responderFunc)(e
 }
 
 #undef B_BindingsForCommand
-DENG_EXTERN_C int B_BindingsForCommand(char const *commandCString, char *outBuf, size_t outBufSize)
+DE_EXTERN_C int B_BindingsForCommand(const char *commandCString, char *outBuf, size_t outBufSize)
 {
-    DENG2_ASSERT(commandCString && outBuf);
-    String const command = commandCString;
+    DE_ASSERT(commandCString && outBuf);
+    const String command = commandCString;
 
     *outBuf = 0;
 
     if (command.isEmpty()) return 0;
     if (!outBufSize) return 0;
 
-    InputSystem &isys = ClientApp::inputSystem();
+    InputSystem &isys = ClientApp::input();
 
     String out;
     int numFound = 0;
@@ -1831,7 +1939,7 @@ DENG_EXTERN_C int B_BindingsForCommand(char const *commandCString, char *outBuf,
             {
                 if (numFound) out += " "; // Separator.
 
-                out += String::number(bind.geti("id")) + "@" + context.name() + ":" + bind.composeDescriptor();
+                out += String::asText(bind.geti("id")) + "@" + context.name() + ":" + bind.composeDescriptor();
                 numFound++;
             }
             return LoopContinue;
@@ -1841,17 +1949,17 @@ DENG_EXTERN_C int B_BindingsForCommand(char const *commandCString, char *outBuf,
 
     // Copy the result to the return buffer.
     std::memset(outBuf, 0, outBufSize);
-    qstrncpy(outBuf, out.toUtf8().constData(), outBufSize - 1);
+    strncpy(outBuf, out, outBufSize - 1);
 
     return numFound;
 }
 
 #undef B_BindingsForControl
-DENG_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameCString, int inverse,
+DE_EXTERN_C int B_BindingsForControl(int localPlayer, const char *impulseNameCString, int inverse,
     char *outBuf, size_t outBufSize)
 {
-    DENG2_ASSERT(impulseNameCString && outBuf);
-    String const impulseName = impulseNameCString;
+    DE_ASSERT(impulseNameCString && outBuf);
+    const String impulseName = impulseNameCString;
 
     *outBuf = 0;
 
@@ -1859,7 +1967,7 @@ DENG_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameC
     if (impulseName.isEmpty()) return 0;
     if (!outBufSize) return 0;
 
-    InputSystem &isys = ClientApp::inputSystem();
+    InputSystem &isys = ClientApp::input();
 
     String out;
     int numFound = 0;
@@ -1867,11 +1975,11 @@ DENG_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameC
     {
         context.forAllImpulseBindings(localPlayer, [&] (CompiledImpulseBindingRecord &rec)
         {
-            auto const &bind = rec.compiled();
-            DENG2_ASSERT(bind.localPlayer == localPlayer);
+            const auto &bind = rec.compiled();
+            DE_ASSERT(bind.localPlayer == localPlayer);
 
-            PlayerImpulse const *impulse = P_PlayerImpulsePtr(bind.impulseId);
-            DENG2_ASSERT(impulse);
+            const PlayerImpulse *impulse = P_PlayerImpulsePtr(bind.impulseId);
+            DE_ASSERT(impulse);
 
             if (!impulse->name.compareWithoutCase(impulseName))
             {
@@ -1881,7 +1989,7 @@ DENG_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameC
                 {
                     if (numFound) out += " ";
 
-                    out += String::number(bind.id) + "@" + context.name() + ":" +
+                    out += String::asText(bind.id) + "@" + context.name() + ":" +
                             ImpulseBinding(rec).composeDescriptor();
                     numFound++;
                 }
@@ -1893,20 +2001,20 @@ DENG_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameC
 
     // Copy the result to the return buffer.
     std::memset(outBuf, 0, outBufSize);
-    qstrncpy(outBuf, out.toUtf8().constData(), outBufSize - 1);
+    strncpy(outBuf, out, outBufSize - 1);
 
     return numFound;
 }
 
 #undef DD_GetKeyCode
-DENG_EXTERN_C int DD_GetKeyCode(char const *key)
+DE_EXTERN_C int DD_GetKeyCode(const char *key)
 {
-    DENG2_ASSERT(key);
+    DE_ASSERT(key);
     int code = B_KeyForShortName(key);
     return (code? code : key[0]);
 }
 
-DENG_DECLARE_API(B) =
+DE_DECLARE_API(B) =
 {
     { DE_API_BINDING },
     B_SetContextFallback,

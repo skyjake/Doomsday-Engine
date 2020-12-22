@@ -52,7 +52,7 @@ typedef struct LZFILE_s {
 #define lzError(f)     ((f)->flags & LZFILE_FLAG_ERROR)
 
 void LZSSEXPORT     lzPassword(char *password);
-LZFILE* LZSSEXPORT  lzOpen(char const *filename, char const *mode);
+LZFILE* LZSSEXPORT  lzOpen(const char *filename, const char *mode);
 int LZSSEXPORT      lzClose(LZFILE * f);
 int LZSSEXPORT      lzSeek(LZFILE * f, int offset);
 int16_t LZSSEXPORT  lzGetW(LZFILE * f);

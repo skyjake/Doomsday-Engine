@@ -21,27 +21,22 @@
 #include "ui/inputsystem.h"
 #include "clientapp.h"
 
-#include <de/App>
-#include <de/DictionaryValue>
-#include <de/Process>
-#include <de/RecordValue>
-#include <de/Script>
-#include <de/ScriptSystem>
+#include <de/app.h>
+#include <de/dscript.h>
+#include <de/regexp.h>
 
 #include <doomsday/console/var.h>
 
-#include <QRegExp>
-
 using namespace de;
 
-static String VAR_CONTROLLER_PRESETS("controllerPresets");
+static const char *VAR_CONTROLLER_PRESETS = "controllerPresets";
 
-DENG2_PIMPL_NOREF(ControllerPresets)
-, DENG2_OBSERVES(DoomsdayApp, GameChange)
+DE_PIMPL_NOREF(ControllerPresets)
+, DE_OBSERVES(DoomsdayApp, GameChange)
 {
-    Record &inputModule;
-    char const *presetCVarPath = nullptr;
-    int deviceId = 0;
+    Record &    inputModule;
+    const char *presetCVarPath = nullptr;
+    int         deviceId       = 0;
 
     Impl()
         : inputModule(App::scriptSystem()["Input"])
@@ -55,22 +50,22 @@ DENG2_PIMPL_NOREF(ControllerPresets)
 //        DoomsdayApp::app().audienceForGameChange() -= this;
 //    }
 
-    DictionaryValue const &presets() const
+    const DictionaryValue &presets() const
     {
         return inputModule.get(VAR_CONTROLLER_PRESETS).as<DictionaryValue>();
     }
 
-    QList<QString> ids() const
+    List<String> ids() const
     {
-        QSet<QString> ids;
+        Set<String> ids;
         for (auto i : presets().elements())
         {
-            if (auto const *value = maybeAs<RecordValue>(i.second))
+            if (const auto *value = maybeAs<RecordValue>(i.second))
             {
                 ids.insert(value->dereference().gets("id"));
             }
         }
-        return ids.toList();
+        return compose<List<String>>(ids.begin(), ids.end());
     }
 
     /**
@@ -82,14 +77,14 @@ DENG2_PIMPL_NOREF(ControllerPresets)
      *
      * @return Object defining the gamepad default bindings, or @c nullptr if not found.
      */
-    Record const *findMatching(String const &deviceName) const
+    const Record *findMatching(const String &deviceName) const
     {
         for (auto i : presets().elements())
         {
-            String const key = i.first.value->asText();
-            if (!key.isEmpty() && QRegExp(key, Qt::CaseInsensitive).exactMatch(deviceName))
+            const String key = i.first.value->asText();
+            if (!key.isEmpty() && RegExp(key, CaseInsensitive).exactMatch(deviceName))
             {
-                if (auto const *value = maybeAs<RecordValue>(i.second))
+                if (const auto *value = maybeAs<RecordValue>(i.second))
                 {
                     return value->record();
                 }
@@ -98,11 +93,11 @@ DENG2_PIMPL_NOREF(ControllerPresets)
         return nullptr;
     }
 
-    Record const *findById(String const &id) const
+    const Record *findById(const String &id) const
     {
         for (auto i : presets().elements())
         {
-            if (auto const *value = maybeAs<RecordValue>(i.second))
+            if (const auto *value = maybeAs<RecordValue>(i.second))
             {
                 if (value->dereference().gets("id") == id)
                 {
@@ -118,17 +113,17 @@ DENG2_PIMPL_NOREF(ControllerPresets)
         return Con_FindVariable(presetCVarPath);
     }
 
-    void currentGameChanged(Game const &newGame)
+    void currentGameChanged(const Game &newGame)
     {
-        DENG2_ASSERT(deviceId == IDEV_JOY1); /// @todo Expand for other devices as needed. -jk
+        DE_ASSERT(deviceId == IDEV_JOY1); /// @todo Expand for other devices as needed. -jk
 
         // When loading a game, automatically apply the control scheme matching
         // the connected game controller (unless a specific scheme is already set).
         if (!newGame.isNull() && !Joystick_Name().isEmpty())
         {
-            String const currentScheme = CVar_String(presetCVar());
+            const String currentScheme = CVar_String(presetCVar());
 
-            if (auto const *gamepad = findMatching(Joystick_Name()))
+            if (const auto *gamepad = findMatching(Joystick_Name()))
             {
                 if (currentScheme.isEmpty())
                 {
@@ -141,9 +136,9 @@ DENG2_PIMPL_NOREF(ControllerPresets)
         }
     }
 
-    void applyPreset(Record const *preset)
+    void applyPreset(const Record *preset)
     {
-        ClientApp::inputSystem().removeBindingsForDevice(deviceId);
+        ClientApp::input().removeBindingsForDevice(deviceId);
 
         if (preset)
         {
@@ -156,11 +151,11 @@ DENG2_PIMPL_NOREF(ControllerPresets)
             proc.execute();
         }
 
-        CVar_SetString(presetCVar(), preset? preset->gets("id").toUtf8() : "");
+        CVar_SetString(presetCVar(), preset? preset->gets("id").c_str() : "");
     }
 };
 
-ControllerPresets::ControllerPresets(int deviceId, char const *presetCVarPath)
+ControllerPresets::ControllerPresets(int deviceId, const char *presetCVarPath)
     : d(new Impl)
 {
     d->deviceId       = deviceId;
@@ -172,12 +167,12 @@ String ControllerPresets::currentPreset() const
     return CVar_String(d->presetCVar());
 }
 
-void ControllerPresets::applyPreset(String const &presetId)
+void ControllerPresets::applyPreset(const String &presetId)
 {
     d->applyPreset(d->findById(presetId));
 }
 
-QStringList ControllerPresets::ids() const
+StringList ControllerPresets::ids() const
 {
     return d->ids();
 }

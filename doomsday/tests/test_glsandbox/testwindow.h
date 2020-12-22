@@ -20,19 +20,17 @@
 #ifndef GLSANDBOX_TESTWINDOW_H
 #define GLSANDBOX_TESTWINDOW_H
 
-#include <de/GLWindow>
+#include <de/glwindow.h>
 
 class TestWindow : public de::GLWindow
 {
-    Q_OBJECT
-
 public:
     TestWindow();
 
     void draw() override;
-    void keyPressEvent(QKeyEvent *ev) override;
+    void rootUpdate() override;
+//    void keyPressEvent(QKeyEvent *ev) override;
 
-public slots:
     void testRenderToTexture();
     void testDynamicAtlas();
     void testModel();
@@ -40,7 +38,7 @@ public slots:
     void loadMD5Model();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // GLSANDBOX_TESTWINDOW_H

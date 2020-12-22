@@ -20,16 +20,16 @@
 #include "de_platform.h" // strdup macro
 #include "ui/inputdebug.h"
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 
-#include <de/concurrency.h>
-#include <de/ddstring.h>
-#include <de/point.h>
-#include <de/timer.h> // SECONDSPERTIC
+#include <de/legacy/concurrency.h>
+#include <de/legacy/ddstring.h>
+#include <de/legacy/point.h>
+#include <de/legacy/timer.h> // SECONDSPERTIC
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
-#include <de/KeyEvent>
-#include <de/GLInfo>
+#include <de/keyevent.h>
+#include <de/glinfo.h>
 #include "clientapp.h"
 #include "dd_def.h"
 #include "dd_main.h"
@@ -60,7 +60,7 @@ static byte devRendKeyState;
 static byte devRendMouseState;
 
 #define MAX_KEYMAPPINGS  256
-static uchar shiftKeyMappings[MAX_KEYMAPPINGS];
+static dbyte shiftKeyMappings[MAX_KEYMAPPINGS];
 
 // Initialize key mapping table.
 static void initKeyMappingsOnce()
@@ -68,7 +68,7 @@ static void initKeyMappingsOnce()
     // Already been here?
     if (shiftKeyMappings[1] == 1) return;
 
-    uchar defaultShiftTable[96] = // Contains characters 32 to 127.
+    dbyte defaultShiftTable[96] = // Contains characters 32 to 127.
     {
     /* 32 */    ' ', 0, 0, 0, 0, 0, 0, '"',
     /* 40 */    0, 0, 0, 0, '<', '_', '>', '?', ')', '!',
@@ -92,7 +92,7 @@ static void initKeyMappingsOnce()
     }
 }
 
-static void initDrawStateForVisual(Point2Raw const *origin)
+static void initDrawStateForVisual(const Point2Raw *origin)
 {
     FR_PushAttrib();
 
@@ -105,7 +105,7 @@ static void initDrawStateForVisual(Point2Raw const *origin)
     }
 }
 
-static void endDrawStateForVisual(Point2Raw const *origin)
+static void endDrawStateForVisual(const Point2Raw *origin)
 {
     // Ignore zero offsets.
     if (origin && !(origin->x == 0 && origin->y == 0))
@@ -120,7 +120,7 @@ static void endDrawStateForVisual(Point2Raw const *origin)
 /**
  * Apply all active modifiers to the key.
  */
-static uchar modKey(int ddkey)
+static dbyte modKey(int ddkey)
 {
     extern bool shiftDown;
 
@@ -128,13 +128,13 @@ static uchar modKey(int ddkey)
 
     if (shiftDown)
     {
-        DENG2_ASSERT(ddkey >= 0 && ddkey < MAX_KEYMAPPINGS);
+        DE_ASSERT(ddkey >= 0 && ddkey < MAX_KEYMAPPINGS);
         ddkey = shiftKeyMappings[ddkey];
     }
 
     if (ddkey >= DDKEY_NUMPAD7 && ddkey <= DDKEY_NUMPAD0)
     {
-        static uchar const numPadKeys[10] = { '7', '8', '9', '4', '5', '6', '1', '2', '3', '0' };
+        static dbyte const numPadKeys[10] = { '7', '8', '9', '4', '5', '6', '1', '2', '3', '0' };
         return numPadKeys[ddkey - DDKEY_NUMPAD7];
     }
     else if (ddkey == DDKEY_DIVIDE)
@@ -158,10 +158,10 @@ static uchar modKey(int ddkey)
         return '*';
     }
 
-    return uchar(ddkey);
+    return dbyte(ddkey);
 }
 
-void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw const *_origin,
+void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, const Point2Raw *_origin,
     RectRaw *geometry)
 {
 #define BORDER 4
@@ -177,7 +177,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
         geometry->size.width = geometry->size.height = 0;
     }
 
-    ButtonInputControl const &button = device.button(buttonID);
+    const ButtonInputControl &button = device.button(buttonID);
 
     Point2Raw origin;
     origin.x = _origin? _origin->x : 0;
@@ -190,14 +190,14 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
         // Use the symbolic name.
         label = button.name();
     }
-    else if (&device == ClientApp::inputSystem().devicePtr(IDEV_KEYBOARD))
+    else if (&device == ClientApp::input().devicePtr(IDEV_KEYBOARD))
     {
         // Perhaps a printable ASCII character?
         // Apply all active modifiers to the key.
-        uchar asciiCode = modKey(buttonID);
+        dbyte asciiCode = modKey(buttonID);
         if (asciiCode > 32 && asciiCode < 127)
         {
-            label = String("%1").arg(QChar(asciiCode));
+            label = String::asText(asciiCode);
         }
 
         // Is there symbolic name in the bindings system?
@@ -209,18 +209,18 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
 
     if (label.isEmpty())
     {
-        label = String("#%1").arg(buttonID, 3, 10, QChar('0'));
+        label = Stringf("#%03i", buttonID);
     }
 
     initDrawStateForVisual(&origin);
 
     // Calculate the size of the visual according to the dimensions of the text.
     Size2Raw textSize;
-    FR_TextSize(&textSize, label.toUtf8().constData());
+    FR_TextSize(&textSize, label);
 
     // Enlarge by BORDER pixels.
-    Rectanglei textGeom = Rectanglei::fromSize(Vector2i(0, 0),
-                                               Vector2ui(textSize.width  + BORDER * 2,
+    Rectanglei textGeom = Rectanglei::fromSize(Vec2i(0, 0),
+                                               Vec2ui(textSize.width  + BORDER * 2,
                                                          textSize.height + BORDER * 2));
 
     // Draw a background.
@@ -229,14 +229,14 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
 
     // Draw the text.
     DGL_Enable(DGL_TEXTURE_2D);
-    Point2Raw const textOffset = {{{BORDER, BORDER}}};
-    FR_DrawText(label.toUtf8().constData(), &textOffset);
+    const Point2Raw textOffset = {{{BORDER, BORDER}}};
+    FR_DrawText(label, &textOffset);
     DGL_Disable(DGL_TEXTURE_2D);
 
     // Mark expired?
     if (button.bindContextAssociation() & InputControl::Expired)
     {
-        int const markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
+        const int markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
 
         DGL_Color3fv(expiredMarkColor);
         DGL_Begin(DGL_TRIANGLES);
@@ -249,7 +249,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
     // Mark triggered?
     if (button.bindContextAssociation() & InputControl::Triggered)
     {
-        int const markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
+        const int markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
 
         DGL_Color3fv(triggeredMarkColor);
         DGL_Begin(DGL_TRIANGLES);
@@ -271,7 +271,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
 #undef BORDER
 }
 
-void Rend_RenderAxisStateVisual(InputDevice & /*device*/, int /*axisID*/, Point2Raw const *origin,
+void Rend_RenderAxisStateVisual(InputDevice & /*device*/, int /*axisID*/, const Point2Raw *origin,
     RectRaw *geometry)
 {
     if (geometry)
@@ -280,14 +280,14 @@ void Rend_RenderAxisStateVisual(InputDevice & /*device*/, int /*axisID*/, Point2
         geometry->size.width = geometry->size.height = 0;
     }
 
-    //inputdevaxis_t const &axis = device.axis(axisID);
+    //const inputdevaxis_t &axis = device.axis(axisID);
 
     initDrawStateForVisual(origin);
 
     endDrawStateForVisual(origin);
 }
 
-void Rend_RenderHatStateVisual(InputDevice & /*device*/, int /*hatID*/, Point2Raw const *origin,
+void Rend_RenderHatStateVisual(InputDevice & /*device*/, int /*hatID*/, const Point2Raw *origin,
     RectRaw *geometry)
 {
     if (geometry)
@@ -296,7 +296,7 @@ void Rend_RenderHatStateVisual(InputDevice & /*device*/, int /*hatID*/, Point2Ra
         geometry->size.width = geometry->size.height = 0;
     }
 
-    //inputdevhat_t const &hat = device.hat(hatID);
+    //const inputdevhat_t &hat = device.hat(hatID);
 
     initDrawStateForVisual(origin);
 
@@ -331,7 +331,7 @@ struct inputdev_layout_t
     uint numGroups;
 };
 
-static void drawControlGroup(InputDevice &device, inputdev_layout_controlgroup_t const *group,
+static void drawControlGroup(InputDevice &device, const inputdev_layout_controlgroup_t *group,
     Point2Raw *_origin, RectRaw *retGeometry)
 {
 #define SPACING  2
@@ -352,7 +352,7 @@ static void drawControlGroup(InputDevice &device, inputdev_layout_controlgroup_t
     RectRaw ctrlGeom{};
     for (uint i = 0; i < group->numControls; ++i)
     {
-        inputdev_layout_control_t const *ctrl = group->controls + i;
+        const inputdev_layout_control_t *ctrl = group->controls + i;
 
         switch (ctrl->type)
         {
@@ -362,7 +362,6 @@ static void drawControlGroup(InputDevice &device, inputdev_layout_controlgroup_t
 
         default:
             App_Error("drawControlGroup: Unknown inputdev_controltype_t: %i.", (int)ctrl->type);
-            exit(1); // Unreachable.
         }
 
         if (ctrlGeom.size.width > 0 && ctrlGeom.size.height > 0)
@@ -392,13 +391,13 @@ static void drawControlGroup(InputDevice &device, inputdev_layout_controlgroup_t
 /**
  * Render a visual representation of the current state of the specified device.
  */
-void Rend_RenderInputDeviceStateVisual(InputDevice &device, inputdev_layout_t const *layout,
-    Point2Raw const *origin, Size2Raw *retVisualDimensions)
+void Rend_RenderInputDeviceStateVisual(InputDevice &device, const inputdev_layout_t *layout,
+    const Point2Raw *origin, Size2Raw *retVisualDimensions)
 {
 #define SPACING  2
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     if (retVisualDimensions)
     {
@@ -425,11 +424,10 @@ void Rend_RenderInputDeviceStateVisual(InputDevice &device, inputdev_layout_t co
         Size2Raw size;
 
         DGL_Enable(DGL_TEXTURE_2D);
-        Block const fullName(device.title().toUtf8());
-        FR_DrawText(fullName.constData(), nullptr/*no offset*/);
+        FR_DrawText(device.title(), nullptr/*no offset*/);
         DGL_Disable(DGL_TEXTURE_2D);
 
-        FR_TextSize(&size, fullName.constData());
+        FR_TextSize(&size, device.title());
         visualGeom = Rect_NewWithOriginSize2(offset.x, offset.y, size.width, size.height);
 
         offset.y += size.height + SPACING;
@@ -438,7 +436,7 @@ void Rend_RenderInputDeviceStateVisual(InputDevice &device, inputdev_layout_t co
     // Draw control groups.
     for (uint i = 0; i < layout->numGroups; ++i)
     {
-        inputdev_layout_controlgroup_t const *grp = &layout->groups[i];
+        const inputdev_layout_controlgroup_t *grp = &layout->groups[i];
         RectRaw grpGeometry{};
 
         drawControlGroup(device, grp, &offset, &grpGeometry);
@@ -764,8 +762,8 @@ void I_DebugDrawer()
 
     if (novideo || isDedicated) return; // Not for us.
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Disabled?
     if (!devRendKeyState && !devRendMouseState && !devRendJoyState) return;
@@ -773,7 +771,7 @@ void I_DebugDrawer()
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
-    DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
+    DGL_Ortho(0, 0, DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT, -1, 1);
 
     if (devRendKeyState)
     {
@@ -806,4 +804,4 @@ void I_DebugDrawerConsoleRegister()
     C_VAR_BYTE("rend-dev-input-mouse-state", &devRendMouseState, CVF_NO_ARCHIVE, 0, 1);
 }
 
-#endif // DENG2_DEBUG
+#endif // DE_DEBUG

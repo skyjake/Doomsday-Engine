@@ -20,15 +20,15 @@
 #include "gl/gl_main.h"
 #include "clientapp.h"
 
-#include <de/GLProgram>
-#include <de/GLUniform>
-#include <de/Drawable>
+#include <de/glprogram.h>
+#include <de/gluniform.h>
+#include <de/drawable.h>
 
 namespace fx {
 
 using namespace de;
 
-DENG2_PIMPL(Ramp)
+DE_PIMPL(Ramp)
 {
     GLUniform uGamma{"uGamma", GLUniform::Float};
     GLUniform uContrast{"uContrast", GLUniform::Float};
@@ -43,10 +43,10 @@ DENG2_PIMPL(Ramp)
     {
         using VBuf = GLBufferT<Vertex2Tex>;
         auto *buf = new VBuf;
-        buf->setVertices(gl::TriangleStrip,
+        buf->setVertices(gfx::TriangleStrip,
                          VBuf::Builder().makeQuad(Rectanglef(-1, -1, 2, 2),
                                                   Rectanglef(0, 0, 1, 1)),
-                         gl::Static);
+                         gfx::Static);
         ramp.addBuffer(buf);
 
         ClientApp::shaders().build(ramp.program(), "fx.ramp")
@@ -79,7 +79,7 @@ void Ramp::glDeinit()
 void Ramp::draw()
 {
     GLFramebuffer &target = GLState::current().target();
-    GLTexture *colorTex = target.attachedTexture(GLFramebuffer::Color);
+    GLTexture *colorTex = target.attachedTexture(GLFramebuffer::Color0);
 
     // Must have access to the color texture containing the frame buffer contents.
     if (!colorTex) return;
@@ -93,7 +93,7 @@ void Ramp::draw()
 
         if (GLInfo::extensions().NV_texture_barrier)
         {
-            GLInfo::NV_texture_barrier()->glTextureBarrierNV();
+            gl::glTextureBarrierNV();
         }
 
         d->ramp.draw();

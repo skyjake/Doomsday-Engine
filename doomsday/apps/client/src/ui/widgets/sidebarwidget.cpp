@@ -23,22 +23,21 @@
 
 #include <doomsday/doomsdayapp.h>
 
-#include <de/DialogContentStylist>
-#include <de/SequentialLayout>
-#include <de/SignalAction>
+#include <de/dialogcontentstylist.h>
+#include <de/sequentiallayout.h>
 
 using namespace de;
 using namespace de::ui;
 
-DENG_GUI_PIMPL(SidebarWidget)
-, DENG2_OBSERVES(DoomsdayApp, GameChange)
+DE_GUI_PIMPL(SidebarWidget)
+, DE_OBSERVES(DoomsdayApp, GameChange)
 {
-    DialogContentStylist stylist;
-    GuiWidget *container;
-    ScrollAreaWidget *sidebarContent;
-    IndirectRule *firstColumnWidth; ///< Shared by all groups.
-    LabelWidget *title;
-    ButtonWidget *close;
+    DialogContentStylist              stylist;
+    GuiWidget *                       container;
+    ScrollAreaWidget *                sidebarContent;
+    IndirectRule *                    firstColumnWidth; ///< Shared by all groups.
+    LabelWidget *                     title;
+    ButtonWidget *                    close;
     std::unique_ptr<SequentialLayout> layout;
 
     Impl(Public *i)
@@ -69,7 +68,7 @@ DENG_GUI_PIMPL(SidebarWidget)
         close->setImage(style().images().image("close.ringless"));
         close->setImageColor(title->textColorf());
         close->setOverrideImageSize(title->font().height());
-        close->setAction(new SignalAction(thisPublic, SLOT(close())));
+        close->setActionFn([this](){ self().close(); });
         close->setSizePolicy(ui::Expand, ui::Expand);
     }
 
@@ -78,7 +77,7 @@ DENG_GUI_PIMPL(SidebarWidget)
         releaseRef(firstColumnWidth);
     }
 
-    void currentGameChanged(Game const &newGame)
+    void currentGameChanged(const Game &newGame)
     {
         if (newGame.isNull())
         {
@@ -88,7 +87,7 @@ DENG_GUI_PIMPL(SidebarWidget)
     }
 };
 
-SidebarWidget::SidebarWidget(String const &titleText, String const &name)
+SidebarWidget::SidebarWidget(const String &titleText, const String &name)
     : PanelWidget(name)
     , d(new Impl(this))
 {
@@ -119,7 +118,7 @@ SidebarWidget::SidebarWidget(String const &titleText, String const &name)
                                  rule().height());    
     setContent(d->container);
 
-    RuleRectangle const &area = d->sidebarContent->contentRule();
+    const RuleRectangle &area = d->sidebarContent->contentRule();
     d->layout.reset(new SequentialLayout(area.left(), area.top(), Down));
 
     // Install the editor.
@@ -136,10 +135,10 @@ LabelWidget &SidebarWidget::title()
     return *d->title;
 }
 
-Rule const &SidebarWidget::maximumOfAllGroupFirstColumns() const
+const Rule &SidebarWidget::maximumOfAllGroupFirstColumns() const
 {
-    Rule const *max = nullptr;
-    foreach (GuiWidget *child, d->sidebarContent->childWidgets())
+    const Rule *max = nullptr;
+    for (GuiWidget *child : d->sidebarContent->childWidgets())
     {
         if (auto *g = maybeAs<VariableGroupEditor>(child))
         {
@@ -179,8 +178,8 @@ void SidebarWidget::panelDismissed()
     ClientWindow::main().unsetSidebar(ClientWindow::RightEdge);
 }
 
-void SidebarWidget::updateSidebarLayout(Rule const &minWidth,
-                                        Rule const &extraHeight)
+void SidebarWidget::updateSidebarLayout(const Rule &minWidth,
+                                        const Rule &extraHeight)
 {
     d->firstColumnWidth->setSource(maximumOfAllGroupFirstColumns());
 

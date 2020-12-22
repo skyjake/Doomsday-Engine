@@ -31,37 +31,37 @@
 
 #include <de/liblegacy.h>
 #include <doomsday/defs/ded.h>
-#include "world/map.h"
+#include <doomsday/world/map.h>
 
 #ifndef __SERVER__
 #  error "Attempted to include server's header in a non-server build"
 #endif
 
-DENG_EXTERN_C void Con_TransitionTicker(timespan_t t);
-DENG_EXTERN_C void Con_SetProgress(int progress);
+DE_EXTERN_C void Con_TransitionTicker(timespan_t t);
+DE_EXTERN_C void Con_SetProgress(int progress);
 
 #undef BusyMode_FreezeGameForBusyMode
-DENG_EXTERN_C void BusyMode_FreezeGameForBusyMode();
+DE_EXTERN_C void BusyMode_FreezeGameForBusyMode();
 
-DENG_EXTERN_C void GL_Shutdown();
+DE_EXTERN_C void GL_Shutdown();
 
-DENG_EXTERN_C void R_RenderPlayerView(int num);
-DENG_EXTERN_C void R_SetBorderGfx(Uri const *const *paths);
-DENG_EXTERN_C void R_SkyParams(int layer, int param, void *data);
-DENG_EXTERN_C void R_ShutdownSvgs(void);
-DENG_EXTERN_C struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);
+DE_EXTERN_C void R_RenderPlayerView(int num);
+DE_EXTERN_C void R_SetBorderGfx(const Uri *const *paths);
+DE_EXTERN_C void R_SkyParams(int layer, int param, void *data);
+DE_EXTERN_C void R_ShutdownSvgs(void);
+DE_EXTERN_C struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);
 
-DENG_EXTERN_C void Rend_CacheForMobjType(int num);
-DENG_EXTERN_C void Rend_ConsoleInit();
-DENG_EXTERN_C void Rend_ConsoleResize(int force);
-DENG_EXTERN_C void Rend_ConsoleOpen(int yes);
-DENG_EXTERN_C void Rend_ConsoleToggleFullscreen();
-DENG_EXTERN_C void Rend_ConsoleMove(int y);
-DENG_EXTERN_C void Rend_ConsoleCursorResetBlink();
+DE_EXTERN_C void Rend_CacheForMobjType(int num);
+DE_EXTERN_C void Rend_ConsoleInit();
+DE_EXTERN_C void Rend_ConsoleResize(int force);
+DE_EXTERN_C void Rend_ConsoleOpen(int yes);
+DE_EXTERN_C void Rend_ConsoleToggleFullscreen();
+DE_EXTERN_C void Rend_ConsoleMove(int y);
+DE_EXTERN_C void Rend_ConsoleCursorResetBlink();
 
-DENG_EXTERN_C void Cl_InitPlayers(void);
+DE_EXTERN_C void Cl_InitPlayers(void);
 
-DENG_EXTERN_C void UI_Ticker(timespan_t t);
-DENG_EXTERN_C void UI_Shutdown();
+DE_EXTERN_C void UI_Ticker(timespan_t t);
+DE_EXTERN_C void UI_Shutdown();
 
 #endif // SERVER_DUMMIES_H

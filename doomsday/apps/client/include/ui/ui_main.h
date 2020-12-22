@@ -19,13 +19,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_UI_MAIN_H
-#define LIBDENG_UI_MAIN_H
+#ifndef DE_UI_MAIN_H
+#define DE_UI_MAIN_H
 
-#include <de/rect.h>
+#include <de/legacy/rect.h>
 #include "ddevent.h"
 #ifdef __CLIENT__
-#  include "MaterialVariantSpec"
+#  include "resource/materialvariantspec.h"
 #endif
 
 /*enum fontstyle_t {
@@ -69,14 +69,14 @@ typedef struct {
     float red, green, blue;
 } ui_color_t;
 
-DENG_EXTERN_C fontid_t fontFixed; //, fontVariable[FONTSTYLE_COUNT];
+DE_EXTERN_C fontid_t fontFixed; //, fontVariable[FONTSTYLE_COUNT];
 
 //void UI_Register(void);
 
 void UI_LoadFonts(void);
 
-char const *UI_ChooseFixedFont(void);
-//char const *UI_ChooseVariableFont(fontstyle_t style);
+const char *UI_ChooseFixedFont(void);
+//const char *UI_ChooseVariableFont(fontstyle_t style);
 
 /// @param id  Id number of the color to return e.g. "UIC_TEXT".
 ui_color_t* UI_Color(uint id);
@@ -91,7 +91,7 @@ ui_color_t* UI_Color(uint id);
  * @param size  Screen-space dimensions of the cursor in pixels.
  * @param alpha  Alpha level to use when drawing the background.
  */
-void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &size, float alpha);
+void UI_DrawDDBackground(const Point2Raw &origin, const Size2Raw &size, float alpha);
 
 void UI_MixColors(ui_color_t* a, ui_color_t* b, ui_color_t* dest, float amount);
 void UI_SetColorA(ui_color_t* color, float alpha);
@@ -104,6 +104,6 @@ void UI_SetColor(ui_color_t* color);
 void UI_TextOutEx(const char* text, const Point2Raw* origin, ui_color_t* color, float alpha);
 void UI_TextOutEx2(const char* text, const Point2Raw* origin, ui_color_t* color, float alpha, int alignFlags, short textFlags);
 
-//de::MaterialVariantSpec const &UI_MaterialSpec(int texSpecFlags = 0);
+//const de::MaterialVariantSpec &UI_MaterialSpec(int texSpecFlags = 0);
 
 #endif

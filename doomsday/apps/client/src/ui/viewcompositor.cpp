@@ -21,8 +21,7 @@
 #include "ui/postprocessing.h"
 #include "ui/infine/finaleinterpreter.h"
 #include "ui/infine/finalepagewidget.h"
-//#include "ui/editors/edit_bias.h"
-#include "network/net_main.h" // Net_Drawer (get rid of this)
+#include "network/sys_network.h" // Net_Drawer (get rid of this)
 #include "render/rend_main.h"
 #include "render/viewports.h"
 #include "world/p_players.h"
@@ -33,23 +32,23 @@
 #include "dd_main.h"
 #include "gl/gl_main.h"
 
-#include <de/Config>
-#include <de/CommandLine>
-#include <de/GLState>
-#include <de/GLShaderBank>
-#include <de/Drawable>
-#include <de/VRConfig>
-#include <de/WindowTransform>
+#include <de/config.h>
+#include <de/commandline.h>
+#include <de/glstate.h>
+#include <de/glshaderbank.h>
+#include <de/drawable.h>
+#include <de/vrconfig.h>
+#include <de/windowtransform.h>
 
 using namespace de;
 
 static Ranged const FACTOR_RANGE(1.0 / 16.0, 1.0);
 
-DENG2_PIMPL(ViewCompositor)
-, DENG2_OBSERVES(Variable, Change)
+DE_PIMPL(ViewCompositor)
+, DE_OBSERVES(Variable, Change)
 {
-    mutable Variable const *pixelDensity = nullptr;
-    mutable Variable const *resizeFactor = nullptr;
+    mutable const Variable *pixelDensity = nullptr;
+    mutable const Variable *resizeFactor = nullptr;
 
     int playerNum = 0;
 
@@ -82,7 +81,7 @@ DENG2_PIMPL(ViewCompositor)
     {
         getConfig();
 
-        double const rf = (*resizeFactor > 0? 1.0 / *resizeFactor : 1.0);
+        const double rf = (*resizeFactor > 0? 1.0 / *resizeFactor : 1.0);
         return FACTOR_RANGE.clamp(*pixelDensity * rf);
     }
 
@@ -130,7 +129,7 @@ DENG2_PIMPL(ViewCompositor)
         viewFramebuf.setSampleCount(sampleCount);
     }
 
-    void variableValueChanged(Variable &, Value const &) override
+    void variableValueChanged(Variable &, const Value &) override
     {
         updateSampleCount();
     }
@@ -162,7 +161,7 @@ DENG2_PIMPL(ViewCompositor)
 
             VBuf::Builder verts;
             verts.makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1));
-            vbuf->setVertices(gl::TriangleStrip, verts, gl::Static);
+            vbuf->setVertices(gfx::TriangleStrip, verts, gfx::Static);
         }*/
     }
 
@@ -208,15 +207,15 @@ GLTextureFramebuffer &ViewCompositor::gameView()
     return d->viewFramebuf;
 }
 
-GLTextureFramebuffer const &ViewCompositor::gameView() const
+const GLTextureFramebuffer &ViewCompositor::gameView() const
 {
     return d->viewFramebuf;
 }
 
 void ViewCompositor::drawCompositedLayers()
 {
-    Rectanglei const view3D = R_Console3DViewRect(d->playerNum);
-    auto const oldDisplayPlayer = displayPlayer;
+    const Rectanglei view3D = R_Console3DViewRect(d->playerNum);
+    const auto oldDisplayPlayer = displayPlayer;
 
     // View border around the game view.
     displayPlayer = d->playerNum;
@@ -232,7 +231,7 @@ void ViewCompositor::drawCompositedLayers()
     // 3D world view (using the previously rendered texture).
     d->postProcessing.update();
     d->postProcessing.draw(ClientWindow::main().root().projMatrix2D() *
-                           Matrix4f::scaleThenTranslate(view3D.size(), view3D.topLeft),
+                           Mat4f::scaleThenTranslate(view3D.size(), view3D.topLeft),
                            d->viewFramebuf.colorTexture());
 
     DGL_MatrixMode(DGL_PROJECTION);
@@ -243,7 +242,7 @@ void ViewCompositor::drawCompositedLayers()
     // covers the entire area.
 
     // Game HUD.
-    if (auto const *vp = R_CurrentViewPort())
+    if (const auto *vp = R_CurrentViewPort())
     {
         R_RenderPlayerViewBorder();
 
@@ -252,7 +251,7 @@ void ViewCompositor::drawCompositedLayers()
         RectRaw vpGeometry = {{vp->geometry.topLeft.x, vp->geometry.topLeft.y},
                               {int(vp->geometry.width()), int(vp->geometry.height())}};
 
-        viewdata_t const *vd = &DD_Player(d->playerNum)->viewport();
+        const viewdata_t *vd = &DD_Player(d->playerNum)->viewport();
         RectRaw vdWindow = {{vd->window.topLeft.x, vd->window.topLeft.y},
                             {int(vd->window.width()), int(vd->window.height())}};
 
@@ -275,11 +274,11 @@ void ViewCompositor::drawCompositedLayers()
     // normalized window coordinates first because the rendering target may not be
     // the window (the target may thus have any resolution).
 
-    Rectanglef const normRect = GuiWidget::normalizedRect(
+    const Rectanglef normRect = GuiWidget::normalizedRect(
                 R_ConsoleRect(d->playerNum),
                 Rectanglei::fromSize(ClientWindow::main().root().viewSize()));
 
-    auto const targetSize = GLState::current().target().size();
+    const auto targetSize = GLState::current().target().size();
     Rectanglef const vp { normRect.topLeft     * targetSize,
                           normRect.bottomRight * targetSize };
 
@@ -292,9 +291,9 @@ void ViewCompositor::drawCompositedLayers()
         {
             dgl_borderedprojectionstate_t bp;
             GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_CLIP |
-                                           (!App_World().hasMap()? BPF_OVERDRAW_MASK : 0),
+                                                    (!world::World::get().hasMap() ? BPF_OVERDRAW_MASK : 0),
                                            SCREENWIDTH, SCREENHEIGHT,
-                                           DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT,
+                                           DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT,
                                            scalemode_t(Con_GetByte("rend-finale-stretch")));
             GL_BeginBorderedProjection(&bp);
             for (Finale *finale : App_InFineSystem().finales())
@@ -311,7 +310,7 @@ void ViewCompositor::drawCompositedLayers()
         // Draw any full window game graphics.
         if (gx.DrawWindow)
         {
-            Size2Raw const dimensions = {{{DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT}}};
+            const Size2Raw dimensions = {{{DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT}}};
             gx.DrawWindow(&dimensions);
         }
     }
@@ -325,7 +324,7 @@ void ViewCompositor::drawCompositedLayers()
         SBE_DrawGui();
 
         // Debug visualizations.
-        if (App_World().hasMap() && App_World().map().hasLightGrid())
+        if (world::World::get().hasMap() && App_World().map().hasLightGrid())
         {
             Rend_LightGridVisual(App_World().map().lightGrid());
         }

@@ -20,18 +20,18 @@
 
 #include "de_platform.h"
 #include "resource/fontmanifest.h"
+#include "resource/fontscheme.h"
 
 #include "dd_main.h" // App_Fonts(), remove me
-#include "FontScheme"
-#include <de/Log>
+#include <de/log.h>
 
 using namespace de;
 
-DENG2_PIMPL(FontManifest),
-DENG2_OBSERVES(AbstractFont, Deletion)
+DE_PIMPL(FontManifest),
+DE_OBSERVES(AbstractFont, Deletion)
 {
     int uniqueId;
-    QScopedPointer<AbstractFont>(resource); ///< Associated resource (if any).
+    std::unique_ptr<AbstractFont>(resource); ///< Associated resource (if any).
 
     Impl(Public *i)
         : Base(i)
@@ -40,17 +40,17 @@ DENG2_OBSERVES(AbstractFont, Deletion)
 
     ~Impl()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(Deletion, i) i->fontManifestBeingDeleted(self());
+        DE_NOTIFY_PUBLIC_VAR(Deletion, i) i->fontManifestBeingDeleted(self());
     }
 
     // Observes AbstractFont::Deletion.
-    void fontBeingDeleted(AbstractFont const & /*resource*/)
+    void fontBeingDeleted(const AbstractFont & /*resource*/)
     {
         resource.reset();
     }
 };
 
-FontManifest::FontManifest(PathTree::NodeArgs const &args)
+FontManifest::FontManifest(const PathTree::NodeArgs &args)
     : Node(args), d(new Impl(this))
 {}
 
@@ -58,23 +58,24 @@ FontScheme &FontManifest::scheme() const
 {
     LOG_AS("FontManifest");
     /// @todo Optimize: FontManifest should contain a link to the owning FontScheme.
-    foreach(FontScheme *scheme, App_Resources().allFontSchemes())
+    for (const auto &scheme : App_Resources().allFontSchemes())
     {
-        if(&scheme->index() == &tree()) return *scheme;
+        if (&scheme.second->index() == &tree()) return *scheme.second;
     }
     /// @throw Error Failed to determine the scheme of the manifest (should never happen...).
-    throw Error("FontManifest::scheme", String("Failed to determine scheme for manifest [%1]").arg(de::dintptr(this)));
+    throw Error("FontManifest::scheme", stringf("Failed to determine scheme for manifest [%p]", this));
 }
 
-String const &FontManifest::schemeName() const
+const String &FontManifest::schemeName() const
 {
     return scheme().name();
 }
 
-String FontManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const
+String FontManifest::description(res::Uri::ComposeAsTextFlags uriCompositionFlags) const
 {
-    return String("%1").arg(composeUri().compose(uriCompositionFlags | Uri::DecodePath),
-                            ( uriCompositionFlags.testFlag(Uri::OmitScheme)? -14 : -22 ) );
+    return composeUri().compose(uriCompositionFlags | res::Uri::DecodePath);
+//    return String("%1").arg(composeUri().compose(uriCompositionFlags | Uri::DecodePath),
+//                            ( uriCompositionFlags.testFlag(Uri::OmitScheme)? -14 : -22 ) );
 }
 
 int FontManifest::uniqueId() const
@@ -86,26 +87,26 @@ bool FontManifest::setUniqueId(int newUniqueId)
 {
     LOG_AS("FontManifest");
 
-    if(d->uniqueId == newUniqueId) return false;
+    if (d->uniqueId == newUniqueId) return false;
 
     d->uniqueId = newUniqueId;
 
     // Notify interested parties that the uniqueId has changed.
-    DENG2_FOR_AUDIENCE(UniqueIdChange, i) i->fontManifestUniqueIdChanged(*this);
+    DE_NOTIFY_VAR(UniqueIdChange, i) i->fontManifestUniqueIdChanged(*this);
 
     return true;
 }
 
 bool FontManifest::hasResource() const
 {
-    return !d->resource.isNull();
+    return bool(d->resource);
 }
 
 AbstractFont &FontManifest::resource() const
 {
-    if(hasResource())
+    if (hasResource())
     {
-        return *d->resource.data();
+        return *d->resource;
     }
     /// @throw MissingFontError No resource is associated with the manifest.
     throw MissingFontError("FontManifest::resource", "No resource is associated");
@@ -115,20 +116,20 @@ void FontManifest::setResource(AbstractFont *newResource)
 {
     LOG_AS("FontManifest");
 
-    if(d->resource.data() != newResource)
+    if (d->resource.get() != newResource)
     {
-        if(AbstractFont *curFont = d->resource.data())
+        if (d->resource)
         {
             // Cancel notifications about the existing resource.
-            curFont->audienceForDeletion -= d;
+            d->resource->audienceForDeletion -= d;
         }
 
         d->resource.reset(newResource);
 
-        if(AbstractFont *curFont = d->resource.data())
+        if (d->resource)
         {
             // We want notification when the new resource is about to be deleted.
-            curFont->audienceForDeletion += d;
+            d->resource->audienceForDeletion += d;
         }
     }
 }

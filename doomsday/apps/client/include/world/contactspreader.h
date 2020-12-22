@@ -19,21 +19,17 @@
  */
 
 #ifdef __CLIENT__
-#ifndef DENG_CLIENT_WORLD_CONTACTSPREADER_H
-#define DENG_CLIENT_WORLD_CONTACTSPREADER_H
+#ifndef DE_CLIENT_WORLD_CONTACTSPREADER_H
+#define DE_CLIENT_WORLD_CONTACTSPREADER_H
 
-#include <de/aabox.h>
-#include <QBitArray>
-#include "world/blockmap.h"
-
-namespace world {
+#include <doomsday/world/blockmap.h>
+#include <de/legacy/aabox.h>
+#include <de/bitarray.h>
 
 /**
  * Performs contact spreading for the specified @a blockmap.
  */
-void spreadContacts(Blockmap const &blockmap, AABoxd const &region, QBitArray *spreadBlocks = 0);
+void spreadContacts(const world::Blockmap &blockmap, const AABoxd &region, de::BitArray *spreadBlocks = 0);
 
-}  // namespace world
-
-#endif  // DENG_CLIENT_WORLD_CONTACTSPREADER_H
+#endif  // DE_CLIENT_WORLD_CONTACTSPREADER_H
 #endif  // __CLIENT__

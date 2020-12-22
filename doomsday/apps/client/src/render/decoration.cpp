@@ -22,18 +22,18 @@
 #include "render/decoration.h"
 
 #include "world/surface.h"
-#include "world/clientserverworld.h"
-#include <doomsday/world/MaterialManifest>
+#include "world/clientworld.h"
+#include <doomsday/world/materialmanifest.h>
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(Decoration)
+DE_PIMPL_NOREF(Decoration)
 {
-    MaterialAnimator::Decoration const *source = nullptr;
+    const MaterialAnimator::Decoration *source = nullptr;
     Surface *surface = nullptr;
 };
 
-Decoration::Decoration(MaterialAnimator::Decoration const &source, Vector3d const &origin)
+Decoration::Decoration(const MaterialAnimator::Decoration &source, const Vec3d &origin)
     : MapObject(origin)
     , d(new Impl)
 {
@@ -45,22 +45,22 @@ Decoration::~Decoration()
 
 String Decoration::description() const
 {
-    auto desc = String(    _E(l) "Origin: "   _E(.)_E(i) "%1" _E(.)
-                       " " _E(l) "Material: " _E(.)_E(i) "%2" _E(.)
-                       " " _E(l) "Surface: "  _E(.)_E(i) "%3" _E(.))
-                  .arg(origin().asText())
-                  .arg(source().decor().material().manifest().composeUri().asText())
-                  .arg(String("[0x%1]").arg(de::dintptr(&surface()), 0, 16));
+    auto desc = Stringf(    _E(l) "Origin: "   _E(.)_E(i) "%s" _E(.)
+                               " " _E(l) "Material: " _E(.)_E(i) "%s" _E(.)
+                               " " _E(l) "Surface: "  _E(.)_E(i) "[%p]" _E(.),
+                  origin().asText().c_str(),
+                  source().decor().material().manifest().composeUri().asText().c_str(),
+                  &surface());
 
-#ifdef DENG2_DEBUG
-    desc.prepend(String(_E(b) "Decoration " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
+#ifdef DE_DEBUG
+    desc.prepend(Stringf(_E(b) "Decoration " _E(.) "[%p]\n", this));
 #endif
     return desc;
 }
 
-MaterialAnimator::Decoration const &Decoration::source() const
+const MaterialAnimator::Decoration &Decoration::source() const
 {
-    DENG2_ASSERT(d->source);
+    DE_ASSERT(d->source);
     return *d->source;
 }
 
@@ -76,7 +76,7 @@ Surface &Decoration::surface()
     throw MissingSurfaceError("Decoration::surface", "No surface is attributed");
 }
 
-Surface const &Decoration::surface() const
+const Surface &Decoration::surface() const
 {
     if(hasSurface()) return *d->surface;
     /// @throw MissingSurfaceError Attempted with no surface attributed.

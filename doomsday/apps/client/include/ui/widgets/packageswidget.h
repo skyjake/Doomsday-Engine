@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_HOME_PACKAGESWIDGET_H
-#define DENG_CLIENT_UI_HOME_PACKAGESWIDGET_H
+#ifndef DE_CLIENT_UI_HOME_PACKAGESWIDGET_H
+#define DE_CLIENT_UI_HOME_PACKAGESWIDGET_H
 
-#include <de/ButtonWidget>
-#include <de/LineEditWidget>
-#include <de/IPersistent>
-#include <de/ProgressWidget>
+#include <de/buttonwidget.h>
+#include <de/lineeditwidget.h>
+#include <de/ipersistent.h>
+#include <de/progresswidget.h>
 
 class HomeItemWidget;
 class HomeMenuWidget;
@@ -34,28 +34,28 @@ class HomeMenuWidget;
  */
 class PackagesWidget : public de::GuiWidget, public de::IPersistent
 {
-    Q_OBJECT
-
 public:
     /// Specified manual package is not available. @ingroup errors
-    DENG2_ERROR(UnavailableError);
+    DE_ERROR(UnavailableError);
 
     /// Determines whether an item should be shown as highlighted or not.
     class IPackageStatus
     {
     public:
         virtual ~IPackageStatus();
-        virtual bool isPackageHighlighted(de::String const &packageId) const = 0;
+        virtual bool isPackageHighlighted(const de::String &packageId) const = 0;
     };
 
     enum PopulateBehavior { PopulationDisabled, PopulationEnabled };
 
+    DE_AUDIENCE(ItemCount, void itemCountChanged(unsigned int shownItems, unsigned int totalItems))
+
 public:
     PackagesWidget(PopulateBehavior popBehavior = PopulationEnabled,
-                   de::String const &name = de::String());
+                   const de::String &name = de::String());
 
     PackagesWidget(de::StringList manualPackageIds,
-                   de::String const &name = de::String());
+                   const de::String &name = de::String());
 
     HomeMenuWidget &menu();
     de::ProgressWidget &progress();
@@ -65,8 +65,8 @@ public:
     void setRightClickToOpenContextMenu(bool enable);
     void setHiddenTags(de::StringList hiddenTags);
     void setPopulationEnabled(bool enable);
-    void setFilterEditorMinimumY(de::Rule const &minY);
-    void setPackageStatus(IPackageStatus const &packageStatus);
+    void setFilterEditorMinimumY(const de::Rule &minY);
+    void setPackageStatus(const IPackageStatus &packageStatus);
     void showProgressIndicator();
 
     /**
@@ -75,7 +75,7 @@ public:
      *
      * @param actionItem  Items for action buttons.
      */
-    void setActionItems(de::ui::Data const &actionItems);
+    void setActionItems(const de::ui::Data &actionItems);
 
     de::ui::Data &actionItems();
 
@@ -94,7 +94,7 @@ public:
      * @param packageId  Package identifier.
      * @return  Item.
      */
-    de::ui::Item const *itemForPackage(de::String const &packageId) const;
+    const de::ui::Item *itemForPackage(const de::String &packageId) const;
 
     /**
      * Returns the ID of the package whose action buttons were most recently interacted
@@ -106,11 +106,13 @@ public:
 
     de::GuiWidget *actionWidget() const;
 
-    de::ui::Item const *actionItem() const;
+    const de::ui::Item *actionItem() const;
 
-    void scrollToPackage(de::String const &packageId) const;
+    void scrollToPackage(const de::String &packageId) const;
 
     de::LineEditWidget &searchTermsEditor();
+
+    void refreshPackages();
 
     // Events.
     void initialize();
@@ -118,13 +120,10 @@ public:
 
     // Implements IPersistent.
     void operator>>(de::PersistentState &toState) const;
-    void operator<<(de::PersistentState const &fromState);
-
-signals:
-    void itemCountChanged(unsigned int shownItems, unsigned int totalItems);
+    void operator<<(const de::PersistentState &fromState);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_HOME_PACKAGESWIDGET_H
+#endif // DE_CLIENT_UI_HOME_PACKAGESWIDGET_H

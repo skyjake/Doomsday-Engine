@@ -1,0 +1,8 @@
+# Shared resources for all Doomsday applications
+
+title: Doomsday Base
+version: 3.0
+license: GPL 3+
+tags: core
+
+importPath <modules>

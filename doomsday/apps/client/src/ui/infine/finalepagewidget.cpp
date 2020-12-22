@@ -20,23 +20,23 @@
 
 #include "ui/infine/finalepagewidget.h"
 
-#include <doomsday/world/Material>
-#include <de/vector1.h>
+#include <doomsday/world/material.h>
+#include <de/legacy/vector1.h>
 #include "dd_main.h" // App_Resources()
 
 #ifdef __CLIENT__
-#  include <de/GLInfo>
-#  include <de/GLState>
+#  include <de/glinfo.h>
+#  include <de/glstate.h>
 #  include "gl/gl_draw.h"
 #  include "gl/gl_main.h"
 #  include "render/rend_main.h" // renderWireframe
-#  include "MaterialAnimator"
+#  include "resource/materialanimator.h"
 #endif
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(FinalePageWidget)
-, DENG2_OBSERVES(FinaleWidget, Deletion)
+DE_PIMPL_NOREF(FinalePageWidget)
+, DE_OBSERVES(FinaleWidget, Deletion)
 {
     struct Flags {
         char hidden:1;         ///< Not drawn.
@@ -78,13 +78,13 @@ DENG2_PIMPL_NOREF(FinalePageWidget)
 
     ~Impl()
     {
-        qDeleteAll(children);
-        DENG2_ASSERT(children.isEmpty());
+        deleteAll(children);
+        DE_ASSERT(children.isEmpty());
     }
 
-    void finaleWidgetBeingDeleted(FinaleWidget const &widget)
+    void finaleWidgetBeingDeleted(const FinaleWidget &widget)
     {
-        DENG2_ASSERT(children.contains(&const_cast<FinaleWidget &>(widget)));
+        DE_ASSERT(children.contains(&const_cast<FinaleWidget &>(widget)));
         children.removeOne(&const_cast<FinaleWidget &>(widget));
     }
 };
@@ -96,7 +96,7 @@ FinalePageWidget::~FinalePageWidget()
 {}
 
 #ifdef __CLIENT__
-static inline MaterialVariantSpec const &uiMaterialSpec()
+static inline const MaterialVariantSpec &uiMaterialSpec()
 {
     return App_Resources().materialSpec(UiContext, 0, 0, 0, 0,
                                              GL_REPEAT, GL_REPEAT, 0, 1, 0,
@@ -154,20 +154,20 @@ void FinalePageWidget::draw() const
 
     //GL_SetMultisample(true);
 
-    // Clear Z buffer (prevent the objects being clipped by nearby polygons).
-    LIBGUI_GL.glClear(GL_DEPTH_BUFFER_BIT);
+    // Prevent objects from being clipped by nearby polygons.
+    glClear(GL_DEPTH_BUFFER_BIT);
 
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     if (renderWireframe > 1)
     {
-        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 #endif
 
     DGL_PushState();
     DGL_Enable(DGL_ALPHA_TEST);
 
-    Vector3f worldOrigin(/*-SCREENWIDTH/2*/ - d->offset[VX].value,
+    Vec3f worldOrigin(/*-SCREENWIDTH/2*/ - d->offset[VX].value,
                          /*-SCREENHEIGHT/2*/ - d->offset[VY].value,
                          0/*.05f - d->offset[VZ].value*/);
 
@@ -178,11 +178,11 @@ void FinalePageWidget::draw() const
 
     DGL_PopState();
 
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     // Back from wireframe mode?
     if (renderWireframe > 1)
     {
-        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 #endif
 
@@ -279,7 +279,7 @@ FinaleWidget *FinalePageWidget::removeChild(FinaleWidget *widgetToRemove)
     return widgetToRemove;
 }
 
-FinalePageWidget::Children const &FinalePageWidget::children() const
+const FinalePageWidget::Children &FinalePageWidget::children() const
 {
     return d->children;
 }
@@ -295,31 +295,31 @@ FinalePageWidget &FinalePageWidget::setBackgroundMaterial(world::Material *newMa
     return *this;
 }
 
-FinalePageWidget &FinalePageWidget::setBackgroundTopColor(Vector3f const &newColor, int steps)
+FinalePageWidget &FinalePageWidget::setBackgroundTopColor(const Vec3f &newColor, int steps)
 {
     AnimatorVector3_Set(d->bg.topColor, newColor.x, newColor.y, newColor.z, steps);
     return *this;
 }
 
-FinalePageWidget &FinalePageWidget::setBackgroundTopColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+FinalePageWidget &FinalePageWidget::setBackgroundTopColorAndAlpha(const Vec4f &newColorAndAlpha, int steps)
 {
     AnimatorVector4_Set(d->bg.topColor, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
     return *this;
 }
 
-FinalePageWidget &FinalePageWidget::setBackgroundBottomColor(Vector3f const &newColor, int steps)
+FinalePageWidget &FinalePageWidget::setBackgroundBottomColor(const Vec3f &newColor, int steps)
 {
     AnimatorVector3_Set(d->bg.bottomColor, newColor.x, newColor.y, newColor.z, steps);
     return *this;
 }
 
-FinalePageWidget &FinalePageWidget::setBackgroundBottomColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+FinalePageWidget &FinalePageWidget::setBackgroundBottomColorAndAlpha(const Vec4f &newColorAndAlpha, int steps)
 {
     AnimatorVector4_Set(d->bg.bottomColor, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
     return *this;
 }
 
-FinalePageWidget &FinalePageWidget::setOffset(Vector3f const &newOffset, int steps)
+FinalePageWidget &FinalePageWidget::setOffset(const Vec3f &newOffset, int steps)
 {
     AnimatorVector3_Set(d->offset, newOffset.x, newOffset.y, newOffset.z, steps);
     return *this;
@@ -343,13 +343,13 @@ FinalePageWidget &FinalePageWidget::setOffsetZ(float y, int steps)
     return *this;
 }
 
-FinalePageWidget &FinalePageWidget::setFilterColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+FinalePageWidget &FinalePageWidget::setFilterColorAndAlpha(const Vec4f &newColorAndAlpha, int steps)
 {
     AnimatorVector4_Set(d->filter, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
     return *this;
 }
 
-FinalePageWidget &FinalePageWidget::setPredefinedColor(uint idx, Vector3f const &newColor, int steps)
+FinalePageWidget &FinalePageWidget::setPredefinedColor(uint idx, const Vec3f &newColor, int steps)
 {
     if (VALID_FIPAGE_PREDEFINED_COLOR(idx))
     {
@@ -357,18 +357,18 @@ FinalePageWidget &FinalePageWidget::setPredefinedColor(uint idx, Vector3f const 
     }
     else
     {
-        throw InvalidColorError("FinalePageWidget::setPredefinedColor", "Invalid color #" + String::number(idx));
+        throw InvalidColorError("FinalePageWidget::setPredefinedColor", "Invalid color #" + String::asText(idx));
     }
     return *this;
 }
 
-animatorvector3_t const *FinalePageWidget::predefinedColor(uint idx)
+const animatorvector3_t *FinalePageWidget::predefinedColor(uint idx)
 {
     if (VALID_FIPAGE_PREDEFINED_COLOR(idx))
     {
         return &d->preColor[idx];
     }
-    throw InvalidColorError("FinalePageWidget::predefinedColor", "Invalid color #" + String::number(idx));
+    throw InvalidColorError("FinalePageWidget::predefinedColor", "Invalid color #" + String::asText(idx));
 }
 
 FinalePageWidget &FinalePageWidget::setPredefinedFont(uint idx, fontid_t fontNum)
@@ -379,7 +379,7 @@ FinalePageWidget &FinalePageWidget::setPredefinedFont(uint idx, fontid_t fontNum
     }
     else
     {
-        throw InvalidFontError("FinalePageWidget::setPredefinedFont", "Invalid font #" + String::number(idx));
+        throw InvalidFontError("FinalePageWidget::setPredefinedFont", "Invalid font #" + String::asText(idx));
     }
     return *this;
 }
@@ -390,5 +390,5 @@ fontid_t FinalePageWidget::predefinedFont(uint idx)
     {
         return d->preFont[idx];
     }
-    throw InvalidFontError("FinalePageWidget::predefinedFont", "Invalid font #" + String::number(idx));
+    throw InvalidFontError("FinalePageWidget::predefinedFont", "Invalid font #" + String::asText(idx));
 }

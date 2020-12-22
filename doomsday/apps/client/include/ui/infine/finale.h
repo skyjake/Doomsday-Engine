@@ -17,11 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_UI_INFINE_FINALE_H
-#define DENG_UI_INFINE_FINALE_H
+#ifndef DE_UI_INFINE_FINALE_H
+#define DE_UI_INFINE_FINALE_H
 
-#include <de/Observers>
-#include <de/String>
+#include <de/observers.h>
+#include <de/string.h>
 #include "../ddevent.h"
 #include "api_infine.h"  // finaleid_t
 
@@ -43,7 +43,7 @@ class Finale
 {
 public:
     /// Notified when the finale is about to be deleted.
-    DENG2_DEFINE_AUDIENCE2(Deletion, void finaleBeingDeleted(Finale const &finale))
+    DE_AUDIENCE(Deletion, void finaleBeingDeleted(const Finale &finale))
 
 public:
     /**
@@ -51,7 +51,7 @@ public:
      * @param id      Unique identifier for the script.
      * @param script  The InFine script to be interpreted (a copy is made).
      */
-    Finale(int flags, finaleid_t id, de::String const &script);
+    Finale(int flags, finaleid_t id, const de::String &script);
 
     int flags() const;
     finaleid_t id() const;
@@ -68,17 +68,17 @@ public:
      */
     bool runTicks(timespan_t timeDelta);
 
-    int handleEvent(ddevent_t const &ev);
+    int handleEvent(const ddevent_t &ev);
     bool requestSkip();
     bool isMenuTrigger() const;
 
     /**
      * Provides access to the script interpreter. Mainly for debug purposes.
      */
-    FinaleInterpreter const &interpreter() const;
+    const FinaleInterpreter &interpreter() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_UI_INFINE_FINALE_H
+#endif // DE_UI_INFINE_FINALE_H

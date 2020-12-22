@@ -20,28 +20,24 @@
 
 #include "de_base.h"
 #include "network/net_buf.h"
-
-#include <de/c_wrapper.h>
-#include <de/concurrency.h>
-#include <de/memory.h>
-#include <de/timer.h>
-#include <de/ByteRefArray>
-#include <de/Loop>
-
+#include "network/net_event.h"
+#include "world/p_players.h"
 #ifdef __CLIENT__
 #  include "network/sys_network.h"
-#endif
-#include "network/masterserver.h"
-#include "network/net_event.h"
-#ifdef __CLIENT__
 #  include "network/serverlink.h"
 #endif
-
 #ifdef __SERVER__
 #  include "serversystem.h"
 #endif
 
-#include "world/p_players.h"
+#include <doomsday/network/masterserver.h>
+#include <doomsday/net.h>
+#include <de/c_wrapper.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/timer.h>
+#include <de/byterefarray.h>
+#include <de/loop.h>
 
 using namespace de;
 
@@ -60,7 +56,7 @@ static mutex_t msgMutex;
 
 reader_s *Reader_NewWithNetworkBuffer()
 {
-    return Reader_NewWithBuffer((byte const *) netBuffer.msg.data, netBuffer.length);
+    return Reader_NewWithBuffer((const byte *) netBuffer.msg.data, netBuffer.length);
 }
 
 void N_Init()
@@ -104,7 +100,7 @@ static dd_bool N_LockQueue(dd_bool doAcquire)
 
 void N_PostMessage(netmessage_t *msg)
 {
-    DENG2_ASSERT(msg);
+    DE_ASSERT(msg);
 
     N_LockQueue(true);
 
@@ -154,8 +150,8 @@ static netmessage_t *N_GetMessage()
         msg = ::msgHead;
 
         // Check for simulated latency.
-        if(::netSimulatedLatencySeconds > 0 &&
-           (Timer_RealSeconds() - msg->receivedAt < ::netSimulatedLatencySeconds))
+        if(netState.simulatedLatencySeconds > 0 &&
+           (Timer_RealSeconds() - msg->receivedAt < netState.simulatedLatencySeconds))
         {
             // This message has not been received yet.
             msg = nullptr;
@@ -188,7 +184,7 @@ static netmessage_t *N_GetMessage()
 
 static void N_ReleaseMessage(netmessage_t *msg)
 {
-    DENG2_ASSERT(msg);
+    DE_ASSERT(msg);
     if(msg->handle)
     {
         delete [] reinterpret_cast<byte *>(msg->handle);
@@ -201,10 +197,10 @@ void N_ClearMessages()
 {
     if(!msgMutex) return;  // Not initialized yet.
 
-    dfloat const oldSim = ::netSimulatedLatencySeconds;
+    const dfloat oldSim = netState.simulatedLatencySeconds;
 
     // No simulated latency now.
-    ::netSimulatedLatencySeconds = 0;
+    netState.simulatedLatencySeconds = 0;
 
     netmessage_t *msg;
     while((msg = N_GetMessage()) != nullptr)
@@ -212,74 +208,29 @@ void N_ClearMessages()
         N_ReleaseMessage(msg);
     }
 
-    ::netSimulatedLatencySeconds = oldSim;
+    netState.simulatedLatencySeconds = oldSim;
 
     // The queue is now empty.
     ::msgHead = ::msgTail = nullptr;
     ::entryCount = 0;
 }
 
-void N_SendPacket(dint flags)
+void N_SendPacket(void)
 {
-#ifdef __SERVER__
-    duint dest = 0;
-#else
-    DENG2_UNUSED(flags);
-#endif
-
-    // Is the network available?
-    if(!::allowSending)
-        return;
-
-    // Figure out the destination DPNID.
-#ifdef __SERVER__
-    {
-        if(::netBuffer.player >= 0 && ::netBuffer.player < DDMAXPLAYERS)
-        {
-            if(!DD_Player(::netBuffer.player)->isConnected())
-            {
-                // Do not send anything to disconnected players.
-                return;
-            }
-
-            dest = DD_Player(::netBuffer.player)->remoteUserId;
-        }
-        else
-        {
-            // Broadcast to all non-local players, using recursive calls.
-            for(dint i = 0; i < DDMAXPLAYERS; ++i)
-            {
-                ::netBuffer.player = i;
-                N_SendPacket(flags);
-            }
-
-            // Reset back to -1 to notify of the broadcast.
-            ::netBuffer.player = NSP_BROADCAST;
-            return;
-        }
-    }
-#endif
-
     try
     {
-#ifdef __CLIENT__
-        de::Transmitter &out = Net_ServerLink();
-#else
-        de::Transmitter &out = App_ServerSystem().user(dest);
-#endif
-
-        out << de::ByteRefArray(&::netBuffer.msg, ::netBuffer.headerLength + ::netBuffer.length);
+        if (allowSending)
+        {
+            DoomsdayApp::net().sendDataToPlayer(
+                netBuffer.player,
+                ByteRefArray(&netBuffer.msg, netBuffer.headerLength + netBuffer.length));
+        }
     }
-    catch(Error const &er)
+    catch(const Error &er)
     {
         LOGDEV_NET_WARNING("N_SendPacket failed: ") << er.asText();
     }
 }
-
-//void N_AddSentBytes(dsize bytes)
-//{
-//    ::numSentBytes += bytes;
-//}
 
 dint N_IdentifyPlayer(nodeid_t id)
 {
@@ -293,7 +244,7 @@ dint N_IdentifyPlayer(nodeid_t id)
     }
     return -1;
 #else
-    DENG2_UNUSED(id);
+    DE_UNUSED(id);
 #endif
 
     // Clients receive messages only from the server.
@@ -360,7 +311,7 @@ void N_PrintBufferInfo()
 {
     N_PrintTransmissionStats();
 
-    double const loopRate = Loop::get().rate();
+    const double loopRate = Loop::get().rate();
     if (loopRate > 0)
     {
         LOG_NET_MSG("Event loop frequency: up to %.1f Hz") << loopRate;
@@ -373,9 +324,9 @@ void N_PrintBufferInfo()
 
 void N_PrintTransmissionStats()
 {
-    auto const dataBytes = Socket::sentUncompressedBytes();
-    auto const outBytes  = Socket::sentBytes();
-    auto const outRate   = Socket::outputBytesPerSecond();
+    const auto dataBytes = Socket::sentUncompressedBytes();
+    const auto outBytes  = Socket::sentBytes();
+    const auto outRate   = Socket::outputBytesPerSecond();
 
     if (outBytes == 0)
     {

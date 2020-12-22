@@ -19,25 +19,6 @@
 
 #include "de_platform.h"
 
-#include <QNetworkProxyFactory>
-#include <QHostInfo>
-#include <QDebug>
-#include <stdlib.h>
-
-#include <doomsday/console/var.h>
-
-#include <de/CommandLine>
-#include <de/Config>
-#include <de/Error>
-#include <de/FileSystem>
-#include <de/Garbage>
-#include <de/Log>
-#include <de/LogBuffer>
-#include <de/PackageFeed>
-#include <de/PackageLoader>
-#include <de/ScriptSystem>
-#include <de/c_wrapper.h>
-
 #include "serverapp.h"
 #include "serverplayer.h"
 #include "dd_main.h"
@@ -47,40 +28,53 @@
 #include "def_main.h"
 #include "con_config.h"
 #include "network/net_main.h"
-#include "world/map.h"
 #include "world/p_players.h"
 
-#if WIN32
-#  include "dd_winit.h"
-#elif UNIX
-#  include "dd_uinit.h"
-#endif
+#include <doomsday/console/var.h>
+#include <doomsday/net.h>
+#include <doomsday/world/map.h>
+#include <doomsday/world/thinkers.h>
+
+#include <de/commandline.h>
+#include <de/config.h>
+#include <de/error.h>
+#include <de/filesystem.h>
+#include <de/garbage.h>
+#include <de/log.h>
+#include <de/logbuffer.h>
+#include <de/packagefeed.h>
+#include <de/packageloader.h>
+#include <de/dscript.h>
+#include <de/c_wrapper.h>
+
+#include <stdlib.h>
 
 using namespace de;
 
-static ServerApp *serverAppSingleton = 0;
+static ServerApp *serverAppSingleton = nullptr;
 
-static String const PATH_SERVER_FILES = "/sys/server/public";
+DE_STATIC_STRING(PATH_SERVER_FILES, "/sys/server/public");
 
-static void handleAppTerminate(char const *msg)
+static void handleAppTerminate(const char *msg)
 {
     LogBuffer::get().flush();
-    qFatal("Application terminated due to exception:\n%s\n", msg);
+    warning("Application terminated due to exception:\n%s\n", msg);
+    exit(1);
 }
 
-DENG2_PIMPL(ServerApp)
-, DENG2_OBSERVES(Plugins, PublishAPI)
-, DENG2_OBSERVES(DoomsdayApp, GameUnload)
-, DENG2_OBSERVES(DoomsdayApp, ConsoleRegistration)
-, DENG2_OBSERVES(DoomsdayApp, PeriodicAutosave)
-, DENG2_OBSERVES(PackageLoader, Activity)
+DE_PIMPL(ServerApp)
+, DE_OBSERVES(Plugins, PublishAPI)
+, DE_OBSERVES(DoomsdayApp, GameUnload)
+, DE_OBSERVES(DoomsdayApp, ConsoleRegistration)
+, DE_OBSERVES(DoomsdayApp, PeriodicAutosave)
+, DE_OBSERVES(PackageLoader, Activity)
 {
-    QScopedPointer<ServerSystem> serverSystem;
-    QScopedPointer<Resources> resources;
-    QScopedPointer<AudioSystem> audioSys;
-    ClientServerWorld world;
-    InFineSystem infineSys;
-    duint32 serverId;
+    std::unique_ptr<ServerSystem> serverSystem;
+    std::unique_ptr<Resources>    resources;
+    std::unique_ptr<AudioSystem>  audioSys;
+    ServerWorld                   world;
+    InFineSystem                  infineSys;
+    duint32                       serverId;
 
     Impl(Public *i)
         : Base(i)
@@ -99,15 +93,15 @@ DENG2_PIMPL(ServerApp)
         LOG_NET_NOTE("Server instance ID: %08x") << serverId;
     }
 
-    ~Impl()
+    ~Impl() override
     {
         Sys_Shutdown();
         DD_Shutdown();
     }
 
-    void publishAPIToPlugin(::Library *plugin) override
+    void publishAPIToPlugin(const char *plugName) override
     {
-        DD_PublishAPIs(plugin);
+        DD_PublishAPIs(plugName);
     }
 
     void consoleRegistration() override
@@ -115,13 +109,13 @@ DENG2_PIMPL(ServerApp)
         DD_ConsoleRegister();
     }
 
-    void aboutToUnloadGame(Game const &/*gameBeingUnloaded*/) override
+    void aboutToUnloadGame(const Game &/*gameBeingUnloaded*/) override
     {
-        if (netGame && isServer)
+        if (netState.netGame && netState.isServer)
         {
             N_ServerClose();
         }
-        infineSystem().reset();
+        infine().reset();
         if (App_GameLoaded())
         {
             Con_SaveDefaults();
@@ -142,19 +136,17 @@ DENG2_PIMPL(ServerApp)
         // Packages available to clients via RemoteFeed use versioned identifiers because
         // a client may already have a different version of the package.
 
-        Folder &files = self().fileSystem().makeFolder(PATH_SERVER_FILES);
+        Folder &files = self().fileSystem().makeFolder(PATH_SERVER_FILES());
         auto *feed = new PackageFeed(PackageLoader::get(),
                                      PackageFeed::LinkVersionedIdentifier);
-        feed->setFilter([] (Package const &pkg)
-        {
-            return !pkg.matchTags(pkg.file(), "\\b(vanilla|core)\\b");
-        });
+        feed->setFilter(
+            [](const Package &pkg) { return !pkg.matchTags(pkg.file(), "\\b(vanilla|core)\\b"); });
         files.attach(feed);
     }
 
     void setOfLoadedPackagesChanged() override
     {
-        if (Folder *files = FS::tryLocate<Folder>(PATH_SERVER_FILES))
+        if (auto *files = FS::tryLocate<Folder>(PATH_SERVER_FILES()))
         {
             files->populate();
         }
@@ -163,16 +155,13 @@ DENG2_PIMPL(ServerApp)
 #ifdef UNIX
     void printVersionToStdOut()
     {
-        printf("%s\n", String("%1 %2")
-               .arg(DOOMSDAY_NICENAME)
-               .arg(DOOMSDAY_VERSION_FULLTEXT)
-               .toLatin1().constData());
+        printf("%s %s\n", DOOMSDAY_NICENAME, DOOMSDAY_VERSION_FULLTEXT);
     }
 
     void printHelpToStdOut()
     {
         printVersionToStdOut();
-        printf("Usage: %s [options]\n", self().commandLine().at(0).toLatin1().constData());
+        printf("Usage: %s [options]\n", self().commandLine().at(0).c_str());
         printf(" -iwad (dir)  Set directory containing IWAD files.\n");
         printf(" -file (f)    Load one or more PWAD files at startup.\n");
         printf(" -game (id)   Set game to load at startup.\n");
@@ -182,19 +171,16 @@ DENG2_PIMPL(ServerApp)
 #endif
 };
 
-ServerApp::ServerApp(int &argc, char **argv)
-    : TextApp(argc, argv)
+ServerApp::ServerApp(const StringList &args)
+    : TextApp(args)
     , DoomsdayApp([] () -> Player * { return new ServerPlayer; })
     , d(new Impl(this))
 {
     novideo = true;
 
-    // Use the host system's proxy configuration.
-    QNetworkProxyFactory::setUseSystemConfiguration(true);
-
     // Metadata.
     setMetadata("Deng Team", "dengine.net", "Doomsday Server", DOOMSDAY_VERSION_BASE);
-    setUnixHomeFolderName(".doomsday");
+    setUnixHomeFolderName(".doomsday-server");
 
     setTerminateFunc(handleAppTerminate);
 
@@ -212,6 +198,15 @@ ServerApp::ServerApp(int &argc, char **argv)
 
     // We must presently set the current game manually (the collection is global).
     setGame(games().nullGame());
+
+    net().setTransmitterLookup([](int player) -> Transmitter * {
+        auto &plr = players().at(player).as<ServerPlayer>();
+        if (plr.isConnected())
+        {
+            return &serverSystem().user(plr.remoteUserId);
+        }
+        return nullptr;
+    });
 }
 
 ServerApp::~ServerApp()
@@ -219,7 +214,7 @@ ServerApp::~ServerApp()
     d.reset();
 
     // Now that everything is shut down we can forget about the singleton instance.
-    serverAppSingleton = 0;
+    serverAppSingleton = nullptr;
 }
 
 duint32 ServerApp::instanceId() const
@@ -261,12 +256,12 @@ void ServerApp::initialize()
     d->initServerFiles();
 
     // Initialize.
-#if WIN32
+#if defined (WIN32)
     if (!DD_Win32_Init())
     {
         throw Error("ServerApp::initialize", "DD_Win32_Init failed");
     }
-#elif UNIX
+#elif defined (UNIX)
     if (!DD_Unix_Init())
     {
         throw Error("ServerApp::initialize", "DD_Unix_Init failed");
@@ -280,9 +275,9 @@ void ServerApp::initialize()
     DD_FinishInitializationAfterWindowReady();
 }
 
-void ServerApp::checkPackageCompatibility(StringList const &packageIds,
-                                          String const &userMessageIfIncompatible,
-                                          std::function<void ()> finalizeFunc)
+void ServerApp::checkPackageCompatibility(const StringList &           packageIds,
+                                          const String &               userMessageIfIncompatible,
+                                          const std::function<void()> &finalizeFunc)
 {
     if (GameProfiles::arePackageListsCompatible(packageIds, loadedPackagesAffectingGameplay()))
     {
@@ -294,31 +289,32 @@ void ServerApp::checkPackageCompatibility(StringList const &packageIds,
     }
 }
 
-shell::ServerInfo ServerApp::currentServerInfo() // static
+ServerInfo ServerApp::currentServerInfo() // static
 {
-    shell::ServerInfo info;
+    ServerInfo info;
 
     // Let's figure out what we want to tell about ourselves.
     info.setServerId(ServerApp::app().d->serverId);
     info.setCompatibilityVersion(DOOMSDAY_VERSION);
-    info.setPluginDescription(String::format("%s %s",
-                                             reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_NAME)),
-                                             reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_VERSION_SHORT))));
+    info.setPluginDescription(
+        Stringf("%s %s",
+                reinterpret_cast<const char *>(gx.GetPointer(DD_PLUGIN_NAME)),
+                reinterpret_cast<const char *>(gx.GetPointer(DD_PLUGIN_VERSION_SHORT))));
 
     info.setGameId(game().id());
-    info.setGameConfig(reinterpret_cast<char const *>(gx.GetPointer(DD_GAME_CONFIG)));
+    info.setGameConfig(reinterpret_cast<const char *>(gx.GetPointer(DD_GAME_CONFIG)));
     info.setName(serverName);
     info.setDescription(serverInfo);
 
     // The server player is there, it's just hidden.
     info.setMaxPlayers(de::min(svMaxPlayers, DDMAXPLAYERS - (isDedicated ? 1 : 0)));
 
-    shell::ServerInfo::Flags flags(0);
+    Flags flags = 0;
     if (CVar_Byte(Con_FindVariable("server-allowjoin"))
-            && isServer != 0
+            && netState.isServer != 0
             && Sv_GetNumPlayers() < svMaxPlayers)
     {
-        flags |= shell::ServerInfo::AllowJoin;
+        flags |= ServerInfo::AllowJoin;
     }
     info.setFlags(flags);
 
@@ -326,30 +322,17 @@ shell::ServerInfo ServerApp::currentServerInfo() // static
     if (world().hasMap())
     {
         auto &map = world().map();
-        String const mapPath = (map.hasManifest() ? map.manifest().composeUri().path() : "(unknown map)");
+        const String mapPath = (map.hasManifest() ? map.manifest().composeUri().path() : "(unknown map)");
         info.setMap(mapPath);
     }
 
-    // The master server will use the public IP address where an announcement came from,
-    // so we don't necessarily have to specify a valid address. The port is required, though.
-    info.setAddress({"localhost", duint16(nptIPPort)});
+    // Check the IP address of the server.
+    info.setAddress(Address::localNetworkInterface(duint16(nptIPPort)));
 
-    // This will only work if the server has a public IP address.
-    QHostInfo const host = QHostInfo::fromName(QHostInfo::localHostName());
-    foreach (QHostAddress hostAddr, host.addresses())
+    if (const String publicHostName = nptIPAddress)
     {
-        if (!hostAddr.isLoopback())
-        {
-            info.setAddress(Address(hostAddr, duint16(nptIPPort)));
-            break;
-        }
-    }
-
-    String const publicDomain = nptIPAddress;
-    if (!publicDomain.isEmpty())
-    {
-        info.setDomainName(String("%1:%2").arg(publicDomain)
-                           .arg(nptIPPort? nptIPPort : shell::DEFAULT_PORT));
+        info.setDomainName(Stringf(
+            "%s:%i", publicHostName.c_str(), nptIPPort ? nptIPPort : DEFAULT_PORT));
     }
 
     // Let's compile a list of client names.
@@ -372,16 +355,16 @@ shell::ServerInfo ServerApp::currentServerInfo() // static
     return info;
 }
 
-void ServerApp::unloadGame(GameProfile const &upcomingGame)
+void ServerApp::unloadGame(const GameProfile &upcomingGame)
 {
     DoomsdayApp::unloadGame(upcomingGame);
 
-    world::Map::initDummies();
+    world::Map::initDummyElements();
 }
 
 ServerApp &ServerApp::app()
 {
-    DENG2_ASSERT(serverAppSingleton != 0);
+    DE_ASSERT(serverAppSingleton != nullptr);
     return *serverAppSingleton;
 }
 
@@ -390,12 +373,12 @@ ServerSystem &ServerApp::serverSystem()
     return *app().d->serverSystem;
 }
 
-InFineSystem &ServerApp::infineSystem()
+InFineSystem &ServerApp::infine()
 {
     return app().d->infineSys;
 }
 
-AudioSystem &ServerApp::audioSystem()
+AudioSystem &ServerApp::audio()
 {
     return *app().d->audioSys;
 }
@@ -405,7 +388,7 @@ Resources &ServerApp::resources()
     return *app().d->resources;
 }
 
-ClientServerWorld &ServerApp::world()
+ServerWorld &ServerApp::world()
 {
     return app().d->world;
 }

@@ -20,26 +20,25 @@
  */
 
 #include "updater/updatersettings.h"
-#include <QDateTime>
-#include <QDesktopServices>
-#include <de/Record>
-#include <de/Config>
-#include <de/TextValue>
-#include <de/NumberValue>
-#include <de/TimeValue>
+#include <de/app.h>
+#include <de/record.h>
+#include <de/config.h>
+#include <de/textvalue.h>
+#include <de/numbervalue.h>
+#include <de/timevalue.h>
 
 using namespace de;
 
-static String const VAR_FREQUENCY     ("updater.frequency");
-static String const VAR_CHANNEL       ("updater.channel");
-static String const VAR_LAST_CHECKED  ("updater.lastChecked");
-static String const VAR_ONLY_MANUAL   ("updater.onlyManually");
-static String const VAR_DELETE        ("updater.delete");
-static String const VAR_DOWNLOAD_PATH ("updater.downloadPath");
-static String const VAR_DELETE_PATH   ("updater.deleteAtStartup");
-static String const VAR_AUTO_DOWNLOAD ("updater.autoDownload");
+static const char *VAR_FREQUENCY     = "updater.frequency";
+static const char *VAR_CHANNEL       = "updater.channel";
+static const char *VAR_LAST_CHECKED  = "updater.lastChecked";
+static const char *VAR_ONLY_MANUAL   = "updater.onlyManually";
+static const char *VAR_DELETE        = "updater.delete";
+static const char *VAR_DOWNLOAD_PATH = "updater.downloadPath";
+static const char *VAR_DELETE_PATH   = "updater.deleteAtStartup";
+static const char *VAR_AUTO_DOWNLOAD = "updater.autoDownload";
 
-static String const SYMBOL_DEFAULT_DOWNLOAD("${DEFAULT}");
+static const char *SYMBOL_DEFAULT_DOWNLOAD = "${DEFAULT}";
 
 UpdaterSettings::UpdaterSettings()
 {}
@@ -79,7 +78,7 @@ de::NativePath UpdaterSettings::pathToDeleteAtStartup() const
 {
     de::NativePath p = Config::get().gets(VAR_DELETE_PATH);
     de::String ext = p.toString().fileNameExtension();
-    if (p.fileName().startsWith("doomsday") && (ext == ".exe" || ext == ".deb" || ext == ".dmg"))
+    if (p.fileName().beginsWith("doomsday") && (ext == ".exe" || ext == ".deb" || ext == ".dmg"))
     {
         return p;
     }
@@ -121,7 +120,7 @@ void UpdaterSettings::setChannel(UpdaterSettings::Channel channel)
     Config::get().set(VAR_CHANNEL, dint(channel));
 }
 
-void UpdaterSettings::setLastCheckTime(de::Time const &time)
+void UpdaterSettings::setLastCheckTime(const de::Time &time)
 {
     Config::get(VAR_LAST_CHECKED) = new TimeValue(time);
 }
@@ -153,11 +152,7 @@ void UpdaterSettings::setPathToDeleteAtStartup(de::NativePath deletePath)
 
 de::NativePath UpdaterSettings::defaultDownloadPath()
 {
-#ifdef DENG2_QT_5_0_OR_NEWER
-    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-#else
-    return QDesktopServices::storageLocation(QDesktopServices::CacheLocation);
-#endif
+    return App::cachePath();
 }
 
 de::String UpdaterSettings::lastCheckAgo() const
@@ -172,30 +167,26 @@ de::String UpdaterSettings::lastCheckAgo() const
     if (delta < 60.0)
     {
         t = delta.asMilliSeconds() / 1000;
-        return de::String(QObject::tr("%1 %2 ago")).arg(t).
-                          arg(t != 1? QObject::tr("seconds") : QObject::tr("second"));
+        return de::Stringf("%i second%s ago", t, DE_PLURAL_S(t));
     }
 
     t = delta.asMinutes();
     if (t <= 60)
     {
-        return de::String(QObject::tr("%1 %2 ago")).arg(t).
-                arg(t != 1? QObject::tr("minutes") : QObject::tr("minute"));
+        return de::Stringf("%i minute%s ago", t, DE_PLURAL_S(t));
     }
 
     t = delta.asHours();
     if (t <= 24)
     {
-        return de::String(QObject::tr("%1 %2 ago")).arg(t).
-                arg(t != 1? QObject::tr("hours") : QObject::tr("hour"));
+        return de::Stringf("%i hour%s ago", t, DE_PLURAL_S(t));
     }
 
     t = delta.asDays();
     if (t <= 7)
     {
-        return de::String(QObject::tr("%1 %2 ago")).arg(t).
-                arg(t != 1? QObject::tr("days") : QObject::tr("day"));
+        return de::Stringf("%i day%s ago", t, DE_PLURAL_S(t));
     }
 
-    return de::String("on " + when.asText(de::Time::FriendlyFormat));
+    return "on " + when.asText(de::Time::FriendlyFormat);
 }

@@ -1,0 +1,69 @@
+# Shaders for Doomsday Application Framework widgets
+# (also includes some general-purpose shaders)
+#
+# In each "shader" block, there can be:
+# - path:          path to both the .vsh and .fsh files (omit extension:
+#                  "shaders/test" => shaders/test.vsh, shaders/test.fsh)
+# - path.vertex:   path to the vertex shader file
+# - path.fragment: path to the fragment shader file
+# - vertex:        source of the vertex shader
+# - fragment:      source of the fragment shader
+
+@include <shaders/generic.dei>
+@include <shaders/blur.dei>
+
+shader ui.guiwidget.batch {
+    vertex = "
+        uniform mat4  uMvpMatrix;
+        uniform vec4  uColor[DE_MAX_BATCH_UNIFORMS];
+        uniform float uSaturation[DE_MAX_BATCH_UNIFORMS];
+        uniform vec4  uScissorRect[DE_MAX_BATCH_UNIFORMS];
+
+        in vec4 aVertex;
+        in vec2 aUV;
+        in vec4 aColor;
+        in float aIndex; // uColor
+
+        out vec2 vUV;
+        out vec4 vColor;
+        out vec4 vScissor;
+        out float vSaturation;
+
+        void main(void) {
+            gl_Position = uMvpMatrix * aVertex;
+            vUV = aUV;
+
+            int index = int(aIndex);
+            vColor = aColor * uColor[index];
+            vScissor = uScissorRect[index];
+            vSaturation = uSaturation[index];
+        }"
+    fragment = "
+        #include 'shaders/hsv.glsl'
+
+        uniform sampler2D uTex;
+
+        in vec2 vUV;
+        in vec4 vColor;
+        in vec4 vScissor;
+        in float vSaturation;
+
+        void main(void) {
+            // Check the scissor first.
+            if (gl_FragCoord.x < vScissor.x || gl_FragCoord.x > vScissor.z ||
+                gl_FragCoord.y < vScissor.y || gl_FragCoord.y > vScissor.w) {
+                discard;
+            }
+            out_FragColor = texture(uTex, vUV);
+
+            // Optionally adjust color saturation.
+            if (vSaturation < 1.0) {
+                highp vec4 hsv = rgbToHsv(out_FragColor);
+                hsv.y *= vSaturation;
+                out_FragColor = hsvToRgb(hsv);
+            }
+
+            // Final vertex color.
+            out_FragColor *= vColor;
+        }"
+}

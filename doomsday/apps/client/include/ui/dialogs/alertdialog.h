@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_ALERTDIALOG_H
-#define DENG_CLIENT_ALERTDIALOG_H
+#ifndef DE_CLIENT_ALERTDIALOG_H
+#define DE_CLIENT_ALERTDIALOG_H
 
-#include <de/DialogWidget>
+#include <de/dialogwidget.h>
 
 /**
  * Dialog for listing recent alerts.
@@ -36,18 +36,11 @@
  */
 class AlertDialog : public de::DialogWidget
 {
-    Q_OBJECT
+public:
+    enum Level { Minor = -1, Normal = 0, Major = 1 };
 
 public:
-    enum Level
-    {
-        Minor  = -1,
-        Normal = 0,
-        Major  = 1
-    };
-
-public:
-    AlertDialog(de::String const &name = "alerts");
+    AlertDialog(const de::String &name = "alerts");
 
     /**
      * Adds a new alert. If the same alert is already in the list, the new one is ignored.
@@ -58,11 +51,11 @@ public:
      * @param message  Alert message.
      * @param level    Severity level.
      */
-    void newAlert(de::String const &message, Level level = Normal);
+    void newAlert(const de::String &message, Level level = Normal);
 
     void update();
 
-public slots:
+public:
     void showListOfAlerts();
     void hideNotification();
     void autohideTimeChanged();
@@ -72,7 +65,7 @@ protected:
     void panelDismissed();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_ALERTDIALOG_H
+#endif // DE_CLIENT_ALERTDIALOG_H

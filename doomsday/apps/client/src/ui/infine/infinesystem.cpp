@@ -17,15 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_INFINE
+#define DE_NO_API_MACROS_INFINE
 
-#include <QtAlgorithms>
-#include <de/Log>
+#include <de/log.h>
 #include <doomsday/console/var.h>
 
 #include "de_base.h"
 #include "ui/infine/infinesystem.h"
-#include "BindContext"
+#include "ui/bindcontext.h"
 #include "ui/infine/finale.h"
 #include "ui/infine/finaleinterpreter.h"
 
@@ -36,18 +35,18 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(InFineSystem)
-, DENG2_OBSERVES(Finale, Deletion)
+DE_PIMPL_NOREF(InFineSystem)
+, DE_OBSERVES(Finale, Deletion)
 {
     Finales finales;
 
-    ~Impl() { qDeleteAll(finales); }
+    ~Impl() { deleteAll(finales); }
 
     Finale *finaleForId(finaleid_t id)
     {
         if (id != 0)
         {
-            for (Finale const *f : finales)
+            for (const Finale *f : finales)
             {
                 if (f->id() == id) return const_cast<Finale *>(f);
             }
@@ -62,7 +61,7 @@ DENG2_PIMPL_NOREF(InFineSystem)
         return id;
     }
 
-    void finaleBeingDeleted(Finale const &finale)
+    void finaleBeingDeleted(const Finale &finale)
     {
         finales.removeOne(const_cast<Finale *>(&finale));
     }
@@ -106,7 +105,7 @@ void InFineSystem::runTicks(timespan_t timeDelta)
     }
 }
 
-Finale &InFineSystem::newFinale(int flags, String script, String const &setupCmds)
+Finale &InFineSystem::newFinale(int flags, String script, const String &setupCmds)
 {
     LOG_AS("InFineSystem");
 
@@ -133,10 +132,10 @@ Finale &InFineSystem::finale(finaleid_t id)
     Finale *finale = d->finaleForId(id);
     if (finale) return *finale;
     /// @throw MissingFinaleError The given id does not reference a Finale
-    throw MissingFinaleError("finale", "No Finale known by id:" + String::number(id));
+    throw MissingFinaleError("finale", "No Finale known by id:" + String::asText(id));
 }
 
-InFineSystem::Finales const &InFineSystem::finales() const
+const InFineSystem::Finales &InFineSystem::finales() const
 {
     return d->finales;
 }
@@ -150,8 +149,8 @@ void InFineSystem::initBindingContext() // static
     if (inited) return;
 
     inited = true;
-    BindContext &context = ClientApp::inputSystem().context("finale");
-    context.setDDFallbackResponder(de::function_cast<int (*)(ddevent_t const *)>(gx.FinaleResponder));
+    BindContext &context = ClientApp::input().context("finale");
+    context.setDDFallbackResponder(de::function_cast<int (*)(const ddevent_t *)>(gx.FinaleResponder));
     context.activate(); // always on
 }
 
@@ -160,7 +159,7 @@ void InFineSystem::deinitBindingContext() // static
     // Not yet initialized?
     if (!inited) return;
 
-    BindContext &context = ClientApp::inputSystem().context("finale");
+    BindContext &context = ClientApp::input().context("finale");
     context.setDDFallbackResponder(nullptr);
     context.deactivate();
     inited = false;
@@ -179,7 +178,7 @@ void InFineSystem::consoleRegister() // static
 // Public API (C Wrapper) ---------------------------------------------------------------
 
 #undef FI_Execute2
-finaleid_t FI_Execute2(char const *script, int flags, char const *setupCmds)
+finaleid_t FI_Execute2(const char *script, int flags, const char *setupCmds)
 {
     LOG_AS("InFine.Execute");
 
@@ -199,7 +198,7 @@ finaleid_t FI_Execute2(char const *script, int flags, char const *setupCmds)
 }
 
 #undef FI_Execute
-finaleid_t FI_Execute(char const *script, int flags)
+finaleid_t FI_Execute(const char *script, int flags)
 {
     return FI_Execute2(script, flags, 0);
 }
@@ -281,13 +280,13 @@ int FI_ScriptFlags(finaleid_t id)
 }
 
 #undef FI_ScriptResponder
-int FI_ScriptResponder(finaleid_t id, void const *ev)
+int FI_ScriptResponder(finaleid_t id, const void *ev)
 {
-    DENG2_ASSERT(ev);
+    DE_ASSERT(ev);
     LOG_AS("InFine.ScriptResponder");
     if (App_InFineSystem().hasFinale(id))
     {
-        return App_InFineSystem().finale(id).handleEvent(*static_cast<ddevent_t const *>(ev));
+        return App_InFineSystem().finale(id).handleEvent(*static_cast<const ddevent_t *>(ev));
     }
     LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
     return false;
@@ -329,7 +328,7 @@ dd_bool FI_ScriptIsMenuTrigger(finaleid_t id)
     return false;
 }
 
-DENG_DECLARE_API(Infine) =
+DE_DECLARE_API(Infine) =
 {
     { DE_API_INFINE },
     FI_Execute2,

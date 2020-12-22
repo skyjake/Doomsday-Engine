@@ -21,22 +21,23 @@
 #include "de_base.h"
 #include "gl/sys_opengl.h"
 
-#include <QSet>
-#include <QStringList>
-#include <de/libcore.h>
-#include <de/concurrency.h>
-#include <de/GLInfo>
-#include <de/GLState>
+#include <de/legacy/concurrency.h>
+#include <de/glinfo.h>
+#include <de/glstate.h>
+#include <de/set.h>
+#include <de/regexp.h>
 #include "sys_system.h"
 #include "gl/gl_main.h"
 
-#ifdef WIN32
-#   define GETPROC(Type, x)   x = de::function_cast<Type>(wglGetProcAddress(#x))
-#elif defined (DENG_X11)
-#   include <GL/glx.h>
-#   undef None
-#   define GETPROC(Type, x)   x = de::function_cast<Type>(glXGetProcAddress((GLubyte const *)#x))
-#endif
+//#ifdef WIN32
+//#   define GETPROC(Type, x)   x = de::function_cast<Type>(wglGetProcAddress(#x))
+//#elif defined (DE_X11)
+//#   include <GL/glx.h>
+//#   undef None
+//#   define GETPROC(Type, x)   x = de::function_cast<Type>(glXGetProcAddress((const GLubyte *)#x))
+//#endif
+
+using namespace de;
 
 gl_state_t GL_state;
 
@@ -46,7 +47,7 @@ static dd_bool firstTimeInit = true;
 
 static void initialize(void)
 {
-    de::GLInfo::Extensions const &ext = de::GLInfo::extensions();
+    const de::GLInfo::Extensions &ext = de::GLInfo::extensions();
 
     if(CommandLine_Exists("-noanifilter"))
     {
@@ -62,9 +63,9 @@ static void initialize(void)
     if (ext.EXT_texture_compression_s3tc)
     {
         GLint iVal;
-        LIBGUI_GL.glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
+        glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
         LIBGUI_ASSERT_GL_OK();
-        if (iVal == 0)// || LIBGUI_GL.glGetError() != GL_NO_ERROR)
+        if (iVal == 0)// || glGetError() != GL_NO_ERROR)
             GL_state.features.texCompression = false;
     }
 #else
@@ -72,57 +73,57 @@ static void initialize(void)
 #endif
 }
 
-#define TABBED(A, B)  _E(Ta) "  " _E(l) A _E(.) " " _E(Tb) << B << "\n"
+#define TABBED(A, B)  _E(Ta) "  " _E(l) + String(A) + _E(.) " " _E(Tb) + String(B) + "\n"
 
-de::String Sys_GLDescription()
+String Sys_GLDescription()
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-    de::String str;
-    QTextStream os(&str);
+    String str;
 
-    os << _E(b) "OpenGL information:\n" << _E(.);
+    str += _E(b) "OpenGL information:\n" _E(.);
 
-    os << TABBED("Version:",  (char const *) LIBGUI_GL.glGetString(GL_VERSION));
-    os << TABBED("Renderer:", (char const *) LIBGUI_GL.glGetString(GL_RENDERER));
-    os << TABBED("Vendor:",   (char const *) LIBGUI_GL.glGetString(GL_VENDOR));
+    str += TABBED("Version:",  reinterpret_cast<const char *>(glGetString(GL_VERSION)));
+    str += TABBED("Renderer:", reinterpret_cast<const char *>(glGetString(GL_RENDERER)));
+    str += TABBED("Vendor:",   reinterpret_cast<const char *>(glGetString(GL_VENDOR)));
 
     LIBGUI_ASSERT_GL_OK();
 
-    os << _E(T`) "Capabilities:\n";
+    str += _E(T`) "Capabilities:\n";
 
     GLint iVal;
 
 #ifdef USE_TEXTURE_COMPRESSION_S3
-    if(de::GLInfo::extensions().EXT_texture_compression_s3tc)
+    if (de::GLInfo::extensions().EXT_texture_compression_s3tc)
     {
-        LIBGUI_GL.glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
+        glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
         LIBGUI_ASSERT_GL_OK();
-        os << TABBED("Compressed texture formats:", iVal);
+        str += TABBED("Compressed texture formats:", String::asText(iVal));
     }
 #endif
 
-    os << TABBED("Use texture compression:", (GL_state.features.texCompression? "yes" : "no"));
+    str += TABBED("Use texture compression:", (GL_state.features.texCompression? "yes" : "no"));
 
-    os << TABBED("Available texture units:", de::GLInfo::limits().maxTexUnits);
+    str += TABBED("Available texture units:", String::asText(de::GLInfo::limits().maxTexUnits));
 
-    if(de::GLInfo::extensions().EXT_texture_filter_anisotropic)
+    if (de::GLInfo::extensions().EXT_texture_filter_anisotropic)
     {
-        os << TABBED("Maximum texture anisotropy:", de::GLInfo::limits().maxTexFilterAniso);
+        str += TABBED("Maximum texture anisotropy:", String::asText(de::GLInfo::limits().maxTexFilterAniso));
     }
     else
     {
-        os << _E(Ta) "  Variable texture anisotropy unavailable.";
+        str += _E(Ta) "  Variable texture anisotropy unavailable.";
     }
 
-    os << TABBED("Maximum texture size:", de::GLInfo::limits().maxTexSize);
+    str += TABBED("Maximum texture size:", String::asText(de::GLInfo::limits().maxTexSize));
 
-    os << TABBED("Line width granularity:", de::GLInfo::limits().smoothLineWidthGranularity);
+    str += TABBED("Line width granularity:", String::asText(de::GLInfo::limits().smoothLineWidthGranularity));
 
-    os << TABBED("Line width range:",
-                 de::GLInfo::limits().smoothLineWidth.start << "..." <<
-                 de::GLInfo::limits().smoothLineWidth.end);
+    str += TABBED("Line width range:",
+                  Stringf("%.2f...%.2f",
+                                     de::GLInfo::limits().smoothLineWidth.start,
+                                     de::GLInfo::limits().smoothLineWidth.end));
 
     return str.rightStrip();
 
@@ -158,20 +159,20 @@ dd_bool Sys_GLInitialize(void)
 
     assert(doneEarlyInit);
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     assert(!Sys_GLCheckError());
 
     if(firstTimeInit)
     {
-#if defined (DENG_OPENGL)
-        const GLubyte* versionStr = LIBGUI_GL.glGetString(GL_VERSION);
+#if defined (DE_OPENGL)
+        const GLubyte* versionStr = glGetString(GL_VERSION);
         double version = (versionStr? strtod((const char*) versionStr, NULL) : 0);
         if(version == 0)
         {
             LOG_GL_WARNING("Failed to determine OpenGL version; driver reports: %s")
-                    << LIBGUI_GL.glGetString(GL_VERSION);
+                    << glGetString(GL_VERSION);
         }
         else if(version < 3.3)
         {
@@ -180,13 +181,13 @@ dd_bool Sys_GLInitialize(void)
                 Sys_CriticalMessagef("Your OpenGL is too old!\n"
                                      "  Driver version: %s\n"
                                      "  The minimum supported version is 2.0",
-                                     LIBGUI_GL.glGetString(GL_VERSION));
+                                     glGetString(GL_VERSION));
                 return false;
             }
             else
             {
                 LOG_GL_WARNING("OpenGL may be too old (3.3+ required, "
-                               "but driver reports %s)") << LIBGUI_GL.glGetString(GL_VERSION);
+                               "but driver reports %s)") << glGetString(GL_VERSION);
             }
         }
 #endif
@@ -207,7 +208,7 @@ dd_bool Sys_GLInitialize(void)
 
     // Use nice quality for mipmaps please.
     //if(GL_state.features.genMipmap && de::GLInfo::extensions().SGIS_generate_mipmap)
-    //LIBGUI_GL.glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
+    //glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
 
     assert(!Sys_GLCheckError());
 
@@ -237,10 +238,10 @@ void Sys_GLConfigureDefaultState(void)
      */
     assert(doneEarlyInit);
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glFrontFace(GL_CW);
+    glFrontFace(GL_CW);
     LIBGUI_ASSERT_GL_OK();
 
     DGL_CullFace(DGL_NONE);
@@ -249,8 +250,8 @@ void Sys_GLConfigureDefaultState(void)
 
     DGL_Disable(DGL_TEXTURE_2D);
 
-#if defined (DENG_OPENGL)
-    LIBGUI_GL.glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+#if defined (DE_OPENGL)
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
     LIBGUI_ASSERT_GL_OK();
 #endif
 
@@ -268,24 +269,24 @@ void Sys_GLConfigureDefaultState(void)
 
 //    de::GLInfo::setLineWidth(GL_state.currentLineWidth);
 
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     // Setup for antialiased lines/points.
-    LIBGUI_GL.glEnable(GL_LINE_SMOOTH);
+    glEnable(GL_LINE_SMOOTH);
     LIBGUI_ASSERT_GL_OK();
-    LIBGUI_GL.glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     LIBGUI_ASSERT_GL_OK();
 
-    LIBGUI_GL.glPointSize(GL_state.currentPointSize);
+    glPointSize(GL_state.currentPointSize);
     LIBGUI_ASSERT_GL_OK();
 
     // Prefer good quality in texture compression.
-    LIBGUI_GL.glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
+    glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
     LIBGUI_ASSERT_GL_OK();
 #endif
 
     // Default state for the white fog is off.
     DGL_Disable(DGL_FOG);
-    DGL_Fogi(DGL_FOG_MODE, GL_LINEAR);
+    DGL_Fogi(DGL_FOG_MODE, DGL_LINEAR);
     DGL_Fogi(DGL_FOG_END, 2100); // This should be tweaked a bit.
     DGL_Fogfv(DGL_FOG_COLOR, fogcol);
 
@@ -295,46 +296,45 @@ void Sys_GLConfigureDefaultState(void)
     DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 }
 
-static de::String omitGLPrefix(de::String str)
+static String omitGLPrefix(const String &str)
 {
-    if(str.startsWith("GL_")) return str.substr(3);
+    if (str.beginsWith("GL_")) return str.substr(de::BytePos(3));
     return str;
 }
 
-static void printExtensions(QStringList extensions)
+static void printExtensions(StringList extensions)
 {
-    qSort(extensions);
+    extensions.sort();
 
     // Find all the prefixes.
-    QSet<QString> prefixes;
-    foreach(QString ext, extensions)
+    de::Set<String> prefixes;
+    for (String ext : extensions)
     {
         ext = omitGLPrefix(ext);
-        int pos = ext.indexOf("_");
-        if(pos > 0)
+        auto pos = ext.indexOf("_");
+        if (pos > 0)
         {
             prefixes.insert(ext.left(pos));
         }
     }
 
-    QStringList sortedPrefixes = prefixes.toList();
-    qSort(sortedPrefixes);
-    foreach(QString prefix, sortedPrefixes)
+    auto sortedPrefixes = de::compose<StringList>(prefixes.begin(), prefixes.end());
+    sortedPrefixes.sort();
+    for (const String &prefix : sortedPrefixes)
     {
-        de::String str;
-        QTextStream os(&str);
+        String str;
 
-        os << "    " << prefix << " extensions:\n        " _E(>) _E(2);
+        str += "    " + prefix + " extensions:\n        " _E(>) _E(2);
 
         bool first = true;
-        foreach(QString ext, extensions)
+        for (String ext : extensions)
         {
             ext = omitGLPrefix(ext);
-            if(ext.startsWith(prefix + "_"))
+            if (ext.beginsWith(prefix + "_"))
             {
-                ext.remove(0, prefix.size() + 1);
-                if(!first) os << ", ";
-                os << ext;
+                ext.remove(de::BytePos(0), prefix.size() + 1);
+                if (!first) str += ", ";
+                str += ext;
                 first = false;
             }
         }
@@ -345,13 +345,18 @@ static void printExtensions(QStringList extensions)
 
 void Sys_GLPrintExtensions(void)
 {
+    using namespace de;
+
     LOG_GL_MSG(_E(b) "OpenGL Extensions:");
-    QStringList exts;
-    foreach (QByteArray extName, QOpenGLContext::currentContext()->extensions())
+
+    int count = 0;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &count);
+    StringList allExts;
+    for (int i = 0; i < count; ++i)
     {
-        exts << extName;
+        allExts << reinterpret_cast<const char *>(glGetStringi(GL_EXTENSIONS, i));
     }
-    printExtensions(exts);
+    printExtensions(allExts);
 
     /*
 #if WIN32
@@ -359,7 +364,7 @@ void Sys_GLPrintExtensions(void)
     if(wglGetExtensionsStringARB)
     {
         LOG_GL_MSG("  Extensions (WGL):");
-        printExtensions(QString((char const *) ((GLubyte const *(__stdcall *)(HDC))wglGetExtensionsStringARB)(wglGetCurrentDC())).split(" ", QString::SkipEmptyParts));
+        printExtensions(QString((const char *) ((const GLubyte *(__stdcall *)(HDC))wglGetExtensionsStringARB)(wglGetCurrentDC())).split(" ", QString::SkipEmptyParts));
     }
 #endif
 
@@ -371,10 +376,10 @@ void Sys_GLPrintExtensions(void)
     */
 }
 
-dd_bool Sys_GLCheckErrorArgs(char const *file, int line)
+dd_bool Sys_GLCheckErrorArgs(const char *file, int line)
 {
     if (novideo) return false;
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     de::GLInfo::checkError(file, line);
 #endif
     return false;

@@ -23,7 +23,7 @@
 
 #include "api_base.h"
 #include "api_uri.h"
-#include "api_map.h"
+#include <doomsday/api_map.h>
 
 /**
  * @defgroup material Materials
@@ -31,19 +31,19 @@
  */
 ///@{
 
-DENG_API_TYPEDEF(Material)
+DE_API_TYPEDEF(Material)
 {
     de_api_t api;
 
-    world_Material *(*ForTextureUri)(Uri const *textureUri);
+    world_Material *(*ForTextureUri)(const Uri *textureUri);
     Uri *(*ComposeUri)(materialid_t materialId);
-    materialid_t (*ResolveUri)(Uri const *uri);
-    materialid_t (*ResolveUriCString)(char const *path);
+    materialid_t (*ResolveUri)(const Uri *uri);
+    materialid_t (*ResolveUriCString)(const char *path);
 
 }
-DENG_API_T(Material);
+DE_API_T(Material);
 
-#ifndef DENG_NO_API_MACROS_MATERIALS
+#ifndef DE_NO_API_MACROS_MATERIALS
 #define DD_MaterialForTextureUri    _api_Material.ForTextureUri
 #define Materials_ComposeUri        _api_Material.ComposeUri
 #define Materials_ResolveUri        _api_Material.ResolveUri
@@ -51,7 +51,7 @@ DENG_API_T(Material);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(Material);
+DE_USING_API(Material);
 #endif
 
 ///@}

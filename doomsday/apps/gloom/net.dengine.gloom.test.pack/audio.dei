@@ -1,0 +1,21 @@
+waveform test { path = "audio/test.wav" }
+
+group user {
+    waveform step1    { path = "audio/user/step1.wav" }
+    waveform step2    { path = "audio/user/step2.wav" }
+    waveform step3    { path = "audio/user/step3.wav" }
+    waveform step4    { path = "audio/user/step4.wav" }
+    waveform step5    { path = "audio/user/step5.wav" }    
+    waveform falldown { path = "audio/user/falldown.wav" }
+    waveform fastwind { path = "audio/user/fastwind.wav" }
+}
+
+group field {
+    waveform birds    { path = "audio/fields/birds.mp3" }
+    waveform crickets { path = "audio/fields/crickets.mp3" }
+}
+
+group mountain {
+    waveform wind { path = "audio/mountain/wind.wav" }
+}
+

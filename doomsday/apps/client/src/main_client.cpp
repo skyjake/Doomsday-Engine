@@ -41,74 +41,46 @@
  * another loop that continues handling events received by the application.
  */
 
+#define SDL_MAIN_HANDLED
+
 #include "clientapp.h"
 #include "dd_loop.h"
 #include "dd_version.h"
 
-#include <QDebug>
-#include <QMessageBox>
-#include <QTranslator>
-#include <de/EscapeParser>
+#include <de/escapeparser.h>
+#include <SDL_main.h>
+#include <SDL_messagebox.h>
 
-#if defined (DENG_STATIC_LINK)
+#if defined (DE_STATIC_LINK)
 
-#include <QtPlugin>
-#include <de/Library>
-
-Q_IMPORT_PLUGIN(QIOSIntegrationPlugin)
-Q_IMPORT_PLUGIN(QGifPlugin)
-Q_IMPORT_PLUGIN(QJpegPlugin)
-Q_IMPORT_PLUGIN(QTgaPlugin)
-Q_IMPORT_PLUGIN(QtQuick2Plugin)
-Q_IMPORT_PLUGIN(QtQuickControls2Plugin)
-Q_IMPORT_PLUGIN(QtQuickLayoutsPlugin)
-Q_IMPORT_PLUGIN(QtQuickTemplates2Plugin)
-Q_IMPORT_PLUGIN(QtQuick2WindowPlugin)
-
-DENG2_IMPORT_LIBRARY(importidtech1)
-DENG2_IMPORT_LIBRARY(importudmf)
-DENG2_IMPORT_LIBRARY(importdeh)
-DENG2_IMPORT_LIBRARY(audio_fmod)
-DENG2_IMPORT_LIBRARY(doom)
-//DENG2_IMPORT_LIBRARY(heretic)
-//DENG2_IMPORT_LIBRARY(hexen)
-//DENG2_IMPORT_LIBRARY(doom64)
+DE_IMPORT_LIBRARY(importidtech1)
+DE_IMPORT_LIBRARY(importudmf)
+DE_IMPORT_LIBRARY(importdeh)
+DE_IMPORT_LIBRARY(audio_fmod)
 
 #endif
 
-#if defined (DENG_MOBILE)
-#  include <QQuickView>
-#  include "ui/clientwindow.h"
-#endif
+using namespace de;
+
+DE_EXTERN_C void GameKit_Init();
 
 /**
  * Application entry point.
  */
 int main(int argc, char **argv)
 {
+    SDL_SetMainReady();
+
+    init_Foundation();
+    GameKit_Init();
     int exitCode = 0;
     {
-        ClientApp::setDefaultOpenGLFormat();
-
-        ClientApp clientApp(argc, argv);
-        
-        /**
-         * @todo Translations are presently disabled because lupdate can't seem to
-         * parse tr strings from inside private implementation classes. Workaround
-         * or fix is needed?
-         */
-#if 0
-        // Load the current locale's translation.
-        QTranslator translator;
-        translator.load(QString("client_") + QLocale::system().name());
-        clientApp.installTranslator(&translator);
-#endif
+        ClientApp clientApp(makeList(argc, argv));
 
         try
         {
-            clientApp.initialize();
-            
-#if defined (DENG_MOBILE)
+/*
+ #if defined (DE_MOBILE)
             // On mobile, Qt Quick is actually in charge of drawing the screen.
             // GLWindow is just an item that draws the UI background.
             qmlRegisterType<de::GLQuickItemT<ClientWindow>>("Doomsday", 1, 0, "ClientWindow");
@@ -117,23 +89,25 @@ int main(int argc, char **argv)
             view.setSource(QUrl("qrc:///qml/main.qml"));
             view.show();
 #endif
-            
-            exitCode = clientApp.execLoop();
+*/
+            exitCode = clientApp.exec([&]() { clientApp.initialize(); });
         }
-        catch(de::Error const &er)
+        catch (const de::Error &er)
         {
             de::EscapeParser msg;
             msg.parse(er.asText());
-            qWarning() << "App init failed:\n" << msg.plainText();
-            QMessageBox::critical(0, DOOMSDAY_NICENAME, "App init failed:\n" + msg.plainText());
+            de::warning("App init failed:\n%s", msg.plainText().c_str());
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, DOOMSDAY_NICENAME,
+                                     "App init failed:\n" + msg.plainText(), nullptr);
+            deinit_Foundation();
             return -1;
         }
     }
 
     // Check that all reference-counted objects have been deleted.
-    #if defined (DENG2_DEBUG)
+    #if defined (DE_DEBUG)
     {
-        #if defined (DENG_USE_COUNTED_TRACING)
+        #if defined (DE_USE_COUNTED_TRACING)
         {
             if(de::Counted::totalCount > 0)
             {
@@ -142,11 +116,12 @@ int main(int argc, char **argv)
         }
         #else
         {
-            DENG2_ASSERT(de::Counted::totalCount == 0);
+            DE_ASSERT(de::Counted::totalCount == 0);
         }
         #endif
     }
     #endif
 
+    deinit_Foundation();
     return exitCode;
 }

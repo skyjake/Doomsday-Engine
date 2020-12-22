@@ -22,40 +22,39 @@
 using namespace de;
 using namespace de::ui;
 
-DENG2_PIMPL_NOREF(CVarChoiceWidget)
+DE_PIMPL_NOREF(CVarChoiceWidget)
 {
-    char const *cvar;
+    const char *cvar;
 
     cvar_t *var() const
     {
         cvar_t *cv = Con_FindVariable(cvar);
-        DENG2_ASSERT(cv != 0);
+        DE_ASSERT(cv != 0);
         return cv;
     }
 };
 
-CVarChoiceWidget::CVarChoiceWidget(char const *cvarPath)
+CVarChoiceWidget::CVarChoiceWidget(const char *cvarPath)
     : ChoiceWidget(String::format("cvar-%s", cvarPath))
     , d(new Impl)
 {
     d->cvar = cvarPath;
     updateFromCVar();
 
-    connect(this, SIGNAL(selectionChangedByUser(uint)),
-            this, SLOT(setCVarValueFromWidget()));
+    audienceForUserSelection() += [this](){ setCVarValueFromWidget(); };
 }
 
-char const *CVarChoiceWidget::cvarPath() const
+const char *CVarChoiceWidget::cvarPath() const
 {
     return d->cvar;
 }
 
 void CVarChoiceWidget::updateFromCVar()
 {
-    setSelected(items().findData(CVar_Integer(d->var())));
+    setSelected(items().findData(NumberValue(CVar_Integer(d->var()))));
 }
 
 void CVarChoiceWidget::setCVarValueFromWidget()
 {
-    CVar_SetInteger(d->var(), selectedItem().data().toInt());
+    CVar_SetInteger(d->var(), selectedItem().data().asInt());
 }

@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_NETWORK_BUFFER_H
-#define LIBDENG_NETWORK_BUFFER_H
+#ifndef DE_NETWORK_BUFFER_H
+#define DE_NETWORK_BUFFER_H
 
 #include "dd_types.h"
 
@@ -54,7 +54,7 @@ typedef struct {
 #pragma pack()
 
 typedef struct netbuffer_s {
-    int             player;         // Recipient or sender.
+    int             player;         // Recipient or sender (can be NSP_BROADCAST).
     size_t          length;         // Number of bytes in the data buffer.
     size_t          headerLength;   // 1 byte at the moment.
 
@@ -102,7 +102,7 @@ void N_ClearMessages(void);
  * Handles broadcasts using recursion.
  * Clients can only send packets to the server.
  */
-void N_SendPacket(int flags);
+void N_SendPacket(void);
 
 /**
  * An attempt is made to extract a message from the message queue.
@@ -138,4 +138,4 @@ void N_PostMessage(netmessage_t *msg);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_NETWORK_BUFFER_H */
+#endif /* DE_NETWORK_BUFFER_H */

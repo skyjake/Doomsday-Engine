@@ -21,8 +21,8 @@
 #ifndef DOOMSDAY_API_MAP_EDIT_H
 #define DOOMSDAY_API_MAP_EDIT_H
 
-#include <de/str.h>
-#include <de/types.h>
+#include <de/legacy/str.h>
+#include <de/legacy/types.h>
 #include <doomsday/world/valuetype.h>
 #include "api_base.h"
 
@@ -50,7 +50,7 @@ struct de_api_sector_hacks_s
     int visPlaneLinkTargetSector;
 };
 
-DENG_API_TYPEDEF(MPE)
+DE_API_TYPEDEF(MPE)
 {
     de_api_t api;
 
@@ -58,18 +58,18 @@ DENG_API_TYPEDEF(MPE)
      * Called by the game to register the map object types it wishes us to make
      * public via the MPE interface.
      */
-    //dd_bool         (*RegisterMapObj)(int identifier, char const *name);
+    //dd_bool         (*RegisterMapObj)(int identifier, const char *name);
 
     /**
      * Called by the game to add a new property to a previously registered
      * map object type definition.
      */
-    //dd_bool         (*RegisterMapObjProperty)(int identifier, int propIdentifier, char const *propName, valuetype_t type);
+    //dd_bool         (*RegisterMapObjProperty)(int identifier, int propIdentifier, const char *propName, valuetype_t type);
 
     /**
      * To be called to begin the map building process.
      */
-    dd_bool         (*Begin)(Uri const *mapUri);
+    dd_bool         (*Begin)(const Uri *mapUri);
 
     /**
      * To be called to end the map building process.
@@ -101,7 +101,7 @@ DENG_API_TYPEDEF(MPE)
      *                        vertexes will be written back here.
      * @return  @c =true iff all vertexes were created successfully.
      */
-    dd_bool         (*VertexCreatev)(int num, coord_t const *values, int *archiveIndices, int *indices);
+    dd_bool         (*VertexCreatev)(int num, const coord_t *values, int *archiveIndices, int *indices);
 
     /**
      * Create a new line in the editable map.
@@ -128,12 +128,12 @@ DENG_API_TYPEDEF(MPE)
                         const struct de_api_sector_hacks_s *hacks,
                         int archiveIndex);
     int             (*PlaneCreate)(int sector, coord_t height, const char *materialUri, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ, int archiveIndex);
-    int             (*PolyobjCreate)(int const *lines, int linecount, int tag, int sequenceType, coord_t originX, coord_t originY, int archiveIndex);
-    dd_bool         (*GameObjProperty)(char const *objName, int idx, char const *propName, valuetype_t type, void *data);
+    int             (*PolyobjCreate)(const int *lines, int linecount, int tag, int sequenceType, coord_t originX, coord_t originY, int archiveIndex);
+    dd_bool         (*GameObjProperty)(const char *objName, int idx, const char *propName, valuetype_t type, void *data);
 }
-DENG_API_T(MPE);
+DE_API_T(MPE);
 
-#ifndef DENG_NO_API_MACROS_MAP_EDIT
+#ifndef DE_NO_API_MACROS_MAP_EDIT
 //#define P_RegisterMapObj    _api_MPE.RegisterMapObj
 //#define P_RegisterMapObjProperty _api_MPE.RegisterMapObjProperty
 #define MPE_Begin           _api_MPE.Begin
@@ -149,7 +149,7 @@ DENG_API_T(MPE);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(MPE);
+DE_USING_API(MPE);
 #endif
 
 ///@}

@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_CONSOLEEFFECT_H
-#define DENG_CLIENT_CONSOLEEFFECT_H
+#ifndef DE_CLIENT_CONSOLEEFFECT_H
+#define DE_CLIENT_CONSOLEEFFECT_H
 
 #include <de/libcore.h>
-#include <de/Rectangle>
-#include <de/GLShaderBank>
+#include <de/rectangle.h>
+#include <de/glshaderbank.h>
 
 /**
  * Draws camera lens effects for a particular player console. Maintains
@@ -79,13 +79,13 @@ public:
     virtual void endFrame();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /// Dynamic stack of effects. (Used currently as a fixed array, though.)
 struct ConsoleEffectStack
 {
-    typedef QList<ConsoleEffect *> EffectList;
+    typedef de::List<ConsoleEffect *> EffectList;
     EffectList effects;
 
     ~ConsoleEffectStack() {
@@ -93,9 +93,9 @@ struct ConsoleEffectStack
     }
 
     void clear() {
-        qDeleteAll(effects);
+        deleteAll(effects);
         effects.clear();
     }
 };
 
-#endif // DENG_CLIENT_CONSOLEEFFECT_H
+#endif // DE_CLIENT_CONSOLEEFFECT_H

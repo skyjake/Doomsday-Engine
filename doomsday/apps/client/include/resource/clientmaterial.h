@@ -18,12 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_CLIENTMATERIAL_H
-#define DENG_RESOURCE_CLIENTMATERIAL_H
+#ifndef DE_RESOURCE_CLIENTMATERIAL_H
+#define DE_RESOURCE_CLIENTMATERIAL_H
 
-#include <doomsday/world/Material>
-#include "audio/s_environ.h"
-#include "MaterialVariantSpec"
+#include <doomsday/world/material.h>
+#include "resource/materialvariantspec.h"
 
 class MaterialAnimator;
 
@@ -54,20 +53,10 @@ public:
      */
     de::String description() const override;
 
-    /**
-     * Returns the attributed audio environment identifier for the material.
-     */
-    AudioEnvironmentId audioEnvironment() const;
-
-    /**
-     * Change the attributed audio environment for the material to @a newEnvironment.
-     */
-    void setAudioEnvironment(AudioEnvironmentId newEnvironment);
-
 //- Decorations -------------------------------------------------------------------------
 
     /// The referenced decoration does not exist. @ingroup errors
-    DENG2_ERROR(MissingDecorationError);
+    DE_ERROR(MissingDecorationError);
 
     /**
      * Base class for modelling a logical "decoration".
@@ -89,7 +78,7 @@ public:
     {
     public:
         /// The referenced stage does not exist. @ingroup errors
-        DENG2_ERROR(MissingStageError);
+        DE_ERROR(MissingStageError);
 
         /**
          * Base class for a logical decoration animation stage.
@@ -100,10 +89,10 @@ public:
             float variance;  ///< Stage variance (time).
 
             Stage(int tics, float variance) : tics(tics), variance(variance) {}
-            Stage(Stage const &other) : tics(other.tics), variance(other.variance) {}
+            Stage(const Stage &other) : tics(other.tics), variance(other.variance) {}
             virtual ~Stage() {}
 
-            DENG2_CAST_METHODS()
+            DE_CAST_METHODS()
 
             /**
              * Returns a human-friendly, textual description of the animation stage
@@ -116,11 +105,11 @@ public:
         /**
          * Construct a new material Decoration with the given skip pattern configuration.
          */
-        Decoration(de::Vector2i const &patternSkip   = de::Vector2i(),
-                   de::Vector2i const &patternOffset = de::Vector2i());
+        Decoration(const de::Vec2i &patternSkip   = de::Vec2i(),
+                   const de::Vec2i &patternOffset = de::Vec2i());
         virtual ~Decoration();
 
-        DENG2_CAST_METHODS()
+        DE_CAST_METHODS()
 
         /**
          * Returns a human-friendly, textual name for the type of material decoration.
@@ -136,7 +125,7 @@ public:
          * Returns the Material 'owner' of the material decoration.
          */
         ClientMaterial       &material();
-        ClientMaterial const &material() const;
+        const ClientMaterial &material() const;
 
         void setMaterial(ClientMaterial *newOwner);
 
@@ -145,14 +134,14 @@ public:
          *
          * @see patternOffset()
          */
-        de::Vector2i const &patternSkip() const;
+        const de::Vec2i &patternSkip() const;
 
         /**
          * Returns the pattern offset configuration for the decoration.
          *
          * @see patternSkip()
          */
-        de::Vector2i const &patternOffset() const;
+        const de::Vec2i &patternOffset() const;
 
         /**
          * Returns the total number of animation Stages for the decoration.
@@ -170,7 +159,7 @@ public:
          *
          * @return  Index of the newly added stage (0 based).
          */
-        int addStage(Stage const &stage);
+        int addStage(const Stage &stage);
 
         /**
          * Lookup an animation Stage by @a index.
@@ -180,11 +169,11 @@ public:
         Stage &stage(int index) const;
 
     protected:
-        typedef QList<Stage *> Stages;
+        typedef de::List<Stage *> Stages;
         Stages _stages;
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
     /**
@@ -228,7 +217,7 @@ public:
     /**
      * Determines if a MaterialAnimator exists for a material variant which fulfills @a spec.
      */
-    bool hasAnimator(de::MaterialVariantSpec const &spec);
+    bool hasAnimator(const de::MaterialVariantSpec &spec);
 
     /**
      * Find/create an MaterialAnimator for a material variant which fulfils @a spec
@@ -237,7 +226,7 @@ public:
      *
      * @return  The (possibly, newly created) Animator.
      */
-    MaterialAnimator &getAnimator(de::MaterialVariantSpec const &spec);
+    MaterialAnimator &getAnimator(const de::MaterialVariantSpec &spec);
 
     /**
      * Iterate through all the MaterialAnimators for the material.
@@ -251,12 +240,12 @@ public:
      */
     void clearAllAnimators();
 
-    static ClientMaterial &find(de::Uri const &uri);
+    static ClientMaterial &find(const res::Uri &uri);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 typedef ClientMaterial::Decoration MaterialDecoration;
 
-#endif  // DENG_RESOURCE_CLIENTMATERIAL_H
+#endif  // DE_RESOURCE_CLIENTMATERIAL_H

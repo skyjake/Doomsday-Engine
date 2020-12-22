@@ -2,8 +2,11 @@ set (FMOD_DIR "" CACHE PATH "Location of the FMOD Programmer's API SDK")
 
 set (_oldPath ${FMOD_FMOD_H})
 
+# We may need to clean up the provided path.
+deng_clean_path (fmodRoot ${FMOD_DIR})
+
 find_file (FMOD_FMOD_H api/lowlevel/inc/fmod.h
-    PATHS "${FMOD_DIR}"
+    PATHS "${fmodRoot}"
     HINTS ENV DENG_DEPEND_PATH
     PATH_SUFFIXES "FMOD" "FMOD Programmers API" "FMOD Studio API Windows"
     NO_DEFAULT_PATH
@@ -40,7 +43,7 @@ if (FMOD_FMOD_H AND NOT TARGET fmodex)
     elseif (APPLE)
         set (fmodLib "${fmodApi}/lib/libfmod.dylib")
         set (fmodInstLib ${fmodLib})
-    elseif (MSVC)
+    elseif (WIN32 OR CYGWIN OR MSYS)
         if (ARCH_BITS EQUAL 64)
             set (fmodLib "${fmodApi}/lib/fmod64_vc.lib")
             set (fmodInstLib "${fmodApi}/lib/fmod64.dll")
@@ -57,6 +60,17 @@ if (FMOD_FMOD_H AND NOT TARGET fmodex)
         set (fmodInstLib ${fmodLib})
     endif ()
     target_link_libraries (fmodex INTERFACE ${fmodLib})
+    install (TARGETS fmodex
+        EXPORT fmod
+        ARCHIVE DESTINATION ${DE_INSTALL_LIB_DIR} 
+        COMPONENT libs
+    )
+    install (EXPORT fmod
+        DESTINATION ${DE_INSTALL_CMAKE_DIR}/fmod
+        FILE fmod-config.cmake
+        NAMESPACE FMOD::
+        COMPONENT sdk
+    )
     if (fmodInstLib)
         deng_install_library (${fmodInstLib})
     endif ()

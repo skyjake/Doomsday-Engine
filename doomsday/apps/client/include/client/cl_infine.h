@@ -20,7 +20,7 @@
 #define CLIENT_INFINE
 
 #include "api_infine.h"
-#include <de/reader.h>
+#include <de/legacy/reader.h>
 
 finaleid_t Cl_CurrentFinale();
 

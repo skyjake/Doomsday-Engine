@@ -20,23 +20,19 @@
 #ifndef RENDER_WALLEDGE
 #define RENDER_WALLEDGE
 
-#include <QVector>
+#include "world/line.h"
+#include "world/ihplane.h"
+#include "wallspec.h"
+#include "trianglestripbuilder.h"
 
-#include <de/Error>
-#include <de/Vector>
-
-#include "Line"
-#include "WallSpec"
-
-#include "TriangleStripBuilder"
-#include "IHPlane"
+#include <doomsday/mesh/hedge.h>
+#include <de/error.h>
+#include <de/vector.h>
 
 class Surface;
 
 /// Maximum number of intercepts in a WallEdge.
 #define WALLEDGE_MAX_INTERCEPTS          64
-
-namespace de { class HEdge; }
 
 /**
  * Helper/utility class intended to simplify the process of generating sections of wall
@@ -46,29 +42,27 @@ namespace de { class HEdge; }
  */
 class WallEdge : public WorldEdge
 {
-    DENG2_NO_COPY  (WallEdge)
-    DENG2_NO_ASSIGN(WallEdge)
+    DE_NO_COPY  (WallEdge)
+    DE_NO_ASSIGN(WallEdge)
 
 public:
     /// Invalid range geometry was found during prepare() @ingroup errors
-    DENG2_ERROR(InvalidError);
+    DE_ERROR(InvalidError);
 
     class Event : public WorldEdge::Event, public de::IHPlane::IIntercept
     {
     public:
         Event();
-        Event(WallEdge &owner, de::ddouble distance = 0);
+        Event(WallEdge &owner, double distance = 0);
 
-        Event &operator = (Event const &other);
-        bool operator < (Event const &other) const;
-        de::ddouble distance() const;
-        de::Vector3d origin() const;
+        Event &operator = (const Event &other);
+        bool operator < (const Event &other) const;
+        double distance() const;
+        de::Vec3d origin() const;
 
     private:
         WallEdge *_owner;
     };
-
-    //typedef QVector<Event> Events;
 
 public:
     /**
@@ -76,25 +70,25 @@ public:
      *
      * @param hedge  Assumed to have a mapped LineSideSegment with sections.
      */
-    WallEdge(WallSpec const &spec, de::HEdge &hedge, int edge);
+    WallEdge(const WallSpec &spec, mesh::HEdge &hedge, int edge);
 
     virtual ~WallEdge();
 
-    inline Event const &operator [] (EventIndex index) const {
+    inline const Event &operator [] (EventIndex index) const {
         return at(index);
     }
 
-    de::Vector3d const &pOrigin() const;
-    de::Vector3d const &pDirection() const;
+    const de::Vec3d &pOrigin() const;
+    const de::Vec3d &pDirection() const;
 
-    de::Vector2f materialOrigin() const;
+    de::Vec2f materialOrigin() const;
 
-    de::Vector3f normal() const;
+    de::Vec3f normal() const;
 
-    WallSpec const &spec() const;
+    const WallSpec &spec() const;
 
     inline LineSide &lineSide() const {
-        return lineSideSegment().lineSide();
+        return lineSideSegment().lineSide().as<LineSide>();
     }
 
     coord_t lineSideOffset() const;
@@ -105,10 +99,10 @@ public:
     bool isValid() const;
 
     /// Implement IEdge.
-    Event const &first() const;
+    const Event &first() const;
 
     /// Implement IEdge.
-    Event const &last() const;
+    const Event &last() const;
 
     int divisionCount() const;
 
@@ -116,18 +110,18 @@ public:
 
     EventIndex lastDivision() const;
 
-    inline Event const &bottom() const { return first(); }
-    inline Event const &top   () const { return last();  }
+    inline const Event &bottom() const { return first(); }
+    inline const Event &top   () const { return last();  }
 
-    //Events const &events() const;
+    //const Events &events() const;
 
-    Event const &at(EventIndex index) const;
+    const Event &at(EventIndex index) const;
 
 private:
     struct Impl;
     Impl *d;
 
-    static QList<WallEdge::Impl *> recycledImpls;    
+    static de::List<WallEdge::Impl *> recycledImpls;
     static Impl *getRecycledImpl();
     static void recycleImpl(Impl *d);
 };

@@ -20,44 +20,41 @@
 
 #include "render/shadowedge.h"
 
-#include "Face"
-#include "HEdge"
-
-#include "ConvexSubspace"
-#include "Plane"
-#include "Sector"
-#include "Surface"
-#include "world/lineowner.h"
-#include "client/clientsubsector.h"
+#include "world/convexsubspace.h"
+#include "world/plane.h"
+#include "world/surface.h"
+#include "world/subsector.h"
 
 #include "render/rend_main.h"
-#include "MaterialAnimator"
-#include "WallEdge"
+#include "resource/materialanimator.h"
+#include "render/walledge.h"
 
-using namespace world;
+#include <doomsday/mesh/face.h>
+#include <doomsday/world/lineowner.h>
+#include <doomsday/world/sector.h>
 
-namespace de {
+using namespace de;
 
-DENG2_PIMPL_NOREF(ShadowEdge)
+DE_PIMPL_NOREF(ShadowEdge)
 {
-    HEdge const *leftMostHEdge = nullptr;
-    dint edge = 0;
+    const mesh::HEdge *leftMostHEdge = nullptr;
+    int edge = 0;
 
-    Vector3d inner;
-    Vector3d outer;
-    dfloat sectorOpenness = 0;
-    dfloat openness = 0;
+    Vec3d inner;
+    Vec3d outer;
+    float sectorOpenness = 0;
+    float openness = 0;
 };
 
 ShadowEdge::ShadowEdge() : d(new Impl)
 {}
 
-void ShadowEdge::init(HEdge const &leftMostHEdge, dint edge)
+void ShadowEdge::init(const mesh::HEdge &leftMostHEdge, int edge)
 {
     d->leftMostHEdge = &leftMostHEdge;
     d->edge          = edge;
 
-    d->inner = d->outer = Vector3d();
+    d->inner = d->outer = Vec3d();
     d->sectorOpenness = d->openness = 0;
 }
 
@@ -70,7 +67,7 @@ void ShadowEdge::init(HEdge const &leftMostHEdge, dint edge)
  * @c =1 At the same height as "this" one.
  * @c >1 The 'other' edge is past our height (clearly 'open').
  */
-static dfloat opennessFactor(dfloat fz, dfloat bz, dfloat bhz)
+static float opennessFactor(float fz, float bz, float bhz)
 {
     if(fz <= bz - SHADOWEDGE_OPEN_THRESHOLD || fz >= bhz)
         return 0;  // Fully closed.
@@ -88,14 +85,14 @@ static dfloat opennessFactor(dfloat fz, dfloat bz, dfloat bhz)
 }
 
 /// @todo fixme: Should use the visual plane heights of subsectors.
-static bool middleMaterialCoversOpening(LineSide const &side)
+static bool middleMaterialCoversOpening(const world::LineSide &side)
 {
     if (!side.hasSector()) return false;  // Never.
 
     if (!side.hasSections()) return false;
     //if (!side.middle().hasMaterial()) return false;
 
-    MaterialAnimator *matAnimator = side.middle().materialAnimator();
+    MaterialAnimator *matAnimator = side.middle().as<Surface>().materialAnimator();
     /* material().as<ClientMaterial>()
             .getAnimator(Rend_MapSurfaceMaterialSpec());*/
 
@@ -111,28 +108,28 @@ static bool middleMaterialCoversOpening(LineSide const &side)
         if (side.isFlagged(SDF_MIDDLE_STRETCH))
             return true;
 
-        Sector const &frontSec = side.sector();
-        Sector const *backSec  = side.back().sectorPtr();
+        const auto &frontSec = side.sector();
+        const auto *backSec  = side.back().sectorPtr();
 
         // Determine the opening between the visual sector planes at this edge.
         coord_t openBottom;
-        if (backSec && backSec->floor().heightSmoothed() > frontSec.floor().heightSmoothed())
+        if (backSec && backSec->floor().as<Plane>().heightSmoothed() > frontSec.floor().as<Plane>().heightSmoothed())
         {
-            openBottom = backSec->floor().heightSmoothed();
+            openBottom = backSec->floor().as<Plane>().heightSmoothed();
         }
         else
         {
-            openBottom = frontSec.floor().heightSmoothed();
+            openBottom = frontSec.floor().as<Plane>().heightSmoothed();
         }
 
         coord_t openTop;
-        if (backSec && backSec->ceiling().heightSmoothed() < frontSec.ceiling().heightSmoothed())
+        if (backSec && backSec->ceiling().as<Plane>().heightSmoothed() < frontSec.ceiling().as<Plane>().heightSmoothed())
         {
-            openTop = backSec->ceiling().heightSmoothed();
+            openTop = backSec->ceiling().as<Plane>().heightSmoothed();
         }
         else
         {
-            openTop = frontSec.ceiling().heightSmoothed();
+            openTop = frontSec.ceiling().as<Plane>().heightSmoothed();
         }
 
         if (matAnimator->dimensions().y >= openTop - openBottom)
@@ -140,7 +137,7 @@ static bool middleMaterialCoversOpening(LineSide const &side)
             // Possibly; check the placement.
             if(side.leftHEdge()) // possibility of degenerate BSP leaf
             {
-                WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle),
+                WallEdge edge(WallSpec::fromMapSide(side.as<LineSide>(), LineSide::Middle),
                               *side.leftHEdge(), Line::From);
                 return (edge.isValid() && edge.top().z() > edge.bottom().z()
                         && edge.top().z() >= openTop && edge.bottom().z() <= openBottom);
@@ -151,15 +148,17 @@ static bool middleMaterialCoversOpening(LineSide const &side)
     return false;
 }
 
-void ShadowEdge::prepare(dint planeIndex)
+void ShadowEdge::prepare(int planeIndex)
 {
-    dint const otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
-    HEdge const &hedge = *d->leftMostHEdge;
-    auto const &subsec = hedge.face().mapElementAs<ConvexSubspace>()
-                            .subsector().as<world::ClientSubsector>();
-    Plane const &plane = subsec.visPlane(planeIndex);
+    using world::Sector;
+    
+    const int otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
+    const auto &hedge = *d->leftMostHEdge;
+    const auto &subsec = hedge.face().mapElementAs<ConvexSubspace>()
+                            .subsector().as<Subsector>();
+    const Plane &plane = subsec.visPlane(planeIndex);
 
-    LineSide const &lineSide = hedge.mapElementAs<LineSideSegment>().lineSide();
+    const auto &lineSide = hedge.mapElementAs<LineSideSegment>().lineSide();
 
     d->sectorOpenness = d->openness = 0; // Default is fully closed.
 
@@ -170,13 +169,13 @@ void ShadowEdge::prepare(dint planeIndex)
     if (hedge.twin().hasFace() &&
         hedge.twin().face().mapElementAs<ConvexSubspace>().hasSubsector())
     {
-        auto const &backSubsec = hedge.twin().face().mapElementAs<ConvexSubspace>()
-                                    .subsector().as<world::ClientSubsector>();
+        const auto &backSubsec = hedge.twin().face().mapElementAs<ConvexSubspace>()
+                                    .subsector().as<Subsector>();
 
-        Plane const &backPlane = backSubsec.visPlane(planeIndex);
-        Surface const &wallEdgeSurface =
-            lineSide.back().hasSector() ? lineSide.surface(planeIndex == Sector::Ceiling ? LineSide::Top : LineSide::Bottom)
-                                        : lineSide.middle();
+        const Plane &backPlane = backSubsec.visPlane(planeIndex);
+        const Surface &wallEdgeSurface =
+            (lineSide.back().hasSector() ? lineSide.surface(planeIndex == Sector::Ceiling ? LineSide::Top : LineSide::Bottom)
+                                        : lineSide.middle()).as<Surface>();
 
         // Figure out the relative plane heights.
         coord_t fz = plane.heightSmoothed();
@@ -187,7 +186,7 @@ void ShadowEdge::prepare(dint planeIndex)
         if (planeIndex == Sector::Ceiling)
             bz = -bz;
 
-        coord_t bhz = backSubsec.sector().plane(otherPlaneIndex).heightSmoothed();
+        coord_t bhz = backSubsec.sector().plane(otherPlaneIndex).as<Plane>().heightSmoothed();
         if (planeIndex == Sector::Ceiling)
             bhz = -bhz;
 
@@ -222,9 +221,9 @@ void ShadowEdge::prepare(dint planeIndex)
     // 'openness' of it's plane heights vs those of "this" wall section.
     /// @todo fixme: Should use the visual plane heights of subsectors.
 
-    dint const edge = lineSide.sideId() ^ d->edge;
-    LineOwner const *vo = lineSide.line().vertexOwner(edge)->navigate(ClockDirection(d->edge ^ 1));
-    Line const &neighborLine = vo->line();
+    const int edge = lineSide.sideId() ^ d->edge;
+    const auto *vo = lineSide.line().vertexOwner(edge)->navigate(ClockDirection(d->edge ^ 1));
+    const auto &neighborLine = vo->line();
 
     if (&neighborLine == &lineSide.line())
     {
@@ -237,7 +236,7 @@ void ShadowEdge::prepare(dint planeIndex)
     else
     {
         // Choose the correct side of the neighbor (determined by which vertex is shared).
-        LineSide const &neighborLineSide = neighborLine.side(&lineSide.line().vertex(edge) == &neighborLine.from()? d->edge ^ 1 : d->edge);
+        const auto &neighborLineSide = neighborLine.side(&lineSide.line().vertex(edge) == &neighborLine.from()? d->edge ^ 1 : d->edge);
 
         if (!neighborLineSide.hasSections() && neighborLineSide.back().hasSector())
         {
@@ -252,21 +251,21 @@ void ShadowEdge::prepare(dint planeIndex)
         else if (neighborLineSide.back().hasSector())
         {
             // Its a normal neighbor.
-            Sector const *backSec  = neighborLineSide.back().sectorPtr();
+            const Sector *backSec  = neighborLineSide.back().sectorPtr();
             if (backSec != &subsec.sector() &&
-                !((plane.isSectorFloor  () && backSec->ceiling().heightSmoothed() <= plane.heightSmoothed()) ||
-                  (plane.isSectorCeiling() && backSec->floor  ().heightSmoothed() >= plane.heightSmoothed())))
+                !((plane.isSectorFloor  () && backSec->ceiling().as<Plane>().heightSmoothed() <= plane.heightSmoothed()) ||
+                  (plane.isSectorCeiling() && backSec->floor  ().as<Plane>().heightSmoothed() >= plane.heightSmoothed())))
             {
                 // Figure out the relative plane heights.
                 coord_t fz = plane.heightSmoothed();
                 if (planeIndex == Sector::Ceiling)
                     fz = -fz;
 
-                coord_t bz = backSec->plane(planeIndex).heightSmoothed();
+                coord_t bz = backSec->plane(planeIndex).as<Plane>().heightSmoothed();
                 if (planeIndex == Sector::Ceiling)
                     bz = -bz;
 
-                coord_t bhz = backSec->plane(otherPlaneIndex).heightSmoothed();
+                coord_t bhz = backSec->plane(otherPlaneIndex).as<Plane>().heightSmoothed();
                 if (planeIndex == Sector::Ceiling)
                     bhz = -bhz;
 
@@ -277,51 +276,49 @@ void ShadowEdge::prepare(dint planeIndex)
 
     if (d->openness < 1)
     {
-        LineOwner *vo = lineSide.line().vertexOwner(lineSide.sideId() ^ d->edge);
+        auto *vo = lineSide.line().vertexOwner(lineSide.sideId() ^ d->edge);
         if (d->edge) vo = vo->prev();
 
-        d->inner = Vector3d(lineSide.vertex(d->edge).origin() + vo->innerShadowOffset(),
+        d->inner = Vec3d(lineSide.vertex(d->edge).origin() + vo->innerShadowOffset(),
                             plane.heightSmoothed());
     }
     else
     {
-        d->inner = Vector3d(lineSide.vertex(d->edge).origin() + vo->extendedShadowOffset(),
+        d->inner = Vec3d(lineSide.vertex(d->edge).origin() + vo->extendedShadowOffset(),
                             plane.heightSmoothed());
     }
 
-    d->outer = Vector3d(lineSide.vertex(d->edge).origin(), plane.heightSmoothed());
+    d->outer = Vec3d(lineSide.vertex(d->edge).origin(), plane.heightSmoothed());
 }
 
-Vector3d const &ShadowEdge::inner() const
+const Vec3d &ShadowEdge::inner() const
 {
     return d->inner;
 }
 
-Vector3d const &ShadowEdge::outer() const
+const Vec3d &ShadowEdge::outer() const
 {
     return d->outer;
 }
 
-dfloat ShadowEdge::openness() const
+float ShadowEdge::openness() const
 {
     return d->openness;
 }
 
-dfloat ShadowEdge::sectorOpenness() const
+float ShadowEdge::sectorOpenness() const
 {
     return d->sectorOpenness;
 }
 
 /// @todo Cache this result?
-dfloat ShadowEdge::shadowStrength(dfloat darkness) const
+float ShadowEdge::shadowStrength(float darkness) const
 {
     if(d->sectorOpenness < 1)
     {
-        dfloat strength = de::min(darkness * (1 - d->sectorOpenness), 1.f);
+        float strength = de::min(darkness * (1 - d->sectorOpenness), 1.f);
         if(d->openness < 1) strength *= 1 - d->openness;
         return strength;
     }
     return 0;
 }
-
-}  // namespace de

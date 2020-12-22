@@ -22,7 +22,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_HAVE_UREFLECTIONTEX
+#define DE_HAVE_UREFLECTIONTEX
 
 #define MAX_REFLECTION_BIAS 5.0
 

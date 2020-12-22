@@ -17,20 +17,19 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/TextApp>
-#include <de/Log>
-#include <de/LogFilter>
-
-#include <QDebug>
+#include <de/textapp.h>
+#include <de/log.h>
+#include <de/logfilter.h>
 
 using namespace de;
 
 int main(int argc, char **argv)
 {
+    init_Foundation();
     try
     {
-        TextApp app(argc, argv);
-        app.initSubsystems(App::DisablePlugins);
+        TextApp app(makeList(argc, argv));
+        app.initSubsystems(App::DisablePersistentData);
 
         for (int j = 0; j < 2; ++j)
         {
@@ -60,11 +59,11 @@ int main(int argc, char **argv)
             }
         }
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
-        qWarning() << err.asText();
+        err.warnPlainText();
     }
-
-    qDebug() << "Exiting main()...";
+    deinit_Foundation();
+    debug("Exiting main()...");
     return 0;
 }

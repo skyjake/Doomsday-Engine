@@ -26,16 +26,16 @@
 #include "render/r_main.h"
 #include "render/rendersystem.h"
 
-#include <de/timer.h>
-#include <de/Garbage>
-#include <de/AnimationVector>
+#include <de/legacy/timer.h>
+#include <de/garbage.h>
+#include <de/animationvector.h>
 
 using namespace de;
 
 namespace render {
 
-DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
-, DENG2_OBSERVES(Asset, Deletion)
+DE_PIMPL_NOREF(PlayerWeaponAnimator)
+, DE_OBSERVES(Asset, Deletion)
 {
     ClientPlayer *player;
     String identifier;
@@ -46,10 +46,10 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
         : player(plr)
     {}
 
-    void setupAsset(String const &identifier)
+    void setupAsset(const String &identifier)
     {
         this->identifier = identifier;
-        angleOffset = Vector2f();
+        angleOffset = Vec2f();
 
         if (animator)
         {
@@ -63,7 +63,7 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
             auto &model = modelBank().model<Model>(identifier);
             model.audienceForDeletion() += this;
             animator.reset(new StateAnimator(identifier, model));
-            animator->setOwnerNamespace(player->info(), QStringLiteral("__player__"));
+            animator->setOwnerNamespace(player->info(), DE_STR("__player__"));
         }
         else
         {
@@ -79,7 +79,7 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
 
     static ModelBank &modelBank()
     {
-        return ClientApp::renderSystem().modelRenderer().bank();
+        return ClientApp::render().modelRenderer().bank();
     }
 };
 
@@ -87,7 +87,7 @@ PlayerWeaponAnimator::PlayerWeaponAnimator(ClientPlayer *plr)
     : d(new Impl(plr))
 {}
 
-void PlayerWeaponAnimator::setAsset(String const &identifier)
+void PlayerWeaponAnimator::setAsset(const String &identifier)
 {
     d->setupAsset(identifier);
 }
@@ -97,7 +97,7 @@ String PlayerWeaponAnimator::assetId() const
     return d->identifier;
 }
 
-void PlayerWeaponAnimator::stateChanged(state_s const *state)
+void PlayerWeaponAnimator::stateChanged(const state_s *state)
 {
     if (d->animator)
     {
@@ -107,13 +107,13 @@ void PlayerWeaponAnimator::stateChanged(state_s const *state)
 
 StateAnimator &PlayerWeaponAnimator::animator()
 {
-    DENG2_ASSERT(hasModel());
+    DE_ASSERT(hasModel());
     return *d->animator;
 }
 
 void PlayerWeaponAnimator::setupVisPSprite(vispsprite_t &spr) const
 {
-    DENG2_ASSERT(hasModel());
+    DE_ASSERT(hasModel());
 
     spr.type = VPSPR_MODEL2;
     spr.data.model2.model = model();
@@ -123,18 +123,18 @@ void PlayerWeaponAnimator::setupVisPSprite(vispsprite_t &spr) const
     float bob[2] = { *(float *) gx.GetPointer(DD_PSPRITE_BOB_X),
                      *(float *) gx.GetPointer(DD_PSPRITE_BOB_Y) };
 
-    Vector2f angles(
+    Vec2f angles(
     /* yaw: */   bob[0] * weaponOffsetScale,
     /* pitch: */ (32 - bob[1]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f);
 
-    TimeSpan const span = 1.0 / Timer_TicksPerSecond();
+    const TimeSpan span = 1.0 / Timer_TicksPerSecond();
     d->angleOffset.setValueIfDifferentTarget(angles, span);
 
     spr.data.model2.yawAngleOffset   = d->angleOffset.x;
     spr.data.model2.pitchAngleOffset = d->angleOffset.y;
 }
 
-void PlayerWeaponAnimator::advanceTime(TimeSpan const &elapsed)
+void PlayerWeaponAnimator::advanceTime(TimeSpan elapsed)
 {
     if (clientPaused) return;
 
@@ -149,7 +149,7 @@ bool PlayerWeaponAnimator::hasModel() const
     return bool(d->animator);
 }
 
-Model const *PlayerWeaponAnimator::model() const
+const Model *PlayerWeaponAnimator::model() const
 {
     if (!hasModel()) return nullptr;
     return &d->animator->model();

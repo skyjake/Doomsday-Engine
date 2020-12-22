@@ -18,37 +18,36 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_RESOURCES_H
-#define DENG_CLIENT_RESOURCES_H
+#ifndef DE_CLIENT_RESOURCES_H
+#define DE_CLIENT_RESOURCES_H
 
-#include <QList>
-#include <QMap>
-#include <QSet>
-#include <de/Error>
-#include <de/Record>
-#include <de/String>
-#include <de/System>
+#include <de/list.h>
+#include <de/keymap.h>
+#include <de/set.h>
+#include <de/error.h>
+#include <de/record.h>
+#include <de/string.h>
+#include <de/system.h>
 
 #include <doomsday/defs/ded.h>
 #include <doomsday/filesys/wad.h>
 #include <doomsday/filesys/zip.h>
 #include <doomsday/uri.h>
-#include <doomsday/resource/animgroup.h>
-#include <doomsday/resource/mapmanifest.h>
-#include <doomsday/resource/resources.h>
-#include <doomsday/resource/colorpalette.h>
-#include <doomsday/res/Texture>
-#include <doomsday/res/TextureScheme>
+#include <doomsday/res/animgroup.h>
+#include <doomsday/res/mapmanifest.h>
+#include <doomsday/res/resources.h>
+#include <doomsday/res/colorpalette.h>
+#include <doomsday/res/texture.h>
+#include <doomsday/res/texturescheme.h>
 
-#include "resource/rawtexture.h"
-
-#include "AbstractFont"
-#include "BitmapFont"
-#include "CompositeBitmapFont"
-#include "FontScheme"
-#include "MaterialVariantSpec"
-#include "resource/framemodel.h"
-#include "resource/framemodeldef.h"
+#include "abstractfont.h"
+#include "bitmapfont.h"
+#include "compositebitmapfont.h"
+#include "fontscheme.h"
+#include "framemodel.h"
+#include "framemodeldef.h"
+#include "materialvariantspec.h"
+#include "rawtexture.h"
 
 class ClientMaterial;
 
@@ -88,13 +87,13 @@ class ClientResources : public Resources
 {
 public:
     /// The referenced model def was not found. @ingroup errors
-    DENG2_ERROR(MissingModelDefError);
+    DE_ERROR(MissingModelDefError);
 
     /// The specified font id was invalid (out of range). @ingroup errors
-    DENG2_ERROR(UnknownFontIdError);
+    DE_ERROR(UnknownFontIdError);
 
-    typedef QMap<de::String, de::FontScheme *> FontSchemes;
-    typedef QList<AbstractFont *> AllFonts;
+    typedef de::KeyMap<de::String, de::FontScheme *> FontSchemes;
+    typedef de::List<AbstractFont *> AllFonts;
 
     static ClientResources &get();
 
@@ -127,14 +126,14 @@ public:
     /**
      * Returns a list of pointers to all the raw textures in the collection.
      */
-    QList<rawtex_t *> collectRawTextures() const;
+    de::List<rawtex_t *> collectRawTextures() const;
 
     /**
      * Determines if a manifest exists for a resource on @a path.
      *
      * @return @c true, if a manifest exists; otherwise @a false.
      */
-    bool hasFont(de::Uri const &path) const;
+    bool hasFont(const res::Uri &path) const;
 
     /**
      * Convenient method of looking up a concrete font resource in the collection
@@ -159,7 +158,7 @@ public:
      * @param search  The search term.
      * @return Found unique identifier.
      */
-    de::FontManifest &fontManifest(de::Uri const &search) const;
+    de::FontManifest &fontManifest(const res::Uri &search) const;
 
     /**
      * Lookup a manifest by unique identifier.
@@ -179,22 +178,22 @@ public:
      *
      * @throws UnknownSchemeError If @a name is unknown.
      */
-    de::FontScheme &fontScheme(de::String name) const;
+    de::FontScheme &fontScheme(const de::String& name) const;
 
     /**
      * Returns @c true iff a Scheme exists with the symbolic @a name.
      */
-    bool knownFontScheme(de::String name) const;
+    bool knownFontScheme(const de::String& name) const;
 
     /**
      * Returns a list of all the schemes for efficient traversal.
      */
-    FontSchemes const &allFontSchemes() const;
+    const FontSchemes &allFontSchemes() const;
 
     /**
      * Returns the total number of manifest schemes in the collection.
      */
-    inline de::dint fontSchemeCount() const { return allFontSchemes().count(); }
+    inline int fontSchemeCount() const { return allFontSchemes().size(); }
 
     /**
      * Clear all resources in all schemes.
@@ -202,8 +201,8 @@ public:
      * @see allFontSchemes(), FontScheme::clear().
      */
     inline void clearAllFontSchemes() {
-        foreach(de::FontScheme *scheme, allFontSchemes()) {
-            scheme->clear();
+        for (const auto &scheme : allFontSchemes()) {
+            scheme.second->clear();
         }
     }
 
@@ -211,7 +210,7 @@ public:
      * Returns a list of pointers to all the concrete resources in the collection,
      * from all schemes.
      */
-    AllFonts const &allFonts() const;
+    const AllFonts &allFonts() const;
 
     /**
      * Declare a resource in the collection, producing a (possibly new) manifest
@@ -222,7 +221,7 @@ public:
      *
      * @return  The associated manifest for this URI.
      */
-    inline de::FontManifest &declareFont(de::Uri const &uri) {
+    inline de::FontManifest &declareFont(const res::Uri &uri) {
         return fontScheme(uri.scheme()).declare(uri.path());
     }
 
@@ -231,7 +230,7 @@ public:
      *
      * @return  Index of the definition; otherwise @c -1 if @a modelDef is unknown.
      */
-    de::dint indexOf(FrameModelDef const *modelDef);
+    int indexOf(const FrameModelDef *modelDef);
 
     /**
      * Convenient method of looking up a concrete model resource in the collection
@@ -257,7 +256,7 @@ public:
      *
      * @see modelDefCount()
      */
-    FrameModelDef &modelDef(de::dint index);
+    FrameModelDef &modelDef(int index);
 
     /**
      * Lookup a model definition by it's unique @a id. O(n)
@@ -278,17 +277,17 @@ public:
      *
      * @return  Found model definition; otherwise @c nullptr.
      */
-    FrameModelDef *modelDefForState(de::dint stateIndex, de::dint select = 0);
+    FrameModelDef *modelDefForState(int stateIndex, int select = 0);
 
     /**
      * Returns the total number of model definitions in the system.
      *
      * @see modelDef()
      */
-    de::dint modelDefCount() const;
+    int modelDefCount() const;
 
     /// @todo Refactor away. Used for animating particle/sky models.
-    void setModelDefFrame(FrameModelDef &modelDef, de::dint frame);
+    void setModelDefFrame(FrameModelDef &modelDef, int frame);
 
     /**
      * Release all GL-textures in all schemes.
@@ -310,7 +309,7 @@ public:
      *
      * @param schemeName  Symbolic name of the texture scheme to process.
      */
-    void releaseGLTexturesByScheme(de::String schemeName);
+    void releaseGLTexturesByScheme(const de::String& schemeName);
 
     /**
      * Prepare a material variant specification in accordance to the specified
@@ -334,10 +333,20 @@ public:
      *
      * @return  The interned copy of the rationalized specification.
      */
-    de::MaterialVariantSpec const &materialSpec(MaterialContextId contextId,
-        de::dint flags, byte border, de::dint tClass, de::dint tMap, de::dint wrapS, de::dint wrapT,
-        de::dint minFilter, de::dint magFilter, de::dint anisoFilter, bool mipmapped,
-        bool gammaCorrection, bool noStretch, bool toAlpha);
+    const de::MaterialVariantSpec &materialSpec(MaterialContextId contextId,
+                                                int          flags,
+                                                byte              border,
+                                                int          tClass,
+                                                int          tMap,
+                                                GLenum            wrapS,
+                                                GLenum            wrapT,
+                                                int          minFilter,
+                                                int          magFilter,
+                                                int          anisoFilter,
+                                                bool              mipmapped,
+                                                bool              gammaCorrection,
+                                                bool              noStretch,
+                                                bool              toAlpha);
 
     /**
      * Prepare a TextureVariantSpecification according to usage context. If the
@@ -351,9 +360,9 @@ public:
      *
      * @return  The interned copy of the rationalized specification.
      */
-    TextureVariantSpec const &textureSpec(texturevariantusagecontext_t tc,
-        de::dint flags, byte border, de::dint tClass, de::dint tMap, de::dint wrapS, de::dint wrapT,
-        de::dint minFilter, de::dint magFilter, de::dint anisoFilter,
+    const TextureVariantSpec &textureSpec(texturevariantusagecontext_t tc,
+        int flags, byte border, int tClass, int tMap, GLenum wrapS, GLenum wrapT,
+        int minFilter, int magFilter, int anisoFilter,
         dd_bool mipmapped, dd_bool gammaCorrection, dd_bool noStretch, dd_bool toAlpha);
 
     /**
@@ -362,10 +371,10 @@ public:
      *
      * @return  A rationalized and valid TextureVariantSpecification.
      */
-    TextureVariantSpec &detailTextureSpec(de::dfloat contrast);
+    TextureVariantSpec &detailTextureSpec(float contrast);
 
-    AbstractFont *newFontFromDef(ded_compositefont_t const &def);
-    AbstractFont *newFontFromFile(de::Uri const &uri, de::String filePath);
+    AbstractFont *newFontFromDef(const ded_compositefont_t &def);
+    AbstractFont *newFontFromFile(const res::Uri &uri, const de::String& filePath);
 
     /**
      * Release all GL-textures for fonts in the identified scheme.
@@ -387,7 +396,7 @@ public:
      * @param cacheGroups   @c true= variants for all materials in any applicable
      *                      groups are desired; otherwise just specified material.
      */
-    void cache(ClientMaterial &material, de::MaterialVariantSpec const &spec,
+    void cache(ClientMaterial &material, const de::MaterialVariantSpec &spec,
                bool cacheGroups = true);
 
     /**
@@ -401,7 +410,7 @@ public:
      * @param spriteId      Unique identifier of the sprite set to cache.
      * @param materialSpec  Specification to use when caching materials.
      */
-    void cache(spritenum_t spriteId, de::MaterialVariantSpec const &materialSpec);
+    void cache(spritenum_t spriteId, const de::MaterialVariantSpec &materialSpec);
 
     /**
      * Process all queued material cache tasks.
@@ -426,9 +435,9 @@ public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-DENG_EXTERN_C byte precacheMapMaterials, precacheSprites;
+DE_EXTERN_C byte precacheMapMaterials, precacheSprites;
 
-#endif // DENG_CLIENT_RESOURCES_H
+#endif // DE_CLIENT_RESOURCES_H

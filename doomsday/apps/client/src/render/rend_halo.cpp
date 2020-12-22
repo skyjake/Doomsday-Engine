@@ -26,9 +26,9 @@
 #include "gl/gl_texmanager.h"
 #include "world/p_players.h"
 
-#include <de/concurrency.h>
-#include <de/GLState>
-#include <de/GLInfo>
+#include <de/legacy/concurrency.h>
+#include <de/glstate.h>
+#include <de/glinfo.h>
 #include <doomsday/console/var.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/doomsdayapp.h>
@@ -86,7 +86,7 @@ void H_Register(void)
     C_CMD_FLAGS("flareconfig", NULL, FlareConfig, CMDF_NO_DEDICATED);
 }
 
-TextureVariantSpec const &Rend_HaloTextureSpec()
+const TextureVariantSpec &Rend_HaloTextureSpec()
 {
     return App_Resources().textureSpec(TC_HALO_LUMINANCE,
         TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, 1, 0,
@@ -95,8 +95,8 @@ TextureVariantSpec const &Rend_HaloTextureSpec()
 
 void H_SetupState(bool dosetup)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(dosetup)
     {
@@ -132,8 +132,8 @@ static inline float fadeFactorAt(coord_t distToViewer)
     return 1;
 }
 
-bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
-    Vector3f const &color, coord_t distanceToViewer,
+bool H_RenderHalo(const Vec3d &origin, float size, DGLuint tex,
+    const Vec3f &color, coord_t distanceToViewer,
     float occlusionFactor, float brightnessFactor, float viewXOffset,
     bool doPrimary, bool viewRelativeRotate)
 {
@@ -148,35 +148,35 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
     occlusionFactor = (1 + occlusionFactor) / 2;
 
     // viewSideVec is to the left.
-    viewdata_t const *viewData = &viewPlayer->viewport();
-    Vector3f const leftOff  = viewData->upVec + viewData->sideVec;
-    Vector3f const rightOff = viewData->upVec - viewData->sideVec;
+    const viewdata_t *viewData = &viewPlayer->viewport();
+    const Vec3f leftOff  = viewData->upVec + viewData->sideVec;
+    const Vec3f rightOff = viewData->upVec - viewData->sideVec;
 
     // Calculate the center of the flare.
     // Apply the flare's X offset. (Positive is to the right.)
-    Vector3f const center = Vector3f(origin.x, origin.z, origin.y)
+    const Vec3f center = Vec3f(origin.x, origin.z, origin.y)
                           - viewData->sideVec * viewXOffset;
 
     // Calculate the mirrored position.
     // Project viewtocenter vector onto viewSideVec.
-    Vector3f const viewToCenter = center - Rend_EyeOrigin();
+    const Vec3f viewToCenter = center - Rend_EyeOrigin();
 
     // Calculate the 'mirror' vector.
-    float const scale = viewToCenter.dot(viewData->frontVec)
+    const float scale = viewToCenter.dot(viewData->frontVec)
                         / viewData->frontVec.dot(viewData->frontVec);
-    Vector3f const mirror =
+    const Vec3f mirror =
         (viewData->frontVec * scale - viewToCenter) * 2;
 
     // Calculate dimming factors.
-    float const fadeFactor    = fadeFactorAt(distanceToViewer);
-    float const secFadeFactor = viewToCenter.normalize().dot(viewData->frontVec);
+    const float fadeFactor    = fadeFactorAt(distanceToViewer);
+    const float secFadeFactor = viewToCenter.normalize().dot(viewData->frontVec);
 
     // Calculate texture turn angle.
     float turnAngle = 0;
     if(viewRelativeRotate)
     {
         // Normalize the mirror vector so that both are on the view plane.
-        Vector3f haloPos = mirror.normalize();
+        Vec3f haloPos = mirror.normalize();
         if(haloPos.length())
         {
             turnAngle = de::clamp<float>(-1, haloPos.dot(viewData->upVec), 1);
@@ -195,17 +195,17 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
     }
 
     // The overall brightness of the flare (average color).
-    float const luminosity = (color.x + color.y + color.z) / 3;
+    const float luminosity = (color.x + color.y + color.z) / 3;
 
     // Small flares have stronger dimming.
-    float const distanceDim = distanceDimFactorAt(distanceToViewer, size);
+    const float distanceDim = distanceDimFactorAt(distanceToViewer, size);
 
     // Setup GL state.
     if(doPrimary)
         H_SetupState(true);
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();   
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Prepare the texture rotation matrix.
     DGL_MatrixMode(DGL_TEXTURE);
@@ -219,7 +219,7 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
     flare_t *fl = flares;
     for(int i = 0; i < haloMode && i < NUM_FLARES; ++i, fl++)
     {
-        bool const secondary = i != 0;
+        const bool secondary = i != 0;
 
         if(doPrimary && secondary)
             break;
@@ -307,7 +307,7 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
         }
 
         // Determine the final position of the flare.
-        Vector3f pos = center;
+        Vec3f pos = center;
 
         // Secondary halos are mirrored according to the flare table.
         if(secondary)
@@ -315,11 +315,11 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
             pos += mirror * fl->offset;
         }
 
-        GL_BindTextureUnmanaged(renderTextures? tex : 0, gl::ClampToEdge, gl::ClampToEdge);
+        GL_BindTextureUnmanaged(renderTextures? tex : 0, gfx::ClampToEdge, gfx::ClampToEdge);
         DGL_Enable(DGL_TEXTURE_2D);
 
-        float const radX = radius * fl->size;
-        float const radY = radX / 1.2f; // Aspect correction.
+        const float radX = radius * fl->size;
+        const float radY = radX / 1.2f; // Aspect correction.
 
         DGL_Color4f(color.x, color.y, color.z, alpha);
         DGL_Begin(DGL_QUADS);
@@ -360,7 +360,7 @@ bool H_RenderHalo(Vector3d const &origin, float size, DGLuint tex,
  */
 D_CMD(FlareConfig)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     int             i;
     float           val;

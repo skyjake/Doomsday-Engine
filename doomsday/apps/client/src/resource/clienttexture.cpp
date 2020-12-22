@@ -22,15 +22,14 @@
 #include "resource/clientresources.h"
 
 #include <doomsday/console/cmd.h>
-#include <doomsday/res/TextureManifest>
-#include <de/Error>
-#include <de/Log>
-#include <de/memory.h>
-#include <QMap>
+#include <doomsday/res/texturemanifest.h>
+#include <de/error.h>
+#include <de/log.h>
+#include <de/legacy/memory.h>
 
 using namespace de;
 
-DENG2_PIMPL(ClientTexture)
+DE_PIMPL(ClientTexture)
 {
     /// Set of (render-) context variants.
     Variants variants;
@@ -47,7 +46,7 @@ DENG2_PIMPL(ClientTexture)
         while (!variants.isEmpty())
         {
             ClientTexture::Variant *variant = variants.takeFirst();
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
             if (variant->glName())
             {
                 String textualVariantSpec = variant->spec().asText();
@@ -80,12 +79,12 @@ duint ClientTexture::variantCount() const
 }
 
 ClientTexture::Variant *ClientTexture::chooseVariant(ChooseVariantMethod method,
-                                                     TextureVariantSpec const &spec,
+                                                     const TextureVariantSpec &spec,
                                                      bool canCreate)
 {
-    foreach (Variant *variant, d->variants)
+    for (Variant *variant : d->variants)
     {
-        TextureVariantSpec const &cand = variant->spec();
+        const TextureVariantSpec &cand = variant->spec();
         switch (method)
         {
         case MatchSpec:
@@ -107,7 +106,7 @@ ClientTexture::Variant *ClientTexture::chooseVariant(ChooseVariantMethod method,
     }
 
     /*
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     // 07/04/2011 dj: The "fuzzy selection" features are yet to be implemented.
     // As such, the following should NOT return a valid variant iff the rest of
     // this subsystem has been implemented correctly.
@@ -115,7 +114,7 @@ ClientTexture::Variant *ClientTexture::chooseVariant(ChooseVariantMethod method,
     // Presently this is used as a sanity check.
     if (method == MatchSpec)
     {
-        DENG_ASSERT(!chooseVariant(FuzzyMatchSpec, spec));
+        DE_ASSERT(!chooseVariant(FuzzyMatchSpec, spec));
     }
 #endif
      */
@@ -126,15 +125,15 @@ ClientTexture::Variant *ClientTexture::chooseVariant(ChooseVariantMethod method,
     return d->variants.back();
 }
 
-ClientTexture::Variant *ClientTexture::prepareVariant(TextureVariantSpec const &spec)
+ClientTexture::Variant *ClientTexture::prepareVariant(const TextureVariantSpec &spec)
 {
     Variant *variant = chooseVariant(MatchSpec, spec, true /*can create*/);
-    DENG2_ASSERT(variant);
+    DE_ASSERT(variant);
     variant->prepare();
     return variant;
 }
 
-ClientTexture::Variants const &ClientTexture::variants() const
+const ClientTexture::Variants &ClientTexture::variants() const
 {
     return d->variants;
 }
@@ -148,7 +147,7 @@ void ClientTexture::release(/*TextureVariantSpec *spec*/)
 {
     Texture::release();
 
-    foreach (TextureVariant *variant, d->variants)
+    for (TextureVariant *variant : d->variants)
     {
         //if (!spec || spec == &variant->spec())
         {
@@ -163,19 +162,18 @@ void ClientTexture::release(/*TextureVariantSpec *spec*/)
 
 String ClientTexture::description() const
 {
-    String variantDesc;
-    QTextStream os(&variantDesc);
+    std::ostringstream os;
 
     if (variantCount())
     {
         // Print variant specs.
         os << "\n" << _E(R);
 
-        for (int variantIdx = 0; variantIdx < d->variants.size(); ++variantIdx)
+        for (int variantIdx = 0; variantIdx < d->variants.sizei(); ++variantIdx)
         {
-            auto const *variant = d->variants.at(variantIdx);
+            const auto *variant = d->variants.at(variantIdx);
 
-            Vector2f coords;
+            Vec2f coords;
             variant->glCoords(&coords.x, &coords.y);
 
             String textualVariantSpec = variant->spec().asText();
@@ -193,7 +191,7 @@ String ClientTexture::description() const
     }
 
     return res::Texture::description() +
-           String(" x%1").arg(variantCount()) +
-           variantDesc;
+           Stringf(" x%i", variantCount()) +
+           os.str();
 }
 

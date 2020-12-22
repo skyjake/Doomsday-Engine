@@ -16,25 +16,53 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_CLIENTSTYLE_H
-#define DENG_CLIENT_UI_CLIENTSTYLE_H
+#ifndef DE_CLIENT_UI_CLIENTSTYLE_H
+#define DE_CLIENT_UI_CLIENTSTYLE_H
 
-#include <de/Style>
-#include <de/GuiWidget>
-#include <de/ui/Stylist>
+#include <de/image.h>
+#include <de/ui/style.h>
+#include <de/guiwidget.h>
+#include <de/ui/stylist.h>
+#include <doomsday/game.h>
+#include <doomsday/res/lumpcatalog.h>
 
 class ClientStyle : public de::Style
 {
 public:
+    enum LogoFlag
+    {
+        UnmodifiedAppearance = 0,
+        ColorizedByFamily    = 0x1,
+        Downscale50Percent   = 0x2,
+        NullImageIfFails     = 0x4, // by default returns a small fallback image
+        AlwaysTryLoad        = 0x8,
+
+        DefaultLogoFlags     = ColorizedByFamily | Downscale50Percent,
+    };
+    using LogoFlags = de::Flags;
+
+public:
     ClientStyle();
 
     de::GuiWidget *sharedBlurWidget() const override;
-    de::ui::Stylist &emptyMenuLabelStylist() const;
 
     void performUpdate() override;
 
+    /**
+     * Prepares a game logo image to be used in items. The image is based on the
+     * game's title screen image in its WAD file(s).
+     *
+     * @param game     Game.
+     * @param catalog  Catalog of selected lumps.
+     *
+     * @return Lgoo image.
+     */
+    static de::Image makeGameLogo(const Game &            game,
+                                  const res::LumpCatalog &catalog,
+                                  LogoFlags               flags = DefaultLogoFlags);
+
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_CLIENTSTYLE_H
+#endif // DE_CLIENT_UI_CLIENTSTYLE_H

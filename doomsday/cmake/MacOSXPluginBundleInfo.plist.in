@@ -9,15 +9,15 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleVersion</key>
-	<string>${DENG_VERSION_WITH_BUILD}</string>
+	<string>${DE_VERSION_WITH_BUILD}</string>
 	<key>CFBundleLongVersionString</key>
-	<string>${DENG_VERSION_WITH_BUILD}</string>
+	<string>${DE_VERSION_WITH_BUILD}</string>
 	<key>CFBundleShortVersionString</key>
-	<string>${DENG_VERSION}</string>
+	<string>${DE_VERSION}</string>
 	<key>CFBundleName</key>
 	<string>${MACOSX_BUNDLE_BUNDLE_NAME}</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>${DENG_TEAM_COPYRIGHT}</string>
+	<string>${DE_TEAM_COPYRIGHT}</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleExecutable</key>

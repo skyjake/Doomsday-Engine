@@ -22,12 +22,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_GRAPHICS_DRAW_H
-#define LIBDENG_GRAPHICS_DRAW_H
+#ifndef DE_GRAPHICS_DRAW_H
+#define DE_GRAPHICS_DRAW_H
 
-#include <de/Rectangle>
-#include <de/Vector>
-#include <de/rect.h>
+#include <de/rectangle.h>
+#include <de/vector.h>
+#include <de/legacy/rect.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,13 +35,13 @@ extern "C" {
 
 void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
 
-void GL_DrawRect(de::Rectanglei const &rect);
+void GL_DrawRect(const de::Rectanglei &rect);
 void GL_DrawRect2(int x, int y, int w, int h);
 
 /**
  * @param coords  [topLeft, topRight, bottomRight, bottomLeft]
  */
-void GL_DrawRectWithCoords(de::Rectanglei const &rect, de::Vector2i const coords[4]);
+void GL_DrawRectWithCoords(const de::Rectanglei &rect, de::Vec2i const coords[4]);
 
 void GL_DrawRectf(const RectRawf* rect);
 void GL_DrawRectf2(double x, double y, double w, double h);
@@ -66,4 +66,4 @@ void GL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int t
 } // extern "C"
 #endif
 
-#endif // LIBDENG_GRAPHICS_DRAW_H
+#endif // DE_GRAPHICS_DRAW_H

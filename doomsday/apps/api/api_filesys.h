@@ -22,10 +22,10 @@
 #ifndef DOOMSDAY_API_FILE_H
 #define DOOMSDAY_API_FILE_H
 
-#include <de/str.h>
+#include <de/legacy/str.h>
 #include "api_base.h"
 
-DENG_API_TYPEDEF(F)
+DE_API_TYPEDEF(F)
 {
     de_api_t api;
 
@@ -64,16 +64,16 @@ DENG_API_TYPEDEF(F)
      *                  written here (i.e., @c true= the file was @em not loaded
      *                  from some resource of the current game).
      */
-    AutoStr*        (*ReadFileIntoString)(Str const *path, dd_bool *isCustom);
+    AutoStr*        (*ReadFileIntoString)(const Str *path, dd_bool *isCustom);
 
     /**
      * Returns a pointer to the global WAD lump index.
      */
     void const*     (*LumpIndex)();
 }
-DENG_API_T(F);
+DE_API_T(F);
 
-#ifndef DENG_NO_API_MACROS_FILESYS
+#ifndef DE_NO_API_MACROS_FILESYS
 #define F_Access                _api_F.Access
 #define F_FileExists            _api_F.FileExists
 #define F_MakePath              _api_F.MakePath
@@ -84,7 +84,7 @@ DENG_API_T(F);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(F);
+DE_USING_API(F);
 #endif
 
 #endif // DOOMSDAY_API_FILE_H

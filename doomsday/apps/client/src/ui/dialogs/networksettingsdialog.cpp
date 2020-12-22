@@ -22,18 +22,17 @@
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
 
-#include "ConfigProfiles"
+#include "configprofiles.h"
 #include "clientapp.h"
 
-#include <de/SignalAction>
-#include <de/GridPopupWidget>
-#include <de/VariableLineEditWidget>
-#include <de/VariableToggleWidget>
+#include <de/gridpopupwidget.h>
+#include <de/variablelineeditwidget.h>
+#include <de/variabletogglewidget.h>
 
 using namespace de;
 using namespace de::ui;
 
-DENG_GUI_PIMPL(NetworkSettingsDialog)
+DE_GUI_PIMPL(NetworkSettingsDialog)
 {
     VariableToggleWidget *localPackages;
     VariableLineEditWidget *webApiUrl;
@@ -44,12 +43,12 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
     {
         ScrollAreaWidget &area = self().area();
 
-        area.add(localPackages = new VariableToggleWidget(tr("Local Multiplayer Mods"),
+        area.add(localPackages = new VariableToggleWidget("Local Multiplayer Mods",
                                                           App::config("resource.localPackages")));
 
         // Developer options.
         self().add(devPopup = new GridPopupWidget);
-        *devPopup << LabelWidget::newWithText(tr("Web API:"))
+        *devPopup << LabelWidget::newWithText("Web API:")
                   << (webApiUrl = new VariableLineEditWidget(App::config("apiUrl")))
                   << Const(0)
                   << (devInfo = new CVarToggleWidget("net-dev"));
@@ -58,7 +57,7 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
 
     void fetch()
     {
-        foreach (GuiWidget *w, self().area().childWidgets() + devPopup->content().childWidgets())
+        for (GuiWidget *w : self().area().childWidgets() + devPopup->content().childWidgets())
         {
             if (ICVarWidget *cv = maybeAs<ICVarWidget>(w))
             {
@@ -68,13 +67,13 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
     }
 };
 
-NetworkSettingsDialog::NetworkSettingsDialog(String const &name)
+NetworkSettingsDialog::NetworkSettingsDialog(const String &name)
     : DialogWidget(name, WithHeading), d(new Impl(this))
 {
-    heading().setText(tr("Network Settings"));
+    heading().setText("Network Settings");
     heading().setStyleImage("network");
 
-    d->devInfo->setText(tr("Developer Info"));
+    d->devInfo->setText("Developer Info");
 
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
@@ -83,8 +82,8 @@ NetworkSettingsDialog::NetworkSettingsDialog(String const &name)
     layout << *d->localPackages;
 
     auto *caution = LabelWidget::newWithText(
-                tr("Caution: Loading additional add-ons or mods may cause gameplay bugs "
-                   "or client instability in multiplayer games."), &area());
+                "Caution: Loading additional add-ons or mods may cause gameplay bugs "
+                "or client instability in multiplayer games.", &area());
     caution->margins().setTop("");
     caution->setTextLineAlignment(ui::AlignLeft);
     caution->setMaximumTextWidth(area().rule().width() - area().margins().width());
@@ -95,9 +94,9 @@ NetworkSettingsDialog::NetworkSettingsDialog(String const &name)
     area().setContentSize(layout);
 
     buttons()
-            << new DialogButtonItem(Default | Accept, tr("Close"))
-            << new DialogButtonItem(Action, tr("Reset to Defaults"),
-                                    new SignalAction(this, SLOT(resetToDefaults())))
+            << new DialogButtonItem(Default | Accept, "Close")
+            << new DialogButtonItem(Action, "Reset to Defaults",
+                                    [this](){ resetToDefaults(); })
             << new DialogButtonItem(ActionPopup | Id1, style().images().image("gauge"));
 
     popupButtonWidget(Id1)->setPopup(*d->devPopup);

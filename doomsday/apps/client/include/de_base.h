@@ -17,20 +17,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_BASE_H
-#define LIBDENG_BASE_H
+#ifndef DE_BASE_H
+#define DE_BASE_H
 
 // System headers needed everywhere.
 #include <assert.h>
 
 #include "de_platform.h"
 
-#include <de/memory.h>
-#include <de/memoryzone.h>
-#include <de/reader.h>
-#include <de/writer.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/memoryzone.h>
+#include <de/legacy/reader.h>
+#include <de/legacy/writer.h>
 #include <de/c_wrapper.h>
-#include <de/Garbage>
+#include <de/garbage.h>
 
 #include "dd_def.h"
 #include "dd_share.h"
@@ -41,7 +41,6 @@
 #include "ui/nativeui.h"
 #include "ui/zonedebug.h"
 
-#include <doomsday/library.h>
 #include <doomsday/gameapi.h>
 #include <doomsday/plugins.h>
 #include <doomsday/games.h>
@@ -54,4 +53,4 @@
 #  include "server_dummies.h"
 #endif
 
-#endif // LIBDENG_BASE_H
+#endif // DE_BASE_H

@@ -21,20 +21,22 @@
 #include "approotwidget.h"
 #include "globalshortcuts.h"
 
-#include <de/CommandLine>
-#include <de/CompositorWidget>
-#include <de/GLState>
-#include <de/Garbage>
-#include <de/LabelWidget>
-#include <de/LogBuffer>
-#include <de/VRConfig>
-#include <de/VRWindowTransform>
+#include <de/buttonwidget.h>
+#include <de/commandline.h>
+#include <de/compositorwidget.h>
+#include <de/flowlayout.h>
+#include <de/glstate.h>
+#include <de/garbage.h>
+#include <de/labelwidget.h>
+#include <de/logbuffer.h>
+#include <de/vrconfig.h>
+#include <de/vrwindowtransform.h>
 
 using namespace de;
 
-DENG2_PIMPL(MainWindow)
-, DENG2_OBSERVES(GLWindow, Init)
-, DENG2_OBSERVES(GLWindow, Resize)
+DE_PIMPL(MainWindow)
+, DE_OBSERVES(GLWindow, Init)
+, DE_OBSERVES(GLWindow, Resize)
 {
     AppRootWidget root;
     bool needRootSizeUpdate;
@@ -55,9 +57,9 @@ DENG2_PIMPL(MainWindow)
         , root(i)
         , needRootSizeUpdate(false)
         , contentXf(*i)
-        , compositor(0)
-        , test(0)
-        , cursor(0)
+        , compositor(nullptr)
+        , test(nullptr)
+        , cursor(nullptr)
         , cursorX(new ConstantRule(0))
         , cursorY(new ConstantRule(0))
     {
@@ -74,7 +76,7 @@ DENG2_PIMPL(MainWindow)
 
     void setupUI()
     {
-        Style const &style = Style::get();
+        const auto &style = Style::get();
 
         shortcuts = new GlobalShortcuts;
         root.add(shortcuts);
@@ -83,7 +85,7 @@ DENG2_PIMPL(MainWindow)
         root.add(compositor);
 
         test = new LabelWidget;
-        test->setText("Doomsday Application Framework Test");
+        test->setText(_E(b) "Doomsday" _E(.)" Application" _E(i)" Framework " _E(.)"Test");
         test->setImage(TestApp::images().image("logo"));
         test->setTextAlignment(ui::AlignBottom);
         test->rule().setRect(root.viewRule());
@@ -94,7 +96,7 @@ DENG2_PIMPL(MainWindow)
         label->setImage(TestApp::images().image("logo"));
         label->setSizePolicy(ui::Filled, ui::Filled);
         label->setImageFit(ui::OriginalAspectRatio | ui::FitToHeight | ui::FitToSize);
-        label->set(GuiWidget::Background(Vector4f(1.f, 1.f, 1.f, .5f)));
+        label->set(GuiWidget::Background(Vec4f(1.f, 1.f, 1.f, .5f)));
         label->rule()
                 .setInput(Rule::Right,  root.viewRule().midX())
                 .setInput(Rule::Top,    root.viewRule().top())
@@ -106,12 +108,47 @@ DENG2_PIMPL(MainWindow)
         label2->setImage(TestApp::images().image("logo"));
         label2->setSizePolicy(ui::Filled, ui::Filled);
         label2->setImageFit(ui::OriginalAspectRatio | ui::FitToHeight);
-        label2->set(GuiWidget::Background(Vector4f(1.f, .5f, 0.f, .5f)));
+        label2->set(GuiWidget::Background(Vec4f(1.f, .5f, 0.f, .5f)));
         label2->rule()
                 .setInput(Rule::Left,  label->rule().right())
                 .setInput(Rule::Top,   label->rule().top())
                 .setSize(label->rule().width(), label->rule().height());
         compositor->add(label2);
+
+        ButtonWidget *button = new ButtonWidget;
+        button->setSizePolicy(ui::Expand, ui::Expand);
+        button->setText("Press Me");
+        button->rule()
+                .setMidAnchorX(test->rule().midX())
+                .setInput(Rule::Bottom, test->rule().bottom());
+        button->audienceForPress() += []() {
+            TestApp::app().createAnotherWindow();
+        };
+        compositor->add(button);
+
+        // Try some flow.
+#if defined (DE_DEBUG)
+        const int count1 = Counted::totalCount;
+#endif
+        {
+            FlowLayout flow(Const(0), Const(0), root.viewWidth() / 2);
+
+            for (int i = 0; i < 26; ++i)
+            {
+                auto *lw = new LabelWidget(i == 25 ? "test-letter" : "");
+                lw->setText(Stringf("%c", 'A' + i));
+                lw->set(GuiWidget::Background(Vec4f(randf(), randf(), randf(), 0.25f)));
+                lw->setSizePolicy(ui::Expand, ui::Expand);
+                lw->margins().set("gap");
+
+                flow << *lw;
+                compositor->add(lw);
+            }
+        }
+#if defined (DE_DEBUG)
+        const int count2 = Counted::totalCount;
+        debug("de::Counted increase during FlowLayout creation: %i", count2 - count1);
+#endif
 
         // Mouse cursor.
         cursor = new LabelWidget;
@@ -136,13 +173,11 @@ DENG2_PIMPL(MainWindow)
         contentXf.glInit();
 
         self().raise();
-        self().requestActivate();
-        //self.canvas().setFocus();
     }
 
     void updateMouseCursor()
     {
-        Vector2i cp = TestApp::windowSystem().latestMousePosition();
+        const Vec2i cp = self().latestMousePosition();
         if (cp.x < 0 || cp.y < 0) return;
         cursorX->set(cp.x);
         cursorY->set(cp.y);
@@ -150,11 +185,11 @@ DENG2_PIMPL(MainWindow)
 
     void updateRootSize()
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
 
         needRootSizeUpdate = false;
 
-        Vector2ui const size = contentXf.logicalRootSize(self().pixelSize());
+        const Vec2ui size = contentXf.logicalRootSize(self().pixelSize());
 
         // Tell the widgets.
         root.setViewSize(size);
@@ -162,7 +197,7 @@ DENG2_PIMPL(MainWindow)
 
     void updateCompositor()
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
         if (!compositor) return;
 
         VRConfig &vr = TestApp::vr();
@@ -172,8 +207,8 @@ DENG2_PIMPL(MainWindow)
             compositor->setCompositeProjection(
                         vr.projectionMatrix(OVR_FOV, root.viewRule().size(),
                                             OVR_NEAR_CLIP, OVR_FAR_CLIP)
-                        * Matrix4f::scale(Vector3f(.5f, -.5f / vr.oculusRift().aspect(), 1))
-                        * Matrix4f::translate(Vector3f(-.5f, -.5f, -1)));
+                        * Mat4f::scale(Vec3f(.5f, -.5f / vr.oculusRift().aspect(), 1))
+                        * Mat4f::translate(Vec3f(-.5f, -.5f, -1)));
         }
         else
         {
@@ -193,10 +228,15 @@ DENG2_PIMPL(MainWindow)
         GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
 
         updateRootSize();
+
+        if (const auto *letter = root.guiFind("test-letter"))
+        {
+            debug(letter->rule().description().c_str());
+        }
     }
 };
 
-MainWindow::MainWindow(String const &id)
+MainWindow::MainWindow(const String &id)
     : BaseWindow(id), d(new Impl(this))
 {
 #if 0
@@ -218,12 +258,12 @@ MainWindow::MainWindow(String const &id)
     d->setupUI();
 }
 
-AppRootWidget &MainWindow::root()
+GuiRootWidget &MainWindow::root()
 {
     return d->root;
 }
 
-Vector2f MainWindow::windowContentSize() const
+Vec2f MainWindow::windowContentSize() const
 {
     // Current root widget size.
     return d->root.viewRule().size();
@@ -242,7 +282,7 @@ void MainWindow::preDraw()
     // NOTE: This occurs during the Canvas paintGL event.
     BaseWindow::preDraw();
 
-    DENG2_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_IN_MAIN_THREAD();
 
     d->updateMouseCursor();
     if (d->needRootSizeUpdate)
@@ -262,6 +302,12 @@ void MainWindow::postDraw()
     Garbage_Recycle();
 }
 
+void MainWindow::windowAboutToClose()
+{
+    BaseWindow::windowAboutToClose();
+    close();
+}
+
 void MainWindow::addOnTop(de::GuiWidget *widget)
 {
     d->compositor->add(widget);
@@ -270,8 +316,8 @@ void MainWindow::addOnTop(de::GuiWidget *widget)
     d->compositor->moveChildToLast(*d->cursor);
 }
 
-bool MainWindow::handleFallbackEvent(Event const &)
-{
-    // Handle event at a global level, if appropriate.
-    return false;
-}
+//bool MainWindow::handleFallbackEvent(const Event &)
+//{
+//    // Handle event at a global level, if appropriate.
+//    return false;
+//}

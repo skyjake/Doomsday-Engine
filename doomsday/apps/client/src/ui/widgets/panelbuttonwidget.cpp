@@ -20,19 +20,19 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(PanelButtonWidget)
+DE_GUI_PIMPL(PanelButtonWidget)
 {
     PanelWidget *drawer;
 
     Impl(Public *i) : Base(i)
     {
         self().add(drawer = new PanelWidget);
-        drawer->set(Background(Vector4f(0, 0, 0, .15f)));
+        drawer->set(Background(Vec4f(0, 0, 0, .15f)));
         drawer->setEatMouseEvents(false);
     }
 };
 
-PanelButtonWidget::PanelButtonWidget(Flags flags, String const &name)
+PanelButtonWidget::PanelButtonWidget(Flags flags, const String &name)
     : HomeItemWidget(flags, name)
     , d(new Impl(this))
 {
@@ -64,10 +64,10 @@ void PanelButtonWidget::setSelected(bool selected)
 
     if (selected)
     {
-        d->drawer->set(Background(Vector4f(0, 0, 0, .4f)));
+        d->drawer->set(Background(Vec4f(0, 0, 0, .4f)));
     }
     else
     {
-        d->drawer->set(Background(Vector4f(0, 0, 0, .15f)));
+        d->drawer->set(Background(Vec4f(0, 0, 0, .15f)));
     }
 }

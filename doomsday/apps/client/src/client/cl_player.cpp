@@ -19,21 +19,20 @@
 
 #include "de_base.h"
 #include "client/cl_player.h"
-
 #include "api_client.h"
-
 #include "network/net_main.h"
-#include "network/protocol.h"
-
+#include "network/net_demo.h"
 #include "world/map.h"
 #include "world/p_players.h"
-#include "BspLeaf"
-#include "Sector"
+#include <doomsday/network/protocol.h>
+#include <doomsday/world/bspleaf.h>
+#include <doomsday/world/sector.h>
 
-#include <de/LogBuffer>
-#include <de/Vector>
+#include <de/logbuffer.h>
+#include <de/vector.h>
 
 using namespace de;
+using world::World;
 
 #define TOP_PSPY            (32)
 #define BOTTOM_PSPY         (128)
@@ -63,7 +62,7 @@ clplayerstate_t *ClPlayer_State(int plrNum)
 }
 
 #undef ClPlayer_ClMobj
-DENG_EXTERN_C struct mobj_s *ClPlayer_ClMobj(int plrNum)
+DE_EXTERN_C struct mobj_s *ClPlayer_ClMobj(int plrNum)
 {
     if (plrNum < 0 || plrNum >= DDMAXPLAYERS) return 0;
     return ClMobj_Find(ClPlayer_State(plrNum)->clMobjId);
@@ -71,7 +70,7 @@ DENG_EXTERN_C struct mobj_s *ClPlayer_ClMobj(int plrNum)
 
 void ClPlayer_UpdateOrigin(int plrNum)
 {
-    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    DE_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
 
     player_t *plr = DD_Player(plrNum);
     clplayerstate_t *s = ClPlayer_State(plrNum);
@@ -115,7 +114,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
     if (clmo->thinker.id != state->pendingFixTargetClMobjId)
         return;
 
-    DENG_ASSERT(clmo->thinker.id == state->clMobjId);
+    DE_ASSERT(clmo->thinker.id == state->clMobjId);
 
     if (state->pendingFixes & DDPF_FIXANGLES)
     {
@@ -137,7 +136,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         sendAck = true;
 
         LOGDEV_NET_MSG("Applying pos %s to mobj %p and clmo %i")
-                << Vector3d(state->pendingOriginFix).asText()
+                << Vec3d(state->pendingOriginFix).asText()
                 << mo << clmo->thinker.id;
 
         Mobj_SetOrigin(mo, state->pendingOriginFix[VX], state->pendingOriginFix[VY], state->pendingOriginFix[VZ]);
@@ -157,7 +156,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         sendAck = true;
 
         LOGDEV_NET_MSG("Applying mom %s to mobj %p and clmo %i")
-                << Vector3d(state->pendingMomFix).asText()
+                << Vec3d(state->pendingMomFix).asText()
                 << mo << clmo->thinker.id;
 
         mo->mom[MX] = clmo->mom[VX] = state->pendingMomFix[VX];
@@ -215,7 +214,7 @@ void ClPlayer_HandleFix()
         state->pendingFixes |= DDPF_FIXORIGIN;
 
         LOGDEV_NET_VERBOSE("Pending fix pos %i: %s")
-                << ddpl->fixAcked.origin << Vector3d(state->pendingOriginFix).asText();
+                << ddpl->fixAcked.origin << Vec3d(state->pendingOriginFix).asText();
     }
 
     if (fixes & 4) // fix momentum?
@@ -227,7 +226,7 @@ void ClPlayer_HandleFix()
         state->pendingFixes |= DDPF_FIXMOM;
 
         LOGDEV_NET_VERBOSE("Pending fix momentum %i: %s")
-                << ddpl->fixAcked.mom << Vector3d(state->pendingMomFix).asText();
+                << ddpl->fixAcked.mom << Vec3d(state->pendingMomFix).asText();
     }
 
     ClPlayer_ApplyPendingFixes(plrNum);
@@ -245,10 +244,10 @@ void ClPlayer_MoveLocal(coord_t dx, coord_t dy, coord_t z, bool onground)
     cpMom[MY][SECONDS_TO_TICKS(gameTime) % LOCALCAM_WRITE_TICS] = dy;
 
     // Calculate an average.
-    Vector2d mom;
+    Vec2d mom;
     for (int i = 0; i < LOCALCAM_WRITE_TICS; ++i)
     {
-        mom += Vector2d(cpMom[MX][i], cpMom[MY][i]);
+        mom += Vec2d(cpMom[MX][i], cpMom[MY][i]);
     }
     mom /= LOCALCAM_WRITE_TICS;
 
@@ -284,7 +283,7 @@ void ClPlayer_ReadDelta()
     LOG_AS("ClPlayer_ReadDelta2");
 
     /// @todo Do not assume the CURRENT map.
-    world::Map &map = App_World().map();
+    Map &map = World::get().map().as<Map>();
 
     dint df = 0;
     ushort num;
@@ -381,7 +380,7 @@ void ClPlayer_ReadDelta()
     if (df & PDF_ANGLE)
     {
         //s->angle = Reader_ReadByte(msgReader) << 24;
-        DENG_UNUSED(Reader_ReadByte(msgReader));
+        DE_UNUSED(Reader_ReadByte(msgReader));
     }
 
     if (df & PDF_TURNDELTA)
@@ -419,7 +418,7 @@ void ClPlayer_ReadDelta()
             ddpl->flags &= ~DDPF_REMOTE_VIEW_FILTER;
         }
         LOG_NET_XVERBOSE("View filter color set remotely to %s",
-                         Vector4f(ddpl->filterColor).asText());
+                         Vec4f(ddpl->filterColor).asText());
     }
 
     if (df & PDF_PSPRITES)

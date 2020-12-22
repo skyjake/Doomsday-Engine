@@ -1,6 +1,6 @@
 /** @file main.cpp Application startup and shutdown.
  *
- * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2019 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,14 +17,27 @@
  */
 
 #include "guishellapp.h"
-#include <de/libcore.h>
+#include "linkwindow.h"
 
-#ifdef Q_OS_MACX
-#  include <QFont>
-#endif
+using namespace de;
 
 int main(int argc, char *argv[])
 {
-    GuiShellApp a(argc, argv);
-    return a.exec();
+    int result = -1;
+    init_Foundation();
+    try
+    {
+        GuiShellApp app(makeList(argc, argv));
+        app.initialize();
+        auto *win = app.newOrReusedConnectionWindow();
+        GLWindow::setMain(win); // TODO: remove me (window doesn't appear??)
+        win->show();
+        result = app.exec();
+    }
+    catch (const Error &er)
+    {
+        LOG_ERROR("Failure during init: %s") << er.asText();
+    }
+    deinit_Foundation();
+    return result;
 }

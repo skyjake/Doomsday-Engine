@@ -29,7 +29,7 @@ class Id1Translator : public PackageFormatter
 {
 public:
     /// The game identity key of the source data is ambigous. @ingroup errors
-    DENG2_SUB_ERROR(ReadError, AmbigousGameIdError);
+    DE_SUB_ERROR(ReadError, AmbigousGameIdError);
 
     /// Identifiers for supported save formats.
     enum FormatId {
@@ -38,7 +38,7 @@ public:
     };
 
 public:
-    Id1Translator(FormatId id, QStringList knownExtensions, QStringList baseGameIdKeys);
+    Id1Translator(FormatId id, de::StringList knownExtensions, de::StringList baseGameIdKeys);
     virtual ~Id1Translator();
 
     de::String formatName() const;
@@ -48,7 +48,7 @@ public:
     void convert(de::Path path);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // SAVEGAMETOOL_ID1TRANSLATOR_H

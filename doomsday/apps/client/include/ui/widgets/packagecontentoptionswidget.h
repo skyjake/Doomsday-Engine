@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_PACKAGECONTENTOPTIONSWIDGET_H
-#define DENG_CLIENT_UI_PACKAGECONTENTOPTIONSWIDGET_H
+#ifndef DE_CLIENT_UI_PACKAGECONTENTOPTIONSWIDGET_H
+#define DE_CLIENT_UI_PACKAGECONTENTOPTIONSWIDGET_H
 
-#include <de/GuiWidget>
+#include <de/guiwidget.h>
 
 /**
  * Widget for package content options.
@@ -27,16 +27,16 @@
 class PackageContentOptionsWidget : public de::GuiWidget
 {
 public:
-    PackageContentOptionsWidget(de::String const &packageId,
-                                de::Rule   const &maxHeight,
-                                de::String const &name = de::String());
+    PackageContentOptionsWidget(const de::String &packageId,
+                                const de::Rule &maxHeight,
+                                const de::String &name = de::String());
 
-    static de::PopupWidget *makePopup(de::String const &packageId,
-                                      de::Rule const &width,
-                                      de::Rule const &maxHeight);
+    static de::PopupWidget *makePopup(const de::String &packageId,
+                                      const de::Rule &width,
+                                      const de::Rule &maxHeight);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_PACKAGECONTENTOPTIONSWIDGET_H
+#endif // DE_CLIENT_UI_PACKAGECONTENTOPTIONSWIDGET_H

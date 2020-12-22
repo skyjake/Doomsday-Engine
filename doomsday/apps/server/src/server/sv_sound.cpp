@@ -19,16 +19,16 @@
  */
 
 #include "de_base.h"
-#include "server/sv_sound.h"
-
-#include <de/LogBuffer>
 #include "network/net_main.h"
-#include "world/p_players.h"
+#include "server/sv_sound.h"
 #include "server/sv_pool.h"
+#include "world/p_players.h"
+
+#include <de/logbuffer.h>
 
 using namespace de;
 
-static inline dd_bool isRealMobj(mobj_t const *base)
+static inline dd_bool isRealMobj(const mobj_t *base)
 {
     return base && base->thinker.id != 0;
 }
@@ -36,8 +36,8 @@ static inline dd_bool isRealMobj(mobj_t const *base)
 /**
  * Find the map object to whom @a base belongs.
  */
-static void identifySoundEmitter(mobj_t const **base, Sector **sector, Polyobj **poly,
-                                 Plane **plane, Surface **surface)
+static void identifySoundEmitter(const mobj_t **base, world::Sector **sector, Polyobj **poly,
+                                 world::Plane **plane, world::Surface **surface)
 {
     *sector  = nullptr;
     *poly    = nullptr;
@@ -47,10 +47,10 @@ static void identifySoundEmitter(mobj_t const **base, Sector **sector, Polyobj *
     if (!*base || isRealMobj(*base)) return;
 
     /// @todo fixme: Do not assume the current map.
-    App_World().map().identifySoundEmitter(*reinterpret_cast<SoundEmitter const *>(*base),
+    App_World().map().identifySoundEmitter(*reinterpret_cast<const SoundEmitter *>(*base),
                                            sector, poly, plane, surface);
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     if (!*sector && !*poly && !*plane && !*surface)
     {
         throw Error("Sv_IdentifySoundBase", "Bad sound base");
@@ -60,22 +60,22 @@ static void identifySoundEmitter(mobj_t const **base, Sector **sector, Polyobj *
     *base = nullptr;
 }
 
-void Sv_Sound(dint soundId, mobj_t const *origin, dint toPlr)
+void Sv_Sound(dint soundId, const mobj_t *origin, dint toPlr)
 {
     Sv_SoundAtVolume(soundId, origin, 1, toPlr);
 }
 
-void Sv_SoundAtVolume(dint soundIDAndFlags, mobj_t const *origin, dfloat volume, dint toPlr)
+void Sv_SoundAtVolume(dint soundIDAndFlags, const mobj_t *origin, dfloat volume, dint toPlr)
 {
-    if (::isClient) return;
+    if (netState.isClient) return;
 
     dint soundID = (soundIDAndFlags & ~DDSF_FLAG_MASK);
     if (!soundID) return;
 
-    Sector *sector;
+    world::Sector *sector;
     Polyobj *poly;
-    Plane *plane;
-    Surface *surface;
+    world::Plane *plane;
+    world::Surface *surface;
     identifySoundEmitter(&origin, &sector, &poly, &plane, &surface);
 
     dint targetPlayers = 0;
@@ -104,14 +104,14 @@ void Sv_SoundAtVolume(dint soundIDAndFlags, mobj_t const *origin, dfloat volume,
                      (soundIDAndFlags & DDSF_REPEAT) != 0, targetPlayers);
 }
 
-void Sv_StopSound(dint soundId, mobj_t const *origin)
+void Sv_StopSound(dint soundId, const mobj_t *origin)
 {
-    if (::isClient) return;
+    if (netState.isClient) return;
 
-    Sector *sector;
+    world::Sector *sector;
+    world::Plane *plane;
+    world::Surface *surface;
     Polyobj *poly;
-    Plane *plane;
-    Surface *surface;
     identifySoundEmitter(&origin, &sector, &poly, &plane, &surface);
 
     LOGDEV_NET_XVERBOSE("Sv_StopSound: id: #%i origin: %i(%p) sec: %p poly: %p plane: %p surface: %p",

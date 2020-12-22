@@ -22,8 +22,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_SHARED_H
-#define LIBDENG_SHARED_H
+#ifndef DE_SHARED_H
+#define DE_SHARED_H
 
 #ifndef C_DECL
 #  if defined(WIN32)
@@ -39,17 +39,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <de/aabox.h>
+#include <de/legacy/aabox.h>
 #include <doomsday/players.h>
 #include <doomsday/player.h>
 #include <doomsday/console/var.h>
 #include <doomsday/console/cmd.h>
+#include <doomsday/api_map.h>
 #include "dengproject.h"
 #include "dd_version.h"
 #include "dd_types.h"
-#include "def_share.h"
 #include "api_thinker.h"
-#include "api_map.h"
 #include "api_gl.h"
 #include "api_busy.h"
 #include "api_event.h"
@@ -805,32 +804,6 @@ enum {
 };
 ///@}
 
-/*
- * Information about a multiplayer server. @ingroup network
- *
- * This structure is not sent over the network. The information is only sent either
- * as plain text or as a serialized Record.
- */
-/*typedef struct serverinfo_s {
-    int             version;
-    char            name[64];
-    char            description[80];
-    int             numPlayers, maxPlayers;
-    char            canJoin;
-    char            address[64];
-    int             port;
-    unsigned short  ping;       ///< Milliseconds.
-    char            plugin[32]; ///< Game plugin and version.
-    char            gameIdentityKey[17];
-    char            gameConfig[40];
-    char            map[20];
-    char            clientNames[128];
-    unsigned int    loadedFilesCRC;
-    char            iwad[32];   ///< Obsolete.
-    char            pwads[128];
-    int             data[3];
-} serverinfo_t;*/
-
 /**
  * @defgroup netPackets Network Packets
  * @ingroup network
@@ -857,4 +830,4 @@ enum {
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_SHARED_H */
+#endif /* DE_SHARED_H */

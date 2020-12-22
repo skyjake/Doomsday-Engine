@@ -6,10 +6,10 @@ dist: xenial
 cache: ccache
 
 before_install:
-    - sudo apt-get -y install cmake libsdl2-dev libsdl2-mixer-dev libxrandr-dev libxxf86vm-dev libfluidsynth-dev ncurses-dev qt5-default libqt5opengl5-dev libqt5x11extras5-dev
+    - sudo apt-get -y install cmake libsdl2-dev libsdl2-mixer-dev libxrandr-dev libxxf86vm-dev libfluidsynth-dev ncurses-dev
 
 before_script:
     - mkdir build-travis
 
 script:
-    - cd build-travis && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDENG_ENABLE_TESTS=ON ../doomsday && make -j4
+    - cd build-travis && cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDE_ENABLE_TESTS=ON ../doomsday && make -j4

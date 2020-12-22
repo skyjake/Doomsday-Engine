@@ -19,8 +19,8 @@
  */
 
 #ifdef __CLIENT__
-#ifndef DENG_CLIENT_RENDER_THINGS_H
-#define DENG_CLIENT_RENDER_THINGS_H
+#ifndef DE_CLIENT_RENDER_THINGS_H
+#define DE_CLIENT_RENDER_THINGS_H
 
 #include "world/p_object.h"
 
@@ -29,5 +29,5 @@
  */
 void R_ProjectSprite(mobj_t &mob);
 
-#endif  // DENG_CLIENT_RENDER_THINGS_H
+#endif  // DE_CLIENT_RENDER_THINGS_H
 #endif  // __CLIENT__

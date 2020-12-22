@@ -24,18 +24,17 @@
 #include "ui/clientstyle.h"
 #include "network/serverlink.h"
 
-#include <doomsday/Games>
-#include <de/CallbackAction>
-#include <de/PopupButtonWidget>
-#include <de/PopupMenuWidget>
-#include <de/SignalAction>
-#include <de/ui/SubwidgetItem>
+#include <doomsday/games.h>
+#include <de/callbackaction.h>
+#include <de/popupbuttonwidget.h>
+#include <de/popupmenuwidget.h>
+#include <de/ui/subwidgetitem.h>
 
 using namespace de;
 
-DENG_GUI_PIMPL(MultiplayerColumnWidget)
-, DENG2_OBSERVES(ui::Data, Addition)
-, DENG2_OBSERVES(ui::Data, Removal)
+DE_GUI_PIMPL(MultiplayerColumnWidget)
+, DE_OBSERVES(ui::Data, Addition)
+, DE_OBSERVES(ui::Data, Removal)
 {
     MultiplayerServerMenuWidget *menu;
     LabelWidget *noServers;
@@ -46,14 +45,13 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
         ScrollAreaWidget &area = self().scrollArea();
         area.add(menu = new MultiplayerServerMenuWidget);
 
-        self().header().menuButton().setPopup([] (PopupButtonWidget const &) -> PopupWidget * {
+        self().header().menuButton().setPopup([] (const PopupButtonWidget &) -> PopupWidget * {
             auto *menu = new PopupMenuWidget;
             menu->items()
-                    << new ui::ActionItem(tr("Connect to Server..."),
-                                          new SignalAction(&ClientWindow::main().taskBar(),
-                                                           SLOT(connectToServerManually())))
-                    << new ui::ActionItem(tr("Refresh List"), new CallbackAction([] () {
-                            ServerLink::get().discoverUsingMaster(); }));
+                    << new ui::ActionItem("Connect to Server...",
+                                          []() { ClientWindow::main().taskBar().connectToServerManually(); })
+                    << new ui::ActionItem("Refresh List", []() {
+                            ServerLink::get().discoverUsingMaster(); });
             return menu;
         }, ui::Down);
 
@@ -63,17 +61,16 @@ DENG_GUI_PIMPL(MultiplayerColumnWidget)
                 .setInput(Rule::Top,   self().header().rule().bottom());
 
         // Empty content label.
-        noServers = new LabelWidget;
-        noServers->setText(tr("No Servers Found"));
-        style().as<ClientStyle>().emptyMenuLabelStylist().applyStyle(*noServers);
+        noServers = &self().addNew<LabelWidget>();
+        style().emptyContentLabelStylist().applyStyle(*noServers);
+        noServers->setText("No Servers Found");
         noServers->rule().setRect(self().rule());
-        self().add(noServers);
 
         menu->items().audienceForAddition() += this;
         menu->items().audienceForRemoval() += this;
     }
 
-    void dataItemAdded(ui::DataPos, ui::Item const &) override
+    void dataItemAdded(ui::DataPos, const ui::Item &) override
     {
         noServers->hide();
     }
@@ -96,19 +93,24 @@ MultiplayerColumnWidget::MultiplayerColumnWidget()
                                 rule("gap") +
                                 d->menu->rule().height());
 
-    header().title().setText(_E(s)_E(C) "dengine.net\n" _E(.)_E(.)_E(w) + tr("Multiplayer Games"));
-    header().info().setText(tr("Multiplayer servers are discovered via the dengine.net "
-                               "master server and by broadcasting on the local network."));
+    header().title().setText(_E(s)_E(C) "dengine.net\n" _E(.)_E(.)_E(w) "Multiplayer Games");
+    header().info().setText("Multiplayer servers are discovered via the dengine.net "
+                            "master server and by broadcasting on the local network.");
 }
 
 String MultiplayerColumnWidget::tabHeading() const
 {
-    return tr("Multiplayer");
+    return DE_STR("Multiplayer");
+}
+
+int MultiplayerColumnWidget::tabShortcut() const
+{
+    return 'm';
 }
 
 String MultiplayerColumnWidget::configVariableName() const
 {
-    return "home.columns.multiplayer";
+    return DE_STR("home.columns.multiplayer");
 }
 
 void MultiplayerColumnWidget::setHighlighted(bool highlighted)

@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_API_FONT_RENDERER_H
-#define LIBDENG_API_FONT_RENDERER_H
+#ifndef DE_API_FONT_RENDERER_H
+#define DE_API_FONT_RENDERER_H
 
 #include "api_base.h"
 
@@ -63,11 +63,11 @@ extern "C" {
 #define DTF_ONLY_SHADOW                 (DTF_NO_TYPEIN|DTF_NO_GLITTER)
 /*@}*/
 
-DENG_API_TYPEDEF(FR)
+DE_API_TYPEDEF(FR)
 {
     de_api_t api;
 
-    fontid_t (*ResolveUri)(struct uri_s const *uri);
+    fontid_t (*ResolveUri)(const struct uri_s *uri);
 
     /// @return  Unique identifier associated with the current font.
     fontid_t (*Font)(void);
@@ -246,9 +246,9 @@ DENG_API_TYPEDEF(FR)
     void (*ResetTypeinTimer)(void);
 
 }
-DENG_API_T(FR);
+DE_API_T(FR);
 
-#ifndef DENG_NO_API_MACROS_FONT_RENDER
+#ifndef DE_NO_API_MACROS_FONT_RENDER
 #define Fonts_ResolveUri        _api_FR.ResolveUri
 #define FR_Font                 _api_FR.Font
 #define FR_SetFont              _api_FR.SetFont
@@ -302,11 +302,11 @@ DENG_API_T(FR);
 #endif
 
 #if defined __DOOMSDAY__ && defined __CLIENT__
-DENG_USING_API(FR);
+DE_USING_API(FR);
 #endif
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_API_FONT_RENDERER_H */
+#endif /* DE_API_FONT_RENDERER_H */

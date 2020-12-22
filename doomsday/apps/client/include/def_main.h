@@ -27,99 +27,12 @@
 #endif
 
 #include <vector>
-#include <de/String>
+#include <de/string.h>
 #include <doomsday/defs/ded.h>  // ded_t
 #include <doomsday/defs/dedtypes.h>
 #include <doomsday/uri.h>
 
-template <typename PODType>
-struct Array : public std::vector<PODType>
-{
-    Array() : _elements(0) {}
-    bool isEmpty() const {
-        return !size();
-    }
-    int size() const {
-        return (int) std::vector<PODType>::size();
-    }
-    void clear() {
-        _elements = nullptr;
-        std::vector<PODType>::clear();
-    }
-    PODType *append(int count = 1) {
-        DENG2_ASSERT(count >= 0);
-        for(int i = 0; i < count; ++i) {
-            std::vector<PODType>::push_back(PODType());
-        }
-        if(!isEmpty()) {
-            _elements = &(*this)[0];
-            return &_elements[size() - count];
-        }
-        return nullptr;
-    }
-    /// Determine the index of element @a elem. Performance is O(1).
-    int indexOf(PODType const *elem) const {
-        if (!elem) return 0;
-        int index = elem - elements();
-        if (index < 0 || index >= size()) return 0; // Not in this array.
-        return index;
-    }
-    PODType *elements() {
-        return _elements;
-    }
-    PODType const *elements() const {
-        return _elements;
-    }
-    PODType **elementsPtr() {
-        return &_elements;
-    }
-private:
-    PODType *_elements;
-};
-
 struct xgclass_s;   ///< @note The actual classes are on game side.
-
-struct sfxinfo_t
-{
-    void *data;           ///< Pointer to sound data.
-    lumpnum_t lumpNum;
-    char lumpName[9];     ///< Actual lump name of the sound (full name).
-    char id[32];          ///< Identifier name (from the def).
-    char name[32];        ///< Long name.
-    sfxinfo_t *link;      ///< Link to another sound.
-    int linkPitch;
-    int linkVolume;
-    int priority;
-    int channels;         ///< Max. channels for the sound to occupy.
-    int usefulness;       ///< Used to determine when to cache out.
-    int flags;
-    int group;
-    ddstring_t external;  ///< Path to external file.
-};
-
-struct stateinfo_t
-{
-    mobjinfo_t *owner;
-    ded_light_t *light;
-    ded_ptcgen_t *ptcGens;
-};
-
-/**
- * Definitions that have been preprocessed for runtime use. Some of these are
- * visible to the games via the InternalData API.
- */
-struct RuntimeDefs
-{
-    Array<mobjinfo_t>  mobjInfo;   ///< Map object info database.
-    Array<state_t>     states;     ///< State list.
-    Array<stateinfo_t> stateInfo;
-    Array<sfxinfo_t>   sounds;     ///< Sound effect list.
-    Array<ddtext_t>    texts;      ///< Text string list.
-
-    void clear();
-};
-
-extern RuntimeDefs runtimeDefs;
 
 /**
  * Register the console commands and/or variables of this module.
@@ -148,7 +61,7 @@ void Def_PostInit();
  */
 void Def_Read();
 
-de::String Def_GetStateName(state_t const *state);
+de::String Def_GetStateName(const state_t *state);
 
 /**
  * Can we reach 'snew' if we start searching from 'sold'?
@@ -156,9 +69,9 @@ de::String Def_GetStateName(state_t const *state);
  */
 bool Def_SameStateSequence(state_t *snew, state_t *sold);
 
-ded_compositefont_t *Def_GetCompositeFont(char const *uri);
-ded_ptcgen_t *Def_GetGenerator(struct uri_s const *uri);
-ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri);
+ded_compositefont_t *Def_GetCompositeFont(const char *uri);
+ded_ptcgen_t *Def_GetGenerator(const struct uri_s *uri);
+ded_ptcgen_t *Def_GetGenerator(const res::Uri &uri);
 ded_ptcgen_t *Def_GetDamageGenerator(int mobjType);
 ded_light_t *Def_GetLightDef(int spr, int frame);
 
@@ -183,12 +96,12 @@ bool Def_SoundIsRepeating(int soundId);
 /**
  * @return  @c true= the definition was found.
  */
-int Def_Get(int type, char const *id, void *out);
+int Def_Get(int type, const char *id, void *out);
 
 /**
  * This is supposed to be the main interface for outside parties to
  * modify definitions (unless they want to do it manually with dedfile.h).
  */
-int Def_Set(int type, int index, int value, void const *ptr);
+int Def_Set(int type, int index, int value, const void *ptr);
 
 #endif  // DEFINITIONS_MAIN_H

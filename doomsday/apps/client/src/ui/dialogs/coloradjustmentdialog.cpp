@@ -18,14 +18,13 @@
 
 #include "ui/dialogs/coloradjustmentdialog.h"
 #include "ui/widgets/cvarsliderwidget.h"
-#include <de/GridLayout>
-#include <de/SignalAction>
+#include <de/gridlayout.h>
 #include "api_console.h"
 
 using namespace de;
 using namespace de::ui;
 
-DENG_GUI_PIMPL(ColorAdjustmentDialog)
+DE_GUI_PIMPL(ColorAdjustmentDialog)
 {
     CVarSliderWidget *gamma;
     CVarSliderWidget *contrast;
@@ -35,15 +34,15 @@ DENG_GUI_PIMPL(ColorAdjustmentDialog)
     {
         ScrollAreaWidget &area = self().area();
 
-        LabelWidget *gammaLabel      = LabelWidget::newWithText(tr("Gamma:"), &area);
-        LabelWidget *contrastLabel   = LabelWidget::newWithText(tr("Contrast:"), &area);
-        LabelWidget *brightnessLabel = LabelWidget::newWithText(tr("Brightness:"), &area);
+        LabelWidget *gammaLabel      = LabelWidget::newWithText("Gamma:", &area);
+        LabelWidget *contrastLabel   = LabelWidget::newWithText("Contrast:", &area);
+        LabelWidget *brightnessLabel = LabelWidget::newWithText("Brightness:", &area);
 
         area.add(gamma = new CVarSliderWidget("vid-gamma"));
         area.add(contrast = new CVarSliderWidget("vid-contrast"));
         area.add(brightness = new CVarSliderWidget("vid-bright"));
 
-        Rule const &sliderWidth = rule("coloradjustment.slider");
+        const Rule &sliderWidth = rule("coloradjustment.slider");
         gamma->rule().setInput(Rule::Width, sliderWidth);
         contrast->rule().setInput(Rule::Width, sliderWidth);
         brightness->rule().setInput(Rule::Width, sliderWidth);
@@ -72,14 +71,14 @@ DENG_GUI_PIMPL(ColorAdjustmentDialog)
     }
 };
 
-ColorAdjustmentDialog::ColorAdjustmentDialog(String const &name)
+ColorAdjustmentDialog::ColorAdjustmentDialog(const String &name)
     : DialogWidget(name, WithHeading), d(new Impl(this))
 {
-    heading().setText(tr("Color Adjustments"));
+    heading().setText("Color Adjustments");
     buttons()
-            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
-            << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
-                                    new SignalAction(this, SLOT(resetToDefaults())));
+            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, "Close")
+            << new DialogButtonItem(DialogWidget::Action, "Reset to Defaults",
+                                    [this](){ resetToDefaults(); });
 }
 
 void ColorAdjustmentDialog::prepare()

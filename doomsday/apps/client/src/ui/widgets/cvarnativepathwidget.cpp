@@ -21,16 +21,14 @@
 #include "clientapp.h"
 
 #include <doomsday/console/var.h>
-#include <de/PopupMenuWidget>
-#include <de/SignalAction>
-#include <QFileDialog>
+#include <de/popupmenuwidget.h>
 
 using namespace de;
 
-DENG2_PIMPL(CVarNativePathWidget)
-, DENG2_OBSERVES(NativePathWidget, UserChange)
+DE_PIMPL(CVarNativePathWidget)
+, DE_OBSERVES(NativePathWidget, UserChange)
 {
-    char const *cvar;
+    const char *cvar;
 
     Impl(Public *i) : Base(i)
     {}
@@ -38,7 +36,7 @@ DENG2_PIMPL(CVarNativePathWidget)
     cvar_t *var() const
     {
         cvar_t *cv = Con_FindVariable(cvar);
-        DENG2_ASSERT(cv != 0);
+        DE_ASSERT(cv != 0);
         return cv;
     }
 
@@ -48,16 +46,16 @@ DENG2_PIMPL(CVarNativePathWidget)
     }
 };
 
-CVarNativePathWidget::CVarNativePathWidget(char const *cvarPath)
+CVarNativePathWidget::CVarNativePathWidget(const char *cvarPath)
     : d(new Impl(this))
 {
     d->cvar = cvarPath;
     updateFromCVar();
-    setPrompt(QString("Select File for \"%1\"").arg(d->cvar));
-    audienceForUserChange() += d;
+    setPrompt(Stringf("Select File for \"%s\"", d->cvar));
+    audienceForUserChange() += [this]() { setCVarValueFromWidget(); };
 }
 
-char const *CVarNativePathWidget::cvarPath() const
+const char *CVarNativePathWidget::cvarPath() const
 {
     return d->cvar;
 }
@@ -69,5 +67,5 @@ void CVarNativePathWidget::updateFromCVar()
 
 void CVarNativePathWidget::setCVarValueFromWidget()
 {
-    CVar_SetString(d->var(), path().toString().toUtf8());
+    CVar_SetString(d->var(), path());
 }

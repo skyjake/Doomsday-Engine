@@ -26,15 +26,15 @@
 #include "render/r_main.h"
 #include "sys_system.h"
 
-#include <de/concurrency.h>
-#include <de/Drawable>
-#include <de/GLTextureFramebuffer>
-#include <de/GuiRootWidget>
-#include <de/ProgressWidget>
+#include <de/legacy/concurrency.h>
+#include <de/drawable.h>
+#include <de/gltextureframebuffer.h>
+#include <de/guirootwidget.h>
+#include <de/progresswidget.h>
 
 using namespace de;
 
-DENG_GUI_PIMPL(BusyWidget)
+DE_GUI_PIMPL(BusyWidget)
 {
     typedef DefaultVertexBuf VertexBuf;
 
@@ -63,8 +63,8 @@ DENG_GUI_PIMPL(BusyWidget)
         VertexBuf *buf = new VertexBuf;
 
         VertexBuf::Builder verts;
-        verts.makeQuad(Rectanglef(0, 0, 1, 1), Vector4f(1, 1, 1, 1), Rectanglef(0, 0, 1, 1));
-        buf->setVertices(gl::TriangleStrip, verts, gl::Static);
+        verts.makeQuad(Rectanglef(0, 0, 1, 1), Vec4f(1), Rectanglef(0, 0, 1, 1));
+        buf->setVertices(gfx::TriangleStrip, verts, gfx::Static);
 
         drawable.addBuffer(buf);
         shaders().build(drawable.program(), "generic.textured.color")
@@ -83,7 +83,7 @@ DENG_GUI_PIMPL(BusyWidget)
     }
 };
 
-BusyWidget::BusyWidget(String const &name)
+BusyWidget::BusyWidget(const String &name)
     : GuiWidget(name), d(new Impl(this))
 {
     requestGeometry(false);
@@ -148,9 +148,9 @@ void BusyWidget::drawContent()
 
         // Draw the texture.
         Rectanglei pos = rule().recti();
-        d->uMvpMatrix = Matrix4f::scale(Vector3f(1, -1, 1)) *
+        d->uMvpMatrix = Mat4f::scale(Vec3f(1, -1, 1)) *
                 root().projMatrix2D() *
-                Matrix4f::scaleThenTranslate(pos.size(), pos.topLeft);
+                Mat4f::scaleThenTranslate(pos.size(), pos.topLeft);
         d->drawable.draw();
 
         GLState::pop();
@@ -158,7 +158,7 @@ void BusyWidget::drawContent()
     }
 }
 
-bool BusyWidget::handleEvent(Event const &)
+bool BusyWidget::handleEvent(const Event &)
 {
     // Eat events and ignore them.
     return true;
@@ -178,9 +178,9 @@ void BusyWidget::renderTransitionFrame()
     // We'll have an up-to-date frame after this.
     d->frameDrawnAt = Time();
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-    DENG2_ASSERT(d->gameWidget);
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT(d->gameWidget);
 
     Rectanglei grabRect = Rectanglei::fromSize(rule().recti().size());
 
@@ -218,11 +218,11 @@ void BusyWidget::clearTransitionFrameToBlack()
 {
     if (d->haveTransitionFrame())
     {
-        d->transitionFrame.clear(GLFramebuffer::Color);
+        d->transitionFrame.clear(GLFramebuffer::Color0);
     }
 }
 
-GLTexture const *BusyWidget::transitionFrame() const
+const GLTexture *BusyWidget::transitionFrame() const
 {
     if (d->haveTransitionFrame())
     {

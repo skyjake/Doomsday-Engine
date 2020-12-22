@@ -20,20 +20,20 @@
 #ifndef CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 #define CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 
-#include <de/Record>
+#include <de/record.h>
 #include "dd_types.h"
 #include "ddevent.h"
-#include "Binding"
+#include "ui/binding.h"
 
 class BindContext;
 
-bool B_ParseAxisPosition(Binding::ControlTest &test, float &pos, char const *desc);
+bool B_ParseAxisPosition(Binding::ControlTest &test, float &pos, const char *desc);
 
-bool B_ParseButtonState(Binding::ControlTest &test, char const *desc);
+bool B_ParseButtonState(Binding::ControlTest &test, const char *desc);
 
-bool B_ParseHatAngle(float &angle, char const *desc);
+bool B_ParseHatAngle(float &angle, const char *desc);
 
-bool B_ParseBindingCondition(de::Record &cond, char const *desc);
+bool B_ParseBindingCondition(de::Record &cond, const char *desc);
 
 // ---
 
@@ -43,9 +43,9 @@ de::String B_ButtonStateToString(Binding::ControlTest test);
 
 de::String B_HatAngleToString(float angle);
 
-de::String B_ConditionToString(de::Record const &cond);
+de::String B_ConditionToString(const de::Record &cond);
 
-de::String B_EventToString(ddevent_t const &ev);
+de::String B_EventToString(const ddevent_t &ev);
 
 // ---
 
@@ -56,26 +56,26 @@ bool B_CheckAxisPosition(Binding::ControlTest test, float testPos, float pos);
  * @param localNum  Local player number.
  * @param context   Relevant binding context, if any (may be @c nullptr).
  */
-bool B_CheckCondition(Binding::CompiledConditionRecord const *cond, int localNum, BindContext const *context);
+bool B_CheckCondition(const Binding::CompiledConditionRecord *cond, int localNum, const BindContext *context);
 
 // ---------------------------------------------------------------------------------
 
 extern byte zeroControlUponConflict;
 
-bool B_ParseKeyId(int &id, char const *desc);
+bool B_ParseKeyId(int &id, const char *desc);
 
-bool B_ParseMouseTypeAndId(ddeventtype_t &type, int &id, char const *desc);
+bool B_ParseMouseTypeAndId(ddeventtype_t &type, int &id, const char *desc);
 
-bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char const *desc);
+bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, const char *desc);
 
 de::String B_ControlDescToString(int deviceId, ddeventtype_t type, int id);
 
-void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int impulseId,
+void B_EvaluateImpulseBindings(const BindContext *context, int localNum, int impulseId,
     float *pos, float *relativeOffset, bool allowTriggered);
 
-char const *B_ShortNameForKey(int ddKey, bool forceLowercase = true);
+const char *B_ShortNameForKey(int ddKey, bool forceLowercase = true);
 
-int B_KeyForShortName(char const *key);
+int B_KeyForShortName(const char *key);
 
 #endif // CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 

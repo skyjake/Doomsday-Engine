@@ -16,33 +16,30 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_NATIVEPATHWIDGET_H
-#define DENG_CLIENT_UI_NATIVEPATHWIDGET_H
+#ifndef DE_CLIENT_UI_NATIVEPATHWIDGET_H
+#define DE_CLIENT_UI_NATIVEPATHWIDGET_H
 
-#include <de/AuxButtonWidget>
+#include <de/auxbuttonwidget.h>
+#include <de/filedialog.h>
 
 /**
  * Console variable that contains a native path.
  */
 class NativePathWidget : public de::AuxButtonWidget
 {
-    Q_OBJECT
-
 public:
-    DENG2_DEFINE_AUDIENCE2(UserChange, void pathChangedByUser(NativePathWidget &))
+    DE_AUDIENCE(UserChange, void pathChangedByUser(NativePathWidget &))
 
 public:
     NativePathWidget();
 
     /**
-     * Sets all the file types that can be selected using the widget. Each entry in
-     * the list should be formatted as "Description (*.ext *.ext2)".
-     *
-     * The default is "All files (*)".
+     * Sets all the file types that can be selected using the widget.
+     * The default is to show all files.
      *
      * @param filters  Allowed file types.
      */
-    void setFilters(const de::StringList &filters);
+    void setFilters(const de::FileDialog::FileTypes &filters);
 
     /**
      * Sets the text that is shown as the current selection when nothing has been
@@ -58,13 +55,14 @@ public:
 
     de::NativePath path() const;
 
-public slots:
     void chooseUsingNativeFileDialog();
+
     void clearPath();
+
     void showActionsPopup();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_NATIVEPATHWIDGET_H
+#endif // DE_CLIENT_UI_NATIVEPATHWIDGET_H

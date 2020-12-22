@@ -24,20 +24,20 @@
 
 #include "api_base.h"
 
-DENG_API_TYPEDEF(Busy)
+DE_API_TYPEDEF(Busy)
 {
     de_api_t api;
 
     void (*FreezeGameForBusyMode)(void);
 }
-DENG_API_T(Busy);
+DE_API_T(Busy);
 
-#ifndef DENG_NO_API_MACROS_BUSY
+#ifndef DE_NO_API_MACROS_BUSY
 #define BusyMode_FreezeGameForBusyMode _api_Busy.FreezeGameForBusyMode
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(Busy);
+DE_USING_API(Busy);
 #endif
 
 #endif /* DOOMSDAY_API_BUSY_H */

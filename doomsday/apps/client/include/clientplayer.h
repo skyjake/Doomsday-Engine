@@ -75,18 +75,18 @@ public:
 public:
     ClientPlayer();
 
-    void setWorld(World *world) override;
+    void setWorld(world::World *world) override;
 
     ViewCompositor &viewCompositor();
 
     viewdata_t &viewport();
-    viewdata_t const &viewport() const;
+    const viewdata_t &viewport() const;
 
     clplayerstate_t &clPlayerState();
-    clplayerstate_t const &clPlayerState() const;
+    const clplayerstate_t &clPlayerState() const;
 
     ConsoleEffectStack &fxStack();
-    ConsoleEffectStack const &fxStack() const;
+    const ConsoleEffectStack &fxStack() const;
 
     render::PlayerWeaponAnimator &playerWeaponAnimator();
 
@@ -100,12 +100,12 @@ public:
      *
      * @param id  Weapon id, as defined by the game.
      */
-    void setWeaponAssetId(de::String const &id);
+    void setWeaponAssetId(const de::String &id);
 
-    void weaponStateChanged(struct state_s const *state);
+    void weaponStateChanged(const struct state_s *state);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CLIENT_CLIENTPLAYER_H

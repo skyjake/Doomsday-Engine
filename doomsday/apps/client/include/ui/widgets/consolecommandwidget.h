@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef DENG_CLIENT_CONSOLECOMMANDWIDGET_H
-#define DENG_CLIENT_CONSOLECOMMANDWIDGET_H
+#ifndef DE_CLIENT_CONSOLECOMMANDWIDGET_H
+#define DE_CLIENT_CONSOLECOMMANDWIDGET_H
 
-#include <de/CommandWidget>
+#include <de/commandwidget.h>
 
 /**
  * Text editor with a history buffer. Entered commands are executed as console
@@ -33,20 +33,20 @@
 class ConsoleCommandWidget : public de::CommandWidget
 {
 public:
-    ConsoleCommandWidget(de::String const &name = de::String());
+    ConsoleCommandWidget(const de::String &name = de::String());
 
     // Events.
     void focusGained();
     void focusLost();
-    bool handleEvent(de::Event const &event);
+    bool handleEvent(const de::Event &event);
 
 protected:
-    bool isAcceptedAsCommand(de::String const &text);
-    void executeCommand(de::String const &text);
-    void autoCompletionBegan(de::String const &prefix);
+    bool isAcceptedAsCommand(const de::String &text);
+    void executeCommand(const de::String &text);
+    void autoCompletionBegan(const de::String &prefix);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_CONSOLECOMMANDWIDGET_H
+#endif // DE_CLIENT_CONSOLECOMMANDWIDGET_H

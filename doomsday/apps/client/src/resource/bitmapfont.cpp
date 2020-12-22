@@ -22,15 +22,16 @@
 #include "dd_main.h" // isDedicated
 #include "gl/gl_main.h" // GL_NewTextureWithParams
 #include "sys_system.h" // novideo
-#include "FontManifest"
+#include "resource/fontmanifest.h"
 #include <doomsday/uri.h>
-#include <de/LogBuffer>
-#include <de/mathutil.h> // M_CeilPow2()
-#include <de/memory.h>
+#include <de/logbuffer.h>
+#include <de/legacy/mathutil.h> // M_CeilPow2()
+#include <de/legacy/memory.h>
 #include <doomsday/busymode.h>
 #include <doomsday/filesys/fs_main.h>
 
 using namespace de;
+using namespace res;
 
 static byte inByte(FileHandle *file)
 {
@@ -52,12 +53,12 @@ struct Glyph
     Rectanglei texCoords;
 };
 
-DENG2_PIMPL(BitmapFont)
+DE_PIMPL(BitmapFont)
 {
     String filePath;        ///< The "archived" version of this font (if any).
     GLuint texGLName;       ///< GL-texture name.
-    Vector2ui texMargin;    ///< Margin in pixels.
-    Vector2i texDimensions; ///< Texture dimensions in pixels.
+    Vec2ui texMargin;    ///< Margin in pixels.
+    Vec2i texDimensions; ///< Texture dimensions in pixels.
     bool needGLInit;
 
     /// Font metrics.
@@ -86,7 +87,7 @@ DENG2_PIMPL(BitmapFont)
      * Lookup the glyph for the specified character @a ch. If no glyph is defined
      * for this character then the special "missing glyph" is returned instead.
      */
-    Glyph &glyph(uchar ch)
+    Glyph &glyph(dbyte ch)
     {
         //if(ch >= MAX_CHARS) return missingGlyph;
         return glyphs[ch];
@@ -98,9 +99,9 @@ DENG2_PIMPL(BitmapFont)
      *
      * @todo Could be smarter. Presently this treats @em all glyphs equally.
      */
-    Vector2ui findMissingGlyphSize()
+    Vec2ui findMissingGlyphSize()
     {
-        Vector2ui accumSize;
+        Vec2ui accumSize;
         int glyphCount = 0;
         for(int i = 0; i < MAX_CHARS; ++i)
         {
@@ -115,11 +116,11 @@ DENG2_PIMPL(BitmapFont)
 
     uint8_t *readFormat0(FileHandle *file)
     {
-        DENG2_ASSERT(file != 0);
+        DE_ASSERT(file != 0);
 
         self()._flags |= AbstractFont::Colorize;
         self()._flags &= ~AbstractFont::Shadowed;
-        texMargin = Vector2ui(0, 0);
+        texMargin = Vec2ui(0, 0);
 
         // Load in the data.
         texDimensions.x = inShort(file);
@@ -134,8 +135,8 @@ DENG2_PIMPL(BitmapFont)
             ushort w = inByte(file);
             ushort h = inByte(file);
 
-            ch->posCoords = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(w, h));
-            ch->texCoords = Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h));
+            ch->posCoords = Rectanglei::fromSize(Vec2i(0, 0), Vec2ui(w, h));
+            ch->texCoords = Rectanglei::fromSize(Vec2i(x, y), Vec2ui(w, h));
         }
 
         missingGlyph.posCoords.setSize(findMissingGlyphSize());
@@ -143,12 +144,14 @@ DENG2_PIMPL(BitmapFont)
         int bitmapFormat = inByte(file);
         if(bitmapFormat > 0)
         {
-            de::Uri uri = self().manifest().composeUri();
-            throw Error("BitmapFont::readFormat0", QString("Font \"%1\" uses unknown format '%2'").arg(uri).arg(bitmapFormat));
+            res::Uri uri = self().manifest().composeUri();
+            throw Error(
+                "BitmapFont::readFormat0",
+                stringf("Font \"%s\" uses unknown format '%i'", uri.pathCStr(), bitmapFormat));
         }
 
         // Read the glyph atlas texture.
-        int const numPels = texDimensions.x * texDimensions.y;
+        const int numPels = texDimensions.x * texDimensions.y;
         uint32_t *image = (uint32_t *) M_Calloc(numPels * 4);
         int c, i;
         for(c = i = 0; i < (numPels + 7) / 8; ++i)
@@ -170,15 +173,17 @@ DENG2_PIMPL(BitmapFont)
 
     uint8_t *readFormat2(FileHandle *file)
     {
-        DENG2_ASSERT(file != 0);
+        DE_ASSERT(file != 0);
 
         self()._flags |= AbstractFont::Colorize | AbstractFont::Shadowed;
 
         int bitmapFormat = inByte(file);
         if(bitmapFormat != 1 && bitmapFormat != 0) // Luminance + Alpha.
         {
-            de::Uri uri = self().manifest().composeUri();
-            throw Error("BitmapFont::readFormat2", QString("Font \"%1\" uses unknown format '%2'").arg(uri).arg(bitmapFormat));
+            res::Uri uri = self().manifest().composeUri();
+            throw Error(
+                "BitmapFont::readFormat2",
+                stringf("Font \"%s\" uses unknown format '%i'", uri.pathCStr(), bitmapFormat));
         }
 
         // Load in the data.
@@ -195,7 +200,7 @@ DENG2_PIMPL(BitmapFont)
         for(int i = 0; i < glyphCount; ++i)
         {
             ushort code = inShort(file);
-            DENG2_ASSERT(code < MAX_CHARS);
+            DE_ASSERT(code < MAX_CHARS);
             Glyph *ch = &glyphs[code];
 
             ushort x = inShort(file);
@@ -203,14 +208,14 @@ DENG2_PIMPL(BitmapFont)
             ushort w = inShort(file);
             ushort h = inShort(file);
 
-            ch->posCoords = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(w, h) - texMargin * 2);
-            ch->texCoords = Rectanglei::fromSize(Vector2i(x, y), Vector2ui(w, h));
+            ch->posCoords = Rectanglei::fromSize(Vec2i(0, 0), Vec2ui(w, h) - texMargin * 2);
+            ch->texCoords = Rectanglei::fromSize(Vec2i(x, y), Vec2ui(w, h));
         }
 
         missingGlyph.posCoords.setSize(findMissingGlyphSize());
 
         // Read the glyph atlas texture.
-        int const numPels = texDimensions.x * texDimensions.y;
+        const int numPels = texDimensions.x * texDimensions.y;
         uint32_t *image = (uint32_t *) M_Calloc(numPels * 4);
         if(bitmapFormat == 0)
         {
@@ -274,13 +279,13 @@ int BitmapFont::lineSpacing() const
     return d->leading;
 }
 
-Rectanglei const &BitmapFont::glyphPosCoords(uchar ch) const
+const Rectanglei &BitmapFont::glyphPosCoords(dbyte ch) const
 {
     glInit();
     return d->glyph(ch).posCoords;
 }
 
-Rectanglei const &BitmapFont::glyphTexCoords(uchar ch) const
+const Rectanglei &BitmapFont::glyphTexCoords(dbyte ch) const
 {
     glInit();
     return d->glyph(ch).texCoords;
@@ -312,7 +317,7 @@ void BitmapFont::glInit() const
         case 2: pixels = d->readFormat2(hndl); break;
 
         default:
-            DENG2_ASSERT(!"BitmapFont: Format not implemented");
+            DE_ASSERT_FAIL("BitmapFont: Format not implemented");
         }
         if(!pixels)
         {
@@ -353,7 +358,7 @@ void BitmapFont::glDeinit() const
 
     if(d->texGLName)
     {
-        Deferred_glDeleteTextures(1, (GLuint const *) &d->texGLName);
+        Deferred_glDeleteTextures(1, (const GLuint *) &d->texGLName);
     }
     d->texGLName = 0;
 }
@@ -372,12 +377,12 @@ uint BitmapFont::textureGLName() const
     return d->texGLName;
 }
 
-Vector2i const &BitmapFont::textureDimensions() const
+const Vec2i &BitmapFont::textureDimensions() const
 {
     return d->texDimensions;
 }
 
-Vector2ui const &BitmapFont::textureMargin() const
+const Vec2ui &BitmapFont::textureMargin() const
 {
     return d->texMargin;
 }

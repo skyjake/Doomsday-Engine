@@ -2,10 +2,13 @@
 #define __DDTEXCOMPILER_H__
 
 #ifdef UNIX
+#  include <string.h>
 #  include <strings.h>
 #  define strnicmp strncasecmp
 #  define stricmp strcasecmp
-void strupr(char* str);
+#  if !defined(__CYGWIN__)
+void strupr(char *);
+#  endif
 #endif
 
 #ifdef WIN32

@@ -23,14 +23,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_SYSTEM_INPUT_H
-#define LIBDENG_SYSTEM_INPUT_H
+#ifndef DE_SYSTEM_INPUT_H
+#define DE_SYSTEM_INPUT_H
 
 #ifndef __CLIENT__
 #  error "Input requires __CLIENT__"
 #endif
 
-#include <de/types.h>
+#include <de/legacy/types.h>
 #include "joystick.h"
 
 #ifdef __cplusplus
@@ -116,16 +116,16 @@ void Keyboard_Submit(int type, int ddKey, int native, const char* text);
 
 size_t Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize);
 
-dd_bool Mouse_IsPresent(void);
+//dd_bool Mouse_IsPresent(void);
 
-void Mouse_Trap(dd_bool enabled);
+//void Mouse_Trap(dd_bool enabled);
 
-/**
+/*
  * Polls the current state of the mouse. This is called at regular intervals.
  */
-void Mouse_Poll(void);
+//void Mouse_Poll(void);
 
-void Mouse_GetState(mousestate_t *state);
+//void Mouse_GetState(mousestate_t *state);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -19,28 +19,29 @@
 #ifndef APPFW_TEST_APP_H
 #define APPFW_TEST_APP_H
 
-#include <de/BaseGuiApp>
-#include <de/ImageBank>
-#include "appwindowsystem.h"
+#include <de/baseguiapp.h>
+#include <de/imagebank.h>
 
 #define OVR_FOV         122.f
 #define OVR_NEAR_CLIP   .1f
 #define OVR_FAR_CLIP    1300.f
 
+class MainWindow;
+
 class TestApp : public de::BaseGuiApp
 {
 public:
-    TestApp(int &argc, char **argv);
+    TestApp(const de::StringList &args);
 
     void initialize();
+    void createAnotherWindow();
 
-    static TestApp &app();
-    static AppWindowSystem &windowSystem();
-    static MainWindow &main();
-    static de::ImageBank &images();
+    static TestApp &        app();
+    static MainWindow &     mainWindow();
+    static de::ImageBank &  images();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // APPFW_TEST_APP_H

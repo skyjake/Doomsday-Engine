@@ -20,8 +20,8 @@
 #ifndef SERVER_SHELLUSER_H
 #define SERVER_SHELLUSER_H
 
-#include <de/Socket>
-#include <de/shell/Link>
+#include <de/socket.h>
+#include <doomsday/network/link.h>
 #include "users.h"
 
 /**
@@ -35,10 +35,8 @@
  *
  * @ingroup server
  */
-class ShellUser : public de::shell::Link, public User
+class ShellUser : public network::Link, public User
 {
-    Q_OBJECT
-
 public:
     /**
      * Constructs a new shell user from a previously opened socket.
@@ -59,11 +57,11 @@ public:
 
     de::Address address() const override;
 
-protected slots:
+protected:
     void handleIncomingPackets();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // SERVER_SHELLUSER_H

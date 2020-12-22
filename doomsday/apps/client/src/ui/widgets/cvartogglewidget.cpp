@@ -22,19 +22,19 @@
 using namespace de;
 using namespace de::ui;
 
-DENG2_PIMPL_NOREF(CVarToggleWidget)
+DE_PIMPL_NOREF(CVarToggleWidget)
 {
-    char const *cvar;
+    const char *cvar;
 
     cvar_t *var() const
     {
         cvar_t *cv = Con_FindVariable(cvar);
-        DENG2_ASSERT(cv != 0);
+        DE_ASSERT(cv != 0);
         return cv;
     }
 };
 
-CVarToggleWidget::CVarToggleWidget(char const *cvarPath, String const &labelText)
+CVarToggleWidget::CVarToggleWidget(const char *cvarPath, const String &labelText)
     : d(new Impl)
 {
     setText(labelText);
@@ -42,11 +42,10 @@ CVarToggleWidget::CVarToggleWidget(char const *cvarPath, String const &labelText
     d->cvar = cvarPath;
     updateFromCVar();
 
-    connect(this, SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)),
-            this, SLOT(setCVarValueFromWidget()));
+    audienceForUserToggle() += [this]() { CVar_SetInteger(d->var(), isActive() ? 1 : 0); };
 }
 
-char const *CVarToggleWidget::cvarPath() const
+const char *CVarToggleWidget::cvarPath() const
 {
     return d->cvar;
 }
@@ -54,9 +53,4 @@ char const *CVarToggleWidget::cvarPath() const
 void CVarToggleWidget::updateFromCVar()
 {
     setActive(CVar_Integer(d->var()) != 0);
-}
-
-void CVarToggleWidget::setCVarValueFromWidget()
-{
-    CVar_SetInteger(d->var(), isActive()? 1 : 0);
 }

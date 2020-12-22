@@ -19,58 +19,61 @@
 
 #include "serversystem.h"
 
-#include <de/c_wrapper.h>
-#include <de/timer.h>
-#include <de/Address>
-#include <de/Beacon>
-#include <de/ByteRefArray>
-#include <de/Garbage>
-#include <de/ListenSocket>
-#include <de/TextApp>
-
 #include "api_console.h"
-
 #include "serverapp.h"
 #include "shellusers.h"
 #include "remoteuser.h"
 #include "remotefeeduser.h"
-
 #include "server/sv_def.h"
 #include "server/sv_frame.h"
-
 #include "network/net_main.h"
 #include "network/net_buf.h"
 #include "network/net_event.h"
-#include "network/monitor.h"
-#include "network/masterserver.h"
-
+#include <doomsday/network/masterserver.h>
 #include "dd_main.h"
 #include "dd_loop.h"
 #include "sys_system.h"
-#include "world/map.h"
 #include "world/p_players.h"
+
+#include <doomsday/world/map.h>
+#include <de/c_wrapper.h>
+#include <de/legacy/timer.h>
+#include <de/address.h>
+#include <de/beacon.h>
+#include <de/byterefarray.h>
+#include <de/garbage.h>
+#include <de/listensocket.h>
+#include <de/textapp.h>
 
 using namespace de;
 
-char *nptIPAddress = (char *) ""; ///< Public domain for clients to connect to (cvar).
-int   nptIPPort    = 0; ///< Server TCP port (cvar).
+char *  serverName   = (char *) "Doomsday";
+char *  serverInfo   = (char *) "Multiplayer Host";
+dd_bool serverPublic = false;       // cvar
+char *  nptIPAddress = (char *) ""; // Public domain for clients to connect to (cvar).
+int     nptIPPort    = 0;           // Server TCP port (cvar).
 
-static de::duint16 Server_ListenPort()
+static byte netShowLatencies = false;
+static byte netAllowJoin     = true;
+
+static constexpr TimeSpan BEACON_UPDATE_INTERVAL = 2.0_s;
+
+static duint16 Server_ListenPort()
 {
     return (!nptIPPort ? DEFAULT_TCP_PORT : nptIPPort);
 }
 
-DENG2_PIMPL(ServerSystem)
+DE_PIMPL(ServerSystem)
 {
     bool inited = false;
 
     /// Beacon for informing clients that a server is present.
-    Beacon beacon = { DEFAULT_UDP_PORT };
+    Beacon beacon{{DEFAULT_UDP_PORT, DEFAULT_UDP_PORT + 16}};
     Time lastBeaconUpdateAt;
 
     ListenSocket *serverSock = nullptr;
 
-    QHash<Id, RemoteUser *> users;
+    Hash<Id::Type, RemoteUser *> users;
     ShellUsers shellUsers;
     Users remoteFeedUsers;
 
@@ -91,14 +94,14 @@ DENG2_PIMPL(ServerSystem)
         deinit();
 
         // Open a listening TCP socket. It will accept client connections.
-        DENG2_ASSERT(!serverSock);
+        DE_ASSERT(!serverSock);
         if (!(serverSock = new ListenSocket(port)))
             return false;
 
-        QObject::connect(serverSock, SIGNAL(incomingConnection()), thisPublic, SLOT(handleIncomingConnection()));
+        serverSock->audienceForIncoming() += [this](){ self().handleIncomingConnection(); };
 
         // Update the beacon with the new port.
-        beacon.start(port);
+        beacon.start();
 
         App_World().audienceForMapChange() += shellUsers;
 
@@ -108,12 +111,10 @@ DENG2_PIMPL(ServerSystem)
 
     void clearUsers()
     {
-        // Clear the client nodes.
-        for (RemoteUser *u : users.values())
+        while (!users.empty())
         {
-            delete u;
+            delete users.begin()->second;
         }
-        DENG2_ASSERT(users.isEmpty());
     }
 
     void deinit()
@@ -135,20 +136,20 @@ DENG2_PIMPL(ServerSystem)
         clearUsers();
     }
 
-    RemoteUser &findUser(Id const &id) const
+    RemoteUser &findUser(const Id &id) const
     {
-        DENG2_ASSERT(users.contains(id));
+        DE_ASSERT(users.contains(id));
         return *users[id];
     }
 
-    void updateBeacon(Clock const &clock)
+    void updateBeacon(const Clock &clock)
     {
-        if (lastBeaconUpdateAt.since() > 0.5)
+        if (lastBeaconUpdateAt.since() > BEACON_UPDATE_INTERVAL)
         {
             lastBeaconUpdateAt = clock.time();
 
             // Update the status message in the server's presence beacon.
-            if (serverSock && App_World().hasMap())
+            if (serverSock && world::World::get().hasMap())
             {
                 Block msg;
                 de::Writer(msg).withHeader() << ServerApp::currentServerInfo().strippedForBroadcast();
@@ -161,15 +162,15 @@ DENG2_PIMPL(ServerSystem)
      * The client is removed from the game immediately. This is used when
      * the server needs to terminate a client's connection abnormally.
      */
-    void terminateNode(Id const &id)
+    void terminateNode(const Id &id)
     {
         if (id)
         {
-            DENG2_ASSERT(users.contains(id));
+            DE_ASSERT(users.contains(id));
 
             delete users[id];
 
-            DENG2_ASSERT(!users.contains(id));
+            DE_ASSERT(!users.contains(id));
         }
     }
 
@@ -190,7 +191,7 @@ DENG2_PIMPL(ServerSystem)
             player_t *plr = DD_Player(i);
             if (plr->remoteUserId)
             {
-                DENG2_ASSERT(users.contains(plr->remoteUserId));
+                DE_ASSERT(users.contains(plr->remoteUserId));
 
                 RemoteUser *user = users[plr->remoteUserId];
                 if (first)
@@ -217,14 +218,14 @@ DENG2_PIMPL(ServerSystem)
         {
             LOG_MSG("%i shell user%s")
                     << shellUsers.count()
-                    << DENG2_PLURAL_S(shellUsers.count());
+                    << DE_PLURAL_S(shellUsers.count());
         }
 
         if (remoteFeedUsers.count())
         {
             LOG_MSG("%i remote file system user%s")
                     << remoteFeedUsers.count()
-                    << DENG2_PLURAL_S(remoteFeedUsers.count());
+                    << DE_PLURAL_S(remoteFeedUsers.count());
         }
 
         N_PrintBufferInfo();
@@ -253,12 +254,12 @@ bool ServerSystem::isListening() const
     return d->isStarted();
 }
 
-void ServerSystem::terminateNode(Id const &id)
+void ServerSystem::terminateNode(const Id &id)
 {
     d->terminateNode(id);
 }
 
-RemoteUser &ServerSystem::user(Id const &id) const
+RemoteUser &ServerSystem::user(const Id &id) const
 {
     if (!d->users.contains(id))
     {
@@ -276,36 +277,34 @@ bool ServerSystem::isUserAllowedToJoin(RemoteUser &/*user*/) const
 
 void ServerSystem::convertToShellUser(RemoteUser *user)
 {
-    DENG2_ASSERT(user);
+    DE_ASSERT(user);
     LOG_AS("convertToShellUser");
 
     Socket *socket = user->takeSocket();
 
     LOGDEV_NET_VERBOSE("Remote user %s converted to shell user") << user->id();
-    user->deleteLater();
+    trash(user);
 
     d->shellUsers.add(new ShellUser(socket));
 }
 
 void ServerSystem::convertToRemoteFeedUser(RemoteUser *user)
 {
-    DENG2_ASSERT(user);
+    DE_ASSERT(user);
 
     Socket *socket = user->takeSocket();
     LOGDEV_NET_VERBOSE("Remote user %s converted to remote file system user") << user->id();
-    user->deleteLater();
+    trash(user);
 
     d->remoteFeedUsers.add(new RemoteFeedUser(socket));
 }
 
 int ServerSystem::userCount() const
 {
-    return d->remoteFeedUsers.count() +
-           d->shellUsers.count() +
-           d->users.size();
+    return d->remoteFeedUsers.count() + d->shellUsers.count() + d->users.size();
 }
 
-void ServerSystem::timeChanged(Clock const &clock)
+void ServerSystem::timeChanged(const Clock &clock)
 {
     if (Sys_IsShuttingDown())
         return; // Shouldn't run this while shutting down.
@@ -313,7 +312,7 @@ void ServerSystem::timeChanged(Clock const &clock)
     Garbage_Recycle();
 
     // Adjust loop rate depending on whether users are connected.
-    DENG2_TEXT_APP->loop().setRate(userCount()? 35 : 3);
+    DE_TEXT_APP->loop().setRate(userCount()? 35 : 3);
 
     Loop_RunTics();
 
@@ -325,6 +324,7 @@ void ServerSystem::timeChanged(Clock const &clock)
     /// @todo There's no need to queue packets via net_buf, just handle
     /// them right away.
     Sv_GetPackets();
+    Sv_CheckEvents();
 
     /// @todo Kick unjoined nodes who are silent for too long.
 }
@@ -332,13 +332,13 @@ void ServerSystem::timeChanged(Clock const &clock)
 void ServerSystem::handleIncomingConnection()
 {
     LOG_AS("ServerSystem");
-    forever
+    for (;;)
     {
         Socket *sock = d->serverSock->accept();
         if (!sock) break;
 
-        RemoteUser *user = new RemoteUser(sock);
-        connect(user, SIGNAL(userDestroyed()), this, SLOT(userDestroyed()));
+        auto *user = new RemoteUser(sock);
+        user->audienceForDestroy() += [this, user](){ userDestroyed(user); };
         d->users.insert(user->id(), user);
 
         // Immediately handle pending messages, if there are any.
@@ -346,10 +346,8 @@ void ServerSystem::handleIncomingConnection()
     }
 }
 
-void ServerSystem::userDestroyed()
+void ServerSystem::userDestroyed(RemoteUser *u)
 {
-    RemoteUser *u = static_cast<RemoteUser *>(sender());
-
     LOG_AS("ServerSystem");
     LOGDEV_NET_VERBOSE("Removing user %s") << u->id();
 
@@ -373,14 +371,74 @@ ServerSystem &App_ServerSystem()
 
 //---------------------------------------------------------------------------
 
+D_CMD(Kick)
+{
+    DE_UNUSED(src, argc);
+
+    LOG_AS("kick (Cmd)")
+
+    if(!netState.netGame)
+    {
+        LOG_SCR_ERROR("This is not a network game");
+        return false;
+    }
+
+    if(!netState.isServer)
+    {
+        LOG_SCR_ERROR("Only allowed on the server");
+        return false;
+    }
+
+    int num = String(argv[1]).toInt();
+    if(num < 1 || num >= DDMAXPLAYERS)
+    {
+        LOG_NET_ERROR("Invalid client number");
+        return false;
+    }
+
+#if 0
+    if(::netRemoteUser == num)
+    {
+        LOG_NET_ERROR("Can't kick the client who's logged in");
+        return false;
+    }
+#endif
+
+    Sv_Kick(num);
+    return true;
+}
+
+static void serverPublicChanged()
+{
+    if (netState.isServer)
+    {
+        N_MasterAnnounceServer(serverPublic);
+    }
+}
+
+static void serverAllowJoinChanged()
+{
+    if (netState.isServer && serverPublic)
+    {
+        N_MasterAnnounceServer(true);
+    }
+}
+
 void Server_Register()
 {
-    C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
-    C_VAR_INT    ("net-ip-port",    &nptIPPort, CVF_NO_MAX, 0, 0);
+    C_VAR_CHARPTR   ("server-name",             &::serverName, 0, 0, 0);
+    C_VAR_CHARPTR   ("server-info",             &::serverInfo, 0, 0, 0);
+    C_VAR_INT2      ("server-public",           &::serverPublic, 0, 0, 1, serverPublicChanged);
+    C_VAR_BYTE2     ("server-allowjoin",        &netAllowJoin,  0, 0, 1, serverAllowJoinChanged);
+    C_VAR_CHARPTR   ("server-password",         &::netPassword, 0, 0, 0);
+    C_VAR_BYTE      ("server-latencies",        &::netShowLatencies, 0, 0, 1);
+    C_VAR_INT       ("server-frame-interval",   &::frameInterval, CVF_NO_MAX, 0, 0);
+    C_VAR_INT       ("server-player-limit",     &::svMaxPlayers, 0, 0, DDMAXPLAYERS);
 
-#ifdef _DEBUG
-    C_CMD("netfreq", NULL, NetFreqs);
-#endif
+    C_VAR_CHARPTR   ("net-ip-address", &nptIPAddress, 0, 0, 0);
+    C_VAR_INT       ("net-ip-port",    &nptIPPort, CVF_NO_MAX, 0, 0);
+
+    C_CMD_FLAGS     ("kick", "i", Kick, CMDF_NO_NULLGAME);
 }
 
 dd_bool N_ServerOpen()
@@ -441,4 +499,27 @@ dd_bool N_ServerClose()
 void N_PrintNetworkStatus()
 {
     App_ServerSystem().printStatus();
+}
+
+void N_MasterAnnounceServer(bool isOpen)
+{
+    LOG_AS("N_MasterAnnounceServer");
+
+    if (isOpen && !strlen(netPassword))
+    {
+        LOG_NET_WARNING("Cannot announce server as public: no shell password set! "
+                        "You must set one with the 'server-password' cvar.");
+        return;
+    }
+
+    LOG_NET_MSG("Announcing server (open:%b)") << isOpen;
+
+    // Let's figure out what we want to tell about ourselves.
+    ServerInfo info = ServerApp::currentServerInfo();
+    if (!isOpen)
+    {
+        info.setFlags(info.flags() & ~ServerInfo::AllowJoin);
+    }
+
+    N_MasterExec(MasterWorker::ANNOUNCE, info.asRecord());
 }

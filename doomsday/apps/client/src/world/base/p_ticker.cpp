@@ -21,8 +21,8 @@
 #include "world/p_ticker.h"
 
 #ifdef __CLIENT__
-#  include "MaterialAnimator"
-#  include <doomsday/world/Materials>
+#  include "resource/materialanimator.h"
+#  include <doomsday/world/materials.h>
 #endif
 
 using namespace de;
@@ -45,7 +45,7 @@ void P_Ticker(timespan_t elapsed)
     });
 #endif
 
-    App_World().tick(elapsed);
+    world::World::get().tick(elapsed);
 
     // Internal ticking for all players.
     DoomsdayApp::players().forAll([&elapsed] (Player &plr) {

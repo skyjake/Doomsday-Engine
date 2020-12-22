@@ -18,32 +18,26 @@
 
 #include "de_platform.h"
 #include "api_console.h"
-#include "ConfigProfiles"
+#include "configprofiles.h"
 
-#include <de/App>
-#include <de/Config>
-#include <de/Info>
-#include <de/NumberValue>
-#include <de/Process>
-#include <de/RecordValue>
-#include <de/Script>
-#include <de/TextValue>
-#include <de/ZipArchive>
+#include <de/app.h>
+#include <de/config.h>
+#include <de/info.h>
+#include <de/dscript.h>
+#include <de/ziparchive.h>
 
 #include <doomsday/doomsdayapp.h>
-#include <doomsday/Game>
-
-#include <QMap>
-#include <QList>
-#include <QTextStream>
+#include <doomsday/game.h>
+#include <de/keymap.h>
+#include <sstream>
 
 using namespace de;
 
-static String const CUSTOM_PROFILE = "Custom";
+DE_STATIC_STRING(CUSTOM_PROFILE, "Custom");
 
-DENG2_PIMPL(ConfigProfiles)
-, DENG2_OBSERVES(DoomsdayApp, GameUnload)
-, DENG2_OBSERVES(DoomsdayApp, GameChange)
+DE_PIMPL(ConfigProfiles)
+, DE_OBSERVES(DoomsdayApp, GameUnload)
+, DE_OBSERVES(DoomsdayApp, GameChange)
 {
     struct Setting
     {
@@ -58,42 +52,35 @@ DENG2_PIMPL(ConfigProfiles)
          *
          * @param val  New value.
          */
-        void setValue(QVariant const &val) const
+        void setValue(const Value &val) const
         {
             switch (type)
             {
             case IntCVar:
-                Con_SetInteger(name.toLatin1(), val.toInt());
+                Con_SetInteger(name, val.asInt());
                 break;
 
             case FloatCVar:
-                Con_SetFloat(name.toLatin1(), val.toFloat());
+                Con_SetFloat(name, float(val.asNumber()));
                 break;
 
             case StringCVar:
-                Con_SetString(name.toLatin1(), val.toString().toUtf8());
+                Con_SetString(name, val.asText());
                 break;
 
             case ConfigVariable:
-                if (!qstrcmp(val.typeName(), "QString"))
-                {
-                    Config::get(name).set(TextValue(val.toString()));
-                }
-                else
-                {
-                    Config::get(name).set(NumberValue(val.toDouble()));
-                }
+                Config::get(name).set(val);
                 break;
             }
         }
     };
 
-    typedef QMap<String, Setting> Settings;
+    typedef KeyMap<String, Setting> Settings;
     Settings settings;
 
     struct Profile : public Profiles::AbstractProfile
     {
-        typedef QMap<String, QVariant> Values;
+        typedef KeyMap<String, std::shared_ptr<Value>> Values;
         Values values;
 
         ConfigProfiles &owner()
@@ -101,9 +88,9 @@ DENG2_PIMPL(ConfigProfiles)
             return static_cast<ConfigProfiles &>(AbstractProfile::owner());
         }
 
-        ConfigProfiles const &owner() const
+        const ConfigProfiles &owner() const
         {
-            return static_cast<ConfigProfiles const &>(AbstractProfile::owner());
+            return static_cast<const ConfigProfiles &>(AbstractProfile::owner());
         }
 
         bool resetToDefaults() override
@@ -118,60 +105,55 @@ DENG2_PIMPL(ConfigProfiles)
 
         String toInfoSource() const override
         {
-            auto const &settings = owner().d->settings;
+            const auto &settings = owner().d->settings;
 
-            String info;
-            QTextStream os(&info);
-            os.setCodec("UTF-8");
-
-            DENG2_FOR_EACH_CONST(Values, val, values)
+            std::ostringstream os;
+            for (const auto &val : values)
             {
-                DENG2_ASSERT(settings.contains(val.key()));
+                DE_ASSERT(settings.contains(val.first));
 
-                Setting const &st = settings[val.key()];
+                const Setting &st = settings.find(val.first)->second;
 
-                String valueText;
-                switch (st.type)
-                {
-                case IntCVar:
-                case FloatCVar:
-                case StringCVar:
-                case ConfigVariable:
-                    // QVariant can handle this.
-                    valueText = val.value().toString();
-                    break;
-                }
+//                String valueText;
+//                switch (st.type)
+//                {
+//                case IntCVar:
+//                case FloatCVar:
+//                case StringCVar:
+//                case ConfigVariable:
+//                    valueText = val.second->asText();
+//                    break;
+//                }
 
-                if (!info.isEmpty()) os << "\n";
+                if (!os.str().empty()) os << "\n";
 
                 os << "setting \"" << st.name << "\" {\n"
-                   << "    value: " << valueText << "\n"
+                   << "    value: " << val.second->asText() << "\n"
                    << "}";
             }
-
-            return info;
+            return os.str();
         }
 
-        void initializeFromInfoBlock(ConfigProfiles const &profs,
-                                     de::Info::BlockElement const &block)
+        void initializeFromInfoBlock(const ConfigProfiles &        profs,
+                                     const de::Info::BlockElement &block)
         {
             // Use the default settings for anything not defined in the file.
             values = profs.d->defaults.values;
 
             // Read all the setting values from the profile block.
-            foreach (auto const *element, block.contentsInOrder())
+            for (const auto *element : block.contentsInOrder())
             {
                 if (!element->isBlock()) continue;
 
-                de::Info::BlockElement const &setBlock = element->as<de::Info::BlockElement>();
+                const de::Info::BlockElement &setBlock = element->as<de::Info::BlockElement>();
 
                 // Only process known settings.
                 if (setBlock.blockType() == "setting" &&
-                   profs.d->settings.contains(setBlock.name()))
+                    profs.d->settings.contains(setBlock.name()))
                 {
-                    values[setBlock.name()] =
+                    values[setBlock.name()].reset(
                             profs.d->textToSettingValue(setBlock.keyValue("value").text,
-                                                        setBlock.name());
+                                                        setBlock.name()));
                 }
             }
         }
@@ -180,7 +162,7 @@ DENG2_PIMPL(ConfigProfiles)
     Profile defaults;
     String current;
 
-    Impl(Public *i) : Base(i), current(CUSTOM_PROFILE)
+    Impl(Public *i) : Base(i), current(CUSTOM_PROFILE())
     {
         DoomsdayApp::app().audienceForGameUnload() += this;
         DoomsdayApp::app().audienceForGameChange() += this;
@@ -188,7 +170,7 @@ DENG2_PIMPL(ConfigProfiles)
         addProfile(current);
     }
 
-    Profile *addProfile(String const &name)
+    Profile *addProfile(const String &name)
     {
         Profile *prof = new Profile;
         prof->setName(name);
@@ -196,7 +178,7 @@ DENG2_PIMPL(ConfigProfiles)
         return prof;
     }
 
-    Profile *tryFind(String const &name) const
+    Profile *tryFind(const String &name) const
     {
         return maybeAs<Profile>(self().tryFind(name));
     }
@@ -206,7 +188,8 @@ DENG2_PIMPL(ConfigProfiles)
         return self().find(current).as<Profile>();
     }
 
-    QVariant getDefaultFromConfig(String const &name)
+    /// Caller gets ownership of the returned Value.
+    Value *getDefaultFromConfig(const String &name)
     {
         try
         {
@@ -215,77 +198,56 @@ DENG2_PIMPL(ConfigProfiles)
             Process proc(script);
             proc.execute();
 
-            Record const &confDefaults = *proc.context().evaluator().result()
+            const Record &confDefaults = *proc.context().evaluator().result()
                     .as<RecordValue>().record();
 
-            DENG2_ASSERT(confDefaults.has(name));
+            DE_ASSERT(confDefaults.has(name));
 
-            Variable const &var = confDefaults[name];
-            if (is<NumberValue>(var.value()))
-            {
-                return var.value().asNumber();
-            }
-            else if (is<TextValue>(var.value()))
-            {
-                return var.value().asText();
-            }
-            else
-            {
-                // Oops, we don't support this yet.
-                DENG2_ASSERT(false);
-            }
+            return confDefaults[name].value().duplicate();
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_WARNING("Failed to find default for \"%s\": %s") << name << er.asText();
         }
-        return QVariant();
+        return new NoneValue;
     }
 
     /**
      * Gets the current values of the settings and saves them to a profile.
      */
-    void fetch(String const &profileName)
+    void fetch(const String &profileName)
     {
         Profile &prof = self().find(profileName).as<Profile>();
         if (prof.isReadOnly()) return;
 
-        foreach (Setting const &st, settings.values())
+        for (const auto &st : settings)
         {
-            QVariant val;
-
-            switch (st.type)
+            std::shared_ptr<Value> val;
+            switch (st.second.type)
             {
             case IntCVar:
-                val = Con_GetInteger(st.name.toLatin1());
+                val.reset(new NumberValue(Con_GetInteger(st.second.name)));
                 break;
 
             case FloatCVar:
-                val = Con_GetFloat(st.name.toLatin1());
+                val.reset(new NumberValue(Con_GetFloat(st.second.name)));
                 break;
 
             case StringCVar:
-                val = QString(Con_GetString(st.name.toLatin1()));
+                val.reset(new TextValue(st.second.name));
                 break;
 
             case ConfigVariable: {
-                Value const &cfgValue = Config::get(st.name).value();
-                if (is<NumberValue>(cfgValue))
-                {
-                    val = cfgValue.asNumber();
-                }
-                else
-                {
-                    val = cfgValue.asText();
-                }
+                val.reset(Config::get(st.second.name).value().duplicate());
                 break; }
             }
+            if (!val) val.reset(new NoneValue);
 
-            prof.values[st.name] = val;
+            prof.values[st.first] = val;
         }
     }
 
-    void setCurrent(String const &name)
+    void setCurrent(const String &name)
     {
         current = name;
 
@@ -295,21 +257,19 @@ DENG2_PIMPL(ConfigProfiles)
         }
     }
 
-    void apply(String const &profileName)
+    void apply(const String &profileName)
     {
         Profile &profile = self().find(profileName).as<Profile>();
-
-        foreach (Setting const &st, settings.values())
+        for (const auto &st : settings)
         {
-            QVariant const &val = profile.values[st.name];
-            st.setValue(val);
+            st.second.setValue(*profile.values[st.second.name]);
         }
     }
 
-    void changeTo(String const &profileName)
+    void changeTo(const String &profileName)
     {
         LOG_AS("ConfigProfiles");
-        DENG2_ASSERT(tryFind(profileName));
+        DE_ASSERT(tryFind(profileName));
 
         if (current == profileName) return;
 
@@ -325,7 +285,7 @@ DENG2_PIMPL(ConfigProfiles)
         setCurrent(profileName);
         apply(current);
 
-        DENG2_FOR_PUBLIC_AUDIENCE(ProfileChange, i)
+        DE_NOTIFY_PUBLIC_VAR(ProfileChange, i)
         {
             i->currentProfileChanged(profileName);
         }
@@ -339,12 +299,12 @@ DENG2_PIMPL(ConfigProfiles)
         }
     }
 
-    void resetSetting(String const &settingName) const
+    void resetSetting(const String &settingName) const
     {
-        DENG2_ASSERT(settings.contains(settingName));
-        DENG2_ASSERT(defaults.values.contains(settingName));
+        DE_ASSERT(settings.contains(settingName));
+        DE_ASSERT(defaults.values.contains(settingName));
 
-        settings[settingName].setValue(defaults.values[settingName]);
+        settings[settingName].setValue(*defaults.values[settingName]);
     }
 
     /**
@@ -357,39 +317,39 @@ DENG2_PIMPL(ConfigProfiles)
         return self().persistentName().concatenateMember("profile");
     }
 
-    QVariant textToSettingValue(String const &text, String const &settingName) const
+    Value *textToSettingValue(const String &text, const String &settingName) const
     {
-        DENG2_ASSERT(settings.contains(settingName));
+        DE_ASSERT(settings.contains(settingName));
 
-        Setting const &st = settings[settingName];
+        const Setting &st = settings[settingName];
 
         switch (st.type)
         {
         case IntCVar:
-            return text.toInt();
+            return new NumberValue(text.toInt());
 
         case FloatCVar:
-            return text.toFloat();
+            return new NumberValue(text.toFloat());
 
         case StringCVar:
-            return text;
+            return new TextValue(text);
 
         case ConfigVariable:
-            return text.toDouble();
+            return new NumberValue(text.toDouble());
         }
 
-        DENG2_ASSERT(false);
-        return QVariant();
+        DE_ASSERT_FAIL("Invalid setting type");
+        return new NoneValue;
     }
 
     bool addCustomProfileIfMissing()
     {
-        if (!tryFind(CUSTOM_PROFILE))
+        if (!tryFind(CUSTOM_PROFILE()))
         {
-            addProfile(CUSTOM_PROFILE);
+            addProfile(CUSTOM_PROFILE());
 
             // Use whatever values are currently in effect.
-            fetch(CUSTOM_PROFILE);
+            fetch(CUSTOM_PROFILE());
             return true;
         }
         return false; // nothing added
@@ -401,7 +361,7 @@ DENG2_PIMPL(ConfigProfiles)
      *
      * @param newGame  New current game.
      */
-    void currentGameChanged(Game const &newGame)
+    void currentGameChanged(const Game &newGame)
     {
         if (!self().isPersistent() || newGame.isNull()) return;
 
@@ -414,7 +374,7 @@ DENG2_PIMPL(ConfigProfiles)
         // have the Custom profile.
         if (addCustomProfileIfMissing())
         {
-            current = CUSTOM_PROFILE;
+            current = CUSTOM_PROFILE();
         }
 
         // Update current profile.
@@ -423,9 +383,9 @@ DENG2_PIMPL(ConfigProfiles)
         if (!tryFind(current))
         {
             // Fall back to the one profile we know is available.
-            if (tryFind(CUSTOM_PROFILE))
+            if (tryFind(CUSTOM_PROFILE()))
             {
-                current = CUSTOM_PROFILE;
+                current = CUSTOM_PROFILE();
             }
             else
             {
@@ -447,7 +407,7 @@ DENG2_PIMPL(ConfigProfiles)
      *
      * @param gameBeingUnloaded  Current game.
      */
-    void aboutToUnloadGame(Game const &gameBeingUnloaded)
+    void aboutToUnloadGame(const Game &gameBeingUnloaded)
     {
         if (!self().isPersistent() || gameBeingUnloaded.isNull()) return;
 
@@ -467,20 +427,20 @@ DENG2_PIMPL(ConfigProfiles)
 ConfigProfiles::ConfigProfiles() : d(new Impl(this))
 {}
 
-ConfigProfiles &ConfigProfiles::define(SettingType type,
-                                       String const &settingName,
-                                       QVariant const &defaultValue)
+ConfigProfiles &ConfigProfiles::define(SettingType   type,
+                                       const String &settingName,
+                                       const Value & defaultValue)
 {
     d->settings.insert(settingName, Impl::Setting(type, settingName));
 
-    QVariant def;
+    std::shared_ptr<Value> def;
     if (type == ConfigVariable)
     {
-        def = d->getDefaultFromConfig(settingName);
+        def.reset(d->getDefaultFromConfig(settingName));
     }
     else
     {
-        def = defaultValue;
+        def.reset(defaultValue.duplicate());
     }
     d->defaults.values[settingName] = def;
 
@@ -492,7 +452,7 @@ String ConfigProfiles::currentProfile() const
     return d->current;
 }
 
-bool ConfigProfiles::saveAsProfile(String const &name)
+bool ConfigProfiles::saveAsProfile(const String &name)
 {
     if (!tryFind(name) && !name.isEmpty())
     {
@@ -503,7 +463,7 @@ bool ConfigProfiles::saveAsProfile(String const &name)
     return false;
 }
 
-void ConfigProfiles::setProfile(String const &name)
+void ConfigProfiles::setProfile(const String &name)
 {
     d->changeTo(name);
 }
@@ -512,24 +472,24 @@ void ConfigProfiles::resetToDefaults()
 {
     d->reset();
 
-    DENG2_FOR_AUDIENCE(ProfileChange, i)
+    DE_NOTIFY_VAR(ProfileChange, i)
     {
         i->currentProfileChanged(d->current);
     }
 }
 
-void ConfigProfiles::resetSettingToDefaults(String const &settingName)
+void ConfigProfiles::resetSettingToDefaults(const String &settingName)
 {
     d->resetSetting(settingName);
 }
 
-bool ConfigProfiles::rename(String const &name)
+bool ConfigProfiles::rename(const String &name)
 {
     if (d->currentProfile().setName(name))
     {
         d->setCurrent(name);
 
-        DENG2_FOR_AUDIENCE(ProfileChange, i)
+        DE_NOTIFY_VAR(ProfileChange, i)
         {
             i->currentProfileChanged(name);
         }
@@ -538,7 +498,7 @@ bool ConfigProfiles::rename(String const &name)
     return false;
 }
 
-void ConfigProfiles::deleteProfile(String const &name)
+void ConfigProfiles::deleteProfile(const String &name)
 {
     // Can't delete the current profile.
     if (name == d->current) return;
@@ -551,7 +511,7 @@ void ConfigProfiles::deleteProfile(String const &name)
 }
 
 Profiles::AbstractProfile *
-ConfigProfiles::profileFromInfoBlock(de::Info::BlockElement const &block)
+ConfigProfiles::profileFromInfoBlock(const de::Info::BlockElement &block)
 {
     std::unique_ptr<Impl::Profile> prof(new Impl::Profile);
     prof->initializeFromInfoBlock(*this, block);

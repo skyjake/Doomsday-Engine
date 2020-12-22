@@ -19,58 +19,60 @@
 #ifndef LINKWINDOW_H
 #define LINKWINDOW_H
 
-#include <QMainWindow>
-#include <de/String>
-#include <de/NativePath>
-#include <de/shell/Link>
+#include <de/basewindow.h>
+#include <de/guirootwidget.h>
+#include <de/nativepath.h>
+#include <de/string.h>
+#include <doomsday/network/link.h>
 
 /**
  * Window for a server link.
  */
-class LinkWindow : public QMainWindow
+class LinkWindow : public de::BaseWindow
 {
-    Q_OBJECT
-
 public:
-    LinkWindow(QWidget *parent = 0);
+    LinkWindow(const de::String &id);
 
-    void setTitle(QString const &title);
+    de::GuiRootWidget &root();
+
+    de::Vec2f windowContentSize() const override;
+    void      drawWindowContent() override;
+
+    void setTitle(const de::String &title);
 
     bool isConnected() const;
 
     // Qt events.
-    void changeEvent(QEvent *);
-    void closeEvent(QCloseEvent *);
+//    void changeEvent(QEvent *);
+//    void closeEvent(QCloseEvent *);
 
-signals:
-    void linkOpened(LinkWindow *window);
-    void linkClosed(LinkWindow *window);
-    void closed(LinkWindow *window);
+//signals:
+//    void linkOpened(LinkWindow *window);
+//    void linkClosed(LinkWindow *window);
+//    void closed(LinkWindow *window);
 
-public slots:
-    void openConnection(QString address);
-    void waitForLocalConnection(de::duint16 localPort, de::NativePath const &errorLogPath, QString name);
-    void openConnection(de::shell::Link *link, de::String name = "");
+    void openConnection(const de::String &address);
+    void waitForLocalConnection(de::duint16 localPort, const de::NativePath &errorLogPath, const de::String &name);
+    void openConnection(network::Link *link, const de::String &name = {});
     void closeConnection();
-    void sendCommandToServer(de::String command);
-    void sendCommandsToServer(QStringList commands);
+    void sendCommandToServer(const de::String& command);
+    void sendCommandsToServer(const de::StringList &commands);
     void switchToStatus();
     void switchToOptions();
     void switchToConsole();
-    void updateWhenConnected();
-    void updateConsoleFontFromPreferences();
+    void stopServer();
 
-protected slots:
-    void checkFoundServers();
+protected:
     void handleIncomingPackets();
     void addressResolved();
     void connected();
     void disconnected();
     void askForPassword();
-    void localServerStopped(int port);
+
+    void windowAboutToClose() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LINKWINDOW_H

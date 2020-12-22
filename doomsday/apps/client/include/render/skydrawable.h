@@ -18,15 +18,15 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_SKYDRAWABLE_H
-#define DENG_CLIENT_RENDER_SKYDRAWABLE_H
+#ifndef DE_CLIENT_RENDER_SKYDRAWABLE_H
+#define DE_CLIENT_RENDER_SKYDRAWABLE_H
 
 #include <de/libcore.h>
-#include <de/Error>
-#include <de/Observers>
+#include <de/error.h>
+#include <de/observers.h>
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/sky.h>
-#include "MaterialVariantSpec"
+#include "resource/materialvariantspec.h"
 #include "resource/framemodeldef.h"
 #include "world/sky.h"
 
@@ -47,22 +47,22 @@ public:
     {
     public:
         /// Required layer state is missing. @ingroup errors
-        DENG2_ERROR(MissingLayerStateError);
+        DE_ERROR(MissingLayerStateError);
 
         /// Required model state is missing. @ingroup errors
-        DENG2_ERROR(MissingModelStateError);
+        DE_ERROR(MissingModelStateError);
 
         struct LayerState
         {
-            de::dfloat offset;
+            float offset;
         };
 
         struct ModelState
         {
-            de::dint frame;
-            de::dint timer;
-            de::dint maxTimer;
-            de::dfloat yaw;
+            int frame;
+            int timer;
+            int maxTimer;
+            float yaw;
         };
 
     public:
@@ -77,27 +77,27 @@ public:
          * Determines whether the specified animation layer state @a index is valid.
          * @see layer()
          */
-        bool hasLayer(de::dint index) const;
+        bool hasLayer(int index) const;
 
         /**
          * Lookup an animation layer state by it's unique @a index.
          * @see hasLayer()
          */
-        LayerState       &layer(de::dint index);
-        LayerState const &layer(de::dint index) const;
+        LayerState       &layer(int index);
+        const LayerState &layer(int index) const;
 
         /**
          * Determines whether the specified animation model state @a index is valid.
          * @see model()
          */
-        bool hasModel(de::dint index) const;
+        bool hasModel(int index) const;
 
         /**
          * Lookup an animation model state by it's unique @a index.
          * @see hasModel()
          */
-        ModelState       &model(de::dint index);
-        ModelState const &model(de::dint index) const;
+        ModelState       &model(int index);
+        const ModelState &model(int index) const;
 
         /**
          * Advances the animation state.
@@ -107,7 +107,7 @@ public:
         void advanceTime(timespan_t elapsed);
 
     public:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
 public:
@@ -116,24 +116,24 @@ public:
      *
      * @param sky  Sky to visualize, if any (may be @c nullptr to configure layer).
      */
-    explicit SkyDrawable(world::Sky const *sky = nullptr);
+    explicit SkyDrawable(const Sky *sky = nullptr);
 
     /**
      * Reconfigure the drawable for visualizing the given @a sky.
      *
      * @return Reference to this drawable, for caller convenience.
      */
-    SkyDrawable &configure(world::Sky const *sky = nullptr);
+    SkyDrawable &configure(const Sky *sky = nullptr);
 
     /**
      * Returns a pointer to the configured sky, if any (may be @c nullptr).
      */
-    world::Sky const *sky() const;
+    const Sky *sky() const;
 
     /**
      * Render the sky.
      */
-    void draw(Animator const *animator = nullptr) const;
+    void draw(const Animator *animator = nullptr) const;
 
     /**
      * Cache all the assets needed for visualizing the sky.
@@ -145,16 +145,16 @@ public:
      *
      * @param modelIndex  Unique index of the model.
      */
-    FrameModelDef *modelDef(de::dint modelIndex) const;
+    FrameModelDef *modelDef(int modelIndex) const;
 
 public:
-    static de::MaterialVariantSpec const &layerMaterialSpec(bool masked);
+    static const de::MaterialVariantSpec &layerMaterialSpec(bool masked);
 
     /// Register the console commands, variables, etc..., of this module.
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif  // DENG_CLIENT_RENDER_SKYDRAWABLE_H
+#endif  // DE_CLIENT_RENDER_SKYDRAWABLE_H

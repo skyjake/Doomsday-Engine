@@ -24,10 +24,10 @@
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "render/rend_main.h"
-#include "world/clientserverworld.h"
+#include "world/clientworld.h"
 
-#include <de/GLInfo>
-#include <de/vector1.h>
+#include <de/glinfo.h>
+#include <de/legacy/vector1.h>
 #include <doomsday/console/var.h>
 #include <cmath>
 
@@ -39,7 +39,7 @@ static byte  vignetteEnabled  = true;
 static float vignetteDarkness = 1.0f;
 static float vignetteWidth    = 1.0f;
 
-static void Vignette_Render(Rectanglei const &viewRect, float fov)
+static void Vignette_Render(const Rectanglei &viewRect, float fov)
 {
     const int DIVS = 60;
     vec2f_t vec;
@@ -75,8 +75,8 @@ static void Vignette_Render(Rectanglei const &viewRect, float fov)
         alpha *= fov/100.f;
     }
 
-    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_CAMERA_VIGNETTE), gl::Repeat,
-                            gl::ClampToEdge);
+    GL_BindTextureUnmanaged(
+        GL_PrepareLSTexture(LST_CAMERA_VIGNETTE), gfx::Repeat, gfx::ClampToEdge);
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Begin(DGL_TRIANGLE_STRIP);
@@ -104,14 +104,12 @@ Vignette::Vignette(int console) : ConsoleEffect(console)
 
 void Vignette::draw()
 {
-    if (!ClientApp::world().hasMap())
+    if (ClientApp::world().hasMap())
     {
-        return;
+        /// @todo Field of view should be console-specific.
+
+        Vignette_Render(viewRect(), Rend_FieldOfView());
     }
-
-    /// @todo Field of view should be console-specific.
-
-    Vignette_Render(viewRect(), Rend_FieldOfView());
 }
 
 void Vignette::consoleRegister()

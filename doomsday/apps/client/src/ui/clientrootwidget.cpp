@@ -18,13 +18,12 @@
 
 #include "ui/clientrootwidget.h"
 #include "ui/clientwindow.h"
-#include "ui/clientwindowsystem.h"
 #include "ui/inputsystem.h"
 #include "clientapp.h"
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(ClientRootWidget)
+DE_PIMPL_NOREF(ClientRootWidget)
 {
     PackageIconBank packageIconBank;
 };
@@ -65,13 +64,13 @@ void ClientRootWidget::addOnTop(GuiWidget *widget)
     window().addOnTop(widget);
 }
 
-void ClientRootWidget::dispatchLatestMousePosition()
-{
-    ClientApp::windowSystem().dispatchLatestMousePosition();
-}
+//void ClientRootWidget::dispatchLatestMousePosition()
+//{
+//    ClientApp::windowSystem().dispatchLatestMousePosition();
+//}
 
-void ClientRootWidget::handleEventAsFallback(Event const &event)
+void ClientRootWidget::handleEventAsFallback(const Event &event)
 {
     // The bindings might have use for this event.
-    ClientApp::inputSystem().tryEvent(event, "global");
+    ClientApp::input().tryEvent(event, "global");
 }

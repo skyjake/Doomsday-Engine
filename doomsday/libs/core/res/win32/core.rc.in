@@ -1,0 +1,143 @@
+/**
+ * @file core.rc
+ * Win32 resource script (template).
+ *
+ * @authors Copyright &copy; 2008-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2012-2017 Jaakko Keranen <jaakko.keranen@iki.fi>
+ *
+ * @par License
+ * LGPL: http://www.gnu.org/licenses/lgpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details. You should have received a copy of
+ * the GNU Lesser General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small> 
+ */
+
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+
+#include "windows.h"
+
+#undef APSTUDIO_READONLY_SYMBOLS
+
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+# ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+# endif //_WIN32
+
+# ifdef APSTUDIO_INVOKED
+1 TEXTINCLUDE
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE
+BEGIN
+    "#include ""windows.h""\r\n"
+END
+
+3 TEXTINCLUDE
+BEGIN
+    "#ifndef NO_MANIFEST\r\n"
+    "   CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST ""deng_core.dll.manifest""\r\n"
+    "#endif\r\n"
+    "\r\n"
+    "VS_VERSION_INFO VERSIONINFO\r\n"
+    "FILEVERSION    LIBCORE_VERSION_NUMBER\r\n"
+    "PRODUCTVERSION LIBCORE_VERSION_NUMBER\r\n"
+    "# if defined(_DEBUG)\r\n"
+    "FILEFLAGSMASK  VS_FF_DEBUG | VS_FF_PRERELEASE\r\n"
+    "# elif defined(LIBCORE_RELEASE_FULL)\r\n"
+    "FILEFLAGSMASK  VS_FF_SPECIALBUILD\r\n"
+    "# else\r\n"
+    "FILEFLAGSMASK  0\r\n"
+    "# endif\r\n"
+    "FILEOS         VOS_NT_WINDOWS32\r\n"
+    "FILETYPE       VFT_DLL\r\n"
+    "FILESUBTYPE    VFT2_UNKNOWN\r\n"
+    "BEGIN\r\n"
+    "    BLOCK ""StringFileInfo""\r\n"
+    "    BEGIN\r\n"
+    "        BLOCK ""040904b0""\r\n"
+    "        BEGIN\r\n"
+    "            VALUE ""CompanyName"",     ""\0""\r\n"
+    "#if defined(UNICODE)\r\n"
+    "            VALUE ""FileDescription"", LIBCORE_DESC_WSTR ""\0""\r\n"
+    "#else\r\n"
+    "            VALUE ""FileDescription"", LIBCORE_DESC ""\0""\r\n"
+    "#endif\r\n"
+    "            VALUE ""FileVersion"",     LIBCORE_VERSION_TEXT ""\0""\r\n"
+    "            VALUE ""InternalName"",    LIBCORE_NICENAME ""\0""\r\n"
+    "            VALUE ""LegalCopyright"",  ""Copyright (c) "" LIBCORE_COPYRIGHT ""\0""\r\n"
+    "            VALUE ""OriginalFilename"", LIBCORE_FILENAME ""\0""\r\n"
+    "            VALUE ""ProductName"",     LIBCORE_NICENAME ""\0""\r\n"
+    "            VALUE ""ProductVersion"",  LIBCORE_VERSION_TEXT ""\0""\r\n"
+    "#if !defined(_DEBUG) && !defined(LIBCORE_RELEASE_FULL) && defined(LIBCORE_RELEASE_NAME)\r\n"
+    "            VALUE ""SpecialBuild"",   LIBCORE_RELEASE_NAME ""\0""\r\n"
+    "#endif\r\n"
+    "        END\r\n"
+    "    END\r\n"
+    "\r\n"
+    "    BLOCK ""VarFileInfo""\r\n"
+    "    BEGIN\r\n"
+    "        VALUE ""Translation"", 0x409, 1200\r\n"
+    "    END\r\n"
+    "END\r\n"
+END
+# endif
+
+#endif // English (U.S.) resources
+
+#ifndef APSTUDIO_INVOKED
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     ${DE_LIBCORE_VERSION_WINDOWS}
+PRODUCTVERSION  ${DE_LIBCORE_VERSION_WINDOWS}
+# if defined(_DEBUG)
+FILEFLAGSMASK   VS_FF_DEBUG | VS_FF_PRERELEASE
+# elif !defined(LIBCORE_RELEASE_FULL)
+FILEFLAGSMASK   VS_FF_SPECIALBUILD
+# else
+FILEFLAGSMASK   0
+# endif
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_DLL
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName",    "\0"
+#if defined(UNICODE)
+            VALUE "FileDescription", "Doomsday 2 Core Library" "\0"
+#else
+            VALUE "FileDescription", "Doomsday 2 Core Library" "\0"
+#endif
+            VALUE "FileVersion",    "${DE_LIBCORE_VERSION}.${DE_BUILD}" "\0"
+            VALUE "InternalName",   "libcore" "\0"
+            VALUE "LegalCopyright", "${DE_TEAM_COPYRIGHT}" "\0"
+            VALUE "OriginalFilename", "deng_core.dll" "\0"
+            VALUE "ProductName",    "libcore" "\0"
+            VALUE "ProductVersion", "${DE_LIBCORE_VERSION}.${DE_BUILD}" "\0"
+#if !defined(_DEBUG) && !defined(LIBCORE_RELEASE_FULL) && defined(LIBCORE_RELEASE_NAME)
+            VALUE "SpecialBuild",   LIBCORE_RELEASE_NAME "\0"
+#endif
+        END
+    END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+#endif

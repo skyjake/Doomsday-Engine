@@ -21,7 +21,7 @@
 #define CLIENT_RENDER_VR_H
 
 #include "dd_types.h"
-#include <de/VRConfig>
+#include <de/vrconfig.h>
 
 de::VRConfig &vrCfg();
 

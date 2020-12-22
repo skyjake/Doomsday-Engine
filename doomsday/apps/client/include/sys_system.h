@@ -18,14 +18,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CORE_SYSTEM_H
-#define DENG_CORE_SYSTEM_H
+#ifndef DE_CORE_SYSTEM_H
+#define DE_CORE_SYSTEM_H
 
 #include <de/libcore.h>
-#include <de/NativePath>
+#include <de/nativepath.h>
 #include "dd_types.h"
 
-extern de::dint novideo;
+extern int novideo;
 
 void Sys_Init();
 void Sys_Shutdown();
@@ -36,11 +36,11 @@ void Sys_Shutdown();
 bool Sys_IsShuttingDown();
 
 #undef Sys_Quit
-DENG_EXTERN_C void Sys_Quit();
+DE_EXTERN_C void Sys_Quit();
 
 void Sys_HideMouseCursor();
 
-void Sys_Sleep(de::dint millisecs);
+void Sys_Sleep(int millisecs);
 
 /**
  * Blocks the thread for a very short period of time. If attempting to wait
@@ -52,7 +52,7 @@ void Sys_Sleep(de::dint millisecs);
  */
 void Sys_BlockUntilRealTime(de::duint realTimeMs);
 
-de::dint Sys_CriticalMessage(char const *msg);
-de::dint Sys_CriticalMessagef(char const *format, ...) PRINTF_F(1,2);
+int Sys_CriticalMessage(const char *msg);
+int Sys_CriticalMessagef(const char *format, ...) PRINTF_F(1,2);
 
-#endif  // DENG_CORE_SYSTEM_H
+#endif  // DE_CORE_SYSTEM_H

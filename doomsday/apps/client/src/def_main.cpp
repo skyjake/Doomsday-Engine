@@ -19,22 +19,20 @@
  * 02110-1301 USA</small>
  */
 
-#define DENG_NO_API_MACROS_DEFINITIONS
+#define DE_NO_API_MACROS_DEFINITIONS
 
 #include "def_main.h"
+#include "dd_main.h"
+#include "dd_def.h"
+#include "api_def.h"
+#include "api_sound.h"
 
-#include <cctype>
-#include <cstring>
-#include <QMap>
-#include <QTextStream>
-#include <de/findfile.h>
-#include <de/c_wrapper.h>
-#include <de/App>
-#include <de/PackageLoader>
-#include <de/ScriptSystem>
-#include <de/NativePath>
-#include <de/RecordValue>
-#include <doomsday/doomsdayapp.h>
+#ifdef __CLIENT__
+#  include "world/generator.h"
+#  include "render/rend_particle.h"
+#  include "resource/lightmaterialdecoration.h"
+#endif
+
 #include <doomsday/console/cmd.h>
 #include <doomsday/defs/decoration.h>
 #include <doomsday/defs/dedfile.h>
@@ -42,41 +40,37 @@
 #include <doomsday/defs/material.h>
 #include <doomsday/defs/sky.h>
 #include <doomsday/defs/state.h>
+#include <doomsday/doomsdayapp.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
-#include <doomsday/resource/manifest.h>
-#include <doomsday/resource/animgroups.h>
-#include <doomsday/res/Bundles>
-#include <doomsday/res/DoomsdayPackage>
-#include <doomsday/res/Textures>
-#include <doomsday/world/Materials>
-#include <doomsday/world/MaterialManifest>
-#include <doomsday/world/xg.h>
-
-#include "dd_main.h"
-#include "dd_def.h"
-
-#include "api_def.h"
-#include "api_sound.h"
-
-#include "Generator"
-#ifdef __CLIENT__
-#  include "render/rend_particle.h"
-#endif
-
+#include <doomsday/manifest.h>
+#include <doomsday/res/bundles.h>
+#include <doomsday/res/doomsdaypackage.h>
+#include <doomsday/res/textures.h>
+#include <doomsday/res/animgroups.h>
+#include <doomsday/world/materialmanifest.h>
+#include <doomsday/world/materials.h>
 #include <doomsday/world/detailtexturemateriallayer.h>
 #include <doomsday/world/shinetexturemateriallayer.h>
 #include <doomsday/world/texturemateriallayer.h>
-#ifdef __CLIENT__
-#  include "resource/lightmaterialdecoration.h"
-#endif
+#include <doomsday/world/xg.h>
+#include <de/keymap.h>
+
+#include <de/legacy/findfile.h>
+#include <de/c_wrapper.h>
+#include <de/app.h>
+#include <de/packageloader.h>
+#include <de/dscript.h>
+#include <de/nativepath.h>
+
+#include <cwctype>
+#include <cstring>
 
 using namespace de;
+using namespace res;
 
 #define LOOPi(n)    for (i = 0; i < (n); ++i)
 #define LOOPk(n)    for (k = 0; k < (n); ++k)
-
-RuntimeDefs runtimeDefs;
 
 static bool defsInited;
 static mobjinfo_t *gettingFor;
@@ -85,20 +79,6 @@ static Binder *defsBinder;
 static inline FS1 &fileSys()
 {
     return App_FileSystem();
-}
-
-void RuntimeDefs::clear()
-{
-    for (dint i = 0; i < sounds.size(); ++i)
-    {
-        Str_Free(&sounds[i].external);
-    }
-    sounds.clear();
-
-    mobjInfo.clear();
-    states.clear();
-    texts.clear();
-    stateInfo.clear();
 }
 
 static Value *Function_Defs_GetSoundNum(Context &, const Function::ArgumentValues &args)
@@ -127,21 +107,21 @@ void Def_Init()
     }
 
     // Constants for definitions.
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_SPAWN);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_SEE);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_PAIN);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_MELEE);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_MISSILE);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_CRASH);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_DEATH);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_XDEATH);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SN_RAISE);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_SPAWN);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_SEE);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_PAIN);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_MELEE);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_MISSILE);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_CRASH);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_DEATH);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_XDEATH);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SN_RAISE);
 
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SDN_ACTIVE);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SDN_ATTACK);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SDN_DEATH);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SDN_PAIN);
-    DENG2_ADD_NUMBER_CONSTANT(defs.names, SDN_SEE);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SDN_ACTIVE);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SDN_ATTACK);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SDN_DEATH);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SDN_PAIN);
+    DE_ADD_NUMBER_CONSTANT(defs.names, SDN_SEE);
 }
 
 void Def_Destroy()
@@ -160,7 +140,7 @@ void Def_Destroy()
     ::defsInited = false;
 }
 
-state_t *Def_GetState(dint num)
+state_t *Def_GetState(int num)
 {
     if (num >= 0 && num < DED_Definitions()->states.size())
     {
@@ -169,12 +149,12 @@ state_t *Def_GetState(dint num)
     return nullptr;  // Not found.
 }
 
-sfxinfo_t *Def_GetSoundInfo(dint soundId, dfloat *freq, dfloat *volume)
+sfxinfo_t *Def_GetSoundInfo(int soundId, float *freq, float *volume)
 {
     if (soundId <= 0 || soundId >= DED_Definitions()->sounds.size())
         return nullptr;
 
-    dfloat dummy = 0;
+    float dummy = 0;
     if (!freq)   freq   = &dummy;
     if (!volume) volume = &dummy;
 
@@ -184,7 +164,7 @@ sfxinfo_t *Def_GetSoundInfo(dint soundId, dfloat *freq, dfloat *volume)
     // ones.
     sfxinfo_t *info = &::runtimeDefs.sounds[soundId];
 
-    for (dint i = 0; info->link && i < 10;
+    for (int i = 0; info->link && i < 10;
         info     = info->link,
         *freq    = (info->linkPitch > 0    ? info->linkPitch  / 128.0f : *freq),
         *volume += (info->linkVolume != -1 ? info->linkVolume / 127.0f : 0),
@@ -192,12 +172,12 @@ sfxinfo_t *Def_GetSoundInfo(dint soundId, dfloat *freq, dfloat *volume)
        ++i)
     {}
 
-    DENG2_ASSERT(soundId < DED_Definitions()->sounds.size());
+    DE_ASSERT(soundId < DED_Definitions()->sounds.size());
 
     return info;
 }
 
-bool Def_SoundIsRepeating(dint soundId)
+bool Def_SoundIsRepeating(int soundId)
 {
     if (sfxinfo_t *info = Def_GetSoundInfo(soundId, nullptr, nullptr))
     {
@@ -206,15 +186,15 @@ bool Def_SoundIsRepeating(dint soundId)
     return false;
 }
 
-ded_compositefont_t *Def_GetCompositeFont(char const *uri)
+ded_compositefont_t *Def_GetCompositeFont(const char *uri)
 {
     return DED_Definitions()->getCompositeFont(uri);
 }
 
 /// @todo $revise-texture-animation
-static ded_reflection_t *tryFindReflection(de::Uri const &uri, /* bool hasExternal,*/ bool isCustom)
+static ded_reflection_t *tryFindReflection(const res::Uri &uri, /* bool hasExternal,*/ bool isCustom)
 {
-    for (dint i = DED_Definitions()->reflections.size() - 1; i >= 0; i--)
+    for (int i = DED_Definitions()->reflections.size() - 1; i >= 0; i--)
     {
         ded_reflection_t &def = DED_Definitions()->reflections[i];
         if (!def.material || *def.material !=  uri) continue;
@@ -240,14 +220,14 @@ static ded_reflection_t *tryFindReflection(de::Uri const &uri, /* bool hasExtern
 }
 
 /// @todo $revise-texture-animation
-static ded_detailtexture_t *tryFindDetailTexture(de::Uri const &uri, /*bool hasExternal,*/ bool isCustom)
+static ded_detailtexture_t *tryFindDetailTexture(const res::Uri &uri, /*bool hasExternal,*/ bool isCustom)
 {
-    for (dint i = DED_Definitions()->details.size() - 1; i >= 0; i--)
+    for (int i = DED_Definitions()->details.size() - 1; i >= 0; i--)
     {
         ded_detailtexture_t &def = DED_Definitions()->details[i];
-        for (dint k = 0; k < 2; ++k)
+        for (int k = 0; k < 2; ++k)
         {
-            de::Uri const *matUri = (k == 0 ? def.material1 : def.material2);
+            const res::Uri *matUri = (k == 0 ? def.material1 : def.material2);
             if (!matUri || *matUri != uri) continue;
 
             /*if (hasExternal)
@@ -270,11 +250,11 @@ static ded_detailtexture_t *tryFindDetailTexture(de::Uri const &uri, /*bool hasE
     return nullptr;  // Not found.
 }
 
-ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri)
+ded_ptcgen_t *Def_GetGenerator(const res::Uri &uri)
 {
     if (uri.isEmpty()) return nullptr;
 
-    for (dint i = 0; i < DED_Definitions()->ptcGens.size(); ++i)
+    for (int i = 0; i < DED_Definitions()->ptcGens.size(); ++i)
     {
         ded_ptcgen_t *def = &DED_Definitions()->ptcGens[i];
         if (!def->material) continue;
@@ -302,16 +282,16 @@ ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri)
     return nullptr;  // None found.
 }
 
-ded_ptcgen_t *Def_GetGenerator(uri_s const *uri)
+ded_ptcgen_t *Def_GetGenerator(const uri_s *uri)
 {
     if (!uri) return nullptr;
-    return Def_GetGenerator(reinterpret_cast<de::Uri const &>(*uri));
+    return Def_GetGenerator(reinterpret_cast<const res::Uri &>(*uri));
 }
 
 ded_ptcgen_t *Def_GetDamageGenerator(int mobjType)
 {
     // Search for a suitable definition.
-    for (dint i = 0; i < DED_Definitions()->ptcGens.size(); ++i)
+    for (int i = 0; i < DED_Definitions()->ptcGens.size(); ++i)
     {
         ded_ptcgen_t *def = &DED_Definitions()->ptcGens[i];
 
@@ -332,16 +312,16 @@ ded_ptcgen_t *Def_GetDamageGenerator(int mobjType)
  *     \\s   Space
  * </pre>
  */
-static void Def_InitTextDef(ddtext_t *txt, char const *str)
+static void Def_InitTextDef(ddtext_t *txt, const char *str)
 {
-    DENG2_ASSERT(txt);
+    DE_ASSERT(txt);
 
     // Handle null pointers with "".
     if (!str) str = "";
 
-    txt->text = (char *) M_Calloc(qstrlen(str) + 1);
+    txt->text = (char *) M_Calloc(strlen(str) + 1);
 
-    char const *in = str;
+    const char *in = str;
     char *out = txt->text;
     for (; *in; out++, in++)
     {
@@ -366,18 +346,18 @@ static void Def_InitTextDef(ddtext_t *txt, char const *str)
     }
 
     // Adjust buffer to fix exactly.
-    txt->text = (char *) M_Realloc(txt->text, qstrlen(txt->text) + 1);
+    txt->text = (char *) M_Realloc(txt->text, strlen(txt->text) + 1);
 }
 
 /**
  * Prints a count with a 2-space indentation.
  */
-static String defCountMsg(dint count, String const &label)
+static String defCountMsg(int count, const String &label)
 {
-    if (!::verbose && !count)
+    if (!DoomsdayApp::verbose && !count)
         return "";  // Don't print zeros if not verbose.
 
-    return String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label);
+    return Stringf(_E(Ta) "  %i " _E(Tb) "%s\n", count, label.c_str());
 }
 
 /**
@@ -387,20 +367,20 @@ static void Def_ReadLumpDefs()
 {
     LOG_AS("Def_ReadLumpDefs");
 
-    LumpIndex const &lumpIndex = fileSys().nameIndex();
+    const LumpIndex &lumpIndex = fileSys().nameIndex();
     LumpIndex::FoundIndices foundDefns;
     lumpIndex.findAll("DD_DEFNS.lmp", foundDefns);
-    DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDefns)
+    for (const auto i : foundDefns)
     {
-        if (!DED_ReadLump(DED_Definitions(), *i))
+        if (!DED_ReadLump(DED_Definitions(), i))
         {
-            QByteArray path = NativePath(lumpIndex[*i].container().composePath()).pretty().toUtf8();
-            LOG_RES_ERROR("Parse error reading \"%s:DD_DEFNS\": %s") << path.constData() << DED_Error();
+            LOG_RES_ERROR("Parse error reading \"%s:DD_DEFNS\": %s")
+                << NativePath(lumpIndex[i].container().composePath()).pretty() << DED_Error();
         }
     }
 
-    dint const numProcessedLumps = foundDefns.size();
-    if (::verbose && numProcessedLumps > 0)
+    const auto numProcessedLumps = foundDefns.size();
+    if (DoomsdayApp::verbose && numProcessedLumps > 0)
     {
         LOG_RES_NOTE("Processed %i %s")
                 << numProcessedLumps << (numProcessedLumps != 1 ? "lumps" : "lump");
@@ -410,9 +390,9 @@ static void Def_ReadLumpDefs()
 /**
  * Uses gettingFor. Initializes the state-owners information.
  */
-dint Def_StateForMobj(String const &state)
+int Def_StateForMobj(const String &state)
 {
-    dint num = DED_Definitions()->getStateNum(state);
+    int num = DED_Definitions()->getStateNum(state);
     if (num < 0) num = 0;
 
     // State zero is the NULL state.
@@ -421,7 +401,7 @@ dint Def_StateForMobj(String const &state)
         ::runtimeDefs.stateInfo[num].owner = ::gettingFor;
         // Scan forward at most 'count' states, or until we hit a state with
         // an owner, or the NULL state.
-        dint st, count = 16;
+        int st, count = 16;
         for (st = ::runtimeDefs.states[num].nextState;
             st > 0 && count-- && !::runtimeDefs.stateInfo[st].owner;
             st = ::runtimeDefs.states[st].nextState)
@@ -433,7 +413,7 @@ dint Def_StateForMobj(String const &state)
     return num;
 }
 
-static void readDefinitionFile(String path)
+static void readDefinitionFile(const String& path)
 {
     if (path.isEmpty()) return;
 
@@ -448,9 +428,9 @@ static void readDefinitionFile(String path)
  * @param dst  Absolute path written here.
  * @param src  Original path.
  */
-static void prependWorkPath(ddstring_t *dst, ddstring_t const *src)
+static void prependWorkPath(ddstring_t *dst, const ddstring_t *src)
 {
-    DENG2_ASSERT(dst && src);
+    DE_ASSERT(dst && src);
 
     if (!F_IsAbsolute(src))
     {
@@ -475,34 +455,34 @@ static void prependWorkPath(ddstring_t *dst, ddstring_t const *src)
 /**
  * Returns a URN list (in load order) for all lumps whose name matches the pattern "MAPINFO.lmp".
  */
-static QStringList allMapInfoUrns()
+static StringList allMapInfoUrns()
 {
-    QStringList foundPaths;
+    StringList foundPaths;
 
     // The game's main MAPINFO definitions should be processed first.
     bool ignoreNonCustom = false;
     try
     {
-        String mainMapInfo = fileSys().findPath(de::Uri(App_CurrentGame().mainMapInfo()), RLF_MATCH_EXTENSION);
+        String mainMapInfo = fileSys().findPath(res::Uri(App_CurrentGame().mainMapInfo()), RLF_MATCH_EXTENSION);
         if (!mainMapInfo.isEmpty())
         {
             foundPaths << mainMapInfo;
             ignoreNonCustom = true;
         }
     }
-    catch (FS1::NotFoundError const &)
+    catch (const FS1::NotFoundError &)
     {}  // Ignore this error.
 
     // Process all other lumps named MAPINFO.lmp
-    LumpIndex const &lumpIndex = fileSys().nameIndex();
+    const LumpIndex &lumpIndex = fileSys().nameIndex();
     LumpIndex::FoundIndices foundLumps;
     lumpIndex.findAll("MAPINFO.lmp", foundLumps);
-    for (auto const &lumpNumber : foundLumps)
+    for (const auto &lumpNumber : foundLumps)
     {
         // Ignore MAPINFO definition data in IWADs?
         if (ignoreNonCustom)
         {
-            File1 const &file = lumpIndex[lumpNumber];
+            const File1 &file = lumpIndex[lumpNumber];
             /// @todo Custom status for contained files is not inherited from the container?
             if (file.isContained())
             {
@@ -513,7 +493,7 @@ static QStringList allMapInfoUrns()
                 continue;
         }
 
-        foundPaths << String("LumpIndex:%1").arg(lumpNumber);
+        foundPaths << Stringf("LumpIndex:%i", lumpNumber);
     }
 
     return foundPaths;
@@ -522,12 +502,12 @@ static QStringList allMapInfoUrns()
 /**
  * @param mapInfoUrns  MAPINFO definitions to translate, in load order.
  */
-static void translateMapInfos(QStringList const &mapInfoUrns, String &xlat, String &xlatCustom)
+static void translateMapInfos(const StringList &mapInfoUrns, String &xlat, String &xlatCustom)
 {
     xlat.clear();
     xlatCustom.clear();
 
-    String delimitedPaths = mapInfoUrns.join(";");
+    String delimitedPaths = String::join(mapInfoUrns, ";");
     if (delimitedPaths.isEmpty()) return;
 
     ddhook_mapinfo_convert_t parm;
@@ -536,7 +516,7 @@ static void translateMapInfos(QStringList const &mapInfoUrns, String &xlat, Stri
     Str_InitStd(&parm.translatedCustom);
     try
     {
-        Str_Set(&parm.paths, delimitedPaths.toUtf8().constData());
+        Str_Set(&parm.paths, delimitedPaths);
         if (DoomsdayApp::plugins().callAllHooks(HOOK_MAPINFO_CONVERT, 0, &parm))
         {
             xlat       = Str_Text(&parm.translated);
@@ -560,10 +540,10 @@ static void readAllDefinitions()
 
     if (App_GameLoaded())
     {
-        Game const &game = App_CurrentGame();
+        const Game &game = App_CurrentGame();
 
         // Some games use definitions (MAPINFO lumps) that are translated to DED.
-        QStringList mapInfoUrns = allMapInfoUrns();
+        StringList mapInfoUrns = allMapInfoUrns();
         if (!mapInfoUrns.isEmpty())
         {
             String xlat, xlatCustom;
@@ -574,7 +554,7 @@ static void readAllDefinitions()
                 LOG_AS("Non-custom translated");
                 LOGDEV_MAP_VERBOSE("MAPINFO definitions:\n") << xlat;
 
-                if (!DED_ReadData(DED_Definitions(), xlat.toUtf8().constData(),
+                if (!DED_ReadData(DED_Definitions(), xlat,
                                  "[TranslatedMapInfos]", false /*not custom*/))
                 {
                     LOG_RES_ERROR("DED parse error: %s") << DED_Error();
@@ -586,7 +566,7 @@ static void readAllDefinitions()
                 LOG_AS("Custom translated");
                 LOGDEV_MAP_VERBOSE("MAPINFO definitions:\n") << xlatCustom;
 
-                if (!DED_ReadData(DED_Definitions(), xlatCustom.toUtf8().constData(),
+                if (!DED_ReadData(DED_Definitions(), xlatCustom,
                                  "[TranslatedMapInfos]", true /*custom*/))
                 {
                     LOG_RES_ERROR("DED parse error: %s") << DED_Error();
@@ -595,20 +575,19 @@ static void readAllDefinitions()
         }
 
         // Now any startup definition files required by the game.
-        Game::Manifests const &gameResources = game.manifests();
-        dint packageIdx = 0;
-        for (Game::Manifests::const_iterator i = gameResources.find(RC_DEFINITION);
-            i != gameResources.end() && i.key() == RC_DEFINITION; ++i, ++packageIdx)
+        const Game::Manifests &gameResources = game.manifests();
+        int packageIdx = 0;
+        const auto foundRes = gameResources.equal_range(RC_DEFINITION);
+        for (auto i = foundRes.first; i != foundRes.second; ++i, ++packageIdx)
         {
-            ResourceManifest &record = **i;
+            ResourceManifest &record = *i->second;
             /// Try to locate this resource now.
-            String const &path = record.resolvedPath(true/*try to locate*/);
+            const String &path = record.resolvedPath(true/*try to locate*/);
             if (path.isEmpty())
             {
-                const auto names = record.names().join(";");
+                const auto names = String::join(record.names(), ";");
                 LOG_RES_ERROR("Failed to locate required game definition \"%s\"") << names;
             }
-
             readDefinitionFile(path);
         }
 
@@ -616,9 +595,9 @@ static void readAllDefinitions()
         if (!CommandLine_Exists("-noauto"))
         {
             FS1::PathList foundPaths;
-            if (fileSys().findAllPaths(de::makeUri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded").resolved(), 0, foundPaths))
+            if (fileSys().findAllPaths(res::makeUri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded").resolved(), 0, foundPaths))
             {
-                for (FS1::PathListItem const &found : foundPaths)
+                for (const FS1::PathListItem &found : foundPaths)
                 {
                     // Ignore directories.
                     if (found.attrib & A_SUBDIR) continue;
@@ -630,12 +609,12 @@ static void readAllDefinitions()
     }
 
     // Definitions from loaded data bundles.
-    for (DataBundle const *bundle : DataBundle::loadedBundles())
+    for (const DataBundle *bundle : DataBundle::loadedBundles())
     {
         if (bundle->format() == DataBundle::Ded)
         {
-            String const bundleRoot = bundle->rootPath();
-            for (Value const *path : bundle->packageMetadata().geta("dataFiles").elements())
+            const String bundleRoot = bundle->rootPath();
+            for (const Value *path : bundle->packageMetadata().geta("dataFiles").elements())
             {
                 readDefinitionFile(bundleRoot / path->asText());
             }
@@ -649,14 +628,14 @@ static void readAllDefinitions()
         if (ddPkg.hasDefinitions())
         {
             // Relative to package root.
-            Folder const &defsFolder = pkg->root().locate<Folder const>(ddPkg.defsPath());
+            const Folder &defsFolder = pkg->root().locate<Folder const>(ddPkg.defsPath());
 
             // Read all the DED files found in this folder, in alphabetical order.
             // Subfolders are not checked -- the DED files need to manually `Include`
             // any files from subfolders.
             defsFolder.forContents([] (String name, File &file)
             {
-                if (!name.fileNameExtension().compareWithoutCase(".ded"))
+                if (!name.fileNameExtension().compare(".ded", CaseInsensitive))
                 {
                     readDefinitionFile(file.path());
                 }
@@ -672,15 +651,15 @@ static void readAllDefinitions()
     LOG_RES_VERBOSE("readAllDefinitions: Completed in %.2f seconds") << begunAt.since();
 }
 
-static void defineFlaremap(de::Uri const &resourceUri)
+static void defineFlaremap(const res::Uri &resourceUri)
 {
     if (resourceUri.isEmpty()) return;
 
     // Reference to none?
-    if (!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
+    if (!resourceUri.path().toString().compareWithoutCase("-")) return;
 
     // Reference to a "built-in" flaremap?
-    String const &resourcePathStr = resourceUri.path().toStringRef();
+    const String resourcePathStr = resourceUri.path();
     if (resourcePathStr.length() == 1 &&
         resourcePathStr.first() >= '0' && resourcePathStr.first() <= '4')
         return;
@@ -688,31 +667,31 @@ static void defineFlaremap(de::Uri const &resourceUri)
     res::Textures::get().defineTexture("Flaremaps", resourceUri);
 }
 
-static void defineLightmap(de::Uri const &resourceUri)
+static void defineLightmap(const res::Uri &resourceUri)
 {
     if (resourceUri.isEmpty()) return;
 
     // Reference to none?
-    if (!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
+    if (!resourceUri.path().toString().compareWithoutCase("-")) return;
 
     res::Textures::get().defineTexture("Lightmaps", resourceUri);
 }
 
-static void generateMaterialDefForTexture(res::TextureManifest const &manifest)
+static void generateMaterialDefForTexture(const res::TextureManifest &manifest)
 {
     LOG_AS("generateMaterialDefForTexture");
 
     Record &mat = DED_Definitions()->materials[DED_Definitions()->addMaterial()];
     mat.set("autoGenerated", true);
 
-    de::Uri const texUri = manifest.composeUri();
-    mat.set("id", de::Uri(DD_MaterialSchemeNameForTextureScheme(texUri.scheme()), texUri.path()).compose());
+    const res::Uri texUri = manifest.composeUri();
+    mat.set("id", res::Uri(DD_MaterialSchemeNameForTextureScheme(texUri.scheme()), texUri.path()).compose());
 
     if (manifest.hasTexture())
     {
         res::Texture &tex = manifest.texture();
         mat.set("dimensions", new ArrayValue(tex.dimensions()));
-        mat.set("flags", dint(tex.isFlagged(res::Texture::NoDraw) ? MATF_NO_DRAW : 0));
+        mat.set("flags", int(tex.isFlagged(res::Texture::NoDraw) ? MATF_NO_DRAW : 0));
     }
     else
     {
@@ -727,11 +706,11 @@ static void generateMaterialDefForTexture(res::TextureManifest const &manifest)
     st0.set("texture", texUri.compose());
 
     // Is there an animation for this?
-    res::AnimGroup const *anim = res::AnimGroups::get().animGroupForTexture(manifest);
+    const res::AnimGroup *anim = res::AnimGroups::get().animGroupForTexture(manifest);
     if (anim && anim->frameCount() > 1)
     {
         // Determine the start frame.
-        dint startFrame = 0;
+        int startFrame = 0;
         while (&anim->frame(startFrame).textureManifest() != &manifest)
         {
             startFrame++;
@@ -742,8 +721,8 @@ static void generateMaterialDefForTexture(res::TextureManifest const &manifest)
             return;
 
         // Complete configuration of the first stage.
-        res::AnimGroupFrame const &animFrame0 = anim->frame(startFrame);
-        st0.set("tics", dint( animFrame0.tics() + animFrame0.randomTics()) );
+        const res::AnimGroupFrame &animFrame0 = anim->frame(startFrame);
+        st0.set("tics", int( animFrame0.tics() + animFrame0.randomTics()) );
         if (animFrame0.randomTics())
         {
             st0.set("variance", animFrame0.randomTics() / st0.getf("tics"));
@@ -751,14 +730,14 @@ static void generateMaterialDefForTexture(res::TextureManifest const &manifest)
 
         // Add further stages according to the animation group.
         startFrame++;
-        for (dint i = 0; i < anim->frameCount() - 1; ++i)
+        for (int i = 0; i < anim->frameCount() - 1; ++i)
         {
-            res::AnimGroupFrame const &animFrame      = anim->frame(de::wrap(startFrame + i, 0, anim->frameCount()));
-            res::TextureManifest const &frameManifest = animFrame.textureManifest();
+            const res::AnimGroupFrame &animFrame      = anim->frame(de::wrap(startFrame + i, 0, anim->frameCount()));
+            const res::TextureManifest &frameManifest = animFrame.textureManifest();
 
             Record &st = layerDef.addStage();
             st.set("texture", frameManifest.composeUrn().compose());
-            st.set("tics", dint( animFrame.tics() + animFrame.randomTics() ));
+            st.set("tics", int( animFrame.tics() + animFrame.randomTics() ));
             if (animFrame.randomTics())
             {
                 st.set("variance", animFrame.randomTics() / st.getf("tics"));
@@ -773,7 +752,7 @@ static void generateMaterialDefsForAllTexturesInScheme(res::TextureScheme &schem
     while (iter.hasNext()) generateMaterialDefForTexture(iter.next());
 }
 
-static inline void generateMaterialDefsForAllTexturesInScheme(String const &schemeName)
+static inline void generateMaterialDefsForAllTexturesInScheme(const String &schemeName)
 {
     generateMaterialDefsForAllTexturesInScheme(res::Textures::get().textureScheme(schemeName));
 }
@@ -790,10 +769,10 @@ static void generateMaterialDefs()
 /**
  * Returns @c true iff @a decorDef is compatible with the specified context.
  */
-static bool decorationIsCompatible(Record const &decorDef, de::Uri const &textureUri,
+static bool decorationIsCompatible(const Record &decorDef, const res::Uri &textureUri,
                                    bool materialIsCustom)
 {
-    if (de::makeUri(decorDef.gets("texture")) != textureUri)
+    if (res::makeUri(decorDef.gets("texture")) != textureUri)
         return false;
 
     if (materialIsCustom)
@@ -810,25 +789,25 @@ static bool decorationIsCompatible(Record const &decorDef, de::Uri const &textur
  * @param material  The material being (re)decorated.
  * @param def       Definition to apply.
  */
-static void redecorateMaterial(ClientMaterial &material, Record const &def)
+static void redecorateMaterial(ClientMaterial &material, const Record &def)
 {
     defn::Material matDef(def);
 
     material.clearAllDecorations();
 
     // Prefer decorations defined within the material.
-    for (dint i = 0; i < matDef.decorationCount(); ++i)
+    for (int i = 0; i < matDef.decorationCount(); ++i)
     {
         defn::MaterialDecoration decorDef(matDef.decoration(i));
 
-        for (dint k = 0; k < decorDef.stageCount(); ++k)
+        for (int k = 0; k < decorDef.stageCount(); ++k)
         {
-            Record const &st = decorDef.stage(k);
+            const Record &st = decorDef.stage(k);
 
-            defineLightmap(de::makeUri(st.gets("lightmapUp")));
-            defineLightmap(de::makeUri(st.gets("lightmapDown")));
-            defineLightmap(de::makeUri(st.gets("lightmapSide")));
-            defineFlaremap(de::makeUri(st.gets("haloTexture")));
+            defineLightmap(res::makeUri(st.gets("lightmapUp")));
+            defineLightmap(res::makeUri(st.gets("lightmapDown")));
+            defineLightmap(res::makeUri(st.gets("lightmapSide")));
+            defineFlaremap(res::makeUri(st.gets("haloTexture")));
         }
 
         material.addDecoration(LightMaterialDecoration::fromDef(decorDef.def()));
@@ -841,21 +820,21 @@ static void redecorateMaterial(ClientMaterial &material, Record const &def)
     if (material.layerCount())
     {
         // The animation configuration of layer0 determines decoration animation.
-        auto const &decorationsByTexture = DED_Definitions()->decorations.lookup("texture").elements();
-        auto const &layer0               = material.layer(0).as<world::TextureMaterialLayer>();
+        const auto &decorationsByTexture = DED_Definitions()->decorations.lookup("texture").elements();
+        const auto &layer0               = material.layer(0).as<world::TextureMaterialLayer>();
 
         bool haveDecorations = false;
-        QVector<Record const *> stageDecorations(layer0.stageCount());
-        for (dint i = 0; i < layer0.stageCount(); ++i)
+        List<const Record *> stageDecorations(layer0.stageCount());
+        for (int i = 0; i < layer0.stageCount(); ++i)
         {
-            world::TextureMaterialLayer::AnimationStage const &stage = layer0.stage(i);
+            const world::TextureMaterialLayer::AnimationStage &stage = layer0.stage(i);
             try
             {
                 res::TextureManifest &texManifest = res::Textures::get().textureManifest(stage.texture);
-                de::Uri const texUri = texManifest.composeUri();
-                for (auto const &pair : decorationsByTexture)
+                const res::Uri texUri = texManifest.composeUri();
+                for (const auto &pair : decorationsByTexture)
                 {
-                    Record const &rec = *pair.second->as<RecordValue>().record();
+                    const Record &rec = *pair.second->as<RecordValue>().record();
                     if (decorationIsCompatible(rec, texUri, material.manifest().isCustom()))
                     {
                         stageDecorations[i] = &rec;
@@ -864,25 +843,25 @@ static void redecorateMaterial(ClientMaterial &material, Record const &def)
                     }
                 }
             }
-            catch (Resources::MissingResourceManifestError const &)
+            catch (const Resources::MissingResourceManifestError &)
             {}  // Ignore this error
         }
 
         if (!haveDecorations) return;
 
-        for (dint i = 0; i < layer0.stageCount(); ++i)
+        for (int i = 0; i < layer0.stageCount(); ++i)
         {
             if (!stageDecorations[i]) continue;
 
             defn::Decoration mainDef(*stageDecorations[i]);
-            for (dint k = 0; k < mainDef.lightCount(); ++k)
+            for (int k = 0; k < mainDef.lightCount(); ++k)
             {
                 defn::MaterialDecoration decorDef(mainDef.light(k));
-                DENG2_ASSERT(decorDef.stageCount() == 1); // sanity check.
+                DE_ASSERT(decorDef.stageCount() == 1); // sanity check.
 
                 std::unique_ptr<LightMaterialDecoration> decor(
-                        new LightMaterialDecoration(Vector2i(decorDef.geta("patternSkip")),
-                                                    Vector2i(decorDef.geta("patternOffset")),
+                        new LightMaterialDecoration(Vec2i(decorDef.geta("patternSkip")),
+                                                    Vec2i(decorDef.geta("patternOffset")),
                                                     false /*don't use interpolation*/));
 
                 std::unique_ptr<LightMaterialDecoration::AnimationStage> definedDecorStage(
@@ -890,21 +869,21 @@ static void redecorateMaterial(ClientMaterial &material, Record const &def)
 
                 definedDecorStage->tics = layer0.stage(i).tics;
 
-                for (dint m = 0; m < i; ++m)
+                for (int m = 0; m < i; ++m)
                 {
                     LightMaterialDecoration::AnimationStage preStage(*definedDecorStage);
                     preStage.tics  = layer0.stage(m).tics;
-                    preStage.color = Vector3f();
+                    preStage.color = Vec3f();
                     decor->addStage(preStage);  // makes a copy.
                 }
 
                 decor->addStage(*definedDecorStage);
 
-                for (dint m = i + 1; m < layer0.stageCount(); ++m)
+                for (int m = i + 1; m < layer0.stageCount(); ++m)
                 {
                     LightMaterialDecoration::AnimationStage postStage(*definedDecorStage);
                     postStage.tics  = layer0.stage(m).tics;
-                    postStage.color = Vector3f();
+                    postStage.color = Vec3f();
                     decor->addStage(postStage);
                 }
 
@@ -916,12 +895,12 @@ static void redecorateMaterial(ClientMaterial &material, Record const &def)
 
 #endif // __CLIENT__
 
-static ded_group_t *findGroupForMaterialLayerAnimation(de::Uri const &uri)
+static ded_group_t *findGroupForMaterialLayerAnimation(const res::Uri &uri)
 {
     if (uri.isEmpty()) return nullptr;
 
     // Reverse iteration (later defs override earlier ones).
-    for (dint i = DED_Definitions()->groups.size(); i--> 0; )
+    for (int i = DED_Definitions()->groups.size(); i--> 0; )
     {
         ded_group_t &grp = DED_Definitions()->groups[i];
 
@@ -935,7 +914,7 @@ static ded_group_t *findGroupForMaterialLayerAnimation(de::Uri const &uri)
         if (!grp.tryFindFirstMemberWithMaterial(uri)) continue;
 
         // Only consider groups where each frame has a valid duration.
-        dint k;
+        int k;
         for (k = 0; k < grp.members.size(); ++k)
         {
             if (grp.members[k].tics < 0) break;
@@ -949,23 +928,20 @@ static ded_group_t *findGroupForMaterialLayerAnimation(de::Uri const &uri)
     return nullptr;  // Not found.
 }
 
-static void configureMaterial(world::Material &mat, Record const &definition)
+static void configureMaterial(world::Material &mat, const Record &definition)
 {
     defn::Material matDef(definition);
-    de::Uri const materialUri(matDef.gets("id"), RC_NULL);
+    res::Uri const materialUri(matDef.gets("id"), RC_NULL);
 
     // Reconfigure basic properties.
-    mat.setDimensions(Vector2ui(matDef.geta("dimensions")));
+    mat.setDimensions(Vec2ui(matDef.geta("dimensions")));
     mat.markDontDraw((matDef.geti("flags") & MATF_NO_DRAW) != 0);
     mat.markSkyMasked((matDef.geti("flags") & MATF_SKYMASK) != 0);
-
-#ifdef __CLIENT__
-    static_cast<ClientMaterial &>(mat).setAudioEnvironment(S_AudioEnvironmentId(&materialUri));
-#endif
+    mat.setAudioEnvironment(S_AudioEnvironmentId(&materialUri));
 
     // Reconfigure the layers.
     mat.clearAllLayers();
-    for (dint i = 0; i < matDef.layerCount(); ++i)
+    for (int i = 0; i < matDef.layerCount(); ++i)
     {
         mat.addLayerAt(world::TextureMaterialLayer::fromDef(matDef.layer(i)), mat.layerCount());
     }
@@ -980,17 +956,17 @@ static void configureMaterial(world::Material &mat, Record const &definition)
             // We may need to interpret the layer animation from the now
             // deprecated Group definitions.
 
-            if (matDef.getb(QStringLiteral("autoGenerated")) && layer0.stageCount() == 1)
+            if (matDef.getb(DE_STR("autoGenerated")) && layer0.stageCount() == 1)
             {
-                de::Uri const &textureUri = stage0.texture;
+                const res::Uri &textureUri = stage0.texture;
 
                 // Possibly; see if there is a compatible definition with
                 // a member named similarly to the texture for layer #0.
 
-                if (ded_group_t const *grp = findGroupForMaterialLayerAnimation(textureUri))
+                if (const ded_group_t *grp = findGroupForMaterialLayerAnimation(textureUri))
                 {
                     // Determine the start frame.
-                    dint startFrame = 0;
+                    int startFrame = 0;
                     while (!grp->members[startFrame].material ||
                            *grp->members[startFrame].material != textureUri)
                     {
@@ -998,21 +974,21 @@ static void configureMaterial(world::Material &mat, Record const &definition)
                     }
 
                     // Configure the first stage.
-                    ded_group_member_t const &gm0 = grp->members[startFrame];
+                    const ded_group_member_t &gm0 = grp->members[startFrame];
                     stage0.tics     = gm0.tics;
-                    stage0.variance = de::max(gm0.randomTics, 0) / dfloat( gm0.tics );
+                    stage0.variance = de::max(gm0.randomTics, 0) / float( gm0.tics );
 
                     // Add further stages for each frame in the group.
                     startFrame++;
-                    for (dint i = 0; i < grp->members.size() - 1; ++i)
+                    for (int i = 0; i < grp->members.size() - 1; ++i)
                     {
-                        dint const frame             = de::wrap(startFrame + i, 0, grp->members.size());
-                        ded_group_member_t const &gm = grp->members[frame];
+                        const int frame              = de::wrap(startFrame + i, 0, grp->members.size());
+                        const ded_group_member_t &gm = grp->members[frame];
 
                         if (gm.material)
                         {
-                            dint const tics       = gm.tics;
-                            dfloat const variance = de::max(gm.randomTics, 0) / dfloat( gm.tics );
+                            const int tics       = gm.tics;
+                            const float variance = de::max(gm.randomTics, 0) / float( gm.tics );
 
                             layer0.addStage(world::TextureMaterialLayer::AnimationStage(*gm.material, tics, variance));
                         }
@@ -1022,10 +998,10 @@ static void configureMaterial(world::Material &mat, Record const &definition)
 
             // Are there Detail definitions we need to produce a layer for?
             world::DetailTextureMaterialLayer *dlayer = nullptr;
-            for (dint i = 0; i < layer0.stageCount(); ++i)
+            for (int i = 0; i < layer0.stageCount(); ++i)
             {
                 world::TextureMaterialLayer::AnimationStage &stage = layer0.stage(i);
-                ded_detailtexture_t const *detailDef =
+                const ded_detailtexture_t *detailDef =
                     tryFindDetailTexture(stage.texture, /*UNKNOWN VALUE,*/ mat.manifest().isCustom());
 
                 if (!detailDef || !detailDef->stage.texture)
@@ -1051,24 +1027,24 @@ static void configureMaterial(world::Material &mat, Record const &definition)
                         if (dlayer->stageCount() == 2)
                         {
                             // Update the first stage with timing info.
-                            world::TextureMaterialLayer::AnimationStage const &stage0 = layer0.stage(0);
+                            const world::TextureMaterialLayer::AnimationStage &stage0 = layer0.stage(0);
                             world::TextureMaterialLayer::AnimationStage &dstage0      = dlayer->stage(0);
 
                             dstage0.tics     = stage0.tics;
                             dstage0.variance = stage0.variance;
                         }
                     }
-                    catch (Resources::MissingResourceManifestError const &)
+                    catch (const Resources::MissingResourceManifestError &)
                     {}  // Ignore this error.
                 }
             }
 
             // Are there Reflection definition we need to produce a layer for?
             world::ShineTextureMaterialLayer *slayer = nullptr;
-            for (dint i = 0; i < layer0.stageCount(); ++i)
+            for (int i = 0; i < layer0.stageCount(); ++i)
             {
                 world::TextureMaterialLayer::AnimationStage &stage = layer0.stage(i);
-                ded_reflection_t const *shineDef =
+                const ded_reflection_t *shineDef =
                     tryFindReflection(stage.texture, /*UNKNOWN VALUE,*/ mat.manifest().isCustom());
 
                 if (!shineDef || !shineDef->stage.texture)
@@ -1098,24 +1074,24 @@ static void configureMaterial(world::Material &mat, Record const &definition)
                                                  (texture.composeUri(), stage.tics, stage.variance,
                                                   maskTexture->composeUri(), shineDef->stage.blendMode,
                                                   shineDef->stage.shininess,
-                                                  Vector3f(shineDef->stage.minColor),
-                                                  Vector2f(shineDef->stage.maskWidth, shineDef->stage.maskHeight)));
+                                                  Vec3f(shineDef->stage.minColor),
+                                                  Vec2f(shineDef->stage.maskWidth, shineDef->stage.maskHeight)));
                             }
-                            catch (Resources::MissingResourceManifestError const &)
+                            catch (const Resources::MissingResourceManifestError &)
                             {}  // Ignore this error.
                         }
 
                         if (slayer->stageCount() == 2)
                         {
                             // Update the first stage with timing info.
-                            world::TextureMaterialLayer::AnimationStage const &stage0 = layer0.stage(0);
+                            const world::TextureMaterialLayer::AnimationStage &stage0 = layer0.stage(0);
                             world::TextureMaterialLayer::AnimationStage &sstage0      = slayer->stage(0);
 
                             sstage0.tics     = stage0.tics;
                             sstage0.variance = stage0.variance;
                         }
                     }
-                    catch (Resources::MissingResourceManifestError const &)
+                    catch (const Resources::MissingResourceManifestError &)
                     {}  // Ignore this error.
                 }
             }
@@ -1123,18 +1099,21 @@ static void configureMaterial(world::Material &mat, Record const &definition)
     }
 
 #ifdef __CLIENT__
-    redecorateMaterial(static_cast<ClientMaterial &>(mat), definition);
+    if (is<ClientMaterial>(mat))
+    {
+        redecorateMaterial(static_cast<ClientMaterial &>(mat), definition);
+    }
 #endif
 
     // At this point we know the material is usable.
     mat.markValid();
 }
 
-static void interpretMaterialDef(Record const &definition)
+static void interpretMaterialDef(const Record &definition)
 {
     LOG_AS("interpretMaterialDef");
     defn::Material matDef(definition);
-    de::Uri const materialUri(matDef.gets("id"), RC_NULL);
+    res::Uri const materialUri(matDef.gets("id"), RC_NULL);
     try
     {
         // Create/retrieve a manifest for the would-be material.
@@ -1148,7 +1127,7 @@ static void interpretMaterialDef(Record const &definition)
             defn::MaterialLayer layerDef(matDef.layer(0));
             if (layerDef.stageCount() > 0)
             {
-                de::Uri const textureUri(layerDef.stage(0).gets("texture"), RC_NULL);
+                res::Uri const textureUri(layerDef.stage(0).gets("texture"), RC_NULL);
                 try
                 {
                     res::TextureManifest &texManifest = res::Textures::get().textureManifest(textureUri);
@@ -1157,7 +1136,7 @@ static void interpretMaterialDef(Record const &definition)
                         manifest->setFlags(world::MaterialManifest::Custom);
                     }
                 }
-                catch (Resources::MissingResourceManifestError const &er)
+                catch (const Resources::MissingResourceManifestError &er)
                 {
                     // Log but otherwise ignore this error.
                     LOG_RES_MSG("Ignoring unknown texture \"%s\" in Material \"%s\" (layer 0 stage 0): %s")
@@ -1172,12 +1151,12 @@ static void interpretMaterialDef(Record const &definition)
         /// @todo Defer until necessary.
         configureMaterial(*manifest->derive(), definition);
     }
-    catch (Resources::UnknownSchemeError const &er)
+    catch (const Resources::UnknownSchemeError &er)
     {
         LOG_RES_WARNING("Failed to declare material \"%s\": %s")
             << materialUri << er.asText();
     }
-    catch (world::MaterialScheme::InvalidPathError const &er)
+    catch (const world::MaterialScheme::InvalidPathError &er)
     {
         LOG_RES_WARNING("Failed to declare material \"%s\": %s")
             << materialUri << er.asText();
@@ -1242,7 +1221,7 @@ void Def_Read()
 
 #ifdef __CLIENT__
     // Composite fonts.
-    for (dint i = 0; i < defs.compositeFonts.size(); ++i)
+    for (int i = 0; i < defs.compositeFonts.size(); ++i)
     {
         ClientResources::get().newFontFromDef(defs.compositeFonts[i]);
     }
@@ -1250,12 +1229,12 @@ void Def_Read()
 
     // States.
     ::runtimeDefs.states.append(defs.states.size());
-    for (dint i = 0; i < ::runtimeDefs.states.size(); ++i)
+    for (int i = 0; i < ::runtimeDefs.states.size(); ++i)
     {
         Record &dst = defs.states[i];
 
         // Make sure duplicate IDs overwrite the earliest.
-        dint stateNum = defs.getStateNum(dst.gets("id"));
+        int stateNum = defs.getStateNum(dst.gets("id"));
         if (stateNum == -1) continue;
 
         Record &dstNew = defs.states[stateNum];
@@ -1274,8 +1253,8 @@ void Def_Read()
                                                                           << dst.gets("nextState");
         }
 
-        auto const &misc = dst.geta("misc");
-        for (dint k = 0; k < NUM_STATE_MISC; ++k)
+        const auto &misc = dst.geta("misc");
+        for (int k = 0; k < NUM_STATE_MISC; ++k)
         {
             st->misc[k] = misc[k].asInt();
         }
@@ -1291,7 +1270,7 @@ void Def_Read()
 
     // Mobj info.
     ::runtimeDefs.mobjInfo.append(defs.things.size());
-    for (dint i = 0; i < runtimeDefs.mobjInfo.size(); ++i)
+    for (int i = 0; i < runtimeDefs.mobjInfo.size(); ++i)
     {
         Record *dmo = &defs.things[i];
 
@@ -1312,10 +1291,10 @@ void Def_Read()
         mo->flags2       = dmo->geta("flags")[1].asInt();
         mo->flags3       = dmo->geta("flags")[2].asInt();
 
-        auto const &states = dmo->geta("states");
-        auto const &sounds = dmo->geta("sounds");
+        const auto &states = dmo->geta("states");
+        const auto &sounds = dmo->geta("sounds");
 
-        for (dint k = 0; k < STATENAMES_COUNT; ++k)
+        for (int k = 0; k < STATENAMES_COUNT; ++k)
         {
             mo->states[k] = Def_StateForMobj(states[k].asText());
         }
@@ -1326,32 +1305,32 @@ void Def_Read()
         mo->deathSound   = defs.getSoundNum(sounds[SDN_DEATH].asText());
         mo->activeSound  = defs.getSoundNum(sounds[SDN_ACTIVE].asText());
 
-        for (dint k = 0; k < NUM_MOBJ_MISC; ++k)
+        for (int k = 0; k < NUM_MOBJ_MISC; ++k)
         {
             mo->misc[k] = dmo->geta("misc")[k].asInt();
         }
     }
 
     // Decorations. (Define textures).
-    for (dint i = 0; i < defs.decorations.size(); ++i)
+    for (int i = 0; i < defs.decorations.size(); ++i)
     {
         defn::Decoration decorDef(defs.decorations[i]);
-        for (dint k = 0; k < decorDef.lightCount(); ++k)
+        for (int k = 0; k < decorDef.lightCount(); ++k)
         {
-            Record const &st = defn::MaterialDecoration(decorDef.light(k)).stage(0);
-            if (Vector3f(st.geta("color")) != Vector3f(0, 0, 0))
+            const Record &st = defn::MaterialDecoration(decorDef.light(k)).stage(0);
+            if (Vec3f(st.geta("color")) != Vec3f(0.0f))
             {
-                defineLightmap(de::makeUri(st["lightmapUp"]));
-                defineLightmap(de::makeUri(st["lightmapDown"]));
-                defineLightmap(de::makeUri(st["lightmapSide"]));
-                defineFlaremap(de::makeUri(st["haloTexture"]));
+                defineLightmap(res::makeUri(st["lightmapUp"]));
+                defineLightmap(res::makeUri(st["lightmapDown"]));
+                defineLightmap(res::makeUri(st["lightmapSide"]));
+                defineFlaremap(res::makeUri(st["haloTexture"]));
             }
         }
     }
 
     // Detail textures (Define textures).
     res::Textures::get().textureScheme("Details").clear();
-    for (dint i = 0; i < defs.details.size(); ++i)
+    for (int i = 0; i < defs.details.size(); ++i)
     {
         ded_detailtexture_t *dtl = &defs.details[i];
 
@@ -1367,7 +1346,7 @@ void Def_Read()
     // Surface reflections (Define textures).
     res::Textures::get().textureScheme("Reflections").clear();
     res::Textures::get().textureScheme("Masks").clear();
-    for (dint i = 0; i < defs.reflections.size(); ++i)
+    for (int i = 0; i < defs.reflections.size(); ++i)
     {
         ded_reflection_t *ref = &defs.reflections[i];
 
@@ -1381,20 +1360,20 @@ void Def_Read()
         if (ref->stage.maskTexture)
         {
             res::Textures::get().defineTexture("Masks", *ref->stage.maskTexture,
-                            Vector2ui(ref->stage.maskWidth, ref->stage.maskHeight));
+                            Vec2ui(ref->stage.maskWidth, ref->stage.maskHeight));
         }
     }
 
     // Materials.
-    for (dint i = 0; i < defs.materials.size(); ++i)
+    for (int i = 0; i < defs.materials.size(); ++i)
     {
         interpretMaterialDef(defs.materials[i]);
     }
 
     // Dynamic lights. Update the sprite numbers.
-    for (dint i = 0; i < defs.lights.size(); ++i)
+    for (int i = 0; i < defs.lights.size(); ++i)
     {
-        dint const stateIdx = defs.getStateNum(defs.lights[i].state);
+        const int stateIdx = defs.getStateNum(defs.lights[i].state);
         if (stateIdx < 0)
         {
             // It's probably a bias light definition, then?
@@ -1409,18 +1388,18 @@ void Def_Read()
 
     // Sound effects.
     ::runtimeDefs.sounds.append(defs.sounds.size());
-    for (dint i = 0; i < ::runtimeDefs.sounds.size(); ++i)
+    for (int i = 0; i < ::runtimeDefs.sounds.size(); ++i)
     {
         ded_sound_t *snd = &defs.sounds[i];
         // Make sure duplicate defs overwrite the earliest.
         sfxinfo_t *si    = &::runtimeDefs.sounds[defs.getSoundNum(snd->id)];
 
-        qstrcpy(si->id, snd->id);
-        qstrcpy(si->lumpName, snd->lumpName);
-        si->lumpNum     = (qstrlen(snd->lumpName) > 0? fileSys().lumpNumForName(snd->lumpName) : -1);
-        qstrcpy(si->name, snd->name);
+        strcpy(si->id, snd->id);
+        strcpy(si->lumpName, snd->lumpName);
+        si->lumpNum     = (strlen(snd->lumpName) > 0? fileSys().lumpNumForName(snd->lumpName) : -1);
+        strcpy(si->name, snd->name);
 
-        dint const soundIdx = defs.getSoundNum(snd->link);
+        const int soundIdx = defs.getSoundNum(snd->link);
         si->link        = (soundIdx >= 0 ? &::runtimeDefs.sounds[soundIdx] : 0);
 
         si->linkPitch   = snd->linkPitch;
@@ -1467,23 +1446,24 @@ void Def_Read()
 
     // Text.
     ::runtimeDefs.texts.append(defs.text.size());
-    for (dint i = 0; i < defs.text.size(); ++i)
+    for (int i = 0; i < defs.text.size(); ++i)
     {
         Def_InitTextDef(&::runtimeDefs.texts[i], defs.text[i].text);
     }
     // Handle duplicate strings.
-    for (dint i = 0; i < ::runtimeDefs.texts.size(); ++i)
+    for (int i = 0; i < ::runtimeDefs.texts.size(); ++i)
     {
         if (!::runtimeDefs.texts[i].text) continue;
 
-        for (dint k = i + 1; k < ::runtimeDefs.texts.size(); ++k)
+        for (int k = i + 1; k < ::runtimeDefs.texts.size(); ++k)
         {
             if (!::runtimeDefs.texts[k].text) continue; // Already done.
-            if (qstricmp(defs.text[i].id, defs.text[k].id)) continue; // ID mismatch.
+            if (iCmpStrCase(defs.text[i].id, defs.text[k].id)) continue; // ID mismatch.
 
             // Update the earlier string.
-            ::runtimeDefs.texts[i].text = (char *) M_Realloc(::runtimeDefs.texts[i].text, qstrlen(::runtimeDefs.texts[k].text) + 1);
-            qstrcpy(::runtimeDefs.texts[i].text, ::runtimeDefs.texts[k].text);
+            ::runtimeDefs.texts[i].text = (char *) M_Realloc(
+                ::runtimeDefs.texts[i].text, strlen(::runtimeDefs.texts[k].text) + 1);
+            strcpy(::runtimeDefs.texts[i].text, ::runtimeDefs.texts[k].text);
 
             // Free the later string, it isn't used (>NUMTEXT).
             M_Free(::runtimeDefs.texts[k].text);
@@ -1491,13 +1471,14 @@ void Def_Read()
         }
     }
 
+#if defined(__CLIENT__)
     // Particle generators.
-    for (dint i = 0; i < defs.ptcGens.size(); ++i)
+    for (int i = 0; i < defs.ptcGens.size(); ++i)
     {
         ded_ptcgen_t *pg = &defs.ptcGens[i];
-        dint st = defs.getStateNum(pg->state);
+        int st = defs.getStateNum(pg->state);
 
-        if (!qstrcmp(pg->type, "*"))
+        if (!iCmpStr(pg->type, "*"))
             pg->typeNum = DED_PTCGEN_ANY_MOBJ_TYPE;
         else
             pg->typeNum = defs.getMobjNum(pg->type);
@@ -1505,7 +1486,7 @@ void Def_Read()
         pg->damageNum = defs.getMobjNum(pg->damage);
 
         // Figure out embedded sound ID numbers.
-        for (dint k = 0; k < pg->stages.size(); ++k)
+        for (int k = 0; k < pg->stages.size(); ++k)
         {
             if (pg->stages[k].sound.name[0])
             {
@@ -1523,7 +1504,7 @@ void Def_Read()
         stateinfo_t *stinfo = &::runtimeDefs.stateInfo[st];
 
         // Link the definition to the state.
-        if (pg->flags & world::Generator::StateChain)
+        if (pg->flags & Generator::StateChain)
         {
             // Add to the chain.
             pg->stateNext = stinfo->ptcGens;
@@ -1543,9 +1524,10 @@ void Def_Read()
             pg->stateNext = nullptr;
         }
     }
+#endif
 
     // Map infos.
-    for (dint i = 0; i < defs.mapInfos.size(); ++i)
+    for (int i = 0; i < defs.mapInfos.size(); ++i)
     {
         Record &mi = defs.mapInfos[i];
 
@@ -1560,37 +1542,36 @@ void Def_Read()
     // Log a summary of the definition database.
     LOG_RES_MSG(_E(b) "Definitions:");
     String str;
-    QTextStream os(&str);
-    os << defCountMsg(defs.episodes.size(),         "episodes");
-    os << defCountMsg(defs.groups.size(),           "animation groups");
-    os << defCountMsg(defs.compositeFonts.size(),   "composite fonts");
-    os << defCountMsg(defs.details.size(),          "detail textures");
-    os << defCountMsg(defs.finales.size(),          "finales");
-    os << defCountMsg(defs.lights.size(),           "lights");
-    os << defCountMsg(defs.lineTypes.size(),        "line types");
-    os << defCountMsg(defs.mapInfos.size(),         "map infos");
+    str += defCountMsg(defs.episodes.size(),         "episodes");
+    str += defCountMsg(defs.groups.size(),           "animation groups");
+    str += defCountMsg(defs.compositeFonts.size(),   "composite fonts");
+    str += defCountMsg(defs.details.size(),          "detail textures");
+    str += defCountMsg(defs.finales.size(),          "finales");
+    str += defCountMsg(defs.lights.size(),           "lights");
+    str += defCountMsg(defs.lineTypes.size(),        "line types");
+    str += defCountMsg(defs.mapInfos.size(),         "map infos");
 
-    dint nonAutoGeneratedCount = 0;
-    for (dint i = 0; i < defs.materials.size(); ++i)
+    int nonAutoGeneratedCount = 0;
+    for (int i = 0; i < defs.materials.size(); ++i)
     {
         if (!defs.materials[i].getb("autoGenerated"))
             ++nonAutoGeneratedCount;
     }
-    os << defCountMsg(nonAutoGeneratedCount,        "materials");
+    str += defCountMsg(nonAutoGeneratedCount,        "materials");
 
-    os << defCountMsg(defs.models.size(),           "models");
-    os << defCountMsg(defs.ptcGens.size(),          "particle generators");
-    os << defCountMsg(defs.skies.size(),            "skies");
-    os << defCountMsg(defs.sectorTypes.size(),      "sector types");
-    os << defCountMsg(defs.musics.size(),           "songs");
-    os << defCountMsg(::runtimeDefs.sounds.size(),    "sound effects");
-    os << defCountMsg(defs.sprites.size(),          "sprite names");
-    os << defCountMsg(::runtimeDefs.states.size(),    "states");
-    os << defCountMsg(defs.decorations.size(),      "surface decorations");
-    os << defCountMsg(defs.reflections.size(),      "surface reflections");
-    os << defCountMsg(::runtimeDefs.texts.size(),     "text strings");
-    os << defCountMsg(defs.textureEnv.size(),       "texture environments");
-    os << defCountMsg(::runtimeDefs.mobjInfo.size(),  "things");
+    str += defCountMsg(defs.models.size(),           "models");
+    str += defCountMsg(defs.ptcGens.size(),          "particle generators");
+    str += defCountMsg(defs.skies.size(),            "skies");
+    str += defCountMsg(defs.sectorTypes.size(),      "sector types");
+    str += defCountMsg(defs.musics.size(),           "songs");
+    str += defCountMsg(::runtimeDefs.sounds.size(),  "sound effects");
+    str += defCountMsg(defs.sprites.size(),          "sprite names");
+    str += defCountMsg(::runtimeDefs.states.size(),  "states");
+    str += defCountMsg(defs.decorations.size(),      "surface decorations");
+    str += defCountMsg(defs.reflections.size(),      "surface reflections");
+    str += defCountMsg(::runtimeDefs.texts.size(),   "text strings");
+    str += defCountMsg(defs.textureEnv.size(),       "texture environments");
+    str += defCountMsg(::runtimeDefs.mobjInfo.size(),"things");
 
     LOG_RES_MSG("%s") << str.rightStrip();
 
@@ -1600,7 +1581,7 @@ void Def_Read()
 static void initMaterialGroup(ded_group_t &def)
 {
     world::Materials::MaterialManifestGroup *group = nullptr;
-    for (dint i = 0; i < def.members.size(); ++i)
+    for (int i = 0; i < def.members.size(); ++i)
     {
         ded_group_member_t *gm = &def.members[i];
         if (!gm->material) continue;
@@ -1632,7 +1613,7 @@ static void initMaterialGroup(ded_group_t &def)
             }
 #endif
         }
-        catch (Resources::MissingResourceManifestError const &er)
+        catch (const Resources::MissingResourceManifestError &er)
         {
             // Log but otherwise ignore this error.
             LOG_RES_WARNING("Unknown material \"%s\" in group def %i: %s")
@@ -1647,11 +1628,11 @@ void Def_PostInit()
 #ifdef __CLIENT__
 
     // Particle generators: model setup.
-    for (dint i = 0; i < DED_Definitions()->ptcGens.size(); ++i)
+    for (int i = 0; i < DED_Definitions()->ptcGens.size(); ++i)
     {
         ded_ptcgen_t *gen = &DED_Definitions()->ptcGens[i];
 
-        for (dint k = 0; k < gen->stages.size(); ++k)
+        for (int k = 0; k < gen->stages.size(); ++k)
         {
             ded_ptcstage_t *st = &gen->stages[k];
 
@@ -1661,7 +1642,8 @@ void Def_PostInit()
             st->model = -1;
             try
             {
-                FrameModelDef &modef = ClientResources::get().modelDef(String("Particle%1").arg(st->type - PTC_MODEL, 2, 10, QChar('0')));
+                FrameModelDef &modef = ClientResources::get().modelDef(
+                    Stringf("Particle%02i", st->type - PTC_MODEL));
                 if (modef.subModelId(0) == NOMODELID)
                 {
                     continue;
@@ -1682,7 +1664,7 @@ void Def_PostInit()
                     st->endFrame = -1;
                 }
             }
-            catch (ClientResources::MissingModelDefError const &)
+            catch (const ClientResources::MissingModelDefError &)
             {}  // Ignore this error.
         }
     }
@@ -1690,7 +1672,7 @@ void Def_PostInit()
 #endif // __CLIENT__
 
     // Lights.
-    for (dint i = 0; i < DED_Definitions()->lights.size(); ++i)
+    for (int i = 0; i < DED_Definitions()->lights.size(); ++i)
     {
         ded_light_t &lightDef = DED_Definitions()->lights[i];
 
@@ -1702,7 +1684,7 @@ void Def_PostInit()
 
     // Material groups (e.g., for precaching).
     world::Materials::get().clearAllMaterialGroups();
-    for (dint i = 0; i < DED_Definitions()->groups.size(); ++i)
+    for (int i = 0; i < DED_Definitions()->groups.size(); ++i)
     {
         initMaterialGroup(DED_Definitions()->groups[i]);
     }
@@ -1713,11 +1695,11 @@ bool Def_SameStateSequence(state_t *snew, state_t *sold)
     if (!snew || !sold) return false;
     if (snew == sold) return true;  // Trivial.
 
-    dint const target = ::runtimeDefs.states.indexOf(snew);
-    dint const start  = ::runtimeDefs.states.indexOf(sold);
+    const int target = ::runtimeDefs.states.indexOf(snew);
+    const int start  = ::runtimeDefs.states.indexOf(sold);
 
-    dint count = 0;
-    for (dint it = sold->nextState; it >= 0 && it != start && count < 16;
+    int count = 0;
+    for (int it = sold->nextState; it >= 0 && it != start && count < 16;
         it = ::runtimeDefs.states[it].nextState, ++count)
     {
         if (it == target)
@@ -1729,15 +1711,15 @@ bool Def_SameStateSequence(state_t *snew, state_t *sold)
     return false;
 }
 
-String Def_GetStateName(state_t const *state)
+String Def_GetStateName(const state_t *state)
 {
     if (!state) return "(nullptr)";
-    dint const idx = ::runtimeDefs.states.indexOf(state);
-    DENG2_ASSERT(idx >= 0);
+    const int idx = ::runtimeDefs.states.indexOf(state);
+    DE_ASSERT(idx >= 0);
     return DED_Definitions()->states[idx].gets("id");
 }
 
-static inline dint Friendly(dint num)
+static inline int Friendly(int num)
 {
     return de::max(0, num);
 }
@@ -1748,7 +1730,7 @@ static inline dint Friendly(dint num)
  */
 void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
 {
-    DENG2_ASSERT(l && def);
+    DE_ASSERT(l && def);
 
     l->id               = def->id;
     l->flags            = def->flags[0];
@@ -1760,7 +1742,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
     l->actTime          = def->actTime;
     l->actTag           = def->actTag;
 
-    for (dint i = 0; i < 10; ++i)
+    for (int i = 0; i < 10; ++i)
     {
         if (i == 9)
             l->aparm[i] = DED_Definitions()->getMobjNum(def->aparm9);
@@ -1786,7 +1768,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
         {
             l->actMaterial = world::Materials::get().materialManifest(*def->actMaterial).id();
         }
-        catch (Resources::MissingResourceManifestError const &)
+        catch (const Resources::MissingResourceManifestError &)
         {}  // Ignore this error.
     }
 
@@ -1796,7 +1778,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
         {
             l->deactMaterial = world::Materials::get().materialManifest(*def->deactMaterial).id();
         }
-        catch (Resources::MissingResourceManifestError const &)
+        catch (const Resources::MissingResourceManifestError &)
         {}  // Ignore this error.
     }
 
@@ -1805,16 +1787,16 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
     l->materialMoveAngle = def->materialMoveAngle;
     l->materialMoveSpeed = def->materialMoveSpeed;
 
-    dint i;
+    int i;
     LOOPi(20) l->iparm[i] = def->iparm[i];
     LOOPi(20) l->fparm[i] = def->fparm[i];
     LOOPi(5)  l->sparm[i] = def->sparm[i];
 
     // Some of the parameters might be strings depending on the line class.
     // Find the right mapping table.
-    for (dint k = 0; k < 20; ++k)
+    for (int k = 0; k < 20; ++k)
     {
-        dint const a = XG_Class(l->lineClass)->iparm[k].map;
+        const int a = XG_Class(l->lineClass)->iparm[k].map;
         if (a < 0) continue;
 
         if (a & MAP_SND)
@@ -1825,7 +1807,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
         {
             if (def->iparmStr[k][0])
             {
-                if (!qstricmp(def->iparmStr[k], "-1"))
+                if (!iCmpStrCase(def->iparmStr[k], "-1"))
                 {
                     l->iparm[k] = -1;
                 }
@@ -1833,16 +1815,16 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
                 {
                     try
                     {
-                        l->iparm[k] = world::Materials::get().materialManifest(de::makeUri(def->iparmStr[k])).id();
+                        l->iparm[k] = world::Materials::get().materialManifest(res::makeUri(def->iparmStr[k])).id();
                     }
-                    catch (Resources::MissingResourceManifestError const &)
+                    catch (const Resources::MissingResourceManifestError &)
                     {}  // Ignore this error.
                 }
             }
         }
         else if (a & MAP_MUS)
         {
-            dint temp = Friendly(DED_Definitions()->getMusicNum(def->iparmStr[k]));
+            int temp = Friendly(DED_Definitions()->getMusicNum(def->iparmStr[k]));
 
             if (temp == 0)
             {
@@ -1857,7 +1839,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
         }
         else
         {
-            dint temp = DED_Definitions()->evalFlags(def->iparmStr[k]);
+            int temp = DED_Definitions()->evalFlags(def->iparmStr[k]);
             if (temp)
                 l->iparm[k] = temp;
         }
@@ -1869,8 +1851,8 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
  */
 void Def_CopySectorType(sectortype_t *s, ded_sectortype_t *def)
 {
-    DENG2_ASSERT(s && def);
-    dint i, k;
+    DE_ASSERT(s && def);
+    int i, k;
 
     s->id           = def->id;
     s->flags        = def->flags;
@@ -1913,7 +1895,7 @@ void Def_CopySectorType(sectortype_t *s, ded_sectortype_t *def)
     LOOPi(2) s->ceilInterval[i] = def->ceilInterval[i];
 }
 
-dint Def_Get(dint type, char const *id, void *out)
+int Def_Get(int type, const char *id, void *out)
 {
     switch (type)
     {
@@ -1926,15 +1908,15 @@ dint Def_Get(dint type, char const *id, void *out)
         return false;
 
     case DD_DEF_SOUND_LUMPNAME: {
-        dint32 i = *((dint32 *) id);
+        int32_t i = *((int32_t *) id);
         if (i < 0 || i >= ::runtimeDefs.sounds.size())
             return false;
-        qstrcpy((char *)out, ::runtimeDefs.sounds[i].lumpName);
+        strcpy((char *)out, ::runtimeDefs.sounds[i].lumpName);
         return true; }
 
     case DD_DEF_LINE_TYPE: {
-        dint typeId = strtol(id, (char **)nullptr, 10);
-        for (dint i = DED_Definitions()->lineTypes.size() - 1; i >= 0; i--)
+        int typeId = strtol(id, (char **)nullptr, 10);
+        for (int i = DED_Definitions()->lineTypes.size() - 1; i >= 0; i--)
         {
             if (DED_Definitions()->lineTypes[i].id != typeId) continue;
             if (out) Def_CopyLineType((linetype_t *)out, &DED_Definitions()->lineTypes[i]);
@@ -1943,8 +1925,8 @@ dint Def_Get(dint type, char const *id, void *out)
         return false; }
 
     case DD_DEF_SECTOR_TYPE: {
-        dint typeId = strtol(id, (char **)nullptr, 10);
-        for (dint i = DED_Definitions()->sectorTypes.size() - 1; i >= 0; i--)
+        int typeId = strtol(id, (char **)nullptr, 10);
+        for (int i = DED_Definitions()->sectorTypes.size() - 1; i >= 0; i--)
         {
             if (DED_Definitions()->sectorTypes[i].id != typeId) continue;
             if (out) Def_CopySectorType((sectortype_t *)out, &DED_Definitions()->sectorTypes[i]);
@@ -1956,7 +1938,7 @@ dint Def_Get(dint type, char const *id, void *out)
     }
 }
 
-dint Def_Set(dint type, dint index, dint value, void const *ptr)
+int Def_Set(int type, int index, int value, const void *ptr)
 {
     LOG_AS("Def_Set");
 
@@ -1965,7 +1947,7 @@ dint Def_Set(dint type, dint index, dint value, void const *ptr)
     case DD_DEF_SOUND:
         if (index < 0 || index >= ::runtimeDefs.sounds.size())
         {
-            DENG2_ASSERT(!"Sound index is invalid");
+            DE_ASSERT_FAIL("Sound index is invalid");
             return false;
         }
 
@@ -1973,8 +1955,8 @@ dint Def_Set(dint type, dint index, dint value, void const *ptr)
         {
         case DD_LUMP:
             S_StopSound(index, 0);
-            qstrcpy(::runtimeDefs.sounds[index].lumpName, (char const *) ptr);
-            if (qstrlen(::runtimeDefs.sounds[index].lumpName))
+            strcpy(::runtimeDefs.sounds[index].lumpName, (const char *) ptr);
+            if (strlen(::runtimeDefs.sounds[index].lumpName))
             {
                 ::runtimeDefs.sounds[index].lumpNum = fileSys().lumpNumForName(::runtimeDefs.sounds[index].lumpName);
                 if (::runtimeDefs.sounds[index].lumpNum < 0)
@@ -2005,7 +1987,7 @@ dint Def_Set(dint type, dint index, dint value, void const *ptr)
  */
 D_CMD(ListMobjs)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if (DED_Definitions()->things.size() <= 0)
     {
@@ -2014,9 +1996,9 @@ D_CMD(ListMobjs)
     }
 
     LOG_RES_MSG(_E(b) "Registered Mobjs (ID | Name):");
-    for (dint i = 0; i < DED_Definitions()->things.size(); ++i)
+    for (int i = 0; i < DED_Definitions()->things.size(); ++i)
     {
-        auto const &name = DED_Definitions()->things[i].gets("name");
+        const auto &name = DED_Definitions()->things[i].gets("name");
         if (!name.isEmpty())
             LOG_RES_MSG(" %s | %s") << DED_Definitions()->things[i].gets("id") << name;
         else
@@ -2031,7 +2013,7 @@ void Def_ConsoleRegister()
     C_CMD("listmobjtypes", "", ListMobjs);
 }
 
-DENG_DECLARE_API(Def) =
+DE_DECLARE_API(Def) =
 {
     { DE_API_DEFINITIONS },
 

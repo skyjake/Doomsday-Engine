@@ -19,22 +19,20 @@
  */
 
 #include "de_platform.h"
-#include "gl/texturecontent.h"
-
-#include <cstring>
-#include <doomsday/resource/colorpalettes.h>
-#include <de/concurrency.h>
-#include <de/memory.h>
-#include <de/GLInfo>
-#include <de/texgamma.h>
 #include "dd_def.h"  // texGamma
 #include "dd_main.h"  // App_Resources()
 #include "sys_system.h"
-
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
-
+#include "gl/texturecontent.h"
 #include "render/rend_main.h"  // misc global vars awaiting new home
+
+#include <doomsday/res/colorpalettes.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/texgamma.h>
+#include <de/glinfo.h>
+#include <cstring>
 
 using namespace de;
 
@@ -51,10 +49,11 @@ static int BytesPerPixelFmt(dgltexformat_t format)
     case DGL_RGB:                   return 3;
 
     case DGL_RGBA:                  return 4;
+
     default:
         App_Error("BytesPerPixelFmt: Unknown format %i, don't know pixel size.\n", format);
-        return 0; // Unreachable.
     }
+    return 0; // Unreachable.
 }
 
 #if 0
@@ -94,25 +93,25 @@ static int BytesPerPixel(GLint format)
 
 void GL_InitTextureContent(texturecontent_t *content)
 {
-    DENG_ASSERT(content);
-    content->format = dgltexformat_t(0);
-    content->name = 0;
-    content->pixels = 0;
-    content->paletteId = 0;
-    content->width = 0;
-    content->height = 0;
-    content->minFilter = GL_LINEAR;
-    content->magFilter = GL_LINEAR;
+    DE_ASSERT(content);
+    content->format      = dgltexformat_t(0);
+    content->name        = 0;
+    content->pixels      = 0;
+    content->paletteId   = 0;
+    content->width       = 0;
+    content->height      = 0;
+    content->minFilter   = GL_LINEAR;
+    content->magFilter   = GL_LINEAR;
     content->anisoFilter = -1; // Best.
-    content->wrap[0] = GL_CLAMP_TO_EDGE;
-    content->wrap[1] = GL_CLAMP_TO_EDGE;
-    content->grayMipmap = 0;
-    content->flags = 0;
+    content->wrap[0]     = GL_CLAMP_TO_EDGE;
+    content->wrap[1]     = GL_CLAMP_TO_EDGE;
+    content->grayMipmap  = 0;
+    content->flags       = 0;
 }
 
-texturecontent_t *GL_ConstructTextureContentCopy(texturecontent_t const *other)
+texturecontent_t *GL_ConstructTextureContentCopy(const texturecontent_t *other)
 {
-    DENG_ASSERT(other);
+    DE_ASSERT(other);
 
     texturecontent_t *c = (texturecontent_t*) M_Malloc(sizeof(*c));
 
@@ -129,7 +128,7 @@ texturecontent_t *GL_ConstructTextureContentCopy(texturecontent_t const *other)
 
 void GL_DestroyTextureContent(texturecontent_t *content)
 {
-    DENG_ASSERT(content);
+    DE_ASSERT(content);
     if (content->pixels) M_Free((uint8_t *)content->pixels);
     M_Free(content);
 }
@@ -145,12 +144,12 @@ void GL_DestroyTextureContent(texturecontent_t *content)
  * @return  The DGL texture format determined for the image.
  */
 static dgltexformat_t prepareImageAsTexture(image_t &image,
-    variantspecification_t const &spec)
+    const variantspecification_t &spec)
 {
-    DENG_ASSERT(image.pixels);
+    DE_ASSERT(image.pixels);
 
-    bool const monochrome = (spec.flags & TSF_MONOCHROME) != 0;
-    bool const scaleSharp = (spec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
+    const bool monochrome = (spec.flags & TSF_MONOCHROME) != 0;
+    const bool scaleSharp = (spec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
 
     if (spec.toAlpha)
     {
@@ -216,7 +215,7 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
             int newWidth = 0, newHeight = 0;
             newPixels = GL_SmartFilter(scaleMethod, image.pixels, image.size.x, image.size.y,
                                        0, &newWidth, &newHeight);
-            image.size = Vector2ui(newWidth, newHeight);
+            image.size = Vec2ui(newWidth, newHeight);
             if (newPixels != image.pixels)
             {
                 M_Free(image.pixels);
@@ -301,9 +300,9 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
  * @return  The DGL texture format determined for the image.
  */
 static dgltexformat_t prepareImageAsDetailTexture(image_t &image,
-    detailvariantspecification_t const &spec, float *baMul, float *hiMul, float *loMul)
+    const detailvariantspecification_t &spec, float *baMul, float *hiMul, float *loMul)
 {
-    DENG_UNUSED(spec);
+    DE_UNUSED(spec);
 
     // We want a luminance map.
     if (image.pixelSize > 2)
@@ -320,11 +319,11 @@ static dgltexformat_t prepareImageAsDetailTexture(image_t &image,
 void GL_PrepareTextureContent(texturecontent_t &c,
                               GLuint glTexName,
                               image_t &image,
-                              TextureVariantSpec const &spec,
-                              res::TextureManifest const &textureManifest)
+                              const TextureVariantSpec &spec,
+                              const res::TextureManifest &textureManifest)
 {
-    DENG_ASSERT(glTexName != 0);
-    DENG_ASSERT(image.pixels != 0);
+    DE_ASSERT(glTexName != 0);
+    DE_ASSERT(image.pixels != 0);
 
     // Initialize and assign a GL name to the content.
     GL_InitTextureContent(&c);
@@ -333,11 +332,11 @@ void GL_PrepareTextureContent(texturecontent_t &c,
     switch (spec.type)
     {
     case TST_GENERAL: {
-        variantspecification_t const &vspec = spec.variant;
-        bool const noCompression = (vspec.flags & TSF_NO_COMPRESSION) != 0;
+        const variantspecification_t &vspec = spec.variant;
+        const bool noCompression = (vspec.flags & TSF_NO_COMPRESSION) != 0;
         // If the Upscale And Sharpen filter is enabled, scaling is applied
         // implicitly by prepareImageAsTexture(), so don't do it again.
-        bool const noSmartFilter = (vspec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
+        const bool noSmartFilter = (vspec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
 
         // Prepare the image for upload.
         dgltexformat_t dglFormat = prepareImageAsTexture(image, vspec);
@@ -364,7 +363,7 @@ void GL_PrepareTextureContent(texturecontent_t &c,
         break; }
 
     case TST_DETAIL: {
-        detailvariantspecification_t const &dspec = spec.detailVariant;
+        const detailvariantspecification_t &dspec = spec.detailVariant;
 
         // Prepare the image for upload.
         float baMul, hiMul, loMul;
@@ -375,14 +374,14 @@ void GL_PrepareTextureContent(texturecontent_t &c,
         if (baMul != 1 || hiMul != 1 || loMul != 1)
         {
             // Integrate the normalization factor with contrast.
-            float const hiContrast = 1 - 1. / hiMul;
-            float const loContrast = 1 - loMul;
-            float const shift = ((hiContrast + loContrast) / 2);
+            const float hiContrast = 1 - 1. / hiMul;
+            const float loContrast = 1 - loMul;
+            const float shift = ((hiContrast + loContrast) / 2);
 
             grayMipmapFactor = int(255 * de::clamp(0.f, dspec.contrast / 255.f - shift, 1.f));
 
             // Announce the normalization.
-            de::Uri uri = textureManifest.composeUri();
+            res::Uri uri = textureManifest.composeUri();
             LOG_GL_VERBOSE("Normalized detail texture \"%s\" (balance: %f, high amp: %f, low amp: %f)")
                 << uri << baMul << hiMul << loMul;
         }
@@ -408,7 +407,7 @@ void GL_PrepareTextureContent(texturecontent_t &c,
 
     default:
         // Invalid spec type.
-        DENG_ASSERT(false);
+        DE_ASSERT(false);
     }
 }
 
@@ -419,29 +418,29 @@ void GL_PrepareTextureContent(texturecontent_t &c,
  * @param allowCompression  @c true == use compression if available.
  * @return  The chosen texture format.
  */
-static GLint ChooseTextureFormat(dgltexformat_t format, dd_bool allowCompression)
+static GLenum chooseTextureFormat(dgltexformat_t format, dd_bool allowCompression)
 {
-#if defined (DENG_OPENGL_ES)
-    
+#if defined (DE_OPENGL_ES)
+
     switch (format)
     {
     case DGL_RGB:
     case DGL_COLOR_INDEX_8:
         return GL_RGB8;
-        
+
     case DGL_RGBA:
     case DGL_COLOR_INDEX_8_PLUS_A8:
         return GL_RGBA8;
 
     default:
-        DENG2_ASSERT(!"ChooseTextureFormat: Invalid texture source format");
+        DE_ASSERT_FAIL("chooseTextureFormat: Invalid texture source format");
         return 0;
     }
 
 #else
-    
+
     dd_bool compress = (allowCompression && GL_state.features.texCompression);
-    
+
     switch (format)
     {
     case DGL_RGB:
@@ -450,7 +449,7 @@ static GLint ChooseTextureFormat(dgltexformat_t format, dd_bool allowCompression
             return GL_RGB8;
 #if USE_TEXTURE_COMPRESSION_S3
         if (GLInfo::extensions().EXT_texture_compression_s3tc)
-            return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+            return gl33ext::GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 #endif
         return GL_COMPRESSED_RGB;
 
@@ -460,7 +459,7 @@ static GLint ChooseTextureFormat(dgltexformat_t format, dd_bool allowCompression
             return GL_RGBA8;
 #if USE_TEXTURE_COMPRESSION_S3
         if (GLInfo::extensions().EXT_texture_compression_s3tc)
-            return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+            return gl33ext::GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 #endif
         return GL_COMPRESSED_RGBA;
 
@@ -471,10 +470,10 @@ static GLint ChooseTextureFormat(dgltexformat_t format, dd_bool allowCompression
         return !compress ? GL_LUMINANCE_ALPHA : GL_COMPRESSED_LUMINANCE_ALPHA;*/
 
     default:
-        DENG2_ASSERT(!"ChooseTextureFormat: Invalid texture source format");
-        return 0; // Unreachable.
+        DE_ASSERT_FAIL("chooseTextureFormat: Invalid texture source format");
+        return GL_NONE; // Unreachable.
     }
-    
+
 #endif
 }
 
@@ -489,30 +488,34 @@ static GLint ChooseTextureFormat(dgltexformat_t format, dd_bool allowCompression
  *
  * @return  @c true iff successful.
  */
-static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
-    int width,  int height, int genMipmaps)
+static dd_bool uploadTexture(GLenum         glFormat,
+                             GLenum         loadFormat,
+                             const uint8_t *pixels,
+                             int            width,
+                             int            height,
+                             int            genMipmaps)
 {
-    GLenum const properties[8] =
-    {
-       GL_PACK_ROW_LENGTH,
-       GL_PACK_ALIGNMENT,
-       GL_PACK_SKIP_ROWS,
-       GL_PACK_SKIP_PIXELS,
-       GL_UNPACK_ROW_LENGTH,
-       GL_UNPACK_ALIGNMENT,
-       GL_UNPACK_SKIP_ROWS,
-       GL_UNPACK_SKIP_PIXELS,
+    GLenum const properties[8] = {
+        GL_PACK_ROW_LENGTH,
+        GL_PACK_ALIGNMENT,
+        GL_PACK_SKIP_ROWS,
+        GL_PACK_SKIP_PIXELS,
+        GL_UNPACK_ROW_LENGTH,
+        GL_UNPACK_ALIGNMENT,
+        GL_UNPACK_SKIP_ROWS,
+        GL_UNPACK_SKIP_PIXELS,
     };
 
     const int packRowLength = 0, packAlignment = 1, packSkipRows = 0, packSkipPixels = 0;
     const int unpackRowLength = 0, unpackAlignment = 1, unpackSkipRows = 0, unpackSkipPixels = 0;
     int mipLevel = 0;
-    DENG_ASSERT(pixels);
+    DE_ASSERT(pixels);
 
-    if (!(GL_LUMINANCE_ALPHA == loadFormat || GL_LUMINANCE == loadFormat ||
+    if (!(/*GL_LUMINANCE_ALPHA == loadFormat || GL_LUMINANCE == loadFormat ||*/
          GL_RGB == loadFormat || GL_RGBA == loadFormat))
     {
-        throw Error("texturecontent_t::uploadTexture", "Unsupported load format " + String::number(loadFormat));
+        throw Error("texturecontent_t::uploadTexture",
+                    stringf("Unsupported load format 0x%x", int(loadFormat)));
     }
 
     // Can't operate on null texture.
@@ -530,41 +533,39 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
         genMipmaps = 0;
     }
 
-    //DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    auto &GL = LIBGUI_GL;
+    //DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Automatic mipmap generation?
     /*if (genMipmaps)
     {
-        GL.glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
         LIBGUI_ASSERT_GL_OK();
     }*/
 
-    //LIBGUI_GL.glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
+    //glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
     GLint oldPixelStore[8];
     for (int i = 0; i < 8; ++i)
     {
-        GL.glGetIntegerv(properties[i], &oldPixelStore[i]);
+        glGetIntegerv(properties[i], &oldPixelStore[i]);
         LIBGUI_ASSERT_GL_OK();
     }
 
-    GL.glPixelStorei(GL_PACK_ROW_LENGTH, (GLint)packRowLength);
+    glPixelStorei(GL_PACK_ROW_LENGTH, (GLint)packRowLength);
     LIBGUI_ASSERT_GL_OK();
-    GL.glPixelStorei(GL_PACK_ALIGNMENT, (GLint)packAlignment);
+    glPixelStorei(GL_PACK_ALIGNMENT, (GLint)packAlignment);
     LIBGUI_ASSERT_GL_OK();
-    GL.glPixelStorei(GL_PACK_SKIP_ROWS, (GLint)packSkipRows);
+    glPixelStorei(GL_PACK_SKIP_ROWS, (GLint)packSkipRows);
     LIBGUI_ASSERT_GL_OK();
-    GL.glPixelStorei(GL_PACK_SKIP_PIXELS, (GLint)packSkipPixels);
+    glPixelStorei(GL_PACK_SKIP_PIXELS, (GLint)packSkipPixels);
     LIBGUI_ASSERT_GL_OK();
-    GL.glPixelStorei(GL_UNPACK_ROW_LENGTH, (GLint)unpackRowLength);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, (GLint)unpackRowLength);
     LIBGUI_ASSERT_GL_OK();
-    GL.glPixelStorei(GL_UNPACK_ALIGNMENT, (GLint)unpackAlignment);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, (GLint)unpackAlignment);
     LIBGUI_ASSERT_GL_OK();
-    GL.glPixelStorei(GL_UNPACK_SKIP_ROWS, (GLint)unpackSkipRows);
+    glPixelStorei(GL_UNPACK_SKIP_ROWS, (GLint)unpackSkipRows);
     LIBGUI_ASSERT_GL_OK();
-    GL.glPixelStorei(GL_UNPACK_SKIP_PIXELS, (GLint)unpackSkipPixels);
+    glPixelStorei(GL_UNPACK_SKIP_PIXELS, (GLint)unpackSkipPixels);
     LIBGUI_ASSERT_GL_OK();
 
 #if 0
@@ -575,7 +576,7 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
 
         bpp = BytesPerPixel(loadFormat);
         if (bpp == 0)
-            throw Error("texturecontent_t::uploadTexture", "Unknown GL format " + String::number(loadFormat));
+            throw Error("texturecontent_t::uploadTexture", "Unknown GL format " + String::asText(loadFormat));
 
         GL_OptimalTextureSize(width, height, false, true, &w, &h);
 
@@ -596,7 +597,7 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
 
         for (;;)
         {
-            LIBGUI_GL.glTexImage2D(GL_TEXTURE_2D, mipLevel, (GLint)glFormat, w, h, 0, (GLint)loadFormat,
+            glTexImage2D(GL_TEXTURE_2D, mipLevel, (GLint)glFormat, w, h, 0, (GLint)loadFormat,
                 GL_UNSIGNED_BYTE, image);
 
             if (w == 1 && h == 1)
@@ -610,7 +611,7 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
                 neww, newh, /*GL_UNSIGNED_BYTE,*/ packRowLength, packAlignment,
                 packSkipRows, packSkipPixels);
             if (!newimage)
-                throw Error("texturecontent_t::uploadTexture", "Unknown error resizing mipmap level #" + String::number(mipLevel));
+                throw Error("texturecontent_t::uploadTexture", "Unknown error resizing mipmap level #" + String::asText(mipLevel));
 
             if (image != pixels)
                 M_Free(image);
@@ -626,26 +627,32 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
     else
 #endif
     {
-        LIBGUI_GL.glTexImage2D(GL_TEXTURE_2D, mipLevel, GLint(glFormat),
-                               GLsizei(width), GLsizei(height), 0,
-                               GLenum(loadFormat), GL_UNSIGNED_BYTE, pixels);
+        glTexImage2D(GL_TEXTURE_2D,
+                     mipLevel,
+                     glFormat,
+                     GLsizei(width),
+                     GLsizei(height),
+                     0,
+                     loadFormat,
+                     GL_UNSIGNED_BYTE,
+                     pixels);
         LIBGUI_ASSERT_GL_OK();
 
         if (genMipmaps)
         {
-            LIBGUI_GL.glGenerateMipmap(GL_TEXTURE_2D);
+            glGenerateMipmap(GL_TEXTURE_2D);
         }
     }
 
-    //LIBGUI_GL.glPopClientAttrib();
+    //glPopClientAttrib();
 
     for (int i = 0; i < 8; ++i)
     {
-        GL.glPixelStorei(properties[i], oldPixelStore[i]);
+        glPixelStorei(properties[i], oldPixelStore[i]);
         LIBGUI_ASSERT_GL_OK();
     }
 
-    DENG_ASSERT(!Sys_GLCheckError());
+    DE_ASSERT(!Sys_GLCheckError());
 
     return true;
 }
@@ -660,21 +667,26 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
  *
  * @return  @c true iff successful.
  */
-static dd_bool uploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixels,
-    int width, int height, float grayFactor)
+static dd_bool uploadTextureGrayMipmap(GLenum         glFormat,
+                                       GLenum         loadFormat,
+                                       const uint8_t *pixels,
+                                       int            width,
+                                       int            height,
+                                       float          grayFactor)
 {
     int i, w, h, numpels = width * height, numLevels, pixelSize;
     uint8_t* image, *faded, *out;
     const uint8_t* in;
     float invFactor;
-    DENG_ASSERT(pixels);
+    DE_ASSERT(pixels);
 
-    if (!(GL_RGB == loadFormat || GL_LUMINANCE == loadFormat))
+    if (!(GL_RGB == loadFormat || GL_RED == loadFormat))
     {
-        throw Error("texturecontent_t::uploadTextureGrayMipmap", "Unsupported load format " + String::number(loadFormat));
+        throw Error("texturecontent_t::uploadTextureGrayMipmap",
+                    "Unsupported load format " + String::asText(int(loadFormat)));
     }
 
-    pixelSize = (loadFormat == GL_LUMINANCE? 1 : 3);
+    pixelSize = (loadFormat == GL_RED? 1 : 3);
 
     // Can't operate on null texture.
     if (width < 1 || height < 1)
@@ -702,8 +714,8 @@ static dd_bool uploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8
     }
 
     // Upload the first level right away.
-    LIBGUI_GL.glTexImage2D(GL_TEXTURE_2D, 0, glFormat, width, height, 0, (GLint)loadFormat,
-        GL_UNSIGNED_BYTE, image);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, glFormat, width, height, 0, loadFormat, GL_UNSIGNED_BYTE, image);
 
     // Generate all mipmaps levels.
     w = width;
@@ -718,7 +730,7 @@ static dd_bool uploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8
         if (h > 1)
             h /= 2;
 
-        LIBGUI_GL.glTexImage2D(GL_TEXTURE_2D, i + 1, glFormat, w, h, 0, (GLint)loadFormat,
+        glTexImage2D(GL_TEXTURE_2D, i + 1, glFormat, w, h, 0, (GLenum)loadFormat,
             GL_UNSIGNED_BYTE, faded);
     }
 
@@ -726,14 +738,14 @@ static dd_bool uploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8
     M_Free(faded);
     M_Free(image);
 
-    DENG_ASSERT(!Sys_GLCheckError());
+    DE_ASSERT(!Sys_GLCheckError());
     return true;
 }
 
 /// @note Texture parameters will NOT be set here!
-void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod method)
+void GL_UploadTextureContent(const texturecontent_t &content, gfx::UploadMethod method)
 {
-    if (method == gl::Deferred)
+    if (method == gfx::Deferred)
     {
         GL_DeferTextureUpload(&content);
         return;
@@ -750,7 +762,7 @@ void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod m
 
     int loadWidth             = content.width;
     int loadHeight            = content.height;
-    uint8_t const *loadPixels = content.pixels;
+    const uint8_t *loadPixels = content.pixels;
     dgltexformat_t dglFormat  = content.format;
 
     // Convert a paletted source image to truecolor.
@@ -776,9 +788,9 @@ void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod m
         if (applyTexGamma && texGamma > .0001f)
         {
             uint8_t* dst, *localBuffer = 0;
-            long const numPels = loadWidth * loadHeight;
+            const long numPels = loadWidth * loadHeight;
 
-            uint8_t const *src = loadPixels;
+            const uint8_t *src = loadPixels;
             if (loadPixels == content.pixels)
             {
                 localBuffer = (uint8_t *) M_Malloc(comps * numPels);
@@ -843,7 +855,7 @@ void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod m
     if (dglFormat == DGL_LUMINANCE && (content.flags & TXCF_CONVERT_8BIT_TO_ALPHA))
     {
         // Needs converting. This adds some overhead.
-        long const numPixels = content.width * content.height;
+        const long numPixels = content.width * content.height;
         uint8_t *localBuffer = (uint8_t *) M_Malloc(4 * numPixels);
 
         // Move the average color to the alpha channel, make the actual color white.
@@ -866,7 +878,7 @@ void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod m
     else if (dglFormat == DGL_LUMINANCE)
     {
         // Needs converting. This adds some overhead.
-        long const numPixels = content.width * content.height;
+        const long numPixels = content.width * content.height;
         uint8_t *localBuffer = (uint8_t *) M_Malloc(3 * numPixels);
 
         // Move the average color to the alpha channel, make the actual color white.
@@ -889,7 +901,7 @@ void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod m
     if (dglFormat == DGL_LUMINANCE_PLUS_A8)
     {
         // Needs converting. This adds some overhead.
-        long const numPixels = content.width * content.height;
+        const long numPixels = content.width * content.height;
         uint8_t *localBuffer = (uint8_t *) M_Malloc(4 * numPixels);
 
         uint8_t *pixel = localBuffer;
@@ -952,22 +964,24 @@ void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod m
         }
     }
 
-    //DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, content.name);
-    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, content.minFilter);
-    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, content.magFilter);
-    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     content.wrap[0]);
-    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     content.wrap[1]);
+    glBindTexture(GL_TEXTURE_2D, content.name);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, content.minFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, content.magFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     content.wrap[0]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     content.wrap[1]);
     if (GL_state.features.texFilterAniso)
-        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(content.anisoFilter));
+    {
+        glTexParameteri(GL_TEXTURE_2D, gl33ext::GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(content.anisoFilter));
+    }
 
-    DENG2_ASSERT(dglFormat == DGL_RGB || dglFormat == DGL_RGBA);
+    DE_ASSERT(dglFormat == DGL_RGB || dglFormat == DGL_RGBA);
 
     if (!(content.flags & TXCF_GRAY_MIPMAP))
     {
-        GLint loadFormat;
+        GLenum loadFormat;
         switch (dglFormat)
         {
         //case DGL_LUMINANCE_PLUS_A8: loadFormat = GL_LUMINANCE_ALPHA; break;
@@ -975,42 +989,44 @@ void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod m
         case DGL_RGB:               loadFormat = GL_RGB;             break;
         case DGL_RGBA:              loadFormat = GL_RGBA;            break;
         default:
-            throw Error("GL_UploadTextureContent", QString("Unknown format %1").arg(int(dglFormat)));
+            throw Error("GL_UploadTextureContent", stringf("Unknown format %x", dglFormat));
         }
 
-        GLint glFormat = ChooseTextureFormat(dglFormat, !noCompression);
+        GLenum glFormat = chooseTextureFormat(dglFormat, !noCompression);
 
         if (!uploadTexture(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
                           generateMipmaps ? true : false))
         {
-            throw Error("GL_UploadTextureContent", QString("TexImage failed (%1:%2 fmt%3)")
-                                                       .arg(content.name)
-                                                       .arg(Vector2i(loadWidth, loadHeight).asText())
-                                                       .arg(int(dglFormat)));
+            throw Error("GL_UploadTextureContent",
+                        stringf("TexImage failed (%u:%s fmt%i)",
+                                content.name,
+                                Vec2i(loadWidth, loadHeight).asText().c_str(),
+                                dglFormat));
         }
     }
     else
     {
         // Special fade-to-gray luminance texture (used for details).
-        GLint glFormat, loadFormat;
+        GLenum glFormat, loadFormat;
 
         switch (dglFormat)
         {
         //case DGL_LUMINANCE:         loadFormat = GL_LUMINANCE; break;
         case DGL_RGB:               loadFormat = GL_RGB;       break;
         default:
-            throw Error("GL_UploadTextureContent", QString("Unknown format %1").arg(int(dglFormat)));
+            throw Error("GL_UploadTextureContent", stringf("Unknown format %i", dglFormat));
         }
 
-        glFormat = ChooseTextureFormat(dglFormat, !noCompression);
+        glFormat = chooseTextureFormat(dglFormat, !noCompression);
 
         if (!uploadTextureGrayMipmap(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
                                      content.grayMipmap * reciprocal255))
         {
-            throw Error("GL_UploadTextureContent", QString("TexImageGrayMipmap failed (%1:%2 fmt%3)")
-                                                       .arg(content.name)
-                                                       .arg(Vector2i(loadWidth, loadHeight).asText())
-                                                       .arg(int(dglFormat)));
+            throw Error("GL_UploadTextureContent",
+                        stringf("TexImageGrayMipmap failed (%u:%s fmt%i)",
+                                content.name,
+                                Vec2i(loadWidth, loadHeight).asText().c_str(),
+                                dglFormat));
         }
     }
 

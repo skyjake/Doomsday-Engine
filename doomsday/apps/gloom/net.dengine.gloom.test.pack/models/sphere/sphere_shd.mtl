@@ -1,0 +1,7 @@
+newmtl sphr_mtl
+Ka 1.000 1.000 1.000
+Kd 1.000 1.000 1.000
+map_Ka specGloss.tga
+map_Kd specGloss.tga
+map_Ks specGloss.tga
+norm norm.tga

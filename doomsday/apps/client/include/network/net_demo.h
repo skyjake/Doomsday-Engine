@@ -21,12 +21,16 @@
  * Demos.
  */
 
-#ifndef LIBDENG_DEMO_H
-#define LIBDENG_DEMO_H
+#ifndef DE_DEMO_H
+#define DE_DEMO_H
 
 #ifdef __SERVER__
 #  error Demos are not available in a SERVER build
 #endif
+
+// The consolePlayer's camera position is written to the demo file
+// every 3rd tic.
+#define LOCALCAM_WRITE_TICS 3
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,4 +59,4 @@ void            Demo_StopPlayback(void);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_DEMO_H */
+#endif /* DE_DEMO_H */

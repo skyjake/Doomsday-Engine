@@ -1,3 +1,5 @@
+#include <utility>
+
 /** @file packagesdialog.cpp
  *
  * @authors Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -22,36 +24,36 @@
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/dialogs/packageinfodialog.h"
 #include "ui/dialogs/datafilesettingsdialog.h"
-#include "resource/idtech1image.h"
 #include "ui/clientwindow.h"
 #include "ui/clientstyle.h"
 #include "clientapp.h"
 
-#include <doomsday/Games>
-#include <doomsday/LumpCatalog>
-#include <doomsday/res/Bundles>
+#include <doomsday/games.h>
+#include <doomsday/res/lumpcatalog.h>
+#include <doomsday/res/bundles.h>
 
 #include <de/charsymbols.h>
-#include <de/CallbackAction>
-#include <de/ChildWidgetOrganizer>
-#include <de/FileSystem>
-#include <de/DocumentPopupWidget>
-#include <de/MenuWidget>
-#include <de/NativeFile>
-#include <de/PackageLoader>
-#include <de/PopupButtonWidget>
-#include <de/PopupMenuWidget>
-#include <de/SequentialLayout>
-#include <de/SignalAction>
-#include <de/ui/SubwidgetItem>
-#include <de/ui/VariantActionItem>
+#include <de/callbackaction.h>
+#include <de/childwidgetorganizer.h>
+#include <de/filesystem.h>
+#include <de/documentpopupwidget.h>
+#include <de/menuwidget.h>
+#include <de/nativefile.h>
+#include <de/packageloader.h>
+#include <de/popupbuttonwidget.h>
+#include <de/popupmenuwidget.h>
+#include <de/sequentiallayout.h>
+#include <de/textvalue.h>
+#include <de/ui/subwidgetitem.h>
+#include <de/ui/variantactionitem.h>
 
 using namespace de;
 
-DENG_GUI_PIMPL(PackagesDialog)
+DE_GUI_PIMPL(PackagesDialog)
 , public ChildWidgetOrganizer::IWidgetFactory
 , public PackagesWidget::IPackageStatus
-, DENG2_OBSERVES(Widget, ChildAddition)
+, DE_OBSERVES(Widget, ChildAddition)
+, DE_OBSERVES(HomeMenuWidget, Click)
 {
     StringList selectedPackages;
     LabelWidget *nothingSelected;
@@ -69,12 +71,12 @@ DENG_GUI_PIMPL(PackagesDialog)
      */
     class SelectedPackageItem
         : public ui::Item
-        , DENG2_OBSERVES(res::Bundles, Identify)
+        , DE_OBSERVES(res::Bundles, Identify)
     {
     public:
-        SelectedPackageItem(String const &packageId)
+        SelectedPackageItem(const String &packageId)
         {
-            setData(packageId);
+            setData(TextValue(packageId));
             updatePackageInfo();
             DoomsdayApp::bundles().audienceForIdentify() += this;
         }
@@ -93,15 +95,15 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         String packageId() const
         {
-            return data().toString();
+            return data().asText();
         }
 
-        Record const *info() const
+        const Record *info() const
         {
             return _info;
         }
 
-        File const *packageFile() const
+        const File *packageFile() const
         {
             return _file;
         }
@@ -115,8 +117,8 @@ DENG_GUI_PIMPL(PackagesDialog)
         }
 
     private:
-        File   const *_file = nullptr;
-        Record const *_info = nullptr;
+        const File *_file = nullptr;
+        const Record *_info = nullptr;
     };
 
     /**
@@ -126,7 +128,7 @@ DENG_GUI_PIMPL(PackagesDialog)
     class SelectedPackageWidget : public HomeItemWidget
     {
     public:
-        SelectedPackageWidget(SelectedPackageItem const &item,
+        SelectedPackageWidget(const SelectedPackageItem &item,
                               PackagesDialog &owner)
             : _owner(owner)
             , _item(&item)
@@ -150,7 +152,7 @@ DENG_GUI_PIMPL(PackagesDialog)
             icon().setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
             icon().setStyleImage("package.icon", "default");
             icon().margins().set("dialog.gap");
-            Rule const &height = style().fonts().font("default").height();
+            const Rule &height = style().fonts().font("default").height();
             icon().rule().setInput(Rule::Width, height + rule("dialog.gap")*2);
         }
 
@@ -163,7 +165,7 @@ DENG_GUI_PIMPL(PackagesDialog)
             else
             {
                 label().setText(Package::splitToHumanReadable(_item->packageId()) +
-                                " " _E(D) DENG2_CHAR_MDASH " Missing");
+                                " " _E(D) DE_CHAR_MDASH " Missing");
             }
         }
 
@@ -179,7 +181,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
     private:
         PackagesDialog &_owner;
-        SelectedPackageItem const *_item;
+        const SelectedPackageItem *_item;
         ButtonWidget *_removeButton;
     };
 
@@ -191,8 +193,8 @@ DENG_GUI_PIMPL(PackagesDialog)
         // Indicator that is only visible when no packages have been added to the profile.
         nothingSelected = new LabelWidget;
 
-        nothingSelected->setText(tr("No Mods Selected"));
-        style().as<ClientStyle>().emptyMenuLabelStylist().applyStyle(*nothingSelected);
+        nothingSelected->setText("No Mods Selected");
+        style().emptyContentLabelStylist().applyStyle(*nothingSelected);
         nothingSelected->rule()
                 .setRect(self().leftArea().rule())
                 .setInput(Rule::Top, gameTitle->rule().bottom());
@@ -224,14 +226,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         menu->audienceForChildAddition() += this;
         self().leftArea().enableIndicatorDraw(true);
 
-        QObject::connect(menu, &HomeMenuWidget::itemClicked, [this] (int index)
-        {
-            if (index >= 0)
-            {
-                browser->scrollToPackage(menu->items().at(index)
-                                         .as<SelectedPackageItem>().packageId());
-            }
-        });
+        menu->audienceForClick() += this;
 
         // Package browser.
         self().rightArea().add(browser = new PackagesWidget(PackagesWidget::PopulationDisabled,
@@ -241,9 +236,9 @@ DENG_GUI_PIMPL(PackagesDialog)
         browser->setPackageStatus(*this);
 
         // Action for showing information about the package.
-        actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this] () -> PopupWidget *
+        actions << new ui::SubwidgetItem("...", ui::Up, [this] () -> PopupWidget *
         {
-            String const id = browser->actionPackage();
+            const String id = browser->actionPackage();
             return new PackageInfoDialog(id, PackageInfoDialog::EnableActions);
         });
 
@@ -254,7 +249,7 @@ DENG_GUI_PIMPL(PackagesDialog)
                                              String(),
                                              new CallbackAction([this] ()
         {
-            String const packageId = browser->actionPackage();
+            const String packageId = browser->actionPackage();
             if (!selectedPackages.contains(packageId))
             {
                 selectedPackages.append(packageId);
@@ -279,12 +274,20 @@ DENG_GUI_PIMPL(PackagesDialog)
         browser->setFilterEditorMinimumY(self().rightArea().rule().top());
     }
 
+    void menuItemClicked(HomeMenuWidget &, ui::DataPos index) override
+    {
+        if (index != ui::Data::InvalidPos)
+        {
+            browser->scrollToPackage(menu->items().at(index).as<SelectedPackageItem>().packageId());
+        }
+    }
+
     void populate()
     {
         menu->items().clear();
 
         // Remove from the list those packages that are no longer listed.
-        for (String packageId : selectedPackages)
+        for (const String &packageId : selectedPackages)
         {
             menu->items() << new SelectedPackageItem(packageId);
         }
@@ -301,9 +304,9 @@ DENG_GUI_PIMPL(PackagesDialog)
     {
         if (gameProfile && catalog.setPackages(gameProfile->allRequiredPackages() + selectedPackages))
         {
-            gameTitle->setImage(IdTech1Image::makeGameLogo(gameProfile->game(), catalog,
-                                                           IdTech1Image::UnmodifiedAppearance |
-                                                           IdTech1Image::AlwaysTryLoad));
+            gameTitle->setImage(ClientStyle::makeGameLogo(gameProfile->game(), catalog,
+                                                           ClientStyle::UnmodifiedAppearance |
+                                                           ClientStyle::AlwaysTryLoad));
             // List of the native required files.
             StringList dataFiles;
 //            if (gameProfile->customDataFile())
@@ -321,7 +324,7 @@ DENG_GUI_PIMPL(PackagesDialog)
                     {
                         // Only list here the game data files; Doomsday's PK3s are always
                         // there so listing them is not very helpful.
-                        if (Package::matchTags(*file, QStringLiteral("\\bgamedata\\b")))
+                    if (Package::matchTags(*file, DE_STR("\\bgamedata\\b")))
                         {
                             // Resolve indirection (symbolic links and interpretations) to
                             // describe the actual source file of the package.
@@ -332,36 +335,36 @@ DENG_GUI_PIMPL(PackagesDialog)
 //            }
             if (!dataFiles.isEmpty())
             {
-                gameDataFiles->setText(_E(l) + String::format("Game data file%s: ", dataFiles.size() != 1? "s" : "") +
+                gameDataFiles->setText(_E(l) + Stringf("Game data file%s: ", dataFiles.size() != 1? "s" : "") +
                                        _E(.) + String::join(dataFiles, _E(l) " and " _E(.)));
             }
             else
             {
-                gameDataFiles->setText(_E(D) + tr("Locate data file in Data Files settings"));
+                gameDataFiles->setText(_E(D) "Locate data file in Data Files settings");
             }
         }
     }
 
-    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *) override
+    GuiWidget *makeItemWidget(const ui::Item &item, const GuiWidget *) override
     {
         return new SelectedPackageWidget(item.as<SelectedPackageItem>(), self());
     }
 
-    void updateItemWidget(GuiWidget &widget, ui::Item const &) override
+    void updateItemWidget(GuiWidget &widget, const ui::Item &) override
     {
         widget.as<SelectedPackageWidget>().updateContents();
     }
 
-    bool isPackageHighlighted(String const &packageId) const override
+    bool isPackageHighlighted(const String &packageId) const override
     {
         return selectedPackages.contains(packageId);
     }
 
-    void removePackage(String const &packageId)
+    void removePackage(const String &packageId)
     {
         selectedPackages.removeOne(packageId);
-        auto pos = menu->items().findData(packageId);
-        DENG2_ASSERT(pos != ui::Data::InvalidPos);
+        auto pos = menu->items().findData(TextValue(packageId));
+        DE_ASSERT(pos != ui::Data::InvalidPos);
         menu->items().remove(pos);
         updateNothingIndicator();
         updateGameTitle();
@@ -373,20 +376,20 @@ DENG_GUI_PIMPL(PackagesDialog)
         // We use a delay here because ScrollAreaWidget does scrolling based on
         // the current geometry of the widget and HomeItemWidget uses an animation
         // for its height.
-        Loop::get().timer(0.3, [this, pos] ()
+        Loop::timer(0.3, [this, pos] ()
         {
             menu->setSelectedIndex(pos);
         });
     }
 };
 
-PackagesDialog::PackagesDialog(String const &titleText)
+PackagesDialog::PackagesDialog(const String &titleText)
     : DialogWidget("packagesdialog", WithHeading)
     , d(new Impl(this))
 {
     if (titleText.isEmpty())
     {
-        heading().setText(tr("Mods"));
+        heading().setText("Mods");
     }
     else
     {
@@ -394,10 +397,10 @@ PackagesDialog::PackagesDialog(String const &titleText)
     }
     heading().setStyleImage("package.icon");
     buttons()
-            << new DialogButtonItem(Default | Accept, tr("OK"))
-            << new DialogButtonItem(Reject, tr("Cancel"))
+            << new DialogButtonItem(Default | Accept, "OK")
+            << new DialogButtonItem(Reject, "Cancel")
             << new DialogButtonItem(Action, style().images().image("refresh"),
-                                    new CallbackAction([]() { FS::get().refreshAsync(); }))
+                                    []() { FS::get().refreshAsync(); })
             << new DialogButtonItem(Action | Id1, style().images().image("gear"),
                                     "Data Files",
                                     new CallbackAction([this]() {
@@ -433,7 +436,7 @@ void PackagesDialog::setProfile(const GameProfile &profile)
 
 void PackagesDialog::setSelectedPackages(StringList packages)
 {
-    d->selectedPackages = packages;
+    d->selectedPackages = std::move(packages);
     d->browser->populate();
     d->updateGameTitle();
 }

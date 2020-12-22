@@ -17,79 +17,79 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_MATERIALS
+#define DE_NO_API_MACROS_MATERIALS
 
 #include "de_base.h"
 #include "api_material.h"
 
-#include <doomsday/res/Textures>
-#include <doomsday/world/Materials>
-#include <doomsday/world/MaterialManifest>
+#include <doomsday/res/textures.h>
+#include <doomsday/world/materials.h>
+#include <doomsday/world/materialmanifest.h>
 
 using namespace de;
 
 #undef DD_MaterialForTextureUri
-DENG_EXTERN_C world_Material *DD_MaterialForTextureUri(uri_s const *textureUri)
+DE_EXTERN_C world_Material *DD_MaterialForTextureUri(const uri_s *textureUri)
 {
     if (!textureUri) return nullptr;  // Not found.
 
     try
     {
-        de::Uri uri = res::Textures::get().textureManifest(reinterpret_cast<de::Uri const &>(*textureUri)).composeUri();
+        res::Uri uri = res::Textures::get().textureManifest(reinterpret_cast<const res::Uri &>(*textureUri)).composeUri();
         uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
         return reinterpret_cast<world_Material *>(&world::Materials::get().material(uri));
     }
-    catch (world::MaterialManifest::MissingMaterialError const &er)
+    catch (const world::MaterialManifest::MissingMaterialError &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
-    catch (Resources::UnknownSchemeError const &er)
+    catch (const Resources::UnknownSchemeError &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
-    catch (Resources::MissingResourceManifestError const &)
+    catch (const Resources::MissingResourceManifestError &)
     {}  // Ignore this error.
 
     return nullptr;  // Not found.
 }
 
 #undef Materials_ComposeUri
-DENG_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId)
+DE_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId)
 {
     world::MaterialManifest &manifest = world::Materials::get().toMaterialManifest(materialId);
-    return reinterpret_cast<uri_s *>(new de::Uri(manifest.composeUri()));
+    return reinterpret_cast<uri_s *>(new res::Uri(manifest.composeUri()));
 }
 
 #undef Materials_ResolveUri
-DENG_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
+DE_EXTERN_C materialid_t Materials_ResolveUri(const struct uri_s *uri)
 {
     try
     {
-        return world::Materials::get().materialManifest(*reinterpret_cast<de::Uri const *>(uri)).id();
+        return world::Materials::get().materialManifest(*reinterpret_cast<const res::Uri *>(uri)).id();
     }
-    catch (Resources::MissingResourceManifestError const &)
+    catch (const Resources::MissingResourceManifestError &)
     {}  // Ignore this error.
     return NOMATERIALID;
 }
 
 #undef Materials_ResolveUriCString
-DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
+DE_EXTERN_C materialid_t Materials_ResolveUriCString(const char *uriCString)
 {
     if (uriCString && uriCString[0])
     {
         try
         {
-            return world::Materials::get().materialManifest(de::makeUri(uriCString)).id();
+            return world::Materials::get().materialManifest(res::makeUri(uriCString)).id();
         }
-        catch (Resources::MissingResourceManifestError const &)
+        catch (const Resources::MissingResourceManifestError &)
         {}  // Ignore this error.
     }
     return NOMATERIALID;
 }
 
-DENG_DECLARE_API(Material) =
+DE_DECLARE_API(Material) =
 {
     { DE_API_MATERIALS },
     DD_MaterialForTextureUri,

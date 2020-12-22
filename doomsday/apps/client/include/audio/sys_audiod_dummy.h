@@ -31,9 +31,9 @@
 #include "api_audiod_sfx.h"
 #include "api_audiod_mus.h"
 
-DENG_EXTERN_C audiodriver_t          audiod_dummy;
-DENG_EXTERN_C audiointerface_sfx_t   audiod_dummy_sfx;
-DENG_EXTERN_C audiointerface_music_t audiod_dummy_music;
-DENG_EXTERN_C audiointerface_cd_t    audiod_dummy_cd;
+DE_EXTERN_C audiodriver_t          audiod_dummy;
+DE_EXTERN_C audiointerface_sfx_t   audiod_dummy_sfx;
+DE_EXTERN_C audiointerface_music_t audiod_dummy_music;
+DE_EXTERN_C audiointerface_cd_t    audiod_dummy_cd;
 
 #endif

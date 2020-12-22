@@ -19,30 +19,28 @@
 #ifndef LOCALSERVERGUIDIALOG_H
 #define LOCALSERVERGUIDIALOG_H
 
-#include <QDialog>
-#include <de/NativePath>
+#include <de/dialogwidget.h>
+#include <de/nativepath.h>
 
-class LocalServerDialog : public QDialog
+class LocalServerDialog : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
-    explicit LocalServerDialog(QWidget *parent = 0);
+    explicit LocalServerDialog();
 
-    quint16 port() const;
+    uint16_t port() const;
     de::String name() const;
-    QString gameMode() const;
-    QStringList additionalOptions() const;
+    de::String gameMode() const;
+    de::StringList additionalOptions() const;
     de::NativePath runtimeFolder() const;
 
-protected slots:
+protected:
     void portChanged();
     void configureGameOptions();
     void saveState();
     void validate();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // LOCALSERVERGUIDIALOG_H

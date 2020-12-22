@@ -6,12 +6,12 @@ project (Doomsday)
 
 include (cmake/Config.cmake)
 
-add_subdirectory (sdk)
+add_subdirectory (libs)
 add_subdirectory (apps)
 if (NOT IOS)
-    if (DENG_ENABLE_TOOLS)
+    if (DE_ENABLE_TOOLS)
         add_subdirectory (tools)
     endif ()
-    add_subdirectory (tests)
 endif ()
+
 add_subdirectory (post)

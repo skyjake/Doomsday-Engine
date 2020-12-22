@@ -30,18 +30,6 @@
 #include "gl/gl_main.h"
 #include "api_gl.h"
 
-#include <de/concurrency.h>
-#include <de/App>
-#include <de/Config>
-#include <de/DisplayMode>
-#include <de/GLInfo>
-#include <de/GLState>
-#include <de/LogBuffer>
-#include <doomsday/console/cmd.h>
-#include <doomsday/console/var.h>
-#include <doomsday/defs/mapinfo.h>
-#include <doomsday/filesys/fs_main.h>
-#include <doomsday/resource/colorpalettes.h>
 #include "clientapp.h"
 #include "sys_system.h"  // novideo
 
@@ -54,9 +42,9 @@
 #include "gl/texturecontent.h"
 
 #include "resource/hq2x.h"
-#include "MaterialAnimator"
-#include "MaterialVariantSpec"
-#include "ClientTexture"
+#include "resource/materialanimator.h"
+#include "resource/materialvariantspec.h"
+#include "resource/clienttexture.h"
 
 #include "api_render.h"
 #include "render/rend_main.h"
@@ -67,12 +55,26 @@
 #include "render/rend_model.h"
 #include "render/rend_particle.h"
 #include "render/vr.h"
-#include "misc/r_util.h"
 
 #include "ui/ui_main.h"
-#include "ui/clientwindowsystem.h"
+
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/var.h>
+#include <doomsday/defs/mapinfo.h>
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/r_util.h>
+#include <doomsday/res/colorpalettes.h>
+#include <de/legacy/concurrency.h>
+#include <de/app.h>
+#include <de/config.h>
+#include <de/glinfo.h>
+#include <de/glstate.h>
+#include <de/logbuffer.h>
+
+#include <SDL_video.h>
 
 using namespace de;
+using namespace res;
 
 extern dint maxnumnodes;
 extern dd_bool fillOutlines;
@@ -86,8 +88,8 @@ dfloat glNearClip, glFarClip;
 static dd_bool initGLOk;
 static dd_bool initFullGLOk;
 
-static dd_bool gamma_support;
-static dfloat oldgamma, oldcontrast, oldbright;
+static dd_bool isGammaRampEnabled;
+//static dfloat oldgamma, oldcontrast, oldbright;
 
 static dint fogModeDefault;
 
@@ -109,18 +111,34 @@ dd_bool GL_IsFullyInited()
 }
 
 #if 0
-void GL_GetGammaRamp(DisplayColorTransfer *ramp)
+struct GammaRamp
 {
-    if(!gamma_support) return;
+    duint16 red[256];
+    duint16 green[256];
+    duint16 blue[256];
+};
 
-    DisplayMode_GetColorTransfer(ramp);
-}
+//void GL_GetGammaRamp(GammaRamp *ramp)
+//{
+//    if (!isGammaRampEnabled) return;
 
-void GL_SetGammaRamp(DisplayColorTransfer const *ramp)
+//    DE_ASSERT(GLWindow::mainExists());
+
+//    SDL_GetWindowGammaRamp(reinterpret_cast<SDL_Window *>(GLWindow::getMain().sdlWindow()),
+//                           ramp->red,
+//                           ramp->green,
+//                           ramp->blue);
+//}
+
+void GL_SetGammaRamp(const GammaRamp &ramp)
 {
-    if(!gamma_support) return;
-
-    DisplayMode_SetColorTransfer(ramp);
+    if (isGammaRampEnabled && GLWindow::mainExists())
+    {
+        SDL_SetWindowGammaRamp(reinterpret_cast<SDL_Window *>(GLWindow::getMain().sdlWindow()),
+                               ramp.red,
+                               ramp.green,
+                               ramp.blue);
+    }
 }
 
 /**
@@ -133,51 +151,48 @@ void GL_SetGammaRamp(DisplayColorTransfer const *ramp)
  * @param contrast  Steepness.
  * @param bright    Brightness, uniform offset.
  */
-void GL_MakeGammaRamp(ushort *ramp, dfloat gamma, dfloat contrast, dfloat bright)
+void GL_MakeGammaRamp(GammaRamp &ramp, dfloat gamma, dfloat contrast, dfloat bright)
 {
-    DENG2_ASSERT(ramp);
-
-    ddouble ideal[256];  // After processing clamped to unsigned short.
+    double ideal[256]; // After processing clamped to unsigned short.
 
     // Don't allow stupid values.
-    if(contrast < 0.1f)
-        contrast = 0.1f;
+    if (contrast < 0.1f) contrast = 0.1f;
 
-    if(bright > 0.8f)  bright = 0.8f;
-    if(bright < -0.8f) bright = -0.8f;
+    if (bright > 0.8f) bright = 0.8f;
+    if (bright < -0.8f) bright = -0.8f;
 
     // Init the ramp as a line with the steepness defined by contrast.
-    for(dint i = 0; i < 256; ++i)
+    for (int i = 0; i < 256; ++i)
     {
         ideal[i] = i * contrast - (contrast - 1) * 127;
     }
 
     // Apply the gamma curve.
-    if(gamma != 1)
+    if (gamma != 1)
     {
-        if(gamma <= 0.1f) gamma = 0.1f;
+        if (gamma <= 0.1f) gamma = 0.1f;
 
-        ddouble norm = pow(255, 1 / ddouble( gamma ) - 1);  // Normalizing factor.
-        for(dint i = 0; i < 256; ++i)
+        double norm = pow(255, 1 / double(gamma) - 1); // Normalizing factor.
+        for (int i = 0; i < 256; ++i)
         {
-            ideal[i] = pow(ideal[i], 1 / ddouble( gamma )) / norm;
+            ideal[i] = pow(ideal[i], 1 / double(gamma)) / norm;
         }
     }
 
     // The last step is to add the brightness offset.
-    for(dint i = 0; i < 256; ++i)
+    for (int i = 0; i < 256; ++i)
     {
         ideal[i] += bright * 128;
     }
 
     // Clamp it and write the ramp table.
-    for(dint i = 0; i < 256; ++i)
+    for (int i = 0; i < 256; ++i)
     {
-        ideal[i] *= 0x100;  // Byte => word
-        if(ideal[i] < 0)        ideal[i] = 0;
-        if(ideal[i] > 0xffff)   ideal[i] = 0xffff;
+        ideal[i] *= 0x100; // Byte => word
+        if (ideal[i] < 0) ideal[i] = 0;
+        if (ideal[i] > 0xffff) ideal[i] = 0xffff;
 
-        ramp[i] = ramp[i + 256] = ramp[i + 512] = (dushort) ideal[i];
+        ramp.red[i] = ramp.green[i] = ramp.blue[i] = duint16(ideal[i]);
     }
 }
 
@@ -186,14 +201,14 @@ void GL_MakeGammaRamp(ushort *ramp, dfloat gamma, dfloat contrast, dfloat bright
  */
 void GL_SetGamma()
 {
-    DisplayColorTransfer myramp;
+    GammaRamp myramp;
 
     oldgamma    = vid_gamma;
     oldcontrast = vid_contrast;
     oldbright   = vid_bright;
 
-    GL_MakeGammaRamp(myramp.table, vid_gamma, vid_contrast, vid_bright);
-    GL_SetGammaRamp(&myramp);
+    GL_MakeGammaRamp(myramp, vid_gamma, vid_contrast, vid_bright);
+    GL_SetGammaRamp(myramp);
 }
 #endif
 
@@ -202,7 +217,7 @@ void GL_FinishFrame()
 {
     if (ClientApp::vr().mode() == VRConfig::OculusRift) return;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
     LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
 #if 0
@@ -213,10 +228,10 @@ void GL_FinishFrame()
     }
 #endif
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     // Wait until the right time to show the frame so that the realized
     // frame rate is exactly right.
-    LIBGUI_GL.glFlush();
+    glFlush();
     DD_WaitForOptimalUpdateTime();
 #endif
 }
@@ -242,9 +257,9 @@ void GL_EarlyInit()
 
     LOG_GL_VERBOSE("Initializing Render subsystem...");
 
-    ClientApp::renderSystem().glInit();
+    ClientApp::render().glInit();
 
-    gamma_support = !CommandLine_Check("-noramp");
+    isGammaRampEnabled = !CommandLine_Check("-noramp");
 
     GL_InitDeferredTask();
 
@@ -314,8 +329,8 @@ void GL_Shutdown()
     if(!initGLOk || !ClientWindow::mainExists())
         return; // Not yet initialized fully.
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // We won't be drawing anything further but we don't want to shutdown
     // with the previous frame still visible as this can lead to unwanted
@@ -327,11 +342,11 @@ void GL_Shutdown()
         dint i = 0;
         do
         {
-            LIBGUI_GL.glClear(GL_COLOR_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT);
             GL_FinishFrame();
         } while(++i < 3);
     }*/
-    ClientApp::renderSystem().glDeinit();
+    ClientApp::render().glDeinit();
     GL_ShutdownDeferredTask();
     FR_Shutdown();
     Rend_ModelShutdown();
@@ -352,10 +367,10 @@ void GL_Init2DState()
     glNearClip = 5;
     glFarClip  = 16500;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_IN_MAIN_THREAD();
 
     //DGL_SetInteger(DGL_FLUSH_BACKTRACE, true);
-
+    
     // Here we configure the OpenGL state and set the projection matrix.
     DGL_CullFace(DGL_NONE);
     DGL_Disable(DGL_DEPTH_TEST);
@@ -392,20 +407,20 @@ Rangef GL_DepthClipRange()
 
 void GL_ProjectionMatrix(bool useFixedFov)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_LoadMatrix(Rend_GetProjectionMatrix(useFixedFov ? weaponFixedFOV : 0.f).values());
 }
 
-void GL_SetupFogFromMapInfo(Record const *mapInfo)
+void GL_SetupFogFromMapInfo(const Record *mapInfo)
 {
     if(mapInfo)
     {
         R_SetupFog(mapInfo->getf("fogStart"), mapInfo->getf("fogEnd"),
                    mapInfo->getf("fogDensity"),
-                   Vector3f(mapInfo->get("fogColor")).data().baseAs<float>());
+                   Vec3f(mapInfo->get("fogColor")).data().baseAs<float>());
     }
     else
     {
@@ -420,7 +435,7 @@ void GL_SetupFogFromMapInfo(Record const *mapInfo)
     String fadeTable = (mapInfo? mapInfo->gets("fadeTable") : "");
     if(!fadeTable.isEmpty())
     {
-        LumpIndex const &lumps = App_FileSystem().nameIndex();
+        const LumpIndex &lumps = App_FileSystem().nameIndex();
         dint lumpNum = lumps.findLast(fadeTable + ".lmp");
         if(lumpNum == lumps.findLast("COLORMAP.lmp"))
         {
@@ -436,15 +451,15 @@ void GL_SetupFogFromMapInfo(Record const *mapInfo)
 }
 
 #undef GL_UseFog
-DENG_EXTERN_C void GL_UseFog(dint yes)
+DE_EXTERN_C void GL_UseFog(dint yes)
 {
     fogParams.usingFog = yes;
 }
 
 void GL_SelectTexUnits(dint count)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     for (dint i = MAX_TEX_UNITS - 1; i >= count; i--)
     {
@@ -490,17 +505,17 @@ void GL_TotalRestore()
     //Con_Resize();
 
     // Restore the fog settings.
-    GL_SetupFogFromMapInfo(App_World().hasMap() ? &App_World().map().mapInfo() : nullptr);
+    GL_SetupFogFromMapInfo(world::World::get().hasMap() ? &App_World().map().mapInfo() : nullptr);
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     Z_CheckHeap();
 #endif
 }
 
 void GL_BlendMode(blendmode_t mode)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(mode)
     {
@@ -556,23 +571,24 @@ void GL_BlendMode(blendmode_t mode)
     }
 }
 
-GLenum GL_Filter(gl::Filter f)
+GLenum GL_Filter(gfx::Filter f)
 {
     switch(f)
     {
-    case gl::Nearest: return GL_NEAREST;
-    case gl::Linear:  return GL_LINEAR;
+    case gfx::Nearest: return GL_NEAREST;
+    case gfx::Linear:  return GL_LINEAR;
     }
     return GL_REPEAT;
 }
 
-GLenum GL_Wrap(gl::Wrapping w)
+GLenum GL_Wrap(gfx::Wrapping w)
 {
     switch(w)
     {
-    case gl::Repeat:         return GL_REPEAT;
-    case gl::RepeatMirrored: return GL_MIRRORED_REPEAT;
-    case gl::ClampToEdge:    return GL_CLAMP_TO_EDGE;
+    case gfx::Repeat:         return GL_REPEAT;
+    case gfx::RepeatMirrored: return GL_MIRRORED_REPEAT;
+    case gfx::ClampToEdge:    return GL_CLAMP_TO_EDGE;
+    case gfx::ClampToBorder:  return GL_CLAMP_TO_BORDER;
     }
     return GL_REPEAT;
 }
@@ -592,7 +608,7 @@ dint GL_NumMipmapLevels(dint width, dint height)
 dd_bool GL_OptimalTextureSize(dint width, dint height, dd_bool noStretch, dd_bool isMipMapped,
     dint *optWidth, dint *optHeight)
 {
-    DENG2_ASSERT(optWidth && optHeight);
+    DE_ASSERT(optWidth && optHeight);
     if (!isMipMapped)
     {
         *optWidth  = width;
@@ -691,13 +707,13 @@ dint GL_GetTexAnisoMul(dint level)
     return de::min(mul, GLInfo::limits().maxTexFilterAniso);
 }
 
-static void uploadContentUnmanaged(texturecontent_t const &content)
+static void uploadContentUnmanaged(const texturecontent_t &content)
 {
     LOG_AS("uploadContentUnmanaged");
     if(novideo) return;
 
-    gl::UploadMethod uploadMethod = GL_ChooseUploadMethod(&content);
-    if(uploadMethod == gl::Immediate)
+    gfx::UploadMethod uploadMethod = GL_ChooseUploadMethod(&content);
+    if(uploadMethod == gfx::Immediate)
     {
         LOGDEV_GL_XVERBOSE("Uploading texture (%i:%ix%i) while not busy! "
                            "Should have been precached in busy mode?",
@@ -708,7 +724,7 @@ static void uploadContentUnmanaged(texturecontent_t const &content)
 }
 
 GLuint GL_NewTextureWithParams(dgltexformat_t format, dint width, dint height,
-    duint8 const *pixels, dint flags)
+    const duint8 *pixels, dint flags)
 {
     texturecontent_t c;
     GL_InitTextureContent(&c);
@@ -723,12 +739,21 @@ GLuint GL_NewTextureWithParams(dgltexformat_t format, dint width, dint height,
     return c.name;
 }
 
-GLuint GL_NewTextureWithParams(dgltexformat_t format, dint width, dint height,
-    uint8_t const *pixels, dint flags, dint grayMipmap, dint minFilter, dint magFilter,
-    dint anisoFilter, dint wrapS, dint wrapT)
+GLuint GL_NewTextureWithParams(dgltexformat_t format,
+                               dint           width,
+                               dint           height,
+                               const uint8_t *pixels,
+                               dint           flags,
+                               dint           grayMipmap,
+                               GLenum         minFilter,
+                               GLenum         magFilter,
+                               dint           anisoFilter,
+                               GLenum         wrapS,
+                               GLenum         wrapT)
 {
     texturecontent_t c;
     GL_InitTextureContent(&c);
+
     c.name        = GL_GetReservedTextureName();
     c.format      = format;
     c.width       = width;
@@ -746,19 +771,19 @@ GLuint GL_NewTextureWithParams(dgltexformat_t format, dint width, dint height,
     return c.name;
 }
 
-static inline MaterialVariantSpec const &uiMaterialSpec(gl::Wrapping wrapS, gl::Wrapping wrapT)
+static inline const MaterialVariantSpec &uiMaterialSpec(gfx::Wrapping wrapS, gfx::Wrapping wrapT)
 {
     return resSys().materialSpec(UiContext, 0, 1, 0, 0, GL_Wrap(wrapS), GL_Wrap(wrapT),
                                  0, 1, 0, false, false, false, false);
 }
 
-static inline MaterialVariantSpec const &pspriteMaterialSpec(dint tClass, dint tMap)
+static inline const MaterialVariantSpec &pspriteMaterialSpec(dint tClass, dint tMap)
 {
     return resSys().materialSpec(PSpriteContext, 0, 1, tClass, tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                  0, -2, 0, false, true, true, false);
 }
 
-void GL_SetMaterialUI2(world::Material *material, gl::Wrapping wrapS, gl::Wrapping wrapT)
+void GL_SetMaterialUI2(world::Material *material, gfx::Wrapping wrapS, gfx::Wrapping wrapT)
 {
     if(!material) return; // @todo we need a "NULL material".
 
@@ -772,33 +797,34 @@ void GL_SetMaterialUI2(world::Material *material, gl::Wrapping wrapS, gl::Wrappi
 
 void GL_SetMaterialUI(world::Material *mat)
 {
-    GL_SetMaterialUI2(mat, gl::ClampToEdge, gl::ClampToEdge);
+    GL_SetMaterialUI2(mat, gfx::ClampToEdge, gfx::ClampToEdge);
 }
 
 void GL_SetPSprite(world::Material *material, dint tClass, dint tMap)
 {
-    if(!material) return;
+    if (auto *clMat = maybeAs<ClientMaterial>(material))
+    {
+        MaterialAnimator &matAnimator = clMat->getAnimator(pspriteMaterialSpec(tClass, tMap));
 
-    MaterialAnimator &matAnimator = static_cast<ClientMaterial *>(material)->getAnimator(pspriteMaterialSpec(tClass, tMap));
+        // Ensure we have up to date info about the material.
+        matAnimator.prepare();
 
-    // Ensure we have up to date info about the material.
-    matAnimator.prepare();
-
-    GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
+        GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
+    }
 }
 
-void GL_SetRawImage(lumpnum_t lumpNum, gl::Wrapping wrapS, gl::Wrapping wrapT)
+void GL_SetRawImage(lumpnum_t lumpNum, gfx::Wrapping wrapS, gfx::Wrapping wrapT)
 {
     if(rawtex_t *rawTex = ClientResources::get().declareRawTexture(lumpNum))
     {
         GL_BindTextureUnmanaged(GL_PrepareRawTexture(*rawTex), wrapS, wrapT,
-                                (filterUI ? gl::Linear : gl::Nearest));
+                                (filterUI ? gfx::Linear : gfx::Nearest));
     }
 }
 
 void GL_BindTexture(TextureVariant *vtexture)
 {
-#if defined (DENG_HAVE_BUSYRUNNER)
+#if defined (DE_HAVE_BUSYRUNNER)
     if (ClientApp::busyRunner().inWorkerThread()) return;
 #endif
 
@@ -810,33 +836,33 @@ void GL_BindTexture(TextureVariant *vtexture)
         return;
     }
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, glTexName);
+    glBindTexture(GL_TEXTURE_2D, glTexName);
     LIBGUI_ASSERT_GL_OK();
 
     // Apply dynamic adjustments to the GL texture state according to our spec.
-    TextureVariantSpec const &spec = vtexture->spec();
+    const TextureVariantSpec &spec = vtexture->spec();
     if(spec.type == TST_GENERAL)
     {
-        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, spec.variant.wrapS);
-        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, spec.variant.wrapT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, spec.variant.wrapS);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, spec.variant.wrapT);
 
-        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, spec.variant.glMagFilter());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, spec.variant.glMagFilter());
         if(GL_state.features.texFilterAniso)
         {
-            LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
+            glTexParameteri(GL_TEXTURE_2D, gl33ext::GL_TEXTURE_MAX_ANISOTROPY_EXT,
                             GL_GetTexAnisoMul(spec.variant.logicalAnisoLevel()));
         }
         LIBGUI_ASSERT_GL_OK();
     }
 }
 
-void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wrapT,
-    gl::Filter filter)
+void GL_BindTextureUnmanaged(GLuint glName, gfx::Wrapping wrapS, gfx::Wrapping wrapT,
+                             gfx::Filter filter)
 {
-#if defined (DENG_HAVE_BUSYRUNNER)
+#if defined (DE_HAVE_BUSYRUNNER)
     if (ClientApp::busyRunner().inWorkerThread()) return;
 #endif
 
@@ -848,23 +874,24 @@ void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wra
         return;
     }
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, glName);
+    glBindTexture(GL_TEXTURE_2D, glName);
     LIBGUI_ASSERT_GL_OK();
 
-    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_Wrap(wrapS));
-    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_Wrap(wrapT));
-    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_Filter(filter));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_Wrap(wrapS));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_Wrap(wrapT));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_Filter(filter));
     if(GL_state.features.texFilterAniso)
     {
-        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
+        glTexParameteri(
+            GL_TEXTURE_2D, gl33ext::GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
     }
     LIBGUI_ASSERT_GL_OK();
 }
 
-void GL_Bind(GLTextureUnit const &glTU)
+void GL_Bind(const GLTextureUnit &glTU)
 {
     if(!glTU.hasTexture()) return;
 
@@ -885,28 +912,28 @@ void GL_Bind(GLTextureUnit const &glTU)
     }
 }
 
-void GL_BindTo(GLTextureUnit const &glTU, dint unit)
+void GL_BindTo(const GLTextureUnit &glTU, dint unit)
 {
     if(!glTU.hasTexture()) return;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
     DGL_SetInteger(DGL_ACTIVE_TEXTURE, unit);
     GL_Bind(glTU);
 }
 
 void GL_SetNoTexture()
 {
-#if defined (DENG_HAVE_BUSYRUNNER)
+#if defined (DE_HAVE_BUSYRUNNER)
     if(ClientApp::busyRunner().inWorkerThread()) return;
 #endif
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     /// @todo Don't actually change the current binding. Instead we should disable
     ///       all currently enabled texture types.
-    LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 dint GL_ChooseSmartFilter(dint width, dint height, dint /*flags*/)
@@ -916,7 +943,7 @@ dint GL_ChooseSmartFilter(dint width, dint height, dint /*flags*/)
     return 1;  // nearest neighbor.
 }
 
-duint8 *GL_SmartFilter(dint method, duint8 const *src, dint width, dint height,
+duint8 *GL_SmartFilter(dint method, const duint8 *src, dint width, dint height,
     dint flags, dint *outWidth, dint *outHeight)
 {
     dint newWidth, newHeight;
@@ -956,10 +983,10 @@ duint8 *GL_SmartFilter(dint method, duint8 const *src, dint width, dint height,
     return out;
 }
 
-duint8 *GL_ConvertBuffer(duint8 const *in, dint width, dint height, dint informat,
+duint8 *GL_ConvertBuffer(const duint8 *in, dint width, dint height, dint informat,
                          colorpaletteid_t paletteId, dint outformat)
 {
-    DENG2_ASSERT(in);
+    DE_ASSERT(in);
 
     if(informat == outformat)
     {
@@ -993,8 +1020,8 @@ duint8 *GL_ConvertBuffer(duint8 const *in, dint width, dint height, dint informa
 
     if(informat == 3 && outformat == 4)
     {
-        long const numPels = width * height;
-        duint8 const *src  = in;
+        const long numPels = width * height;
+        const duint8 *src  = in;
         duint8 *dst        = out;
         for(long i = 0; i < numPels; ++i)
         {
@@ -1010,13 +1037,13 @@ duint8 *GL_ConvertBuffer(duint8 const *in, dint width, dint height, dint informa
     return out;
 }
 
-void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelSize,
+void GL_CalcLuminance(const duint8 *buffer, dint width, dint height, dint pixelSize,
     colorpaletteid_t paletteId, dfloat *retBrightX, dfloat *retBrightY,
     ColorRawf *retColor, dfloat *retLumSize)
 {
-    DENG2_ASSERT(buffer && retBrightX && retBrightY && retColor && retLumSize);
+    DE_ASSERT(buffer && retBrightX && retBrightY && retColor && retLumSize);
 
-    static duint8 const sizeLimit = 192, brightLimit = 224, colLimit = 192;
+    static const duint8 sizeLimit = 192, brightLimit = 224, colLimit = 192;
 
     res::ColorPalette *palette = (pixelSize == 1? &resSys().colorPalettes().colorPalette(paletteId) : nullptr);
 
@@ -1056,9 +1083,9 @@ void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelS
         lowAvg[i]  = 0;
     }
 
-    duint8 const *src = buffer;
+    const duint8 *src = buffer;
     // In paletted mode, the alpha channel follows the actual image.
-    duint8 const *alphaSrc = &buffer[width * height];
+    const duint8 *alphaSrc = &buffer[width * height];
 
     // Skip to the start of the first column.
     if(region[2] > 0)
@@ -1082,14 +1109,14 @@ void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelS
         for(dint x = region[0]; x <= region[1]; ++x, src += pixelSize, alphaSrc++)
         {
             // Alpha pixels don't count. Why? -ds
-            dd_bool const pixelIsTransparent = (pixelSize == 1? *alphaSrc < 255 :
+            const dd_bool pixelIsTransparent = (pixelSize == 1? *alphaSrc < 255 :
                                                 pixelSize == 4?    src[3] < 255 : false);
 
             if(pixelIsTransparent) continue;
 
             if(pixelSize == 1)
             {
-                Vector3ub palColor = palette->color(*src);
+                Vec3ub palColor = palette->color(*src);
                 rgb[0] = palColor.x;
                 rgb[1] = palColor.y;
                 rgb[2] = palColor.z;
@@ -1180,7 +1207,7 @@ void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelS
             }
         }
 
-        Vector3f color(retColor->rgb);
+        Vec3f color(retColor->rgb);
         R_AmplifyColor(color);
         for(dint i = 0; i < 3; ++i)
         {
@@ -1207,13 +1234,13 @@ void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelS
     */
 }
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
 
 D_CMD(SetRes)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     bool isFull = win->isFullScreen();
@@ -1228,9 +1255,9 @@ D_CMD(SetRes)
 
 D_CMD(SetFullRes)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     dint attribs[] = {
@@ -1244,9 +1271,9 @@ D_CMD(SetFullRes)
 
 D_CMD(SetWinRes)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     dint attribs[] = {
@@ -1261,9 +1288,9 @@ D_CMD(SetWinRes)
 
 D_CMD(ToggleFullscreen)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     dint attribs[] = {
@@ -1275,9 +1302,9 @@ D_CMD(ToggleFullscreen)
 
 D_CMD(ToggleMaximized)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     dint attribs[] = {
@@ -1289,9 +1316,9 @@ D_CMD(ToggleMaximized)
 
 D_CMD(ToggleCentered)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     dint attribs[] = {
@@ -1303,9 +1330,9 @@ D_CMD(ToggleCentered)
 
 D_CMD(CenterWindow)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     dint attribs[] = {
@@ -1317,9 +1344,9 @@ D_CMD(CenterWindow)
 
 D_CMD(SetBPP)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
     dint attribs[] = {
@@ -1329,40 +1356,43 @@ D_CMD(SetBPP)
     return win->changeAttributes(attribs);
 }
 
-#endif // !DENG_MOBILE
+#endif // !DE_MOBILE
 
 D_CMD(DisplayModeInfo)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
-    ClientWindow *win = ClientWindowSystem::mainPtr();
+    ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
-    DisplayMode const *mode = DisplayMode_Current();
+    SDL_DisplayMode disp;
+    Vec2i ratio = de::ratio({disp.w, disp.h});
+    SDL_GetCurrentDisplayMode(win->displayIndex(), &disp);
 
-    String str = String("Current display mode:%1 depth:%2 (%3:%4")
-                     .arg(Vector2i(mode->width, mode->height).asText())
-                     .arg(mode->depth)
-                     .arg(mode->ratioX)
-                     .arg(mode->ratioY);
-    if(mode->refreshRate > 0)
+    String str = Stringf("Current display mode:%ix%i depth:%i (%i:%i",
+                         disp.w,
+                         disp.h,
+                         SDL_BITSPERPIXEL(disp.format),
+                         ratio.x,
+                         ratio.y);
+    if (disp.refresh_rate > 0)
     {
-        str += String(", refresh: %1 Hz").arg(mode->refreshRate, 0, 'f', 1);
+        str += Stringf(", refresh: %d Hz", disp.refresh_rate);
     }
-    str += String(")\nMain window:\n  current origin:%1 size:%2"
-                  "\n  windowed origin:%3 size:%4"
-                  "\n  fullscreen size:%5")
-               .arg(win->pos().asText())
-               .arg(win->pointSize().asText())
-               .arg(win->windowRect().topLeft.asText())
-               .arg(win->windowRect().size().asText())
-               .arg(win->fullscreenSize().asText());
+    str += Stringf(")\nMain window:\n  current origin:%s size:%s"
+                  "\n  windowed origin:%s size:%s"
+                  "\n  fullscreen size:%s",
+               win->pos().asText().c_str(),
+               win->pointSize().asText().c_str(),
+               win->windowRect().topLeft.asText().c_str(),
+               win->windowRect().size().asText().c_str(),
+               win->fullscreenSize().asText().c_str());
 
-#if !defined (DENG_MOBILE)
-    str += String("\n  fullscreen:%1 centered:%2 maximized:%3")
-               .arg(DENG2_BOOL_YESNO( win->isFullScreen() ))
-               .arg(DENG2_BOOL_YESNO( win->isCentered()   ))
-               .arg(DENG2_BOOL_YESNO( win->isMaximized()  ));
+#if !defined (DE_MOBILE)
+    str += Stringf("\n  fullscreen:%s centered:%s maximized:%s",
+                   DE_BOOL_YESNO(win->isFullScreen()),
+                   DE_BOOL_YESNO(win->isCentered()),
+                   DE_BOOL_YESNO(win->isMaximized()));
 #endif
 
     LOG_GL_MSG("%s") << str;
@@ -1371,23 +1401,25 @@ D_CMD(DisplayModeInfo)
 
 D_CMD(ListDisplayModes)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
-    LOG_GL_MSG("There are %i display modes available:") << DisplayMode_Count();
-    for(dint i = 0; i < DisplayMode_Count(); ++i)
+    auto &win = GLWindow::getMain();
+    const auto modes = GLWindow::displayModes(win.displayIndex());
+
+    LOG_GL_MSG("There are %i display modes available:") << modes.size();
+    for (const auto &mode : modes)
     {
-        DisplayMode const *mode = DisplayMode_ByIndex(i);
-        if(mode->refreshRate > 0)
+        if (mode.refreshRate > 0)
         {
-            LOG_GL_MSG("  %i x %i x %i " _E(>) "(%i:%i, refresh: %.1f Hz)")
-                    << mode->width << mode->height << mode->depth
-                    << mode->ratioX << mode->ratioY << mode->refreshRate;
+            LOG_GL_MSG("  %i x %i x %i " _E(>) "(%i:%i, refresh: %d Hz)")
+                    << mode.resolution.x << mode.resolution.y << mode.bitDepth
+                    << mode.ratio().x << mode.ratio().y << mode.refreshRate;
         }
         else
         {
             LOG_GL_MSG("  %i x %i x %i (%i:%i)")
-                    << mode->width << mode->height << mode->depth
-                    << mode->ratioX << mode->ratioY;
+                    << mode.resolution.x << mode.resolution.y<< mode.bitDepth
+                    << mode.ratio().x << mode.ratio().y;
         }
     }
     return true;
@@ -1396,7 +1428,7 @@ D_CMD(ListDisplayModes)
 #if 0
 D_CMD(UpdateGammaRamp)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     GL_SetGamma();
     LOG_GL_VERBOSE("Gamma ramp set");
@@ -1406,7 +1438,7 @@ D_CMD(UpdateGammaRamp)
 
 D_CMD(Fog)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(argc == 1)
     {
@@ -1491,7 +1523,7 @@ D_CMD(Fog)
 void GL_Register()
 {
     // Cvars
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     C_VAR_INT  ("rend-dev-wireframe",    &renderWireframe,  CVF_NO_ARCHIVE, 0, 2);
 #endif
     C_VAR_INT  ("rend-fog-default",      &fogModeDefault,   0, 0, 2);
@@ -1518,7 +1550,7 @@ void GL_Register()
     C_CMD_FLAGS("fog",              nullptr,   Fog,                CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
     C_CMD      ("displaymode",      "",     DisplayModeInfo);
     C_CMD      ("listdisplaymodes", "",     ListDisplayModes);
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     C_CMD      ("setcolordepth",    "i",    SetBPP);
     C_CMD      ("setbpp",           "i",    SetBPP);
     C_CMD      ("setres",           "ii",   SetRes);

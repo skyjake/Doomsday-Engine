@@ -17,28 +17,24 @@
  * 02110-1301 USA</small>
  */
 
-#include <QScopedPointer>
-
 #include "render/trianglestripbuilder.h"
 
 using namespace de;
 
-DENG2_PIMPL(TriangleStripBuilder)
+DE_PIMPL(TriangleStripBuilder)
 {
     ClockDirection direction;
     bool buildTexCoords;
     int initialReserveElements;
 
-    QScopedPointer<PositionBuffer> positions;
-    QScopedPointer<TexCoordBuffer> texcoords;
+    std::unique_ptr<PositionBuffer> positions;
+    std::unique_ptr<TexCoordBuffer> texcoords;
 
     Impl(Public *i, bool buildTexCoords)
-        : Base(i),
-          direction(Clockwise),
-          buildTexCoords(buildTexCoords),
-          initialReserveElements(0),
-          positions(0),
-          texcoords(0)
+        : Base(i)
+        , direction(Clockwise)
+        , buildTexCoords(buildTexCoords)
+        , initialReserveElements(0)
     {}
 
     void reserveElements(int num)
@@ -46,7 +42,7 @@ DENG2_PIMPL(TriangleStripBuilder)
         if(num < 0) return; // Huh?
 
         // Time to allocate the buffers?
-        if(positions.isNull())
+        if (!positions)
         {
             positions.reset(new PositionBuffer());
             if(buildTexCoords)
@@ -82,36 +78,35 @@ void TriangleStripBuilder::extend(AbstractEdge &edge)
     // Silently ignore invalid edges.
     if(!edge.isValid()) return;
 
-    AbstractEdge::Event const &from = edge.first();
-    AbstractEdge::Event const &to   = edge.last();
+    const AbstractEdge::Event &from = edge.first();
+    const AbstractEdge::Event &to   = edge.last();
 
     d->reserveElements(2);
 
-    d->positions->append((d->direction == Anticlockwise? to : from).origin());
-    d->positions->append((d->direction == Anticlockwise? from : to).origin());
+    d->positions->append((d->direction == CounterClockwise? to : from).origin());
+    d->positions->append((d->direction == CounterClockwise? from : to).origin());
 
     if(d->buildTexCoords)
     {
         double edgeLength = to.origin().z - from.origin().z;
 
-        d->texcoords->append(edge.materialOrigin() + Vector2f(0, (d->direction == Anticlockwise? 0 : edgeLength)));
-        d->texcoords->append(edge.materialOrigin() + Vector2f(0, (d->direction == Anticlockwise? edgeLength : 0)));
+        d->texcoords->append(edge.materialOrigin() + Vec2f(0, (d->direction == CounterClockwise? 0 : edgeLength)));
+        d->texcoords->append(edge.materialOrigin() + Vec2f(0, (d->direction == CounterClockwise? edgeLength : 0)));
     }
 }
 
 int TriangleStripBuilder::numElements() const
 {
-    return d->positions.isNull()? 0 : d->positions->size();
+    return d->positions? d->positions->sizei() : 0;
 }
 
 int TriangleStripBuilder::take(PositionBuffer **positions, TexCoordBuffer **texcoords)
 {
-    int retNumElements = numElements();
-
-    *positions = d->positions.take();
-    if(texcoords)
+    const int retNumElements = numElements();
+    *positions = d->positions.release();
+    if (texcoords)
     {
-        *texcoords = d->texcoords.take();
+        *texcoords = d->texcoords.release();
     }
     return retNumElements;
 }

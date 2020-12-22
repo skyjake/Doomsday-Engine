@@ -17,12 +17,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_WALLSPEC
-#define DENG_RENDER_WALLSPEC
+#ifndef DE_RENDER_WALLSPEC
+#define DE_RENDER_WALLSPEC
 
-#include <QFlags>
-
-#include "Line"
+#include "world/line.h"
 
 /**
  * Wall geometry specification. The members are public for convenient access.
@@ -68,10 +66,9 @@ public:
 
         DefaultFlags = ForceOpaque | SkyClip
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     /// Specification flags.
-    Flags flags;
+    de::Flags flags;
 
     /// Wall section identifier.
     int section;
@@ -79,7 +76,9 @@ public:
     /**
      * Construct a default wall geometry specification for the specifed @a section.
      */
-    WallSpec(int section = 0, Flags flags = DefaultFlags) : flags(flags), section(section)
+    WallSpec(int section = 0, de::Flags flags = DefaultFlags)
+        : flags(flags)
+        , section(section)
     {}
 
     /**
@@ -87,9 +86,7 @@ public:
      * @a side and @a section of a map Line considering the current map renderer
      * configuration.
      */
-    static WallSpec fromMapSide(LineSide const &side, int section);
+    static WallSpec fromMapSide(const LineSide &side, int section);
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(WallSpec::Flags)
-
-#endif // DENG_RENDER_WALLSPEC
+#endif // DE_RENDER_WALLSPEC

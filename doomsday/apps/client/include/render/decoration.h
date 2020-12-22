@@ -18,14 +18,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_DECORATION_H
-#define DENG_CLIENT_RENDER_DECORATION_H
+#ifndef DE_CLIENT_RENDER_DECORATION_H
+#define DE_CLIENT_RENDER_DECORATION_H
 
-#include <de/Error>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/vector.h>
 
-#include "MapObject"
-#include "MaterialAnimator"
+#include "world/mapobject.h"
+#include "resource/materialanimator.h"
 
 /// No decorations are visible beyond this.
 #define MAX_DECOR_DISTANCE      (2048)
@@ -40,7 +40,7 @@ class Decoration : public world::MapObject
 {
 public:
     /// Required surface is missing. @ingroup errors
-    DENG2_ERROR(MissingSurfaceError);
+    DE_ERROR(MissingSurfaceError);
 
 public:
     /**
@@ -49,8 +49,8 @@ public:
      * @param source  Source of the decoration (a material).
      * @param origin  Origin of the decoration in map space.
      */
-    Decoration(MaterialAnimator::Decoration const &source,
-               de::Vector3d const &origin = de::Vector3d());
+    Decoration(const MaterialAnimator::Decoration &source,
+               const de::Vec3d &origin = de::Vec3d());
     virtual ~Decoration();
 
     de::String description() const;
@@ -60,7 +60,7 @@ public:
      *
      * @see hasSource(), setSource()
      */
-    MaterialAnimator::Decoration const &source() const;
+    const MaterialAnimator::Decoration &source() const;
 
     /**
      * Returns @c true iff a surface is attributed for the decoration.
@@ -73,7 +73,7 @@ public:
      * Convenient method which returns the surface owner of the decoration.
      */
     Surface       &surface();
-    Surface const &surface() const;
+    const Surface &surface() const;
 
     /**
      * Change the attributed surface of the decoration.
@@ -83,7 +83,7 @@ public:
     void setSurface(Surface *newSurface);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif  // DENG_CLIENT_RENDER_DECORATION_H
+#endif  // DE_CLIENT_RENDER_DECORATION_H

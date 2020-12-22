@@ -26,14 +26,12 @@
 // MACROS ------------------------------------------------------------------
 
 #ifdef _WIN32
-#define stricmp     _stricmp
-#define cprintf     _cprintf
-#endif
-
-#ifdef __GNUC__
-#include <strings.h>
-#define stricmp     strcasecmp
-#define cprintf     printf
+#  define stricmp     _stricmp
+#  define cprintf     _cprintf
+#elif defined __GNUC__
+#  include <strings.h>
+#  define stricmp     strcasecmp
+#  define cprintf     printf
 #endif
 
 // TYPES -------------------------------------------------------------------

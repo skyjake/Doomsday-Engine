@@ -20,19 +20,19 @@
 
 #include "resource/fontscheme.h"
 #include "dd_types.h"
-#include <de/Log>
-#include <QList>
+#include <de/log.h>
+#include <de/list.h>
 
 using namespace de;
 
-DENG2_PIMPL(FontScheme),
-DENG2_OBSERVES(FontManifest, UniqueIdChange),
-DENG2_OBSERVES(FontManifest, Deletion)
+DE_PIMPL(FontScheme),
+DE_OBSERVES(FontManifest, UniqueIdChange),
+DE_OBSERVES(FontManifest, Deletion)
 {
     String name; ///< Symbolic.
     Index index; ///< Mappings from paths to manifests.
 
-    QList<Manifest *> uniqueIdLut; ///< Index with uniqueId - uniqueIdBase.
+    List<Manifest *> uniqueIdLut; ///< Index with uniqueId - uniqueIdBase.
     bool uniqueIdLutDirty;
     int uniqueIdBase;
 
@@ -45,13 +45,13 @@ DENG2_OBSERVES(FontManifest, Deletion)
     ~Impl()
     {
         self().clear();
-        DENG2_ASSERT(index.isEmpty()); // sanity check.
+        DE_ASSERT(index.isEmpty()); // sanity check.
     }
 
     bool inline uniqueIdInLutRange(int uniqueId) const
     {
         return uniqueId - uniqueIdBase >= 0 &&
-               (uniqueId - uniqueIdBase) < uniqueIdLut.size();
+               (uniqueId - uniqueIdBase) < uniqueIdLut.sizei();
     }
 
     void findUniqueIdRange(int *minId, int *maxId)
@@ -65,7 +65,7 @@ DENG2_OBSERVES(FontManifest, Deletion)
         while(iter.hasNext())
         {
             Manifest &manifest = iter.next();
-            int const uniqueId = manifest.uniqueId();
+            const int uniqueId = manifest.uniqueId();
             if(minId && uniqueId < *minId) *minId = uniqueId;
             if(maxId && uniqueId > *maxId) *maxId = uniqueId;
         }
@@ -80,14 +80,14 @@ DENG2_OBSERVES(FontManifest, Deletion)
     }
 
     /// @pre uniqueIdMap is large enough if initialized!
-    void unlinkInUniqueIdLut(Manifest const &manifest)
+    void unlinkInUniqueIdLut(const Manifest &manifest)
     {
-        DENG2_ASSERT(&manifest.scheme() == thisPublic); // sanity check.
+        DE_ASSERT(&manifest.scheme() == thisPublic); // sanity check.
         // If the lut is already considered 'dirty' do not unlink.
         if(!uniqueIdLutDirty)
         {
             int uniqueId = manifest.uniqueId();
-            DENG2_ASSERT(uniqueIdInLutRange(uniqueId));
+            DE_ASSERT(uniqueIdInLutRange(uniqueId));
             uniqueIdLut[uniqueId - uniqueIdBase] = 0;
         }
     }
@@ -95,9 +95,9 @@ DENG2_OBSERVES(FontManifest, Deletion)
     /// @pre uniqueIdLut has been initialized and is large enough!
     void linkInUniqueIdLut(Manifest &manifest)
     {
-        DENG2_ASSERT(&manifest.scheme() == thisPublic); // sanity check.
+        DE_ASSERT(&manifest.scheme() == thisPublic); // sanity check.
         int uniqueId = manifest.uniqueId();
-        DENG_ASSERT(uniqueIdInLutRange(uniqueId));
+        DE_ASSERT(uniqueIdInLutRange(uniqueId));
         uniqueIdLut[uniqueId - uniqueIdBase] = &manifest;
     }
 
@@ -122,11 +122,11 @@ DENG2_OBSERVES(FontManifest, Deletion)
         }
 
         // Fill the LUT with initial values.
-#ifdef DENG2_QT_4_7_OR_NEWER
+#ifdef DE_QT_4_7_OR_NEWER
         uniqueIdLut.reserve(lutSize);
 #endif
         int i = 0;
-        for(; i < uniqueIdLut.size(); ++i)
+        for(; i < uniqueIdLut.sizei(); ++i)
         {
             uniqueIdLut[i] = 0;
         }
@@ -156,7 +156,7 @@ DENG2_OBSERVES(FontManifest, Deletion)
     }
 
     // Observes FontManifest Deletion.
-    void fontManifestBeingDeleted(Manifest const &manifest)
+    void fontManifestBeingDeleted(const Manifest &manifest)
     {
         deindex(const_cast<Manifest &>(manifest));
     }
@@ -164,7 +164,7 @@ DENG2_OBSERVES(FontManifest, Deletion)
 
 FontScheme::FontScheme(String symbolicName) : d(new Impl(this))
 {
-    d->name = symbolicName;
+    d->name = std::move(symbolicName);
 }
 
 void FontScheme::clear()
@@ -178,12 +178,12 @@ void FontScheme::clear()
     d->uniqueIdLutDirty = true;
 }
 
-String const &FontScheme::name() const
+const String &FontScheme::name() const
 {
     return d->name;
 }
 
-FontScheme::Manifest &FontScheme::declare(Path const &path)
+FontScheme::Manifest &FontScheme::declare(const Path &path)
 {
     LOG_AS("FontScheme::declare");
 
@@ -193,9 +193,9 @@ FontScheme::Manifest &FontScheme::declare(Path const &path)
         throw InvalidPathError("FontScheme::declare", "Missing/zero-length path was supplied");
     }
 
-    int const sizeBefore = d->index.size();
+    const int sizeBefore = d->index.size();
     Manifest *newManifest = &d->index.insert(path);
-    DENG2_ASSERT(newManifest != 0);
+    DE_ASSERT(newManifest != 0);
 
     if(d->index.size() != sizeBefore)
     {
@@ -206,18 +206,18 @@ FontScheme::Manifest &FontScheme::declare(Path const &path)
         newManifest->audienceForDeletion += d;
 
         // Notify interested parties that a new manifest was defined in the scheme.
-        DENG2_FOR_AUDIENCE(ManifestDefined, i) i->fontSchemeManifestDefined(*this, *newManifest);
+        DE_NOTIFY_VAR(ManifestDefined, i) i->fontSchemeManifestDefined(*this, *newManifest);
     }
 
     return *newManifest;
 }
 
-bool FontScheme::has(Path const &path) const
+bool FontScheme::has(const Path &path) const
 {
     return d->index.has(path, Index::NoBranch | Index::MatchFull);
 }
 
-FontScheme::Manifest const &FontScheme::find(Path const &path) const
+const FontScheme::Manifest &FontScheme::find(const Path &path) const
 {
     if(has(path))
     {
@@ -227,13 +227,13 @@ FontScheme::Manifest const &FontScheme::find(Path const &path) const
     throw NotFoundError("FontScheme::find", "Failed to locate a manifest matching \"" + path.asText() + "\"");
 }
 
-FontScheme::Manifest &FontScheme::find(Path const &path)
+FontScheme::Manifest &FontScheme::find(const Path &path)
 {
-    Manifest const &found = const_cast<FontScheme const *>(this)->find(path);
+    const Manifest &found = const_cast<const FontScheme *>(this)->find(path);
     return const_cast<Manifest &>(found);
 }
 
-FontScheme::Manifest const &FontScheme::findByUniqueId(int uniqueId) const
+const FontScheme::Manifest &FontScheme::findByUniqueId(int uniqueId) const
 {
     d->rebuildUniqueIdLut();
 
@@ -243,16 +243,17 @@ FontScheme::Manifest const &FontScheme::findByUniqueId(int uniqueId) const
         if(manifest) return *manifest;
     }
     /// @throw NotFoundError  No manifest was found with a matching resource URI.
-    throw NotFoundError("FontScheme::findByUniqueId", "No manifest found with a unique ID matching \"" + QString("%1").arg(uniqueId) + "\"");
+    throw NotFoundError("FontScheme::findByUniqueId",
+                        stringf("No manifest found with a unique ID matching \"%i\"", uniqueId));
 }
 
 FontScheme::Manifest &FontScheme::findByUniqueId(int uniqueId)
 {
-    Manifest const &found = const_cast<FontScheme const *>(this)->findByUniqueId(uniqueId);
+    const Manifest &found = const_cast<const FontScheme *>(this)->findByUniqueId(uniqueId);
     return const_cast<Manifest &>(found);
 }
 
-FontScheme::Index const &FontScheme::index() const
+const FontScheme::Index &FontScheme::index() const
 {
     return d->index;
 }

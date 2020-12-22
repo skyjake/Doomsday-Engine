@@ -19,43 +19,40 @@
 
 #include "ui/bindcontext.h"
 
-#include <QList>
-#include <QSet>
-#include <QtAlgorithms>
-#include <de/Log>
-#include <doomsday/console/exec.h>
 #include "clientapp.h"
-
 #include "world/p_players.h"
-
-#include "CommandBinding"
-#include "ImpulseBinding"
+#include "ui/commandbinding.h"
+#include "ui/impulsebinding.h"
 #include "ui/inputdevice.h"
 #include "ui/inputsystem.h"
 
+#include <doomsday/console/exec.h>
+#include <de/set.h>
+#include <de/log.h>
+
 using namespace de;
 
-static String const VAR_ID        ("id");
-static String const VAR_TYPE      ("type");
-static String const VAR_TEST      ("test");
-static String const VAR_DEVICE_ID ("deviceId");
-static String const VAR_CONTROL_ID("controlId");
+static const char *VAR_ID         = "id";
+static const char *VAR_TYPE       = "type";
+static const char *VAR_TEST       = "test";
+static const char *VAR_DEVICE_ID  = "deviceId";
+static const char *VAR_CONTROL_ID = "controlId";
 
-DENG2_PIMPL(BindContext)
+DE_PIMPL(BindContext)
 {
     bool active  = false;  ///< @c true= Bindings are active.
     bool protect = false;  ///< @c true= Prevent explicit end user (de)activation.
     String name;           ///< Symbolic.
 
     // Acquired device states, unless higher-priority contexts override.
-    typedef QSet<int> DeviceIds;
+    typedef Set<int> DeviceIds;
     DeviceIds acquireDevices;
     bool acquireAllDevices = false;  ///< @c true= will ignore @var acquireDevices.
 
-    typedef QList<Record *> CommandBindings;
+    typedef List<Record *> CommandBindings;
     CommandBindings commandBinds;
 
-    typedef QList<CompiledImpulseBindingRecord *> ImpulseBindings;
+    typedef List<CompiledImpulseBindingRecord *> ImpulseBindings;
     ImpulseBindings impulseBinds[DDMAXPLAYERS];  ///< Group bindings for each local player.
 
     DDFallbackResponderFunc ddFallbackResponder = nullptr;
@@ -74,10 +71,10 @@ DENG2_PIMPL(BindContext)
      *
      * @return  @c true if a match is found.
      */
-    bool findMatchingBinding(Record const *matchCmdRec, Record const *matchImpRec,
+    bool findMatchingBinding(const Record *matchCmdRec, const Record *matchImpRec,
         Record **cmdResult, Record **impResult) const
     {
-        DENG2_ASSERT(cmdResult && impResult);
+        DE_ASSERT(cmdResult && impResult);
 
         *cmdResult = nullptr;
         *impResult = nullptr;
@@ -90,7 +87,7 @@ DENG2_PIMPL(BindContext)
         ImpulseBinding matchImp;
         if (matchImpRec) matchImp = matchImpRec;
 
-        for (Record const *rec : commandBinds)
+        for (const Record *rec : commandBinds)
         {
             CommandBinding bind(*rec);
 
@@ -124,9 +121,9 @@ DENG2_PIMPL(BindContext)
         }
 
         for (int i = 0; i < DDMAXPLAYERS; ++i)
-        for (auto const *rec : impulseBinds[i])
+        for (const auto *rec : impulseBinds[i])
         {
-            auto const &bind = rec->compiled();
+            const auto &bind = rec->compiled();
 
             if (matchCmd)
             {
@@ -160,7 +157,7 @@ DENG2_PIMPL(BindContext)
     /**
      * Delete all other bindings matching either @a cmdBinding or @a impBinding.
      */
-    void deleteMatching(Record const *cmdBinding, Record const *impBinding)
+    void deleteMatching(const Record *cmdBinding, const Record *impBinding)
     {
         Record *foundCmd = nullptr;
         Record *foundImp = nullptr;
@@ -178,16 +175,16 @@ DENG2_PIMPL(BindContext)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(ActiveChange)
-    DENG2_PIMPL_AUDIENCE(AcquireDeviceChange)
-    DENG2_PIMPL_AUDIENCE(BindingAddition)
+    DE_PIMPL_AUDIENCE(ActiveChange)
+    DE_PIMPL_AUDIENCE(AcquireDeviceChange)
+    DE_PIMPL_AUDIENCE(BindingAddition)
 };
 
-DENG2_AUDIENCE_METHOD(BindContext, ActiveChange)
-DENG2_AUDIENCE_METHOD(BindContext, AcquireDeviceChange)
-DENG2_AUDIENCE_METHOD(BindContext, BindingAddition)
+DE_AUDIENCE_METHOD(BindContext, ActiveChange)
+DE_AUDIENCE_METHOD(BindContext, AcquireDeviceChange)
+DE_AUDIENCE_METHOD(BindContext, BindingAddition)
 
-BindContext::BindContext(String const &name) : d(new Impl(this))
+BindContext::BindContext(const String &name) : d(new Impl(this))
 {
     setName(name);
 }
@@ -217,7 +214,7 @@ String BindContext::name() const
     return d->name;
 }
 
-void BindContext::setName(String const &newName)
+void BindContext::setName(const String &newName)
 {
     d->name = newName;
 }
@@ -231,21 +228,21 @@ void BindContext::activate(bool yes)
     d->active = yes;
 
     // Notify interested parties.
-    DENG2_FOR_AUDIENCE2(ActiveChange, i) i->bindContextActiveChanged(*this);
+    DE_NOTIFY(ActiveChange, i) i->bindContextActiveChanged(*this);
 }
 
 void BindContext::acquire(int deviceId, bool yes)
 {
-    DENG2_ASSERT(deviceId >= 0 && deviceId < NUM_INPUT_DEVICES);
-    int const countBefore = d->acquireDevices.count();
+    DE_ASSERT(deviceId >= 0 && deviceId < NUM_INPUT_DEVICES);
+    const int countBefore = d->acquireDevices.size();
 
     if (yes) d->acquireDevices.insert(deviceId);
     else     d->acquireDevices.remove(deviceId);
 
-    if (countBefore != d->acquireDevices.count())
+    if (countBefore != d->acquireDevices.size())
     {
         // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(AcquireDeviceChange, i) i->bindContextAcquireDeviceChanged(*this);
+        DE_NOTIFY(AcquireDeviceChange, i) i->bindContextAcquireDeviceChanged(*this);
     }
 }
 
@@ -256,7 +253,7 @@ void BindContext::acquireAll(bool yes)
         d->acquireAllDevices = yes;
 
         // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(AcquireDeviceChange, i) i->bindContextAcquireDeviceChanged(*this);
+        DE_NOTIFY(AcquireDeviceChange, i) i->bindContextAcquireDeviceChanged(*this);
     }
 }
 
@@ -283,11 +280,11 @@ void BindContext::setFallbackResponder(FallbackResponderFunc newResponderFunc)
 void BindContext::clearAllBindings()
 {
     LOG_AS("BindContext");
-    qDeleteAll(d->commandBinds);
+    deleteAll(d->commandBinds);
     d->commandBinds.clear();
     for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        qDeleteAll(d->impulseBinds[i]);
+        deleteAll(d->impulseBinds[i]);
         d->impulseBinds[i].clear();
     }
     LOG_INPUT_VERBOSE(_E(b) "'%s'" _E(.) " cleared") << d->name;
@@ -296,8 +293,8 @@ void BindContext::clearAllBindings()
 void BindContext::clearBindingsForDevice(int deviceId)
 {
     // Collect all the bindings that should be deleted.
-    QSet<int> ids;
-    forAllCommandBindings([&ids, &deviceId] (Record const &bind)
+    Set<int> ids;
+    forAllCommandBindings([&ids, &deviceId] (const Record &bind)
     {
         if (bind.geti(VAR_DEVICE_ID) == deviceId)
         {
@@ -305,7 +302,7 @@ void BindContext::clearBindingsForDevice(int deviceId)
         }
         return LoopContinue;
     });
-    forAllImpulseBindings([&ids, &deviceId] (CompiledImpulseBindingRecord const &bind)
+    forAllImpulseBindings([&ids, &deviceId] (const CompiledImpulseBindingRecord &bind)
     {
         if (bind.compiled().deviceId == deviceId)
         {
@@ -314,15 +311,15 @@ void BindContext::clearBindingsForDevice(int deviceId)
         return LoopContinue;
     });
 
-    foreach (int id, ids)
+    for (int id : ids)
     {
         deleteBinding(id);
     }
 }
 
-Record *BindContext::bindCommand(char const *eventDesc, char const *command)
+Record *BindContext::bindCommand(const char *eventDesc, const char *command)
 {
-    DENG2_ASSERT(eventDesc && command && command[0]);
+    DE_ASSERT(eventDesc && command && command[0]);
     LOG_AS("BindContext");
     try
     {
@@ -341,21 +338,21 @@ Record *BindContext::bindCommand(char const *eventDesc, char const *command)
         d->deleteMatching(&bind.def(), nullptr);
 
         // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind.def(), true/*is-command*/);
+        DE_NOTIFY(BindingAddition, i) i->bindContextBindingAdded(*this, bind.def(), true/*is-command*/);
 
         Con_MarkAsChanged(true);
 
         return &bind.def();
     }
-    catch (Binding::ConfigureError const &)
+    catch (const Binding::ConfigureError &)
     {}
     return nullptr;
 }
 
-Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impulse, int localPlayer)
+Record *BindContext::bindImpulse(const char *ctrlDesc, const PlayerImpulse &impulse, int localPlayer)
 {
-    DENG2_ASSERT(ctrlDesc);
-    DENG2_ASSERT(localPlayer >= 0 && localPlayer < DDMAXPLAYERS);
+    DE_ASSERT(ctrlDesc);
+    DE_ASSERT(localPlayer >= 0 && localPlayer < DDMAXPLAYERS);
     LOG_AS("BindContext");
     try
     {
@@ -375,25 +372,25 @@ Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impu
         d->deleteMatching(nullptr, &bind.def());
 
         // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind.def(), false/*is-impulse*/);
+        DE_NOTIFY(BindingAddition, i) i->bindContextBindingAdded(*this, bind.def(), false/*is-impulse*/);
 
         Con_MarkAsChanged(true);
 
         return &bind.def();
     }
-    catch (Binding::ConfigureError const &)
+    catch (const Binding::ConfigureError &)
     {}
     return nullptr;
 }
 
-Record *BindContext::findCommandBinding(char const *command, int deviceId) const
+Record *BindContext::findCommandBinding(const char *command, int deviceId) const
 {
     if (command && command[0])
     {
-        for (Record const *rec : d->commandBinds)
+        for (const Record *rec : d->commandBinds)
         {
             CommandBinding bind(*rec);
-            if (bind.gets(QStringLiteral("command")).compareWithoutCase(command)) continue;
+            if (bind.gets(DE_STR("command")).compareWithoutCase(command)) continue;
 
             if ((deviceId < 0 || deviceId >= NUM_INPUT_DEVICES) || bind.geti(VAR_DEVICE_ID) == deviceId)
             {
@@ -407,9 +404,9 @@ Record *BindContext::findCommandBinding(char const *command, int deviceId) const
 Record *BindContext::findImpulseBinding(int deviceId, ibcontroltype_t bindType, int controlId) const
 {
     for (int i = 0; i < DDMAXPLAYERS; ++i)
-    for (auto const *rec : d->impulseBinds[i])
+    for (const auto *rec : d->impulseBinds[i])
     {
-        auto const &bind = rec->compiled();
+        const auto &bind = rec->compiled();
         if (bind.type      == bindType &&
             bind.deviceId  == deviceId &&
             bind.controlId == controlId)
@@ -450,7 +447,7 @@ bool BindContext::deleteBinding(int id)
     return false;
 }
 
-bool BindContext::tryEvent(ddevent_t const &event, bool respectHigherContexts) const
+bool BindContext::tryEvent(const ddevent_t &event, bool respectHigherContexts) const
 {
     LOG_AS("BindContext");
 
@@ -461,7 +458,7 @@ bool BindContext::tryEvent(ddevent_t const &event, bool respectHigherContexts) c
     if (event.type != E_FOCUS)
     {
         // See if the command bindings will have it.
-        for (Record const *rec : d->commandBinds)
+        for (const Record *rec : d->commandBinds)
         {
             CommandBinding bind(*rec);
             AutoRef<Action> act(bind.makeAction(event, *this, respectHigherContexts));
@@ -482,7 +479,7 @@ bool BindContext::tryEvent(ddevent_t const &event, bool respectHigherContexts) c
     if (d->fallbackResponder)
     {
         event_t ev;
-        if (/*bool const validGameEvent =*/ InputSystem::convertEvent(event, ev))
+        if (/*const bool validGameEvent =*/ InputSystem::convertEvent(event, ev))
         {
             if (d->fallbackResponder(&ev))
                 return true;
@@ -493,7 +490,7 @@ bool BindContext::tryEvent(ddevent_t const &event, bool respectHigherContexts) c
 }
 
 LoopResult BindContext::forAllCommandBindings(
-    std::function<de::LoopResult (Record &)> func) const
+    const std::function<de::LoopResult (Record &)>& func) const
 {
     for (Record *rec : d->commandBinds)
     {
@@ -503,7 +500,7 @@ LoopResult BindContext::forAllCommandBindings(
 }
 
 LoopResult BindContext::forAllImpulseBindings(int localPlayer,
-    std::function<de::LoopResult (CompiledImpulseBindingRecord &)> func) const
+    const std::function<de::LoopResult (CompiledImpulseBindingRecord &)>& func) const
 {
     for (int i = 0; i < DDMAXPLAYERS; ++i)
     {

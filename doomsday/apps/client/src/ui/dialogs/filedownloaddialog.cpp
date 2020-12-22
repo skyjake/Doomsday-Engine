@@ -23,41 +23,38 @@
 
 using namespace de;
 
-DENG_GUI_PIMPL(FileDownloadDialog)
-, DENG2_OBSERVES(shell::PackageDownloader, Status)
+DE_GUI_PIMPL(FileDownloadDialog)
+, DE_OBSERVES(PackageDownloader, Status)
 {
-    shell::PackageDownloader &downloader;
-    String message = tr("Downloading data files...");
+    PackageDownloader &downloader;
+    String message = "Downloading data files...";
 
-    Impl(Public *i, shell::PackageDownloader &downloader)
+    Impl(Public *i, PackageDownloader &downloader)
         : Base(i)
         , downloader(downloader)
     {
         downloader.audienceForStatus() += this;
 
-        self().progressIndicator().setText(tr("%1\n" _E(l)_E(F) "%2"
-                                              DENG2_CHAR_MDASH " files / "
-                                              DENG2_CHAR_MDASH " MB")
-                                           .arg(message)
-                                           .arg(_E(l)));
+        self().progressIndicator().setText(message + "\n" _E(l) _E(F) _E(l) DE_CHAR_MDASH
+                                           " files / " DE_CHAR_MDASH " MB");
     }
 
-    void downloadStatusUpdate(Rangei64 const &bytes, Rangei const &files)
+    void downloadStatusUpdate(const Rangei64 &bytes, const Rangei &files)
     {
         if (!bytes.end) return;
 
         auto &indicator = self().progressIndicator();
         indicator.setProgress(round<int>(100.0 * double(bytes.size())/double(bytes.end)));
 
-        indicator.setText(tr("%1\n" _E(l)_E(F) "%2 file%3 / %4 MB")
-                          .arg(message)
-                          .arg(files.start)
-                          .arg(DENG2_PLURAL_S(files.start))
-                          .arg(bytes.start/1.0e6, 0, 'f', 1));
+        indicator.setText(Stringf("%s\n" _E(l) _E(F) "%i file%s / %.1f MB",
+                                  message.c_str(),
+                                  files.start,
+                                  DE_PLURAL_S(files.start),
+                                  bytes.start / 1.0e6));
     }
 };
 
-FileDownloadDialog::FileDownloadDialog(shell::PackageDownloader &downloader)
+FileDownloadDialog::FileDownloadDialog(PackageDownloader &downloader)
     : d(new Impl(this, downloader))
 {}
 

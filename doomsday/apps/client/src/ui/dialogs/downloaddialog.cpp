@@ -20,11 +20,11 @@
 
 #include "ui/dialogs/downloaddialog.h"
 
-#include <de/CallbackAction>
+#include <de/callbackaction.h>
 
 using namespace de;
 
-DENG_GUI_PIMPL(DownloadDialog)
+DE_GUI_PIMPL(DownloadDialog)
 {
     ProgressWidget *progress;
 
@@ -45,7 +45,7 @@ DENG_GUI_PIMPL(DownloadDialog)
 
         self().buttons() << new DialogButtonItem(DialogWidget::Reject,
                                                  "Cancel Download",
-                                                 new CallbackAction([this] () { self().cancel(); }));
+                                                 [this](){ self().cancel(); });
         updateStyle();
     }
 
@@ -55,7 +55,7 @@ DENG_GUI_PIMPL(DownloadDialog)
     }
 };
 
-DownloadDialog::DownloadDialog(String const &name)
+DownloadDialog::DownloadDialog(const String &name)
     : DialogWidget(name)
     , d(new Impl(this))
 {}

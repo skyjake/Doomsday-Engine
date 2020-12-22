@@ -21,8 +21,8 @@
 #ifndef DOOMSDAY_API_BASE_H
 #define DOOMSDAY_API_BASE_H
 
-#include <de/str.h>
-#include <doomsday/resource/resourceclass.h>
+#include <de/legacy/str.h>
+#include <doomsday/resourceclass.h>
 #include <doomsday/game.h>
 #include "apis.h"
 #include "api_uri.h"
@@ -43,7 +43,7 @@ typedef struct gameinfo_s {
 /// @}
 
 // The Base API.
-DENG_API_TYPEDEF(Base)
+DE_API_TYPEDEF(Base)
 {
     de_api_t api;
 
@@ -64,7 +64,7 @@ DENG_API_TYPEDEF(Base)
      * @note Game registration order defines the order of the automatic game
      * identification/selection logic.
      */
-    //gameid_t (*DefineGame)(GameDef const *definition);
+    //gameid_t (*DefineGame)(const GameDef *definition);
 
     /**
      * Adds a new resource to the list for the identified @a game.
@@ -86,7 +86,7 @@ DENG_API_TYPEDEF(Base)
      *                  semicolon delimited list of identity keys.
      */
     //void (*AddGameResource)(gameid_t game, resourceclassid_t classId, int fFlags,
-    //                        char const *names, void const *params);
+    //                        const char *names, const void *params);
 
     /**
      * Retrieve extended info about the current game.
@@ -119,7 +119,7 @@ DENG_API_TYPEDEF(Base)
      * @param data       Data of the packet.
      * @param length     Length of the data.
      */
-    void (*SendPacket)(int to_player, int type, void const *data, size_t length);
+    void (*SendPacket)(int to_player, int type, const void *data, size_t length);
 
     /**
      * To be called by the game after loading a save state to instruct the engine
@@ -127,9 +127,9 @@ DENG_API_TYPEDEF(Base)
      */
     void (*SetupMap)(int mode, int flags);
 }
-DENG_API_T(Base);
+DE_API_T(Base);
 
-#ifndef DENG_NO_API_MACROS_BASE
+#ifndef DE_NO_API_MACROS_BASE
 #define Sys_Quit                  _api_Base.Quit
 #define DD_GetInteger             _api_Base.GetInteger
 #define DD_SetInteger             _api_Base.SetInteger
@@ -145,7 +145,7 @@ DENG_API_T(Base);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(Base);
+DE_USING_API(Base);
 #endif
 
 #endif // DOOMSDAY_API_BASE_H

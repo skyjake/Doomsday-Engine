@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_NATIVEUI_H
-#define LIBDENG_NATIVEUI_H
+#ifndef DE_NATIVEUI_H
+#define DE_NATIVEUI_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,4 +73,4 @@ void Sys_MessageBoxWithDetailsFromFile(messageboxtype_t type, const char* title,
 } // extern "C"
 #endif
 
-#endif // LIBDENG_NATIVEUI_H
+#endif // DE_NATIVEUI_H

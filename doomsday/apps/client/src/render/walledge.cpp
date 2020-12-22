@@ -20,24 +20,21 @@
 #include "de_base.h"
 #include "render/walledge.h"
 
-#include "BspLeaf"
-#include "ConvexSubspace"
-#include "Sector"
-
-#include "world/lineowner.h"
+#include "world/convexsubspace.h"
 #include "world/p_players.h"
 #include "world/maputil.h"
 #include "world/surface.h"
-#include "client/clientsubsector.h"
-#include "MaterialAnimator"
+#include "world/subsector.h"
+#include "resource/materialanimator.h"
 #include "render/rend_main.h"  /// devRendSkyMode @todo remove me
 
-#include "Face"
-
-#include <QtAlgorithms>
+#include <doomsday/world/bspleaf.h>
+#include <doomsday/world/sector.h>
+#include <doomsday/world/lineowner.h>
+#include <doomsday/mesh/face.h>
+#include <doomsday/mesh/mesh.h>
 
 using namespace de;
-using namespace world;
 
 /**
  * Determines whether normal smoothing should be performed for the given pair of
@@ -52,7 +49,7 @@ using namespace world;
  */
 static bool shouldSmoothNormals(Surface &sufA, Surface &sufB, binangle_t angleDiff)
 {
-    DENG2_UNUSED2(sufA, sufB);
+    DE_UNUSED(sufA, sufB);
     return INRANGE_OF(angleDiff, BANG_180, BANG_45);
 }
 
@@ -67,14 +64,14 @@ WallEdge::Event::Event(WallEdge &owner, ddouble distance)
     , _owner(&owner)
 {}
 
-WallEdge::Event &WallEdge::Event::operator = (Event const &other)
+WallEdge::Event &WallEdge::Event::operator = (const Event &other)
 {
     _owner    = other._owner;
     _distance = other._distance;
     return *this;
 }
 
-bool WallEdge::Event::operator < (Event const &other) const
+bool WallEdge::Event::operator < (const Event &other) const
 {
     return distance() < other.distance();
 }
@@ -84,7 +81,7 @@ ddouble WallEdge::Event::distance() const
     return IHPlane::IIntercept::distance();
 }
 
-Vector3d WallEdge::Event::origin() const
+Vec3d WallEdge::Event::origin() const
 {
     return _owner->pOrigin() + _owner->pDirection() * distance();
 }
@@ -94,7 +91,7 @@ static inline coord_t lineSideOffset(LineSideSegment &seg, dint edge)
     return seg.lineSideOffset() + (edge? seg.length() : 0);
 }
 
-QList<WallEdge::Impl *> WallEdge::recycledImpls;
+List<WallEdge::Impl *> WallEdge::recycledImpls;
 
 struct WallEdge::Impl : public IHPlane
 {
@@ -103,13 +100,13 @@ struct WallEdge::Impl : public IHPlane
     WallSpec spec;
     dint edge = 0;
 
-    HEdge *wallHEdge = nullptr;
+    mesh::HEdge *wallHEdge = nullptr;
 
     /// The half-plane which partitions the surface coordinate space.
     Partition hplane;
 
-    Vector3d pOrigin;
-    Vector3d pDirection;
+    Vec3d pOrigin;
+    Vec3d pDirection;
 
     coord_t lo = 0, hi = 0;
 
@@ -119,12 +116,12 @@ struct WallEdge::Impl : public IHPlane
 
     /**
      * Special-purpose array whose memory is never freed while the array exists.
-     * `WallEdge::Impl`s are recycled, so it would be a waste of time to keep 
+     * `WallEdge::Impl`s are recycled, so it would be a waste of time to keep
      * allocating and freeing the event arrays.
      */
-    struct EventArray : private QVector<Event>
+    struct EventArray : private List<Event>
     {
-        using Base = QVector<Event>;
+        using Base = List<Event>;
 
         int size = 0;
 
@@ -146,9 +143,9 @@ struct WallEdge::Impl : public IHPlane
             size = 0;
         }
 
-        void append(Event const &event)
+        void append(const Event &event)
         {
-            if (size < Base::size())
+            if (size < Base::sizei())
             {
                 (*this)[size++] = event;
             }
@@ -179,9 +176,9 @@ struct WallEdge::Impl : public IHPlane
     EventArray events;
     bool needSortEvents = false;
 
-    Vector2f materialOrigin;
+    Vec2f materialOrigin;
 
-    Vector3f normal;
+    Vec3f normal;
     bool needUpdateNormal = true;
 
     Impl() {}
@@ -197,7 +194,7 @@ struct WallEdge::Impl : public IHPlane
         needUpdateNormal = true;
     }
 
-    void init(WallEdge *i, WallSpec const &wallSpec, HEdge &hedge, dint edge)
+    void init(WallEdge *i, const WallSpec &wallSpec, mesh::HEdge &hedge, dint edge)
     {
         self = i;
 
@@ -209,13 +206,13 @@ struct WallEdge::Impl : public IHPlane
 
         // Determine the map space Z coordinates of the wall section.
         LineSideSegment &seg   = lineSideSegment();
-        Line const &line       = seg.line();
-        bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
-        bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP)    != 0;
+        const auto &line       = seg.line();
+        const bool unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
+        const bool unpegTop    = (line.flags() & DDLF_DONTPEGTOP)    != 0;
 
-        ConvexSubspace const &space = (line.definesPolyobj() ? line.polyobj().bspLeaf().subspace()
-                                                             : wallHEdge->face().mapElementAs<world::ConvexSubspace>());
-        auto const &subsec = space.subsector().as<world::ClientSubsector>();
+        const auto &space = (line.definesPolyobj() ? line.polyobj().bspLeaf().subspace()
+                               : wallHEdge->face().mapElementAs<world::ConvexSubspace>());
+        const auto &subsec = space.subsector().as<Subsector>();
 
         /*
          * For reference, see "Texture aligment" in Doomwiki.org:
@@ -236,7 +233,7 @@ struct WallEdge::Impl : public IHPlane
                 lo = hi = subsec.visFloor().heightSmoothed();
             }
 
-            materialOrigin = seg.lineSide().middle().originSmoothed();
+            materialOrigin = seg.lineSide().middle().as<Surface>().originSmoothed();
             if (unpegBottom)
             {
                 materialOrigin.y -= hi - lo;
@@ -245,15 +242,15 @@ struct WallEdge::Impl : public IHPlane
         else
         {
             // Two sided.
-            auto const &backSubsec =
+            const auto &backSubsec =
                 line.definesPolyobj() ? subsec
                                       : wallHEdge->twin().face().mapElementAs<world::ConvexSubspace>()
-                                            .subsector().as<world::ClientSubsector>();
+                                            .subsector().as<Subsector>();
 
-            Plane const *ffloor = &subsec.visFloor();
-            Plane const *fceil  = &subsec.visCeiling();
-            Plane const *bfloor = &backSubsec.visFloor();
-            Plane const *bceil  = &backSubsec.visCeiling();
+            const Plane *ffloor = &subsec.visFloor();
+            const Plane *fceil  = &subsec.visCeiling();
+            const Plane *bfloor = &backSubsec.visFloor();
+            const Plane *bceil  = &backSubsec.visCeiling();
 
             switch (spec.section)
             {
@@ -276,7 +273,7 @@ struct WallEdge::Impl : public IHPlane
                         hi = lo;
                     }
 
-                    materialOrigin = seg.lineSide().middle().originSmoothed();
+                    materialOrigin = seg.lineSide().middle().as<Surface>().originSmoothed();
                     if (!unpegTop)
                     {
                         // Align with normal middle texture.
@@ -323,7 +320,7 @@ struct WallEdge::Impl : public IHPlane
                         lo = hi;
                     }
 
-                    materialOrigin = seg.lineSide().bottom().originSmoothed();
+                    materialOrigin = seg.lineSide().bottom().as<Surface>().originSmoothed();
                     if (bfloor->heightSmoothed() > fceil->heightSmoothed())
                     {
                         materialOrigin.y -= (raiseToBackFloor? t : fceilZ)
@@ -339,8 +336,8 @@ struct WallEdge::Impl : public IHPlane
                 break;
 
             case LineSide::Middle: {
-                LineSide const &lineSide = seg.lineSide();
-                Surface const &middle    = lineSide.middle();
+                const auto &   lineSide = seg.lineSide();
+                const Surface &middle   = lineSide.middle().as<Surface>();
 
                 const bool isExtendedMasked = middle.hasMaterial() &&
                                               !middle.materialAnimator()->isOpaque() &&
@@ -354,7 +351,7 @@ struct WallEdge::Impl : public IHPlane
                 else
                 {
                     // Use the unmapped heights for positioning purposes.
-                    lo = lineSide.sector().floor().heightSmoothed();
+                    lo = lineSide.sector().floor().as<Plane>().heightSmoothed();
                 }
 
                 if (!line.isSelfReferencing() && fceil == &subsec.sector().ceiling())
@@ -364,10 +361,10 @@ struct WallEdge::Impl : public IHPlane
                 else
                 {
                     // Use the unmapped heights for positioning purposes.
-                    hi = lineSide.back().sector().ceiling().heightSmoothed();
+                    hi = lineSide.back().sector().ceiling().as<Plane>().heightSmoothed();
                 }
 
-                materialOrigin = Vector2f(middle.originSmoothed().x, 0);
+                materialOrigin = Vec2f(middle.originSmoothed().x, 0);
 
                 // Perform clipping.
                 if (middle.hasMaterial()
@@ -404,8 +401,8 @@ struct WallEdge::Impl : public IHPlane
                         }
 
                         // Clip it?
-                        bool const clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial());
-                        bool const clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
+                        const bool clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial());
+                        const bool clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
                         if (clipTop || clipBottom)
                         {
                             if (clipBottom && lo < openBottom)
@@ -434,10 +431,10 @@ struct WallEdge::Impl : public IHPlane
                 break; }
             }
         }
-        materialOrigin += Vector2f(::lineSideOffset(seg, edge), 0);
+        materialOrigin += Vec2f(::lineSideOffset(seg, edge), 0);
 
-        pOrigin    = Vector3d(self->origin(), lo);
-        pDirection = Vector3d(0, 0, hi - lo);
+        pOrigin    = Vec3d(self->origin(), lo);
+        pDirection = Vec3d(0, 0, hi - lo);
     }
 
     inline LineSideSegment &lineSideSegment()
@@ -475,13 +472,13 @@ struct WallEdge::Impl : public IHPlane
     }
 
     // Implements IHPlane
-    void configure(Partition const &newPartition)
+    void configure(const Partition &newPartition)
     {
         hplane = newPartition;
     }
 
     // Implements IHPlane
-    Partition const &partition() const
+    const Partition &partition() const
     {
         return hplane;
     }
@@ -502,7 +499,7 @@ struct WallEdge::Impl : public IHPlane
     {
         if (needSortEvents)
         {
-            qSort(events.begin(), events.end(), [] (WorldEdge::Event const &a, WorldEdge::Event const &b) {
+            std::sort(events.begin(), events.end(), [] (const WorldEdge::Event &a, const WorldEdge::Event &b) {
                 return a < b;
             });
             needSortEvents = false;
@@ -519,15 +516,18 @@ struct WallEdge::Impl : public IHPlane
     }
 
     // Implements IHPlane
-    Event const &at(EventIndex index) const
+    const Event &at(EventIndex index) const
     {
         if(index >= 0 && index < interceptCount())
         {
             return events.at(index);
         }
         /// @throw UnknownInterceptError The specified intercept index is not valid.
-        throw UnknownInterceptError("WallEdge::at", String("Index '%1' does not map to a known intercept (count: %2)")
-                                                        .arg(index).arg(interceptCount()));
+        throw UnknownInterceptError(
+            "WallEdge::at",
+            stringf("Index '%i' does not map to a known intercept (count: %i)",
+                    index,
+                    interceptCount()));
     }
 
     // Implements IHPlane
@@ -536,11 +536,11 @@ struct WallEdge::Impl : public IHPlane
         return events.size;
     }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     void printIntercepts() const
     {
         EventIndex index = 0;
-        foreach (Event const &icpt, events)
+        for (const Event &icpt : events)
         {
             LOGDEV_MAP_MSG(" %u: >%1.2f ") << (index++) << icpt.distance();
         }
@@ -552,13 +552,13 @@ struct WallEdge::Impl : public IHPlane
      */
     void assertInterceptsInRange(ddouble low, ddouble hi) const
     {
-#ifdef DENG2_DEBUG
-        foreach (Event const &icpt, events)
+#ifdef DE_DEBUG
+        for (const Event &icpt : events)
         {
-            DENG2_ASSERT(icpt.distance() >= low && icpt.distance() <= hi);
+            DE_ASSERT(icpt.distance() >= low && icpt.distance() <= hi);
         }
 #else
-        DENG2_UNUSED2(low, hi);
+        DE_UNUSED(low, hi);
 #endif
     }
 
@@ -569,23 +569,23 @@ struct WallEdge::Impl : public IHPlane
 
     void addNeighborIntercepts(ddouble bottom, ddouble top)
     {
-        ClockDirection const direction = edge ? Clockwise : Anticlockwise;
+        const ClockDirection direction = edge ? Clockwise : CounterClockwise;
 
-        HEdge const *hedge = wallHEdge;
-        while ((hedge = &SubsectorCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
+        const auto *hedge = wallHEdge;
+        while ((hedge = &world::SubsectorCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
         {
             // Stop if there is no space on the back side.
             if (!hedge->hasFace() || !hedge->hasMapElement())
                 break;
 
-            auto const &backSpace = hedge->face().mapElementAs<ConvexSubspace>();
-            auto const &subsec    = backSpace.subsector().as<world::ClientSubsector>();
+            const auto &backSpace = hedge->face().mapElementAs<ConvexSubspace>();
+            const auto &subsec    = backSpace.subsector().as<Subsector>();
 
             if (subsec.hasWorldVolume())
             {
                 for (dint i = 0; i < subsec.visPlaneCount(); ++i)
                 {
-                    Plane const &plane = subsec.visPlane(i);
+                    const Plane &plane = subsec.visPlane(i);
 
                     if (plane.heightSmoothed() > bottom && plane.heightSmoothed() < top)
                     {
@@ -653,7 +653,7 @@ struct WallEdge::Impl : public IHPlane
 
     void prepareEvents()
     {
-        DENG2_ASSERT(self->isValid());
+        DE_ASSERT(self->isValid());
 
         needSortEvents = false;
 
@@ -665,7 +665,7 @@ struct WallEdge::Impl : public IHPlane
         // Add intecepts for neighbor planes?
         if(shouldInterceptNeighbors())
         {
-            configure(Partition(Vector2d(0, hi - lo)));
+            configure(Partition(Vec2d(0, hi - lo)));
 
             // Add intercepts (the "divisions") in ascending distance order.
             addNeighborIntercepts(lo, hi);
@@ -675,7 +675,7 @@ struct WallEdge::Impl : public IHPlane
             sortAndMergeIntercepts();
         }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
         // Sanity check.
         assertInterceptsInRange(0, 1);
 #endif
@@ -692,26 +692,26 @@ struct WallEdge::Impl : public IHPlane
         diff = 0;
 
         // Are we not blending?
-        if(spec.flags.testFlag(WallSpec::NoEdgeNormalSmoothing))
+        if (spec.flags.testFlag(WallSpec::NoEdgeNormalSmoothing))
             return nullptr;
 
-        LineSide const &lineSide = lineSideSegment().lineSide();
+        const LineSide &lineSide = lineSideSegment().lineSide().as<LineSide>();
 
         // Polyobj lines have no owner rings.
-        if(lineSide.line().definesPolyobj())
+        if (lineSide.line().definesPolyobj())
             return nullptr;
 
-        ClockDirection const direction = (edge? Anticlockwise : Clockwise);
-        LineOwner const &farVertOwner  = *lineSide.line().vertexOwner(lineSide.sideId() ^ edge);
+        const ClockDirection direction = (edge? CounterClockwise : Clockwise);
+        const auto &farVertOwner  = *lineSide.line().vertexOwner(lineSide.sideId() ^ edge);
         Line *neighbor;
-        if(R_SideBackClosed(lineSide))
+        if (R_SideBackClosed(lineSide))
         {
-            neighbor = R_FindSolidLineNeighbor(lineSide.line(), farVertOwner, direction,
+            neighbor = R_FindSolidLineNeighbor(lineSide.line().as<Line>(), farVertOwner, direction,
                                                lineSide.sectorPtr(), &diff);
         }
         else
         {
-            neighbor = R_FindLineNeighbor(lineSide.line(), farVertOwner, direction,
+            neighbor = R_FindLineNeighbor(lineSide.line().as<Line>(), farVertOwner, direction,
                                           lineSide.sectorPtr(), &diff);
         }
 
@@ -719,7 +719,7 @@ struct WallEdge::Impl : public IHPlane
         if(!neighbor) return nullptr;
 
         // Choose the correct side of the neighbor (determined by which vertex is shared).
-        LineSide *otherSide;
+        world::LineSide *otherSide;
         if(&neighbor->vertex(edge ^ 1) == &lineSide.vertex(edge))
             otherSide = &neighbor->front();
         else
@@ -729,7 +729,7 @@ struct WallEdge::Impl : public IHPlane
         if(!otherSide->hasSections()) return nullptr;
 
         /// @todo Do not assume the neighbor is the middle section of @var otherSide.
-        return &otherSide->middle();
+        return &otherSide->middle().as<Surface>();
     }
 
     /**
@@ -740,8 +740,8 @@ struct WallEdge::Impl : public IHPlane
     {
         needUpdateNormal = false;
 
-        LineSide &lineSide = lineSideSegment().lineSide();
-        Surface &surface   = lineSide.surface(spec.section);
+        auto &lineSide   = lineSideSegment().lineSide();
+        Surface &surface = lineSide.surface(spec.section).as<Surface>();
 
         binangle_t angleDiff;
         Surface *blendSurface = findBlendNeighbor(angleDiff);
@@ -749,7 +749,7 @@ struct WallEdge::Impl : public IHPlane
         if(blendSurface && shouldSmoothNormals(surface, *blendSurface, angleDiff))
         {
             // Average normals.
-            normal = Vector3f(surface.normal() + blendSurface->normal()) / 2;
+            normal = Vec3f(surface.normal() + blendSurface->normal()) / 2;
         }
         else
         {
@@ -758,7 +758,7 @@ struct WallEdge::Impl : public IHPlane
     }
 };
 
-WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
+WallEdge::WallEdge(const WallSpec &spec, mesh::HEdge &hedge, int edge)
     : WorldEdge((edge? hedge.twin() : hedge).origin())
     , d(getRecycledImpl())
 {
@@ -770,22 +770,22 @@ WallEdge::~WallEdge()
     recycleImpl(d);
 }
 
-Vector3d const &WallEdge::pOrigin() const
+const Vec3d &WallEdge::pOrigin() const
 {
     return d->pOrigin;
 }
 
-Vector3d const &WallEdge::pDirection() const
+const Vec3d &WallEdge::pDirection() const
 {
     return d->pDirection;
 }
 
-Vector2f WallEdge::materialOrigin() const
+Vec2f WallEdge::materialOrigin() const
 {
     return d->materialOrigin;
 }
 
-Vector3f WallEdge::normal() const
+Vec3f WallEdge::normal() const
 {
     if(d->needUpdateNormal)
     {
@@ -794,7 +794,7 @@ Vector3f WallEdge::normal() const
     return d->normal;
 }
 
-WallSpec const &WallEdge::spec() const
+const WallSpec &WallEdge::spec() const
 {
     return d->spec;
 }
@@ -829,7 +829,7 @@ WallEdge::EventIndex WallEdge::lastDivision() const
     return divisionCount()? (d->interceptCount() - 2) : InvalidIndex;
 }
 
-WallEdge::Event const &WallEdge::at(EventIndex index) const
+const WallEdge::Event &WallEdge::at(EventIndex index) const
 {
     return d->events.at(index);
 }
@@ -839,12 +839,12 @@ bool WallEdge::isValid() const
     return d->hi > d->lo;
 }
 
-WallEdge::Event const &WallEdge::first() const
+const WallEdge::Event &WallEdge::first() const
 {
     return d->bottom;
 }
 
-WallEdge::Event const &WallEdge::last() const
+const WallEdge::Event &WallEdge::last() const
 {
     return d->top;
 }

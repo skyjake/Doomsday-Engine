@@ -20,8 +20,6 @@
 
 #include "de_base.h"
 
-#include "misc/r_util.h"
-
 #include "gl/gl_defer.h"
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
@@ -31,10 +29,11 @@
 
 #include "render/rend_main.h" // misc global vars awaiting new home
 
-#include <doomsday/resource/colorpalettes.h>
-#include <doomsday/res/Texture>
-#include <de/LogBuffer>
-#include <de/mathutil.h> // M_CeilPow
+#include <doomsday/res/colorpalettes.h>
+#include <doomsday/res/texture.h>
+#include <doomsday/r_util.h>
+#include <de/logbuffer.h>
+#include <de/legacy/mathutil.h> // M_CeilPow
 
 using namespace de;
 
@@ -48,14 +47,14 @@ variantspecification_t::variantspecification_t()
     , gammaCorrection(true)
     , noStretch(false)
     , toAlpha(false)
-    , minFilter(GL_LINEAR)
-    , magFilter(GL_LINEAR)
+    , minFilter(1) // linear
+    , magFilter(1) // linear
     , anisoFilter(0)
     , tClass(0)
     , tMap(0)
 {}
 
-variantspecification_t::variantspecification_t(variantspecification_t const &other)
+variantspecification_t::variantspecification_t(const variantspecification_t &other)
     : context(other.context)
     , flags(other.flags)
     , border(other.border)
@@ -72,7 +71,7 @@ variantspecification_t::variantspecification_t(variantspecification_t const &oth
     , tMap(other.tMap)
 {}
 
-bool variantspecification_t::operator == (variantspecification_t const &other) const
+bool variantspecification_t::operator == (const variantspecification_t &other) const
 {
     if(this == &other) return 1;
     /// @todo We can be a bit cleverer here...
@@ -94,9 +93,9 @@ bool variantspecification_t::operator == (variantspecification_t const &other) c
     return 1; // Equal.
 }
 
-int variantspecification_t::glMinFilter() const
+GLenum variantspecification_t::glMinFilter() const
 {
-    if(minFilter >= 0) // Constant logical value.
+    if (minFilter >= 0) // Constant logical value.
     {
         return (mipmapped? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST) + minFilter;
     }
@@ -104,7 +103,7 @@ int variantspecification_t::glMinFilter() const
     return mipmapped? glmode[mipmapping] : GL_LINEAR;
 }
 
-int variantspecification_t::glMagFilter() const
+GLenum variantspecification_t::glMagFilter() const
 {
     if(magFilter >= 0) // Constant logical value.
     {
@@ -132,19 +131,19 @@ TextureVariantSpec::TextureVariantSpec(texturevariantspecificationtype_t type)
     : type(type)
 {}
 
-TextureVariantSpec::TextureVariantSpec(TextureVariantSpec const &other)
+TextureVariantSpec::TextureVariantSpec(const TextureVariantSpec &other)
     : type(other.type)
     , variant(other.variant)
     , detailVariant(other.detailVariant)
 {}
 
-bool detailvariantspecification_t::operator == (detailvariantspecification_t const &other) const
+bool detailvariantspecification_t::operator == (const detailvariantspecification_t &other) const
 {
     if(this == &other) return true;
     return contrast == other.contrast; // Equal.
 }
 
-bool TextureVariantSpec::operator == (TextureVariantSpec const &other) const
+bool TextureVariantSpec::operator == (const TextureVariantSpec &other) const
 {
     if(this == &other) return true; // trivial
     if(type != other.type) return false;
@@ -153,23 +152,23 @@ bool TextureVariantSpec::operator == (TextureVariantSpec const &other) const
     case TST_GENERAL: return variant       == other.variant;
     case TST_DETAIL:  return detailVariant == other.detailVariant;
     }
-    DENG2_ASSERT(false);
+    DE_ASSERT_FAIL("Invalid texture variant specification type");
     return false;
 }
 
-static String nameForGLTextureWrapMode(int mode)
+static String nameForGLTextureWrapMode(GLenum mode)
 {
     if(mode == GL_REPEAT) return "repeat";
-#if defined (DENG_OPENGL)
-    if(mode == GL_CLAMP) return "clamp";
-#endif
+//#if defined (DE_OPENGL)
+//    if(mode == GL_CLAMP) return "clamp";
+//#endif
     if(mode == GL_CLAMP_TO_EDGE) return "clamp_edge";
     return "(unknown)";
 }
 
 String TextureVariantSpec::asText() const
 {
-    static String const textureUsageContextNames[1 + TEXTUREVARIANTUSAGECONTEXT_COUNT] = {
+    static const char *textureUsageContextNames[1 + TEXTUREVARIANTUSAGECONTEXT_COUNT] = {
         /* TC_UNKNOWN */                    "unknown",
         /* TC_UI */                         "ui",
         /* TC_MAPSURFACE_DIFFUSE */         "mapsurface_diffuse",
@@ -183,29 +182,29 @@ String TextureVariantSpec::asText() const
         /* TC_PSPRITE_DIFFUSE */            "psprite_diffuse",
         /* TC_SKYSPHERE_DIFFUSE */          "skysphere_diffuse"
     };
-    static String const textureSpecificationTypeNames[2] = {
+    static const char *textureSpecificationTypeNames[2] = {
         /* TST_GENERAL */   "general",
         /* TST_DETAIL */    "detail"
     };
-    static String const filterModeNames[] = { "ui", "sprite", "noclass", "const" };
-    static String const glFilterNames[] = {
+    static const char *filterModeNames[] = { "ui", "sprite", "noclass", "const" };
+    static const char *glFilterNames[] = {
         "nearest", "linear", "nearest_mipmap_nearest", "linear_mipmap_nearest",
         "nearest_mipmap_linear", "linear_mipmap_linear"
     };
 
-    String text = String("Type:%1").arg(textureSpecificationTypeNames[type]);
+    String text = Stringf("Type:%s", textureSpecificationTypeNames[type]);
 
     switch(type)
     {
     case TST_DETAIL: {
-        detailvariantspecification_t const &spec = detailVariant;
-        text += " Contrast:" + String::number(int(.5f + spec.contrast / 255.f * 100)) + "%";
+        const detailvariantspecification_t &spec = detailVariant;
+        text += " Contrast:" + String::asText(int(.5f + spec.contrast / 255.f * 100)) + "%";
         break; }
 
     case TST_GENERAL: {
-        variantspecification_t const &spec = variant;
+        const variantspecification_t &spec = variant;
         texturevariantusagecontext_t tc = spec.context;
-        DENG2_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
+        DE_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
 
         int glMinFilterNameIdx;
         if(spec.minFilter >= 0) // Constant logical value.
@@ -238,14 +237,14 @@ String TextureVariantSpec::asText() const
             }
         }
 
-        text += " Context:" + textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1]
-              + " Flags:" + String::number(spec.flags & ~TSF_INTERNAL_MASK)
-              + " Border:" + String::number(spec.border)
+        text += DE_STR(" Context:") + textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1]
+              + " Flags:" + String::asText(spec.flags & ~TSF_INTERNAL_MASK)
+              + " Border:" + String::asText(spec.border)
               + " MinFilter:" + filterModeNames[3 + de::clamp(-1, spec.minFilter, 0)]
                               + "|" + glFilterNames[glMinFilterNameIdx]
               + " MagFilter:" + filterModeNames[3 + de::clamp(-3, spec.magFilter, 0)]
                               + "|" + glFilterNames[glMagFilterNameIdx]
-              + " AnisoFilter:" + String::number(spec.anisoFilter)
+              + " AnisoFilter:" + String::asText(spec.anisoFilter)
               + " WrapS:" + nameForGLTextureWrapMode(spec.wrapS)
               + " WrapT:" + nameForGLTextureWrapMode(spec.wrapT)
               + " CorrectGamma:" + (spec.gammaCorrection? "yes" : "no")
@@ -254,8 +253,8 @@ String TextureVariantSpec::asText() const
 
         if(spec.flags & TSF_HAS_COLORPALETTE_XLAT)
         {
-            text += " Translated:(tclass:" + String::number(spec.tClass)
-                                           + " tmap:" + String::number(spec.tMap) + ")";
+            text += " Translated:(tclass:" + String::asText(spec.tClass)
+                                           + " tmap:" + String::asText(spec.tMap) + ")";
         }
         break; }
     }
@@ -263,7 +262,7 @@ String TextureVariantSpec::asText() const
     return text;
 }
 
-DENG2_PIMPL(ClientTexture::Variant)
+DE_PIMPL(ClientTexture::Variant)
 {
     ClientTexture &texture; /// The base for which "this" is a context derivative.
     TextureVariantSpec spec; /// Usage context specification.
@@ -278,7 +277,7 @@ DENG2_PIMPL(ClientTexture::Variant)
     /// Prepared coordinates for the bottom right of the texture minus border.
     float s, t;
 
-    Impl(Public *i, ClientTexture &generalCase, TextureVariantSpec const &spec)
+    Impl(Public *i, ClientTexture &generalCase, const TextureVariantSpec &spec)
         : Base(i)
         , texture(generalCase)
         , spec(spec)
@@ -296,7 +295,7 @@ DENG2_PIMPL(ClientTexture::Variant)
     }
 };
 
-ClientTexture::Variant::Variant(ClientTexture &generalCase, TextureVariantSpec const &spec)
+ClientTexture::Variant::Variant(ClientTexture &generalCase, const TextureVariantSpec &spec)
     : d(new Impl(this, generalCase, spec))
 {}
 
@@ -309,7 +308,7 @@ ClientTexture::Variant::Variant(ClientTexture &generalCase, TextureVariantSpec c
  * @param tex           Logical texture which will hold the analysis data.
  * @param forceUpdate   Force an update of the recorded analysis data.
  */
-static void performImageAnalyses(image_t const &image,
+static void performImageAnalyses(const image_t &image,
     texturevariantusagecontext_t context, ClientTexture &tex, bool forceUpdate)
 {
     // Do we need color palette info?
@@ -437,7 +436,7 @@ static void performImageAnalyses(image_t const &image,
                                     App_Resources().colorPalettes().colorPalette(image.paletteId),
                                     false, &ac->color);
             }
-            Vector3f color(ac->color.rgb);
+            Vec3f color(ac->color.rgb);
             R_AmplifyColor(color);
             for(int i = 0; i < 3; ++i)
             {
@@ -565,12 +564,12 @@ uint ClientTexture::Variant::prepare()
     }
 
     // Submit the content for uploading (possibly deferred).
-    gl::UploadMethod uploadMethod = GL_ChooseUploadMethod(&c);
+    gfx::UploadMethod uploadMethod = GL_ChooseUploadMethod(&c);
     GL_UploadTextureContent(c, uploadMethod);
 
     LOGDEV_RES_XVERBOSE("Prepared \"%s\" variant (glName:%u)%s",
                         d->texture.manifest().composeUri() << uint(d->glTexName) <<
-                        (uploadMethod == gl::Immediate? " while not busy!" : ""));
+                        (uploadMethod == gfx::Immediate? " while not busy!" : ""));
     LOGDEV_RES_XVERBOSE("  Content: %s", Image_Description(image));
     LOGDEV_RES_XVERBOSE("  Specification %p: %s", &d->spec << d->spec.asText());
 
@@ -594,7 +593,7 @@ void ClientTexture::Variant::release()
 {
     if (isPrepared())
     {
-        Deferred_glDeleteTextures(1, (GLuint const *) &d->glTexName);
+        Deferred_glDeleteTextures(1, (const GLuint *) &d->glTexName);
         d->glTexName = 0;
     }
 }
@@ -604,7 +603,7 @@ ClientTexture &ClientTexture::Variant::base() const
     return d->texture;
 }
 
-TextureVariantSpec const &ClientTexture::Variant::spec() const
+const TextureVariantSpec &ClientTexture::Variant::spec() const
 {
     return d->spec;
 }
@@ -621,7 +620,7 @@ String ClientTexture::Variant::sourceDescription() const
     return "none";
 }
 
-ClientTexture::Variant::Flags ClientTexture::Variant::flags() const
+Flags ClientTexture::Variant::flags() const
 {
     return d->flags;
 }

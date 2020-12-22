@@ -20,24 +20,20 @@
 
 #include "render/rend_fakeradio.h"
 
-#include <de/Vector>
-#include <doomsday/console/var.h>
 #include "clientapp.h"
 
 #include "gl/gl_texmanager.h"
 
-#include "MaterialAnimator"
-#include "MaterialVariantSpec"
+#include "resource/materialanimator.h"
+#include "resource/materialvariantspec.h"
 
 #include "world/map.h"
-#include "ConvexSubspace"
-#include "Line"
-#include "Surface"
-#include "client/clientsubsector.h"
+#include "world/convexsubspace.h"
+#include "world/line.h"
+#include "world/surface.h"
+#include "world/subsector.h"
 
-#include "Face"
-#include "HEdge"
-#include "WallEdge"
+#include "render/walledge.h"
 
 #include "render/rend_main.h"
 #include "render/rendersystem.h"
@@ -47,8 +43,12 @@
 #include "render/viewports.h"  // R_FrameCount()
 #include "render/store.h"
 
+#include <doomsday/console/var.h>
+#include <doomsday/mesh/face.h>
+#include <doomsday/mesh/hedge.h>
+#include <de/vector.h>
+
 using namespace de;
-using namespace world;
 
 enum WallShadow
 {
@@ -58,14 +58,14 @@ enum WallShadow
     RightShadow
 };
 
-static dfloat const MIN_OPEN            = 0.1f;
-static ddouble const MINDIFF            = 8;       ///< Min plane height difference (world units).
-static ddouble const INDIFF             = 8;       ///< Max plane height for indifference offset.
-static dfloat const MIN_SHADOW_DARKNESS = .0001f;  ///< Minimum to qualify.
-static ddouble const MIN_SHADOW_SIZE    = 1;       ///< In map units.
+static const float MIN_OPEN            = 0.1f;
+static const ddouble MINDIFF            = 8;       ///< Min plane height difference (world units).
+static const ddouble INDIFF             = 8;       ///< Max plane height for indifference offset.
+static const float MIN_SHADOW_DARKNESS = .0001f;  ///< Minimum to qualify.
+static const ddouble MIN_SHADOW_SIZE    = 1;       ///< In map units.
 
-dint rendFakeRadio              = true;  ///< cvar
-static dfloat fakeRadioDarkness = 1.2f;  ///< cvar
+int rendFakeRadio              = true;  ///< cvar
+static float fakeRadioDarkness = 1.2f;  ///< cvar
 byte devFakeRadioUpdate         = true;  ///< cvar
 
 /**
@@ -75,7 +75,7 @@ byte devFakeRadioUpdate         = true;  ///< cvar
  * @param ambientLight  Ambient light level to process. It is assumed that adaptation has
  *                      @em NOT yet been applied (it will be).
  */
-static inline dfloat calcShadowDarkness(dfloat ambientLight)
+static inline float calcShadowDarkness(float ambientLight)
 {
     ambientLight += Rend_LightAdaptationDelta(ambientLight);
     return (0.6f - ambientLight * 0.4f) * 0.65f * ::fakeRadioDarkness;
@@ -87,7 +87,7 @@ static inline dfloat calcShadowDarkness(dfloat ambientLight)
  * @param ambientLight  Ambient light level to process. It is assumed that adaptation has
  *                      @em NOT yet been applied (it will be).
  */
-static inline dfloat calcShadowSize(dfloat ambientLight)
+static inline float calcShadowSize(float ambientLight)
 {
     return 2 * (8 + 16 - ambientLight * 16);  /// @todo Make cvars out of constants.
 }
@@ -102,7 +102,7 @@ static inline dfloat calcShadowSize(dfloat ambientLight)
  * @see wallWidth()
  * @see wallDimensions()
  */
-static inline ddouble wallHeight(WallEdge const &leftEdge, WallEdge const &rightEdge)
+static inline ddouble wallHeight(const WallEdge &leftEdge, const WallEdge &rightEdge)
 {
     return rightEdge.top().origin().z - leftEdge.bottom().origin().z;
 }
@@ -117,7 +117,7 @@ static inline ddouble wallHeight(WallEdge const &leftEdge, WallEdge const &right
  * @see wallHeight()
  * @see wallDimensions()
  */
-static inline ddouble wallWidth(WallEdge const &leftEdge, WallEdge const &rightEdge)
+static inline ddouble wallWidth(const WallEdge &leftEdge, const WallEdge &rightEdge)
 {
     return de::abs((rightEdge.origin() - leftEdge.origin()).length());
 }
@@ -133,9 +133,9 @@ static inline ddouble wallWidth(WallEdge const &leftEdge, WallEdge const &rightE
  * @see wallHeight()
  */
 #if 0
-static Vector2d wallDimensions(WallEdge const &leftEdge, WallEdge const &rightEdge)
+static Vec2d wallDimensions(const WallEdge &leftEdge, const WallEdge &rightEdge)
 {
-    return Vector2d(wallWidth(leftEdge, rightEdge), wallHeight(leftEdge, rightEdge));
+    return Vec2d(wallWidth(leftEdge, rightEdge), wallHeight(leftEdge, rightEdge));
 }
 #endif
 
@@ -146,7 +146,7 @@ static Vector2d wallDimensions(WallEdge const &leftEdge, WallEdge const &rightEd
  * @param leftEdge    WallEdge describing the logical left-edge of the wall section.
  * @param rightEdge   WallEdge describing the logical right-edge of the wall section.
  */
-static ddouble wallOffset(WallEdge const &leftEdge, WallEdge const &/*rightEdge*/)
+static ddouble wallOffset(const WallEdge &leftEdge, const WallEdge &/*rightEdge*/)
 {
     return leftEdge.lineSideOffset();
 }
@@ -159,7 +159,7 @@ static ddouble wallOffset(WallEdge const &leftEdge, WallEdge const &/*rightEdge*
  * @param rightEdge   WallEdge describing the logical right-edge of the wall section.
  * @param rightSide   Use the right edge if @c true; otherwise the left edge.
  */
-static dfloat wallSideOpenness(WallEdge const &leftEdge, WallEdge const &/*rightEdge*/, bool rightSide)
+static float wallSideOpenness(const WallEdge &leftEdge, const WallEdge &/*rightEdge*/, bool rightSide)
 {
     return leftEdge.lineSide().radioCornerSide(rightSide).corner;
 }
@@ -173,17 +173,17 @@ static dfloat wallSideOpenness(WallEdge const &leftEdge, WallEdge const &/*right
  * @param shadow      WallShadow identifier.
  * @param shadowSize  Shadow size in map units.
  */
-static bool wallReceivesShadow(WallEdge const &leftEdge, WallEdge const &rightEdge,
-    WallShadow shadow, dfloat shadowSize)
+static bool wallReceivesShadow(const WallEdge &leftEdge, const WallEdge &rightEdge,
+    WallShadow shadow, float shadowSize)
 {
     if(shadowSize <= 0) return false;
 
-    LineSide const &side = leftEdge.lineSide();
-    DENG2_ASSERT(side.leftHEdge());
+    const LineSide &side = leftEdge.lineSide();
+    DE_ASSERT(side.leftHEdge());
 
-    auto const &subsec      = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
-    Plane const &visFloor   = subsec.visFloor  ();
-    Plane const &visCeiling = subsec.visCeiling();
+    const auto &subsec      = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector().as<Subsector>();
+    const Plane &visFloor   = subsec.visFloor  ();
+    const Plane &visCeiling = subsec.visCeiling();
 
     switch(shadow)
     {
@@ -207,7 +207,7 @@ static bool wallReceivesShadow(WallEdge const &leftEdge, WallEdge const &rightEd
                && wallSideOpenness(leftEdge, rightEdge, true/*right side*/) > 0
                && leftEdge.lineSideOffset() + wallWidth(leftEdge, rightEdge) > side.line().length() - shadowSize;
     }
-    DENG2_ASSERT(!"Unknown WallShadow");
+    DE_ASSERT_FAIL("Unknown WallShadow");
     return false;
 }
 
@@ -217,7 +217,7 @@ static bool wallReceivesShadow(WallEdge const &leftEdge, WallEdge const &rightEd
  * @param lineLength  If negative; implies that the texture is flipped horizontally.
  * @param segOffset   Offset to the start of the segment.
  */
-static inline dfloat calcTexCoordX(dfloat lineLength, dfloat segOffset)
+static inline float calcTexCoordX(float lineLength, float segOffset)
 {
     return (lineLength > 0 ? segOffset : lineLength + segOffset);
 }
@@ -230,7 +230,7 @@ static inline dfloat calcTexCoordX(dfloat lineLength, dfloat segOffset)
  * @param top        Z height of the top of the wall section.
  * @param texHeight  If negative; implies that the texture is flipped vertically.
  */
-static inline dfloat calcTexCoordY(dfloat z, dfloat bottom, dfloat top, dfloat texHeight)
+static inline float calcTexCoordY(float z, float bottom, float top, float texHeight)
 {
     return (texHeight > 0 ? top - z : bottom - z);
 }
@@ -238,28 +238,28 @@ static inline dfloat calcTexCoordY(dfloat z, dfloat bottom, dfloat top, dfloat t
 struct ProjectedShadowData
 {
     lightingtexid_t texture;
-    Vector2f texOrigin;
-    Vector2f texDimensions;
-    Vector2f texCoords[4];  ///< { bl, tl, br, tr }
+    Vec2f texOrigin;
+    Vec2f texDimensions;
+    Vec2f texCoords[4];  ///< { bl, tl, br, tr }
 };
 
-static void setTopShadowParams(WallEdge const &leftEdge, WallEdge const &rightEdge, ddouble shadowSize,
+static void setTopShadowParams(const WallEdge &leftEdge, const WallEdge &rightEdge, ddouble shadowSize,
     ProjectedShadowData &projected)
 {
     LineSide /*const*/ &side = leftEdge.lineSide();
-    DENG2_ASSERT(side.leftHEdge());
-    auto const &space       = side.leftHEdge()->face().mapElementAs<ConvexSubspace>();
-    auto const &subsec      = space.subsector().as<world::ClientSubsector>();
-    Plane const &visFloor   = subsec.visFloor  ();
-    Plane const &visCeiling = subsec.visCeiling();
+    DE_ASSERT(side.leftHEdge());
+    const auto &space       = side.leftHEdge()->face().mapElementAs<ConvexSubspace>();
+    const auto &subsec      = space.subsector().as<Subsector>();
+    const Plane &visFloor   = subsec.visFloor  ();
+    const Plane &visCeiling = subsec.visCeiling();
 
     projected = {};
-    projected.texDimensions = Vector2f(0, shadowSize);
-    projected.texOrigin     = Vector2f(0, calcTexCoordY(leftEdge.top().z(), subsec.visFloor().heightSmoothed()
+    projected.texDimensions = Vec2f(0, shadowSize);
+    projected.texOrigin     = Vec2f(0, calcTexCoordY(leftEdge.top().z(), subsec.visFloor().heightSmoothed()
                                                         , subsec.visCeiling().heightSmoothed(), shadowSize));
     projected.texture       = LST_RADIO_OO;
 
-    edgespan_t const &edgeSpan = side.radioEdgeSpan(true/*top*/);
+    const edgespan_t &edgeSpan = side.radioEdgeSpan(true/*top*/);
 
     // One or both neighbors without a back sector?
     if(side.radioCornerSide(0/*left*/ ).corner == -1 ||
@@ -401,21 +401,21 @@ static void setTopShadowParams(WallEdge const &leftEdge, WallEdge const &rightEd
     }
 }
 
-static void setBottomShadowParams(WallEdge const &leftEdge, WallEdge const &rightEdge, ddouble shadowSize,
+static void setBottomShadowParams(const WallEdge &leftEdge, const WallEdge &rightEdge, ddouble shadowSize,
     ProjectedShadowData &projected)
 {
     LineSide /*const*/ &side = leftEdge.lineSide();
-    DENG2_ASSERT(side.leftHEdge());
-    auto const &subsec      = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
-    Plane const &visFloor   = subsec.visFloor  ();
-    Plane const &visCeiling = subsec.visCeiling();
+    DE_ASSERT(side.leftHEdge());
+    const auto &subsec      = side.leftHEdge()->face().mapElementAs<ConvexSubspace>().subsector().as<Subsector>();
+    const Plane &visFloor   = subsec.visFloor  ();
+    const Plane &visCeiling = subsec.visCeiling();
 
     projected = {};
     projected.texDimensions.y = -shadowSize;
     projected.texOrigin.y     = calcTexCoordY(leftEdge.top().z(), visFloor.heightSmoothed(), visCeiling.heightSmoothed(), -shadowSize);
     projected.texture         = LST_RADIO_OO;
 
-    edgespan_t const &edgeSpan = side.radioEdgeSpan(false/*bottom*/);
+    const edgespan_t &edgeSpan = side.radioEdgeSpan(false/*bottom*/);
 
     // Corners without a neighbor back sector?
     if(side.radioCornerSide(0/*left*/).corner == -1 || side.radioCornerSide(1/*right*/).corner == -1)
@@ -557,20 +557,20 @@ static void setBottomShadowParams(WallEdge const &leftEdge, WallEdge const &righ
     }
 }
 
-static void setSideShadowParams(WallEdge const &leftEdge, WallEdge const &rightEdge, bool rightSide,
+static void setSideShadowParams(const WallEdge &leftEdge, const WallEdge &rightEdge, bool rightSide,
     ddouble shadowSize, ProjectedShadowData &projected)
 {
     LineSide /*const*/ &side = leftEdge.lineSide();
-    HEdge const *hedge = side.leftHEdge();
-    DENG2_ASSERT(hedge);
-    auto const &subsec      = hedge->face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
-    Plane const &visFloor   = subsec.visFloor  ();
-    Plane const &visCeiling = subsec.visCeiling();
-    DENG2_ASSERT(visFloor.castsShadow() || visCeiling.castsShadow());  // sanity check.
+    const auto *hedge = side.leftHEdge();
+    DE_ASSERT(hedge);
+    const auto &subsec      = hedge->face().mapElementAs<ConvexSubspace>().subsector().as<Subsector>();
+    const Plane &visFloor   = subsec.visFloor  ();
+    const Plane &visCeiling = subsec.visCeiling();
+    DE_ASSERT(visFloor.castsShadow() || visCeiling.castsShadow());  // sanity check.
 
     projected = {};
-    projected.texOrigin     = Vector2f(0, leftEdge.bottom().z() - visFloor.heightSmoothed());
-    projected.texDimensions = Vector2f(0, visCeiling.heightSmoothed() - visFloor.heightSmoothed());
+    projected.texOrigin     = Vec2f(0, leftEdge.bottom().z() - visFloor.heightSmoothed());
+    projected.texDimensions = Vec2f(0, visCeiling.heightSmoothed() - visFloor.heightSmoothed());
 
     if(rightSide)
     {
@@ -624,12 +624,12 @@ static void setSideShadowParams(WallEdge const &leftEdge, WallEdge const &rightE
     }
     else
     {
-        auto const &bSpace = hedge->twin().face().mapElementAs<ConvexSubspace>();
+        const auto &bSpace = hedge->twin().face().mapElementAs<ConvexSubspace>();
         if (bSpace.hasSubsector())
         {
-            auto const &bSubsec  = bSpace.subsector().as<world::ClientSubsector>();
-            ddouble const bFloor = bSubsec.visFloor  ().heightSmoothed();
-            ddouble const bCeil  = bSubsec.visCeiling().heightSmoothed();
+            const auto &bSubsec  = bSpace.subsector().as<Subsector>();
+            const ddouble bFloor = bSubsec.visFloor  ().heightSmoothed();
+            const ddouble bCeil  = bSubsec.visCeiling().heightSmoothed();
             if (bFloor > visFloor.heightSmoothed() && bCeil < visCeiling.heightSmoothed())
             {
                 if (visFloor.castsShadow() && visCeiling.castsShadow())
@@ -685,27 +685,27 @@ static void setSideShadowParams(WallEdge const &leftEdge, WallEdge const &rightE
     }
 }
 
-static void quadTexCoords(Vector2f *tc, WallEdge const &leftEdge, WallEdge const &rightEdge,
-    Vector2f const &texOrigin, Vector2f const &texDimensions, bool horizontal)
+static void quadTexCoords(Vec2f *tc, const WallEdge &leftEdge, const WallEdge &rightEdge,
+    const Vec2f &texOrigin, const Vec2f &texDimensions, bool horizontal)
 {
-    DENG2_ASSERT(tc);
+    DE_ASSERT(tc);
     if(horizontal)
     {
         tc[0] = (texOrigin / texDimensions).yx();
-        tc[2] = tc[0] + Vector2f(0                              , wallWidth(leftEdge, rightEdge)) / texDimensions.yx();
-        tc[3] = tc[0] + Vector2f(wallHeight(leftEdge, rightEdge), wallWidth(leftEdge, rightEdge)) / texDimensions.yx();
-        tc[1] = Vector2f(tc[3].x, tc[0].y);
+        tc[2] = tc[0] + Vec2f(0                              , wallWidth(leftEdge, rightEdge)) / texDimensions.yx();
+        tc[3] = tc[0] + Vec2f(wallHeight(leftEdge, rightEdge), wallWidth(leftEdge, rightEdge)) / texDimensions.yx();
+        tc[1] = Vec2f(tc[3].x, tc[0].y);
     }
     else  // Vertical.
     {
         tc[1] = texOrigin / texDimensions;
-        tc[0] = tc[1] + Vector2f(0                             , wallHeight(leftEdge, rightEdge)) / texDimensions;
-        tc[2] = tc[1] + Vector2f(wallWidth(leftEdge, rightEdge), wallHeight(leftEdge, rightEdge)) / texDimensions;
-        tc[3] = Vector2f(tc[2].x, tc[1].y);
+        tc[0] = tc[1] + Vec2f(0                             , wallHeight(leftEdge, rightEdge)) / texDimensions;
+        tc[2] = tc[1] + Vec2f(wallWidth(leftEdge, rightEdge), wallHeight(leftEdge, rightEdge)) / texDimensions;
+        tc[3] = Vec2f(tc[2].x, tc[1].y);
     }
 }
 
-static bool projectWallShadow(WallEdge const &leftEdge, WallEdge const &rightEdge,
+static bool projectWallShadow(const WallEdge &leftEdge, const WallEdge &rightEdge,
     WallShadow shadow, ddouble shadowSize, ProjectedShadowData &projected)
 {
     if(!wallReceivesShadow(leftEdge, rightEdge, shadow, shadowSize))
@@ -737,22 +737,23 @@ static bool projectWallShadow(WallEdge const &leftEdge, WallEdge const &rightEdg
                       projected.texOrigin, projected.texDimensions, true/*horizontal*/);
         return true;
     }
-    DENG2_ASSERT(!"Unknown WallShadow");
+    DE_ASSERT_FAIL("Unknown WallShadow");
     return false;
 }
 
-static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, WallEdge const &rightEdge,
-    dfloat shadowDark, ProjectedShadowData const &tp)
+static void drawWallShadow(const Vec3f *posCoords, const WallEdge &leftEdge, const WallEdge &rightEdge,
+    float shadowDark, const ProjectedShadowData &tp)
 {
-    DENG2_ASSERT(posCoords);
+    DE_ASSERT(posCoords);
 
     // Uniform color - shadows are black.
-    Vector4ub const shadowColor(0, 0, 0, 255 * de::clamp(0.f, shadowDark, 1.0f));
+    Vec4ub const shadowColor(0, 0, 0, 255 * de::clamp(0.f, shadowDark, 1.0f));
 
     DrawListSpec listSpec;
     listSpec.group = ShadowGeom;
-    listSpec.texunits[TU_PRIMARY] = GLTextureUnit(GL_PrepareLSTexture(tp.texture), gl::ClampToEdge, gl::ClampToEdge);
-    DrawList &shadowList = ClientApp::renderSystem().drawLists().find(listSpec);
+    listSpec.texunits[TU_PRIMARY] =
+        GLTextureUnit(GL_PrepareLSTexture(tp.texture), gfx::ClampToEdge, gfx::ClampToEdge);
+    DrawList &shadowList = ClientApp::render().drawLists().find(listSpec);
 
     static DrawList::Indices indices;
     if (indices.size() < 64) indices.resize(64);
@@ -760,12 +761,12 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
     // Walls with edge divisions mean two trifans.
     if(leftEdge.divisionCount() || rightEdge.divisionCount())
     {
-        Store &buffer = ClientApp::renderSystem().buffer();
+        Store &buffer = ClientApp::render().buffer();
         // Right fan.
         {
-            duint const numVerts = 3 + rightEdge.divisionCount();
-            duint const base     = buffer.allocateVertices(numVerts);
-            if (indices.size() < int(numVerts)) indices.resize(numVerts);
+            const duint numVerts = 3 + rightEdge.divisionCount();
+            const duint base     = buffer.allocateVertices(numVerts);
+            if (indices.size() < numVerts) indices.resize(numVerts);
             for(duint i = 0; i < numVerts; ++i)
             {
                 indices[i] = base + i;
@@ -786,27 +787,27 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
             buffer.colorCoords [indices[numVerts - 1]] = shadowColor;
             buffer.texCoords[0][indices[numVerts - 1]] = tp.texCoords[2];
 
-            for(dint i = 0; i < rightEdge.divisionCount(); ++i)
+            for(int i = 0; i < rightEdge.divisionCount(); ++i)
             {
-                WorldEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - i);
+                const WorldEdge::Event &icpt = rightEdge.at(rightEdge.lastDivision() - i);
 
                 buffer.posCoords   [indices[2 + i]] = icpt.origin();
                 buffer.colorCoords [indices[2 + i]] = shadowColor;
-                buffer.texCoords[0][indices[2 + i]] = Vector2f(tp.texCoords[3].x, tp.texCoords[2].y + (tp.texCoords[3].y - tp.texCoords[2].y) * icpt.distance());
+                buffer.texCoords[0][indices[2 + i]] = Vec2f(tp.texCoords[3].x, tp.texCoords[2].y + (tp.texCoords[3].y - tp.texCoords[2].y) * icpt.distance());
             }
 
             // Write the geometry?
             if(::rendFakeRadio != 2)
             {
-                shadowList.write(buffer, indices.constData(), numVerts, gl::TriangleFan);
+                shadowList.write(buffer, indices.data(), numVerts, gfx::TriangleFan);
             }
         }
         // Left fan.
         {
-            duint const numVerts = 3 + leftEdge .divisionCount();
-            duint const base     = buffer.allocateVertices(numVerts);
-            if (indices.size() < int(numVerts)) indices.resize(numVerts);
-            for(duint i = 0; i < numVerts; ++i)
+            const duint numVerts = 3 + leftEdge .divisionCount();
+            const duint base     = buffer.allocateVertices(numVerts);
+            if (indices.size() < numVerts) indices.resize(numVerts);
+            for (duint i = 0; i < numVerts; ++i)
             {
                 indices[i] = base + i;
             }
@@ -826,25 +827,25 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
             buffer.colorCoords [indices[numVerts - 1]] = shadowColor;
             buffer.texCoords[0][indices[numVerts - 1]] = tp.texCoords[1];
 
-            for(dint i = 0; i < leftEdge.divisionCount(); ++i)
+            for(int i = 0; i < leftEdge.divisionCount(); ++i)
             {
-                WorldEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + i);
+                const WorldEdge::Event &icpt = leftEdge.at(leftEdge.firstDivision() + i);
 
                 buffer.posCoords   [indices[2 + i]] = icpt.origin();
                 buffer.colorCoords [indices[2 + i]] = shadowColor;
-                buffer.texCoords[0][indices[2 + i]] = Vector2f(tp.texCoords[0].x, tp.texCoords[0].y + (tp.texCoords[1].y - tp.texCoords[0].y) * icpt.distance());
+                buffer.texCoords[0][indices[2 + i]] = Vec2f(tp.texCoords[0].x, tp.texCoords[0].y + (tp.texCoords[1].y - tp.texCoords[0].y) * icpt.distance());
             }
 
             // Write the geometry?
             if(::rendFakeRadio != 2)
             {
-                shadowList.write(buffer, indices.constData(), numVerts, gl::TriangleFan);
+                shadowList.write(buffer, indices.data(), numVerts, gfx::TriangleFan);
             }
         }
     }
     else
     {
-        Store &buffer = ClientApp::renderSystem().buffer();
+        Store &buffer = ClientApp::render().buffer();
         duint base = buffer.allocateVertices(4);
         for(duint i = 0; i < 4; ++i)
         {
@@ -864,31 +865,31 @@ static void drawWallShadow(Vector3f const *posCoords, WallEdge const &leftEdge, 
         // Write the geometry?
         if(::rendFakeRadio != 2)
         {
-            shadowList.write(buffer, indices.constData(), 4, gl::TriangleStrip);
+            shadowList.write(buffer, indices.data(), 4, gfx::TriangleStrip);
         }
     }
 }
 
-void Rend_DrawWallRadio(WallEdge const &leftEdge, WallEdge const &rightEdge, dfloat ambientLight)
+void Rend_DrawWallRadio(const WallEdge &leftEdge, const WallEdge &rightEdge, float ambientLight)
 {
     // Disabled?
     if(!::rendFakeRadio || ::levelFullBright || leftEdge.spec().flags.testFlag(WallSpec::NoFakeRadio))
         return;
 
     // Skip if the surface is not lit with ambient light.
-    dfloat const shadowDark = calcShadowDarkness(ambientLight);
+    const float shadowDark = calcShadowDarkness(ambientLight);
     if(shadowDark < MIN_SHADOW_DARKNESS)
         return;
 
     // Skip if the determined shadow size is too small.
-    dfloat const shadowSize = calcShadowSize(ambientLight);
+    const float shadowSize = calcShadowSize(ambientLight);
     if(shadowSize < MIN_SHADOW_SIZE)
         return;
 
     // Ensure we have up-to-date information for generating shadow geometry.
     leftEdge.lineSide().updateRadioForFrame(R_FrameCount());
 
-    Vector3f const posCoords[] = {
+    Vec3f const posCoords[] = {
         leftEdge .bottom().origin(),
         leftEdge .top   ().origin(),
         rightEdge.bottom().origin(),
@@ -935,10 +936,10 @@ void Rend_DrawWallRadio(WallEdge const &leftEdge, WallEdge const &rightEdge, dfl
  *
  * @return  @c true if one or both edges are partially in shadow.
  */
-static bool prepareFlatShadowEdges(ShadowEdge edges[2], HEdge const *hEdges[2], dint sectorPlaneIndex,
-    dfloat shadowDark)
+static bool prepareFlatShadowEdges(ShadowEdge edges[2], const mesh::HEdge *hEdges[2],
+                                   int sectorPlaneIndex, float shadowDark)
 {
-    DENG2_ASSERT(edges && hEdges && hEdges[0] && hEdges[1]);
+    DE_ASSERT(edges && hEdges && hEdges[0] && hEdges[1]);
 
     // If the sector containing the shadowing line section is fully closed (i.e., volume is
     // not positive) then skip shadow drawing entirely.
@@ -946,10 +947,10 @@ static bool prepareFlatShadowEdges(ShadowEdge edges[2], HEdge const *hEdges[2], 
     if(!hEdges[0]->hasFace() || !hEdges[0]->face().hasMapElement())
         return false;
 
-    if(!hEdges[0]->face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>().hasWorldVolume())
+    if(!hEdges[0]->face().mapElementAs<ConvexSubspace>().subsector().as<Subsector>().hasWorldVolume())
         return false;
 
-    for(dint i = 0; i < 2; ++i)
+    for(int i = 0; i < 2; ++i)
     {
         edges[i].init(*hEdges[i], i);
         edges[i].prepare(sectorPlaneIndex);
@@ -957,19 +958,23 @@ static bool prepareFlatShadowEdges(ShadowEdge edges[2], HEdge const *hEdges[2], 
     return (edges[0].shadowStrength(shadowDark) >= .0001 && edges[1].shadowStrength(shadowDark) >= .0001);
 }
 
-static uint makeFlatShadowGeometry(DrawList::Indices &indices, Store &verts, gl::Primitive &primitive,
-    ShadowEdge const edges[2], dfloat shadowDark, bool haveFloor)
+static uint makeFlatShadowGeometry(DrawList::Indices &indices,
+                                   Store &            verts,
+                                   gfx::Primitive &primitive,
+                                   ShadowEdge const   edges[2],
+                                   float             shadowDark,
+                                   bool               haveFloor)
 {
     static duint const floorOrder[][4] = { { 0, 1, 2, 3 }, { 1, 2, 3, 0 } };
     static duint const ceilOrder [][4] = { { 0, 3, 2, 1 }, { 1, 0, 3, 2 } };
 
-    static Vector4ub const white(255, 255, 255, 0);
-    static Vector4ub const black(  0,   0,   0, 0);
+    static Vec4ub const white(255, 255, 255, 0);
+    static Vec4ub const black(  0,   0,   0, 0);
 
     // What vertex winding order (0 = left, 1 = right)? (For best results, the cross edge
     // should always be the shortest.)
-    duint const winding = (edges[1].length() > edges[0].length()? 1 : 0);
-    duint const *order  = (haveFloor ? floorOrder[winding] : ceilOrder[winding]);
+    const duint winding = (edges[1].length() > edges[0].length()? 1 : 0);
+    const duint *order  = (haveFloor ? floorOrder[winding] : ceilOrder[winding]);
 
     // Assign indices.
     duint base = verts.allocateVertices(4);
@@ -982,16 +987,16 @@ static uint makeFlatShadowGeometry(DrawList::Indices &indices, Store &verts, gl:
     //
     // Build the geometry.
     //
-    primitive = gl::TriangleFan;
+    primitive = gfx::TriangleFan;
     verts.posCoords[indices[order[0]]] = edges[0].outer();
     verts.posCoords[indices[order[1]]] = edges[1].outer();
     verts.posCoords[indices[order[2]]] = edges[1].inner();
     verts.posCoords[indices[order[3]]] = edges[0].inner();
     // Set uniform color.
-#if defined (DENG_OPENGL)
-    Vector4ub const &uniformColor = (::renderWireframe? white : black);  // White to assist visual debugging.
+#if defined (DE_OPENGL)
+    const Vec4ub &uniformColor = (::renderWireframe? white : black);  // White to assist visual debugging.
 #else
-    Vector4ub const &uniformColor = black;
+    const Vec4ub &uniformColor = black;
 #endif
     for(duint i = 0; i < 4; ++i)
     {
@@ -1006,7 +1011,7 @@ static uint makeFlatShadowGeometry(DrawList::Indices &indices, Store &verts, gl:
     return 4;
 }
 
-void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
+void Rend_DrawFlatRadio(const ConvexSubspace &subspace)
 {
     // Disabled?
     if(!::rendFakeRadio || ::levelFullBright) return;
@@ -1014,10 +1019,10 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
     // If no shadow-casting lines are linked we no work to do.
     if(!subspace.shadowLineCount()) return;
 
-    auto const &subsec = subspace.subsector().as<world::ClientSubsector>();
+    const auto &subsec = subspace.subsector().as<Subsector>();
 
     // Determine the shadow properties.
-    dfloat const shadowDark = calcShadowDarkness(subsec.lightSourceIntensity());
+    const float shadowDark = calcShadowDarkness(subsec.lightSourceIntensity());
     if(shadowDark < MIN_SHADOW_DARKNESS)
         return;
 
@@ -1025,11 +1030,11 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
     static ShadowEdge shadowEdges[2/*left, right*/];  // Keep these around (needed often).
 
     // Can skip drawing for Planes that do not face the viewer - find the 2D vector to subspace center.
-    auto const eyeToSubspace = Vector2f(Rend_EyeOrigin().xz() - subspace.poly().center());
+    const auto eyeToSubspace = Vec2f(Rend_EyeOrigin().xz() - subspace.poly().center());
 
     // All shadow geometry uses the same texture (i.e., none) - use the same list.
-    DrawList &shadowList = ClientApp::renderSystem().drawLists().find(
-#if defined (DENG_OPENGL)
+    DrawList &shadowList = ClientApp::render().drawLists().find(
+#if defined (DE_OPENGL)
         DrawListSpec(renderWireframe? UnlitGeom : ShadowGeom)
 #else
         DrawListSpec(ShadowGeom)
@@ -1039,40 +1044,41 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
     // Process all LineSides linked to this subspace as potential shadow casters.
     subspace.forAllShadowLines([&subsec, &shadowDark, &eyeToSubspace, &shadowList] (LineSide &side)
     {
-        DENG2_ASSERT(side.hasSections() && !side.line().definesPolyobj() && side.leftHEdge());
+        DE_ASSERT(side.hasSections() && !side.line().definesPolyobj() && side.leftHEdge());
 
         // Process each only once per frame (we only want to draw a shadow set once).
         if(side.shadowVisCount() != R_FrameCount())
         {
             side.setShadowVisCount(R_FrameCount());  // Mark processed.
 
-            for (dint pln = 0; pln < subsec.visPlaneCount(); ++pln)
+            for (int pln = 0; pln < subsec.visPlaneCount(); ++pln)
             {
-                Plane const &plane = subsec.visPlane(pln);
+                const Plane &plane = subsec.visPlane(pln);
 
                 // Skip Planes which should not receive FakeRadio shadowing.
                 if (!plane.receivesShadow()) continue;
 
                 // Skip Planes facing away from the viewer.
-                if (Vector3f(eyeToSubspace, Rend_EyeOrigin().y - plane.heightSmoothed())
+                if (Vec3f(eyeToSubspace, Rend_EyeOrigin().y - plane.heightSmoothed())
                          .dot(plane.surface().normal()) >= 0)
                 {
-                    HEdge const *hEdges[2/*left, right*/] = { side.leftHEdge(), side.leftHEdge() };
+                    const mesh::HEdge *hEdges[2/*left, right*/] = { side.leftHEdge(), side.leftHEdge() };
 
                     if (prepareFlatShadowEdges(shadowEdges, hEdges, pln, shadowDark))
                     {
-                        bool const haveFloor = plane.surface().normal()[2] > 0;
+                        const bool haveFloor = plane.surface().normal()[2] > 0;
 
                         // Build geometry.
-                        Store &buffer = ClientApp::renderSystem().buffer();
-                        gl::Primitive primitive;
-                        uint vertCount = makeFlatShadowGeometry(indices, buffer, primitive, shadowEdges, shadowDark, haveFloor);
+                        Store &buffer = ClientApp::render().buffer();
+                        gfx::Primitive primitive;
+                        uint              vertCount = makeFlatShadowGeometry(
+                            indices, buffer, primitive, shadowEdges, shadowDark, haveFloor);
 
                         // Skip drawing entirely?
                         if (::rendFakeRadio == 2) continue;
 
                         // Write the geometry.
-                        shadowList.write(buffer, indices.constData(), vertCount, primitive);
+                        shadowList.write(buffer, indices.data(), vertCount, primitive);
                     }
                 }
             }

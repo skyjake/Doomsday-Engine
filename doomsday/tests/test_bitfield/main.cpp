@@ -17,14 +17,15 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/BitField>
-#include <QTextStream>
-#include <QDebug>
+#include <de/bitfield.h>
+#include <iostream>
 
 using namespace de;
 
 int main(int, char **)
 {
+    init_Foundation();
+    using namespace std;
     try
     {
         BitField::Elements elems;
@@ -32,7 +33,7 @@ int main(int, char **)
 
         BitField pack(elems);
         pack.set(1, duint(1));
-        qDebug() << pack.asText().toLatin1().constData();
+        cout << pack.asText() << endl;
 
         elems.clear();
         elems.add(1, 1);
@@ -40,56 +41,54 @@ int main(int, char **)
 
         pack.setElements(elems);
         pack.set(2, true);
-        qDebug() << pack.asText().toLatin1().constData();
+        cout << pack.asText() << endl;
         pack.set(1, true);
-        qDebug() << pack.asText().toLatin1().constData();
+        cout << pack.asText() << endl;
 
         elems.add(3, 3);
         pack.set(1, false);
-        qDebug() << pack.asText().toLatin1().constData();
+        cout << pack.asText() << endl;
         pack.set(3, 6u);
-        qDebug() << pack.asText().toLatin1().constData();
+        cout << pack.asText() << endl;
 
         elems.add(10, 8);
         pack.set(10, 149u);
-        qDebug() << pack.asText().toLatin1().constData();
+        cout << pack.asText() << endl;
 
-        qDebug() << "Field 1:" << pack[1];
-        qDebug() << "Field 2:" << pack[2];
-        qDebug() << "Field 3:" << pack[3];
-        qDebug() << "Field 10:" << pack[10];
+        cout << "Field 1: " << pack[1] << " Field 2: " << pack[2] << " Field 3: " << pack[3]
+             << " Field 10: " << pack[10] << endl;
 
-        DENG2_ASSERT(pack[10] == 149);
+        DE_ASSERT(pack[10] == 149);
 
         BitField pack2 = pack;
-        qDebug() << "Copied:" << pack2.asText().toLatin1().constData();
+        cout << "Copied: " << pack2.asText() << endl;
 
-        qDebug() << "Equal:" << (pack2 == pack? "true" : "false");
-        qDebug() << "Delta:" << pack.delta(pack2);
+        cout << "Equal: " << (pack2 == pack? "true" : "false") << endl;
+        cout << "Delta: " << pack.delta(pack2) << endl;
 
         pack2.set(3, 3u);
-        qDebug() << "Modified:" << pack2.asText().toLatin1().constData();
-        qDebug() << "Equal:" << (pack2 == pack? "true" : "false");
-        qDebug() << "Delta:" << pack.delta(pack2);
+        cout << "Modified: " << pack2.asText() << endl;
+        cout << "Equal: " << (pack2 == pack? "true" : "false") << endl;
+        cout << "Delta: " << pack.delta(pack2) << endl;
 
         pack2.set(3, 6u);
         pack2.set(10, 128u);
-        qDebug() << "Modified:" << pack2.asText().toLatin1().constData();
-        qDebug() << "Field 10:" << pack2[10];
-        qDebug() << "Equal:" << (pack2 == pack? "true" : "false");
-        qDebug() << "Delta:" << pack.delta(pack2);
+        cout << "Modified: " << pack2.asText() << endl;
+        cout << "Field 10: " << pack2[10] << endl;
+        cout << "Equal: " << (pack2 == pack? "true" : "false") << endl;
+        cout << "Delta: " << pack.delta(pack2) << endl;
 
         pack2.set(1, true);
-        qDebug() << "Modified:" << pack2.asText().toLatin1().constData();
-        qDebug() << "Equal:" << (pack2 == pack? "true" : "false");
-        qDebug() << "Delta:" << pack.delta(pack2);
-        qDebug() << "Delta (reverse):" << pack2.delta(pack);
+        cout << "Modified: " << pack2.asText() << endl;
+        cout << "Equal: " << (pack2 == pack? "true" : "false") << endl;
+        cout << "Delta: " << pack.delta(pack2) << endl;
+        cout << "Delta (reverse): " << pack2.delta(pack) << endl;
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
-        qWarning() << err.asText() << "\n";
+        err.warnPlainText();
     }
-
-    qDebug() << "Exiting main()...\n";
-    return 0;        
+    deinit_Foundation();
+    debug("Exiting main()...");
+    return 0;
 }

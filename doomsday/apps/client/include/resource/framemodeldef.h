@@ -18,11 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_FRAMEMODELDEF_H
-#define DENG_RESOURCE_FRAMEMODELDEF_H
+#ifndef DE_RESOURCE_FRAMEMODELDEF_H
+#define DE_RESOURCE_FRAMEMODELDEF_H
 
 #include <vector>
-#include <de/Vector>
+#include <de/vector.h>
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/model.h>
 
@@ -73,7 +73,7 @@ struct SubmodelDef
     int _flags;
     short skin;
     char skinRange;
-    de::Vector3f offset;
+    de::Vec3f offset;
     byte alpha;
     res::Texture *shinySkin;
     blendmode_t blendMode;
@@ -125,11 +125,11 @@ struct FrameModelDef
     /// [0,1) When is this frame in effect?
     float interMark     = 0;
     float interRange[2];
-    de::Vector3f offset;
+    de::Vec3f offset;
     float resize        = 0;
-    de::Vector3f scale;
+    de::Vec3f scale;
 
-    typedef std::vector<de::Vector3f> PtcOffsets;
+    typedef std::vector<de::Vec3f> PtcOffsets;
     PtcOffsets _ptcOffset;
 
     float visualRadius  = 0;
@@ -147,7 +147,7 @@ struct FrameModelDef
     typedef std::vector<SubmodelDef> Subs;
     Subs _sub;
 
-    FrameModelDef(char const *modelDefId = "")
+    FrameModelDef(const char *modelDefId = "")
     {
         de::zap(id);
         de::zap(interRange);
@@ -157,7 +157,7 @@ struct FrameModelDef
     SubmodelDef *addSub()
     {
         _sub.push_back(SubmodelDef());
-        _ptcOffset.push_back(de::Vector3f());
+        _ptcOffset.push_back(de::Vec3f());
         return &_sub.back();
     }
 
@@ -186,13 +186,13 @@ struct FrameModelDef
 
     SubmodelDef &subModelDef(unsigned int subnum)
     {
-        DENG2_ASSERT(hasSub(subnum));
+        DE_ASSERT(hasSub(subnum));
         return _sub[subnum];
     }
 
-    SubmodelDef const &subModelDef(unsigned int subnum) const
+    const SubmodelDef &subModelDef(unsigned int subnum) const
     {
-        DENG2_ASSERT(hasSub(subnum));
+        DE_ASSERT(hasSub(subnum));
         return _sub[subnum];
     }
 
@@ -201,21 +201,21 @@ struct FrameModelDef
         return subnum < _sub.size();
     }
 
-    de::Vector3f particleOffset(unsigned int subnum) const
+    de::Vec3f particleOffset(unsigned int subnum) const
     {
         if(hasSub(subnum))
         {
-            DENG2_ASSERT(subnum < _ptcOffset.size());
+            DE_ASSERT(subnum < _ptcOffset.size());
             return _ptcOffset[subnum];
         }
-        return de::Vector3f();
+        return de::Vec3f();
     }
 
-    void setParticleOffset(unsigned int subnum, de::Vector3f const &off)
+    void setParticleOffset(unsigned int subnum, const de::Vec3f &off)
     {
-        DENG2_ASSERT(hasSub(subnum));
+        DE_ASSERT(hasSub(subnum));
         _ptcOffset[subnum] = off;
     }
 };
 
-#endif // DENG_RESOURCE_FRAMEMODELDEF_H
+#endif // DE_RESOURCE_FRAMEMODELDEF_H

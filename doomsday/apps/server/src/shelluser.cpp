@@ -19,30 +19,29 @@
 
 #include "shelluser.h"
 
-#include <de/shell/Protocol>
-#include <de/shell/Lexicon>
-#include <de/Log>
-#include <de/LogBuffer>
-#include <de/LogSink>
-#include <de/Loop>
-#include <doomsday/console/exec.h>
-#include <doomsday/console/knownword.h>
-#include <doomsday/games.h>
-
 #include "api_console.h"
-
 #include "dd_main.h"
 #include "network/net_main.h"
-#include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
 
+#include <doomsday/console/exec.h>
+#include <doomsday/console/knownword.h>
+#include <doomsday/games.h>
+#include <doomsday/network/protocol.h>
+#include <doomsday/world/map.h>
+#include <de/lexicon.h>
+#include <de/log.h>
+#include <de/logbuffer.h>
+#include <de/logsink.h>
+#include <de/loop.h>
+
 using namespace de;
 
-DENG2_PIMPL(ShellUser), public LogSink
+DE_PIMPL(ShellUser), public LogSink
 {
     /// Log entries to be sent are collected here.
-    LockableT<shell::LogEntryPacket> logEntryPacket;
+    LockableT<network::LogEntryPacket> logEntryPacket;
 
     Impl(Public &i) : Base(i)
     {
@@ -55,14 +54,14 @@ DENG2_PIMPL(ShellUser), public LogSink
         LogBuffer::get().removeSink(*this);
     }
 
-    LogSink &operator << (LogEntry const &entry)
+    LogSink &operator << (const LogEntry &entry)
     {
-        DENG2_GUARD(logEntryPacket);
+        DE_GUARD(logEntryPacket);
         logEntryPacket.value.add(entry);
         return *this;
     }
 
-    LogSink &operator << (String const &)
+    LogSink &operator << (const String &)
     {
         return *this;
     }
@@ -75,8 +74,8 @@ DENG2_PIMPL(ShellUser), public LogSink
     {
         Loop::mainCall([this] ()
         {
-            DENG2_GUARD(logEntryPacket);
-            if (!logEntryPacket.value.isEmpty() && self().status() == shell::Link::Connected)
+            DE_GUARD(logEntryPacket);
+            if (!logEntryPacket.value.isEmpty() && self().status() == network::Link::Connected)
             {
                 self() << logEntryPacket.value;
                 logEntryPacket.value.clear();
@@ -85,22 +84,22 @@ DENG2_PIMPL(ShellUser), public LogSink
     }
 };
 
-ShellUser::ShellUser(Socket *socket) : shell::Link(socket), d(new Impl(*this))
+ShellUser::ShellUser(Socket *socket) : network::Link(socket), d(new Impl(*this))
 {
-    connect(this, &Link::disconnected, [this] ()
+    audienceForDisconnected() += [this]()
     {
-        DENG2_FOR_AUDIENCE(Disconnect, i)
+        DE_NOTIFY_VAR(Disconnect, i)
         {
             i->userDisconnected(*this);
         }
-    });
-    connect(this, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
+    };
+    audienceForPacketsReady() += [this](){ handleIncomingPackets(); };
 }
 
 void ShellUser::sendInitialUpdate()
 {
     // Console lexicon.
-    QScopedPointer<RecordPacket> packet(protocol().newConsoleLexicon(Con_Lexicon()));
+    std::unique_ptr<RecordPacket> packet(protocol().newConsoleLexicon(Con_Lexicon()));
     *this << *packet;
 
     sendGameState();
@@ -124,12 +123,12 @@ void ShellUser::sendGameState()
      * state packet.
      */
 
-    String rules = reinterpret_cast<char const *>(gx.GetPointer(DD_GAME_CONFIG));
+    String rules = reinterpret_cast<const char *>(gx.GetPointer(DD_GAME_CONFIG));
 
     // Check the map's information.
     String mapId;
     String mapTitle;
-    if (App_World().hasMap())
+    if (world::World::get().hasMap())
     {
         world::Map &map = App_World().map();
 
@@ -140,24 +139,24 @@ void ShellUser::sendGameState()
         mapTitle = Con_GetString("map-name");
     }
 
-    QScopedPointer<RecordPacket> packet(protocol().newGameState(mode, rules, mapId, mapTitle));
+    std::unique_ptr<RecordPacket> packet(protocol().newGameState(mode, rules, mapId, mapTitle));
     *this << *packet;
 }
 
 void ShellUser::sendMapOutline()
 {
-    if (!App_World().hasMap()) return;
+    if (!world::World::get().hasMap()) return;
 
-    shell::MapOutlinePacket packet;
+    network::MapOutlinePacket packet;
     App_World().map().initMapOutlinePacket(packet);
     *this << packet;
 }
 
 void ShellUser::sendPlayerInfo()
 {
-    if (!App_World().hasMap()) return;
+    if (!world::World::get().hasMap()) return;
 
-    QScopedPointer<shell::PlayerInfoPacket> packet(new shell::PlayerInfoPacket);
+    std::unique_ptr<network::PlayerInfoPacket> packet(new network::PlayerInfoPacket);
 
     for (uint i = 1; i < DDMAXPLAYERS; ++i)
     {
@@ -166,12 +165,12 @@ void ShellUser::sendPlayerInfo()
         if (!plr->isInGame())
             continue;
 
-        shell::PlayerInfoPacket::Player info;
+        network::PlayerInfoPacket::Player info;
 
         info.number   = i;
         info.name     = plr->name;
-        info.position = de::Vector2i(plr->publicData().mo->origin[VX],
-                                     plr->publicData().mo->origin[VY]);
+        info.position = Vec2i(plr->publicData().mo->origin[VX],
+                              plr->publicData().mo->origin[VY]);
 
         /**
          * @todo Player color is presently game-side data. Therefore, this
@@ -193,24 +192,24 @@ Address ShellUser::address() const
 
 void ShellUser::handleIncomingPackets()
 {
-    forever
+    for (;;)
     {
-        QScopedPointer<Packet> packet(nextPacket());
-        if (packet.isNull()) break;
+        std::unique_ptr<Packet> packet(nextPacket());
+        if (!packet) break;
 
         try
         {
-            switch (protocol().recognize(packet.data()))
+            switch (protocol().recognize(packet.get()))
             {
-            case shell::Protocol::Command:
-                Con_Execute(CMDS_CONSOLE, protocol().command(*packet).toUtf8().constData(), false, true);
+            case network::Protocol::Command:
+                Con_Execute(CMDS_CONSOLE, protocol().command(*packet), false, true);
                 break;
 
             default:
                 break;
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_NET_WARNING("Error while processing packet from %s: %s") << packet->from() << er.asText();
         }

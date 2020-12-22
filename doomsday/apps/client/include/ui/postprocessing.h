@@ -16,13 +16,13 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_FX_POSTPROCESSING_H
-#define DENG_CLIENT_FX_POSTPROCESSING_H
+#ifndef DE_CLIENT_FX_POSTPROCESSING_H
+#define DE_CLIENT_FX_POSTPROCESSING_H
 
 #include "render/consoleeffect.h"
-#include <de/Matrix>
-#include <de/Time>
-#include <de/GLTexture>
+#include <de/matrix.h>
+#include <de/time.h>
+#include <de/gltexture.h>
 
 /**
  * Post-processing of rendered camera lens frames. Maintains an offscreen
@@ -50,9 +50,9 @@ public:
      * @param fxPostShader  Name of the shader under "fx.post".
      * @param span          Duration of the fade in animation.
      */
-    void fadeInShader(de::String const &fxPostShader, de::TimeSpan const &span);
+    void fadeInShader(const de::String &fxPostShader, de::TimeSpan span);
 
-    void fadeOut(de::TimeSpan const &span);
+    void fadeOut(de::TimeSpan span);
 
     /**
      * Sets a constant opacity factor that is applied in addition to the fade.
@@ -64,13 +64,13 @@ public:
     void glInit();
     void glDeinit();
     void update();
-    void draw(de::Matrix4f const &mvpMatrix, de::GLTexture const &frame);
+    void draw(const de::Mat4f &mvpMatrix, const de::GLTexture &frame);
 
 public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_FX_POSTPROCESSING_H
+#endif // DE_CLIENT_FX_POSTPROCESSING_H

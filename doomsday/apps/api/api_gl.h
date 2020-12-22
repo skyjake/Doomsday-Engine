@@ -23,8 +23,8 @@
 #ifndef DOOMSDAY_GL_H
 #define DOOMSDAY_GL_H
 
-#include <de/rect.h>
-#include "api_map.h"
+#include <de/legacy/rect.h>
+#include <doomsday/api_map.h>
 #include "dd_types.h"
 
 #ifdef __cplusplus
@@ -173,8 +173,26 @@ typedef enum blendmode_e {
 } blendmode_t;
 
 #define VALID_BLENDMODE(val) ((int)(val) >= BM_FIRST && (int)(val) <= BM_LAST)
-
 #define NUM_BLENDMODES       (10)
+
+static inline const char *DGL_NameForBlendMode(blendmode_t mode)
+{
+    static const char *names[1 + NUM_BLENDMODES] = {
+        /* invalid */               "(invalid)",
+        /* BM_ZEROALPHA */          "zero_alpha",
+        /* BM_NORMAL */             "normal",
+        /* BM_ADD */                "add",
+        /* BM_DARK */               "dark",
+        /* BM_SUBTRACT */           "subtract",
+        /* BM_REVERSE_SUBTRACT */   "reverse_subtract",
+        /* BM_MUL */                "mul",
+        /* BM_INVERSE */            "inverse",
+        /* BM_INVERSE_MUL */        "inverse_mul",
+        /* BM_ALPHA_SUBTRACT */     "alpha_subtract"
+    };
+    if (!VALID_BLENDMODE(mode)) return names[0];
+    return names[2 + (int) mode];
+}
 
 typedef struct dgl_vertex_s {
     float           xyz[4]; ///< The fourth is padding.
@@ -252,7 +270,7 @@ typedef struct {
     float scaleFactor;
 } dgl_borderedprojectionstate_t;
 
-DENG_API_TYPEDEF(GL)
+DE_API_TYPEDEF(GL)
 {
     de_api_t api;
 
@@ -279,14 +297,14 @@ DENG_API_TYPEDEF(GL)
      * @param rect  Geometry of the new scissor region. Coordinates are
      *              in viewport space.
      */
-    void (*SetScissor)(RectRaw const *rect);
+    void (*SetScissor)(const RectRaw *rect);
     void (*SetScissor2)(int x, int y, int width, int height);
 
     void (*MatrixMode)(DGLenum mode);
     void (*PushMatrix)(void);
     void (*PopMatrix)(void);
     void (*LoadIdentity)(void);
-    void (*LoadMatrix)(float const *matrix4x4);
+    void (*LoadMatrix)(const float *matrix4x4);
 
     void (*Translatef)(float x, float y, float z);
     void (*Rotatef)(float angle, float x, float y, float z);
@@ -316,7 +334,7 @@ DENG_API_TYPEDEF(GL)
     void (*Color4fv)(const float* vec);
 
     void (*TexCoord2f)(byte target, float s, float t);
-    void (*TexCoord2fv)(byte target, float const *vec);
+    void (*TexCoord2fv)(byte target, const float *vec);
 
     void (*Vertex2f)(float x, float y);
     void (*Vertex2fv)(const float* vec);
@@ -359,7 +377,7 @@ DENG_API_TYPEDEF(GL)
 
     void (*Fogi)(DGLenum property, int value);
     void (*Fogf)(DGLenum property, float value);
-    void (*Fogfv)(DGLenum property, float const *values);
+    void (*Fogfv)(DGLenum property, const float *values);
 
     void (*UseFog)(int yes);
 
@@ -375,9 +393,9 @@ DENG_API_TYPEDEF(GL)
      */
     void (*ResetViewEffects)();
 }
-DENG_API_T(GL);
+DE_API_T(GL);
 
-#ifndef DENG_NO_API_MACROS_GL
+#ifndef DE_NO_API_MACROS_GL
 #define DGL_Enable          _api_GL.Enable
 #define DGL_Disable         _api_GL.Disable
 #define DGL_PushState       _api_GL.PushState
@@ -455,7 +473,7 @@ DENG_API_T(GL);
 #endif
 
 #if defined __DOOMSDAY__ && defined __CLIENT__
-DENG_USING_API(GL);
+DE_USING_API(GL);
 #endif
 
 ///@}

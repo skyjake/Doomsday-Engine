@@ -18,20 +18,21 @@
  */
 
 #include "ui/b_util.h"
-#include <de/timer.h>
-#include <de/input/ddkey.h>
-#include <de/RecordValue>
+#include <de/legacy/timer.h>
+#include <de/ddkey.h>
+#include <de/recordvalue.h>
 #include "clientapp.h"
 
-#include "BindContext"
-#include "CommandBinding"
-#include "ImpulseBinding"
+#include "ui/bindcontext.h"
+#include "ui/commandbinding.h"
+#include "ui/impulsebinding.h"
 #include "ui/inputsystem.h"
 #include "ui/inputdevice.h"
 #include "ui/axisinputcontrol.h"
 #include "ui/buttoninputcontrol.h"
 #include "ui/hatinputcontrol.h"
-#include "network/net_main.h" // netGame
+
+#include <doomsday/net.h>
 
 using namespace de;
 
@@ -40,31 +41,31 @@ byte zeroControlUponConflict = true;
 static float STAGE_THRESHOLD = 6.f/35;
 static float STAGE_FACTOR    = .5f;
 
-bool B_ParseButtonState(Binding::ControlTest &test, char const *toggleName)
+bool B_ParseButtonState(Binding::ControlTest &test, const char *toggleName)
 {
-    DENG2_ASSERT(toggleName);
+    DE_ASSERT(toggleName);
 
-    if (!qstrlen(toggleName) || !qstricmp(toggleName, "down"))
+    if (!strlen(toggleName) || !iCmpStrCase(toggleName, "down"))
     {
         test = Binding::ButtonStateDown; // this is the default, if omitted
         return true;
     }
-    if (!qstricmp(toggleName, "undefined"))
+    if (!iCmpStrCase(toggleName, "undefined"))
     {
         test = Binding::ButtonStateAny;
         return true;
     }
-    if (!qstricmp(toggleName, "repeat"))
+    if (!iCmpStrCase(toggleName, "repeat"))
     {
         test = Binding::ButtonStateRepeat;
         return true;
     }
-    if (!qstricmp(toggleName, "press"))
+    if (!iCmpStrCase(toggleName, "press"))
     {
         test = Binding::ButtonStateDownOrRepeat;
         return true;
     }
-    if (!qstricmp(toggleName, "up"))
+    if (!iCmpStrCase(toggleName, "up"))
     {
         test = Binding::ButtonStateUp;
         return true;
@@ -74,29 +75,29 @@ bool B_ParseButtonState(Binding::ControlTest &test, char const *toggleName)
     return false; // Not recognized.
 }
 
-bool B_ParseAxisPosition(Binding::ControlTest &test, float &pos, char const *desc)
+bool B_ParseAxisPosition(Binding::ControlTest &test, float &pos, const char *desc)
 {
-    DENG2_ASSERT(desc);
+    DE_ASSERT(desc);
 
-    if (!qstrnicmp(desc, "within", 6) && qstrlen(desc) > 6)
+    if (!iCmpStrNCase(desc, "within", 6) && strlen(desc) > 6)
     {
         test = Binding::AxisPositionWithin;
         pos  = String((desc + 6)).toFloat();
         return true;
     }
-    if (!qstrnicmp(desc, "beyond", 6) && qstrlen(desc) > 6)
+    if (!iCmpStrNCase(desc, "beyond", 6) && strlen(desc) > 6)
     {
         test = Binding::AxisPositionBeyond;
         pos  = String((desc + 6)).toFloat();
         return true;
     }
-    if (!qstrnicmp(desc, "pos", 3) && qstrlen(desc) > 3)
+    if (!iCmpStrNCase(desc, "pos", 3) && strlen(desc) > 3)
     {
         test = Binding::AxisPositionBeyondPositive;
         pos  = String((desc + 3)).toFloat();
         return true;
     }
-    if (!qstrnicmp(desc, "neg", 3) && qstrlen(desc) > 3)
+    if (!iCmpStrNCase(desc, "neg", 3) && strlen(desc) > 3)
     {
         test = Binding::AxisPositionBeyondNegative;
         pos  = -String((desc + 3)).toFloat();
@@ -107,20 +108,20 @@ bool B_ParseAxisPosition(Binding::ControlTest &test, float &pos, char const *des
     return false;
 }
 
-bool B_ParseModifierId(int &id, char const *desc)
+bool B_ParseModifierId(int &id, const char *desc)
 {
-    DENG2_ASSERT(desc);
+    DE_ASSERT(desc);
     id = String(desc).toInt() - 1 + CTL_MODIFIER_1;
     return (id >= CTL_MODIFIER_1 && id <= CTL_MODIFIER_4);
 }
 
-bool B_ParseKeyId(int &id, char const *desc)
+bool B_ParseKeyId(int &id, const char *desc)
 {
-    DENG2_ASSERT(desc);
+    DE_ASSERT(desc);
     LOG_AS("B_ParseKeyId");
 
     // The possibilies: symbolic key name, or "codeNNN".
-    if (!qstrnicmp(desc, "code", 4) && qstrlen(desc) == 7)
+    if (!iCmpStrNCase(desc, "code", 4) && strlen(desc) == 7)
     {
         // Hexadecimal?
         if (desc[4] == 'x' || desc[4] == 'X')
@@ -145,10 +146,10 @@ bool B_ParseKeyId(int &id, char const *desc)
     return false;
 }
 
-bool B_ParseMouseTypeAndId(ddeventtype_t &type, int &id, char const *desc)
+bool B_ParseMouseTypeAndId(ddeventtype_t &type, int &id, const char *desc)
 {
-    DENG2_ASSERT(desc);
-    InputDevice const &mouse = InputSystem::get().device(IDEV_MOUSE);
+    DE_ASSERT(desc);
+    const InputDevice &mouse = InputSystem::get().device(IDEV_MOUSE);
 
     // Maybe it's one of the named buttons?
     id = mouse.toButtonId(desc);
@@ -159,7 +160,7 @@ bool B_ParseMouseTypeAndId(ddeventtype_t &type, int &id, char const *desc)
     }
 
     // Perhaps a generic button?
-    if (!qstrnicmp(desc, "button", 6) && qstrlen(desc) > 6)
+    if (!iCmpStrNCase(desc, "button", 6) && strlen(desc) > 6)
     {
         type = E_TOGGLE;
         id   = String((desc + 6)).toInt() - 1;
@@ -179,9 +180,9 @@ bool B_ParseMouseTypeAndId(ddeventtype_t &type, int &id, char const *desc)
     return false;
 }
 
-bool B_ParseDeviceAxisTypeAndId(ddeventtype_t &type, int &id, InputDevice const &device, char const *desc)
+bool B_ParseDeviceAxisTypeAndId(ddeventtype_t &type, int &id, const InputDevice &device, const char *desc)
 {
-    DENG2_ASSERT(desc);
+    DE_ASSERT(desc);
 
     type = E_AXIS;
     id   = device.toAxisId(desc);
@@ -191,11 +192,11 @@ bool B_ParseDeviceAxisTypeAndId(ddeventtype_t &type, int &id, InputDevice const 
     return false;
 }
 
-bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char const *desc)
+bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, const char *desc)
 {
     InputDevice &device = InputSystem::get().device(deviceId);
 
-    if (!qstrnicmp(desc, "button", 6) && qstrlen(desc) > 6)
+    if (!iCmpStrNCase(desc, "button", 6) && strlen(desc) > 6)
     {
         type = E_TOGGLE;
         id   = String((desc + 6)).toInt() - 1;
@@ -205,7 +206,7 @@ bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char c
         LOG_INPUT_WARNING("\"%s\" button %i does not exist") << device.title() << id;
         return false;
     }
-    if (!qstrnicmp(desc, "hat", 3) && qstrlen(desc) > 3)
+    if (!iCmpStrNCase(desc, "hat", 3) && strlen(desc) > 3)
     {
         type = E_ANGLE;
         id   = String((desc + 3)).toInt() - 1;
@@ -215,7 +216,7 @@ bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char c
         LOG_INPUT_WARNING("\"%s\" hat %i does not exist") << device.title() << id;
         return false;
     }
-    if (!qstricmp(desc, "hat"))
+    if (!iCmpStrCase(desc, "hat"))
     {
         type = E_ANGLE;
         id   = 0;
@@ -226,15 +227,15 @@ bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char c
     return B_ParseDeviceAxisTypeAndId(type, id, device, desc);
 }
 
-bool B_ParseHatAngle(float &pos, char const *desc)
+bool B_ParseHatAngle(float &pos, const char *desc)
 {
-    DENG2_ASSERT(desc);
-    if (!qstricmp(desc, "center"))
+    DE_ASSERT(desc);
+    if (!iCmpStrCase(desc, "center"))
     {
         pos = -1;
         return true;
     }
-    if (!qstrnicmp(desc, "angle", 5) && qstrlen(desc) > 5)
+    if (!iCmpStrNCase(desc, "angle", 5) && strlen(desc) > 5)
     {
         pos = String((desc + 5)).toFloat();
         return true;
@@ -243,9 +244,9 @@ bool B_ParseHatAngle(float &pos, char const *desc)
     return false;
 }
 
-bool B_ParseBindingCondition(Record &cond, char const *desc)
+bool B_ParseBindingCondition(Record &cond, const char *desc)
 {
-    DENG2_ASSERT(desc);
+    DE_ASSERT(desc);
 
     // First, we expect to encounter a device name.
     AutoStr *str = AutoStr_NewStd();
@@ -426,23 +427,23 @@ bool B_CheckAxisPosition(Binding::ControlTest test, float testPos, float pos)
     return false;
 }
 
-bool B_CheckCondition(Binding::CompiledConditionRecord const *condRec, int localNum,
-                      BindContext const *context)
+bool B_CheckCondition(const Binding::CompiledConditionRecord *condRec, int localNum,
+                      const BindContext *context)
 {
-    DENG2_ASSERT(condRec);
+    DE_ASSERT(condRec);
 
-    auto const &cond = condRec->compiled();
-    bool const fulfilled = !cond.negate;
+    const auto &cond = condRec->compiled();
+    const bool fulfilled = !cond.negate;
 
     switch (cond.type)
     {
     case Binding::GlobalState:
-        if (cond.multiplayer && netGame)
+        if (cond.multiplayer && netState.netGame)
             return fulfilled;
         break;
 
     case Binding::AxisState: {
-        AxisInputControl const &axis = InputSystem::get().device(cond.device).axis(cond.id);
+        const AxisInputControl &axis = InputSystem::get().device(cond.device).axis(cond.id);
         if (B_CheckAxisPosition(cond.test, cond.pos, axis.position()))
         {
             return fulfilled;
@@ -450,7 +451,7 @@ bool B_CheckCondition(Binding::CompiledConditionRecord const *condRec, int local
         break; }
 
     case Binding::ButtonState: {
-        ButtonInputControl const &button = InputSystem::get().device(cond.device).button(cond.id);
+        const ButtonInputControl &button = InputSystem::get().device(cond.device).button(cond.id);
         bool isDown = button.isDown();
         if (( isDown && cond.test == Binding::ButtonStateDown) ||
             (!isDown && cond.test == Binding::ButtonStateUp))
@@ -460,7 +461,7 @@ bool B_CheckCondition(Binding::CompiledConditionRecord const *condRec, int local
         break; }
 
     case Binding::HatState: {
-        HatInputControl const &hat = InputSystem::get().device(cond.device).hat(cond.id);
+        const HatInputControl &hat = InputSystem::get().device(cond.device).hat(cond.id);
         if (hat.position() == cond.pos)
         {
             return fulfilled;
@@ -481,25 +482,25 @@ bool B_CheckCondition(Binding::CompiledConditionRecord const *condRec, int local
         }
         break;
 
-    default: DENG2_ASSERT(!"B_CheckCondition: Unknown cond.type"); break;
+    default: DE_ASSERT_FAIL("B_CheckCondition: Unknown cond.type"); break;
     }
 
     return !fulfilled;
 }
 
 /// @todo: Belongs in BindContext? -ds
-void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int impulseId,
+void B_EvaluateImpulseBindings(const BindContext *context, int localNum, int impulseId,
     float *pos, float *relativeOffset, bool allowTriggered)
 {
-    DENG2_ASSERT(context); // Why call without one?
-    DENG2_ASSERT(pos && relativeOffset);
+    DE_ASSERT(context); // Why call without one?
+    DE_ASSERT(pos && relativeOffset);
 
     *pos = 0;
     *relativeOffset = 0;
 
     if (localNum < 0 || localNum >= DDMAXPLAYERS) return; // No local player specified.
 
-    uint const nowTime = Timer_RealMilliseconds();
+    const uint nowTime = Timer_RealMilliseconds();
     bool conflicted[NUM_IBD_TYPES]; de::zap(conflicted);
     bool appliedState[NUM_IBD_TYPES]; de::zap(appliedState);
 
@@ -507,13 +508,13 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
     {
         // Wrong impulse?
         //ImpulseBinding bind(rec);
-        auto const &bind = rec.compiled();
+        const auto &bind = rec.compiled();
         if (bind.impulseId != impulseId) return LoopContinue;
 
         // If the binding has conditions, they may prevent using it.
         bool skip = false;
-        ArrayValue const &conds = rec.geta(QStringLiteral("condition"));
-        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
+        const ArrayValue &conds = rec.geta(DE_STR("condition"));
+        DE_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
         {
             if (!B_CheckCondition(static_cast<Binding::CompiledConditionRecord *>
                                   ((*i)->as<RecordValue>().record()), localNum, context))
@@ -525,7 +526,7 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
         if (skip) return LoopContinue;
 
         // Get the device.
-        InputDevice const *device = InputSystem::get().devicePtr(bind.deviceId);
+        const InputDevice *device = InputSystem::get().devicePtr(bind.deviceId);
         if (!device || !device->isActive())
             return LoopContinue; // Not available.
 
@@ -537,7 +538,7 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
         case IBD_TOGGLE: ctrl = &device->button(bind.controlId); break;
         case IBD_ANGLE:  ctrl = &device->hat   (bind.controlId); break;
 
-        default: DENG2_ASSERT(!"B_EvaluateImpulseBindings: Invalid bind.type"); break;
+        default: DE_ASSERT_FAIL("B_EvaluateImpulseBindings: Invalid bind.type"); break;
         }
 
         float devicePos = 0;
@@ -605,7 +606,7 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
             }
         }
 
-        int const bflags = bind.flags;
+        const int bflags = bind.flags;
 
         // Apply further modifications based on flags.
         if (bflags & IBDF_INVERSE)
@@ -666,7 +667,7 @@ String B_ControlDescToString(int deviceId, ddeventtype_t type, int id)
     switch (type)
     {
     case E_TOGGLE: {
-        DENG2_ASSERT(device);
+        DE_ASSERT(device);
         ButtonInputControl &button = device->button(id);
         if (!button.name().isEmpty())
         {
@@ -674,31 +675,31 @@ String B_ControlDescToString(int deviceId, ddeventtype_t type, int id)
         }
         else if (device == InputSystem::get().devicePtr(IDEV_KEYBOARD))
         {
-            char const *name = B_ShortNameForKey(id);
+            const char *name = B_ShortNameForKey(id);
             if (name)
             {
                 str += name;
             }
             else
             {
-                str += String("code%1").arg(id, 3, 10, QChar('0'));
+                str += Stringf("code%03i", id);
             }
         }
         else
         {
-            str += "button" + String::number(id + 1);
+            str += "button" + String::asText(id + 1);
         }
         break; }
 
     case E_AXIS:
-        DENG2_ASSERT(device);
+        DE_ASSERT(device);
         str += device->axis(id).name();
         break;
 
-    case E_ANGLE:    str += "hat" + String::number(id + 1); break;
+    case E_ANGLE:    str += "hat" + String::asText(id + 1); break;
     case E_SYMBOLIC: str += "sym";                          break;
 
-    default: DENG2_ASSERT(!"B_ControlDescToString: Invalid event type"); break;
+    default: DE_ASSERT_FAIL("B_ControlDescToString: Invalid event type"); break;
     }
 
     return str;
@@ -715,7 +716,7 @@ String B_ButtonStateToString(Binding::ControlTest test)
     case Binding::ButtonStateUp:           return "-up";
 
     default:
-        DENG2_ASSERT(!"B_ButtonStateToString: Unknown test");
+        DE_ASSERT_FAIL("B_ButtonStateToString: Unknown test");
         return "";
     }
 }
@@ -724,23 +725,23 @@ String B_AxisPositionToString(Binding::ControlTest test, float pos)
 {
     switch (test)
     {
-    case Binding::AxisPositionWithin:         return String("-within%1").arg(pos);
-    case Binding::AxisPositionBeyond:         return String("-beyond%1").arg(pos);
-    case Binding::AxisPositionBeyondPositive: return String("-pos%1"   ).arg(pos);
-    case Binding::AxisPositionBeyondNegative: return String("-neg%1").arg(-pos);
+    case Binding::AxisPositionWithin:         return Stringf("-within%f", pos);
+    case Binding::AxisPositionBeyond:         return Stringf("-beyond%f", pos);
+    case Binding::AxisPositionBeyondPositive: return Stringf("-pos%f",    pos);
+    case Binding::AxisPositionBeyondNegative: return Stringf("-neg%f",    -pos);
 
     default:
-        DENG2_ASSERT(!"B_AxisPositionToString: Unknown test");
+        DE_ASSERT_FAIL("B_AxisPositionToString: Unknown test");
         return "";
     }
 }
 
 String B_HatAngleToString(float pos)
 {
-    return (pos < 0? "-center" : String("-angle") + String::number(pos));
+    return (pos < 0? "-center" : String("-angle") + String::asText(pos));
 }
 
-String B_ConditionToString(Record const &cond)
+String B_ConditionToString(const Record &cond)
 {
     String str;
 
@@ -753,7 +754,7 @@ String B_ConditionToString(Record const &cond)
     }
     else if (cond.geti("type") == Binding::ModifierState)
     {
-        str += "modifier-" + String::number(cond.geti("id") - CTL_MODIFIER_1 + 1);
+        str += "modifier-" + String::asText(cond.geti("id") - CTL_MODIFIER_1 + 1);
     }
     else
     {
@@ -790,7 +791,7 @@ String B_ConditionToString(Record const &cond)
     return str;
 }
 
-String B_EventToString(ddevent_t const &ev)
+String B_EventToString(const ddevent_t &ev)
 {
     String str = B_ControlDescToString(ev.device, ev.type,
                                        (  ev.type == E_TOGGLE  ? ev.toggle.id
@@ -824,7 +825,7 @@ String B_EventToString(ddevent_t const &ev)
 struct keyname_t
 {
     int key;           ///< DDKEY
-    char const *name;
+    const char *name;
 };
 static keyname_t const keyNames[] = {
     { DDKEY_PAUSE,       "pause" },
@@ -903,10 +904,11 @@ static keyname_t const keyNames[] = {
     { DDKEY_MULTIPLY,    "multiply" },
     { DDKEY_SECTION,     "section" },
     { DDKEY_WINMENU,     "winmenu" },
+    { DDKEY_ISOEXTRAKEY, "extra" },
     { 0, nullptr}
 };
 
-char const *B_ShortNameForKey(int ddKey, bool forceLowercase)
+const char *B_ShortNameForKey(int ddKey, bool forceLowercase)
 {
     static char nameBuffer[40];
 
@@ -927,17 +929,17 @@ char const *B_ShortNameForKey(int ddKey, bool forceLowercase)
     return nullptr;
 }
 
-int B_KeyForShortName(char const *key)
+int B_KeyForShortName(const char *key)
 {
-    DENG2_ASSERT(key);
+    DE_ASSERT(key);
 
     for (uint idx = 0; keyNames[idx].key; ++idx)
     {
-        if (!qstricmp(key, keyNames[idx].name))
+        if (!iCmpStrCase(key, keyNames[idx].name))
             return keyNames[idx].key;
     }
 
-    if (qstrlen(key) == 1 && key[0] < 127 && isprint(key[0]))
+    if (strlen(key) == 1 && key[0] < 127 && isprint(key[0]))
     {
         // ASCII char.
         return tolower(key[0]);

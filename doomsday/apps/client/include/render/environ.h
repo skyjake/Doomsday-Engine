@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_ENVIRON_H
-#define DENG_CLIENT_RENDER_ENVIRON_H
+#ifndef DE_CLIENT_RENDER_ENVIRON_H
+#define DE_CLIENT_RENDER_ENVIRON_H
 
-#include <de/GLTexture>
+#include <de/gltexture.h>
 
 namespace world { class Subsector; }
 
@@ -35,7 +35,7 @@ public:
 
     void glDeinit();
 
-    de::GLTexture const &defaultReflection() const;
+    const de::GLTexture &defaultReflection() const;
 
     /**
      * Determines the reflection cube map suitable for an object whose origin lies inside
@@ -43,12 +43,12 @@ public:
      *
      * @return Reflection cube map.
      */
-    de::GLTexture const &reflectionInSubsector(world::Subsector const *subsector) const;
+    const de::GLTexture &reflectionInSubsector(const world::Subsector *subsector) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace render
 
-#endif // DENG_CLIENT_RENDER_ENVIRON_H
+#endif // DE_CLIENT_RENDER_ENVIRON_H

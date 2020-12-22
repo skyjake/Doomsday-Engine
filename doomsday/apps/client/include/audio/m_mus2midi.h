@@ -21,7 +21,7 @@
 #ifndef __DOOMSDAY_MUS2MIDI_H__
 #define __DOOMSDAY_MUS2MIDI_H__
 
-#include <de/Block>
+#include <de/block.h>
 
 /**
  * Converts DOOM MUS format music into MIDI music. The output is written to a
@@ -29,6 +29,6 @@
  *
  * @param musData  The MUS data to convert.
  */
-de::Block M_Mus2Midi(de::Block const &musData);
+de::Block M_Mus2Midi(const de::Block &musData);
 
 #endif

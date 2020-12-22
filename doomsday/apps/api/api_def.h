@@ -27,24 +27,24 @@
 /// @addtogroup defs
 ///@{
 
-DENG_API_TYPEDEF(Def) // v2
+DE_API_TYPEDEF(Def) // v2
 {
     de_api_t api;
 
-    int (*_Get)(int type, char const *id, void *out);
-    int (*_Set)(int type, int index, int value, void const *ptr);
-    int (*EvalFlags)(char const *flags);
+    int (*_Get)(int type, const char *id, void *out);
+    int (*_Set)(int type, int index, int value, const void *ptr);
+    int (*EvalFlags)(const char *flags);
 }
-DENG_API_T(Def);
+DE_API_T(Def);
 
-#ifndef DENG_NO_API_MACROS_DEFINITIONS
+#ifndef DE_NO_API_MACROS_DEFINITIONS
 #define Def_Get         _api_Def._Get
 #define Def_Set         _api_Def._Set
 #define Def_EvalFlags   _api_Def.EvalFlags
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(Def);
+DE_USING_API(Def);
 #endif
 
 ///@}

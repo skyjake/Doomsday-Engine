@@ -20,32 +20,26 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_UPDATERSETTINGSDIALOG_H
-#define DENG_CLIENT_UPDATERSETTINGSDIALOG_H
+#ifndef DE_CLIENT_UPDATERSETTINGSDIALOG_H
+#define DE_CLIENT_UPDATERSETTINGSDIALOG_H
 
-#include <de/DialogWidget>
+#include <de/dialogwidget.h>
 
 /**
  * Dialog for configuring the settings of the automatic updater.
  */
 class UpdaterSettingsDialog : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
-    enum Mode {
-        Normal = 0,
-        WithApplyAndCheckButton = 1
-    };
+    enum Mode { Normal = 0, WithApplyAndCheckButton = 1 };
 
-    UpdaterSettingsDialog(Mode mode = Normal, de::String const &name = "updatersettings");
+    UpdaterSettingsDialog(Mode mode = Normal, const de::String &name = "updatersettings");
 
     /**
      * Determines whether settings have changed.
      */
     bool settingsHaveChanged() const;
 
-public slots:
     void apply();
     void applyAndCheckNow();
 
@@ -53,7 +47,7 @@ protected:
     void finish(int result);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UPDATERSETTINGSDIALOG_H
+#endif // DE_CLIENT_UPDATERSETTINGSDIALOG_H

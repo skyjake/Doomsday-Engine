@@ -18,12 +18,11 @@
 
 #include "render/shadervar.h"
 
-#include <de/ScriptedInfo>
-#include <de/ScriptSystem>
+#include <de/dscript.h>
 
 using namespace de;
 
-static String const DEF_WRAP("wrap");
+DE_STATIC_STRING(DEF_WRAP, "wrap");
 
 /**
  * Animatable variable bound to a GL uniform. The value can have 1...4 float
@@ -42,7 +41,7 @@ ShaderVar::~ShaderVar()
 
 float ShaderVar::currentValue(int index) const
 {
-    auto const &val = values.at(index);
+    const auto &val = values.at(index);
     float v = val.anim->animation();
     if (val.wrap.isEmpty())
     {
@@ -60,18 +59,18 @@ void ShaderVar::updateUniform()
         break;
 
     case 2:
-        *uniform = Vector2f(currentValue(0),
+        *uniform = Vec2f(currentValue(0),
                             currentValue(1));
         break;
 
     case 3:
-        *uniform = Vector3f(currentValue(0),
+        *uniform = Vec3f(currentValue(0),
                             currentValue(1),
                             currentValue(2));
         break;
 
     case 4:
-        *uniform = Vector4f(currentValue(0),
+        *uniform = Vec4f(currentValue(0),
                             currentValue(1),
                             currentValue(2),
                             currentValue(3));
@@ -79,9 +78,9 @@ void ShaderVar::updateUniform()
     }
 }
 
-static char const *componentNames[] = { "x", "y", "z", "w" };
+static const char *componentNames[] = { "x", "y", "z", "w" };
 
-void ShaderVar::updateValuePointers(Record &names, String const &varName)
+void ShaderVar::updateValuePointers(Record &names, const String &varName)
 {
     if (values.size() == 1)
     {
@@ -89,7 +88,7 @@ void ShaderVar::updateValuePointers(Record &names, String const &varName)
     }
     else
     {
-        for (int i = 0; i < values.size(); ++i)
+        for (int i = 0; i < values.sizei(); ++i)
         {
             values[i].anim = &names[varName.concatenateMember(componentNames[i])]
                     .value<AnimationValue>();
@@ -99,8 +98,8 @@ void ShaderVar::updateValuePointers(Record &names, String const &varName)
 
 //---------------------------------------------------------------------------------------
 
-void ShaderVars::initVariableFromDefinition(String const &variableName,
-                                            Record const &valueDef,
+void ShaderVars::initVariableFromDefinition(const String &variableName,
+                                            const Record &valueDef,
                                             Record &bindingNames)
 {
     GLUniform::Type uniformType = GLUniform::Float;
@@ -108,35 +107,36 @@ void ShaderVars::initVariableFromDefinition(String const &variableName,
 
     // Initialize the appropriate type of value animation and uniform,
     // depending on the "value" key in the definition.
-    Value const &initialValue = valueDef.get("value");
-    if (auto const *array = maybeAs<ArrayValue>(initialValue))
+    const Value &initialValue = valueDef.get("value");
+    if (const auto *array = maybeAs<ArrayValue>(initialValue))
     {
         switch (array->size())
         {
         default:
-            throw DefinitionError("StateAnimator::initVariables",
-                                  QString("%1: Invalid initial value size (%2) for render.variable")
-                                  .arg(ScriptedInfo::sourceLocation(valueDef))
-                                  .arg(array->size()));
+            throw DefinitionError(
+                "StateAnimator::initVariables",
+                stringf("%s: Invalid initial value size (%zu) for render.variable",
+                        ScriptedInfo::sourceLocation(valueDef).c_str(),
+                        array->size()));
 
         case 2:
-            var->init(vectorFromValue<Vector2f>(*array));
+            var->init(vectorFromValue<Vec2f>(*array));
             uniformType = GLUniform::Vec2;
             break;
 
         case 3:
-            var->init(vectorFromValue<Vector3f>(*array));
+            var->init(vectorFromValue<Vec3f>(*array));
             uniformType = GLUniform::Vec3;
             break;
 
         case 4:
-            var->init(vectorFromValue<Vector4f>(*array));
+            var->init(vectorFromValue<Vec4f>(*array));
             uniformType = GLUniform::Vec4;
             break;
         }
 
         // Expose the components individually in the namespace for scripts.
-        for (int k = 0; k < var->values.size(); ++k)
+        for (duint k = 0; k < var->values.size(); ++k)
         {
             addBinding(bindingNames,
                        variableName.concatenateMember(componentNames[k]),
@@ -152,20 +152,20 @@ void ShaderVars::initVariableFromDefinition(String const &variableName,
     }
 
     // Optional range wrapping.
-    if (valueDef.hasSubrecord(DEF_WRAP))
+    if (valueDef.hasSubrecord(DEF_WRAP()))
     {
         for (int k = 0; k < 4; ++k)
         {
-            String const varName = QString("%1.%2").arg(DEF_WRAP).arg(componentNames[k]);
+            const String varName = DEF_WRAP() + "." + componentNames[k];
             if (valueDef.has(varName))
             {
                 var->values[k].wrap = rangeFromValue<Rangef>(valueDef.geta(varName));
             }
         }
     }
-    else if (valueDef.has(DEF_WRAP))
+    else if (valueDef.has(DEF_WRAP()))
     {
-        var->values[0].wrap = rangeFromValue<Rangef>(valueDef.geta(DEF_WRAP));
+        var->values[0].wrap = rangeFromValue<Rangef>(valueDef.geta(DEF_WRAP()));
     }
 
     // Uniform to be passed to the shader.
@@ -173,15 +173,10 @@ void ShaderVars::initVariableFromDefinition(String const &variableName,
 
     // Compose a lookup for quickly finding the variables of each pass
     // (by pass name).
-    members[variableName] = var.release();
+    members[variableName] = std::move(var);
 }
 
-ShaderVars::~ShaderVars()
-{
-    qDeleteAll(members.values());
-}
-
-void ShaderVars::addBinding(Record &names, String const &varName, AnimationValue *anim)
+void ShaderVars::addBinding(Record &names, const String &varName, AnimationValue *anim)
 {
     names.add(varName).set(anim).setReadOnly();
 }

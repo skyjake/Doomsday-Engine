@@ -24,12 +24,12 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <de/concurrency.h>
-#include <de/GLInfo>
-#include <de/GLBuffer>
-#include <de/GLState>
-#include <de/GLProgram>
-#include <de/Matrix>
+#include <de/legacy/concurrency.h>
+#include <de/glinfo.h>
+#include <de/glbuffer.h>
+#include <de/glstate.h>
+#include <de/glprogram.h>
+#include <de/matrix.h>
 #include "sys_system.h"
 #include "gl/gl_draw.h"
 #include "gl/sys_opengl.h"
@@ -37,8 +37,8 @@
 
 using namespace de;
 
-constexpr uint MAX_TEX_COORDS = 2;
-constexpr int  MAX_BATCH      = 16;
+static constexpr uint MAX_TEX_COORDS = 2;
+static constexpr int  MAX_BATCH      = 16;
 
 static unsigned s_drawCallCount = 0;
 static unsigned s_primSwitchCount = 0;
@@ -65,7 +65,7 @@ struct DGLDrawState
         VAA_TEXCOORD1,
         VAA_FRAG_OFFSET,
         VAA_BATCH_INDEX,
-        NUM_VERTEX_ATTRIB_ARRAYS
+        NUM_VERTEX_ATTRIB_ARRAYS,
     };
 
     dglprimtype_t   primType      = DGL_NO_PRIMITIVE;
@@ -80,20 +80,19 @@ struct DGLDrawState
         {{0.f, 0.f}, {0.f, 0.f}},
         {0.f, 0.f},
         0.f};
-    Vertex          primVertices[4];
-    QVector<Vertex> vertices;
+    Vertex        primVertices[4];
+    List<Vertex>  vertices;
 
-    struct GLData
-    {
+    struct GLData {
         GLProgram shader;
 
         GLState  batchState;
-        Matrix4f batchMvpMatrix[MAX_BATCH];
-        Matrix4f batchTexMatrix0[MAX_BATCH];
-        Matrix4f batchTexMatrix1[MAX_BATCH];
+        Mat4f    batchMvpMatrix[MAX_BATCH];
+        Mat4f    batchTexMatrix0[MAX_BATCH];
+        Mat4f    batchTexMatrix1[MAX_BATCH];
         int      batchTexEnabled[MAX_BATCH];
         int      batchTexMode[MAX_BATCH];
-        Vector4f batchTexModeColor[MAX_BATCH];
+        Vec4f    batchTexModeColor[MAX_BATCH];
         float    batchAlphaLimit[MAX_BATCH];
         int      batchTexture0[MAX_BATCH];
         int      batchTexture1[MAX_BATCH];
@@ -111,15 +110,14 @@ struct DGLDrawState
         GLUniform uFogRange;
         GLUniform uFogColor;
 
-        struct DrawBuffer
-        {
+        struct DrawBuffer {
             GLuint   vertexArray = 0;
             GLBuffer arrayData;
 
             void release()
             {
-#if defined (DENG_HAVE_VAOS)
-                LIBGUI_GL.glDeleteVertexArrays(1, &vertexArray);
+#if defined(DE_HAVE_VAOS)
+                glDeleteVertexArrays(1, &vertexArray);
 #endif
                 arrayData.clear();
             }
@@ -138,8 +136,8 @@ struct DGLDrawState
             , uFogColor     { "uFogColor",     GLUniform::Vec4 }
         {}
 
-        QVector<DrawBuffer *> buffers;
-        int bufferPos = 0;
+        List<DrawBuffer *> buffers;
+        dsize bufferPos = 0;
     };
     std::unique_ptr<GLData> gl;
 
@@ -152,8 +150,8 @@ struct DGLDrawState
     {
         if (resetPrimitive)
         {
-            DENG2_ASSERT(!vertices.empty());
-            DENG2_ASSERT(glPrimitive(batchPrimType) == GL_TRIANGLE_STRIP);
+            DE_ASSERT(!vertices.empty());
+            DE_ASSERT(glPrimitive(batchPrimType) == GL_TRIANGLE_STRIP);
 
             // When committing multiple triangle strips, add a disconnection
             // between batches.
@@ -165,8 +163,8 @@ struct DGLDrawState
 
     void commitLine(Vertex start, Vertex end)
     {
-        const Vector2f lineDir = (Vector2f(end.vertex) - Vector2f(start.vertex)).normalize();
-        const Vector2f lineNormal{-lineDir.y, lineDir.x};
+        const Vec2f lineDir = (Vec2f(end.vertex) - Vec2f(start.vertex)).normalize();
+        const Vec2f lineNormal{-lineDir.y, lineDir.x};
 
         const bool disjoint = !vertices.empty();
         if (disjoint)
@@ -299,20 +297,20 @@ struct DGLDrawState
         return vertices.size();
     }
 
-    static Vector4ub colorFromFloat(const Vector4f &color)
+    static Vec4ub colorFromFloat(const Vec4f &color)
     {
-        Vector4i rgba = (color * 255 + Vector4f(0.5f, 0.5f, 0.5f, 0.5f))
-                .toVector4i()
-                .max(Vector4i(0, 0, 0, 0))
-                .min(Vector4i(255, 255, 255, 255));
-        return Vector4ub(dbyte(rgba.x), dbyte(rgba.y), dbyte(rgba.z), dbyte(rgba.w));
+        Vec4i rgba = (color * 255 + Vec4f(0.5f, 0.5f, 0.5f, 0.5f))
+                .toVec4i()
+                .max(Vec4i(0, 0, 0, 0))
+                .min(Vec4i(255, 255, 255, 255));
+        return Vec4ub(dbyte(rgba.x), dbyte(rgba.y), dbyte(rgba.z), dbyte(rgba.w));
     }
 
     void beginPrimitive(dglprimtype_t primitive)
     {
         glInit();
 
-        DENG2_ASSERT(primType == DGL_NO_PRIMITIVE);
+        DE_ASSERT(primType == DGL_NO_PRIMITIVE);
 
         if (batchPrimType != DGL_NO_PRIMITIVE && !isCompatible(batchPrimType, primitive))
         {
@@ -343,7 +341,7 @@ struct DGLDrawState
                 commitLine(currentVertex, primVertices[0]);
             }
             resetPrimitive = true;
-            DENG2_ASSERT(!vertices.empty());
+            DE_ASSERT(!vertices.empty());
             endBatch();
         }
         clearPrimitive();
@@ -351,12 +349,11 @@ struct DGLDrawState
 
     void getBoundTextures(int &id0, int &id1)
     {
-        auto &GL = LIBGUI_GL;
-        GL.glActiveTexture(GL_TEXTURE0);
-        GL.glGetIntegerv(GL_TEXTURE_BINDING_2D, &id0);
-        GL.glActiveTexture(GL_TEXTURE1);
-        GL.glGetIntegerv(GL_TEXTURE_BINDING_2D, &id1);
-        GL.glActiveTexture(GLenum(GL_TEXTURE0 + DGL_GetInteger(DGL_ACTIVE_TEXTURE)));
+        glActiveTexture(GL_TEXTURE0);
+        glGetIntegerv(GL_TEXTURE_BINDING_2D, &id0);
+        glActiveTexture(GL_TEXTURE1);
+        glGetIntegerv(GL_TEXTURE_BINDING_2D, &id1);
+        glActiveTexture(GL_TEXTURE0 + duint(DGL_GetInteger(DGL_ACTIVE_TEXTURE)));
     }
 
     static inline bool isLinePrimitive(DGLenum p)
@@ -444,7 +441,7 @@ struct DGLDrawState
 
     void glInit()
     {
-        DENG_ASSERT_GL_CONTEXT_ACTIVE();
+        DE_ASSERT_GL_CONTEXT_ACTIVE();
 
         if (!gl)
         {
@@ -465,24 +462,22 @@ struct DGLDrawState
                     << gl->uFogRange
                     << gl->uFogColor;
 
-            auto &GL = LIBGUI_GL;
-
             // Sampler uniforms.
             {
                 int samplers[2][MAX_BATCH];
-                for (int i = 0; i < batchMaxSize; ++i)
+                for (int i = 0; i < int(batchMaxSize); ++i)
                 {
                     samplers[0][i] = i;
-                    samplers[1][i] = batchMaxSize + i;
+                    samplers[1][i] = int(batchMaxSize) + i;
                 }
 
                 auto prog = gl->shader.glName();
-                GL.glUseProgram(prog);
-                GL.glUniform1iv(GL.glGetUniformLocation(prog, "uTex0[0]"), GLsizei(batchMaxSize), samplers[0]);
+                glUseProgram(prog);
+                glUniform1iv(glGetUniformLocation(prog, "uTex0[0]"), GLsizei(batchMaxSize), samplers[0]);
                 LIBGUI_ASSERT_GL_OK();
-                GL.glUniform1iv(GL.glGetUniformLocation(prog, "uTex1[0]"), GLsizei(batchMaxSize), samplers[1]);
+                glUniform1iv(glGetUniformLocation(prog, "uTex1[0]"), GLsizei(batchMaxSize), samplers[1]);
                 LIBGUI_ASSERT_GL_OK();
-                GL.glUseProgram(0);
+                glUseProgram(0);
             }
         }
     }
@@ -491,7 +486,7 @@ struct DGLDrawState
     {
         if (gl)
         {
-            foreach (GLData::DrawBuffer *dbuf, gl->buffers)
+            for (GLData::DrawBuffer *dbuf : gl->buffers)
             {
                 dbuf->release();
                 delete dbuf;
@@ -507,16 +502,15 @@ struct DGLDrawState
             auto *dbuf = new GLData::DrawBuffer;
 
             // Vertex array object.
-#if defined (DENG_HAVE_VAOS)
+#if defined (DE_HAVE_VAOS)
             {
-                auto &GL = LIBGUI_GL;
-                GL.glGenVertexArrays(1, &dbuf->vertexArray);
-                GL.glBindVertexArray(dbuf->vertexArray);
+                glGenVertexArrays(1, &dbuf->vertexArray);
+                glBindVertexArray(dbuf->vertexArray);
                 for (uint i = 0; i < NUM_VERTEX_ATTRIB_ARRAYS; ++i)
                 {
-                    GL.glEnableVertexAttribArray(i);
+                    glEnableVertexAttribArray(i);
                 }
-                GL.glBindVertexArray(0);
+                glBindVertexArray(0);
             }
 #endif
 
@@ -528,47 +522,44 @@ struct DGLDrawState
     void glBindArrays()
     {
         const uint stride = sizeof(Vertex);
-        auto &GL = LIBGUI_GL;
 
         // Upload the vertex data.
         GLData::DrawBuffer &buf = nextBuffer();
-        buf.arrayData.setData(&vertices[0], sizeof(Vertex) * vertices.size(), gl::Dynamic);
+        buf.arrayData.setData(&vertices[0], sizeof(Vertex) * vertices.size(), gfx::Dynamic);
 
-#if defined (DENG_HAVE_VAOS)
-        GL.glBindVertexArray(buf.vertexArray);
+#if defined (DE_HAVE_VAOS)
+        glBindVertexArray(buf.vertexArray);
 #else
         for (uint i = 0; i < NUM_VERTEX_ATTRIB_ARRAYS; ++i)
         {
-            GL.glEnableVertexAttribArray(i);
+            glEnableVertexAttribArray(i);
         }
 #endif
         LIBGUI_ASSERT_GL_OK();
 
-        GL.glBindBuffer(GL_ARRAY_BUFFER, buf.arrayData.glName());
+        glBindBuffer(GL_ARRAY_BUFFER, buf.arrayData.glName());
         LIBGUI_ASSERT_GL_OK();
 
         // Updated pointers.
-        GL.glVertexAttribPointer(VAA_VERTEX,      3, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, vertex));
-        GL.glVertexAttribPointer(VAA_COLOR,       4, GL_UNSIGNED_BYTE, GL_TRUE,  stride, DENG2_OFFSET_PTR(Vertex, color));
-        GL.glVertexAttribPointer(VAA_TEXCOORD0,   2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, texCoord[0]));
-        GL.glVertexAttribPointer(VAA_TEXCOORD1,   2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, texCoord[1]));
-        GL.glVertexAttribPointer(VAA_FRAG_OFFSET, 2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, fragOffset[0]));
-        GL.glVertexAttribPointer(VAA_BATCH_INDEX, 1, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, batchIndex));
+        glVertexAttribPointer(VAA_VERTEX,      3, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, vertex));
+        glVertexAttribPointer(VAA_COLOR,       4, GL_UNSIGNED_BYTE, GL_TRUE,  stride, DENG2_OFFSET_PTR(Vertex, color));
+        glVertexAttribPointer(VAA_TEXCOORD0,   2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, texCoord[0]));
+        glVertexAttribPointer(VAA_TEXCOORD1,   2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, texCoord[1]));
+        glVertexAttribPointer(VAA_FRAG_OFFSET, 2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, fragOffset[0]));
+        glVertexAttribPointer(VAA_BATCH_INDEX, 1, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, batchIndex));
         LIBGUI_ASSERT_GL_OK();
 
-        GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     void glUnbindArrays()
     {
-        auto &GL = LIBGUI_GL;
-
-#if defined (DENG_HAVE_VAOS)
-        GL.glBindVertexArray(0);
+#if defined (DE_HAVE_VAOS)
+        glBindVertexArray(0);
 #else
         for (uint i = 0; i < NUM_VERTEX_ATTRIB_ARRAYS; ++i)
         {
-            GL.glDisableVertexAttribArray(i);
+            glDisableVertexAttribArray(i);
             LIBGUI_ASSERT_GL_OK();
         }
 #endif
@@ -576,13 +567,12 @@ struct DGLDrawState
 
     void glBindBatchTextures(duint count)
     {
-        auto &GL = LIBGUI_GL;
         for (duint i = 0; i < count; ++i)
         {
-            GL.glActiveTexture(GLenum(GL_TEXTURE0 + i));
-            GL.glBindTexture(GL_TEXTURE_2D, GLuint(gl->batchTexture0[i]));
-            GL.glActiveTexture(GLenum(GL_TEXTURE0 + batchMaxSize + i));
-            GL.glBindTexture(GL_TEXTURE_2D, GLuint(gl->batchTexture1[i]));
+            glActiveTexture(GLenum(GL_TEXTURE0 + i));
+            glBindTexture(GL_TEXTURE_2D, GLuint(gl->batchTexture0[i]));
+            glActiveTexture(GLenum(GL_TEXTURE0 + batchMaxSize + i));
+            glBindTexture(GL_TEXTURE_2D, GLuint(gl->batchTexture1[i]));
         }
     }
 
@@ -598,8 +588,7 @@ struct DGLDrawState
         case DGL_TRIANGLE_FAN:      return GL_TRIANGLE_STRIP;
         case DGL_TRIANGLE_STRIP:    return GL_TRIANGLE_STRIP;
         case DGL_QUADS:             return GL_TRIANGLES;
-
-        case DGL_NO_PRIMITIVE:      /*DENG2_ASSERT(!"No primitive type specified");*/ break;
+        case DGL_NO_PRIMITIVE:      break;
         }
         return GL_NONE;
     }
@@ -636,33 +625,31 @@ struct DGLDrawState
         {
             // We can't draw a line thinner than one pixel.
             const float lineWidth = std::max(.5f, GL_state.currentLineWidth);
-            gl->uFragmentSize     = Vector2f(lineWidth, lineWidth) / glState.target().size();
+            gl->uFragmentSize     = Vec2f(lineWidth, lineWidth) / glState.target().size();
         }
         else
         {
-            gl->uFragmentSize = Vector2f();
+            gl->uFragmentSize = Vec2f();
         }
         DGL_FogParams(gl->uFogRange, gl->uFogColor);
-
-        auto &GL = LIBGUI_GL;
 
         glState.apply();
 
         glBindArrays();
         gl->shader.beginUse();
-        DENG2_ASSERT(gl->shader.validate());
-        GL.glDrawArrays(glPrimitive(batchPrimType), 0, numVertices()); ++s_drawCallCount;
+        DE_ASSERT(gl->shader.validate());
+        glDrawArrays(glPrimitive(batchPrimType), 0, numVertices()); ++s_drawCallCount;
         gl->shader.endUse();
         LIBGUI_ASSERT_GL_OK();
         glUnbindArrays();
 
         // Restore the previously bound OpenGL textures.
         {
-            GL.glActiveTexture(GL_TEXTURE0);
-            GL.glBindTexture(GL_TEXTURE_2D, GLuint(oldTex[0]));
-            GL.glActiveTexture(GL_TEXTURE1);
-            GL.glBindTexture(GL_TEXTURE_2D, GLuint(oldTex[1]));
-            GL.glActiveTexture(GLenum(GL_TEXTURE0 + DGL_GetInteger(DGL_ACTIVE_TEXTURE)));
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, GLuint(oldTex[0]));
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, GLuint(oldTex[1]));
+            glActiveTexture(GL_TEXTURE0 + duint(DGL_GetInteger(DGL_ACTIVE_TEXTURE)));
         }
     }
 };
@@ -671,11 +658,9 @@ static DGLDrawState dglDraw;
 
 unsigned int DGL_BatchMaxSize()
 {
-    auto &GL = LIBGUI_GL;
-
     // This determines how long DGL batch draws can be.
     int maxFragSamplers;
-    GL.glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxFragSamplers);
+    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxFragSamplers);
 
     return duint(de::min(MAX_BATCH, de::max(8, maxFragSamplers / 2))); // DGL needs two per draw.
 }
@@ -717,14 +702,14 @@ void DGL_CurrentColor(DGLubyte *rgba)
 
 void DGL_CurrentColor(float *rgba)
 {
-    Vector4f colorf = Vector4ub(dglDraw.currentVertex.color).toVector4f() / 255.0;
+    Vec4f colorf = Vec4ub(dglDraw.currentVertex.color).toVec4f() / 255.0;
     std::memcpy(rgba, colorf.constPtr(), sizeof(float) * 4);
 }
 
 #undef DGL_Color3ub
-DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
+DE_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.currentVertex.color[0] = r;
     dglDraw.currentVertex.color[1] = g;
@@ -733,9 +718,9 @@ DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 }
 
 #undef DGL_Color3ubv
-DENG_EXTERN_C void DGL_Color3ubv(DGLubyte const *vec)
+DE_EXTERN_C void DGL_Color3ubv(const DGLubyte *vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.currentVertex.color[0] = vec[0];
     dglDraw.currentVertex.color[1] = vec[1];
@@ -744,9 +729,9 @@ DENG_EXTERN_C void DGL_Color3ubv(DGLubyte const *vec)
 }
 
 #undef DGL_Color4ub
-DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
+DE_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.currentVertex.color[0] = r;
     dglDraw.currentVertex.color[1] = g;
@@ -755,9 +740,9 @@ DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 }
 
 #undef DGL_Color4ubv
-DENG_EXTERN_C void DGL_Color4ubv(DGLubyte const *vec)
+DE_EXTERN_C void DGL_Color4ubv(const DGLubyte *vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.currentVertex.color[0] = vec[0];
     dglDraw.currentVertex.color[1] = vec[1];
@@ -766,9 +751,9 @@ DENG_EXTERN_C void DGL_Color4ubv(DGLubyte const *vec)
 }
 
 #undef DGL_Color3f
-DENG_EXTERN_C void DGL_Color3f(float r, float g, float b)
+DE_EXTERN_C void DGL_Color3f(float r, float g, float b)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     const auto color = DGLDrawState::colorFromFloat({r, g, b, 1.f});
     dglDraw.currentVertex.color[0] = color.x;
@@ -778,11 +763,11 @@ DENG_EXTERN_C void DGL_Color3f(float r, float g, float b)
 }
 
 #undef DGL_Color3fv
-DENG_EXTERN_C void DGL_Color3fv(float const *vec)
+DE_EXTERN_C void DGL_Color3fv(const float *vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
-    const auto color = DGLDrawState::colorFromFloat({Vector3f(vec), 1.f});
+    const auto color = DGLDrawState::colorFromFloat({Vec3f(vec), 1.f});
     dglDraw.currentVertex.color[0] = color.x;
     dglDraw.currentVertex.color[1] = color.y;
     dglDraw.currentVertex.color[2] = color.z;
@@ -790,9 +775,9 @@ DENG_EXTERN_C void DGL_Color3fv(float const *vec)
 }
 
 #undef DGL_Color4f
-DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
+DE_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     const auto color = DGLDrawState::colorFromFloat({r, g, b, a});
     dglDraw.currentVertex.color[0] = color.x;
@@ -802,11 +787,11 @@ DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
 }
 
 #undef DGL_Color4fv
-DENG_EXTERN_C void DGL_Color4fv(float const *vec)
+DE_EXTERN_C void DGL_Color4fv(const float *vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
-    const auto color = DGLDrawState::colorFromFloat(vec);
+    const auto color = DGLDrawState::colorFromFloat(Vec4f(vec));
     dglDraw.currentVertex.color[0] = color.x;
     dglDraw.currentVertex.color[1] = color.y;
     dglDraw.currentVertex.color[2] = color.z;
@@ -814,10 +799,10 @@ DENG_EXTERN_C void DGL_Color4fv(float const *vec)
 }
 
 #undef DGL_TexCoord2f
-DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t)
+DE_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG2_ASSERT(target < MAX_TEX_COORDS);
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT(target < MAX_TEX_COORDS);
 
     if (target < MAX_TEX_COORDS)
     {
@@ -827,10 +812,10 @@ DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t)
 }
 
 #undef DGL_TexCoord2fv
-DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec)
+DE_EXTERN_C void DGL_TexCoord2fv(byte target, const float *vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG2_ASSERT(target < MAX_TEX_COORDS);
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT(target < MAX_TEX_COORDS);
 
     if (target < MAX_TEX_COORDS)
     {
@@ -840,9 +825,9 @@ DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec)
 }
 
 #undef DGL_Vertex2f
-DENG_EXTERN_C void DGL_Vertex2f(float x, float y)
+DE_EXTERN_C void DGL_Vertex2f(float x, float y)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.currentVertex.vertex[0] = x;
     dglDraw.currentVertex.vertex[1] = y;
@@ -851,9 +836,9 @@ DENG_EXTERN_C void DGL_Vertex2f(float x, float y)
 }
 
 #undef DGL_Vertex2fv
-DENG_EXTERN_C void DGL_Vertex2fv(const float* vec)
+DE_EXTERN_C void DGL_Vertex2fv(const float* vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     if (vec)
     {
@@ -865,9 +850,9 @@ DENG_EXTERN_C void DGL_Vertex2fv(const float* vec)
 }
 
 #undef DGL_Vertex3f
-DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z)
+DE_EXTERN_C void DGL_Vertex3f(float x, float y, float z)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     dglDraw.currentVertex.vertex[0] = x;
     dglDraw.currentVertex.vertex[1] = y;
@@ -877,9 +862,9 @@ DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z)
 }
 
 #undef DGL_Vertex3fv
-DENG_EXTERN_C void DGL_Vertex3fv(const float* vec)
+DE_EXTERN_C void DGL_Vertex3fv(const float* vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     if (vec)
     {
@@ -891,9 +876,9 @@ DENG_EXTERN_C void DGL_Vertex3fv(const float* vec)
 }
 
 #undef DGL_Vertices2ftv
-DENG_EXTERN_C void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
+DE_EXTERN_C void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_IN_RENDER_THREAD();
 
     for(; num > 0; num--, vec++)
     {
@@ -903,10 +888,10 @@ DENG_EXTERN_C void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
 }
 
 #undef DGL_Vertices3ftv
-DENG_EXTERN_C void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
+DE_EXTERN_C void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     for(; num > 0; num--, vec++)
     {
@@ -916,10 +901,10 @@ DENG_EXTERN_C void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
 }
 
 #undef DGL_Vertices3fctv
-DENG_EXTERN_C void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
+DE_EXTERN_C void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     for(; num > 0; num--, vec++)
     {
@@ -930,101 +915,101 @@ DENG_EXTERN_C void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
 }
 
 #undef DGL_Begin
-DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode)
+DE_EXTERN_C void DGL_Begin(dglprimtype_t mode)
 {
     if (novideo) return;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     dglDraw.beginPrimitive(mode);
 }
 
 void DGL_AssertNotInPrimitive(void)
 {
-    DENG_ASSERT(dglDraw.primType == DGL_NO_PRIMITIVE);
+    DE_ASSERT(dglDraw.primType == DGL_NO_PRIMITIVE);
 }
 
 #undef DGL_End
-DENG_EXTERN_C void DGL_End(void)
+DE_EXTERN_C void DGL_End(void)
 {
     if (novideo) return;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     dglDraw.endPrimitive();
 }
 
 #undef DGL_DrawLine
-DENG_EXTERN_C void DGL_DrawLine(float x1, float y1, float x2, float y2, float r,
+DE_EXTERN_C void DGL_DrawLine(float x1, float y1, float x2, float y2, float r,
     float g, float b, float a)
 {
     GL_DrawLine(x1, y1, x2, y2, r, g, b, a);
 }
 
 #undef DGL_DrawRect
-DENG_EXTERN_C void DGL_DrawRect(RectRaw const *rect)
+DE_EXTERN_C void DGL_DrawRect(const RectRaw *rect)
 {
     if (!rect) return;
-    GL_DrawRect(Rectanglei::fromSize(Vector2i(rect->origin.xy),
-                                     Vector2ui(rect->size.width, rect->size.height)));
+    GL_DrawRect(Rectanglei::fromSize(Vec2i(rect->origin.xy),
+                                     Vec2ui(rect->size.width, rect->size.height)));
 }
 
 #undef DGL_DrawRect2
-DENG_EXTERN_C void DGL_DrawRect2(int x, int y, int w, int h)
+DE_EXTERN_C void DGL_DrawRect2(int x, int y, int w, int h)
 {
     GL_DrawRect2(x, y, w, h);
 }
 
 #undef DGL_DrawRectf
-DENG_EXTERN_C void DGL_DrawRectf(RectRawf const *rect)
+DE_EXTERN_C void DGL_DrawRectf(const RectRawf *rect)
 {
     GL_DrawRectf(rect);
 }
 
 #undef DGL_DrawRectf2
-DENG_EXTERN_C void DGL_DrawRectf2(double x, double y, double w, double h)
+DE_EXTERN_C void DGL_DrawRectf2(double x, double y, double w, double h)
 {
     GL_DrawRectf2(x, y, w, h);
 }
 
 #undef DGL_DrawRectf2Color
-DENG_EXTERN_C void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a)
+DE_EXTERN_C void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_IN_MAIN_THREAD();
 
     DGL_Color4f(r, g, b, a);
     GL_DrawRectf2(x, y, w, h);
 }
 
 #undef DGL_DrawRectf2Tiled
-DENG_EXTERN_C void DGL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
+DE_EXTERN_C void DGL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
 {
     GL_DrawRectf2Tiled(x, y, w, h, tw, th);
 }
 
 #undef DGL_DrawCutRectfTiled
-DENG_EXTERN_C void DGL_DrawCutRectfTiled(RectRawf const *rect, int tw, int th, int txoff, int tyoff,
-    RectRawf const *cutRect)
+DE_EXTERN_C void DGL_DrawCutRectfTiled(const RectRawf *rect, int tw, int th, int txoff, int tyoff,
+    const RectRawf *cutRect)
 {
     GL_DrawCutRectfTiled(rect, tw, th, txoff, tyoff, cutRect);
 }
 
 #undef DGL_DrawCutRectf2Tiled
-DENG_EXTERN_C void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th,
+DE_EXTERN_C void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th,
     int txoff, int tyoff, double cx, double cy, double cw, double ch)
 {
     GL_DrawCutRectf2Tiled(x, y, w, h, tw, th, txoff, tyoff, cx, cy, cw, ch);
 }
 
 #undef DGL_DrawQuadOutline
-DENG_EXTERN_C void DGL_DrawQuadOutline(Point2Raw const *tl, Point2Raw const *tr,
-    Point2Raw const *br, Point2Raw const *bl, float const color[4])
+DE_EXTERN_C void DGL_DrawQuadOutline(const Point2Raw *tl, const Point2Raw *tr,
+    const Point2Raw *br, const Point2Raw *bl, float const color[4])
 {
     if(!tl || !tr || !br || !bl || (color && !(color[CA] > 0))) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_IN_MAIN_THREAD();
 
     if(color) DGL_Color4fv(color);
     DGL_Begin(DGL_LINE_STRIP);
@@ -1037,7 +1022,7 @@ DENG_EXTERN_C void DGL_DrawQuadOutline(Point2Raw const *tl, Point2Raw const *tr,
 }
 
 #undef DGL_DrawQuad2Outline
-DENG_EXTERN_C void DGL_DrawQuad2Outline(int tlX, int tlY, int trX, int trY,
+DE_EXTERN_C void DGL_DrawQuad2Outline(int tlX, int tlY, int trX, int trY,
     int brX, int brY, int blX, int blY, const float color[4])
 {
     Point2Raw tl, tr, bl, br;

@@ -24,12 +24,11 @@
 
 #include "clientapp.h"
 
-//#include "render/lightgrid.h"
-
 #include "world/map.h"
-#include "world/bspleaf.h"
 #include "world/convexsubspace.h"
-#include "client/clientsubsector.h"
+#include "world/subsector.h"
+
+#include <doomsday/world/bspleaf.h>
 
 using namespace de;
 
@@ -66,7 +65,7 @@ vissprite_t *R_NewVisSprite(visspritetype_t type)
     return spr;
 }
 
-void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
+void VisSprite_SetupSprite(vissprite_t *spr, const VisEntityPose &pose, const VisEntityLighting &light,
     dfloat /*secFloor*/, dfloat /*secCeil*/, dfloat /*floorClip*/, dfloat /*top*/,
     ClientMaterial &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
     dint tClass, dint tMap, world::BspLeaf *bspLeafAtOrigin,
@@ -74,10 +73,10 @@ void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntit
 {
     drawspriteparams_t &p = *VS_SPRITE(spr);
 
-    MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec(tClass, tMap);
+    const MaterialVariantSpec &spec = Rend_SpriteMaterialSpec(tClass, tMap);
     MaterialAnimator *matAnimator   = &material.getAnimator(spec);
 
-    DENG2_ASSERT((tClass == 0 && tMap == 0) ||
+    DE_ASSERT((tClass == 0 && tMap == 0) ||
                  (spec.primarySpec->variant.flags & TSF_HAS_COLORPALETTE_XLAT));
 
     spr->pose = pose;
@@ -93,7 +92,7 @@ void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntit
     spr->light.ambientColor[3] = (useSpriteAlpha? light.ambientColor.w : 1);
 }
 
-void VisSprite_SetupModel(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
+void VisSprite_SetupModel(vissprite_t *spr, const VisEntityPose &pose, const VisEntityLighting &light,
     FrameModelDef *mf, FrameModelDef *nextMF, dfloat inter,
     dint id, dint selector, world::BspLeaf * /*bspLeafAtOrigin*/, dint mobjDDFlags, dint tmap,
     bool /*fullBright*/, bool alwaysInterpolate)
@@ -120,7 +119,7 @@ void R_SortVisSprites()
 {
     if(!visSpriteP) return;
 
-    dint const count = visSpriteP - visSprites;
+    const dint count = visSpriteP - visSprites;
     if(count <= 0) return;
 
     vissprite_t unsorted;
@@ -170,14 +169,14 @@ void R_SortVisSprites()
     }
 }
 
-void VisEntityLighting::setupLighting(Vector3d const &origin, ddouble distance,
-                                      world::BspLeaf const &bspLeaf)
+void VisEntityLighting::setupLighting(const Vec3d &origin, ddouble distance,
+                                      const world::BspLeaf &bspLeaf)
 {
 #if 0
     world::Map &map = ClientApp::world().map();
     if(useBias && map.hasLightGrid())
     {
-        Vector4f color = map.lightGrid().evaluate(origin);
+        Vec4f color = map.lightGrid().evaluate(origin);
 
         // Apply light range compression.
         for(dint i = 0; i < 3; ++i)
@@ -192,8 +191,8 @@ void VisEntityLighting::setupLighting(Vector3d const &origin, ddouble distance,
     else
 #endif
     {
-        auto const &subsec   = bspLeaf.subspace().subsector().as<world::ClientSubsector>();
-        Vector4f const color = subsec.lightSourceColorfIntensity();
+        const auto &subsec = bspLeaf.subspace().subsector().as<Subsector>();
+        const Vec4f color  = subsec.lightSourceColorfIntensity();
 
         // No need for distance attentuation.
         dfloat lightLevel = color.w;

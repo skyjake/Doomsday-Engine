@@ -8,45 +8,46 @@ Linux 64-bit [![Linux Build Status](https://travis-ci.org/skyjake/Doomsday-Engin
 
 ## Libraries
 
-**libcore** is the core of Doomsday 2. It is a C++ class framework containing functionality such as the file system, plugin loading, Doomsday Script, network communications, and generic data structures. Almost everything relies or will rely on this core library.
+**libcore** is the core of Doomsday 3. It is a C++ class framework containing functionality such as the file system, plugin loading, Doomsday Script, network communications, and generic data structures. Almost everything relies or will rely on this core library.
 
-**liblegacy** is a collection of C language routines extracted from the old Doomsday 1 code base. Its purpose is to (eventually) act as a C wrapper for libcore. (Game plugins are mostly in C.)
+**libgui** builds on the core library to add low-level GUI capabilities such as OpenGL graphics, fonts, images, and input devices. It also contains the Doomsday UI framework: widgets, generic dialogs, and abstract data models.
 
-**libgui** builds on libcore to add low-level GUI capabilities such as OpenGL graphics, fonts, images, and input devices.
+**libgloom** contains the renderer.
 
-**libappfw** contains the Doomsday UI framework: widgets, generic dialogs, abstract data models. libappfw is built on libgui and libcore.
+**libdoomsday** is an application-level library that contains shared functionality for the client, server, and extensions.
 
-**libshell** has functionality related to connecting to and controlling Doomsday servers remotely.
+**libdoomsdaygui** extends libdoomsday with GUI-only functionality like widgets shared by the client and shell apps.
 
-**libdoomsday** is an application-level library that contains shared functionality for the client, server, and plugins.
+**libgamekit** contains the game extension libraries: Doom, Heretic, and Hexen.
 
-## External Dependencies
+## Dependencies
 
 ### CMake
 
 Doomsday is compiled using [CMake](http://cmake.org/). Version 3.1 or later is required.
 
-### Qt
+### SDL 2
 
-Using the latest version of Qt 5 is recommended. The minimum required version is Qt 5.5 (complete build) or Qt 5.0 (client disabled).
+[SDL 2](http://libsdl.org) provides window system integration (windows, graphics API initialization, input events, game controllers). Additionally, SDL2_mixer can be used for audio output.
+
+### the_Foundation
+
+[the_Foundation](https://git.skyjake.fi/skyjake/the_Foundation/) is a C library for low-level functionality such as multithreading and Unicode text processing. Use the `build_deps.py` script to download and compile this.
+
+### GLM
+
+[OpenGL Mathematics](https://glm.g-truc.net/) library. Use the `build_deps.py` script to download and compile this.
 
 ### Open Asset Import Library
 
-libgui requires the [Open Asset Import Library](http://assimp.sourceforge.net/lib_html/index.html) for reading 3D model and animation files. It is compiled automatically as part of the build and is expected to be present as a Git submodule in _doomsday/external/assimp_. Source tarballs come with the Assimp sources included.
-
-### SDL 2
-
-[SDL 2](http://libsdl.org) is needed for game controller input (e.g., joysticks and gamepads). Additionally, SDL2_mixer can be used for audio output (not required).
+libgui requires the [Open Asset Import Library](http://assimp.sourceforge.net/lib_html/index.html) for reading 3D model and animation files. Use the `build_deps.py` script to download and compile this.
 
 ### FMOD Studio
 
 The optional FMOD audio plugin requires the [FMOD Studio Low-Level Programmer API](http://www.fmod.org/download).
 
-## Branches
+### FluidSynth
 
-The following branches are currently active in the repository.
+FluidSynth is used for rendering MIDI music using software instruments. FluidSynth can be built as part of the main Doomsday build, in which case GLib 2 is also required as a dependency.
 
-- **master**: Main code base. This is where releases are made from on a biweekly basis. Bug fixing is done in this branch, while larger development efforts occur in separate work branches.
-- **stable**: Latest stable release. Patch releases can be made from this branch when necessary.
-- **stable-x.y**: Stable release x.y.
-- **legacy**: Old stable code base. Currently at the 1.8.6 release.
+

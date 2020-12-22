@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_PROFILEPICKERWIDGET_H
-#define DENG_CLIENT_PROFILEPICKERWIDGET_H
+#ifndef DE_CLIENT_PROFILEPICKERWIDGET_H
+#define DE_CLIENT_PROFILEPICKERWIDGET_H
 
-#include <de/ChoiceWidget>
-#include "ConfigProfiles"
+#include <de/choicewidget.h>
+#include "configprofiles.h"
 
 /**
  * Widget for selecting/manipulating settings profiles.
@@ -31,7 +31,9 @@
  */
 class ProfilePickerWidget : public de::ChoiceWidget
 {
-    Q_OBJECT
+public:
+    DE_AUDIENCE(ProfileChange, void profileChanged())
+    DE_AUDIENCE(EditorRequest, void profileEditorRequested())
 
 public:
     /**
@@ -42,18 +44,14 @@ public:
      *                     "appearance". Appears in the UI dialogs.
      * @param name         Name for the widget.
      */
-    ProfilePickerWidget(ConfigProfiles &settings, de::String const &description,
-                        de::String const &name = de::String());
+    ProfilePickerWidget(ConfigProfiles &settings, const de::String &description,
+                        const de::String &name = {});
 
     ButtonWidget &button();
 
     void useInvertedStyleForPopups();
 
-signals:
-    void profileChanged();
-    void profileEditorRequested();
-
-public slots:
+public:
     void openMenu();
     void edit();
     void rename();
@@ -66,7 +64,7 @@ protected:
     void updateStyle();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_PROFILEPICKERWIDGET_H
+#endif // DE_CLIENT_PROFILEPICKERWIDGET_H

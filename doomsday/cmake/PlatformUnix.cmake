@@ -9,27 +9,27 @@ if (NOT CMAKE_CXX_COMPILER_ID)
     endif ()
 endif ()
 
-set (DENG_X11 ON)
-set (DENG_PLATFORM_SUFFIX x11)
-set (DENG_AMETHYST_PLATFORM UNIX)
+set (DE_X11 ON)
+set (DE_PLATFORM_SUFFIX x11)
+set (DE_AMETHYST_PLATFORM UNIX)
 
-set (DENG_BASE_DIR    "" CACHE STRING "Base directory path (defaults to {prefix}/${DENG_INSTALL_DATA_DIR})")
-set (DENG_LIBRARY_DIR "" CACHE STRING "Plugin directory path (defaults to {prefix}/${DENG_INSTALL_PLUGIN_DIR})")
+set (DE_BASE_DIR    "" CACHE STRING "Base directory path (defaults to {prefix}/${DE_INSTALL_DATA_DIR})")
+set (DE_LIBRARY_DIR "" CACHE STRING "Plugin directory path (defaults to {prefix}/${DE_INSTALL_PLUGIN_DIR})")
 
 add_definitions (
-    -DDENG_X11
+    -DDE_X11
     -D__USE_BSD
     -D_GNU_SOURCE=1
 )
 
-if (DENG_UPDATER_PLATFORM)
-    add_definitions (-DDENG_PLATFORM_ID="${DENG_UPDATER_PLATFORM}-${DENG_ARCH}")
+if (DE_UPDATER_PLATFORM)
+    add_definitions (-DDE_PLATFORM_ID="${DE_UPDATER_PLATFORM}-${DE_ARCH}")
 else ()
-    add_definitions (-DDENG_PLATFORM_ID="source")
+    add_definitions (-DDE_PLATFORM_ID="source")
 endif ()
 
 if (CMAKE_COMPILER_IS_GNUCXX)
-    foreach (cxxOpt -Wno-deprecated-copy;-Wno-class-memaccess;-Wno-address-of-packed-member)
+    foreach (cxxOpt -Wno-deprecated-copy;-Wno-class-memaccess;-Wno-address-of-packed-member;-Wno-psabi)
         append_unique (CMAKE_CXX_FLAGS ${cxxOpt})
     endforeach (cxxOpt)
 
@@ -38,3 +38,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
     append_unique (CMAKE_CXX_FLAGS_RELWITHDEBINFO -fno-tree-fre)
     append_unique (CMAKE_CXX_FLAGS_MINSIZEREL     -fno-tree-fre)
 endif ()
+
+# All symbols are hidden by default.
+append_unique (CMAKE_C_FLAGS   "-fvisibility=hidden")
+append_unique (CMAKE_CXX_FLAGS "-fvisibility=hidden")

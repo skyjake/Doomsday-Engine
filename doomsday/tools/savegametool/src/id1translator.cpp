@@ -18,28 +18,28 @@
  */
 
 #include <cstring> // memcpy
-#include <de/TextApp>
-#include <de/ArrayValue>
-#include <de/FileSystem>
-#include <de/FixedByteArray>
-#include <de/LogBuffer>
-#include <de/NativeFile>
-#include <de/NumberValue>
-#include <de/Reader>
-#include <de/Writer>
-#include <de/ZipArchive>
+#include <de/textapp.h>
+#include <de/arrayvalue.h>
+#include <de/filesystem.h>
+#include <de/fixedbytearray.h>
+#include <de/logbuffer.h>
+#include <de/nativefile.h>
+#include <de/numbervalue.h>
+#include <de/reader.h>
+#include <de/writer.h>
+#include <de/ziparchive.h>
 #include "id1translator.h"
+#include "savegametool.h"
 
-extern de::String fallbackGameId;
 extern de::Path composeMapUriPath(de::duint32 episode, de::duint32 map);
 extern de::Folder &outputFolder();
 
 using namespace de;
 
-DENG2_PIMPL(Id1Translator)
+DE_PIMPL(Id1Translator)
 {
     FormatId id;
-    File const *saveFilePtr;
+    const File *saveFilePtr;
     dint32 saveVersion;
 
     Impl(Public *i)
@@ -64,7 +64,7 @@ DENG2_PIMPL(Id1Translator)
         case DoomV9:     return 0x1DEAD600;
         case HereticV13: return 0x7D9A1200;
         }
-        DENG2_ASSERT(!"Id1Translator::magic: Invalid format id");
+        DE_ASSERT_FAIL("Id1Translator::magic: Invalid format id");
         return 0;
     }
 
@@ -75,23 +75,23 @@ DENG2_PIMPL(Id1Translator)
         case DoomV9:     return verId == 90;
         case HereticV13: return verId == 130;
         }
-        DENG2_ASSERT(!"Id1Translator::knownFormatVersion: Invalid format id");
+        DE_ASSERT_FAIL("Id1Translator::knownFormatVersion: Invalid format id");
         return false;
     }
 
-    File const *saveFile() const
+    const File *saveFile() const
     {
-        DENG2_ASSERT(saveFilePtr != 0);
+        DE_ASSERT(saveFilePtr != 0);
         return saveFilePtr;
     }
 
     void openFile(Path path)
     {
         LOG_TRACE("openFile: Opening \"%s\"", path);
-        DENG2_ASSERT(saveFilePtr == 0);
+        DE_ASSERT(saveFilePtr == 0);
         try
         {
-            saveFilePtr = &DENG2_TEXT_APP->fileSystem().find<File const>(path);
+            saveFilePtr = &DE_TEXT_APP->fileSystem().find<File const>(path);
             return;
         }
         catch (...)
@@ -110,7 +110,7 @@ DENG2_PIMPL(Id1Translator)
 
     Block *bufferFile(Reader &from) const
     {
-        IByteArray const &source = *from.source();
+        const IByteArray &source = *from.source();
         return new Block(source, from.offset(), source.size() - from.offset());
     }
 
@@ -127,11 +127,11 @@ DENG2_PIMPL(Id1Translator)
 
         Block vcheck;
         from.readBytes(16, vcheck);
-        saveVersion = String(vcheck.constData() + 8).toInt(0, 10, String::AllowSuffix);
-        DENG2_ASSERT(knownFormatVersion(saveVersion));
+        saveVersion = String(vcheck.c_str() + 8).toInt(0, 10, String::AllowSuffix);
+        DE_ASSERT(knownFormatVersion(saveVersion));
 
         // Id Tech 1 formats omitted the majority of the game rules...
-        QScopedPointer<Record> rules(new Record);
+        std::unique_ptr<Record> rules(new Record);
         dbyte skill;
         from >> skill;
         // Interpret skill levels outside the normal range as "spawn no things".
@@ -140,12 +140,12 @@ DENG2_PIMPL(Id1Translator)
             skill = SM_NOTHINGS;
         }
         rules->set("skill", skill);
-        metadata.add("gameRules", rules.take());
+        metadata.add("gameRules", rules.release());
 
         uint episode, map;
         from.readAs<dchar>(episode);
         from.readAs<dchar>(map);
-        DENG2_ASSERT(map > 0);
+        DE_ASSERT(map > 0);
         metadata.set("mapUri", composeMapUriPath(episode, map - 1).asText());
 
         ArrayValue *array = new ArrayValue;
@@ -185,8 +185,8 @@ DENG2_PIMPL(Id1Translator)
     }
 };
 
-Id1Translator::Id1Translator(FormatId id, QStringList knownExtensions, QStringList baseGameIdKeys)
-    : PackageFormatter(knownExtensions, baseGameIdKeys)
+Id1Translator::Id1Translator(FormatId id, StringList knownExtensions, StringList baseGameIdKeys)
+    : PackageFormatter(std::move(knownExtensions), std::move(baseGameIdKeys))
     , d(new Impl(this))
 {
     d->id = id;
@@ -202,7 +202,7 @@ String Id1Translator::formatName() const
     case DoomV9:      return "Doom (id Tech 1)";
     case HereticV13:  return "Heretic (id Tech 1)";
     }
-    DENG2_ASSERT(!"Id1Translator::formatName: Invalid format id");
+    DE_ASSERT_FAIL("Id1Translator::formatName: Invalid format id");
     return "";
 }
 
@@ -220,10 +220,10 @@ bool Id1Translator::recognize(Path path)
         from.seek(24);
         Block vcheck;
         from.readBytes(16, vcheck);
-        if (vcheck.startsWith("version "))
+        if (vcheck.beginsWith("version "))
         {
             // The version id can be used to determine which game format the save is in.
-            int verId = String(vcheck.constData() + 8).toInt(0, 10, String::AllowSuffix);
+            int verId = String(vcheck.c_str() + 8).toInt(0, 10, String::AllowSuffix);
             if (d->knownFormatVersion(verId))
             {
                 recognized = true;
@@ -241,11 +241,11 @@ void Id1Translator::convert(Path path)
     LOG_AS("Id1Translator");
 
     /// @todo try all known extensions at the given path, if not specified.
-    String saveName = path.lastSegment().toString();
+    String saveName = path.lastSegment().toLowercaseString();
 
     d->openFile(path);
-    String const nativeFilePath = d->saveFile()->source()->as<NativeFile>().nativePath();
-    QScopedPointer<Reader> from(new Reader(*d->saveFile()));
+    const String nativeFilePath = d->saveFile()->source()->as<NativeFile>().nativePath();
+    std::unique_ptr<Reader> from(new Reader(*d->saveFile()));
 
     // Read and translate the game session metadata.
     GameStateMetadata metadata;

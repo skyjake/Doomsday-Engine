@@ -19,23 +19,23 @@
 #include "globalshortcuts.h"
 #include "testapp.h"
 
-#include <de/KeyEvent>
+#include <de/keyevent.h>
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(GlobalShortcuts)
+DE_PIMPL_NOREF(GlobalShortcuts)
 {};
 
 GlobalShortcuts::GlobalShortcuts()
     : Widget("shortcuts"), d(new Impl)
 {}
 
-bool GlobalShortcuts::handleEvent(Event const &event)
+bool GlobalShortcuts::handleEvent(const Event &event)
 {
     if (event.isKeyDown())
     {
-        KeyEvent const &key = event.as<KeyEvent>();
-        if (key.modifiers().testFlag(KeyEvent::Control) && key.qtKey() == Qt::Key_Q)
+        const KeyEvent &key = event.as<KeyEvent>();
+        if (key.modifiers().testFlag(KeyEvent::Control) && key.ddKey() == 'q')
         {
             TestApp::app().quit();
             return true;

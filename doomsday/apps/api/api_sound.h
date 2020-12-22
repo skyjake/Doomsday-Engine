@@ -22,11 +22,11 @@
 #define DOOMSDAY_API_SOUND_H
 
 #include "apis.h"
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 struct mobj_s;
 
-DENG_API_TYPEDEF(S)
+DE_API_TYPEDEF(S)
 {
     de_api_t api;
 
@@ -43,7 +43,7 @@ DENG_API_TYPEDEF(S)
      *
      * @return  Non-zero if a sound was started.
      */
-    int (*LocalSoundAtVolumeFrom)(int soundIdAndFlags, struct mobj_s const *emitter,
+    int (*LocalSoundAtVolumeFrom)(int soundIdAndFlags, const struct mobj_s *emitter,
         coord_t *origin, float volume);
 
     /**
@@ -52,7 +52,7 @@ DENG_API_TYPEDEF(S)
      *
      * @return  Non-zero if a sound was started.
      */
-    int (*LocalSoundAtVolume)(int soundId, struct mobj_s const *emitter, float volume);
+    int (*LocalSoundAtVolume)(int soundId, const struct mobj_s *emitter, float volume);
 
     /**
      * Plays a sound on the local system from the given @a emitter.
@@ -60,7 +60,7 @@ DENG_API_TYPEDEF(S)
      *
      * @return  Non-zero if a sound was started.
      */
-    int (*LocalSound)(int soundId, struct mobj_s const *emitter);
+    int (*LocalSound)(int soundId, const struct mobj_s *emitter);
 
     /**
      * Plays a sound on the local system at the given fixed world @a origin.
@@ -75,7 +75,7 @@ DENG_API_TYPEDEF(S)
      *
      * @return  Non-zero if a sound was started.
      */
-    int (*StartSound)(int soundId, struct mobj_s const *emitter);
+    int (*StartSound)(int soundId, const struct mobj_s *emitter);
 
     /**
      * Play a world sound. The sound is sent to all players except the one who
@@ -87,14 +87,14 @@ DENG_API_TYPEDEF(S)
      *
      * @return  Non-zero if a sound was successfully started.
      */
-    int (*StartSoundEx)(int soundId, struct mobj_s const *emitter);
+    int (*StartSoundEx)(int soundId, const struct mobj_s *emitter);
 
     /**
      * Play a world sound. All players in the game will hear it.
      *
      * @return  Non-zero if a sound was started.
      */
-    int (*StartSoundAtVolume)(int soundId, struct mobj_s const *emitter, float volume);
+    int (*StartSoundAtVolume)(int soundId, const struct mobj_s *emitter, float volume);
 
     /**
      * Play a player sound. Only the specified player will hear it.
@@ -111,13 +111,13 @@ DENG_API_TYPEDEF(S)
      * @param emitter  @c nullptr: stops all sounds with the ID.
      *                 Otherwise both ID and origin must match.
      */
-    void (*StopSound)(int soundId, struct mobj_s const *emitter/*, flags = 0*/);
+    void (*StopSound)(int soundId, const struct mobj_s *emitter/*, flags = 0*/);
 
     /**
      * @copydoc StopSound()
      * @param flags  @ref soundStopFlags
      */
-    void (*StopSound2)(int soundId, struct mobj_s const *emitter, int flags);
+    void (*StopSound2)(int soundId, const struct mobj_s *emitter, int flags);
 
     /**
      * Is an instance of the sound being played using the given emitter?
@@ -131,7 +131,7 @@ DENG_API_TYPEDEF(S)
     /**
      * @return  @c NULL, if the song is found.
      */
-    int (*StartMusic)(char const *musicId, dd_bool looped);
+    int (*StartMusic)(const char *musicId, dd_bool looped);
 
     /**
      * Start a song based on its number.
@@ -150,9 +150,9 @@ DENG_API_TYPEDEF(S)
      */
     void (*PauseMusic)(dd_bool doPause);
 }
-DENG_API_T(S);
+DE_API_T(S);
 
-#ifndef DENG_NO_API_MACROS_SOUND
+#ifndef DE_NO_API_MACROS_SOUND
 #define S_LocalSoundAtVolumeFrom    _api_S.LocalSoundAtVolumeFrom
 #define S_LocalSoundAtVolume        _api_S.LocalSoundAtVolume
 #define S_LocalSound                _api_S.LocalSound
@@ -171,7 +171,7 @@ DENG_API_T(S);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(S);
+DE_USING_API(S);
 #endif
 
 #endif  // DOOMSDAY_API_SOUND_H

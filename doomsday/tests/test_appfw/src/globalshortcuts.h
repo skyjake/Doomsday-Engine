@@ -19,7 +19,7 @@
 #ifndef GLOBALSHORTCUTS_H
 #define GLOBALSHORTCUTS_H
 
-#include <de/Widget>
+#include <de/widget.h>
 
 class GlobalShortcuts : public de::Widget
 {
@@ -27,10 +27,10 @@ public:
     GlobalShortcuts();
 
     // Events.
-    bool handleEvent(de::Event const &event);
+    bool handleEvent(const de::Event &event);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // GLOBALSHORTCUTS_H

@@ -1,6 +1,6 @@
 /** @file net_msg.cpp  Network Messaging.
  *
- * Buffer overflow checks *ARE NOT* made ifndef DENG2_DEBUG.
+ * Buffer overflow checks *ARE NOT* made ifndef DE_DEBUG.
  * Buffer data is written using little-endian ordering.
  *
  * Note that negative values are not good for the packed write/read routines,
@@ -23,11 +23,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_base.h"
 #include "network/net_msg.h"
-
-#include <QList>
 #include "network/net_buf.h"
+
+#include <de/list.h>
 
 using namespace de;
 
@@ -36,7 +35,7 @@ reader_s *msgReader;
 
 /// An ongoing writer is pushed here if a new one is started before the
 /// earlier one is finished.
-static QList<writer_s *> pendingWriters;
+static List<writer_s *> pendingWriters;
 
 void Msg_Begin(dint type)
 {
@@ -65,7 +64,7 @@ dd_bool Msg_BeingWritten()
 
 void Msg_End()
 {
-    DENG2_ASSERT(::msgWriter);
+    DE_ASSERT(::msgWriter);
 
     // Finalize the netbuffer.
     // Message type is included as the first byte.
@@ -90,7 +89,7 @@ void Msg_BeginRead()
     }
 
     // Start reading from the netbuffer.
-    DENG2_ASSERT(::msgReader == nullptr);
+    DE_ASSERT(::msgReader == nullptr);
     ::msgReader = Reader_NewWithNetworkBuffer();
 }
 

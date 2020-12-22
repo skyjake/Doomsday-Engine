@@ -22,23 +22,23 @@
 using namespace de;
 using namespace de::ui;
 
-DENG2_PIMPL_NOREF(CVarLineEditWidget)
+DE_PIMPL_NOREF(CVarLineEditWidget)
 {
-    char const *cvar;
+    const char *cvar;
 
     cvar_t *var() const
     {
         cvar_t *cv = Con_FindVariable(cvar);
-        DENG2_ASSERT(cv != 0);
+        DE_ASSERT(cv != 0);
         return cv;
     }
 };
 
-CVarLineEditWidget::CVarLineEditWidget(char const *cvarPath)
+CVarLineEditWidget::CVarLineEditWidget(const char *cvarPath)
     : d(new Impl)
 {
     setSignalOnEnter(true);
-    connect(this, SIGNAL(enterPressed(QString)), this, SLOT(endEditing()));
+    audienceForEnter() += [this](){ endEditing(); };
 
     d->cvar = cvarPath;
     updateFromCVar();
@@ -54,7 +54,7 @@ void CVarLineEditWidget::contentChanged()
     }
 }
 
-char const *CVarLineEditWidget::cvarPath() const
+const char *CVarLineEditWidget::cvarPath() const
 {
     return d->cvar;
 }
@@ -71,6 +71,6 @@ void CVarLineEditWidget::endEditing()
 
 void CVarLineEditWidget::setCVarValueFromWidget()
 {
-    CVar_SetString(d->var(), text().toUtf8());
+    CVar_SetString(d->var(), text());
 }
 

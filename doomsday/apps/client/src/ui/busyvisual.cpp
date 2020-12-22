@@ -23,10 +23,10 @@
 #include "ui/busyvisual.h"
 
 #include <cmath>
-#include <de/concurrency.h>
-#include <de/timer.h>
-#include <de/GLState>
-#include <de/GLInfo>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/timer.h>
+#include <de/glstate.h>
+#include <de/glinfo.h>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/var.h>
 #include "gl/gl_main.h"
@@ -154,20 +154,20 @@ void Con_DrawTransition(void)
     if (isDedicated) return;
     if (!Con_TransitionInProgress()) return;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
     DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
 
-    DENG2_ASSERT(ClientWindow::main().busy().transitionFrame() != 0);
+    DE_ASSERT(ClientWindow::main().busy().transitionFrame() != 0);
 
-    GLuint const texScreenshot = ClientWindow::main().busy().transitionFrame()->glName();
+    const GLuint texScreenshot = ClientWindow::main().busy().transitionFrame()->glName();
 
-    GL_BindTextureUnmanaged(texScreenshot, gl::ClampToEdge, gl::ClampToEdge);
-    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    GL_BindTextureUnmanaged(texScreenshot, gfx::ClampToEdge, gfx::ClampToEdge);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     DGL_PushState();
     DGL_Disable(DGL_ALPHA_TEST);
     DGL_Enable(DGL_TEXTURE_2D);

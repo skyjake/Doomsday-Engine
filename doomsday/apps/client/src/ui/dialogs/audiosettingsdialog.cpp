@@ -27,22 +27,20 @@
 #include "audio/audiosystem.h"
 
 #include "clientapp.h"
-#include "ConfigProfiles"
+#include "configprofiles.h"
 
-#include <de/FoldPanelWidget>
-#include <de/GridPopupWidget>
-#include <de/ScriptSystem>
-#include <de/SequentialLayout>
-#include <de/SignalAction>
-#include <de/TextValue>
-#include <de/VariableChoiceWidget>
-#include <de/VariableSliderWidget>
-#include <de/VariableToggleWidget>
+#include <de/foldpanelwidget.h>
+#include <de/gridpopupwidget.h>
+#include <de/dscript.h>
+#include <de/sequentiallayout.h>
+#include <de/variablechoicewidget.h>
+#include <de/variablesliderwidget.h>
+#include <de/variabletogglewidget.h>
 
 using namespace de;
 using namespace de::ui;
 
-DENG_GUI_PIMPL(AudioSettingsDialog)
+DE_GUI_PIMPL(AudioSettingsDialog)
 {
     CVarSliderWidget *sfxVolume;
     CVarSliderWidget *musicVolume;
@@ -63,7 +61,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
 //    VariableChoiceWidget *fmodSpeakerMode;
     VariableChoiceWidget *soundPlugin;
     VariableChoiceWidget *musicPlugin;
-#if defined (WIN32)
+#if defined (DE_WINDOWS)
     VariableChoiceWidget *cdPlugin;
 #endif
     bool needAudioReinit = false;
@@ -85,11 +83,10 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
             area.add(musicSource    = new CVarChoiceWidget    ("music-source"));
             area.add(musicSoundfont = new CVarNativePathWidget("music-soundfont"));
 
-            musicSoundfont->setBlankText(tr("GeneralUser GS"));
-            musicSoundfont->setFilters(StringList()
-                                       << "SF2 soundfonts (*.sf2)"
-                                       << "DLS soundfonts (*.dls)"
-                                       << "All files (*)");
+            musicSoundfont->setBlankText("GeneralUser GS");
+            musicSoundfont->setFilters({{"SF2 soundfonts", {"sf2"}},
+                                        {"DLS soundfonts", {"dls"}},
+                                        {"All files", {}}});
 
             area.add(pauseOnFocus = new VariableToggleWidget("Pause on Focus Lost",
                                                              App::config("audio.pauseOnFocus"),
@@ -103,7 +100,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
 
             // Developer options.
             self().add(devPopup = new GridPopupWidget);
-            soundInfo = new CVarToggleWidget("sound-info", tr("Sound Channel Status"));
+            soundInfo = new CVarToggleWidget("sound-info", "Sound Channel Status");
             *devPopup << soundInfo;
             devPopup->commit();
         }
@@ -116,7 +113,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         backendBase->add(sfxChannels  = new VariableSliderWidget(App::config("audio.channels"), Ranged(1, 64), 1.0));
         backendBase->add(soundPlugin  = new VariableChoiceWidget(App::config("audio.soundPlugin"), VariableChoiceWidget::Text));
         backendBase->add(musicPlugin  = new VariableChoiceWidget(App::config("audio.musicPlugin"), VariableChoiceWidget::Text));
-#if defined (WIN32)
+#if defined (DE_WINDOWS)
         backendBase->add(cdPlugin = new VariableChoiceWidget(App::config("audio.cdPlugin"), VariableChoiceWidget::Text));
 #endif
 //        backendBase->add(fmodSpeakerMode = new VariableChoiceWidget(App::config("audio.fmod.speakerMode"), VariableChoiceWidget::Text));
@@ -129,7 +126,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
 
             layout << *LabelWidget::newWithText("SFX Plugin:", backendBase) << *soundPlugin
                    << *LabelWidget::newWithText("Music Plugin:", backendBase) << *musicPlugin
-#if defined (WIN32)
+#if defined (DE_WINDOWS)
                    << *LabelWidget::newWithText("CD Plugin:", backendBase) << *cdPlugin
 #endif
                    << *LabelWidget::newWithText("Output:", backendBase) << *audioOutput
@@ -142,63 +139,52 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         // Check currently available outputs.
         enumerateAudioOutputs();
 
-        /*
-        fmodSpeakerMode->items()
-                << new ChoiceItem("Mono", "mono")
-                << new ChoiceItem("Stereo", "")
-                << new ChoiceItem("Quad", "quad")
-                << new ChoiceItem("Surround", "surround")
-                << new ChoiceItem("5.1", "5.1")
-                << new ChoiceItem("7.1", "7.1")
-                << new ChoiceItem("Raw", "raw");
-         */
-
         soundPlugin->items()
-                << new ChoiceItem(tr("FMOD"), "fmod")
-           #if !defined (DENG_DISABLE_SDLMIXER)
-                << new ChoiceItem(tr("SDL_mixer"), "sdlmixer")
+                << new ChoiceItem("FMOD", "fmod")
+           #if !defined (DE_DISABLE_SDLMIXER)
+                << new ChoiceItem("SDL_mixer", "sdlmixer")
            #endif
-                << new ChoiceItem(tr("OpenAL"), "openal")
-           #if defined (WIN32)
-                << new ChoiceItem(tr("DirectSound"), "dsound")
-           #endif
-                << new ChoiceItem(tr("Disabled"), "dummy");
+                << new ChoiceItem("OpenAL", "openal")
+//           #if defined (WIN32)
+//                << new ChoiceItem(tr("DirectSound"), "dsound")
+//           #endif
+                << new ChoiceItem("Disabled", "dummy");
 
         musicPlugin->items()
-                << new ChoiceItem(tr("Fluidsynth"), "fluidsynth")
-                << new ChoiceItem(tr("FMOD"), "fmod")
-           #if !defined (DENG_DISABLE_SDLMIXER)
-                << new ChoiceItem(tr("SDL_mixer"), "sdlmixer")
+                << new ChoiceItem("FluidSynth", "fluidsynth")
+                << new ChoiceItem("FMOD", "fmod")
+           #if !defined (DE_DISABLE_SDLMIXER)
+                << new ChoiceItem("SDL_mixer", "sdlmixer")
            #endif
-           #if defined (WIN32)
-                << new ChoiceItem(tr("Windows Multimedia"), "winmm")
-           #endif
-                << new ChoiceItem(tr("Disabled"), "dummy");
+//           #if defined (WIN32)
+//                << new ChoiceItem("Windows Multimedia", "winmm")
+//           #endif
+                << new ChoiceItem("Disabled", "dummy");
 
-#if defined (WIN32)
+#if defined (DE_WINDOWS)
         cdPlugin->items()
-                << new ChoiceItem(tr("Windows Multimedia"), "winmm")
-                << new ChoiceItem(tr("Disabled"), "dummy");
+            //              << new ChoiceItem(tr("Windows Multimedia"), "winmm")
+                << new ChoiceItem("Disabled", "dummy");
 
         cdPlugin->updateFromVariable();
 #endif
 
-        soundPlugin    ->updateFromVariable();
-        musicPlugin    ->updateFromVariable();
-//        fmodSpeakerMode->updateFromVariable();
+        soundPlugin->updateFromVariable();
+        musicPlugin->updateFromVariable();
+        audioOutput->updateFromVariable();
 
         // The audio system needs reinitializing if the plugins are changed.
-        auto changeFunc = [this](uint) {
+        auto changeFunc = [this]() {
             needAudioReinit = true;
             self().buttonWidget(Id2)->setText(_E(b) "Apply");
         };
-        QObject::connect(soundPlugin,     &ChoiceWidget::selectionChangedByUser, changeFunc);
-        QObject::connect(musicPlugin,     &ChoiceWidget::selectionChangedByUser, changeFunc);
-//        QObject::connect(fmodSpeakerMode, &ChoiceWidget::selectionChangedByUser, changeFunc);
-#if defined (WIN32)
-        QObject::connect(cdPlugin,        &ChoiceWidget::selectionChangedByUser, changeFunc);
+        soundPlugin->audienceForUserSelection() += changeFunc;
+        musicPlugin->audienceForUserSelection() += changeFunc;
+        audioOutput->audienceForUserSelection() += changeFunc;
+#if defined (DE_WINDOWS)
+        cdPlugin->audienceForUserSelection() += changeFunc;
 #endif
-        QObject::connect(sfxChannels, &SliderWidget::valueChangedByUser, changeFunc);
+        sfxChannels->audienceForUserValue() += changeFunc;
     }
 
     void enumerateAudioOutputs()
@@ -213,9 +199,9 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         if (outputs.contains(key))
         {
             const auto &names = outputs.element(key).as<ArrayValue>();
-            for (unsigned i = 0; i < names.size(); ++i)
+            for (dsize i = 0; i < names.size(); ++i)
             {
-                audioOutput->items() << new ChoiceItem(names.at(i).asText(), i);
+                audioOutput->items() << new ChoiceItem(names.at(i).asText(), NumberValue(i));
             }
         }
     }
@@ -224,7 +210,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     {
         if (!DoomsdayApp::isGameLoaded()) return;
 
-        foreach (GuiWidget *w, self().area().childWidgets() + devPopup->content().childWidgets())
+        for (GuiWidget *w : self().area().childWidgets() + devPopup->content().childWidgets())
         {
             if (ICVarWidget *cv = maybeAs<ICVarWidget>(w))
             {
@@ -234,13 +220,13 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     }
 };
 
-AudioSettingsDialog::AudioSettingsDialog(String const &name)
+AudioSettingsDialog::AudioSettingsDialog(const String &name)
     : DialogWidget(name, WithHeading)
     , d(new Impl(this))
 {
-    bool const gameLoaded = DoomsdayApp::isGameLoaded();
+    const bool gameLoaded = DoomsdayApp::isGameLoaded();
 
-    heading().setText(tr("Audio Settings"));
+    heading().setText("Audio Settings");
     heading().setImage(style().images().image("audio"));
 
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
@@ -249,12 +235,12 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
 
     if (gameLoaded)
     {
-        auto *sfxVolLabel   = LabelWidget::newWithText(tr("SFX Volume:"     ), &area());
-        auto *musicVolLabel = LabelWidget::newWithText(tr("Music Volume:"   ), &area());
-        auto *rvbVolLabel   = LabelWidget::newWithText(tr("Reverb Strength:"), &area());
+        auto *sfxVolLabel   = LabelWidget::newWithText("SFX Volume:"     , &area());
+        auto *musicVolLabel = LabelWidget::newWithText("Music Volume:"   , &area());
+        auto *rvbVolLabel   = LabelWidget::newWithText("Reverb Strength:", &area());
 
-        d->sound3D    ->setText(tr("3D Effects & Reverb"  ));
-        d->overlapStop->setText(tr("One Sound per Emitter"));
+        d->sound3D    ->setText("3D Effects & Reverb"  );
+        d->overlapStop->setText("One Sound per Emitter");
         //d->sound16bit ->setText(tr("16-bit Resampling"    ));
 
         /*auto *rateLabel = LabelWidget::newWithText(tr("Resampling:"), &area());
@@ -264,14 +250,14 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
                 << new ChoiceItem(tr("2x @ 22050 Hz"), 22050)
                 << new ChoiceItem(tr("4x @ 44100 Hz"), 44100);*/
 
-        auto *musSrcLabel = LabelWidget::newWithText(tr("Preferred Music:"), &area());
+        auto *musSrcLabel = LabelWidget::newWithText("Preferred Music:", &area());
 
         d->musicSource->items()
-                << new ChoiceItem(tr("MUS lumps"),      AudioSystem::MUSP_MUS)
-                << new ChoiceItem(tr("External files"), AudioSystem::MUSP_EXT)
-                << new ChoiceItem(tr("CD"),             AudioSystem::MUSP_CD);
+                << new ChoiceItem("MUS lumps",      NumberValue(AudioSystem::MUSP_MUS))
+                << new ChoiceItem("External files", NumberValue(AudioSystem::MUSP_EXT))
+                << new ChoiceItem("CD",             NumberValue(AudioSystem::MUSP_CD));
 
-        auto *sfLabel = LabelWidget::newWithText(tr("MIDI Sound Font:"), &area());
+        auto *sfLabel = LabelWidget::newWithText("MIDI Sound Font:", &area());
 
         // Layout.
         LabelWidget::appendSeparatorWithText("Sound Effects", &area(), &layout);
@@ -305,9 +291,9 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
     d->backendFold->title().rule().setInput(Rule::Width, area().contentRule().width());
 
     buttons()
-            << new DialogButtonItem(Default | Accept | Id2, tr("Close"))
-            << new DialogButtonItem(Action, tr("Reset to Defaults"),
-                                    new SignalAction(this, SLOT(resetToDefaults())));
+            << new DialogButtonItem(Default | Accept | Id2, "Close")
+            << new DialogButtonItem(Action, "Reset to Defaults",
+                                    [this]() { resetToDefaults(); });
     if (gameLoaded)
     {
         buttons() << new DialogButtonItem(ActionPopup | Id1,

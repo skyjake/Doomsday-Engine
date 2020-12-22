@@ -18,7 +18,7 @@
 
 #include "render/projectionlist.h"
 
-#include <de/memoryzone.h>
+#include <de/legacy/memoryzone.h>
 
 using namespace de;
 
@@ -43,7 +43,7 @@ void ProjectionList::rewind()  // static
 }
 
 /// Averaged-color * alpha.
-static dfloat luminosity(ProjectedTextureData const &pt)  // static
+static dfloat luminosity(const ProjectedTextureData &pt)  // static
 {
     return (pt.color.x + pt.color.y + pt.color.z) / 3 * pt.color.w;
 }

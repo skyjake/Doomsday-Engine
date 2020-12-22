@@ -72,17 +72,17 @@
 #include <QVector>
 
 // Doomsday SDK:
-#include <de/App>
-#include <de/Error>
-#include <de/Log>
-#include <de/memory.h>
-#include <de/NativePath>
-#include <de/Observers>
-#include <de/PathTree>
-#include <de/Reader>
-#include <de/Rectangle>
-#include <de/String>
-#include <de/Vector>
-#include <de/Writer>
+#include <de/app.h>
+#include <de/error.h>
+#include <de/log.h>
+#include <de/legacy/memory.h>
+#include <de/nativepath.h>
+#include <de/observers.h>
+#include <de/pathtree.h>
+#include <de/reader.h>
+#include <de/rectangle.h>
+#include <de/string.h>
+#include <de/vector.h>
+#include <de/writer.h>
 
 #endif

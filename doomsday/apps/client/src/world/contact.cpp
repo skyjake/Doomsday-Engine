@@ -19,17 +19,15 @@
 
 #include "de_platform.h"
 #include "world/contact.h"
-
-#include <de/memoryzone.h>
-#include <de/Error>
 #include "world/map.h"
 #include "world/p_object.h"
-#include "BspLeaf"
-#include "ConvexSubspace"
+#include "world/convexsubspace.h"
+
+#include <doomsday/world/bspleaf.h>
+#include <de/legacy/memoryzone.h>
+#include <de/error.h>
 
 using namespace de;
-
-namespace world {
 
 ContactType Contact::type() const
 {
@@ -41,7 +39,7 @@ void *Contact::objectPtr() const
     return _object;
 }
 
-Vector3d Contact::objectOrigin() const
+Vec3d Contact::objectOrigin() const
 {
     switch(_type)
     {
@@ -50,8 +48,8 @@ Vector3d Contact::objectOrigin() const
 
     default: break;
     }
-    DENG2_ASSERT(false);
-    return Vector3d();
+    DE_ASSERT(false);
+    return Vec3d();
 }
 
 ddouble Contact::objectRadius() const
@@ -63,7 +61,7 @@ ddouble Contact::objectRadius() const
 
     default: break;
     }
-    DENG2_ASSERT(false);
+    DE_ASSERT(false);
     return 0;
 }
 
@@ -76,11 +74,11 @@ AABoxd Contact::objectBounds() const
 
     default: break;
     }
-    DENG2_ASSERT(false);
+    DE_ASSERT(false);
     return AABoxd();
 }
 
-BspLeaf &Contact::objectBspLeafAtOrigin() const
+world::BspLeaf &Contact::objectBspLeafAtOrigin() const
 {
     switch(_type)
     {
@@ -91,11 +89,7 @@ BspLeaf &Contact::objectBspLeafAtOrigin() const
     }
 }
 
-}  // namespace world
-
 //- ContactList -------------------------------------------------------------------------
-
-namespace world {
 
 struct ContactList::Node
 {
@@ -128,7 +122,7 @@ ContactList::Node *ContactList::begin() const
 
 ContactList::Node *ContactList::newNode(void *object) // static
 {
-    DENG2_ASSERT(object);
+    DE_ASSERT(object);
 
     Node *node;
     if(!cursor)
@@ -154,9 +148,9 @@ ContactList::Node *ContactList::newNode(void *object) // static
 // Separate contact lists for each BSP leaf and contact type.
 static ContactList *subspaceContactLists;
 
-ContactList &R_ContactList(world::ConvexSubspace &subspace, ContactType type)
+ContactList &R_ContactList(const ConvexSubspace &subspace, ContactType type)
 {
-    return subspaceContactLists[subspace.indexInMap() * ContactTypeCount + dint( type )];
+    return subspaceContactLists[subspace.indexInMap() * ContactTypeCount + int(type)];
 }
 
 static Contact *contacts;
@@ -164,7 +158,7 @@ static Contact *contactFirst, *contactCursor;
 
 static Contact *newContact(void *object, ContactType type)
 {
-    DENG2_ASSERT(object);
+    DE_ASSERT(object);
 
     Contact *contact;
     if(!contactCursor)
@@ -238,7 +232,7 @@ void R_AddContact(Lumobj &lum)
     }
 }
 
-LoopResult R_ForAllContacts(std::function<LoopResult (world::Contact const &)> func)
+LoopResult R_ForAllContacts(const std::function<LoopResult (const Contact &)> &func)
 {
     for(Contact *contact = contacts; contact; contact = contact->next)
     {
@@ -248,7 +242,7 @@ LoopResult R_ForAllContacts(std::function<LoopResult (world::Contact const &)> f
     return LoopContinue;
 }
 
-LoopResult R_ForAllSubspaceMobContacts(world::ConvexSubspace &subspace, std::function<LoopResult (mobj_s &)> func)
+LoopResult R_ForAllSubspaceMobContacts(const ConvexSubspace &subspace, const std::function<LoopResult (mobj_s &)> &func)
 {
     ContactList &list = R_ContactList(subspace, ContactMobj);
     for(ContactList::Node *node = list.begin(); node; node = node->next)
@@ -259,7 +253,7 @@ LoopResult R_ForAllSubspaceMobContacts(world::ConvexSubspace &subspace, std::fun
     return LoopContinue;
 }
 
-LoopResult R_ForAllSubspaceLumContacts(ConvexSubspace &subspace, std::function<LoopResult (Lumobj &)> func)
+LoopResult R_ForAllSubspaceLumContacts(const ConvexSubspace &subspace, const std::function<LoopResult (Lumobj &)> &func)
 {
     ContactList &list = R_ContactList(subspace, ContactLumobj);
     for(ContactList::Node *node = list.begin(); node; node = node->next)
@@ -269,5 +263,3 @@ LoopResult R_ForAllSubspaceLumContacts(ConvexSubspace &subspace, std::function<L
     }
     return LoopContinue;
 }
-
-}  // namespace world

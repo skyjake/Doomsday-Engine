@@ -21,22 +21,23 @@
 
 #include "de_platform.h"
 #include "resource/framemodel.h"
-#include "ClientTexture"
+#include "resource/clienttexture.h"
 
-#include <doomsday/res/TextureManifest>
+#include <doomsday/res/texturemanifest.h>
 #include <doomsday/filesys/file.h>
-#include <de/Range>
-#include <de/memory.h>
-#include <QtAlgorithms>
+#include <de/range.h>
+#include <de/bitarray.h>
+#include <de/legacy/memory.h>
 
 using namespace de;
+using namespace res;
 
 bool FrameModel::DetailLevel::hasVertex(int number) const
 {
     return model.lodVertexUsage().testBit(number * model.lodCount() + level);
 }
 
-void FrameModel::Frame::bounds(Vector3f &retMin, Vector3f &retMax) const
+void FrameModel::Frame::bounds(Vec3f &retMin, Vec3f &retMax) const
 {
     retMin = min;
     retMax = max;
@@ -134,21 +135,21 @@ static void *allocAndLoad(FileHandle &file, int offset, int len)
 // Precalculated normal LUT for use when loading MD2/DMD format models.
 #define NUMVERTEXNORMALS 162
 static float avertexnormals[NUMVERTEXNORMALS][3] = {
-#include "misc/tab_anorms.h"
+#include <doomsday/tab_anorms.h>
 };
 
 /**
  * @todo reimplement file loading using de::Reader.
  */
-DENG2_PIMPL(FrameModel)
+DE_PIMPL(FrameModel)
 {
-    Flags flags;
-    Skins skins;
+    Flags  flags;
+    Skins  skins;
     Frames frames;
-    int numVertices;
+    int    numVertices;
 
     DetailLevels lods;
-    QBitArray lodVertexUsage;
+    BitArray     lodVertexUsage;
 
     uint modelId; ///< In the repository.
 
@@ -202,26 +203,26 @@ DENG2_PIMPL(FrameModel)
         uint8_t *frameData = (uint8_t *) allocAndLoad(file, hdr.offsetFrames, hdr.frameSize * hdr.numFrames);
         for(int i = 0; i < hdr.numFrames; ++i)
         {
-            md2_packedFrame_t const *pfr = (md2_packedFrame_t const *) (frameData + hdr.frameSize * i);
-            Vector3f const scale(DD_FLOAT(pfr->scale[0]), DD_FLOAT(pfr->scale[2]), DD_FLOAT(pfr->scale[1]));
-            Vector3f const translation(DD_FLOAT(pfr->translate[0]), DD_FLOAT(pfr->translate[2]), DD_FLOAT(pfr->translate[1]));
-            String const frameName = pfr->name;
+            const md2_packedFrame_t *pfr = (const md2_packedFrame_t *) (frameData + hdr.frameSize * i);
+            Vec3f const scale(DD_FLOAT(pfr->scale[0]), DD_FLOAT(pfr->scale[2]), DD_FLOAT(pfr->scale[1]));
+            Vec3f const translation(DD_FLOAT(pfr->translate[0]), DD_FLOAT(pfr->translate[2]), DD_FLOAT(pfr->translate[1]));
+            const String frameName = pfr->name;
 
             FrameModelFrame *frame = new FrameModelFrame(*mdl, frameName);
             frame->vertices.reserve(hdr.numVertices);
 
             // Scale and translate each vertex.
-            md2_triangleVertex_t const *pVtx = pfr->vertices;
+            const md2_triangleVertex_t *pVtx = pfr->vertices;
             for(int k = 0; k < hdr.numVertices; ++k, pVtx++)
             {
                 frame->vertices.append(FrameModelFrame::Vertex());
                 FrameModelFrame::Vertex &vtx = frame->vertices.last();
 
-                vtx.pos = Vector3f(pVtx->vertex[0], pVtx->vertex[2], pVtx->vertex[1])
+                vtx.pos = Vec3f(pVtx->vertex[0], pVtx->vertex[2], pVtx->vertex[1])
                               * scale + translation;
                 vtx.pos.y *= aspectScale; // Aspect undoing.
 
-                vtx.norm = Vector3f(avertexnormals[pVtx->normalIndex]);
+                vtx.norm = Vec3f(avertexnormals[pVtx->normalIndex]);
 
                 if(!k)
                 {
@@ -242,7 +243,7 @@ DENG2_PIMPL(FrameModel)
         FrameModelLOD &lod0 = *mdl->d->lods.last();
 
         uint8_t *commandData = (uint8_t *) allocAndLoad(file, hdr.offsetGlCommands, 4 * hdr.numGlCommands);
-        for(uint8_t const *pos = commandData; *pos;)
+        for(const uint8_t *pos = commandData; *pos;)
         {
             int count = DD_LONG( *(int *) pos ); pos += 4;
 
@@ -259,11 +260,11 @@ DENG2_PIMPL(FrameModel)
 
             while(count--)
             {
-                md2_commandElement_t const *v = (md2_commandElement_t *) pos; pos += 12;
+                const md2_commandElement_t *v = (md2_commandElement_t *) pos; pos += 12;
 
                 prim.elements.append(FrameModel::Primitive::Element());
                 FrameModel::Primitive::Element &elem = prim.elements.last();
-                elem.texCoord = Vector2f(DD_FLOAT(v->s), DD_FLOAT(v->t));
+                elem.texCoord = Vec2f(DD_FLOAT(v->s), DD_FLOAT(v->t));
                 elem.index    = DD_LONG(v->index);
             }
         }
@@ -342,12 +343,12 @@ DENG2_PIMPL(FrameModel)
     /**
      * Packed: pppppppy yyyyyyyy. Yaw is on the XY plane.
      */
-    static Vector3f unpackVector(ushort packed)
+    static Vec3f unpackVector(ushort packed)
     {
-        float const yaw   = (packed & 511) / 512.0f * 2 * PI;
-        float const pitch = ((packed >> 9) / 127.0f - 0.5f) * PI;
-        float const cosp  = float(cos(pitch));
-        return Vector3f(cos(yaw) * cosp, sin(yaw) * cosp, sin(pitch));
+        const float yaw   = (packed & 511) / 512.0f * 2 * PI;
+        const float pitch = ((packed >> 9) / 127.0f - 0.5f) * PI;
+        const float cosp  = float(cos(pitch));
+        return Vec3f(cos(yaw) * cosp, sin(yaw) * cosp, sin(pitch));
     }
 
     /**
@@ -411,22 +412,22 @@ DENG2_PIMPL(FrameModel)
         uint8_t *frameData = (uint8_t *) allocAndLoad(file, info.offsetFrames, info.frameSize * info.numFrames);
         for(int i = 0; i < info.numFrames; ++i)
         {
-            dmd_packedFrame_t const *pfr = (dmd_packedFrame_t *) (frameData + info.frameSize * i);
-            Vector3f const scale(DD_FLOAT(pfr->scale[0]), DD_FLOAT(pfr->scale[2]), DD_FLOAT(pfr->scale[1]));
-            Vector3f const translation(DD_FLOAT(pfr->translate[0]), DD_FLOAT(pfr->translate[2]), DD_FLOAT(pfr->translate[1]));
-            String const frameName = pfr->name;
+            const dmd_packedFrame_t *pfr = (dmd_packedFrame_t *) (frameData + info.frameSize * i);
+            Vec3f const scale(DD_FLOAT(pfr->scale[0]), DD_FLOAT(pfr->scale[2]), DD_FLOAT(pfr->scale[1]));
+            Vec3f const translation(DD_FLOAT(pfr->translate[0]), DD_FLOAT(pfr->translate[2]), DD_FLOAT(pfr->translate[1]));
+            const String frameName = pfr->name;
 
             Frame *frame = new Frame(*mdl, frameName);
             frame->vertices.reserve(info.numVertices);
 
             // Scale and translate each vertex.
-            dmd_packedVertex_t const *pVtx = pfr->vertices;
+            const dmd_packedVertex_t *pVtx = pfr->vertices;
             for(int k = 0; k < info.numVertices; ++k, ++pVtx)
             {
                 frame->vertices.append(Frame::Vertex());
                 Frame::Vertex &vtx = frame->vertices.last();
 
-                vtx.pos = Vector3f(pVtx->vertex[0], pVtx->vertex[2], pVtx->vertex[1])
+                vtx.pos = Vec3f(pVtx->vertex[0], pVtx->vertex[2], pVtx->vertex[1])
                               * scale + translation;
                 vtx.pos.y *= aspectScale; // Aspect undo.
 
@@ -472,7 +473,7 @@ DENG2_PIMPL(FrameModel)
 
             uint8_t *commandData = (uint8_t *) allocAndLoad(file, lodInfo[i].offsetGlCommands,
                                                             4 * lodInfo[i].numGlCommands);
-            for(uint8_t const *pos = commandData; *pos;)
+            for(const uint8_t *pos = commandData; *pos;)
             {
                 int count = DD_LONG( *(int *) pos ); pos += 4;
 
@@ -489,12 +490,12 @@ DENG2_PIMPL(FrameModel)
 
                 while(count--)
                 {
-                    md2_commandElement_t const *v = (md2_commandElement_t *) pos; pos += 12;
+                    const md2_commandElement_t *v = (md2_commandElement_t *) pos; pos += 12;
 
                     prim.elements.append(Primitive::Element());
                     Primitive::Element &elem = prim.elements.last();
 
-                    elem.texCoord = Vector2f(DD_FLOAT(v->s), DD_FLOAT(v->t));
+                    elem.texCoord = Vec2f(DD_FLOAT(v->s), DD_FLOAT(v->t));
                     elem.index    = DD_LONG(v->index);
                 }
             }
@@ -532,8 +533,8 @@ DENG2_PIMPL(FrameModel)
         // Renormalizing?
         if(!CommandLine_Check("-renorm")) return;
 
-        int const tris  = mdl.lodInfo[0].numTriangles;
-        int const verts = mdl.info.numVertices;
+        const int tris  = mdl.lodInfo[0].numTriangles;
+        const int verts = mdl.info.numVertices;
 
         vector_t* normals = (vector_t*) Z_Malloc(sizeof(vector_t) * tris, PU_APPSTATIC, 0);
         vector_t norm;
@@ -655,12 +656,12 @@ FrameModel *FrameModel::loadFromFile(FileHandle &hndl, float aspectScale) //stat
     };
 
     // Firstly, attempt to guess the resource type from the file extension.
-    ModelFileType const *rtypeGuess = 0;
+    const ModelFileType *rtypeGuess = 0;
     String filePath = hndl.file().composePath();
     String ext      = filePath.fileNameExtension();
     if (!ext.isEmpty())
     {
-        for (auto const &rtype : modelTypes)
+        for (const auto &rtype : modelTypes)
         {
             if (!rtype.ext.compareWithoutCase(ext))
             {
@@ -676,7 +677,7 @@ FrameModel *FrameModel::loadFromFile(FileHandle &hndl, float aspectScale) //stat
     }
 
     // Not yet interpreted - try each known format in order.
-    for (auto const &rtype : modelTypes)
+    for (const auto &rtype : modelTypes)
     {
         // Already tried this?
         if (&rtype == rtypeGuess) continue;
@@ -701,26 +702,25 @@ void FrameModel::setModelId(uint newModelId)
     d->modelId = newModelId;
 }
 
-FrameModel::Flags FrameModel::flags() const
+Flags FrameModel::flags() const
 {
     return d->flags;
 }
 
-void FrameModel::setFlags(FrameModel::Flags flagsToChange, FlagOp operation)
+void FrameModel::setFlags(Flags flagsToChange, FlagOp operation)
 {
     LOG_AS("FrameModel");
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
-int FrameModel::frameNumber(String name) const
+int FrameModel::frameNumber(const String& name) const
 {
-    if(!name.isEmpty())
+    if (!name.isEmpty())
     {
-        for(int i = 0; i < d->frames.count(); ++i)
+        for (int i = 0; i < d->frames.count(); ++i)
         {
             Frame *frame = d->frames.at(i);
-            if(!frame->name.compareWithoutCase(name))
-                return i;
+            if (!frame->name.compareWithoutCase(name)) return i;
         }
     }
     return -1; // Not found.
@@ -733,10 +733,10 @@ FrameModel::Frame &FrameModel::frame(int number) const
     {
         return *d->frames.at(number);
     }
-    throw MissingFrameError("FrameModel::frame", "Invalid frame number " + String::number(number) + ", valid range is " + Rangei(0, d->frames.count()).asText());
+    throw MissingFrameError("FrameModel::frame", "Invalid frame number " + String::asText(number) + ", valid range is " + Rangei(0, d->frames.count()).asText());
 }
 
-FrameModel::Frames const &FrameModel::frames() const
+const FrameModel::Frames &FrameModel::frames() const
 {
     return d->frames;
 }
@@ -744,18 +744,18 @@ FrameModel::Frames const &FrameModel::frames() const
 void FrameModel::clearAllFrames()
 {
     LOG_AS("FrameModel");
-    qDeleteAll(d->frames);
+    deleteAll(d->frames);
     d->frames.clear();
 }
 
-int FrameModel::skinNumber(String name) const
+int FrameModel::skinNumber(const String& name) const
 {
     if(!name.isEmpty())
     {
         // Reverse iteration so that later skins override earlier ones.
         for(int i = d->skins.count(); i--> 0; )
         {
-            Skin const &skin = d->skins.at(i);
+            const Skin &skin = d->skins.at(i);
             if(!skin.name.compareWithoutCase(name))
                 return i;
         }
@@ -770,7 +770,7 @@ FrameModel::Skin &FrameModel::skin(int number) const
     {
         return const_cast<Skin &>(d->skins.at(number));
     }
-    throw MissingSkinError("FrameModel::skin", "Invalid skin number " + String::number(number) + ", valid range is " + Rangei(0, d->skins.count()).asText());
+    throw MissingSkinError("FrameModel::skin", "Invalid skin number " + String::asText(number) + ", valid range is " + Rangei(0, d->skins.count()).asText());
 }
 
 FrameModel::Skin &FrameModel::newSkin(String name)
@@ -781,7 +781,7 @@ FrameModel::Skin &FrameModel::newSkin(String name)
     return d->skins.last();
 }
 
-FrameModel::Skins const &FrameModel::skins() const
+const FrameModel::Skins &FrameModel::skins() const
 {
     return d->skins;
 }
@@ -799,15 +799,15 @@ FrameModel::DetailLevel &FrameModel::lod(int level) const
     {
         return *d->lods.at(level);
     }
-    throw MissingDetailLevelError("FrameModel::lod", "Invalid detail level " + String::number(level) + ", valid range is " + Rangei(0, d->lods.count()).asText());
+    throw MissingDetailLevelError("FrameModel::lod", "Invalid detail level " + String::asText(level) + ", valid range is " + Rangei(0, d->lods.count()).asText());
 }
 
-FrameModel::DetailLevels const &FrameModel::lods() const
+const FrameModel::DetailLevels &FrameModel::lods() const
 {
     return d->lods;
 }
 
-FrameModel::Primitives const &FrameModel::primitives() const
+const FrameModel::Primitives &FrameModel::primitives() const
 {
     LOG_AS("FrameModel");
     return lod(0).primitives;
@@ -818,7 +818,7 @@ int FrameModel::vertexCount() const
     return d->numVertices;
 }
 
-QBitArray const &FrameModel::lodVertexUsage() const
+const BitArray &FrameModel::lodVertexUsage() const
 {
     return d->lodVertexUsage;
 }

@@ -20,16 +20,15 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_PORTABLE_INIT_H
-#define LIBDENG_PORTABLE_INIT_H
+#ifndef DE_PORTABLE_INIT_H
+#define DE_PORTABLE_INIT_H
 
 #include "api_internaldata.h"
 #include <doomsday/gameapi.h>
-#include <doomsday/library.h>
 #include <de/c_wrapper.h>
 
 #ifdef __CLIENT__
-#include <de/String>
+#include <de/string.h>
 
 /**
  * Compose the title for the main window.
@@ -58,9 +57,9 @@ void DD_ConsoleInit(void);
 /**
  * Provides the library with the engine's public APIs.
  *
- * @param lib  Library instance.
+ * @param plugName  Plugin extension name.
  */
-void DD_PublishAPIs(Library *lib);
+void DD_PublishAPIs(const char *plugName);
 
 /**
  * Define abbreviations and aliases for command line options.
@@ -71,4 +70,4 @@ void DD_InitCommandLine(void);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_PORTABLE_INIT_H */
+#endif /* DE_PORTABLE_INIT_H */

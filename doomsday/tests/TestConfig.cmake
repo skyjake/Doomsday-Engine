@@ -4,12 +4,13 @@
 cmake_minimum_required (VERSION 3.0)
 include (${CMAKE_CURRENT_LIST_DIR}/../cmake/Config.cmake)
 
-find_package (DengCore)
-
 macro (deng_test target)
     sublist (_src 1 -1 ${ARGV})
     add_executable (${target} ${_src})
-    target_link_libraries (${target} Deng::libcore)
+    deng_link_libraries (${target} PUBLIC DengCore)
+    if (UNIX)
+        target_compile_definitions (${target} PRIVATE -DUNIX)
+    endif ()
     deng_target_defaults (${target})
     deng_target_rpath (${target})
     set_property (TARGET ${target} PROPERTY FOLDER Tests)

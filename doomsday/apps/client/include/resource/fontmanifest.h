@@ -18,15 +18,15 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_FONTMANIFEST_H
-#define DENG_RESOURCE_FONTMANIFEST_H
+#ifndef DE_RESOURCE_FONTMANIFEST_H
+#define DE_RESOURCE_FONTMANIFEST_H
 
-#include "AbstractFont"
+#include "abstractfont.h"
 #include <doomsday/uri.h>
-#include <de/Error>
-#include <de/Observers>
-#include <de/PathTree>
-#include <de/String>
+#include <de/error.h>
+#include <de/observers.h>
+#include <de/pathtree.h>
+#include <de/string.h>
 
 namespace de {
 
@@ -45,16 +45,16 @@ class FontManifest : public PathTree::Node
 {
 public:
     /// Required Font instance is missing. @ingroup errors
-    DENG2_ERROR(MissingFontError);
+    DE_ERROR(MissingFontError);
 
     /// Notified when the manifest is about to be deleted.
-    DENG2_DEFINE_AUDIENCE(Deletion, void fontManifestBeingDeleted(FontManifest const &manifest))
+    DE_DEFINE_AUDIENCE(Deletion, void fontManifestBeingDeleted(const FontManifest &manifest))
 
     /// Notified whenever the unique identifier changes.
-    DENG2_DEFINE_AUDIENCE(UniqueIdChange, void fontManifestUniqueIdChanged(FontManifest &manifest))
+    DE_DEFINE_AUDIENCE(UniqueIdChange, void fontManifestUniqueIdChanged(FontManifest &manifest))
 
 public:
-    FontManifest(PathTree::NodeArgs const &args);
+    FontManifest(const PathTree::NodeArgs &args);
 
     /**
      * Returns the owning scheme of the manifest.
@@ -66,7 +66,7 @@ public:
      *
      * @see scheme(), FontScheme::name()
      */
-    String const &schemeName() const;
+    const String &schemeName() const;
 
     /**
      * Compose a URI of the form "scheme:path" for the manifest.
@@ -77,8 +77,8 @@ public:
      * The path component of the URI will contain the percent-encoded path
      * of the manifest.
      */
-    inline Uri composeUri(QChar sep = '/') const {
-        return Uri(schemeName(), path(sep));
+    inline res::Uri composeUri(Char sep = '/') const {
+        return res::Uri(schemeName(), path(sep));
     }
 
     /**
@@ -92,8 +92,8 @@ public:
      *
      * @see uniqueId(), setUniqueId()
      */
-    inline Uri composeUrn() const {
-        return Uri("urn", String("%1:%2").arg(schemeName()).arg(uniqueId(), 0, 10));
+    inline res::Uri composeUrn() const {
+        return res::Uri("urn", Stringf("%s:%i", schemeName().c_str(), uniqueId()));
     }
 
     /**
@@ -101,7 +101,8 @@ public:
      *
      * @return Human-friendly description the manifest.
      */
-    String description(Uri::ComposeAsTextFlags uriCompositionFlags = Uri::DefaultComposeAsTextFlags) const;
+    String description(res::Uri::ComposeAsTextFlags uriCompositionFlags =
+                           res::Uri::DefaultComposeAsTextFlags) const;
 
     /**
      * Returns the scheme-unique identifier for the manifest.
@@ -141,9 +142,9 @@ public:
     inline void clearResource() { setResource(0); }
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace de
 
-#endif // DENG_RESOURCE_FONTMANIFEST_H
+#endif // DE_RESOURCE_FONTMANIFEST_H

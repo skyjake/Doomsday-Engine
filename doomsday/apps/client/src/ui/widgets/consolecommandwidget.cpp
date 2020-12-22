@@ -18,20 +18,20 @@
 
 #include "ui/widgets/consolecommandwidget.h"
 
-#include <de/App>
-#include <de/KeyEvent>
+#include <de/app.h>
+#include <de/keyevent.h>
 #include <doomsday/console/knownword.h>
 #include <doomsday/console/exec.h>
 #include "ui/inputsystem.h"
 #include "clientapp.h"
 #include "dd_main.h"
-#include "BindContext"
+#include "ui/bindcontext.h"
 
 using namespace de;
 
-DENG_GUI_PIMPL(ConsoleCommandWidget),
-DENG2_OBSERVES(App, StartupComplete),
-DENG2_OBSERVES(DoomsdayApp, GameChange)
+DE_GUI_PIMPL(ConsoleCommandWidget),
+DE_OBSERVES(App, StartupComplete),
+DE_OBSERVES(DoomsdayApp, GameChange)
 {
     Impl(Public *i) : Base(i)
     {
@@ -50,7 +50,7 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
         updateLexicon();
     }
 
-    void currentGameChanged(Game const &)
+    void currentGameChanged(const Game &)
     {
         updateLexicon();
     }
@@ -61,7 +61,7 @@ DENG2_OBSERVES(DoomsdayApp, GameChange)
     }
 };
 
-ConsoleCommandWidget::ConsoleCommandWidget(String const &name)
+ConsoleCommandWidget::ConsoleCommandWidget(const String &name)
     : CommandWidget(name), d(new Impl(this))
 {
     d->updateLexicon();
@@ -70,23 +70,23 @@ ConsoleCommandWidget::ConsoleCommandWidget(String const &name)
 void ConsoleCommandWidget::focusGained()
 {
     CommandWidget::focusGained();
-    ClientApp::inputSystem().context("console").activate();
+    ClientApp::input().context("console").activate();
 }
 
 void ConsoleCommandWidget::focusLost()
 {
     CommandWidget::focusLost();
-    ClientApp::inputSystem().context("console").deactivate();
+    ClientApp::input().context("console").deactivate();
 }
 
-bool ConsoleCommandWidget::handleEvent(Event const &event)
+bool ConsoleCommandWidget::handleEvent(const Event &event)
 {
     if (isDisabled()) return false;
 
     if (hasFocus())
     {
         // Console bindings override normal event handling.
-        if (ClientApp::inputSystem().tryEvent(event, "console"))
+        if (ClientApp::input().tryEvent(event, "console"))
         {
             // Eaten by bindings.
             return true;
@@ -96,24 +96,24 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
     return CommandWidget::handleEvent(event);
 }
 
-bool ConsoleCommandWidget::isAcceptedAsCommand(String const &)
+bool ConsoleCommandWidget::isAcceptedAsCommand(const String &)
 {
     // Everything is OK for a console command.
     return true;
 }
 
-void ConsoleCommandWidget::executeCommand(String const &text)
+void ConsoleCommandWidget::executeCommand(const String &text)
 {
     LOG_SCR_NOTE(_E(1) "> ") << text;
 
     // Execute the command right away.
-    Con_Execute(CMDS_CONSOLE, text.toUtf8(), false, false);
+    Con_Execute(CMDS_CONSOLE, text, false, false);
 }
 
-void ConsoleCommandWidget::autoCompletionBegan(String const &)
+void ConsoleCommandWidget::autoCompletionBegan(const String &)
 {
     // Prepare a list of annotated completions to show in the popup.
-    QStringList const compls = suggestedCompletions();
+    const auto compls = suggestedCompletions();
     if (compls.size() > 1)
     {
         showAutocompletionPopup(Con_AnnotatedConsoleTerms(compls));

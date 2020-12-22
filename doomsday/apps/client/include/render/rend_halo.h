@@ -17,23 +17,23 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_HALO_H
-#define DENG_CLIENT_RENDER_HALO_H
+#ifndef DE_CLIENT_RENDER_HALO_H
+#define DE_CLIENT_RENDER_HALO_H
 
-#include <de/Vector>
+#include <de/vector.h>
 
-#include "TextureVariantSpec"
+#include "resource/texturevariantspec.h"
 
-DENG_EXTERN_C int   haloOccludeSpeed;
-DENG_EXTERN_C int   haloMode, haloRealistic, haloBright, haloSize;
-DENG_EXTERN_C float haloFadeMax, haloFadeMin, minHaloSize;
+DE_EXTERN_C int   haloOccludeSpeed;
+DE_EXTERN_C int   haloMode, haloRealistic, haloBright, haloSize;
+DE_EXTERN_C float haloFadeMax, haloFadeMin, minHaloSize;
 
 void H_Register();
 
 /**
  * Returns the texture variant specification for halos.
  */
-TextureVariantSpec const &Rend_HaloTextureSpec();
+const TextureVariantSpec &Rend_HaloTextureSpec();
 
 void H_SetupState(bool dosetup);
 
@@ -59,8 +59,8 @@ void H_SetupState(bool dosetup);
  *
  * @return          @c true, iff a halo was rendered.
  */
-bool H_RenderHalo(de::Vector3d const &origin, float size,
-                  DGLuint tex, de::Vector3f const &color,
+bool H_RenderHalo(const de::Vec3d &origin, float size,
+                  DGLuint tex, const de::Vec3f &color,
                   coord_t distanceToViewer, float occlusionFactor,
                   float brightnessFactor, float viewXOffset,
                   bool primary, bool viewRelativeRotate);
@@ -68,4 +68,4 @@ bool H_RenderHalo(de::Vector3d const &origin, float size,
 // Console commands.
 D_CMD(FlareConfig);
 
-#endif // DENG_CLIENT_RENDER_HALO_H
+#endif // DE_CLIENT_RENDER_HALO_H

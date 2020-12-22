@@ -2,23 +2,23 @@
 @INCLUDE = doomsday.doxy
 
 PROJECT_NAME            = "Doomsday SDK"
-PROJECT_NUMBER          = 2.3
+PROJECT_NUMBER          = 3.0
 PROJECT_BRIEF           = "Core engine library and supporting libraries"
 PROJECT_LOGO            = doc/apidoc-logo.png
 OUTPUT_DIRECTORY        = apidoc/sdk/
 
-INPUT                   = sdk/libcore/include sdk/libgui/include sdk/libappfw/include sdk/libshell/include sdk/liblegacy/include \
-                          sdk/libcore/src     sdk/libgui/src     sdk/libappfw/src     sdk/libshell/src     sdk/liblegacy/src
+INPUT                   = libs/core/include libs/gui/include libs/appfw/include libs/shell/include libs/legacy/include \
+                          libs/core/src     libs/gui/src     libs/appfw/src     libs/shell/src     libs/legacy/src
 FILE_PATTERNS           = *
-PREDEFINED              = __cplusplus __DENG2__ __LIBGUI__ __LIBSHELL__ __LIBAPPFW__ __DENG__ \
-                          "DENG2_PIMPL(ClassName)=typedef ClassName Public; struct ClassName::Instance : public de::Private<ClassName>" \
-                          "DENG2_PIMPL_NOREF(C)=struct C::Instance : public de::IPrivate" \
-                          "DENG_GUI_PIMPL(C)=struct C::public de::GuiWidgetPrivate<C>" \
-                          "DENG2_PRIVATE(Var)=struct Instance; Instance *Var;" \
-                          "DENG2_ERROR(N)=class N : public de::Error {};" \
-                          "DENG2_SUB_ERROR(B,N)=class N : public B {};" \
-                          "DENG2_OBSERVES(C,A)=public C::I##Audience##Observer" \
-                          "DENG2_DEFINE_AUDIENCE2(Name,Method)=class I##Name##Observer { public: virtual ~I##Name##Observer() {} virtual Method = 0; }; typedef de::Observers<I##Name##Observer> Name##Audience; Name##Audience &audienceFor##Name(); Name##Audience const &audienceFor##Name() const;"
+PREDEFINED              = __cplusplus __DE__ __LIBGUI__ __LIBSHELL__ __LIBAPPFW__ __DE__ \
+                          "DE_PIMPL(ClassName)=typedef ClassName Public; struct ClassName::Instance : public de::Private<ClassName>" \
+                          "DE_PIMPL_NOREF(C)=struct C::Instance : public de::IPrivate" \
+                          "DE_GUI_PIMPL(C)=struct C::public de::GuiWidgetPrivate<C>" \
+                          "DE_PRIVATE(Var)=struct Instance; Instance *Var;" \
+                          "DE_ERROR(N)=class N : public de::Error {};" \
+                          "DE_SUB_ERROR(B,N)=class N : public B {};" \
+                          "DE_OBSERVES(C,A)=public C::I##Audience##Observer" \
+                          "DE_DEFINE_AUDIENCE2(Name,Method)=class I##Name##Observer { public: virtual ~I##Name##Observer() {} virtual Method = 0; }; typedef de::Observers<I##Name##Observer> Name##Audience; Name##Audience &audienceFor##Name(); Name##Audience const &audienceFor##Name() const;"
 
 INCLUDED_BY_GRAPH       = NO
 COLLABORATION_GRAPH     = NO

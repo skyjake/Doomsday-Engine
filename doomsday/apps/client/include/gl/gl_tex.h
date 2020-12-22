@@ -22,12 +22,11 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_GL_IMAGE_MANIPULATION_H
-#define DENG_GL_IMAGE_MANIPULATION_H
+#ifndef DE_GL_IMAGE_MANIPULATION_H
+#define DE_GL_IMAGE_MANIPULATION_H
 
-#include "misc/color.h"
-
-#include <doomsday/resource/colorpalette.h>
+#include <doomsday/color.h>
+#include <doomsday/res/colorpalette.h>
 
 typedef struct colorpalette_analysis_s {
     colorpaletteid_t paletteId;
@@ -155,8 +154,8 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
  * @param hasAlpha  @c true == @a pixels includes alpha data.
  * @param color     Determined average color written here.
  */
-void FindAverageColorIdx(uint8_t const *pixels, int width, int height,
-    res::ColorPalette const &palette, dd_bool hasAlpha, ColorRawf *color);
+void FindAverageColorIdx(const uint8_t *pixels, int width, int height,
+    const res::ColorPalette &palette, dd_bool hasAlpha, ColorRawf *color);
 
 /**
  * @param pixels     RGB(a) image to evaluate.
@@ -166,7 +165,7 @@ void FindAverageColorIdx(uint8_t const *pixels, int width, int height,
  * @param line       Line to evaluate.
  * @param color      Determined average color written here.
  */
-void FindAverageLineColor(uint8_t const *pixels, int width, int height,
+void FindAverageLineColor(const uint8_t *pixels, int width, int height,
     int pixelSize, int line, ColorRawf *color);
 
 /**
@@ -178,8 +177,8 @@ void FindAverageLineColor(uint8_t const *pixels, int width, int height,
  * @param hasAlpha  @c true == @a pixels includes alpha data.
  * @param color     Determined average color written here.
  */
-void FindAverageLineColorIdx(uint8_t const *pixels, int width, int height,
-    int line, res::ColorPalette const &palette, dd_bool hasAlpha, ColorRawf *color);
+void FindAverageLineColorIdx(const uint8_t *pixels, int width, int height,
+    int line, const res::ColorPalette &palette, dd_bool hasAlpha, ColorRawf *color);
 
 /**
  * @param pixels     RGB(a) image to evaluate.
@@ -189,7 +188,7 @@ void FindAverageLineColorIdx(uint8_t const *pixels, int width, int height,
  * @param alpha      Determined average alpha written here.
  * @param coverage   Fraction representing the ratio of alpha to non-alpha pixels.
  */
-void FindAverageAlpha(uint8_t const *pixels, int width, int height, int pixelSize,
+void FindAverageAlpha(const uint8_t *pixels, int width, int height, int pixelSize,
     float *alpha, float *coverage);
 
 /**
@@ -199,7 +198,7 @@ void FindAverageAlpha(uint8_t const *pixels, int width, int height, int pixelSiz
  * @param alpha     Determined average alpha written here.
  * @param coverage  Fraction representing the ratio of alpha to non-alpha pixels.
  */
-void FindAverageAlphaIdx(uint8_t const *pixels, int width, int height, float *alpha,
+void FindAverageAlphaIdx(const uint8_t *pixels, int width, int height, float *alpha,
     float *coverage);
 
 /**
@@ -259,18 +258,18 @@ void GL_DownMipmap32(uint8_t* pixels, int width, int height, int pixelSize);
  */
 void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float fade);
 
-dd_bool GL_PalettizeImage(uint8_t *out, int outformat, res::ColorPalette const *palette,
-    dd_bool gammaCorrect, uint8_t const *in, int informat, int width, int height);
+dd_bool GL_PalettizeImage(uint8_t *out, int outformat, const res::ColorPalette *palette,
+    dd_bool gammaCorrect, const uint8_t *in, int informat, int width, int height);
 
 dd_bool GL_QuantizeImageToPalette(uint8_t *out, int outformat,
-    res::ColorPalette const *palette, uint8_t const *in, int informat, int width, int height);
+    const res::ColorPalette *palette, const uint8_t *in, int informat, int width, int height);
 
 /**
  * Desaturates the texture in the dest buffer by averaging the colour then
  * looking up the nearest match in the palette. Increases the brightness
  * to maximum.
  */
-void GL_DeSaturatePalettedImage(uint8_t *buffer, res::ColorPalette const &palette,
+void GL_DeSaturatePalettedImage(uint8_t *buffer, const res::ColorPalette &palette,
     int width, int height);
 
-#endif // DENG_GL_IMAGE_MANIPULATION_H
+#endif // DE_GL_IMAGE_MANIPULATION_H

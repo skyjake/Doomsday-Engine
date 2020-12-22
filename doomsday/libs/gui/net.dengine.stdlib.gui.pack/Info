@@ -1,0 +1,8 @@
+title: Doomsday Script Standard Library: GUI
+version: 3.0
+license: GPL 3+
+tags: core script gui
+
+notes: This package may also be used as a basic UI style.
+
+importPath <modules>

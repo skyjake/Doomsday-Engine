@@ -22,7 +22,7 @@
  * 02110-1301 USA</small>
  */
 
-#define DENG_NO_API_MACROS_BASE // functions defined here
+#define DE_NO_API_MACROS_BASE // functions defined here
 
 #include "de_platform.h"
 #include "dd_main.h"
@@ -36,29 +36,25 @@
 #  include <ctype.h>
 #endif
 
-#include <QStringList>
 #include <de/charsymbols.h>
-#include <de/concurrency.h>
-#include <de/findfile.h>
-#include <de/memoryzone.h>
-#include <de/memory.h>
-#include <de/timer.h>
-#include <de/ArrayValue>
-#include <de/CommandLine>
-#include <de/Garbage>
-#include <de/NativeFile>
-#include <de/PackageLoader>
-#include <de/LinkFile>
-#include <de/LogBuffer>
-#include <de/DictionaryValue>
-#include <de/Log>
-#include <de/EscapeParser>
-#include <de/NativePath>
-#ifdef __CLIENT__
-#  include <de/texgamma.h>
-#  include <de/DisplayMode>
-#endif
-#include <doomsday/AbstractSession>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/findfile.h>
+#include <de/legacy/memoryzone.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/timer.h>
+#include <de/arrayvalue.h>
+#include <de/commandline.h>
+#include <de/garbage.h>
+#include <de/nativefile.h>
+#include <de/packageloader.h>
+#include <de/linkfile.h>
+#include <de/logbuffer.h>
+#include <de/dictionaryvalue.h>
+#include <de/log.h>
+#include <de/escapeparser.h>
+#include <de/nativepath.h>
+
+#include <doomsday/abstractsession.h>
 #include <doomsday/console/alias.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
@@ -68,33 +64,25 @@
 #include <doomsday/filesys/virtualmappings.h>
 #include <doomsday/filesys/wad.h>
 #include <doomsday/filesys/zip.h>
-#include <doomsday/resource/databundle.h>
-#include <doomsday/resource/manifest.h>
-#include <doomsday/resource/resources.h>
-#include <doomsday/res/Bundles>
-#include <doomsday/res/DoomsdayPackage>
-#include <doomsday/res/MapManifests>
-#include <doomsday/res/Sprites>
-#include <doomsday/res/Textures>
-#include <doomsday/world/Materials>
-#include <doomsday/help.h>
-#include <doomsday/library.h>
+#include <doomsday/res/databundle.h>
+#include <doomsday/manifest.h>
+#include <doomsday/res/resources.h>
+#include <doomsday/res/bundles.h>
+#include <doomsday/res/doomsdaypackage.h>
+#include <doomsday/res/mapmanifests.h>
+#include <doomsday/res/sprites.h>
+#include <doomsday/res/textures.h>
+#include <doomsday/world/materials.h>
 #include <doomsday/world/entitydef.h>
-
-#ifdef __SERVER__
-#  include "serverapp.h"
-#endif
+#include <doomsday/world/sector.h>
+#include <doomsday/help.h>
 
 #include "dd_loop.h"
 #include "def_main.h"
 #include "busyrunner.h"
 #include "con_config.h"
 #include "sys_system.h"
-//#include "ui/editors/edit_bias.h"
-#include "gl/svg.h"
 
-#include "world/clientserverworld.h"
-#include "world/map.h"
 #include "world/p_players.h"
 
 #include "ui/infine/infinesystem.h"
@@ -103,16 +91,18 @@
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
-#  include "ui/clientwindowsystem.h"
+#  include "world/clientworld.h"
 
-#  include "client/cledgeloop.h"
-#  include "client/clientsubsector.h"
 #  include "client/cl_def.h"
 #  include "client/cl_infine.h"
+#  include "client/cledgeloop.h"
+#  include "world/subsector.h"
+#  include "world/map.h"
 
 #  include "gl/gl_main.h"
 #  include "gl/gl_defer.h"
 #  include "gl/gl_texmanager.h"
+#  include "gl/svg.h"
 
 #  include "network/net_main.h"
 #  include "network/net_demo.h"
@@ -126,9 +116,8 @@
 #  include "render/rend_particle.h" // Rend_ParticleLoadSystemTextures
 #  include "render/vr.h"
 
-#  include "Contact"
-#  include "MaterialAnimator"
-#  include "Sector"
+#  include "world/contact.h"
+#  include "resource/materialanimator.h"
 
 #  include "ui/ui_main.h"
 #  include "ui/inputsystem.h"
@@ -140,16 +129,25 @@
 
 #  include "updater.h"
 #  include "updater/updatedownloaddialog.h"
-#endif
-#ifdef __SERVER__
-#  include "network/net_main.h"
 
+#  include <de/legacy/texgamma.h>
+#  include <de/glwindow.h>
+#  include <de/windowsystem.h>
+#endif
+
+#ifdef __SERVER__
+#  include "serverapp.h"
+#  include "serverworld.h"
+#  include "network/net_main.h"
 #  include "server/sv_def.h"
+#  include <doomsday/world/map.h>
 #endif
 
 using namespace de;
+using namespace res;
+using World = world::World;
 
-class ZipFileType : public de::NativeFileType
+class ZipFileType : public NativeFileType
 {
 public:
     ZipFileType() : NativeFileType("FT_ZIP", RC_PACKAGE)
@@ -158,7 +156,7 @@ public:
         addKnownExtension(".zip");
     }
 
-    File1 *interpret(FileHandle &hndl, String path, FileInfo const &info) const
+    File1 *interpret(FileHandle &hndl, String path, const FileInfo &info) const
     {
         if (Zip::recognise(hndl))
         {
@@ -170,7 +168,7 @@ public:
     }
 };
 
-class WadFileType : public de::NativeFileType
+class WadFileType : public NativeFileType
 {
 public:
     WadFileType() : NativeFileType("FT_WAD", RC_PACKAGE)
@@ -178,7 +176,7 @@ public:
         addKnownExtension(".wad");
     }
 
-    File1 *interpret(FileHandle &hndl, String path, FileInfo const &info) const
+    File1 *interpret(FileHandle &hndl, String path, const FileInfo &info) const
     {
         if (Wad::recognise(hndl))
         {
@@ -194,12 +192,11 @@ static dint DD_StartupWorker(void *context);
 static dint DD_DummyWorker(void *context);
 
 dint isDedicated;
-dint verbose;                      ///< For debug messages (-verbose).
 #ifdef __CLIENT__
 dint symbolicEchoMode = false;     ///< @note Mutable via public API.
 #endif
 
-static char *startupFiles = (char *) "";  ///< List of file names, whitespace seperating (written to .cfg).
+static char *startupFiles = const_cast<char *>("");  ///< List of file names, whitespace seperating (written to .cfg).
 
 static void registerResourceFileTypes()
 {
@@ -338,7 +335,7 @@ static void createPackagesScheme()
     if (char *fn = UnixInfo_GetConfigValue("paths", "iwaddir"))
     {
         NativePath path = de::App::commandLine().startupPath() / fn;
-        scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
+        scheme.addSearchPath(SearchPath(res::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
         LOG_RES_NOTE("Using paths.iwaddir: %s") << path.pretty();
         free(fn);
     }
@@ -366,7 +363,7 @@ static void createPackagesScheme()
             };
             for (dint i = 0; !appDirs[i].isEmpty(); ++i)
             {
-                scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(steamPath / appDirs[i]),
+                scheme.addSearchPath(SearchPath(res::Uri::fromNativeDirPath(steamPath / appDirs[i]),
                                                 SearchPath::NoDescend));
             }
         }
@@ -376,7 +373,7 @@ static void createPackagesScheme()
     NativePath systemWads("/usr/share/games/doom");
     if (systemWads.exists())
     {
-        scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(systemWads),
+        scheme.addSearchPath(SearchPath(res::Uri::fromNativeDirPath(systemWads),
                                         SearchPath::NoDescend));
     }
 #endif
@@ -385,7 +382,7 @@ static void createPackagesScheme()
     if (!CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
     {
         NativePath path = App::commandLine().startupPath() / getenv("DOOMWADDIR");
-        scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
+        scheme.addSearchPath(SearchPath(res::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
         LOG_RES_NOTE("Using DOOMWADDIR: %s") << path.pretty();
     }
 
@@ -402,29 +399,29 @@ static void createPackagesScheme()
         for (dint i = allPaths.count(); i--> 0; )
         {
             NativePath path = App::commandLine().startupPath() / allPaths[i];
-            scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
+            scheme.addSearchPath(SearchPath(res::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
             LOG_RES_NOTE("Using DOOMWADPATH: %s") << path.pretty();
         }
 
 #undef SEP_CHAR
     }
 
-    scheme.addSearchPath(SearchPath(de::makeUri("$(App.DataPath)/"), SearchPath::NoDescend));
-    scheme.addSearchPath(SearchPath(de::makeUri("$(App.DataPath)/$(GamePlugin.Name)/"), SearchPath::NoDescend));
+    scheme.addSearchPath(SearchPath(res::makeUri("$(App.DataPath)/"), SearchPath::NoDescend));
+    scheme.addSearchPath(SearchPath(res::makeUri("$(App.DataPath)/$(GamePlugin.Name)/"), SearchPath::NoDescend));
 }
 #endif
 
 void DD_CreateFileSystemSchemes()
 {
-    dint const schemedef_max_searchpaths = 5;
+    const dint schemedef_max_searchpaths = 5;
     struct schemedef_s {
-        char const *name;
-        char const *optOverridePath;
-        char const *optFallbackPath;
-        FS1::Scheme::Flags flags;
-        SearchPath::Flags searchPathFlags;
+        const char *name;
+        const char *optOverridePath;
+        const char *optFallbackPath;
+        Flags flags;
+        Flags searchPathFlags;
         /// Priority is right to left.
-        char const *searchPaths[schemedef_max_searchpaths];
+        const char *searchPaths[schemedef_max_searchpaths];
     } defs[] = {
         { "Defs",         nullptr,           nullptr,     FS1::Scheme::Flag(0), 0,
             { "$(App.DefsPath)/", "$(App.DefsPath)/$(GamePlugin.Name)/", "$(App.DefsPath)/$(GamePlugin.Name)/$(Game.IdentityKey)/" }
@@ -461,7 +458,7 @@ void DD_CreateFileSystemSchemes()
     //createPackagesScheme();
 
     // Setup the rest...
-    for (schemedef_s const &def : defs)
+    for (const schemedef_s &def : defs)
     {
         FS1::Scheme &scheme = App_FileSystem().createScheme(def.name, def.flags);
 
@@ -471,26 +468,26 @@ void DD_CreateFileSystemSchemes()
 
         for (dint i = 0; i < searchPathCount; ++i)
         {
-            scheme.addSearchPath(SearchPath(de::makeUri(def.searchPaths[i]), def.searchPathFlags));
+            scheme.addSearchPath(SearchPath(res::makeUri(def.searchPaths[i]), def.searchPathFlags));
         }
 
         if (def.optOverridePath && CommandLine_CheckWith(def.optOverridePath, 1))
         {
             NativePath path = NativePath(CommandLine_NextAsPath());
-            scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), def.searchPathFlags), FS1::OverridePaths);
+            scheme.addSearchPath(SearchPath(res::Uri::fromNativeDirPath(path), def.searchPathFlags), FS1::OverridePaths);
             path = path / "$(Game.IdentityKey)";
-            scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), def.searchPathFlags), FS1::OverridePaths);
+            scheme.addSearchPath(SearchPath(res::Uri::fromNativeDirPath(path), def.searchPathFlags), FS1::OverridePaths);
         }
 
         if (def.optFallbackPath && CommandLine_CheckWith(def.optFallbackPath, 1))
         {
             NativePath path = NativePath(CommandLine_NextAsPath());
-            scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), def.searchPathFlags), FS1::FallbackPaths);
+            scheme.addSearchPath(SearchPath(res::Uri::fromNativeDirPath(path), def.searchPathFlags), FS1::FallbackPaths);
         }
     }
 }
 
-void App_Error(char const *error, ...)
+void App_Error(const char *error, ...)
 {
     static bool errorInProgress = false;
 
@@ -506,15 +503,11 @@ void App_Error(char const *error, ...)
     // Already in an error?
     if (errorInProgress)
     {
-#ifdef __CLIENT__
-        DisplayMode_Shutdown();
-#endif
-
         va_start(argptr, error);
         dd_vsnprintf(buff, sizeof(buff), error, argptr);
         va_end(argptr);
 
-#if defined (__CLIENT__) && defined (DENG_HAVE_BUSYRUNNER)
+#if defined (__CLIENT__) && defined (DE_HAVE_BUSYRUNNER)
         if (!ClientApp::busyRunner().inWorkerThread())
         {
             Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, buff, 0);
@@ -546,12 +539,12 @@ void App_Error(char const *error, ...)
     {
         DoomsdayApp::app().busyMode().abort(buff);
 
-#if defined (__CLIENT__) && defined (DENG_HAVE_BUSYRUNNER)
+#if defined (__CLIENT__) && defined (DE_HAVE_BUSYRUNNER)
         if (ClientApp::busyRunner().inWorkerThread())
         {
             // We should not continue to execute the worker any more.
             // The thread will be terminated imminently.
-            forever Thread_Sleep(10000);
+            for (;;) Thread_Sleep(10000);
         }
 #endif
     }
@@ -562,9 +555,9 @@ void App_Error(char const *error, ...)
     exit(-1);
 }
 
-void App_AbnormalShutdown(char const *message)
+void App_AbnormalShutdown(const char *message)
 {
-    DENG2_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_IN_MAIN_THREAD();
 
 #ifdef __CLIENT__
     // This is a crash landing, better be safe than sorry.
@@ -574,16 +567,16 @@ void App_AbnormalShutdown(char const *message)
     Sys_Shutdown();
 
 #ifdef __CLIENT__
-    DisplayMode_Shutdown();
-    DENG2_GUI_APP->loop().pause();
+    //DisplayMode_Shutdown();
+    DE_GUI_APP->loop().pause();
 
     // This is an abnormal shutdown, we cannot continue drawing any of the
     // windows. (Alternatively could hide/disable drawing of the windows.) Note
     // that the app's event loop is running normally while we show the native
     // message box below -- if the app windows are not hidden/closed, they might
     // receive draw events.
-    ClientApp::windowSystem().forAll([] (BaseWindow *win) {
-        win->hide();
+    ClientApp::windowSystem().forAll([] (GLWindow &win) {
+        win.hide();
         return LoopContinue;
     });
 #endif
@@ -594,9 +587,11 @@ void App_AbnormalShutdown(char const *message)
         LogBuffer_Flush();
 
         /// @todo Get the actual output filename (might be a custom one).
-        Sys_MessageBoxWithDetailsFromFile(MBT_ERROR, DOOMSDAY_NICENAME, message,
-                                          "See Details for complete message log contents.",
-                                          LogBuffer::get().outputFile().toUtf8());
+        Sys_MessageBoxWithDetailsFromFile(MBT_ERROR,
+                                          DOOMSDAY_NICENAME,
+                                          message,
+                                          "See the doomsday.out log file for more details.",
+                                          LogBuffer::get().outputFile());
     }
 
     //Sys_Shutdown();
@@ -613,13 +608,13 @@ AudioSystem &App_AudioSystem()
     if (App::appExists())
     {
 #ifdef __CLIENT__
-        if (ClientApp::hasAudioSystem())
+        if (ClientApp::hasAudio())
         {
-            return ClientApp::audioSystem();
+            return ClientApp::audio();
         }
 #endif
 #ifdef __SERVER__
-        return ServerApp::audioSystem();
+        return ServerApp::audio();
 #endif
     }
     throw Error("App_AudioSystem", "App not yet initialized");
@@ -630,27 +625,32 @@ ClientResources &App_Resources()
 {
     return ClientResources::get();
 }
+
+ClientWorld &App_World()
+{
+    return ClientApp::classicWorld();
+}
 #else
 Resources &App_Resources()
 {
     return Resources::get();
 }
-#endif
 
-ClientServerWorld &App_World()
+ServerWorld &App_World()
 {
-    return static_cast<ClientServerWorld &>(World::get());
+    return static_cast<ServerWorld &>(world::World::get());
 }
+#endif
 
 InFineSystem &App_InFineSystem()
 {
     if (App::appExists())
     {
 #ifdef __CLIENT__
-        return ClientApp::infineSystem();
+        return ClientApp::infine();
 #endif
 #ifdef __SERVER__
-        return ServerApp::infineSystem();
+        return ServerApp::infine();
 #endif
     }
     throw Error("App_InFineSystem", "App not yet initialized");
@@ -673,7 +673,7 @@ void Con_Open(dint yes)
 #endif
 
 #ifdef __SERVER__
-    DENG2_UNUSED(yes);
+    DE_UNUSED(yes);
 #endif
 }
 
@@ -684,7 +684,7 @@ void Con_Open(dint yes)
  */
 D_CMD(OpenClose)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     if (!stricmp(argv[0], "conopen"))
     {
@@ -703,7 +703,7 @@ D_CMD(OpenClose)
 
 D_CMD(TaskBar)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     ClientWindow &win = ClientWindow::main();
     if (!win.taskBar().isOpen() || !win.console().commandLine().hasFocus())
@@ -720,7 +720,7 @@ D_CMD(TaskBar)
 
 D_CMD(PackagesSidebar)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if (!DoomsdayApp::isGameLoaded()) return false;
 
@@ -738,7 +738,7 @@ D_CMD(PackagesSidebar)
 
 D_CMD(Tutorial)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
     ClientWindow::main().taskBar().showTutorial();
     return true;
 }
@@ -772,10 +772,10 @@ int DD_ActivateGameWorker(void *context)
 
         if (gx.PreInit)
         {
-            DENG2_ASSERT(App_CurrentGame().pluginId() != 0);
+            DE_ASSERT(App_CurrentGame().pluginId() != 0);
 
             plugins.setActivePluginId(App_CurrentGame().pluginId());
-            gx.PreInit(App_CurrentGame().id().toUtf8());
+            gx.PreInit(App_CurrentGame().id());
             plugins.setActivePluginId(0);
         }
     }
@@ -787,7 +787,7 @@ int DD_ActivateGameWorker(void *context)
 
     if (App_GameLoaded())
     {
-        File const *configFile;
+        const File *configFile;
 
         // Parse the game's main config file.
         // If a custom top-level config is specified; let it override.
@@ -811,7 +811,7 @@ int DD_ActivateGameWorker(void *context)
 
 #ifdef __CLIENT__
         // Apply default control bindings for this game.
-        ClientApp::inputSystem().bindGameDefaults();
+        ClientApp::input().bindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
         if ((configFile = FS::tryLocate<const File>(App_CurrentGame().bindingConfig()))
@@ -898,11 +898,11 @@ void App_ClearGames()
     DoomsdayApp::setGame(App_Games().nullGame());
 }
 
-static void populateGameInfo(GameInfo &info, Game const &game)
+static void populateGameInfo(GameInfo &info, const Game &game)
 {
-    info.identityKey = AutoStr_FromTextStd(game.id().toUtf8().constData());
-    info.title       = AutoStr_FromTextStd(game.title().toUtf8().constData());
-    info.author      = AutoStr_FromTextStd(game.author().toUtf8().constData());
+    info.identityKey = AutoStr_FromTextStd(game.id());
+    info.title       = AutoStr_FromTextStd(game.title());
+    info.author      = AutoStr_FromTextStd(game.author());
 }
 
 /// @note Part of the Doomsday public API.
@@ -924,18 +924,18 @@ dd_bool DD_GameInfo(GameInfo *info)
     return false;
 }
 
-Game const &App_CurrentGame()
+const Game &App_CurrentGame()
 {
     return DoomsdayApp::game();
 }
 
 static GameProfile automaticProfile;
 
-static GameProfile const *autoselectGameProfile()
+static const GameProfile *autoselectGameProfile()
 {
     if (auto arg = CommandLine::get().check("-game", 1))
     {
-        String const param = arg.params.first();
+        const String param = arg.params.first();
         Games &games = DoomsdayApp::games();
 
         // The argument can be a game ID or a profile name.
@@ -952,7 +952,7 @@ static GameProfile const *autoselectGameProfile()
         }
 
         // Packages from the command line.
-        foreach (String packageId, PackageLoader::get().loadedFromCommandLine())
+        for (String packageId : PackageLoader::get().loadedFromCommandLine())
         {
             StringList pkgs = automaticProfile.packages();
             pkgs << packageId;
@@ -960,10 +960,10 @@ static GameProfile const *autoselectGameProfile()
         }
 
         // Also append the packages specified as files on the command line.
-        foreach (File *f, DoomsdayApp::app().filesFromCommandLine())
+        for (File *f : DoomsdayApp::app().filesFromCommandLine())
         {
             String packageId;
-            if (auto const *bundle = maybeAs<DataBundle>(f))
+            if (const auto *bundle = maybeAs<DataBundle>(f))
             {
                 packageId = bundle->packageId();
             }
@@ -998,7 +998,7 @@ static GameProfile const *autoselectGameProfile()
 dint DD_EarlyInit()
 {
     // Determine the requested degree of verbosity.
-    ::verbose = CommandLine_Exists("-verbose");
+    DoomsdayApp::verbose = CommandLine_Exists("-verbose");
 
 #ifdef __SERVER__
     ::isDedicated = true;
@@ -1017,7 +1017,7 @@ dint DD_EarlyInit()
 }
 
 // Perform basic runtime type size checks.
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 static void assertTypeSizes()
 {
     void *ptr = 0;
@@ -1025,10 +1025,10 @@ static void assertTypeSizes()
     int16_t int16 = 0;
     dfloat float32 = 0;
 
-    DENG2_UNUSED(ptr);
-    DENG2_UNUSED(int32);
-    DENG2_UNUSED(int16);
-    DENG2_UNUSED(float32);
+    DE_UNUSED(ptr);
+    DE_UNUSED(int32);
+    DE_UNUSED(int16);
+    DE_UNUSED(float32);
 
     ASSERT_32BIT(int32);
     ASSERT_16BIT(int16);
@@ -1048,11 +1048,12 @@ static void assertTypeSizes()
  */
 static void initializeWithWindowReady()
 {
-    DENG2_DEBUG_ONLY( assertTypeSizes(); )
+    DE_DEBUG_ONLY( assertTypeSizes(); )
 
-    static char const *AUTOEXEC_NAME = "autoexec.cfg";
+    static const char *AUTOEXEC_NAME = "autoexec.cfg";
 
 #ifdef __CLIENT__
+    GLWindow::glActivateMain();
     GL_EarlyInit();
 #endif
 
@@ -1070,7 +1071,7 @@ static void initializeWithWindowReady()
     //Con_InitProgress(200);
 #endif
 
-    BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+    BusyMode_RunNewTaskWithName(BUSYF_NO_UPLOADS | BUSYF_STARTUP | (DoomsdayApp::verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 DD_StartupWorker, 0, "Starting up...");
 
     // Engine initialization is complete. Now finish up with the GL.
@@ -1088,7 +1089,7 @@ static void initializeWithWindowReady()
 //    // Do deferred uploads.
 //    Con_SetProgress(100);
 //#endif
-    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+    BusyMode_RunNewTaskWithName(BUSYF_STARTUP | (DoomsdayApp::verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 DD_DummyWorker, 0, "Buffering...");
 
     //
@@ -1103,7 +1104,7 @@ static void initializeWithWindowReady()
     // Attempt automatic game selection.
     if (!CommandLine_Exists("-noautoselect") || isDedicated)
     {
-        if (GameProfile const *game = autoselectGameProfile())
+        if (const GameProfile *game = autoselectGameProfile())
         {
 #ifdef __CLIENT__
             ClientWindow::main().home().moveOffscreen(0.0);
@@ -1120,7 +1121,7 @@ static void initializeWithWindowReady()
             /// @todo Allow shell connections in Home, too.
             String msg = "Could not determine which game to start. "
                          "Please specify one with the " _E(b) "-game" _E(.) " option. ";
-            auto const playable = DoomsdayApp::gameProfiles().allPlayableProfiles();
+            const auto playable = DoomsdayApp::gameProfiles().allPlayableProfiles();
             if (playable.isEmpty())
             {
                 msg += "However, it seems all games are missing required data files. "
@@ -1130,10 +1131,12 @@ static void initializeWithWindowReady()
             else
             {
                 StringList ids;
-                foreach (GameProfile const *prof, playable) ids << prof->gameId();
+                for (const GameProfile *prof : playable) ids << prof->gameId();
                 msg += "The following games are playable: " + String::join(ids, ", ");
             }
-            App_Error(msg.toLatin1());
+            EscapeParser esc;
+            esc.parse(msg);
+            App_Error("%s", esc.plainText().c_str());
         }
 #endif
     }
@@ -1176,9 +1179,9 @@ static void initializeWithWindowReady()
     {
         LOG_AS("-parse");
         Time begunAt;
-        forever
+        for (;;)
         {
-            char const *arg = CommandLine_NextAsPath();
+            const char *arg = CommandLine_NextAsPath();
             if (!arg || arg[0] == '-') break;
 
             LOG_NOTE("Additional pre-init config file \"%s\"") << NativePath(arg).pretty();
@@ -1198,7 +1201,7 @@ static void initializeWithWindowReady()
 
         for (++p; p < CommandLine_Count(); p++)
         {
-            char const *arg = CommandLine_At(p);
+            const char *arg = CommandLine_At(p);
 
             if (arg[0] == '-')
             {
@@ -1273,10 +1276,10 @@ void DD_FinishInitializationAfterWindowReady()
     LOGDEV_MSG("Window is ready, finishing initialization");
 
 #ifdef __CLIENT__
-# ifdef WIN32
+//# ifdef WIN32
     // Now we can get the color transfer table as the window is available.
-    DisplayMode_SaveOriginalColorTransfer();
-# endif
+    //DisplayMode_SaveOriginalColorTransfer();
+//# endif
     if (!Sys_GLInitialize())
     {
         App_Error("Error initializing OpenGL.\n");
@@ -1288,22 +1291,30 @@ void DD_FinishInitializationAfterWindowReady()
 #endif // __CLIENT__
 
     // Initialize engine subsystems and initial state.
-    try
-    {
-        initializeWithWindowReady();
-        // Let everyone know we're up and running (via another timer callback).
-        Loop::get().timer(0.1, [] () { App::app().notifyStartupComplete(); });
-        return;
-    }
-    catch (Error const &er)
-    {
-        EscapeParser esc;
-        esc.parse(er.asText());
-        Sys_CriticalMessage(esc.plainText().toUtf8().constData());
-    }
-    catch (...)
-    {}
-    exit(2);  // Cannot continue...
+    Loop::timer(0.01, []() {
+        try
+        {
+            // The rest of the initialization assumes that the main window exists.
+            initializeWithWindowReady();
+            // Let everyone know we're up and running.
+            App::app().notifyStartupComplete();
+            return;
+        }
+        catch (const Error &er)
+        {
+            EscapeParser esc;
+            esc.parse(er.asText());
+            Sys_CriticalMessage(esc.plainText());
+        }
+        catch (...)
+        {}
+        // Shut down the application.
+#if defined (__CLIENT__)
+        DE_GUI_APP->quit(2);
+#else
+        DE_TEXT_APP->quit(2);
+#endif
+    });
 }
 
 static dint DD_StartupWorker(void * /*context*/)
@@ -1338,9 +1349,9 @@ static dint DD_StartupWorker(void * /*context*/)
         Time begunAt;
         LOG_AS("-cparse")
 
-        forever
+        for (;;)
         {
-            char const *arg = CommandLine_NextAsPath();
+            const char *arg = CommandLine_NextAsPath();
             if (!arg || arg[0] == '-') break;
 
             LOG_MSG("Additional (pre-init) config file \"%s\"") << NativePath(arg).pretty();
@@ -1362,15 +1373,15 @@ static dint DD_StartupWorker(void * /*context*/)
     DoomsdayApp::bundles().waitForEverythingIdentified();*/
     FS::waitForIdle();
 
-    /*String foundPath = App_FileSystem().findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
+    /*String foundPath = App_FileSystem().findPath(res::Uri("doomsday.pk3", RC_PACKAGE),
                                                  RLF_DEFAULT, App_ResourceClass(RC_PACKAGE));
     foundPath = App_BasePath() / foundPath;  // Ensure the path is absolute.
-    File1 *loadedFile = File1::tryLoad(de::makeUri(foundPath));
-    DENG2_ASSERT(loadedFile);
-    DENG2_UNUSED(loadedFile);*/
+    File1 *loadedFile = File1::tryLoad(res::makeUri(foundPath));
+    DE_ASSERT(loadedFile);
+    DE_UNUSED(loadedFile);*/
 
     // It is assumed that doomsday.pk3 is currently stored in a native file.
-    if (File const *basePack = App::packageLoader().select("net.dengine.legacy.base"))
+    if (const File *basePack = App::packageLoader().select("net.dengine.legacy.base"))
     {
         // The returned file is a symlink to the actual data file.
         // Since we're loading with FS1, we need to look up the native path.
@@ -1391,7 +1402,7 @@ static dint DD_StartupWorker(void * /*context*/)
     //Con_SetProgress(60);
 
     // Execute the startup script (Startup.cfg).
-    char const *startupConfig = "startup.cfg";
+    const char *startupConfig = "startup.cfg";
     if (F_FileExists(startupConfig))
     {
         Con_ParseCommands(startupConfig);
@@ -1457,16 +1468,16 @@ void DD_CheckTimeDemo()
         if (CommandLine_CheckWith("-timedemo", 1) || // Timedemo mode.
             CommandLine_CheckWith("-playdemo", 1))   // Play-once mode.
         {
-            Block cmd = String("playdemo %1").arg(CommandLine_Next()).toUtf8();
-            Con_Execute(CMDS_CMDLINE, cmd.constData(), false, false);
+            Con_Execute(
+                CMDS_CMDLINE, Stringf("playdemo %s", CommandLine_Next()), false, false);
         }
     }
 }
 
 static dint DD_UpdateEngineStateWorker(void *context)
 {
-    DENG2_ASSERT(context);
-    auto const initiatedBusyMode = *static_cast<bool *>(context);
+    DE_ASSERT(context);
+    const auto initiatedBusyMode = *static_cast<bool *>(context);
 
 #ifdef __CLIENT__
     if (!novideo)
@@ -1508,12 +1519,12 @@ static dint DD_UpdateEngineStateWorker(void *context)
     Rend_UpdateLightModMatrix();
     // The rendering lists have persistent data that has changed during the
     // re-initialization.
-    ClientApp::renderSystem().clearDrawLists();
+    ClientApp::render().clearDrawLists();
 #endif
 
     /// @todo fixme: Update the game title and the status.
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     Z_CheckHeap();
 #endif
 
@@ -1575,7 +1586,7 @@ void DD_UpdateEngineState()
 #ifdef __CLIENT__
         Con_InitProgress(200);
 #endif
-        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+        BusyMode_RunNewTaskWithName(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (DoomsdayApp::verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                     DD_UpdateEngineStateWorker, &initiatedBusyMode,
                                     "Updating engine state...");
     }
@@ -1610,12 +1621,12 @@ struct ddvalue_t
 
 static ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE] = {
     {&novideo, 0},
-    {&netGame, 0},
-    {&isServer, 0}, // An *open* server?
-    {&isClient, 0},
+    {&netState.netGame, 0},
+    {&netState.isServer, 0}, // An *open* server?
+    {&netState.isClient, 0},
     {&consolePlayer, &consolePlayer},
     {&displayPlayer, 0}, // use R_SetViewPortPlayer() to change
-    {&gotFrame, 0},
+    {&netState.gotFrame, 0},
     {0, 0}, // pointer updated when queried (DED sound def count)
 
 #ifdef __SERVER__
@@ -1655,13 +1666,13 @@ dint DD_GetInteger(dint ddvalue)
     {
 #ifdef __CLIENT__
     case DD_SHIFT_DOWN:
-        return dint( ClientApp::inputSystem().shiftDown() );
+        return dint( ClientApp::input().shiftDown() );
 
     case DD_WINDOW_WIDTH:
-        return DENG_GAMEVIEW_WIDTH;
+        return DE_GAMEVIEW_WIDTH;
 
     case DD_WINDOW_HEIGHT:
-        return DENG_GAMEVIEW_HEIGHT;
+        return DE_GAMEVIEW_HEIGHT;
 
     case DD_CURRENT_CLIENT_FINALE_ID:
         return Cl_CurrentFinale();
@@ -1677,10 +1688,10 @@ dint DD_GetInteger(dint ddvalue)
         return DED_Definitions()->things.size();
 
     case DD_MAP_MUSIC:
-        if (App_World().hasMap())
+        if (World::get().hasMap())
         {
-            Record const &mapInfo = App_World().map().mapInfo();
-            return DED_Definitions()->getMusicNum(mapInfo.gets("music").toUtf8().constData());
+            const Record &mapInfo = World::get().map().mapInfo();
+            return DED_Definitions()->getMusicNum(mapInfo.gets("music"));
         }
         return -1;
 
@@ -1740,13 +1751,13 @@ void *DD_GetVariable(dint ddvalue)
         return &gx;
 
     case DD_MAP_POLYOBJ_COUNT:
-        value = App_World().hasMap()? App_World().map().polyobjCount() : 0;
+        value = World::get().hasMap()? World::get().map().polyobjCount() : 0;
         return &value;
 
     case DD_MAP_BOUNDING_BOX:
-        if (App_World().hasMap())
+        if (World::get().hasMap())
         {
-            valueBox = App_World().map().bounds();
+            valueBox = World::get().map().bounds();
         }
         else
         {
@@ -1755,26 +1766,26 @@ void *DD_GetVariable(dint ddvalue)
         return &valueBox;
 
     case DD_MAP_MIN_X:
-        valueD = App_World().hasMap()? App_World().map().bounds().minX : 0;
+        valueD = World::get().hasMap()? World::get().map().bounds().minX : 0;
         return &valueD;
 
     case DD_MAP_MIN_Y:
-        valueD = App_World().hasMap()? App_World().map().bounds().minY : 0;
+        valueD = World::get().hasMap()? World::get().map().bounds().minY : 0;
         return &valueD;
 
     case DD_MAP_MAX_X:
-        valueD = App_World().hasMap()? App_World().map().bounds().maxX : 0;
+        valueD = World::get().hasMap()? World::get().map().bounds().maxX : 0;
         return &valueD;
 
     case DD_MAP_MAX_Y:
-        valueD = App_World().hasMap()? App_World().map().bounds().maxY : 0;
+        valueD = World::get().hasMap()? World::get().map().bounds().maxY : 0;
         return &valueD;
 
     /*case DD_CPLAYER_THRUST_MUL:
         return &cplrThrustMul;*/
 
     case DD_MAP_GRAVITY:
-        valueD = App_World().hasMap()? App_World().map().gravity() : 0;
+        valueD = World::get().hasMap()? World::get().map().gravity() : 0;
         return &valueD;
 
 #ifdef __CLIENT__
@@ -1799,10 +1810,10 @@ void *DD_GetVariable(dint ddvalue)
     //case DD_TORCH_ADDITIVE:
     //    return &torchAdditive;
 
-# ifdef WIN32
-    case DD_WINDOW_HANDLE:
-        return ClientWindow::main().nativeHandle();
-# endif
+//# ifdef WIN32
+//    case DD_WINDOW_HANDLE:
+//        return ClientWindow::main().nativeHandle();
+//# endif
 #endif
 
     // We have to separately calculate the 35 Hz ticks.
@@ -1841,8 +1852,8 @@ void DD_SetVariable(dint ddvalue, void *parm)
             return;*/
 
         case DD_MAP_GRAVITY:
-            if (App_World().hasMap())
-                App_World().map().setGravity(*(coord_t*) parm);
+            if (World::get().hasMap())
+                World::get().map().setGravity(*(coord_t*) parm);
             return;
 
 #ifdef __CLIENT__
@@ -1889,7 +1900,7 @@ void DD_ReadGameHelp()
     {
         if (App_GameLoaded())
         {
-            const de::Uri uri(Path("$(App.DataPath)/$(GamePlugin.Name)/conhelp.txt"));
+            const res::Uri uri(Path("$(App.DataPath)/$(GamePlugin.Name)/conhelp.txt"));
             FS::FoundFiles found;
             FS::get().findAll(uri.resolved(), found);
             if (found.empty())
@@ -1899,14 +1910,14 @@ void DD_ReadGameHelp()
             Help_ReadStrings(*found.front());
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_RES_WARNING("") << er.asText();
     }
 }
 
 /// @note Part of the Doomsday public API.
-fontschemeid_t DD_ParseFontSchemeName(char const *str)
+fontschemeid_t DD_ParseFontSchemeName(const char *str)
 {
 #ifdef __CLIENT__
     try
@@ -1921,14 +1932,14 @@ fontschemeid_t DD_ParseFontSchemeName(char const *str)
             return FS_GAME;
         }
     }
-    catch (Resources::UnknownSchemeError const &)
+    catch (const Resources::UnknownSchemeError &)
     {}
 #endif
-    qDebug() << "Unknown font scheme:" << String(str) << ", returning 'FS_INVALID'";
+    debug("Unknown font scheme: \"%s\", returning 'FS_INVALID'", str);
     return FS_INVALID;
 }
 
-String DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)
+String DD_MaterialSchemeNameForTextureScheme(const String &textureSchemeName)
 {
     if (!textureSchemeName.compareWithoutCase("Textures"))
     {
@@ -1949,7 +1960,7 @@ String DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)
     return "";
 }
 
-AutoStr *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeName)
+AutoStr *DD_MaterialSchemeNameForTextureScheme(const ddstring_t *textureSchemeName)
 {
     if (!textureSchemeName)
     {
@@ -1957,26 +1968,26 @@ AutoStr *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeNa
     }
     else
     {
-        QByteArray schemeNameUtf8 = DD_MaterialSchemeNameForTextureScheme(String(Str_Text(textureSchemeName))).toUtf8();
-        return AutoStr_FromTextStd(schemeNameUtf8.constData());
+        return AutoStr_FromTextStd(
+            DD_MaterialSchemeNameForTextureScheme(Str_Text(textureSchemeName)));
     }
 }
 
 D_CMD(Load)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
     BusyMode_FreezeGameForBusyMode();
     auto &loader = PackageLoader::get();
 
     for (int arg = 1; arg < argc; ++arg)
     {
-        String searchTerm = String(argv[arg]).trimmed();
+        String searchTerm = String(argv[arg]).strip();
         if (!searchTerm) continue;
 
         // Are we loading a game?
         if (DoomsdayApp::games().contains(searchTerm))
         {
-            Game const &game = DoomsdayApp::games()[searchTerm];
+            const Game &game = DoomsdayApp::games()[searchTerm];
             if (!game.isPlayable())
             {
                 LOG_SCR_ERROR("Game \"%s\" is missing one or more required packages: %s")
@@ -2051,7 +2062,7 @@ D_CMD(Load)
                 if (files.size() <= 10)
                 {
                     LOG_SCR_MSG("Maybe you meant:");
-                    for (auto const *f : files)
+                    for (const auto *f : files)
                     {
                         LOG_SCR_MSG("- " _E(>) "%s") << f->description();
                     }
@@ -2064,7 +2075,7 @@ D_CMD(Load)
                 return false;
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_SCR_ERROR("Failed to load package \"%s\": %s") << searchTerm << er.asText();
             return false;
@@ -2075,7 +2086,7 @@ D_CMD(Load)
 
 D_CMD(Unload)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
     BusyMode_FreezeGameForBusyMode();
 
     DoomsdayApp &app = DoomsdayApp::app();
@@ -2093,13 +2104,13 @@ D_CMD(Unload)
             return app.changeGame(GameProfiles::null(), DD_ActivateGameWorker);
         }
 
-        auto &loader = PackageLoader::get();
-        auto const loadedPackages = loader.loadedPackages();
-        auto loadedBundles = DataBundle::loadedBundles();
+        auto &     loader         = PackageLoader::get();
+        const auto loadedPackages = loader.loadedPackages();
+        auto       loadedBundles  = DataBundle::loadedBundles();
 
         for (int arg = 1; arg < argc; ++arg)
         {
-            String searchTerm = String(argv[arg]).trimmed();
+            String searchTerm = String(argv[arg]).strip();
             if (!searchTerm) continue;
 
             if (app.isGameLoaded() && searchTerm == DoomsdayApp::game().id())
@@ -2117,7 +2128,7 @@ D_CMD(Unload)
                 loader.unload(searchTerm);
                 continue;
             }
-            for (DataBundle const *bundle : loadedBundles)
+            for (const DataBundle *bundle : loadedBundles)
             {
                 if (!bundle->sourceFile().name().compareWithoutCase(searchTerm))
                 {
@@ -2128,7 +2139,7 @@ D_CMD(Unload)
             }
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_SCR_ERROR("Problem while unloading: %s") << er.asText();
         return false;
@@ -2163,7 +2174,7 @@ D_CMD(Unload)
             LOG_MSG("%s is not currently loaded.") << game.id();
             return true;
         }
-        catch (Games::NotFoundError const &)
+        catch (const Games::NotFoundError &)
         {} // Ignore the error.
     }
 
@@ -2173,11 +2184,11 @@ D_CMD(Unload)
     {
         try
         {
-            String foundPath = App_FileSystem().findPath(de::Uri::fromNativePath(argv[1], RC_PACKAGE),
+            String foundPath = App_FileSystem().findPath(res::Uri::fromNativePath(argv[1], RC_PACKAGE),
                                                          RLF_MATCH_EXTENSION, App_ResourceClass(RC_PACKAGE));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
-            if (File1::tryUnload(de::makeUri(foundPath)))
+            if (File1::tryUnload(res::makeUri(foundPath)))
             {
                 didUnloadFiles = true;
             }
@@ -2199,7 +2210,7 @@ D_CMD(Unload)
 
 D_CMD(Reset)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     DD_UpdateEngineState();
     return true;
@@ -2207,7 +2218,7 @@ D_CMD(Reset)
 
 D_CMD(ReloadGame)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     if (!DoomsdayApp::currentGameProfile())
     {
@@ -2220,11 +2231,11 @@ D_CMD(ReloadGame)
     return true;
 }
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
 
 D_CMD(CheckForUpdates)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     LOG_MSG("Checking for available updates...");
     ClientApp::updater().checkNow(Updater::OnlyShowResultIfUpdateAvailable);
@@ -2233,7 +2244,7 @@ D_CMD(CheckForUpdates)
 
 D_CMD(CheckForUpdatesAndNotify)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     LOG_MSG("Checking for available updates...");
     ClientApp::updater().checkNow(Updater::AlwaysShowResult);
@@ -2242,7 +2253,7 @@ D_CMD(CheckForUpdatesAndNotify)
 
 D_CMD(LastUpdated)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     ClientApp::updater().printLastUpdated();
     return true;
@@ -2250,17 +2261,17 @@ D_CMD(LastUpdated)
 
 D_CMD(ShowUpdateSettings)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     ClientApp::updater().showSettings();
     return true;
 }
 
-#endif // DENG_HAVE_UPDATER
+#endif // DE_HAVE_UPDATER
 
 D_CMD(Version)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     LOG_SCR_NOTE(_E(D) DOOMSDAY_NICENAME " %s") << Version::currentBuild().asHumanReadableText();
     LOG_SCR_MSG(_E(l) "Homepage: " _E(.) _E(i) DOOMSDAY_HOMEURL _E(.)
@@ -2269,7 +2280,7 @@ D_CMD(Version)
     // Print the version info of the current game if loaded.
     if (App_GameLoaded())
     {
-        LOG_SCR_MSG(_E(l) "Game: " _E(.) "%s") << (char const *) gx.GetPointer(DD_PLUGIN_VERSION_LONG);
+        LOG_SCR_MSG(_E(l) "Game: " _E(.) "%s") << (const char *) gx.GetPointer(DD_PLUGIN_VERSION_LONG);
     }
 
     // Additional information for developers.
@@ -2283,9 +2294,9 @@ D_CMD(Version)
 
 D_CMD(Quit)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
     if (UpdateDownloadDialog::isDownloadInProgress())
     {
         LOG_WARNING("Cannot quit while downloading an update");
@@ -2316,16 +2327,14 @@ D_CMD(Quit)
 #ifdef _DEBUG
 D_CMD(DebugError)
 {
-    DENG2_UNUSED3(src, argv, argc);
-
+    DE_UNUSED(src, argv, argc);
     App_Error("Fatal error!\n");
-    return true;
 }
 #endif
 
 D_CMD(Help)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     /*
 #ifdef __CLIENT__
@@ -2341,14 +2350,14 @@ D_CMD(Help)
 
 #ifdef __CLIENT__
     LOG_SCR_MSG(_E(D) "Keys:" _E(.))
-            << TABBED(DENG2_CHAR_SHIFT_KEY "Esc", "Open the taskbar and console")
+            << TABBED(DE_CHAR_SHIFT_KEY "Esc", "Open the taskbar and console")
             << TABBED("Tab", "Autocomplete the word at the cursor")
-            << TABBED(DENG2_CHAR_UP_DOWN_ARROW, "Move backwards/forwards through the input command history, or up/down one line inside a multi-line command")
+            << TABBED(DE_CHAR_UP_DOWN_ARROW, "Move backwards/forwards through the input command history, or up/down one line inside a multi-line command")
             << TABBED("PgUp/Dn", "Scroll up/down in the history, or expand the history to full height")
-            << TABBED(DENG2_CHAR_SHIFT_KEY "PgUp/Dn", "Jump to the top/bottom of the history")
+            << TABBED(DE_CHAR_SHIFT_KEY "PgUp/Dn", "Jump to the top/bottom of the history")
             << TABBED("Home", "Move the cursor to the start of the command line")
             << TABBED("End", "Move the cursor to the end of the command line")
-            << TABBED(DENG2_CHAR_CONTROL_KEY "K", "Clear everything on the line right of the cursor position")
+            << TABBED(DE_CHAR_CONTROL_KEY "K", "Clear everything on the line right of the cursor position")
             << TABBED("F5", "Clear the console message history");
 #endif
     LOG_SCR_MSG(_E(D) "Getting started:");
@@ -2362,7 +2371,7 @@ D_CMD(Help)
     return true;
 }
 
-static void printHelpAbout(char const *query)
+static void printHelpAbout(const char *query)
 {
     // Try the console commands first.
     if (ccmd_t *ccmd = Con_FindCommand(query))
@@ -2370,7 +2379,7 @@ static void printHelpAbout(char const *query)
         LOG_SCR_MSG(_E(b) "%s" _E(.) " (Command)") << ccmd->name;
 
         HelpId help = DH_Find(ccmd->name);
-        if (char const *description = DH_GetString(help, HST_DESCRIPTION))
+        if (const char *description = DH_GetString(help, HST_DESCRIPTION))
         {
             LOG_SCR_MSG("") << description;
         }
@@ -2378,7 +2387,7 @@ static void printHelpAbout(char const *query)
         Con_PrintCommandUsage(ccmd);  // For all overloaded variants.
 
         // Any extra info?
-        if (char const *info = DH_GetString(help, HST_INFO))
+        if (const char *info = DH_GetString(help, HST_INFO))
         {
             LOG_SCR_MSG("  " _E(>) _E(l)) << info;
         }
@@ -2391,7 +2400,7 @@ static void printHelpAbout(char const *query)
         LOG_SCR_MSG(_E(b) "%s" _E(.) " (Variable)") << Str_Text(path);
 
         HelpId help = DH_Find(Str_Text(path));
-        if (char const *description = DH_GetString(help, HST_DESCRIPTION))
+        if (const char *description = DH_GetString(help, HST_DESCRIPTION))
         {
             LOG_SCR_MSG("") << description;
         }
@@ -2419,7 +2428,7 @@ static void printHelpAbout(char const *query)
         LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "load %s" _E(.) " to load the " _E(l) "%s" _E(.) " game mode") << game.id() << game.title();
         return;
     }
-    catch (Games::NotFoundError const &)
+    catch (const Games::NotFoundError &)
     {}  // Ignore this error.
 
     LOG_SCR_NOTE("There is no help about '%s'") << query;
@@ -2427,7 +2436,7 @@ static void printHelpAbout(char const *query)
 
 D_CMD(HelpWhat)
 {
-    DENG2_UNUSED2(argc, src);
+    DE_UNUSED(argc, src);
 
     if (!String(argv[1]).compareWithoutCase("(what)"))
     {
@@ -2442,7 +2451,7 @@ D_CMD(HelpWhat)
 #ifdef __CLIENT__
 D_CMD(Clear)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     ClientWindow::main().console().clearLog();
     return true;
@@ -2464,7 +2473,7 @@ void DD_ConsoleRegister()
     C_CMD("unload",         "*",    Unload);
     C_CMD("write",          "s",    WriteConsole);
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     C_CMD("fatalerror",     nullptr,   DebugError);
 #endif
 
@@ -2479,7 +2488,7 @@ void DD_ConsoleRegister()
 #ifdef __CLIENT__
     C_CMD("clear",           "", Clear);
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
     C_CMD("update",          "", CheckForUpdates);
     C_CMD("updateandnotify", "", CheckForUpdatesAndNotify);
     C_CMD("updatesettings",  "", ShowUpdateSettings);
@@ -2514,29 +2523,29 @@ void DD_ConsoleRegister()
 #endif
 
     Net_Register();
-    ClientServerWorld::consoleRegister();
+    world::Map::consoleRegister();
     InFineSystem::consoleRegister();
 }
 
 // dd_loop.c
-DENG_EXTERN_C dd_bool DD_IsSharpTick(void);
+DE_EXTERN_C dd_bool DD_IsSharpTick(void);
 
 // net_main.c
-DENG_EXTERN_C void Net_SendPacket(dint to_player, dint type, const void* data, size_t length);
+DE_EXTERN_C void Net_SendPacket(dint to_player, dint type, const void* data, size_t length);
 
 #undef R_SetupMap
-DENG_EXTERN_C void R_SetupMap(dint mode, dint flags)
+DE_EXTERN_C void R_SetupMap(dint mode, dint flags)
 {
-    DENG2_UNUSED2(mode, flags);
+    DE_UNUSED(mode, flags);
 
-    if (!App_World().hasMap()) return; // Huh?
+    if (!World::get().hasMap()) return; // Huh?
 
     // Perform map setup again. Its possible that after loading we now
     // have more HOMs to fix, etc..
-    world::Map &map = App_World().map();
+    world::Map &map = World::get().map();
 
 #ifdef __CLIENT__
-    map.initSkyFix();
+    map.as<Map>().initSkyFix();
 #endif
 
 #ifdef __CLIENT__
@@ -2566,9 +2575,9 @@ DENG_EXTERN_C void R_SetupMap(dint mode, dint flags)
 }
 
 // sys_system.c
-DENG_EXTERN_C void Sys_Quit();
+DE_EXTERN_C void Sys_Quit();
 
-DENG_DECLARE_API(Base) =
+DE_DECLARE_API(Base) =
 {
     { DE_API_BASE },
 

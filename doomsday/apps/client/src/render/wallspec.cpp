@@ -18,21 +18,20 @@
  */
 
 #include "de_base.h"
-
-#include "MaterialAnimator"
-#include "Sector"
-#include "Surface"
+#include "resource/materialanimator.h"
+#include "world/surface.h"
 #include "world/p_players.h" // viewPlayer
-
 #include "render/rend_main.h"
 #include "render/walledge.h"
+
+#include <doomsday/world/sector.h>
 
 using namespace de;
 
 /**
  * Should angle based light level deltas be applied?
  */
-static bool useWallSectionLightLevelDeltas(LineSide const &side, dint section)
+static bool useWallSectionLightLevelDeltas(const LineSide &side, dint section)
 {
     // Disabled?
     if (rendLightWallAngle <= 0) return false;
@@ -42,7 +41,7 @@ static bool useWallSectionLightLevelDeltas(LineSide const &side, dint section)
     if (side.surface(section).hasFixMaterial() &&
         side.hasSector() && side.back().hasSector())
     {
-        Sector &backSector = side.back().sector();
+        auto &backSector = side.back().sector();
         if (backSector.floor().height() < backSector.ceiling().height())
             return false;
     }
@@ -50,9 +49,9 @@ static bool useWallSectionLightLevelDeltas(LineSide const &side, dint section)
     return true;
 }
 
-WallSpec WallSpec::fromMapSide(LineSide const &side, dint section) // static
+WallSpec WallSpec::fromMapSide(const LineSide &side, dint section) // static
 {
-    bool const isTwoSidedMiddle = (section == LineSide::Middle && !side.considerOneSided());
+    const bool isTwoSidedMiddle = (section == LineSide::Middle && !side.considerOneSided());
 
     WallSpec spec(section);
 
@@ -63,7 +62,7 @@ WallSpec WallSpec::fromMapSide(LineSide const &side, dint section) // static
     }
 
     // TNT MAP02 window grille: transparent masked wall
-    if (auto *midMan = side.middle().materialAnimator())
+    if (auto *midMan = side.middle().as<Surface>().materialAnimator())
     {
         if (section != LineSide::Middle && !midMan->isOpaque())
         {

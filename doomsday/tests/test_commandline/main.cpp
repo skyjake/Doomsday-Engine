@@ -17,20 +17,21 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/CommandLine>
-#include <de/Log>
-#include <de/TextApp>
+#include <de/commandline.h>
+#include <de/log.h>
+#include <de/textapp.h>
 
-#include <QDebug>
+#include <iostream>
 
 using namespace de;
 
 int main(int argc, char **argv)
 {
+    init_Foundation();
     try
     {
-        TextApp app(argc, argv);
-        app.initSubsystems(App::DisablePlugins);
+        TextApp app(makeList(argc, argv));
+        app.initSubsystems();
 
         CommandLine cmd;
 #ifdef UNIX
@@ -41,18 +42,18 @@ int main(int argc, char **argv)
         String output;
         if (cmd.executeAndWait(&output))
         {
-            LOG_MSG("Output from %s:\n") << cmd.at(0) << output;
+            LOG_MSG("Output from %s:\n%s") << cmd.at(0) << output;
         }
         else
         {
             LOG_WARNING("Failed to execute!");
         }
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
-        qWarning() << err.asText();
+        err.warnPlainText();
     }
-
-    qDebug() << "Exiting main()...";
+    deinit_Foundation();
+    debug("Exiting main()...");
     return 0;
 }

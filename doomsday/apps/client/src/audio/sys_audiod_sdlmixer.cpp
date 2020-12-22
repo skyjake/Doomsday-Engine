@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_DISABLE_SDLMIXER
+#ifndef DE_DISABLE_SDLMIXER
 
 #include "de_base.h"
 #include "audio/sys_audiod_sdlmixer.h"
@@ -28,9 +28,9 @@
 #include <SDL_mixer.h>
 #undef main
 
-#include <de/timer.h>
-#include <de/Log>
-#include <QVector>
+#include <de/legacy/timer.h>
+#include <de/log.h>
+#include <de/bitarray.h>
 
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
@@ -103,7 +103,7 @@ audiointerface_music_t audiod_sdlmixer_music = { {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static QVector<bool> usedChannels;
+static de::BitArray usedChannels;
 
 static Mix_Music* lastMusic;
 //static dd_bool playingMusic = false;
@@ -122,9 +122,9 @@ static void musicPlaybackFinished(void)
 
 static int getFreeChannel(void)
 {
-    for (int i = 0; i < usedChannels.size(); ++i)
+    for (int i = 0; i < usedChannels.sizei(); ++i)
     {
-        if (!usedChannels[i])
+        if (!usedChannels.at(i))
             return i;
     }
     return -1;
@@ -242,14 +242,14 @@ sfxbuffer_t* DS_SDLMixer_SFX_CreateBuffer(int flags, int bits, int rate)
 
     // The cursor is used to keep track of the channel on which the sample
     // is playing.
-    int const freeChannelIndex = getFreeChannel();
+    const int freeChannelIndex = getFreeChannel();
     if (freeChannelIndex >= 0)
     {
-        usedChannels[buf->cursor = freeChannelIndex] = true;
+        usedChannels.setBit(buf->cursor = freeChannelIndex, true);
     }
     else
     {
-        buf->cursor = usedChannels.size();
+        buf->cursor = usedChannels.sizei();
         usedChannels << true;
 
         // Make sure we have enough channels allocated.
@@ -264,7 +264,7 @@ sfxbuffer_t* DS_SDLMixer_SFX_CreateBuffer(int flags, int bits, int rate)
 void DS_SDLMixer_SFX_DestroyBuffer(sfxbuffer_t* buf)
 {
     Mix_HaltChannel(buf->cursor);
-    usedChannels[buf->cursor] = false;
+    usedChannels.setBit(buf->cursor, false);
 
     if (buf)
         Z_Free(buf);
@@ -329,7 +329,7 @@ void DS_SDLMixer_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     *(Uint32 *) (conv + 40) = DD_ULONG(sample->size);
     memcpy(conv + 44, sample->data, sample->size);
 
-    buf->ptr = Mix_LoadWAV_RW(SDL_RWFromMem(conv, 44 + sample->size), 1);
+    buf->ptr = Mix_LoadWAV_RW(SDL_RWFromMem(conv, 44 + sample->size), SDL_TRUE);
     if (!buf->ptr)
     {
         LOG_AS("DS_SDLMixer_SFX_Load");
@@ -554,4 +554,4 @@ int DS_SDLMixer_Music_PlayFile(const char* filename, int looped)
     return result;
 }
 
-#endif // DENG_DISABLE_SDLMIXER
+#endif // DE_DISABLE_SDLMIXER

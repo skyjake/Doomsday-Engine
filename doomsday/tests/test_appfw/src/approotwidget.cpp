@@ -22,7 +22,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(AppRootWidget)
+DE_PIMPL(AppRootWidget)
 {
     Impl(Public *i) : Base(i) {}
 };
@@ -42,12 +42,7 @@ void AppRootWidget::addOnTop(GuiWidget *widget)
     window().addOnTop(widget);
 }
 
-void AppRootWidget::dispatchLatestMousePosition()
-{
-    TestApp::windowSystem().dispatchLatestMousePosition();
-}
-
-void AppRootWidget::handleEventAsFallback(Event const &/*event*/)
+void AppRootWidget::handleEventAsFallback(const Event &/*event*/)
 {
     // Handle event at global level, if applicable.
 }

@@ -18,12 +18,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_GLTEXTUREUNIT_H
-#define DENG_CLIENT_GLTEXTUREUNIT_H
+#ifndef DE_CLIENT_GLTEXTUREUNIT_H
+#define DE_CLIENT_GLTEXTUREUNIT_H
 
-#include "ClientTexture"
-#include <de/GLTexture>
-#include <de/Vector>
+#include "resource/clienttexture.h"
+#include <de/gltexture.h>
+#include <de/vector.h>
 
 namespace de {
 
@@ -46,27 +46,27 @@ public:
     /// Unmanged GL textures have an independent state.
     struct Unmanaged {
         GLuint glName;
-        gl::Wrapping wrapS;
-        gl::Wrapping wrapT;
-        gl::Filter filter;
+        gfx::Wrapping wrapS;
+        gfx::Wrapping wrapT;
+        gfx::Filter filter;
 
         Unmanaged(GLuint glName       = 0,
-                  gl::Wrapping wrapS  = gl::Repeat,
-                  gl::Wrapping wrapT  = gl::Repeat,
-                  gl::Filter   filter = gl::Linear)
+                  gfx::Wrapping wrapS  = gfx::Repeat,
+                  gfx::Wrapping wrapT  = gfx::Repeat,
+                  gfx::Filter   filter = gfx::Linear)
             : glName(glName)
             , wrapS(wrapS)
             , wrapT(wrapT)
             , filter(filter)
         {}
-        Unmanaged(Unmanaged const &other)
+        Unmanaged(const Unmanaged &other)
             : glName(other.glName)
             , wrapS(other.wrapS)
             , wrapT(other.wrapT)
             , filter(other.filter)
         {}
 
-        Unmanaged &operator = (Unmanaged const &other) {
+        Unmanaged &operator = (const Unmanaged &other) {
             glName = other.glName;
             wrapS  = other.wrapS;
             wrapT  = other.wrapT;
@@ -74,7 +74,7 @@ public:
             return *this;
         }
 
-        bool operator == (Unmanaged const &other) const {
+        bool operator == (const Unmanaged &other) const {
             if(glName != other.glName) return false;
             if(wrapS != other.wrapS)   return false;
             if(wrapT != other.wrapT)   return false;
@@ -82,15 +82,15 @@ public:
             return true;
         }
 
-        bool operator != (Unmanaged const &other) const {
+        bool operator != (const Unmanaged &other) const {
             return !(*this == other);
         }
     } unmanaged;
 
     /// Shared properties:
     float opacity;
-    Vector2f scale;
-    Vector2f offset;
+    Vec2f scale;
+    Vec2f offset;
 
     GLTextureUnit()
         : texture(0)
@@ -98,22 +98,22 @@ public:
         , scale(1, 1)
     {}
     GLTextureUnit(TextureVariant &textureVariant,
-                  Vector2f const &scale          = Vector2f(1, 1),
-                  Vector2f const &offset         = Vector2f(0, 0),
-                  float opacity                  = 1)
+                  const Vec2f &scale          = Vec2f(1, 1),
+                  const Vec2f &offset         = Vec2f(0, 0),
+                  float opacity               = 1)
         : texture(&textureVariant)
         , opacity(opacity)
         , scale(scale)
         , offset(offset)
     {}
-    GLTextureUnit(GLuint textureGLName, gl::Wrapping textureGLWrapS = gl::Repeat,
-        gl::Wrapping textureGLWrapT = gl::Repeat)
+    GLTextureUnit(GLuint textureGLName, gfx::Wrapping textureGLWrapS = gfx::Repeat,
+        gfx::Wrapping textureGLWrapT = gfx::Repeat)
         : texture(0)
         , unmanaged(textureGLName, textureGLWrapS, textureGLWrapT)
         , opacity(1)
         , scale(1, 1)
     {}
-    GLTextureUnit(GLTextureUnit const &other)
+    GLTextureUnit(const GLTextureUnit &other)
         : texture(other.texture)
         , unmanaged(other.unmanaged)
         , opacity(other.opacity)
@@ -121,7 +121,7 @@ public:
         , offset(other.offset)
     {}
 
-    GLTextureUnit &operator = (GLTextureUnit const &other) {
+    GLTextureUnit &operator = (const GLTextureUnit &other) {
         texture   = other.texture;
         unmanaged = other.unmanaged;
         opacity   = other.opacity;
@@ -130,7 +130,7 @@ public:
         return *this;
     }
 
-    bool operator == (GLTextureUnit const &other) const {
+    bool operator == (const GLTextureUnit &other) const {
         if(texture)
         {
             if(texture != other.texture) return false;
@@ -159,4 +159,4 @@ public:
 
 } // namespace de
 
-#endif // DENG_CLIENT_GLTEXTUREUNIT_H
+#endif // DE_CLIENT_GLTEXTUREUNIT_H

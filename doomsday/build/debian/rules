@@ -8,10 +8,10 @@ builddir/Makefile: builddir
 	cd builddir && QTCHOOSER_RUNTOOL=qmake QT_SELECT=5 cmake \
 		-DQMAKE=qtchooser \
 		-DCMAKE_BUILD_TYPE=Release \
-		-DDENG_BUILD=${BuildNumber} \
+		-DDE_BUILD=${BuildNumber} \
 		-DCMAKE_CXX_FLAGS=-std=c++11 \
 		-DDENG_ENABLE_SDK=OFF \
-		-DDENG_ENABLE_COTIRE=OFF \
+		-DDE_ENABLE_COTIRE=OFF \
 		../../doomsday
 
 build: build-arch build-indep

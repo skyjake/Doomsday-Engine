@@ -25,7 +25,7 @@
 #include "dd_main.h" // App_GameLoaded
 #include "dd_def.h"
 #include "clientapp.h"
-#include "BindContext"
+#include "ui/bindcontext.h"
 
 using namespace de;
 
@@ -37,7 +37,7 @@ using namespace de;
  * @return @c true if the event was eaten and can be processed by the rest of the
  * binding context stack.
  */
-static int globalContextFallback(ddevent_t const *ddev)
+static int globalContextFallback(const ddevent_t *ddev)
 {
     if (App_GameLoaded() && !BusyMode_Active())
     {
@@ -61,7 +61,7 @@ static int globalContextFallback(ddevent_t const *ddev)
 /// @note Called once on init.
 void B_Init()
 {
-    InputSystem &isys = ClientApp::inputSystem();
+    InputSystem &isys = ClientApp::input();
 
     // In dedicated mode we have fewer binding contexts available.
 

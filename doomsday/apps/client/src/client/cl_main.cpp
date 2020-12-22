@@ -36,22 +36,22 @@
 
 #include <doomsday/console/exec.h>
 #include <doomsday/filesys/fs_main.h>
-#include <de/CommandLine>
-#include <de/Config>
-#include <de/timer.h>
+#include <de/commandline.h>
+#include <de/config.h>
+#include <de/legacy/timer.h>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
 
 using namespace de;
 
-static String const VAR_NETWORK_ID("network.ID");
+static const char *VAR_NETWORK_ID = "network.ID";
 
 ident_t clientID;
 bool handshakeReceived;
 int gameReady;
 int serverTime;
-bool netLoggedIn; // Logged in to the server.
+//bool netLoggedIn; // Logged in to the server.
 int clientPaused; // Set by the server.
 
 void Cl_InitID()
@@ -59,7 +59,7 @@ void Cl_InitID()
     if (auto arg = CommandLine::get().check("-id", 1))
     {
         bool ok;
-        auto newId = arg.params.at(0).toUInt(&ok, 0);
+        auto newId = arg.params.at(0).toUInt32(&ok, 0);
         if (ok)
         {
             clientID = newId;
@@ -77,7 +77,7 @@ void Cl_InitID()
 
     if (config.has(VAR_NETWORK_ID))
     {
-        clientID = config.gets(VAR_NETWORK_ID).toUInt(nullptr, 16);
+        clientID = config.gets(VAR_NETWORK_ID).toUInt32(nullptr, 16);
         return;
     }
 
@@ -88,7 +88,7 @@ void Cl_InitID()
                        ((rand() & 0xff) << 24));
 
     // Write it to the file.
-    config.set(VAR_NETWORK_ID, String::format("%x", clientID));
+    config.set(VAR_NETWORK_ID, Stringf("%x", clientID));
 }
 
 int Cl_GameReady()
@@ -128,7 +128,7 @@ void Cl_SendHello()
 
     // The game mode is included in the hello packet.
     char buf[256]; zap(buf);
-    strncpy(buf, App_CurrentGame().id().toUtf8().constData(), sizeof(buf) - 1);
+    strncpy(buf, App_CurrentGame().id(), sizeof(buf) - 1);
 
     LOGDEV_NET_VERBOSE("game mode = %s") << buf;
 
@@ -185,9 +185,9 @@ void Cl_AnswerHandshake()
     Smoother_Clear(DD_Player(consolePlayer)->smoother());
     DD_Player(consolePlayer)->publicData().flags &= ~DDPF_USE_VIEW_FILTER;
 
-    isClient = true;
-    isServer = false;
-    netLoggedIn = false;
+    netState.isClient = true;
+    netState.isServer = false;
+    //netLoggedIn = false;
     clientPaused = false;
 
     if (handshakeReceived)
@@ -336,7 +336,7 @@ void Cl_GetPackets()
         case PKT_CHAT: {
             int msgfrom = Reader_ReadByte(msgReader);
             int mask = Reader_ReadUInt32(msgReader);
-            DENG2_UNUSED(mask);
+            DE_UNUSED(mask);
             size_t len = Reader_ReadUInt16(msgReader);
             char *msg = (char *) M_Malloc(len + 1);
             Reader_Read(msgReader, msg, len);
@@ -347,7 +347,7 @@ void Cl_GetPackets()
             break; }
 
         case PSV_SERVER_CLOSE:  // We should quit?
-            netLoggedIn = false;
+            //netLoggedIn = false;
             Con_Execute(CMDS_DDAY, "net disconnect", true, false);
             break;
 
@@ -357,15 +357,17 @@ void Cl_GetPackets()
             char *text = (char *) M_Malloc(textLen + 1);
             Reader_Read(msgReader, text, textLen);
             text[textLen] = 0;
-            DENG_UNUSED(conFlags);
+            DE_UNUSED(conFlags);
             LOG_NOTE("%s") << text;
             M_Free(text);
             break; }
 
+#if 0
         case PKT_LOGIN:
             // Server responds to our login request. Let's see if we were successful.
             netLoggedIn = CPP_BOOL(Reader_ReadByte(msgReader));
             break;
+#endif
 
         case PSV_FINALE:
             Cl_Finale(msgReader);
@@ -393,7 +395,7 @@ void Cl_GetPackets()
     }
 }
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
 
 /**
  * Check the state of the client on engineside. A debugging utility.
@@ -402,7 +404,7 @@ static void assertPlayerIsValid(int plrNum)
 {
     LOG_AS("Client.assertPlayerIsValid");
 
-    if (!isClient || !Cl_GameReady() || clientPaused) return;
+    if (!netState.isClient || !Cl_GameReady() || clientPaused) return;
     if (plrNum < 0 || plrNum >= DDMAXPLAYERS) return;
 
     player_t *plr = DD_Player(plrNum);
@@ -435,11 +437,11 @@ static void assertPlayerIsValid(int plrNum)
     }
 }
 
-#endif // DENG_DEBUG
+#endif // DE_DEBUG
 
 void Cl_Ticker(timespan_t ticLength)
 {
-    if (!isClient || !Cl_GameReady() || clientPaused)
+    if (!netState.isClient || !Cl_GameReady() || clientPaused)
         return;
 
     // On clientside, players are represented by two mobjs: the real mobj,
@@ -471,26 +473,27 @@ void Cl_Ticker(timespan_t ticLength)
         ClPlayer_ApplyPendingFixes(i);
         ClPlayer_UpdateOrigin(i);
 
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
         assertPlayerIsValid(i);
 #endif
     }
 
-    if (App_World().hasMap())
+    if (world::World::get().hasMap())
     {
-        App_World().map().expireClMobjs();
+        App_World().map().as<Map>().expireClMobjs();
     }
 }
 
+#if 0
 /**
  * Clients use this to establish a remote connection to the server.
  */
 D_CMD(Login)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     // Only clients can log in.
-    if (!isClient)
+    if (!netState.isClient)
         return false;
 
     Msg_Begin(PKT_LOGIN);
@@ -513,3 +516,4 @@ D_CMD(Login)
     Net_SendBuffer(0, 0);
     return true;
 }
+#endif

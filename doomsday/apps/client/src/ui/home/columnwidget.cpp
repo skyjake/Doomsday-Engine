@@ -18,32 +18,31 @@
 
 #include "ui/home/columnwidget.h"
 
-#include <de/App>
-#include <de/GLProgram>
-#include <de/LabelWidget>
-#include <de/Range>
-#include <de/StyleProceduralImage>
+#include <de/app.h>
+#include <de/glprogram.h>
+#include <de/image.h>
+#include <de/labelwidget.h>
+#include <de/range.h>
+#include <de/styleproceduralimage.h>
 #include <de/math.h>
-
-#include <QColor>
 
 using namespace de;
 
-DENG_GUI_PIMPL(ColumnWidget)
+DE_GUI_PIMPL(ColumnWidget)
 {
     /**
      * Procedural image for drawing the background of a column.
      */
     struct BackgroundImage : public StyleProceduralImage
     {
-        AnimationVector3 colorAnim { Animation::Linear };
+        AnimationVector3 colorAnim{Animation::Linear};
         bool needUpdate = false;
 
-        BackgroundImage(DotPath const &styleImageId, ColumnWidget &owner)
+        BackgroundImage(const DotPath &styleImageId, ColumnWidget &owner)
             : StyleProceduralImage(styleImageId, owner)
         {}
 
-        void setColor(Color const &color)
+        void setColor(const Color &color)
         {
             StyleProceduralImage::setColor(color);
             colorAnim.setValue(color, 0.5);
@@ -64,39 +63,39 @@ DENG_GUI_PIMPL(ColumnWidget)
             return update;
         }
 
-        void glMakeGeometry(GuiVertexBuilder &verts, Rectanglef const &rect) override
+        void glMakeGeometry(GuiVertexBuilder &verts, const Rectanglef &rect) override
         {
             if (!allocId().isNone())
             {
                 Rectanglef uv = root().atlas().imageRectf(allocId());
-                Vector2f const reduction(uv.width() / 40, uv.height() / 40);
+                Vec2f const reduction(uv.width() / 40, uv.height() / 40);
                 uv = uv.adjusted(reduction, -reduction);
 
-                Rectanglef const norm = owner().normalizedRect();
+                const Rectanglef norm = owner().normalizedRect();
                 verts.makeQuad(rect,
-                               Vector4f(colorAnim.value(), 1.f),
+                               Vec4f(colorAnim.value(), 1.f),
                                Rectanglef(uv.topLeft + norm.topLeft     * uv.size(),
                                           uv.topLeft + norm.bottomRight * uv.size()));
 
-                int const edgeWidth = GuiWidget::pointsToPixels(1);
-                auto const edgeUv = owner().root().atlas().imageRectf(owner().root().solidWhitePixel());
+                const int edgeWidth = GuiWidget::pointsToPixels(1);
+                const auto edgeUv = owner().root().atlas().imageRectf(owner().root().solidWhitePixel());
                 verts.makeQuad(Rectanglef(rect.left(), rect.top(),
                                           edgeWidth, rect.height()),
-                               Vector4f(0, 0, 0, 1), edgeUv);
+                               Vec4f(0, 0, 0, 1), edgeUv);
                 verts.makeQuad(Rectanglef(rect.right() - edgeWidth, rect.top(),
                                           edgeWidth, rect.height()),
-                               Vector4f(0, 0, 0, 1), edgeUv);
+                               Vec4f(0, 0, 0, 1), edgeUv);
             }
         }
     };
 
-    bool highlighted = false;
-    LabelWidget *back;
+    bool              highlighted = false;
+    LabelWidget *     back;
     ScrollAreaWidget *scrollArea;
-    HeaderWidget *header;
-    Rule const *maxContentWidth = nullptr;
-    Vector4f backTintColor;
-    Animation backSaturation { 0.f, Animation::Linear };
+    HeaderWidget *    header;
+    const Rule *      maxContentWidth = nullptr;
+    Vec4f             backTintColor;
+    Animation         backSaturation{0.f, Animation::Linear};
 
     Impl(Public *i) : Base(i)
     {
@@ -120,9 +119,13 @@ DENG_GUI_PIMPL(ColumnWidget)
     {
         releaseRef(maxContentWidth);
     }
+
+    DE_PIMPL_AUDIENCE(Activity)
 };
 
-ColumnWidget::ColumnWidget(String const &name)
+DE_AUDIENCE_METHOD(ColumnWidget, Activity)
+
+ColumnWidget::ColumnWidget(const String &name)
     : GuiWidget(name)
     , d(new Impl(this))
 {
@@ -145,7 +148,7 @@ ColumnWidget::ColumnWidget(String const &name)
     setBehavior(ChildVisibilityClipping);
 }
 
-void ColumnWidget::setBackgroundImage(DotPath const &imageId)
+void ColumnWidget::setBackgroundImage(const DotPath &imageId)
 {
     auto *img = new Impl::BackgroundImage(imageId, *this);
     img->setColor(d->backTintColor);
@@ -162,7 +165,7 @@ HeaderWidget &ColumnWidget::header()
     return *d->header;
 }
 
-Rule const &ColumnWidget::maximumContentWidth() const
+const Rule &ColumnWidget::maximumContentWidth() const
 {
     return *d->maxContentWidth;
 }
@@ -179,9 +182,9 @@ Variable *ColumnWidget::configVariable() const
     return &App::config(name);
 }
 
-String ColumnWidget::tabShortcut() const
+int ColumnWidget::tabShortcut() const
 {
-    return String();
+    return 0;
 }
 
 void ColumnWidget::setHighlighted(bool highlighted)
@@ -191,7 +194,7 @@ void ColumnWidget::setHighlighted(bool highlighted)
         d->highlighted = highlighted;
 
         auto &img = d->back->image()->as<Impl::BackgroundImage>();
-        img.setColor(highlighted? Vector4f(1, 1, 1, 1) : d->backTintColor);
+        img.setColor(highlighted? Vec4f(1) : d->backTintColor);
 
         d->backSaturation.setValue(highlighted? 1.f : 0.f, 0.5);
     }
@@ -213,20 +216,20 @@ void ColumnWidget::updateStyle()
 {
     GuiWidget::updateStyle();
 
-    d->backTintColor = Vector4f(style().colors().colorf("home.background.tint"), 1.f);
+    d->backTintColor = Vec4f(style().colors().colorf("home.background.tint"), 1.f);
 }
 
-bool ColumnWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &))
+bool ColumnWidget::dispatchEvent(const Event &event, bool (Widget::*memberFunc)(const Event &))
 {
     // Observe mouse clicks occurring in the column.
     if (event.type() == Event::MouseButton ||
         event.type() == Event::MouseWheel)
     {
-        MouseEvent const &mouse = event.as<MouseEvent>();
+        const MouseEvent &mouse = event.as<MouseEvent>();
         if ((mouse.motion() == MouseEvent::Wheel || mouse.state() == MouseEvent::Pressed) &&
             rule().recti().contains(mouse.pos()))
         {
-            emit mouseActivity(this);
+            DE_NOTIFY(Activity, i) i->mouseActivity(this);
         }
     }
 

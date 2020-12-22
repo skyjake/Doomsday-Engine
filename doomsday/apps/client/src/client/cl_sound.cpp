@@ -1,4 +1,4 @@
-﻿/** @file cl_sound.cpp  Clientside sounds.
+/** @file cl_sound.cpp  Clientside sounds.
  *
  * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -18,40 +18,39 @@
  */
 
 #include "de_base.h"
-#include "client/cl_sound.h"
-
 #include "api_client.h"
-#include "client/cl_player.h"
-
 #include "api_sound.h"
-
+#include "client/cl_sound.h"
+#include "client/cl_player.h"
 #include "network/net_msg.h"
-
 #include "world/map.h"
 #include "world/p_players.h"
-#include "Sector"
 
-#include <de/LogBuffer>
+#include <doomsday/world/sector.h>
+#include <de/logbuffer.h>
 
 using namespace de;
+
+using world::Sector;
+using world::World;
 
 void Cl_ReadSoundDelta(deltatype_t type)
 {
     LOG_AS("Cl_ReadSoundDelta");
 
     /// @todo Do not assume the CURRENT map.
-    world::Map &map = App_World().map();
+    Map &map = World::get().map().as<Map>();
 
     dint sound = 0, soundFlags = 0;
     mobj_t *cmo = 0;
     thid_t mobjId = 0;
     Sector *sector = 0;
     Polyobj *poly = 0;
-    LineSide *side = 0;
+    world::LineSide *side = 0;
     mobj_t *emitter = 0;
 
-    duint16 const deltaId = Reader_ReadUInt16(::msgReader);
-    byte const flags      = Reader_ReadByte(::msgReader);
+    const duint16 deltaId = Reader_ReadUInt16(::msgReader);
+    const byte flags      = Reader_ReadByte(::msgReader);
 
     bool skip = false;
     if (type == DT_SOUND)
@@ -228,7 +227,7 @@ void Cl_Sound()
     /// @todo Do not assume the CURRENT map.
     world::Map &map = App_World().map();
 
-    byte const flags = Reader_ReadByte(::msgReader);
+    const byte flags = Reader_ReadByte(::msgReader);
 
     // Sound ID.
     dint sound;
@@ -291,8 +290,8 @@ void Cl_Sound()
     }
     else if (flags & SNDF_PLAYER)
     {
-        dint const player = (flags & 0xf0) >> 4;
-        DENG2_ASSERT(player >= 0 && player < DDMAXPLAYERS);
+        const dint player = (flags & 0xf0) >> 4;
+        DE_ASSERT(player >= 0 && player < DDMAXPLAYERS);
         S_LocalSoundAtVolume(sound, DD_Player(player)->publicData().mo, volume / 127.0f);
     }
     else

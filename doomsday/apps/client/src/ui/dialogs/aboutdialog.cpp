@@ -21,20 +21,18 @@
 #include "gl/sys_opengl.h"
 #include "audio/audiodriver.h"
 #include "clientapp.h"
-
 #include "dd_main.h"
 #include "dd_def.h"
 
-#include <de/Version>
-#include <de/SequentialLayout>
-#include <de/SignalAction>
-#include <de/LabelWidget>
-#include <de/DocumentPopupWidget>
-#include <de/Style>
+#include <de/version.h>
+#include <de/sequentiallayout.h>
+#include <de/labelwidget.h>
+#include <de/documentpopupwidget.h>
+#include <de/ui/style.h>
 
 using namespace de;
 
-DENG2_PIMPL(AboutDialog)
+DE_PIMPL(AboutDialog)
 {
     DocumentPopupWidget *glPopup;
     DocumentPopupWidget *audioPopup;
@@ -62,32 +60,31 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Impl(this))
     logo->setImage(style().images().image("logo.px256"));
     logo->setSizePolicy(ui::Fixed, ui::Expand);
 
-    de::Version const version = de::Version::currentBuild();
+    const de::Version version = de::Version::currentBuild();
 
     // Set up the contents of the widget.
-    LabelWidget *title = LabelWidget::newWithText(String("%1 %2.%3")
-                                                  .arg(DOOMSDAY_NICENAME)
-                                                  .arg(version.major)
-                                                  .arg(version.minor));
+    LabelWidget *title = LabelWidget::newWithText(
+        Stringf("%s %i.%i", DOOMSDAY_NICENAME, version.major, version.minor));
     title->margins().set("");
     title->setFont("title");
     title->setTextColor("accent");
     title->setSizePolicy(ui::Fixed, ui::Expand);
 
     LabelWidget *info = new LabelWidget;
-    String txt = String(_E(b) "%4 build %5" _E(.) "\n%6%8\n\n%1 (%2-%7)%3")
-            .arg(version.operatingSystem() == "windows"? tr("Windows") :
-                 version.operatingSystem() == "macx"? tr("macOS") :
-                 version.operatingSystem() == "ios"? tr("iOS") : tr("Unix"))
-            .arg(version.cpuBits())
-            .arg(version.isDebugBuild()? tr(" Debug") : "")
-            .arg(DOOMSDAY_RELEASE_TYPE)
-            //.arg(version.compactNumber())
-            .arg(version.build)
-            .arg(Time::fromText(__DATE__ " " __TIME__, Time::CompilerDateTime)
-                 .asDateTime().toString(Qt::SystemLocaleShortDate))
-            .arg(tr("bit"))
-            .arg(version.gitDescription.isEmpty()? "" : ("\n" _E(s)_E(F) + version.gitDescription + _E(.)_E(.)));
+
+    String txt = Stringf(
+        _E(b) DOOMSDAY_RELEASE_TYPE " %s #%d" _E(.) "\n" __DATE__ " " __TIME__ "%s\n\n%s %d-bit%s",
+        version.compactNumber().c_str(),
+        version.build,
+        version.gitDescription.isEmpty()
+            ? ""
+            : ("\n" _E(s) _E(F) + version.gitDescription + _E(.) _E(.)).c_str(),
+        version.operatingSystem()       == "windows" ? "Windows"
+            : version.operatingSystem() == "macx"    ? "macOS"
+            : version.operatingSystem() == "ios"     ? "iOS" : "Unix",
+        version.cpuBits(),
+        version.isDebugBuild() ? " (Debug)" : "");
+
     info->setText(txt);
     info->setSizePolicy(ui::Fixed, ui::Expand);
 
@@ -96,7 +93,7 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Impl(this))
     area().add(info);
 
     // Layout.
-    RuleRectangle const &cont = area().contentRule();
+    const RuleRectangle &cont = area().contentRule();
     SequentialLayout layout(cont.left(), cont.top());
     layout.setOverrideWidth(rule("dialog.about.width"));
     layout << *logo << *title << *info;
@@ -105,13 +102,13 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Impl(this))
     area().setContentSize(layout);
 
     buttons()
-            << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Close"))
-            << new DialogButtonItem(DialogWidget::ActionPopup, tr("GL"))
-            << new DialogButtonItem(DialogWidget::ActionPopup, tr("Audio"))
-            << new DialogButtonItem(DialogWidget::Action, tr("Homepage..."),
-                                    new SignalAction(&ClientApp::app(), SLOT(openHomepageInBrowser())));
+            << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, "Close")
+            << new DialogButtonItem(DialogWidget::ActionPopup, "GL")
+            << new DialogButtonItem(DialogWidget::ActionPopup, "Audio")
+            << new DialogButtonItem(DialogWidget::Action, "Homepage...",
+                                    [](){ ClientApp::app().openHomepageInBrowser(); });
 
     // The popups are anchored to their button.
-    popupButtonWidget(tr("GL")).setPopup(*d->glPopup);
-    popupButtonWidget(tr("Audio")).setPopup(*d->audioPopup);
+    popupButtonWidget("GL").setPopup(*d->glPopup);
+    popupButtonWidget("Audio").setPopup(*d->audioPopup);
 }

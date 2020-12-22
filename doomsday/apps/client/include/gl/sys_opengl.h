@@ -25,43 +25,30 @@
  * http://oss.sgi.com/projects/ogl-sample/
  */
 
-#ifndef LIBDENG_SYSTEM_OPENGL_H
-#define LIBDENG_SYSTEM_OPENGL_H
+#ifndef DE_SYSTEM_OPENGL_H
+#define DE_SYSTEM_OPENGL_H
 
 #ifdef __SERVER__
 #  define GL_CLAMP_TO_EDGE    0
 #endif
 
 #ifdef __CLIENT__
-
-#ifdef WIN32
-#  include <de/graphics/opengl.h>
-#  define GL_CALL __stdcall
-#endif
-
-#if defined(UNIX) && !defined(MACOSX)
-#  include <de/graphics/opengl.h>
-#  define GL_CALL
-#endif
-
-#if defined(UNIX) && defined(MACOSX)
-#  define GL_GLEXT_PROTOTYPES
-#  include <de/graphics/opengl.h>
-#  include <OpenGL/glext.h>
-#  include <OpenGL/OpenGL.h>
-#  define GL_CALL
-#endif
-
+#  include <de/opengl.h>
+#  ifdef WIN32
+#    define GL_CALL __stdcall
+#  else
+#    define GL_CALL
+#  endif
 #endif // __CLIENT__
 
-#ifndef GL_NV_texture_env_combine4
-#  define GL_NV_texture_env_combine4    1
-#  define GL_COMBINE4_NV                0x8503
-#  define GL_SOURCE3_RGB_NV             0x8583
-#  define GL_SOURCE3_ALPHA_NV           0x858B
-#  define GL_OPERAND3_RGB_NV            0x8593
-#  define GL_OPERAND3_ALPHA_NV          0x859B
-#endif
+//#ifndef GL_NV_texture_env_combine4
+//#  define GL_NV_texture_env_combine4    1
+//#  define GL_COMBINE4_NV                0x8503
+//#  define GL_SOURCE3_RGB_NV             0x8583
+//#  define GL_SOURCE3_ALPHA_NV           0x858B
+//#  define GL_OPERAND3_RGB_NV            0x8593
+//#  define GL_OPERAND3_ALPHA_NV          0x859B
+//#endif
 
 #include <string.h>
 
@@ -113,15 +100,15 @@ extern "C" {
 
 extern gl_state_t GL_state;
 
-#ifndef GL_ATI_texture_env_combine3
-#define GL_MODULATE_ADD_ATI             0x8744
-#define GL_MODULATE_SIGNED_ADD_ATI      0x8745
-#define GL_MODULATE_SUBTRACT_ATI        0x8746
-#endif
+//#ifndef GL_ATI_texture_env_combine3
+//#define GL_MODULATE_ADD_ATI             0x8744
+//#define GL_MODULATE_SIGNED_ADD_ATI      0x8745
+//#define GL_MODULATE_SUBTRACT_ATI        0x8746
+//#endif
 
-#ifndef GL_ATI_texture_env_combine3
-#define GL_ATI_texture_env_combine3     1
-#endif
+//#ifndef GL_ATI_texture_env_combine3
+//#define GL_ATI_texture_env_combine3     1
+//#endif
 
 dd_bool Sys_GLPreInit(void);
 
@@ -145,7 +132,7 @@ void Sys_GLConfigureDefaultState(void);
  */
 void Sys_GLPrintExtensions(void);
 
-dd_bool Sys_GLCheckErrorArgs(char const *file, int line);
+dd_bool Sys_GLCheckErrorArgs(const char *file, int line);
 
 #endif // __CLIENT__
 
@@ -161,4 +148,4 @@ de::String Sys_GLDescription();
 
 #endif
 
-#endif /* LIBDENG_SYSTEM_OPENGL_H */
+#endif /* DE_SYSTEM_OPENGL_H */

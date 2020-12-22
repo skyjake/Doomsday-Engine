@@ -20,14 +20,14 @@
 #include "resource/lightmaterialdecoration.h"
 
 #include <doomsday/defs/material.h>
-#include <doomsday/res/Textures>
+#include <doomsday/res/textures.h>
 #include "clientapp.h"
 
 using namespace de;
 
 LightMaterialDecoration::AnimationStage::AnimationStage(int tics, float variance,
-    Vector2f const &origin, float elevation, Vector3f const &color, float radius,
-    float haloRadius, LightRange const &lightLevels, ClientTexture *ceilingTexture,
+    const Vec2f &origin, float elevation, const Vec3f &color, float radius,
+    float haloRadius, const LightRange &lightLevels, ClientTexture *ceilingTexture,
     ClientTexture *floorTexture, ClientTexture *texture, ClientTexture *flareTexture, int sysFlareIdx)
     : Stage(tics, variance)
     , origin     (origin)
@@ -43,7 +43,7 @@ LightMaterialDecoration::AnimationStage::AnimationStage(int tics, float variance
     , sysFlareIdx(sysFlareIdx)
 {}
 
-LightMaterialDecoration::AnimationStage::AnimationStage(AnimationStage const &other)
+LightMaterialDecoration::AnimationStage::AnimationStage(const AnimationStage &other)
     : Stage(other)
     , origin     (other.origin)
     , elevation  (other.elevation)
@@ -59,22 +59,22 @@ LightMaterialDecoration::AnimationStage::AnimationStage(AnimationStage const &ot
 {}
 
 LightMaterialDecoration::AnimationStage *
-LightMaterialDecoration::AnimationStage::fromDef(Record const &stageDef)
+LightMaterialDecoration::AnimationStage::fromDef(const Record &stageDef)
 {
-    ClientTexture *lightmapUp   = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", de::makeUri(stageDef.gets("lightmapUp"  ))));
-    ClientTexture *lightmapDown = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", de::makeUri(stageDef.gets("lightmapDown"))));
-    ClientTexture *lightmapSide = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", de::makeUri(stageDef.gets("lightmapSide"))));
+    ClientTexture *lightmapUp   = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", res::makeUri(stageDef.gets("lightmapUp"  ))));
+    ClientTexture *lightmapDown = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", res::makeUri(stageDef.gets("lightmapDown"))));
+    ClientTexture *lightmapSide = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", res::makeUri(stageDef.gets("lightmapSide"))));
 
     int haloTextureIndex  = stageDef.geti("haloTextureIndex");
     ClientTexture *haloTexture  = nullptr;
-    de::Uri const haloTextureUri(stageDef.gets("haloTexture"), RC_NULL);
+    res::Uri const haloTextureUri(stageDef.gets("haloTexture"), RC_NULL);
     if(!haloTextureUri.isEmpty())
     {
         // Select a system flare by numeric identifier?
         if(haloTextureUri.path().length() == 1 &&
-           haloTextureUri.path().toStringRef().first().isDigit())
+           haloTextureUri.path().toString().first().isNumeric())
         {
-            haloTextureIndex = haloTextureUri.path().toStringRef().first().digitValue();
+            haloTextureIndex = haloTextureUri.path().toString().first().delta('0');
         }
         else
         {
@@ -83,29 +83,29 @@ LightMaterialDecoration::AnimationStage::fromDef(Record const &stageDef)
     }
 
     return new AnimationStage(stageDef.geti("tics"), stageDef.getf("variance"),
-                              Vector2f(stageDef.geta("origin")), stageDef.getf("elevation"),
-                              Vector3f(stageDef.geta("color")), stageDef.getf("radius"),
+                              Vec2f(stageDef.geta("origin")), stageDef.getf("elevation"),
+                              Vec3f(stageDef.geta("color")), stageDef.getf("radius"),
                               stageDef.getf("haloRadius"),
-                              LightRange(Vector2f(stageDef.geta("lightLevels"))),
+                              LightRange(Vec2f(stageDef.geta("lightLevels"))),
                               lightmapUp, lightmapDown, lightmapSide,
                               haloTexture, haloTextureIndex);
 }
 
 String LightMaterialDecoration::AnimationStage::description() const
 {
-    return String(_E(l) "Tics: ")      + _E(.) + (tics > 0? String("%1 (~%2)").arg(tics).arg(variance, 0, 'g', 2) : "-1")
+    return String(_E(l) "Tics: ")      + _E(.) + (tics > 0? Stringf("%i (~%.2f)", tics, variance) : "-1")
                 + _E(l) " Origin: "      _E(.) + origin.asText()
-                + _E(l) " Elevation: "   _E(.) + String::number(elevation, 'f', 2)
+                + _E(l) " Elevation: "   _E(.) + String::asText(elevation, 2)
                 + _E(l) " LightLevels: " _E(.) + lightLevels.asText()
                 + _E(l) "\nColor: "      _E(.) + color.asText()
-                + _E(l) " Radius: "      _E(.) + String::number(radius, 'f', 2)
-                + _E(l) " HaloRadius: "  _E(.) + String::number(haloRadius, 'f', 2);
+                + _E(l) " Radius: "      _E(.) + String::asText(radius, 2)
+                + _E(l) " HaloRadius: "  _E(.) + String::asText(haloRadius, 2);
 }
 
 // ------------------------------------------------------------------------------------
 
-LightMaterialDecoration::LightMaterialDecoration(Vector2i const &patternSkip,
-    Vector2i const &patternOffset, bool useInterpolation)
+LightMaterialDecoration::LightMaterialDecoration(const Vec2i &patternSkip,
+    const Vec2i &patternOffset, bool useInterpolation)
     : Decoration(patternSkip, patternOffset)
     , _useInterpolation(useInterpolation)
 {}
@@ -113,12 +113,12 @@ LightMaterialDecoration::LightMaterialDecoration(Vector2i const &patternSkip,
 LightMaterialDecoration::~LightMaterialDecoration()
 {}
 
-LightMaterialDecoration *LightMaterialDecoration::fromDef(Record const &definition)
+LightMaterialDecoration *LightMaterialDecoration::fromDef(const Record &definition)
 {
     defn::MaterialDecoration decorDef(definition);
 
-    auto *decor = new LightMaterialDecoration(Vector2i(decorDef.geta("patternSkip")),
-                                              Vector2i(decorDef.geta("patternOffset")));
+    auto *decor = new LightMaterialDecoration(Vec2i(decorDef.geta("patternSkip")),
+                                              Vec2i(decorDef.geta("patternOffset")));
     for(int i = 0; i < decorDef.stageCount(); ++i)
     {
         decor->_stages.append(AnimationStage::fromDef(decorDef.stage(i)));
@@ -126,7 +126,7 @@ LightMaterialDecoration *LightMaterialDecoration::fromDef(Record const &definiti
     return decor;
 }
 
-int LightMaterialDecoration::addStage(AnimationStage const &stageToCopy)
+int LightMaterialDecoration::addStage(const AnimationStage &stageToCopy)
 {
     _stages.append(new AnimationStage(stageToCopy));
     return _stages.count() - 1;

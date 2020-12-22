@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#include <de/findfile.h>
+#include <de/legacy/findfile.h>
 #include "wadtool.h"
 
 fname_t root;

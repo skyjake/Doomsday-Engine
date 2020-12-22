@@ -21,29 +21,24 @@
 #include "de_platform.h"
 #include "resource/image.h"
 #include "resource/tga.h"
-
-#include <doomsday/resource/patch.h>
-#include <doomsday/resource/colorpalettes.h>
-
-#include <de/memory.h>
-#include <de/LogBuffer>
-#include <QByteArray>
-#include <QImage>
-#include <de/NativePath>
-#include <doomsday/filesys/fs_main.h>
-
 #include "dd_main.h"
-
-#include <doomsday/res/Composite>
-#include <doomsday/resource/pcx.h>
-
 #include "gl/gl_tex.h"
-
 #include "render/rend_main.h" // misc global vars awaiting new home
 
-#ifndef DENG2_QT_4_7_OR_NEWER // older than 4.7?
-#  define constBits bits
-#endif
+#include <doomsday/res/patch.h>
+#include <doomsday/res/colorpalettes.h>
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/res/composite.h>
+#include <doomsday/pcx.h>
+
+#include <de/legacy/memory.h>
+#include <de/logbuffer.h>
+#include <de/image.h>
+#include <de/nativepath.h>
+
+//#ifndef DE_QT_4_7_OR_NEWER // older than 4.7?
+//#  define constBits bits
+//#endif
 
 using namespace de;
 using namespace res;
@@ -51,10 +46,10 @@ using namespace res;
 struct GraphicFileType
 {
     /// Symbolic name of the resource type.
-    String name;
+    const char *name;
 
     /// Known file extension.
-    String ext;
+    const char *ext;
 
     bool (*interpretFunc)(FileHandle &hndl, String filePath, image_t &img);
 
@@ -90,19 +85,17 @@ static GraphicFileType const graphicTypes[] = {
     { "PNG",    "png",      interpretPng /*, 0*/ },
     { "JPG",    "jpg",      interpretJpg /*, 0*/ }, // TODO: add alternate "jpeg" extension
     { "TGA",    "tga",      interpretTga /*, TGA_LastError*/ },
-    { "PCX",    "pcx",      interpretPcx /*, PCX_LastError*/ },
-    { "",       "",         nullptr /*,            0*/ } // Terminate.
+    { "PCX",    "pcx",      interpretPcx /*, PCX_LastError*/ }
 };
 
-static GraphicFileType const *guessGraphicFileTypeFromFileName(String fileName)
+static const GraphicFileType *guessGraphicFileTypeFromFileName(String fileName)
 {
     // The path must have an extension for this.
     String ext = fileName.fileNameExtension();
     if (!ext.isEmpty())
     {
-        for (int i = 0; !graphicTypes[i].ext.isEmpty(); ++i)
+        for (const auto &type : graphicTypes)
         {
-            GraphicFileType const &type = graphicTypes[i];
             if (!ext.compareWithoutCase(type.ext))
             {
                 return &type;
@@ -115,7 +108,7 @@ static GraphicFileType const *guessGraphicFileTypeFromFileName(String fileName)
 static void interpretGraphic(FileHandle &hndl, String filePath, image_t &img)
 {
     // Firstly try the interpreter for the guessed resource types.
-    GraphicFileType const *rtypeGuess = guessGraphicFileTypeFromFileName(filePath);
+    const GraphicFileType *rtypeGuess = guessGraphicFileTypeFromFileName(filePath);
     if (rtypeGuess)
     {
         rtypeGuess->interpretFunc(hndl, filePath, img);
@@ -126,14 +119,12 @@ static void interpretGraphic(FileHandle &hndl, String filePath, image_t &img)
     {
         // Try each recognisable format instead.
         /// @todo Order here should be determined by the resource locator.
-        for (int i = 0; !graphicTypes[i].name.isEmpty(); ++i)
+        for (const auto &graphicType : graphicTypes)
         {
-            GraphicFileType const *graphicType = &graphicTypes[i];
-
             // Already tried this?
-            if (graphicType == rtypeGuess) continue;
+            if (&graphicType == rtypeGuess) continue;
 
-            graphicTypes[i].interpretFunc(hndl, filePath, img);
+            graphicType.interpretFunc(hndl, filePath, img);
             if (img.pixels) break;
         }
     }
@@ -142,19 +133,19 @@ static void interpretGraphic(FileHandle &hndl, String filePath, image_t &img)
 /// @return  @c true if the file name in @a path ends with the "color key" suffix.
 static inline bool isColorKeyed(String path)
 {
-    return path.fileNameWithoutExtension().endsWith("-ck", String::CaseInsensitive);
+    return path.fileNameWithoutExtension().endsWith("-ck", CaseInsensitive);
 }
 
 void Image_Init(image_t &img)
 {
-    img.size      = Vector2ui(0, 0);
+    img.size      = Vec2ui(0, 0);
     img.pixelSize = 0;
     img.flags     = 0;
     img.paletteId = 0;
     img.pixels    = 0;
 }
 
-void Image_InitFromImage(image_t &img, Image const &guiImage)
+void Image_InitFromImage(image_t &img, const Image &guiImage)
 {
     img.size      = guiImage.size();
     img.pixelSize = guiImage.depth() / 8;
@@ -169,18 +160,18 @@ void Image_ClearPixelData(image_t &img)
     M_Free(img.pixels); img.pixels = 0;
 }
 
-image_t::Size Image_Size(image_t const &img)
+image_t::Size Image_Size(const image_t &img)
 {
     return img.size;
 }
 
-String Image_Description(image_t const &img)
+String Image_Description(const image_t &img)
 {
-    return String("Dimensions:%1 Flags:%2 %3:%4")
-               .arg(img.size.asText())
-               .arg(img.flags)
-               .arg(0 != img.paletteId? "ColorPalette" : "PixelSize")
-               .arg(0 != img.paletteId? img.paletteId : img.pixelSize);
+    return Stringf("Dimensions:%s Flags:%x %s:%i",
+                          img.size.asText().c_str(),
+                          img.flags,
+                          0 != img.paletteId ? "ColorPalette" : "PixelSize",
+                          0 != img.paletteId ? img.paletteId : img.pixelSize);
 }
 
 void Image_ConvertToLuminance(image_t &img, bool retainAlpha)
@@ -245,7 +236,7 @@ void Image_ConvertToAlpha(image_t &img, bool makeWhite)
     img.pixelSize = 2;
 }
 
-bool Image_HasAlpha(image_t const &img)
+bool Image_HasAlpha(const image_t &img)
 {
     LOG_AS("Image_HasAlpha");
 
@@ -262,8 +253,8 @@ bool Image_HasAlpha(image_t const &img)
 
     if (img.pixelSize == 4)
     {
-        long const numpels = img.size.x * img.size.y;
-        uint8_t const *in = img.pixels;
+        const long numpels = img.size.x * img.size.y;
+        const uint8_t *in = img.pixels;
         for (long i = 0; i < numpels; ++i, in += 4)
         {
             if (in[3] < 255)
@@ -320,7 +311,7 @@ uint8_t *Image_LoadFromFile(image_t &img, FileHandle &file)
     return img.pixels;
 }
 
-bool Image_LoadFromFileWithFormat(image_t &img, char const *format, FileHandle &hndl)
+bool Image_LoadFromFileWithFormat(image_t &img, const char *format, FileHandle &hndl)
 {
     LOG_AS("Image_LoadFromFileWithFormat");
 
@@ -333,11 +324,11 @@ bool Image_LoadFromFileWithFormat(image_t &img, char const *format, FileHandle &
     Image_Init(img);
 
     // Load the file contents to a memory buffer.
-    QByteArray data;
+    Block data;
     data.resize(hndl.length() - initPos);
     hndl.read(reinterpret_cast<uint8_t*>(data.data()), data.size());
 
-    QImage image = QImage::fromData(data, format);
+    Image image = Image::fromData(data, format);
     if (image.isNull())
     {
         // Back to the original file position.
@@ -348,38 +339,38 @@ bool Image_LoadFromFileWithFormat(image_t &img, char const *format, FileHandle &
     //LOG_TRACE("Loading \"%s\"...") << NativePath(hndl->file().composePath()).pretty();
 
     // Convert paletted images to RGB.
-    if (image.colorCount())
+    /*if (image.colorCount())
     {
         image = image.convertToFormat(QImage::Format_ARGB32);
-        DENG_ASSERT(!image.colorCount());
-        DENG_ASSERT(image.depth() == 32);
-    }
+        DE_ASSERT(!image.colorCount());
+        DE_ASSERT(image.depth() == 32);
+    }*/
 
     // Swap the red and blue channels for GL.
-    image = image.rgbSwapped();
+//    image = image.rgbSwapped();
 
-    img.size      = Vector2ui(image.width(), image.height());
+    img.size      = Vec2ui(image.width(), image.height());
     img.pixelSize = image.depth() / 8;
 
     LOGDEV_RES_VERBOSE("size:%s depth:%i alpha:%b bytes:%i")
             << img.size.asText() << img.pixelSize
             << image.hasAlphaChannel() << image.byteCount();
 
-    img.pixels = reinterpret_cast<uint8_t *>(M_MemDup(image.constBits(), image.byteCount()));
+    img.pixels = reinterpret_cast<uint8_t *>(M_MemDup(image.bits(), image.byteCount()));
 
     // Back to the original file position.
     hndl.seek(initPos, SeekSet);
     return true;
 }
 
-bool Image_Save(image_t const &img, char const *filePath)
+bool Image_Save(const image_t &img, const char *filePath)
 {
     // Compose the full path.
     String fullPath = String(filePath);
     if (fullPath.isEmpty())
     {
         static int n = 0;
-        fullPath = String("image%1x%2-%3").arg(img.size.x).arg(img.size.y).arg(n++, 3);
+        fullPath = Stringf("image%ux%u-%03i", img.size.x, img.size.y, n++);
     }
 
     if (fullPath.fileNameExtension().isEmpty())
@@ -388,13 +379,14 @@ bool Image_Save(image_t const &img, char const *filePath)
     }
 
     // Swap red and blue channels then save.
-    QImage image = QImage(img.pixels, img.size.x, img.size.y, QImage::Format_ARGB32);
-    image = image.rgbSwapped();
+    Image image = Image(img.size, Image::RGBA_8888, ByteRefArray(img.pixels, img.size.area() * 4));
+//    image = image.rgbSwapped();
 
-    return image.save(NativePath(fullPath));
+    image.save(NativePath(fullPath));
+    return true;
 }
 
-uint8_t *GL_LoadImage(image_t &image, String nativePath)
+uint8_t *GL_LoadImage(image_t &image, const String& nativePath)
 {
     try
     {
@@ -415,14 +407,15 @@ uint8_t *GL_LoadImage(image_t &image, String nativePath)
     return 0; // Not loaded.
 }
 
-Source GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
+Source GL_LoadExtImage(image_t &image, const char *_searchPath, gfxmode_t mode)
 {
-    DENG_ASSERT(_searchPath);
+    DE_ASSERT(_searchPath);
 
     try
     {
-        String foundPath = App_FileSystem().findPath(de::Uri(RC_GRAPHIC, _searchPath),
+        String foundPath = App_FileSystem().findPath(res::Uri(RC_GRAPHIC, _searchPath),
                                                      RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
+
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
 
@@ -447,9 +440,9 @@ Source GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
     return None;
 }
 
-static dd_bool palettedIsMasked(uint8_t const *pixels, int width, int height)
+static dd_bool palettedIsMasked(const uint8_t *pixels, int width, int height)
 {
-    DENG2_ASSERT(pixels != 0);
+    DE_ASSERT(pixels != 0);
     // Jump to the start of the alpha data.
     pixels += width * height;
     for (int i = 0; i < width * height; ++i)
@@ -468,7 +461,7 @@ static Source loadExternalTexture(image_t &image, String encodedSearchPath,
     // First look for a version with an optional suffix.
     try
     {
-        String foundPath = App_FileSystem().findPath(de::Uri(encodedSearchPath + optionalSuffix, RC_GRAPHIC),
+        String foundPath = App_FileSystem().findPath(res::Uri(encodedSearchPath + optionalSuffix, RC_GRAPHIC),
                                                      RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
@@ -483,7 +476,7 @@ static Source loadExternalTexture(image_t &image, String encodedSearchPath,
     {
         try
         {
-            String foundPath = App_FileSystem().findPath(de::Uri(encodedSearchPath, RC_GRAPHIC),
+            String foundPath = App_FileSystem().findPath(res::Uri(encodedSearchPath, RC_GRAPHIC),
                                                          RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
             // Ensure the found path is absolute.
             foundPath = App_BasePath() / foundPath;
@@ -508,19 +501,19 @@ static Source loadExternalTexture(image_t &image, String encodedSearchPath,
  *
  * @todo Optimize: Should be redesigned to composite whole rows -ds
  */
-static void compositePaletted(dbyte *dst, Vector2ui const &dstDimensions,
-    IByteArray const &src, Vector2ui const &srcDimensions, Vector2i const &origin)
+static void compositePaletted(dbyte *dst, const Vec2ui &dstDimensions,
+    const IByteArray &src, const Vec2ui &srcDimensions, const Vec2i &origin)
 {
-    if (dstDimensions == Vector2ui()) return;
-    if (srcDimensions == Vector2ui()) return;
+    if (dstDimensions == Vec2ui()) return;
+    if (srcDimensions == Vec2ui()) return;
 
-    int const       srcW = srcDimensions.x;
-    int const       srcH = srcDimensions.y;
-    size_t const srcPels = srcW * srcH;
+    const int srcW = srcDimensions.x;
+    const int srcH = srcDimensions.y;
+    const size_t srcPels = srcW * srcH;
 
-    int const       dstW = dstDimensions.x;
-    int const       dstH = dstDimensions.y;
-    size_t const dstPels = dstW * dstH;
+    const int dstW = dstDimensions.x;
+    const int dstH = dstDimensions.y;
+    const size_t dstPels = dstW * dstH;
 
     int dstX, dstY;
 
@@ -554,23 +547,23 @@ static String toTranslationId(int tclass, int tmap)
 
     int trans = de::max(0, NUM_TRANSLATION_MAPS_PER_CLASS * tclass + tmap - 1);
     LOGDEV_RES_XVERBOSE("tclass=%i tmap=%i => TransPal# %i", tclass << tmap << trans);
-    return String::number(trans);
+    return String::asText(trans);
 
 #undef NUM_TRANSLATION_MAPS_PER_CLASS
 #undef NUM_TRANSLATION_CLASSES
 }
 
-static Block loadAndTranslatePatch(IByteArray const &data, colorpaletteid_t palId,
+static Block loadAndTranslatePatch(const IByteArray &data, colorpaletteid_t palId,
     int tclass = 0, int tmap = 0)
 {
     res::ColorPalette &palette = App_Resources().colorPalettes().colorPalette(palId);
-    if (res::ColorPaletteTranslation const *xlat = palette.translation(toTranslationId(tclass, tmap)))
+    if (const res::ColorPaletteTranslation *xlat = palette.translation(toTranslationId(tclass, tmap)))
     {
         return res::Patch::load(data, *xlat, res::Patch::ClipToLogicalDimensions);
     }
     else
     {
-        return res::Patch::load(data, res::Patch::ClipToLogicalDimensions);
+        return res::Patch::load(data, nullptr, res::Patch::ClipToLogicalDimensions);
     }
 }
 
@@ -598,7 +591,7 @@ static Source loadPatch(image_t &image, FileHandle &hndl, int tclass = 0,
             PatchMetadata info = Patch::loadMetadata(fileData);
 
             Image_Init(image);
-            image.size      = Vector2ui(info.logicalDimensions.x + border*2,
+            image.size      = Vec2ui(info.logicalDimensions.x + border*2,
                                         info.logicalDimensions.y + border*2);
             image.pixelSize = 1;
             image.paletteId = colorPaletteId;
@@ -606,7 +599,7 @@ static Source loadPatch(image_t &image, FileHandle &hndl, int tclass = 0,
             image.pixels = (uint8_t *) M_Calloc(2 * image.size.x * image.size.y);
 
             compositePaletted(image.pixels, image.size,
-                              patchImg, info.logicalDimensions, Vector2i(border, border));
+                              patchImg, info.logicalDimensions, Vec2i(border, border));
 
             if (palettedIsMasked(image.pixels, image.size.x, image.size.y))
             {
@@ -615,7 +608,7 @@ static Source loadPatch(image_t &image, FileHandle &hndl, int tclass = 0,
 
             return Original;
         }
-        catch (IByteArray::OffsetError const &)
+        catch (const IByteArray::OffsetError &)
         {
             LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch")
                 << NativePath(file.container().composePath()).pretty()
@@ -627,20 +620,20 @@ static Source loadPatch(image_t &image, FileHandle &hndl, int tclass = 0,
     return None;
 }
 
-static Source loadPatchComposite(image_t &image, Texture const &tex,
+static Source loadPatchComposite(image_t &image, const Texture &tex,
     bool maskZero = false, bool useZeroOriginIfOneComponent = false)
 {
     LOG_AS("image_t::loadPatchComposite");
 
     Image_Init(image);
     image.pixelSize = 1;
-    image.size      = Vector2ui(tex.width(), tex.height());
+    image.size      = Vec2ui(tex.width(), tex.height());
     image.paletteId = App_Resources().colorPalettes().defaultColorPalette();
 
     image.pixels = (uint8_t *) M_Calloc(2 * image.size.x * image.size.y);
 
-    res::Composite const &texDef = *reinterpret_cast<res::Composite *>(tex.userDataPointer());
-    DENG2_FOR_EACH_CONST(res::Composite::Components, i, texDef.components())
+    const res::Composite &texDef = *reinterpret_cast<res::Composite *>(tex.userDataPointer());
+    DE_FOR_EACH_CONST(res::Composite::Components, i, texDef.components())
     {
         File1 &file           = App_FileSystem().lump(i->lumpNum());
         ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
@@ -650,23 +643,23 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
         {
             try
             {
-                Patch::Flags loadFlags;
+                Flags loadFlags;
                 if (maskZero) loadFlags |= Patch::MaskZero;
 
-                Block patchImg     = Patch::load(fileData, loadFlags);
-                PatchMetadata info = Patch::loadMetadata(fileData);
+                PatchMetadata info;
+                Block patchImg = Patch::load(fileData, &info, loadFlags);
 
-                Vector2i origin = i->origin();
+                Vec2i origin = i->origin();
                 if (useZeroOriginIfOneComponent && texDef.componentCount() == 1)
                 {
-                    origin = Vector2i(0, 0);
+                    origin = Vec2i(0, 0);
                 }
 
                 // Draw the patch in the buffer.
                 compositePaletted(image.pixels, image.size,
                                   patchImg, info.dimensions, origin);
             }
-            catch (IByteArray::OffsetError const &)
+            catch (const IByteArray::OffsetError &)
             {} // Ignore this error.
         }
 
@@ -695,7 +688,7 @@ static Source loadFlat(image_t &image, FileHandle &hndl)
     Image_Init(image);
 
     /// @todo not all flats are 64x64!
-    image.size      = Vector2ui(64, 64);
+    image.size      = Vec2ui(64, 64);
     image.pixelSize = 1;
     image.paletteId = App_Resources().colorPalettes().defaultColorPalette();
 
@@ -751,14 +744,14 @@ static Source loadDetail(image_t &image, FileHandle &hndl)
     return Original;
 }
 
-Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
-                          TextureVariantSpec const &spec)
+Source GL_LoadSourceImage(image_t &image, const ClientTexture &tex,
+                          const TextureVariantSpec &spec)
 {
-    de::FS1 &fileSys = App_FileSystem();
+    res::FS1 &fileSys = App_FileSystem();
     auto &cfg = R_Config();
 
     Source source = None;
-    variantspecification_t const &vspec = spec.variant;
+    const variantspecification_t &vspec = spec.variant;
     if (!tex.manifest().schemeName().compareWithoutCase("Textures"))
     {
         // Attempt to load an external replacement for this composite texture?
@@ -766,7 +759,7 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
                 (loadExtAlways || cfg.highResWithPWAD->value().isTrue() || !tex.isFlagged(Texture::Custom)))
         {
             // First try the textures scheme.
-            de::Uri uri = tex.manifest().composeUri();
+            res::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
         }
 
@@ -778,8 +771,8 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
             }
             else
             {
-                bool const zeroMask = (vspec.flags & TSF_ZEROMASK) != 0;
-                bool const useZeroOriginIfOneComponent = true;
+                const bool zeroMask = (vspec.flags & TSF_ZEROMASK) != 0;
+                const bool useZeroOriginIfOneComponent = true;
                 source = loadPatchComposite(image, tex, zeroMask, useZeroOriginIfOneComponent);
             }
         }
@@ -791,13 +784,13 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
                 (loadExtAlways || cfg.highResWithPWAD->value().isTrue() || !tex.isFlagged(Texture::Custom)))
         {
             // First try the flats scheme.
-            de::Uri uri = tex.manifest().composeUri();
+            res::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
 
             if (source == None)
             {
                 // How about the old-fashioned "flat-name" in the textures scheme?
-                source = loadExternalTexture(image, "Textures:flat-" + uri.path().toStringRef(), "-ck");
+                source = loadExternalTexture(image, "Textures:flat-" + uri.path(), "-ck");
             }
         }
 
@@ -805,12 +798,12 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
         {
             if (tex.manifest().hasResourceUri())
             {
-                de::Uri resourceUri = tex.manifest().resourceUri();
+                res::Uri resourceUri = tex.manifest().resourceUri();
                 if (!resourceUri.scheme().compareWithoutCase("LumpIndex"))
                 {
                     try
                     {
-                        lumpnum_t const lumpNum = resourceUri.path().toString().toInt();
+                        const lumpnum_t lumpNum = resourceUri.path().toString().toInt();
                         FileHandle &hndl    = fileSys.openLump(fileSys.lump(lumpNum));
 
                         source = loadFlat(image, hndl);
@@ -837,7 +830,7 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
         if (cfg.noHighResTex->value().isFalse() &&
                 (loadExtAlways || cfg.highResWithPWAD->value().isTrue() || !tex.isFlagged(Texture::Custom)))
         {
-            de::Uri uri = tex.manifest().composeUri();
+            res::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
         }
 
@@ -845,12 +838,12 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
         {
             if (tex.manifest().hasResourceUri())
             {
-                de::Uri resourceUri = tex.manifest().resourceUri();
+                res::Uri resourceUri = tex.manifest().resourceUri();
                 if (!resourceUri.scheme().compareWithoutCase("LumpIndex"))
                 {
                     try
                     {
-                        lumpnum_t const lumpNum = resourceUri.path().toString().toInt();
+                        const lumpnum_t lumpNum = resourceUri.path().toString().toInt();
                         FileHandle &hndl    = fileSys.openLump(fileSys.lump(lumpNum));
 
                         source = loadPatch(image, hndl, tclass, tmap, vspec.border);
@@ -876,7 +869,7 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
         // Attempt to load an external replacement for this sprite?
         if (cfg.noHighResPatches->value().isFalse())
         {
-            de::Uri uri = tex.manifest().composeUri();
+            res::Uri uri = tex.manifest().composeUri();
 
             // Prefer psprite or translated versions if available.
             if (TC_PSPRITE_DIFFUSE == vspec.context)
@@ -885,7 +878,10 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
             }
             else if (tclass || tmap)
             {
-                source = loadExternalTexture(image, "Patches:" + uri.path() + String("-table%1%2").arg(tclass).arg(tmap), "-ck");
+                source = loadExternalTexture(image,
+                                             "Patches:" + uri.path() +
+                                                 Stringf("-table%i%i", tclass, tmap),
+                                             "-ck");
             }
 
             if (!source)
@@ -898,12 +894,12 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
         {
             if (tex.manifest().hasResourceUri())
             {
-                de::Uri resourceUri = tex.manifest().resourceUri();
+                res::Uri resourceUri = tex.manifest().resourceUri();
                 if (!resourceUri.scheme().compareWithoutCase("LumpIndex"))
                 {
                     try
                     {
-                        lumpnum_t const lumpNum = resourceUri.path().toString().toInt();
+                        const lumpnum_t lumpNum = resourceUri.path().toString().toInt();
                         FileHandle &hndl    = fileSys.openLump(fileSys.lump(lumpNum));
 
                         source = loadPatch(image, hndl, tclass, tmap, vspec.border);
@@ -921,14 +917,14 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
     {
         if (tex.manifest().hasResourceUri())
         {
-            de::Uri resourceUri = tex.manifest().resourceUri();
+            res::Uri resourceUri = tex.manifest().resourceUri();
             if (resourceUri.scheme().compareWithoutCase("Lumps"))
             {
                 source = loadExternalTexture(image, resourceUri.compose());
             }
             else
             {
-                lumpnum_t const lumpNum = fileSys.lumpNumForName(resourceUri.path());
+                const lumpnum_t lumpNum = fileSys.lumpNumForName(resourceUri.path());
                 try
                 {
                     File1 &lump = fileSys.lump(lumpNum);
@@ -948,7 +944,7 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
     {
         if (tex.manifest().hasResourceUri())
         {
-            de::Uri resourceUri = tex.manifest().resourceUri();
+            res::Uri resourceUri = tex.manifest().resourceUri();
             source = loadExternalTexture(image, resourceUri.compose());
         }
     }

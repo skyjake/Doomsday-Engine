@@ -25,6 +25,8 @@
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/filesys/fs_util.h>
+#include <doomsday/net.h>
+#include <doomsday/network/protocol.h>
 
 #include "client/cl_player.h"
 
@@ -58,7 +60,7 @@ struct demopacket_header_t
 
 extern dfloat netConnectTime;
 
-static char const *demoPath = "/home/demo/";
+static const char *demoPath = "/home/demo/";
 
 #if 0
 LZFILE *playdemo;
@@ -86,7 +88,7 @@ void Demo_Init()
  * Open a demo file and begin recording.
  * Returns @c false if the recording can't be begun.
  */
-dd_bool Demo_BeginRecording(char const * /*fileName*/, dint /*plrNum*/)
+dd_bool Demo_BeginRecording(const char * /*fileName*/, dint /*plrNum*/)
 {
     return false;
 
@@ -119,7 +121,7 @@ dd_bool Demo_BeginRecording(char const * /*fileName*/, dint /*plrNum*/)
     ::writeInfo[plrNum].cameratimer = 0;
     ::writeInfo[plrNum].fov         = -1;  // Must be written in the first packet.
 
-    if(::isServer)
+    if(netState.isServer)
     {
         // Playing demos alters gametic. This'll make sure we're going to get updates.
         ::clients[0].lastTransmit = -1;
@@ -144,7 +146,7 @@ dd_bool Demo_BeginRecording(char const * /*fileName*/, dint /*plrNum*/)
 
 void Demo_PauseRecording(dint playerNum)
 {
-    DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
+    DE_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
     auto &cl = *DD_Player(playerNum);
 
     // A demo is not being recorded?
@@ -161,7 +163,7 @@ void Demo_PauseRecording(dint playerNum)
  */
 void Demo_ResumeRecording(dint playerNum)
 {
-    DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
+    DE_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
     auto &cl = *DD_Player(playerNum);
 
     // Not recording or not paused?
@@ -181,7 +183,7 @@ void Demo_ResumeRecording(dint playerNum)
  */
 void Demo_StopRecording(dint playerNum)
 {
-    DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
+    DE_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
     auto &cl = *DD_Player(playerNum);
 
     // A demo is not being recorded?
@@ -194,7 +196,7 @@ void Demo_StopRecording(dint playerNum)
 
 void Demo_WritePacket(dint playerNum)
 {
-    DENG_UNUSED(playerNum);
+    DE_UNUSED(playerNum);
 #if 0
     if(playerNum < 0)
     {
@@ -202,7 +204,7 @@ void Demo_WritePacket(dint playerNum)
         return;
     }
 
-    DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
+    DE_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
     auto &cl = *DD_Player(playerNum);
     DemoTimer &inf = cl.demoTimer();
 
@@ -269,12 +271,12 @@ void Demo_BroadcastPacket()
     }
 }
 
-dd_bool Demo_BeginPlayback(char const *fileName)
+dd_bool Demo_BeginPlayback(const char *fileName)
 {
     // Already in playback?
     if(::playback) return false;
     // Playback not possible?
-    if(::netGame || ::isClient) return false;
+    if(netState.netGame || netState.isClient) return false;
 
     // Check that we aren't recording anything.
     for(dint i = 0; i < DDMAXPLAYERS; ++i)
@@ -305,8 +307,8 @@ dd_bool Demo_BeginPlayback(char const *fileName)
 
     // OK, let's begin the demo.
     ::playback       = true;
-    ::isServer       = false;
-    ::isClient       = true;
+    netState.isServer       = false;
+    netState.isClient       = true;
     ::readInfo.first = true;
     ::viewangleDelta = 0;
     ::lookdirDelta   = 0;
@@ -408,7 +410,7 @@ dd_bool Demo_ReadPacket()
  */
 void Demo_WriteLocalCamera(dint plrNum)
 {
-    DENG2_ASSERT(plrNum >= 0 && plrNum <= DDMAXPLAYERS);
+    DE_ASSERT(plrNum >= 0 && plrNum <= DDMAXPLAYERS);
     player_t *plr    = DD_Player(plrNum);
     ddplayer_t *ddpl = &plr->publicData();
     mobj_t *mob      = ddpl->mo;
@@ -457,7 +459,7 @@ void Demo_WriteLocalCamera(dint plrNum)
  */
 void Demo_ReadLocalCamera()
 {
-    DENG2_ASSERT(::consolePlayer >= 0 && consolePlayer < DDMAXPLAYERS);
+    DE_ASSERT(::consolePlayer >= 0 && consolePlayer < DDMAXPLAYERS);
     ddplayer_t *pl = &DD_Player(::consolePlayer)->publicData();
     mobj_t *mob    = pl->mo;
 
@@ -548,7 +550,7 @@ void Demo_Ticker(timespan_t /*time*/)
     // Only playback is handled.
     if(::playback)
     {
-        DENG2_ASSERT(::consolePlayer >= 0 && ::consolePlayer < DDMAXPLAYERS);
+        DE_ASSERT(::consolePlayer >= 0 && ::consolePlayer < DDMAXPLAYERS);
         player_t   *plr  = DD_Player(::consolePlayer);
         ddplayer_t *ddpl = &plr->publicData();
 
@@ -580,7 +582,7 @@ void Demo_Ticker(timespan_t /*time*/)
 
 D_CMD(PlayDemo)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     LOG_MSG("Playing demo \"%s\"...") << argv[1];
     return Demo_BeginPlayback(argv[1]);
@@ -588,21 +590,21 @@ D_CMD(PlayDemo)
 
 D_CMD(RecordDemo)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
-    if(argc == 3 && ::isClient)
+    if(argc == 3 && netState.isClient)
     {
         LOG_ERROR("Clients can only record the consolePlayer");
         return true;
     }
 
-    if(::isClient && argc != 2)
+    if(netState.isClient && argc != 2)
     {
         LOG_SCR_NOTE("Usage: %s (fileName)") << argv[0];
         return true;
     }
 
-    if(::isServer && (argc < 2 || argc > 3))
+    if(netState.isServer && (argc < 2 || argc > 3))
     {
         LOG_SCR_NOTE("Usage: %s (fileName) (plnum)") << argv[0];
         LOG_SCR_MSG("(plnum) is the player which will be recorded.");
@@ -621,7 +623,7 @@ D_CMD(RecordDemo)
 
 D_CMD(PauseDemo)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     dint plnum = ::consolePlayer;
     if(argc >= 2)
@@ -654,7 +656,7 @@ D_CMD(PauseDemo)
 
 D_CMD(StopDemo)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     if(argc > 2)
     {
@@ -703,7 +705,7 @@ D_CMD(StopDemo)
  */
 D_CMD(DemoLump)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     char buf[64]; de::zap(buf);
     strncpy(buf, argv[1], 64);

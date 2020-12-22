@@ -20,10 +20,12 @@
 
 #include "render/angleclipper.h"
 
-#include <QVector>
-#include <de/Error>
-#include <de/Log>
+#include <de/list.h>
+#include <de/error.h>
+#include <de/log.h>
 #include <doomsday/console/var.h>
+#include <doomsday/mesh/hedge.h>
+#include <doomsday/tab_tables.h>
 
 #include "dd_def.h"
 #include "render/rend_main.h"
@@ -35,7 +37,7 @@ namespace internal
     /**
      * @param point  @em View-relative point in map-space.
      */
-    static inline binangle_t pointToAngle(Vector2d const &point)
+    static inline binangle_t pointToAngle(const Vec2d &point)
     {
         // Shift for more accuracy;
         return bamsAtan2(dint(point.y * 100), dint(point.x * 100));
@@ -101,18 +103,18 @@ namespace internal
          */
         void release(Element *elem)
         {
-            DENG2_ASSERT(_last);
+            DE_ASSERT(_last);
 
             if(elem == _last)
             {
-                DENG2_ASSERT(!_rover);
+                DE_ASSERT(!_rover);
 
                 // We can only remove the last if all elements are already in use.
                 _rover = elem;
                 return;
             }
 
-            DENG2_ASSERT(elem->_next);
+            DE_ASSERT(elem->_next);
 
             // Unlink from the list entirely.
             elem->_next->_prev = elem->_prev;
@@ -148,7 +150,7 @@ namespace internal
 }  // namespace internal
 using namespace ::internal;
 
-DENG2_PIMPL_NOREF(AngleClipper)
+DE_PIMPL_NOREF(AngleClipper)
 {
     /// Specialized AngleRange for half-space clipping.
     struct Clipper : public ElementPool::Element, AngleRange
@@ -156,8 +158,8 @@ DENG2_PIMPL_NOREF(AngleClipper)
         Clipper *prev;
         Clipper *next;
     };
-    ElementPool clipNodes;         ///< The list of clipnodes.
-    Clipper *clipHead = nullptr;   ///< Head of the clipped-range list.
+    ElementPool clipNodes;          ///< The list of clipnodes.
+    Clipper *   clipHead = nullptr; ///< Head of the clipped-range list.
 
     /// Specialized AngleRange for half-space occlusion.
     struct Occluder : public ElementPool::Element, AngleRange
@@ -165,13 +167,13 @@ DENG2_PIMPL_NOREF(AngleClipper)
         Occluder *prev;
         Occluder *next;
 
-        bool topHalf;              ///< @c true= top, rather than bottom, half.
-        Vector3f normal;           ///< Of the occlusion plane.
+        bool  topHalf; ///< @c true= top, rather than bottom, half.
+        Vec3f normal;  ///< Of the occlusion plane.
     };
     ElementPool occNodes;          ///< The list of occlusion nodes.
-    Occluder *occHead = nullptr;   ///< Head of the occlusion-range list.
+    Occluder *  occHead = nullptr; ///< Head of the occlusion-range list.
 
-    QVector<binangle_t> angleBuf;  ///< Scratch buffer for sorting angles.
+    List<binangle_t> angleBuf;  ///< Scratch buffer for sorting angles.
 
     ~Impl()
     {
@@ -182,7 +184,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
     template <typename NodeType>
     void clearRangeList(NodeType **head)
     {
-        DENG2_ASSERT(head);
+        DE_ASSERT(head);
         while(*head)
         {
             auto *next = static_cast<NodeType *>((*head)->next);
@@ -293,12 +295,10 @@ DENG2_PIMPL_NOREF(AngleClipper)
                 return;  // The new range already exists.
             }
 
-#ifdef DENG2_DEBUG
-            if(i == i->next)
-                throw Error("AngleClipper::addRange", String("loop1 0x%1 linked to itself: %2 => %3")
-                                                        .arg((quintptr)i, QT_POINTER_SIZE * 2, 16, QChar('0'))
-                                                        .arg(i->from, 0, 16)
-                                                        .arg(i->to,   0, 16));
+#ifdef DE_DEBUG
+            if (i == i->next)
+                throw Error("AngleClipper::addRange",
+                            stringf("loop1 %p linked to itself: %x => %x", i, i->from, i->to));
 #endif
         }
 
@@ -456,7 +456,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
         occNodes.release(orange);
     }
 
-    Occluder *newOcclusionRange(binangle_t from, binangle_t to, Vector3f const &normal,
+    Occluder *newOcclusionRange(binangle_t from, binangle_t to, const Vec3f &normal,
         bool topHalf)
     {
         // Perhaps a previously-used occluder can be reused?
@@ -481,7 +481,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
     /**
      * @pre The given range is "safe".
      */
-    void addOcclusionRange(binangle_t from, binangle_t to, Vector3f const &normal,
+    void addOcclusionRange(binangle_t from, binangle_t to, const Vec3f &normal,
         bool topHalf)
     {
         // Is the range valid?
@@ -536,7 +536,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
      * If necessary, cut the given range in two.
      */
     void safeAddOcclusionRange(binangle_t startAngle, binangle_t endAngle,
-                               Vector3f const &normal, bool tophalf)
+                               const Vec3f &normal, bool tophalf)
     {
         // Is this range already clipped?
         if(!safeCheckRange(startAngle, endAngle)) return;
@@ -546,18 +546,18 @@ DENG2_PIMPL_NOREF(AngleClipper)
             // The range has to be added in two parts.
             addOcclusionRange(startAngle, BANG_MAX, normal, tophalf);
 
-            DENG2_DEBUG_ONLY(occlusionRanger(3));
+            DE_DEBUG_ONLY(occlusionRanger(3));
 
             addOcclusionRange(0, endAngle, normal, tophalf);
 
-            DENG2_DEBUG_ONLY(occlusionRanger(4));
+            DE_DEBUG_ONLY(occlusionRanger(4));
         }
         else
         {
             // Add the range as usual.
             addOcclusionRange(startAngle, endAngle, normal, tophalf);
 
-            DENG2_DEBUG_ONLY(occlusionRanger(5));
+            DE_DEBUG_ONLY(occlusionRanger(5));
         }
     }
 
@@ -574,7 +574,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
         if(!orange->normal.z) return 0;
 
         // Where do they cross?
-        Vector3f cross = orange->normal.cross(other->normal);
+        Vec3f cross = orange->normal.cross(other->normal);
         if(!cross.x && !cross.y && !cross.z)
         {
             // These two planes are exactly the same! Remove one.
@@ -596,7 +596,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
         // Now we must determine which plane occludes which.
         // Pick a point in the middle of the range.
         crossAngle = (orange->from + orange->to) >> (1 + BAMS_BITS - 13);
-        cross.x = 100 * FIX2FLT(fineCosine[crossAngle]);
+        cross.x = 100 * FIX2FLT(finecosine[crossAngle]);
         cross.y = 100 * FIX2FLT(finesine  [crossAngle]);
         cross.z = -(orange->normal.x * cross.x +
                     orange->normal.y * cross.y) / orange->normal.z;
@@ -650,7 +650,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
      */
     void cutOcclusionRange(binangle_t from, binangle_t to)
     {
-        DENG2_DEBUG_ONLY(occlusionRanger(1));
+        DE_DEBUG_ONLY(occlusionRanger(1));
 
         // Find the range after which it's OK to add oranges cut in half.
         // (Must preserve the ascending order of the start angles.) We want the
@@ -733,33 +733,30 @@ DENG2_PIMPL_NOREF(AngleClipper)
             orange = next;
         }
 
-        DENG2_DEBUG_ONLY(occlusionRanger(2));
+        DE_DEBUG_ONLY(occlusionRanger(2));
 
         mergeOccludes();
 
-        DENG2_DEBUG_ONLY(occlusionRanger(6));
+        DE_DEBUG_ONLY(occlusionRanger(6));
     }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     void occlusionLister()
     {
-        for(Occluder *orange = occHead; orange; orange = orange->next)
+        for (Occluder *orange = occHead; orange; orange = orange->next)
         {
-            LOG_MSG(String("from: %1 to: %2 topHalf: %3")
-                        .arg(orange->from, 0, 16)
-                        .arg(orange->to,   0, 16)
-                        .arg(DENG2_BOOL_YESNO(orange->topHalf)));
+            LOG_MSG("from: %x to: %x topHalf: %b") << orange->from << orange->to << orange->topHalf;
         }
     }
 
     void occlusionRanger(int mark)
     {
-        for(Occluder *orange = occHead; orange; orange = orange->next)
+        for (Occluder *orange = occHead; orange; orange = orange->next)
         {
-            if(orange->prev && orange->prev->from > orange->from)
+            if (orange->prev && orange->prev->from > orange->from)
             {
                 occlusionLister();
-                throw Error("AngleClipper::occlusionRanger", String("Order %1 has failed").arg(mark));
+                throw Error("AngleClipper::occlusionRanger", stringf("Order %i has failed", mark));
             }
         }
     }
@@ -780,7 +777,7 @@ dint AngleClipper::isAngleVisible(binangle_t bang) const
 {
     if(::devNoCulling) return true;
 
-    for(Impl::Clipper const *crange = d->clipHead; crange; crange = crange->next)
+    for(const Impl::Clipper *crange = d->clipHead; crange; crange = crange->next)
     {
         if(bang > crange->from && bang < crange->to)
             return false;
@@ -789,17 +786,17 @@ dint AngleClipper::isAngleVisible(binangle_t bang) const
     return true;  // Not occluded.
 }
 
-dint AngleClipper::isPointVisible(Vector3d const &point) const
+dint AngleClipper::isPointVisible(const Vec3d &point) const
 {
     if(::devNoCulling) return true;
 
-    Vector3d const viewRelPoint = point - Rend_EyeOrigin().xzy();
-    binangle_t const angle      = pointToAngle(viewRelPoint);
+    const Vec3d viewRelPoint = point - Rend_EyeOrigin().xzy();
+    const binangle_t angle      = pointToAngle(viewRelPoint);
 
     if(!isAngleVisible(angle)) return false;
 
     // Not clipped by the clipnodes. Perhaps it's occluded by an orange.
-    for(Impl::Occluder const *orange = d->occHead; orange; orange = orange->next)
+    for(const Impl::Occluder *orange = d->occHead; orange; orange = orange->next)
     {
         if(angle >= orange->from && angle <= orange->to)
         {
@@ -816,9 +813,9 @@ dint AngleClipper::isPointVisible(Vector3d const &point) const
     return true;  // Not occluded.
 }
 
-dint AngleClipper::isPolyVisible(Face const &poly) const
+dint AngleClipper::isPolyVisible(const mesh::Face &poly) const
 {
-    DENG2_ASSERT(poly.isConvex());
+    DE_ASSERT(poly.isConvex());
 
     if(::devNoCulling) return true;
 
@@ -829,9 +826,9 @@ dint AngleClipper::isPolyVisible(Face const &poly) const
     }
 
     // Find angles to all corners.
-    Vector2d const eyeOrigin = Rend_EyeOrigin().xz();
+    const Vec2d eyeOrigin = Rend_EyeOrigin().xz();
     dint n = 0;
-    HEdge const *hedge = poly.hedge();
+    const auto *hedge = poly.hedge();
     do
     {
         d->angleBuf[n++] = pointToAngle(hedge->origin() - eyeOrigin);
@@ -892,40 +889,40 @@ dint AngleClipper::safeAddRange(binangle_t from, binangle_t to)
     return true;
 }
 
-void AngleClipper::addRangeFromViewRelPoints(Vector2d const &from, Vector2d const &to)
+void AngleClipper::addRangeFromViewRelPoints(const Vec2d &from, const Vec2d &to)
 {
-    Vector2d const eyeOrigin = Rend_EyeOrigin().xz();
+    const Vec2d eyeOrigin = Rend_EyeOrigin().xz();
     safeAddRange(pointToAngle(to   - eyeOrigin),
                  pointToAngle(from - eyeOrigin));
 }
 
 /// @todo Optimize:: Check if the given line is already occluded?
-void AngleClipper::addViewRelOcclusion(Vector2d const &from, Vector2d const &to,
+void AngleClipper::addViewRelOcclusion(const Vec2d &from, const Vec2d &to,
     coord_t height, bool topHalf)
 {
     // Calculate the occlusion plane normal.
     // We'll use the game's coordinate system (left-handed, but Y and Z are swapped).
-    Vector3d const eyeOrigin    = Rend_EyeOrigin().xzy();
-    auto const eyeToV1          = Vector3d(from, height) - eyeOrigin;
-    auto const eyeToV2          = Vector3d(to,   height) - eyeOrigin;
+    const Vec3d eyeOrigin    = Rend_EyeOrigin().xzy();
+    const auto eyeToV1          = Vec3d(from, height) - eyeOrigin;
+    const auto eyeToV2          = Vec3d(to,   height) - eyeOrigin;
 
-    binangle_t const startAngle = pointToAngle(eyeToV2);
-    binangle_t const endAngle   = pointToAngle(eyeToV1);
+    const binangle_t startAngle = pointToAngle(eyeToV2);
+    const binangle_t endAngle   = pointToAngle(eyeToV1);
 
     // Do not attempt to occlude with a zero-length range.
     if(startAngle == endAngle) return;
 
     // The normal points to the half we want to occlude.
-    Vector3f const normal = (topHalf? eyeToV2 : eyeToV1).cross(topHalf? eyeToV1 : eyeToV2);
+    const Vec3f normal = (topHalf? eyeToV2 : eyeToV1).cross(topHalf? eyeToV1 : eyeToV2);
 
-#ifdef DENG2_DEBUG
-    if(Vector3f(0, 0, (topHalf ? 1000 : -1000)).dot(normal) < 0)
+#ifdef DE_DEBUG
+    if(Vec3f(0, 0, (topHalf ? 1000 : -1000)).dot(normal) < 0)
     {
         LOG_AS("AngleClipper::addViewRelOcclusion");
         LOGDEV_GL_WARNING("Wrong side v1:%s v2:%s eyeOrigin:%s!")
                 << from.asText() << to.asText()
-                << Vector2d(eyeOrigin).asText();
-        DENG2_ASSERT(!"Failed AngleClipper::addViewRelOcclusion: Side test");
+                << Vec2d(eyeOrigin).asText();
+        DE_ASSERT_FAIL("Failed AngleClipper::addViewRelOcclusion: Side test");
     }
 #endif
 
@@ -933,16 +930,16 @@ void AngleClipper::addViewRelOcclusion(Vector2d const &from, Vector2d const &to,
     d->safeAddOcclusionRange(startAngle, endAngle, normal, topHalf);
 }
 
-dint AngleClipper::checkRangeFromViewRelPoints(Vector2d const &from, Vector2d const &to)
+dint AngleClipper::checkRangeFromViewRelPoints(const Vec2d &from, const Vec2d &to)
 {
     if(::devNoCulling) return true;
 
-    Vector2d const eyeOrigin = Rend_EyeOrigin().xz();
+    const Vec2d eyeOrigin = Rend_EyeOrigin().xz();
     return d->safeCheckRange(pointToAngle(to   - eyeOrigin) - BANG_45/90,
                              pointToAngle(from - eyeOrigin) + BANG_45/90);
 }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 void AngleClipper::validate()
 {
     for(Impl::Clipper *i = d->clipHead; i; i = i->next)

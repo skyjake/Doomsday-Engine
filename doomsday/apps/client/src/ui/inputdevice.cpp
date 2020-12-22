@@ -23,39 +23,38 @@
 #include "ui/axisinputcontrol.h"
 #include "ui/buttoninputcontrol.h"
 #include "ui/hatinputcontrol.h"
-#include <QList>
-#include <QtAlgorithms>
-#include <de/Log>
+#include <de/list.h>
+#include <de/log.h>
 
 using namespace de;
 
-DENG2_PIMPL(InputDevice)
+DE_PIMPL(InputDevice)
 {
     bool active = false;  ///< Initially inactive.
     String title;         ///< Human-friendly title.
     String name;          ///< Symbolic name.
 
-    QList<  AxisInputControl *> axes;
-    QList<ButtonInputControl *> buttons;
-    QList<   HatInputControl *> hats;
+    List<  AxisInputControl *> axes;
+    List<ButtonInputControl *> buttons;
+    List<   HatInputControl *> hats;
 
     Impl(Public *i) : Base(i) {}
 
     ~Impl()
     {
-        qDeleteAll(hats);
-        qDeleteAll(buttons);
-        qDeleteAll(axes);
+        deleteAll(hats);
+        deleteAll(buttons);
+        deleteAll(axes);
     }
 
-    DENG2_PIMPL_AUDIENCE(ActiveChange)
+    DE_PIMPL_AUDIENCE(ActiveChange)
 };
 
-DENG2_AUDIENCE_METHOD(InputDevice, ActiveChange)
+DE_AUDIENCE_METHOD(InputDevice, ActiveChange)
 
-InputDevice::InputDevice(String const &name) : d(new Impl(this))
+InputDevice::InputDevice(const String &name) : d(new Impl(this))
 {
-    DENG2_ASSERT(!name.isEmpty());
+    DE_ASSERT(!name.isEmpty());
     d->name = name;
 }
 
@@ -74,7 +73,7 @@ void InputDevice::activate(bool yes)
         d->active = yes;
 
         // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(ActiveChange, i) i->inputDeviceActiveChanged(*this);
+        DE_NOTIFY(ActiveChange, i) i->inputDeviceActiveChanged(*this);
     }
 }
 
@@ -88,7 +87,7 @@ String InputDevice::title() const
     return (d->title.isEmpty()? d->name : d->title);
 }
 
-void InputDevice::setTitle(String const &newTitle)
+void InputDevice::setTitle(const String &newTitle)
 {
     d->title = newTitle;
 }
@@ -98,37 +97,41 @@ String InputDevice::description() const
     String desc;
     if (!d->title.isEmpty())
     {
-        desc += String(_E(D)_E(b) "%1" _E(.)_E(.) " - ").arg(d->title);
+        desc += Stringf(_E(D)_E(b) "%s" _E(.)_E(.) " - ", d->title.c_str());
     }
-    desc += String(_E(b) "%1" _E(.)_E(l) " (%2)" _E(.)).arg(name()).arg(isActive()? "active" : "inactive");
+    desc += Stringf(
+        _E(b) "%s" _E(.) _E(l) " (%s)" _E(.), name().c_str(), isActive() ? "active" : "inactive");
 
-    if (int const count = axisCount())
+    if (const int count = axisCount())
     {
-        desc += String("\n  " _E(b) "%1 axes:" _E(.)).arg(count);
+        desc += Stringf("\n  " _E(b) "%i axes:" _E(.), count);
         int idx = 0;
-        for (Control const *axis : d->axes)
+        for (const Control *axis : d->axes)
         {
-            desc += String("\n    [%1] " _E(>) "%2" _E(<)).arg(idx++, 3).arg(axis->description());
+            desc += Stringf("\n    [%3i] " _E(>) "%s" _E(<), idx++,
+                                   axis->description().c_str());
         }
     }
 
-    if (int const count = buttonCount())
+    if (const int count = buttonCount())
     {
-        desc += String("\n  " _E(b) "%1 buttons:" _E(.)).arg(count);
+        desc += Stringf("\n  " _E(b) "%i buttons:" _E(.), count);
         int idx = 0;
-        for (Control const *button : d->buttons)
+        for (const Control *button : d->buttons)
         {
-            desc += String("\n    [%1] " _E(>) "%2" _E(<)).arg(idx++, 3).arg(button->description());
+            desc += Stringf("\n    [%03i] " _E(>) "%s" _E(<), idx++,
+                                   button->description().c_str());
         }
     }
 
-    if (int const count = hatCount())
+    if (const int count = hatCount())
     {
-        desc += String("\n  " _E(b) "%1 hats:" _E(.)).arg(count);
+        desc += Stringf("\n  " _E(b) "%i hats:" _E(.), count);
         int idx = 0;
-        for (Control const *hat : d->hats)
+        for (const Control *hat : d->hats)
         {
-            desc += String("\n    [%1] " _E(>) "%2" _E(<)).arg(idx++, 3).arg(hat->description());
+            desc += Stringf("\n    [%3i] " _E(>) "%s" _E(<), idx++,
+                                   hat->description().c_str());
         }
     }
 
@@ -160,7 +163,7 @@ void InputDevice::reset()
     LOG_INPUT_VERBOSE(_E(b) "'%s'" _E(.) " controls reset") << title();
 }
 
-LoopResult InputDevice::forAllControls(std::function<de::LoopResult (Control &)> func)
+LoopResult InputDevice::forAllControls(const std::function<de::LoopResult (Control &)>& func)
 {
     for (Control *axis : d->axes)
     {
@@ -177,7 +180,7 @@ LoopResult InputDevice::forAllControls(std::function<de::LoopResult (Control &)>
     return LoopContinue;
 }
 
-dint InputDevice::toAxisId(String const &name) const
+dint InputDevice::toAxisId(const String &name) const
 {
     if (!name.isEmpty())
     {
@@ -190,7 +193,7 @@ dint InputDevice::toAxisId(String const &name) const
     return -1;
 }
 
-dint InputDevice::toButtonId(String const &name) const
+dint InputDevice::toButtonId(const String &name) const
 {
     if (!name.isEmpty())
     {
@@ -203,7 +206,7 @@ dint InputDevice::toButtonId(String const &name) const
     return -1;
 }
 
-bool InputDevice::hasAxis(de::dint id) const
+bool InputDevice::hasAxis(int id) const
 {
     return (id >= 0 && id < d->axes.count());
 }
@@ -212,7 +215,7 @@ AxisInputControl &InputDevice::axis(dint id) const
 {
     if (hasAxis(id)) return *d->axes.at(id);
     /// @throw MissingControlError  The given id is invalid.
-    throw MissingControlError("InputDevice::axis", "Invalid id:" + String::number(id));
+    throw MissingControlError("InputDevice::axis", "Invalid id:" + String::asText(id));
 }
 
 void InputDevice::addAxis(AxisInputControl *axis)
@@ -227,7 +230,7 @@ int InputDevice::axisCount() const
     return d->axes.count();
 }
 
-bool InputDevice::hasButton(de::dint id) const
+bool InputDevice::hasButton(int id) const
 {
     return (id >= 0 && id < d->buttons.count());
 }
@@ -236,7 +239,7 @@ ButtonInputControl &InputDevice::button(dint id) const
 {
     if (hasButton(id)) return *d->buttons.at(id);
     /// @throw MissingControlError  The given id is invalid.
-    throw MissingControlError("InputDevice::button", "Invalid id:" + String::number(id));
+    throw MissingControlError("InputDevice::button", "Invalid id:" + String::asText(id));
 }
 
 void InputDevice::addButton(ButtonInputControl *button)
@@ -251,7 +254,7 @@ int InputDevice::buttonCount() const
     return d->buttons.count();
 }
 
-bool InputDevice::hasHat(de::dint id) const
+bool InputDevice::hasHat(int id) const
 {
     return (id >= 0 && id < d->hats.count());
 }
@@ -260,7 +263,7 @@ HatInputControl &InputDevice::hat(dint id) const
 {
     if (hasHat(id)) return *d->hats.at(id);
     /// @throw MissingControlError  The given id is invalid.
-    throw MissingControlError("InputDevice::hat", "Invalid id:" + String::number(id));
+    throw MissingControlError("InputDevice::hat", "Invalid id:" + String::asText(id));
 }
 
 void InputDevice::addHat(HatInputControl *hat)
@@ -293,7 +296,7 @@ void InputDevice::consoleRegister()
 
 //---------------------------------------------------------------------------------------
 
-DENG2_PIMPL_NOREF(InputDevice::Control)
+DE_PIMPL_NOREF(InputDevice::Control)
 {
     String name;  ///< Symbolic
     InputDevice *device = nullptr;
@@ -312,19 +315,19 @@ InputDevice::Control::~Control()
 
 String InputDevice::Control::name() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->name;
 }
 
-void InputDevice::Control::setName(String const &newName)
+void InputDevice::Control::setName(const String &newName)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     d->name = newName;
 }
 
 String InputDevice::Control::fullName() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     String desc;
     if (hasDevice()) desc += device().name() + "-";
     desc += (d->name.isEmpty()? "<unnamed>" : d->name);
@@ -333,7 +336,7 @@ String InputDevice::Control::fullName() const
 
 InputDevice &InputDevice::Control::device() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     if (d->device) return *d->device;
     /// @throw MissingDeviceError  Missing InputDevice attribution.
     throw MissingDeviceError("InputDevice::Control::device", "No InputDevice is attributed");
@@ -341,43 +344,43 @@ InputDevice &InputDevice::Control::device() const
 
 bool InputDevice::Control::hasDevice() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->device != nullptr;
 }
 
 void InputDevice::Control::setDevice(InputDevice *newDevice)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     d->device = newDevice;
 }
 
 BindContext *InputDevice::Control::bindContext() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->bindContext;
 }
 
 void InputDevice::Control::setBindContext(BindContext *newContext)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     d->bindContext = newContext;
 }
 
 InputDevice::Control::BindContextAssociation InputDevice::Control::bindContextAssociation() const
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     return d->flags;
 }
 
-void InputDevice::Control::setBindContextAssociation(BindContextAssociation const &flagsToChange, FlagOp op)
+void InputDevice::Control::setBindContextAssociation(const BindContextAssociation &flagsToChange, FlagOp op)
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     applyFlagOperation(d->flags, flagsToChange, op);
 }
 
 void InputDevice::Control::clearBindContextAssociation()
 {
-    DENG2_GUARD(this);
+    DE_GUARD(this);
     d->prevBindContext = d->bindContext;
     d->bindContext     = nullptr;
     applyFlagOperation(d->flags, Triggered, UnsetFlags);
@@ -385,8 +388,8 @@ void InputDevice::Control::clearBindContextAssociation()
 
 void InputDevice::Control::expireBindContextAssociationIfChanged()
 {
-    DENG2_GUARD(this);
-    
+    DE_GUARD(this);
+
     // No change?
     if (d->bindContext == d->prevBindContext) return;
 

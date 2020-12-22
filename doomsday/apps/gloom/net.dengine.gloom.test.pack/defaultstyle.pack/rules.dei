@@ -1,0 +1,76 @@
+# Length rules for the default UI style
+
+script {
+    import DisplayMode
+    UNIT = 4.0 * DisplayMode.DPI_FACTOR
+}
+
+rule unit     { constant $= UNIT }
+rule halfunit { constant $= UNIT / 2 }
+rule gap      { constant $= UNIT * 3 }
+rule glow     { constant $= UNIT * 25 }
+
+group label {
+    rule gap { constant $= gap.constant / 2 }
+}
+
+rule scrollarea.bar { constant $= UNIT }
+
+group document {
+    rule progress    { constant $= UNIT * 30 }
+    rule popup.width { constant $= UNIT * 120 }
+}
+
+group editor {
+    rule width { constant $= UNIT * 55 }
+    rule completion.height { constant $= UNIT * 100 }
+}
+
+group progress {
+    rule textgap { constant $= gap.constant }
+}
+
+group slider {
+    rule width  { constant $= UNIT * 55 }
+    rule label  { constant $= UNIT * 20 }
+    rule editor { constant $= UNIT * 20 }
+}
+
+group dialog {
+    rule gap { constant $= UNIT * 2 }
+
+    rule about.width       { constant $= UNIT * 80 }
+    rule message.width     { constant $= UNIT * 140 }
+    rule download.width    { constant $= UNIT * 115 }
+    rule multiplayer.width { constant $= UNIT * 80 }
+}
+
+group alerts {
+    rule width { constant $= UNIT * 100 }
+}
+
+group sidebar {
+    rule width { constant $= UNIT * 80 }
+}
+
+group console {
+    rule width { constant $= UNIT * 125 }
+
+    group commandline {
+        rule width.min { constant $= UNIT * 25 }
+        rule width.max { constant $= UNIT * 75 }
+    }
+}
+
+group gameselection {
+    rule max.width  { constant $= UNIT * 215 }
+    rule max.height { constant $= UNIT * 215 }
+}
+
+group coloradjustment {
+    rule slider { constant $= slider.width.constant * 1.36 }
+}
+
+group rendererappearance {
+    rule width { constant $= UNIT * 100 }
+}

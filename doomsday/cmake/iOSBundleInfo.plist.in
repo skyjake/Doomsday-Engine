@@ -6,10 +6,10 @@
     <string>Doomsday</string>
     <key>CFBundleDisplayName</key>
     <string>Doomsday</string>
-    <key>CFBundleIdentifier</key>    
+    <key>CFBundleIdentifier</key>
     <string>net.dengine.Doomsday</string>
     <key>CFBundleVersion</key>
-    <string>${DENG_VERSION}</string>
+    <string>${DE_VERSION}</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>UISupportedInterfaceOrientations</key>

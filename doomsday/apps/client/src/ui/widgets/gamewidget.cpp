@@ -26,7 +26,7 @@
 #include "ui/ui_main.h"
 #include "ui/sys_input.h"
 #include "ui/busyvisual.h"
-#include "ui/clientwindowsystem.h"
+#include "ui/inputsystem.h"
 #include "ui/viewcompositor.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/busywidget.h"
@@ -48,15 +48,11 @@
 #include "gl/gl_defer.h"
 
 #include <doomsday/console/exec.h>
-#include <de/FileSystem>
-#include <de/GLState>
-#include <de/GLTextureFramebuffer>
-#include <de/LogBuffer>
-#include <de/VRConfig>
-
-#include <QPainter>
-#include <QImage>
-#include <QBuffer>
+#include <de/filesystem.h>
+#include <de/glstate.h>
+#include <de/gltextureframebuffer.h>
+#include <de/logbuffer.h>
+#include <de/vrconfig.h>
 
 /**
  * Maximum number of milliseconds spent uploading textures at the beginning
@@ -67,9 +63,9 @@
 
 using namespace de;
 
-DENG2_PIMPL(GameWidget)
+DE_PIMPL(GameWidget)
 {
-    bool needFrames = true; // Rendering a new frame is necessary.
+    bool          needFrames   = true; // Rendering a new frame is necessary.
     VRConfig::Eye lastFrameEye = VRConfig::NeitherEye;
 
     Impl(Public *i) : Base(i) {}
@@ -138,8 +134,10 @@ DENG2_PIMPL(GameWidget)
 
         if (needFrames)
         {
+            using namespace world;
+
             // Notify the world that a new render frame has begun.
-            App_World().beginFrame(CPP_BOOL(R_NextViewer()));
+            ClientApp::world().notifyFrameState(World::FrameBegins);
 
             // Each players' view is rendered into an FBO first. What is seen on screen
             // is then composited using the player view as a texture with additional layers
@@ -151,7 +149,7 @@ DENG2_PIMPL(GameWidget)
             DGL_Flush();
 
             // Notify the world that we've finished rendering the frame.
-            App_World().endFrame();
+            ClientApp::world().notifyFrameState(World::FrameEnds);
 
             needFrames = false;
         }
@@ -175,7 +173,7 @@ DENG2_PIMPL(GameWidget)
     }
 };
 
-GameWidget::GameWidget(String const &name)
+GameWidget::GameWidget(const String &name)
     : GuiWidget(name), d(new Impl(this))
 {
     requestGeometry(false);
@@ -194,8 +192,10 @@ void GameWidget::drawComposited()
     d->drawComposited();
 }
 
-void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
+void GameWidget::renderCubeMap(uint size, const String &outputImagePath)
 {
+    using namespace world;
+
     const int player = consolePlayer;
     Vec2ui fbSize(size, size);
 
@@ -211,12 +211,11 @@ void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
     plr.publicData().flags |= DDPF_CAMERA;
 
     // Notify the world that a new render frame has begun.
-    App_World().beginFrame(CPP_BOOL(R_NextViewer()));
+    World::get().notifyFrameState(World::FrameBegins);
 
-    QImage composited(QSize(6 * size, size), QImage::Format_RGB32);
-    QPainter painter(&composited);
+    Image composited(Image::Size(6 * size, size), Image::RGB_888);
 
-    int const baseYaw = 180;
+    const int baseYaw = 180;
 
     GLTextureFramebuffer destFb(Image::RGB_888, fbSize, 1);
     destFb.glInit();
@@ -229,9 +228,9 @@ void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
         else
         {
             Rend_SetFixedView(player, baseYaw, i == 4? -90 : 90, 90, fbSize);
-        }        
+        }
         d->renderPlayerViewToFramebuffer(player, destFb);
-        painter.drawImage(i * size, 0, destFb.toImage());
+        composited.draw(i * size, 0, destFb.toImage());
 
         // IssueID #2401: Somewhere the GL state is messed up, only the first view would
         // be visible. A proper fix would be to look through the GL state changes during
@@ -240,26 +239,24 @@ void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
     }
     destFb.glDeinit();
 
-    App_World().endFrame();
+    World::get().notifyFrameState(World::FrameEnds);
 
     // Write the composited image to a file.
     {
-        QBuffer buf;
-        buf.open(QBuffer::WriteOnly);
-        composited.save(&buf, outputImagePath.fileNameExtension().mid(1).toLatin1());
+        const Block buf = composited.serialize(outputImagePath.fileNameExtension().toString());
 
         // Choose a unique name.
-        int counter = 0;
+        int    counter    = 0;
         String uniquePath = outputImagePath;
         while (FS::tryLocate<File const>(uniquePath))
         {
             uniquePath = outputImagePath.fileNameAndPathWithoutExtension() +
-                    String::format("-%03i", counter++) +
+                    Stringf("-%03i", counter++) +
                     outputImagePath.fileNameExtension();
         }
 
         File &outFile = FS::get().root().replaceFile(uniquePath);
-        outFile << Block(buf.data());
+        outFile << buf;
         outFile.flush();
 
         LOG_GL_MSG("Cube map saved to \"%s\"") << outFile.correspondingNativePath();
@@ -332,7 +329,7 @@ void GameWidget::drawContent()
     GLState::pop();
 }
 
-bool GameWidget::handleEvent(Event const &event)
+bool GameWidget::handleEvent(const Event &event)
 {
     /**
      * @todo Event processing should occur here, not during Loop_RunTics().
@@ -363,8 +360,8 @@ bool GameWidget::handleEvent(Event const &event)
             // Click completed on the widget, trap the mouse.
             window.eventHandler().trapMouse();
             window.taskBar().close();
-            root().setFocus(0);         // Allow input to reach here.
-            root().clearFocusStack();   // Ensure no popups steal focus away.
+            root().setFocus(this);         // Allow input to reach here.
+//            root().clearFocusStack();   // Ensure no popups steal focus away.
             break;
 
         default:
@@ -373,15 +370,28 @@ bool GameWidget::handleEvent(Event const &event)
         }
     }
 
-    if (event.type() == Event::KeyPress ||
-        event.type() == Event::KeyRepeat ||
-        event.type() == Event::KeyRelease)
+//    if (hasFocus())
     {
-        KeyEvent const &ev = event.as<KeyEvent>();
-        Keyboard_Submit(ev.state() == KeyEvent::Pressed? IKE_DOWN :
-                        ev.state() == KeyEvent::Repeat?  IKE_REPEAT :
-                                                         IKE_UP,
-                        ev.ddKey(), ev.nativeCode(), ev.text().toLatin1());
+        switch (event.type())
+        {
+        case Event::KeyPress:
+        case Event::KeyRepeat:
+        case Event::KeyRelease:
+            InputSystem::get().postKeyboardEvent(event.as<KeyEvent>());
+            return true;
+
+        case Event::MouseButton:
+        case Event::MouseMotion:
+        case Event::MouseWheel:
+            InputSystem::get().postMouseEvent(event.as<MouseEvent>());
+            return true;
+
+//            const auto &ev = event.as<KeyEvent>();
+//            Keyboard_Submit(ev.state() == KeyEvent::Pressed? IKE_DOWN :
+//                            ev.state() == KeyEvent::Repeat?  IKE_REPEAT :
+//                                                             IKE_UP,
+//                            ev.ddKey(), ev.scancode(), ev.text());
+        }
     }
 
     return false;
@@ -396,7 +406,7 @@ void GameWidget::glDeinit()
 
 D_CMD(CubeShot)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
 
     int size = String(argv[1]).toInt();
     if (size < 8) return false;

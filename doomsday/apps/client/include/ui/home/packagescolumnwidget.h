@@ -16,14 +16,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_HOME_PACKAGESCOLUMNWIDGET_H
-#define DENG_CLIENT_UI_HOME_PACKAGESCOLUMNWIDGET_H
+#ifndef DE_CLIENT_UI_HOME_PACKAGESCOLUMNWIDGET_H
+#define DE_CLIENT_UI_HOME_PACKAGESCOLUMNWIDGET_H
 
 #include "columnwidget.h"
 
 class PackagesColumnWidget : public ColumnWidget
 {
-    Q_OBJECT
+public:
+    DE_AUDIENCE(AvailableCount, void availablePackageCountChanged(int count))
 
 public:
     PackagesColumnWidget();
@@ -31,14 +32,11 @@ public:
     int availablePackageCount() const;
 
     de::String tabHeading() const override;
-    de::String tabShortcut() const override;
-    void setHighlighted(bool highlighted) override;
-
-signals:
-    void availablePackageCountChanged(int count);
+    int        tabShortcut() const override;
+    void       setHighlighted(bool highlighted) override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_HOME_PACKAGESCOLUMNWIDGET_H
+#endif // DE_CLIENT_UI_HOME_PACKAGESCOLUMNWIDGET_H

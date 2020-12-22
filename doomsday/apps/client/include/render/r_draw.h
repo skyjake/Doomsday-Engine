@@ -20,12 +20,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_MISC_H
-#define DENG_CLIENT_RENDER_MISC_H
+#ifndef DE_CLIENT_RENDER_MISC_H
+#define DE_CLIENT_RENDER_MISC_H
 
-#include "ClientTexture"
-#include "TextureVariantSpec"
-#include <de/GLTexture>
+#include "resource/clienttexture.h"
+#include "resource/texturevariantspec.h"
+#include <de/gltexture.h>
 
 void R_InitViewWindow();
 void R_ShutdownViewWindow();
@@ -35,13 +35,19 @@ void R_ShutdownViewWindow();
  */
 void R_DrawViewBorder();
 
-TextureVariantSpec const &Rend_PatchTextureSpec(int flags = 0,
-    de::gl::Wrapping wrapS = de::gl::ClampToEdge, de::gl::Wrapping wrapT = de::gl::ClampToEdge);
+const TextureVariantSpec &Rend_PatchTextureSpec(int               flags = 0,
+                                                de::gfx::Wrapping wrapS = de::gfx::ClampToEdge,
+                                                de::gfx::Wrapping wrapT = de::gfx::ClampToEdge);
 
 void R_DrawPatch(ClientTexture &texture, int x, int y);
 void R_DrawPatch(ClientTexture &texture, int x, int y, int w, int h, bool useOffsets = true);
 
-void R_DrawPatchTiled(ClientTexture &texture, int x, int y, int w, int h,
-    de::gl::Wrapping wrapS, de::gl::Wrapping wrapT);
+void R_DrawPatchTiled(ClientTexture &   texture,
+                      int               x,
+                      int               y,
+                      int               w,
+                      int               h,
+                      de::gfx::Wrapping wrapS,
+                      de::gfx::Wrapping wrapT);
 
-#endif // DENG_CLIENT_RENDER_MISC_H
+#endif // DE_CLIENT_RENDER_MISC_H

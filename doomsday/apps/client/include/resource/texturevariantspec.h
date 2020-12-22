@@ -17,16 +17,17 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_TEXTUREVARIANTSPEC_H
-#define DENG_RESOURCE_TEXTUREVARIANTSPEC_H
+#ifndef DE_RESOURCE_TEXTUREVARIANTSPEC_H
+#define DE_RESOURCE_TEXTUREVARIANTSPEC_H
 
 #ifndef __CLIENT__
 #  error "resource/texturevariantspec.h only exists in the Client"
 #endif
 
 #include "dd_types.h"
-//#include "gl/sys_opengl.h"
-#include <de/String>
+
+#include <de/string.h>
+#include <de/opengl.h>
 
 typedef enum {
     TC_UNKNOWN = -1,
@@ -70,7 +71,7 @@ struct variantspecification_t
     texturevariantusagecontext_t context;
     int flags; /// @ref textureVariantSpecificationFlags
     byte border; /// In pixels, added to all four edges of the texture.
-    int wrapS, wrapT;
+    GLenum wrapS, wrapT;
     dd_bool mipmapped, gammaCorrection, noStretch, toAlpha;
 
     /**
@@ -111,21 +112,21 @@ struct variantspecification_t
     /// Color palette translation.
     int tClass, tMap;
 
-    int glMinFilter() const;
-    int glMagFilter() const;
+    GLenum glMinFilter() const;
+    GLenum glMagFilter() const;
     int logicalAnisoLevel() const;
 
     variantspecification_t();
-    variantspecification_t(variantspecification_t const &other);
+    variantspecification_t(const variantspecification_t &other);
 
     /**
      * Magnification, Anisotropic filter level and GL texture wrap modes are
      * handled through dynamic changes to GL's texture environment state.
      * Consequently, they are ignored during spec equality comparison.
      */
-    bool operator == (variantspecification_t const &other) const;
+    bool operator == (const variantspecification_t &other) const;
 
-    inline bool operator != (variantspecification_t const &other) const {
+    inline bool operator != (const variantspecification_t &other) const {
         return !(*this == other);
     }
 };
@@ -144,9 +145,9 @@ struct detailvariantspecification_t
 {
     uint8_t contrast;
 
-    bool operator == (detailvariantspecification_t const &other) const;
+    bool operator == (const detailvariantspecification_t &other) const;
 
-    inline bool operator != (detailvariantspecification_t const &other) const {
+    inline bool operator != (const detailvariantspecification_t &other) const {
         return !(*this == other);
     }
 };
@@ -166,11 +167,11 @@ public:
 
 public:
     TextureVariantSpec(texturevariantspecificationtype_t type = TST_GENERAL);
-    TextureVariantSpec(TextureVariantSpec const &other);
+    TextureVariantSpec(const TextureVariantSpec &other);
 
-    bool operator == (TextureVariantSpec const &other) const;
-    
-    inline bool operator != (TextureVariantSpec const &other) const {
+    bool operator == (const TextureVariantSpec &other) const;
+
+    inline bool operator != (const TextureVariantSpec &other) const {
         return !(*this == other);
     }
 
@@ -180,4 +181,4 @@ public:
     de::String asText() const;
 };
 
-#endif // DENG_RESOURCE_TEXTUREVARIANTSPEC_H
+#endif // DE_RESOURCE_TEXTUREVARIANTSPEC_H

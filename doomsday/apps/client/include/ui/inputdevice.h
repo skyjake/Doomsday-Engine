@@ -21,10 +21,9 @@
 #define CLIENT_INPUTSYSTEM_INPUTDEVICE_H
 
 #include <functional>
-#include <QFlags>
-#include <de/Error>
-#include <de/Observers>
-#include <de/String>
+#include <de/error.h>
+#include <de/observers.h>
+#include <de/string.h>
 
 class BindContext;
 class AxisInputControl;
@@ -40,10 +39,10 @@ class InputDevice
 {
 public:
     /// Referenced control is missing. @ingroup errors
-    DENG2_ERROR(MissingControlError);
+    DE_ERROR(MissingControlError);
 
     /// Notified when the active state of the device changes.
-    DENG2_DEFINE_AUDIENCE2(ActiveChange, void inputDeviceActiveChanged(InputDevice &device))
+    DE_AUDIENCE(ActiveChange, void inputDeviceActiveChanged(InputDevice &device))
 
     /**
      * Base class for all controls.
@@ -53,7 +52,7 @@ public:
     {
     public:
         /// No InputDevice is associated with the control. @ingroup errors
-        DENG2_ERROR(MissingDeviceError);
+        DE_ERROR(MissingDeviceError);
 
         /**
          * How the control state relates to binding contexts.
@@ -70,13 +69,13 @@ public:
 
             DefaultFlags = 0
         };
-        Q_DECLARE_FLAGS(BindContextAssociation, BindContextAssociationFlag)
+        using BindContextAssociation = de::Flags;
 
     public:
         explicit Control(InputDevice *device = nullptr);
         virtual ~Control();
 
-        DENG2_CAST_METHODS()
+        DE_CAST_METHODS()
 
         /**
          * Returns @c true if the control is presently in its default state.
@@ -100,7 +99,7 @@ public:
         /**
          * Change the symbolic name of the control to @a newName.
          */
-        void setName(de::String const &newName);
+        void setName(const de::String &newName);
 
         /**
          * Compose the full symbolic name of the control including the device name
@@ -174,7 +173,7 @@ public:
          * @param flagsToChange  Association flags to change.
          * @param op             Logical operation to perform.
          */
-        void setBindContextAssociation(BindContextAssociation const &flagsToChange,
+        void setBindContextAssociation(const BindContextAssociation &flagsToChange,
                                        de::FlagOp op = de::SetFlags);
 
         void clearBindContextAssociation();
@@ -186,7 +185,7 @@ public:
         virtual void consoleRegister() {}
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
 public:
@@ -196,7 +195,7 @@ public:
      *
      * @param name  Symbolic name of the device.
      */
-    InputDevice(de::String const &name);
+    InputDevice(const de::String &name);
     virtual ~InputDevice();
 
     /**
@@ -229,7 +228,7 @@ public:
      * Change the title of the device, intended for human-readable descriptions,
      * to @a newTitle.
      */
-    void setTitle(de::String const &newTitle);
+    void setTitle(const de::String &newTitle);
 
     /**
      * Returns information about the device as styled text.
@@ -245,19 +244,19 @@ public:
     /**
      * Iterate through all the controls of the device.
      */
-    de::LoopResult forAllControls(std::function<de::LoopResult (Control &)> func);
+    de::LoopResult forAllControls(const std::function<de::LoopResult (Control &)>& func);
 
     /**
      * Translate a symbolic axis @a name to the associated unique axis id.
      *
      * @return  Index of the named axis control if found, otherwise @c -1.
      */
-    de::dint toAxisId(de::String const &name) const;
+    int toAxisId(const de::String &name) const;
 
     /**
      * Returns @c true if @a id is a known axis control.
      */
-    bool hasAxis(de::dint id) const;
+    bool hasAxis(int id) const;
 
     /**
      * Lookup an axis control by unique @a id.
@@ -266,7 +265,7 @@ public:
      *
      * @return  Axis control associated with the given @a id.
      */
-    AxisInputControl &axis(de::dint id) const;
+    AxisInputControl &axis(int id) const;
 
     /**
      * Add an @a axis control to the input device.
@@ -278,19 +277,19 @@ public:
     /**
      * Returns the number of axis controls of the device.
      */
-    de::dint axisCount() const;
+    int axisCount() const;
 
     /**
      * Translate a symbolic key @a name to the associated unique key id.
      *
      * @return  Index of the named key control if found, otherwise @c -1.
      */
-    de::dint toButtonId(de::String const &name) const;
+    int toButtonId(const de::String &name) const;
 
     /**
      * Returns @c true if @a id is a known button control.
      */
-    bool hasButton(de::dint id) const;
+    bool hasButton(int id) const;
 
     /**
      * Lookup a button control by unique @a id.
@@ -299,7 +298,7 @@ public:
      *
      * @return  Button control associated with the given @a id.
      */
-    ButtonInputControl &button(de::dint id) const;
+    ButtonInputControl &button(int id) const;
 
     /**
      * Add a @a button control to the input device.
@@ -311,12 +310,12 @@ public:
     /**
      * Returns the number of button controls of the device.
      */
-    de::dint buttonCount() const;
+    int buttonCount() const;
 
     /**
      * Returns @c true if @a id is a known hat control.
      */
-    bool hasHat(de::dint id) const;
+    bool hasHat(int id) const;
 
     /**
      * Lookup a hat control by unique @a id.
@@ -325,7 +324,7 @@ public:
      *
      * @return  Hat control associated with the given @a id.
      */
-    HatInputControl &hat(de::dint id) const;
+    HatInputControl &hat(int id) const;
 
     /**
      * Add a @a hat control to the input device.
@@ -337,7 +336,7 @@ public:
     /**
      * Returns the number of hat controls of the device.
      */
-    de::dint hatCount() const;
+    int hatCount() const;
 
     /**
      * Register the console commands and variables for this device and all controls.
@@ -345,10 +344,8 @@ public:
     void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(InputDevice::Control::BindContextAssociation)
 
 typedef InputDevice::Control InputControl;
 

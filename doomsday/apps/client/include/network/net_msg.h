@@ -24,11 +24,11 @@
 #ifndef __DOOMSDAY_NETMESSAGE_H__
 #define __DOOMSDAY_NETMESSAGE_H__
 
-#include <de/reader.h>
-#include <de/writer.h>
+#include <de/legacy/reader.h>
+#include <de/legacy/writer.h>
 
-DENG_EXTERN_C Writer1 *msgWriter;
-DENG_EXTERN_C Reader1 *msgReader;
+DE_EXTERN_C Writer1 *msgWriter;
+DE_EXTERN_C Reader1 *msgReader;
 
 #ifdef __cplusplus
 extern "C" {

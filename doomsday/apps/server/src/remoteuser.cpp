@@ -23,54 +23,61 @@
 #include "network/net_event.h"
 #include "server/sv_def.h"
 #include "serverapp.h"
-#include "world/map.h"
 
-#include <de/data/json.h>
-#include <de/memory.h>
-#include <de/Message>
-#include <de/ByteRefArray>
-#include <de/shell/Protocol>
+#include <doomsday/world/map.h>
+#include <doomsday/network/protocol.h>
 
-#include <QCryptographicHash>
+#include <de/json.h>
+#include <de/legacy/memory.h>
+#include <de/message.h>
+#include <de/byterefarray.h>
+#include <de/garbage.h>
 
 using namespace de;
 
-enum RemoteUserState {
-    Disconnected,
-    Unjoined,
-    Joined
-};
+enum RemoteUserState { Disconnected, Unjoined, Joined };
 
-DENG2_PIMPL(RemoteUser)
+DE_PIMPL(RemoteUser)
+, DE_OBSERVES(Socket, StateChange)
+, DE_OBSERVES(Socket, Message)
 {
-    Id id;
-    Socket *socket;
-    int protocolVersion;
-    Address address;
-    bool isFromLocal;
+    Id              id;
+    Socket *        socket;
+    int             protocolVersion;
+    Address         address;
+    bool            isFromLocal;
     RemoteUserState state;
-    String name;
-
+    String          name;
+    
     Impl(Public *i, Socket *sock)
-        : Base(i),
-          socket(sock),
-          state(Unjoined)
+        : Base(i)
+        , socket(sock)
+        , state(Unjoined)
     {
-        DENG2_ASSERT(socket != 0);
-
-        QObject::connect(socket, SIGNAL(disconnected()),  thisPublic, SLOT(socketDisconnected()));
-        QObject::connect(socket, SIGNAL(messagesReady()), thisPublic, SLOT(handleIncomingPackets()));
-
-        address = socket->peerAddress();
+        DE_ASSERT(socket != nullptr);
+        
+        socket->audienceForStateChange() += this;
+        socket->audienceForMessage() += this;
+        
+        address     = socket->peerAddress();
         isFromLocal = socket->isLocal();
-
-        LOG_NET_MSG("New remote user %s from socket %s (local:%b)")
-                << id << address << isFromLocal;
+        
+        LOG_NET_MSG("New remote user %s from socket %s (local:%b)") << id << address << isFromLocal;
     }
-
-    ~Impl()
+    
+    ~Impl() override
     {
         delete socket;
+    }
+    
+    void socketStateChanged(Socket &, Socket::SocketState state) override
+    {
+        if (state == Socket::Disconnected) self().socketDisconnected();
+    }
+    
+    void messagesIncoming(Socket &) override
+    {
+        self().handleIncomingPackets();
     }
 
     void notifyClientExit()
@@ -86,7 +93,7 @@ DENG2_PIMPL(RemoteUser)
         if (state == Disconnected) return;
 
         LOG_NET_NOTE("Closing connection to remote user %s (from %s)") << id << address;
-        DENG2_ASSERT(socket->isOpen());
+        DE_ASSERT(socket->isOpen());
 
         if (state == Joined)
         {
@@ -113,26 +120,24 @@ DENG2_PIMPL(RemoteUser)
      *
      * @return @c false to stop processing further incoming messages (for now).
      */
-    bool handleRequest(Block const &command)
+    bool handleRequest(const Block &command)
     {
         LOG_AS("handleRequest");
 
-        //ddstring_t msg;
-
-        auto const length = command.size();
+        const auto length = command.size();
 
         // If the command is too long, it'll be considered invalid.
         if (length >= 256)
         {
-            self().deleteLater();
+            disconnect();
             return false;
         }
 
         // Status query?
         if (command == "Info?")
         {
-            shell::ServerInfo const info = ServerApp::currentServerInfo();
-            Block const msg = "Info\n" + composeJSON(info.asRecord());
+            const ServerInfo info = ServerApp::currentServerInfo();
+            const Block msg = "Info\n" + composeJSON(info.asRecord());
             LOGDEV_NET_VERBOSE("Info reply:\n%s") << String::fromUtf8(msg);
             self() << msg;
         }
@@ -142,7 +147,7 @@ DENG2_PIMPL(RemoteUser)
         }
         else if (command == "MapOutline?")
         {
-            shell::MapOutlinePacket packet;
+            network::MapOutlinePacket packet;
             if (ServerApp::world().hasMap())
             {
                 ServerApp::world().map().initMapOutlinePacket(packet);
@@ -157,7 +162,7 @@ DENG2_PIMPL(RemoteUser)
             App_ServerSystem().convertToRemoteFeedUser(thisPublic);
             return false;
         }
-        else if (length >= 5 && command.startsWith("Shell"))
+        else if (length >= 5 && command.beginsWith("Shell"))
         {
             if (length == 5)
             {
@@ -172,12 +177,12 @@ DENG2_PIMPL(RemoteUser)
             else if (length > 5)
             {
                 // A password was included.
-                QByteArray supplied = command.mid(5);
-                QByteArray pwd(netPassword, strlen(netPassword));
-                if (supplied != QCryptographicHash::hash(pwd, QCryptographicHash::Sha1))
+                Block supplied = command.mid(5);
+                Block pwd(netPassword, strlen(netPassword));
+                if (supplied != pwd.md5Hash())
                 {
                     // Wrong!
-                    self().deleteLater();
+                    disconnect();
                     return false;
                 }
             }
@@ -187,9 +192,9 @@ DENG2_PIMPL(RemoteUser)
             App_ServerSystem().convertToShellUser(thisPublic);
             return false;
         }
-        else if (length >= 10 && command.startsWith("Join ") && command[9] == ' ')
+        else if (length >= 10 && command.beginsWith("Join ") && command[9] == ' ')
         {
-            protocolVersion = command.mid(5, 4).toInt(0, 16);
+            protocolVersion = String(command.mid(5, 4)).toInt(nullptr, 16);
 
             // Read the client's name and convert the network node into an actual
             // client. Here we also decide if the client's protocol is compatible
@@ -212,7 +217,7 @@ DENG2_PIMPL(RemoteUser)
             else
             {
                 // Couldn't join the game, so close the connection.
-                self().deleteLater();
+                disconnect();
                 return false;
             }
         }
@@ -220,21 +225,25 @@ DENG2_PIMPL(RemoteUser)
         {
             // Too bad, scoundrel! Goodbye.
             LOG_NET_WARNING("Received an invalid request from %s") << id;
-            self().deleteLater();
+            disconnect();
             return false;
         }
 
         // Everything was OK.
         return true;
     }
+
+    DE_PIMPL_AUDIENCE(Destroy)
 };
+
+DE_AUDIENCE_METHOD(RemoteUser, Destroy)
 
 RemoteUser::RemoteUser(Socket *socket) : d(new Impl(this, socket))
 {}
 
 RemoteUser::~RemoteUser()
 {
-    emit userDestroyed();
+    DE_NOTIFY(Destroy, i) { i->aboutToDestroyRemoteUser(*this); }
 
     d->disconnect();
 }
@@ -252,14 +261,14 @@ String RemoteUser::name() const
 Socket *RemoteUser::takeSocket()
 {
     Socket *sock = d->socket;
-    QObject::disconnect(sock, SIGNAL(disconnected()),  this, SLOT(socketDisconnected()));
-    QObject::disconnect(sock, SIGNAL(messagesReady()), this, SLOT(handleIncomingPackets()));
-    d->socket = 0;
-    d->state = Disconnected; // not signaled
+    sock->audienceForMessage()     -= d;
+    sock->audienceForStateChange() -= d;
+    d->socket = nullptr;
+    d->state  = Disconnected; // not signaled
     return sock;
 }
 
-void RemoteUser::send(IByteArray const &data)
+void RemoteUser::send(const IByteArray &data)
 {
     if (d->state != Disconnected && d->socket->isOpen())
     {
@@ -270,10 +279,10 @@ void RemoteUser::send(IByteArray const &data)
 void RemoteUser::handleIncomingPackets()
 {
     LOG_AS("RemoteUser");
-    forever
+    for (;;)
     {
-        QScopedPointer<Message> packet(d->socket->receive());
-        if (packet.isNull()) break;
+        std::unique_ptr<Message> packet(d->socket->receive());
+        if (!packet) break;
 
         switch (d->state)
         {
@@ -310,8 +319,7 @@ void RemoteUser::socketDisconnected()
 {
     d->state = Disconnected;
     d->notifyClientExit();
-
-    deleteLater();
+    trash(this);
 }
 
 bool RemoteUser::isJoined() const

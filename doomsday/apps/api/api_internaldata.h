@@ -23,13 +23,14 @@
 
 #include "apis.h"
 #include "dd_share.h"
+#include "def_share.h"
 
 /**
  * Data exported out of the Doomsday engine.
  *
  * @deprecated Avoid this API.
  */
-DENG_API_TYPEDEF(InternalData)
+DE_API_TYPEDEF(InternalData)
 {
     de_api_t api;
 
@@ -41,10 +42,10 @@ DENG_API_TYPEDEF(InternalData)
     // General information.
     int            *validCount;
 }
-DENG_API_T(InternalData);
+DE_API_T(InternalData);
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(InternalData);
+DE_USING_API(InternalData);
 #endif
 
 #endif  // DOOMSDAY_API_INTERNALDATA_H

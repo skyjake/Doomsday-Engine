@@ -19,11 +19,11 @@
  */
 
 #include "ui/buttoninputcontrol.h"
-#include <de/timer.h> // Timer_RealMilliseconds()
+#include <de/legacy/timer.h> // Timer_RealMilliseconds()
 
 using namespace de;
 
-ButtonInputControl::ButtonInputControl(String const &name)
+ButtonInputControl::ButtonInputControl(const String &name)
 {
     setName(name);
 }
@@ -38,7 +38,7 @@ bool ButtonInputControl::isDown() const
 
 void ButtonInputControl::setDown(bool yes)
 {
-    bool const oldDown = _isDown;
+    const bool oldDown = _isDown;
 
     _isDown = yes;
 
@@ -63,7 +63,7 @@ void ButtonInputControl::setDown(bool yes)
 
 String ButtonInputControl::description() const
 {
-    return String(_E(b) "%1 " _E(.) "(Button)").arg(fullName());
+    return Stringf(_E(b) "%s " _E(.) "(Button)", fullName().c_str());
 }
 
 bool ButtonInputControl::inDefaultState() const

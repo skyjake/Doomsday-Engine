@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_CONSOLE
+#define DE_NO_API_MACROS_CONSOLE
 #include <doomsday/console/exec.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
@@ -24,21 +24,21 @@
 #include "dd_main.h"
 
 #undef Con_SetUri2
-void Con_SetUri2(char const *path, uri_s const *uri, int svFlags)
+void Con_SetUri2(const char *path, const uri_s *uri, int svFlags)
 {
     cvar_t* var = Con_FindVariable(path);
     if(!var) return;
-    CVar_SetUri2(var, *reinterpret_cast<de::Uri const *>(uri), svFlags);
+    CVar_SetUri2(var, *reinterpret_cast<const res::Uri *>(uri), svFlags);
 }
 
 #undef Con_SetUri
-void Con_SetUri(char const *path, uri_s const *uri)
+void Con_SetUri(const char *path, const uri_s *uri)
 {
     Con_SetUri2(path, uri, 0);
 }
 
 #undef Con_SetString2
-void Con_SetString2(char const *path, char const *text, int svFlags)
+void Con_SetString2(const char *path, const char *text, int svFlags)
 {
     cvar_t *var = Con_FindVariable(path);
     if(!var) return;
@@ -46,13 +46,13 @@ void Con_SetString2(char const *path, char const *text, int svFlags)
 }
 
 #undef Con_SetString
-void Con_SetString(char const *path, char const *text)
+void Con_SetString(const char *path, const char *text)
 {
     Con_SetString2(path, text, 0);
 }
 
 #undef Con_SetInteger2
-void Con_SetInteger2(char const *path, int value, int svFlags)
+void Con_SetInteger2(const char *path, int value, int svFlags)
 {
     cvar_t *var = Con_FindVariable(path);
     if(!var) return;
@@ -60,13 +60,13 @@ void Con_SetInteger2(char const *path, int value, int svFlags)
 }
 
 #undef Con_SetInteger
-void Con_SetInteger(char const *path, int value)
+void Con_SetInteger(const char *path, int value)
 {
     Con_SetInteger2(path, value, 0);
 }
 
 #undef Con_SetFloat2
-void Con_SetFloat2(char const *path, float value, int svFlags)
+void Con_SetFloat2(const char *path, float value, int svFlags)
 {
     cvar_t *var = Con_FindVariable(path);
     if(!var) return;
@@ -74,13 +74,13 @@ void Con_SetFloat2(char const *path, float value, int svFlags)
 }
 
 #undef Con_SetFloat
-void Con_SetFloat(char const *path, float value)
+void Con_SetFloat(const char *path, float value)
 {
     Con_SetFloat2(path, value, 0);
 }
 
 #undef Con_GetInteger
-int Con_GetInteger(char const *path)
+int Con_GetInteger(const char *path)
 {
     cvar_t *var = Con_FindVariable(path);
     if(!var) return 0;
@@ -88,7 +88,7 @@ int Con_GetInteger(char const *path)
 }
 
 #undef Con_GetFloat
-float Con_GetFloat(char const *path)
+float Con_GetFloat(const char *path)
 {
     cvar_t *var = Con_FindVariable(path);
     if(!var) return 0;
@@ -96,7 +96,7 @@ float Con_GetFloat(char const *path)
 }
 
 #undef Con_GetByte
-byte Con_GetByte(char const *path)
+byte Con_GetByte(const char *path)
 {
     cvar_t *var = Con_FindVariable(path);
     if(!var) return 0;
@@ -104,7 +104,7 @@ byte Con_GetByte(char const *path)
 }
 
 #undef Con_GetString
-char const *Con_GetString(char const *path)
+const char *Con_GetString(const char *path)
 {
     cvar_t *var = Con_FindVariable(path);
     if(!var) return "";
@@ -112,12 +112,12 @@ char const *Con_GetString(char const *path)
 }
 
 #undef Con_GetUri
-uri_s const *Con_GetUri(char const *path)
+const uri_s *Con_GetUri(const char *path)
 {
-    return reinterpret_cast<uri_s const *>(&CVar_Uri(Con_FindVariable(path)));
+    return reinterpret_cast<const uri_s *>(&CVar_Uri(Con_FindVariable(path)));
 }
 
-cvartype_t Con_GetVariableType(char const *path)
+cvartype_t Con_GetVariableType(const char *path)
 {
     cvar_t *var = Con_FindVariable(path);
     if(!var) return CVT_NULL;
@@ -147,7 +147,7 @@ int DD_Executef(int silent, const char *command, ...)
     return Con_Execute(CMDS_GAME, buffer, silent, false);
 }
 
-DENG_DECLARE_API(Con) =
+DE_DECLARE_API(Con) =
 {
     { DE_API_CONSOLE },
 

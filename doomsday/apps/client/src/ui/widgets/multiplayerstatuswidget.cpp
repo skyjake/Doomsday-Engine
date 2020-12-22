@@ -19,11 +19,11 @@
 #include "ui/widgets/multiplayerstatuswidget.h"
 #include "network/serverlink.h"
 #include "clientapp.h"
-#include "CommandAction"
+#include "ui/commandaction.h"
 
-#include <de/ui/ActionItem>
-#include <de/ui/SubwidgetItem>
-#include <QTimer>
+#include <de/ui/actionitem.h>
+#include <de/ui/subwidgetitem.h>
+#include <de/timer.h>
 
 using namespace de;
 
@@ -31,15 +31,15 @@ enum {
     POS_STATUS = 1
 };
 
-DENG_GUI_PIMPL(MultiplayerStatusWidget)
-, DENG2_OBSERVES(ServerLink, Join)
-, DENG2_OBSERVES(ServerLink, Leave)
+DE_GUI_PIMPL(MultiplayerStatusWidget)
+, DE_OBSERVES(ServerLink, Join)
+, DE_OBSERVES(ServerLink, Leave)
 {
-    QTimer timer;
+    Timer timer;
 
     Impl(Public *i) : Base(i)
     {
-        timer.setInterval(1000);
+        timer.setInterval(1.0);
 
         link().audienceForJoin() += this;
         link().audienceForLeave() += this;
@@ -66,10 +66,10 @@ DENG_GUI_PIMPL(MultiplayerStatusWidget)
 MultiplayerStatusWidget::MultiplayerStatusWidget()
     : PopupMenuWidget("multiplayer-menu"), d(new Impl(this))
 {
-    connect(&d->timer, SIGNAL(timeout()), this, SLOT(updateElapsedTime()));
+    d->timer += [this](){ updateElapsedTime(); };
 
     items()
-            << new ui::ActionItem(tr("Disconnect"), new CommandAction("net disconnect"))
+            << new ui::ActionItem("Disconnect", new CommandAction("net disconnect"))
             //<< new ui::Item(ui::Item::Separator, tr("Connection:"))
             << new ui::Item(ui::Item::ShownAsLabel, ""); // sv address & time
 }
@@ -79,15 +79,16 @@ void MultiplayerStatusWidget::updateElapsedTime()
     if (d->link().status() != ServerLink::Connected)
         return;
 
-    TimeSpan const elapsed = d->link().connectedAt().since();
+    const TimeSpan elapsed = d->link().connectedAt().since();
 
-    items().at(POS_STATUS).setLabel(
-                _E(s)_E(l) + tr("Server:") + _E(.) " " + d->link().address().asText() + "\n"
-                _E(l) + tr("Connected:") + _E(.) +
-                String(" %1:%2:%3")
-                .arg(int(elapsed.asHours()))
-                .arg(int(elapsed.asMinutes()) % 60, 2, 10, QLatin1Char('0'))
-                .arg(int(elapsed) % 60, 2, 10, QLatin1Char('0')));
+    items()
+        .at(POS_STATUS)
+        .setLabel(_E(s) _E(l) "Server:" _E(.) " " + d->link().address().asText() +
+                  "\n" _E(l) "Connected:" _E(.) +
+                  Stringf(" %i:%02i:%02i",
+                                 int(elapsed.asHours()),
+                                 int(elapsed.asMinutes()) % 60,
+                                 int(elapsed) % 60));
 }
 
 void MultiplayerStatusWidget::preparePanelForOpening()

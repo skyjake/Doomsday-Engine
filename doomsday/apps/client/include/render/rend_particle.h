@@ -18,10 +18,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_PARTICLE_H
-#define DENG_CLIENT_RENDER_PARTICLE_H
+#ifndef DE_CLIENT_RENDER_PARTICLE_H
+#define DE_CLIENT_RENDER_PARTICLE_H
 
-namespace world { class Map; }
+class Map;
 
 // Maximum number of particle textures (not instances).
 #define MAX_PTC_TEXTURES        300
@@ -41,7 +41,7 @@ enum ParticleType
     PTC_MODEL = 1000
 };
 
-DENG_EXTERN_C de::dbyte useParticles;
+DE_EXTERN_C de::dbyte useParticles;
 
 void Rend_ParticleRegister();
 
@@ -66,6 +66,6 @@ void Rend_ParticleReleaseExtraTextures();
  * particles from one generator will obscure particles from another.
  * This would be especially bad with smoke trails.
  */
-void Rend_RenderParticles(world::Map &map);
+void Rend_RenderParticles(Map &map);
 
-#endif  // DENG_CLIENT_RENDER_PARTICLE_H
+#endif  // DE_CLIENT_RENDER_PARTICLE_H

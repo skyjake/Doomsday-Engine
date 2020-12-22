@@ -19,38 +19,6 @@
 
 #include "de_platform.h"
 
-#include <cstdlib>
-#include <QAction>
-#include <QDebug>
-#include <QDesktopServices>
-#include <QFontDatabase>
-#include <QMenuBar>
-#include <QNetworkProxyFactory>
-#include <QSplashScreen>
-
-#include <de/c_wrapper.h>
-#include <de/ArrayValue>
-#include <de/ByteArrayFile>
-#include <de/CallbackAction>
-#include <de/CommandLine>
-#include <de/Config>
-#include <de/DictionaryValue>
-#include <de/DisplayMode>
-#include <de/Error>
-#include <de/FileSystem>
-#include <de/Garbage>
-#include <de/Info>
-#include <de/Log>
-#include <de/LogSink>
-#include <de/NativeFont>
-#include <de/ScriptSystem>
-#include <de/TextValue>
-#include <de/VRConfig>
-
-#include <doomsday/console/exec.h>
-#include <doomsday/AbstractSession>
-#include <doomsday/GameStateFolder>
-
 #include "audio/audiosystem.h"
 #include "busyrunner.h"
 #include "clientapp.h"
@@ -65,62 +33,104 @@
 #include "gl/gl_texmanager.h"
 #include "gl/svg.h"
 #include "network/net_demo.h"
-#include "network/net_main.h"
 #include "network/serverlink.h"
 #include "render/r_draw.h"
 #include "render/rend_main.h"
 #include "render/rend_particle.h"
 #include "render/rendersystem.h"
+#include "render/classicworldrenderer.h"
+#include "render/gloomworldrenderer.h"
 #include "sys_system.h"
 #include "ui/alertmask.h"
 #include "ui/b_main.h"
 #include "ui/clientwindow.h"
-#include "ui/clientwindowsystem.h"
+#include "ui/clientstyle.h"
 #include "ui/dialogs/alertdialog.h"
 #include "ui/dialogs/packagecompatibilitydialog.h"
 #include "ui/inputsystem.h"
-#include "ui/nativemenu.h"
 #include "ui/progress.h"
-#include "ui/styledlogsinkformatter.h"
 #include "ui/sys_input.h"
 #include "ui/viewcompositor.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "updater.h"
 #include "updater/updatedownloaddialog.h"
 #include "world/contact.h"
+#include "world/gloomworld.h"
 #include "world/map.h"
 #include "world/p_players.h"
 
-#if WIN32
-#  include "dd_winit.h"
-#elif UNIX
-#  include "dd_uinit.h"
-#endif
+#include <doomsday/console/exec.h>
+#include <doomsday/abstractsession.h>
+#include <doomsday/gamestatefolder.h>
+#include <doomsday/net.h>
 
-#include <de/timer.h>
+#include <de/legacy/timer.h>
+#include <de/c_wrapper.h>
+#include <de/bytearrayfile.h>
+#include <de/callbackaction.h>
+#include <de/commandline.h>
+#include <de/config.h>
+#include <de/dscript.h>
+#include <de/error.h>
+#include <de/extension.h>
+#include <de/filesystem.h>
+#include <de/garbage.h>
+#include <de/info.h>
+#include <de/log.h>
+#include <de/logsink.h>
+#include <de/nativefont.h>
+#include <de/packageloader.h>
+#include <de/styledlogsinkformatter.h>
+#include <de/vrconfig.h>
+#include <de/windowsystem.h>
+
+#include <SDL_events.h>
+#include <SDL_surface.h>
+#include <SDL_timer.h>
+#include <SDL_video.h>
+
+#include <cstdlib>
 
 #include "ui/splash.xpm"
 
 using namespace de;
 
+DE_EXTENSION(importsave);
+
+#if defined (DE_HAVE_AUDIO_FMOD)
+DE_EXTENSION(fmod);
+#endif
+#if defined (DE_HAVE_AUDIO_FLUIDSYNTH)
+DE_EXTENSION(fluidsynth);
+#endif
+#if defined (DE_HAVE_AUDIO_OPENAL)
+DE_EXTENSION(openal);
+#endif
+#if defined (DE_HAVE_AUDIO_DIRECTSOUND)
+DE_EXTENSION(directsound);
+#endif
+#if defined (DE_HAVE_AUDIO_WINMM)
+DE_EXTENSION(winmm);
+#endif
+
 static ClientApp *clientAppSingleton = 0;
 
-static void handleLegacyCoreTerminate(char const *msg)
+DE_NORETURN static void handleLegacyCoreTerminate(const char *msg)
 {
     App_Error("Application terminated due to exception:\n%s\n", msg);
 }
 
 static void continueInitWithEventLoopRunning()
 {
-    if (!ClientWindowSystem::mainExists()) return;
+    if (!ClientWindow::mainExists()) return;
 
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
-    ClientWindowSystem::main().show();
+    ClientWindow::getMain().show();
 #endif
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
     ClientApp::updater().setupUI();
 #endif
 }
@@ -130,17 +140,20 @@ static Value *Function_App_ConsolePlayer(Context &, const Function::ArgumentValu
     return new RecordValue(DoomsdayApp::players().at(consolePlayer).objectNamespace());
 }
 
-static Value *Function_App_GamePlugin(Context &, Function::ArgumentValues const &)
+static Value *Function_App_GamePlugin(Context &, const Function::ArgumentValues &)
 {
     if (App_CurrentGame().isNull())
     {
         // The null game has no plugin.
         return 0;
     }
-    String name = DoomsdayApp::plugins().fileForPlugin(App_CurrentGame().pluginId())
-            .name().fileNameWithoutExtension();
-    if (name.startsWith("lib")) name.remove(0, 3);
-    return new TextValue(name);
+    return new TextValue(DoomsdayApp::plugins().extensionName(App_CurrentGame().pluginId()));
+}
+
+static Value *Function_App_Quit(Context &, const Function::ArgumentValues &)
+{
+    Sys_Quit();
+    return 0;
 }
 
 static Value *Function_App_GetInteger(Context &, const Function::ArgumentValues &args)
@@ -167,41 +180,49 @@ static Value *Function_App_SetInteger(Context &, const Function::ArgumentValues 
     return nullptr;
 }
 
-static Value *Function_App_Quit(Context &, Function::ArgumentValues const &)
+static SDL_Surface *createSDLSurfaceFromImage(const Image &image)
 {
-    Sys_Quit();
-    return nullptr;
+    const int imageWidth  = int(image.width());
+    const int imageHeight = int(image.height());
+    return SDL_CreateRGBSurfaceWithFormatFrom(const_cast<uint8_t *>(image.bits()),
+                                              imageWidth,
+                                              imageHeight,
+                                              int(image.depth()),
+                                              int(image.stride()),
+                                              SDL_PIXELFORMAT_ABGR8888);
 }
 
-DENG2_PIMPL(ClientApp)
-, DENG2_OBSERVES(Plugins, PublishAPI)
-, DENG2_OBSERVES(Plugins, Notification)
-, DENG2_OBSERVES(Games, Progress)
-, DENG2_OBSERVES(DoomsdayApp, GameChange)
-, DENG2_OBSERVES(DoomsdayApp, GameUnload)
-, DENG2_OBSERVES(DoomsdayApp, ConsoleRegistration)
-, DENG2_OBSERVES(DoomsdayApp, PeriodicAutosave)
+DE_PIMPL(ClientApp)
+, DE_OBSERVES(Plugins, PublishAPI)
+, DE_OBSERVES(Plugins, Notification)
+, DE_OBSERVES(App, StartupComplete)
+, DE_OBSERVES(Games, Progress)
+, DE_OBSERVES(DoomsdayApp, GameChange)
+, DE_OBSERVES(DoomsdayApp, GameUnload)
+, DE_OBSERVES(DoomsdayApp, ConsoleRegistration)
+, DE_OBSERVES(DoomsdayApp, PeriodicAutosave)
 {
+    SDL_Window *splashWindow = nullptr;
     Binder binder;
-#if defined (DENG_HAVE_UPDATER)
-    QScopedPointer<Updater> updater;
+#if defined (DE_HAVE_UPDATER)
+    std::unique_ptr<Updater> updater;
 #endif
-#if defined (DENG_HAVE_BUSYRUNNER)
+#if defined (DE_HAVE_BUSYRUNNER)
     BusyRunner busyRunner;
 #endif
-    ConfigProfiles audioSettings;
-    ConfigProfiles networkSettings;
-    ConfigProfiles logSettings;
-    ConfigProfiles uiSettings;
-    std::unique_ptr<NativeMenu> nativeAppMenu;
-    InputSystem *inputSys = nullptr;
-    AudioSystem *audioSys = nullptr;
-    RenderSystem *rendSys = nullptr;
+    ConfigProfiles   audioSettings;
+    ConfigProfiles   networkSettings;
+    ConfigProfiles   logSettings;
+    ConfigProfiles   windowSettings;
+    ConfigProfiles   uiSettings;
+    InputSystem *    inputSys  = nullptr;
+    AudioSystem *    audioSys  = nullptr;
+    RenderSystem *   rendSys   = nullptr;
     ClientResources *resources = nullptr;
-    ClientWindowSystem *winSys = nullptr;
-    InFineSystem infineSys; // instantiated at construction time
-    ServerLink *svLink = nullptr;
-    ClientServerWorld *world = nullptr;
+    InFineSystem     infineSys; // instantiated at construction time
+    ServerLink *     svLink       = nullptr;
+    ClientWorld *    classicWorld = nullptr;
+    GloomWorld *     gloomWorld   = nullptr;
 
     /**
      * Log entry sink that passes warning messages to the main window's alert
@@ -220,13 +241,14 @@ DENG2_PIMPL(ClientApp)
             setMode(OnlyWarningEntries);
         }
 
-        LogSink &operator << (LogEntry const &entry)
+        LogSink &operator<<(const LogEntry &entry)
         {
             if (alertMask.shouldRaiseAlert(entry.metadata()))
             {
                 // Don't raise alerts if the console history is open; the
                 // warning/error will be shown there.
                 if (ClientWindow::mainExists() &&
+                    ClientWindow::main().isUICreated() &&
                     ClientWindow::main().taskBar().isOpen() &&
                     ClientWindow::main().taskBar().console().isLogOpen())
                 {
@@ -235,17 +257,16 @@ DENG2_PIMPL(ClientApp)
 
                 // We don't want to raise alerts about problems in id/Raven WADs,
                 // since these just have to be accepted by the user.
-                if ((entry.metadata() & LogEntry::Map) &&
-                   ClientApp::world().hasMap())
+                if ((entry.metadata() & LogEntry::Map) && ClientApp::world().hasMap())
                 {
-                    world::Map const &map = ClientApp::world().map();
+                    const auto &map = ClientApp::world().map();
                     if (map.hasManifest() && !map.manifest().sourceFile()->hasCustom())
                     {
                         return *this;
                     }
                 }
 
-                foreach (String msg, formatter.logEntryToTextLines(entry))
+                for (const String &msg : formatter.logEntryToTextLines(entry))
                 {
                     ClientApp::alert(msg, entry.level());
                 }
@@ -253,7 +274,7 @@ DENG2_PIMPL(ClientApp)
             return *this;
         }
 
-        LogSink &operator << (String const &plainText)
+        LogSink &operator<<(const String &plainText)
         {
             ClientApp::alert(plainText);
             return *this;
@@ -276,51 +297,63 @@ DENG2_PIMPL(ClientApp)
         self().audienceForConsoleRegistration() += this;
         self().games().audienceForProgress() += this;
         self().audienceForPeriodicAutosave() += this;
+        self().audienceForStartupComplete() += this;
     }
 
-    ~Impl()
+    ~Impl() override
     {
         try
         {
-            ClientWindow::glActiveMain(); // for GL deinit
-
-            LogBuffer::get().removeSink(logAlarm);
-
-            self().players().forAll([] (Player &p)
-            {
+            ClientWindow::glActivateMain(); // for GL deinit
+                        
+            self().players().forAll([](Player &p) {
                 p.as<ClientPlayer>().viewCompositor().glDeinit();
                 return LoopContinue;
             });
-            self().glDeinit();
+            LogBuffer::get().removeSink(logAlarm);
 
             Sys_Shutdown();
+            
+            delete classicWorld; classicWorld = nullptr;
+            delete gloomWorld;   gloomWorld   = nullptr;
+            
             DD_Shutdown();
+
+            self().glDeinit();
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
-            qWarning() << "Exception during ~ClientApp:" << er.asText();
-            DENG2_ASSERT("Unclean shutdown: exception in ~ClientApp"!=0);
+            warning("Exception during ~ClientApp: %s", er.asText().c_str());
+            DE_ASSERT_FAIL("Unclean shutdown: exception in ~ClientApp");
         }
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
         updater.reset();
 #endif
         delete inputSys;
         delete resources;
-        delete winSys;
         delete audioSys;
         delete rendSys;
-        delete world;
         delete svLink;
         clientAppSingleton = 0;
     }
 
-    void publishAPIToPlugin(::Library *plugin)
+    void appStartupCompleted() override
     {
-        DD_PublishAPIs(plugin);
+        // Get rid of the splash window.
+        if (splashWindow)
+        {
+            SDL_DestroyWindow(splashWindow);
+            splashWindow = nullptr;
+        }
     }
 
-    void pluginSentNotification(int notification, void *data)
+    void publishAPIToPlugin(const char *plugName) override
+    {
+        DD_PublishAPIs(plugName);
+    }
+
+    void pluginSentNotification(int notification, void *data) override
     {
         LOG_AS("ClientApp::pluginSentNotification");
 
@@ -330,7 +363,7 @@ DENG2_PIMPL(ClientApp)
             // If an update has been downloaded and is ready to go, we should
             // re-show the dialog now that the user has saved the game as prompted.
             LOG_DEBUG("Game saved");
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
             UpdateDownloadDialog::showCompletedDownload();
 #endif
             break;
@@ -338,7 +371,7 @@ DENG2_PIMPL(ClientApp)
         case DD_NOTIFY_PSPRITE_STATE_CHANGED:
             if (data)
             {
-                auto const *args = (ddnotify_psprite_state_changed_t *) data;
+                const auto *args = (ddnotify_psprite_state_changed_t *) data;
                 self().player(args->player).weaponStateChanged(args->state);
             }
             break;
@@ -346,7 +379,7 @@ DENG2_PIMPL(ClientApp)
         case DD_NOTIFY_PLAYER_WEAPON_CHANGED:
             if (data)
             {
-                auto const *args = (ddnotify_player_weapon_changed_t *) data;
+                const auto *args = (ddnotify_player_weapon_changed_t *) data;
                 self().player(args->player).setWeaponAssetId(args->weaponId);
             }
             break;
@@ -356,22 +389,22 @@ DENG2_PIMPL(ClientApp)
         }
     }
 
-    void gameWorkerProgress(int progress)
+    void gameWorkerProgress(int progress) override
     {
         Con_SetProgress(progress);
     }
 
-    void consoleRegistration()
+    void consoleRegistration() override
     {
         DD_ConsoleRegister();
     }
 
-    void aboutToUnloadGame(Game const &/*gameBeingUnloaded*/)
+    void aboutToUnloadGame(const Game &/*gameBeingUnloaded*/) override
     {
-        DENG_ASSERT(ClientWindow::mainExists());
+        DE_ASSERT(ClientWindow::mainExists());
 
         // Quit netGame if one is in progress.
-        if (netGame)
+        if (netState.netGame)
         {
             Con_Execute(CMDS_DDAY, "net disconnect", true, false);
         }
@@ -386,7 +419,7 @@ DENG2_PIMPL(ClientApp)
         Rend_ParticleLoadSystemTextures();
         GL_ResetViewEffects();
 
-        infineSystem().reset();
+        infine().reset();
 
         if (App_GameLoaded())
         {
@@ -397,7 +430,7 @@ DENG2_PIMPL(ClientApp)
             Con_SetAllowed(0);
 
             R_ClearViewData();
-            world::R_DestroyContactLists();
+            R_DestroyContactLists();
             P_ClearPlayerImpulses();
 
             Con_Execute(CMDS_DDAY, "clearbindings", true, false);
@@ -408,7 +441,7 @@ DENG2_PIMPL(ClientApp)
         infineSys.deinitBindingContext();
     }
 
-    void currentGameChanged(Game const &newGame)
+    void currentGameChanged(const Game &newGame) override
     {
         if (Sys_IsShuttingDown()) return;
 
@@ -426,6 +459,8 @@ DENG2_PIMPL(ClientApp)
 
         if (newGame.isNull())
         {
+            world().unloadMap();
+
             // The mouse is free while in the Home.
             ClientWindow::main().eventHandler().trapMouse(false);
         }
@@ -435,7 +470,7 @@ DENG2_PIMPL(ClientApp)
         if (!newGame.isNull())
         {
             // Auto-start the game?
-            auto const *prof = self().currentGameProfile();
+            const auto *prof = self().currentGameProfile();
             if (prof && prof->autoStartMap())
             {
                 LOG_NOTE("Starting in %s as configured in the game profile")
@@ -443,28 +478,18 @@ DENG2_PIMPL(ClientApp)
 
                 Con_Executef(CMDS_DDAY, false, "setdefaultskill %i; setmap %s",
                              prof->autoStartSkill(),
-                             prof->autoStartMap().toUtf8().constData());
+                             prof->autoStartMap().c_str());
             }
         }
     }
 
-    void periodicAutosave()
+    void periodicAutosave() override
     {
         if (Config::exists())
         {
             Config::get().writeIfModified();
         }
         Con_SaveDefaultsIfChanged();
-    }
-
-    /**
-     * Set up an application-wide menu.
-     */
-    void setupAppMenu()
-    {
-#if defined (MACOSX)
-        nativeAppMenu.reset(new NativeMenu);
-#endif
     }
 
     void initSettings()
@@ -474,12 +499,22 @@ DENG2_PIMPL(ClientApp)
         // Log filter and alert settings.
         for (int i = LogEntry::FirstDomainBit; i <= LogEntry::LastDomainBit; ++i)
         {
-            String const name = LogFilter::domainRecordName(LogEntry::Context(1 << i));
+            const String name = LogFilter::domainRecordName(LogEntry::Context(1 << i));
             logSettings
-                    .define(Prof::ConfigVariable, String("log.filter.%1.minLevel").arg(name))
-                    .define(Prof::ConfigVariable, String("log.filter.%1.allowDev").arg(name))
-                    .define(Prof::ConfigVariable, String("alert.%1").arg(name));
+                    .define(Prof::ConfigVariable, Stringf("log.filter.%s.minLevel", name.c_str()))
+                    .define(Prof::ConfigVariable, Stringf("log.filter.%s.allowDev", name.c_str()))
+                    .define(Prof::ConfigVariable, "alert." + name);
         }
+
+        windowSettings
+                .define(Prof::ConfigVariable, "window.main.showFps")
+                .define(Prof::ConfigVariable, "window.main.fsaa")
+                .define(Prof::ConfigVariable, "window.main.vsync")
+                .define(Prof::IntCVar,        "refresh-rate-maximum", 0)
+                .define(Prof::IntCVar,        "rend-finale-stretch", SCALEMODE_SMART_STRETCH)
+                .define(Prof::IntCVar,        "rend-hud-stretch", SCALEMODE_SMART_STRETCH)
+                .define(Prof::IntCVar,        "inlude-stretch", SCALEMODE_SMART_STRETCH)
+                .define(Prof::IntCVar,        "menu-stretch", SCALEMODE_SMART_STRETCH);
 
         uiSettings
                 .define(Prof::ConfigVariable, "ui.scaleFactor")
@@ -500,19 +535,19 @@ DENG2_PIMPL(ClientApp)
         networkSettings
                 .define(Prof::ConfigVariable, "apiUrl")
                 .define(Prof::ConfigVariable, "resource.localPackages")
-                .define(Prof::IntCVar,        "net-dev",             0);
+                .define(Prof::IntCVar,        "net-dev",             NumberValue::zero);
 
         audioSettings
-                .define(Prof::IntCVar,        "sound-volume",        255 * 2/3)
-                .define(Prof::IntCVar,        "music-volume",        255 * 2/3)
-                .define(Prof::FloatCVar,      "sound-reverb-volume", 0.5f)
-                .define(Prof::IntCVar,        "sound-info",          0)
+                .define(Prof::IntCVar,        "sound-volume",        NumberValue(255 * 2/3))
+                .define(Prof::IntCVar,        "music-volume",        NumberValue(255 * 2/3))
+                .define(Prof::FloatCVar,      "sound-reverb-volume", NumberValue(0.5f))
+                .define(Prof::IntCVar,        "sound-info",          NumberValue::zero)
                 //.define(Prof::IntCVar,        "sound-rate",          11025)
                 //.define(Prof::IntCVar,        "sound-16bit",         0)
-                .define(Prof::IntCVar,        "sound-3d",            0)
-                .define(Prof::IntCVar,        "sound-overlap-stop",  0)
-                .define(Prof::IntCVar,        "music-source",        AudioSystem::MUSP_EXT)
-                .define(Prof::StringCVar,     "music-soundfont",     "")
+                .define(Prof::IntCVar,        "sound-3d",            NumberValue::zero)
+                .define(Prof::IntCVar,        "sound-overlap-stop",  NumberValue::zero)
+                .define(Prof::IntCVar,        "music-source",        NumberValue(AudioSystem::MUSP_EXT))
+                .define(Prof::StringCVar,     "music-soundfont",     TextValue())
                 .define(Prof::ConfigVariable, "audio.soundPlugin")
                 .define(Prof::ConfigVariable, "audio.musicPlugin")
                 .define(Prof::ConfigVariable, "audio.cdPlugin")
@@ -521,14 +556,8 @@ DENG2_PIMPL(ClientApp)
                 .define(Prof::ConfigVariable, "audio.output");
     }
 
-#ifdef UNIX
-    void printVersionToStdOut()
-    {
-        printf("%s\n", String("%1 %2")
-               .arg(DOOMSDAY_NICENAME)
-               .arg(DOOMSDAY_VERSION_FULLTEXT)
-               .toLatin1().constData());
-    }
+#if defined (UNIX)
+    void printVersionToStdOut() { printf("%s %s\n", DOOMSDAY_NICENAME, DOOMSDAY_VERSION_FULLTEXT); }
 
     void printHelpToStdOut()
     {
@@ -545,26 +574,26 @@ DENG2_PIMPL(ClientApp)
     }
 #endif
 
-    String mapClientStatePath(String const &mapId) const
+    String mapClientStatePath(const String &mapId) const
     {
-        return String("maps/%1ClientState").arg(mapId);
+        return Stringf("maps/%sClientState", mapId.c_str());
     }
 
-    String mapObjectStatePath(String const &mapId) const
+    String mapObjectStatePath(const String &mapId) const
     {
-        return String("maps/%1ObjectState").arg(mapId);
+        return Stringf("maps/%sObjectState", mapId.c_str());
     }
 };
 
-ClientApp::ClientApp(int &argc, char **argv)
-    : BaseGuiApp(argc, argv)
+ClientApp::ClientApp(const StringList &args)
+    : BaseGuiApp(args)
     , DoomsdayApp([] () -> Player * { return new ClientPlayer; })
     , d(new Impl(this))
 {
     novideo = false;
 
     // Use the host system's proxy configuration.
-    QNetworkProxyFactory::setUseSystemConfiguration(true);
+//    QNetworkProxyFactory::setUseSystemConfiguration(true);
 
     // Metadata.
     setMetadata("Deng Team", "dengine.net", "Doomsday Engine", DOOMSDAY_VERSION_BASE);
@@ -581,24 +610,57 @@ ClientApp::ClientApp(int &argc, char **argv)
     {
         auto &appModule = scriptSystem()["App"];
         d->binder.init(appModule)
-                << DENG2_FUNC_NOARG (App_ConsolePlayer, "consolePlayer")
-                << DENG2_FUNC_NOARG (App_GamePlugin,    "gamePlugin")
-                << DENG2_FUNC_NOARG (App_Quit,          "quit")
-                << DENG2_FUNC       (App_GetInteger,    "getInteger", "id")
-                << DENG2_FUNC       (App_SetInteger,    "setInteger", "id" << "value");
+                << DE_FUNC_NOARG (App_ConsolePlayer, "consolePlayer")
+                << DE_FUNC_NOARG (App_GamePlugin,    "gamePlugin")
+                << DE_FUNC_NOARG (App_Quit,          "quit")
+                << DE_FUNC       (App_GetInteger,    "getInteger", "id")
+                << DE_FUNC       (App_SetInteger,    "setInteger", "id" << "value");
     }
 
-#if !defined (DENG_MOBILE)
-    /// @todo Remove the splash screen when file system indexing can be done as
-    /// a background task and the main window can be opened instantly. -jk
-    QPixmap const pixmap(doomsdaySplashXpm);
-    QSplashScreen *splash = new QSplashScreen(pixmap);
-    splash->show();
-    splash->showMessage(Version::currentBuild().asHumanReadableText(),
-                        Qt::AlignHCenter | Qt::AlignBottom,
-                        QColor(90, 110, 95));
-    processEvents();
-    splash->deleteLater();
+    net().setTransmitterLookup([](int player) -> Transmitter * {
+        DE_ASSERT(player == 0);
+        DE_UNUSED(player);
+        return &serverLink();
+    });
+
+    // Show the splash image in a separate window.
+#if !defined (DE_MSYS)
+    {
+        SDL_Surface *splashSurface = createSDLSurfaceFromImage(Image::fromXpmData(doomsdaySplashXpm));
+
+        d->splashWindow =
+            SDL_CreateWindow(DOOMSDAY_NICENAME,
+                             SDL_WINDOWPOS_CENTERED,
+                             SDL_WINDOWPOS_CENTERED,
+                             splashSurface->w,
+                             splashSurface->h,
+                             SDL_WINDOW_BORDERLESS | SDL_WINDOW_SHOWN | SDL_WINDOW_ALWAYS_ON_TOP |
+                             SDL_WINDOW_ALLOW_HIGHDPI);
+
+        SDL_BlitSurface(splashSurface, nullptr, SDL_GetWindowSurface(d->splashWindow), nullptr);
+
+        // Version text.
+        {
+            FontParams fp{};
+            fp.family = "Builtin";
+            fp.pointSize = 16;
+            fp.spec.weight = 50;
+            Font font(fp);
+            const Image rasterized = font.rasterize(Version::currentBuild().asHumanReadableText(),
+                                                    Vec4ub(90, 110, 95, 255),
+                                                    Vec4ub(90, 110, 95, 0));
+            auto *surf = createSDLSurfaceFromImage(rasterized);
+            SDL_Rect rect = { splashSurface->w / 2 - surf->w / 2,
+                              splashSurface->h - surf->h * 3 / 2, 0, 0 };
+            SDL_BlitSurface(surf, nullptr, SDL_GetWindowSurface(d->splashWindow), &rect);
+            SDL_FreeSurface(surf);
+        }
+
+        SDL_UpdateWindowSurface(d->splashWindow);
+        SDL_FreeSurface(splashSurface);
+        SDL_RaiseWindow(d->splashWindow);
+        SDL_PumpEvents(); // allow it to appear immediately
+    }
 #endif
 }
 
@@ -607,25 +669,23 @@ void ClientApp::initialize()
     Libdeng_Init();
     DD_InitCommandLine();
 
-#ifdef UNIX
-    // Some common Unix command line options.
-    if (commandLine().has("--version") || commandLine().has("-version"))
+    #if defined (UNIX)
     {
-        d->printVersionToStdOut();
-        ::exit(0);
+        // Some common Unix command line options.
+        if (commandLine().has("--version") || commandLine().has("-version"))
+        {
+            d->printVersionToStdOut();
+            ::exit(0);
+        }
+        if (commandLine().has("--help") || commandLine().has("-h") || commandLine().has("-?"))
+        {
+            d->printHelpToStdOut();
+            ::exit(0);
+        }
     }
-    if (commandLine().has("--help") || commandLine().has("-h") || commandLine().has("-?"))
-    {
-        d->printHelpToStdOut();
-        ::exit(0);
-    }
-#endif
+    #endif
 
     d->svLink = new ServerLink;
-
-    // Config needs DisplayMode, so let's initialize it before the libcore
-    // subsystems and Config.
-    DisplayMode_Init();
 
     // Initialize definitions before the files are indexed.
     Def_Init();
@@ -649,21 +709,30 @@ void ClientApp::initialize()
     d->initSettings();
 
     // Initialize.
-#if WIN32
-    if (!DD_Win32_Init())
+    #if defined (WIN32)
     {
-        throw Error("ClientApp::initialize", "DD_Win32_Init failed");
+        if (!DD_Win32_Init())
+        {
+            throw Error("ClientApp::initialize", "DD_Win32_Init failed");
+        }
     }
-#elif UNIX
-    if (!DD_Unix_Init())
+    #elif defined (UNIX)
     {
-        throw Error("ClientApp::initialize", "DD_Unix_Init failed");
+        if (!DD_Unix_Init())
+        {
+            throw Error("ClientApp::initialize", "DD_Unix_Init failed");
+        }
     }
-#endif
+    #endif
 
     // Create the world system.
-    d->world = new ClientServerWorld;
-    addSystem(*d->world);
+#if 0
+    d->classicWorld = new ClientWorld;
+    addSystem(*d->classicWorld);
+#else
+    d->gloomWorld = new GloomWorld;
+    addSystem(*d->gloomWorld);
+#endif
 
     // Create the render system.
     d->rendSys = new RenderSystem;
@@ -673,12 +742,18 @@ void ClientApp::initialize()
     d->audioSys = new AudioSystem;
     addSystem(*d->audioSys);
 
-    // Create the window system.
-    d->winSys = new ClientWindowSystem;
-    WindowSystem::setAppWindowSystem(*d->winSys);
-    addSystem(*d->winSys);
+    // Set up the window system.
+    {
+        auto &ws = windowSystem();
+        ws.setStyle(new ClientStyle);
+        ws.style().load(packageLoader().load("net.dengine.client.defaultstyle"));
+        ws.audienceForAllClosing() += []() {
+            // We can't get rid of the windows without tearing down GL stuff first.
+            GL_Shutdown();
+        };
+    }
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
     // Check for updates automatically.
     d->updater.reset(new Updater);
 #endif
@@ -689,12 +764,7 @@ void ClientApp::initialize()
 
     plugins().loadAll();
 
-    // On mobile, the window is instantiated via QML.
-#if !defined (DENG_MOBILE)
-    d->winSys->createWindow()->setTitle(DD_ComposeMainWindowTitle());
-#endif
-
-    d->setupAppMenu();
+    windowSystem().newWindow<ClientWindow>()->setTitle(DD_ComposeMainWindowTitle());
 
     // Create the input system.
     d->inputSys = new InputSystem;
@@ -727,7 +797,7 @@ void ClientApp::postFrame()
 
     // We will arrive here always at the same time in relation to the displayed
     // frame: it is a good time to update the mouse state.
-    Mouse_Poll();
+//    Mouse_Poll();
 
     if (!BusyMode_Active())
     {
@@ -745,9 +815,9 @@ void ClientApp::postFrame()
     Garbage_Recycle();
 }
 
-void ClientApp::checkPackageCompatibility(StringList const &packageIds,
-                                          String const &userMessageIfIncompatible,
-                                          std::function<void ()> finalizeFunc)
+void ClientApp::checkPackageCompatibility(const StringList &packageIds,
+                                          const String &userMessageIfIncompatible,
+                                          const std::function<void ()>& finalizeFunc)
 {
     if (packageIds.isEmpty() || // Metadata did not specify packages.
         GameProfiles::arePackageListsCompatible(packageIds, loadedPackagesAffectingGameplay()))
@@ -765,7 +835,7 @@ void ClientApp::checkPackageCompatibility(StringList const &packageIds,
         {
             // Run the dialog's event loop in a separate timer callback so it doesn't
             // interfere with the app's event loop.
-            Loop::timer(.01, [this, dlg] ()
+            Loop::timer(.01, [dlg] ()
             {
                 dlg->setDeleteAfterDismissed(true);
                 dlg->exec(ClientWindow::main().root());
@@ -778,14 +848,14 @@ void ClientApp::checkPackageCompatibility(StringList const &packageIds,
     }
 }
 
-void ClientApp::gameSessionWasSaved(AbstractSession const &session,
+void ClientApp::gameSessionWasSaved(const AbstractSession &session,
                                     GameStateFolder &toFolder)
 {
     DoomsdayApp::gameSessionWasSaved(session, toFolder);
 
     try
     {
-        String const mapId = session.mapUri().path();
+        const String mapId = session.mapUri().path();
 
         // Internal map state.
         {
@@ -800,32 +870,32 @@ void ClientApp::gameSessionWasSaved(AbstractSession const &session,
             file << world().map().objectsDescription().toUtf8(); // plain text
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOGDEV_MAP_WARNING("Internal map state was not serialized: %s") << er.asText();
     }
 }
 
-void ClientApp::gameSessionWasLoaded(AbstractSession const &session,
-                                     GameStateFolder const &fromFolder)
+void ClientApp::gameSessionWasLoaded(const AbstractSession &session,
+                                     const GameStateFolder &fromFolder)
 {
     DoomsdayApp::gameSessionWasLoaded(session, fromFolder);
 
-    String const mapId = session.mapUri().path();
+    const String mapId = session.mapUri().path();
 
     // Internal map state. This might be missing.
     try
     {
-        if (File const *file = fromFolder.tryLocate<File const>(d->mapClientStatePath(mapId)))
+        if (const File *file = fromFolder.tryLocate<File const>(d->mapClientStatePath(mapId)))
         {
-            DENG2_ASSERT(session.thinkerMapping() != nullptr);
+            DE_ASSERT(session.thinkerMapping() != nullptr);
 
             Reader reader(*file);
             world().map().deserializeInternalState(reader.withHeader(),
                                                    *session.thinkerMapping());
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOGDEV_MAP_WARNING("Internal map state not deserialized: %s") << er.asText();
     }
@@ -833,7 +903,7 @@ void ClientApp::gameSessionWasLoaded(AbstractSession const &session,
     // Restore object state.
     try
     {
-        if (File const *file = fromFolder.tryLocate<File const>(d->mapObjectStatePath(mapId)))
+        if (const File *file = fromFolder.tryLocate<File const>(d->mapObjectStatePath(mapId)))
         {
             // Parse the info and cross-check with current state.
             world().map().restoreObjects(Info(*file), *session.thinkerMapping());
@@ -843,7 +913,7 @@ void ClientApp::gameSessionWasLoaded(AbstractSession const &session,
             LOGDEV_MSG("\"%s\" not found") << d->mapObjectStatePath(mapId);
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOGDEV_MAP_WARNING("Object state check error: %s") << er.asText();
     }
@@ -856,7 +926,7 @@ ClientPlayer &ClientApp::player(int console) // static
 
 LoopResult ClientApp::forLocalPlayers(const std::function<LoopResult (ClientPlayer &)> &func) // static
 {
-    auto const &players = DoomsdayApp::players();
+    const auto &players = DoomsdayApp::players();
     for (int i = 0; i < players.count(); ++i)
     {
         ClientPlayer &player = players.at(i).as<ClientPlayer>();
@@ -872,14 +942,18 @@ LoopResult ClientApp::forLocalPlayers(const std::function<LoopResult (ClientPlay
     return LoopContinue;
 }
 
-void ClientApp::alert(String const &msg, LogEntry::Level level)
+void ClientApp::alert(const String &msg, LogEntry::Level level)
 {
     if (ClientWindow::mainExists())
     {
-        ClientWindow::main().alerts()
-                .newAlert(msg, level >= LogEntry::Error?   AlertDialog::Major  :
-                               level == LogEntry::Warning? AlertDialog::Normal :
-                                                           AlertDialog::Minor);
+        auto &win = ClientWindow::main();
+        if (win.isUICreated())
+        {
+            win.alerts()
+                    .newAlert(msg, level >= LogEntry::Error?   AlertDialog::Major  :
+                                   level == LogEntry::Warning? AlertDialog::Normal :
+                                                               AlertDialog::Minor);
+        }
     }
     /**
      * @todo If there is no window, the alert could be stored until the window becomes
@@ -889,24 +963,29 @@ void ClientApp::alert(String const &msg, LogEntry::Level level)
 
 ClientApp &ClientApp::app()
 {
-    DENG2_ASSERT(clientAppSingleton != 0);
+    DE_ASSERT(clientAppSingleton != nullptr);
     return *clientAppSingleton;
 }
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
 Updater &ClientApp::updater()
 {
-    DENG2_ASSERT(!app().d->updater.isNull());
+    DE_ASSERT(app().d->updater);
     return *app().d->updater;
 }
 #endif
 
-#if defined (DENG_HAVE_BUSYRUNNER)
+#if defined (DE_HAVE_BUSYRUNNER)
 BusyRunner &ClientApp::busyRunner()
 {
     return app().d->busyRunner;
 }
 #endif
+
+ClientWindow *ClientApp::mainWindow()
+{
+    return static_cast<ClientWindow *>(WindowSystem::get().mainPtr());
+}
 
 ConfigProfiles &ClientApp::logSettings()
 {
@@ -923,6 +1002,11 @@ ConfigProfiles &ClientApp::audioSettings()
     return app().d->audioSettings;
 }
 
+ConfigProfiles &ClientApp::windowSettings()
+{
+    return app().d->windowSettings;
+}
+
 ConfigProfiles &ClientApp::uiSettings()
 {
     return app().d->uiSettings;
@@ -931,82 +1015,105 @@ ConfigProfiles &ClientApp::uiSettings()
 ServerLink &ClientApp::serverLink()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(a.d->svLink != 0);
+    DE_ASSERT(a.d->svLink != nullptr);
     return *a.d->svLink;
 }
 
-InFineSystem &ClientApp::infineSystem()
+InFineSystem &ClientApp::infine()
 {
     ClientApp &a = ClientApp::app();
-    //DENG2_ASSERT(a.d->infineSys != 0);
+    //DE_ASSERT(a.d->infineSys != 0);
     return a.d->infineSys;
 }
 
-InputSystem &ClientApp::inputSystem()
+InputSystem &ClientApp::input()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(a.d->inputSys != 0);
+    DE_ASSERT(a.d->inputSys != nullptr);
     return *a.d->inputSys;
 }
 
-bool ClientApp::hasInputSystem()
+bool ClientApp::hasInput()
 {
     return ClientApp::app().d->inputSys != nullptr;
 }
 
-RenderSystem &ClientApp::renderSystem()
+RenderSystem &ClientApp::render()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(hasRenderSystem());
+    DE_ASSERT(hasRender());
     return *a.d->rendSys;
 }
 
-bool ClientApp::hasRenderSystem()
+bool ClientApp::hasRender()
 {
     return ClientApp::app().d->rendSys != nullptr;
 }
 
-AudioSystem &ClientApp::audioSystem()
+AudioSystem &ClientApp::audio()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(hasAudioSystem());
+    DE_ASSERT(hasAudio());
     return *a.d->audioSys;
 }
 
-bool ClientApp::hasAudioSystem()
+bool ClientApp::hasAudio()
 {
     return ClientApp::app().d->audioSys != nullptr;
+}
+
+bool ClientApp::hasClassicWorld()
+{
+    return ClientApp::app().d->classicWorld != nullptr;
 }
 
 ClientResources &ClientApp::resources()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(a.d->resources != 0);
+    DE_ASSERT(a.d->resources != nullptr);
     return *a.d->resources;
 }
 
-ClientWindowSystem &ClientApp::windowSystem()
+world::World &ClientApp::world()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(a.d->winSys != 0);
-    return *a.d->winSys;
+    DE_ASSERT(a.d->gloomWorld || a.d->classicWorld);
+    if (a.d->gloomWorld) return *a.d->gloomWorld;
+    return *a.d->classicWorld;
 }
 
-ClientServerWorld &ClientApp::world()
+ClientWorld &ClientApp::classicWorld()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(a.d->world != 0);
-    return *a.d->world;
+    DE_ASSERT(a.d->classicWorld);
+    return *a.d->classicWorld;
 }
 
 void ClientApp::openHomepageInBrowser()
 {
-    openInBrowser(QUrl(DOOMSDAY_HOMEURL));
+    openInBrowser(DOOMSDAY_HOMEURL);
 }
 
-void ClientApp::openInBrowser(QUrl url)
+void ClientApp::showLocalFile(const NativePath &path)
 {
-#if !defined (DENG_MOBILE)
+    revealFile(path);
+}
+
+IWorldRenderer *ClientApp::makeWorldRenderer() const
+{
+    if (d->classicWorld)
+    {
+        return new ClassicWorldRenderer;
+    }
+    else
+    {
+        return new GloomWorldRenderer;
+    }
+}
+
+void ClientApp::openInBrowser(const String &url)
+{
+#if !defined (DE_MOBILE)
     // Get out of fullscreen mode.
     int windowed[] = {
         ClientWindow::Fullscreen, false,
@@ -1015,10 +1122,16 @@ void ClientApp::openInBrowser(QUrl url)
     ClientWindow::main().changeAttributes(windowed);
 #endif
 
-    QDesktopServices::openUrl(url);
+#if defined (MACOSX)
+    CommandLine({"/usr/bin/open", url}).execute();
+#elif defined (DE_WINDOWS)
+    DE_ASSERT_FAIL("Open URL in web browser");
+#else
+    CommandLine({"/usr/bin/xdg-open", url}).execute();
+#endif
 }
 
-void ClientApp::unloadGame(GameProfile const &upcomingGame)
+void ClientApp::unloadGame(const GameProfile &upcomingGame)
 {
     DoomsdayApp::unloadGame(upcomingGame);
 
@@ -1040,10 +1153,10 @@ void ClientApp::unloadGame(GameProfile const &upcomingGame)
     R_InitViewWindow();
     R_InitSvgs();
 
-    world::Map::initDummies();
+    world::Map::initDummyElements();
 }
 
-void ClientApp::makeGameCurrent(GameProfile const &newGame)
+void ClientApp::makeGameCurrent(const GameProfile &newGame)
 {
     DoomsdayApp::makeGameCurrent(newGame);
 
@@ -1056,9 +1169,9 @@ void ClientApp::reset()
     DoomsdayApp::reset();
 
     Rend_ResetLookups();
-    for (int i = 0; i < ClientApp::players().count(); ++i)
+    for (int i = 0; i < players().count(); ++i)
     {
-        ClientApp::player(i).viewCompositor().glDeinit();
+        player(i).viewCompositor().glDeinit();
     }
     if (App_GameLoaded())
     {

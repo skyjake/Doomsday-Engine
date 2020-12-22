@@ -18,8 +18,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_RESOURCE_HQ2X_H
-#define LIBDENG_RESOURCE_HQ2X_H
+#ifndef DE_RESOURCE_HQ2X_H
+#define DE_RESOURCE_HQ2X_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,7 +49,7 @@ void GL_InitSmartFilterHQ2x(void);
  * @param height  Height of the source image in pixels.
  * @param flags  @ref imageConversionFlags
  */
-uint8_t *GL_SmartFilterHQ2x(uint8_t const *src, int width, int height, int flags);
+uint8_t *GL_SmartFilterHQ2x(const uint8_t *src, int width, int height, int flags);
 
 ///@}
 
@@ -57,4 +57,4 @@ uint8_t *GL_SmartFilterHQ2x(uint8_t const *src, int width, int height, int flags
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_RESOURCE_HQ2X_H */
+#endif /* DE_RESOURCE_HQ2X_H */

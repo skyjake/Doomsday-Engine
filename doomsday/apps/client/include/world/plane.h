@@ -1,7 +1,7 @@
 /** @file plane.h  Map plane.
  * @ingroup world
  *
- * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -19,160 +19,45 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_PLANE_H
-#define DENG_WORLD_PLANE_H
+#pragma once
 
-#include <de/Error>
-#include <de/Observers>
-#include <de/String>
-#include <de/Vector>
-#include <doomsday/world/MapElement>
-
-#include "dd_share.h"  // SoundEmitter
-#ifdef __CLIENT__
-#  include "def_main.h"  // ded_ptcgen_t
+#if defined(__SERVER__)
+#  error "plane.h is only for Client"
 #endif
 
-class Sector;
-class Surface;
-#ifdef __CLIENT__
-namespace world { struct Generator; }
+#include "world/surface.h"
+#include <doomsday/world/plane.h>
+#include <array>
+
+#include "def_main.h"  // ded_ptcgen_t
+
+struct Generator;
+class Map;
 class ClPlaneMover;
-#endif
+class Surface;
 
-/**
- * World map sector plane.
- */
-class Plane : public world::MapElement
+namespace world { class Sector; }
+
+class Plane : public world::Plane
+    , DE_OBSERVES(world::Surface, MaterialChange)
 {
-    DENG2_NO_COPY  (Plane)
-    DENG2_NO_ASSIGN(Plane)
-
 public:
-#ifdef __CLIENT__
     /// No generator is attached. @ingroup errors
-    DENG2_ERROR(MissingGeneratorError);
-#endif
-
-    /// Notified when the plane is about to be deleted.
-    DENG2_DEFINE_AUDIENCE2(Deletion, void planeBeingDeleted(Plane const &plane))
-
-    /// Notified whenever a @em sharp height change occurs.
-    DENG2_DEFINE_AUDIENCE2(HeightChange, void planeHeightChanged(Plane &plane))
-
-#ifdef __CLIENT__
+    DE_ERROR(MissingGeneratorError);
 
     /// Notified whenever a @em smoothed height change occurs.
-    DENG2_DEFINE_AUDIENCE2(HeightSmoothedChange, void planeHeightSmoothedChanged(Plane &plane))
-
-#endif
-
-    /// Maximum speed for a smoothed plane.
-    static de::dint const MAX_SMOOTH_MOVE = 64;
+    DE_DEFINE_AUDIENCE(HeightSmoothedChange, void planeHeightSmoothedChanged(Plane &plane))
 
 public:
-    /**
-     * Construct a new plane.
-     *
-     * @param sector  Sector parent which will own the plane.
-     * @param normal  Normal of the plane (will be normalized if necessary).
-     * @param height  Height of the plane in map space coordinates.
-     */
-    Plane(Sector &sector,
-          de::Vector3f const &normal = de::Vector3f(0, 0, 1),
-          de::ddouble height         = 0);
+    Plane(world::Sector &sector, const de::Vec3f &normal = de::Vec3f(0, 0, 1), double height = 0);
 
-    /**
-     * Composes a human-friendly, styled, textual description of the plane.
-     */
-    de::String description() const;
+    ~Plane() override;
 
-    /**
-     * Returns the owning Sector of the plane.
-     */
-    Sector       &sector();
-    Sector const &sector() const;
+    Map &map() const;
+    Surface &surface() { return world::Plane::surface().as<Surface>(); }
+    const Surface &surface() const { return world::Plane::surface().as<Surface>(); }
 
-    /**
-     * Returns the index of the plane within the owning sector.
-     */
-    de::dint indexInSector() const;
-
-    /**
-     * Change the index of the plane within the owning sector.
-     *
-     * @param newIndex  New index to attribute the plane.
-     */
-    void setIndexInSector(de::dint newIndex);
-
-    /**
-     * Returns @c true iff this is the floor plane of the owning sector.
-     */
-    bool isSectorFloor() const;
-
-    /**
-     * Returns @c true iff this is the ceiling plane of the owning sector.
-     */
-    bool isSectorCeiling() const;
-
-    /**
-     * Returns the Surface component of the plane.
-     */
-    Surface       &surface();
-    Surface const &surface() const;
-
-    /**
-     * Returns a pointer to the Surface component of the plane (never @c nullptr).
-     */
-    Surface *surfacePtr() const;
-
-    /**
-     * Change the normal of the plane to @a newNormal (which if necessary will
-     * be normalized before being assigned to the plane).
-     *
-     * @post The plane's tangent vectors and logical plane type will have been
-     * updated also.
-     */
-    void setNormal(de::Vector3f const &newNormal);
-
-    /**
-     * Returns the sound emitter for the plane.
-     */
-    SoundEmitter       &soundEmitter();
-    SoundEmitter const &soundEmitter() const;
-
-    /**
-     * Update the sound emitter origin according to the point defined by the center
-     * of the plane's owning Sector (on the XY plane) and the Z height of the plane.
-     */
-    void updateSoundEmitterOrigin();
-
-    /**
-     * Returns the @em current sharp height of the plane relative to @c 0 on the
-     * map up axis. The HeightChange audience is notified whenever the height
-     * changes.
-     */
-    de::ddouble height() const;
-
-    /**
-     * Returns the @em target sharp height of the plane in world map units. The target
-     * height is the destination height following a successful move. Note that this may
-     * be the same as @ref height(), in which case the plane is not currently moving.
-     * The HeightChange audience is notified whenever the current @em sharp height changes.
-     *
-     * @see speed(), height()
-     */
-    de::ddouble heightTarget() const;
-
-    /**
-     * Returns the rate at which the plane height will be updated (units per tic)
-     * when moving to the target height in the map coordinate space.
-     *
-     * @see heightTarget(), height()
-     */
-    de::ddouble speed() const;
-
-#ifdef __CLIENT__
+    void setHeight(double newHeight) override;
 
     /**
      * Returns the current smoothed height of the plane (interpolated) in the
@@ -180,7 +65,7 @@ public:
      *
      * @see heightTarget(), height()
      */
-    de::ddouble heightSmoothed() const;
+    double heightSmoothed() const;
 
     /**
      * Returns the delta between current height and the smoothed height of the
@@ -188,7 +73,7 @@ public:
      *
      * @see heightSmoothed(), heightTarget()
      */
-    de::ddouble heightSmoothedDelta() const;
+    double heightSmoothedDelta() const;
 
     /**
      * Perform smoothed height interpolation.
@@ -223,14 +108,14 @@ public:
      *
      * @see hasGenerator()
      */
-    world::Generator &generator() const;
+    Generator &generator() const;
 
     /**
      * Creates a new flat-triggered particle generator based on the given
      * definition. Note that it may @em not be "this" plane to which the resultant
      * generator is attached as the definition may override this.
      */
-    void spawnParticleGen(ded_ptcgen_t const *def);
+    void spawnParticleGen(const ded_ptcgen_t *def);
 
     void addMover(ClPlaneMover &mover);
     void removeMover(ClPlaneMover &mover);
@@ -245,14 +130,13 @@ public:
      */
     bool receivesShadow() const;
 
-#endif  // __CLIENT__
-
-protected:
-    de::dint property(world::DmuArgs &args) const;
-    de::dint setProperty(world::DmuArgs const &args);
-
 private:
-    DENG2_PRIVATE(d)
-};
+    Generator *tryFindGenerator() const;
+    void notifySmoothedHeightChanged();
+    void surfaceMaterialChanged(world::Surface &) override;
 
-#endif  // DENG_WORLD_PLANE_H
+    std::array<double, 2> _oldHeight;  // Sharp height change tracking buffer (for smoothing).
+    double _heightSmoothed = 0;
+    double _heightSmoothedDelta = 0;   // Delta between the current sharp height and the visual height.
+    ClPlaneMover *_mover = nullptr;    // The current mover.
+};

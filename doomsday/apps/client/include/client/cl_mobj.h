@@ -18,14 +18,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_WORLD_MOBJ_H
-#define DENG_CLIENT_WORLD_MOBJ_H
+#ifndef DE_CLIENT_WORLD_MOBJ_H
+#define DE_CLIENT_WORLD_MOBJ_H
 
 #include "world/p_object.h"
 #include "world/clientmobjthinkerdata.h"
 
 /// Asserts that a given mobj is a client mobj.
-#define CL_ASSERT_CLMOBJ(mo)    DENG_ASSERT(Cl_IsClientMobj(mo));
+#define CL_ASSERT_CLMOBJ(mo)    DE_ASSERT(Cl_IsClientMobj(mo));
 
 /**
  * Make the real player mobj identical with the client mobj.
@@ -82,6 +82,6 @@ void ClMobj_ReadNullDelta();
  *
  * @return  @c true, if the mobj is a client mobj; otherwise @c false.
  */
-dd_bool Cl_IsClientMobj(mobj_t const *mo);
+dd_bool Cl_IsClientMobj(const mobj_t *mo);
 
-#endif // DENG_CLIENT_WORLD_MOBJ_H
+#endif // DE_CLIENT_WORLD_MOBJ_H

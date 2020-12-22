@@ -1,0 +1,34 @@
+image logo { path = "images/deng-logo-256.png" }
+
+group world {
+    image stone.diffuse { path = "images/mat-stone.png" }
+    image grass.diffuse { path = "images/mat-grass.jpg" }
+    image dirt.diffuse  { path = "images/mat-dirt.jpg" }
+    group test {
+        image diffuse    { path = "images/mat-stone.png" }
+        #image diffuse    { path = "images/mat-stone.png/Color.multiply:128,128,128" }
+        #image specgloss  { path = "images/mat-stone.png/Color.solid:32,40,50,128" }
+        #image normaldisp { path = "images/heights2.png/HeightMap.toNormals" }
+        image normaldisp { path = "images/softnoise.png/HeightMap.toNormals" }
+    }
+    image test2.diffuse { path = "images/mat-test2.png" }
+    group water {
+        image diffuse    { path = "images/softnoise.png/Color.solid:128,64,0,128" }
+        image normaldisp { path = "images/softnoise.png/HeightMap.toNormals" }
+        image specgloss  { path = "images/softnoise.png/Color.solid:255,255,255,255"}
+    }
+    group metal {
+        image basecolor { path = "images/rustediron-streaks_basecolor.png" }
+        image metallic  { path = "images/rustediron-streaks_metallic.png" }
+        image normal    { path = "images/rustediron-streaks_normal.png" }
+        image roughness { path = "images/rustediron-streaks_roughness.png" }
+    }
+}
+
+image noise { path = "images/softnoise.png" }
+
+group sky {
+    image day     { path = "images/sky-day.jpg" }
+    image morning { path = "images/sky-morning.jpg" }
+    image evening { path = "images/sky-evening.jpg" }
+}

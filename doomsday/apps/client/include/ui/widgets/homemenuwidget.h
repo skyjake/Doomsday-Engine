@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_HOME_HOMEMENUWIDGET_H
-#define DENG_CLIENT_UI_HOME_HOMEMENUWIDGET_H
+#ifndef DE_CLIENT_UI_HOME_HOMEMENUWIDGET_H
+#define DE_CLIENT_UI_HOME_HOMEMENUWIDGET_H
 
-#include <de/MenuWidget>
+#include <de/menuwidget.h>
 
 class HomeItemWidget;
 class ColumnWidget;
@@ -31,10 +31,12 @@ class ColumnWidget;
  */
 class HomeMenuWidget : public de::MenuWidget
 {
-    Q_OBJECT
+public:
+    DE_AUDIENCE(Selection, void selectedIndexChanged(HomeMenuWidget &, de::ui::DataPos index))
+    DE_AUDIENCE(Click,     void menuItemClicked(HomeMenuWidget &, de::ui::DataPos index))
 
 public:
-    HomeMenuWidget(de::String const &name = de::String());
+    HomeMenuWidget(const de::String &name = de::String());
 
     void unselectAll();
     void restorePreviousSelection();
@@ -54,23 +56,19 @@ public:
      */
     void setSelectedIndex(de::ui::DataPos index);
 
-    de::ui::Item const *interactedItem() const;
-    de::ui::Item const *actionItem() const;
-    void setInteractedItem(de::ui::Item const *menuItem,
-                           de::ui::Item const *actionItem);
+    const de::ui::Item *interactedItem() const;
+    const de::ui::Item *actionItem() const;
+    void setInteractedItem(const de::ui::Item *menuItem,
+                           const de::ui::Item *actionItem);
 
     ColumnWidget *parentColumn() const;
 
-signals:
-    void selectedIndexChanged(int index);
-    void itemClicked(int index);
-
-protected slots:
+protected:
     void mouseActivityInItem();
     void itemSelectionChanged();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_HOME_HOMEMENUWIDGET_H
+#endif // DE_CLIENT_UI_HOME_HOMEMENUWIDGET_H

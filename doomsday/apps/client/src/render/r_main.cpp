@@ -20,14 +20,6 @@
 
 #include "de_platform.h"
 
-#include <de/vector1.h>
-#include <de/GLInfo>
-#include <de/GLState>
-#include <de/GLFramebuffer>
-#include <doomsday/defs/sprite.h>
-#include <doomsday/world/Materials>
-#include <doomsday/res/Sprites>
-
 #include "dd_def.h"  // finesine
 #include "clientapp.h"
 #include "gl/gl_main.h"
@@ -40,60 +32,68 @@
 #include "render/vissprite.h"
 #include "resource/clientresources.h"
 #include "world/map.h"
+#include "world/subsector.h"
+#include "world/convexsubspace.h"
 #include "world/p_players.h"
-#include "BspLeaf"
-#include "ConvexSubspace"
-#include "client/clientsubsector.h"
+
+#include <doomsday/defs/sprite.h>
+#include <doomsday/world/bspleaf.h>
+#include <doomsday/world/materials.h>
+#include <doomsday/res/sprites.h>
+#include <de/legacy/vector1.h>
+#include <de/glinfo.h>
+#include <de/glstate.h>
+#include <de/glframebuffer.h>
 
 using namespace de;
 
-dint levelFullBright;
-dint weaponOffsetScaleY = 1000;
-dint psp3d;
+int levelFullBright;
+int weaponOffsetScaleY = 1000;
+int psp3d;
 
-dfloat pspLightLevelMultiplier = 1;
-dfloat pspOffset[2];
+float pspLightLevelMultiplier = 1;
+float pspOffset[2];
 
 /*
  * Console variables:
  */
-dfloat weaponFOVShift    = 45;
-dfloat weaponOffsetScale = 0.3183f;  // 1/Pi
+float weaponFOVShift    = 45;
+float weaponOffsetScale = 0.3183f;  // 1/Pi
 dbyte weaponScaleMode    = SCALEMODE_SMART_STRETCH;
 
-static MaterialVariantSpec const &pspriteMaterialSpec()
+static const MaterialVariantSpec &pspriteMaterialSpec()
 {
     return ClientApp::resources().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                  0, -2, 0, false, true, true, false);
 }
 
-static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs)
+static void setupPSpriteParams(rendpspriteparams_t &parm, const vispsprite_t &vs)
 {
-    static dint const WEAPONTOP = 32;  /// @todo Currently hardcoded here and in the plugins.
+    static const int WEAPONTOP = 32;  /// @todo Currently hardcoded here and in the plugins.
 
-    dfloat const offScaleY = ::weaponOffsetScaleY / 1000.0f;
+    const float offScaleY = ::weaponOffsetScaleY / 1000.0f;
 
-    DENG2_ASSERT(vs.psp);
-    ddpsprite_t const &psp = *vs.psp;
-    DENG2_ASSERT(psp.statePtr);
-    state_t const &state = *psp.statePtr;
+    DE_ASSERT(vs.psp);
+    const ddpsprite_t &psp = *vs.psp;
+    DE_ASSERT(psp.statePtr);
+    const state_t &state = *psp.statePtr;
 
-    defn::Sprite::View const spriteView = defn::Sprite(res::Sprites::get().sprite(state.sprite, state.frame)).view(0);
+    const defn::Sprite::View spriteView = defn::Sprite(res::Sprites::get().sprite(state.sprite, state.frame)).view(0);
 
     // Lookup the Material for this Sprite and prepare the animator.
     MaterialAnimator &matAnimator = ClientMaterial::find(*spriteView.material)
             .getAnimator(pspriteMaterialSpec());
     matAnimator.prepare();
 
-    TextureVariant const &tex             = *matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
-    Vector2i const &texOrigin             = tex.base().origin();
-    variantspecification_t const &texSpec = tex.spec().variant;
+    const TextureVariant &tex             = *matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+    const Vec2i &texOrigin             = tex.base().origin();
+    const variantspecification_t &texSpec = tex.spec().variant;
 
     parm.pos[0] = psp.pos[0] + texOrigin.x + pspOffset[0] - texSpec.border;
     parm.pos[1] = WEAPONTOP + offScaleY * (psp.pos[1] - WEAPONTOP) + texOrigin.y
                 + pspOffset[1] - texSpec.border;
 
-    Vector2ui const dimensions = matAnimator.dimensions() + Vector2ui(texSpec.border, texSpec.border) * 2;
+    const Vec2ui dimensions = matAnimator.dimensions() + Vec2ui(texSpec.border, texSpec.border) * 2;
     parm.width  = dimensions.x;
     parm.height = dimensions.y;
 
@@ -112,16 +112,16 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
     }
     else
     {
-        DENG2_ASSERT(vs.bspLeaf);
+        DE_ASSERT(vs.bspLeaf);
 #if 0
-        world::Map const &map = ClientApp::world().map();
+        const world::Map &map = ClientApp::world().map();
         if (useBias && map.hasLightGrid())
         {
             // Evaluate the position in the light grid.
-            Vector4f color = map.lightGrid().evaluate(vs.origin);
+            Vec4f color = map.lightGrid().evaluate(vs.origin);
 
             // Apply light range compression.
-            for (dint i = 0; i < 3; ++i)
+            for (int i = 0; i < 3; ++i)
             {
                 color[i] += Rend_LightAdaptationDelta(color[i]);
             }
@@ -131,11 +131,11 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
         else
 #endif
         {
-            auto const &subsec   = vs.bspLeaf->subspace().subsector().as<world::ClientSubsector>();
-            Vector4f const color = subsec.lightSourceColorfIntensity();
+            const auto &subsec   = vs.bspLeaf->subspace().subsector().as<Subsector>();
+            const Vec4f color = subsec.lightSourceColorfIntensity();
 
             // No need for distance attentuation.
-            dfloat lightLevel = color.w;
+            float lightLevel = color.w;
 
             // Add extra light plus bonus.
             lightLevel += Rend_ExtraLightDelta();
@@ -146,7 +146,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
             Rend_ApplyLightAdaptation(lightLevel);
 
             // Determine the final ambientColor.
-            for (dint i = 0; i < 3; ++i)
+            for (int i = 0; i < 3; ++i)
             {
                 parm.ambientColor[i] = lightLevel * color[i];
             }
@@ -154,7 +154,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
         Rend_ApplyTorchLight(parm.ambientColor, 0);
 
         parm.vLightListIdx =
-                Rend_CollectAffectingLights(vs.origin, Vector3f(parm.ambientColor),
+                Rend_CollectAffectingLights(vs.origin, Vec3f(parm.ambientColor),
                                             vs.bspLeaf->subspacePtr());
     }
 }
@@ -163,7 +163,7 @@ void Rend_Draw2DPlayerSprites()
 {
     if (!viewPlayer) return;
 
-    ddplayer_t const &ddpl = viewPlayer->publicData();
+    const ddplayer_t &ddpl = viewPlayer->publicData();
 
     // Cameramen have no HUD sprites.
     if (ddpl.flags & DDPF_CAMERA  ) return;
@@ -175,7 +175,7 @@ void Rend_Draw2DPlayerSprites()
     }
 
     // Draw HUD vissprites.
-    for (vispsprite_t const &vs : visPSprites)
+    for (const vispsprite_t &vs : visPSprites)
     {
         // We are only interested in sprites (models are handled elsewhere).
         if (vs.type != VPSPR_SPRITE) continue;  // No...
@@ -188,10 +188,10 @@ void Rend_Draw2DPlayerSprites()
             rendpspriteparams_t parm; setupPSpriteParams(parm, vs);
             Rend_DrawPSprite(parm);
         }
-        catch (Resources::MissingResourceManifestError const &er)
+        catch (const Resources::MissingResourceManifestError &er)
         {
             // Log but otherwise ignore this error.
-            state_t const &state = *vs.psp->statePtr;
+            const state_t &state = *vs.psp->statePtr;
             LOG_GL_WARNING("Drawing psprite '%i' frame '%i': %s")
                     << state.sprite << state.frame << er.asText();
         }
@@ -203,7 +203,7 @@ void Rend_Draw2DPlayerSprites()
     }
 }
 
-static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const &spr)
+static void setupModelParamsForVisPSprite(vissprite_t &vis, const vispsprite_t &spr)
 {
     drawmodelparams_t *params = VS_MODEL(&vis);
 
@@ -255,7 +255,7 @@ void Rend_Draw3DPlayerSprites()
     bool first = true;
 
     // Draw HUD vissprites.
-    for (vispsprite_t const &spr : visPSprites)
+    for (const vispsprite_t &spr : visPSprites)
     {
         // We are only interested in models (sprites are handled elsewhere).
         if (spr.type != VPSPR_MODEL &&
@@ -279,12 +279,162 @@ void Rend_Draw3DPlayerSprites()
         {
             vispsprite_t lit = spr;
             /// @todo Apply the origin offset here and when rendering.
-            lit.light.setupLighting(spr.origin + Vector3d(0, 0, -10), -10, *spr.bspLeaf);
-            ClientApp::renderSystem().modelRenderer()
+            lit.light.setupLighting(spr.origin + Vec3d(0, 0, -10), -10, *spr.bspLeaf);
+            ClientApp::render().modelRenderer()
                     .render(lit, viewPlayer->publicData().mo);
         }
     }
 
     // Restore normal projection matrix.
     GL_ProjectionMatrix(false);
+}
+
+angle_t R_ViewPointToAngle(Vec2d point)
+{
+    const viewdata_t *viewData = &viewPlayer->viewport();
+    point -= Vec2d(viewData->current.origin);
+    return M_PointXYToAngle(point.x, point.y);
+}
+
+coord_t R_ViewPointDistance(coord_t x, coord_t y)
+{
+    const Vec3d &viewOrigin = viewPlayer->viewport().current.origin;
+    coord_t viewOriginv1[2] = { viewOrigin.x, viewOrigin.y };
+    coord_t pointv1[2] = { x, y };
+    return M_PointDistance(viewOriginv1, pointv1);
+}
+
+void R_ProjectViewRelativeLine2D(coord_t const center[2], dd_bool alignToViewPlane,
+                                 coord_t width, coord_t offset, coord_t start[2], coord_t end[2])
+{
+    const viewdata_t *viewData = &viewPlayer->viewport();
+    float sinrv, cosrv;
+
+    if(alignToViewPlane)
+    {
+        // Should be fully aligned to view plane.
+        sinrv = -viewData->viewCos;
+        cosrv =  viewData->viewSin;
+    }
+    else
+    {
+        // Transform the origin point.
+        coord_t trX   = center[VX] - viewData->current.origin.x;
+        coord_t trY   = center[VY] - viewData->current.origin.y;
+        float thangle = BANG2RAD(bamsAtan2(trY * 10, trX * 10)) - float(de::PI) / 2;
+        sinrv = sin(thangle);
+        cosrv = cos(thangle);
+    }
+
+    start[VX] = center[VX];
+    start[VY] = center[VY];
+
+    start[VX] -= cosrv * ((width / 2) + offset);
+    start[VY] -= sinrv * ((width / 2) + offset);
+    end[VX] = start[VX] + cosrv * width;
+    end[VY] = start[VY] + sinrv * width;
+}
+
+void R_ProjectViewRelativeLine2D(Vec2d const center, bool alignToViewPlane,
+                                 coord_t width, coord_t offset, Vec2d &start, Vec2d &end)
+{
+    const viewdata_t *viewData = &viewPlayer->viewport();
+    float sinrv, cosrv;
+
+    if(alignToViewPlane)
+    {
+        // Should be fully aligned to view plane.
+        sinrv = -viewData->viewCos;
+        cosrv =  viewData->viewSin;
+    }
+    else
+    {
+        // Transform the origin point.
+        coord_t trX   = center[VX] - viewData->current.origin.x;
+        coord_t trY   = center[VY] - viewData->current.origin.y;
+        float thangle = BANG2RAD(bamsAtan2(trY * 10, trX * 10)) - float(de::PI) / 2;
+        sinrv = sin(thangle);
+        cosrv = cos(thangle);
+    }
+
+    start = center - Vec2d(cosrv * ((width / 2) + offset),
+                           sinrv * ((width / 2) + offset));
+    end = start + Vec2d(cosrv * width, sinrv * width);
+}
+
+bool R_GenerateTexCoords(Vec2f &s, Vec2f &t, const Vec3d &point,
+                         float xScale, float yScale, const Vec3d &v1, const Vec3d &v2,
+                         const Mat3f &tangentMatrix)
+{
+    const Vec3d v1ToPoint = v1 - point;
+    s[0] = v1ToPoint.dot(tangentMatrix.column(0)/*tangent*/) * xScale + .5f;
+    t[0] = v1ToPoint.dot(tangentMatrix.column(1)/*bitangent*/) * yScale + .5f;
+
+    // Is the origin point visible?
+    if(s[0] >= 1 || t[0] >= 1)
+        return false; // Right on the X axis or below on the Y axis.
+
+    const Vec3d v2ToPoint = v2 - point;
+    s[1] = v2ToPoint.dot(tangentMatrix.column(0)) * xScale + .5f;
+    t[1] = v2ToPoint.dot(tangentMatrix.column(1)) * yScale + .5f;
+
+    // Is the end point visible?
+    if(s[1] <= 0 || t[1] <= 0)
+        return false; // Left on the X axis or above on the Y axis.
+
+    return true;
+}
+
+#undef R_ChooseAlignModeAndScaleFactor
+DE_EXTERN_C dd_bool R_ChooseAlignModeAndScaleFactor(float *scale, int width, int height,
+                                                    int availWidth, int availHeight, scalemode_t scaleMode)
+{
+    if(scaleMode == SCALEMODE_STRETCH)
+    {
+        if(scale) *scale = 1;
+        return true;
+    }
+    else
+    {
+        float heightAspectCorrected = height * 1.2f;
+
+        // First try scaling horizontally to fit the available width.
+        float factor = float(availWidth) / float(width);
+        if(factor * heightAspectCorrected <= availHeight)
+        {
+            // Fits, use letterbox.
+            if(scale) *scale = factor;
+            return false;
+        }
+
+        // Fit vertically instead.
+        if(scale) *scale = float(availHeight) / heightAspectCorrected;
+        return true; // Pillarbox.
+    }
+}
+
+#undef R_ChooseScaleMode2
+DE_EXTERN_C scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight,
+                                           scalemode_t overrideMode, float stretchEpsilon)
+{
+    const float availRatio = float(availWidth) / availHeight;
+    const float origRatio  = float(width) / (height * 1.2f);
+
+    // Considered identical?
+    if(INRANGE_OF(availRatio, origRatio, .001f))
+        return SCALEMODE_STRETCH;
+
+    if(SCALEMODE_STRETCH == overrideMode || SCALEMODE_NO_STRETCH  == overrideMode)
+        return overrideMode;
+
+    // Within tolerable stretch range?
+    return INRANGE_OF(availRatio, origRatio, stretchEpsilon)? SCALEMODE_STRETCH : SCALEMODE_NO_STRETCH;
+}
+
+#undef R_ChooseScaleMode
+DE_EXTERN_C scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight,
+                                          scalemode_t overrideMode)
+{
+    return R_ChooseScaleMode2(availWidth, availHeight, width, height, overrideMode,
+                              DEFAULT_SCALEMODE_STRETCH_EPSILON);
 }

@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_IMAGE_H
-#define DENG_RESOURCE_IMAGE_H
+#ifndef DE_RESOURCE_IMAGE_H
+#define DE_RESOURCE_IMAGE_H
 
 #ifndef __CLIENT__
 #  error "resource/image.h is for the client only"
@@ -29,10 +29,10 @@
 
 #include "dd_share.h" // gfxmode_t
 #include <doomsday/filesys/filehandle.h>
-#include <de/Image>
-#include <de/String>
-#include <de/Vector>
-#include <de/size.h>
+#include <de/legacy/size.h>
+#include <de/image.h>
+#include <de/string.h>
+#include <de/vector.h>
 
 /// @todo Should not depend on texture-level stuff here.
 class TextureVariantSpec;
@@ -67,7 +67,7 @@ namespace res
 
 struct image_t
 {
-    typedef de::Vector2ui Size;
+    typedef de::Vec2ui Size;
 
     /// @ref imageFlags
     int flags = 0;
@@ -91,7 +91,7 @@ struct image_t
  */
 void Image_Init(image_t &image);
 
-void Image_InitFromImage(image_t &image, de::Image const &guiImage);
+void Image_InitFromImage(image_t &image, const de::Image &guiImage);
 
 /**
  * Releases image pixel data, but does not delete @a image.
@@ -102,14 +102,14 @@ void Image_ClearPixelData(image_t &image);
 /**
  * Returns the size of the image in pixels.
  */
-image_t::Size Image_Size(image_t const &image);
+image_t::Size Image_Size(const image_t &image);
 
 /**
  * Returns a textual description of the image.
  *
  * @return Human-friendly description of the image.
  */
-de::String Image_Description(image_t const &image);
+de::String Image_Description(const image_t &image);
 
 /**
  * Loads PCX, TGA and PNG images. The returned buffer must be freed
@@ -117,14 +117,14 @@ de::String Image_Description(image_t const &image);
  * The allocated memory buffer always has enough space for 4-component
  * colors.
  */
-uint8_t *Image_LoadFromFile(image_t &image, de::FileHandle &file);
+uint8_t *Image_LoadFromFile(image_t &image, res::FileHandle &file);
 
-bool Image_LoadFromFileWithFormat(image_t &image, char const *format, de::FileHandle &file);
+bool Image_LoadFromFileWithFormat(image_t &image, const char *format, res::FileHandle &file);
 
-bool Image_Save(image_t const &image, char const *filePath);
+bool Image_Save(const image_t &image, const char *filePath);
 
 /// @return  @c true if the image pixel data contains alpha information.
-bool Image_HasAlpha(image_t const &image);
+bool Image_HasAlpha(const image_t &image);
 
 /**
  * Converts the image by converting it to a luminance map and then moving
@@ -139,13 +139,13 @@ void Image_ConvertToAlpha(image_t &image, bool makeWhite = false);
 void Image_ConvertToLuminance(image_t &image, bool retainAlpha = true);
 
 /// @todo Move into image_t
-uint8_t *GL_LoadImage(image_t &image, de::String nativePath);
+uint8_t *GL_LoadImage(image_t &image, const de::String& nativePath);
 
 /// @todo Move into image_t
-res::Source GL_LoadExtImage(image_t &image, char const *searchPath, gfxmode_t mode);
+res::Source GL_LoadExtImage(image_t &image, const char *searchPath, gfxmode_t mode);
 
 /// @todo Move into image_t
-res::Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
-                               TextureVariantSpec const &spec);
+res::Source GL_LoadSourceImage(image_t &image, const ClientTexture &tex,
+                               const TextureVariantSpec &spec);
 
-#endif // DENG_RESOURCE_IMAGE_H
+#endif // DE_RESOURCE_IMAGE_H

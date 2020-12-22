@@ -17,17 +17,17 @@
  */
 
 #include "testapp.h"
-#include "appwindowsystem.h"
+#include "mainwindow.h"
 
-#include <de/DisplayMode>
-#include <de/FileSystem>
-#include <de/ScriptSystem>
+#include <de/dscript.h>
+#include <de/filesystem.h>
+#include <de/packageloader.h>
+#include <de/windowsystem.h>
 
 using namespace de;
 
-DENG2_PIMPL(TestApp)
+DE_PIMPL(TestApp)
 {
-    QScopedPointer<AppWindowSystem> winSys;
     ImageBank images;
 
     Impl(Public *i) : Base(i) {}
@@ -43,7 +43,7 @@ DENG2_PIMPL(TestApp)
         // Load all the shader program definitions.
         FS::FoundFiles found;
         self().findInPackages("shaders.dei", found);
-        DENG2_FOR_EACH(FS::FoundFiles, i, found)
+        DE_FOR_EACH(FS::FoundFiles, i, found)
         {
             LOG_MSG("Loading shader definitions from %s") << (*i)->description();
             self().shaders().addFromInfo(**i);
@@ -51,8 +51,9 @@ DENG2_PIMPL(TestApp)
     }
 };
 
-TestApp::TestApp(int &argc, char **argv)
-    : BaseGuiApp(argc, argv), d(new Impl(this))
+TestApp::TestApp(const StringList &args)
+    : BaseGuiApp(args)
+    , d(new Impl(this))
 {
     setMetadata("Deng Team", "dengine.net", "Application Framework Test", "1.0");
     setUnixHomeFolderName(".test_appfw");
@@ -60,13 +61,11 @@ TestApp::TestApp(int &argc, char **argv)
 
 void TestApp::initialize()
 {
-    DisplayMode_Init();
     addInitPackage("net.dengine.test.appfw");
-    initSubsystems(App::DisablePlugins);
+    initSubsystems();
 
     // Create subsystems.
-    d->winSys.reset(new AppWindowSystem);
-    addSystem(*d->winSys);
+    windowSystem().style().load(packageLoader().package("net.dengine.stdlib.gui"));
 
     d->loadAllShaders();
 
@@ -74,26 +73,29 @@ void TestApp::initialize()
     d->images.addFromInfo(rootFolder().locate<File>("/packs/net.dengine.test.appfw/images.dei"));
 
     // Create the window.
-    MainWindow *win = d->winSys->newWindow<MainWindow>("main");
+    auto *win = windowSystem().newWindow<MainWindow>("main");
 
     scriptSystem().importModule("bootstrap");
 
     win->show();
 }
 
+void TestApp::createAnotherWindow()
+{
+    if (!windowSystem().findWindow("extra"))
+    {
+        windowSystem().newWindow<MainWindow>("extra")->show();
+    }
+}
+
 TestApp &TestApp::app()
 {
-    return *static_cast<TestApp *>(DENG2_APP);
+    return *static_cast<TestApp *>(DE_APP);
 }
 
-AppWindowSystem &TestApp::windowSystem()
+MainWindow &TestApp::mainWindow()
 {
-    return *app().d->winSys;
-}
-
-MainWindow &TestApp::main()
-{
-    return windowSystem().main();
+    return windowSystem().getMain().as<MainWindow>();
 }
 
 ImageBank &TestApp::images()

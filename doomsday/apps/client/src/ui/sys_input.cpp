@@ -1,4 +1,4 @@
-/** @file sys_input.cpp  Keyboard and mouse input pre-processing. 
+/** @file sys_input.cpp  Keyboard and mouse input pre-processing.
  *
  * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -28,18 +28,18 @@
 
 #include "sys_system.h"
 
-#include "ui/mouse_qt.h"  // portable
-#ifdef WIN32
-#  include "directinput.h"
-#  include "mouse_win32.h"
-#endif
+// #include "ui/mouse_qt.h"  // portable
+// #ifdef WIN32
+// #  include "directinput.h"
+// #  include "mouse_win32.h"
+// #endif
 
 #define EVBUFSIZE       64
 #define KEYBUFSIZE      32
 
 static dd_bool initOk;
-static byte useMouse;  ///< Input enabled from mouse?
-static mouseinterface_t *iMouse; ///< Current mouse interface.
+//static byte useMouse;  ///< Input enabled from mouse?
+//static mouseinterface_t *iMouse; ///< Current mouse interface.
 
 static keyevent_t keyEvents[EVBUFSIZE];
 static int evHead, evTail;
@@ -74,19 +74,19 @@ static keyevent_t *getKeyEvent(void)
     return ev;
 }
 
-static void Mouse_Init(void)
-{
-    if (CommandLine_Check("-nomouse") || novideo)
-        return;
+//static void Mouse_Init(void)
+//{
+//    if (CommandLine_Check("-nomouse") || novideo)
+//        return;
 
-    LOG_AS("Mouse_Init");
+//    LOG_AS("Mouse_Init");
 
-    DENG_ASSERT(iMouse);
-    iMouse->init();
+//    DE_ASSERT(iMouse);
+//    iMouse->init();
 
     // Init was successful.
-    useMouse = true;
-}
+//    useMouse = true;
+//}
 
 dd_bool I_InitInterfaces(void)
 {
@@ -96,13 +96,13 @@ dd_bool I_InitInterfaces(void)
 #ifdef __CLIENT__
 
     // Select drivers.
-    iMouse = &qtMouse;
+//    iMouse = &qtMouse;
 #ifdef WIN32
-    iMouse = &win32Mouse;
-    DirectInput_Init();
+//    iMouse = &win32Mouse;
+//    DirectInput_Init();
 #endif
 
-    Mouse_Init();
+//    Mouse_Init();
     Joystick_Init();
 
 #endif // __CLIENT__
@@ -117,12 +117,12 @@ void I_ShutdownInterfaces()
         return; // Not initialized.
 
 #ifdef __CLIENT__
-    if (useMouse) iMouse->shutdown();
-    useMouse = false;
+//    if (useMouse) iMouse->shutdown();
+//    useMouse = false;
 
     Joystick_Shutdown();
 # ifdef WIN32
-    DirectInput_Shutdown();
+//    DirectInput_Shutdown();
 # endif
 #endif
 
@@ -163,6 +163,7 @@ size_t Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize)
     return i;
 }
 
+#if 0
 dd_bool Mouse_IsPresent(void)
 {
     //if (!initOk) I_InitInterfaces();
@@ -173,7 +174,7 @@ void Mouse_Poll(void)
 {
     if (useMouse)
     {
-        iMouse->poll();
+//        iMouse->poll();
     }
 }
 
@@ -181,7 +182,7 @@ void Mouse_GetState(mousestate_t *state)
 {
     if (useMouse)
     {
-        iMouse->getState(state);
+//        iMouse->getState(state);
     }
 }
 
@@ -189,6 +190,7 @@ void Mouse_Trap(dd_bool enabled)
 {
     if (useMouse)
     {
-        iMouse->trap(enabled);
+//        iMouse->trap(enabled);
     }
 }
+#endif

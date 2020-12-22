@@ -31,38 +31,21 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_FAKERADIO
-#define DENG_CLIENT_RENDER_FAKERADIO
+#ifndef DE_CLIENT_RENDER_FAKERADIO
+#define DE_CLIENT_RENDER_FAKERADIO
 
-#include "WallEdge"
+#ifdef __SERVER__
+#  error "rend_fakeradio.h is only for the Client"
+#endif
 
-namespace world { class ConvexSubspace; }
+#include <de/libcore.h>
+
+class ConvexSubspace;
+class WallEdge;
 class Plane;
 
-/**
- * FakeRadio shadow data.
- * @ingroup render
- */
-struct shadowcorner_t
-{
-    de::dfloat corner;
-    Plane *proximity;
-    de::dfloat pOffset;
-    de::dfloat pHeight;
-};
-
-/**
- * FakeRadio connected edge data.
- * @ingroup render
- */
-struct edgespan_t
-{
-    de::dfloat length;
-    de::dfloat shift;
-};
-
-DENG2_EXTERN_C de::dint rendFakeRadio;
-DENG2_EXTERN_C byte devFakeRadioUpdate;
+DE_EXTERN_C int     rendFakeRadio;
+DE_EXTERN_C uint8_t devFakeRadioUpdate;
 
 /**
  * Render FakeRadio for the specified wall section. Generates and then draws all shadow geometry
@@ -75,17 +58,17 @@ DENG2_EXTERN_C byte devFakeRadioUpdate;
  * @param rightEdge     Geometry for the right edge of the wall section.
  * @param ambientLight  Ambient light level/luminosity.
  */
-void Rend_DrawWallRadio(WallEdge const &leftEdge, WallEdge const &rightEdge, de::dfloat ambientLight);
+void Rend_DrawWallRadio(const WallEdge &leftEdge, const WallEdge &rightEdge, float ambientLight);
 
 /**
  * Render FakeRadio for the given subspace. Draws all shadow geometry linked to the ConvexSubspace,
  * that has not already been rendered.
  */
-void Rend_DrawFlatRadio(world::ConvexSubspace const &subspace);
+void Rend_DrawFlatRadio(const ConvexSubspace &subspace);
 
 /**
  * Register the console commands, variables, etc..., of this module.
  */
 void Rend_RadioRegister();
 
-#endif  // DENG_CLIENT_RENDER_FAKERADIO
+#endif  // DE_CLIENT_RENDER_FAKERADIO

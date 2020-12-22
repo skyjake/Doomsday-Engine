@@ -18,11 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_VISSPRITE_H
-#define DENG_CLIENT_RENDER_VISSPRITE_H
+#ifndef DE_CLIENT_RENDER_VISSPRITE_H
+#define DE_CLIENT_RENDER_VISSPRITE_H
 
-#include <de/Vector>
-#include <de/GLState>
+#include <de/vector.h>
+#include <de/glstate.h>
 
 #include "render/billboard.h"
 #include "rend_model.h"
@@ -50,9 +50,9 @@ enum visspritetype_t
 /// @ingroup render
 struct VisEntityPose
 {
-    de::Vector3d origin;
+    de::Vec3d origin;
     float topZ = 0.f;               ///< Global top Z coordinate (origin Z is the bottom).
-    de::Vector3d srvo;              ///< Short-range visual offset.
+    de::Vec3d srvo;                 ///< Short-range visual offset.
     coord_t distance = 0.0;         ///< Distance from viewer.
     float yaw = 0.f;
     float extraYawAngle = 0.f;
@@ -66,13 +66,13 @@ struct VisEntityPose
 
     VisEntityPose() = default;
 
-    VisEntityPose(de::Vector3d const &origin_, de::Vector3d const &visOffset,
+    VisEntityPose(const de::Vec3d &origin_, const de::Vec3d &visOffset,
                   bool viewAlign_ = false,
-                  de::dfloat topZ_ = 0,
-                  de::dfloat yaw_ = 0,
-                  de::dfloat yawAngleOffset_ = 0,
-                  de::dfloat pitch_ = 0,
-                  de::dfloat pitchAngleOffset_= 0)
+                  float topZ_ = 0,
+                  float yaw_ = 0,
+                  float yawAngleOffset_ = 0,
+                  float pitch_ = 0,
+                  float pitchAngleOffset_= 0)
         : origin(origin_)
         , topZ(topZ_)
         , srvo(visOffset)
@@ -90,24 +90,24 @@ struct VisEntityPose
 
     inline coord_t midZ() const { return (origin.z + topZ) / 2; }
 
-    de::Vector3d mid() const { return de::Vector3d(origin.x, origin.y, midZ()); }
+    de::Vec3d mid() const { return de::Vec3d(origin.x, origin.y, midZ()); }
 };
 
 /// @ingroup render
 struct VisEntityLighting
 {
-    de::Vector4f ambientColor;
+    de::Vec4f ambientColor;
     de::duint vLightListIdx = 0;
     bool isFullBright = false;
 
     VisEntityLighting() = default;
 
-    VisEntityLighting(de::Vector4f const &ambientColor, de::duint lightListIndex)
+    VisEntityLighting(const de::Vec4f &ambientColor, de::duint lightListIndex)
         : ambientColor(ambientColor)
         , vLightListIdx(lightListIndex)
     {}
 
-    void setupLighting(de::Vector3d const &origin, de::ddouble distance, world::BspLeaf const &bspLeaf);
+    void setupLighting(const de::Vec3d &origin, double distance, const world::BspLeaf &bspLeaf);
 };
 
 /**
@@ -139,15 +139,15 @@ struct vissprite_t
 #define VS_MODEL2(v)        (&((v)->data.model2))
 #define VS_FLARE(v)         (&((v)->data.flare))
 
-void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
-    de::dfloat secFloor, de::dfloat secCeil, de::dfloat floorClip, de::dfloat top,
+void VisSprite_SetupSprite(vissprite_t *spr, const VisEntityPose &pose, const VisEntityLighting &light,
+    float secFloor, float secCeil, float floorClip, float top,
     ClientMaterial &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
-    de::dint tClass, de::dint tMap, world::BspLeaf *bspLeafAtOrigin,
+    int tClass, int tMap, world::BspLeaf *bspLeafAtOrigin,
     bool floorAdjust, bool fitTop, bool fitBottom);
 
-void VisSprite_SetupModel(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
-    FrameModelDef *mf, FrameModelDef *nextMF, de::dfloat inter,
-    de::dint id, de::dint selector, world::BspLeaf *bspLeafAtOrigin, de::dint mobjDDFlags, de::dint tmap,
+void VisSprite_SetupModel(vissprite_t *spr, const VisEntityPose &pose, const VisEntityLighting &light,
+    FrameModelDef *mf, FrameModelDef *nextMF, float inter,
+    int id, int selector, world::BspLeaf *bspLeafAtOrigin, int mobjDDFlags, int tmap,
     bool fullBright, bool alwaysInterpolate);
 
 /// @ingroup render
@@ -163,7 +163,7 @@ struct vispsprite_t
 {
     vispspritetype_t      type;
     ddpsprite_t *         psp;
-    de::Vector3d          origin;
+    de::Vec3d             origin;
     const world::BspLeaf *bspLeaf;
     VisEntityLighting     light;
     float                 alpha; // overall opacity
@@ -198,9 +198,9 @@ struct vispsprite_t
     } data;
 };
 
-DENG_EXTERN_C vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
-DENG_EXTERN_C vissprite_t visSprSortedHead;
-DENG_EXTERN_C vispsprite_t visPSprites[DDMAXPSPRITES];
+DE_EXTERN_C vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
+DE_EXTERN_C vissprite_t visSprSortedHead;
+DE_EXTERN_C vispsprite_t visPSprites[DDMAXPSPRITES];
 
 /// To be called at the start of the current render frame to clear the vissprite list.
 void R_ClearVisSprites();
@@ -209,4 +209,4 @@ vissprite_t *R_NewVisSprite(visspritetype_t type);
 
 void R_SortVisSprites();
 
-#endif  // DENG_CLIENT_RENDER_VISSPRITE_H
+#endif  // DE_CLIENT_RENDER_VISSPRITE_H

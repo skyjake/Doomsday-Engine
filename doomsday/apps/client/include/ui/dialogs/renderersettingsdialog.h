@@ -16,33 +16,29 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_RENDERERSETTINGSDIALOG_H
-#define DENG_CLIENT_RENDERERSETTINGSDIALOG_H
+#ifndef DE_CLIENT_RENDERERSETTINGSDIALOG_H
+#define DE_CLIENT_RENDERERSETTINGSDIALOG_H
 
-#include <de/DialogWidget>
+#include <de/dialogwidget.h>
 
 /**
  * Dialog for modifying input settings.
  */
 class RendererSettingsDialog : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
-    RendererSettingsDialog(de::String const &name = "renderersettings");
+    RendererSettingsDialog(const de::String &name = "renderersettings");
 
-public slots:
     void resetToDefaults();
 
-protected slots:
+protected:
     void showDeveloperPopup();
     void editProfile();
 
-protected:
     void finish(int result) override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_RENDERERSETTINGSDIALOG_H
+#endif // DE_CLIENT_RENDERERSETTINGSDIALOG_H

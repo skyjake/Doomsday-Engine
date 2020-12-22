@@ -23,8 +23,7 @@
 
 #include "apis.h"
 #include "dd_share.h" // DDMAXPLAYERS
-#include "def_share.h"
-#include <de/smoother.h>
+#include <de/legacy/smoother.h>
 #include <doomsday/player.h>
 
 /**
@@ -85,14 +84,14 @@ typedef impulsetype_t controltype_t;
 #define DDPF_UNDEFINED_WEAPON   0x4000 ///< Weapon of the player is undefined (not sent yet).
 ///@}
 
-DENG_API_TYPEDEF(Player)
+DE_API_TYPEDEF(Player)
 {
     de_api_t api;
 
     /**
      * @return The name of player @a player.
      */
-    char const *(*GetPlayerName)(int player);
+    const char *(*GetPlayerName)(int player);
 
     /**
      * @return Client identifier for player @a player.
@@ -123,7 +122,7 @@ DENG_API_TYPEDEF(Player)
      * @param bindContext  Symbolic name of the binding context in which the impulse
      *                     is effective.
      */
-    void (*NewControl)(int id, impulsetype_t type, char const *name, char const *bindContext);
+    void (*NewControl)(int id, impulsetype_t type, const char *name, const char *bindContext);
 
     /**
      * Determines if one or more bindings exist for a player and impulse Id in
@@ -159,9 +158,9 @@ DENG_API_TYPEDEF(Player)
      */
     void (*Impulse)(int playerNum, int impulseId);
 }
-DENG_API_T(Player);
+DE_API_T(Player);
 
-#ifndef DENG_NO_API_MACROS_PLAYER
+#ifndef DE_NO_API_MACROS_PLAYER
 #define Net_GetPlayerName           _api_Player.GetPlayerName
 #define Net_GetPlayerID             _api_Player.GetPlayerID
 #define Net_PlayerSmoother          _api_Player.GetSmoother
@@ -174,7 +173,7 @@ DENG_API_T(Player);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(Player);
+DE_USING_API(Player);
 #endif
 
 #endif // DOOMSDAY_API_PLAYER_H

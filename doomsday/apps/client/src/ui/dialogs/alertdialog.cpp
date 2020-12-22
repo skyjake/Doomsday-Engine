@@ -19,36 +19,34 @@
 #include "ui/dialogs/alertdialog.h"
 #include "ui/dialogs/logsettingsdialog.h"
 #include "ui/clientwindow.h"
-#include "ui/clientwindowsystem.h"
 #include "clientapp.h"
 
-#include <de/App>
-#include <de/ChoiceWidget>
-#include <de/Config>
-#include <de/DialogContentStylist>
-#include <de/FIFO>
-#include <de/NotificationAreaWidget>
-#include <de/SequentialLayout>
-#include <de/SignalAction>
-#include <de/ui/ActionItem>
-#include <de/ui/ListData>
-
-#include <QTimer>
+#include <de/app.h>
+#include <de/choicewidget.h>
+#include <de/config.h>
+#include <de/dialogcontentstylist.h>
+#include <de/fifo.h>
+#include <de/notificationareawidget.h>
+#include <de/sequentiallayout.h>
+#include <de/timer.h>
+#include <de/ui/actionitem.h>
+#include <de/ui/listdata.h>
+#include <de/windowsystem.h>
 
 using namespace de;
 
-static String const VAR_AUTOHIDE = "alert.autoHide";
+DE_STATIC_STRING(VAR_AUTOHIDE, "alert.autoHide");
 
-DENG_GUI_PIMPL(AlertDialog)
-, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
-, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
-, DENG2_OBSERVES(Variable, Change)
+DE_GUI_PIMPL(AlertDialog)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+, DE_OBSERVES(Variable, Change)
 {
     /// Data model item representing an alert in the list.
     class AlertItem : public ui::ActionItem
     {
     public:
-        AlertItem(String const &msg, Level level)
+        AlertItem(const String &msg, Level level)
             : ui::ActionItem(ShownAsLabel, msg)
             , _level(level)
         {}
@@ -72,8 +70,7 @@ DENG_GUI_PIMPL(AlertDialog)
                              Font::RichFormat::Style &fontStyle,
                              int &colorIndex) const
         {
-            ClientApp::windowSystem().style()
-                    .richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
+            Style::get().richStyleFormat(contentStyle, sizeFactor, fontWeight, fontStyle, colorIndex);
 
             if (contentStyle == Font::RichFormat::MajorStyle ||
                contentStyle == Font::RichFormat::MajorMetaStyle)
@@ -88,7 +85,7 @@ DENG_GUI_PIMPL(AlertDialog)
     MenuWidget *alerts;
     bool clearOnDismiss;
     TextStyling styling;
-    QTimer hideTimer; ///< Automatically hides the notification.
+    Timer hideTimer; ///< Automatically hides the notification.
     ChoiceWidget *autohideTimes;
     DialogContentStylist stylist;
 
@@ -126,9 +123,9 @@ DENG_GUI_PIMPL(AlertDialog)
         alerts->organizer().audienceForWidgetUpdate() += this;
 
         // Set up the automatic hide timer.
-        QObject::connect(&hideTimer, SIGNAL(timeout()), thisPublic, SLOT(hideNotification()));
+        hideTimer += [this](){ self().hideNotification(); };
         hideTimer.setSingleShot(true);
-        App::config(VAR_AUTOHIDE).audienceForChange() += this;
+        App::config(VAR_AUTOHIDE()).audienceForChange() += this;
     }
 
     NotificationAreaWidget &notifs()
@@ -136,27 +133,27 @@ DENG_GUI_PIMPL(AlertDialog)
         return ClientWindow::main().notifications();
     }
 
-    int autoHideAfterSeconds() const
+    TimeSpan autoHideAfterSeconds() const
     {
-        return App::config().geti(VAR_AUTOHIDE, 3 * 60);
+        return App::config().getd(VAR_AUTOHIDE(), 3 * 60);
     }
 
-    void variableValueChanged(Variable &, Value const &)
+    void variableValueChanged(Variable &, const Value &)
     {
         // Update the auto-hide timer.
-        if (!autoHideAfterSeconds())
+        if (!fequal(autoHideAfterSeconds(), 0))
         {
             // Never autohide.
             hideTimer.stop();
         }
         else
         {
-            hideTimer.setInterval(autoHideAfterSeconds() * 1000);
+            hideTimer.setInterval(autoHideAfterSeconds());
             if (!hideTimer.isActive()) hideTimer.start();
         }
     }
 
-    void queueAlert(String const &msg, Level level)
+    void queueAlert(const String &msg, Level level)
     {
         pending.put(new AlertItem(msg, level));
     }
@@ -180,7 +177,7 @@ DENG_GUI_PIMPL(AlertDialog)
 
     void add(AlertItem *alert)
     {
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
 
         // If we already have this, don't re-add.
         for (ui::Data::Pos i = 0; i < alerts->items().size(); ++i)
@@ -192,7 +189,7 @@ DENG_GUI_PIMPL(AlertDialog)
         alerts->items().insert(0, alert);
     }
 
-    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
+    void widgetCreatedForItem(GuiWidget &widget, const ui::Item &item)
     {
         // Background is provided by the popup.
         widget.set(Background());
@@ -216,11 +213,11 @@ DENG_GUI_PIMPL(AlertDialog)
                 .setRight("")
                 .setBottom("");
 
-        AlertItem const &alert = item.as<AlertItem>();
+        const AlertItem &alert = item.as<AlertItem>();
         switch (alert.level())
         {
         case Minor:
-            label.setImageColor(Vector4f(style().colors().colorf("text"), .5f));
+            label.setImageColor(Vec4f(style().colors().colorf("text"), .5f));
             break;
 
         case Normal:
@@ -234,10 +231,10 @@ DENG_GUI_PIMPL(AlertDialog)
         }
     }
 
-    void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
+    void widgetUpdatedForItem(GuiWidget &widget, const ui::Item &item)
     {
-        DENG2_UNUSED(widget);
-        DENG2_UNUSED(item);
+        DE_UNUSED(widget);
+        DE_UNUSED(item);
     }
 
     void showNotification()
@@ -248,7 +245,7 @@ DENG_GUI_PIMPL(AlertDialog)
         notifs().showOrHide(*notification, true);
 
         // Restart the autohiding timer.
-        if (autoHideAfterSeconds() > 0)
+        if (autoHideAfterSeconds() > 0.0)
         {
             hideTimer.start(autoHideAfterSeconds() * 1000);
         }
@@ -276,20 +273,20 @@ DENG_GUI_PIMPL(AlertDialog)
 
     void updateAutohideTimeSelection()
     {
-        int const time = autoHideAfterSeconds();
-        ui::DataPos pos = autohideTimes->items().findData(time);
+        const ddouble time = autoHideAfterSeconds();
+        ui::DataPos pos = autohideTimes->items().findData(NumberValue(time));
         if (pos != ui::Data::InvalidPos)
         {
             autohideTimes->setSelected(pos);
         }
         else
         {
-            autohideTimes->setSelected(autohideTimes->items().findData(0));
+            autohideTimes->setSelected(autohideTimes->items().findData(NumberValue(0)));
         }
     }
 };
 
-AlertDialog::AlertDialog(String const &/*name*/) : d(new Impl(this))
+AlertDialog::AlertDialog(const String &/*name*/) : d(new Impl(this))
 {
     setOutlineColor("transparent");
 
@@ -297,7 +294,7 @@ AlertDialog::AlertDialog(String const &/*name*/) : d(new Impl(this))
     d->notification->setPopup(*this, ui::Down);
 
     buttons() << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default,
-                                      tr("Clear All"))
+                                      "Clear All")
               << new DialogButtonItem(DialogWidget::ActionPopup | DialogWidget::Id1,
                                       style().images().image("gear"));
 
@@ -307,25 +304,25 @@ AlertDialog::AlertDialog(String const &/*name*/) : d(new Impl(this))
     d->stylist.setContainer(*this);
     auto &gearButton = *popupButtonWidget(DialogWidget::Id1);
 
-    gearButton.setPopup([] (PopupButtonWidget const &) {
+    gearButton.setPopup([](const PopupButtonWidget &) {
         return new LogSettingsDialog;
     }, ui::Left);
     gearButton.setOpener([this] (PopupWidget *pop) {
         auto &dlg = pop->as<LogSettingsDialog>();
-        connect(this, SIGNAL(closed()), pop, SLOT(close()));
+        audienceForClose() += [pop](){ pop->close(); };
         dlg.orphan();
         dlg.exec(root());
     });
 
-    auto *lab = LabelWidget::newWithText(tr("Hide After:"), this);
+    auto *lab = LabelWidget::newWithText("Hide After:", this);
 
     add(d->autohideTimes = new ChoiceWidget);
     d->autohideTimes->items()
-            << new ChoiceItem(tr("1 min"),   60)
-            << new ChoiceItem(tr("3 mins"),  3 * 60)
-            << new ChoiceItem(tr("5 mins"),  5 * 60)
-            << new ChoiceItem(tr("10 mins"), 10 * 60)
-            << new ChoiceItem(tr("Never"),   0);
+            << new ChoiceItem("1 min",   NumberValue(60))
+            << new ChoiceItem("3 mins",  NumberValue(3 * 60))
+            << new ChoiceItem("5 mins",  NumberValue(5 * 60))
+            << new ChoiceItem("10 mins", NumberValue(10 * 60))
+            << new ChoiceItem("Never",   NumberValue(0));
     d->updateAutohideTimeSelection();
 
     lab->rule()
@@ -342,10 +339,10 @@ AlertDialog::AlertDialog(String const &/*name*/) : d(new Impl(this))
                            lab->rule().width() +
                            d->autohideTimes->rule().width());
 
-    connect(d->autohideTimes, SIGNAL(selectionChangedByUser(uint)), this, SLOT(autohideTimeChanged()));
+    d->autohideTimes->audienceForUserSelection() += [this]() { autohideTimeChanged(); };
 }
 
-void AlertDialog::newAlert(String const &message, Level level)
+void AlertDialog::newAlert(const String &message, Level level)
 {
     d->queueAlert(message, level);
 }
@@ -367,7 +364,7 @@ void AlertDialog::showListOfAlerts()
     // Restore the normal color.
     d->notification->setImageColor(style().colors().colorf("text"));
 
-    area().scrollToTop(0);
+    area().scrollToTop(0.0);
     open();
 }
 
@@ -378,7 +375,7 @@ void AlertDialog::hideNotification()
 
 void AlertDialog::autohideTimeChanged()
 {
-    App::config().set(VAR_AUTOHIDE, d->autohideTimes->selectedItem().data().toInt());
+    App::config().set(VAR_AUTOHIDE(), d->autohideTimes->selectedItem().data().asInt());
 }
 
 void AlertDialog::finish(int result)

@@ -17,12 +17,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_UI_INFINESYSTEM_H
-#define DENG_UI_INFINESYSTEM_H
+#ifndef DE_UI_INFINESYSTEM_H
+#define DE_UI_INFINESYSTEM_H
 
-#include <QList>
-#include <de/Error>
-#include <de/String>
+#include <de/list.h>
+#include <de/error.h>
+#include <de/string.h>
 #include "finale.h"
 
 /**
@@ -34,9 +34,9 @@ class InFineSystem
 {
 public:
     /// The referenced Finale could not be found. @ingroup errors
-    DENG2_ERROR(MissingFinaleError);
+    DE_ERROR(MissingFinaleError);
 
-    typedef QList<Finale *> Finales;
+    typedef de::List<Finale *> Finales;
 
 public:
     InFineSystem();
@@ -61,7 +61,7 @@ public:
      * @param script     InFine script to be interpreted.
      * @param setupCmds  InFine script for setting up the script environment on load.
      */
-    Finale &newFinale(int flags, de::String script, de::String const &setupCmds = "");
+    Finale &newFinale(int flags, de::String script, const de::String &setupCmds = "");
 
     /**
      * Returns @c true if @a id references a known Finale.
@@ -76,7 +76,7 @@ public:
     /**
      * Provides a list of all the Finales in the system, in order, for efficient traversal.
      */
-    Finales const &finales() const;
+    const Finales &finales() const;
 
 public:
 #ifdef __CLIENT__
@@ -90,7 +90,7 @@ public:
     static void consoleRegister();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_UI_INFINESYSTEM_H
+#endif // DE_UI_INFINESYSTEM_H

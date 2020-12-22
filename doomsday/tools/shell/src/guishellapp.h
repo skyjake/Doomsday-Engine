@@ -19,51 +19,54 @@
 #ifndef GUISHELLAPP_H
 #define GUISHELLAPP_H
 
-#include "qtguiapp.h"
-#include <de/shell/ServerFinder>
-#include <QMenu>
+#include <de/baseguiapp.h>
+#include <de/imagebank.h>
+#include <de/popupmenuwidget.h>
+#include <de/serverfinder.h>
+#include <de/ui/listdata.h>
+#include <de/ui/actionitem.h>
 
 class LinkWindow;
 
-class GuiShellApp : public QtGuiApp
+class GuiShellApp : public de::BaseGuiApp
 {
-    Q_OBJECT
+public:
+    using MenuItems = de::ui::ListDataT<de::ui::ActionItem>;
 
 public:
-    GuiShellApp(int &argc, char **argv);
+    GuiShellApp(const de::StringList &args);
+
+    void initialize();
+    void quitRequested() override;
 
     LinkWindow *newOrReusedConnectionWindow();
-    de::shell::ServerFinder &serverFinder();
+    int countOpenConnections() const;
+    de::ServerFinder &serverFinder();
 
     static GuiShellApp &app();
-    QMenu *localServersMenu();
-    QMenu *makeHelpMenu();
+    static de::ImageBank &imageBank();
+//    de::PopupMenuWidget &localServersMenu();
+//    de::PopupMenuWidget *makeHelpMenu();
+    const MenuItems &localServerMenuItems() const;
 
-public slots:
     void connectToServer();
     void connectToLocalServer();
     void disconnectFromServer();
     void closeActiveWindow();
     void startLocalServer();
-    void stopServer();
-    void updateLocalServerMenu();
     void aboutShell();
     void showHelp();
-    void openWebAddress(QString address);
+    void openWebAddress(const de::String &address);
     void showPreferences();
-    void preferencesDone();
-    void updateMenu();
+//    void updateMenu();
 
-signals:
-    void consoleFontChanged();
-    void localServerStopped(int port);
+    DE_AUDIENCE(LocalServerStop, void localServerStopped(int port))
 
-protected slots:
-    void windowClosed(LinkWindow *window);
+protected:
     void checkLocalServers();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // GUISHELLAPP_H

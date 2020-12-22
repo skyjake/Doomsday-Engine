@@ -13,37 +13,35 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_VIDEOSETTINGSDIALOG_H
-#define DENG_CLIENT_VIDEOSETTINGSDIALOG_H
+#ifndef DE_CLIENT_VIDEOSETTINGSDIALOG_H
+#define DE_CLIENT_VIDEOSETTINGSDIALOG_H
 
-#include <de/DialogWidget>
+#include <de/dialogwidget.h>
 
 /**
  * Dialog for modifying video settings.
  */
 class VideoSettingsDialog : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
-    VideoSettingsDialog(de::String const &name = "videosettings");
+    VideoSettingsDialog(const de::String &name = "videosettings");
 
-protected slots:
+protected:
     void resetToDefaults();
-#if !defined (DENG_MOBILE)
-    void changeMode(uint selected);
-    void changeColorDepth(uint selected);
-    void changeRefreshRate(uint selected);
+#if !defined (DE_MOBILE)
+    void changeMode(de::ui::DataPos selected);
+    void changeColorDepth(de::ui::DataPos selected);
+    void changeRefreshRate(de::ui::DataPos selected);
     void showColorAdjustments();
     void showWindowMenu();
     void applyModeToWindow();
 #endif
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_VIDEOSETTINGSDIALOG_H
+#endif // DE_CLIENT_VIDEOSETTINGSDIALOG_H

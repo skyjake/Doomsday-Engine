@@ -38,18 +38,18 @@
 #include "render/modelrenderer.h"
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
-#include "MaterialVariantSpec"
-#include "ClientTexture"
-#include "ClientMaterial"
+#include "resource/materialvariantspec.h"
+#include "resource/clienttexture.h"
+#include "resource/clientmaterial.h"
 
 #include <doomsday/console/var.h>
-#include <doomsday/world/Materials>
-#include <de/Log>
-#include <de/ArrayValue>
-#include <de/GLInfo>
-#include <de/binangle.h>
-#include <de/memory.h>
-#include <de/concurrency.h>
+#include <doomsday/world/materials.h>
+#include <de/log.h>
+#include <de/arrayvalue.h>
+#include <de/glinfo.h>
+#include <de/legacy/binangle.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/concurrency.h>
 #include <cstdlib>
 #include <cmath>
 #include <cstring>
@@ -66,24 +66,23 @@ static inline float qatan2(float y, float x)
     return ang;
 }
 
-enum rendcmd_t
-{
+enum rendcmd_t {
     RC_COMMAND_COORDS,
     RC_OTHER_COORDS,
-    RC_BOTH_COORDS
+    RC_BOTH_COORDS,
 };
 
-byte useModels         = true;
-int modelLight         = 4;
-int frameInter         = true;
-float modelAspectMod   = 1 / 1.2f; //.833334f;
-int mirrorHudModels;
+byte  useModels      = true;
+int   modelLight     = 4;
+int   frameInter     = true;
+float modelAspectMod = 1 / 1.2f; //.833334f;
+int   mirrorHudModels;
 //int modelShinyMultitex = true;
 float modelShinyFactor = 1.0f;
 float modelSpinSpeed   = 1;
-int maxModelDistance   = 1500;
+int   maxModelDistance = 1500;
 float rend_model_lod   = 256;
-byte precacheSkins     = true;
+byte  precacheSkins    = true;
 
 static bool inited;
 
@@ -96,18 +95,18 @@ struct array_t
 static array_t arrays[MAX_ARRAYS];
 
 // The global vertex render buffer.
-static Vector3f *modelPosCoords;
-static Vector3f *modelNormCoords;
-static Vector4ub *modelColorCoords;
-static Vector2f *modelTexCoords;
+static Vec3f *modelPosCoords;
+static Vec3f *modelNormCoords;
+static Vec4ub *modelColorCoords;
+static Vec2f *modelTexCoords;
 
 // Global variables for ease of use. (Egads!)
-static Vector3f modelCenter;
+static Vec3f modelCenter;
 static FrameModelLOD *activeLod;
 
 static uint vertexBufferMax; ///< Maximum number of vertices we'll be required to render per submodel.
 static uint vertexBufferSize; ///< Current number of vertices supported by the render buffer.
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
 static bool announcedVertexBufferMaxBreach; ///< @c true if an attempt has been made to expand beyond our capability.
 #endif
 
@@ -141,7 +140,7 @@ void Rend_ModelInit()
     modelTexCoords   = 0;
 
     vertexBufferMax = vertexBufferSize = 0;
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     announcedVertexBufferMaxBreach = false;
 #endif
 
@@ -158,7 +157,7 @@ void Rend_ModelShutdown()
     M_Free(modelTexCoords); modelTexCoords = 0;
 
     vertexBufferMax = vertexBufferSize = 0;
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
     announcedVertexBufferMaxBreach = false;
 #endif
 
@@ -167,7 +166,7 @@ void Rend_ModelShutdown()
 
 bool Rend_ModelExpandVertexBuffers(uint numVertices)
 {
-    DENG2_ASSERT(inited);
+    DE_ASSERT(inited);
 
     LOG_AS("Rend_ModelExpandVertexBuffers");
 
@@ -176,7 +175,7 @@ bool Rend_ModelExpandVertexBuffers(uint numVertices)
     // Sanity check a sane maximum...
     if (numVertices >= RENDER_MAX_MODEL_VERTS)
     {
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
         if (!announcedVertexBufferMaxBreach)
         {
             LOGDEV_GL_WARNING("Attempted to expand to %u vertices (max %u)")
@@ -202,10 +201,10 @@ static bool resizeVertexBuffer(uint numVertices)
     if (vertexBufferMax != vertexBufferSize)
     {
         /// @todo Align access to this memory along a 4-byte boundary?
-        modelPosCoords   =  (Vector3f *) M_Realloc(modelPosCoords,   sizeof(*modelPosCoords)   * vertexBufferMax);
-        modelNormCoords  =  (Vector3f *) M_Realloc(modelNormCoords,  sizeof(*modelNormCoords)  * vertexBufferMax);
-        modelColorCoords = (Vector4ub *) M_Realloc(modelColorCoords, sizeof(*modelColorCoords) * vertexBufferMax);
-        modelTexCoords   =  (Vector2f *) M_Realloc(modelTexCoords,   sizeof(*modelTexCoords)   * vertexBufferMax);
+        modelPosCoords   =  (Vec3f *) M_Realloc(modelPosCoords,   sizeof(*modelPosCoords)   * vertexBufferMax);
+        modelNormCoords  =  (Vec3f *) M_Realloc(modelNormCoords,  sizeof(*modelNormCoords)  * vertexBufferMax);
+        modelColorCoords = (Vec4ub *) M_Realloc(modelColorCoords, sizeof(*modelColorCoords) * vertexBufferMax);
+        modelTexCoords   =  (Vec2f *) M_Realloc(modelTexCoords,   sizeof(*modelTexCoords)   * vertexBufferMax);
 
         vertexBufferSize = vertexBufferMax;
     }
@@ -216,8 +215,8 @@ static bool resizeVertexBuffer(uint numVertices)
 
 static void disableArrays(int vertices, int colors, int coords)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     if (vertices)
     {
@@ -237,21 +236,21 @@ static void disableArrays(int vertices, int colors, int coords)
         }
     }
 
-    DENG_ASSERT(!Sys_GLCheckError());
+    DE_ASSERT(!Sys_GLCheckError());
 }
 
 static inline void enableTexUnit(int id)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_Enable(DGL_TEXTURE0 + id);
 }
 
 static inline void disableTexUnit(int id)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_Disable(DGL_TEXTURE0 + id);
 
@@ -286,8 +285,8 @@ static void selectTexUnits(int count)
 static void configureArrays(void *vertices, void *colors, int numCoords = 0,
                             void **coords = 0)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     if (vertices)
     {
@@ -310,32 +309,32 @@ static void configureArrays(void *vertices, void *colors, int numCoords = 0,
         }
     }
 
-    DENG_ASSERT(!Sys_GLCheckError());
+    DE_ASSERT(!Sys_GLCheckError());
 }
 
 static void drawArrayElement(int index)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     for (int i = 0; i < MAX_TEX_UNITS; ++i)
     {
         if (arrays[AR_TEXCOORD0 + i].enabled)
         {
-            Vector2f const &texCoord = reinterpret_cast<Vector2f const *>(arrays[AR_TEXCOORD0 + i].data)[index];
+            const Vec2f &texCoord = reinterpret_cast<const Vec2f *>(arrays[AR_TEXCOORD0 + i].data)[index];
             DGL_TexCoord2fv(byte(i), texCoord.constPtr());
         }
     }
 
     if (arrays[AR_COLOR].enabled)
     {
-        Vector4ub const &colorCoord = reinterpret_cast<Vector4ub const *>(arrays[AR_COLOR].data)[index];
+        const Vec4ub &colorCoord = reinterpret_cast<const Vec4ub *>(arrays[AR_COLOR].data)[index];
         DGL_Color4ubv(colorCoord.constPtr());
     }
 
     if (arrays[AR_VERTEX].enabled)
     {
-        Vector3f const &posCoord = reinterpret_cast<Vector3f const *>(arrays[AR_VERTEX].data)[index];
+        const Vec3f &posCoord = reinterpret_cast<const Vec3f *>(arrays[AR_VERTEX].data)[index];
         DGL_Vertex3fv(posCoord.constPtr());
     }
 }
@@ -348,10 +347,11 @@ static FrameModelFrame &visibleModelFrame(FrameModelDef &modef, int subnumber, i
     if (subnumber >= int(modef.subCount()))
     {
         throw Error("Rend_DrawModel.visibleFrame",
-                    QString("Model has %1 submodels, but submodel #%2 was requested")
-                        .arg(modef.subCount()).arg(subnumber));
+                    stringf("Model has %i submodels, but submodel #%i was requested",
+                            modef.subCount(),
+                            subnumber));
     }
-    SubmodelDef const &sub = modef.subModelDef(subnumber);
+    const SubmodelDef &sub = modef.subModelDef(subnumber);
 
     int curFrame = sub.frame;
     if (modef.flags & MFF_IDFRAME)
@@ -366,13 +366,13 @@ static FrameModelFrame &visibleModelFrame(FrameModelDef &modef, int subnumber, i
  * Render a set of 3D model primitives using the given data.
  */
 static void drawPrimitives(rendcmd_t mode,
-                           FrameModel::Primitives const &primitives,
-                           Vector3f *posCoords,
-                           Vector4ub *colorCoords,
-                           Vector2f *texCoords = 0)
+                           const FrameModel::Primitives &primitives,
+                           Vec3f *posCoords,
+                           Vec4ub *colorCoords,
+                           Vec2f *texCoords = 0)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Disable all vertex arrays.
     disableArrays(true, true, DDMAXINT);
@@ -397,10 +397,10 @@ static void drawPrimitives(rendcmd_t mode,
         break;
     }
 
-    FrameModel::Primitive::Element const *firstElem = nullptr;
+    const FrameModel::Primitive::Element *firstElem = nullptr;
     bool joining = false;
 
-    auto submitElement = [mode, &firstElem] (FrameModel::Primitive::Element const &elem)
+    auto submitElement = [mode, &firstElem] (const FrameModel::Primitive::Element &elem)
     {
         if (!firstElem)
         {
@@ -420,9 +420,9 @@ static void drawPrimitives(rendcmd_t mode,
     // begins with the same winding.
 
     DGL_Begin(DGL_TRIANGLE_STRIP);
-    foreach (FrameModel::Primitive const &prim, primitives)
+    for (const FrameModel::Primitive &prim : primitives)
     {
-        DGLenum const primType = (prim.triFan? DGL_TRIANGLE_FAN : DGL_TRIANGLE_STRIP);
+        const DGLenum primType = (prim.triFan? DGL_TRIANGLE_FAN : DGL_TRIANGLE_STRIP);
 
         joining = false;
         if (lastLength > 0)
@@ -437,7 +437,7 @@ static void drawPrimitives(rendcmd_t mode,
         if (primType == DGL_TRIANGLE_STRIP)
         {
             lastLength = prim.elements.size();
-            foreach (FrameModel::Primitive::Element const &elem, prim.elements)
+            for (const FrameModel::Primitive::Element &elem : prim.elements)
             {
                 submitElement(elem);
                 if (joining)
@@ -450,7 +450,7 @@ static void drawPrimitives(rendcmd_t mode,
         else
         {
             lastLength = 2; // just make it even, so it doesn't affect winding (see above)
-            for (int i = 1; i < prim.elements.size(); ++i)
+            for (duint i = 1; i < prim.elements.size(); ++i)
             {
                 submitElement(prim.elements.at(0));
                 if (joining)
@@ -468,12 +468,12 @@ static void drawPrimitives(rendcmd_t mode,
 /**
  * Interpolate linearly between two sets of vertices.
  */
-static void Mod_LerpVertices(float inter, int count, FrameModelFrame const &from,
-    FrameModelFrame const &to, Vector3f *posOut, Vector3f *normOut)
+static void Mod_LerpVertices(float inter, int count, const FrameModelFrame &from,
+    const FrameModelFrame &to, Vec3f *posOut, Vec3f *normOut)
 {
-    DENG2_ASSERT(&from.model == &to.model); // sanity check.
-    DENG2_ASSERT(!activeLod || &activeLod->model == &from.model); // sanity check.
-    DENG2_ASSERT(from.vertices.count() == to.vertices.count()); // sanity check.
+    DE_ASSERT(&from.model == &to.model); // sanity check.
+    DE_ASSERT(!activeLod || &activeLod->model == &from.model); // sanity check.
+    DE_ASSERT(from.vertices.count() == to.vertices.count()); // sanity check.
 
     FrameModelFrame::VertexBuf::const_iterator startIt = from.vertices.begin();
     FrameModelFrame::VertexBuf::const_iterator endIt   = to.vertices.begin();
@@ -502,9 +502,9 @@ static void Mod_LerpVertices(float inter, int count, FrameModelFrame const &from
     }
 }
 
-static void Mod_MirrorCoords(dint count, Vector3f *coords, dint axis)
+static void Mod_MirrorCoords(dint count, Vec3f *coords, dint axis)
 {
-    DENG2_ASSERT(coords);
+    DE_ASSERT(coords);
     for (; count-- > 0; coords++)
     {
         (*coords)[axis] = -(*coords)[axis];
@@ -521,7 +521,7 @@ static void Mod_MirrorCoords(dint count, Vector3f *coords, dint axis)
  *
  * @todo Construct a rotation matrix once and use it for all lights.
  */
-static Vector3f rotateLightVector(VectorLightData const &vlight, dfloat yaw, dfloat pitch,
+static Vec3f rotateLightVector(const VectorLightData &vlight, dfloat yaw, dfloat pitch,
     bool invert = false)
 {
     dfloat rotated[3]; vlight.direction.decompose(rotated);
@@ -534,36 +534,36 @@ static Vector3f rotateLightVector(VectorLightData const &vlight, dfloat yaw, dfl
         rotated[1] = -rotated[1];
     }
 
-    return Vector3f(rotated);
+    return Vec3f(rotated);
 }
 
 /**
  * Calculate vertex lighting.
  */
-static void Mod_VertexColors(Vector4ub *out, dint count, Vector3f const *normCoords,
-    duint lightListIdx, duint maxLights, Vector4f const &ambient, bool invert,
+static void Mod_VertexColors(Vec4ub *out, dint count, const Vec3f *normCoords,
+    duint lightListIdx, duint maxLights, const Vec4f &ambient, bool invert,
     dfloat rotateYaw, dfloat rotatePitch)
 {
-    Vector4f const saturated(1, 1, 1, 1);
+    Vec4f const saturated(1, 1, 1, 1);
 
     for (dint i = 0; i < count; ++i, out++, normCoords++)
     {
         if (activeLod && !activeLod->hasVertex(i))
             continue;
 
-        Vector3f const &normal = *normCoords;
+        const Vec3f &normal = *normCoords;
 
         // Accumulate contributions from all affecting lights.
         dint numProcessed = 0;
-        Vector3f accum[2];  // Begin with total darkness [color, extra].
-        ClientApp::renderSystem().forAllVectorLights(lightListIdx, [&maxLights, &invert, &rotateYaw
+        Vec3f accum[2];  // Begin with total darkness [color, extra].
+        ClientApp::render().forAllVectorLights(lightListIdx, [&maxLights, &invert, &rotateYaw
                                                       , &rotatePitch, &normal
-                                                      , &accum, &numProcessed] (VectorLightData const &vlight)
+                                                      , &accum, &numProcessed] (const VectorLightData &vlight)
         {
             numProcessed += 1;
 
             // We must transform the light vector to model space.
-            Vector3f const lightDirection
+            Vec3f const lightDirection
                     = rotateLightVector(vlight, rotateYaw, rotatePitch, invert);
 
             dfloat strength = lightDirection.dot(normal)
@@ -581,30 +581,30 @@ static void Mod_VertexColors(Vector4ub *out, dint count, Vector3f const *normCoo
         });
 
         // Check for ambient and convert to ubyte.
-        Vector4f color(accum[0].max(ambient) + accum[1], ambient[3]);
+        Vec4f color(accum[0].max(ambient) + accum[1], ambient[3]);
 
-        *out = (color.min(saturated) * 255).toVector4ub();
+        *out = (color.min(saturated) * 255).toVec4ub();
     }
 }
 
 /**
  * Set all the colors in the array to bright white.
  */
-static void Mod_FullBrightVertexColors(dint count, Vector4ub *colorCoords, dfloat alpha)
+static void Mod_FullBrightVertexColors(dint count, Vec4ub *colorCoords, dfloat alpha)
 {
-    DENG2_ASSERT(colorCoords);
+    DE_ASSERT(colorCoords);
     for (; count-- > 0; colorCoords++)
     {
-        *colorCoords = Vector4ub(255, 255, 255, 255 * alpha);
+        *colorCoords = Vec4ub(255, 255, 255, 255 * alpha);
     }
 }
 
 /**
  * Set all the colors into the array to the same values.
  */
-static void Mod_FixedVertexColors(dint count, Vector4ub *colorCoords, Vector4ub const &color)
+static void Mod_FixedVertexColors(dint count, Vec4ub *colorCoords, const Vec4ub &color)
 {
-    DENG2_ASSERT(colorCoords);
+    DE_ASSERT(colorCoords);
     for (; count-- > 0; colorCoords++)
     {
         *colorCoords = color;
@@ -614,7 +614,7 @@ static void Mod_FixedVertexColors(dint count, Vector4ub *colorCoords, Vector4ub 
 /**
  * Calculate cylindrically mapped, shiny texture coordinates.
  */
-static void Mod_ShinyCoords(Vector2f *out, int count, Vector3f const *normCoords,
+static void Mod_ShinyCoords(Vec2f *out, int count, const Vec3f *normCoords,
     float normYaw, float normPitch, float shinyAng, float shinyPnt, float reactSpeed)
 {
     for (int i = 0; i < count; ++i, out++, normCoords++)
@@ -630,7 +630,7 @@ static void Mod_ShinyCoords(Vector2f *out, int count, Vector3f const *normCoords
                        (shinyPnt + normYaw) * 360 * reactSpeed,
                        (shinyAng + normPitch - .5f) * 180 * reactSpeed);
 
-        *out = Vector2f(rotatedNormal[0] + 1, rotatedNormal[2]);
+        *out = Vec2f(rotatedNormal[0] + 1, rotatedNormal[2]);
     }
 }
 
@@ -703,23 +703,23 @@ static int chooseSkin(FrameModelDef &mf, int submodel, int id, int selector, int
     return skin;
 }
 
-static inline MaterialVariantSpec const &modelSkinMaterialSpec()
+static inline const MaterialVariantSpec &modelSkinMaterialSpec()
 {
     return ClientApp::resources().materialSpec(ModelSkinContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                                  1, -2, -1, true, true, false, false);
 }
 
-static void drawSubmodel(uint number, vissprite_t const &spr)
+static void drawSubmodel(uint number, const vissprite_t &spr)
 {
-    drawmodelparams_t const &parm = *VS_MODEL(&spr);
-    int const zSign = (spr.pose.mirrored? -1 : 1);
+    const drawmodelparams_t &parm = *VS_MODEL(&spr);
+    const int zSign = (spr.pose.mirrored? -1 : 1);
     FrameModelDef *mf = parm.mf, *mfNext = parm.nextMF;
-    SubmodelDef const &smf = mf->subModelDef(number);
+    const SubmodelDef &smf = mf->subModelDef(number);
 
     FrameModel &mdl = App_Resources().model(smf.modelId);
 
     // Do not bother with infinitely small models...
-    if (mf->scale == Vector3f(0, 0, 0))
+    if (mf->scale == Vec3f(0.0f))
         return;
 
     float alpha = spr.light.ambientColor[CA];
@@ -837,7 +837,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     // Determine the suitable LOD.
     if (mdl.lodCount() > 1 && rend_model_lod != 0)
     {
-        float lodFactor = rend_model_lod * DENG_GAMEVIEW_WIDTH / 640.0f / (Rend_FieldOfView() / 90.0f);
+        float lodFactor = rend_model_lod * DE_GAMEVIEW_WIDTH / 640.0f / (Rend_FieldOfView() / 90.0f);
         if (!de::fequal(lodFactor, 0))
         {
             lodFactor = 1 / lodFactor;
@@ -862,28 +862,28 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     }
 
     // Coordinates to the center of the model (game coords).
-    modelCenter = Vector3f(spr.pose.origin[VX], spr.pose.origin[VY], spr.pose.midZ())
-            + Vector3d(spr.pose.srvo) + Vector3f(mf->offset.x, mf->offset.z, mf->offset.y);
+    modelCenter = Vec3f(spr.pose.origin[VX], spr.pose.origin[VY], spr.pose.midZ())
+            + Vec3d(spr.pose.srvo) + Vec3f(mf->offset.x, mf->offset.z, mf->offset.y);
 
     // Calculate lighting.
-    Vector4f ambient;
+    Vec4f ambient;
     if (smf.testFlag(MFF_FULLBRIGHT) && !smf.testFlag(MFF_DIM))
     {
         // Submodel-specific lighting override.
-        ambient = Vector4f(1, 1, 1, 1);
+        ambient = Vec4f(1);
         Mod_FullBrightVertexColors(numVerts, modelColorCoords, alpha);
     }
     else if (!spr.light.vLightListIdx)
     {
         // Lit uniformly.
-        ambient = Vector4f(spr.light.ambientColor, alpha);
+        ambient = Vec4f(spr.light.ambientColor, alpha);
         Mod_FixedVertexColors(numVerts, modelColorCoords,
-                              (ambient * 255).toVector4ub());
+                              (ambient * 255).toVec4ub());
     }
     else
     {
         // Lit normally.
-        ambient = Vector4f(spr.light.ambientColor, alpha);
+        ambient = Vec4f(spr.light.ambientColor, alpha);
 
         Mod_VertexColors(modelColorCoords, numVerts,
                          modelNormCoords, spr.light.vLightListIdx, modelLight + 1,
@@ -909,11 +909,11 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         }
     }
 
-    Vector4f color;
+    Vec4f color;
     if (shininess > 0)
     {
         // Calculate shiny coordinates.
-        Vector3f shinyColor = mf->def.sub(number).get("shinyColor");
+        Vec3f shinyColor = mf->def.sub(number).get("shinyColor");
 
         // With psprites, add the view angle/pitch.
         float offset = parm.shineYawOffset;
@@ -936,7 +936,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         }
         else
         {
-            Vector3f delta = modelCenter;
+            Vec3f delta = modelCenter;
 
             if (!parm.shineTranslateWithViewerPos)
             {
@@ -955,11 +955,11 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         // Shiny color.
         if (smf.testFlag(MFF_SHINY_LIT))
         {
-            color = Vector4f(ambient * shinyColor, shininess);
+            color = Vec4f(ambient * shinyColor, shininess);
         }
         else
         {
-            color = Vector4f(shinyColor, shininess);
+            color = Vec4f(shinyColor, shininess);
         }
     }
 
@@ -967,7 +967,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     if (renderTextures == 2)
     {
         // For lighting debug, render all surfaces using the gray texture.
-        MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri("System", Path("gray")))
+        MaterialAnimator &matAnimator = ClientMaterial::find(res::Uri("System", Path("gray")))
                 .getAnimator(modelSkinMaterialSpec());
 
         // Ensure we've up to date info about the material.
@@ -987,18 +987,17 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     // If we mirror the model, triangles have a different orientation.
     if (zSign < 0)
     {
-        LIBGUI_GL.glFrontFace(GL_CCW);
+        glFrontFace(GL_CCW);
     }
 
     // Twosided models won't use backface culling.
     if (smf.testFlag(MFF_TWO_SIDED))
     {
-        //glDisable(GL_CULL_FACE);
         DGL_CullFace(DGL_NONE);
     }
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FrameModel::Primitives const &primitives =
+    const FrameModel::Primitives &primitives =
         activeLod? activeLod->primitives : mdl.primitives();
 
     // Render using multiple passes?
@@ -1028,7 +1027,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
 
             // Shiny color.
             Mod_FixedVertexColors(numVerts, modelColorCoords,
-                                  (color * 255).toVector4ub());
+                                  (color * 255).toVec4ub());
 
             // We'll use multitexturing to clear out empty spots in
             // the primary texture.
@@ -1062,8 +1061,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         GL_BindTexture(renderTextures? shinyTexture : 0);
 
         // Multiply by shininess.
-        float colorv1[] = { color.x * color.w, color.y * color.w, color.z * color.w, color.w };
-        DGL_SetModulationColor(colorv1);
+        DGL_SetModulationColor({color.x * color.w, color.y * color.w, color.z * color.w, color.w});
 
         DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
         GL_BindTexture(renderTextures? skinTexture : 0);
@@ -1083,31 +1081,29 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     // Normally culling is always enabled.
     if (smf.testFlag(MFF_TWO_SIDED))
     {
-        //glEnable(GL_CULL_FACE);
         DGL_CullFace(DGL_BACK);
     }
 
     if (zSign < 0)
     {
-        LIBGUI_GL.glFrontFace(GL_CW);
+        glFrontFace(GL_CW);
     }
-    //glDepthFunc(GL_LESS);
     DGL_DepthFunc(DGL_LESS);
 
     GL_BlendMode(BM_NORMAL);
 }
 
-void Rend_DrawModel(vissprite_t const &spr)
+void Rend_DrawModel(const vissprite_t &spr)
 {
-    drawmodelparams_t const &parm = *VS_MODEL(&spr);
+    const drawmodelparams_t &parm = *VS_MODEL(&spr);
 
-    DENG2_ASSERT(inited);
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT(inited);
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     if (!parm.mf) return;
 
-    DENG2_ASSERT(parm.mf->select == (parm.selector & DDMOBJ_SELECTOR_MASK))
+    DE_ASSERT(parm.mf->select == (parm.selector & DDMOBJ_SELECTOR_MASK))
 
     // Render all the submodels of this model.
     for (uint i = 0; i < parm.mf->subCount(); ++i)
@@ -1134,8 +1130,6 @@ void Rend_DrawModel(vissprite_t const &spr)
     if (devMobjVLights && spr.light.vLightListIdx)
     {
         // Draw the vlight vectors, for debug.
-        //glDisable(GL_DEPTH_TEST);
-        //glDisable(GL_CULL_FACE);
         DGL_PushState();
         DGL_Disable(DGL_DEPTH_TEST);
         DGL_CullFace(DGL_NONE);
@@ -1145,8 +1139,8 @@ void Rend_DrawModel(vissprite_t const &spr)
 
         DGL_Translatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
 
-        coord_t const distFromViewer = de::abs(spr.pose.distance);
-        ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (VectorLightData const &vlight)
+        const coord_t distFromViewer = de::abs(spr.pose.distance);
+        ClientApp::render().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (const VectorLightData &vlight)
         {
             if (distFromViewer < 1600 - 8)
             {
@@ -1162,14 +1156,14 @@ void Rend_DrawModel(vissprite_t const &spr)
     }
 }
 
-TextureVariantSpec const &Rend_ModelDiffuseTextureSpec(bool noCompression)
+const TextureVariantSpec &Rend_ModelDiffuseTextureSpec(bool noCompression)
 {
     return ClientApp::resources().textureSpec(TC_MODELSKIN_DIFFUSE,
         (noCompression? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT, GL_REPEAT,
         1, -2, -1, true, true, false, false);
 }
 
-TextureVariantSpec const &Rend_ModelShinyTextureSpec()
+const TextureVariantSpec &Rend_ModelShinyTextureSpec()
 {
     return ClientApp::resources().textureSpec(TC_MODELSKIN_REFLECTION,
         TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, false,

@@ -21,14 +21,14 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_UI_JOYSTICK_H
-#define DENG_CLIENT_UI_JOYSTICK_H
+#ifndef DE_CLIENT_UI_JOYSTICK_H
+#define DE_CLIENT_UI_JOYSTICK_H
 
 #ifdef __SERVER__
 #  error Joystick is not available in a SERVER build
 #endif
 
-#include <de/String>
+#include <de/string.h>
 
 #define IJOY_AXISMIN    -10000
 #define IJOY_AXISMAX    10000
@@ -59,4 +59,4 @@ void Joystick_GetState(joystate_t *state);
 
 de::String Joystick_Name();
 
-#endif // DENG_CLIENT_UI_JOYSTICK_H
+#endif // DE_CLIENT_UI_JOYSTICK_H

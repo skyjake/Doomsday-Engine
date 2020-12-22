@@ -22,19 +22,19 @@
 #include "ui/widgets/packageswidget.h"
 #include "ui/widgets/taskbarwidget.h"
 
-#include <doomsday/DoomsdayApp>
-#include <de/Config>
+#include <doomsday/doomsdayapp.h>
+#include <de/config.h>
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(DataFileSettingsDialog)
+DE_PIMPL_NOREF(DataFileSettingsDialog)
 {
     Variable &pkgFolders  = Config::get("resource.packageFolder");
     Id searchGroup;
     bool modified = false;
 };
 
-DataFileSettingsDialog::DataFileSettingsDialog(String const &name)
+DataFileSettingsDialog::DataFileSettingsDialog(const String &name)
     : DirectoryListDialog(name)
     , d(new Impl)
 {
@@ -42,24 +42,20 @@ DataFileSettingsDialog::DataFileSettingsDialog(String const &name)
     buttons().at(0).setLabel("Apply");
 
     title().setFont("heading");
-    title().setText(tr("Data Files"));
+    title().setText("Data Files");
     title().setStyleImage("package.icon", "heading");
 
     message().hide();
 
     d->searchGroup = addGroup(
-        tr("Search Folders"),
-        tr("The following folders are searched for game IWAD files and mods like PWADs, PK3s, and "
-           "Doomsday packages. Toggle the " _E(b) "Subdirs" _E(.)
-           " option to include all subfolders as well."));
+        "Search Folders",
+        "The following folders are searched for game IWAD files and mods like PWADs, PK3s, and "
+        "Doomsday packages. Toggle the " _E(b) "Subdirs" _E(.)
+        " option to include all subfolders as well.");
     setValue(d->searchGroup, d->pkgFolders.value());
 
-    connect(this, &DirectoryListDialog::arrayChanged, [this] ()
-    {
-        d->modified = true;
-    });
-    
     updateLayout();
+    audienceForChange() += [this]() { d->modified = true; };
 }
 
 void DataFileSettingsDialog::finish(int result)

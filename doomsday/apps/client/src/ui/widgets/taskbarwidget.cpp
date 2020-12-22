@@ -18,7 +18,7 @@
 
 #include "ui/widgets/taskbarwidget.h"
 
-#include "CommandAction"
+#include "ui/commandaction.h"
 #include "clientapp.h"
 #include "dd_main.h"
 #include "network/serverlink.h"
@@ -47,27 +47,24 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/console/exec.h>
 
-#include <de/AnimationRule>
-#include <de/BlurWidget>
-#include <de/ButtonWidget>
-#include <de/CallbackAction>
-#include <de/Config>
-#include <de/DirectoryListDialog>
-#include <de/Drawable>
-#include <de/GLBuffer>
-#include <de/KeyEvent>
-#include <de/Painter>
-#include <de/PopupMenuWidget>
-#include <de/SequentialLayout>
-#include <de/SignalAction>
-#include <de/ui/SubwidgetItem>
-
-#include <QFileDialog>
+#include <de/animationrule.h>
+#include <de/blurwidget.h>
+#include <de/buttonwidget.h>
+#include <de/callbackaction.h>
+#include <de/config.h>
+#include <de/directorylistdialog.h>
+#include <de/drawable.h>
+#include <de/glbuffer.h>
+#include <de/keyevent.h>
+#include <de/painter.h>
+#include <de/popupmenuwidget.h>
+#include <de/sequentiallayout.h>
+#include <de/ui/subwidgetitem.h>
 
 using namespace de;
 using namespace de::ui;
 
-static TimeSpan OPEN_CLOSE_SPAN = 0.2;
+static constexpr TimeSpan OPEN_CLOSE_SPAN = 200_ms;
 
 enum MenuItemPositions
 {
@@ -89,11 +86,11 @@ enum MenuItemPositions
     POS_UI_SETTINGS       = 9,
 };
 
-DENG_GUI_PIMPL(TaskBarWidget)
-, DENG2_OBSERVES(DoomsdayApp, GameChange)
-, DENG2_OBSERVES(ServerLink, Join)
-, DENG2_OBSERVES(ServerLink, Leave)
-, DENG2_OBSERVES(PanelWidget, AboutToOpen) // update menu
+DE_GUI_PIMPL(TaskBarWidget)
+, DE_OBSERVES(DoomsdayApp, GameChange)
+, DE_OBSERVES(ServerLink, Join)
+, DE_OBSERVES(ServerLink, Leave)
+, DE_OBSERVES(PanelWidget, AboutToOpen) // update menu
 {
     typedef DefaultVertexBuf VertexBuf;
 
@@ -126,7 +123,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
     //Drawable drawable;
     //GLUniform uMvpMatrix;
     //GLUniform uColor;
-    //Matrix4f projMatrix;
+    //Mat4f projMatrix;
 
     Impl(Public *i)
         : Base(i)
@@ -142,7 +139,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         //, uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
         //, uColor    ("uColor",     GLUniform::Vec4)
     {
-        //uColor = Vector4f(1, 1, 1, 1);
+        //uColor = Vec4f(1);
         self().set(Background(style().colors().colorf("background")));
 
         vertShift = new AnimationRule(0);
@@ -230,7 +227,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
         if (layoutMode == NormalLayout)
         {
-            Version const currentVersion = Version::currentBuild();
+            const Version currentVersion = Version::currentBuild();
             if (String(DOOMSDAY_RELEASE_TYPE) == "Stable")
             {
                 text = _E(b) + currentVersion.compactNumber();
@@ -238,7 +235,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
             else
             {
                 text = _E(b) + currentVersion.compactNumber() + " " +
-                       _E(l) + String("#%1").arg(currentVersion.build);
+                       _E(l) + Stringf("#%i", currentVersion.build);
             }
         }
         else
@@ -264,7 +261,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
             verts.clear();
             self().glMakeGeometry(verts);
-            //drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
+            //drawable.buffer<VertexBuf>().setVertices(gfx::TriangleStrip, verts, gfx::Static);
         }*/
     }
 
@@ -275,7 +272,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     void showOrHideMenuItems()
     {
-        Game const &game = App_CurrentGame();
+        const Game &game = App_CurrentGame();
 
         //itemWidget(mainMenu, POS_GAMES)            .show(!game.isNull());
         itemWidget(mainMenu, POS_UNLOAD)           .show(!game.isNull());
@@ -300,7 +297,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         }
     }
 
-    void currentGameChanged(Game const &)
+    void currentGameChanged(const Game &)
     {
         updateStatus();
         showOrHideMenuItems();
@@ -321,7 +318,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     void updateStatus()
     {
-        if (auto const *prof = DoomsdayApp::currentGameProfile())
+        if (const auto *prof = DoomsdayApp::currentGameProfile())
         {
             status->setText(prof->name().truncateWithEllipsis(30));
         }
@@ -331,7 +328,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         }
         else
         {
-            status->setText(tr("No game loaded"));
+            status->setText("No game loaded");
         }
     }
 
@@ -339,16 +336,20 @@ DENG_GUI_PIMPL(TaskBarWidget)
     {
         if (self().root().window().as<ClientWindow>().isGameMinimized())
         {
-            mainMenu->items().at(POS_HOME).setLabel(tr("Hide Home"));
+            mainMenu->items().at(POS_HOME).setLabel("Hide Home");
         }
         else
         {
-            mainMenu->items().at(POS_HOME).setLabel(tr("Show Home"));
+            mainMenu->items().at(POS_HOME).setLabel("Show Home");
         }
     }
+
+    DE_PIMPL_AUDIENCES(Open, Close)
 };
 
-#if defined (DENG_HAVE_UPDATER)
+DE_AUDIENCE_METHODS(TaskBarWidget, Open, Close)
+
+#if defined (DE_HAVE_UPDATER)
 static PopupWidget *makeUpdaterSettings()
 {
     return new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
@@ -359,7 +360,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
 {
     Background bg(style().colors().colorf("background"));
 
-    Rule const &gap = rule("gap");
+    const Rule &gap = rule("gap");
 
     d->backBlur = new LabelWidget;
     d->backBlur->rule()
@@ -367,14 +368,6 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
             .setInput(Rule::Bottom, rule().bottom())
             .setInput(Rule::Right,  rule().right())
             .setInput(Rule::Top,    rule().top());
-    if (style().isBlurringAllowed())
-    {
-        d->backBlur->set(Background(ClientWindow::main().taskBarBlur(), Vector4f(1, 1, 1, 1)));
-    }
-    else
-    {
-        d->backBlur->set(Background(Vector4f(0, 0, 0, 1)));
-    }
     add(d->backBlur);
 
     d->console = new ConsoleWidget;
@@ -424,7 +417,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
     d->multi->hide(); // hidden when not connected
     d->multi->setImage(style().images().image("network"));
     d->multi->setTextAlignment(ui::AlignRight);
-    d->multi->setText(tr("MP"));
+    d->multi->setText("MP");
     d->multi->setSizePolicy(ui::Expand, ui::Filled);
     d->multi->rule().setInput(Rule::Height, rule().height());
     add(d->multi);
@@ -447,66 +440,66 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
 
     // Game unloading confirmation submenu.
     auto *unloadMenu = new ui::SubmenuItem(style().images().image("close.ring"),
-                                           tr("Unload Game"), ui::Left);
+                                           "Unload Game", ui::Left);
     unloadMenu->items()
-            << new ui::Item(ui::Item::Separator, tr("Really unload the game?"))
-            << new ui::ActionItem(tr("Unload") + " " _E(b) + tr("(discard progress)"), new SignalAction(this, SLOT(unloadGame())))
-            << new ui::ActionItem(tr("Cancel"), new SignalAction(&d->mainMenu->menu(), SLOT(dismissPopups())));
+            << new ui::Item(ui::Item::Separator, "Really unload the game?")
+            << new ui::ActionItem("Unload " _E(b) "(discard progress)", [this]() { unloadGame(); })
+            << new ui::ActionItem("Cancel", [this]() { d->mainMenu->menu().dismissPopups(); });
 
     /*
      * Set up items for the config and DE menus. Some of these are shown/hidden
      * depending on whether a game is loaded.
      */
     d->configMenu->items()
-            << new ui::SubwidgetItem(style().images().image("renderer"),  tr("Renderer"),       ui::Left, makePopup<RendererSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("vr"),        tr("3D & VR"),        ui::Left, makePopup<VRSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("renderer"),  "Renderer",       ui::Left, makePopup<RendererSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("vr"),        "3D & VR",        ui::Left, makePopup<VRSettingsDialog>)
             << new ui::Item(ui::Item::Separator)
-            << new ui::SubwidgetItem(style().images().image("display"),   tr("Video"),          ui::Left, makePopup<VideoSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("audio"),     tr("Audio"),          ui::Left, makePopup<AudioSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("input"),     tr("Input"),          ui::Left, makePopup<InputSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("network"),   tr("Network"),        ui::Left, makePopup<NetworkSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("display"),   "Video",          ui::Left, makePopup<VideoSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("audio"),     "Audio",          ui::Left, makePopup<AudioSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("input"),     "Input",          ui::Left, makePopup<InputSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("network"),   "Network",        ui::Left, makePopup<NetworkSettingsDialog>)
             << new ui::Item(ui::Item::Separator)
-            << new ui::SubwidgetItem(style().images().image("package.icon"), tr("Data Files"),     ui::Left, makePopup<DataFileSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("home.icon"), tr("User Interface"), ui::Left, makePopup<UISettingsDialog>);
-#if defined (DENG_HAVE_UPDATER)
+            << new ui::SubwidgetItem(style().images().image("package.icon"), "Data Files",     ui::Left, makePopup<DataFileSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("home.icon"), "User Interface", ui::Left, makePopup<UISettingsDialog>);
+#if defined (DE_HAVE_UPDATER)
     d->configMenu->items()
-            << new ui::SubwidgetItem(style().images().image("updater"),   tr("Updater"),        ui::Left, makeUpdaterSettings);
+            << new ui::SubwidgetItem(style().images().image("updater"),   "Updater",        ui::Left, makeUpdaterSettings);
 #endif
 
-    auto *helpMenu = new ui::SubmenuItem(tr("Help"), ui::Left);
+    auto *helpMenu = new ui::SubmenuItem("Help", ui::Left);
     helpMenu->items()
-            << new ui::ActionItem(tr("Doomsday Manual..."),
+            << new ui::ActionItem("Doomsday Manual...",
                               new CallbackAction([]() {
-                                  ClientApp::app().openInBrowser(QUrl("https://manual.dengine.net/"));
+                                  ClientApp::app().openInBrowser("https://manual.dengine.net/");
                               }))
-            << new ui::ActionItem(tr("Show Tutorial"), new SignalAction(this, SLOT(showTutorial())));
-            //<< new ui::VariableToggleItem(tr("Menu Annotations"), App::config("ui.showAnnotations"))
+            << new ui::ActionItem("Show Tutorial", [this]() { showTutorial(); });
+            //<< new ui::VariableToggleItem("Menu Annotations", App::config("ui.showAnnotations"))
 
     d->mainMenu->items()
-            << new ui::Item(ui::Item::Separator, tr("Games"))
+            << new ui::Item(ui::Item::Separator, "Games")
             << new ui::ActionItem(style().images().image("home.icon"), "",
-                                  new SignalAction(this, SLOT(showOrHideHome())))
-            << new ui::ActionItem(tr("Connect to Server..."), new SignalAction(this, SLOT(connectToServerManually())))
+                                  [this]() { showOrHideHome(); })
+            << new ui::ActionItem("Connect to Server...", [this]() { connectToServerManually(); })
             << new ui::Item(ui::Item::Separator)
             << unloadMenu                           // hidden with null-game
             << new ui::Item(ui::Item::Separator)
-            << new ui::Item(ui::Item::Separator, tr("Resources"))
-            << new ui::ActionItem(tr("Browse Mods..."), new SignalAction(this, SLOT(openPackagesSidebar())))
+            << new ui::Item(ui::Item::Separator, "Resources")
+            << new ui::ActionItem("Browse Mods...", [this]() { openPackagesSidebar(); })
             << new ui::Item(ui::Item::Annotation,
-                            tr("Load/unload data files and view package information."))
-            << new ui::ActionItem(tr("Clear Cache"), new CallbackAction([] () { DoomsdayApp::app().clearCache(); }))
+                            "Load/unload data files and view package information.")
+            << new ui::ActionItem("Clear Cache", []() { DoomsdayApp::app().clearCache(); })
             << new ui::Item(ui::Item::Annotation,
-                            tr("Forces a refresh of resource file metadata."))
+                            "Forces a refresh of resource file metadata.")
             << new ui::Item(ui::Item::Separator)
-            << new ui::Item(ui::Item::Separator, tr("Doomsday"))
-#if defined (DENG_HAVE_UPDATER)
-            << new ui::ActionItem(tr("Check for Updates"), new CommandAction("updateandnotify"))
+            << new ui::Item(ui::Item::Separator, "Doomsday")
+#if defined (DE_HAVE_UPDATER)
+            << new ui::ActionItem("Check for Updates", new CommandAction("updateandnotify"))
 #endif
-            << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
+            << new ui::ActionItem("About Doomsday", [this]() { showAbout(); })
             << helpMenu
-#if !defined (DENG_MOBILE)
+#if !defined (DE_MOBILE)
             << new ui::Item(ui::Item::Separator)
-            << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit!"))
+            << new ui::ActionItem("Quit Doomsday", new CommandAction("quit!"))
 #endif
             ;
 
@@ -515,9 +508,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
     // Set the initial command line layout.
     updateCommandLineLayout();
 
-    connect(d->console, SIGNAL(commandModeChanged()), this, SLOT(updateCommandLineLayout()));
-    connect(d->console, SIGNAL(commandLineGotFocus()), this, SLOT(closeMainMenu()));
-    connect(d->console, SIGNAL(commandLineGotFocus()), this, SLOT(closeConfigMenu()));
+    d->console->audienceForCommandMode() += [this]() { updateCommandLineLayout(); };
+    d->console->audienceForGotFocus() += [this]() { closeMainMenu(); closeConfigMenu(); };
 
     // Initially closed.
     close();
@@ -543,9 +535,23 @@ bool TaskBarWidget::isOpen() const
     return d->opened;
 }
 
-Rule const &TaskBarWidget::shift()
+const Rule &TaskBarWidget::shift()
 {
     return *d->vertShift;
+}
+
+void TaskBarWidget::initialize()
+{
+    GuiWidget::initialize();
+
+    if (style().isBlurringAllowed())
+    {
+        d->backBlur->set(Background(root().window().as<ClientWindow>().taskBarBlur(), Vec4f(1)));
+    }
+    else
+    {
+        d->backBlur->set(Background(Vec4f(0, 0, 0, 1)));
+    }
 }
 
 void TaskBarWidget::glInit()
@@ -576,7 +582,7 @@ void TaskBarWidget::drawContent()
     d->updateGeometry();
 }
 
-bool TaskBarWidget::handleEvent(Event const &event)
+bool TaskBarWidget::handleEvent(const Event &event)
 {
     ClientWindow &window = root().window().as<ClientWindow>();
 
@@ -586,7 +592,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
             && !window.isGameMinimized())
     {
         // Clicking outside the taskbar will trap the mouse automatically.
-        MouseEvent const &mouse = event.as<MouseEvent>();
+        const MouseEvent &mouse = event.as<MouseEvent>();
         if (mouse.state() == MouseEvent::Released && !hitTest(mouse.pos()))
         {
             /*if (root().focus())
@@ -621,13 +627,13 @@ bool TaskBarWidget::handleEvent(Event const &event)
     if (isOpen() && event.isKey() && event.as<KeyEvent>().isModifier())
     {
         // However, let the bindings system know about the modifier state.
-        ClientApp::inputSystem().trackEvent(event);
+        ClientApp::input().trackEvent(event);
         return true;
     }
 
     if (event.type() == Event::KeyPress)
     {
-        KeyEvent const &key = event.as<KeyEvent>();
+        const KeyEvent &key = event.as<KeyEvent>();
 
         // Shift-Esc opens and closes the task bar.
         if (key.ddKey() == DDKEY_ESCAPE)
@@ -681,7 +687,7 @@ void TaskBarWidget::open()
         d->vertShift->set(0, OPEN_CLOSE_SPAN);
         setOpacity(1, OPEN_CLOSE_SPAN);
 
-        emit opened();
+        DE_NOTIFY(Open, i) i->taskBarOpened();
     }
 
     // Untrap the mouse if it is trapped.
@@ -729,7 +735,7 @@ void TaskBarWidget::close()
         // Clear focus now; callbacks/signal handlers may set the focus elsewhere.
         if (hasRoot()) root().setFocus(0);
 
-        emit closed();
+        DE_NOTIFY(Close, i) i->taskBarClosed();
 
         // Retrap the mouse if it was trapped when opening.
         if (hasRoot())
@@ -748,7 +754,7 @@ void TaskBarWidget::close()
 
 void TaskBarWidget::openConfigMenu()
 {
-    d->mainMenu->close(0);
+    d->mainMenu->close(0.0);
     d->configMenu->open();
 }
 
@@ -759,7 +765,7 @@ void TaskBarWidget::closeConfigMenu()
 
 void TaskBarWidget::openMainMenu()
 {
-    d->configMenu->close(0);
+    d->configMenu->close(0.0);
     d->mainMenu->open();
 }
 
@@ -791,7 +797,7 @@ void TaskBarWidget::showAbout()
     root().window().glDone();
 }
 
-#if defined (DENG_HAVE_UPDATER)
+#if defined (DE_HAVE_UPDATER)
 void TaskBarWidget::showUpdaterSettings()
 {
     /// @todo This has actually little to do with the taskbar. -jk
@@ -804,7 +810,7 @@ void TaskBarWidget::showUpdaterSettings()
 
 void TaskBarWidget::showOrHideHome()
 {
-    DENG2_ASSERT(App_GameLoaded());
+    DE_ASSERT(App_GameLoaded());
 
     // Minimize the game, switch to MP column in Home.
     auto &win = ClientWindow::main();

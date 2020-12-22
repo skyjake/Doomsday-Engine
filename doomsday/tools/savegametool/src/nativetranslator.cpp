@@ -17,21 +17,20 @@
  * 02110-1301 USA</small>
  */
 
+#include <de/list.h>
+#include <de/arrayvalue.h>
+#include <de/filesystem.h>
+#include <de/logbuffer.h>
+#include <de/nativefile.h>
+#include <de/numbervalue.h>
+#include <de/reader.h>
+#include <de/textapp.h>
+#include <de/writer.h>
+#include <de/ziparchive.h>
 #include "lzss.h"
-#include <QList>
-#include <QMutableListIterator>
-#include <de/ArrayValue>
-#include <de/FileSystem>
-#include <de/LogBuffer>
-#include <de/NativeFile>
-#include <de/NumberValue>
-#include <de/Reader>
-#include <de/TextApp>
-#include <de/Writer>
-#include <de/ZipArchive>
 #include "nativetranslator.h"
+#include "savegametool.h"
 
-extern de::String fallbackGameId;
 extern de::Path composeMapUriPath(de::duint32 episode, de::duint32 map);
 extern de::Folder &outputFolder();
 
@@ -47,7 +46,7 @@ public:
     explicit LZReader(LZFILE *file = 0)
         : _file(const_cast<LZFILE *>(file))
     {
-        DENG2_ASSERT(_file != 0);
+        DE_ASSERT(_file != 0);
     }
 
     void seek(uint offset)
@@ -102,7 +101,7 @@ public:
         return *this;
     }
 
-    LZReader &operator >> (de::dfloat &value)
+    LZReader &operator >> (float &value)
     {
         *this >> *reinterpret_cast<de::duint32 *>(&value);
         return *this;
@@ -111,7 +110,7 @@ public:
 private:
     LZFILE &file() const
     {
-        DENG2_ASSERT(_file != 0);
+        DE_ASSERT(_file != 0);
         return *_file;
     }
 };
@@ -121,7 +120,7 @@ private:
 using namespace internal;
 using namespace de;
 
-DENG2_PIMPL(NativeTranslator)
+DE_PIMPL(NativeTranslator)
 {
     typedef enum savestatesegment_e {
         ASEG_MAP_HEADER = 102,  // Hexen only
@@ -167,25 +166,25 @@ DENG2_PIMPL(NativeTranslator)
         case Heretic: return 0x7D9A12C5;
         case Hexen:   return 0x1B17CC00;
         }
-        DENG2_ASSERT(!"NativeTranslator::magic: Invalid format id");
+        DE_ASSERT_FAIL("NativeTranslator::magic: Invalid format id");
         return 0;
     }
 
     LZFILE *saveFile()
     {
-        DENG2_ASSERT(saveFilePtr != 0);
+        DE_ASSERT(saveFilePtr != 0);
         return saveFilePtr;
     }
 
-    LZFILE const *saveFile() const
+    const LZFILE *saveFile() const
     {
-        DENG2_ASSERT(saveFilePtr != 0);
+        DE_ASSERT(saveFilePtr != 0);
         return saveFilePtr;
     }
 
     String translateGamemode(int gamemode)
     {
-        static char const *doomGameIdentityKeys[] = {
+        static const char *doomGameIdentityKeys[] = {
             /*doom_shareware*/    "doom1-share",
             /*doom*/              "doom1",
             /*doom_ultimate*/     "doom1-ultimate",
@@ -195,12 +194,12 @@ DENG2_PIMPL(NativeTranslator)
             /*doom2_tnt*/         "doom2-tnt",
             /*doom2_hacx*/        "hacx"
         };
-        static char const *hereticGameIdentityKeys[] = {
+        static const char *hereticGameIdentityKeys[] = {
             /*heretic_shareware*/ "heretic-share",
             /*heretic*/           "heretic",
             /*heretic_extended*/  "heretic-ext"
         };
-        static char const *hexenGameIdentityKeys[] = {
+        static const char *hexenGameIdentityKeys[] = {
             /*hexen_demo*/        "hexen-demo",
             /*hexen*/             "hexen",
             /*hexen_deathkings*/  "hexen-dk",
@@ -217,7 +216,7 @@ DENG2_PIMPL(NativeTranslator)
                 /*doom2*/               4,
                 /*doom_ultimate*/       2
             };
-            DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(oldGamemodes) / sizeof(oldGamemodes[0]));
+            DE_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(oldGamemodes) / sizeof(oldGamemodes[0]));
             gamemode = oldGamemodes[gamemode];
 
             // Older versions did not differentiate between versions of Doom2, meaning we cannot
@@ -239,40 +238,40 @@ DENG2_PIMPL(NativeTranslator)
                 /*heretic*/             1,
                 /*heretic_extended*/    2
             };
-            DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(oldGamemodes) / sizeof(oldGamemodes[0]));
+            DE_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(oldGamemodes) / sizeof(oldGamemodes[0]));
             gamemode = oldGamemodes[gamemode];
         }
 
         switch (id)
         {
         case Doom:
-            DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(doomGameIdentityKeys)    / sizeof(doomGameIdentityKeys[0]));
+            DE_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(doomGameIdentityKeys)    / sizeof(doomGameIdentityKeys[0]));
             return doomGameIdentityKeys[gamemode];
 
         case Heretic:
-            DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(hereticGameIdentityKeys) / sizeof(hereticGameIdentityKeys[0]));
+            DE_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(hereticGameIdentityKeys) / sizeof(hereticGameIdentityKeys[0]));
             return hereticGameIdentityKeys[gamemode];
 
         case Hexen:
-            DENG2_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(hexenGameIdentityKeys)   / sizeof(hexenGameIdentityKeys[0]));
+            DE_ASSERT(gamemode >= 0 && (unsigned)gamemode < sizeof(hexenGameIdentityKeys)   / sizeof(hexenGameIdentityKeys[0]));
             return hexenGameIdentityKeys[gamemode];
         }
-        DENG2_ASSERT(false);
+        DE_ASSERT(false);
         return "";
     }
 
     void openFile(Path path)
     {
         LOG_TRACE("openFile: Opening \"%s\"", path);
-        DENG2_ASSERT(saveFilePtr == 0);
+        DE_ASSERT(saveFilePtr == 0);
         try
         {
-            NativeFile const &nativeFile = DENG2_TEXT_APP->fileSystem().find<NativeFile const>(path);
-            NativePath const nativeFilePath = nativeFile.nativePath();
-            saveFilePtr = lzOpen(nativeFilePath.toUtf8().constData(), "rp");
+            const NativeFile &nativeFile = DE_TEXT_APP->fileSystem().find<NativeFile const>(path);
+            const NativePath nativeFilePath = nativeFile.nativePath();
+            saveFilePtr = lzOpen(nativeFilePath, "rp");
             return;
         }
-        catch (FileSystem::NotFoundError const &)
+        catch (const FileSystem::NotFoundError &)
         {} // We'll thow our own.
 
         throw FileOpenError("NativeTranslator", "Failed opening \"" + path + "\"");
@@ -324,14 +323,14 @@ DENG2_PIMPL(NativeTranslator)
         if (saveVersion < 0 || saveVersion > 13)
         {
             /// @throw UnknownFormatError Format is from the future.
-            throw UnknownFormatError("translateMetadata", "Incompatible format version " + String::number(saveVersion));
+            throw UnknownFormatError("translateMetadata", "Incompatible format version " + String::asText(saveVersion));
         }
         // We are incompatible with v3 saves due to an invalid test used to determine present
         // sides (ver3 format's sides contain chunks of junk data).
         if (id == Hexen && saveVersion == 3)
         {
             /// @throw UnknownFormatError Map state is in an unsupported format.
-            throw UnknownFormatError("translateMetadata", "Unsupported format version " + String::number(saveVersion));
+            throw UnknownFormatError("translateMetadata", "Unsupported format version " + String::asText(saveVersion));
         }
 
         // Translate gamemode identifiers from older save versions.
@@ -346,12 +345,12 @@ DENG2_PIMPL(NativeTranslator)
             from >> len;
         }
         dint8 *descBuf = (dint8 *)malloc(len + 1);
-        DENG2_ASSERT(descBuf != 0);
+        DE_ASSERT(descBuf != 0);
         from.read(descBuf, len);
         metadata.set("userDescription", String((char *)descBuf, len));
         free(descBuf); descBuf = 0;
 
-        QScopedPointer<Record> rules(new Record);
+        std::unique_ptr<Record> rules(new Record);
         if (id != Hexen && saveVersion < 13)
         {
             // In DOOM the high bit of the skill mode byte is also used for the
@@ -425,7 +424,7 @@ DENG2_PIMPL(NativeTranslator)
             rules->addBoolean("respawnMonsters", respawnMonsters);
         }
 
-        metadata.add("gameRules",           rules.take());
+        metadata.add("gameRules", rules.release());
 
         if (id != Hexen)
         {
@@ -478,7 +477,7 @@ DENG2_PIMPL(NativeTranslator)
 
         void operator >> (Writer &to) const
         {
-            DENG2_ASSERT(mapNumber);
+            DE_ASSERT(mapNumber);
 
             to << composeMapUriPath(0, mapNumber).asText()
                << scriptNumber;
@@ -490,7 +489,7 @@ DENG2_PIMPL(NativeTranslator)
             }
         }
     };
-    typedef QList<ACScriptTask *> ACScriptTasks;
+    typedef de::List<ACScriptTask *> ACScriptTasks;
 
     void translateACScriptState(ZipArchive &arch, LZReader &from)
     {
@@ -504,7 +503,7 @@ DENG2_PIMPL(NativeTranslator)
             if (segId != ASEG_WORLDSCRIPTDATA)
             {
                 /// @throw ReadError Failed alignment check.
-                throw ReadError("translateACScriptState", "Corrupt save game, segment #" + String::number(ASEG_WORLDSCRIPTDATA) + " failed alignment check");
+                throw ReadError("translateACScriptState", "Corrupt save game, segment #" + String::asText(ASEG_WORLDSCRIPTDATA) + " failed alignment check");
             }
         }
 
@@ -516,7 +515,7 @@ DENG2_PIMPL(NativeTranslator)
         if (ver < 1 || ver > 3)
         {
             /// @throw UnknownFormatError Format is from the future.
-            throw UnknownFormatError("translateACScriptState", "Incompatible data segment version " + String::number(ver));
+            throw UnknownFormatError("translateACScriptState", "Incompatible data segment version " + String::asText(ver));
         }
 
         dint32 worldVars[MAX_ACS_WORLD_VARS];
@@ -539,14 +538,17 @@ DENG2_PIMPL(NativeTranslator)
             }
 
             // Prune tasks with no map number set (unused).
-            QMutableListIterator<ACScriptTask *> it(tasks);
-            while (it.hasNext())
+            for (auto it = tasks.begin(); it != tasks.end(); )
             {
-                ACScriptTask *task = it.next();
+                ACScriptTask *task = *it;
                 if (!task->mapNumber)
                 {
-                    it.remove();
+                    it = tasks.erase(it);
                     delete task;
+                }
+                else
+                {
+                    ++it;
                 }
             }
             LOG_XVERBOSE("Translated %i deferred ACScript tasks", tasks.count());
@@ -562,15 +564,16 @@ DENG2_PIMPL(NativeTranslator)
         }
         writer << dint32(tasks.count());
         writer.writeObjects(tasks);
-        qDeleteAll(tasks);
+        deleteAll(tasks);
 
 #undef MAX_ACS_WORLD_VARS
     }
 };
 
-NativeTranslator::NativeTranslator(FormatId formatId, QStringList knownExtensions,
-                                   QStringList baseGameIdKeys)
-    : PackageFormatter(knownExtensions, baseGameIdKeys)
+NativeTranslator::NativeTranslator(FormatId   formatId,
+                                   StringList knownExtensions,
+                                   StringList baseGameIdKeys)
+    : PackageFormatter(std::move(knownExtensions), std::move(baseGameIdKeys))
     , d(new Impl(this))
 {
     d->id = formatId;
@@ -587,7 +590,7 @@ String NativeTranslator::formatName() const
     case Heretic:   return "Heretic";
     case Hexen:     return "Hexen";
     }
-    DENG2_ASSERT(!"NativeTranslator::formatName: Invalid format id");
+    DE_ASSERT_FAIL("NativeTranslator::formatName: Invalid format id");
     return "";
 }
 
@@ -631,10 +634,10 @@ void NativeTranslator::convert(Path path)
     LOG_AS("NativeTranslator");
 
     /// @todo try all known extensions at the given path, if not specified.
-    String saveName = path.lastSegment().toString();
+    String saveName = path.lastSegment().toLowercaseString();
 
     d->openFile(path);
-    String const nativeFilePath = DENG2_TEXT_APP->fileSystem().find<NativeFile const>(path).nativePath();
+    const String nativeFilePath = DE_TEXT_APP->fileSystem().find<NativeFile const>(path).nativePath();
     LZReader from(d->saveFile());
 
     ZipArchive arch;
@@ -651,14 +654,14 @@ void NativeTranslator::convert(Path path)
 
     if (d->id == Hexen)
     {
-        QScopedPointer<Block> xlatedPlayerData(d->bufferFile());
-        DENG2_ASSERT(!xlatedPlayerData.isNull());
+        std::unique_ptr<Block> xlatedPlayerData(d->bufferFile());
+        DE_ASSERT(xlatedPlayerData);
         d->closeFile();
 
         // Update the metadata with the present player info (this is not needed by Hexen
         // but we'll include it for the sake of uniformity).
         ArrayValue *array = new de::ArrayValue;
-        int const presentPlayersOffset = (d->saveVersion < 4? 0 : 4 + 1 + (8 * 4) + 4);
+        const int presentPlayersOffset = (d->saveVersion < 4? 0 : 4 + 1 + (8 * 4) + 4);
         for (int i = 0; i < 8/*MAXPLAYERS*/; ++i)
         {
             dbyte playerPresent = xlatedPlayerData->at(presentPlayersOffset + i);
@@ -667,18 +670,18 @@ void NativeTranslator::convert(Path path)
         metadata.set("players", array);
 
         // Serialized map states are in similarly named "side car" files.
-        int const maxHubMaps = 99;
+        const int maxHubMaps = 99;
         for (int i = 0; i < maxHubMaps; ++i)
         {
             try
             {
                 d->openFile(path.toString().fileNamePath() / saveName.fileNameWithoutExtension()
-                            + String("%1").arg(i + 1, 2, 10, QChar('0'))
+                            + Stringf("%02i", i + 1)
                             + saveName.fileNameExtension());
 
                 if (Block *xlatedData = d->bufferFile())
                 {
-                    String const mapUriPath = composeMapUriPath(0, i + 1);
+                    const String mapUriPath = composeMapUriPath(0, i + 1);
 
                     // If this is the "current" map extract the map time for the metadata.
                     if (!mapUriPath.compareWithoutCase(metadata.gets("mapUri")))
@@ -689,8 +692,8 @@ void NativeTranslator::convert(Path path)
                     }
 
                     // Concatenate the translated data to form the serialized map state file.
-                    QScopedPointer<Block> mapStateData(composeMapStateHeader(d->magic(), d->saveVersion));
-                    DENG2_ASSERT(!mapStateData.isNull());
+                    std::unique_ptr<Block> mapStateData(composeMapStateHeader(d->magic(), d->saveVersion));
+                    DE_ASSERT(mapStateData);
                     *mapStateData += *xlatedPlayerData;
                     *mapStateData += *xlatedData;
 
@@ -699,7 +702,7 @@ void NativeTranslator::convert(Path path)
                     delete xlatedData;
                 }
             }
-            catch (FileOpenError const &)
+            catch (const FileOpenError &)
             {} // Ignore this error.
             d->closeFile();
         }
@@ -712,8 +715,8 @@ void NativeTranslator::convert(Path path)
         {
             // Append the remaining translated data to header, forming the new serialized
             // map state data file.
-            QScopedPointer<Block> mapStateData(composeMapStateHeader(d->magic(), d->saveVersion));
-            DENG2_ASSERT(!mapStateData.isNull());
+            std::unique_ptr<Block> mapStateData(composeMapStateHeader(d->magic(), d->saveVersion));
+            DE_ASSERT(mapStateData);
             *mapStateData += *xlatedData;
 
             arch.add(Path("maps") / metadata.gets("mapUri") + "State", *mapStateData);

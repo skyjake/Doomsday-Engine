@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_WORLD_EDITMAP_H
-#define DENG_WORLD_EDITMAP_H
+#ifndef DE_WORLD_EDITMAP_H
+#define DE_WORLD_EDITMAP_H
 
-#include "world/map.h"
+#include <doomsday/world/map.h>
 
 /**
  * Provides access to the current map being built with the runtime map editing
@@ -36,4 +36,4 @@ world::Map *MPE_Map();
  */
 world::Map *MPE_TakeMap();
 
-#endif  // DENG_WORLD_EDITMAP_H
+#endif  // DE_WORLD_EDITMAP_H

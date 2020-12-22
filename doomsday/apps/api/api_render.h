@@ -25,12 +25,12 @@
 #include "api_gl.h"
 #include "dd_share.h"
 
-DENG_API_TYPEDEF(Rend)
+DE_API_TYPEDEF(Rend)
 {
     de_api_t api;
 
     void (*SetupFogDefaults)(void);
-    void (*SetupFog)(float start, float end, float density, float const *rgb);
+    void (*SetupFog)(float start, float end, float density, const float *rgb);
 
     /**
      * Prepare all texture resources for the specified mobjtype.
@@ -77,7 +77,7 @@ DENG_API_TYPEDEF(Rend)
 
     void (*SetViewWindowGeometry)(int player, const RectRaw* geometry, dd_bool interpolate);
 
-    void (*SetBorderGfx)(UriWrapper const *const *paths);
+    void (*SetBorderGfx)(const UriWrapper *const *paths);
 
     /**
      * Retrieve the geometry of the specified viewport by console player num.
@@ -149,9 +149,9 @@ DENG_API_TYPEDEF(Rend)
      */
     int (*ScreenShot)(const char* filename, int flags);
 }
-DENG_API_T(Rend);
+DE_API_T(Rend);
 
-#ifndef DENG_NO_API_MACROS_RENDER
+#ifndef DE_NO_API_MACROS_RENDER
 #define R_SetupFogDefaults          _api_Rend.SetupFogDefaults
 #define R_SetupFog                  _api_Rend.SetupFog
 #define Rend_CacheForMobjType       _api_Rend.CacheForMobjType
@@ -178,7 +178,7 @@ DENG_API_T(Rend);
 #endif
 
 #if defined __DOOMSDAY__ && defined __CLIENT__
-DENG_USING_API(Rend);
+DE_USING_API(Rend);
 #endif
 
 #endif // DOOMSDAY_API_RENDER_H

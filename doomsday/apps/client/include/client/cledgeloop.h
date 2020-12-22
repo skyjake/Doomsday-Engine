@@ -18,26 +18,24 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_WORLD_CLEDGELOOP_H
-#define DENG_CLIENT_WORLD_CLEDGELOOP_H
+#ifndef DE_CLIENT_WORLD_CLEDGELOOP_H
+#define DE_CLIENT_WORLD_CLEDGELOOP_H
 
-#include <de/String>
-#include "misc/hedge.h"
-#include "client/clientsubsector.h"
-
-namespace world {
+#include <de/string.h>
+#include <doomsday/mesh/hedge.h>
+#include "world/subsector.h"
 
 class ClEdgeLoop
 {
 public:
-    ClEdgeLoop(ClientSubsector &owner, de::HEdge &first,
-               de::dint loopId = ClientSubsector::OuterLoop);
+    ClEdgeLoop(Subsector &owner, mesh::HEdge &first,
+               int loopId = Subsector::OuterLoop);
 
-    ClientSubsector &owner() const;
+    Subsector &owner() const;
 
     de::String description() const;
 
-    de::dint loopId() const;
+    int loopId() const;
 
     bool isInner() const;
     bool isOuter() const;
@@ -46,9 +44,9 @@ public:
 
     bool hasBackSubsector() const;
 
-    ClientSubsector &backSubsector() const;
+    Subsector &backSubsector() const;
 
-    de::HEdge &first() const;
+    mesh::HEdge &first() const;
 
     /**
      * Do as in the original DOOM if the texture has not been defined - extend the
@@ -57,9 +55,7 @@ public:
     void fixSurfacesMissingMaterials();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-} // namespace world
-
-#endif // DENG_CLIENT_WORLD_CLEDGELOOP_H
+#endif // DE_CLIENT_WORLD_CLEDGELOOP_H

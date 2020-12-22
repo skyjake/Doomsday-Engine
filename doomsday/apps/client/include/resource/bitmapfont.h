@@ -21,9 +21,9 @@
 #define CLIENT_RESOURCE_BITMAPFONT_H
 
 #include "abstractfont.h"
-#include <de/Rectangle>
-#include <de/String>
-#include <de/Vector>
+#include <de/rectangle.h>
+#include <de/string.h>
+#include <de/vector.h>
 
 /**
  * Bitmap font.
@@ -41,21 +41,21 @@ public:
 
     /// @return  GL-texture name.
     uint textureGLName() const;
-    de::Vector2i const &textureDimensions() const;
-    de::Vector2ui const &textureMargin() const;
+    const de::Vec2i &textureDimensions() const;
+    const de::Vec2ui &textureMargin() const;
 
     int ascent() const override;
     int descent() const override;
     int lineSpacing() const override;
 
-    de::Rectanglei const &glyphPosCoords(uchar ch) const override;
-    de::Rectanglei const &glyphTexCoords(uchar ch) const override;
+    const de::Rectanglei &glyphPosCoords(de::dbyte ch) const override;
+    const de::Rectanglei &glyphTexCoords(de::dbyte ch) const override;
 
     void glInit() const override;
     void glDeinit() const override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CLIENT_RESOURCE_BITMAPFONT_H

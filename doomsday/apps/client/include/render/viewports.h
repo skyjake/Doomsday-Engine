@@ -17,22 +17,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_VIEWPORTS_H
-#define DENG_CLIENT_VIEWPORTS_H
+#ifndef DE_CLIENT_VIEWPORTS_H
+#define DE_CLIENT_VIEWPORTS_H
 
 #ifdef __SERVER__
 #  error "viewports.h is for the client only"
 #endif
 
-#include <de/Rectangle>
-#include <de/Matrix>
-#include <de/rect.h>
+#include <de/rectangle.h>
+#include <de/matrix.h>
+#include <de/legacy/rect.h>
 
-namespace world {
-class ConvexSubspace;
-struct Generator;
-}
+namespace world { class ConvexSubspace; }
 class Lumobj;
+struct Generator;
 
 struct viewport_t
 {
@@ -42,23 +40,23 @@ struct viewport_t
 
 struct viewer_t
 {
-    de::Vector3d origin;
+    de::Vec3d origin;
     float pitch;
 
-    viewer_t(de::Vector3d const &origin = de::Vector3d(),
+    viewer_t(const de::Vec3d &origin = de::Vec3d(),
              angle_t angle              = 0,
              float pitch                = 0)
         : origin(origin)
         , pitch(pitch)
         , _angle(angle)
     {}
-    viewer_t(viewer_t const &other)
+    viewer_t(const viewer_t &other)
         : origin(other.origin)
         , pitch(other.pitch)
         , _angle(other._angle)
     {}
 
-    viewer_t lerp(viewer_t const &end, float pos) const {
+    viewer_t lerp(const viewer_t &end, float pos) const {
         return viewer_t(de::lerp(origin, end.origin, pos),
                         _angle + int(pos * (int(end._angle) - int(_angle))),
                         de::lerp(pitch,  end.pitch,  pos));
@@ -83,7 +81,7 @@ struct viewdata_t
      * these must note that it might be necessary to fix the aspect ratio of the
      * Y axis by dividing the Y coordinate by 1.2.
      */
-    de::Vector3f frontVec, upVec, sideVec; /* to the left */
+    de::Vec3f frontVec, upVec, sideVec; /* to the left */
 
     float viewCos = 0.f;
     float viewSin = 0.f;
@@ -98,8 +96,8 @@ enum ViewPortLayer {
     HUDLayer
 };
 
-DENG_EXTERN_C int      rendInfoTris;
-DENG_EXTERN_C dd_bool  firstFrameAfterLoad;
+DE_EXTERN_C int      rendInfoTris;
+DE_EXTERN_C dd_bool  firstFrameAfterLoad;
 
 /**
  * Register console variables.
@@ -128,12 +126,12 @@ void R_RenderBlankView();
 void R_RenderPlayerViewBorder();
 
 /// @return  Current viewport; otherwise @c 0.
-viewport_t const *R_CurrentViewPort();
+const viewport_t *R_CurrentViewPort();
 
 /**
  * Set the current GL viewport.
  */
-void R_UseViewPort(viewport_t const *vp);
+void R_UseViewPort(const viewport_t *vp);
 
 void R_UseViewPort(int consoleNum);
 
@@ -156,7 +154,7 @@ void R_UpdateViewer(int consoleNum);
 
 void R_ResetViewer();
 
-int R_NextViewer();
+int R_IsViewerResetPending();
 
 void R_ClearViewData();
 
@@ -176,28 +174,28 @@ void R_NewSharpWorld();
  *
  * @see R_ViewerSubspaceMarkVisible()
  */
-bool R_ViewerSubspaceIsVisible(world::ConvexSubspace const &subspace);
+bool R_ViewerSubspaceIsVisible(const world::ConvexSubspace &subspace);
 
 /**
  * Mark the subspace as visible for the current frame.
  *
  * @see R_ViewerSubspaceIsVisible()
  */
-void R_ViewerSubspaceMarkVisible(world::ConvexSubspace const &subspace, bool yes = true);
+void R_ViewerSubspaceMarkVisible(const world::ConvexSubspace &subspace, bool yes = true);
 
 /**
  * Returns @c true iff the (particle) generator is marked as visible for the current frame.
  *
  * @see R_ViewerGeneratorMarkVisible()
  */
-bool R_ViewerGeneratorIsVisible(world::Generator const &generator);
+bool R_ViewerGeneratorIsVisible(const Generator &generator);
 
 /**
  * Mark the (particle) generator as visible for the current frame.
  *
  * @see R_ViewerGeneratorIsVisible()
  */
-void R_ViewerGeneratorMarkVisible(world::Generator const &generator, bool yes = true);
+void R_ViewerGeneratorMarkVisible(const Generator &generator, bool yes = true);
 
 /// @return  Distance in map space units between the lumobj and viewer.
 double R_ViewerLumobjDistance(int idx);
@@ -237,6 +235,6 @@ void R_ViewWindowTicker(int consoleNum, timespan_t ticLength);
  *
  * @return MVP matrix.
  */
-de::Matrix4f const &Viewer_Matrix();
+const de::Mat4f &Viewer_Matrix();
 
-#endif // DENG_CLIENT_VIEWPORTS_H
+#endif // DE_CLIENT_VIEWPORTS_H

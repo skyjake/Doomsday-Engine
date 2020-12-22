@@ -19,7 +19,7 @@
 #ifndef CLIENT_RENDER_PLAYERWEAPONANIMATOR_H
 #define CLIENT_RENDER_PLAYERWEAPONANIMATOR_H
 
-#include <de/ModelDrawable>
+#include <de/modeldrawable.h>
 #include "stateanimator.h"
 
 class ClientPlayer;
@@ -37,27 +37,27 @@ class PlayerWeaponAnimator
 public:
     PlayerWeaponAnimator(ClientPlayer *plr);
 
-    void setAsset(de::String const &identifier);
+    void setAsset(const de::String &identifier);
 
     de::String assetId() const;
 
-    void stateChanged(state_s const *state);
+    void stateChanged(const state_s *state);
 
     /**
      * Determines if a 3D model has been found and is ready to be rendered.
      */
     bool hasModel() const;
 
-    Model const *model() const;
+    const Model *model() const;
 
     StateAnimator &animator();
 
     void setupVisPSprite(vispsprite_t &spr) const;
 
-    void advanceTime(de::TimeSpan const &elapsed);
+    void advanceTime(de::TimeSpan elapsed);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace render

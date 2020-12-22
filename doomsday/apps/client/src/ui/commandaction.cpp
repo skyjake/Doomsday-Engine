@@ -17,12 +17,12 @@
  */
 
 #include "de_platform.h"
-#include "CommandAction"
+#include "ui/commandaction.h"
 #include <doomsday/console/exec.h>
 
 using namespace de;
 
-CommandAction::CommandAction(String const &cmd, int commandSource)
+CommandAction::CommandAction(const String &cmd, int commandSource)
     : _command(cmd), _source(commandSource)
 {}
 
@@ -30,5 +30,5 @@ void CommandAction::trigger()
 {
     Action::trigger();
 
-    Con_Execute(_source, _command.toUtf8(), false /*silent*/, false /*net*/);
+    Con_Execute(_source, _command, false /*silent*/, false /*net*/);
 }

@@ -22,23 +22,23 @@ using namespace de;
 
 namespace render {
 
-String const Model::DEF_TIMELINE("timeline");
+DE_STATIC_STRING(DEF_TIMELINE, "timeline");
 
-Model::AnimSequence::AnimSequence(String const &name, Record const &def)
+Model::AnimSequence::AnimSequence(const String &name, const Record &def)
     : name(name)
     , def(&def)
 {
     // Parse timeline events.
-    if (def.hasSubrecord(DEF_TIMELINE))
+    if (def.hasSubrecord(DEF_TIMELINE()))
     {
         timeline = new Timeline;
-        timeline->addFromInfo(def.subrecord(DEF_TIMELINE));
+        timeline->addFromInfo(def.subrecord(DEF_TIMELINE()));
     }
-    else if (def.hasMember(DEF_TIMELINE))
+    else if (def.hasMember(DEF_TIMELINE()))
     {
         // Uses a shared timeline in the definition. This will be looked up when
         // the animation starts.
-        sharedTimeline = def.gets(DEF_TIMELINE);
+        sharedTimeline = def.gets(DEF_TIMELINE());
     }
 }
 
@@ -47,7 +47,7 @@ Model::~Model()
     // The commit group will be deleted now.
     unsetAtlas();
 
-    qDeleteAll(timelines.values());
+    timelines.deleteAll();
 }
 
 } // namespace render

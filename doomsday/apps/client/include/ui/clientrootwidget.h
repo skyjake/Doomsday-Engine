@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENTROOTWIDGET_H
-#define DENG_CLIENTROOTWIDGET_H
+#ifndef DE_CLIENTROOTWIDGET_H
+#define DE_CLIENTROOTWIDGET_H
 
-#include <de/GuiRootWidget>
-#include <de/GLWindow>
-#include <de/PackageIconBank>
+#include <de/guirootwidget.h>
+#include <de/glwindow.h>
+#include <de/packageiconbank.h>
 
 class ClientWindow;
 
@@ -38,11 +38,11 @@ public:
 
     void update() override;
     void addOnTop(de::GuiWidget *widget) override;
-    void dispatchLatestMousePosition() override;
-    void handleEventAsFallback(de::Event const &event) override;
+//    void dispatchLatestMousePosition() override;
+    void handleEventAsFallback(const de::Event &event) override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENTROOTWIDGET_H
+#endif // DE_CLIENTROOTWIDGET_H

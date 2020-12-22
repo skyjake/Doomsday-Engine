@@ -9,7 +9,7 @@
  * replaced with the engine's own (scriptable) UI widgets (once they are
  * available).
  *
- * @authors Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -27,13 +27,6 @@
  * 02110-1301 USA</small>
  */
 
-#include <QDateTime>
-#include <QStringList>
-#include <QDesktopServices>
-#include <QNetworkAccessManager>
-#include <QTextStream>
-#include <QDir>
-
 #include "de_platform.h"
 
 #ifdef WIN32
@@ -46,9 +39,9 @@
 #include "dd_def.h"
 #include "dd_types.h"
 #include "dd_main.h"
+#include "network/net_main.h"
 #include "clientapp.h"
 #include "ui/nativeui.h"
-#include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "updater.h"
@@ -58,14 +51,14 @@
 #include "updater/updatersettings.h"
 #include "updater/updatersettingsdialog.h"
 
-#include <de/App>
-#include <de/CommandLine>
-#include <de/Date>
-#include <de/LogBuffer>
-#include <de/NotificationAreaWidget>
-#include <de/SignalAction>
-#include <de/Time>
-#include <de/data/json.h>
+#include <de/app.h>
+#include <de/commandline.h>
+#include <de/date.h>
+#include <de/logbuffer.h>
+#include <de/notificationareawidget.h>
+#include <de/time.h>
+#include <de/webrequest.h>
+#include <de/json.h>
 #include <doomsday/console/exec.h>
 
 using namespace de;
@@ -74,7 +67,7 @@ using namespace de;
 #  define INSTALL_SCRIPT_NAME "deng-upgrade.scpt"
 #endif
 
-#define PLATFORM_ID     DENG_PLATFORM_ID
+#define PLATFORM_ID     DE_PLATFORM_ID
 
 static CommandLine* installerCommand;
 
@@ -83,11 +76,11 @@ static CommandLine* installerCommand;
  */
 static void runInstallerCommand(void)
 {
-    DENG_ASSERT(installerCommand != 0);
+    DE_ASSERT(installerCommand != nullptr);
 
     installerCommand->execute();
     delete installerCommand;
-    installerCommand = 0;
+    installerCommand = nullptr;
 }
 
 /**
@@ -104,7 +97,7 @@ public:
         setSizePolicy(ui::Expand, ui::Expand);
 
         _icon = new LabelWidget;
-        _icon->setImage(ClientApp::windowSystem().style().images().image("updater"));
+        _icon->setImage(style().images().image("updater"));
         _icon->setOverrideImageSize(overrideImageSize());
         _icon->rule().setRect(rule());
         add(_icon);
@@ -120,14 +113,16 @@ public:
         add(_clickable);
     }
 
-    void showIcon(DotPath const &path)
+    virtual ~UpdaterStatusWidget() = default;
+
+    void showIcon(const DotPath &path)
     {
-        _icon->setImageColor(ClientApp::windowSystem().style().colors().colorf(path));
+        _icon->setImageColor(style().colors().colorf(path));
     }
 
     void hideIcon()
     {
-        _icon->setImageColor(Vector4f());
+        _icon->setImageColor(Vec4f());
     }
 
     PopupButtonWidget &popupButton()
@@ -140,10 +135,14 @@ private:
     PopupButtonWidget *_clickable;
 };
 
-DENG2_PIMPL(Updater)
-, DENG2_OBSERVES(App, StartupComplete)
+DE_PIMPL(Updater)
+, DE_OBSERVES(App, StartupComplete)
+, DE_OBSERVES(DialogWidget, Accept)
+, DE_OBSERVES(UpdateDownloadDialog, Failure)
+, DE_OBSERVES(UpdateDownloadDialog, Progress)
+, DE_OBSERVES(WebRequest, Finished)
 {
-    QNetworkAccessManager *network = nullptr;
+    WebRequest web;
     UpdateDownloadDialog *download = nullptr; // not owned (in the widget tree, if exists)
     UniqueWidgetPtr<UpdaterStatusWidget> status;
     UpdateAvailableDialog *availableDlg = nullptr; ///< If currently open (not owned).
@@ -151,13 +150,14 @@ DENG2_PIMPL(Updater)
     bool savingSuggested = false;
 
     Version latestVersion;
-    QString latestPackageUri;
-    QString latestPackageUri2; // fallback location
-    QString latestLogUri;
+    String latestPackageUri;
+    String latestPackageUri2; // fallback location
+    String latestLogUri;
 
     Impl(Public *i) : Base(i)
     {
-        network = new QNetworkAccessManager(thisPublic);
+        web.setUserAgent(Version::currentBuild().userAgent());
+        web.audienceForFinished() += this;
 
         // Delete a package installed earlier?
         UpdaterSettings st;
@@ -166,7 +166,7 @@ DENG2_PIMPL(Updater)
             de::String p = st.pathToDeleteAtStartup();
             if (!p.isEmpty())
             {
-                QFile file(p);
+                NativePath file(p);
                 if (file.exists())
                 {
                     LOG_NOTE("Deleting previously installed package: %s") << p;
@@ -177,19 +177,33 @@ DENG2_PIMPL(Updater)
         st.setPathToDeleteAtStartup("");
     }
 
+    void webRequestFinished(WebRequest &) override
+    {
+        LOG_AS("Updater")
+        try
+        {
+            handleReply();
+        }
+        catch (const Error &er)
+        {
+            LOG_WARNING("Error when reading update check reply: %s") << er.asText();
+        }
+    }
+
     void setupUI()
     {
         status.reset(new UpdaterStatusWidget);
     }
 
-    QString composeCheckUri()
+    String composeCheckUri()
     {
         UpdaterSettings st;
-        String uri = String("%1builds?latest_for=%2&type=%3")
-                .arg(App::apiUrl())
-                .arg(DENG_PLATFORM_ID)
-                .arg(st.channel() == UpdaterSettings::Stable? "stable" :
-                     st.channel() == UpdaterSettings::Unstable? "unstable" : "candidate");
+        String uri = Stringf("%sbuilds?latest_for=%s&type=%s",
+                App::apiUrl().c_str(),
+                DE_PLATFORM_ID,
+                st.channel() == UpdaterSettings::Stable   ? "stable" :
+                st.channel() == UpdaterSettings::Unstable ? "unstable"
+                                                          : "candidate");
         LOG_XVERBOSE("URI: ", uri);
         return uri;
     }
@@ -232,9 +246,7 @@ DENG2_PIMPL(Updater)
 
         if (st.frequency() == UpdaterSettings::Biweekly)
         {
-            // Check on Tuesday and Saturday, as the builds are usually on
-            // Monday and Friday.
-            int weekday = now.asDateTime().date().dayOfWeek();
+            int weekday = Date(now).dayOfWeek();
             if (weekday == 2 || weekday == 6) return true;
         }
 
@@ -242,7 +254,7 @@ DENG2_PIMPL(Updater)
         return false;
     }
 
-    void appStartupCompleted()
+    void appStartupCompleted() override
     {
         LOG_AS("Updater")
         LOG_DEBUG("App startup was completed");
@@ -261,7 +273,7 @@ DENG2_PIMPL(Updater)
     void showCheckingNotification()
     {
         status->setRange(Rangei(0, 1));
-        status->setProgress(0, 0);
+        status->setProgress(0, 0.0);
         status->showIcon("text");
         showNotification(true);
     }
@@ -281,48 +293,50 @@ DENG2_PIMPL(Updater)
 
     void queryLatestVersion(bool notifyAlways)
     {
-        showCheckingNotification();
+        if (!web.isPending())
+        {
+            showCheckingNotification();
 
-        UpdaterSettings().setLastCheckTime(de::Time());
-        alwaysShowNotification = notifyAlways;
-        network->get(QNetworkRequest(composeCheckUri()));
+            UpdaterSettings().setLastCheckTime(de::Time());
+            alwaysShowNotification = notifyAlways;
+            web.get(composeCheckUri());
+        }
     }
 
-    void handleReply(QNetworkReply *reply)
+    void handleReply()
     {
-        reply->deleteLater(); // make sure it gets deleted
+        DE_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT(web.isFinished());
 
-        DENG2_ASSERT_IN_MAIN_THREAD();
         showNotification(false);
 
-        if (reply->error() != QNetworkReply::NoError)
+        if (web.isFailed())
         {
-            LOG_WARNING("Network request failed: %s") << reply->url().toString();
+            LOG_WARNING("Network request failed: %s") << web.errorMessage();
             return;
         }
 
-        QVariant result = de::parseJSON(QString::fromUtf8(reply->readAll()));
-        if (!result.isValid()) return;
-
-        QVariantMap const map = result.toMap();
-        if (!map.contains("direct_download_uri")) return;
-
-        latestPackageUri = map["direct_download_uri"].toString();
-        latestLogUri     = map["release_changeloguri"].toString();
+        const Record result = de::parseJSON(String::fromUtf8(web.result()));
+        if (!result.has("direct_download_uri"))
+        {
+            return;
+        }
+        latestPackageUri = result["direct_download_uri"];
+        latestLogUri     = result["release_changeloguri"];
 
         // Check if a fallback location is specified for the download.
-        if (map.contains("direct_download_fallback_uri"))
+        if (result.has("direct_download_fallback_uri"))
         {
-            latestPackageUri2 = map["direct_download_fallback_uri"].toString();
+            latestPackageUri2 = result["direct_download_fallback_uri"];
         }
         else
         {
             latestPackageUri2 = "";
         }
 
-        latestVersion = Version(map["version"].toString(), map["build_uniqueid"].toInt());
+        latestVersion = Version(result["version"], result.geti("build_uniqueid"));
 
-        Version const currentVersion = Version::currentBuild();
+        const Version currentVersion = Version::currentBuild();
 
         LOG_MSG(_E(b) "Received version information:\n" _E(.)
                 " - installed version: " _E(>) "%s ") << currentVersion.asHumanReadableText();
@@ -337,7 +351,7 @@ DENG2_PIMPL(Updater)
             return;
         }
 
-        bool const gotUpdate = latestVersion > currentVersion;
+        const bool gotUpdate = (latestVersion > currentVersion);
 
         // Is this newer than what we're running?
         if (gotUpdate)
@@ -382,22 +396,22 @@ DENG2_PIMPL(Updater)
 
     void execAvailableDialog()
     {
-        DENG2_ASSERT(availableDlg != 0);
+        DE_ASSERT(availableDlg != nullptr);
 
         availableDlg->setDeleteAfterDismissed(true);
-        QObject::connect(availableDlg, SIGNAL(checkAgain()), thisPublic, SLOT(recheck()));
+        availableDlg->audienceForRecheck() += [this]() { self().recheck(); };
 
         if (availableDlg->exec(ClientWindow::main().root()))
         {
             startDownload();
             download->open();
         }
-        availableDlg = 0;
+        availableDlg = nullptr;
     }
 
     void startDownload()
     {
-        DENG2_ASSERT(!download);
+        DE_ASSERT(!download);
 
         // The notification provides access to the download dialog.
         showDownloadNotification();
@@ -405,13 +419,72 @@ DENG2_PIMPL(Updater)
         LOG_MSG("Download and install update");
 
         download = new UpdateDownloadDialog(latestPackageUri, latestPackageUri2);
+        download->audienceForClose() += [this]() {
+            if (!download || download->isFailed())
+            {
+                if (download)
+                {
+                    download->setDeleteAfterDismissed(true);
+                    download = nullptr;
+                }
+                showNotification(false);
+            }
+        };
+        download->audienceForAccept() += this;
+        download->audienceForFailure() += this;
+        download->audienceForProgress() += this;
         status->popupButton().setPopup(*download, ui::Down);
-        QObject::connect(download, SIGNAL(closed()), thisPublic, SLOT(downloadDialogClosed()));
-        QObject::connect(download, SIGNAL(downloadProgress(int)),thisPublic, SLOT(downloadProgressed(int)));
-        QObject::connect(download, SIGNAL(downloadFailed(QString)), thisPublic, SLOT(downloadFailed(QString)));
-        QObject::connect(download, SIGNAL(accepted(int)), thisPublic, SLOT(downloadCompleted(int)));
 
         ClientWindow::main().root().addOnTop(download);
+    }
+
+    void downloadProgress(int progress) override
+    {
+        DE_ASSERT(status);
+        status->setRange(Rangei(0, 100));
+        status->setProgress(progress);
+    }
+
+    void downloadFailed(const String &message) override
+    {
+        LOG_NOTE("Update cancelled: ") << message;
+    }
+
+    void dialogAccepted(DialogWidget &, int) override
+    {
+        // Autosave the game.
+        // Well, we can't do that yet so just remind the user about saving.
+        if (App_GameLoaded() && !savingSuggested && gx.GetInteger(DD_GAME_RECOMMENDS_SAVING))
+        {
+            savingSuggested = true;
+
+            MessageDialog *msg = new MessageDialog;
+            msg->setDeleteAfterDismissed(true);
+            msg->title().setText("Save Game?");
+            msg->message().setText(_E(b) "Installing the update will discard unsaved progress in the game.\n\n"
+                                   _E(.) "Doomsday will be shut down before the installation can start. "
+                                   "The game is not saved automatically, so you will have to "
+                                   "save the game before installing the update.");
+            msg->buttons()
+                    << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, "I'll Save First")
+                    << new DialogButtonItem(DialogWidget::Reject, "Discard Progress & Install");
+
+            if (msg->exec(ClientWindow::main().root()))
+            {
+                Con_Execute(CMDS_DDAY, "savegame", false, false);
+                return;
+            }
+        }
+
+        /// @todo Check the signature of the downloaded file.
+
+        // Everything is ready to begin the installation!
+        startInstall(download->downloadedFilePath());
+
+        // The download dialog can be dismissed now.
+        download->guiDeleteLater();
+        download = nullptr;
+        savingSuggested = false;
     }
 
     /**
@@ -420,16 +493,18 @@ DENG2_PIMPL(Updater)
      *
      * @param distribPackagePath  File path of the distribution package.
      */
-    void startInstall(de::String distribPackagePath)
+    void startInstall(const String &distribPackagePath)
     {
 #ifdef MACOSX
-        de::String volName = "Doomsday Engine " + latestVersion.compactNumber();
+        String volName = "Doomsday Engine " + latestVersion.compactNumber();
 
-#ifdef DENG2_QT_5_0_OR_NEWER
-        QString scriptPath = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-#else
-        QString scriptPath = QDesktopServices::storageLocation(QDesktopServices::CacheLocation);
-#endif
+//#ifdef DE_QT_5_0_OR_NEWER
+//        String scriptPath = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+//#else
+//        String scriptPath = QDesktopServices::storageLocation(QDesktopServices::CacheLocation);
+//#endif
+#if 0
+        String scriptPath = App::cachePath();
         QDir::current().mkpath(scriptPath); // may not exist
         scriptPath = QDir(scriptPath).filePath(INSTALL_SCRIPT_NAME);
         QFile file(scriptPath);
@@ -472,6 +547,7 @@ DENG2_PIMPL(Updater)
         installerCommand->append("osascript");
         installerCommand->append(scriptPath);
         atexit(runInstallerCommand);
+#endif
 
 #elif defined(WIN32)
         /**
@@ -518,7 +594,7 @@ DENG2_PIMPL(Updater)
 
 Updater::Updater() : d(new Impl(this))
 {
-    connect(d->network, SIGNAL(finished(QNetworkReply *)), this, SLOT(gotReply(QNetworkReply *)));
+    d->web.audienceForFinished() += d;
 
     // Do a silent auto-update check when starting.
     App::app().audienceForStartupComplete() += d;
@@ -532,59 +608,6 @@ void Updater::setupUI()
 ProgressWidget &Updater::progress()
 {
     return *d->status;
-}
-
-void Updater::gotReply(QNetworkReply *reply)
-{
-    d->handleReply(reply);
-}
-
-void Updater::downloadProgressed(int percentage)
-{
-    d->status->setRange(Rangei(0, 100));
-    d->status->setProgress(percentage);
-}
-
-void Updater::downloadCompleted(int)
-{
-    // Autosave the game.
-    // Well, we can't do that yet so just remind the user about saving.
-    if (App_GameLoaded() && !d->savingSuggested && gx.GetInteger(DD_GAME_RECOMMENDS_SAVING))
-    {
-        d->savingSuggested = true;
-
-        MessageDialog *msg = new MessageDialog;
-        msg->setDeleteAfterDismissed(true);
-        msg->title().setText(tr("Save Game?"));
-        msg->message().setText(tr(_E(b) "Installing the update will discard unsaved progress in the game.\n\n"
-                                  _E(.) "Doomsday will be shut down before the installation can start. "
-                                  "The game is not saved automatically, so you will have to "
-                                  "save the game before installing the update."));
-        msg->buttons()
-                << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("I'll Save First"))
-                << new DialogButtonItem(DialogWidget::Reject, tr("Discard Progress & Install"));
-
-        if (msg->exec(ClientWindow::main().root()))
-        {
-            Con_Execute(CMDS_DDAY, "savegame", false, false);
-            return;
-        }
-    }
-
-    /// @todo Check the signature of the downloaded file.
-
-    // Everything is ready to begin the installation!
-    d->startInstall(d->download->downloadedFilePath());
-
-    // The download dialog can be dismissed now.
-    d->download->guiDeleteLater();
-    d->download = 0;
-    d->savingSuggested = false;
-}
-
-void Updater::downloadFailed(QString message)
-{
-    LOG_NOTE("Update cancelled: ") << message;
 }
 
 void Updater::recheck()
@@ -646,18 +669,5 @@ void Updater::printLastUpdated(void)
     else
     {
         LOG_MSG("Latest update check was made %s") << ago;
-    }
-}
-
-void Updater::downloadDialogClosed()
-{
-    if (!d->download || d->download->isFailed())
-    {
-        if (d->download)
-        {
-            d->download->setDeleteAfterDismissed(true);
-            d->download = 0;
-        }
-        d->showNotification(false);
     }
 }

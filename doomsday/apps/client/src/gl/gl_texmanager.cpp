@@ -23,13 +23,11 @@
 #include "gl/gl_texmanager.h"
 
 #include <cstring>
-#include <QList>
-#include <QMutableListIterator>
-#include <de/concurrency.h>
-#include <de/memory.h>
-#include <de/memoryzone.h>
-#include <de/GLInfo>
-#include <doomsday/res/Textures>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/memoryzone.h>
+#include <de/glinfo.h>
+#include <doomsday/res/textures.h>
 #include <doomsday/filesys/fs_main.h>
 
 #include "clientapp.h"
@@ -38,7 +36,7 @@
 
 #include "sys_system.h"
 
-#include "gl/gl_main.h"  // DENG_ASSERT_GL_CONTEXT_ACTIVE
+#include "gl/gl_main.h"  // DE_ASSERT_GL_CONTEXT_ACTIVE
 #include "gl/texturecontent.h"
 
 //#include "render/r_main.h"
@@ -100,7 +98,7 @@ void GL_InitTextureManager()
 /*
 static int reloadTextures(void *context)
 {
-    bool const usingBusyMode = *static_cast<bool *>(context);
+    const bool usingBusyMode = *static_cast<bool *>(context);
 
     /// @todo re-upload ALL textures currently in use.
     GL_LoadLightingSystemTextures();
@@ -160,7 +158,7 @@ void GL_ReleaseAllLightingSystemTextures()
 {
     if (novideo || !initedOk) return;
 
-    Deferred_glDeleteTextures(NUM_LIGHTING_TEXTURES, (GLuint const *) lightingTextures);
+    Deferred_glDeleteTextures(NUM_LIGHTING_TEXTURES, (const GLuint *) lightingTextures);
     zap(lightingTextures);
 }
 
@@ -170,7 +168,7 @@ GLuint GL_PrepareLSTexture(lightingtexid_t which)
     if (which < 0 || which >= NUM_LIGHTING_TEXTURES) return 0;
 
     static const struct TexDef {
-        char const *name;
+        const char *name;
         gfxmode_t mode;
     } texDefs[NUM_LIGHTING_TEXTURES] = {
         /* LST_DYNAMIC */         { "dlight",     LGM_WHITE_ALPHA },
@@ -181,7 +179,7 @@ GLuint GL_PrepareLSTexture(lightingtexid_t which)
         /* LST_RADIO_OE */        { "radiooe",    LGM_WHITE_ALPHA },
         /* LST_CAMERA_VIGNETTE */ { "vignette",   LGM_NORMAL }
     };
-    struct TexDef const &def = texDefs[which];
+    const struct TexDef &def = texDefs[which];
 
     if (!lightingTextures[which])
     {
@@ -205,7 +203,7 @@ GLuint GL_PrepareLSTexture(lightingtexid_t which)
         Image_ClearPixelData(image);
     }
 
-    DENG2_ASSERT(lightingTextures[which] != 0);
+    DE_ASSERT(lightingTextures[which] != 0);
     return lightingTextures[which];
 }
 
@@ -226,7 +224,7 @@ void GL_ReleaseAllFlareTextures()
 {
     if (novideo || !initedOk) return;
 
-    Deferred_glDeleteTextures(NUM_SYSFLARE_TEXTURES, (GLuint const *) sysFlareTextures);
+    Deferred_glDeleteTextures(NUM_SYSFLARE_TEXTURES, (const GLuint *) sysFlareTextures);
     zap(sysFlareTextures);
 }
 
@@ -236,14 +234,14 @@ GLuint GL_PrepareSysFlaremap(flaretexid_t which)
     if (which < 0 || which >= NUM_SYSFLARE_TEXTURES) return 0;
 
     static const struct TexDef {
-        char const *name;
+        const char *name;
     } texDefs[NUM_SYSFLARE_TEXTURES] = {
         /* FXT_ROUND */     { "dlight" },
         /* FXT_FLARE */     { "flare" },
         /* FXT_BRFLARE */   { "brflare" },
         /* FXT_BIGFLARE */  { "bigflare" }
     };
-    struct TexDef const &def = texDefs[which];
+    const struct TexDef &def = texDefs[which];
 
     if (!sysFlareTextures[which])
     {
@@ -267,25 +265,25 @@ GLuint GL_PrepareSysFlaremap(flaretexid_t which)
         Image_ClearPixelData(image);
     }
 
-    DENG2_ASSERT(sysFlareTextures[which] != 0);
+    DE_ASSERT(sysFlareTextures[which] != 0);
     return sysFlareTextures[which];
 }
 
-GLuint GL_PrepareFlaremap(de::Uri const &resourceUri)
+GLuint GL_PrepareFlaremap(const res::Uri &resourceUri)
 {
     if (resourceUri.path().length() == 1)
     {
         // Select a system flare by numeric identifier?
-        int number = resourceUri.path().toStringRef().first().digitValue();
+        int number = resourceUri.path().toString().first().delta('0');
         if (number == 0) return 0; // automatic
         if (number >= 1 && number <= 4)
         {
             return GL_PrepareSysFlaremap(flaretexid_t(number - 1));
         }
     }
-    if (auto *tex = res::Textures::get().tryFindTextureByResourceUri(QStringLiteral("Flaremaps"), resourceUri))
+    if (auto *tex = res::Textures::get().tryFindTextureByResourceUri(DE_STR("Flaremaps"), resourceUri))
     {
-        if (TextureVariant const *variant = static_cast<ClientTexture *>(tex)->prepareVariant(Rend_HaloTextureSpec()))
+        if (const TextureVariant *variant = static_cast<ClientTexture *>(tex)->prepareVariant(Rend_HaloTextureSpec()))
         {
             return variant->glName();
         }
@@ -294,26 +292,26 @@ GLuint GL_PrepareFlaremap(de::Uri const &resourceUri)
     return 0;
 }
 
-static res::Source loadRaw(image_t &image, rawtex_t const &raw)
+static res::Source loadRaw(image_t &image, const rawtex_t &raw)
 {
-    de::FS1 &fileSys = App_FileSystem();
+    res::FS1 &fileSys = App_FileSystem();
 
     // First try an external resource.
     try
     {
-        String foundPath = fileSys.findPath(de::Uri("Patches", Path(raw.name)),
+        String foundPath = fileSys.findPath(res::Uri("Patches", Path(raw.name)),
                                              RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
 
         return GL_LoadImage(image, foundPath)? res::External : res::None;
     }
-    catch (FS1::NotFoundError const&)
+    catch (res::FS1::NotFoundError const&)
     {} // Ignore this error.
 
     try
     {
-        FileHandle &file = fileSys.openLump(fileSys.lump(raw.lumpNum));
+        res::FileHandle &file = fileSys.openLump(fileSys.lump(raw.lumpNum));
         if (Image_LoadFromFile(image, file))
         {
             fileSys.releaseFile(file.file());
@@ -326,14 +324,14 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 #define RAW_WIDTH           320
 #define RAW_HEIGHT          200
 
-        size_t const fileLength = file.length();
+        const size_t fileLength = file.length();
 
         Image_Init(image);
-        image.size      = Vector2ui(RAW_WIDTH, fileLength / RAW_WIDTH);
+        image.size      = Vec2ui(RAW_WIDTH, fileLength / RAW_WIDTH);
         image.pixelSize = 1;
 
         // Load the raw image data.
-        size_t const numPels = RAW_WIDTH * RAW_HEIGHT;
+        const size_t numPels = RAW_WIDTH * RAW_HEIGHT;
         image.pixels = (uint8_t *) M_Malloc(3 * numPels);
         if (fileLength < 3 * numPels)
         {
@@ -349,7 +347,7 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 #undef RAW_HEIGHT
 #undef RAW_WIDTH
     }
-    catch (LumpIndex::NotFoundError const &)
+    catch (const res::LumpIndex::NotFoundError &)
     {} // Ignore error.
 
     return res::None;
@@ -392,28 +390,28 @@ GLuint GL_PrepareRawTexture(rawtex_t &raw)
     return raw.tex;
 }
 
-void GL_SetRawTexturesMinFilter(int newMinFilter)
+void GL_SetRawTexturesMinFilter(GLenum newMinFilter)
 {
-    foreach (rawtex_t *raw, App_Resources().collectRawTextures())
+    for (rawtex_t *raw : App_Resources().collectRawTextures())
     {
         if (raw->tex) // Is the texture loaded?
         {
-            DENG_ASSERT_IN_MAIN_THREAD();
-            DENG_ASSERT_GL_CONTEXT_ACTIVE();
+            DE_ASSERT_IN_MAIN_THREAD();
+            LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
-            LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, raw->tex);
-            LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, newMinFilter);
+            glBindTexture(GL_TEXTURE_2D, raw->tex);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, newMinFilter);
         }
     }
 }
 
 void GL_ReleaseTexturesForRawImages()
 {
-    foreach (rawtex_t *raw, App_Resources().collectRawTextures())
+    for (rawtex_t *raw : App_Resources().collectRawTextures())
     {
         if (raw->tex)
         {
-            Deferred_glDeleteTextures(1, (GLuint const *) &raw->tex);
+            Deferred_glDeleteTextures(1, (const GLuint *) &raw->tex);
             raw->tex = 0;
         }
     }

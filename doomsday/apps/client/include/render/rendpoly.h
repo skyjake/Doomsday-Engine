@@ -19,13 +19,13 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_RENDPOLY_H
-#define DENG_RENDER_RENDPOLY_H
+#ifndef DE_RENDER_RENDPOLY_H
+#define DE_RENDER_RENDPOLY_H
 
 #include <de/liblegacy.h>
-#include <de/Vector>
+#include <de/vector.h>
 
-DENG_EXTERN_C byte rendInfoRPolys;
+DE_EXTERN_C byte rendInfoRPolys;
 
 void R_PrintRendPoolInfo();
 
@@ -40,7 +40,7 @@ void R_InitRendPolyPools();
  *
  * @param num  The number of coordinate sets required.
  */
-de::Vector3f *R_AllocRendVertices(uint num);
+de::Vec3f *R_AllocRendVertices(uint num);
 
 /**
  * Allocate a new contiguous range of color coordinates from the specialized
@@ -48,7 +48,7 @@ de::Vector3f *R_AllocRendVertices(uint num);
  *
  * @param num  The number of coordinate sets required.
  */
-de::Vector4f *R_AllocRendColors(uint num);
+de::Vec4f *R_AllocRendColors(uint num);
 
 /**
  * Allocate a new contiguous range of texture coordinates from the specialized
@@ -56,27 +56,27 @@ de::Vector4f *R_AllocRendColors(uint num);
  *
  * @param num  The number of coordinate sets required.
  */
-de::Vector2f *R_AllocRendTexCoords(uint num);
+de::Vec2f *R_AllocRendTexCoords(uint num);
 
 /**
  * @note Doesn't actually free anything (storage is pooled for reuse).
  *
  * @param posCoords  Position coordinates to mark unused.
  */
-void R_FreeRendVertices(de::Vector3f *posCoords);
+void R_FreeRendVertices(de::Vec3f *posCoords);
 
 /**
  * @note Doesn't actually free anything (storage is pooled for reuse).
  *
  * @param colorCoords  Color coordinates to mark unused.
  */
-void R_FreeRendColors(de::Vector4f *colorCoords);
+void R_FreeRendColors(de::Vec4f *colorCoords);
 
 /**
  * @note Doesn't actually free anything (storage is pooled for reuse).
  *
  * @param texCoords  Texture coordinates to mark unused.
  */
-void R_FreeRendTexCoords(de::Vector2f *texCoords);
+void R_FreeRendTexCoords(de::Vec2f *texCoords);
 
-#endif // DENG_RENDER_RENDPOLY_H
+#endif // DE_RENDER_RENDPOLY_H

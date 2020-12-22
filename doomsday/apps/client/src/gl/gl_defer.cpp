@@ -18,15 +18,15 @@
  * 02110-1301 USA</small>
  */
 
-#define LIBDENG_DISABLE_DEFERRED_GL_API // using regular GL API calls
+#define DE_DISABLE_DEFERRED_GL_API // using regular GL API calls
 
 #include "de_platform.h"
 #include "gl/gl_defer.h"
 
-#include <de/concurrency.h>
-#include <de/timer.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/timer.h>
 #include <doomsday/doomsdayapp.h>
-#include <de/GLInfo>
+#include <de/glinfo.h>
 #include "dd_main.h"
 #include "sys_system.h"  // Sys_Sleep(), novideo
 
@@ -157,9 +157,9 @@ static deferredtask_t* nextTask(void)
     }
 }
 
-LIBDENG_GL_DEFER1(e, GLenum e)
+DE_GL_DEFER1(e, GLenum e)
 {
-    DENG2_ASSERT(ptr != nullptr);
+    DE_ASSERT(ptr != nullptr);
 
     apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_e = ptr;
@@ -168,9 +168,9 @@ LIBDENG_GL_DEFER1(e, GLenum e)
     enqueueTask(DTT_FUNC_PTR_E, api);
 }
 
-LIBDENG_GL_DEFER2(i, GLenum e, GLint i)
+DE_GL_DEFER2(i, GLenum e, GLint i)
 {
-    DENG2_ASSERT(ptr != nullptr);
+    DE_ASSERT(ptr != nullptr);
 
     apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_ei = ptr;
@@ -179,9 +179,9 @@ LIBDENG_GL_DEFER2(i, GLenum e, GLint i)
     enqueueTask(DTT_FUNC_PTR_EI, api);
 }
 
-LIBDENG_GL_DEFER2(f, GLenum e, GLfloat f)
+DE_GL_DEFER2(f, GLenum e, GLfloat f)
 {
-    DENG2_ASSERT(ptr != nullptr);
+    DE_ASSERT(ptr != nullptr);
 
     apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_ef = ptr;
@@ -190,9 +190,9 @@ LIBDENG_GL_DEFER2(f, GLenum e, GLfloat f)
     enqueueTask(DTT_FUNC_PTR_EF, api);
 }
 
-LIBDENG_GL_DEFER2(fv4, GLenum e, const GLfloat* floatArrayWithFourValues)
+DE_GL_DEFER2(fv4, GLenum e, const GLfloat* floatArrayWithFourValues)
 {
-    DENG2_ASSERT(ptr != nullptr);
+    DE_ASSERT(ptr != nullptr);
 
     apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_efv4 = ptr;
@@ -201,9 +201,9 @@ LIBDENG_GL_DEFER2(fv4, GLenum e, const GLfloat* floatArrayWithFourValues)
     enqueueTask(DTT_FUNC_PTR_EFV4, api);
 }
 
-LIBDENG_GL_DEFER2(uintArray, GLsizei s, const GLuint* v)
+DE_GL_DEFER2(uintArray, GLsizei s, const GLuint* v)
 {
-    DENG2_ASSERT(ptr != nullptr);
+    DE_ASSERT(ptr != nullptr);
 
     apifunc_t* api = (apifunc_t *) M_Malloc(sizeof(apifunc_t));
     api->func.ptr_uintArray = ptr;
@@ -219,9 +219,9 @@ static void processTask(deferredtask_t *task)
     switch(task->type)
     {
     case DTT_UPLOAD_TEXTURECONTENT:
-        DENG2_ASSERT(task->data);
+        DE_ASSERT(task->data);
         GL_UploadTextureContent(*reinterpret_cast<texturecontent_t *>(task->data),
-                                gl::Immediate);
+                                gfx::Immediate);
         break;
 
     case DTT_SET_VSYNC:
@@ -339,10 +339,10 @@ void GL_ReserveNames(void)
     Sys_Lock(deferredMutex);
     if(reservedCount < NUM_RESERVED_TEXTURENAMES)
     {
-        DENG_ASSERT_IN_MAIN_THREAD();
-        DENG_ASSERT_GL_CONTEXT_ACTIVE();
+        DE_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-        LIBGUI_GL.glGenTextures(NUM_RESERVED_TEXTURENAMES - reservedCount,
+        glGenTextures(NUM_RESERVED_TEXTURENAMES - reservedCount,
             (GLuint*) &reservedTextureNames[reservedCount]);
         reservedCount = NUM_RESERVED_TEXTURENAMES;
     }
@@ -354,11 +354,11 @@ void GL_ReleaseReservedNames(void)
     if(!deferredInited)
         return; // Just ignore.
 
-    DENG_ASSERT_IN_MAIN_THREAD(); // not deferring here
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD(); // not deferring here
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     Sys_Lock(deferredMutex);
-    LIBGUI_GL.glDeleteTextures(reservedCount, (const GLuint*) reservedTextureNames);
+    glDeleteTextures(reservedCount, (const GLuint*) reservedTextureNames);
     memset(reservedTextureNames, 0, sizeof(reservedTextureNames));
     reservedCount = 0;
     Sys_Unlock(deferredMutex);
@@ -370,7 +370,7 @@ DGLuint GL_GetReservedTextureName(void)
 
     LOG_AS("GL_GetReservedTextureName");
 
-    DENG_ASSERT(deferredInited);
+    DE_ASSERT(deferredInited);
 
     Sys_Lock(deferredMutex);
 
@@ -429,8 +429,8 @@ void GL_ProcessDeferredTasks(uint timeOutMilliSeconds)
 
     if(novideo || !deferredInited) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     startTime = Timer_RealMilliseconds();
 
@@ -450,20 +450,20 @@ void GL_ProcessDeferredTasks(uint timeOutMilliSeconds)
     GL_ReserveNames();
 }
 
-gl::UploadMethod GL_ChooseUploadMethod(struct texturecontent_s const *content)
+gfx::UploadMethod GL_ChooseUploadMethod(const struct texturecontent_s *content)
 {
-    DENG2_ASSERT(content != 0);
+    DE_ASSERT(content != 0);
 
     // Must the operation be carried out immediately?
     if((content->flags & TXCF_NEVER_DEFER) || !DoomsdayApp::busyMode().isActive())
     {
-        return gl::Immediate;
+        return gfx::Immediate;
     }
     // We can defer.
-    return gl::Deferred;
+    return gfx::Deferred;
 }
 
-void GL_DeferTextureUpload(struct texturecontent_s const *content)
+void GL_DeferTextureUpload(const struct texturecontent_s *content)
 {
     if(novideo) return;
 

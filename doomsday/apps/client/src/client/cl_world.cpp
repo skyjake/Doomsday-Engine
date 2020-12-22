@@ -20,26 +20,22 @@
 
 #include "de_base.h"
 #include "client/cl_world.h"
-
-#include <QVector>
-#include <de/stringarray.h>
-#include <doomsday/world/MaterialArchive>
-
 #include "client/cl_player.h"
-
-#include "api_map.h"
 #include "world/map.h"
-#include "Sector"
-#include "Surface"
-
+#include "world/surface.h"
 #include "network/net_msg.h"
-#include "network/protocol.h"
+#include <doomsday/api_map.h>
+#include <doomsday/network/protocol.h>
+#include <doomsday/world/materialarchive.h>
+#include <doomsday/world/sector.h>
+#include <de/legacy/stringarray.h>
 
 using namespace de;
+using world::Sector;
 
 static world::MaterialArchive *serverMaterials;
 
-typedef QVector<int> IndexTransTable;
+typedef List<int> IndexTransTable;
 static IndexTransTable xlatMobjType;
 static IndexTransTable xlatMobjState;
 
@@ -138,14 +134,14 @@ world::Material *Cl_LocalMaterial(materialarchive_serialid_t archId)
 
 int Cl_LocalMobjType(int serverMobjType)
 {
-    if (serverMobjType < 0 || serverMobjType >= xlatMobjType.size())
+    if (serverMobjType < 0 || serverMobjType >= xlatMobjType.sizei())
         return 0; // Invalid type.
     return xlatMobjType[serverMobjType];
 }
 
 int Cl_LocalMobjState(int serverMobjState)
 {
-    if (serverMobjState < 0 || serverMobjState >= xlatMobjState.size())
+    if (serverMobjState < 0 || serverMobjState >= xlatMobjState.sizei())
         return 0; // Invalid state.
     return xlatMobjState[serverMobjState];
 }
@@ -164,7 +160,7 @@ void Cl_ReadSectorDelta(dint /*deltaType*/)
 
     // Sector index number.
     Sector *sec = map.sectorPtr(Reader_ReadUInt16(msgReader));
-    DENG2_ASSERT(sec);
+    DE_ASSERT(sec);
 
     // Flags.
     dint df = Reader_ReadPackedUInt32(msgReader);
@@ -198,7 +194,7 @@ void Cl_ReadSectorDelta(dint /*deltaType*/)
 
     if (df & (SDF_COLOR_RED | SDF_COLOR_GREEN | SDF_COLOR_BLUE))
     {
-        Vector3f newColor = sec->lightColor();
+        Vec3f newColor = sec->lightColor();
         if (df & SDF_COLOR_RED)
             newColor.x = Reader_ReadByte(msgReader) / 255.f;
         if (df & SDF_COLOR_GREEN)
@@ -210,7 +206,7 @@ void Cl_ReadSectorDelta(dint /*deltaType*/)
 
     if (df & (SDF_FLOOR_COLOR_RED | SDF_FLOOR_COLOR_GREEN | SDF_FLOOR_COLOR_BLUE))
     {
-        Vector3f newColor = sec->floor().surface().color();
+        Vec3f newColor = sec->floor().surface().color();
         if (df & SDF_FLOOR_COLOR_RED)
             newColor.x = Reader_ReadByte(msgReader) / 255.f;
         if (df & SDF_FLOOR_COLOR_GREEN)
@@ -222,7 +218,7 @@ void Cl_ReadSectorDelta(dint /*deltaType*/)
 
     if (df & (SDF_CEIL_COLOR_RED | SDF_CEIL_COLOR_GREEN | SDF_CEIL_COLOR_BLUE))
     {
-        Vector3f newColor = sec->ceiling().surface().color();
+        Vec3f newColor = sec->ceiling().surface().color();
         if (df & SDF_CEIL_COLOR_RED)
             newColor.x = Reader_ReadByte(msgReader) / 255.f;
         if (df & SDF_CEIL_COLOR_GREEN)
@@ -237,20 +233,20 @@ void Cl_ReadSectorDelta(dint /*deltaType*/)
     // Do we need to start any moving planes?
     if (df & SDF_FLOOR_HEIGHT)
     {
-        ClPlaneMover::newThinker(sec->floor(), height[PLN_FLOOR], 0);
+        ClPlaneMover::newThinker(sec->floor().as<Plane>(), height[PLN_FLOOR], 0);
     }
     else if (df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
     {
-        ClPlaneMover::newThinker(sec->floor(), target[PLN_FLOOR], speed[PLN_FLOOR]);
+        ClPlaneMover::newThinker(sec->floor().as<Plane>(), target[PLN_FLOOR], speed[PLN_FLOOR]);
     }
 
     if (df & SDF_CEILING_HEIGHT)
     {
-        ClPlaneMover::newThinker(sec->ceiling(), height[PLN_CEILING], 0);
+        ClPlaneMover::newThinker(sec->ceiling().as<Plane>(), height[PLN_CEILING], 0);
     }
     else if (df & (SDF_CEILING_TARGET | SDF_CEILING_SPEED))
     {
-        ClPlaneMover::newThinker(sec->ceiling(), target[PLN_CEILING], speed[PLN_CEILING]);
+        ClPlaneMover::newThinker(sec->ceiling().as<Plane>(), target[PLN_CEILING], speed[PLN_CEILING]);
     }
 
 #undef PLN_CEILING
@@ -262,11 +258,11 @@ void Cl_ReadSideDelta(dint /*deltaType*/)
     /// @todo Do not assume the CURRENT map.
     world::Map &map = App_World().map();
 
-    dint const index = Reader_ReadUInt16(msgReader);
-    dint const df    = Reader_ReadPackedUInt32(msgReader); // Flags.
+    const dint index = Reader_ReadUInt16(msgReader);
+    const dint df    = Reader_ReadPackedUInt32(msgReader); // Flags.
 
-    LineSide *side = map.sidePtr(index);
-    DENG2_ASSERT(side != 0);
+    auto *side = map.sidePtr(index);
+    DE_ASSERT(side != 0);
 
     if (df & SIDF_TOP_MATERIAL)
     {
@@ -290,13 +286,13 @@ void Cl_ReadSideDelta(dint /*deltaType*/)
     {
         // The delta includes the entire lowest byte.
         dint lineFlags = Reader_ReadByte(msgReader);
-        Line &line = side->line();
+        auto &line = side->line();
         line.setFlags((line.flags() & ~0xff) | lineFlags, de::ReplaceFlags);
     }
 
     if (df & (SIDF_TOP_COLOR_RED | SIDF_TOP_COLOR_GREEN | SIDF_TOP_COLOR_BLUE))
     {
-        Vector3f newColor = side->top().color();
+        Vec3f newColor = side->top().color();
         if (df & SIDF_TOP_COLOR_RED)
             newColor.x = Reader_ReadByte(msgReader) / 255.f;
         if (df & SIDF_TOP_COLOR_GREEN)
@@ -308,7 +304,7 @@ void Cl_ReadSideDelta(dint /*deltaType*/)
 
     if (df & (SIDF_MID_COLOR_RED | SIDF_MID_COLOR_GREEN | SIDF_MID_COLOR_BLUE))
     {
-        Vector3f newColor = side->middle().color();
+        Vec3f newColor = side->middle().color();
         if (df & SIDF_MID_COLOR_RED)
             newColor.x = Reader_ReadByte(msgReader) / 255.f;
         if (df & SIDF_MID_COLOR_GREEN)
@@ -324,7 +320,7 @@ void Cl_ReadSideDelta(dint /*deltaType*/)
 
     if (df & (SIDF_BOTTOM_COLOR_RED | SIDF_BOTTOM_COLOR_GREEN | SIDF_BOTTOM_COLOR_BLUE))
     {
-        Vector3f newColor = side->bottom().color();
+        Vec3f newColor = side->bottom().color();
         if (df & SIDF_BOTTOM_COLOR_RED)
             newColor.x = Reader_ReadByte(msgReader) / 255.f;
         if (df & SIDF_BOTTOM_COLOR_GREEN)
@@ -353,7 +349,7 @@ void Cl_ReadPolyDelta()
     world::Map &map = App_World().map();
     Polyobj &pob    = map.polyobj(Reader_ReadPackedUInt16(msgReader));
 
-    dint const df = Reader_ReadByte(msgReader); // Flags.
+    const dint df = Reader_ReadByte(msgReader); // Flags.
     if (df & PODF_DEST_X)
     {
         pob.dest[VX] = Reader_ReadFloat(msgReader);

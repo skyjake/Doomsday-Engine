@@ -28,8 +28,8 @@
 
 #include "api_audiod_sfx.h"  // sfxbuffer_t
 #include "world/p_object.h"  // mobj_t
-#include <de/Error>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/vector.h>
 #include <functional>
 
 // Channel flags.
@@ -46,7 +46,7 @@ class SfxChannel
 {
 public:
     /// No sound buffer is assigned to the channel. @ingroup errors
-    DENG2_ERROR(MissingBufferError);
+    DE_ERROR(MissingBufferError);
 
 public:
     SfxChannel();
@@ -61,7 +61,7 @@ public:
      * Returns the sound buffer assigned to the channel.
      */
     sfxbuffer_t       &buffer();
-    sfxbuffer_t const &buffer() const;
+    const sfxbuffer_t &buffer() const;
     void setBuffer(sfxbuffer_t *newBuffer);
 
     /**
@@ -88,16 +88,16 @@ public:
     /**
      * Returns the attributed sound emitter if any (may be @c nullptr).
      */
-    struct mobj_s const *emitter() const;
-    void setEmitter(struct mobj_s const *newEmitter);
+    const struct mobj_s *emitter() const;
+    void setEmitter(const struct mobj_s *newEmitter);
 
-    void setFixedOrigin(de::Vector3d const &newOrigin);
+    void setFixedOrigin(const de::Vec3d &newOrigin);
 
     /**
      * Returns the @em effective origin point in the soundstage for the channel. This point
      * is used to apply positional audio effects during playback (both 3D and stereo models).
      */
-    de::Vector3d origin() const;
+    de::Vec3d origin() const;
 
     /**
      * Calculate priority points for a sound playing on the channel. They are used to determine
@@ -116,7 +116,7 @@ public:
     void setStartTime(int newStartTime);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**
@@ -164,10 +164,10 @@ public:
      *
      * @param func  Callback to make for each SfxChannel.
      */
-    de::LoopResult forAll(std::function<de::LoopResult (SfxChannel &)> func) const;
+    de::LoopResult forAll(const std::function<de::LoopResult (SfxChannel &)>& func) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }  // namespace audio

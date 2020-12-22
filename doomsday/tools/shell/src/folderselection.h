@@ -19,36 +19,29 @@
 #ifndef FOLDERSELECTION_H
 #define FOLDERSELECTION_H
 
-#include <de/libcore.h>
-#include <de/NativePath>
-#include <QWidget>
+#include <de/guiwidget.h>
+#include <de/nativepath.h>
 
 /**
  * Widget for selecting a folder.
  */
-class FolderSelection : public QWidget
+class FolderSelection : public de::GuiWidget
 {
-    Q_OBJECT
-
 public:
-    explicit FolderSelection(QString const &prompt, QWidget *parent = 0);
-    explicit FolderSelection(QString const &prompt, QString const &extraLabel, QWidget *parent = 0);
+    explicit FolderSelection(const de::String &prompt);
 
-    void setPath(de::NativePath const &path);
-
+    void setPath(const de::NativePath &path);
     void setEnabled(bool yes);
     void setDisabled(bool yes) { setEnabled(!yes); }
 
     de::NativePath path() const;
-    
-signals:
-    void selected();
-    
-public slots:
+
+    DE_AUDIENCE(Selection, void folderSelected(const de::NativePath &))
+
     void selectFolder();
-    
+
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // FOLDERSELECTION_H

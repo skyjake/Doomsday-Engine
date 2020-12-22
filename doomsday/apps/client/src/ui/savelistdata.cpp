@@ -20,17 +20,18 @@
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
-#include <doomsday/AbstractSession>
-#include <doomsday/SaveGames>
-#include <de/Loop>
+#include <doomsday/abstractsession.h>
+#include <doomsday/savegames.h>
+#include <de/loop.h>
+#include <de/textvalue.h>
 
 using namespace de;
 
-DENG2_PIMPL(SaveListData)
-, DENG2_OBSERVES(FileIndex, Addition)
-, DENG2_OBSERVES(FileIndex, Removal)
+DE_PIMPL(SaveListData)
+, DE_OBSERVES(FileIndex, Addition)
+, DE_OBSERVES(FileIndex, Removal)
 {
-    LoopCallback mainCall;
+    Dispatch dispatch;
 
     Impl(Public *i) : Base(i)
     {
@@ -38,28 +39,28 @@ DENG2_PIMPL(SaveListData)
         SaveGames::get().saveIndex().audienceForRemoval()  += this;
     }
 
-    bool shouldAddFolder(GameStateFolder const &save) const
+    bool shouldAddFolder(const GameStateFolder &save) const
     {
         return save.path().beginsWith("/home/savegames"); // Ignore non-user savegames.
     }
 
-    void fileAdded(File const &file, FileIndex const &)
+    void fileAdded(const File &file, const FileIndex &)
     {
-        GameStateFolder const &saveFolder = file.as<GameStateFolder>();
+        const GameStateFolder &saveFolder = file.as<GameStateFolder>();
         if (shouldAddFolder(saveFolder))
         {
-            mainCall.enqueue([this, &saveFolder] ()
+            dispatch += [this, &saveFolder] ()
             {
                 // Needs to be added.
                 self().append(new SaveItem(saveFolder));
-            });
+            };
         }
     }
 
-    void fileRemoved(File const &, FileIndex const &)
+    void fileRemoved(const File &, const FileIndex &)
     {
         // Remove obsolete entries.
-        mainCall.enqueue([this] ()
+        dispatch += [this] ()
         {
             for (ui::Data::Pos idx = self().size() - 1; idx < self().size(); --idx)
             {
@@ -68,12 +69,12 @@ DENG2_PIMPL(SaveListData)
                     self().remove(idx);
                 }
             }
-        });
+        };
     }
 
     void addAllFromIndex()
     {
-        foreach (File *file, SaveGames::get().saveIndex().files())
+        for (File *file : SaveGames::get().saveIndex().files())
         {
             try
             {
@@ -83,7 +84,7 @@ DENG2_PIMPL(SaveListData)
                     self().append(new SaveItem(save));
                 }
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_ERROR("Save file %s has corrupt metadata: %s")
                         << file->description()
@@ -102,13 +103,13 @@ SaveListData::SaveListData()
 
 // SaveItem -------------------------------------------------------------------
 
-SaveListData::SaveItem::SaveItem(GameStateFolder const &saveFolder)
+SaveListData::SaveItem::SaveItem(const GameStateFolder &saveFolder)
     : ImageItem(ShownAsButton)
     , saveFolder(&saveFolder)
 {
     saveFolder.audienceForDeletion() += this;
 
-    setData(savePath()); // for looking it up later
+    setData(TextValue(savePath())); // for looking it up later
     setLabel(title());
 
     Games &games = DoomsdayApp::games();
@@ -168,7 +169,7 @@ StringList SaveListData::SaveItem::loadedPackages() const
 {
     if (saveFolder)
     {
-        Record const &meta = saveFolder->metadata();
+        const Record &meta = saveFolder->metadata();
         if (meta.has("packages"))
         {
             return meta.getStringList("packages");
@@ -177,7 +178,7 @@ StringList SaveListData::SaveItem::loadedPackages() const
     return StringList();
 }
 
-void SaveListData::SaveItem::fileBeingDeleted(File const &)
+void SaveListData::SaveItem::fileBeingDeleted(const File &)
 {
     saveFolder = nullptr;
 }
@@ -187,7 +188,7 @@ SaveListData::SaveItem &SaveListData::at(Pos pos)
     return ListData::at(pos).as<SaveItem>();
 }
 
-SaveListData::SaveItem const &SaveListData::at(Pos pos) const
+const SaveListData::SaveItem &SaveListData::at(Pos pos) const
 {
     return ListData::at(pos).as<SaveItem>();
 }

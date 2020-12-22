@@ -19,12 +19,12 @@
 #include "ui/alertmask.h"
 #include "clientapp.h"
 
-#include <de/Config>
+#include <de/config.h>
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(AlertMask)
-, DENG2_OBSERVES(Variable, Change)
+DE_PIMPL_NOREF(AlertMask)
+, DE_OBSERVES(Variable, Change)
 {
     duint32 mask[LogEntry::HighestLogLevel + 1];
 
@@ -37,7 +37,7 @@ DENG2_PIMPL_NOREF(AlertMask)
                 = LogEntry::AllDomains;
     }
 
-    void variableValueChanged(Variable &, Value const &)
+    void variableValueChanged(Variable &, const Value &)
     {
         updateMask();
     }
@@ -46,10 +46,10 @@ DENG2_PIMPL_NOREF(AlertMask)
     {
         zap(mask);
 
-        Config const &cfg = App::config();
+        const Config &cfg = App::config();
         for(int bit = LogEntry::FirstDomainBit; bit <= LogEntry::LastDomainBit; ++bit)
         {
-            int const alertLevel = cfg.geti(String("alert.") +
+            const int alertLevel = cfg.geti(String("alert.") +
                                             LogFilter::domainRecordName(LogEntry::Context(1 << bit)));
             for(int i = LogEntry::LowestLogLevel; i <= LogEntry::HighestLogLevel; ++i)
             {
@@ -67,15 +67,15 @@ AlertMask::AlertMask() : d(new Impl)
 
 void AlertMask::init()
 {
-    foreach(Variable const *var, App::config().subrecord("alert").members())
+    for (const auto &i : App::config().subrecord("alert").members())
     {
-        var->audienceForChange() += d;
+        i.second->audienceForChange() += d;
     }
     d->updateMask();
 }
 
 bool AlertMask::shouldRaiseAlert(duint32 entryMetadata) const
 {
-    int const level = entryMetadata & LogEntry::LevelMask;
+    const int level = entryMetadata & LogEntry::LevelMask;
     return ((entryMetadata & LogEntry::DomainMask) & d->mask[level]) != 0;
 }

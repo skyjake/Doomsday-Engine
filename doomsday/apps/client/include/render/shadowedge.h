@@ -21,14 +21,11 @@
 #ifndef CLIENT_RENDER_SHADOWEDGE_H
 #define CLIENT_RENDER_SHADOWEDGE_H
 
-#include <de/types.h>
-#include <de/Vector>
+#include <doomsday/mesh/hedge.h>
+#include <de/legacy/types.h>
+#include <de/vector.h>
 
-namespace de {
-
-static coord_t const SHADOWEDGE_OPEN_THRESHOLD = 8;  ///< World units (Z axis).
-
-class HEdge;
+static const coord_t SHADOWEDGE_OPEN_THRESHOLD = 8;  ///< World units (Z axis).
 
 /**
  * @ingroup render
@@ -38,9 +35,9 @@ class ShadowEdge
 public:
     ShadowEdge();
 
-    void init(HEdge const &leftMostHEdge, dint edge);
+    void init(const mesh::HEdge &leftMostHEdge, int edge);
 
-    void prepare(dint planeIndex);
+    void prepare(int planeIndex);
 
     /**
      * Returns the "side openness" factor for the shadow edge. This factor is
@@ -49,7 +46,7 @@ public:
      *
      * @see sectorOpenness()
      */
-    dfloat openness() const;
+    float openness() const;
 
     /**
      * Returns the "sector openness" factor for the shadow edge. This factor is
@@ -58,14 +55,14 @@ public:
      *
      * @see openness()
      */
-    dfloat sectorOpenness() const;
+    float sectorOpenness() const;
 
     /**
      * Determines strength of the shadow to be cast at this edge.
      *
      * @param darkness  Normalized blending factor (0..1).
      */
-    dfloat shadowStrength(dfloat darkness) const;
+    float shadowStrength(float darkness) const;
 
     /**
      * Returns the origin of the @em outer vertex (that which is incident with
@@ -73,7 +70,7 @@ public:
      *
      * @see inner()
      */
-    Vector3d const &outer() const;
+    const de::Vec3d &outer() const;
 
     /**
      * Returns the origin of the @em inner vertex (that which extends away from
@@ -81,7 +78,7 @@ public:
      *
      * @see outer()
      */
-    Vector3d const &inner() const;
+    const de::Vec3d &inner() const;
 
     /**
      * Returns the length of the shadow edge, which is measured as the distance
@@ -90,13 +87,11 @@ public:
      * @see outer(), inner()
      */
     inline coord_t length() const {
-        return Vector3d(inner() - outer()).abs().length();
+        return de::Vec3d(inner() - outer()).abs().length();
     }
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
-
-}  // namespace de
 
 #endif  // CLIENT_RENDER_SHADOWEDGE_H

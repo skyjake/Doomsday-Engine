@@ -24,26 +24,29 @@
 #  include <process.h>
 #endif
 
-#include <signal.h>
-#ifdef MACOSX
-#  include <QDir>
-#endif
-#ifdef WIN32
-#  include <QSettings>
-#endif
-
-#include <de/concurrency.h>
-#include <de/timer.h>
-#include <de/App>
-#include <de/PackageLoader>
-#include <de/Loop>
+//#ifdef MACOSX
+//#  include <QDir>
+//#endif
+//#ifdef WIN32
+//#  include <QSettings>
+//#endif
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/exec.h>
+
+#include <de/legacy/concurrency.h>
+#include <de/legacy/timer.h>
+#include <de/app.h>
+#include <de/packageloader.h>
+#include <de/loop.h>
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #  include "ui/inputsystem.h"
 #  include "gl/gl_main.h"
+#endif
+
+#ifdef __SERVER__
+#  include <de/textapp.h>
 #endif
 
 #include "dd_main.h"
@@ -53,13 +56,15 @@
 #include "ui/nativeui.h"
 #include "api_base.h"
 
+#include <signal.h>
+
 #if defined(WIN32) && !defined(_DEBUG)
-#  define DENG_CATCH_SIGNALS
+#  define DE_CATCH_SIGNALS
 #endif
 
 int novideo;                // if true, stay in text mode for debugging
 
-#ifdef DENG_CATCH_SIGNALS
+#ifdef DE_CATCH_SIGNALS
 /**
  * Borrowed from Lee Killough.
  */
@@ -89,7 +94,7 @@ void Sys_Init()
 
     App_AudioSystem().initPlayback();
 
-#ifdef DENG_CATCH_SIGNALS
+#ifdef DE_CATCH_SIGNALS
     // Register handler for abnormal situations (in release build).
     signal(SIGSEGV, handler);
     signal(SIGTERM, handler);
@@ -135,23 +140,23 @@ void Sys_Shutdown()
     Net_Shutdown();
 
 #ifdef __CLIENT__
-    if (ClientApp::hasAudioSystem())
+    if (ClientApp::hasAudio())
     {
         // Let's shut down sound first, so Windows' HD-hogging doesn't jam
         // the MUS player (would produce horrible bursts of notes).
         App_AudioSystem().deinitPlayback();
     }
     GL_Shutdown();
-    if(ClientApp::hasInputSystem())
+    if(ClientApp::hasInput())
     {
-        ClientApp::inputSystem().clearEvents();
+        ClientApp::input().clearEvents();
     }
 #endif
 
     App_ClearGames();
 }
 
-static int showCriticalMessage(char const *msg)
+static int showCriticalMessage(const char *msg)
 {
     // This is going to be the end, I'm afraid.
     de::Loop::get().stop();
@@ -159,7 +164,7 @@ static int showCriticalMessage(char const *msg)
 #if defined (__CLIENT__)
     Sys_MessageBox(MBT_WARNING, DOOMSDAY_NICENAME, msg, 0);
 #else
-    qWarning() << msg;
+    de::warning("%s", msg);
 #endif
     return 0;
 }
@@ -171,17 +176,17 @@ int Sys_CriticalMessage(const char* msg)
 
 int Sys_CriticalMessagef(const char* format, ...)
 {
-    static const char* unknownMsg = "Unknown critical issue occured.";
-    const size_t BUF_SIZE = 655365;
-    const char* msg;
-    char* buf = 0;
-    va_list args;
-    int result;
+    static const char *unknownMsg = "Unknown critical issue occured.";
+    const size_t       BUF_SIZE   = 655365;
+    const char *       msg;
+    char *             buf = 0;
+    va_list            args;
+    int                result;
 
-    if(format && format[0])
+    if (format && format[0])
     {
         va_start(args, format);
-        buf = (char*) calloc(1, BUF_SIZE);
+        buf = reinterpret_cast<char *>(calloc(1, BUF_SIZE));
         dd_vsnprintf(buf, BUF_SIZE, format, args);
         msg = buf;
         va_end(args);
@@ -193,7 +198,7 @@ int Sys_CriticalMessagef(const char* format, ...)
 
     result = showCriticalMessage(msg);
 
-    if(buf) free(buf);
+    if (buf) free(buf);
     return result;
 }
 
@@ -239,7 +244,7 @@ void Sys_HideMouseCursor()
  * Called when Doomsday should quit (will be deferred until convenient).
  */
 #undef Sys_Quit
-DENG_EXTERN_C void Sys_Quit(void)
+DE_EXTERN_C void Sys_Quit(void)
 {
     auto &app = DoomsdayApp::app();
 
@@ -267,12 +272,16 @@ DENG_EXTERN_C void Sys_Quit(void)
     if (ClientWindow::mainExists())
     {
         ClientWindow::main().fadeContent(ClientWindow::FadeToBlack, 0.1);
-        de::Loop::get().timer(0.1, [] () { DENG2_APP->stopLoop(DD_GameLoopExitCode()); });
+        de::Loop::timer(0.1, []() { DE_GUI_APP->quit(DD_GameLoopExitCode()); });
     }
     else
 #endif
     {
+#ifdef __CLIENT__
         // It's time to stop the main loop.
-        DENG2_APP->stopLoop(DD_GameLoopExitCode());
+        DE_GUI_APP->quit(DD_GameLoopExitCode());
+#else
+        DE_TEXT_APP->quit(DD_GameLoopExitCode());
+#endif
     }
 }

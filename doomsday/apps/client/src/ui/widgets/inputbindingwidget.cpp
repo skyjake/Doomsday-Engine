@@ -18,63 +18,64 @@
 
 #include "ui/widgets/inputbindingwidget.h"
 
-#include <de/charsymbols.h>
-#include <de/AuxButtonWidget>
 #include "clientapp.h"
-#include "BindContext"
-#include "CommandBinding"
-// #include "ImpulseBinding"
+#include "ui/bindcontext.h"
+#include "ui/commandbinding.h"
+// #include "ui/impulsebinding.h"
 #include "ui/inputsystem.h"
 #include "ui/b_util.h"
+
+#include <de/charsymbols.h>
+#include <de/auxbuttonwidget.h>
 
 using namespace de;
 
 #ifdef MACOSX
 #  define CONTROL_MOD   KeyEvent::Meta
-#  define CONTROL_CHAR  DENG2_CHAR_MAC_CONTROL_KEY
+#  define CONTROL_CHAR  DE_CHAR_MAC_CONTROL_KEY
 #else
 #  define CONTROL_MOD   KeyEvent::Control
-#  define CONTROL_CHAR  DENG2_CHAR_CONTROL_KEY
+#  define CONTROL_CHAR  DE_CHAR_CONTROL_KEY
 #endif
 
-DENG_GUI_PIMPL(InputBindingWidget)
-, DENG2_OBSERVES(ButtonWidget, Press)
+DE_GUI_PIMPL(InputBindingWidget)
+, DE_OBSERVES(ButtonWidget, Press)
 {
-    String defaultEvent;
-    String command;
-    QStringList contexts;
-    int device = IDEV_KEYBOARD;
-    bool useModifiers = false;
+    String     defaultEvent;
+    String     command;
+    StringList contexts;
+    int        device       = IDEV_KEYBOARD;
+    bool       useModifiers = false;
 
     Impl(Public *i) : Base(i)
     {
         self().setSizePolicy(ui::Fixed, ui::Expand);
 
-        self().auxiliary().setText(_E(l) + tr("Reset"));
+        self().auxiliary().setText(_E(l) "Reset");
 
         //self().audienceForPress() += this;
         self().auxiliary().audienceForPress() += this;
     }
 
-    String prettyKey(String const &eventDesc)
+    String prettyKey(const String &eventDesc)
     {
-        if (!eventDesc.startsWith("key-"))
+        if (!eventDesc.beginsWith("key-"))
         {
             // Doesn't look like a key.
             return eventDesc;
         }
 
-        String name = eventDesc.substr(Rangei(4, eventDesc.indexOf("-", 4)));
-        name = name.left(1).toUpper() + name.mid(1).toLower();
+        String name = eventDesc.substr({BytePos(4), eventDesc.indexOf("-", BytePos(4))});
+        name = name.upperFirstChar(); //name.left(BytePos(1)).upper() + name.substr(BytePos(1)).lower();
 
         // Any modifiers?
-        int idx = eventDesc.indexOf("+");
+        auto idx = eventDesc.indexOf("+");
         if (idx > 0)
         {
-            String const conds = eventDesc.mid(idx + 1);
+            const String conds = eventDesc.substr(idx + 1);
             if (conds.contains("key-alt-down"))
             {
-                name = String(DENG2_CHAR_ALT_KEY) + name;
+                name = String(DE_CHAR_ALT_KEY) + name;
             }
             if (conds.contains("key-ctrl-down") || conds.contains("key-control-down"))
             {
@@ -82,7 +83,7 @@ DENG_GUI_PIMPL(InputBindingWidget)
             }
             if (conds.contains("key-shift-down"))
             {
-                name = String(DENG2_CHAR_SHIFT_KEY) + name;
+                name = String(DE_CHAR_SHIFT_KEY) + name;
             }
         }
         return name;
@@ -92,15 +93,15 @@ DENG_GUI_PIMPL(InputBindingWidget)
     /// is bound.
     void updateLabel()
     {
-        String text = _E(l) + tr("(not bound)");
+        String text = _E(l) "(not bound)";
 
         // Check all the contexts associated with this widget.
-        foreach (QString bcName, contexts)
+        for (const auto &bcName : contexts)
         {
             if (!InputSystem::get().hasContext(bcName)) continue;
-            BindContext const &context = InputSystem::get().context(bcName);
+            const BindContext &context = InputSystem::get().context(bcName);
 
-            if (Record const *rec = context.findCommandBinding(command.toLatin1(), device))
+            if (const Record *rec = context.findCommandBinding(command, device))
             {
                 // This'll do.
                 CommandBinding bind(*rec);
@@ -112,22 +113,20 @@ DENG_GUI_PIMPL(InputBindingWidget)
         self().setText(_E(b) + text);
     }
 
-    void bindCommand(String const &eventDesc)
+    void bindCommand(const String &eventDesc)
     {
-        Block const cmd = command.toLatin1();
-        InputSystem::get().forAllContexts([&cmd] (BindContext &context)
+        InputSystem::get().forAllContexts([this] (BindContext &context)
         {
-            while (Record *bind = context.findCommandBinding(cmd.constData()))
+            while (Record *bind = context.findCommandBinding(command))
             {
                 context.deleteBinding(bind->geti("id"));
             }
             return LoopContinue;
         });
-
-        foreach (QString bcName, contexts)
+        for (const auto &bcName : contexts)
         {
-            String ev = String("%1:%2").arg(bcName, eventDesc);
-            InputSystem::get().bindCommand(ev.toLatin1(), command.toLatin1());
+            String ev = Stringf("%s:%s", bcName.c_str(), eventDesc.c_str());
+            InputSystem::get().bindCommand(ev, command);
         }
     }
 
@@ -159,13 +158,13 @@ InputBindingWidget::InputBindingWidget() : d(new Impl(this))
     auxiliary().hide();
 }
 
-void InputBindingWidget::setDefaultBinding(String const &eventDesc)
+void InputBindingWidget::setDefaultBinding(const String &eventDesc)
 {
     d->defaultEvent = eventDesc;
     auxiliary().show();
 }
 
-void InputBindingWidget::setCommand(String const &command)
+void InputBindingWidget::setCommand(const String &command)
 {
     d->command = command;
     d->updateLabel();
@@ -176,7 +175,7 @@ void InputBindingWidget::enableModifiers(bool mods)
     d->useModifiers = mods;
 }
 
-void InputBindingWidget::setContexts(QStringList const &contexts)
+void InputBindingWidget::setContexts(const StringList &contexts)
 {
     d->contexts = contexts;
     d->updateLabel();
@@ -196,11 +195,11 @@ void InputBindingWidget::focusLost()
     invertStyle();
 }
 
-bool InputBindingWidget::handleEvent(Event const &event)
+bool InputBindingWidget::handleEvent(const Event &event)
 {
     if (hasFocus())
     {
-        if (KeyEvent const *key = maybeAs<KeyEvent>(event))
+        if (const KeyEvent *key = maybeAs<KeyEvent>(event))
         {
             if (key->state() != KeyEvent::Pressed) return false;
 
@@ -257,7 +256,7 @@ bool InputBindingWidget::handleEvent(Event const &event)
             return true;
         }
 
-        /*if (MouseEvent const *mouse = maybeAs<MouseEvent>(event))
+        /*if (const MouseEvent *mouse = maybeAs<MouseEvent>(event))
         {
             if (mouse->type()  == Event::MouseButton &&
                 mouse->state() == MouseEvent::Released &&
@@ -279,6 +278,6 @@ InputBindingWidget *InputBindingWidget::newTaskBarShortcut()
     bind->setCommand("taskbar");
     bind->setDefaultBinding("key-tilde-down + key-shift-up");
     bind->enableModifiers(true);
-    bind->setContexts(QStringList() << "global" << "console");
+    bind->setContexts({"global", "console"});
     return bind;
 }

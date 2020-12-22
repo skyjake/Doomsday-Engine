@@ -1,7 +1,3 @@
-if (WIN32)
-    set (MINGW_GLIB_DIR "" CACHE PATH "GLib 2.0 SDK directory (mingw)")
-endif ()
-
 if (APPLE AND GLIB_STATIC_DIR AND GETTEXT_STATIC_DIR)
     # Use the static versions of GLib and its dependencies.
     add_library (glib INTERFACE)
@@ -18,26 +14,22 @@ if (APPLE AND GLIB_STATIC_DIR AND GETTEXT_STATIC_DIR)
     )
     link_framework (glib INTERFACE CoreFoundation)
     link_framework (glib INTERFACE CoreServices)
-elseif (MINGW_GLIB_DIR)
+elseif (MSYS2_LIBS_DIR)
     add_library (glib INTERFACE)
+    set (_glibDir ${MSYS2_LIBS_DIR}/${DE_ARCH}/glib-2.0)
     target_link_libraries (glib INTERFACE
-        ${MINGW_GLIB_DIR}/${DENG_ARCH}/lib/libglib-2.0-0.lib
-        ${MINGW_GLIB_DIR}/${DENG_ARCH}/lib/libgthread-2.0-0.lib
+        ${_glibDir}/lib/libglib-2.0-0.lib
+        ${_glibDir}/lib/libgthread-2.0-0.lib
         ws2_32.lib
     )
     target_include_directories (glib INTERFACE
-        ${MINGW_GLIB_DIR}/${DENG_ARCH}/include/glib-2.0
-        ${MINGW_GLIB_DIR}/${DENG_ARCH}/lib/glib-2.0/include
+        ${_glibDir}/include
+        ${_glibDir}/lib/glib-2.0/include
     )
-    if (DENG_ARCH STREQUAL x86)
-        deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libgcc_s_dw2-1.dll)    
-    endif ()
-    deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libglib-2.0-0.dll)
-    deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libgthread-2.0-0.dll)
-    deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libintl-8.dll)
-    deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libiconv-2.dll)
-    deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libpcre-1.dll)
-    deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libwinpthread-1.dll)
+    file (GLOB _bins ${_glibDir}/lib/*.dll)
+    foreach (_bin ${_bins})
+        deng_install_library (${_bin})
+    endforeach (_bin)
 else ()
     # Find GLib via pkg-config.
     find_package (PkgConfig)

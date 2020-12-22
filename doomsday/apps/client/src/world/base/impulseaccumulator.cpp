@@ -19,8 +19,8 @@
 
 #include "world/impulseaccumulator.h"
 
-#include <de/timer.h>
-#include <de/LogBuffer>
+#include <de/legacy/timer.h>
+#include <de/logbuffer.h>
 #include <doomsday/console/var.h>
 #ifdef __CLIENT__
 #  include "ui/inputsystem.h"
@@ -30,7 +30,7 @@
 #include "world/p_players.h"
 
 #ifdef __CLIENT__
-#  include "BindContext"
+#  include "ui/bindcontext.h"
 #  include "ui/b_util.h"
 #endif
 
@@ -39,15 +39,13 @@ using namespace de;
 #ifdef __CLIENT__
 static inline InputSystem &inputSys()
 {
-    return ClientApp::inputSystem();
+    return ClientApp::input();
 }
-#endif
 
-#ifdef __CLIENT__
 static int pimpDoubleClickThreshold = 300; ///< Milliseconds, cvar
 #endif
 
-DENG2_PIMPL_NOREF(ImpulseAccumulator)
+DE_PIMPL_NOREF(ImpulseAccumulator)
 {
     int impulseId = 0;
     int playerNum = 0;
@@ -59,28 +57,22 @@ DENG2_PIMPL_NOREF(ImpulseAccumulator)
     inline PlayerImpulse &getImpulse() const
     {
         auto *impulse = P_PlayerImpulsePtr(impulseId);
-        DENG2_ASSERT(impulse);
+        DE_ASSERT(impulse);
         return *impulse;
     }
 
-#ifdef __CLIENT__
+#if defined (__CLIENT__)
     /**
      * Double-"clicks" actually mean double activations that occur within the
      * double-click threshold. This is to allow double-clicks also from the
      * analog impulses.
      */
-    struct DoubleClick
-    {
-        enum State
-        {
-            None,
-            Positive,
-            Negative
-        };
+    struct DoubleClick {
+        enum State { None, Positive, Negative };
 
-        bool triggered = false;           //< True if double-click has been detected.
-        uint previousClickTime = 0;       //< Previous time an activation occurred.
-        State lastState = None;           //< State at the previous time the check was made.
+        bool  triggered          = false; //< True if double-click has been detected.
+        uint  previousClickTime  = 0;     //< Previous time an activation occurred.
+        State lastState          = None;  //< State at the previous time the check was made.
         State previousClickState = None;  /** Previous click state. When duplicated, triggers
                                               the double click. */
     } db;
@@ -124,14 +116,14 @@ DENG2_PIMPL_NOREF(ImpulseAccumulator)
         }
 
         // We have an potential activation!
-        uint const threshold = uint( de::max(0, pimpDoubleClickThreshold) );
-        uint const nowTime   = Timer_RealMilliseconds();
+        const uint threshold = uint( de::max(0, pimpDoubleClickThreshold) );
+        const uint nowTime   = Timer_RealMilliseconds();
 
         if(newState == db.previousClickState && nowTime - db.previousClickTime < threshold)
         {
             db.triggered = true;
 
-            PlayerImpulse const &impulse = getImpulse();
+            const PlayerImpulse &impulse = getImpulse();
 
             // Compose the name of the symbolic event.
             String symbolicName;
@@ -144,20 +136,19 @@ DENG2_PIMPL_NOREF(ImpulseAccumulator)
             }
             symbolicName += impulse.name;
 
-            int const localPlayer = P_ConsoleToLocal(playerNum);
-            DENG2_ASSERT(localPlayer >= 0);
+            const int localPlayer = P_ConsoleToLocal(playerNum);
+            DE_ASSERT(localPlayer >= 0);
             LOG_INPUT_XVERBOSE("Triggered " _E(b) "'%s'" _E(.) " for player%i state: %i threshold: %i\n  %s",
                                impulse.name << (localPlayer + 1) << newState
                                << (nowTime - db.previousClickTime) << symbolicName);
 
-            Block symbolicNameUtf8 = symbolicName.toUtf8();
-            ddevent_t ev; de::zap(ev);
+            ddevent_t ev{};
             ev.device = uint(-1);
             ev.type   = E_SYMBOLIC;
             ev.symbolic.id   = playerNum;
-            ev.symbolic.name = symbolicNameUtf8.constData();
+            ev.symbolic.name = symbolicName;
 
-            inputSys().postEvent(&ev); // makes a copy.
+            inputSys().postEvent(ev); // makes a copy.
         }
 
         db.previousClickTime  = nowTime;
@@ -203,7 +194,7 @@ bool ImpulseAccumulator::expireBeforeSharpTick() const
 void ImpulseAccumulator::receiveBinary()
 {
     // Ensure this is really a binary accumulator.
-    DENG2_ASSERT(d->type == Binary);
+    DE_ASSERT(d->type == Binary);
     LOG_AS("ImpulseAccumulator");
 
     d->binaryAccum++;
@@ -218,7 +209,7 @@ void ImpulseAccumulator::receiveBinary()
 int ImpulseAccumulator::takeBinary()
 {
     // Ensure this is really a binary accumulator.
-    DENG2_ASSERT(d->type == Binary);
+    DE_ASSERT(d->type == Binary);
     LOG_AS("ImpulseAccumulator");
     short *counter = &d->binaryAccum;
     int count = *counter;
@@ -231,7 +222,7 @@ int ImpulseAccumulator::takeBinary()
 void ImpulseAccumulator::takeAnalog(float *pos, float *relOffset)
 {
     // Ensure this is really an analog accumulator.
-    DENG2_ASSERT(d->type == Analog);
+    DE_ASSERT(d->type == Analog);
     LOG_AS("ImpulseAccumulator");
 
     if(pos) *pos = 0;
@@ -269,7 +260,7 @@ void ImpulseAccumulator::clearAll()
         takeBinary();
         break;
 
-    default: DENG2_ASSERT(!"ImpulseAccumulator::clearAll: Unknown type");
+    default: DE_ASSERT_FAIL("ImpulseAccumulator::clearAll: Unknown type");
     }
 
     // Also clear the double click state.

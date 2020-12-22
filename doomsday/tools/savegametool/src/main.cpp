@@ -17,14 +17,12 @@
  * 02110-1301 USA</small>
  */
 
-#include <QList>
-#include <QtAlgorithms>
-#include <de/DirectoryFeed>
-#include <de/TextApp>
-#include <de/CommandLine>
-#include <de/LogBuffer>
-#include <de/FileSystem>
-#include <de/Time>
+#include <de/directoryfeed.h>
+#include <de/textapp.h>
+#include <de/commandline.h>
+#include <de/logbuffer.h>
+#include <de/filesystem.h>
+#include <de/time.h>
 #include "id1translator.h"
 #include "nativetranslator.h"
 
@@ -32,22 +30,23 @@ using namespace de;
 
 String fallbackGameId;
 
-typedef QList<PackageFormatter *> FormatTranslators;
-static FormatTranslators translators;
-static PackageFormatter *knownTranslator;
+typedef List<PackageFormatter *> FormatTranslators;
+
+static FormatTranslators         translators;
+static PackageFormatter *        knownTranslator;
 
 static void initTranslators()
 {
     // Order defines save format translator recognition order.
 
     // Add Doomsday-native formats:
-    translators << new NativeTranslator(NativeTranslator::Doom,    QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
-    translators << new NativeTranslator(NativeTranslator::Heretic, QStringList(".hsg"), QStringList() << "heretic");
-    translators << new NativeTranslator(NativeTranslator::Hexen,   QStringList(".hxs"), QStringList() << "hexen");
+    translators << new NativeTranslator(NativeTranslator::Doom,    {".dsg"}, {"doom", "hacx", "chex"});
+    translators << new NativeTranslator(NativeTranslator::Heretic, {".hsg"}, {"heretic"});
+    translators << new NativeTranslator(NativeTranslator::Hexen,   {".hxs"}, {"hexen"});
 
     // Add id Tech1 formats:
-    translators << new Id1Translator(Id1Translator::DoomV9,     QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
-    translators << new Id1Translator(Id1Translator::HereticV13, QStringList(".hsg"), QStringList() << "heretic");
+    translators << new Id1Translator(Id1Translator::DoomV9,     {".dsg"}, {"doom", "hacx", "chex"});
+    translators << new Id1Translator(Id1Translator::HereticV13, {".hsg"}, {"heretic"});
 }
 
 static void printUsage()
@@ -57,56 +56,57 @@ static void printUsage()
              "\n--help, -h, -?  Show usage information."
              "\n-idKey   Fallback game ID. Used to resolve ambigous savegame formats."
              "\n-output  Redirect .save output to this directory (default is the working directory).")
-            << DENG2_TEXT_APP->commandLine().at(0);
+            << DE_TEXT_APP->commandLine().at(0);
 }
 
 static void printDescription()
 {
     LOG_VERBOSE("%s is a utility for converting legacy Doomsday Engine, Doom and Heretic savegame"
                 " files into a format recognized by Doomsday Engine version 1.14 (or newer).")
-            << DENG2_TEXT_APP->applicationName();
+            << DE_TEXT_APP->metadata().gets(App::APP_NAME);
 }
 
 String versionText()
 {
-    return String("%1 version %2 (%3)")
-               .arg(DENG2_TEXT_APP->applicationName())
-               .arg(DENG2_TEXT_APP->applicationVersion())
-               .arg(Time::fromText(__DATE__ " " __TIME__, Time::CompilerDateTime)
-                    .asDateTime().toString(Qt::SystemLocaleShortDate));
+    return DE_TEXT_APP->metadata().gets(App::APP_NAME) + " version " +
+           DE_TEXT_APP->metadata().gets(App::APP_VERSION) + " (" __DATE__ " " __TIME__ ")";
 }
 
 Path composeMapUriPath(duint32 episode, duint32 map)
 {
     if (episode > 0)
     {
-        return String("E%1M%2").arg(episode).arg(map > 0? map : 1);
+        return Stringf("E%iM%i", episode, map > 0? map : 1);
     }
-    return String("MAP%1").arg(map > 0? map : 1, 2, 10, QChar('0'));
+    return Stringf("MAP%02i", map > 0? map : 1);
 }
 
 Folder &outputFolder()
 {
-    return DENG2_TEXT_APP->rootFolder().locate<Folder>("output");
+    return DE_TEXT_APP->rootFolder().locate<Folder>("output");
 }
 
-static PackageFormatter *saveFormatForGameId(String const &idKey)
+static PackageFormatter *saveFormatForGameId(const String &idKey)
 {
-    foreach (PackageFormatter *fmt, translators)
-    foreach (QString const &baseId, fmt->baseGameIds)
+    for (PackageFormatter *fmt : translators)
     {
-        if (idKey.beginsWith(baseId)) return fmt;
+        for (const String &baseId : fmt->baseGameIds)
+        {
+            if (idKey.beginsWith(baseId)) return fmt;
+        }
     }
     return 0; // Not found.
 }
 
-static PackageFormatter *guessSaveFormatFromFileName(Path const &path)
+static PackageFormatter *guessSaveFormatFromFileName(const Path &path)
 {
-    String ext = path.lastSegment().toString().fileNameExtension().toLower();
-    foreach (PackageFormatter *fmt, translators)
-    foreach (QString const &knownExtension, fmt->knownExtensions)
+    String ext = path.lastSegment().toLowercaseString().fileNameExtension();
+    for (PackageFormatter *fmt : translators)
     {
-        if (!knownExtension.compare(ext, Qt::CaseInsensitive)) return fmt;
+        if (String::contains(fmt->knownExtensions, ext, CaseInsensitive))
+        {
+            return fmt;
+        }
     }
     return 0; // Not found.
 }
@@ -122,9 +122,9 @@ static PackageFormatter &translator()
 }
 
 /// @param inputPath  Path to the game state file [.dsg | .hsg | .hxs] in the vfs.
-static void convertSavegame(Path inputPath)
+static void convertSavegame(const Path& inputPath)
 {
-    foreach (PackageFormatter *xlator, translators)
+    for (PackageFormatter *xlator : translators)
     {
         if (xlator->recognize(inputPath))
         {
@@ -163,17 +163,17 @@ static void convertSavegame(Path inputPath)
 
 int main(int argc, char **argv)
 {
+    init_Foundation();
     initTranslators();
-
     try
     {
-        TextApp app(argc, argv);
+        TextApp app(makeList(argc, argv));
         app.setMetadata("Deng Team", "dengine.net", "Savegame Tool", "1.0.1");
-        app.initSubsystems(App::DisablePlugins | App::DisablePersistentData);
+        app.initSubsystems(App::DisablePersistentData);
 
         // Name the log output file appropriately.
         LogBuffer::get().setOutputFile(app.homeFolder().path() / "savegametool.out",
-                                             LogBuffer::DontFlush);
+                                       LogBuffer::DontFlush);
 
         // Default /output to the current working directory.
         app.fileSystem().makeFolderWithFeed("/output",
@@ -192,18 +192,18 @@ int main(int argc, char **argv)
         }
         else
         {
-            for (int i = 1; i < args.count(); ++i)
+            for (int i = 1; i < args.sizei(); ++i)
             {
                 if (args.isOption(i))
                 {
                     // Was a fallback game ID specified?
-                    if (i + 1 < args.count() && !args.at(i).compareWithoutCase("-idkey"))
+                    if (i + 1 < args.sizei() && !args.at(i).compareWithoutCase("-idkey"))
                     {
-                        fallbackGameId = args.at(i + 1).strip().toLower();
+                        fallbackGameId = args.at(i + 1).strip().lower();
                         i += 1;
                     }
                     // The -output option can be used to redirect .save output.
-                    if (i + 1 < args.count() && !args.at(i).compareWithoutCase("-output"))
+                    if (i + 1 < args.sizei() && !args.at(i).compareWithoutCase("-output"))
                     {
                         args.makeAbsolutePath(i + 1);
                         app.fileSystem().makeFolderWithFeed("/output",
@@ -217,7 +217,7 @@ int main(int argc, char **argv)
 
                 // Process the named savegame on this input path.
                 args.makeAbsolutePath(i);
-                Path const inputPath = NativePath(args.at(i)).withSeparators('/');
+                const Path inputPath = NativePath(args.at(i)).withSeparators('/');
 
                 // A file name is required.
                 if (inputPath.fileName().isEmpty())
@@ -246,7 +246,7 @@ int main(int argc, char **argv)
                 {
                     convertSavegame(Path("/input") / inputPath.fileName());
                 }
-                catch (Error const &er)
+                catch (const Error &er)
                 {
                     LOG_ERROR("\"%s\" failed conversion:\n")
                             << NativePath(inputPath).pretty() << er.asText();
@@ -254,11 +254,11 @@ int main(int argc, char **argv)
             }
         }
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
-        qWarning() << err.asText();
+        err.warnPlainText();
     }
-
-    qDeleteAll(translators);
+    deleteAll(translators);
+    deinit_Foundation();
     return 0;
 }

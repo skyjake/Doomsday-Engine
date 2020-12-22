@@ -19,11 +19,11 @@
  */
 
 #include "ui/hatinputcontrol.h"
-#include <de/timer.h> // Timer_RealMilliseconds()
+#include <de/legacy/timer.h> // Timer_RealMilliseconds()
 
 using namespace de;
 
-HatInputControl::HatInputControl(String const &name)
+HatInputControl::HatInputControl(const String &name)
 {
     setName(name);
 }
@@ -55,10 +55,8 @@ duint HatInputControl::time() const
 
 String HatInputControl::description() const
 {
-    return String(_E(b) "%1 " _E(.) "(Hat) "
-                  _E(l) "Position: " _E(.) "%2")
-            .arg(fullName())
-            .arg(_pos);
+    return Stringf(
+        _E(b) "%s " _E(.) "(Hat) " _E(l) "Position: " _E(.) "%i", fullName().c_str(), _pos);
 }
 
 bool HatInputControl::inDefaultState() const

@@ -24,20 +24,20 @@
 #include "updater/updatersettings.h"
 #include "updater/updatersettingsdialog.h"
 #include "clientapp.h"
-#include <de/GuiApp>
-#include <de/Log>
-#include <de/ProgressWidget>
-#include <de/ToggleWidget>
-#include <de/SignalAction>
-#include <QUrl>
-#include <QDesktopServices>
+#include <de/guiapp.h>
+#include <de/log.h>
+#include <de/progresswidget.h>
+#include <de/togglewidget.h>
+//#include <de/signalaction.h>
+//#include <QUrl>
+//#include <QDesktopServices>
 
 using namespace de;
 
-static TimeSpan const SHOW_ANIM_SPAN = 0.3;
+static constexpr TimeSpan SHOW_ANIM_SPAN = 300_ms;
 
-DENG_GUI_PIMPL(UpdateAvailableDialog),
-DENG2_OBSERVES(ToggleWidget, Toggle)
+DE_GUI_PIMPL(UpdateAvailableDialog)
+, DE_OBSERVES(ToggleWidget, Toggle)
 {
     ProgressWidget *checking;
     ToggleWidget *autoCheck;
@@ -50,7 +50,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         initForChecking();
     }
 
-    Impl(Public *d, Version const &latest) : Base(*d)
+    Impl(Public *d, const Version &latest) : Base(*d)
     {
         initForResult(latest);
     }
@@ -58,13 +58,13 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     void initForChecking(void)
     {
         init();
-        showProgress(true, 0);
+        showProgress(true, 0.0);
     }
 
-    void initForResult(Version const &latest)
+    void initForResult(const Version &latest)
     {
         init();
-        updateResult(latest, 0);
+        updateResult(latest, 0.0);
     }
 
     void showProgress(bool show, TimeSpan span)
@@ -83,7 +83,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     void init()
     {
         checking = new ProgressWidget;
-        checking->setText(tr("Checking for Updates..."));
+        checking->setText("Checking for Updates...");
 
         // The checking indicator is overlaid on the normal content.
         checking->rule().setRect(self().rule());
@@ -92,30 +92,30 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         autoCheck = new ToggleWidget;
         self().area().add(autoCheck);
         autoCheck->setAlignment(ui::AlignLeft);
-        autoCheck->setText(tr("Check for updates automatically"));
+        autoCheck->setText("Check for updates automatically");
         autoCheck->audienceForToggle() += this;
 
         // Include the toggle in the layout.
         self().updateLayout();
     }
 
-    static bool isMatchingChannel(String const &channel, String const &buildType)
+    static bool isMatchingChannel(const String &channel, const String &buildType)
     {
         if (channel == buildType) return true;
         if (channel == "RC/stable" && buildType != "unstable") return true;
         return false;
     }
 
-    void updateResult(Version const &latest, TimeSpan showSpan)
+    void updateResult(const Version &latest, TimeSpan showSpan)
     {
         showProgress(false, showSpan);
 
         latestVersion = latest;
 
-        Version const currentVersion = Version::currentBuild();
-        String const channel = (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" :
+        const Version currentVersion = Version::currentBuild();
+        const String channel = (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" :
                                 UpdaterSettings().channel() == UpdaterSettings::Unstable? "unstable" : "RC/stable");
-        String const builtInType = String(DOOMSDAY_RELEASE_TYPE).toLower();
+        const String builtInType = CString(DOOMSDAY_RELEASE_TYPE).lower();
         bool askUpgrade    = false;
         bool askDowngrade  = false;
 
@@ -123,28 +123,32 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         {
             askUpgrade = true;
 
-            self().title().setText(tr("Update Available"));
+            self().title().setText("Update Available");
             self().title().setImage(style().images().image("updater"));
-            self().message().setText(tr("There is an update available. The latest %1 release is %2, while you are running %3.")
-                                   .arg(channel)
-                                   .arg(_E(b) + latestVersion.asHumanReadableText() + _E(.))
-                                   .arg(currentVersion.asHumanReadableText()));
+            self().message().setText(
+                Stringf("There is an update available. The latest %s release is %s, while "
+                               "you are running %s.",
+                               channel.c_str(),
+                               (_E(b) + latestVersion.asHumanReadableText() + _E(.)).c_str(),
+                               currentVersion.asHumanReadableText().c_str()));
         }
         else if (isMatchingChannel(channel, builtInType)) // same release type
         {
-            self().title().setText(tr("Up to Date"));
-            self().message().setText(tr("The installed %1 is the latest available %2 build.")
-                                   .arg(currentVersion.asHumanReadableText())
-                                   .arg(_E(b) + channel + _E(.)));
+            self().title().setText("Up to Date");
+            self().message().setText(
+                Stringf("The installed %s is the latest available %s build.",
+                               currentVersion.asHumanReadableText().c_str(),
+                               (_E(b) + channel + _E(.)).c_str()));
         }
         else if (latestVersion < currentVersion)
         {
             askDowngrade = true;
 
-            self().title().setText(tr("Up to Date"));
-            self().message().setText(tr("The installed %1 is newer than the latest available %2 build.")
-                                   .arg(currentVersion.asHumanReadableText())
-                                   .arg(_E(b) + channel + _E(.)));
+            self().title().setText("Up to Date");
+            self().message().setText(
+                Stringf("The installed %s is newer than the latest available %s build.",
+                        currentVersion.asHumanReadableText().c_str(),
+                        (_E(b) + channel + _E(.)).c_str()));
         }
 
         autoCheck->setInactive(UpdaterSettings().onlyCheckManually());
@@ -154,32 +158,32 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         if (askDowngrade)
         {
             self().buttons()
-                    << new DialogButtonItem(DialogWidget::Accept, tr("Downgrade to Older"))
-                    << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Default, tr("Close"));
+                    << new DialogButtonItem(DialogWidget::Accept, "Downgrade to Older")
+                    << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Default, "Close");
         }
         else if (askUpgrade)
         {
             self().buttons()
-                    << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Upgrade"))
-                    << new DialogButtonItem(DialogWidget::Reject, tr("Not Now"));
+                    << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, "Upgrade")
+                    << new DialogButtonItem(DialogWidget::Reject, "Not Now");
         }
         else
         {
             self().buttons()
-                    << new DialogButtonItem(DialogWidget::Accept, tr("Reinstall"))
-                    << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Default, tr("Close"));
+                    << new DialogButtonItem(DialogWidget::Accept, "Reinstall")
+                    << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Default, "Close");
         }
 
         self().buttons()
                 << new DialogButtonItem(DialogWidget::Action | DialogWidget::Id1,
                                         style().images().image("gear"),
-                                        new SignalAction(thisPublic, SLOT(editSettings())));
+                                        [this]() { self().editSettings(); });
 
         if (askUpgrade)
         {
             self().buttons()
-                    << new DialogButtonItem(DialogWidget::Action, tr("What's New?"),
-                                            new SignalAction(thisPublic, SLOT(showWhatsNew())));
+                    << new DialogButtonItem(DialogWidget::Action, "What's New?",
+                                            [this]() { self().showWhatsNew(); });
         }
     }
 
@@ -190,19 +194,23 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
 
         LOG_DEBUG("Never check for updates: %b") << set;
     }
+
+    DE_PIMPL_AUDIENCE(Recheck)
 };
+
+DE_AUDIENCE_METHOD(UpdateAvailableDialog, Recheck)
 
 UpdateAvailableDialog::UpdateAvailableDialog()
     : MessageDialog("updateavailable"), d(new Impl(this))
 {}
 
-UpdateAvailableDialog::UpdateAvailableDialog(Version const &latestVersion, String changeLogUri)
+UpdateAvailableDialog::UpdateAvailableDialog(const Version &latestVersion, String changeLogUri)
     : MessageDialog("updateavailable"), d(new Impl(this, latestVersion))
 {
     d->changeLog = changeLogUri;
 }
 
-void UpdateAvailableDialog::showResult(Version const &latestVersion, String changeLogUri)
+void UpdateAvailableDialog::showResult(const Version &latestVersion, String changeLogUri)
 {
     d->changeLog = changeLogUri;
     d->updateResult(latestVersion, SHOW_ANIM_SPAN);
@@ -210,7 +218,7 @@ void UpdateAvailableDialog::showResult(Version const &latestVersion, String chan
 
 void UpdateAvailableDialog::showWhatsNew()
 {
-    ClientApp::app().openInBrowser(QUrl(d->changeLog));
+    ClientApp::app().openInBrowser(d->changeLog);
 }
 
 void UpdateAvailableDialog::editSettings()
@@ -227,7 +235,7 @@ void UpdateAvailableDialog::editSettings()
         {
             d->autoCheck->setInactive(UpdaterSettings().onlyCheckManually());
             d->showProgress(true, SHOW_ANIM_SPAN);
-            emit checkAgain();
+            DE_NOTIFY(Recheck, i) i->userRequestedSoftwareUpdateCheck();
         }
     }
 }

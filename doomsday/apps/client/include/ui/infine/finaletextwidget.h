@@ -18,11 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_UI_INFINE_FINALETEXTWIDGET_H
-#define DENG_UI_INFINE_FINALETEXTWIDGET_H
+#ifndef DE_UI_INFINE_FINALETEXTWIDGET_H
+#define DE_UI_INFINE_FINALETEXTWIDGET_H
 
-#include <de/String>
-#include <de/Vector>
+#include <de/string.h>
+#include <de/vector.h>
 #include "ui/infine/finalewidget.h"
 
 /**
@@ -33,7 +33,7 @@
 class FinaleTextWidget : public FinaleWidget
 {
 public:
-    FinaleTextWidget(de::String const &name);
+    FinaleTextWidget(const de::String &name);
     virtual ~FinaleTextWidget();
 
     void accelerate();
@@ -47,8 +47,8 @@ public:
      */
     int visLength();
 
-    char const *text() const;
-    FinaleTextWidget &setText(char const *newText);
+    const char *text() const;
+    FinaleTextWidget &setText(const char *newText);
 
     fontid_t font() const;
     FinaleTextWidget &setFont(fontid_t newFont);
@@ -70,18 +70,18 @@ public:
     FinaleTextWidget &setPageColor(uint id);
     FinaleTextWidget &setPageFont(uint id);
 
-    FinaleTextWidget &setColorAndAlpha(de::Vector4f const &newColorAndAlpha, int steps = 0);
-    FinaleTextWidget &setColor(de::Vector3f const &newColor, int steps = 0);
+    FinaleTextWidget &setColorAndAlpha(const de::Vec4f &newColorAndAlpha, int steps = 0);
+    FinaleTextWidget &setColor(const de::Vec3f &newColor, int steps = 0);
     FinaleTextWidget &setAlpha(float alpha, int steps = 0);
 
 protected:
 #ifdef __CLIENT__
-    void draw(de::Vector3f const &offset);
+    void draw(const de::Vec3f &offset);
 #endif
     void runTicks();
 
 public:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_UI_INFINE_FINALETEXTWIDGET_H
+#endif // DE_UI_INFINE_FINALETEXTWIDGET_H

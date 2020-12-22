@@ -19,12 +19,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UPDATEDOWNLOADDIALOG_H
-#define DENG_CLIENT_UPDATEDOWNLOADDIALOG_H
+#ifndef DE_CLIENT_UPDATEDOWNLOADDIALOG_H
+#define DE_CLIENT_UPDATEDOWNLOADDIALOG_H
 
 #include "ui/dialogs/downloaddialog.h"
-
-class QNetworkReply;
 
 /**
  * Dialog for downloading an update in the background and then starting
@@ -32,11 +30,14 @@ class QNetworkReply;
  */
 class UpdateDownloadDialog : public DownloadDialog
 {
-    Q_OBJECT
+public:
+    DE_AUDIENCE(Progress, void downloadProgress(int percentage))
+    DE_AUDIENCE(Failure,  void downloadFailed(const de::String &uri))
 
 public:
     UpdateDownloadDialog(de::String downloadUri, de::String fallbackUri);
-    ~UpdateDownloadDialog();
+
+    ~UpdateDownloadDialog() override;
 
     /**
      * Returns the path of the downloaded file.
@@ -54,18 +55,13 @@ public:
     static UpdateDownloadDialog &currentDownload();
     static void showCompletedDownload();
 
-signals:
-    void downloadProgress(int percentage);
-    void downloadFailed(QString uri);
-
-public slots:
-    void replyMetaDataChanged();
-    void progress(qint64 received, qint64 total);
-    void finished(QNetworkReply *);
+//    void replyMetaDataChanged();
+//    void progress(qint64 received, qint64 total);
+//    void finished(QNetworkReply *);
     void cancel() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UPDATEDOWNLOADDIALOG_H
+#endif // DE_CLIENT_UPDATEDOWNLOADDIALOG_H

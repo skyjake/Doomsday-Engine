@@ -26,43 +26,38 @@
 #include "render/modelrenderer.h"
 #include "render/stateanimator.h"
 
-#include <de/RecordValue>
-#include <de/Process>
-#include <QFlags>
+#include <de/dscript.h>
 
 using namespace de;
 using namespace world;
 
-namespace internal
-{
-    enum Flag
-    {
-        Initialized = 0x1,      ///< Thinker data has been initialized.
-        StateChanged = 0x2      ///< State has changed during the current tick.
-    };
-    Q_DECLARE_FLAGS(Flags, Flag)
-    Q_DECLARE_OPERATORS_FOR_FLAGS(Flags)
-}
+namespace internal {
+
+enum Flag {
+    Initialized  = 0x1, ///< Thinker data has been initialized.
+    StateChanged = 0x2  ///< State has changed during the current tick.
+};
+
+} // namespace internal
 
 using namespace ::internal;
 
-DENG2_PIMPL(ClientMobjThinkerData)
-, DENG2_OBSERVES(Asset, Deletion)
+DE_PIMPL(ClientMobjThinkerData)
+, DE_OBSERVES(Asset, Deletion)
 {
-    enum SerialFlagUInt16
-    {
+    enum SerialFlagUInt16 {
         HasAnimator = 0x0001,
     };
 
     Flags flags;
     std::unique_ptr<RemoteSync> sync;
     std::unique_ptr<render::StateAnimator> animator;
-    Matrix4f modelMatrix;
+    Mat4f modelMatrix;
 
     Impl(Public *i) : Base(i)
     {}
 
-    Impl(Public *i, Impl const &other) : Base(i)
+    Impl(Public *i, const Impl &other) : Base(i)
     {
         if (other.sync)
         {
@@ -85,7 +80,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
         return Def_GetStateName(self().mobj()->state);
     }
 
-    bool isStateInCurrentSequence(state_t const *previous)
+    bool isStateInCurrentSequence(const state_t *previous)
     {
         if (!previous) return false;
         return Def_GetState(previous->nextState) == self().mobj()->state;
@@ -93,12 +88,12 @@ DENG2_PIMPL(ClientMobjThinkerData)
 
     String modelId() const
     {
-        return QStringLiteral("model.thing.%1").arg(thingName().toLower());
+        return "model.thing." + thingName().lower();
     }
 
     static ModelBank &modelBank()
     {
-        return ClientApp::renderSystem().modelRenderer().bank();
+        return ClientApp::render().modelRenderer().bank();
     }
 
     void assetBeingDeleted(Asset &)
@@ -120,23 +115,23 @@ DENG2_PIMPL(ClientMobjThinkerData)
         if (modelBank().has(modelId()))
         {
             // Prepare the animation state of the model.
-            auto const &model = modelBank().model<render::Model>(modelId());
+            const auto &model = modelBank().model<render::Model>(modelId());
             try
             {
                 model.audienceForDeletion() += this;
 
                 animator.reset(new render::StateAnimator(modelId(), model));
-                animator->setOwnerNamespace(self().objectNamespace(), QStringLiteral("__thing__"));
+                animator->setOwnerNamespace(self().objectNamespace(), DE_STR("__thing__"));
 
                 // Apply possible scaling operations on the model.
                 modelMatrix = model.transformation;
                 if (model.flags & render::Model::AutoscaleToThingHeight)
                 {
-                    Vector3f const dims = modelMatrix * model.dimensions();
-                    modelMatrix = Matrix4f::scale(self().mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
+                    const Vec3f dims = modelMatrix * model.dimensions();
+                    modelMatrix = Mat4f::scale(self().mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
                 }
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 model.audienceForDeletion() -= this;
 
@@ -162,7 +157,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
      * a less than 1.0 probability for starting. The sequence may be identified either by
      * name ("walk") or index (for example, "#3").
      */
-    void triggerStateAnimations(state_t const *state = nullptr)
+    void triggerStateAnimations(const state_t *state = nullptr)
     {
         if (flags & StateChanged)
         {
@@ -186,7 +181,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
 
     }
 
-    void advanceAnimations(TimeSpan const &delta)
+    void advanceAnimations(TimeSpan delta)
     {
         if (animator)
         {
@@ -209,12 +204,12 @@ DENG2_PIMPL(ClientMobjThinkerData)
     }
 };
 
-ClientMobjThinkerData::ClientMobjThinkerData(de::Id const &id)
+ClientMobjThinkerData::ClientMobjThinkerData(const de::Id &id)
     : MobjThinkerData(id)
     , d(new Impl(this))
 {}
 
-ClientMobjThinkerData::ClientMobjThinkerData(ClientMobjThinkerData const &other)
+ClientMobjThinkerData::ClientMobjThinkerData(const ClientMobjThinkerData &other)
     : MobjThinkerData(other)
     , d(new Impl(this, *other.d))
 {}
@@ -258,21 +253,21 @@ render::StateAnimator *ClientMobjThinkerData::animator()
     return d->animator.get();
 }
 
-render::StateAnimator const *ClientMobjThinkerData::animator() const
+const render::StateAnimator *ClientMobjThinkerData::animator() const
 {
     return d->animator.get();
 }
 
-Matrix4f const &ClientMobjThinkerData::modelTransformation() const
+const Mat4f &ClientMobjThinkerData::modelTransformation() const
 {
     return d->modelMatrix;
 }
 
-void ClientMobjThinkerData::stateChanged(state_t const *previousState)
+void ClientMobjThinkerData::stateChanged(const state_t *previousState)
 {
     MobjThinkerData::stateChanged(previousState);
 
-    bool const justSpawned = !previousState;
+    const bool justSpawned = !previousState;
 
     d->initOnce();
     if ((d->flags & StateChanged) && d->isStateInCurrentSequence(previousState))
@@ -298,7 +293,7 @@ void ClientMobjThinkerData::stateChanged(state_t const *previousState)
     d->triggerParticleGenerators(justSpawned);
 }
 
-void ClientMobjThinkerData::damageReceived(int damage, mobj_t const *inflictor)
+void ClientMobjThinkerData::damageReceived(int damage, const mobj_t *inflictor)
 {
     MobjThinkerData::damageReceived(damage, inflictor);
 
@@ -320,7 +315,7 @@ void ClientMobjThinkerData::operator << (Reader &from)
     {
         throw DeserializationError("ClientMobjThinkerData::operator <<",
                                    "Invalid serial identifier " +
-                                   String::number(sid));
+                                   String::asText(sid));
     }
 
     MobjThinkerData::operator << (from);
@@ -351,7 +346,7 @@ void ClientMobjThinkerData::operator >> (Writer &to) const
 
     MobjThinkerData::operator >> (to);
 
-    duint16 const flags = (d->animator? Impl::HasAnimator : 0);
+    const duint16 flags = (d->animator? Impl::HasAnimator : 0);
     to << flags;
 
     if (d->animator)

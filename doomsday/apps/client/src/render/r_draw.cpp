@@ -18,10 +18,10 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/concurrency.h>
-#include <doomsday/res/Textures>
-#include <doomsday/world/Materials>
-#include <de/GLInfo>
+#include <de/legacy/concurrency.h>
+#include <doomsday/res/textures.h>
+#include <doomsday/world/materials.h>
+#include <de/glinfo.h>
 
 #include "clientapp.h"
 #include "sys_system.h"
@@ -33,7 +33,7 @@
 #include "gl/sys_opengl.h"
 
 #include "api_resource.h"
-#include "MaterialAnimator"
+#include "resource/materialanimator.h"
 
 #include "world/p_players.h" // displayPlayer
 
@@ -54,7 +54,7 @@ enum {
 
 static bool initedDraw = false;
 static int borderSize;
-static de::Uri *borderGraphicsNames[9];
+static res::Uri *borderGraphicsNames[9];
 
 /// @todo Declare the patches with URNs to avoid unnecessary duplication here -ds
 static patchid_t borderPatches[9];
@@ -80,14 +80,14 @@ static void loadViewBorderPatches()
 static ClientTexture &borderTexture(int borderComp)
 {
     res::TextureScheme &patches = res::Textures::get().textureScheme("Patches");
-    DENG2_ASSERT(borderComp >= 0 && borderComp < 9);
+    DE_ASSERT(borderComp >= 0 && borderComp < 9);
     return static_cast<ClientTexture &>(patches.findByUniqueId(borderPatches[borderComp]).texture());
 }
 
 #undef R_SetBorderGfx
-DENG_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths)
+DE_EXTERN_C void R_SetBorderGfx(const struct uri_s *const *paths)
 {
-    DENG2_ASSERT(initedDraw);
+    DE_ASSERT(initedDraw);
     if(!paths) return;
 
     for(uint i = 0; i < 9; ++i)
@@ -96,9 +96,9 @@ DENG_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths)
         {
             if(!borderGraphicsNames[i])
             {
-                borderGraphicsNames[i] = new de::Uri;
+                borderGraphicsNames[i] = new res::Uri;
             }
-            *(borderGraphicsNames[i]) = *reinterpret_cast<de::Uri const *>(paths[i]);
+            *(borderGraphicsNames[i]) = *reinterpret_cast<const res::Uri *>(paths[i]);
         }
         else
         {
@@ -154,8 +154,9 @@ void R_ShutdownViewWindow()
     initedDraw = false;
 }
 
-TextureVariantSpec const &Rend_PatchTextureSpec(int flags, gl::Wrapping wrapS,
-    gl::Wrapping wrapT)
+const TextureVariantSpec &Rend_PatchTextureSpec(int              flags,
+                                                gfx::Wrapping wrapS,
+                                                gfx::Wrapping wrapT)
 {
     return ClientApp::resources().textureSpec(TC_UI, flags, 0, 0, 0,
         GL_Wrap(wrapS), GL_Wrap(wrapT), 0, -3, 0, false, false, false, false);
@@ -170,7 +171,7 @@ void R_DrawPatch(ClientTexture &texture, int x, int y, int w, int h, bool useOff
         return;
     }
 
-    TextureVariantSpec const &texSpec =
+    const TextureVariantSpec &texSpec =
         Rend_PatchTextureSpec(0 | (texture.isFlagged(res::Texture::Monochrome)        ? TSF_MONOCHROME : 0)
                                 | (texture.isFlagged(res::Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0));
     GL_BindTexture(texture.prepareVariant(texSpec));
@@ -189,10 +190,15 @@ void R_DrawPatch(ClientTexture &tex, int x, int y)
     R_DrawPatch(tex, x, y, tex.width(), tex.height());
 }
 
-void R_DrawPatchTiled(ClientTexture &texture, int x, int y, int w, int h,
-    gl::Wrapping wrapS, gl::Wrapping wrapT)
+void R_DrawPatchTiled(ClientTexture &  texture,
+                      int              x,
+                      int              y,
+                      int              w,
+                      int              h,
+                      gfx::Wrapping wrapS,
+                      gfx::Wrapping wrapT)
 {
-    TextureVariantSpec const &spec =
+    const TextureVariantSpec &spec =
         Rend_PatchTextureSpec(0 | (texture.isFlagged(res::Texture::Monochrome)        ? TSF_MONOCHROME : 0)
                                 | (texture.isFlagged(res::Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
                               wrapS, wrapT);
@@ -201,7 +207,7 @@ void R_DrawPatchTiled(ClientTexture &texture, int x, int y, int w, int h,
     GL_DrawRectf2Tiled(x, y, w, h, texture.width(), texture.height());
 }
 
-static MaterialVariantSpec const &bgMaterialSpec()
+static const MaterialVariantSpec &bgMaterialSpec()
 {
     return ClientApp::resources().materialSpec(UiContext, 0, 0, 0, 0,
                                                     GL_REPEAT, GL_REPEAT, 0, -3,
@@ -211,20 +217,20 @@ static MaterialVariantSpec const &bgMaterialSpec()
 /// @todo Optimize: Do not search for resources (materials, textures) each frame.
 void R_DrawViewBorder()
 {
-    DENG2_ASSERT(initedDraw);
+    DE_ASSERT(initedDraw);
 
-    viewport_t const *port = R_CurrentViewPort();
-    viewdata_t const *vd = &DD_Player(displayPlayer)->viewport();
-    DENG2_ASSERT(port != 0 && vd != 0);
+    const viewport_t *port = R_CurrentViewPort();
+    const viewdata_t *vd = &DD_Player(displayPlayer)->viewport();
+    DE_ASSERT(port != 0 && vd != 0);
 
     if (!borderGraphicsNames[BG_BACKGROUND]) return;
     if (vd->window.isNull()) return;
     if (vd->window.size() >= port->geometry.size()) return;
 
-    Vector2i const origin = port->geometry.topLeft;
+    const Vec2i origin = port->geometry.topLeft;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -258,7 +264,7 @@ void R_DrawViewBorder()
         matAnimator.prepare();
 
         GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
-        Vector2ui const &matDimensions = matAnimator.dimensions();
+        const Vec2ui &matDimensions = matAnimator.dimensions();
 
         GL_DrawCutRectf2Tiled(origin.x, origin.y, port->geometry.width(), port->geometry.height(),
                               matDimensions.x, matDimensions.y, 0, 0,
@@ -266,15 +272,15 @@ void R_DrawViewBorder()
                               origin.y + vd->window.topLeft.y - border,
                               vd->window.width() + 2 * border, vd->window.height() + 2 * border);
     }
-    catch(world::MaterialManifest::MissingMaterialError const &)
+    catch(const world::MaterialManifest::MissingMaterialError &)
     {} // Ignore this error.
 
     if(border)
     {
-        R_DrawPatchTiled(borderTexture(BG_TOP),    origin.x + vd->window.topLeft.x,          origin.y + vd->window.topLeft.y - border, vd->window.width(), border, gl::Repeat, gl::ClampToEdge);
-        R_DrawPatchTiled(borderTexture(BG_BOTTOM), origin.x + vd->window.topLeft.x,          origin.y + vd->window.bottomRight.y, vd->window.width(), border, gl::Repeat, gl::ClampToEdge);
-        R_DrawPatchTiled(borderTexture(BG_LEFT),   origin.x + vd->window.topLeft.x - border, origin.y + vd->window.topLeft.y, border, vd->window.height(), gl::ClampToEdge, gl::Repeat);
-        R_DrawPatchTiled(borderTexture(BG_RIGHT),  origin.x + vd->window.topRight().x,       origin.y + vd->window.topRight().y, border, vd->window.height(), gl::ClampToEdge, gl::Repeat);
+        R_DrawPatchTiled(borderTexture(BG_TOP),    origin.x + vd->window.topLeft.x,          origin.y + vd->window.topLeft.y - border, vd->window.width(), border, gfx::Repeat, gfx::ClampToEdge);
+        R_DrawPatchTiled(borderTexture(BG_BOTTOM), origin.x + vd->window.topLeft.x,          origin.y + vd->window.bottomRight.y, vd->window.width(), border, gfx::Repeat, gfx::ClampToEdge);
+        R_DrawPatchTiled(borderTexture(BG_LEFT),   origin.x + vd->window.topLeft.x - border, origin.y + vd->window.topLeft.y, border, vd->window.height(), gfx::ClampToEdge, gfx::Repeat);
+        R_DrawPatchTiled(borderTexture(BG_RIGHT),  origin.x + vd->window.topRight().x,       origin.y + vd->window.topRight().y, border, vd->window.height(), gfx::ClampToEdge, gfx::Repeat);
     }
 
     DGL_MatrixMode(DGL_TEXTURE);

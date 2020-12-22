@@ -25,14 +25,14 @@
 #include "api_uri.h"
 #include "dd_share.h"
 
-DENG_API_TYPEDEF(R)
+DE_API_TYPEDEF(R)
 {
     de_api_t api;
 
     /**
      * @param encodedName  Percent-encoded name for the patch.
      */
-    patchid_t (*DeclarePatch)(char const *encodedName);
+    patchid_t (*DeclarePatch)(const char *encodedName);
 
     /**
      * Retrieve extended info for the patch associated with @a id.
@@ -64,7 +64,7 @@ DENG_API_TYPEDEF(R)
      * @param tics  Base duration of the new frame in tics.
      * @param randomTics  Extra frame duration in tics (randomized on each cycle).
      */
-    void (*AddAnimGroupFrame)(int groupNum, Uri const *texture, int tics, int randomTics);
+    void (*AddAnimGroupFrame)(int groupNum, const Uri *texture, int tics, int randomTics);
 
     /**
      * Add a new (named) color palette.
@@ -80,7 +80,7 @@ DENG_API_TYPEDEF(R)
      *
      * @return  Color palette id.
      */
-    colorpaletteid_t (*CreateColorPalette)(char const *fmt, char const *name, uint8_t const *colorData, int colorCount);
+    colorpaletteid_t (*CreateColorPalette)(const char *fmt, const char *name, const uint8_t *colorData, int colorCount);
 
     /**
      * Add a new translation map to the specified color palette.
@@ -91,7 +91,7 @@ DENG_API_TYPEDEF(R)
      *                       It is assumed that this table contains a mapping for
      *                       each color index in the palette.
      */
-    void (*CreateColorPaletteTranslation)(colorpaletteid_t paletteId, Str const *translationId, uint8_t const *mappings);
+    void (*CreateColorPaletteTranslation)(colorpaletteid_t paletteId, const Str *translationId, const uint8_t *mappings);
 
     /**
      * Given a color palette name, look up the associated identifier.
@@ -99,7 +99,7 @@ DENG_API_TYPEDEF(R)
      * @param name Unique name of the palette to locate.
      * @return  Identifier of the palette associated with this name, else @c 0
      */
-    colorpaletteid_t (*GetColorPaletteNumForName)(char const *name);
+    colorpaletteid_t (*GetColorPaletteNumForName)(const char *name);
 
     /**
      * Given a color palette id, look up the specified unique name.
@@ -129,12 +129,12 @@ DENG_API_TYPEDEF(R)
      */
     void (*GetColorPaletteRGBubv)(colorpaletteid_t id, int colorIdx, uint8_t rgb[3], dd_bool applyTexGamma);
 
-    int (*TextureUniqueId)(Uri const *uri); /*quiet=false*/
-    int (*TextureUniqueId2)(Uri const *uri, dd_bool quiet);
+    int (*TextureUniqueId)(const Uri *uri); /*quiet=false*/
+    int (*TextureUniqueId2)(const Uri *uri, dd_bool quiet);
 }
-DENG_API_T(R);
+DE_API_T(R);
 
-#ifndef DENG_NO_API_MACROS_RESOURCE
+#ifndef DE_NO_API_MACROS_RESOURCE
 #define R_DeclarePatch                  _api_R.DeclarePatch
 #define R_GetPatchInfo                  _api_R.GetPatchInfo
 #define R_ComposePatchUri               _api_R.ComposePatchUri
@@ -152,7 +152,7 @@ DENG_API_T(R);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(R);
+DE_USING_API(R);
 #endif
 
 #endif // DOOMSDAY_API_RESOURCE_H

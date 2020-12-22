@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_FONT_RENDER
+#define DE_NO_API_MACROS_FONT_RENDER
 
 #include "de_base.h"
 #include "render/rend_font.h"
@@ -26,12 +26,12 @@
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
-#include <de/concurrency.h>
-#include <de/GLState>
-#include <de/GLInfo>
+#include <de/legacy/concurrency.h>
+#include <de/glstate.h>
+#include <de/glinfo.h>
 
-#include "BitmapFont"
-#include "CompositeBitmapFont"
+#include "resource/bitmapfont.h"
+#include "resource/compositebitmapfont.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_draw.h"
@@ -98,8 +98,8 @@ typedef struct {
     } caseMod[2]; // 1=upper, 0=lower
 } drawtextstate_t;
 
-static void drawChar(uchar ch, float posX, float posY, const AbstractFont &font, int alignFlags); //, short textFlags);
-static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright);
+static void drawChar(dbyte ch, float posX, float posY, const AbstractFont &font, int alignFlags); //, short textFlags);
+static void drawFlash(const Point2Raw *origin, const Size2Raw *size, bool bright);
 
 static int initedFont = false;
 
@@ -174,7 +174,7 @@ void FR_SetFont(fontid_t num)
             fr.fontNum = num;
             return;
         }
-        catch (ClientResources::UnknownFontIdError const &)
+        catch (const ClientResources::UnknownFontIdError &)
         {}
     }
     else
@@ -422,19 +422,19 @@ void FR_SetCaseScale(dd_bool value)
 }
 
 #undef FR_CharSize
-void FR_CharSize(Size2Raw *size, uchar ch)
+void FR_CharSize(Size2Raw *size, dbyte ch)
 {
     errorIfNotInited("FR_CharSize");
     if (size)
     {
-        Vector2ui dimensions = App_Resources().font(fr.fontNum).glyphPosCoords(ch).size();
+        Vec2ui dimensions = App_Resources().font(fr.fontNum).glyphPosCoords(ch).size();
         size->width  = dimensions.x;
         size->height = dimensions.y;
     }
 }
 
 #undef FR_CharWidth
-int FR_CharWidth(uchar ch)
+int FR_CharWidth(dbyte ch)
 {
     errorIfNotInited("FR_CharWidth");
     if (fr.fontNum != 0)
@@ -443,7 +443,7 @@ int FR_CharWidth(uchar ch)
 }
 
 #undef FR_CharHeight
-int FR_CharHeight(uchar ch)
+int FR_CharHeight(dbyte ch)
 {
     errorIfNotInited("FR_CharHeight");
     if (fr.fontNum != 0)
@@ -451,7 +451,7 @@ int FR_CharHeight(uchar ch)
     return 0;
 }
 
-int FR_SingleLineHeight(char const *text)
+int FR_SingleLineHeight(const char *text)
 {
     errorIfNotInited("FR_SingleLineHeight");
     if (fr.fontNum == 0 || !text)
@@ -460,10 +460,10 @@ int FR_SingleLineHeight(char const *text)
     int ascent = font.ascent();
     if (ascent != 0)
         return ascent;
-    return font.glyphPosCoords((uchar)text[0]).height();
+    return font.glyphPosCoords((dbyte)text[0]).height();
 }
 
-int FR_GlyphTopToAscent(char const *text)
+int FR_GlyphTopToAscent(const char *text)
 {
     errorIfNotInited("FR_GlyphTopToAscent");
     if (fr.fontNum == 0 || !text)
@@ -507,16 +507,11 @@ struct TextFragment
 
             // Just add them together.
             int i = 0;
-            char const *ch = text;
-            uchar c;
+            const char *ch = text;
+            dbyte c;
             while (i++ < length && (c = *ch++) != 0 && c != '\n')
             {
                 width += FR_CharWidth(c);
-            }
-
-            if (length > 0)
-            {
-                width += currentAttribs()->tracking * (length - 1);
             }
         }
 
@@ -526,8 +521,8 @@ struct TextFragment
 
             // Find the greatest height.
             int i = 0;
-            char const *ch = text;
-            uchar c;
+            const char *ch = text;
+            dbyte c;
             while (i++ < length && (c = *ch++) != 0 && c != '\n')
             {
                 height = de::max(height, FR_CharHeight(c));
@@ -558,6 +553,8 @@ struct TextFragment
 
 static void drawTextFragment(const TextFragment &fragment)
 {
+    DE_ASSERT(fragment.text != 0 && fragment.text[0]);
+
     fr_state_attributes_t* sat = currentAttribs();
     bool noTypein = (fragment.textFlags & DTF_NO_TYPEIN) != 0;
 
@@ -613,8 +610,10 @@ static void drawTextFragment(const TextFragment &fragment)
     {
         if (bmapFont->textureGLName())
         {
-            GL_BindTextureUnmanaged(bmapFont->textureGLName(), gl::ClampToEdge,
-                                    gl::ClampToEdge, filterUI ? gl::Linear : gl::Nearest);
+            GL_BindTextureUnmanaged(bmapFont->textureGLName(),
+                                    gfx::ClampToEdge,
+                                    gfx::ClampToEdge,
+                                    filterUI ? gfx::Linear : gfx::Nearest);
 
             DGL_MatrixMode(DGL_TEXTURE);
             DGL_PushMatrix();
@@ -803,7 +802,7 @@ static void drawTextFragment(const TextFragment &fragment)
     }
 }
 
-static void drawChar(uchar ch, float x, float y, const AbstractFont &font, int alignFlags)
+static void drawChar(dbyte ch, float x, float y, const AbstractFont &font, int alignFlags)
 {
     if (alignFlags & ALIGN_RIGHT)
     {
@@ -814,8 +813,8 @@ static void drawChar(uchar ch, float x, float y, const AbstractFont &font, int a
         x -= font.glyphPosCoords(ch).width() / 2;
     }
 
-    int const ascent = font.ascent();
-    int const lineHeight = ascent ? ascent : font.glyphPosCoords(ch).height();
+    const int ascent = font.ascent();
+    const int lineHeight = ascent ? ascent : font.glyphPosCoords(ch).height();
     if (alignFlags & ALIGN_BOTTOM)
     {
         y -= topToAscent(font) + lineHeight;
@@ -834,10 +833,10 @@ static void drawChar(uchar ch, float x, float y, const AbstractFont &font, int a
     {
         /// @todo Filtering should be determined at a higher level.
         /// @todo We should not need to re-bind this texture here.
-        GL_BindTextureUnmanaged(bmapFont->textureGLName(), gl::ClampToEdge,
-                                gl::ClampToEdge, filterUI? gl::Linear : gl::Nearest);
+        GL_BindTextureUnmanaged(bmapFont->textureGLName(), gfx::ClampToEdge,
+                                gfx::ClampToEdge, filterUI? gfx::Linear : gfx::Nearest);
 
-        geometry = geometry.expanded(bmapFont->textureMargin().toVector2i());
+        geometry = geometry.expanded(bmapFont->textureMargin().toVec2i());
     }
     else if (const CompositeBitmapFont *compFont = maybeAs<CompositeBitmapFont>(font))
     {
@@ -845,10 +844,10 @@ static void drawChar(uchar ch, float x, float y, const AbstractFont &font, int a
         geometry = geometry.expanded(compFont->glyphTextureBorder(ch));
     }
 
-    Vector2i coords[4] = { font.glyphTexCoords(ch).topLeft,
-                           font.glyphTexCoords(ch).topRight(),
-                           font.glyphTexCoords(ch).bottomRight,
-                           font.glyphTexCoords(ch).bottomLeft() };
+    Vec2i coords[4] = { font.glyphTexCoords(ch).topLeft,
+                        font.glyphTexCoords(ch).topRight(),
+                        font.glyphTexCoords(ch).bottomRight,
+                        font.glyphTexCoords(ch).bottomLeft() };
 
     GL_DrawRectWithCoords(geometry, coords);
 
@@ -861,7 +860,7 @@ static void drawChar(uchar ch, float x, float y, const AbstractFont &font, int a
     DGL_Translatef(-x, -y, 0);
 }
 
-static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright)
+static void drawFlash(const Point2Raw *origin, const Size2Raw *size, bool bright)
 {
     float fsize = 4.f + bright;
     float fw = fsize * size->width  / 2.0f;
@@ -877,7 +876,7 @@ static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright
     h = (int) fh;
 
     GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC),
-                            gl::ClampToEdge, gl::ClampToEdge);
+                            gfx::ClampToEdge, gfx::ClampToEdge);
 
     DGL_Begin(DGL_QUADS);
         DGL_TexCoord2f(0, 0, 0);
@@ -958,7 +957,7 @@ static void parseParamaterBlock(const char **strPtr, drawtextstate_t* state, int
     (*strPtr)++;
     while (*(*strPtr) && *(*strPtr) != '}')
     {
-        (*strPtr) = M_SkipWhite((*strPtr));
+        (*strPtr) = M_SkipWhite(*strPtr);
 
         // What do we have here?
         if (!strnicmp((*strPtr), "flash", 5))
@@ -1083,10 +1082,10 @@ static void parseParamaterBlock(const char **strPtr, drawtextstate_t* state, int
                 {
                     try
                     {
-                        state->fontNum = App_Resources().fontManifest(de::makeUri(buf)).uniqueId();
+                        state->fontNum = App_Resources().fontManifest(res::makeUri(buf)).uniqueId();
                         continue;
                     }
-                    catch (Resources::MissingResourceManifestError const &)
+                    catch (const Resources::MissingResourceManifestError &)
                     {}
                 }
 
@@ -1314,8 +1313,8 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, ui
         FR_TextSize(&textSize, text);
     }
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // We need to change the current color, so remember for restore.
     DGL_CurrentColor(origColor);
@@ -1484,7 +1483,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, ui
                 DGL_Scalef(state.scaleX, state.scaleY * extraScale, 1);
 
                 // Draw it.
-                DENG2_ASSERT(fr.fontNum);
+                DE_ASSERT(fr.fontNum);
 
                 TextFragment frag{pass,
                                   App_Resources().font(fr.fontNum),
@@ -1621,19 +1620,19 @@ void FR_Init(void)
 }
 
 #undef Fonts_ResolveUri
-DENG_EXTERN_C fontid_t Fonts_ResolveUri(uri_s const *uri)
+DE_EXTERN_C fontid_t Fonts_ResolveUri(const uri_s *uri)
 {
     if (!uri) return NOFONTID;
     try
     {
-        return App_Resources().fontManifest(*reinterpret_cast<de::Uri const *>(uri)).uniqueId();
+        return App_Resources().fontManifest(*reinterpret_cast<const res::Uri *>(uri)).uniqueId();
     }
-    catch (Resources::MissingResourceManifestError const &)
+    catch (const Resources::MissingResourceManifestError &)
     {}
     return NOFONTID;
 }
 
-DENG_DECLARE_API(FR) =
+DE_DECLARE_API(FR) =
 {
     { DE_API_FONT_RENDER },
     Fonts_ResolveUri,

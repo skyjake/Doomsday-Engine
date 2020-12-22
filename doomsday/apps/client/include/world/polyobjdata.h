@@ -1,6 +1,6 @@
 /** @file polyobjdata.h  Private data for a polyobj
  *
- * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -17,60 +17,21 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_WORLD_POLYOBJDATA_H
-#define DENG_WORLD_POLYOBJDATA_H
+#pragma once
 
-#include <QList>
-#include <QVector>
-#include <de/Vector>
-#include <doomsday/world/thinker.h>
+#include <doomsday/world/polyobjdata.h>
 
-#include "Polyobj"
-
-#ifdef __CLIENT__
 class ClPolyMover;
-#endif
 
-/**
- * Private data for a polyobj.
- *
- * Stored in the Polyobj's thinker.d (polyobjs are not normal thinkers).
- */
-class PolyobjData : public Thinker::IData
+class PolyobjData : public world::PolyobjData
 {
 public:
-    /// Used to store the original/previous vertex coordinates.
-    typedef QVector<de::Vector2d> VertexCoords;
-
-public:
-    PolyobjData();
-    ~PolyobjData();
-
-    void setThinker(thinker_s *thinker);
-    void think();
-    IData *duplicate() const;
-
-#ifdef __CLIENT__
+    PolyobjData() = default;
+    
     void addMover(ClPolyMover &mover);
     void removeMover(ClPolyMover &mover);
     ClPolyMover *mover() const;
-#endif
-
-public:
-    de::dint indexInMap = world::MapElement::NoIndex;
-    de::duint origIndex = world::MapElement::NoIndex;
-
-    de::Mesh *mesh = nullptr;
-    QList<Line *> lines;
-    QList<Vertex *> uniqueVertexes;
-    VertexCoords originalPts;  ///< Used as the base for the rotations.
-    VertexCoords prevPts;      ///< Use to restore the old point values.
 
 private:
-    polyobj_s *_polyobj = nullptr;
-#ifdef __CLIENT__
     ClPolyMover *_mover = nullptr;
-#endif
 };
-
-#endif  // DENG_WORLD_POLYOBJDATA_H

@@ -19,8 +19,8 @@
 #ifndef SERVER_USERS_H
 #define SERVER_USERS_H
 
-#include <de/Address>
-#include <de/Observers>
+#include <de/address.h>
+#include <de/observers.h>
 
 /**
  * Abstract base class representing a connected client.
@@ -32,8 +32,8 @@ public:
 
     virtual de::Address address() const = 0;
 
-    DENG2_CAST_METHODS()
-    DENG2_DEFINE_AUDIENCE(Disconnect, void userDisconnected(User &))
+    DE_CAST_METHODS()
+    DE_DEFINE_AUDIENCE(Disconnect, void userDisconnected(User &))
 };
 
 /**
@@ -56,10 +56,10 @@ public:
 
     int count() const;
 
-    de::LoopResult forUsers(std::function<de::LoopResult (User &)> func);
+    de::LoopResult forUsers(const std::function<de::LoopResult (User &)>& func);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 

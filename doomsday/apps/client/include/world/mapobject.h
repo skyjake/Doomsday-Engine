@@ -18,11 +18,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_WORLD_MAPOBJECT_H
-#define DENG_WORLD_MAPOBJECT_H
+#ifndef DE_WORLD_MAPOBJECT_H
+#define DE_WORLD_MAPOBJECT_H
 
-#include <de/Error>
-#include <de/Vector>
+#include <de/error.h>
+#include <de/vector.h>
 
 namespace world {
 
@@ -40,21 +40,21 @@ class Map;
  */
 class MapObject
 {
-    DENG2_NO_COPY  (MapObject)
-    DENG2_NO_ASSIGN(MapObject)
+    DE_NO_COPY  (MapObject)
+    DE_NO_ASSIGN(MapObject)
 
 public:
     /// No map is attributed. @ingroup errors
-    DENG2_ERROR(MissingMapError);
+    DE_ERROR(MissingMapError);
 
     /// Special identifier used to mark an invalid index.
     enum { NoIndex = -1 };
 
 public:
-    MapObject(de::Vector3d const &origin = de::Vector3d());
+    MapObject(const de::Vec3d &origin = de::Vec3d());
     virtual ~MapObject();
 
-    DENG2_CAST_METHODS()
+    DE_CAST_METHODS()
 
     /**
      * Returns the map BSP leaf at the origin of the object (result cached).
@@ -69,11 +69,11 @@ public:
      *
      * @see move(), setOrigin(), bspLeafAtOrigin()
      */
-    de::Vector3d const &origin() const;
+    const de::Vec3d &origin() const;
 
-    inline de::ddouble x() const { return origin().x; }
-    inline de::ddouble y() const { return origin().y; }
-    inline de::ddouble z() const { return origin().z; }
+    inline double x() const { return origin().x; }
+    inline double y() const { return origin().y; }
+    inline double z() const { return origin().z; }
 
     /**
      * Change the origin of the object in map space.
@@ -82,7 +82,7 @@ public:
      *
      * @see move(), origin()
      */
-    virtual void setOrigin(de::Vector3d const &newOrigin);
+    virtual void setOrigin(const de::Vec3d &newOrigin);
 
     /**
      * Translate the origin of the object in map space.
@@ -91,7 +91,7 @@ public:
      *
      * @see setOrigin(), origin()
      */
-    virtual void move(de::Vector3d const &delta);
+    virtual void move(const de::Vec3d &delta);
 
     /**
      * Returns @c true iff a map is attributed to the object.
@@ -121,7 +121,7 @@ public:
      *
      * @see setIndexInMap()
      */
-    de::dint indexInMap() const;
+    int indexInMap() const;
 
     /**
      * Change the "in-map" index attributed to the map object.
@@ -131,12 +131,12 @@ public:
      *
      * @see indexInMap()
      */
-    void setIndexInMap(de::dint newIndex = NoIndex);
+    void setIndexInMap(int newIndex = NoIndex);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }  // namespace world
 
-#endif  // DENG_WORLD_MAPOBJECT_H
+#endif  // DE_WORLD_MAPOBJECT_H

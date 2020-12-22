@@ -20,14 +20,14 @@
 #include "dd_share.h" // DDMAXPLAYERS
 #include "ui/impulsebinding.h"
 
-#include <de/str.hh>
-#include <de/Log>
-#include <de/RecordValue>
+#include <de/legacy/str.hh>
+#include <de/log.h>
+#include <de/recordvalue.h>
 #include "ui/b_util.h"
 
 using namespace de;
 
-CompiledImpulseBinding::CompiledImpulseBinding(Record const &bind)
+CompiledImpulseBinding::CompiledImpulseBinding(const Record &bind)
     : id            (bind.geti("id"))
     , deviceId      (bind.geti("deviceId"))
     , controlId     (bind.geti("controlId"))
@@ -43,9 +43,9 @@ CompiledImpulseBindingRecord &ImpulseBinding::def()
     return static_cast<CompiledImpulseBindingRecord &>(Binding::def());
 }
 
-CompiledImpulseBindingRecord const &ImpulseBinding::def() const
+const CompiledImpulseBindingRecord &ImpulseBinding::def() const
 {
-    return static_cast<CompiledImpulseBindingRecord const &>(Binding::def());
+    return static_cast<const CompiledImpulseBindingRecord &>(Binding::def());
 }
 
 void ImpulseBinding::resetToDefaults()
@@ -86,8 +86,8 @@ String ImpulseBinding::composeDescriptor()
     }
 
     // Append any state conditions.
-    ArrayValue const &conds = def().geta("condition");
-    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
+    const ArrayValue &conds = def().geta("condition");
+    DE_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
         str += " + " + B_ConditionToString(*(*i)->as<RecordValue>().record());
     }
@@ -95,9 +95,9 @@ String ImpulseBinding::composeDescriptor()
     return str;
 }
 
-static bool doConfigure(ImpulseBinding &bind, char const *ctrlDesc, int impulseId, int localPlayer)
+static bool doConfigure(ImpulseBinding &bind, const char *ctrlDesc, int impulseId, int localPlayer)
 {
-    DENG2_ASSERT(ctrlDesc);
+    DE_ASSERT(ctrlDesc);
 
     bind.resetToDefaults();
     bind.def().set("impulseId", impulseId);
@@ -187,10 +187,10 @@ static bool doConfigure(ImpulseBinding &bind, char const *ctrlDesc, int impulseI
     return true;
 }
 
-void ImpulseBinding::configure(char const *ctrlDesc, int impulseId, int localPlayer, bool assignNewId)
+void ImpulseBinding::configure(const char *ctrlDesc, int impulseId, int localPlayer, bool assignNewId)
 {
-    DENG2_ASSERT(ctrlDesc);
-    DENG2_ASSERT(localPlayer >= 0 && localPlayer < DDMAXPLAYERS);
+    DE_ASSERT(ctrlDesc);
+    DE_ASSERT(localPlayer >= 0 && localPlayer < DDMAXPLAYERS);
     LOG_AS("ImpulseBinding");
 
     // The first part specifies the device-control condition.

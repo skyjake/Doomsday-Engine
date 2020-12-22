@@ -1,0 +1,57 @@
+ui {
+    # Shader for UI widgets.
+    shader guiwidget.batch {
+        vertex = "
+            uniform mat4  uMvpMatrix;
+            uniform vec4  uColor[DE_MAX_BATCH_UNIFORMS];
+            uniform float uSaturation[DE_MAX_BATCH_UNIFORMS];
+            uniform vec4  uScissorRect[DE_MAX_BATCH_UNIFORMS];
+
+            DE_ATTRIB vec4 aVertex;
+            DE_ATTRIB vec2 aUV;
+            DE_ATTRIB vec4 aColor;
+            DE_ATTRIB float aIndex; // uColor
+
+            DE_VAR vec2 vUV;
+            DE_VAR vec4 vColor;
+            DE_VAR vec4 vScissor;
+            DE_VAR float vSaturation;
+
+            void main(void) {
+                gl_Position = uMvpMatrix * aVertex;
+                vUV = aUV;
+
+                int index = int(aIndex);
+                vColor = aColor * uColor[index];
+                vScissor = uScissorRect[index];
+                vSaturation = uSaturation[index];
+            }"
+        fragment = "
+            #include 'hsv.glsl'
+            uniform sampler2D uTex;
+
+            DE_VAR vec2 vUV;
+            DE_VAR vec4 vColor;
+            DE_VAR vec4 vScissor;
+            DE_VAR float vSaturation;
+
+            void main(void) {
+                // Check the scissor first.
+                if (gl_FragCoord.x < vScissor.x || gl_FragCoord.x > vScissor.z ||
+                    gl_FragCoord.y < vScissor.y || gl_FragCoord.y > vScissor.w) {
+                    discard;
+                }
+                out_FragColor = texture(uTex, vUV);
+
+                // Optionally adjust color saturation.
+                if (vSaturation < 1.0) {
+                    vec4 hsv = rgbToHsv(out_FragColor);
+                    hsv.y *= vSaturation;
+                    out_FragColor = hsvToRgb(hsv);
+                }
+
+                // Final vertex color.
+                out_FragColor *= vColor;
+            }"
+    }
+}

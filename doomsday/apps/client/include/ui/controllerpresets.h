@@ -16,11 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_CONTROLLERPRESETS_H
-#define DENG_CLIENT_UI_CONTROLLERPRESETS_H
+#ifndef DE_CLIENT_UI_CONTROLLERPRESETS_H
+#define DE_CLIENT_UI_CONTROLLERPRESETS_H
 
-#include <de/String>
-#include <QStringList>
+#include <de/string.h>
 
 /**
  * Game controller presets.
@@ -28,17 +27,17 @@
 class ControllerPresets
 {
 public:
-    ControllerPresets(int deviceId, char const *presetCVarPath);
+    ControllerPresets(int deviceId, const char *presetCVarPath);
 
     de::String currentPreset() const;
 
-    QStringList ids() const;
+    de::StringList ids() const;
 
-    void applyPreset(de::String const &presetId);
+    void applyPreset(const de::String &presetId);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_CONTROLLERPRESETS_H
+#endif // DE_CLIENT_UI_CONTROLLERPRESETS_H
 

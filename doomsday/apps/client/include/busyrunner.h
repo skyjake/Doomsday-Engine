@@ -47,13 +47,12 @@ public:
     /// Called during the busy loop from the main thread.
     /// @return @c true, if all deferred tasks have been completed. @c false, if
     /// deferred tasks still remain afterwards.
-    DENG2_DEFINE_AUDIENCE2(DeferredGLTask, DeferredResult performDeferredGLTask())
+    DE_AUDIENCE(DeferredGLTask, DeferredResult performDeferredGLTask())
 
 public:
     BusyRunner();
 
     bool isTransitionAnimated() const;
-    bool isWorkerThread(uint threadId) const;
     bool inWorkerThread() const;
 
     /**
@@ -64,13 +63,13 @@ public:
 
     void loop();
 
-    /**
+    /*
      * Called when the background thread has exited.
      */
-    void finishTask();
+    //void finishTask();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 /**

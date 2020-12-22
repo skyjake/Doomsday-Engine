@@ -3,23 +3,32 @@
 # Copyright (c) 2012-2014 Daniel Swanson <danij@dengine.net>
 
 cmake_minimum_required (VERSION 3.1)
-project (DENG_CLIENT)
-set (DENG_ENABLE_PK3S ON)
+project (DE_CLIENT)
+set (DE_ENABLE_PK3S ON)
 include (../../cmake/Config.cmake)
+
+add_subdirectory (libs/importsave)
+add_subdirectory (libs/fmod)
+if (NOT APPLE)
+    # 10.15 deprecates OpenAL in favor of AVAudioEngine
+    add_subdirectory (libs/openal)
+endif ()
+add_subdirectory (libs/fluidsynth)
+# if (WIN32)
+#     add_subdirectory (libs/directsound)
+#     add_subdirectory (libs/winmm)
+# endif ()
 
 # Dependencies --------------------------------------------------------------------------
 
-find_package (DengAppfw)
-find_package (DengDoomsday)
+find_package (the_Foundation REQUIRED)
+find_package (glbinding REQUIRED)
 find_package (Amethyst QUIET)
-find_package (SDL2)
-if (WIN32)
-    find_package (DirectX)
-endif ()
+find_package (SDL2Libs)
 
 # Sources and includes ------------------------------------------------------------------
 
-include_directories (include ${DENG_API_DIR})
+include_directories (include ${DE_API_DIR})
 
 add_definitions (-D__DOOMSDAY__=1 -D__CLIENT__=1)
 
@@ -44,12 +53,11 @@ deng_merge_sources (ui_home       src/ui/home/*.cpp)
 deng_merge_sources (ui_infine     src/ui/infine/*.cpp)
 deng_merge_sources (ui_widgets    src/ui/widgets/*.cpp)
 if (NOT IOS)
-    add_definitions (-DDENG_HAVE_UPDATER)
+    add_definitions (-DDE_HAVE_UPDATER)
     deng_merge_sources (updater   src/updater/*.cpp)
 endif ()
 deng_merge_sources (world         src/world/*.cpp)
 deng_merge_sources (world_base    src/world/base/*.cpp)
-deng_merge_sources (world_bsp     src/world/bsp/*.cpp)
 
 deng_glob_sources (SOURCES src/gl/*.cpp) # Can't merge due to GL deferred calls mechanism.
 
@@ -71,16 +79,16 @@ endif ()
 if (AMETHYST_FOUND)
     if (APPLE)
         set (readme "${CMAKE_CURRENT_BINARY_DIR}/Read Me.html")
-        deng_add_amedoc (HTML "${readme}" ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+        deng_add_amedoc (HTML "${readme}" ${DE_SOURCE_DIR}/doc/readme readme.ame)
         install (FILES ${readme} DESTINATION .)
         list (APPEND SOURCES ${readme})
     else ()
         set (readme "${CMAKE_CURRENT_BINARY_DIR}/readme.html")
-        deng_add_amedoc (HTML ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+        deng_add_amedoc (HTML ${readme} ${DE_SOURCE_DIR}/doc/readme readme.ame)
         list (APPEND SOURCES ${readme})
         if (WIN32)
             # WIX generator requires setting this manually.
-            set_property (INSTALL "${DENG_INSTALL_DOC_DIR}/readme.html"
+            set_property (INSTALL "${DE_INSTALL_DOC_DIR}/readme.html"
                 PROPERTY CPACK_START_MENU_SHORTCUTS "Read Me"
             )
         endif ()
@@ -88,13 +96,19 @@ if (AMETHYST_FOUND)
     # Manual page.
     if (UNIX)
         set (MAN_PAGE ${CMAKE_CURRENT_BINARY_DIR}/doomsday.6)
-        deng_add_amedoc (MAN ${MAN_PAGE} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+        deng_add_amedoc (MAN ${MAN_PAGE} ${DE_SOURCE_DIR}/doc/readme readme.ame)
         list (APPEND SOURCES ${MAN_PAGE})
     endif ()
 endif ()
 
 deng_filter_platform_sources (src ${SOURCES} ${HEADERS} ${API_HEADERS})
 
+list (APPEND DE_REQUIRED_PACKAGES
+    net.dengine.stdlib
+    net.dengine.stdlib.gui
+    net.dengine.base
+    net.dengine.gloom
+)
 deng_add_package (net.dengine.client)
 
 if (IOS)
@@ -125,13 +139,11 @@ if (APPLE AND NOT IOS)
         res/macx/deng.icns
         res/macx/English.lproj
         doomsday.pk3
+        libdoom.pk3
+        libdoom64.pk3
+        libheretic.pk3
+        libhexen.pk3
     )
-endif ()
-
-# Windows: Use Qt resources.
-if (WIN32)
-    qt5_add_resources (RCC_SOURCES res/windows/client.qrc)
-    list (APPEND src ${RCC_SOURCES})
 endif ()
 
 deng_add_application (client ${src} EXTRA_RESOURCES ${MACX_RESOURCES})
@@ -145,7 +157,7 @@ if (IOS)
     link_framework (client PUBLIC CoreFoundation)
     link_framework (client PUBLIC QuartzCore)
     link_framework (client PUBLIC CoreGraphics)
-    link_framework (client PUBLIC CoreText)
+    # link_framework (client PUBLIC CoreText)
     link_framework (client PUBLIC Foundation)
     link_framework (client PUBLIC ImageIO)
     link_framework (client PUBLIC MobileCoreServices)
@@ -191,24 +203,50 @@ if (IOS)
     )
 elseif (APPLE)
     link_framework (client PUBLIC Cocoa)
-    if (DENG_HAVE_QTKIT)
+    if (DE_HAVE_QTKIT)
         link_framework (client PUBLIC QTKit) # MusicPlayer
     endif ()
 endif ()
-if (TARGET SDL2)
-    target_link_libraries (client PUBLIC SDL2)
-endif ()
-if (TARGET SDL2_mixer)
-    target_link_libraries (client PUBLIC SDL2_mixer)
-endif ()
+target_link_sdl2 (client PUBLIC)
 if (TARGET DirectX)
     target_link_libraries (client PUBLIC DirectX)
 endif ()
 if (CMAKE_SYSTEM_NAME MATCHES "BSD")
-    target_link_libraries (client PUBLIC execinfo)
+    target_link_libraries (client PUBLIC execinfo) 
 endif()
 
-target_link_libraries (client PUBLIC Deng::libappfw Deng::libdoomsday)
+target_link_libraries (client PUBLIC doomsdaygui)
+deng_link_libraries (client PUBLIC DengGui DengDoomsday DengGameKit DengGloom)
+
+# Extensions ----------------------------------------------------------------------------
+
+target_link_libraries (client PRIVATE importsave)
+
+if (TARGET audio_fmod)
+    target_link_libraries (client PRIVATE audio_fmod)
+    add_definitions (-DDE_HAVE_AUDIO_FMOD=1)
+    message (STATUS "Extension: audio_fmod")
+endif ()
+if (TARGET audio_openal)
+    target_link_libraries (client PRIVATE audio_openal)
+    add_definitions (-DDE_HAVE_AUDIO_OPENAL=1)
+    message (STATUS "Extension: audio_openal")
+endif ()
+if (TARGET audio_fluidsynth)
+    target_link_libraries (client PRIVATE audio_fluidsynth)
+    add_definitions (-DDE_HAVE_AUDIO_FLUIDSYNTH=1)
+    message (STATUS "Extension: audio_fluidsynth")
+endif ()
+if (TARGET audio_directsound)
+    target_link_libraries (client PRIVATE audio_directsound)
+    add_definitions (-DDE_HAVE_AUDIO_DIRECTSOUND=1)
+    message (STATUS "Extension: audio_directsound")
+endif ()
+if (TARGET audio_winmm)
+    target_link_libraries (client PRIVATE audio_winmm)
+    add_definitions (-DDE_HAVE_AUDIO_WINMM=1)
+    message (STATUS "Extension: audio_winmm")
+endif ()
 
 # Deployment ----------------------------------------------------------------------------
 
@@ -229,11 +267,10 @@ if (UNIX_LINUX)
         net.dengine.Doomsday.desktop)
     install (PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/net.dengine.Doomsday.desktop
         DESTINATION share/applications)
-    install (FILES res/linux/deng-logo-256.png
-        DESTINATION ${DENG_INSTALL_DATA_DIR})
-    install (FILES res/linux/deng-logo-256.png
-        DESTINATION share/icons/hicolor/256x256/apps
-        RENAME net.dengine.Doomsday.png)
+    foreach (dest ${DE_INSTALL_DATA_DIR};share/icons/hicolor/256x256/apps)
+        install (FILES res/linux/deng-logo-256.png DESTINATION ${dest}
+                 RENAME net.dengine.Doomsday.png)
+    endforeach (dest)
     install (FILES res/linux/net.dengine.Doomsday.metainfo.xml
         DESTINATION share/metainfo
         RENAME net.dengine.Doomsday.appdata.xml)
@@ -248,10 +285,10 @@ if (WIN32)
     if (OPENSSL_DIR)
         find_file (OPENSSL_LIBEAY libeay32.dll
             PATHS ${OPENSSL_DIR}
-            PATH_SUFFIXES ${DENG_ARCH})
+            PATH_SUFFIXES ${DE_ARCH})
         find_file (OPENSSL_SSLEAY ssleay32.dll
             PATHS ${OPENSSL_DIR}
-            PATH_SUFFIXES ${DENG_ARCH})
+            PATH_SUFFIXES ${DE_ARCH})
         if (NOT OPENSSL_LIBEAY OR NOT OPENSSL_SSLEAY)
             message (FATAL_ERROR "Could not find OpenSSL libraries (libeay32.dll, ssleay32.dll)")
         endif ()
@@ -260,45 +297,63 @@ if (WIN32)
     endif ()
 endif ()
 
-if (IOS)
-    set_target_properties (client PROPERTIES
-        LINK_FLAGS "-Wl,-e,_qt_main_wrapper"
-        RESOURCE "res/ios/LaunchScreen.xib;${IOS_ICON_FILES}"
-        MACOSX_BUNDLE_INFO_PLIST iOSBundleInfo.plist.in
-        XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
-        XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES NO
-    )
-endif ()
+#if (IOS)
+#    set_target_properties (client PROPERTIES
+#        LINK_FLAGS "-Wl,-e,_qt_main_wrapper"
+#        RESOURCE "res/ios/LaunchScreen.xib;${IOS_ICON_FILES}"
+#        MACOSX_BUNDLE_INFO_PLIST iOSBundleInfo.plist.in
+#        XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+#        XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES NO
+#    )
+#endif ()
 
 if (APPLE AND NOT IOS)
-    deng_install_bundle_deps (client
-        Deng::libcore Deng::libshell Deng::libgui Deng::libappfw
-        Deng::liblegacy Deng::libdoomsday Deng::libgamefw
-        SDL2 SDL2_mixer
+    set_target_properties (client PROPERTIES
+        MACOSX_BUNDLE_BUNDLE_NAME net.dengine.doomsday
+        MACOSX_BUNDLE_INFO_PLIST  MacOSXBundleInfo.plist.in
     )
+    # Install binaries built by targets in the project.
+    deng_install_bundle_deps (client
+        Deng::libcore
+        Deng::libgui
+        Deng::libdoomsday
+        Deng::libgamekit
+        Deng::libgloom
+        doom
+        doom64
+        heretic
+        hexen
+        the_Foundation::the_Foundation
+        glbinding::glbinding
+    )
+    if (TARGET audio_fmod)
+        deng_install_bundle_deps (client fmodex)
+    endif ()
 
     # Plugins are bundled inside the client app. We'll run macdeployqt on the
     # installed app before the plugins are there so it won't do unnecessary
     # work on them -- plugins are already self-contained.
-    get_property (outName TARGET client PROPERTY OUTPUT_NAME)
-    set (stageDir "${DENG_BUILD_STAGING_DIR}/DengPlugins")
-    if (IOS)
-        set (destDir "${outName}.app/PlugIns")
-    else ()
-        set (destDir "${outName}.app/Contents/PlugIns/Doomsday")
-    endif ()
-    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E remove_directory
-        \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
-    deng_install_deployqt (client)
-    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E copy_directory \"${stageDir}\"
-        \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
+#    get_property (outName TARGET client PROPERTY OUTPUT_NAME)
+#    set (stageDir "${DE_BUILD_STAGING_DIR}/DengPlugins")
+#    if (IOS)
+#        set (destDir "${outName}.app/PlugIns")
+#    else ()
+#        set (destDir "${outName}.app/Contents/PlugIns/Doomsday")
+#    endif ()
+#    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E remove_directory
+#        \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
+#    #deng_install_deployqt (client)
+#    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E copy_directory \"${stageDir}\"
+#        \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
 else ()
-    deng_install_deployqt (client)
+    #deng_install_deployqt (client)
 endif ()
+
+deng_deploy_target (client)
 
 if (VC_REDIST_LIBS_DEBUG)
     install (PROGRAMS ${VC_REDIST_LIBS_DEBUG}
-        DESTINATION ${DENG_INSTALL_LIB_DIR}
+        DESTINATION ${DE_INSTALL_LIB_DIR}
         CONFIGURATIONS Debug
         COMPONENT libs
     )
@@ -306,29 +361,29 @@ endif ()
 
 if (VC_REDIST_LIBS)
     install (PROGRAMS ${VC_REDIST_LIBS}
-        DESTINATION ${DENG_INSTALL_LIB_DIR}
+        DESTINATION ${DE_INSTALL_LIB_DIR}
         CONFIGURATIONS Release
         COMPONENT libs
     )
 endif ()
 
-if (MSVC)
-    # Bless the build products folder for running the executables.
-    # We have to write a batch file that adds the correct Qt to the path,
-    # or otherwise windeployqt cannot find the correct libraries to deploy.
-    get_filename_component (QT_BINS ${WINDEPLOYQT_COMMAND} DIRECTORY)
-    file (TO_NATIVE_PATH ${QT_BINS} qtBins)
-    file (TO_NATIVE_PATH ${WINDEPLOYQT_COMMAND} winDepCmd)
-    set (fn ${CMAKE_BINARY_DIR}/deployqt.bat)
-    file (WRITE ${fn}
-        "set PATH=\"${qtBins}\";%PATH%
-        \"${winDepCmd}\" -opengl --no-compiler-runtime --no-translations \"${DENG_VS_STAGING_DIR}/%1/bin/doomsday.exe\""
-    )
-    set (_intDir ${CMAKE_CFG_INTDIR})
-    if (_intDir STREQUAL ".")
-        set (_intDir ${CMAKE_BUILD_TYPE})
-    endif ()
-    add_custom_command (TARGET client POST_BUILD COMMAND ${fn} ${_intDir})
-endif ()
+# if (MSVC)
+#     # Bless the build products folder for running the executables.
+#     # We have to write a batch file that adds the correct Qt to the path,
+#     # or otherwise windeployqt cannot find the correct libraries to deploy.
+#     get_filename_component (QT_BINS ${WINDEPLOYQT_COMMAND} DIRECTORY)
+#     file (TO_NATIVE_PATH ${QT_BINS} qtBins)
+#     file (TO_NATIVE_PATH ${WINDEPLOYQT_COMMAND} winDepCmd)
+#     set (fn ${CMAKE_BINARY_DIR}/deployqt.bat)
+#     file (WRITE ${fn}
+#         "set PATH=\"${qtBins}\";%PATH%
+#         \"${winDepCmd}\" -opengl --no-compiler-runtime --no-translations \"${DE_VS_STAGING_DIR}/%1/bin/doomsday.exe\""
+#     )
+#     set (_intDir ${CMAKE_CFG_INTDIR})
+#     if (_intDir STREQUAL ".")
+#         set (_intDir ${CMAKE_BUILD_TYPE})
+#     endif ()
+#     add_custom_command (TARGET client POST_BUILD COMMAND ${fn} ${_intDir})
+# endif ()
 
 deng_cotire (client include/precompiled.h)

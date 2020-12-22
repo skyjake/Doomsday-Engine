@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_MULTIPLAYERSERVERMENUWIDGET_H
-#define DENG_CLIENT_UI_MULTIPLAYERSERVERMENUWIDGET_H
+#ifndef DE_CLIENT_UI_MULTIPLAYERSERVERMENUWIDGET_H
+#define DE_CLIENT_UI_MULTIPLAYERSERVERMENUWIDGET_H
 
 #include "homemenuwidget.h"
-#include <de/shell/ServerInfo>
+#include <de/serverinfo.h>
 
 /**
  * Menu for listing available multiplayer servers.
@@ -28,7 +28,7 @@
 class MultiplayerServerMenuWidget : public HomeMenuWidget
 {
 public:
-    DENG2_DEFINE_AUDIENCE2(AboutToJoin, void aboutToJoinMultiplayerGame(de::shell::ServerInfo const &))
+    DE_AUDIENCE(AboutToJoin, void aboutToJoinMultiplayerGame(const de::ServerInfo &))
 
     enum DiscoveryMode {
         NoDiscovery,
@@ -37,10 +37,10 @@ public:
     };
 
     MultiplayerServerMenuWidget(DiscoveryMode discovery = DiscoverUsingMaster,
-                                de::String const &name = de::String());
+                                const de::String &name = de::String());
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UIMULTIPLAYERSERVERMENUWIDGET_H
+#endif // DE_CLIENT_UIMULTIPLAYERSERVERMENUWIDGET_H

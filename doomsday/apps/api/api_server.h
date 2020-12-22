@@ -23,7 +23,7 @@
 
 #include "apis.h"
 
-DENG_API_TYPEDEF(Server)
+DE_API_TYPEDEF(Server)
 {
     de_api_t api;
 
@@ -33,14 +33,14 @@ DENG_API_TYPEDEF(Server)
      */
     dd_bool (*CanTrustClientPos)(int player);
 }
-DENG_API_T(Server);
+DE_API_T(Server);
 
-#ifndef DENG_NO_API_MACROS_SERVER
+#ifndef DE_NO_API_MACROS_SERVER
 #define Sv_CanTrustClientPos    _api_Server.CanTrustClientPos
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(Server);
+DE_USING_API(Server);
 #endif
 
 #endif // DOOMSDAY_API_SERVER_H

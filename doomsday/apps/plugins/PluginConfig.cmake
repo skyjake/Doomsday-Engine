@@ -2,11 +2,8 @@
 # Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 cmake_minimum_required (VERSION 3.0)
-project (DENG_PLUGINS)
+project (DE_PLUGINS)
 include (${CMAKE_CURRENT_LIST_DIR}/../../cmake/Config.cmake)
-
-find_package (DengDoomsday)
-find_package (DengGamefw)   # Game framework is available in all plugins.
 
 macro (deng_add_plugin target)
     sublist (_src 1 -1 ${ARGV})
@@ -23,19 +20,19 @@ macro (deng_add_plugin target)
         endif ()
         list (APPEND _src ${_winres})
     endif ()
-    if (DENG_STATIC_LINK)
+    if (DE_STATIC_LINK)
         set (_libType STATIC)
     else ()
         set (_libType MODULE)
     endif ()
-    add_library (${target} ${_libType} ${_src} ${DENG_RESOURCES})
+    add_library (${target} ${_libType} ${_src} ${DE_RESOURCES})
     target_include_directories (${target}
-        PUBLIC "${DENG_API_DIR}"
-        PRIVATE "${DENG_SOURCE_DIR}/sdk/libgui/include"
+        PUBLIC "${DE_API_DIR}"
+        PRIVATE "${DE_SOURCE_DIR}/libs/gui/include"
     )
-    target_link_libraries (${target} PUBLIC Deng::libdoomsday Deng::libgamefw)
+    deng_link_libraries (${target} PUBLIC DengDoomsday DengGamefw)
     enable_cxx11 (${target})
-    set_target_properties (${target} PROPERTIES FOLDER Plugins)
+    set_target_properties (${target} PROPERTIES FOLDER Extensions)
 
     if (APPLE)
         if (IOS)
@@ -55,12 +52,12 @@ macro (deng_add_plugin target)
             APPEND PROPERTY COMPILE_OPTIONS -Wno-missing-braces
         )
         set (_extraRPath)
-        if (NOT DENG_ENABLE_DEPLOYQT)
+        if (NOT DE_ENABLE_DEPLOYQT)
             set (_extraRPath ${QT_LIBS})
         endif ()
         set_target_properties (${target} PROPERTIES
             BUNDLE ON
-            MACOSX_BUNDLE_INFO_PLIST ${DENG_SOURCE_DIR}/cmake/MacOSXPluginBundleInfo.plist.in
+            MACOSX_BUNDLE_INFO_PLIST ${DE_SOURCE_DIR}/cmake/MacOSXPluginBundleInfo.plist.in
             BUILD_WITH_INSTALL_RPATH ON  # staging prevents CMake's own rpath fixing
             INSTALL_RPATH "@loader_path/../Frameworks;@executable_path/../Frameworks;${_extraRPath}"
         )
@@ -75,7 +72,7 @@ macro (deng_add_plugin target)
         # This is needed because we want access to these even in a build where the
         # plugins are not installed yet -- the staging directory symlinks to the
         # individual build directories.
-        set (stage "${DENG_BUILD_STAGING_DIR}/DengPlugins")
+        set (stage "${DE_BUILD_STAGING_DIR}/DengPlugins")
         add_custom_command (TARGET ${target} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E make_directory "${stage}"
             COMMAND ${CMAKE_COMMAND} -E create_symlink
@@ -83,40 +80,40 @@ macro (deng_add_plugin target)
                 "${stage}/${target}.bundle"
         )
         # Fix the Qt framework install names manually.
-        if (DENG_ENABLE_DEPLOYQT)
-            deng_bundle_install_names (${target}
-                SCRIPT_NAME "qtlibs"
-                LD_PATH "@executable_path/../Frameworks"
-                QtCore.framework/Versions/5/QtCore
-                QtNetwork.framework/Versions/5/QtNetwork
-                VERBATIM
-            )
-        endif ()
+        # if (DE_ENABLE_DEPLOYQT)
+        #     deng_bundle_install_names (${target}
+        #         SCRIPT_NAME "qtlibs"
+        #         LD_PATH "@executable_path/../Frameworks"
+        #         QtCore.framework/Versions/5/QtCore
+        #         QtNetwork.framework/Versions/5/QtNetwork
+        #         VERBATIM
+        #     )
+        # endif ()
         deng_xcode_attribs (${target})
         deng_bundle_resources ()
     else ()
         set_target_properties (${target} PROPERTIES
-            VERSION ${DENG_VERSION}
+            VERSION ${DE_VERSION}
         )
         deng_target_rpath (${target})
     endif ()
 
     if (MSVC)
         set_target_properties (${target} PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY_DEBUG "${DENG_VS_STAGING_DIR}/Debug/${DENG_INSTALL_PLUGIN_DIR}"
-            RUNTIME_OUTPUT_DIRECTORY_RELEASE "${DENG_VS_STAGING_DIR}/Release/${DENG_INSTALL_PLUGIN_DIR}"
-            RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${DENG_VS_STAGING_DIR}/MinSizeRel/${DENG_INSTALL_PLUGIN_DIR}"
-            RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${DENG_VS_STAGING_DIR}/RelWithDebInfo/${DENG_INSTALL_PLUGIN_DIR}"
+            RUNTIME_OUTPUT_DIRECTORY_DEBUG "${DE_VS_STAGING_DIR}/Debug/${DE_INSTALL_PLUGIN_DIR}"
+            RUNTIME_OUTPUT_DIRECTORY_RELEASE "${DE_VS_STAGING_DIR}/Release/${DE_INSTALL_PLUGIN_DIR}"
+            RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${DE_VS_STAGING_DIR}/MinSizeRel/${DE_INSTALL_PLUGIN_DIR}"
+            RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${DE_VS_STAGING_DIR}/RelWithDebInfo/${DE_INSTALL_PLUGIN_DIR}"
 
-            LIBRARY_OUTPUT_DIRECTORY_DEBUG "${DENG_VS_STAGING_DIR}/Debug/${DENG_INSTALL_PLUGIN_DIR}"
-            LIBRARY_OUTPUT_DIRECTORY_RELEASE "${DENG_VS_STAGING_DIR}/Release/${DENG_INSTALL_PLUGIN_DIR}"
-            LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${DENG_VS_STAGING_DIR}/MinSizeRel/${DENG_INSTALL_PLUGIN_DIR}"
-            LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${DENG_VS_STAGING_DIR}/RelWithDebInfo/${DENG_INSTALL_PLUGIN_DIR}"
+            LIBRARY_OUTPUT_DIRECTORY_DEBUG "${DE_VS_STAGING_DIR}/Debug/${DE_INSTALL_PLUGIN_DIR}"
+            LIBRARY_OUTPUT_DIRECTORY_RELEASE "${DE_VS_STAGING_DIR}/Release/${DE_INSTALL_PLUGIN_DIR}"
+            LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${DE_VS_STAGING_DIR}/MinSizeRel/${DE_INSTALL_PLUGIN_DIR}"
+            LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${DE_VS_STAGING_DIR}/RelWithDebInfo/${DE_INSTALL_PLUGIN_DIR}"
         )
     endif ()
 
     if (NOT APPLE)
-        install (TARGETS ${target} LIBRARY DESTINATION ${DENG_INSTALL_PLUGIN_DIR})
+        install (TARGETS ${target} LIBRARY DESTINATION ${DE_INSTALL_PLUGIN_DIR})
     endif ()
     set (_src)
     set (_script)

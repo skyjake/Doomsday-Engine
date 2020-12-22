@@ -17,29 +17,30 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/TextApp>
-#include <de/LogBuffer>
-#include <de/ScriptedInfo>
-#include <de/FS>
-#include <QDebug>
+#include <de/textapp.h>
+#include <de/logbuffer.h>
+#include <de/dscript.h>
+#include <de/escapeparser.h>
+#include <de/filesystem.h>
 
 using namespace de;
 
 int main(int argc, char **argv)
 {
+    init_Foundation();
     try
     {
-        TextApp app(argc, argv);
-        app.initSubsystems(App::DisablePlugins);
+        TextApp app(makeList(argc, argv));
+        app.initSubsystems(App::DisablePersistentData);
 
         ScriptedInfo dei;
         dei.parse(app.fileSystem().find("test_info.dei"));
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
-        qWarning() << err.asText();
+        err.warnPlainText();
     }
-
-    qDebug("Exiting main()...");
-    return 0;        
+    deinit_Foundation();
+    debug("Exiting main()...");
+    return 0;
 }

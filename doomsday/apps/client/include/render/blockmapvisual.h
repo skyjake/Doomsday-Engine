@@ -18,17 +18,17 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_BLOCKMAPVISUAL_H
-#define DENG_CLIENT_RENDER_BLOCKMAPVISUAL_H
+#ifndef DE_CLIENT_RENDER_BLOCKMAPVISUAL_H
+#define DE_CLIENT_RENDER_BLOCKMAPVISUAL_H
 
 #include <de/liblegacy.h>
 
-DENG_EXTERN_C byte bmapShowDebug; ///< cvar
-DENG_EXTERN_C float bmapDebugSize; ///< cvar
+DE_EXTERN_C byte bmapShowDebug; ///< cvar
+DE_EXTERN_C float bmapDebugSize; ///< cvar
 
 /**
  * Render the Blockmap debugging visual.
  */
-DENG_EXTERN_C void Rend_BlockmapDebug();
+DE_EXTERN_C void Rend_BlockmapDebug();
 
-#endif // DENG_CLIENT_RENDER_BLOCKMAPVISUAL_H
+#endif // DE_CLIENT_RENDER_BLOCKMAPVISUAL_H

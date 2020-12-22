@@ -17,9 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_base.h"
+#include "client/cl_def.h"
 #include "client/cl_frame.h"
-
 #include "client/cl_mobj.h"
 #include "client/cl_player.h"
 #include "client/cl_sound.h"
@@ -32,8 +31,6 @@
 #define SET_HISTORY_SIZE    50
 #define RESEND_HISTORY_SIZE 50
 #endif
-
-extern int gotFrame;
 
 // Set to true when the PSV_FIRST_FRAME2 packet is received.
 // Until then, all PSV_FRAME2 packets are ignored (they must be
@@ -96,7 +93,7 @@ void Cl_InitFrame(void)
  */
 void Cl_ResetFrame()
 {
-    gotFrame = false;
+    netState.gotFrame = false;
 
     // All frames received before the PSV_FIRST_FRAME2 are ignored.
     // They must be from the wrong map.
@@ -129,7 +126,7 @@ void Cl_Frame2Received(int packetType)
     // Read and process the message.
     while (!Reader_AtEnd(msgReader))
     {
-        byte const deltaType = Reader_ReadByte(msgReader);
+        const byte deltaType = Reader_ReadByte(msgReader);
 
         switch (deltaType)
         {
@@ -180,11 +177,11 @@ void Cl_Frame2Received(int packetType)
         }
     }
 
-    if (!gotFrame)
+    if (!netState.gotFrame)
     {
         LOGDEV_NET_NOTE("First frame received");
     }
 
     // We have now received a frame.
-    gotFrame = true;
+    netState.gotFrame = true;
 }

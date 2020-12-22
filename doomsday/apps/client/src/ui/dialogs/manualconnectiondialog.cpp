@@ -22,16 +22,15 @@
 #include "network/serverlink.h"
 #include "clientapp.h"
 
-#include <de/SignalAction>
-#include <de/FoldPanelWidget>
-#include <de/PersistentState>
-#include <de/ProgressWidget>
+#include <de/foldpanelwidget.h>
+#include <de/persistentstate.h>
+#include <de/progresswidget.h>
 
 using namespace de;
 
-DENG2_PIMPL(ManualConnectionDialog)
-, DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
-, DENG2_OBSERVES(MultiplayerServerMenuWidget, AboutToJoin)
+DE_PIMPL(ManualConnectionDialog)
+, DE_OBSERVES(ServerLink, Discovery)
+, DE_OBSERVES(MultiplayerServerMenuWidget, AboutToJoin)
 {
     String usedAddress;
     FoldPanelWidget *fold;
@@ -47,10 +46,10 @@ DENG2_PIMPL(ManualConnectionDialog)
         , joinWhenEnterPressed(false)
         , autoJoin(true)
     {
-        ClientApp::serverLink().audienceForDiscoveryUpdate() += this;
+        ClientApp::serverLink().audienceForDiscovery() += this;
     }
 
-    void linkDiscoveryUpdate(ServerLink const &link) override
+    void serversDiscovered(const ServerLink &link) override
     {
         if (querying)
         {
@@ -72,26 +71,26 @@ DENG2_PIMPL(ManualConnectionDialog)
             }
             else
             {
-                fold->close(0);
+                fold->close(0.0);
                 progress->setRotationSpeed(0);
-                progress->setText(_E(l) + tr("No response"));
-                progress->setOpacity(0, 4, 2);
+                progress->setText(_E(l) "No response");
+                progress->setOpacity(0, 4.0, 2.0);
             }
         }
     }
 
     ButtonWidget &connectButton()
     {
-        return self().buttonWidget(tr("Connect"));
+        return self().buttonWidget("Connect");
     }
 
-    void aboutToJoinMultiplayerGame(shell::ServerInfo const &) override
+    void aboutToJoinMultiplayerGame(const ServerInfo &) override
     {
         self().accept();
     }
 };
 
-ManualConnectionDialog::ManualConnectionDialog(String const &name)
+ManualConnectionDialog::ManualConnectionDialog(const String &name)
     : InputDialog(name), d(new Impl(this))
 {
     area().enableIndicatorDraw(true);
@@ -107,23 +106,22 @@ ManualConnectionDialog::ManualConnectionDialog(String const &name)
     d->servers = new MultiplayerServerMenuWidget(MultiplayerServerMenuWidget::DirectDiscoveryOnly);
     d->servers->audienceForAboutToJoin() += d;
     d->servers->margins().setLeft("dialog.gap");
-    /*connect(d->servers, SIGNAL(sessionSelected(de::ui::Item const *)),
-            this,     SIGNAL(selected(de::ui::Item const *)));
-    connect(d->servers, SIGNAL(sessionSelected(de::ui::Item const *)),
-            this,     SLOT  (serverSelected(de::ui::Item const *)));*/
+    /*connect(d->servers, SIGNAL(sessionSelected(const de::ui::Item *)),
+            this,     SIGNAL(selected(const de::ui::Item *)));
+    connect(d->servers, SIGNAL(sessionSelected(const de::ui::Item *)),
+            this,     SLOT  (serverSelected(const de::ui::Item *)));*/
     d->servers->rule().setInput(Rule::Width, rule().width() - margins().width());
     d->fold->setContent(d->servers);
     area().add(d->fold);
 
-    title().setText(tr("Connect to Server"));
-    message().setText(tr("Enter the IP address or domain name of the multiplayer server you want to connect to. "
-                         "Optionally, you may include a TCP port number, for example "
-                         _E(b) "10.0.1.1:13209" _E(.) "."));
+    title().setText("Connect to Server");
+    message().setText(
+        "Enter the IP address or domain name of the multiplayer server you want to connect to. "
+        "Optionally, you may include a TCP port number, for example " _E(
+            b) "10.0.1.1:13209" _E(.) ".");
 
-    buttons().clear()
-            << new DialogButtonItem(Default, tr("Connect"),
-                                    new SignalAction(this, SLOT(queryOrConnect())))
-            << new DialogButtonItem(Reject);
+    buttons().clear() << new DialogButtonItem(Default, "Connect", [this]() { queryOrConnect(); })
+                      << new DialogButtonItem(Reject);
 
     d->connectButton().disable();
 
@@ -132,10 +130,9 @@ ManualConnectionDialog::ManualConnectionDialog(String const &name)
             .setInput(Rule::Right,  buttonsMenu().rule().left())
             .setInput(Rule::Height, buttonsMenu().rule().height() - margins().bottom());
 
-    disconnect(&editor(), SIGNAL(enterPressed(QString)), this, SLOT(accept()));
-    connect(&editor(), SIGNAL(enterPressed(QString)), this, SLOT(queryOrConnect()));
-    connect(&editor(), SIGNAL(editorContentChanged()), this, SLOT(validate()));
-    connect(&editor(), SIGNAL(editorContentChanged()), this, SLOT(contentChanged()));
+    editor().audienceForEnter().clear();
+    editor().audienceForEnter() += [this](){ queryOrConnect(); };
+    editor().audienceForContentChange() += [this](){ validate(); contentChanged(); };
 
     updateLayout(IncludeHidden); // fold widgets are hidden while closed
 }
@@ -150,7 +147,7 @@ void ManualConnectionDialog::operator>>(PersistentState &toState) const
     toState.objectNamespace().set(name() + ".address", d->usedAddress);
 }
 
-void ManualConnectionDialog::operator<<(PersistentState const &fromState)
+void ManualConnectionDialog::operator<<(const PersistentState &fromState)
 {
     d->usedAddress = fromState[name() + ".address"];
     editor().setText(d->usedAddress);
@@ -179,7 +176,7 @@ void ManualConnectionDialog::queryOrConnect()
 
         d->joinWhenEnterPressed = false;
         d->querying = true;
-        d->progress->setText(_E(l) + tr("Looking for host..."));
+        d->progress->setText(_E(l) "Looking for host...");
         d->progress->setRotationSpeed(40);
         d->progress->show();
         d->progress->setOpacity(1);
@@ -207,7 +204,7 @@ void ManualConnectionDialog::validate()
     if (editor().text().isEmpty()     ||
         editor().text().contains(';') ||
         editor().text().endsWith(":") ||
-        (editor().text().startsWith(":") && !editor().text().startsWith("::")))
+        (editor().text().beginsWith(":") && !editor().text().beginsWith("::")))
     {
         valid = false;
     }
@@ -216,7 +213,7 @@ void ManualConnectionDialog::validate()
 }
 
 /*
-void ManualConnectionDialog::serverSelected(ui::Item const *item)
+void ManualConnectionDialog::serverSelected(const ui::Item *item)
 {
     if (d->autoJoin)
     {

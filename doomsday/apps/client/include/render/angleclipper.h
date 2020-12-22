@@ -21,9 +21,9 @@
 #ifndef CLIENT_RENDER_ANGLECLIPPER
 #define CLIENT_RENDER_ANGLECLIPPER
 
-#include <de/binangle.h>
-#include <de/Vector>
-#include "Face"
+#include <de/legacy/binangle.h>
+#include <de/vector.h>
+#include <doomsday/mesh/face.h>
 
 /**
  * Inclusive > inclusive binary angle range.
@@ -44,7 +44,7 @@ struct AngleRange
      *         @c  3= @other completely contains "this".
      *         @c -1= No meaningful relationship.
      */
-    de::dint relationship(AngleRange const &other)
+    int relationship(const AngleRange &other)
     {
         if(from >= other.from && to   <= other.to) return 0;
         if(from >= other.from && from <  other.to) return 1;
@@ -74,19 +74,19 @@ public:
     /**
      * Returns non-zero if clipnodes cover the whole range [0..360] degrees.
      */
-    de::dint isFull() const;
+    int isFull() const;
 
     /**
      * Returns non-zero if the given map-space @param angle is @em not-yet occluded.
      */
-    de::dint isAngleVisible(binangle_t angle) const;
+    int isAngleVisible(binangle_t angle) const;
 
     /**
      * Returns non-zero if the given map-space @a point is @em not-yet occluded.
      *
      * @param point  Map-space coordinates to test.
      */
-    de::dint isPointVisible(de::Vector3d const &point) const;
+    int isPointVisible(const de::Vec3d &point) const;
 
     /**
      * Returns non-zero if @em any portion of the given map-space, convex face geometry
@@ -94,7 +94,7 @@ public:
      *
      * @param poly  Map-space convex face geometry to test.
      */
-    de::dint isPolyVisible(de::Face const &poly) const;
+    int isPolyVisible(const mesh::Face &poly) const;
 
 public:  // ---------------------------------------------------------------------------
 
@@ -107,7 +107,7 @@ public:  // --------------------------------------------------------------------
      * @param from
      * @param to
      */
-    de::dint safeAddRange(binangle_t from, binangle_t to);
+    int safeAddRange(binangle_t from, binangle_t to);
 
     /**
      * Add a segment relative to the current viewpoint.
@@ -115,7 +115,7 @@ public:  // --------------------------------------------------------------------
      * @param from  Map-space coordinates describing the start-point.
      * @param to    Map-space coordinates describing the end-point.
      */
-    void addRangeFromViewRelPoints(de::Vector2d const &from, de::Vector2d const &to);
+    void addRangeFromViewRelPoints(const de::Vec2d &from, const de::Vec2d &to);
 
     /**
      * Add an occlusion segment relative to the current viewpoint.
@@ -125,7 +125,7 @@ public:  // --------------------------------------------------------------------
      * @param height
      * @param topHalf
      */
-    void addViewRelOcclusion(de::Vector2d const &from, de::Vector2d const &to,
+    void addViewRelOcclusion(const de::Vec2d &from, const de::Vec2d &to,
                              coord_t height, bool topHalf);
 
     /**
@@ -134,9 +134,9 @@ public:  // --------------------------------------------------------------------
      * @param from  Map-space coordinates for the start-point.
      * @param to    Map-space coordinates for the end-point.
      */
-    de::dint checkRangeFromViewRelPoints(de::Vector2d const &from, de::Vector2d const &to);
+    int checkRangeFromViewRelPoints(const de::Vec2d &from, const de::Vec2d &to);
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     /**
      * A debugging aid: checks if clipnode links are valid.
      */
@@ -144,7 +144,7 @@ public:  // --------------------------------------------------------------------
 #endif
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // CLIENT_RENDER_ANGLECLIPPER

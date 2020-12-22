@@ -18,17 +18,17 @@
 
 #include "ui/dialogs/uisettingsdialog.h"
 #include "clientapp.h"
-#include "ConfigProfiles"
+#include "configprofiles.h"
 
-#include <de/CallbackAction>
-#include <de/Config>
-#include <de/GridLayout>
-#include <de/VariableChoiceWidget>
-#include <de/VariableToggleWidget>
+#include <de/callbackaction.h>
+#include <de/config.h>
+#include <de/gridlayout.h>
+#include <de/variablechoicewidget.h>
+#include <de/variabletogglewidget.h>
 
 using namespace de;
 
-DENG2_PIMPL(UISettingsDialog)
+DE_PIMPL(UISettingsDialog)
 {
     VariableChoiceWidget *uiScale;
     VariableToggleWidget *uiTranslucency;
@@ -66,24 +66,16 @@ DENG2_PIMPL(UISettingsDialog)
     }
 };
 
-UISettingsDialog::UISettingsDialog(String const &name)
+UISettingsDialog::UISettingsDialog(const String &name)
     : DialogWidget(name, WithHeading)
     , d(new Impl(this))
 {
-    heading().setText(tr("UI Settings"));
+    heading().setText("UI Settings");
     heading().setImage(style().images().image("home.icon"));
-
-//    auto *library = LabelWidget::appendSeparatorWithText(_E(D) + tr("Game Library"), &area());
-//    library->setFont("separator.label");
-
-//    auto *restartNotice = LabelWidget::newWithText(tr("Changes take effect only after restarting."), &area());
-//    restartNotice->margins().setTop("");
-//    restartNotice->setFont("separator.annotation");
-//    restartNotice->setTextColor("altaccent");
 
     d->showAnnotations->margins().setBottom(RuleBank::UNIT);
 
-    auto *annots = LabelWidget::newWithText(tr("Annotations briefly describe menu functions."), &area());
+    auto *annots = LabelWidget::newWithText("Annotations briefly describe menu functions.", &area());
     annots->margins().setTop("");
     annots->setFont("separator.annotation");
     annots->setTextColor("altaccent");
@@ -92,16 +84,16 @@ UISettingsDialog::UISettingsDialog(String const &name)
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(2, 0);
     layout.setColumnAlignment(0, ui::AlignRight);
-    layout << *LabelWidget::newWithText(tr("Scale:"), &area()) << *d->uiScale
+    layout << *LabelWidget::newWithText("Scale:", &area()) << *d->uiScale
            << Const(0) << *d->uiTranslucency
 //           << Const(0) << *restartNotice
            << Const(0) << *d->showAnnotations
            << Const(0) << *annots;
-//    layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
+//    layout.setCellAlignment(Vec2i(0, layout.gridSize().y), ui::AlignLeft);
 //    layout.append(*library, 2);
     auto *library = LabelWidget::appendSeparatorWithText("Game Library", &area(), &layout);
 
-    auto *showLabel = LabelWidget::newWithText(tr("Enabled Tabs:"), &area());
+    auto *showLabel = LabelWidget::newWithText("Enabled Tabs:", &area());
     showLabel->rule().setLeftTop(library->rule().left(), library->rule().bottom());
 
     GridLayout showLayout(showLabel->rule().right(), showLabel->rule().top(),
@@ -120,7 +112,7 @@ UISettingsDialog::UISettingsDialog(String const &name)
                           layout.height() + showLayout.height());
 
     buttons()
-            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
-            << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
-                                    new CallbackAction([this] () { d->resetToDefaults(); }));
+            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, "Close")
+            << new DialogButtonItem(DialogWidget::Action, "Reset to Defaults",
+                                    [this]() { d->resetToDefaults(); });
 }

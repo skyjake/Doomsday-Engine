@@ -22,13 +22,13 @@
 #include "ui/b_util.h"
 #include "ui/inputsystem.h"
 
-#include <de/KeyEvent>
-#include <de/ddstring.h>
+#include <de/keyevent.h>
+#include <de/legacy/ddstring.h>
 
 using namespace de;
 using namespace de::ui;
 
-DENG_GUI_PIMPL(KeyGrabberWidget)
+DE_GUI_PIMPL(KeyGrabberWidget)
 {
     Impl(Public *i) : Base(i)
     {}
@@ -37,26 +37,26 @@ DENG_GUI_PIMPL(KeyGrabberWidget)
     {
         root().setFocus(thisPublic);
         self().set(Background(Background::GradientFrame, style().colors().colorf("accent"), 6));
-        self().setText(tr("Waiting for a key..."));
+        self().setText("Waiting for a key...");
     }
 
     void unfocus()
     {
         root().setFocus(0);
         self().set(Background());
-        self().setText(tr("Click to focus"));
+        self().setText("Click to focus");
     }
 };
 
-KeyGrabberWidget::KeyGrabberWidget(String const &name)
+KeyGrabberWidget::KeyGrabberWidget(const String &name)
     : LabelWidget(name), d(new Impl(this))
 {
     setBehavior(Focusable);
     setTextLineAlignment(AlignLeft);
-    setText(tr("Click to focus"));
+    setText("Click to focus");
 }
 
-bool KeyGrabberWidget::handleEvent(Event const &event)
+bool KeyGrabberWidget::handleEvent(const Event &event)
 {
     if (!hasFocus())
     {
@@ -72,7 +72,7 @@ bool KeyGrabberWidget::handleEvent(Event const &event)
     }
     else
     {
-        if (KeyEvent const *key = maybeAs<KeyEvent>(event))
+        if (const KeyEvent *key = maybeAs<KeyEvent>(event))
         {
             if (key->ddKey() == DDKEY_ESCAPE)
             {
@@ -83,17 +83,17 @@ bool KeyGrabberWidget::handleEvent(Event const &event)
             ddevent_t ev;
             InputSystem::convertEvent(event, ev);
 
-            String info = String("DD:%1 Qt:0x%2 Native:0x%3\n" _E(m) "%4")
-                              .arg(key->ddKey())
-                              .arg(key->qtKey(), 0, 16)
-                              .arg(key->nativeCode(), 0, 16)
-                              .arg(B_EventToString(ev));
+            String info = Stringf("DD:%i SDL:0x%x Native:0x%x\n" _E(m) "%s",
+                              key->ddKey(),
+                              key->sdlKey(),
+                              key->scancode(),
+                              B_EventToString(ev).c_str());
             setText(info);
 
             return true;
         }
 
-        if (MouseEvent const *mouse = maybeAs<MouseEvent>(event))
+        if (const MouseEvent *mouse = maybeAs<MouseEvent>(event))
         {
             if (mouse->type() == Event::MouseButton &&
                mouse->state() == MouseEvent::Released &&

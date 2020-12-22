@@ -1,0 +1,49 @@
+# Images for the default UI style
+
+script { import gui, DisplayMode }
+
+#----------------------------------------------------------------------------
+# Widgets
+
+window {
+    image background { path = "graphics/background.jpg" }
+    image borderglow { path = "graphics/borderglow.png" }
+    image cursor     { path = "graphics/mouse.png" }
+}
+
+widget {
+    image dot           { path $= gui.dpiScaledImagePath("graphics/dot.png") }
+    image pin           { path $= gui.dpiScaledImagePath("graphics/pin.png") }
+
+    image corners.thin  { path $= gui.dpiScaledImagePath("graphics/corners-thin.png") }
+    image corners.bold  { path $= gui.dpiScaledImagePath("graphics/corners-bold.png") }
+    image corners.solid { path $= gui.dpiScaledImagePath("graphics/corners-solid.png") }
+
+    image toggle.onoff  { path $= gui.dpiScaledImagePath("graphics/toggle-onoff.png") }
+
+    progress {
+        image wheel { path = "graphics/progress-wheel.png" }
+        image gear  { path = "graphics/progress-gear.png" }
+        image mini  { path = "graphics/progress-mini.png" }
+    }
+}
+
+#----------------------------------------------------------------------------
+# Symbols
+
+image refresh  { path = "graphics/refresh.png" }
+image fold     { path = "graphics/fold.png" }
+image gauge    { path = "graphics/gauge.png" }
+image gear     { path = "graphics/gear.png" }
+image file     { path = "graphics/file.png" }
+package {
+    image icon  { path = "graphics/package.png" }
+    image large { path = "graphics/package-large.png" }
+}
+close {
+    image ring     { path = "graphics/close.png" }
+    image ringless { path = "graphics/close-ringless.png" }
+}
+image create   { path = "graphics/create.png" }
+image alert    { path = "graphics/alert.png" }
+image play     { path = "graphics/play.png" }

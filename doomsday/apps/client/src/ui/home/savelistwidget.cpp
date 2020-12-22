@@ -21,16 +21,16 @@
 #include "ui/savelistdata.h"
 
 #include <doomsday/game.h>
-#include <doomsday/GameStateFolder>
+#include <doomsday/gamestatefolder.h>
 
-#include <de/CallbackAction>
-#include <de/DocumentPopupWidget>
-#include <de/FileSystem>
+#include <de/callbackaction.h>
+#include <de/documentpopupwidget.h>
+#include <de/filesystem.h>
 
 using namespace de;
 
-DENG_GUI_PIMPL(SaveListWidget)
-, DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+DE_GUI_PIMPL(SaveListWidget)
+, DE_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 {
     /**
      * Handles mouse button doubleclicks on the save items.
@@ -41,11 +41,11 @@ DENG_GUI_PIMPL(SaveListWidget)
 
         ClickHandler(SaveListWidget::Impl *d) : d(d) {}
 
-        bool handleEvent(GuiWidget &button, Event const &event)
+        bool handleEvent(GuiWidget &button, const Event &event)
         {
             if (event.type() == Event::MouseButton)
             {
-                MouseEvent const &mouse = event.as<MouseEvent>();
+                const MouseEvent &mouse = event.as<MouseEvent>();
 
                 // Check for right-clicking.
                 if (mouse.button() == MouseEvent::Right)
@@ -79,10 +79,10 @@ DENG_GUI_PIMPL(SaveListWidget)
 
         void saveRightClicked(GuiWidget &saveButton)
         {
-            auto const &saveItem = d->self().organizer()
+            const auto &saveItem = d->self().organizer()
                     .findItemForWidget(saveButton)->as<SaveListData::SaveItem>();
 
-            if (GameStateFolder const *saved = FS::tryLocate<GameStateFolder>(saveItem.savePath()))
+            if (const GameStateFolder *saved = FS::tryLocate<GameStateFolder>(saveItem.savePath()))
             {
                 auto *docPop = new DocumentPopupWidget;
                 docPop->setDeleteAfterDismissed(true);
@@ -103,7 +103,7 @@ DENG_GUI_PIMPL(SaveListWidget)
         self().organizer().audienceForWidgetUpdate() += this;
     }
 
-    void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
+    void widgetUpdatedForItem(GuiWidget &widget, const ui::Item &item)
     {
         auto &button = widget.as<ButtonWidget>();
         button.setTextAlignment(ui::AlignRight);
@@ -112,22 +112,22 @@ DENG_GUI_PIMPL(SaveListWidget)
         button.setSizePolicy(ui::Filled, ui::Expand);
         button.setText(item.label());
         button.margins().set("dialog.gap");
-        button.set(Background(Vector4f()));
+        button.set(Background(Vec4f()));
 
         button.setActionFn([this, &button] () {
             toggleSelectedItem(button);
-            emit owner.mouseActivity();
+            DE_FOR_OBSERVERS(i, owner.audienceForActivity()) i->mouseActivity(owner);
         });
         button.addEventHandler(new ClickHandler(this));
 
-        auto const &saveItem = item.as<SaveListData::SaveItem>();
+        const auto &saveItem = item.as<SaveListData::SaveItem>();
         button.setImage(style().images().image(Game::logoImageForId(saveItem.gameId())));
         button.setOverrideImageSize(style().fonts().font("default").height() * 1.4f);
     }
 
     void toggleSelectedItem(ButtonWidget &button)
     {
-        auto const buttonItemPos = self().items().find(*self().organizer().findItemForWidget(button));
+        const auto buttonItemPos = self().items().find(*self().organizer().findItemForWidget(button));
 
         if (selected == buttonItemPos)
         {
@@ -141,7 +141,7 @@ DENG_GUI_PIMPL(SaveListWidget)
             updateItemHighlights(&button);
         }
 
-        emit self().selectionChanged(selected);
+        DE_NOTIFY_PUBLIC(Selection, i) i->saveListSelectionChanged(selected);
 
         // Keep focus on the clicked button.
         self().root().setFocus(&self());
@@ -166,7 +166,11 @@ DENG_GUI_PIMPL(SaveListWidget)
             }
         }
     }
+
+    DE_PIMPL_AUDIENCES(Selection, DoubleClick)
 };
+
+DE_AUDIENCE_METHODS(SaveListWidget, Selection, DoubleClick)
 
 SaveListWidget::SaveListWidget(GamePanelButtonWidget &owner)
     : d(new Impl(this, owner))
@@ -187,7 +191,7 @@ void SaveListWidget::setSelectedPos(ui::DataPos pos)
     {
         d->selected = pos;
         d->updateItemHighlights(&itemWidget<ButtonWidget>(items().at(pos)));
-        emit selectionChanged(d->selected);
+        DE_NOTIFY(Selection, i) { i->saveListSelectionChanged(d->selected); }
     }
 }
 
@@ -197,6 +201,6 @@ void SaveListWidget::clearSelection()
     {
         d->selected = ui::Data::InvalidPos;
         d->updateItemHighlights(nullptr);
-        emit selectionChanged(d->selected);
+        DE_NOTIFY(DoubleClick, i) { i->saveListDoubleClicked(d->selected); }
     }
 }

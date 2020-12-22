@@ -33,7 +33,7 @@ public:
     LocalPlayer();
     
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // CLIENT_LOCALPLAYER_H

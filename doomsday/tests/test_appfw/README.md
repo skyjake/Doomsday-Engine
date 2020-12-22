@@ -10,4 +10,4 @@ Command line options:
 
 ## Instructions
 
-Before compiling you must have the Doomsday SDK installed somewhere. The qmake variable `DENG_SDK_DIR` must point to the SDK folder.
+Before compiling you must have the Doomsday SDK installed somewhere. The qmake variable `DE_SDK_DIR` must point to the SDK folder.

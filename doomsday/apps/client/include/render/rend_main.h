@@ -25,28 +25,52 @@
 #endif
 
 #include "dd_types.h"
-#include <de/Matrix>
-#include <de/Record>
-#include <de/Vector>
+#include <de/matrix.h>
+#include <de/record.h>
+#include <de/vector.h>
+#include <de/opengl.h>
 
 #include "def_main.h"
-#include "MaterialVariantSpec"
-#include "WallEdge"
+#include "resource/materialvariantspec.h"
 
-class Lumobj;
-class Sector;
 struct VectorLightData;
+class Lumobj;
 class ClientMaterial;
+class Map;
 class MaterialAnimator;
-#if 0
-namespace de {
-    class LightGrid;
-}
-#endif
-namespace world {
+class Plane;
+class Surface;
+class WallEdge;
+class WorldEdge;
+
+namespace world
+{
     class ConvexSubspace;
+    class Sector;
     class Subsector;
 }
+
+/**
+ * FakeRadio shadow data.
+ * @ingroup render
+ */
+struct shadowcorner_t
+{
+    float corner;
+    Plane *proximity;
+    float pOffset;
+    float pHeight;
+};
+
+/**
+ * FakeRadio connected edge data.
+ * @ingroup render
+ */
+struct edgespan_t
+{
+    float length;
+    float shift;
+};
 
 // Multiplicative blending for dynamic lights?
 #define IS_MUL          (dynlightBlend != 1 && !fogParams.usingFog)
@@ -61,9 +85,9 @@ namespace world {
 
 #define SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
 
-DENG_EXTERN_C de::Vector3d vOrigin; // Y/Z swizzled for drawing
-DENG_EXTERN_C float vang, vpitch, yfov;
-DENG_EXTERN_C float viewsidex, viewsidey;
+DE_EXTERN_C de::Vec3d vOrigin; // Y/Z swizzled for drawing
+DE_EXTERN_C float vang, vpitch, yfov;
+DE_EXTERN_C float viewsidex, viewsidey;
 
 struct FogParams
 {
@@ -75,73 +99,73 @@ struct FogParams
 
 extern FogParams fogParams;
 
-DENG_EXTERN_C byte smoothTexAnim, devMobjVLights;
+DE_EXTERN_C byte smoothTexAnim, devMobjVLights;
 
-DENG_EXTERN_C int renderTextures; /// @c 0= no textures, @c 1= normal mode, @c 2= lighting debug
-#if defined (DENG_OPENGL)
-DENG_EXTERN_C int renderWireframe;
+DE_EXTERN_C int renderTextures; /// @c 0= no textures, @c 1= normal mode, @c 2= lighting debug
+#if defined (DE_OPENGL)
+DE_EXTERN_C int renderWireframe;
 #endif
-//DENG_EXTERN_C int useMultiTexLights;
-//DENG_EXTERN_C int useMultiTexDetails;
+//DE_EXTERN_C int useMultiTexLights;
+//DE_EXTERN_C int useMultiTexDetails;
 
-DENG_EXTERN_C int dynlightBlend;
+DE_EXTERN_C int dynlightBlend;
 
-//DENG_EXTERN_C int torchAdditive;
-DENG_EXTERN_C de::Vector3f torchColor;
+//DE_EXTERN_C int torchAdditive;
+DE_EXTERN_C de::Vec3f torchColor;
 
-DENG_EXTERN_C int rAmbient;
-DENG_EXTERN_C float rendLightDistanceAttenuation;
-DENG_EXTERN_C int rendLightAttenuateFixedColormap;
-DENG_EXTERN_C float rendLightWallAngle;
-DENG_EXTERN_C byte rendLightWallAngleSmooth;
-DENG_EXTERN_C float rendSkyLight; // cvar
-DENG_EXTERN_C byte rendSkyLightAuto; // cvar
-DENG_EXTERN_C float lightModRange[255];
-DENG_EXTERN_C int extraLight;
-DENG_EXTERN_C float extraLightDelta;
+DE_EXTERN_C int rAmbient;
+DE_EXTERN_C float rendLightDistanceAttenuation;
+DE_EXTERN_C int rendLightAttenuateFixedColormap;
+DE_EXTERN_C float rendLightWallAngle;
+DE_EXTERN_C byte rendLightWallAngleSmooth;
+DE_EXTERN_C float rendSkyLight; // cvar
+DE_EXTERN_C byte rendSkyLightAuto; // cvar
+DE_EXTERN_C float lightModRange[255];
+DE_EXTERN_C int extraLight;
+DE_EXTERN_C float extraLightDelta;
 
-DENG_EXTERN_C int devRendSkyMode;
-DENG_EXTERN_C int gameDrawHUD;
+DE_EXTERN_C int devRendSkyMode;
+DE_EXTERN_C int gameDrawHUD;
 
-//DENG_EXTERN_C int useBias;
+//DE_EXTERN_C int useBias;
 
-DENG_EXTERN_C int useDynLights;
-DENG_EXTERN_C float dynlightFactor, dynlightFogBright;
-DENG_EXTERN_C int rendMaxLumobjs;
+DE_EXTERN_C int useDynLights;
+DE_EXTERN_C float dynlightFactor, dynlightFogBright;
+DE_EXTERN_C int rendMaxLumobjs;
 
-DENG_EXTERN_C int useGlowOnWalls;
-DENG_EXTERN_C float glowFactor, glowHeightFactor;
-DENG_EXTERN_C int glowHeightMax;
+DE_EXTERN_C int useGlowOnWalls;
+DE_EXTERN_C float glowFactor, glowHeightFactor;
+DE_EXTERN_C int glowHeightMax;
 
-DENG_EXTERN_C int useShadows;
-DENG_EXTERN_C float shadowFactor;
-DENG_EXTERN_C int shadowMaxRadius;
-DENG_EXTERN_C int shadowMaxDistance;
+DE_EXTERN_C int useShadows;
+DE_EXTERN_C float shadowFactor;
+DE_EXTERN_C int shadowMaxRadius;
+DE_EXTERN_C int shadowMaxDistance;
 
-DENG_EXTERN_C byte useLightDecorations;
+DE_EXTERN_C byte useLightDecorations;
 
-DENG_EXTERN_C int useShinySurfaces;
+DE_EXTERN_C int useShinySurfaces;
 
-DENG_EXTERN_C float detailFactor, detailScale;
+DE_EXTERN_C float detailFactor, detailScale;
 
-DENG_EXTERN_C int ratioLimit;
-DENG_EXTERN_C int mipmapping, filterUI, texQuality, filterSprites;
-DENG_EXTERN_C int texMagMode, texAniso;
-DENG_EXTERN_C int useSmartFilter;
-DENG_EXTERN_C int texMagMode;
-DENG_EXTERN_C int glmode[6];
-DENG_EXTERN_C dd_bool fillOutlines;
-//DENG_EXTERN_C dd_bool noHighResTex;
-//DENG_EXTERN_C dd_bool noHighResPatches;
-//DENG_EXTERN_C dd_bool highResWithPWAD;
-DENG_EXTERN_C byte loadExtAlways;
+DE_EXTERN_C int ratioLimit;
+DE_EXTERN_C int mipmapping, filterUI, texQuality, filterSprites;
+DE_EXTERN_C int texMagMode, texAniso;
+DE_EXTERN_C int useSmartFilter;
+DE_EXTERN_C int texMagMode;
+DE_EXTERN_C GLenum glmode[6];
+DE_EXTERN_C dd_bool fillOutlines;
+//DE_EXTERN_C dd_bool noHighResTex;
+//DE_EXTERN_C dd_bool noHighResPatches;
+//DE_EXTERN_C dd_bool highResWithPWAD;
+DE_EXTERN_C byte loadExtAlways;
 
-DENG_EXTERN_C int devNoCulling;
-DENG_EXTERN_C byte devRendSkyAlways;
-DENG_EXTERN_C byte rendInfoLums;
-DENG_EXTERN_C byte devDrawLums;
+DE_EXTERN_C int devNoCulling;
+DE_EXTERN_C byte devRendSkyAlways;
+DE_EXTERN_C byte rendInfoLums;
+DE_EXTERN_C byte devDrawLums;
 
-DENG_EXTERN_C byte freezeRLs;
+DE_EXTERN_C byte freezeRLs;
 
 struct ResourceConfigVars
 {
@@ -165,7 +189,7 @@ bool Rend_IsMTexLights();
 /// @return @c true iff multitexturing is currently enabled for detail textures.
 bool Rend_IsMTexDetails();
 
-void Rend_RenderMap(world::Map &map);
+void Rend_RenderMap(Map &map);
 
 float Rend_FieldOfView();
 
@@ -175,9 +199,9 @@ float Rend_FieldOfView();
  */
 void Rend_ModelViewMatrix(bool inWorldSpace = true);
 
-de::Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool inWorldSpace = true);
+de::Mat4f Rend_GetModelViewMatrix(int consoleNum, bool inWorldSpace = true, bool vgaAspect = true);
 
-de::Vector3d Rend_EyeOrigin();
+de::Vec3d Rend_EyeOrigin();
 
 /**
  * Returns the projection matrix that is used for rendering the current frame's
@@ -186,11 +210,11 @@ de::Vector3d Rend_EyeOrigin();
  * @param fixedFov        If non-zero, overrides the user's FOV with a fixed value.
  * @param clipRangeScale  Multiplier to apply to clip plane distances.
  */
-de::Matrix4f Rend_GetProjectionMatrix(float fixedFov = 0.0f, float clipRangeScale = 1.0f);
+de::Mat4f Rend_GetProjectionMatrix(float fixedFov = 0.0f, float clipRangeScale = 1.0f);
 
 #define Rend_PointDist2D(c) (abs((vOrigin.z-(c)[VY])*viewsidex - (vOrigin.x-(c)[VX])*viewsidey))
 
-void Rend_SetFixedView(int consoleNum, float yaw, float pitch, float fov, de::Vector2f viewportSize);
+void Rend_SetFixedView(int consoleNum, float yaw, float pitch, float fov, de::Vec2f viewportSize);
 void Rend_UnsetFixedView();
 
 /**
@@ -202,7 +226,7 @@ void Rend_UnsetFixedView();
 float Rend_ExtraLightDelta();
 
 void Rend_ApplyTorchLight(float *color3, float distance);
-void Rend_ApplyTorchLight(de::Vector4f &color, float distance);
+void Rend_ApplyTorchLight(de::Vec4f &color, float distance);
 
 /**
  * Apply range compression delta to @a lightValue.
@@ -253,7 +277,7 @@ bool Rend_SkyLightIsEnabled();
 /**
  * Returns the effective sky light color.
  */
-de::Vector3f Rend_SkyLightColor();
+de::Vec3f Rend_SkyLightColor();
 
 /**
  * Blend the given light value with the luminous object's color, applying any
@@ -264,7 +288,7 @@ de::Vector3f Rend_SkyLightColor();
  *
  * @return  Calculated result.
  */
-de::Vector3f Rend_LuminousColor(de::Vector3f const &color, de::dfloat light);
+de::Vec3f Rend_LuminousColor(const de::Vec3f &color, float light);
 
 /**
  * Given an @a intensity determine the height of the plane glow, applying any
@@ -272,7 +296,7 @@ de::Vector3f Rend_LuminousColor(de::Vector3f const &color, de::dfloat light);
  *
  * @return Calculated result.
  */
-coord_t Rend_PlaneGlowHeight(de::dfloat intensity);
+coord_t Rend_PlaneGlowHeight(float intensity);
 
 /**
  * @param point         World space point to evaluate.
@@ -282,20 +306,20 @@ coord_t Rend_PlaneGlowHeight(de::dfloat intensity);
  *
  * @todo Does not belong here.
  */
-de::duint Rend_CollectAffectingLights(de::Vector3d const &point,
-    de::Vector3f const &ambientColor = de::Vector3f(1, 1, 1), world::ConvexSubspace *subspace = nullptr,
+de::duint Rend_CollectAffectingLights(const de::Vec3d &point,
+    const de::Vec3f &ambientColor = de::Vec3f(1), world::ConvexSubspace *subspace = nullptr,
     bool starkLight = false);
 
-void Rend_DrawVectorLight(VectorLightData const &vlight, de::dfloat alpha);
+void Rend_DrawVectorLight(const VectorLightData &vlight, float alpha);
 
-MaterialAnimator *Rend_SpriteMaterialAnimator(de::Record const &spriteDef);
+MaterialAnimator *Rend_SpriteMaterialAnimator(const de::Record &spriteDef);
 
 /**
  * Returns the radius of the given @a sprite, as it would visually appear to be.
  *
  * @note Presently considers rotation 0 only!
  */
-de::ddouble Rend_VisualRadius(de::Record const &sprite);
+double Rend_VisualRadius(const de::Record &sprite);
 
 /**
  * Produce a luminous object from the given @a sprite configuration. The properties of
@@ -305,29 +329,29 @@ de::ddouble Rend_VisualRadius(de::Record const &sprite);
  *
  * @return  Newly generated Lumobj otherwise @c nullptr.
  */
-Lumobj *Rend_MakeLumobj(de::Record const &sprite);
+Lumobj *Rend_MakeLumobj(const de::Record &sprite);
 
 /**
  * Selects a Material for the given map @a surface considering the current map
  * renderer configuration.
  */
-ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface);
+ClientMaterial *Rend_ChooseMapSurfaceMaterial(const Surface &surface);
 
-de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec();
-de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(int wrapS, int wrapT);
+const de::MaterialVariantSpec &Rend_MapSurfaceMaterialSpec();
+const de::MaterialVariantSpec &Rend_MapSurfaceMaterialSpec(GLenum wrapS, GLenum wrapT);
 
-TextureVariantSpec const &Rend_MapSurfaceLightmapTextureSpec();
+const TextureVariantSpec &Rend_MapSurfaceLightmapTextureSpec();
 
-TextureVariantSpec const &Rend_MapSurfaceShinyTextureSpec();
-TextureVariantSpec const &Rend_MapSurfaceShinyMaskTextureSpec();
+const TextureVariantSpec &Rend_MapSurfaceShinyTextureSpec();
+const TextureVariantSpec &Rend_MapSurfaceShinyMaskTextureSpec();
 
-void R_DivVerts(de::Vector3f *dst, de::Vector3f const *src,
-    WorldEdge const &leftEdge, WorldEdge const &rightEdge);
+void R_DivVerts(de::Vec3f *dst, const de::Vec3f *src,
+    const WorldEdge &leftEdge, const WorldEdge &rightEdge);
 
-void R_DivTexCoords(de::Vector2f *dst, de::Vector2f const *src,
-    WorldEdge const &leftEdge, WorldEdge const &rightEdge);
+void R_DivTexCoords(de::Vec2f *dst, const de::Vec2f *src,
+    const WorldEdge &leftEdge, const WorldEdge &rightEdge);
 
-void R_DivVertColors(de::Vector4f *dst, de::Vector4f const *src,
-    WorldEdge const &leftEdge, WorldEdge const &rightEdge);
+void R_DivVertColors(de::Vec4f *dst, const de::Vec4f *src,
+    const WorldEdge &leftEdge, const WorldEdge &rightEdge);
 
 #endif // CLIENT_RENDER_MAIN_H

@@ -17,29 +17,31 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/CommandLine>
-#include <de/DirectoryFeed>
-#include <de/EscapeParser>
-#include <de/FS>
-#include <de/LogBuffer>
-#include <de/NativeFile>
-#include <de/Process>
-#include <de/Script>
-#include <de/TextApp>
-#include <QDebug>
+#include <de/commandline.h>
+#include <de/directoryfeed.h>
+#include <de/escapeparser.h>
+#include <de/filesystem.h>
+#include <de/logbuffer.h>
+#include <de/nativefile.h>
+#include <de/dscript.h>
+#include <de/textapp.h>
 
 using namespace de;
 
 int main(int argc, char **argv)
 {
     if (argc < 2) return -1;
+    init_Foundation();
     try
     {
-        TextApp app(argc, argv);
-        app.setApplicationName("Doomsday Script");
-        app.setConfigScript("");
+        TextApp app(makeList(argc, argv));
+        {
+            Record &amd = app.metadata();
+            amd.set(App::APP_NAME, "Doomsday Script");
+            amd.set(App::CONFIG_PATH, "");
+        }
         LogBuffer::get().enableStandardOutput();
-        app.initSubsystems(App::DisablePlugins | App::DisablePersistentData);
+        app.initSubsystems(App::DisablePersistentData);
 
         app.commandLine().makeAbsolutePath(1);
         NativePath inputFn = app.commandLine().at(1);
@@ -60,13 +62,11 @@ int main(int argc, char **argv)
         LOG_MSG("------------------------------------------------------------------------------");
         LOG_MSG("Final result value is: ") << proc.context().evaluator().result().asText();
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
-        EscapeParser esc;
-        esc.parse(er.asText());
-        qWarning() << esc.plainText();
+        er.warnPlainText();
     }
-
-    qDebug("Exiting main()...");
+    deinit_Foundation();
+    debug("Exiting main()...");
     return 0;
 }

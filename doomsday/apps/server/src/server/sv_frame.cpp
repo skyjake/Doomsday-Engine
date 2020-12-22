@@ -25,7 +25,7 @@
 #include "server/sv_pool.h"
 #include "world/p_players.h"
 
-#include <de/LogBuffer>
+#include <de/logbuffer.h>
 #include <cmath>
 
 using namespace de;
@@ -55,7 +55,7 @@ void Sv_SendFrame(dint playerNumber);
 dint allowFrames;
 dint frameInterval = 1;  ///< Skip every second frame by default (17.5fps)
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
 static dint byteCounts[256];
 static dint totalFrameCount;
 #endif
@@ -68,12 +68,12 @@ static dint lastTransmitTic;
 void Sv_TransmitFrame()
 {
     // Obviously clients don't transmit anything.
-    if (!::allowFrames || ::isClient || Sys_IsShuttingDown())
+    if (!::allowFrames || netState.isClient || Sys_IsShuttingDown())
     {
         return;
     }
 
-    if (!::netGame)
+    if (!netState.netGame)
     {
         // Only generate deltas when somebody is recording a demo.
         dint i = 0;
@@ -98,7 +98,7 @@ void Sv_TransmitFrame()
     Sv_GenerateFrameDeltas();
 
     // How many players currently in the game?
-    dint const numInGame = Sv_GetNumPlayers();
+    const dint numInGame = Sv_GetNumPlayers();
 
     dint pCount = 0;
     for (dint i = 0; i < DDMAXPLAYERS; ++i)
@@ -148,7 +148,7 @@ void Sv_TransmitFrame()
  */
 void Sv_Shutdown()
 {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     if (::totalFrameCount > 0)
     {
         // Byte probabilities.
@@ -168,8 +168,8 @@ void Sv_Shutdown()
  */
 void Sv_WriteMobjDelta(const void* deltaPtr)
 {
-    auto const *delta  = reinterpret_cast<mobjdelta_t const *>(deltaPtr);
-    dt_mobj_t const *d = &delta->mo;
+    const auto *delta  = reinterpret_cast<const mobjdelta_t *>(deltaPtr);
+    const dt_mobj_t *d = &delta->mo;
     dint df            = delta->delta.flags;
 
     byte moreFlags = 0;
@@ -234,8 +234,8 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     }
     */
 
-    DENG2_ASSERT(!(df & MDFC_NULL));     // don't write NULL deltas
-    DENG2_ASSERT((df & 0xffff) != 0);    // don't write empty deltas
+    DE_ASSERT(!(df & MDFC_NULL));     // don't write NULL deltas
+    DE_ASSERT((df & 0xffff) != 0);    // don't write empty deltas
 
     // First the mobj ID number and flags.
     Writer_WriteUInt16(::msgWriter, delta->delta.id);
@@ -303,7 +303,7 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
 
     if (df & MDF_STATE)
     {
-        DENG2_ASSERT(d->state != 0);
+        DE_ASSERT(d->state != 0);
         Writer_WritePackedUInt16(::msgWriter, ::runtimeDefs.states.indexOf(d->state));
     }
 
@@ -340,10 +340,10 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WritePlayerDelta(void const *deltaPtr)
+void Sv_WritePlayerDelta(const void *deltaPtr)
 {
-    auto const *delta    = reinterpret_cast<playerdelta_t const *>(deltaPtr);
-    dt_player_t const *d = &delta->player;
+    const auto *delta    = reinterpret_cast<const playerdelta_t *>(deltaPtr);
+    const dt_player_t *d = &delta->player;
     dint df              = delta->delta.flags;
 
     // First the player number. Upper three bits contain flags.
@@ -367,7 +367,7 @@ void Sv_WritePlayerDelta(void const *deltaPtr)
     if (df & PDF_EXTRALIGHT)
     {
         // Three bits is enough for fixedcolormap.
-        dint const cmap = de::clamp(0, d->fixedColorMap, 7);
+        const dint cmap = de::clamp(0, d->fixedColorMap, 7);
         // Write the five upper bytes of extraLight.
         Writer_WriteByte(::msgWriter, cmap | (d->extraLight & 0xf8));
     }
@@ -380,8 +380,8 @@ void Sv_WritePlayerDelta(void const *deltaPtr)
     {
         for (dint i = 0; i < 2; ++i)
         {
-            ddpsprite_t const &psp = d->psp[i];
-            dint const flags       = df >> (16 + i * 8);
+            const ddpsprite_t &psp = d->psp[i];
+            const dint flags       = df >> (16 + i * 8);
 
             // First the flags.
             Writer_WriteByte(::msgWriter, flags);
@@ -391,12 +391,12 @@ void Sv_WritePlayerDelta(void const *deltaPtr)
             }
             /*if (flags & PSDF_LIGHT)
             {
-                dint const light = de::clamp(0, psp.light * 255, 255);
+                const dint light = de::clamp(0, psp.light * 255, 255);
                 Writer_WriteByte(::msgWriter, light);
             }*/
             if (flags & PSDF_ALPHA)
             {
-                dint const alpha = de::clamp(0.f, psp.alpha * 255, 255.f);
+                const dint alpha = de::clamp(0.f, psp.alpha * 255, 255.f);
                 Writer_WriteByte(::msgWriter, alpha);
             }
             if (flags & PSDF_STATE)
@@ -415,10 +415,10 @@ void Sv_WritePlayerDelta(void const *deltaPtr)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteSectorDelta(void const *deltaPtr)
+void Sv_WriteSectorDelta(const void *deltaPtr)
 {
-    auto const *delta    = reinterpret_cast<sectordelta_t const *>(deltaPtr);
-    dt_sector_t const *d = &delta->sector;
+    const auto *delta    = reinterpret_cast<const sectordelta_t *>(deltaPtr);
+    const dt_sector_t *d = &delta->sector;
     dint              df = delta->delta.flags;
 
     // Is there need to use 4.4 fixed-point speeds?
@@ -426,7 +426,7 @@ void Sv_WriteSectorDelta(void const *deltaPtr)
     byte floorSpd = 0;
     if (df & SDF_FLOOR_SPEED)
     {
-        dint const spd = FLT2FIX(fabs(d->planes[PLN_FLOOR].speed));
+        const dint spd = FLT2FIX(fabs(d->planes[PLN_FLOOR].speed));
         floorSpd = spd >> 15;
         if (!floorSpd)
         {
@@ -437,7 +437,7 @@ void Sv_WriteSectorDelta(void const *deltaPtr)
     byte ceilSpd = 0;
     if (df & SDF_CEILING_SPEED)
     {
-        dint const spd = FLT2FIX(fabs(d->planes[PLN_CEILING].speed));
+        const dint spd = FLT2FIX(fabs(d->planes[PLN_CEILING].speed));
         ceilSpd = spd >> 15;
         if (!ceilSpd)
         {
@@ -508,10 +508,10 @@ void Sv_WriteSectorDelta(void const *deltaPtr)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteSideDelta(void const *deltaPtr)
+void Sv_WriteSideDelta(const void *deltaPtr)
 {
-    auto const *delta  = (sidedelta_t const *) deltaPtr;
-    dt_side_t const *d = &delta->side;
+    const auto *delta  = (const sidedelta_t *) deltaPtr;
+    const dt_side_t *d = &delta->side;
     dint            df = delta->delta.flags;
 
     // Side number first.
@@ -563,10 +563,10 @@ void Sv_WriteSideDelta(void const *deltaPtr)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WritePolyDelta(void const *deltaPtr)
+void Sv_WritePolyDelta(const void *deltaPtr)
 {
-    auto const  *delta = (polydelta_t const *) deltaPtr;
-    dt_poly_t const *d = &delta->po;
+    const auto *delta = (const polydelta_t *) deltaPtr;
+    const dt_poly_t *d = &delta->po;
     dint            df = delta->delta.flags;
 
     if (d->destAngle == (unsigned) -1)
@@ -597,9 +597,9 @@ void Sv_WritePolyDelta(void const *deltaPtr)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteSoundDelta(void const *deltaPtr)
+void Sv_WriteSoundDelta(const void *deltaPtr)
 {
-    auto const *delta = (sounddelta_t const *) deltaPtr;
+    const auto *delta = (const sounddelta_t *) deltaPtr;
     dint           df = delta->delta.flags;
 
     // This is either the sound ID, emitter ID or sector index.
@@ -644,9 +644,9 @@ void Sv_WriteSoundDelta(void const *deltaPtr)
 /**
  * Write the type and possibly the set number (for Unacked deltas).
  */
-void Sv_WriteDeltaHeader(byte type, delta_t const *delta)
+void Sv_WriteDeltaHeader(byte type, const delta_t *delta)
 {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     if (type >= NUM_DELTA_TYPES)
     {
         App_Error("Sv_WriteDeltaHeader: Invalid delta type %i.\n", type);
@@ -654,11 +654,11 @@ void Sv_WriteDeltaHeader(byte type, delta_t const *delta)
 #endif
 
     // Once sent, the deltas can be discarded and there is no need for resending.
-    DENG2_ASSERT(delta->state != DELTA_UNACKED);
+    DE_ASSERT(delta->state != DELTA_UNACKED);
 
     if (delta->state == DELTA_UNACKED)
     {
-        DENG2_ASSERT(!"Unacked");
+        DE_ASSERT_FAIL("Unacked");
         // Flag this as Resent.
         type |= DT_RESENT;
     }
@@ -684,13 +684,13 @@ void Sv_WriteDeltaHeader(byte type, delta_t const *delta)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteDelta(delta_t const *delta)
+void Sv_WriteDelta(const delta_t *delta)
 {
-    DENG2_ASSERT(delta);
+    DE_ASSERT(delta);
 
 #ifdef _NETDEBUG
     // Extra length field in debug builds.
-    dint const lengthOffset = Msg_Offset();
+    const dint lengthOffset = Msg_Offset();
     Msg_WriteLong(0);
 #endif
 
@@ -750,8 +750,8 @@ writeDeltaLength:
  */
 dsize Sv_GetMaxFrameSize(dint playerNumber)
 {
-    DENG2_UNUSED(playerNumber);
-    DENG2_ASSERT(playerNumber >= 0 && playerNumber < DDMAXPLAYERS);
+    DE_UNUSED(playerNumber);
+    DE_ASSERT(playerNumber >= 0 && playerNumber < DDMAXPLAYERS);
     dsize size = MINIMUM_FRAME_SIZE + FRAME_SIZE_FACTOR * 40 /* BWR_DEFAULT */;
 
     // What about the communications medium?
@@ -766,7 +766,7 @@ dsize Sv_GetMaxFrameSize(dint playerNumber)
  */
 byte Sv_GetNewResendID(pool_t *pool)
 {
-    DENG2_ASSERT(pool);
+    DE_ASSERT(pool);
 
     byte id = pool->resendDealer;
     // Advance to next ID, skipping zero.
@@ -796,7 +796,7 @@ void Sv_SendFrame(dint plrNum)
     Sv_RatePool(pool);
 
     // This will be a new set.
-    DENG2_ASSERT(pool);
+    DE_ASSERT(pool);
     pool->setDealer++;
 
     // Determine the maximum size of the frame packet.
@@ -820,7 +820,7 @@ void Sv_SendFrame(dint plrNum)
     while ((delta = Sv_PoolQueueExtract(pool)) != nullptr &&
           (lastStart = Writer_Size(::msgWriter)) < maxFrameSize)
     {
-        byte const oldResend = pool->resendDealer;
+        const byte oldResend = pool->resendDealer;
 
         // Is this going to be a resent?
         if (delta->state == DELTA_UNACKED && !delta->resend)

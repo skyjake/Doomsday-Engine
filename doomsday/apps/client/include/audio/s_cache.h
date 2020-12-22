@@ -22,7 +22,7 @@
 #define AUDIO_SFXSAMPLECACHE_H
 
 #include "api_audiod_sfx.h"  // sfxsample_t
-#include <de/Observers>
+#include <de/observers.h>
 
 namespace audio {
 
@@ -40,7 +40,7 @@ class SfxSampleCache
 {
 public:
     /// Notified when a sound sample is about to be removed from the cache.
-    DENG2_DEFINE_AUDIENCE2(SampleRemove, void sfxSampleCacheAboutToRemove(sfxsample_t const &sample))
+    DE_AUDIENCE(SampleRemove, void sfxSampleCacheAboutToRemove(const sfxsample_t &sample))
 
     struct CacheItem
     {
@@ -109,7 +109,7 @@ public:
     void info(uint *cacheBytes, uint *sampleCount);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }  // namespace audio

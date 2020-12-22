@@ -74,23 +74,23 @@
 #include <QVector>
 
 // Doomsday SDK:
-#include <de/App>
-#include <de/DialogWidget>
-#include <de/Drawable>
-#include <de/Error>
-#include <de/GLState>
-#include <de/GLUniform>
-#include <de/Log>
-#include <de/memory.h>
-#include <de/NativePath>
-#include <de/Observers>
-#include <de/PathTree>
-#include <de/Reader>
-#include <de/Rectangle>
-#include <de/SignalAction>
-#include <de/String>
-#include <de/Vector>
-#include <de/Writer>
+#include <de/app.h>
+#include <de/dialogwidget.h>
+#include <de/drawable.h>
+#include <de/error.h>
+#include <de/glstate.h>
+#include <de/gluniform.h>
+#include <de/log.h>
+#include <de/legacy/memory.h>
+#include <de/nativepath.h>
+#include <de/observers.h>
+#include <de/pathtree.h>
+#include <de/reader.h>
+#include <de/rectangle.h>
+#include <de/signalaction.h>
+#include <de/string.h>
+#include <de/vector.h>
+#include <de/writer.h>
 
 // libdoomsday:
 // unfortunately, the API macros conflict with precompiling

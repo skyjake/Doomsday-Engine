@@ -18,38 +18,34 @@
 
 #include "ui/dialogs/packageinfodialog.h"
 #include "ui/widgets/packagecontentoptionswidget.h"
-#include "resource/idtech1image.h"
+#include "ui/clientstyle.h"
+#include "clientapp.h"
 #include "dd_main.h"
 
-#include <doomsday/DataBundle>
-#include <doomsday/DoomsdayApp>
-#include <doomsday/Games>
-#include <doomsday/LumpCatalog>
+#include <doomsday/res/databundle.h>
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/games.h>
+#include <doomsday/res/lumpcatalog.h>
 
-#include <de/App>
-#include <de/ArchiveEntryFile>
-#include <de/CallbackAction>
-#include <de/DirectoryFeed>
-#include <de/DocumentWidget>
-#include <de/Folder>
-#include <de/ImageFile>
-#include <de/LabelWidget>
-#include <de/Loop>
-#include <de/NativeFile>
-#include <de/PackageLoader>
-#include <de/PopupMenuWidget>
-#include <de/ProgressWidget>
-#include <de/SequentialLayout>
-#include <de/SignalAction>
-
-#include <QDesktopServices>
-#include <QRegularExpression>
-
-#include <sstream>
+#include <de/app.h>
+#include <de/archiveentryfile.h>
+#include <de/callbackaction.h>
+#include <de/directoryfeed.h>
+#include <de/documentwidget.h>
+#include <de/folder.h>
+#include <de/imagefile.h>
+#include <de/labelwidget.h>
+#include <de/loop.h>
+#include <de/nativefile.h>
+#include <de/packageloader.h>
+#include <de/popupmenuwidget.h>
+#include <de/progresswidget.h>
+#include <de/regexp.h>
+#include <de/sequentiallayout.h>
 
 using namespace de;
 
-DENG_GUI_PIMPL(PackageInfoDialog)
+DE_GUI_PIMPL(PackageInfoDialog)
 {
     Mode                           mode;
     LabelWidget *                  title;
@@ -66,6 +62,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     const DataBundle *             bundle = nullptr;
     SafeWidgetPtr<PopupWidget>     configurePopup;
     SafeWidgetPtr<PopupMenuWidget> profileMenu;
+
     enum MenuMode { AddToProfile, PlayInProfile };
     MenuMode menuMode;
 
@@ -81,7 +78,8 @@ DENG_GUI_PIMPL(PackageInfoDialog)
 
         // The Close button is always available. Other actions are shown depending
         // on what kind of package is being displayed.
-        self().buttons() << new DialogButtonItem(Default | Accept, tr("Close"));
+        self().buttons()
+                << new DialogButtonItem(Default | Accept, "Close");
 
         createWidgets();
     }
@@ -156,10 +154,10 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         area.setContentSize(layout.width() + rightLayout.width(), contentHeight);
     }
 
-    void setPackageIcon(Image const &iconImage)
+    void setPackageIcon(const Image &iconImage)
     {
         icon->setImage(iconImage);
-        icon->setImageColor(Vector4f(1, 1, 1, 1));
+        icon->setImageColor(Vec4f(1));
         icon->setImageFit(ui::FitToWidth | ui::OriginalAspectRatio);
         icon->setImageScale(1);
         icon->setBehavior(ContentClipping, true);
@@ -167,19 +165,19 @@ DENG_GUI_PIMPL(PackageInfoDialog)
 
     bool useGameTitlePicture()
     {
-        DENG_ASSERT(bundle != nullptr);
+        DE_ASSERT(bundle != nullptr);
         auto *lumpDir = bundle->lumpDirectory();
         if (!lumpDir || (!lumpDir->has("TITLEPIC") && !lumpDir->has("TITLE")))
         {
             return false;
         }
 
-        Game const &game = Games::get()[compatibleGame];
+        const Game &game = Games::get()[compatibleGame];
 
         res::LumpCatalog catalog;
         catalog.setPackages(game.requiredPackages() + StringList({packageId}));
-        Image img = IdTech1Image::makeGameLogo(
-            game, catalog, IdTech1Image::NullImageIfFails | IdTech1Image::UnmodifiedAppearance);
+        Image img = ClientStyle::makeGameLogo(
+            game, catalog, ClientStyle::NullImageIfFails | ClientStyle::UnmodifiedAppearance);
         if (!img.isNull())
         {
             setPackageIcon(img);
@@ -204,8 +202,8 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         {
             for (const auto *ext : {".jpg", ".jpeg", ".png"})
             {
-                String const imgPath = packagePath / "icon" + ext;
-                if (ImageFile const *img = FS::tryLocate<ImageFile const>(imgPath))
+                const String imgPath = packagePath / "icon" + ext;
+                if (const ImageFile *img = FS::tryLocate<ImageFile const>(imgPath))
                 {
                     Image iconImage = img->image();
                     if (iconImage.width() > 512 || iconImage.height() > 512)
@@ -219,14 +217,14 @@ DENG_GUI_PIMPL(PackageInfoDialog)
                 }
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_RES_WARNING("Failed to use package icon image: %s") << er.asText();
         }
         return false;
     }
 
-    void useIconFile(String const &packagePath)
+    void useIconFile(const String &packagePath)
     {
         if (!useIconFromPackage(packagePath))
         {
@@ -234,19 +232,19 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         }
     }
 
-    bool setup(File const *file)
+    bool setup(const File *file)
     {
         self().setOutlineColor("popup.outline");
 
         if (!file) return false; // Not a package?
 
         // Look up the package metadata.
-        Record const &names = file->objectNamespace();
+        const Record &names = file->objectNamespace();
         if (!names.has(Package::VAR_PACKAGE))
         {
             return false;
         }
-        Record const &meta = names.subrecord(Package::VAR_PACKAGE);
+        const Record &meta = names.subrecord(Package::VAR_PACKAGE);
 
         packageId       = Package::versionedIdentifierForFile(*file);
         nativePath      = file->correspondingNativePath();
@@ -274,12 +272,12 @@ DENG_GUI_PIMPL(PackageInfoDialog)
             }
             else if (bundle->format() == DataBundle::Iwad || bundle->format() == DataBundle::Pwad)
             {
-                lumpDirCrc32 = String::format("%08x", bundle->lumpDirectory()->crc32());
+                lumpDirCrc32 = Stringf("%08x", bundle->lumpDirectory()->crc32());
             }
         }
         else
         {
-            format = tr("Doomsday 2 Package");
+            format = "Doomsday 2 Package";
             useIconFile(file->path());
         }
 
@@ -290,24 +288,24 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         }
 
         title->setText(meta.gets(Package::VAR_TITLE));
-        path->setText(String(_E(b) "%1" _E(.) "\n%2").arg(format).arg(fileDesc.upperFirstChar()));
+        path->setText(Stringf(_E(b) "%s" _E(.) "\n%s",
+                                     format.c_str(),
+                                     fileDesc.upperFirstChar().c_str()));
 
         // Metadata.
-        String metaMsg =
-            String(_E(Ta) _E(l) "Version: " _E(.) _E(Tb) "%1\n" _E(Ta) _E(l) "Tags: " _E(.)
-                       _E(Tb) "%2\n" _E(Ta) _E(l) "License: " _E(.) _E(Tb) "%3")
-                .arg(meta.gets("version"))
-                .arg(meta.gets("tags"))
-                .arg(meta.gets("license"));
+        String metaMsg = Stringf(_E(Ta)_E(l) "Version: " _E(.)_E(Tb) "%s\n"
+                                 _E(Ta)_E(l) "Tags: "    _E(.)_E(Tb) "%s\n"
+                                 _E(Ta)_E(l) "License: " _E(.)_E(Tb) "%s",
+                    meta.gets("version").c_str(),
+                    meta.gets("tags").c_str(),
+                    meta.gets("license").c_str());
         if (meta.has("author"))
         {
-            metaMsg +=
-                String("\n" _E(Ta) _E(l) "Author: " _E(.) _E(Tb) "%1").arg(meta.gets("author"));
+            metaMsg += "\n" _E(Ta) _E(l) "Author: " _E(.) _E(Tb) + meta.gets("author");
         }
         if (meta.has("contact"))
         {
-            metaMsg +=
-                String("\n" _E(Ta) _E(l) "Contact: " _E(.) _E(Tb) "%1").arg(meta.gets("contact"));
+            metaMsg += "\n" _E(Ta) _E(l) "Contact: " _E(.) _E(Tb) + meta.gets("contact");
         }
         metaInfo->setText(metaMsg);
 
@@ -317,16 +315,16 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         // Start with a generic description of the package format.
         if (compatibleGame.isEmpty())
         {
-            QRegularExpression reg(DataBundle::anyGameTagPattern());
-            if (!reg.match(meta.gets("tags")).hasMatch())
+            const RegExp reg(DataBundle::anyGameTagPattern());
+            if (!reg.hasMatch(meta.gets("tags")))
             {
                 msg += "Not enough information to determine which game this package is for.";
             }
         }
         else
         {
-            msg += String("This package is likely meant for " _E(b) "%1" _E(.) ".")
-                       .arg(compatibleGame);
+            msg = Stringf("This package is likely meant for " _E(b) "%s" _E(.) ".",
+                          compatibleGame.c_str());
         }
 
         String moreMsg;
@@ -334,10 +332,9 @@ DENG_GUI_PIMPL(PackageInfoDialog)
             if (bundle && bundle->lumpDirectory() &&
                 bundle->lumpDirectory()->mapType() != res::LumpDirectory::None)
             {
-                int const mapCount = bundle->lumpDirectory()->findMaps().count();
-                moreMsg +=
-                    QString("Contains %1 map%2: ").arg(mapCount).arg(DENG2_PLURAL_S(mapCount)) +
-                    String::join(bundle->lumpDirectory()->mapsInContiguousRangesAsText(), ", ");
+                const int mapCount = bundle->lumpDirectory()->findMaps().count();
+                msg += Stringf("\n\nContains %i map%s: ", mapCount, DE_PLURAL_S(mapCount));
+                msg += String::join(bundle->lumpDirectory()->mapsInContiguousRangesAsText(), ", ");
                 moreMsg += "\n";
 
                 if (bundle->lumpDirectory()->has("DEHACKED"))
@@ -358,7 +355,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         if (meta.has("notes"))
         {
             String notesText = meta.gets("notes");
-            notesText.remove('\r'); // maybe old MS-DOS text
+            notesText.replace("\r", ""); // maybe old MS-DOS text
 
             // Tabs should be properly expanded to the next multiple of 8. This simple
             // replacement works for beginning-of-line indentation, though.
@@ -372,8 +369,8 @@ DENG_GUI_PIMPL(PackageInfoDialog)
             if (meta.has("requires"))
             {
                 msg += "\n\nRequires:";
-                ArrayValue const &reqs = meta.geta("requires");
-                for (Value const *val : reqs.elements())
+                const ArrayValue &reqs = meta.geta("requires");
+                for (const Value *val : reqs.elements())
                 {
                     msg += "\n - " _E(>) + val->asText() + _E(<);
                 }
@@ -381,15 +378,15 @@ DENG_GUI_PIMPL(PackageInfoDialog)
             if (meta.has("dataFiles") && meta.geta("dataFiles").size() > 0)
             {
                 msg += "\n\nData files:";
-                ArrayValue const &files = meta.geta("dataFiles");
-                for (Value const *val : files.elements())
+                const ArrayValue &files = meta.geta("dataFiles");
+                for (const Value *val : files.elements())
                 {
                     msg += "\n - " _E(>) + val->asText() + _E(<);
                 }
             }
         }
 
-        description->setText(msg.trimmed());
+        description->setText(msg.strip());
 
         // Show applicable package actions.
         if (mode == EnableActions)
@@ -397,32 +394,32 @@ DENG_GUI_PIMPL(PackageInfoDialog)
             self().buttons()
                 << new DialogButtonItem(Action | Id2,
                                         style().images().image("play"),
-                                        tr("Play in..."),
-                                        new SignalAction(thisPublic, SLOT(playInGame())))
+                                        "Play in...",
+                                        [this]() { self().playInGame(); })
                 << new DialogButtonItem(Action | Id3,
                                         style().images().image("create"),
-                                        tr("Add to..."),
-                                        new SignalAction(thisPublic, SLOT(addToProfile())));
+                                        "Add to...",
+                                        [this]() { self().addToProfile(); });
         }
+
         if (!nativePath.isEmpty())
         {
             self().buttons() << new DialogButtonItem(
-                Action, tr("Show File"), new SignalAction(thisPublic, SLOT(showFile())));
+                Action, "Show File", [this]() { self().showFile(); });
         }
         if (mode == EnableActions && Package::hasOptionalContent(*file))
         {
-            self().buttons() << new DialogButtonItem(
-                Action | Id1,
-                style().images().image("gear"),
-                tr("Options"),
-                new SignalAction(thisPublic, SLOT(configure())));
+            self().buttons() << new DialogButtonItem(Action | Id1,
+                                                     style().images().image("gear"),
+                                                     "Options",
+                                                     [this]() { self().configure(); });
         }
         return true;
     }
 
-    static String visibleFamily(String const &family)
+    static String visibleFamily(const String &family)
     {
-        if (family.isEmpty()) return tr("Other");
+        if (family.isEmpty()) return "Other";
         return family.upperFirstChar();
     }
 
@@ -433,7 +430,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
      * @param anchor        Popup menu anchor.
      * @param playableOnly  Only show profiles that can be started at the moment.
      */
-    void openProfileMenu(RuleRectangle const &anchor, bool playableOnly)
+    void openProfileMenu(const RuleRectangle &anchor, bool playableOnly)
     {
         if (profileMenu) return;
 
@@ -441,7 +438,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         profileMenu->setDeleteAfterDismissed(true);
         profileMenu->setAnchorAndOpeningDirection(anchor, ui::Left);
 
-        QList<GameProfile *> profs = DoomsdayApp::gameProfiles().profilesSortedByFamily();
+        List<GameProfile *> profs = DoomsdayApp::gameProfiles().profilesSortedByFamily();
 
         auto & items = profileMenu->items();
         String lastFamily;
@@ -465,7 +462,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
             if (prof->packages().contains(packageId))
             {
                 color = _E(C);
-                label += " " _E(s) _E(b) _E(D) + tr("ADDED");
+                label += " " _E(s)_E(b)_E(D) "ADDED";
             }
             if (!compatibleGame.isEmpty() && prof->gameId() == compatibleGame)
             {
@@ -536,7 +533,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
 
                 Loop::timer(0.1, [] {
                     // Switch the game.
-                    GLWindow::main().glActivate();
+                    GLWindow::glActivateMain();
                     BusyMode_FreezeGameForBusyMode();
                     DoomsdayApp::app().changeGame(DoomsdayApp::app().adhocProfile(),
                                                   DD_ActivateGameWorker);
@@ -548,7 +545,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     }
 };
 
-PackageInfoDialog::PackageInfoDialog(String const &packageId, Mode mode)
+PackageInfoDialog::PackageInfoDialog(const String &packageId, Mode mode)
     : DialogWidget("packagepopup")
     , d(new Impl(this, mode))
 {
@@ -558,7 +555,7 @@ PackageInfoDialog::PackageInfoDialog(String const &packageId, Mode mode)
     }
 }
 
-PackageInfoDialog::PackageInfoDialog(File const *packageFile, Mode mode)
+PackageInfoDialog::PackageInfoDialog(const File *packageFile, Mode mode)
     : DialogWidget("packagepopup")
     , d(new Impl(this, mode))
 {
@@ -574,7 +571,7 @@ void PackageInfoDialog::prepare()
 
     // Monospace text implies that there is an DOS-style readme text
     // file included in the notes.
-    bool const useWideLayout = d->description->text().contains(_E(m)) &&
+    const bool useWideLayout = d->description->text().contains(_E(m)) &&
                                d->description->text().size() > 200; // reasonably long?
 
     // Update the width of the dialog. Don't let it get wider than the window.
@@ -617,7 +614,6 @@ void PackageInfoDialog::showFile()
 {
     if (!d->nativePath.isEmpty())
     {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(
-            d->nativePath.isDirectory() ? d->nativePath : d->nativePath.fileNamePath()));
+        ClientApp::app().showLocalFile(d->nativePath);
     }
 }

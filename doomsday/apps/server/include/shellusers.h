@@ -28,7 +28,7 @@
 /**
  * All remote shell users.
  */
-class ShellUsers : public Users, DENG2_OBSERVES(World, MapChange)
+class ShellUsers : public Users, DE_OBSERVES(world::World, MapChange)
 {
 public:
     ShellUsers();
@@ -37,7 +37,7 @@ public:
     void worldMapChanged() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // SERVER_SHELLUSERS_H

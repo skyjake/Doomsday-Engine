@@ -20,7 +20,7 @@
 #define SERVER_REMOTEFEEDUSER_H
 
 #include "users.h"
-#include <de/Socket>
+#include <de/socket.h>
 
 class RemoteFeedUser : public User
 {
@@ -35,7 +35,7 @@ public:
     de::Address address() const override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 

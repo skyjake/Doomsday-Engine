@@ -17,18 +17,48 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/TextApp>
+#include <de/textapp.h>
 #include <de/math.h>
-#include <QDebug>
+#include <de/webrequest.h>
 
 using namespace de;
 
 int main(int argc, char **argv)
 {
+    init_Foundation();
     try
     {
-        TextApp app(argc, argv);
-        app.initSubsystems(App::DisablePlugins);
+        TextApp app(makeList(argc, argv));
+        app.initSubsystems();
+
+        // Iterators.
+        {
+            const String str = u8"H★l—lo Wörld";
+            for (Char ch : str)
+            {
+                debug("Char: %x %lc", unsigned(ch), ch.unicode());
+            }
+            for (auto i = str.begin(); i != str.end(); ++i)
+            {
+                debug("Char %u: %x %lc", i.pos().index, unsigned(*i), (*i).unicode());
+            }
+            for (auto i = str.rbegin(); i != str.rend(); ++i)
+            {
+                debug("Char %u: %x %lc", i.pos().index, unsigned(*i), (*i).unicode());
+            }
+        }
+
+        // URI splitting.
+        {
+            const String uri = "https://dengine.net:8080/some/page.php?query&arg#first-section";
+            String c[5];
+            WebRequest::splitUriComponents(uri, &c[0], &c[1], &c[2], &c[3], &c[4]);
+            for (const auto &i : c)
+            {
+                LOG_MSG("URI component: %s") << i;
+            }
+            LOG_MSG("Host name: %s") << WebRequest::hostNameFromUri(uri);
+        }
 
         LOG_MSG("Escaped %%: arg %i") << 1;
         LOG_MSG("Escaped %%: arg %%%i%%") << 1;
@@ -45,23 +75,23 @@ int main(int argc, char **argv)
         LOG_MSG(" Max width .8: '%.8s'") << "Hello";
         LOG_MSG(" Left align:   '%-8s'") << "Hello";
 
-        LOG_MSG("Integer (64-bit signed): %i") << 0x1000000000LL;
-        LOG_MSG("Integer (64-bit signed): %d") << 0x1000000000LL;
-        LOG_MSG("Integer (64-bit unsigned): %u") << 0x123456789abcLL;
+        LOG_MSG("Integer (64-bit signed): %i") << uint64_t(0x1000000000LL);
+        LOG_MSG("Integer (64-bit signed): %d") << uint64_t(0x1000000000LL);
+        LOG_MSG("Integer (64-bit unsigned): %u") << uint64_t(0x123456789abcLL);
         LOG_MSG("Boolean: %b %b") << true << false;
         LOG_MSG("16-bit Unicode character: %c") << 0x44;
-        LOG_MSG("Hexadecimal (64-bit): %x") << 0x123456789abcLL;
-        LOG_MSG("Hexadecimal (64-bit): %X") << 0x123456789abcLL;
+        LOG_MSG("Hexadecimal (64-bit): %x") << uint64_t(0x123456789abcLL);
+        LOG_MSG("Hexadecimal (64-bit): %X") << uint64_t(0x123456789abcLL);
         LOG_MSG("Pointer: %p") << &app;
         LOG_MSG("Double precision floating point: %f") << PI;
         LOG_MSG("Decimal places .4: %.4f") << PI;
         LOG_MSG("Decimal places .10: %.10f") << PI;
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
-        qWarning() << err.asText() << "\n";
+        err.warnPlainText();
     }
-
-    qDebug() << "Exiting main()...\n";
-    return 0;        
+    deinit_Foundation();
+    debug("Exiting main()...");
+    return 0;
 }

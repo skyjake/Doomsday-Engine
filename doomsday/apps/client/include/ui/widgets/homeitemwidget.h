@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_HOME_HOMEITEMWIDGET_H
-#define DENG_CLIENT_UI_HOME_HOMEITEMWIDGET_H
+#ifndef DE_CLIENT_UI_HOME_HOMEITEMWIDGET_H
+#define DE_CLIENT_UI_HOME_HOMEITEMWIDGET_H
 
-#include <de/Asset>
-#include <de/ButtonWidget>
+#include <de/asset.h>
+#include <de/buttonwidget.h>
 
 class Game;
 namespace res { class LumpCatalog; }
@@ -32,30 +32,31 @@ class HomeMenuWidget;
  */
 class HomeItemWidget : public de::GuiWidget, public de::IAssetGroup
 {
-    Q_OBJECT
-
 public:
-    enum Flag
-    {
+    enum Flag {
         NonAnimatedHeight = 0,
         AnimatedHeight    = 0x1,
         WithoutIcon       = 0x2,
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
+
+    DE_AUDIENCE(Activity,    void mouseActivity(HomeItemWidget &))
+    DE_AUDIENCE(DoubleClick, void itemCoubleClicked(HomeItemWidget &))
+    DE_AUDIENCE(ContextMenu, void openItemContextMenu(HomeItemWidget &))
+    DE_AUDIENCE(Selection,   void itemSelected(HomeItemWidget &))
 
 public:
-    HomeItemWidget(Flags flags = AnimatedHeight, de::String const &name = de::String());
+    HomeItemWidget(de::Flags flags = AnimatedHeight, const de::String &name = de::String());
 
     de::AssetGroup &assets() override;
 
     de::LabelWidget &       icon();
     de::LabelWidget &       label();
-    de::LabelWidget const & label() const;
+    const de::LabelWidget & label() const;
 
     void addButton(de::GuiWidget *button);
     de::GuiWidget &buttonWidget(int index) const;
     void setKeepButtonsVisible(bool yes);
-    void setLabelMinimumRightMargin(de::Rule const &rule);
+    void setLabelMinimumRightMargin(const de::Rule &rule);
 
     virtual void setSelected(bool selected);
     bool isSelected() const;
@@ -64,14 +65,14 @@ public:
     void useInvertedStyle();
     void useColorTheme(ColorTheme style);
     void useColorTheme(ColorTheme unselected, ColorTheme selected);
-    de::DotPath const &textColorId() const;
+    const de::DotPath &textColorId() const;
 
     void acquireFocus();
 
     HomeMenuWidget *parentMenu();
 
     // Events.
-    bool handleEvent(de::Event const &event) override;
+    bool handleEvent(const de::Event &event) override;
     void focusGained() override;
     void focusLost() override;
 
@@ -80,17 +81,8 @@ public:
 protected:
     void updateButtonLayout();
 
-signals:
-    void mouseActivity();
-    void doubleClicked();
-    void openContextMenu();
-    void selected();
-    //void deselected();
-
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(HomeItemWidget::Flags)
-
-#endif // DENG_CLIENT_UI_HOME_HOMEITEMWIDGET_H
+#endif // DE_CLIENT_UI_HOME_HOMEITEMWIDGET_H

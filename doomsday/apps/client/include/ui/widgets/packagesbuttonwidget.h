@@ -16,41 +16,38 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_PACKAGESBUTTONWIDGET_H
-#define DENG_CLIENT_UI_PACKAGESBUTTONWIDGET_H
+#ifndef DE_CLIENT_UI_PACKAGESBUTTONWIDGET_H
+#define DE_CLIENT_UI_PACKAGESBUTTONWIDGET_H
 
 #include "ui/dialogs/packagesdialog.h"
 
-#include <doomsday/GameProfiles>
-#include <de/ButtonWidget>
-#include <QStringList>
+#include <doomsday/gameprofiles.h>
+#include <de/buttonwidget.h>
 
 /**
  * Button for selecting packages.
  */
 class PackagesButtonWidget : public de::ButtonWidget
 {
-    Q_OBJECT
+public:
+    DE_AUDIENCE(Selection, void packageSelectionChanged(const de::StringList &packageIds))
 
 public:
     PackagesButtonWidget();
 
-    void setDialogTitle(de::String const &title);
-    void setDialogIcon(de::DotPath const &imageId);
-    void setGameProfile(GameProfile const &profile);
+    void setDialogTitle(const de::String &title);
+    void setDialogIcon(const de::DotPath &imageId);
+    void setGameProfile(const GameProfile &profile);
     void setSetupCallback(std::function<void (PackagesDialog &dialog)> func);
-    void setLabelPrefix(de::String const &labelPrefix);
-    void setNoneLabel(de::String const &noneLabel);
-    void setOverrideLabel(de::String const &overrideLabel);
+    void setLabelPrefix(const de::String &labelPrefix);
+    void setNoneLabel(const de::String &noneLabel);
+    void setOverrideLabel(const de::String &overrideLabel);
     void setPackages(de::StringList packageIds);
 
     de::StringList packages() const;
 
-signals:
-    void packageSelectionChanged(QStringList packageIds);
-
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_PACKAGESBUTTONWIDGET_H
+#endif // DE_CLIENT_UI_PACKAGESBUTTONWIDGET_H

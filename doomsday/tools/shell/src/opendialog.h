@@ -1,30 +1,29 @@
 #ifndef OPENDIALOG_H
 #define OPENDIALOG_H
 
-#include <QDialog>
-#include <de/Address>
+#include <de/dialogwidget.h>
+#include <de/address.h>
 
 /**
  * Dialog for specifying the server connection to open.
  */
-class OpenDialog : public QDialog
+class OpenDialog : public de::DialogWidget
 {
-    Q_OBJECT
+public:
+    explicit OpenDialog();
+
+    de::String address() const;
 
 public:
-    explicit OpenDialog(QWidget *parent = 0);
-
-    QString address() const;
-
-public slots:
     void updateLocalList(bool autoselect = false);
 
-protected slots:
+protected:
     void saveState();
-    void textEdited(QString);
+    void textEdited(const de::String &);
+    void prepare() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // OPENDIALOG_H

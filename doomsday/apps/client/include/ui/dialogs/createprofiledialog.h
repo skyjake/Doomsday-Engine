@@ -16,12 +16,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_CREATEPROFILEDIALOG_H
-#define DENG_CLIENT_UI_CREATEPROFILEDIALOG_H
+#ifndef DE_CLIENT_UI_CREATEPROFILEDIALOG_H
+#define DE_CLIENT_UI_CREATEPROFILEDIALOG_H
 
-#include <doomsday/GameProfiles>
-#include <de/InputDialog>
-#include <de/IPersistent>
+#include <doomsday/gameprofiles.h>
+#include <de/inputdialog.h>
+#include <de/ipersistent.h>
 
 /**
  * Dialog for creating a game profile.
@@ -31,7 +31,7 @@ class CreateProfileDialog
     , public de::IPersistent
 {
 public:
-    CreateProfileDialog(de::String const &gameFamily);
+    CreateProfileDialog(const de::String &gameFamily);
 
     /**
      * Creates a new profile based on the dialog's current selections.
@@ -39,7 +39,7 @@ public:
      */
     GameProfile *makeProfile() const;
 
-    void fetchFrom(GameProfile const &profile);
+    void fetchFrom(const GameProfile &profile);
 
     void applyTo(GameProfile &profile) const;
 
@@ -47,14 +47,14 @@ public:
 
     // Implements IPersistent.
     void operator>>(de::PersistentState &toState) const;
-    void operator<<(de::PersistentState const &fromState);
+    void operator<<(const de::PersistentState &fromState);
 
 public:
-    static CreateProfileDialog *editProfile(de::String const &gameFamily,
+    static CreateProfileDialog *editProfile(const de::String &gameFamily,
                                             GameProfile &profile);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_CREATEPROFILEDIALOG_H
+#endif // DE_CLIENT_UI_CREATEPROFILEDIALOG_H

@@ -20,15 +20,16 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_UPDATEAVAILABLEDIALOG_H
-#define DENG_CLIENT_UPDATEAVAILABLEDIALOG_H
+#ifndef DE_CLIENT_UPDATEAVAILABLEDIALOG_H
+#define DE_CLIENT_UPDATEAVAILABLEDIALOG_H
 
-#include <de/MessageDialog>
-#include <de/Version>
+#include <de/messagedialog.h>
+#include <de/version.h>
 
 class UpdateAvailableDialog : public de::MessageDialog
 {
-    Q_OBJECT
+public:
+    DE_AUDIENCE(Recheck, void userRequestedSoftwareUpdateCheck())
 
 public:
     /// The dialog is initialized with the "Checking" page visible.
@@ -37,16 +38,13 @@ public:
     /// The dialog is initialized with the result page visible.
     UpdateAvailableDialog(de::Version const& latestVersion, de::String changeLogUri);
 
-public slots:
-    void showResult(de::Version const &latestVersion, de::String changeLogUri);
+public:
+    void showResult(const de::Version &latestVersion, de::String changeLogUri);
     void showWhatsNew();
     void editSettings();
 
-signals:
-    void checkAgain();
-
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // LIBDENG_UPDATEAVAILABLEDIALOG_H
+#endif // DE_UPDATEAVAILABLEDIALOG_H

@@ -27,9 +27,9 @@ uniform float uAlphaLimit[DGL_BATCH_MAX];
 uniform sampler2D uTex0[DGL_BATCH_MAX];
 uniform sampler2D uTex1[DGL_BATCH_MAX];
 
-flat DENG_VAR int vBatchIndex;
-DENG_VAR vec4 vColor;
-DENG_VAR vec2 vTexCoord[2];
+flat DE_VAR int vBatchIndex;
+DE_VAR vec4 vColor;
+DE_VAR vec2 vTexCoord[2];
 
 vec4 sampleTexture0(int batchIndex, vec2 uv)
 {

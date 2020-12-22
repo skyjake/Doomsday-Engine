@@ -13,17 +13,16 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_CONSOLEWIDGET_H
-#define DENG_CLIENT_CONSOLEWIDGET_H
+#ifndef DE_CLIENT_CONSOLEWIDGET_H
+#define DE_CLIENT_CONSOLEWIDGET_H
 
-#include <QObject>
-#include <de/GuiWidget>
-#include <de/ButtonWidget>
-#include <de/LogWidget>
-#include <de/IPersistent>
+#include <de/guiwidget.h>
+#include <de/buttonwidget.h>
+#include <de/logwidget.h>
+#include <de/ipersistent.h>
 
 #include "consolecommandwidget.h"
 
@@ -37,7 +36,9 @@
  */
 class ConsoleWidget : public de::GuiWidget, public de::IPersistent
 {
-    Q_OBJECT
+public:
+    DE_AUDIENCE(CommandMode, void commandModeChanged())
+    DE_AUDIENCE(GotFocus,    void commandLineGotFocus())
 
 public:
     ConsoleWidget();
@@ -47,7 +48,7 @@ public:
     de::CommandWidget &commandLine();
     de::LogWidget &log();
 
-    de::Rule const &shift();
+    const de::Rule &shift();
 
     bool isLogOpen() const;
 
@@ -61,19 +62,16 @@ public:
     void enableBlur(bool yes = true);
 
     // Events.
+    void initialize();
     void viewResized();
     void update();
-    bool handleEvent(de::Event const &event);
+    bool handleEvent(const de::Event &event);
 
     // Implements IPersistent.
-    void operator >> (de::PersistentState &toState) const;
-    void operator << (de::PersistentState const &fromState);
+    void operator>>(de::PersistentState &toState) const;
+    void operator<<(const de::PersistentState &fromState);
 
-signals:
-    void commandModeChanged();
-    void commandLineGotFocus();
-
-public slots:
+public:
     void openLog();
     void closeLog();
     void closeLogAndUnfocusCommandLine();
@@ -85,16 +83,14 @@ public slots:
     void commandLineFocusLost();
     void focusOnCommandLine();
     void closeMenu();
-    void commandWasEntered(de::String const &);
-#if !defined (DENG_MOBILE)
+    void commandWasEntered(const de::String &);
     void copyLogPathToClipboard();
-#endif
 
-protected slots:
+protected:
     void logContentHeightIncreased(int delta);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_CONSOLEWIDGET_H
+#endif // DE_CLIENT_CONSOLEWIDGET_H

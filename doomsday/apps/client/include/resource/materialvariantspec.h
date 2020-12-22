@@ -24,8 +24,8 @@
 #  error "resource/materialvariantspec.h only exists in the Client"
 #endif
 
-#include "MaterialContext"
-#include "ClientTexture" // TextureVariantSpec
+#include "render/materialcontext.h"
+#include "clienttexture.h" // TextureVariantSpec
 
 namespace de {
 
@@ -44,10 +44,10 @@ public:
     MaterialContextId contextId { FirstMaterialContextId };
 
     /// Interned specification for the primary texture.
-    TextureVariantSpec const *primarySpec = nullptr;
+    const TextureVariantSpec *primarySpec = nullptr;
 
     MaterialVariantSpec() {}
-    MaterialVariantSpec(MaterialVariantSpec const &other)
+    MaterialVariantSpec(const MaterialVariantSpec &other)
         : contextId  (other.contextId)
         , primarySpec(other.primarySpec)
     {}
@@ -60,7 +60,7 @@ public:
      *
      * Same as operator ==
      */
-    bool compare(MaterialVariantSpec const &other) const {
+    bool compare(const MaterialVariantSpec &other) const {
         if(this == &other) return true;
         if(contextId != other.contextId) return false;
         return primarySpec == other.primarySpec;
@@ -70,7 +70,7 @@ public:
      * Determines whether specification @a other is equal to this specification.
      * @see compare()
      */
-    bool operator == (MaterialVariantSpec const &other) const {
+    bool operator == (const MaterialVariantSpec &other) const {
         return compare(other);
     }
 
@@ -78,7 +78,7 @@ public:
      * Determines whether specification @a other is NOT equal to this specification.
      * @see compare()
      */
-    bool operator != (MaterialVariantSpec const &other) const {
+    bool operator != (const MaterialVariantSpec &other) const {
         return !(*this == other);
     }
 };

@@ -27,10 +27,10 @@ model.skeletal {
             in vec4 aVertex;
             in vec4 aColor;
             in vec2 aUV;
-            in vec4 aBounds;   // diffuse map
-            in vec4 aBounds2;  // normal map
-            in vec4 aBounds3;  // specular map
-            in vec4 aBounds4;  // emission map
+            in vec4 aBounds0;  // diffuse map
+            in vec4 aBounds1;  // normal map
+            in vec4 aBounds2;  // specular map
+            in vec4 aBounds3;  // emission map
 
             out vec4 vColor;
             out vec2 vUV;
@@ -49,10 +49,10 @@ model.skeletal {
 
                 vColor = aColor;
                 vUV = aUV;
-                vUVBounds[0] = aBounds;
-                vUVBounds[1] = aBounds2;
-                vUVBounds[2] = aBounds3;
-                vUVBounds[3] = aBounds4;
+                vUVBounds[0] = aBounds0;
+                vUVBounds[1] = aBounds1;
+                vUVBounds[2] = aBounds2;
+                vUVBounds[3] = aBounds3;
             }"
 
         defines $= {'PREDEF_TRANSFORM_UV(uv)'          : '',
@@ -185,9 +185,9 @@ model.skeletal {
             in vec4 aVertex;
             in vec4 aColor;
             in vec2 aUV;
-            in vec4 aBounds;   // diffuse map
-            in vec4 aBounds2;  // normal map
-            in vec4 aBounds3;  // specular map
+            in vec4 aBounds0;  // diffuse map
+            in vec4 aBounds1;  // normal map
+            in vec4 aBounds2;  // specular map
 
             out vec4 vColor;
             out vec2 vUV;
@@ -206,9 +206,9 @@ model.skeletal {
 
                 vColor = aColor;
                 vUV = aUV;
-                vUVBounds[0] = aBounds;
-                vUVBounds[1] = aBounds2;
-                vUVBounds[2] = aBounds3;
+                vUVBounds[0] = aBounds0;
+                vUVBounds[1] = aBounds1;
+                vUVBounds[2] = aBounds2;
             }"
 
         include.fragment <include/texture.glsl,
@@ -276,8 +276,8 @@ model.skeletal {
             in vec4 aVertex;
             in vec4 aColor;
             in vec2 aUV;
-            in vec4 aBounds;   // diffuse map
-            in vec4 aBounds2;  // normal map
+            in vec4 aBounds0;  // diffuse map
+            in vec4 aBounds1;  // normal map
 
             out vec4 vColor;
             out vec2 vUV;
@@ -296,8 +296,8 @@ model.skeletal {
 
                 vColor = aColor;
                 vUV = aUV;
-                vUVBounds[0] = aBounds;
-                vUVBounds[1] = aBounds2;
+                vUVBounds[0] = aBounds0;
+                vUVBounds[1] = aBounds1;
             }"
 
         include.fragment <include/texture.glsl,
@@ -360,7 +360,7 @@ model.skeletal {
             in vec4 aVertex;
             in vec4 aColor;
             in vec2 aUV;
-            in vec4 aBounds;   // diffuse map
+            in vec4 aBounds0;   // diffuse map
 
             out vec4 vColor;
             out vec2 vUV;
@@ -376,7 +376,7 @@ model.skeletal {
 
                 vColor = aColor;
                 vUV = aUV;
-                vUVBounds = aBounds;
+                vUVBounds = aBounds0;
             }"
 
         include.fragment <include/texture.glsl>

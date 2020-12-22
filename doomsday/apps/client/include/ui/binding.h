@@ -20,8 +20,8 @@
 #ifndef CLIENT_INPUTSYSTEM_BINDING_H
 #define CLIENT_INPUTSYSTEM_BINDING_H
 
-#include <de/Error>
-#include <de/CompiledRecord>
+#include <de/error.h>
+#include <de/compiledrecord.h>
 
 /**
  * Base class for binding record accessors.
@@ -32,7 +32,7 @@ class Binding : public de::RecordAccessor
 {
 public:
     /// Base class for binding configuration errors. @ingroup errors
-    DENG2_ERROR(ConfigureError);
+    DE_ERROR(ConfigureError);
 
     enum ConditionType
     {
@@ -73,27 +73,27 @@ public:
         bool multiplayer = false;
 
         CompiledCondition() {}
-        CompiledCondition(de::Record const &rec);
-        bool operator == (CompiledCondition const &other) const;
+        CompiledCondition(const de::Record &rec);
+        bool operator == (const CompiledCondition &other) const;
     };
 
     typedef de::CompiledRecordT<CompiledCondition> CompiledConditionRecord;
 
 public:
     Binding()                     : RecordAccessor(0) {}
-    Binding(Binding const &other) : RecordAccessor(other) {}
+    Binding(const Binding &other) : RecordAccessor(other) {}
     Binding(de::Record &d)        : RecordAccessor(d) {}
-    Binding(de::Record const &d)  : RecordAccessor(d) {}
+    Binding(const de::Record &d)  : RecordAccessor(d) {}
 
     virtual ~Binding() {}
 
-    Binding &operator = (de::Record const *d) {
+    Binding &operator = (const de::Record *d) {
         setAccessedRecord(d);
         return *this;
     }
 
     de::Record &def();
-    de::Record const &def() const;
+    const de::Record &def() const;
 
     /**
      * Determines if this binding accessor points to a record.
@@ -118,12 +118,12 @@ public:
     int conditionCount() const;
     bool hasCondition(int index) const;
     CompiledConditionRecord &condition(int index);
-    CompiledConditionRecord const &condition(int index) const;
+    const CompiledConditionRecord &condition(int index) const;
 
     /**
      * Compare the binding conditions with @a other and return @c true if equivalent.
      */
-    bool equalConditions(Binding const &other) const;
+    bool equalConditions(const Binding &other) const;
 
 public:
     /**

@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_HEADERWIDGET_H
-#define DENG_CLIENT_UI_HEADERWIDGET_H
+#ifndef DE_CLIENT_UI_HEADERWIDGET_H
+#define DE_CLIENT_UI_HEADERWIDGET_H
 
-#include <de/PopupButtonWidget>
-#include <de/PanelWidget>
+#include <de/popupbuttonwidget.h>
+#include <de/panelwidget.h>
 
 /**
  * Home column header.
@@ -36,11 +36,11 @@ public:
     de::PanelWidget &infoPanel();
     de::PopupButtonWidget &menuButton();
 
-    void setLogoImage(de::DotPath const &imageId);
-    void setLogoBackground(de::DotPath const &imageId);
+    void setLogoImage(const de::DotPath &imageId);
+    void setLogoBackground(const de::DotPath &imageId);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_HEADERWIDGET_H
+#endif // DE_CLIENT_UI_HEADERWIDGET_H

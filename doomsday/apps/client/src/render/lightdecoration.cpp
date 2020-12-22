@@ -20,25 +20,22 @@
  */
 
 #include "render/lightdecoration.h"
-
-#include "world/convexsubspace.h"
-#include "world/map.h"
-#include "Surface"
-#include "client/clientsubsector.h"
-
 #include "render/rend_main.h" // Rend_ApplyLightAdaptation
 
+#include "world/convexsubspace.h"
+#include "world/subsector.h"
+#include "world/map.h"
+#include "world/surface.h"
 #include "def_main.h"
 
 #include <doomsday/console/var.h>
 
 using namespace de;
-using namespace world;
 
-static dfloat angleFadeFactor = .1f; ///< cvar
-static dfloat brightFactor    = 1;   ///< cvar
+static float angleFadeFactor = .1f; ///< cvar
+static float brightFactor    = 1;   ///< cvar
 
-LightDecoration::LightDecoration(MaterialAnimator::Decoration const &source, Vector3d const &origin)
+LightDecoration::LightDecoration(const MaterialAnimator::Decoration &source, const Vec3d &origin)
     : Decoration(source, origin)
     , Source()
 {}
@@ -46,20 +43,20 @@ LightDecoration::LightDecoration(MaterialAnimator::Decoration const &source, Vec
 String LightDecoration::description() const
 {
     String desc;
-#ifdef DENG2_DEBUG
-    desc.prepend(String(_E(b) "LightDecoration " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
+#ifdef DE_DEBUG
+    desc.prepend(Stringf(_E(b) "LightDecoration " _E(.) "[%p]\n", this));
 #endif
     return Decoration::description() + "\n" + desc;
 }
 
-dfloat LightDecoration::occlusion(Vector3d const &eye) const
+float LightDecoration::occlusion(const Vec3d &eye) const
 {
     // Halo brightness drops as the angle gets too big.
     if (source().elevation() < 2 && ::angleFadeFactor > 0) // Close the surface?
     {
-        Vector3d const vecFromOriginToEye = (origin() - eye).normalize();
+        const Vec3d vecFromOriginToEye = (origin() - eye).normalize();
 
-        auto dot = dfloat( -surface().normal().dot(vecFromOriginToEye) );
+        auto dot = float( -surface().normal().dot(vecFromOriginToEye) );
         if (dot < ::angleFadeFactor / 2)
         {
             return 0;
@@ -75,27 +72,27 @@ dfloat LightDecoration::occlusion(Vector3d const &eye) const
 /**
  * @return  @c > 0 if @a lightlevel passes the min max limit condition.
  */
-static dfloat checkLightLevel(dfloat lightlevel, dfloat min, dfloat max)
+static float checkLightLevel(float lightlevel, float min, float max)
 {
     // Has a limit been set?
     if (de::fequal(min, max)) return 1;
-    return de::clamp(0.f, (lightlevel - min) / dfloat(max - min), 1.f);
+    return de::clamp(0.f, (lightlevel - min) / float(max - min), 1.f);
 }
 
 Lumobj *LightDecoration::generateLumobj() const
 {
     // Decorations with zero color intensity produce no light.
-    if (source().color() == Vector3f(0, 0, 0))
+    if (source().color() == Vec3f(0.0f))
         return nullptr;
 
-    ConvexSubspace *subspace = bspLeafAtOrigin().subspacePtr();
+    auto *subspace = bspLeafAtOrigin().subspacePtr();
     if (!subspace) return nullptr;
 
     // Does it pass the ambient light limitation?
-    dfloat intensity = subspace->subsector().as<ClientSubsector>().lightSourceIntensity();
+    float intensity = subspace->subsector().as<Subsector>().lightSourceIntensity();
     Rend_ApplyLightAdaptation(intensity);
 
-    dfloat lightLevels[2];
+    float lightLevels[2];
     source().lightLevels(lightLevels[0], lightLevels[1]);
 
     intensity = checkLightLevel(intensity, lightLevels[0], lightLevels[1]);
@@ -103,7 +100,7 @@ Lumobj *LightDecoration::generateLumobj() const
         return nullptr;
 
     // Apply the brightness factor (was calculated using sector lightlevel).
-    dfloat fadeMul = intensity * ::brightFactor;
+    float fadeMul = intensity * ::brightFactor;
     if (fadeMul <= 0)
         return nullptr;
 
@@ -127,12 +124,12 @@ void LightDecoration::consoleRegister() // static
     C_VAR_FLOAT("rend-light-decor-bright", &::brightFactor,    0, 0, 10);
 }
 
-dfloat LightDecoration::angleFadeFactor() // static
+float LightDecoration::angleFadeFactor() // static
 {
     return ::angleFadeFactor;
 }
 
-dfloat LightDecoration::brightFactor() // static
+float LightDecoration::brightFactor() // static
 {
     return ::brightFactor;
 }

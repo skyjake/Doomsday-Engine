@@ -17,14 +17,15 @@
  */
 
 #include "users.h"
-#include <de/Garbage>
+#include <de/garbage.h>
+#include <de/set.h>
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(Users)
-, DENG2_OBSERVES(User, Disconnect)
+DE_PIMPL_NOREF(Users)
+, DE_OBSERVES(User, Disconnect)
 {
-    QSet<User *> users;
+    Set<User *> users;
 
     void userDisconnected(User &user) override
     {
@@ -41,7 +42,7 @@ Users::Users() : d(new Impl)
 
 Users::~Users()
 {
-    foreach (User *user, d->users)
+    for (User *user : d->users)
     {
         delete user;
     }
@@ -49,14 +50,14 @@ Users::~Users()
 
 void Users::add(User *user)
 {
-    DENG2_ASSERT(user);
+    DE_ASSERT(user);
     d->users.insert(user);
     user->audienceForDisconnect += d;
 }
 
-LoopResult Users::forUsers(std::function<LoopResult (User &)> func)
+LoopResult Users::forUsers(const std::function<LoopResult (User &)>& func)
 {
-    foreach (User *user, d->users)
+    for (User *user : d->users)
     {
         if (auto result = func(*user))
         {

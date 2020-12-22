@@ -31,14 +31,19 @@
 typedef enum neteventtype_e {
     NE_CLIENT_ENTRY,
     NE_CLIENT_EXIT,
-    //NE_END_CONNECTION
-    //NE_TERMINATE_NODE
 } neteventtype_t;
 
 typedef struct netevent_s {
     neteventtype_t  type;
     nodeid_t        id;
 } netevent_t;
+
+// If a master action fails, the action queue is emptied.
+typedef enum {
+    MAC_REQUEST, // Retrieve the list of servers from the master.
+    MAC_WAIT, // Wait for the server list to arrive.
+    MAC_LIST // Print the server list in the console.
+} masteraction_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,12 +53,10 @@ void            N_MAPost(masteraction_t act);
 dd_bool         N_MADone(void);
 void            N_MAClear(void);
 
-void            N_NEPost(netevent_t * nev);
+void            N_NEPost(netevent_t *nev);
 dd_bool         N_NEPending(void);
-void            N_NETicker(timespan_t time);
-
-void            N_TerminateClient(int console);
-void            N_Update(void);
+dd_bool         N_NEGet(netevent_t *nev);
+void            N_NETicker(void);
 
 #ifdef __cplusplus
 } // extern "C"

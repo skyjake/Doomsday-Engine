@@ -18,11 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RESOURCE_RAWTEXTURE
-#define DENG_RESOURCE_RAWTEXTURE
+#ifndef DE_RESOURCE_RAWTEXTURE
+#define DE_RESOURCE_RAWTEXTURE
 
 #include "dd_share.h" // For lumpnum_t
-#include <de/String>
+#include <de/string.h>
 
 /**
  * A rawtex is a lump raw graphic that has been prepared for render.
@@ -45,4 +45,4 @@ struct rawtex_t
     {}
 };
 
-#endif // DENG_RESOURCE_RAWTEXTURE
+#endif // DE_RESOURCE_RAWTEXTURE

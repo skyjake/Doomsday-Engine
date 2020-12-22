@@ -18,33 +18,35 @@
 
 #include "testapp.h"
 #include "mainwindow.h"
-#include <de/EscapeParser>
-#include <QMessageBox>
-#include <QDebug>
+#include <de/escapeparser.h>
+#include <SDL_messagebox.h>
 
 using namespace de;
 
 int main(int argc, char **argv)
 {
-    TestApp::setDefaultOpenGLFormat();
-    TestApp app(argc, argv);
+    int exitCode;
+    init_Foundation();
     try
     {
+        TestApp app(makeList(argc, argv));
         app.initialize();
-        return app.execLoop();
+        exitCode = app.exec();
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         EscapeParser esc;
         esc.parse(er.asText());
-        qWarning() << "App init failed:\n" << esc.plainText();
-        QMessageBox::critical(0, "test_appfw", "App init failed:\n" + esc.plainText());
-        return -1;
+        warning("App init failed: %s", esc.plainText().c_str());
+        SDL_ShowSimpleMessageBox(
+            SDL_MESSAGEBOX_ERROR, "test_appfw", "App init failed:\n" + esc.plainText(), nullptr);
+        exitCode = -1;
     }
-
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     // Check that all reference-counted objects have been deleted.
-    DENG2_ASSERT(Counted::totalCount == 0);
+    DE_ASSERT(Counted::totalCount == 0);
 #endif
-    return 0;
+    deinit_Foundation();
+    debug("Exiting main()");
+    return exitCode;
 }

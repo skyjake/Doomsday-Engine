@@ -18,20 +18,19 @@
 
 #include "ui/dialogs/logsettingsdialog.h"
 #include "clientapp.h"
-#include "ConfigProfiles"
+#include "configprofiles.h"
 
-#include <de/Config>
-#include <de/FoldPanelWidget>
-#include <de/LogFilter>
-#include <de/SignalAction>
-#include <de/VariableChoiceWidget>
-#include <de/VariableToggleWidget>
+#include <de/config.h>
+#include <de/foldpanelwidget.h>
+#include <de/logfilter.h>
+#include <de/variablechoicewidget.h>
+#include <de/variabletogglewidget.h>
 
 using namespace de;
 
 struct DomainText {
-    char const *name;
-    char const *label;
+    const char *name;
+    const char *label;
 };
 static DomainText const domainText[] = {
     { "generic",    "Minimum Level" },
@@ -46,8 +45,8 @@ static DomainText const domainText[] = {
 
 #define NUM_DOMAINS (sizeof(domainText)/sizeof(domainText[0]))
 
-DENG2_PIMPL(LogSettingsDialog)
-, DENG2_OBSERVES(ToggleWidget, Toggle)
+DE_PIMPL(LogSettingsDialog)
+, DE_OBSERVES(ToggleWidget, Toggle)
 {
     ui::ListData levels;
     VariableToggleWidget *separately;
@@ -71,16 +70,16 @@ DENG2_PIMPL(LogSettingsDialog)
 
             columnWidth = new IndirectRule;
 
-            separately = new VariableToggleWidget(tr("Filter by Subsystem"),
+            separately = new VariableToggleWidget("Filter by Subsystem",
                                                   App::config("log.filterBySubsystem"));
 
-            levels << new ChoiceItem(        tr("1 - X.Verbose"), LogEntry::XVerbose)
-                   << new ChoiceItem(        tr("2 - Verbose"),   LogEntry::Verbose )
-                   << new ChoiceItem(        tr("3 - Message"),   LogEntry::Message )
-                   << new ChoiceItem(        tr("4 - Note"),      LogEntry::Note    )
-                   << new ChoiceItem(_E(D) + tr("5 - Warning"),   LogEntry::Warning )
-                   << new ChoiceItem(_E(D) + tr("6 - Error"),     LogEntry::Error   )
-                   << new ChoiceItem(_E(D) + tr("7 - Critical"),  LogEntry::Critical);
+            levels << new ChoiceItem(      "1 - X.Verbose", NumberValue(LogEntry::XVerbose))
+                   << new ChoiceItem(      "2 - Verbose",   NumberValue(LogEntry::Verbose ))
+                   << new ChoiceItem(      "3 - Message",   NumberValue(LogEntry::Message ))
+                   << new ChoiceItem(      "4 - Note",      NumberValue(LogEntry::Note    ))
+                   << new ChoiceItem(_E(D) "5 - Warning",   NumberValue(LogEntry::Warning ))
+                   << new ChoiceItem(_E(D) "6 - Error",     NumberValue(LogEntry::Error   ))
+                   << new ChoiceItem(_E(D) "7 - Critical",  NumberValue(LogEntry::Critical));
 
             // Folding panel for the per-domain settings.
             fold = new FoldPanelWidget;
@@ -106,7 +105,7 @@ DENG2_PIMPL(LogSettingsDialog)
 
             separately->audienceForToggle() += this;
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOGDEV_ERROR("") << er.asText();
             deinit();
@@ -120,29 +119,28 @@ DENG2_PIMPL(LogSettingsDialog)
         releaseRef(columnWidth);
     }
 
-    void initDomain(DomainText const &dom, DomainWidgets &wgt, GuiWidget *parent)
+    void initDomain(const DomainText &dom, DomainWidgets &wgt, GuiWidget *parent)
     {
         // Text label.
-        wgt.label = LabelWidget::newWithText(tr(dom.label) + ":", parent);
+        wgt.label = LabelWidget::newWithText(CString(dom.label) + ":", parent);
 
         // Minimum level for log entries.
         parent->add(wgt.level = new VariableChoiceWidget(
-                        Config::get(String("log.filter.%1.minLevel").arg(dom.name)),
+                        Config::get(Stringf("log.filter.%s.minLevel", dom.name)),
                         VariableChoiceWidget::Number));
         wgt.level->setItems(levels);
         wgt.level->updateFromVariable();
-        QObject::connect(wgt.level, SIGNAL(selectionChangedByUser(uint)),
-                         thisPublic, SLOT(updateLogFilter()));
+        wgt.level->audienceForUserSelection() += [this](){ self().updateLogFilter(); };
 
         // Developer messages?
-        parent->add(wgt.dev =
-                new VariableToggleWidget(tr("Dev"), Config::get(String("log.filter.%1.allowDev").arg(dom.name))));
-        QObject::connect(wgt.dev, SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)),
-                         thisPublic, SLOT(updateLogFilter()));
+        parent->add(
+            wgt.dev = new VariableToggleWidget(
+                "Dev", Config::get(Stringf("log.filter.%s.allowDev", dom.name))));
+        wgt.dev->audienceForUserToggle() += [this](){ self().updateLogFilter(); };
 
         // Raise alerts?
         parent->add(wgt.alert =
-                new VariableToggleWidget(tr("Alerts"), Config::get(String("alert.") + dom.name)));
+                new VariableToggleWidget("Alerts", Config::get(String("alert.") + dom.name)));
         wgt.alert->setActiveValue(LogEntry::Warning);
         wgt.alert->setInactiveValue(LogEntry::HighestLogLevel + 1);
 
@@ -171,7 +169,7 @@ DENG2_PIMPL(LogSettingsDialog)
         LogFilter &logf = App::logFilter();
 
         // Check the generic filter settings.
-        LogEntry::Level minLevel = LogEntry::Level(domWidgets[0].level->selectedItem().data().toInt());
+        LogEntry::Level minLevel = LogEntry::Level(domWidgets[0].level->selectedItem().data().asInt());
         bool allowDev = domWidgets[0].dev->isActive();
         bool alerts = domWidgets[0].alert->isActive();
 
@@ -183,7 +181,7 @@ DENG2_PIMPL(LogSettingsDialog)
         logf.write(cfg.objectNamespace().subrecord("log.filter"));
         for (uint i = 0; i < NUM_DOMAINS; ++i)
         {
-            char const *name = domainText[i].name;
+            const char *name = domainText[i].name;
             cfg.set(String("alert.") + name, int(alerts? LogEntry::Warning : (LogEntry::HighestLogLevel + 1)));
         }
     }
@@ -218,10 +216,10 @@ DENG2_PIMPL(LogSettingsDialog)
     }
 };
 
-LogSettingsDialog::LogSettingsDialog(String const &name)
+LogSettingsDialog::LogSettingsDialog(const String &name)
     : DialogWidget(name, WithHeading), d(new Impl(this))
 {
-    heading().setText(tr("Log Filter & Alerts"));
+    heading().setText("Log Filter & Alerts");
     heading().setImage(style().images().image("log"));
 
     // Layout.
@@ -246,9 +244,9 @@ LogSettingsDialog::LogSettingsDialog(String const &name)
     area().setContentSize(layout);
 
     buttons()
-            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
-            << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
-                                    new SignalAction(this, SLOT(resetToDefaults())));
+            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, "Close")
+            << new DialogButtonItem(DialogWidget::Action, "Reset to Defaults",
+                                    [this](){ resetToDefaults(); });
 
     if (d->separately->isActive())
     {

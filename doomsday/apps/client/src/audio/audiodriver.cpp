@@ -22,20 +22,21 @@
 
 #include "dd_main.h"
 #include "audio/sys_audiod_dummy.h"
-#ifndef DENG_DISABLE_SDLMIXER
+#ifndef DE_DISABLE_SDLMIXER
 #  include "audio/sys_audiod_sdlmixer.h"
 #endif
 
-#include <de/Library>
-#include <de/LibraryFile>
-#include <de/NativeFile>
+#include <de/extension.h>
+//#include <de/library.h>
+//#include <de/libraryfile.h>
+//#include <de/nativefile.h>
 
 using namespace de;
 
-DENG2_PIMPL(AudioDriver)
+DE_PIMPL(AudioDriver)
 {
-    bool initialized   = false;
-    ::Library *library = nullptr;
+    bool   initialized = false;
+    String extension;
 
     audiodriver_t          iBase;
     audiointerface_sfx_t   iSfx;
@@ -50,42 +51,53 @@ DENG2_PIMPL(AudioDriver)
         zap(iCd);
     }
 
-    static LibraryFile *tryFindAudioPlugin(String const &name)
+//    static LibraryFile *tryFindAudioPlugin(const String &name)
+//    {
+//        if (!name.isEmpty())
+//        {
+//            LibraryFile *found = nullptr;
+//            Library_ForAll([&name, &found] (LibraryFile &lib)
+//            {
+//                if (lib.hasUnderscoreName(name))
+//                {
+//                    found = &lib;
+//                    return LoopAbort;
+//                }
+//                return LoopContinue;
+//            });
+//            return found;
+//        }
+//        return nullptr;
+//    }
+
+    template <typename Type> bool setSymbolPtr(Type &ptr, const char *name, bool required = true)
     {
-        if (!name.isEmpty())
+        functionAssign(ptr, extensionSymbol(extension, name));
+        if (required && !ptr)
         {
-            LibraryFile *found = nullptr;
-            Library_ForAll([&name, &found] (LibraryFile &lib)
-            {
-                if (lib.hasUnderscoreName(name))
-                {
-                    found = &lib;
-                    return LoopAbort;
-                }
-                return LoopContinue;
-            });
-            return found;
+            throw LoadError("AudioDriver::setSymbolPtr",
+                            "Extension \"" + extension + "\" does not have symbol \"" + name + "\"");
         }
-        return nullptr;
+        return ptr != 0;
     }
 
     void getDummyInterfaces()
     {
-        DENG2_ASSERT(!initialized);
+        DE_ASSERT(!initialized);
 
-        library = nullptr;
+        extension.clear();
         std::memcpy(&iBase,  &audiod_dummy,       sizeof(iBase));
         std::memcpy(&iSfx,   &audiod_dummy_sfx,   sizeof(iSfx));
         std::memcpy(&iMusic, &audiod_dummy_music, sizeof(iMusic));
         std::memcpy(&iCd,    &audiod_dummy_cd,    sizeof(iCd));
     }
 
-#ifndef DENG_DISABLE_SDLMIXER
+#ifndef DE_DISABLE_SDLMIXER
     void getSdlMixerInterfaces()
     {
-        DENG2_ASSERT(!initialized);
+        DE_ASSERT(!initialized);
 
-        library = nullptr;
+        extension.clear();
         std::memcpy(&iBase,  &audiod_sdlmixer,       sizeof(iBase));
         std::memcpy(&iSfx,   &audiod_sdlmixer_sfx,   sizeof(iSfx));
         std::memcpy(&iMusic, &audiod_sdlmixer_music, sizeof(iMusic));
@@ -93,68 +105,76 @@ DENG2_PIMPL(AudioDriver)
     }
 #endif
 
-    void importInterfaces(LibraryFile &libFile)
+    void importInterfaces(const String &plugName)
     {
-        DENG2_ASSERT(!initialized);
+        DE_ASSERT(!initialized);
+
+        if (!isExtensionRegistered(plugName))
+        {
+            /// @throw LoadError  Unknown driver specified.
+            throw LoadError("AudioDriver::load", "Unknown driver \"" + plugName + "\"");
+        }
+
+        extension = plugName;
 
         zap(iBase);
         zap(iSfx);
         zap(iMusic);
         zap(iCd);
 
-        library = Library_New(libFile.path().toUtf8().constData());
-        if(!library)
+//        library = Library_New(libFile.path());
+//        if(!library)
+//        {
+//            throw LoadError("AudioDriver::importInterfaces",
+//                            "Failed to load " + libFile.description());
+//        }
+
+//        de::Library &lib = libFile.library();
+
+        setSymbolPtr( iBase.Init,        "DS_Init");
+        setSymbolPtr( iBase.Shutdown,    "DS_Shutdown");
+        setSymbolPtr( iBase.Event,       "DS_Event");
+        setSymbolPtr( iBase.Set,         "DS_Set", false);
+
+        if (extensionSymbol(extension, "DS_SFX_Init"))
         {
-            throw LoadError("AudioDriver::importInterfaces",
-                            "Failed to load " + libFile.description());
+            setSymbolPtr( iSfx.gen.Init,      "DS_SFX_Init");
+            setSymbolPtr( iSfx.gen.Create,    "DS_SFX_CreateBuffer");
+            setSymbolPtr( iSfx.gen.Destroy,   "DS_SFX_DestroyBuffer");
+            setSymbolPtr( iSfx.gen.Load,      "DS_SFX_Load");
+            setSymbolPtr( iSfx.gen.Reset,     "DS_SFX_Reset");
+            setSymbolPtr( iSfx.gen.Play,      "DS_SFX_Play");
+            setSymbolPtr( iSfx.gen.Stop,      "DS_SFX_Stop");
+            setSymbolPtr( iSfx.gen.Refresh,   "DS_SFX_Refresh");
+            setSymbolPtr( iSfx.gen.Set,       "DS_SFX_Set");
+            setSymbolPtr( iSfx.gen.Setv,      "DS_SFX_Setv");
+            setSymbolPtr( iSfx.gen.Listener,  "DS_SFX_Listener");
+            setSymbolPtr( iSfx.gen.Listenerv, "DS_SFX_Listenerv");
+            setSymbolPtr( iSfx.gen.Getv,      "DS_SFX_Getv", false);
         }
 
-        de::Library &lib = libFile.library();
-
-        lib.setSymbolPtr( iBase.Init,        "DS_Init");
-        lib.setSymbolPtr( iBase.Shutdown,    "DS_Shutdown");
-        lib.setSymbolPtr( iBase.Event,       "DS_Event");
-        lib.setSymbolPtr( iBase.Set,         "DS_Set", de::Library::OptionalSymbol);
-
-        if(lib.hasSymbol("DS_SFX_Init"))
+        if (extensionSymbol(extension, "DM_Music_Init"))
         {
-            lib.setSymbolPtr( iSfx.gen.Init,      "DS_SFX_Init");
-            lib.setSymbolPtr( iSfx.gen.Create,    "DS_SFX_CreateBuffer");
-            lib.setSymbolPtr( iSfx.gen.Destroy,   "DS_SFX_DestroyBuffer");
-            lib.setSymbolPtr( iSfx.gen.Load,      "DS_SFX_Load");
-            lib.setSymbolPtr( iSfx.gen.Reset,     "DS_SFX_Reset");
-            lib.setSymbolPtr( iSfx.gen.Play,      "DS_SFX_Play");
-            lib.setSymbolPtr( iSfx.gen.Stop,      "DS_SFX_Stop");
-            lib.setSymbolPtr( iSfx.gen.Refresh,   "DS_SFX_Refresh");
-            lib.setSymbolPtr( iSfx.gen.Set,       "DS_SFX_Set");
-            lib.setSymbolPtr( iSfx.gen.Setv,      "DS_SFX_Setv");
-            lib.setSymbolPtr( iSfx.gen.Listener,  "DS_SFX_Listener");
-            lib.setSymbolPtr( iSfx.gen.Listenerv, "DS_SFX_Listenerv");
-            lib.setSymbolPtr( iSfx.gen.Getv,      "DS_SFX_Getv", de::Library::OptionalSymbol);
+            setSymbolPtr( iMusic.gen.Init,    "DM_Music_Init");
+            setSymbolPtr( iMusic.gen.Update,  "DM_Music_Update");
+            setSymbolPtr( iMusic.gen.Get,     "DM_Music_Get");
+            setSymbolPtr( iMusic.gen.Set,     "DM_Music_Set");
+            setSymbolPtr( iMusic.gen.Pause,   "DM_Music_Pause");
+            setSymbolPtr( iMusic.gen.Stop,    "DM_Music_Stop");
+            setSymbolPtr( iMusic.SongBuffer,  "DM_Music_SongBuffer", false);
+            setSymbolPtr( iMusic.Play,        "DM_Music_Play",       false);
+            setSymbolPtr( iMusic.PlayFile,    "DM_Music_PlayFile",   false);
         }
 
-        if(lib.hasSymbol("DM_Music_Init"))
+        if (extensionSymbol(extension, "DM_CDAudio_Init"))
         {
-            lib.setSymbolPtr( iMusic.gen.Init,    "DM_Music_Init");
-            lib.setSymbolPtr( iMusic.gen.Update,  "DM_Music_Update");
-            lib.setSymbolPtr( iMusic.gen.Get,     "DM_Music_Get");
-            lib.setSymbolPtr( iMusic.gen.Set,     "DM_Music_Set");
-            lib.setSymbolPtr( iMusic.gen.Pause,   "DM_Music_Pause");
-            lib.setSymbolPtr( iMusic.gen.Stop,    "DM_Music_Stop");
-            lib.setSymbolPtr( iMusic.SongBuffer,  "DM_Music_SongBuffer", de::Library::OptionalSymbol);
-            lib.setSymbolPtr( iMusic.Play,        "DM_Music_Play",       de::Library::OptionalSymbol);
-            lib.setSymbolPtr( iMusic.PlayFile,    "DM_Music_PlayFile",   de::Library::OptionalSymbol);
-        }
-
-        if(lib.hasSymbol("DM_CDAudio_Init"))
-        {
-            lib.setSymbolPtr( iCd.gen.Init,       "DM_CDAudio_Init");
-            lib.setSymbolPtr( iCd.gen.Update,     "DM_CDAudio_Update");
-            lib.setSymbolPtr( iCd.gen.Set,        "DM_CDAudio_Set");
-            lib.setSymbolPtr( iCd.gen.Get,        "DM_CDAudio_Get");
-            lib.setSymbolPtr( iCd.gen.Pause,      "DM_CDAudio_Pause");
-            lib.setSymbolPtr( iCd.gen.Stop,       "DM_CDAudio_Stop");
-            lib.setSymbolPtr( iCd.Play,           "DM_CDAudio_Play");
+            setSymbolPtr( iCd.gen.Init,       "DM_CDAudio_Init");
+            setSymbolPtr( iCd.gen.Update,     "DM_CDAudio_Update");
+            setSymbolPtr( iCd.gen.Set,        "DM_CDAudio_Set");
+            setSymbolPtr( iCd.gen.Get,        "DM_CDAudio_Get");
+            setSymbolPtr( iCd.gen.Pause,      "DM_CDAudio_Pause");
+            setSymbolPtr( iCd.gen.Stop,       "DM_CDAudio_Stop");
+            setSymbolPtr( iCd.Play,           "DM_CDAudio_Play");
         }
     }
 };
@@ -177,79 +197,61 @@ AudioDriver::Status AudioDriver::status() const
 
 String AudioDriver::statusAsText() const
 {
-    switch(status())
+    switch (status())
     {
     case Invalid:     return "Invalid";
     case Loaded:      return "Loaded";
     case Initialized: return "Initialized";
-
-    default:
-        DENG2_ASSERT(!"AudioDriver::statusAsText: Unknown status");
-        return "Unknown";
     }
+    return "";
 }
 
-void AudioDriver::load(String const &identifier)
+void AudioDriver::load(const String &identifier)
 {
     LOG_AS("AudioDriver");
 
-    if(isLoaded())
+    if (isLoaded())
     {
         /// @throw LoadError  Attempted to load on top of an already loaded driver.
         throw LoadError("AudioDriver::load", "Already initialized. Cannot load '" + identifier + "'");
     }
 
     // Perhaps a built-in audio driver?
-    if(!identifier.compareWithoutCase("dummy"))
+    if (!identifier.compareWithoutCase("dummy"))
     {
         d->getDummyInterfaces();
         return;
     }
-#ifndef DENG_DISABLE_SDLMIXER
-    if(!identifier.compareWithoutCase("sdlmixer"))
+#ifndef DE_DISABLE_SDLMIXER
+    if (!identifier.compareWithoutCase("sdlmixer"))
     {
         d->getSdlMixerInterfaces();
         return;
     }
 #endif
 
-    // Perhaps a plugin audio driver?
-    LibraryFile *plugin = Impl::tryFindAudioPlugin(identifier);
-    if(!plugin)
-    {
-        /// @throw LoadError  Unknown driver specified.
-        throw LoadError("AudioDriver::load", "Unknown driver \"" + identifier + "\"");
-    }
-
-    try
-    {
-        // Exchange entrypoints.
-        d->importInterfaces(*plugin);
-    }
-    catch(de::Library::SymbolMissingError const &er)
-    {
-        /// @throw LoadError  One or more missing symbol.
-        throw LoadError("AudioDriver::load", "Failed exchanging entrypoints:\n" + er.asText());
-    }
+    // Exchange entrypoints.
+    d->importInterfaces(identifier);
 }
 
 void AudioDriver::unload()
 {
     LOG_AS("AudioDriver");
 
-    if(isInitialized())
+    if (isInitialized())
     {
         /// @throw LoadError  Cannot unload while initialized.
         throw LoadError("AudioDriver::unload", "'" + name() + "' is still initialized, cannot unload");
     }
 
-    if(isLoaded())
+    if (isLoaded())
     {
-        Library_Delete(d->library); d->library = nullptr;
+//        Library_Delete(d->library); d->library = nullptr;
         zap(d->iBase);
         zap(d->iSfx);
         zap(d->iMusic);
         zap(d->iCd);
+        d->extension.clear();
     }
 }
 
@@ -260,7 +262,7 @@ void AudioDriver::initialize()
     // Already been here?
     if(d->initialized) return;
 
-    DENG2_ASSERT(d->iBase.Init != nullptr);
+    DE_ASSERT(d->iBase.Init != nullptr);
     d->initialized = d->iBase.Init();
 }
 
@@ -278,20 +280,20 @@ void AudioDriver::deinitialize()
     d->initialized = false;
 }
 
-::Library *AudioDriver::library() const
+String AudioDriver::extensionName() const
 {
-    return d->library;
+    return d->extension;
 }
 
-bool AudioDriver::isAvailable(String const &identifier)
+bool AudioDriver::isAvailable(const String &identifier)
 {
     if (identifier == "dummy") return true;
-#ifndef DENG_DISABLE_SDLMIXER
+#ifndef DE_DISABLE_SDLMIXER
     if (identifier == "sdlmixer") return true;
 #else
     if (identifier == "sdlmixer") return false;
 #endif
-    return Impl::tryFindAudioPlugin(identifier);
+    return isExtensionRegistered(identifier);
 }
 
 audiodriver_t /*const*/ &AudioDriver::iBase() const
@@ -368,6 +370,6 @@ String AudioDriver_GetName(audiodriverid_t id)
     if(VALID_AUDIODRIVER_IDENTIFIER(id))
         return audioDriverNames[id];
 
-    DENG2_ASSERT(!"S_GetDriverName: Unknown driver id");
+    DE_ASSERT_FAIL("S_GetDriverName: Unknown driver id");
     return "";
 }

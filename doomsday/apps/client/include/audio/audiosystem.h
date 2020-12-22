@@ -28,9 +28,10 @@
 #  include "audio/audiodriver.h"
 #  include "audio/sfxchannel.h"
 #endif
-#include <de/Record>
-#include <de/String>
-#include <de/System>
+#include <doomsday/audio/audio.h>
+#include <de/record.h>
+#include <de/string.h>
+#include <de/system.h>
 
 #define SFX_LOWEST_PRIORITY     ( -1000 )
 
@@ -41,7 +42,7 @@
  *
  * @ingroup audio
  */
-class AudioSystem : public de::System
+class AudioSystem : public audio::Audio
 {
 public:
     static AudioSystem &get();
@@ -53,9 +54,6 @@ public:
 
 public:
     AudioSystem();
-
-    // Systems observe the passage of time.
-    void timeChanged(de::Clock const &) override;
 
     void reinitialize();
 
@@ -137,10 +135,10 @@ public:  // Music playback: ----------------------------------------------------
      *
      * @return  Non-zero if the song is successfully played (or already playing).
      */
-    int playMusic(de::Record const &definition, bool looped = false);
+    int playMusic(const de::Record &definition, bool looped = false);
 
     int playMusicLump(lumpnum_t lumpNum, bool looped = false);
-    int playMusicFile(de::String const &filePath, bool looped = false);
+    int playMusicFile(const de::String &filePath, bool looped = false);
     int playMusicCDTrack(int cdTrack, bool looped = false);
 
     void updateMusicMidiFont();
@@ -174,8 +172,8 @@ public:  // Sound effect playback: ---------------------------------------------
     bool soundIsPlaying(int soundId, struct mobj_s *emitter) const;
 
 #ifdef __CLIENT__
-    void stopSoundGroup(int group, struct mobj_s const *emitter);
-    int stopSoundWithLowerPriority(int soundId, struct mobj_s const *emitter, int defPriority);
+    void stopSoundGroup(int group, const struct mobj_s *emitter);
+    int stopSoundWithLowerPriority(int soundId, const struct mobj_s *emitter, int defPriority);
 #endif
 
     /**
@@ -184,7 +182,7 @@ public:  // Sound effect playback: ---------------------------------------------
      *                 and @a emitter must match.
      * @param flags    @ref soundStopFlags.
      */
-    void stopSound(int soundId, struct mobj_s const *emitter, int flags = 0);
+    void stopSound(int soundId, const struct mobj_s *emitter, int flags = 0) override;
 
 #ifdef __CLIENT__
 
@@ -202,13 +200,13 @@ public:  // Sound effect playback: ---------------------------------------------
      *
      * @return  @c true, if a sound is started.
      */
-    int playSound(sfxsample_t *sample, float volume, float freq, struct mobj_s const *emitter,
+    int playSound(sfxsample_t *sample, float volume, float freq, const struct mobj_s *emitter,
                   coord_t *fixedOrigin, int flags);
 
     /**
      * The priority of a sound is affected by distance, volume and age.
      */
-    float rateSoundPriority(struct mobj_s const *emitter, coord_t const *point, float volume, int startTic);
+    float rateSoundPriority(const struct mobj_s *emitter, const coord_t *point, float volume, int startTic);
 
 public:  // Low-level driver interfaces: ---------------------------------------------
 
@@ -269,22 +267,22 @@ public:  /// @todo make private:
      * Lookup the unique identifier associated with the given audio @a driver.
      * @todo refactor away.
      */
-    audiodriverid_t toDriverId(AudioDriver const *driver) const;
+    audiodriverid_t toDriverId(const AudioDriver *driver) const;
 
 #endif  // __CLIENT__
 
     /// @todo Should not be exposed to users of this class. -ds
-    void startLogical(int soundIdAndFlags, struct mobj_s const *emitter);
+    void startLogical(int soundIdAndFlags, const struct mobj_s *emitter);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 // Music: ---------------------------------------------------------------------------
 
-int Mus_Start(de::Record const &definition, bool looped);
+int Mus_Start(const de::Record &definition, bool looped);
 int Mus_StartLump(lumpnum_t lumpNum, bool looped);
-int Mus_StartFile(char const *filePath, bool looped);
+int Mus_StartFile(const char *filePath, bool looped);
 int Mus_StartCDTrack(int cdTrack, bool looped);
 
 // Sound effects: -------------------------------------------------------------------
@@ -303,7 +301,7 @@ mobj_t *S_GetListenerMobj();
 /**
  * Stop all sounds of the group. If an emitter is specified, only it's sounds are checked.
  */
-void S_StopSoundGroup(int group, struct mobj_s const *emitter);
+void S_StopSoundGroup(int group, const struct mobj_s *emitter);
 
 /**
  * Stops all channels that are playing the specified sound.

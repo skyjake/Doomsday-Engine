@@ -17,19 +17,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/LogBuffer>
 #include "ui/infine/finale.h"
-
-#include "BindContext"
+#include "ui/bindcontext.h"
 #include "ui/infine/finaleinterpreter.h"
 #include "network/net_main.h"
 #ifdef __SERVER__
 #  include "server/sv_infine.h"
 #endif
 
+#include <doomsday/net.h>
+#include <de/logbuffer.h>
+
 using namespace de;
 
-DENG2_PIMPL(Finale)
+DE_PIMPL(Finale)
 {
     bool active;
     int flags;  ///< @ref finaleFlags
@@ -46,33 +47,33 @@ DENG2_PIMPL(Finale)
 
     ~Impl()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->finaleBeingDeleted(self());
+        DE_NOTIFY_PUBLIC(Deletion, i) i->finaleBeingDeleted(self());
     }
 
-    void loadScript(String const &script)
+    void loadScript(const String &script)
     {
         if (script.isEmpty()) return;
 
         LOGDEV_SCR_MSG("Begin Finale - id:%i '%.30s'") << id << script;
-        Block const scriptAsUtf8 = script.toUtf8();
-        interpreter.loadScript(scriptAsUtf8.constData());
+        interpreter.loadScript(script);
+
 #ifdef __SERVER__
-        if (!(flags & FF_LOCAL) && ::isServer)
+        if (!(flags & FF_LOCAL) && netState.isServer)
         {
             // Instruct clients to start playing this Finale.
-            Sv_Finale(id, FINF_BEGIN | FINF_SCRIPT, scriptAsUtf8.constData());
+            Sv_Finale(id, FINF_BEGIN | FINF_SCRIPT, script);
         }
 #endif
 
         active = true;
     }
 
-    DENG2_PIMPL_AUDIENCE(Deletion)
+    DE_PIMPL_AUDIENCE(Deletion)
 };
 
-DENG2_AUDIENCE_METHOD(Finale, Deletion)
+DE_AUDIENCE_METHOD(Finale, Deletion)
 
-Finale::Finale(int flags, finaleid_t id, String const &script)
+Finale::Finale(int flags, finaleid_t id, const String &script)
     : d(new Impl(this, flags, id))
 {
     d->loadScript(script);
@@ -131,7 +132,7 @@ bool Finale::runTicks(timespan_t timeDelta)
     return false;
 }
 
-int Finale::handleEvent(ddevent_t const &ev)
+int Finale::handleEvent(const ddevent_t &ev)
 {
     if (!d->active) return false;
     return d->interpreter.handleEvent(ev);
@@ -150,7 +151,7 @@ bool Finale::isMenuTrigger() const
     return d->interpreter.isMenuTrigger();
 }
 
-FinaleInterpreter const &Finale::interpreter() const
+const FinaleInterpreter &Finale::interpreter() const
 {
     return d->interpreter;
 }

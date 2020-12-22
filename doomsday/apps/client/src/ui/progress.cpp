@@ -22,12 +22,12 @@
 #include "ui/progress.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/busywidget.h"
-#include <de/ProgressWidget>
+#include <de/progresswidget.h>
 
 using namespace de;
 
-// Time for the progress to reach the new target (seconds).
-static de::TimeSpan const PROGRESS_DELTA_TIME = 0.5;
+// Time for the progress to reach the new target.
+static constexpr TimeSpan PROGRESS_DELTA_TIME = 500_ms;
 
 static ProgressWidget &progress()
 {
@@ -37,7 +37,7 @@ static ProgressWidget &progress()
 void Con_InitProgress2(int maxProgress, float start, float end)
 {
     progress().setRange(Rangei(0, maxProgress), Rangef(start, end));
-    progress().setProgress(0, 0);
+    progress().setProgress(0, 0.0);
 }
 
 void Con_InitProgress(int maxProgress)

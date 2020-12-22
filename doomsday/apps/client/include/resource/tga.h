@@ -23,7 +23,7 @@
 #ifdef __cplusplus
 
 #include <doomsday/filesys/filehandle.h>
-#include <de/Vector>
+#include <de/vector.h>
 
 /**
  * Loads a 24-bit or a 32-bit image (24-bit color + 8-bit alpha).
@@ -33,6 +33,6 @@
  *
  * @return  Non-zero iff the image is loaded successfully.
  */
-uint8_t *TGA_Load(de::FileHandle &file, de::Vector2ui &outSize, int &pixelSize);
+uint8_t *TGA_Load(res::FileHandle &file, de::Vec2ui &outSize, int &pixelSize);
 
 #endif // __cplusplus

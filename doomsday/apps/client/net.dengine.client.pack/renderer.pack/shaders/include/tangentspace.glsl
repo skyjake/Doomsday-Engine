@@ -18,7 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifdef DENG_VERTEX_SHADER
+#ifdef DE_VERTEX_SHADER
 
 in vec3 aNormal;
 in vec3 aTangent;
@@ -40,9 +40,9 @@ void setTangentSpace(mat4 modelSpace)
     vTSBitangent = transformVector(aBitangent, modelSpace);
 }
 
-#endif // DENG_VERTEX_SHADER
+#endif // DE_VERTEX_SHADER
 
-#ifdef DENG_FRAGMENT_SHADER
+#ifdef DE_FRAGMENT_SHADER
 
 in  vec3 vTSNormal;
 in  vec3 vTSTangent;
@@ -58,4 +58,4 @@ vec3 modelSpaceNormalVector(vec2 uv)
     return fragmentTangentSpace() * normalVector(uv);
 }
 
-#endif // DENG_FRAGMENT_SHADER
+#endif // DE_FRAGMENT_SHADER

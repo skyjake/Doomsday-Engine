@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_AUDIO_DRIVER_INTERFACE_H
-#define LIBDENG_AUDIO_DRIVER_INTERFACE_H
+#ifndef DE_AUDIO_DRIVER_INTERFACE_H
+#define DE_AUDIO_DRIVER_INTERFACE_H
 
 /**
  * @defgroup audio Audio
@@ -49,7 +49,7 @@ typedef enum {
     AUDIO_IMUSIC_OR_ICD // forAllInterfaces() special value
 } audiointerfacetype_t;
 
-#ifdef WIN32
+#if defined(DE_WINDOWS)
 #  define VALID_AUDIODRIVER_IDENTIFIER(id)    ((id) >= AUDIOD_DUMMY && (id) < AUDIODRIVER_COUNT)
 #else
 #  define VALID_AUDIODRIVER_IDENTIFIER(id)    ((id) >= AUDIOD_DUMMY && (id) <= AUDIOD_FLUIDSYNTH)
@@ -65,7 +65,7 @@ typedef struct audiodriver_s {
     int (*Init) (void);
     void (*Shutdown) (void);
     void (*Event) (int type);
-    int (*Set) (int prop, void const *ptr);
+    int (*Set) (int prop, const void *ptr);
 } audiodriver_t;
 
 typedef struct audiointerface_base_s {
@@ -74,4 +74,4 @@ typedef struct audiointerface_base_s {
 
 ///@}
 
-#endif /* LIBDENG_AUDIO_DRIVER_INTERFACE_H */
+#endif /* DE_AUDIO_DRIVER_INTERFACE_H */

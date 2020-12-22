@@ -3,14 +3,12 @@
 # License: GPL 2.0+
 
 cmake_minimum_required (VERSION 3.1)
-project (DENG_WADTOOL)
+project (DE_WADTOOL)
 include (../../cmake/Config.cmake)
-
-find_package (DengLegacy)
 
 add_executable (wadtool wadtool.c wadtool.h)
 set_property (TARGET wadtool PROPERTY FOLDER Tools)
-target_link_libraries (wadtool Deng::liblegacy)
+deng_link_libraries (wadtool PRIVATE DengCore)
 
 deng_target_rpath (wadtool)
 deng_install_tool (wadtool)

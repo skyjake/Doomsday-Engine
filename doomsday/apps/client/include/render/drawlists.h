@@ -18,17 +18,16 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_DRAWLISTS_H
-#define DENG_CLIENT_RENDER_DRAWLISTS_H
+#ifndef DE_CLIENT_RENDER_DRAWLISTS_H
+#define DE_CLIENT_RENDER_DRAWLISTS_H
 
-#include "DrawList"
-#include <de/Vector>
-#include <QVarLengthArray>
+#include "render/drawlist.h"
+#include <de/vector.h>
 
 class DrawLists
 {
 public:
-    typedef QVarLengthArray<DrawList *, 1024> FoundLists;
+    typedef de::List<DrawList *> FoundLists;
 
 public:
     DrawLists();
@@ -40,7 +39,7 @@ public:
      *
      * @return  The chosen list.
      */
-    DrawList &find(DrawListSpec const &spec);
+    DrawList &find(const DrawListSpec &spec);
 
     /**
      * Finds all draw lists which match the given specification. Note that only
@@ -64,7 +63,7 @@ public:
     void clear();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_RENDER_DRAWLISTS_H
+#endif // DE_CLIENT_RENDER_DRAWLISTS_H

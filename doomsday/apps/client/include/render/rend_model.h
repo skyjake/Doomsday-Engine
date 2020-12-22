@@ -25,9 +25,9 @@
 #include "render/modelrenderer.h"
 #include "rend_main.h"
 
-#include <de/Vector>
-#include <de/ModelBank>
-#include <de/ModelDrawable>
+#include <de/vector.h>
+#include <de/modelbank.h>
+#include <de/modeldrawable.h>
 
 class TextureVariantSpec;
 namespace render { class StateAnimator; }
@@ -45,18 +45,18 @@ struct drawmodelparams_t
     // Animation, frame interpolation:
     FrameModelDef *mf;
     FrameModelDef *nextMF;
-    de::dfloat inter;
+    float inter;
     dd_bool alwaysInterpolate;
-    de::dint id;                ///< For a unique skin offset.
-    de::dint selector;
+    int id;                ///< For a unique skin offset.
+    int selector;
 
     // Appearance:
-    de::dint flags;  ///< Mobj flags.
-    de::dint tmap;
+    int flags;  ///< Mobj flags.
+    int tmap;
 
     // Shiney texture mapping:
-    de::dfloat shineYawOffset;
-    de::dfloat shinePitchOffset;
+    float shineYawOffset;
+    float shinePitchOffset;
     dd_bool shineTranslateWithViewerPos;
     dd_bool shinepspriteCoordSpace;       ///< Use the psprite coordinate space hack.
 };
@@ -64,21 +64,21 @@ struct drawmodelparams_t
 /// @ingroup render
 struct drawmodel2params_t
 {
-    struct mobj_s const *object;
-    render::Model const *model;
-    render::StateAnimator const *animator;
+    const struct mobj_s *object;
+    const render::Model *model;
+    const render::StateAnimator *animator;
 };
 
-DENG_EXTERN_C de::dbyte useModels;
-DENG_EXTERN_C de::dint modelLight;
-DENG_EXTERN_C de::dint frameInter;
-DENG_EXTERN_C de::dfloat modelAspectMod;
-DENG_EXTERN_C de::dint mirrorHudModels;
-//DENG_EXTERN_C de::dint modelShinyMultitex;
-DENG_EXTERN_C de::dfloat modelSpinSpeed;
-DENG_EXTERN_C de::dint maxModelDistance;
-DENG_EXTERN_C de::dfloat rendModelLOD;
-DENG_EXTERN_C de::dbyte precacheSkins;
+DE_EXTERN_C de::dbyte useModels;
+DE_EXTERN_C int modelLight;
+DE_EXTERN_C int frameInter;
+DE_EXTERN_C float modelAspectMod;
+DE_EXTERN_C int mirrorHudModels;
+//DE_EXTERN_C int modelShinyMultitex;
+DE_EXTERN_C float modelSpinSpeed;
+DE_EXTERN_C int maxModelDistance;
+DE_EXTERN_C float rendModelLOD;
+DE_EXTERN_C de::dbyte precacheSkins;
 
 /**
  * Registers the console commands and variables used by this module.
@@ -120,18 +120,18 @@ bool Rend_ModelExpandVertexBuffers(de::duint numVertices);
  * @param  noCompression  @c true= disable texture compression.
  * @return  Specification to be used when preparing such textures.
  */
-TextureVariantSpec const &Rend_ModelDiffuseTextureSpec(bool noCompression);
+const TextureVariantSpec &Rend_ModelDiffuseTextureSpec(bool noCompression);
 
 /**
  * Lookup the texture specification for shiny model skins.
  *
  * @return  Specification to be used when preparing such textures.
  */
-TextureVariantSpec const &Rend_ModelShinyTextureSpec();
+const TextureVariantSpec &Rend_ModelShinyTextureSpec();
 
 /**
  * Render all the submodels of a model.
  */
-void Rend_DrawModel(vissprite_t const &spr);
+void Rend_DrawModel(const vissprite_t &spr);
 
 #endif  // CLIENT_RENDER_MODEL_H

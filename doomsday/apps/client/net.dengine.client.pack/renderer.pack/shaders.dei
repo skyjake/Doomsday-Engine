@@ -9,11 +9,8 @@
 # - fragment:      source of the fragment shader
 
 @include <shaders/dgl/dgl.dei>
-@include <shaders/generic.dei>
 @include <shaders/model.dei>
-@include <shaders/fx/blur.dei>
 @include <shaders/fx/bloom.dei>
 @include <shaders/fx/post.dei>
 @include <shaders/fx/ramp.dei>
-@include <shaders/ui.dei>
 @include <shaders/debug.dei>

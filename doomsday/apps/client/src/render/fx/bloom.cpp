@@ -17,13 +17,13 @@
  */
 
 #include "render/fx/bloom.h"
+#include "world/clientworld.h"
 #include "clientapp.h"
-#include "world/clientserverworld.h"
 
 #include <doomsday/console/var.h>
-#include <de/Drawable>
-#include <de/GLTextureFramebuffer>
-#include <de/WindowTransform>
+#include <de/drawable.h>
+#include <de/gltextureframebuffer.h>
+#include <de/windowtransform.h>
 
 using namespace de;
 
@@ -35,7 +35,7 @@ static float bloomThreshold  = .35f;
 static float bloomDispersion = 1;
 static int   bloomComplexity = 1;
 
-DENG2_PIMPL(Bloom)
+DE_PIMPL(Bloom)
 {
     typedef GLBufferT<Vertex2Tex> VBuf;
 
@@ -64,11 +64,11 @@ DENG2_PIMPL(Bloom)
     {
         // Geometry for drawing with: a single quad.
         VBuf *buf = new VBuf;
-        buf->setVertices(gl::TriangleStrip,
+        buf->setVertices(gfx::TriangleStrip,
                          VBuf::Builder().makeQuad(
                              Rectanglef(0, 0, 1, 1),
                              Rectanglef(0, 0, 1, 1)),
-                         gl::Static);
+                         gfx::Static);
         bloom.addBuffer(buf);
 
         // The work buffer does not need alpha because the result will be additively
@@ -84,7 +84,7 @@ DENG2_PIMPL(Bloom)
         ClientApp::shaders().build(bloom.program("vert"), "fx.bloom.vertical")
                 << uMvpMatrix << uTex << uBlurStep << uWindow;
 
-        uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
+        uMvpMatrix = Mat4f::ortho(0, 1, 0, 1);
     }
 
     void glDeinit()
@@ -99,7 +99,7 @@ DENG2_PIMPL(Bloom)
     void draw()
     {
         GLFramebuffer &target = GLState::current().target();
-        GLTexture *colorTex = target.attachedTexture(GLFramebuffer::Color);
+        GLTexture *colorTex = target.attachedTexture(GLFramebuffer::Color0);
 
         //qDebug() << "bloom with" << colorTex;
 
@@ -108,16 +108,16 @@ DENG2_PIMPL(Bloom)
 
         // Determine the dimensions of the viewport and the target.
         //Rectanglef const rectf(0, 0, 1, 1); //= GLState::current().normalizedViewport();
-        Vector2ui const targetSize = colorTex->size(); // (rectf.size() * target.rectInUse().size()).toVector2ui();
+        const Vec2ui targetSize = colorTex->size(); // (rectf.size() * target.rectInUse().size()).toVec2ui();
 
         // Quarter resolution is used for better efficiency (without significant loss
         // of quality).
-        Vector2ui blurSize = (targetSize / 4).max(Vector2ui(1, 1));
+        Vec2ui blurSize = (targetSize / 4).max(Vec2ui(1, 1));
 
         // Update the size of the work buffer if needed. Also ensure linear filtering
         // is used for better-quality blurring.
         workFB.resize(blurSize);
-        workFB.colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
+        workFB.colorTexture().setFilter(gfx::Linear, gfx::Linear, gfx::MipNone);
 
         GLState::push()
                 .setDepthWrite(false) // don't mess with depth information
@@ -153,27 +153,27 @@ DENG2_PIMPL(Bloom)
      *                     cause more blurring/less quality as the work resolution
      *                     reduces.
      * @param weight       Weight factor for intensity.
-     * @param targetOp     Blending factor (should be gl::One unless debugging).
+     * @param targetOp     Blending factor (should be gfx::One unless debugging).
      */
-    void drawBloomPass(//Rectanglef const &rectf, //Vector2ui const &/*targetSize*/,
+    void drawBloomPass(//const Rectanglef &rectf, //const Vec2ui &/*targetSize*/,
                        GLTexture &colorTarget, float bloomSize, float weight,
-                       gl::Blend targetOp = gl::One)
+                       gfx::Blend targetOp = gfx::One)
     {
         uThreshold = bloomThreshold * (1 + bloomSize) / 2.f;
         uIntensity = bloomIntensity * weight;
 
         // Initialize the work buffer for this pass.
-        workFB.clear(GLFramebuffer::Color);
+        workFB.clear(GLFramebuffer::Color0);
 
         // Divert rendering to the work area (full or partial area used).
         //GLFramebuffer &target = GLState::current().target();
-        Vector2ui const workSize = workFB.size() * bloomSize;
+        const Vec2ui workSize = workFB.size() * bloomSize;
         GLState::push()
                 .setTarget(workFB)
                 .setViewport(Rectangleui::fromSize(workSize));
 
         // Normalized active rectangle of the target.
-        /*Vector4f const active(target.activeRectScale(),
+        /*Vec4f const active(target.activeRectScale(),
                               target.activeRectNormalizedOffset());*/
 
         /*
@@ -185,15 +185,15 @@ DENG2_PIMPL(Bloom)
         // be flipped because the shader uses the bottom left corner as UV origin.
         // Also need to apply the active rectangle as it affects where the viewport
         // ends up inside the frame buffer.
-        uWindow = Vector4f(0, 0, 1, 1); /*Vector4f(rectf.left() * active.x        + active.z,
+        uWindow = Vec4f(0, 0, 1, 1); /*Vec4f(rectf.left() * active.x        + active.z,
                            1 - (rectf.bottom() * active.y + active.w),
                            rectf.width()  * active.x,
                            rectf.height() * active.y);*/
 
         // Spread out or contract the texture sampling of the Gaussian blur kernel.
         // If dispersion is too large, the quality of the blur will suffer.
-        uBlurStep = Vector2f(bloomDispersion / workFB.size().x,
-                             bloomDispersion / workFB.size().y);
+        uBlurStep = Vec2f(bloomDispersion / workFB.size().x,
+                          bloomDispersion / workFB.size().y);
 
         bloom.setProgram(bloom.program()); // horizontal shader
         bloom.draw();
@@ -207,11 +207,11 @@ DENG2_PIMPL(Bloom)
          */
         GLState::push()
                 .setBlend(true)
-                .setBlendFunc(gl::One, targetOp);
+                .setBlendFunc(gfx::One, targetOp);
 
         // Use the work buffer's texture as the source.
         uTex    = workFB.colorTexture();
-        uWindow = Vector4f(0, 1 - bloomSize, bloomSize, bloomSize);
+        uWindow = Vec4f(0, 1 - bloomSize, bloomSize, bloomSize);
 
         bloom.setProgram("vert"); // vertical shader
         bloom.draw();

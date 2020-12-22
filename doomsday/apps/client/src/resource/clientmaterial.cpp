@@ -19,28 +19,26 @@
  */
 
 #include "resource/clientmaterial.h"
-
-#include <QFlag>
-#include <QtAlgorithms>
-#include <de/Log>
-#include <doomsday/console/cmd.h>
-#include <doomsday/res/Textures>
-#include <doomsday/world/Materials>
-#include <doomsday/world/MaterialManifest>
-
 #include "dd_main.h"
-#include "MaterialAnimator"
+#include "resource/materialanimator.h"
+
+#include <doomsday/console/cmd.h>
+#include <doomsday/res/textures.h>
+#include <doomsday/world/materials.h>
+#include <doomsday/world/materialmanifest.h>
+#include <de/log.h>
+#include "resource/materialanimator.h"
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(ClientMaterial::Decoration)
+DE_PIMPL_NOREF(ClientMaterial::Decoration)
 {
-    ClientMaterial *material = nullptr;  ///< Owning Material.
-    Vector2i patternSkip;          ///< Pattern skip intervals.
-    Vector2i patternOffset;        ///< Pattern skip interval offsets.
+    ClientMaterial *material = nullptr; ///< Owning Material.
+    Vec2i           patternSkip;        ///< Pattern skip intervals.
+    Vec2i           patternOffset;      ///< Pattern skip interval offsets.
 };
 
-ClientMaterial::Decoration::Decoration(Vector2i const &patternSkip, Vector2i const &patternOffset)
+ClientMaterial::Decoration::Decoration(const Vec2i &patternSkip, const Vec2i &patternOffset)
     : d(new Impl)
 {
     d->patternSkip   = patternSkip;
@@ -49,18 +47,18 @@ ClientMaterial::Decoration::Decoration(Vector2i const &patternSkip, Vector2i con
 
 ClientMaterial::Decoration::~Decoration()
 {
-    qDeleteAll(_stages);
+    deleteAll(_stages);
 }
 
 ClientMaterial &ClientMaterial::Decoration::material()
 {
-    DENG2_ASSERT(d->material);
+    DE_ASSERT(d->material);
     return *d->material;
 }
 
-ClientMaterial const &ClientMaterial::Decoration::material() const
+const ClientMaterial &ClientMaterial::Decoration::material() const
 {
-    DENG2_ASSERT(d->material);
+    DE_ASSERT(d->material);
     return *d->material;
 }
 
@@ -69,12 +67,12 @@ void ClientMaterial::Decoration::setMaterial(ClientMaterial *newOwner)
     d->material = newOwner;
 }
 
-Vector2i const &ClientMaterial::Decoration::patternSkip() const
+const Vec2i &ClientMaterial::Decoration::patternSkip() const
 {
     return d->patternSkip;
 }
 
-Vector2i const &ClientMaterial::Decoration::patternOffset() const
+const Vec2i &ClientMaterial::Decoration::patternOffset() const
 {
     return d->patternOffset;
 }
@@ -101,24 +99,23 @@ String ClientMaterial::Decoration::describe() const
 
 String ClientMaterial::Decoration::description() const
 {
-    int const numStages = stageCount();
-    String str = _E(b) + describe() + _E(.) + " (" + String::number(numStages) + " stage" + DENG2_PLURAL_S(numStages) + "):";
+    const int numStages = stageCount();
+    String    str       = _E(b) + describe() + _E(.) + " (" + String::asText(numStages) + " stage" +
+                          DE_PLURAL_S(numStages) + "):";
     for (int i = 0; i < numStages; ++i)
     {
-        str += String("\n  [%1] ").arg(i, 2) + _E(>) + stage(i).description() + _E(<);
+        str += Stringf("\n  [%2i] ", i) + _E(>) + stage(i).description() + _E(<);
     }
     return str;
 }
 
-DENG2_PIMPL(ClientMaterial)
+DE_PIMPL(ClientMaterial)
 {
-    AudioEnvironmentId audioEnvironment { AE_NONE };
-
     /// Decorations (owned), to be projected into the world (relative to a Surface).
-    QVector<Decoration *> decorations;
+    List<Decoration *> decorations;
 
     /// Set of draw-context animators (owned).
-    QVector<MaterialAnimator *> animators;
+    List<MaterialAnimator *> animators;
 
     Impl(Public *i) : Base(i) {}
 
@@ -128,13 +125,13 @@ DENG2_PIMPL(ClientMaterial)
         self().clearAllDecorations();
     }
 
-    MaterialAnimator *findAnimator(MaterialVariantSpec const &spec, bool canCreate = false)
+    MaterialAnimator *findAnimator(const MaterialVariantSpec &spec, bool canCreate = false)
     {
-        for (auto iter = animators.constBegin(); iter != animators.constEnd(); ++iter)
+        for (auto *iter : animators)
         {
-            if ((*iter)->variantSpec().compare(spec))
+            if (iter->variantSpec().compare(spec))
             {
-                return const_cast<MaterialAnimator *>(*iter);  // This will do fine.
+                return const_cast<MaterialAnimator *>(iter);  // This will do fine.
             }
         }
 
@@ -169,16 +166,6 @@ bool ClientMaterial::isAnimated() const
     return false;
 }
 
-AudioEnvironmentId ClientMaterial::audioEnvironment() const
-{
-    return (isDrawable()? d->audioEnvironment : AE_NONE);
-}
-
-void ClientMaterial::setAudioEnvironment(AudioEnvironmentId newEnvironment)
-{
-    d->audioEnvironment = newEnvironment;
-}
-
 int ClientMaterial::decorationCount() const
 {
     return d->decorations.count();
@@ -204,7 +191,7 @@ void ClientMaterial::addDecoration(Decoration *decor)
 
 void ClientMaterial::clearAllDecorations()
 {
-    qDeleteAll(d->decorations); d->decorations.clear();
+    deleteAll(d->decorations); d->decorations.clear();
 
     // Animators refer to decorations.
     clearAllAnimators();
@@ -220,12 +207,12 @@ MaterialAnimator &ClientMaterial::animator(int index) const
     return *d.getConst()->animators[index];
 }
 
-bool ClientMaterial::hasAnimator(MaterialVariantSpec const &spec)
+bool ClientMaterial::hasAnimator(const MaterialVariantSpec &spec)
 {
     return d->findAnimator(spec) != nullptr;
 }
 
-MaterialAnimator &ClientMaterial::getAnimator(MaterialVariantSpec const &spec)
+MaterialAnimator &ClientMaterial::getAnimator(const MaterialVariantSpec &spec)
 {
     return *d->findAnimator(spec, true/*create*/);
 }
@@ -241,11 +228,11 @@ LoopResult ClientMaterial::forAllAnimators(const std::function<LoopResult (Mater
 
 void ClientMaterial::clearAllAnimators()
 {
-    qDeleteAll(d->animators);
+    deleteAll(d->animators);
     d->animators.clear();
 }
 
-ClientMaterial &ClientMaterial::find(de::Uri const &uri) // static
+ClientMaterial &ClientMaterial::find(const res::Uri &uri) // static
 {
     return world::Materials::get().material(uri).as<ClientMaterial>();
 }
@@ -254,11 +241,12 @@ String ClientMaterial::description() const
 {
     String str = world::Material::description();
 
-    str += _E(b) " x" + String::number(animatorCount()) + _E(.)
-         + _E(l) " EnvClass: \"" _E(.) + (audioEnvironment() == AE_NONE? "N/A" : S_AudioEnvironmentName(audioEnvironment())) + "\"";
+    str += _E(b) " x" + String::asText(animatorCount()) + _E(.) + _E(l) " EnvClass: \"" _E(.) +
+           (audioEnvironment() == AE_NONE ? "N/A" : S_AudioEnvironmentName(audioEnvironment())) +
+           "\"";
 
     // Add the decoration config:
-    for (Decoration const *decor : d->decorations)
+    for (const auto *decor : d->decorations)
     {
         str += "\n" + decor->description();
     }

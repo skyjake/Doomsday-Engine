@@ -16,10 +16,10 @@
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
-#ifndef DENG_CLIENT_RENDER_STORE_H
-#define DENG_CLIENT_RENDER_STORE_H
+#ifndef DE_CLIENT_RENDER_STORE_H
+#define DE_CLIENT_RENDER_STORE_H
 
-#include <de/Vector>
+#include <de/vector.h>
 
 /**
  * Geometry backing store (arrays).
@@ -27,10 +27,10 @@
  */
 struct Store
 {
-    de::Vector3f *posCoords    = nullptr;
-    de::Vector4ub *colorCoords = nullptr;
-    de::Vector2f *texCoords[2];
-    de::Vector2f *modCoords    = nullptr;
+    de::Vec3f *posCoords    = nullptr;
+    de::Vec4ub *colorCoords = nullptr;
+    de::Vec2f *texCoords[2];
+    de::Vec2f *modCoords    = nullptr;
 
     Store();
     ~Store();
@@ -46,4 +46,4 @@ private:
     de::duint _vertMax   = 0;
 };
 
-#endif // DENG_CLIENT_RENDER_STORE_H
+#endif // DE_CLIENT_RENDER_STORE_H

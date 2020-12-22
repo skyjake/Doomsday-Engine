@@ -29,7 +29,7 @@ AbstractFont::AbstractFont(FontManifest &manifest)
 
 AbstractFont::~AbstractFont()
 {
-    DENG2_FOR_AUDIENCE(Deletion, i) i->fontBeingDeleted(*this);
+    DE_NOTIFY_VAR(Deletion, i) i->fontBeingDeleted(*this);
 }
 
 void AbstractFont::glInit() const
@@ -43,7 +43,7 @@ FontManifest &AbstractFont::manifest() const
     return _manifest;
 }
 
-AbstractFont::Flags AbstractFont::flags() const
+Flags AbstractFont::flags() const
 {
     return _flags;
 }

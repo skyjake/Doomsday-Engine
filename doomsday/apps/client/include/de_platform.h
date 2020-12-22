@@ -31,20 +31,7 @@
 /*
  * The Win32 Platform
  */
-#if defined(WIN32)
-
-#if __cplusplus
-// must be included before anything that defines open:
-/// @todo Windows: Get rid of the open macro.
-#  include <QIODevice>
-#  include <QFile>
-#  include <QTemporaryFile>
-#  include <QSaveFile>
-#  include <QProcess>
-#  ifndef DENG2_QT_5_0_OR_NEWER
-#    include <QAbstractFileEngine>
-#  endif
-#endif
+#if defined (WIN32)
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -61,12 +48,13 @@
 #define strdup   _strdup
 #define spawnlp  _spawnlp
 
-#endif                          // WIN32
+#endif // defined(WIN32)
 
 /*
  * The Unix Platform
  */
 #if defined(UNIX)
+
 #include <string.h>
 #include <strings.h>
 #include <errno.h>
@@ -80,7 +68,7 @@
 #endif
 
 typedef long long int INTEGER64;
-typedef unsigned int DWORD;
+typedef unsigned int  DWORD;
 
 /*
  * Networking.
@@ -96,15 +84,15 @@ typedef unsigned int DWORD;
 #define _getcwd         getcwd
 #define _chdir          chdir
 
-#endif                          // UNIX
+#endif // defined(UNIX)
 
 // Initialization code.
 #ifdef WIN32
-#  include "dd_winit.h"
+#  include "init_windows.h"
 #else
 #  ifdef UNIX
-#    include "dd_uinit.h"
+#    include "init_unix.h"
 #  endif
 #endif
 
-#endif                          // __DOOMSDAY_PLATFORM__
+#endif // __DOOMSDAY_PLATFORM__

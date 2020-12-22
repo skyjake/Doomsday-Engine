@@ -22,19 +22,17 @@
 #include "clientapp.h"
 #include "clientplayer.h"
 
-#include <de/Animation>
-#include <de/Drawable>
-#include <de/GLInfo>
-#include <de/GLTextureFramebuffer>
-#include <de/LogBuffer>
-
-#include <QList>
+#include <de/animation.h>
+#include <de/drawable.h>
+#include <de/glinfo.h>
+#include <de/gltextureframebuffer.h>
+#include <de/logbuffer.h>
 
 using namespace de;
 
 D_CMD(PostFx);
 
-DENG2_PIMPL(PostProcessing)
+DE_PIMPL(PostProcessing)
 {
     enum { PassThroughProgram = 0, ActiveProgram = 1 };
 
@@ -51,10 +49,10 @@ DENG2_PIMPL(PostProcessing)
         float fade;
         TimeSpan span;
 
-        QueueEntry(String const &name, float f, TimeSpan const &s)
+        QueueEntry(const String &name, float f, TimeSpan s)
             : shaderName(name), fade(f), span(s) {}
     };
-    typedef QList<QueueEntry> Queue;
+    typedef List<QueueEntry> Queue;
     Queue queue;
 
     typedef GLBufferT<Vertex2Tex> VBuf;
@@ -64,7 +62,7 @@ DENG2_PIMPL(PostProcessing)
 
     ~Impl()
     {
-        DENG2_ASSERT(!frame.isReady()); // deinited earlier
+        DE_ASSERT(!frame.isReady()); // deinited earlier
     }
 
     void attachUniforms(GLProgram &program)
@@ -72,7 +70,7 @@ DENG2_PIMPL(PostProcessing)
         program << uMvpMatrix << uFrame << uFadeInOut;
     }
 
-    bool setShader(String const &name)
+    bool setShader(const String &name)
     {
         try
         {
@@ -84,7 +82,7 @@ DENG2_PIMPL(PostProcessing)
             LOG_GL_MSG("Post-processing shader \"fx.post.%s\"") << name;
             return true;
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_GL_WARNING("Failed to set shader to \"fx.post.%s\":\n%s")
                     << name << er.asText();
@@ -104,10 +102,10 @@ DENG2_PIMPL(PostProcessing)
 
         // Drawable for drawing stuff back to the original target.
         VBuf *buf = new VBuf;
-        buf->setVertices(gl::TriangleStrip,
+        buf->setVertices(gfx::TriangleStrip,
                          VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1),
                                                   Rectanglef(0, 1, 1, -1)),
-                         gl::Static);
+                         gfx::Static);
         frame.addBuffer(buf);
 
         // The default program is a pass-through shader.
@@ -163,12 +161,12 @@ bool PostProcessing::isActive() const
     return d->isActive();
 }
 
-void PostProcessing::fadeInShader(String const &fxPostShader, TimeSpan const &span)
+void PostProcessing::fadeInShader(const String &fxPostShader, TimeSpan span)
 {
     d->queue.append(Impl::QueueEntry(fxPostShader, 1, span));
 }
 
-void PostProcessing::fadeOut(TimeSpan const &span)
+void PostProcessing::fadeOut(TimeSpan span)
 {
     d->queue.append(Impl::QueueEntry("", 0, span));
 }
@@ -204,7 +202,7 @@ void PostProcessing::update()
     }
 }
 
-void PostProcessing::draw(Matrix4f const &mvpMatrix, GLTexture const &frame)
+void PostProcessing::draw(const Mat4f &mvpMatrix, const GLTexture &frame)
 {
     d->uMvpMatrix = mvpMatrix;
     d->uFrame     = frame;
@@ -220,11 +218,11 @@ void PostProcessing::consoleRegister() // static
 
 D_CMD(PostFx)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
     int console = String(argv[1]).toInt();
-    String const shader = argv[2];
-    TimeSpan const span = (argc == 4? String(argv[3]).toDouble() : 0);
+    const String shader = argv[2];
+    const TimeSpan span = (argc == 4? String(argv[3]).toDouble() : 0);
 
     if (console < 0 || console >= DDMAXPLAYERS)
     {

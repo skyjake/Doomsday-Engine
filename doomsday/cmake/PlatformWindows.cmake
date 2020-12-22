@@ -1,11 +1,11 @@
-set (DENG_PLATFORM_SUFFIX windows)
-set (DENG_AMETHYST_PLATFORM WIN32)
+set (DE_PLATFORM_SUFFIX windows)
+set (DE_AMETHYST_PLATFORM WIN32)
 
 if (NOT CYGWIN)
-    set (DENG_INSTALL_DATA_DIR   "data")
-    set (DENG_INSTALL_DOC_DIR    "doc")
-    set (DENG_INSTALL_LIB_DIR    "bin")
-    set (DENG_INSTALL_PLUGIN_DIR "${DENG_INSTALL_LIB_DIR}/plugins")
+    set (DE_INSTALL_DATA_DIR   "data")
+    set (DE_INSTALL_DOC_DIR    "doc")
+    set (DE_INSTALL_LIB_DIR    "bin")
+    set (DE_INSTALL_PLUGIN_DIR "${DE_INSTALL_LIB_DIR}/plugins")
 endif ()
 
 add_definitions (
@@ -14,22 +14,23 @@ add_definitions (
     -D_WIN32_WINNT=0x0601
     -D_CRT_SECURE_NO_WARNINGS
     -D_USE_MATH_DEFINES
-    -DDENG_PLATFORM_ID="win-${DENG_ARCH}"
+    -DDE_PLATFORM_ID="win-${DE_ARCH}"
+    -DDE_WINDOWS=1
 )
 
 # Code signing.
-set (DENG_SIGNTOOL_CERT "" CACHE STRING "Name of the certificate for signing files.")
-set (DENG_SIGNTOOL_PIN "" CACHE STRING "PIN for signing key.")
-set (DENG_SIGNTOOL_TIMESTAMP "" CACHE STRING "URL of the signing timestamp server.")
+set (DE_SIGNTOOL_CERT "" CACHE STRING "Name of the certificate for signing files.")
+set (DE_SIGNTOOL_PIN "" CACHE STRING "PIN for signing key.")
+set (DE_SIGNTOOL_TIMESTAMP "" CACHE STRING "URL of the signing timestamp server.")
 find_program (SIGNTOOL_COMMAND signtool)
 mark_as_advanced (SIGNTOOL_COMMAND)
 
 function (deng_signtool path comp)
     install (CODE "message (STATUS \"Signing ${path}...\")
-        execute_process (COMMAND \"${SIGNTOOL_COMMAND}\" -pin ${DENG_SIGNTOOL_PIN}
+        execute_process (COMMAND \"${SIGNTOOL_COMMAND}\" -pin ${DE_SIGNTOOL_PIN}
             sign
-            /n \"${DENG_SIGNTOOL_CERT}\"
-            /t ${DENG_SIGNTOOL_TIMESTAMP}
+            /n \"${DE_SIGNTOOL_CERT}\"
+            /t ${DE_SIGNTOOL_TIMESTAMP}
             /fd sha1
             /v
             \"\${CMAKE_INSTALL_PREFIX}/${path}\"
@@ -47,6 +48,12 @@ if (MSVC)
     # Disable warnings about unreferenced formal parameters (C4100).
     append_unique (CMAKE_C_FLAGS   "-w14505 -wd4100 -wd4748")
     append_unique (CMAKE_CXX_FLAGS "-w14505 -wd4100 -wd4748")
+
+    # de::Error is derived from std::runtime_error (non-dll-interface class).
+    append_unique (CMAKE_CXX_FLAGS "-wd4251 -wd4275")
+
+    # Possible loss of data due to number conversion.
+    append_unique (CMAKE_CXX_FLAGS "-wd4244")
 
     # Enable multi-processor compiling.
     append_unique (CMAKE_C_FLAGS   "-MP")
@@ -87,16 +94,16 @@ if (MSVC)
     if (MSVC14)
         if (NOT VC_REDIST_LIBS)
             file (GLOB VC_REDIST_LIBS
-                ${VC_REDIST_DIR}/${DENG_ARCH}/Microsoft.VC140.CRT/msvc*dll
-                ${VC_REDIST_DIR}/${DENG_ARCH}/Microsoft.VC140.CRT/vcruntime*dll
-                ${WINDOWS_KIT_REDIST_DLL_DIR}/${DENG_ARCH}/*.dll
+                ${VC_REDIST_DIR}/${DE_ARCH}/Microsoft.VC140.CRT/msvc*dll
+                ${VC_REDIST_DIR}/${DE_ARCH}/Microsoft.VC140.CRT/vcruntime*dll
+                ${WINDOWS_KIT_REDIST_DLL_DIR}/${DE_ARCH}/*.dll
             )
             set (VC_REDIST_LIBS ${VC_REDIST_LIBS} CACHE STRING "Visual C++/UCRT redistributable libraries")
         endif ()
         if (NOT VC_REDIST_LIBS_DEBUG)
             file (GLOB VC_REDIST_LIBS_DEBUG
-                ${VC_REDIST_DIR}/Debug_NonRedist/${DENG_ARCH}/Microsoft.VC140.DebugCRT/msvc*
-                ${VC_REDIST_DIR}/Debug_NonRedist/${DENG_ARCH}/Microsoft.VC140.DebugCRT/vcruntime*
+                ${VC_REDIST_DIR}/Debug_NonRedist/${DE_ARCH}/Microsoft.VC140.DebugCRT/msvc*
+                ${VC_REDIST_DIR}/Debug_NonRedist/${DE_ARCH}/Microsoft.VC140.DebugCRT/vcruntime*
             )
             set (VC_REDIST_LIBS_DEBUG ${VC_REDIST_LIBS_DEBUG} CACHE STRING
                 "Visual C++ redistributable libraries (debug builds)"

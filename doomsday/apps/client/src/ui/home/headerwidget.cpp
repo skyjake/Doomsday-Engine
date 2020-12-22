@@ -18,16 +18,16 @@
 
 #include "ui/home/headerwidget.h"
 
-#include <de/Config>
-#include <de/LabelWidget>
-#include <de/ButtonWidget>
-#include <de/PanelWidget>
-#include <de/CallbackAction>
+#include <de/config.h>
+#include <de/labelwidget.h>
+#include <de/buttonwidget.h>
+#include <de/panelwidget.h>
+#include <de/callbackaction.h>
 
 using namespace de;
 
-DENG_GUI_PIMPL(HeaderWidget)
-, DENG2_OBSERVES(Variable, Change)
+DE_GUI_PIMPL(HeaderWidget)
+, DE_OBSERVES(Variable, Change)
 {
     LabelWidget *logo;
     LabelWidget *logoBg; /// @todo Backgrounds should support ProceduralImages. -jk
@@ -54,7 +54,7 @@ DENG_GUI_PIMPL(HeaderWidget)
         showDescriptionVar().audienceForChange() += this;
     }
 
-    void variableValueChanged(Variable &, Value const &newValue)
+    void variableValueChanged(Variable &, const Value &newValue)
     {
         if (newValue.isTrue())
         {
@@ -66,7 +66,7 @@ DENG_GUI_PIMPL(HeaderWidget)
         }
     }
 
-    static Variable const &showDescriptionVar()
+    static const Variable &showDescriptionVar()
     {
         return Config::get("home.showColumnDescription");
     }
@@ -89,7 +89,7 @@ HeaderWidget::HeaderWidget()
 
     d->logo->setSizePolicy(ui::Filled, ui::Filled);
     d->logo->setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
-    //d->logo->set(Background(Vector4f(0, 0, 0, 1)));
+    //d->logo->set(Background(Vec4f(0, 0, 0, 1)));
 
     d->logoBg->setSizePolicy(ui::Filled, ui::Filled);
     d->logoBg->setImageFit(ui::FitToSize);
@@ -169,14 +169,14 @@ PopupButtonWidget &HeaderWidget::menuButton()
     return *d->menuButton;
 }
 
-void HeaderWidget::setLogoImage(DotPath const &imageId)
+void HeaderWidget::setLogoImage(const DotPath &imageId)
 {
     d->logo->setStyleImage(imageId);
     d->logo->rule().setInput(Rule::Width, rule("home.header.logo.width"));
     d->title->margins().setLeft("gap");
 }
 
-void HeaderWidget::setLogoBackground(DotPath const &imageId)
+void HeaderWidget::setLogoBackground(const DotPath &imageId)
 {
     d->logoBg->setStyleImage(imageId);
 }

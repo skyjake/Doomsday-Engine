@@ -16,46 +16,44 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_SIDEBARWIDGET_H
-#define DENG_CLIENT_UI_SIDEBARWIDGET_H
+#ifndef DE_CLIENT_UI_SIDEBARWIDGET_H
+#define DE_CLIENT_UI_SIDEBARWIDGET_H
 
-#include <de/ButtonWidget>
-#include <de/ConstantRule>
-#include <de/PanelWidget>
-#include <de/ScrollAreaWidget>
-#include <de/SequentialLayout>
+#include <de/buttonwidget.h>
+#include <de/constantrule.h>
+#include <de/panelwidget.h>
+#include <de/scrollareawidget.h>
+#include <de/sequentiallayout.h>
 
 /**
  * Editor for changing model asset parameters.
  */
 class SidebarWidget : public de::PanelWidget
 {
-    Q_OBJECT
-
 public:
-    SidebarWidget(de::String const &title, de::String const &name = de::String());
+    SidebarWidget(const de::String &title, const de::String &name = {});
 
     de::SequentialLayout &layout();
     de::LabelWidget &     title();
     de::ScrollAreaWidget &containerWidget();
     de::ButtonWidget &    closeButton();
     de::IndirectRule &    firstColumnWidth();
-    de::Rule const &      maximumOfAllGroupFirstColumns() const;
+    const de::Rule &      maximumOfAllGroupFirstColumns() const;
 
 protected:
     /**
      * @param minWidth     Minimum width.
      * @param extraHeight  Height in addition to title and layout.
      */
-    void updateSidebarLayout(de::Rule const &minWidth    = de::ConstantRule::zero(),
-                             de::Rule const &extraHeight = de::ConstantRule::zero());
+    void updateSidebarLayout(const de::Rule &minWidth    = de::ConstantRule::zero(),
+                             const de::Rule &extraHeight = de::ConstantRule::zero());
 
     void preparePanelForOpening();
     void panelDismissed();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 
-#endif // DENG_CLIENT_UI_SIDEBARWIDGET_H
+#endif // DE_CLIENT_UI_SIDEBARWIDGET_H

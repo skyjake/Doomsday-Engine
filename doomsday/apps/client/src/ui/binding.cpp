@@ -19,20 +19,20 @@
 
 #include "ui/binding.h"
 
-#include <de/RecordValue>
+#include <de/recordvalue.h>
 
 using namespace de;
 
 static int idCounter = 0;
 
-static String const VAR_CONDITION("condition");
+static const char *VAR_CONDITION = "condition";
 
 Record &Binding::def()
 {
     return const_cast<Record &>(accessedRecord());
 }
 
-Record const &Binding::def() const
+const Record &Binding::def() const
 {
     return accessedRecord();
 }
@@ -80,12 +80,12 @@ Binding::CompiledConditionRecord &Binding::condition(int index)
     return *static_cast<CompiledConditionRecord *>(def().geta(VAR_CONDITION)[index].as<RecordValue>().record());
 }
 
-Binding::CompiledConditionRecord const &Binding::condition(int index) const
+const Binding::CompiledConditionRecord &Binding::condition(int index) const
 {
-    return *static_cast<CompiledConditionRecord const *>(geta(VAR_CONDITION)[index].as<RecordValue>().record());
+    return *static_cast<const CompiledConditionRecord *>(geta(VAR_CONDITION)[index].as<RecordValue>().record());
 }
 
-bool Binding::equalConditions(Binding const &other) const
+bool Binding::equalConditions(const Binding &other) const
 {
     // Quick test (assumes there are no duplicated conditions).
     if (def()[VAR_CONDITION].array().elements().count() != other.geta(VAR_CONDITION).elements().count())
@@ -93,16 +93,16 @@ bool Binding::equalConditions(Binding const &other) const
         return false;
     }
 
-    ArrayValue const &conds = def().geta(VAR_CONDITION);
-    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
+    const ArrayValue &conds = def().geta(VAR_CONDITION);
+    DE_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
-        auto const &a = *static_cast<CompiledConditionRecord const *>((*i)->as<RecordValue>().record());
+        const auto &a = *static_cast<const CompiledConditionRecord *>((*i)->as<RecordValue>().record());
 
         bool found = false;
-        ArrayValue const &conds2 = other.geta(VAR_CONDITION);
-        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds2.elements())
+        const ArrayValue &conds2 = other.geta(VAR_CONDITION);
+        DE_FOR_EACH_CONST(ArrayValue::Elements, i, conds2.elements())
         {
-            auto const &b = *static_cast<CompiledConditionRecord const *>((*i)->as<RecordValue>().record());
+            const auto &b = *static_cast<const CompiledConditionRecord *>((*i)->as<RecordValue>().record());
             if (a.compiled() == b.compiled())
             {
                 found = true;
@@ -127,7 +127,7 @@ int Binding::newIdentifier() // static
     return id;
 }
 
-Binding::CompiledCondition::CompiledCondition(Record const &rec)
+Binding::CompiledCondition::CompiledCondition(const Record &rec)
     : type(ConditionType(rec.geti("type")))
     , test(ControlTest(rec.geti("test")))
     , device(rec.geti("device"))
@@ -137,7 +137,7 @@ Binding::CompiledCondition::CompiledCondition(Record const &rec)
     , multiplayer(rec.getb("multiplayer"))
 {}
 
-bool Binding::CompiledCondition::operator == (CompiledCondition const &other) const
+bool Binding::CompiledCondition::operator == (const CompiledCondition &other) const
 {
     return (type        == other.type &&
             test        == other.test &&

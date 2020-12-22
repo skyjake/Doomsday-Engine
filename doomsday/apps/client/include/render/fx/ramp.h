@@ -35,7 +35,7 @@ public:
     void draw();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace fx

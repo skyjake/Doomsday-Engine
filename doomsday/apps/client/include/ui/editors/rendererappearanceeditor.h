@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_RENDERERAPPEARANCEEDITOR_H
-#define DENG_CLIENT_RENDERERAPPEARANCEEDITOR_H
+#ifndef DE_CLIENT_RENDERERAPPEARANCEEDITOR_H
+#define DE_CLIENT_RENDERERAPPEARANCEEDITOR_H
 
-#include <de/IPersistent>
+#include <de/ipersistent.h>
 #include "ui/widgets/sidebarwidget.h"
 
 /**
@@ -32,16 +32,14 @@
 class RendererAppearanceEditor : public SidebarWidget
                                , public de::IPersistent
 {
-    Q_OBJECT
-
 public:
     RendererAppearanceEditor();
 
     void operator >> (de::PersistentState &toState) const;
-    void operator << (de::PersistentState const &fromState);
+    void operator << (const de::PersistentState &fromState);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_RENDERERAPPEARANCEEDITOR_H
+#endif // DE_CLIENT_RENDERERAPPEARANCEEDITOR_H

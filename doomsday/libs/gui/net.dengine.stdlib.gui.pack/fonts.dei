@@ -1,0 +1,128 @@
+# Fonts for the default UI style
+#
+# - family: font family name
+# - size can be "pt" or "px", defaults to "pt"
+# - weight: normal, bold, light
+# - style: normal, italic
+# - transform: normal, uppercase, lowercase
+
+script {
+    import Version, gui, DisplayMode
+
+    # Load the fonts contained in this pack.
+    # Note that this pack may be included from other UI styles, so we'll use an
+    # absolute directory to find the font files.
+    def loadFonts()
+        import App
+        fontDir = "/packs/net.dengine.stdlib.gui/fonts"
+        fontStyles = ['Regular', 'Bold', 'Italic', 'BoldItalic', 'Light', 'LightItalic']
+        for style in fontStyles
+            App.loadFont(fontDir / ("Source Sans Pro/SourceSansPro-%s.ttf" % style))
+        end
+        # Monospace font, too.
+        for style in ['Regular', 'Bold', 'Light']
+            App.loadFont(fontDir / ("Source Code Pro/SourceCodePro-%s.ttf" % style))
+        end
+    end
+}
+
+group {
+    # All platforms use the same stbtt TrueType font renderer.
+    condition: True
+
+    script { loadFonts() }
+
+    font default {
+        family: SourceSansPro
+        size: 16pt
+        weight: normal
+        style: normal
+    }
+
+    font monospace inherits default {
+        family: SourceCodePro
+        size: 12pt
+    }
+}
+
+font title inherits default {
+    size $: gui.scale(self.size, 1.75)
+    weight: light
+}
+
+font heading inherits title {
+    size $: gui.scale(default.size, 1.2)
+}
+
+font small inherits default {
+    size $: gui.scale(self.size, 0.75)
+}
+
+menu {
+    font empty inherits heading {
+        weight: bold
+    }
+}
+
+editor {
+    font plaintext inherits default {}
+    font hint.default inherits default {
+        style: italic
+        weight: light
+    }
+    font hint.small inherits small {
+        style: italic
+        weight: light
+    }
+}
+
+separator {
+    font empty inherits default {
+        size $: gui.scale(self.size, 0.5)
+    }
+    font label inherits default {
+        #condition: Version.OS == 'macx' or Version.OS == 'ios'
+        size $: gui.scale(self.size, 0.7)
+        transform: uppercase
+    }
+    #font label inherits small {
+    #    condition: Version.OS != 'macx' and Version.OS != 'ios'
+    #    weight: bold
+    #}
+    font annotation inherits small {}
+}
+
+choice {
+    font selected inherits default {
+        weight: bold
+    }
+}
+
+tab {
+    font label inherits title {
+        size $: gui.scale(self.size, 0.75)
+    }
+    font selected inherits tab.label {}
+}
+
+slider {
+    font label inherits small {}
+    font value inherits slider.label {
+        weight: bold
+    }
+}
+
+log {
+    font normal inherits default {}
+}
+
+document {
+    font monospace inherits monospace {}
+}
+
+script {
+    # Make monospace a bit smaller on Windows - Courier New is pretty wide.
+    if Version.OS == 'windows'
+        document.monospace.size = '9pt'
+    end
+}

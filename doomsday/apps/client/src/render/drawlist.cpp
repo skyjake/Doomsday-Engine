@@ -21,9 +21,9 @@
 #include "de_base.h"
 #include "render/drawlist.h"
 
-#include <de/concurrency.h>
-#include <de/memoryzone.h>
-#include <de/GLInfo>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/memoryzone.h>
+#include <de/glinfo.h>
 #include "clientapp.h"
 #include "gl/gl_main.h"
 #include "render/rend_main.h"
@@ -60,31 +60,30 @@ enum DrawCondition
     SetMatrixTexture   = SetMatrixTexture0 | SetMatrixTexture1
 };
 
-static duint32 const BLEND_MODE_MASK = 0xf;
+using DrawConditions = Flags;
 
-Q_DECLARE_FLAGS(DrawConditions, DrawCondition)
-Q_DECLARE_OPERATORS_FOR_FLAGS(DrawConditions)
+static const duint32 BLEND_MODE_MASK = 0xf;
 
-DrawList::PrimitiveParams::PrimitiveParams(de::gl::Primitive type,
-                                           de::Vector2f texScale,
-                                           de::Vector2f texOffset,
-                                           de::Vector2f detailTexScale,
-                                           de::Vector2f detailTexOffset,
-                                           Flags        flags,
-                                           blendmode_t  blendMode,
-                                           DGLuint      modTexture,
-                                           de::Vector3f modColor)
-    : type           (type)
+DrawList::PrimitiveParams::PrimitiveParams(gfx::Primitive type,
+                                           de::Vec2f      texScale,
+                                           de::Vec2f      texOffset,
+                                           de::Vec2f      detailTexScale,
+                                           de::Vec2f      detailTexOffset,
+                                           Flags          flags,
+                                           blendmode_t    blendMode,
+                                           DGLuint        modTexture,
+                                           de::Vec3f      modColor)
+    : type(type)
     , flags_blendMode(uint(blendMode) | uint(flags))
-    , texScale       (texScale)
-    , texOffset      (texOffset)
-    , detailTexScale (detailTexScale)
+    , texScale(texScale)
+    , texOffset(texOffset)
+    , detailTexScale(detailTexScale)
     , detailTexOffset(detailTexOffset)
-    , modTexture     (modTexture)
-    , modColor       (modColor)
+    , modTexture(modTexture)
+    , modColor(modColor)
 {}
 
-DENG2_PIMPL(DrawList)
+DE_PIMPL(DrawList)
 {
     /**
      * Each Element begins a block of GL commands/geometry to apply/transfer.
@@ -101,7 +100,7 @@ DENG2_PIMPL(DrawList)
         }
 
         struct Data {
-            Store const *buffer;
+            const Store *buffer;
 
             // Element indices into the global backing store for the geometry.
             // These are always contiguous and all are used (some are shared):
@@ -114,18 +113,18 @@ DENG2_PIMPL(DrawList)
             /**
              * Draw the geometry for this element.
              */
-            void draw(DrawConditions const &conditions, TexUnitMap const &texUnitMap)
+            void draw(const DrawConditions &conditions, const TexUnitMap &texUnitMap)
             {
-                DENG2_ASSERT(buffer);
+                DE_ASSERT(buffer);
 
                 if (conditions & SetLightEnv)
                 {
                     // Use the correct texture and color for the light.
                     DGL_SetInteger(DGL_ACTIVE_TEXTURE, (conditions & SetLightEnv0)? 0 : 1);
                     GL_BindTextureUnmanaged(!renderTextures? 0 : primitive.modTexture,
-                                            gl::ClampToEdge, gl::ClampToEdge);
+                                            gfx::ClampToEdge, gfx::ClampToEdge);
 
-                    DGL_SetModulationColor(Vector4f(primitive.modColor, 0.f));
+                    DGL_SetModulationColor(Vec4f(primitive.modColor, 0.f));
                 }
 
                 if (conditions & SetMatrixTexture)
@@ -186,14 +185,14 @@ DENG2_PIMPL(DrawList)
                     GL_BlendMode(blendmode_t(primitive.flags_blendMode & BLEND_MODE_MASK));
                 }
 
-                DGL_Begin(primitive.type == gl::TriangleStrip? DGL_TRIANGLE_STRIP : DGL_TRIANGLE_FAN);
+                DGL_Begin(primitive.type == gfx::TriangleStrip? DGL_TRIANGLE_STRIP : DGL_TRIANGLE_FAN);
                 for (duint i = 0; i < numIndices; ++i)
                 {
-                    duint const index = indices[i];
+                    const duint index = indices[i];
 
                     for (dint k = 0; k < MAX_TEX_UNITS; ++k)
                     {
-                        Vector2f const *tc = nullptr;  // No mapping.
+                        const Vec2f *tc = nullptr;  // No mapping.
                         switch (texUnitMap[k])
                         {
                         case AttributeSpec::TexCoord0:   tc = buffer->texCoords[0]; break;
@@ -211,11 +210,11 @@ DENG2_PIMPL(DrawList)
 
                     if (!(conditions & NoColor))
                     {
-                        Vector4ub const &color = buffer->colorCoords[index];
+                        const Vec4ub &color = buffer->colorCoords[index];
                         DGL_Color4ub(color.x, color.y, color.z, color.w);
                     }
 
-                    Vector3f const &pos = buffer->posCoords[index];
+                    const Vec3f &pos = buffer->posCoords[index];
                     DGL_Vertex3f(pos.x, pos.z, pos.y);
                 }
                 DGL_End();
@@ -262,7 +261,7 @@ DENG2_PIMPL(DrawList)
     duint8 *cursor = nullptr;  ///< Data pointer for reading/writing.
     Element *last  = nullptr;  ///< Last element (if any).
 
-    Impl(Public *i, Spec const &spec) : Base(i), spec(spec) {}
+    Impl(Public *i, const Spec &spec) : Base(i), spec(spec) {}
     ~Impl() { clearAllData(); }
 
     void clearAllData()
@@ -271,7 +270,7 @@ DENG2_PIMPL(DrawList)
         {
             // All the list data will be destroyed.
             Z_Free(data); data = nullptr;
-#ifdef DENG_DEBUG
+#ifdef DE_DEBUG
             Z_CheckHeap();
 #endif
         }
@@ -287,23 +286,23 @@ DENG2_PIMPL(DrawList)
     void *allocateData(dsize bytes)
     {
         // Number of extra bytes to keep allocated in the end of each list.
-        dint const PADDING = 16;
+        const dint PADDING = 16;
 
         if (!bytes) return nullptr;
 
         // We require the extra bytes because we want that the end of the list data is
         // always safe for writing-in-advance. This is needed when the 'end of data'
         // marker is written.
-        dint const startOffset = cursor - data;
-        dsize const required   = startOffset + bytes + PADDING;
+        const dint startOffset = cursor - data;
+        const dsize required   = startOffset + bytes + PADDING;
 
         // First check that the data buffer of the list is large enough.
         if (required > dataSize)
         {
             // Offsets must be preserved.
-            duint8 const *oldData   = data;
-            dint const cursorOffset = (cursor? cursor - oldData : -1);
-            dint const lastOffset   = (last? (duint8 *) last - oldData : -1);
+            const duint8 *oldData   = data;
+            const dint cursorOffset = (cursor? cursor - oldData : -1);
+            const dint lastOffset   = (last? (duint8 *) last - oldData : -1);
 
             // Allocate more memory for the data buffer.
             if (dataSize == 0)
@@ -358,13 +357,13 @@ DENG2_PIMPL(DrawList)
         switch (mode)
         {
         case DM_SKYMASK:
-            DENG2_ASSERT(spec.group == SkyMaskGeom);
+            DE_ASSERT(spec.group == SkyMaskGeom);
 
             // Render all primitives on the list without discrimination.
             return NoColor;
 
         case DM_ALL:  // All surfaces.
-            DENG2_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
+            DE_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
 
             // Should we do blending?
             if (spec.unit(TU_INTER).hasTexture())
@@ -376,7 +375,7 @@ DENG2_PIMPL(DrawList)
                 GL_BindTo(spec.unit(TU_INTER  ), 1);
                 DGL_ModulateTexture(2);
 
-                dfloat color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
+                Vec4f color{0, 0, 0, spec.unit(TU_INTER).opacity};
                 DGL_SetModulationColor(color);
             }
             else if (!spec.unit(TU_PRIMARY).hasTexture())
@@ -399,27 +398,27 @@ DENG2_PIMPL(DrawList)
             return SetMatrixTexture0;
 
         case DM_LIGHT_MOD_TEXTURE:
-            DENG2_ASSERT(spec.group == LitGeom);
+            DE_ASSERT(spec.group == LitGeom);
 
             // Modulate sector light, dynamic light and regular texture.
             GL_BindTo(spec.unit(TU_PRIMARY), 1);
             return SetMatrixTexture1 | SetLightEnv0 | JustOneLight | NoBlend;
 
         case DM_TEXTURE_PLUS_LIGHT:
-            DENG2_ASSERT(spec.group == LitGeom);
+            DE_ASSERT(spec.group == LitGeom);
 
             GL_BindTo(spec.unit(TU_PRIMARY), 0);
             return SetMatrixTexture0 | SetLightEnv1 | NoBlend;
 
         case DM_FIRST_LIGHT:
-            DENG2_ASSERT(spec.group == LitGeom);
+            DE_ASSERT(spec.group == LitGeom);
 
             // Draw all primitives with more than one light
             // and all primitives which will have a blended texture.
             return SetLightEnv0 | ManyLights | Blend;
 
         case DM_BLENDED: {
-            DENG2_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
+            DE_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
 
             // Only render the blended surfaces.
             if (!spec.unit(TU_INTER).hasTexture())
@@ -432,12 +431,12 @@ DENG2_PIMPL(DrawList)
             GL_BindTo(spec.unit(TU_INTER  ), 1);
             DGL_ModulateTexture(2);
 
-            dfloat color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
+            Vec4f color{0, 0, 0, spec.unit(TU_INTER).opacity};
             DGL_SetModulationColor(color);
             return SetMatrixTexture0 | SetMatrixTexture1; }
 
         case DM_BLENDED_FIRST_LIGHT:
-            DENG2_ASSERT(spec.group == LitGeom);
+            DE_ASSERT(spec.group == LitGeom);
 
             // Only blended surfaces.
             if (!spec.unit(TU_INTER).hasTexture())
@@ -447,20 +446,20 @@ DENG2_PIMPL(DrawList)
             return SetMatrixTexture1 | SetLightEnv0;
 
         case DM_WITHOUT_TEXTURE:
-            DENG2_ASSERT(spec.group == LitGeom);
+            DE_ASSERT(spec.group == LitGeom);
 
             // Only render geometries affected by dynlights.
             return 0;
 
         case DM_LIGHTS:
-            DENG2_ASSERT(spec.group == LightGeom);
+            DE_ASSERT(spec.group == LightGeom);
 
             // These lists only contain light geometries.
             GL_Bind(spec.unit(TU_PRIMARY));
             return 0;
 
         case DM_BLENDED_MOD_TEXTURE:
-            DENG2_ASSERT(spec.group == LitGeom);
+            DE_ASSERT(spec.group == LitGeom);
 
             // Blending required.
             if (!spec.unit(TU_INTER).hasTexture())
@@ -472,7 +471,7 @@ DENG2_PIMPL(DrawList)
 
         case DM_MOD_TEXTURE:
         case DM_MOD_TEXTURE_MANY_LIGHTS:
-            DENG2_ASSERT(spec.group == LitGeom);
+            DE_ASSERT(spec.group == LitGeom);
 
             // Texture for surfaces with (many) dynamic lights.
             // Should we do blending?
@@ -485,7 +484,7 @@ DENG2_PIMPL(DrawList)
                 GL_BindTo(spec.unit(TU_INTER  ), 1);
                 DGL_ModulateTexture(3);
 
-                dfloat color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
+                Vec4f color{0, 0, 0, spec.unit(TU_INTER).opacity};
                 DGL_SetModulationColor(color);
                 // Render all geometry.
                 return SetMatrixTexture0 | SetMatrixTexture1;
@@ -501,7 +500,7 @@ DENG2_PIMPL(DrawList)
             return SetMatrixTexture0;
 
         case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
-            DENG2_ASSERT(spec.group == LitGeom);
+            DE_ASSERT(spec.group == LitGeom);
 
             // Blending is not done now.
             if (spec.unit(TU_INTER).hasTexture())
@@ -527,7 +526,7 @@ DENG2_PIMPL(DrawList)
             break;
 
         case DM_ALL_DETAILS:
-            DENG2_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
+            DE_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
 
             if (spec.unit(TU_PRIMARY_DETAIL).hasTexture())
             {
@@ -537,7 +536,7 @@ DENG2_PIMPL(DrawList)
             break;
 
         case DM_UNBLENDED_TEXTURE_AND_DETAIL:
-            DENG2_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
+            DE_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
 
             // Only unblended. Details are optional.
             if (spec.unit(TU_INTER).hasTexture())
@@ -564,7 +563,7 @@ DENG2_PIMPL(DrawList)
             break;
 
         case DM_BLENDED_DETAILS: {
-            DENG2_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
+            DE_ASSERT(spec.group == UnlitGeom || spec.group == LitGeom);
 
             // We'll only render blended primitives.
             if (!spec.unit(TU_INTER).hasTexture())
@@ -581,12 +580,12 @@ DENG2_PIMPL(DrawList)
             GL_BindTo(spec.unit(TU_PRIMARY_DETAIL), 0);
             GL_BindTo(spec.unit(TU_INTER_DETAIL  ), 1);
 
-            dfloat color[4] = { 0, 0, 0, spec.unit(TU_INTER_DETAIL).opacity };
+            Vec4f color{0, 0, 0, spec.unit(TU_INTER_DETAIL).opacity};
             DGL_SetModulationColor(color);
             return SetMatrixDTexture0 | SetMatrixDTexture1; }
 
         case DM_SHADOW:
-            DENG2_ASSERT(spec.group == ShadowGeom);
+            DE_ASSERT(spec.group == ShadowGeom);
 
             if (spec.unit(TU_PRIMARY).hasTexture())
             {
@@ -611,14 +610,14 @@ DENG2_PIMPL(DrawList)
             return 0;
 
         case DM_MASKED_SHINY:
-            DENG2_ASSERT(spec.group == ShineGeom);
+            DE_ASSERT(spec.group == ShineGeom);
 
             if (spec.unit(TU_INTER).hasTexture())
             {
                 GL_SelectTexUnits(2);
                 // The intertex holds the info for the mask texture.
                 GL_BindTo(spec.unit(TU_INTER), 1);
-                dfloat color[4] = { 0, 0, 0, 1 };
+                Vec4f color{0, 0, 0, 1};
                 DGL_SetModulationColor(color);
             }
 
@@ -626,7 +625,7 @@ DENG2_PIMPL(DrawList)
 
         case DM_ALL_SHINY:
         case DM_SHINY:
-            DENG2_ASSERT(spec.group == ShineGeom);
+            DE_ASSERT(spec.group == ShineGeom);
 
             GL_BindTo(spec.unit(TU_PRIMARY), 0);
             if (!spec.unit(TU_INTER).hasTexture())
@@ -737,7 +736,7 @@ DENG2_PIMPL(DrawList)
     }
 };
 
-DrawList::DrawList(Spec const &spec) : d(new Impl(this, spec))
+DrawList::DrawList(const Spec &spec) : d(new Impl(this, spec))
 {}
 
 bool DrawList::isEmpty() const
@@ -745,40 +744,45 @@ bool DrawList::isEmpty() const
     return d->last == nullptr;
 }
 
-DrawList &DrawList::write(Store const &buffer,
-                          DrawList::Indices const &indices,
-                          PrimitiveParams const &params)
+DrawList &DrawList::write(const Store &            buffer,
+                          const DrawList::Indices &indices,
+                          const PrimitiveParams &  params)
 {
     if (indices.isEmpty()) return *this;
-    return write(buffer, indices.constData(), indices.size(), params);
+    return write(buffer, indices.data(), indices.size(), params);
 }
 
-DrawList &DrawList::write(Store const &buffer, Indices const &indices, gl::Primitive primitiveType)
+DrawList &DrawList::write(const Store &buffer, const Indices &indices, gfx::Primitive primitiveType)
 {
-    return write(buffer, indices.constData(), indices.size(), primitiveType);
+    return write(buffer, indices.data(), indices.size(), primitiveType);
 }
 
-DrawList &DrawList::write(Store const &buffer, duint const *indices, int indexCount, gl::Primitive primitiveType)
+DrawList &DrawList::write(const Store & buffer,
+                          const duint * indices,
+                          int           indexCount,
+                          gfx::Primitive primitiveType)
 {
-    static PrimitiveParams defaultParams(gl::TriangleFan); // NOTE: rendering is single-threaded atm
+    static PrimitiveParams defaultParams(gfx::TriangleFan); // NOTE: rendering is single-threaded atm
 
     defaultParams.type = primitiveType;
     return write(buffer, indices, indexCount, defaultParams);
 }
 
-DrawList &DrawList::write(Store const &buffer, duint const *indices, int indexCount,
-                          PrimitiveParams const &params)
+DrawList &DrawList::write(const Store &          buffer,
+                          const duint *          indices,
+                          int                    indexCount,
+                          const PrimitiveParams &params)
 {
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     using Parm = PrimitiveParams;
 
     // Sanity check usage.
-    DENG2_ASSERT(!(spec().group == LightGeom  && ((params.flags_blendMode & Parm::OneLight) ||
+    DE_ASSERT(!(spec().group == LightGeom  && ((params.flags_blendMode & Parm::OneLight) ||
                                                   (params.flags_blendMode & Parm::ManyLights) ||
                                                   params.modTexture)));
-    DENG2_ASSERT(!(spec().group == LitGeom    && !Rend_IsMTexLights() && ((params.flags_blendMode & Parm::OneLight) ||
+    DE_ASSERT(!(spec().group == LitGeom    && !Rend_IsMTexLights() && ((params.flags_blendMode & Parm::OneLight) ||
                                                                           params.modTexture)));
-    DENG2_ASSERT(!(spec().group == ShadowGeom && ((params.flags_blendMode & Parm::OneLight) ||
+    DE_ASSERT(!(spec().group == ShadowGeom && ((params.flags_blendMode & Parm::OneLight) ||
                                                   (params.flags_blendMode & Parm::ManyLights) ||
                                                   params.modTexture)));
 #endif
@@ -795,7 +799,7 @@ DrawList &DrawList::write(Store const &buffer, duint const *indices, int indexCo
 
     d->last->data.numIndices = indexCount;
     auto *lti = (duint *) d->allocateData(sizeof(duint) * d->last->data.numIndices);
-    DENG_ASSERT(d->last != nullptr);
+    DE_ASSERT(d->last != nullptr);
     d->last->data.indices = lti;
     for (duint i = 0; i < d->last->data.numIndices; ++i)
     {
@@ -811,15 +815,15 @@ DrawList &DrawList::write(Store const &buffer, duint const *indices, int indexCo
     return *this;
 }
 
-void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
+void DrawList::draw(DrawMode mode, const TexUnitMap &texUnitMap) const
 {
     using Parm = PrimitiveParams;
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Setup GL state for this list.
-    DrawConditions const conditions = d->pushGLState(mode);
+    const DrawConditions conditions = d->pushGLState(mode);
 
     // Should we just skip all this?
     if (conditions & Skip) return; // Assume no state changes were made.
@@ -876,7 +880,7 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
         {
             elem->data.draw(conditions, texUnitMap);
 
-            DENG2_ASSERT(!Sys_GLCheckError());
+            DE_ASSERT(!Sys_GLCheckError());
         }
     }
 
@@ -889,7 +893,7 @@ DrawList::Spec &DrawList::spec()
     return d->spec;
 }
 
-DrawList::Spec const &DrawList::spec() const
+const DrawList::Spec &DrawList::spec() const
 {
     return d->spec;
 }
@@ -907,5 +911,5 @@ void DrawList::rewind()
 
 void DrawList::reserveSpace(DrawList::Indices &indices, uint count) // static
 {
-    if (indices.size() < int(count)) indices.resize(int(count));
+    if (indices.size() < count) indices.resize(count);
 }

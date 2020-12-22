@@ -19,16 +19,16 @@
 
 #include "shellusers.h"
 #include "dd_main.h"
-#include <de/Garbage>
-#include <QTimer>
+#include <de/garbage.h>
+#include <de/timer.h>
 
 using namespace de;
 
-static int const PLAYER_INFO_INTERVAL = 2500; // ms
+static constexpr TimeSpan PLAYER_INFO_INTERVAL = 2.5_s;
 
-DENG2_PIMPL_NOREF(ShellUsers)
+DE_PIMPL_NOREF(ShellUsers)
 {
-    QTimer infoTimer;
+    Timer infoTimer;
 
     Impl()
     {
@@ -39,20 +39,18 @@ DENG2_PIMPL_NOREF(ShellUsers)
 ShellUsers::ShellUsers() : d(new Impl)
 {
     // Player information is sent periodically to all shell users.
-    QObject::connect(&d->infoTimer, &QTimer::timeout, [this] ()
-    {
-        forUsers([this] (User &user)
-        {
+    d->infoTimer += [this]() {
+        forUsers([](User &user) {
             user.as<ShellUser>().sendPlayerInfo();
             return LoopContinue;
         });
-    });
+    };
     d->infoTimer.start();
 }
 
 void ShellUsers::add(User *user)
 {
-    DENG2_ASSERT(is<ShellUser>(user));
+    DE_ASSERT(is<ShellUser>(user));
     Users::add(user);
 
     LOG_NET_NOTE("New shell user from %s") << user->address();
@@ -61,7 +59,7 @@ void ShellUsers::add(User *user)
 
 void ShellUsers::worldMapChanged()
 {
-    forUsers([this] (User &user)
+    forUsers([] (User &user)
     {
         ShellUser &shellUser = user.as<ShellUser>();
         shellUser.sendGameState();

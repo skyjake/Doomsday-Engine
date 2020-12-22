@@ -20,9 +20,9 @@
 #ifndef CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
 #define CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
 
-#include <de/String>
-#include <de/CompiledRecord>
-#include "Binding"
+#include <de/string.h>
+#include <de/compiledrecord.h>
+#include "binding.h"
 #include "ddevent.h"
 
 enum ibcontroltype_t
@@ -52,7 +52,7 @@ struct CompiledImpulseBinding
     int localPlayer = -1;        ///< Local player number.
 
     CompiledImpulseBinding() {}
-    CompiledImpulseBinding(de::Record const &bind);
+    CompiledImpulseBinding(const de::Record &bind);
 };
 
 typedef de::CompiledRecordT<CompiledImpulseBinding> CompiledImpulseBindingRecord;
@@ -66,18 +66,18 @@ class ImpulseBinding : public Binding
 {
 public:
     ImpulseBinding()                            : Binding() {}
-    ImpulseBinding(ImpulseBinding const &other) : Binding(other) {}
+    ImpulseBinding(const ImpulseBinding &other) : Binding(other) {}
     ImpulseBinding(de::Record &d)               : Binding(d) {}
-    ImpulseBinding(de::Record const &d)         : Binding(d) {}
+    ImpulseBinding(const de::Record &d)         : Binding(d) {}
 
-    ImpulseBinding &operator = (de::Record const *d) {
+    ImpulseBinding &operator = (const de::Record *d) {
         *static_cast<Binding *>(this) = d;
         def().resetCompiled();
         return *this;
     }
 
     CompiledImpulseBindingRecord &def();
-    CompiledImpulseBindingRecord const &def() const;
+    const CompiledImpulseBindingRecord &def() const;
 
     void resetToDefaults();
 
@@ -96,7 +96,7 @@ public:
      * to be in an undefined state. The caller may choose to clear and then reconfigure
      * it using another descriptor.
      */
-    void configure(char const *ctrlDesc, int impulseId, int localPlayer, bool assignNewId = true);
+    void configure(const char *ctrlDesc, int impulseId, int localPlayer, bool assignNewId = true);
 };
 
 #endif // CLIENT_INPUTSYSTEM_IMPULSEBINDING_H

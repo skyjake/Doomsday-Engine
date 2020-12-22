@@ -20,22 +20,34 @@
  */
 
 #include "serverapp.h"
+#include <de/escapeparser.h>
+
+using namespace de;
+
+DE_EXTERN_C void GameKit_Init();
 
 /**
  * Server application entry point.
  */
 int main(int argc, char** argv)
 {
-    ServerApp serverApp(argc, argv);
+    int exitCode;
+    init_Foundation();
+    GameKit_Init();
+    ServerApp serverApp(makeList(argc, argv));
     try
     {
         serverApp.initialize();
-        return serverApp.execLoop();
+        exitCode = serverApp.exec();
     }
-    catch (de::Error const &er)
+    catch (const Error &er)
     {
-        qFatal("App init failed: %s", er.asText().toLatin1().constData());
-        return -1;
+        EscapeParser esc;
+        esc.parse(er.asText());
+        warning("App init failed: %s", esc.plainText().c_str());
+        exitCode = -1;
     }
+    deinit_Foundation();
+    return exitCode;
 }
 

@@ -1,8 +1,6 @@
-/** @file vertex.h  World map vertex.
- * @ingroup world
+/** @file vertex.h
  *
- * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2016 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright (c) 2020 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -14,131 +12,23 @@
  * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
- * General Public License along with this program; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA</small>
+ * General Public License along with this program; if not, see:
+ * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_WORLD_VERTEX_H
-#define DENG_WORLD_VERTEX_H
+#pragma once
 
-#include <de/Observers>
-#include <de/Vector>
-#include <doomsday/world/MapElement>
+#include <doomsday/world/vertex.h>
 
-#include "Mesh"
-
-class Line;
-class LineOwner;
-
-/**
- * Map geometry vertex.
- *
- * An @em owner in this context is any line whose start or end points are
- * defined as the vertex.
- */
-class Vertex : public world::MapElement, public de::MeshElement
+class Vertex : public world::Vertex
 {
-    DENG2_NO_COPY  (Vertex)
-    DENG2_NO_ASSIGN(Vertex)
-
 public:
-    /// Notified whenever the origin changes.
-    DENG2_DEFINE_AUDIENCE(OriginChange, void vertexOriginChanged(Vertex &vertex))
+    Vertex(mesh::Mesh &mesh, const de::Vec2d &origin = {});
 
-public: /// @todo Move to the map loader:
-    /// Head of the LineOwner rings (an array of [numLineOwners] size). The
-    /// owner ring is a doubly, circularly linked list. The head is the owner
-    /// with the lowest angle and the next-most being that with greater angle.
-    LineOwner *_lineOwners = nullptr;
-    uint _numLineOwners = 0;  ///< Total number of line owners.
-
-    // Total numbers of line owners.
-    uint _onesOwnerCount = 0;
-    uint _twosOwnerCount = 0;
-
-public:
-    Vertex(de::Mesh &mesh, de::Vector2d const &origin = de::Vector2d());
-
-    /**
-     * Returns the origin (i.e., position) of the vertex in the map coordinate space.
-     */
-    de::Vector2d const &origin() const;
-
-    /**
-     * Returns the X axis origin (i.e., position) of the vertex in the map coordinate space.
-     */
-    inline de::ddouble x() const { return origin().x; }
-
-    /**
-     * Returns the Y axis origin (i.e., position) of the vertex in the map coordinate space.
-     */
-    inline de::ddouble y() const { return origin().y; }
-
-    /**
-     * Change the origin (i.e., position) of the vertex in the map coordinate
-     * space. The OriginChange audience is notified whenever the origin changes.
-     *
-     * @param newOrigin  New origin in map coordinate space units.
-     */
-    void setOrigin(de::Vector2d const &newOrigin);
-
-    /**
-     * @copydoc setOrigin()
-     *
-     * @param x  New X origin in map coordinate space units.
-     * @param y  New Y origin in map coordinate space units.
-     */
-    inline void setOrigin(float x, float y) { return setOrigin(de::Vector2d(x, y)); }
-
-#ifdef __CLIENT__
     /**
      * Update all FakeRadio shadow offset coordinates for the vertex.
      *
      * @pre Lineowner rings must be set up.
      */
     void updateShadowOffsets();
-#endif
-
-public:  //- Deprecated -----------------------------------------------------------------
-
-    /**
-     * Returns the total number of Line owners for the vertex.
-     *
-     * @see countLineOwners()
-     *
-     * @deprecated Will be replaced with half-edge ring iterator/rover. -ds
-     */
-    uint lineOwnerCount() const;
-
-    /**
-     * Utility function for determining the number of one and two-sided Line
-     * owners for the vertex.
-     *
-     * @note That if only the combined total is desired, it is more efficent to
-     * call lineOwnerCount() instead.
-     *
-     * @pre Line owner rings must have already been calculated.
-     * @pre @a oneSided and/or @a twoSided must have already been initialized.
-     *
-     * @todo Optimize: Cache this result.
-     *
-     * @deprecated Will be replaced with half-edge ring iterator/rover. -ds
-     */
-    void countLineOwners();
-
-    /**
-     * Returns the first Line owner for the vertex; otherwise @c 0 if unowned.
-     *
-     * @deprecated Will be replaced with half-edge ring iterator/rover. -ds
-     */
-    LineOwner *firstLineOwner() const;
-
-protected:
-    int property(world::DmuArgs &args) const;
-
-private:
-    de::Vector2d _origin;  ///< Map-space coordinates.
 };
-
-#endif  // DENG_WORLD_VERTEX_H

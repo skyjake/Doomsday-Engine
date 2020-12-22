@@ -24,7 +24,7 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(ConsoleEffect)
+DE_PIMPL_NOREF(ConsoleEffect)
 {
     int console;
     bool inited;
@@ -58,7 +58,7 @@ bool ConsoleEffect::isInited() const
 
 GLShaderBank &ConsoleEffect::shaders() const
 {
-    return ClientApp::renderSystem().shaders();
+    return ClientApp::render().shaders();
 }
 
 void ConsoleEffect::glInit()

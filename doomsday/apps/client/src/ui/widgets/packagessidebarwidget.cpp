@@ -21,13 +21,13 @@
 #include "ui/dialogs/packageinfodialog.h"
 #include "ui/widgets/homeitemwidget.h"
 
-#include <de/CallbackAction>
-#include <de/FileSystem>
-#include <de/ui/ActionItem>
+#include <de/callbackaction.h>
+#include <de/filesystem.h>
+#include <de/ui/actionitem.h>
 
 using namespace de;
 
-DENG_GUI_PIMPL(PackagesSidebarWidget)
+DE_GUI_PIMPL(PackagesSidebarWidget)
 {
     PackagesWidget *browser;
 
@@ -43,7 +43,7 @@ DENG_GUI_PIMPL(PackagesSidebarWidget)
         browser->actionItems().insert(
             0,
             new ui::ActionItem(
-                tr("..."), new CallbackAction([this]() {
+                "...", new CallbackAction([this]() {
                     auto *pop = new PackageInfoDialog(browser->actionPackage(),
                                                       PackageInfoDialog::EnableActions);
                     root().addOnTop(pop);
@@ -52,7 +52,7 @@ DENG_GUI_PIMPL(PackagesSidebarWidget)
                         browser->actionWidget()->as<HomeItemWidget>().buttonWidget(0).rule(),
                         ui::Up);
                     pop->open();
-                })));
+        })));
     }
 };
 

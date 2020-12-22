@@ -17,13 +17,11 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_TRIANGLE_STRIP_BUILDER
-#define DENG_RENDER_TRIANGLE_STRIP_BUILDER
-
-#include <QVarLengthArray> /// @todo Remove me
+#ifndef DE_RENDER_TRIANGLE_STRIP_BUILDER
+#define DE_RENDER_TRIANGLE_STRIP_BUILDER
 
 #include <de/libcore.h>
-#include <de/Vector>
+#include <de/vector.h>
 
 /**
  * Abstract interface for a component that can be interpreted as an "edge"
@@ -37,9 +35,9 @@ public:
     class IEvent
     {
     public:
-        virtual ~IEvent() {}
+        virtual ~IEvent() = default;
 
-        virtual bool operator < (IEvent const &other) const {
+        virtual bool operator < (const IEvent &other) const {
             return distance() < other.distance();
         }
 
@@ -47,13 +45,13 @@ public:
     };
 
 public:
-    virtual ~IEdge() {}
+    virtual ~IEdge() = default;
 
     virtual bool isValid() const = 0;
 
-    virtual IEvent const &first() const = 0;
+    virtual const IEvent &first() const = 0;
 
-    virtual IEvent const &last() const = 0;
+    virtual const IEvent &last() const = 0;
 };
 
 /**
@@ -72,19 +70,16 @@ public:
     public:
         virtual ~Event() {}
 
-        virtual de::Vector3d origin() const = 0;
+        virtual de::Vec3d origin() const = 0;
     };
 
 public:
     virtual ~AbstractEdge() {}
 
-    virtual Event const &first() const = 0;
-
-    virtual Event const &last() const = 0;
-
-    virtual de::Vector2f materialOrigin() const { return de::Vector2f(); }
-
-    virtual de::Vector3f normal() const { return de::Vector3f(); }
+    virtual const Event &first() const = 0;
+    virtual const Event &last() const  = 0;
+    virtual de::Vec2f    materialOrigin() const { return de::Vec2f(); }
+    virtual de::Vec3f    normal() const { return de::Vec3f(); }
 };
 
 /**
@@ -97,12 +92,12 @@ public:
     {
     public:
         virtual ~Event() {}
-        virtual de::Vector3d origin() const = 0;
+        virtual de::Vec3d origin() const = 0;
         inline double z() const { return origin().z; }
     };
 
 public:
-    WorldEdge(de::Vector2d origin_) : AbstractEdge(), _origin(origin_)
+    WorldEdge(de::Vec2d origin_) : AbstractEdge(), _origin(origin_)
     {}
 
     virtual ~WorldEdge() {}
@@ -110,26 +105,22 @@ public:
     /**
      * Returns the X|Y origin of the edge in the map coordinate space.
      */
-    de::Vector2d const &origin() const { return _origin; }
+    const de::Vec2d &origin() const { return _origin; }
 
-    virtual Event const &first() const = 0;
+    virtual const Event &first() const              = 0;
+    virtual const Event &last() const               = 0;
+    virtual const Event &at(EventIndex index) const = 0;
 
-    virtual Event const &last() const = 0;
-
-    virtual Event const &at(EventIndex index) const = 0;
-
-    virtual int divisionCount() const { return 0; }
-
+    virtual int        divisionCount() const { return 0; }
     virtual EventIndex firstDivision() const { return InvalidIndex; }
-
     virtual EventIndex lastDivision() const { return InvalidIndex; }
 
 private:
-    de::Vector2d _origin;
+    de::Vec2d _origin;
 };
 
-typedef QVarLengthArray<de::Vector3f, 24> PositionBuffer;
-typedef QVarLengthArray<de::Vector2f, 24> TexCoordBuffer;
+typedef de::List<de::Vec3f> PositionBuffer;
+typedef de::List<de::Vec2f> TexCoordBuffer;
 
 /**
  * Abstract triangle strip geometry builder.
@@ -160,7 +151,7 @@ public:
      *
      * Vertex layout:
      *   1--3    2--0
-     *   |  | or |  | if @a direction @c =Anticlockwise
+     *   |  | or |  | if @a direction @c =CounterClockwise
      *   0--2    3--1
      *
      * @param direction        Initial vertex winding direction.
@@ -213,7 +204,7 @@ public:
     int take(PositionBuffer **positions, TexCoordBuffer **texcoords = 0);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_RENDER_TRIANGLE_STRIP_BUILDER
+#endif // DE_RENDER_TRIANGLE_STRIP_BUILDER

@@ -20,12 +20,11 @@
 #include "de_base.h"
 #include "dd_loop.h"
 
-#include <de/timer.h>
-#include <de/App>
-#include <de/Config>
-#include <de/LogBuffer>
+#include <de/legacy/timer.h>
+#include <de/app.h>
+#include <de/logbuffer.h>
 #ifdef __SERVER__
-#  include <de/TextApp>
+#  include <de/textapp.h>
 #endif
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/exec.h>
@@ -53,7 +52,7 @@
 using namespace de;
 
 // Development utility: on sharp tics, print player 0 movement state.
-//#define LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
+//#define DE_PLAYER0_MOVEMENT_ANALYSIS
 
 /**
  * There needs to be at least this many tics per second. A smaller value
@@ -119,7 +118,7 @@ dfloat DD_GetFrameRate()
 }
 
 #undef DD_IsSharpTick
-DENG_EXTERN_C dd_bool DD_IsSharpTick()
+DE_EXTERN_C dd_bool DD_IsSharpTick()
 {
     return ::tickIsSharp;
 }
@@ -127,7 +126,7 @@ DENG_EXTERN_C dd_bool DD_IsSharpTick()
 dd_bool DD_IsFrameTimeAdvancing()
 {
     if(BusyMode_Active()) return false;
-    return ::tickFrame || ::netGame;
+    return ::tickFrame || netState.netGame;
 }
 
 static void checkSharpTick(timespan_t time)
@@ -184,7 +183,7 @@ static void baseTicker(timespan_t time)
             R_ViewWindowTicker(i, time);
         }
 
-        if(isClient)
+        if(netState.isClient)
         {
             Cl_Ticker(time);
         }
@@ -203,7 +202,7 @@ static void baseTicker(timespan_t time)
             R_NewSharpWorld();
 #endif
 
-#ifdef LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
+#ifdef DE_PLAYER0_MOVEMENT_ANALYSIS
             if(DD_Player(0)->publicData().inGame && DD_Player(0)->publicData().mo)
             {
                 static coord_t prevPos[3] = { 0, 0, 0 };
@@ -248,7 +247,7 @@ static void baseTicker(timespan_t time)
     DoomsdayApp::plugins().callAllHooks(HOOK_TICKER, 0, &time);
 
     // The netcode gets to tick, too.
-    Net_Ticker(time);
+    Net_Ticker();
 }
 
 /**
@@ -258,7 +257,7 @@ static void advanceTime(timespan_t delta)
 {
     ::sysTime += delta;
 
-    dint const oldGameTic = SECONDS_TO_TICKS(::gameTime);
+    const dint oldGameTic = SECONDS_TO_TICKS(::gameTime);
 
     // The difference between gametic and demotic is that demotic
     // is not altered at any point. Gametic changes at handshakes.
@@ -281,7 +280,7 @@ static void advanceTime(timespan_t delta)
     }
 
     // World time always advances unless a local game is paused on client-side.
-    App_World().advanceTime(delta);
+    world::World::get().advanceTime(delta);
 }
 
 void DD_ResetTimer()
@@ -334,7 +333,7 @@ void DD_WaitForOptimalUpdateTime()
     if (Sys_IsShuttingDown()) return; // No need for finesse.
 
     // This is when we would ideally like to make the update.
-    duint const targetUpdateTime = prevUpdateTime + optimalDelta;
+    const duint targetUpdateTime = prevUpdateTime + optimalDelta;
 
     // Check the current time.
     duint nowTime = Timer_RealMilliseconds();
@@ -342,7 +341,7 @@ void DD_WaitForOptimalUpdateTime()
 
     if (elapsed < optimalDelta)
     {
-        duint const needSleepMs = optimalDelta - elapsed;
+        const duint needSleepMs = optimalDelta - elapsed;
 
         // We need to wait until the optimal time has passed.
         if (needSleepMs > 5)
@@ -380,7 +379,6 @@ timespan_t DD_CurrentTickDuration()
 void Loop_RunTics()
 {
     // Do a network update first.
-    N_Update();
     Net_Update();
 
     // Check the clock.
@@ -393,7 +391,7 @@ void Loop_RunTics()
     }
 
     // Let's see how much time has passed. This is affected by "settics".
-    ddouble const nowTime = Timer_Seconds();
+    const ddouble nowTime = Timer_Seconds();
 
     ddouble elapsedTime = nowTime - ::lastRunTicsTime;
     if(elapsedTime > MAX_ELAPSED_TIME)
@@ -416,11 +414,11 @@ void Loop_RunTics()
 
 #ifdef __CLIENT__
         // Process input events.
-        ClientApp::inputSystem().processEvents(::ticLength);
+        ClientApp::input().processEvents(::ticLength);
         if(!::processSharpEventsAfterTickers)
         {
             // We are allowed to process sharp events before tickers.
-            ClientApp::inputSystem().processSharpEvents(::ticLength);
+            ClientApp::input().processSharpEvents(::ticLength);
         }
 #endif
 
@@ -431,7 +429,7 @@ void Loop_RunTics()
         if(::processSharpEventsAfterTickers)
         {
             // This is done after tickers for compatibility with ye olde game logic.
-            ClientApp::inputSystem().processSharpEvents(::ticLength);
+            ClientApp::input().processSharpEvents(::ticLength);
         }
 #endif
 

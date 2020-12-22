@@ -17,16 +17,13 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_SKY_FIX_EDGE
-#define DENG_RENDER_SKY_FIX_EDGE
+#ifndef DE_RENDER_SKY_FIX_EDGE
+#define DE_RENDER_SKY_FIX_EDGE
 
-#include <de/Vector>
+#include <doomsday/mesh/hedge.h>
+#include <de/vector.h>
 
-#include "TriangleStripBuilder" /// @todo remove me
-
-namespace de {
-
-class HEdge;
+#include "trianglestripbuilder.h" /// @todo remove me
 
 /**
  * @ingroup render
@@ -45,14 +42,14 @@ public:
     public:
         Event(SkyFixEdge &owner, double distance = 0);
 
-        bool operator < (Event const &other) const;
+        bool operator < (const Event &other) const;
 
         double distance() const;
 
-        Vector3d origin() const;
+        de::Vec3d origin() const;
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
 public:
@@ -60,31 +57,29 @@ public:
      * @param hedge    HEdge from which to determine sky fix coordinates.
      * @param fixType  Fix type.
      */
-    SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS = 0);
+    SkyFixEdge(mesh::HEdge &hedge, FixType fixType, int edge, float materialOffsetS = 0);
 
-    Vector3d const &pOrigin() const;
-    Vector3d const &pDirection() const;
+    const de::Vec3d &pOrigin() const;
+    const de::Vec3d &pDirection() const;
 
-    Vector2f materialOrigin() const;
+    de::Vec2f materialOrigin() const;
 
     /// Implement IEdge.
     bool isValid() const;
 
     /// Implement IEdge.
-    Event const &first() const;
+    const Event &first() const;
 
     /// Implement IEdge.
-    Event const &last() const;
+    const Event &last() const;
 
-    inline Event const &bottom() const { return first(); }
-    inline Event const &top() const { return last(); }
+    inline const Event &bottom() const { return first(); }
+    inline const Event &top() const { return last(); }
 
-    Event const &at(EventIndex index) const;
+    const Event &at(EventIndex index) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-} // namespace de
-
-#endif // DENG_RENDER_SKY_FIX_EDGE
+#endif // DE_RENDER_SKY_FIX_EDGE

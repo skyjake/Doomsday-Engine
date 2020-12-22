@@ -20,13 +20,12 @@
 #include "de_platform.h"
 #include "render/viewports.h"
 
-#include <QBitArray>
-#include <de/concurrency.h>
-#include <de/timer.h>
-#include <de/vector1.h>
-#include <de/GLInfo>
-#include <de/GLState>
-#include <doomsday/filesys/fs_util.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/timer.h>
+#include <de/legacy/vector1.h>
+#include <de/bitarray.h>
+#include <de/glinfo.h>
+#include <de/glstate.h>
 
 #include "clientapp.h"
 #include "api_console.h"
@@ -39,6 +38,7 @@
 #include "api_render.h"
 #include "render/angleclipper.h"
 #include "render/cameralensfx.h"
+#include "render/classicworldrenderer.h"
 #include "render/fx/bloom.h"
 #include "render/playerweaponanimator.h"
 #include "render/r_draw.h"
@@ -51,23 +51,27 @@
 
 #include "network/net_demo.h"
 
-#include "world/linesighttest.h"
-#include "world/thinkers.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
+#include "world/convexsubspace.h"
+#include "world/surface.h"
+#include "world/contact.h"
+#include "world/subsector.h"
 #include "world/sky.h"
-#include "BspLeaf"
-#include "ConvexSubspace"
-#include "Surface"
-#include "Contact"
-#include "client/clientsubsector.h"
 
 #include "ui/ui_main.h"
 #include "ui/clientwindow.h"
 //#include "ui/widgets/gameuiwidget.h"
 
+#include <doomsday/world/bspleaf.h>
+#include <doomsday/world/linesighttest.h>
+#include <doomsday/world/mobjthinker.h>
+#include <doomsday/world/thinkers.h>
+#include <doomsday/filesys/fs_util.h>
+#include <doomsday/tab_tables.h>
+
 using namespace de;
-using namespace world;
+using world::World;
 
 dd_bool firstFrameAfterLoad;
 
@@ -86,11 +90,11 @@ struct FrameLuminous
     coord_t distance;
     duint isClipped;
 };
-static QVector<FrameLuminous> frameLuminous;
+static List<FrameLuminous> frameLuminous;
 
-static QBitArray subspacesVisible;
+static BitArray subspacesVisible;
 
-static QBitArray generatorsVisible(Map::MAX_GENERATORS);
+static BitArray generatorsVisible(Map::MAX_GENERATORS);
 
 static dint frameCount;
 
@@ -110,21 +114,21 @@ void R_ResetFrameCount()
 }
 
 #undef R_SetViewOrigin
-DENG_EXTERN_C void R_SetViewOrigin(dint consoleNum, coord_t const origin[3])
+DE_EXTERN_C void R_SetViewOrigin(dint consoleNum, coord_t const origin[3])
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
-    DD_Player(consoleNum)->viewport().latest.origin = Vector3d(origin);
+    DD_Player(consoleNum)->viewport().latest.origin = Vec3d(origin);
 }
 
 #undef R_SetViewAngle
-DENG_EXTERN_C void R_SetViewAngle(dint consoleNum, angle_t angle)
+DE_EXTERN_C void R_SetViewAngle(dint consoleNum, angle_t angle)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
     DD_Player(consoleNum)->viewport().latest.setAngle(angle);
 }
 
 #undef R_SetViewPitch
-DENG_EXTERN_C void R_SetViewPitch(dint consoleNum, dfloat pitch)
+DE_EXTERN_C void R_SetViewPitch(dint consoleNum, dfloat pitch)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
     DD_Player(consoleNum)->viewport().latest.pitch = pitch;
@@ -137,7 +141,7 @@ void R_SetupDefaultViewWindow(dint consoleNum)
 
     vd->window =
         vd->windowOld =
-            vd->windowTarget = Rectanglei::fromSize(Vector2i(0, 0), Vector2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT));
+            vd->windowTarget = Rectanglei::fromSize(Vec2i(0, 0), Vec2ui(DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT));
     vd->windowInter = 1;
 }
 
@@ -156,20 +160,26 @@ void R_ViewWindowTicker(dint consoleNum, timespan_t ticLength)
     }
     else
     {
-        vd->window.moveTopLeft(Vector2i(de::roundf(de::lerp<dfloat>(vd->windowOld.topLeft.x, vd->windowTarget.topLeft.x, vd->windowInter)),
-                                        de::roundf(de::lerp<dfloat>(vd->windowOld.topLeft.y, vd->windowTarget.topLeft.y, vd->windowInter))));
-        vd->window.setSize(Vector2ui(de::roundf(de::lerp<dfloat>(vd->windowOld.width(),  vd->windowTarget.width(),  vd->windowInter)),
-                                     de::roundf(de::lerp<dfloat>(vd->windowOld.height(), vd->windowTarget.height(), vd->windowInter))));
+        vd->window.moveTopLeft(
+            Vec2i(de::roundf(de::lerp<dfloat>(
+                      vd->windowOld.topLeft.x, vd->windowTarget.topLeft.x, vd->windowInter)),
+                  de::roundf(de::lerp<dfloat>(
+                      vd->windowOld.topLeft.y, vd->windowTarget.topLeft.y, vd->windowInter))));
+        vd->window.setSize(
+            Vec2ui(de::roundf(de::lerp<dfloat>(
+                       vd->windowOld.width(), vd->windowTarget.width(), vd->windowInter)),
+                   de::roundf(de::lerp<dfloat>(
+                       vd->windowOld.height(), vd->windowTarget.height(), vd->windowInter))));
     }
 }
 
 #undef R_ViewWindowGeometry
-DENG_EXTERN_C dint R_ViewWindowGeometry(dint player, RectRaw *geometry)
+DE_EXTERN_C dint R_ViewWindowGeometry(dint player, RectRaw *geometry)
 {
     if(!geometry) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    viewdata_t const &vd = DD_Player(player)->viewport();
+    const viewdata_t &vd = DD_Player(player)->viewport();
     geometry->origin.x    = vd.window.topLeft.x;
     geometry->origin.y    = vd.window.topLeft.y;
     geometry->size.width  = vd.window.width();
@@ -178,24 +188,24 @@ DENG_EXTERN_C dint R_ViewWindowGeometry(dint player, RectRaw *geometry)
 }
 
 #undef R_ViewWindowOrigin
-DENG_EXTERN_C dint R_ViewWindowOrigin(dint player, Point2Raw *origin)
+DE_EXTERN_C dint R_ViewWindowOrigin(dint player, Point2Raw *origin)
 {
     if(!origin) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    viewdata_t const &vd = DD_Player(player)->viewport();
+    const viewdata_t &vd = DD_Player(player)->viewport();
     origin->x = vd.window.topLeft.x;
     origin->y = vd.window.topLeft.y;
     return true;
 }
 
 #undef R_ViewWindowSize
-DENG_EXTERN_C dint R_ViewWindowSize(dint player, Size2Raw *size)
+DE_EXTERN_C dint R_ViewWindowSize(dint player, Size2Raw *size)
 {
     if(!size) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    viewdata_t const &vd = DD_Player(player)->viewport();
+    const viewdata_t &vd = DD_Player(player)->viewport();
     size->width  = vd.window.width();
     size->height = vd.window.height();
     return true;
@@ -207,17 +217,17 @@ DENG_EXTERN_C dint R_ViewWindowSize(dint player, Size2Raw *size)
  * refresh only.
  */
 #undef R_SetViewWindowGeometry
-DENG_EXTERN_C void R_SetViewWindowGeometry(dint player, RectRaw const *geometry, dd_bool interpolate)
+DE_EXTERN_C void R_SetViewWindowGeometry(dint player, const RectRaw *geometry, dd_bool interpolate)
 {
     dint p = P_ConsoleToLocal(player);
     if(p < 0) return;
 
-    viewport_t const *vp = &viewportOfLocalPlayer[p];
+    const viewport_t *vp = &viewportOfLocalPlayer[p];
     viewdata_t *vd = &DD_Player(player)->viewport();
 
-    Rectanglei newGeom = Rectanglei::fromSize(Vector2i(de::clamp<dint>(0, geometry->origin.x, vp->geometry.width()),
+    Rectanglei newGeom = Rectanglei::fromSize(Vec2i(de::clamp<dint>(0, geometry->origin.x, vp->geometry.width()),
                                                        de::clamp<dint>(0, geometry->origin.y, vp->geometry.height())),
-                                              Vector2ui(de::abs(geometry->size.width),
+                                              Vec2ui(de::abs(geometry->size.width),
                                                         de::abs(geometry->size.height)));
 
     if((unsigned) newGeom.bottomRight.x > vp->geometry.width())
@@ -240,7 +250,7 @@ DENG_EXTERN_C void R_SetViewWindowGeometry(dint player, RectRaw const *geometry,
 
     // Restart or advance the interpolation timer?
     // If dimensions have not yet been set - do not interpolate.
-    if(interpolate && vd->window.size() != Vector2ui(0, 0))
+    if(interpolate && vd->window.size() != Vec2ui(0, 0))
     {
         vd->windowOld   = vd->window;
         vd->windowInter = 0;
@@ -253,14 +263,14 @@ DENG_EXTERN_C void R_SetViewWindowGeometry(dint player, RectRaw const *geometry,
 }
 
 #undef R_ViewPortGeometry
-DENG_EXTERN_C dint R_ViewPortGeometry(dint player, RectRaw *geometry)
+DE_EXTERN_C dint R_ViewPortGeometry(dint player, RectRaw *geometry)
 {
     if(!geometry) return false;
 
     dint p = P_ConsoleToLocal(player);
     if(p == -1) return false;
 
-    viewport_t const &vp = viewportOfLocalPlayer[p];
+    const viewport_t &vp = viewportOfLocalPlayer[p];
     geometry->origin.x    = vp.geometry.topLeft.x;
     geometry->origin.y    = vp.geometry.topLeft.y;
     geometry->size.width  = vp.geometry.width();
@@ -269,35 +279,35 @@ DENG_EXTERN_C dint R_ViewPortGeometry(dint player, RectRaw *geometry)
 }
 
 #undef R_ViewPortOrigin
-DENG_EXTERN_C dint R_ViewPortOrigin(dint player, Point2Raw *origin)
+DE_EXTERN_C dint R_ViewPortOrigin(dint player, Point2Raw *origin)
 {
     if(!origin) return false;
 
     dint p = P_ConsoleToLocal(player);
     if(p == -1) return false;
 
-    viewport_t const &vp = viewportOfLocalPlayer[p];
+    const viewport_t &vp = viewportOfLocalPlayer[p];
     origin->x = vp.geometry.topLeft.x;
     origin->y = vp.geometry.topLeft.y;
     return true;
 }
 
 #undef R_ViewPortSize
-DENG_EXTERN_C dint R_ViewPortSize(dint player, Size2Raw *size)
+DE_EXTERN_C dint R_ViewPortSize(dint player, Size2Raw *size)
 {
     if(!size) return false;
 
     dint p = P_ConsoleToLocal(player);
     if(p == -1) return false;
 
-    viewport_t const &vp = viewportOfLocalPlayer[p];
+    const viewport_t &vp = viewportOfLocalPlayer[p];
     size->width  = vp.geometry.width();
     size->height = vp.geometry.height();
     return true;
 }
 
 #undef R_SetViewPortPlayer
-DENG_EXTERN_C void R_SetViewPortPlayer(dint consoleNum, dint viewPlayer)
+DE_EXTERN_C void R_SetViewPortPlayer(dint consoleNum, dint viewPlayer)
 {
     dint p = P_ConsoleToLocal(consoleNum);
     if(p != -1)
@@ -312,12 +322,12 @@ DENG_EXTERN_C void R_SetViewPortPlayer(dint consoleNum, dint viewPlayer)
  */
 void R_UpdateViewPortGeometry(viewport_t *port, dint col, dint row)
 {
-    DENG2_ASSERT(port);
+    DE_ASSERT(port);
 
-    Rectanglei newGeom = Rectanglei(Vector2i(DENG_GAMEVIEW_X + col * DENG_GAMEVIEW_WIDTH  / gridCols,
-                                             DENG_GAMEVIEW_Y + row * DENG_GAMEVIEW_HEIGHT / gridRows),
-                                    Vector2i(DENG_GAMEVIEW_X + (col+1) * DENG_GAMEVIEW_WIDTH  / gridCols,
-                                             DENG_GAMEVIEW_Y + (row+1) * DENG_GAMEVIEW_HEIGHT / gridRows));
+    Rectanglei newGeom = Rectanglei(Vec2i(DE_GAMEVIEW_X + col * DE_GAMEVIEW_WIDTH  / gridCols,
+                                             DE_GAMEVIEW_Y + row * DE_GAMEVIEW_HEIGHT / gridRows),
+                                    Vec2i(DE_GAMEVIEW_X + (col+1) * DE_GAMEVIEW_WIDTH  / gridCols,
+                                             DE_GAMEVIEW_Y + (row+1) * DE_GAMEVIEW_HEIGHT / gridRows));
     ddhook_viewport_reshape_t p;
 
     if(port->geometry == newGeom) return;
@@ -378,7 +388,7 @@ bool R_SetViewGrid(dint numCols, dint numRows)
         // The console number is -1 if the viewport belongs to no one.
         viewport_t *vp = &viewportOfLocalPlayer[p];
 
-        dint const console = P_LocalToConsole(p);
+        const dint console = P_LocalToConsole(p);
         if(console != -1)
         {
             vp->console = DD_Player(console)->viewConsole;
@@ -400,7 +410,7 @@ void R_ResetViewer()
     resetNextViewer = 1;
 }
 
-dint R_NextViewer()
+dint R_IsViewerResetPending()
 {
     return resetNextViewer;
 }
@@ -411,7 +421,7 @@ dint R_NextViewer()
  */
 void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
 {
-    dint const MAXMOVE = 32;
+    const dint MAXMOVE = 32;
 
     /// @todo Remove this snapping. The game should determine this and disable the
     ///       the interpolation as required.
@@ -435,9 +445,9 @@ void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
  */
 viewer_t R_SharpViewer(ClientPlayer &player)
 {
-    DENG2_ASSERT(player.publicData().mo);
+    DE_ASSERT(player.publicData().mo);
 
-    ddplayer_t const &ddpl = player.publicData();
+    const ddplayer_t &ddpl = player.publicData();
 
     viewer_t view(player.viewport().latest);
 
@@ -447,12 +457,12 @@ viewer_t R_SharpViewer(ClientPlayer &player)
         // This needs to be fleshed out with a proper third person
         // camera control setup. Currently we simply project the viewer's
         // position a set distance behind the ddpl.
-        dfloat const distance = 90;
+        const dfloat distance = 90;
 
         duint angle = view.angle() >> ANGLETOFINESHIFT;
         duint pitch = angle_t(LOOKDIR2DEG(view.pitch) / 360 * ANGLE_MAX) >> ANGLETOFINESHIFT;
 
-        view.origin -= Vector3d(FIX2FLT(fineCosine[angle]),
+        view.origin -= Vec3d(FIX2FLT(finecosine[angle]),
                                 FIX2FLT(finesine[angle]),
                                 FIX2FLT(finesine[pitch])) * distance;
     }
@@ -507,19 +517,18 @@ void R_NewSharpWorld()
         R_CheckViewerLimits(vd->lastSharp, &sharpView);
     }
 
-    if(ClientApp::world().hasMap())
+    if (auto *map = maybeAs<Map>(ClientApp::world().mapPtr()))
     {
-        Map &map = ClientApp::world().map();
-        map.updateTrackedPlanes();
-        map.updateScrollingSurfaces();
+        map->updateTrackedPlanes();
+        map->updateScrollingSurfaces();
     }
 }
 
 void R_UpdateViewer(dint consoleNum)
 {
-    DENG2_ASSERT(consoleNum >= 0 && consoleNum < DDMAXPLAYERS);
+    DE_ASSERT(consoleNum >= 0 && consoleNum < DDMAXPLAYERS);
 
-    dint const VIEWPOS_MAX_SMOOTHDISTANCE = 172;
+    const dint VIEWPOS_MAX_SMOOTHDISTANCE = 172;
 
     player_t *player = DD_Player(consoleNum);
     viewdata_t *vd   = &player->viewport();
@@ -595,7 +604,7 @@ void R_UpdateViewer(dint consoleNum)
         {
             struct OldPos {
                 ddouble time;
-                Vector3f pos;
+                Vec3f pos;
             };
 
             static OldPos oldPos[DDMAXPLAYERS];
@@ -617,15 +626,15 @@ void R_UpdateViewer(dint consoleNum)
     }
 
     // Update viewer.
-    angle_t const viewYaw = vd->current.angle();
+    const angle_t viewYaw = vd->current.angle();
 
-    duint const an = viewYaw >> ANGLETOFINESHIFT;
+    const duint an = viewYaw >> ANGLETOFINESHIFT;
     vd->viewSin = FIX2FLT(finesine[an]);
-    vd->viewCos = FIX2FLT(fineCosine[an]);
+    vd->viewCos = FIX2FLT(finecosine[an]);
 
     // Calculate the front, up and side unit vectors.
-    dfloat const yawRad   = ((viewYaw / (dfloat) ANGLE_MAX) *2) * PI;
-    dfloat const pitchRad = vd->current.pitch * 85 / 110.f / 180 * PI;
+    const dfloat yawRad   = ((viewYaw / (dfloat) ANGLE_MAX) *2) * PI;
+    const dfloat pitchRad = vd->current.pitch * 85 / 110.f / 180 * PI;
 
     // The front vector.
     vd->frontVec.x = cos(yawRad) * cos(pitchRad);
@@ -675,7 +684,7 @@ void R_SetupFrame(player_t *player)
             player->extraLight = player->targetExtraLight;
     }
 
-    validCount++;
+    World::validCount++;
 
     extraLight      = player->extraLight;
     extraLightDelta = extraLight / 16.0f;
@@ -693,17 +702,17 @@ void R_RenderPlayerViewBorder()
     R_DrawViewBorder();
 }
 
-void R_UseViewPort(viewport_t const *vp)
+void R_UseViewPort(const viewport_t *vp)
 {
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     if (!vp)
     {
         currentViewport = nullptr;
         /*ClientWindow::main().game().glApplyViewport(
-                Rectanglei::fromSize(Vector2i(DENG_GAMEVIEW_X, DENG_GAMEVIEW_Y),
-                                     Vector2ui(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT)));*/
+                Rectanglei::fromSize(Vec2i(DE_GAMEVIEW_X, DE_GAMEVIEW_Y),
+                                     Vec2ui(DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT)));*/
     }
     else
     {
@@ -730,7 +739,7 @@ Rectanglei R_ConsoleRect(int console)
     int local = P_ConsoleToLocal(console);
     if (local < 0) return Rectanglei();
 
-    auto const &port = viewportOfLocalPlayer[local];
+    const auto &port = viewportOfLocalPlayer[local];
 
     return Rectanglei(port.geometry.topLeft.x,
                       port.geometry.topLeft.y,
@@ -742,14 +751,14 @@ Rectanglei R_Console3DViewRect(int console)
 {
     Rectanglei rect = R_ConsoleRect(console);
 
-    auto const &pv = DD_Player(console)->viewport();
+    const auto &pv = DD_Player(console)->viewport();
     return Rectanglei(rect.left() + pv.window.topLeft.x,
                       rect.top()  + pv.window.topLeft.y,
                       de::min(rect.width(),  pv.window.width()),
                       de::min(rect.height(), pv.window.height()));
 }
 
-viewport_t const *R_CurrentViewPort()
+const viewport_t *R_CurrentViewPort()
 {
     return currentViewport;
 }
@@ -761,7 +770,7 @@ void R_RenderBlankView()
 
 static void setupPlayerSprites()
 {
-    DENG2_ASSERT(viewPlayer);
+    DE_ASSERT(viewPlayer);
 
     // There are no 3D psprites.
     ::psp3d = false;
@@ -776,13 +785,13 @@ static void setupPlayerSprites()
     mobj_t *mob = ddpl->mo;
 
     if(!Mobj_HasSubsector(*mob)) return;
-    auto &subsec = Mobj_Subsector(*mob).as<world::ClientSubsector>();
+    auto &subsec = Mobj_Subsector(*mob);
 
     // Determine if we should be drawing all the psprites full bright?
     bool fullBright = CPP_BOOL(::levelFullBright);
     if(!fullBright)
     {
-        for(ddpsprite_t const &psp : ddpl->pSprites)
+        for(const ddpsprite_t &psp : ddpl->pSprites)
         {
             if(!psp.statePtr) continue;
 
@@ -794,7 +803,7 @@ static void setupPlayerSprites()
         }
     }
 
-    viewdata_t const *viewData = &viewPlayer->viewport();
+    const viewdata_t *viewData = &viewPlayer->viewport();
 
     for(dint i = 0; i < DDMAXPSPRITES; ++i)
     {
@@ -847,8 +856,16 @@ static void setupPlayerSprites()
             spr->data.model.flags       = 0;
             // 32 is the raised weapon height.
             spr->data.model.topZ        = viewData->current.origin.z;
-            spr->data.model.secFloor    = subsec.visFloor().heightSmoothed();
-            spr->data.model.secCeil     = subsec.visCeiling().heightSmoothed();
+            if (auto *vsub = maybeAs<Subsector>(subsec))
+            {
+                spr->data.model.secFloor = vsub->visFloor().heightSmoothed();
+                spr->data.model.secCeil  = vsub->visCeiling().heightSmoothed();
+            }
+            else
+            {
+                spr->data.model.secFloor = subsec.sector().floor().height();
+                spr->data.model.secCeil  = subsec.sector().ceiling().height();
+            }
             spr->data.model.pClass      = 0;
             spr->data.model.floorClip   = 0;
 
@@ -880,32 +897,32 @@ static void setupPlayerSprites()
     }
 }
 
-static Matrix4f frameViewerMatrix;
+static Mat4f frameViewerMatrix;
 
 static void setupViewMatrix()
 {
-    auto &rend = ClientApp::renderSystem();
+    auto &rend = ClientApp::render();
 
     // These will be the matrices for the current frame.
     rend.uProjectionMatrix() = Rend_GetProjectionMatrix();
     rend.uViewMatrix()       = Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer));
 
-    frameViewerMatrix        = rend.uProjectionMatrix().toMatrix4f() * rend.uViewMatrix().toMatrix4f();
+    frameViewerMatrix        = rend.uProjectionMatrix().toMat4f() * rend.uViewMatrix().toMat4f();
 }
 
-Matrix4f const &Viewer_Matrix()
+const Mat4f &Viewer_Matrix()
 {
     return frameViewerMatrix;
 }
 
 enum ViewState { Default2D, PlayerView3D, PlayerSprite2D };
 
-static void changeViewState(ViewState viewState) //, viewport_t const *port, viewdata_t const *viewData)
+static void changeViewState(ViewState viewState) //, const viewport_t *port, const viewdata_t *viewData)
 {
-    //DENG2_ASSERT(port && viewData);
+    //DE_ASSERT(port && viewData);
 
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch (viewState)
     {
@@ -917,10 +934,10 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
 
     case PlayerSprite2D:
     {
-        auto const conRect  = R_ConsoleRect(displayPlayer);
-        auto const viewRect = R_Console3DViewRect(displayPlayer);
+        const auto conRect  = R_ConsoleRect(displayPlayer);
+        const auto viewRect = R_Console3DViewRect(displayPlayer);
 
-        dint const height = dint(SCREENHEIGHT
+        const dint height = dint(SCREENHEIGHT
                 * ( float(conRect.width()) * float(viewRect.height())
                                            / float(viewRect.width()) )
                 / float(conRect.height()));
@@ -991,7 +1008,7 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
     //viewpx = port->geometry.topLeft.x + viewData->window.topLeft.x;
     //viewpy = port->geometry.topLeft.y + viewData->window.topLeft.y;
 
-    /*auto const viewRect = R_Console3DViewRect(displayPlayer);
+    /*const auto viewRect = R_Console3DViewRect(displayPlayer);
     viewpx = 0;
     viewpy = 0;
     viewpw = int(viewRect.width());
@@ -1000,33 +1017,34 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
     //viewpw = de::min(port->geometry.width(), viewData->window.width());
     //viewph = de::min(port->geometry.height(), viewData->window.height());
 
-    /*ClientWindow::main().game().glApplyViewport(Rectanglei::fromSize(Vector2i(viewpx, viewpy),
-                                                                     Vector2ui(viewpw, viewph)));*/
+    /*ClientWindow::main().game().glApplyViewport(Rectanglei::fromSize(Vec2i(viewpx, viewpy),
+                                                                     Vec2ui(viewpw, viewph)));*/
 
 }
 
-#undef R_RenderPlayerView
-DENG_EXTERN_C void R_RenderPlayerView(dint num)
+void ClassicWorldRenderer::glInit()
 {
-    if (num < 0 || num >= DDMAXPLAYERS) return; // Huh?
+
+}
+
+void ClassicWorldRenderer::glDeinit()
+{
+
+}
+
+void ClassicWorldRenderer::setCamera()
+{
+
+}
+
+void ClassicWorldRenderer::advanceTime(TimeSpan /*elapsed*/)
+{
+
+}
+
+void ClassicWorldRenderer::renderPlayerView(int num)
+{
     player_t *player = DD_Player(num);
-
-    if (!player->publicData().inGame) return;
-    if (!player->publicData().mo) return;
-    if (!ClientApp::world().hasMap()) return;
-
-    if (firstFrameAfterLoad)
-    {
-        // Don't let the clock run yet.  There may be some texture
-        // loading still left to do that we have been unable to
-        // predetermine.
-        firstFrameAfterLoad = false;
-        DD_ResetTimer();
-    }
-
-    // Too early? Game has not configured the view window?
-    viewdata_t *vd = &player->viewport();
-    if (vd->window.isNull()) return;
 
     // Setup for rendering the frame.
     R_SetupFrame(player);
@@ -1037,10 +1055,10 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     setupPlayerSprites();
 
     if (ClientApp::vr().mode() == VRConfig::OculusRift &&
-        ClientApp::world().map().isPointInVoid(Rend_EyeOrigin().xzy()))
+        World::get().map().as<Map>().isPointInVoid(Rend_EyeOrigin().xzy()))
     {
         // Putting one's head in the wall will cause a blank screen.
-        GLState::current().target().clear(GLFramebuffer::Color);
+        GLState::current().target().clear(GLFramebuffer::Color0);
         return;
     }
 
@@ -1053,10 +1071,10 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     }
 
     // Go to wireframe mode?
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     if (renderWireframe)
     {
-        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 #endif
 
@@ -1069,26 +1087,26 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     //switchTo3DState(true); //, currentViewport, vd);
     changeViewState(PlayerView3D);
 
-    Rend_RenderMap(ClientApp::world().map());
+    Rend_RenderMap(World::get().map().as<Map>());
 
     // Orthogonal projection to the view window.
     //restore2DState(1); //, currentViewport, vd);
     changeViewState(PlayerSprite2D);
 
     // Don't render in wireframe mode with 2D psprites.
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     if (renderWireframe)
     {
-        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 #endif
 
     Rend_Draw2DPlayerSprites();  // If the 2D versions are needed.
 
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     if (renderWireframe)
     {
-        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 #endif
 
@@ -1111,11 +1129,11 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
 
     DGL_Flush();
 
-#if defined (DENG_OPENGL)
+#if defined (DE_OPENGL)
     // Back from wireframe mode?
     if (renderWireframe)
     {
-        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 #endif
 
@@ -1126,6 +1144,32 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     }
 
     R_PrintRendPoolInfo();
+}
+
+#undef R_RenderPlayerView
+DE_EXTERN_C void R_RenderPlayerView(dint num)
+{
+    if (num < 0 || num >= DDMAXPLAYERS) return; // Huh?
+    player_t *player = DD_Player(num);
+
+    if (!player->publicData().inGame) return;
+    if (!player->publicData().mo) return;
+    if (!ClientApp::world().hasMap()) return;
+
+    if (firstFrameAfterLoad)
+    {
+        // Don't let the clock run yet.  There may be some texture
+        // loading still left to do that we have been unable to
+        // predetermine.
+        firstFrameAfterLoad = false;
+        DD_ResetTimer();
+    }
+
+    // Too early? Game has not configured the view window?
+    viewdata_t *vd = &player->viewport();
+    if (vd->window.isNull()) return;
+
+    ClientApp::render().world().renderPlayerView(num);
 }
 
 /**
@@ -1150,11 +1194,11 @@ void R_RenderViewPort(int playerNum)
     int localNum = P_ConsoleToLocal(playerNum);
     if (localNum < 0) return;
 
-    viewport_t const *vp = &viewportOfLocalPlayer[localNum];
+    const viewport_t *vp = &viewportOfLocalPlayer[localNum];
 
-    DENG2_ASSERT(vp->console == playerNum);
+    DE_ASSERT(vp->console == playerNum);
 
-    dint const oldDisplay = displayPlayer;
+    const dint oldDisplay = displayPlayer;
     displayPlayer = vp->console;
     //R_UseViewPort(vp);
     //currentViewport = vp;
@@ -1175,7 +1219,7 @@ void R_RenderViewPort(int playerNum)
     // Use an orthographic projection in real pixel dimensions.
     DGL_Ortho(0, 0, viewRect.width(), viewRect.height(), -1, 1);
 
-    viewdata_t const *vd = &DD_Player(vp->console)->viewport();
+    const viewdata_t *vd = &DD_Player(vp->console)->viewport();
     RectRaw vpGeometry = {{vp->geometry.topLeft.x, vp->geometry.topLeft.y},
                           {int(vp->geometry.width()), int(vp->geometry.height())}};
 
@@ -1217,7 +1261,7 @@ void R_ClearViewData()
  * thank for this nonsense (Hexen's sector special 200)... -ds
  */
 #undef R_SkyParams
-DENG_EXTERN_C void R_SkyParams(dint layerIndex, dint param, void * /*data*/)
+DE_EXTERN_C void R_SkyParams(dint layerIndex, dint param, void * /*data*/)
 {
     LOG_AS("R_SkyParams");
     if (!ClientApp::world().hasMap())
@@ -1225,10 +1269,10 @@ DENG_EXTERN_C void R_SkyParams(dint layerIndex, dint param, void * /*data*/)
         LOG_GL_WARNING("No map currently loaded, ignoring");
         return;
     }
-    Sky &sky = ClientApp::world().map().sky();
+    auto &sky = World::get().map().sky();
     if (layerIndex >= 0 && layerIndex < sky.layerCount())
     {
-        SkyLayer &layer = sky.layer(layerIndex);
+        auto &layer = sky.layer(layerIndex);
         switch (param)
         {
         case DD_ENABLE:  layer.enable();  break;
@@ -1243,24 +1287,24 @@ DENG_EXTERN_C void R_SkyParams(dint layerIndex, dint param, void * /*data*/)
     LOG_GL_WARNING("Invalid layer #%i") << + layerIndex;
 }
 
-bool R_ViewerSubspaceIsVisible(ConvexSubspace const &subspace)
+bool R_ViewerSubspaceIsVisible(const world::ConvexSubspace &subspace)
 {
-    DENG2_ASSERT(subspace.indexInMap() != MapElement::NoIndex);
+    DE_ASSERT(subspace.indexInMap() != world::MapElement::NoIndex);
     return subspacesVisible.testBit(subspace.indexInMap());
 }
 
-void R_ViewerSubspaceMarkVisible(ConvexSubspace const &subspace, bool yes)
+void R_ViewerSubspaceMarkVisible(const world::ConvexSubspace &subspace, bool yes)
 {
-    DENG2_ASSERT(subspace.indexInMap() != MapElement::NoIndex);
+    DE_ASSERT(subspace.indexInMap() != world::MapElement::NoIndex);
     subspacesVisible.setBit(subspace.indexInMap(), yes);
 }
 
-bool R_ViewerGeneratorIsVisible(Generator const &generator)
+bool R_ViewerGeneratorIsVisible(const Generator &generator)
 {
     return generatorsVisible.testBit(generator.id() - 1 /* id is 1-based index */);
 }
 
-void R_ViewerGeneratorMarkVisible(Generator const &generator, bool yes)
+void R_ViewerGeneratorMarkVisible(const Generator &generator, bool yes)
 {
     generatorsVisible.setBit(generator.id() - 1 /* id is 1-based index */, yes);
 }
@@ -1268,7 +1312,7 @@ void R_ViewerGeneratorMarkVisible(Generator const &generator, bool yes)
 ddouble R_ViewerLumobjDistance(dint idx)
 {
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < ClientApp::world().map().lumobjCount())
+    if(idx >= 0 && idx < World::get().map().as<Map>().lumobjCount())
     {
         return frameLuminous.at(idx).distance;
     }
@@ -1277,7 +1321,7 @@ ddouble R_ViewerLumobjDistance(dint idx)
 
 bool R_ViewerLumobjIsClipped(dint idx)
 {
-    if (idx >= 0 && idx < frameLuminous.size())
+    if (idx >= 0 && idx < frameLuminous.sizei())
     {
         return CPP_BOOL(frameLuminous.at(idx).isClipped);
     }
@@ -1286,26 +1330,26 @@ bool R_ViewerLumobjIsClipped(dint idx)
 
 bool R_ViewerLumobjIsHidden(dint idx)
 {
-    if (idx >= 0 && idx < frameLuminous.size())
+    if (idx >= 0 && idx < frameLuminous.sizei())
     {
         return frameLuminous.at(idx).isClipped == 2;
     }
     return false;
 }
 
-static void markLumobjClipped(Lumobj const &lob, bool yes = true)
+static void markLumobjClipped(const Lumobj &lob, bool yes = true)
 {
-    dint const index = lob.indexInMap();
-    DENG_ASSERT(index >= 0 && index < lob.map().lumobjCount());
-    DENG_ASSERT(index < frameLuminous.size());
+    const dint index = lob.indexInMap();
+    DE_ASSERT(index >= 0 && index < lob.map().as<Map>().lumobjCount());
+    DE_ASSERT(index < frameLuminous.sizei());
     frameLuminous[index].isClipped = yes? 1 : 0;
 }
 
 void R_BeginFrame()
 {
-    static QVector<int> frameLuminousOrder;
+    static List<int> frameLuminousOrder;
 
-    Map &map = ClientApp::world().map();
+    auto &map = World::get().map().as<Map>();
 
     subspacesVisible.resize(map.subspaceCount());
     subspacesVisible.fill(false);
@@ -1318,18 +1362,18 @@ void R_BeginFrame()
 
     // Resize the associated buffers used for per-frame stuff.
     //int maxLuminous = numLuminous;
-    if (frameLuminous.size() < numLuminous)
+    if (frameLuminous.sizei() < numLuminous)
     {
         frameLuminous.resize(numLuminous);
         frameLuminousOrder.resize(numLuminous);
     }
 
     // Update viewer => lumobj distances ready for linking and sorting.
-    viewdata_t const *viewData = &viewPlayer->viewport();
+    const viewdata_t *viewData = &viewPlayer->viewport();
     map.forAllLumobjs([&viewData] (Lumobj &lob)
     {
         // Approximate the distance in 3D.
-        Vector3d delta = lob.origin() - viewData->current.origin;
+        Vec3d delta = lob.origin() - viewData->current.origin;
         frameLuminous[lob.indexInMap()].distance = M_ApproxDistance3(delta.x, delta.y, delta.z * 1.2 /*correct aspect*/);
         return LoopContinue;
     });
@@ -1346,10 +1390,8 @@ void R_BeginFrame()
             frameLuminousOrder[i] = i;
             frameLuminous[i].isClipped = 2;
         }
-        qSort(frameLuminousOrder.begin(),
-              frameLuminousOrder.begin() + numLuminous,
-              [] (int a, int b)
-        {
+        std::sort(
+            frameLuminousOrder.begin(), frameLuminousOrder.begin() + numLuminous, [](int a, int b) {
             return frameLuminous[a].distance < frameLuminous[b].distance;
         });
 
@@ -1383,11 +1425,11 @@ void R_ViewerClipLumobj(Lumobj *lum)
     markLumobjClipped(*lum, false);
 
     /// @todo Determine the exact centerpoint of the light in addLuminous!
-    Vector3d const origin(lum->x(), lum->y(), lum->z() + lum->zOffset());
+    Vec3d const origin(lum->x(), lum->y(), lum->z() + lum->zOffset());
 
     if (!P_IsInVoid(DD_Player(displayPlayer)) && !devNoCulling)
     {
-        if (!ClientApp::renderSystem().angleClipper().isPointVisible(origin))
+        if (!ClientApp::render().angleClipper().isPointVisible(origin))
         {
             markLumobjClipped(*lum); // Won't have a halo.
         }
@@ -1396,8 +1438,8 @@ void R_ViewerClipLumobj(Lumobj *lum)
     {
         markLumobjClipped(*lum);
 
-        Vector3d const eye = Rend_EyeOrigin().xzy();
-        if (LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER)
+        const Vec3d eye = Rend_EyeOrigin().xzy();
+        if (world::LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER)
                 .trace(lum->map().bspTree()))
         {
             markLumobjClipped(*lum, false); // Will have a halo.
@@ -1405,7 +1447,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
     }
 }
 
-void R_ViewerClipLumobjBySight(Lumobj *lob, ConvexSubspace *subspace)
+void R_ViewerClipLumobjBySight(Lumobj *lob, world::ConvexSubspace *subspace)
 {
     if(!lob || !subspace) return;
 
@@ -1415,11 +1457,11 @@ void R_ViewerClipLumobjBySight(Lumobj *lob, ConvexSubspace *subspace)
 
     // We need to figure out if any of the polyobj's segments lies
     // between the viewpoint and the lumobj.
-    Vector3d const eye = Rend_EyeOrigin().xzy();
+    const Vec3d eye = Rend_EyeOrigin().xzy();
 
     subspace->forAllPolyobjs([&lob, &eye] (Polyobj &pob)
     {
-        for(HEdge *hedge : pob.mesh().hedges())
+        for(auto *hedge : pob.mesh().hedges())
         {
             // Is this on the back of a one-sided line?
             if(!hedge->hasMapElement())
@@ -1457,7 +1499,7 @@ angle_t viewer_t::angle() const
 
 D_CMD(ViewGrid)
 {
-    DENG2_UNUSED2(src, argc);
+    DE_UNUSED(src, argc);
     // Recalculate viewports.
     return R_SetViewGrid(String(argv[1]).toInt(), String(argv[2]).toInt());
 }

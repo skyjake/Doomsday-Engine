@@ -22,7 +22,7 @@
 #include "resource/hq2x.h"
 
 #include <cstdlib>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include "dd_main.h"
 #include "dd_types.h"
 #include "dd_share.h"

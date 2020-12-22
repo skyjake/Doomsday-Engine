@@ -19,12 +19,12 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_THINKER_H
-#define LIBDENG_THINKER_H
+#ifndef DE_THINKER_H
+#define DE_THINKER_H
 
 #include "api_base.h"
-#include <de/reader.h>
-#include <de/writer.h>
+#include <de/legacy/reader.h>
+#include <de/legacy/writer.h>
 #include <doomsday/world/thinker.h>
 
 #ifdef __DOOMSDAY__
@@ -43,7 +43,7 @@ extern "C" {
  */
 ///@{
 
-DENG_API_TYPEDEF(Thinker)
+DE_API_TYPEDEF(Thinker)
 {
     de_api_t api;
 
@@ -54,9 +54,9 @@ DENG_API_TYPEDEF(Thinker)
 
     int (*Iterate)(thinkfunc_t func, int (*callback) (thinker_t *, void *), void *context);
 }
-DENG_API_T(Thinker);
+DE_API_T(Thinker);
 
-#ifndef DENG_NO_API_MACROS_THINKER
+#ifndef DE_NO_API_MACROS_THINKER
 #define Thinker_Init        _api_Thinker.Init
 #define Thinker_Run         _api_Thinker.Run
 #define Thinker_Add         _api_Thinker.Add
@@ -65,7 +65,7 @@ DENG_API_T(Thinker);
 #endif
 
 #ifdef __DOOMSDAY__
-DENG_USING_API(Thinker);
+DE_USING_API(Thinker);
 #endif
 
 ///@}
@@ -74,4 +74,4 @@ DENG_USING_API(Thinker);
 } // extern "C"
 #endif
 
-#endif // LIBDENG_THINKER_H
+#endif // DE_THINKER_H

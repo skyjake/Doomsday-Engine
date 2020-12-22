@@ -23,22 +23,24 @@
 
 #include "de_base.h"
 #include "server/sv_pool.h"
-
-#include <cmath>
-#include <de/mathutil.h>
-#include <de/timer.h>
-#include <de/vector1.h>
-#include <de/LogBuffer>
 #include "def_main.h"  // Def_SameStateSequence
-
 #include "network/net_main.h"
-
 #include "world/p_object.h"
 #include "world/p_players.h"
-#include "world/thinkers.h"
-#include "Sector"
+
+#include <doomsday/world/sector.h>
+#include <doomsday/world/thinkers.h>
+#include <de/legacy/mathutil.h>
+#include <de/legacy/timer.h>
+#include <de/legacy/vector1.h>
+#include <de/logbuffer.h>
+#include <cmath>
 
 using namespace de;
+
+using world::Plane;
+using world::Sector;
+using world::Surface;
 
 #define DEFAULT_DELTA_BASE_SCORE    ( 10000 )
 
@@ -79,7 +81,7 @@ struct cregister_t
 
 void Sv_RegisterWorld(cregister_t *reg, dd_bool isInitial);
 void Sv_NewDelta(void *deltaPtr, deltatype_t type, duint id);
-dd_bool Sv_IsVoidDelta(void const *delta);
+dd_bool Sv_IsVoidDelta(const void *delta);
 void Sv_PoolQueueClear(pool_t *pool);
 void Sv_GenerateNewDeltas(cregister_t *reg, dint clientNumber, dd_bool doUpdate);
 
@@ -95,11 +97,6 @@ static dfloat deltaBaseScores[NUM_DELTA_TYPES];
 // the mobj being compared.
 static ThinkerT<dt_mobj_t> dummyZeroMobj;
 
-static inline ClientServerWorld &worldSys()
-{
-    return App_World();
-}
-
 /**
  * Called once for each map, from R_SetupMap(). Initialize the world
  * register and drain all pools.
@@ -109,7 +106,7 @@ void Sv_InitPools()
     Time startedAt;
 
     // Clients don't register anything.
-    if (::isClient) return;
+    if (netState.isClient) return;
 
     LOG_AS("Sv_InitPools");
 
@@ -171,7 +168,7 @@ void Sv_ShutdownPools()
  */
 void Sv_InitPoolForClient(duint clientNumber)
 {
-    DENG2_ASSERT(clientNumber < DDMAXPLAYERS);
+    DE_ASSERT(clientNumber < DDMAXPLAYERS);
 
     // Free everything that might exist in the pool.
     Sv_DrainPool(clientNumber);
@@ -207,10 +204,10 @@ duint Sv_RegisterHashFunction(thid_t id)
  */
 reg_mobj_t *Sv_RegisterFindMobj(cregister_t *reg, thid_t id)
 {
-    DENG2_ASSERT(reg);
+    DE_ASSERT(reg);
 
     // See if there already is a register-mobj for this id.
-    mobjhash_t const &hash = reg->mobjs[Sv_RegisterHashFunction(id)];
+    const mobjhash_t &hash = reg->mobjs[Sv_RegisterHashFunction(id)];
     for (reg_mobj_t *it = hash.first; it; it = it->next)
     {
         if (it->mo.thinker.id == id) return it;
@@ -224,7 +221,7 @@ reg_mobj_t *Sv_RegisterFindMobj(cregister_t *reg, thid_t id)
  */
 reg_mobj_t *Sv_RegisterAddMobj(cregister_t *reg, thid_t id)
 {
-    DENG2_ASSERT(reg);
+    DE_ASSERT(reg);
     mobjhash_t &hash = reg->mobjs[Sv_RegisterHashFunction(id)];
 
     // Try to find an existing register-mobj.
@@ -255,7 +252,7 @@ reg_mobj_t *Sv_RegisterAddMobj(cregister_t *reg, thid_t id)
  */
 void Sv_RegisterRemoveMobj(cregister_t *reg, reg_mobj_t *regMo)
 {
-    DENG2_ASSERT(regMo);
+    DE_ASSERT(regMo);
     mobjhash_t &hash = reg->mobjs[Sv_RegisterHashFunction(regMo->mo.thinker.id)];
 
     // Update the first and last links.
@@ -287,7 +284,7 @@ void Sv_RegisterRemoveMobj(cregister_t *reg, reg_mobj_t *regMo)
  *         @c DDMAXFLOAT= @a mob is touching the ceiling.
  *         Otherwise returns the actual world Z coordinate.
  */
-dfloat Sv_GetMaxedMobjZ(mobj_t const *mob)
+dfloat Sv_GetMaxedMobjZ(const mobj_t *mob)
 {
     // No maxing for now.
     /*if (mob->origin[VZ] == mob->floorZ)
@@ -305,9 +302,9 @@ dfloat Sv_GetMaxedMobjZ(mobj_t const *mob)
  * Store the state of the mobj into the register map-object.
  * Called at register init and after each delta generation cycle.
  */
-void Sv_RegisterMobj(dt_mobj_t *reg, mobj_t const *mob)
+void Sv_RegisterMobj(dt_mobj_t *reg, const mobj_t *mob)
 {
-    DENG2_ASSERT(reg && mob);
+    DE_ASSERT(reg && mob);
     // Just copy the data we need.
     reg->thinker.id   = mob->thinker.id;
     reg->type         = mob->type;
@@ -342,7 +339,7 @@ void Sv_RegisterMobj(dt_mobj_t *reg, mobj_t const *mob)
  */
 void Sv_RegisterResetMobj(dt_mobj_t *reg)
 {
-    DENG2_ASSERT(reg);
+    DE_ASSERT(reg);
 
     reg->origin[0]    = DDMINFLOAT;
     reg->origin[1]    = DDMINFLOAT;
@@ -372,8 +369,8 @@ void Sv_RegisterPlayer(dt_player_t *reg, duint number)
 #define FMAKERGBA(r, g, b, a) \
     ( byte( 0xff * r ) + ( byte( 0xff * g ) << 8 ) + ( byte( 0xff * b ) << 16 ) + ( byte (0xff * a ) << 24 ) )
 
-    DENG2_ASSERT(reg);
-    DENG2_ASSERT(number < DDMAXPLAYERS);
+    DE_ASSERT(reg);
+    DE_ASSERT(number < DDMAXPLAYERS);
     player_t *plr    = DD_Player(number);
     ddplayer_t *ddpl = &plr->publicData();
 
@@ -412,8 +409,8 @@ void Sv_RegisterPlayer(dt_player_t *reg, duint number)
  */
 void Sv_RegisterSector(dt_sector_t *reg, dint number)
 {
-    DENG2_ASSERT(reg);
-    Sector &sector = worldSys().map().sector(number);
+    DE_ASSERT(reg);
+    Sector &sector = ServerWorld::get().map().sector(number);
 
     reg->lightLevel = sector.lightLevel();
     for (dint i = 0; i < 3; ++i)
@@ -424,7 +421,7 @@ void Sv_RegisterSector(dt_sector_t *reg, dint number)
     // @todo $nplanes
     for (dint i = 0; i < 2; ++i) // number of planes in sector.
     {
-        Plane const &plane = sector.plane(i);
+        const Plane &plane = sector.plane(i);
 
         // Plane properties
         reg->planes[i].height = plane.height();
@@ -432,9 +429,9 @@ void Sv_RegisterSector(dt_sector_t *reg, dint number)
         reg->planes[i].speed  = plane.speed();
 
         // Surface properties.
-        Surface const &surface = plane.surface();
+        const Surface &surface = plane.surface();
 
-        Vector3f const &tintColor = surface.color();
+        const Vec3f &tintColor = surface.color();
         for (dint c = 0; c < 3; ++c)
         {
             reg->planes[i].surface.rgba[c] = tintColor[c];
@@ -450,9 +447,9 @@ void Sv_RegisterSector(dt_sector_t *reg, dint number)
  */
 void Sv_RegisterSide(dt_side_t *reg, dint number)
 {
-    DENG2_ASSERT(reg);
+    DE_ASSERT(reg);
 
-    LineSide *side = worldSys().map().sidePtr(number);
+    auto *side = ServerWorld::get().map().sidePtr(number);
 
     if (side->hasSections())
     {
@@ -482,8 +479,8 @@ void Sv_RegisterSide(dt_side_t *reg, dint number)
  */
 void Sv_RegisterPoly(dt_poly_t *reg, duint number)
 {
-    DENG_ASSERT(reg);
-    Polyobj const &pob = worldSys().map().polyobj(number);
+    DE_ASSERT(reg);
+    const Polyobj &pob = ServerWorld::get().map().polyobj(number);
 
     reg->dest[0]    = pob.dest[0];
     reg->dest[1]    = pob.dest[1];
@@ -495,10 +492,10 @@ void Sv_RegisterPoly(dt_poly_t *reg, duint number)
 /**
  * Returns @c true if the result is not void.
  */
-dd_bool Sv_RegisterCompareMobj(cregister_t *reg, mobj_t const *s, mobjdelta_t *d)
+dd_bool Sv_RegisterCompareMobj(cregister_t *reg, const mobj_t *s, mobjdelta_t *d)
 {
     dint df;
-    dt_mobj_t const *r = ::dummyZeroMobj;
+    const dt_mobj_t *r = ::dummyZeroMobj;
     reg_mobj_t *regMo  = Sv_RegisterFindMobj(reg, s->thinker.id);
     if (regMo)
     {
@@ -588,8 +585,8 @@ dd_bool Sv_RegisterCompareMobj(cregister_t *reg, mobj_t const *s, mobjdelta_t *d
  */
 dd_bool Sv_RegisterComparePlayer(cregister_t *reg, duint number, playerdelta_t *d)
 {
-    DENG2_ASSERT(number < DDMAXPLAYERS);
-    dt_player_t const *r = &reg->ddPlayers[number];
+    DE_ASSERT(number < DDMAXPLAYERS);
+    const dt_player_t *r = &reg->ddPlayers[number];
     dt_player_t *s       = &d->player;
     dint df = 0;
 
@@ -622,9 +619,9 @@ dd_bool Sv_RegisterComparePlayer(cregister_t *reg, duint number, playerdelta_t *
  */
 dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d, byte doUpdate)
 {
-    DENG2_ASSERT(reg && d);
+    DE_ASSERT(reg && d);
     dt_sector_t *r  = &reg->sectors[number];
-    Sector const &s = worldSys().map().sector(number);
+    const Sector &s = ServerWorld::get().map().sector(number);
     dint df = 0;
 
     // Determine which data is different.
@@ -707,7 +704,7 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d
         df |= SDF_CEILING_SPEED | SDF_CEILING_TARGET;
     }
 
-#ifdef DENG2_DEBUG
+#ifdef DE_DEBUG
     if (df & (SDF_CEILING_HEIGHT | SDF_CEILING_SPEED | SDF_CEILING_TARGET))
     {
         LOGDEV_NET_XVERBOSE("Sector %i: ceiling state change noted (target = %f)",
@@ -745,9 +742,9 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, dint number, sectordelta_t *d
  */
 dd_bool Sv_RegisterCompareSide(cregister_t *reg, duint number, sidedelta_t *d, byte doUpdate)
 {
-    DENG2_ASSERT(reg/* && d*/);
-    LineSide const *side = worldSys().map().sidePtr(number);
-    dt_side_t *r         = &reg->sides[number];
+    DE_ASSERT(reg/* && d*/);
+    const auto *side = ServerWorld::get().map().sidePtr(number);
+    dt_side_t * r    = &reg->sides[number];
 
     byte lineFlags = side->line().flags() & 0xff;
     byte sideFlags = side->flags() & 0xff;
@@ -886,8 +883,8 @@ dd_bool Sv_RegisterCompareSide(cregister_t *reg, duint number, sidedelta_t *d, b
  */
 dd_bool Sv_RegisterComparePoly(cregister_t *reg, dint number, polydelta_t *d)
 {
-    DENG2_ASSERT(reg/* && d*/);
-    dt_poly_t const *r = &reg->polyObjs[number];
+    DE_ASSERT(reg/* && d*/);
+    const dt_poly_t *r = &reg->polyObjs[number];
     dt_poly_t *s       = &d->po;
     dint df = 0;
 
@@ -914,7 +911,7 @@ dd_bool Sv_RegisterComparePoly(cregister_t *reg, dint number, polydelta_t *d)
 /**
  * Returns @c true if the map-object can be excluded from delta processing.
  */
-dd_bool Sv_IsMobjIgnored(mobj_t const &mob)
+dd_bool Sv_IsMobjIgnored(const mobj_t &mob)
 {
     return (mob.ddFlags & DDMF_LOCAL) != 0;
 }
@@ -924,7 +921,7 @@ dd_bool Sv_IsMobjIgnored(mobj_t const &mob)
  */
 dd_bool Sv_IsPlayerIgnored(dint plrNum)
 {
-    DENG2_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    DE_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
     return !DD_Player(plrNum)->publicData().inGame;
 }
 
@@ -939,9 +936,9 @@ dd_bool Sv_IsPlayerIgnored(dint plrNum)
  */
 void Sv_RegisterWorld(cregister_t *reg, dd_bool isInitial)
 {
-    DENG2_ASSERT(reg);
+    DE_ASSERT(reg);
 
-    world::Map &map = worldSys().map();
+    world::Map &map = ServerWorld::get().map();
 
     de::zapPtr(reg);
     reg->gametic = SECONDS_TO_TICKS(gameTime);
@@ -984,7 +981,7 @@ void Sv_RegisterWorld(cregister_t *reg, dd_bool isInitial)
  */
 void Sv_UpdateOwnerInfo(pool_t *pool)
 {
-    DENG2_ASSERT(pool);
+    DE_ASSERT(pool);
     player_t *plr     = DD_Player(pool->owner);
     ownerinfo_t *info = &pool->ownerInfo;
 
@@ -1036,17 +1033,17 @@ void Sv_NewDelta(void *deltaPtr, deltatype_t type, uint id)
 /**
  * @return  @c true, if the delta contains no information.
  */
-dd_bool Sv_IsVoidDelta(void const *delta)
+dd_bool Sv_IsVoidDelta(const void *delta)
 {
-    return ((delta_t const *) delta)->flags == 0;
+    return ((const delta_t *) delta)->flags == 0;
 }
 
 /**
  * @return  @c true, if the delta is a Sound delta.
  */
-dd_bool Sv_IsSoundDelta(void const *delta)
+dd_bool Sv_IsSoundDelta(const void *delta)
 {
-    delta_t const *d = (delta_t const *) delta;
+    const delta_t *d = (const delta_t *) delta;
 
     return (d->type == DT_SOUND ||
             d->type == DT_MOBJ_SOUND ||
@@ -1058,9 +1055,9 @@ dd_bool Sv_IsSoundDelta(void const *delta)
 /**
  * @return  @c true, if the delta is a Start Sound delta.
  */
-dd_bool Sv_IsStartSoundDelta(void const *delta)
+dd_bool Sv_IsStartSoundDelta(const void *delta)
 {
-    sounddelta_t const *d = (sounddelta_t const *) delta;
+    const sounddelta_t *d = (const sounddelta_t *) delta;
 
     return Sv_IsSoundDelta(delta) &&
         ((d->delta.flags & SNDDF_VOLUME) && d->volume > 0);
@@ -1069,9 +1066,9 @@ dd_bool Sv_IsStartSoundDelta(void const *delta)
 /**
  * @return  @c true, if the delta is Stop Sound delta.
  */
-dd_bool Sv_IsStopSoundDelta(void const *delta)
+dd_bool Sv_IsStopSoundDelta(const void *delta)
 {
-    sounddelta_t const *d = (sounddelta_t const *) delta;
+    const sounddelta_t *d = (const sounddelta_t *) delta;
 
     return Sv_IsSoundDelta(delta) &&
         ((d->delta.flags & SNDDF_VOLUME) && d->volume <= 0);
@@ -1080,27 +1077,27 @@ dd_bool Sv_IsStopSoundDelta(void const *delta)
 /**
  * @return  @c true, if the delta is a Null Mobj delta.
  */
-dd_bool Sv_IsNullMobjDelta(void const *delta)
+dd_bool Sv_IsNullMobjDelta(const void *delta)
 {
-    return ((delta_t const *) delta)->type == DT_MOBJ &&
-        (((delta_t const *) delta)->flags & MDFC_NULL);
+    return ((const delta_t *) delta)->type == DT_MOBJ &&
+        (((const delta_t *) delta)->flags & MDFC_NULL);
 }
 
 /**
  * @return  @c true, if the delta is a Create Mobj delta.
  */
-dd_bool Sv_IsCreateMobjDelta(void const *delta)
+dd_bool Sv_IsCreateMobjDelta(const void *delta)
 {
-    return ((delta_t const *) delta)->type == DT_MOBJ &&
-        (((delta_t const *) delta)->flags & MDFC_CREATE);
+    return ((const delta_t *) delta)->type == DT_MOBJ &&
+        (((const delta_t *) delta)->flags & MDFC_CREATE);
 }
 
 /**
  * @return  @c true, if the deltas refer to the same object.
  */
-dd_bool Sv_IsSameDelta(void const *delta1, void const *delta2)
+dd_bool Sv_IsSameDelta(const void *delta1, const void *delta2)
 {
-    delta_t const *a = (delta_t const *) delta1, *b = (delta_t const *) delta2;
+    const delta_t *a = (const delta_t *) delta1, *b = (const delta_t *) delta2;
 
     return (a->type == b->type) && (a->id == b->id);
 }
@@ -1147,7 +1144,7 @@ void* Sv_CopyDelta(void* deltaPtr)
 void Sv_SubtractDelta(void* deltaPtr1, const void* deltaPtr2)
 {
     delta_t*            delta = (delta_t *) deltaPtr1;
-    const delta_t*      sub = (delta_t const *) deltaPtr2;
+    const delta_t*      sub = (const delta_t *) deltaPtr2;
 
 #ifdef _DEBUG
     if (!Sv_IsSameDelta(delta, sub))
@@ -1172,15 +1169,15 @@ void Sv_SubtractDelta(void* deltaPtr1, const void* deltaPtr2)
  * Applies the data in the source delta to the destination delta.
  * Both must be in the NEW state. Handles all types of deltas.
  */
-void Sv_ApplyDeltaData(void *destDelta, void const *srcDelta)
+void Sv_ApplyDeltaData(void *destDelta, const void *srcDelta)
 {
-    delta_t const *src = (delta_t const *) srcDelta;
+    const delta_t *src = (const delta_t *) srcDelta;
     delta_t *dest      = (delta_t *) destDelta;
     int sf = src->flags;
 
     if (src->type == DT_MOBJ)
     {
-        dt_mobj_t const *s = &((mobjdelta_t const *) src)->mo;
+        const dt_mobj_t *s = &((const mobjdelta_t *) src)->mo;
         dt_mobj_t *d       = &((mobjdelta_t *) dest)->mo;
 
         // *Always* set the player pointer.
@@ -1392,7 +1389,7 @@ void Sv_ApplyDeltaData(void *destDelta, void const *srcDelta)
     }
     else if (Sv_IsSoundDelta(src))
     {
-        const sounddelta_t* s = (sounddelta_t const *) srcDelta;
+        const sounddelta_t* s = (const sounddelta_t *) srcDelta;
         sounddelta_t*       d = (sounddelta_t *) destDelta;
 
         if (sf & SNDDF_VOLUME)
@@ -1413,7 +1410,7 @@ void Sv_ApplyDeltaData(void *destDelta, void const *srcDelta)
  */
 dd_bool Sv_MergeDelta(void* destDelta, const void* srcDelta)
 {
-    const delta_t *src = (delta_t const *) srcDelta;
+    const delta_t *src = (const delta_t *) srcDelta;
     delta_t *dest = (delta_t *) destDelta;
 
 #ifdef _DEBUG
@@ -1458,7 +1455,7 @@ dd_bool Sv_MergeDelta(void* destDelta, const void* srcDelta)
         // stop it? We don't want that.
 
         sounddelta_t *destSound = (sounddelta_t *) destDelta;
-        const sounddelta_t* srcSound = (sounddelta_t const *) srcDelta;
+        const sounddelta_t* srcSound = (const sounddelta_t *) srcDelta;
 
         // Destination becomes equal to source.
         dest->flags = src->flags;
@@ -1494,7 +1491,7 @@ uint Sv_DeltaAge(const delta_t* delta)
  * Approximate the distance to the given sector. Set 'mayBeGone' to true
  * if the mobj may have been destroyed and should not be processed.
  */
-coord_t Sv_MobjDistance(mobj_t const *mo, ownerinfo_t const *info, dd_bool isReal)
+coord_t Sv_MobjDistance(const mobj_t *mo, const ownerinfo_t *info, dd_bool isReal)
 {
     coord_t z;
 
@@ -1523,22 +1520,22 @@ coord_t Sv_MobjDistance(mobj_t const *mo, ownerinfo_t const *info, dd_bool isRea
 /**
  * Approximate the distance to the given sector.
  */
-coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
+coord_t Sv_SectorDistance(int index, const ownerinfo_t *info)
 {
-    DENG2_ASSERT(info);
-    Sector const &sector = worldSys().map().sector(index);
+    DE_ASSERT(info);
+    const Sector &sector = ServerWorld::get().map().sector(index);
 
     return M_ApproxDistance3(info->origin[0] - sector.soundEmitter().origin[0],
                              info->origin[1] - sector.soundEmitter().origin[1],
                              (info->origin[2] - sector.soundEmitter().origin[2]) * 1.2);
 }
 
-coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
+coord_t Sv_SideDistance(int index, int deltaFlags, const ownerinfo_t *info)
 {
-    DENG2_ASSERT(info);
-    LineSide const *side = worldSys().map().sidePtr(index);
+    DE_ASSERT(info);
+    const auto *side = ServerWorld::get().map().sidePtr(index);
 
-    SoundEmitter const &emitter = (  deltaFlags & SNDDF_SIDE_MIDDLE? side->middleSoundEmitter()
+    const SoundEmitter &emitter = (  deltaFlags & SNDDF_SIDE_MIDDLE? side->middleSoundEmitter()
                                    : deltaFlags & SNDDF_SIDE_TOP   ? side->topSoundEmitter()
                                                                    : side->bottomSoundEmitter());
 
@@ -1550,9 +1547,9 @@ coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 /**
  * @return  The distance to the origin of the delta's entity.
  */
-coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
+coord_t Sv_DeltaDistance(const void *deltaPtr, const ownerinfo_t *info)
 {
-    delta_t const *delta = (delta_t const *) deltaPtr;
+    const delta_t *delta = (const delta_t *) deltaPtr;
 
     if (delta->type == DT_MOBJ)
     {
@@ -1564,7 +1561,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
     if (delta->type == DT_PLAYER)
     {
         // Use the player's actual position.
-        mobj_t const *mo = DD_Player(delta->id)->publicData().mo;
+        const mobj_t *mo = DD_Player(delta->id)->publicData().mo;
         if (mo)
         {
             return Sv_MobjDistance(mo, info, true);
@@ -1578,22 +1575,22 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if (delta->type == DT_SIDE)
     {
-        LineSide *side = worldSys().map().sidePtr(delta->id);
-        Line &line = side->line();
+        auto *side = ServerWorld::get().map().sidePtr(delta->id);
+        auto &line = side->line();
         return M_ApproxDistance(info->origin[0] - line.center().x,
                                 info->origin[1] - line.center().y);
     }
 
     if (delta->type == DT_POLY)
     {
-        Polyobj const &pob = worldSys().map().polyobj(delta->id);
+        const Polyobj &pob = ServerWorld::get().map().polyobj(delta->id);
         return M_ApproxDistance(info->origin[0] - pob.origin[0],
                                 info->origin[1] - pob.origin[1]);
     }
 
     if (delta->type == DT_MOBJ_SOUND)
     {
-        sounddelta_t const *sound = (sounddelta_t const *) deltaPtr;
+        const sounddelta_t *sound = (const sounddelta_t *) deltaPtr;
         return Sv_MobjDistance(sound->mobj, info, true);
     }
 
@@ -1609,7 +1606,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if (delta->type == DT_POLY_SOUND)
     {
-        Polyobj const &pob = worldSys().map().polyobj(delta->id);
+        const Polyobj &pob = ServerWorld::get().map().polyobj(delta->id);
         return M_ApproxDistance(info->origin[VX] - pob.origin[VX],
                                 info->origin[VY] - pob.origin[VY]);
     }
@@ -1708,7 +1705,7 @@ void Sv_DrainPool(uint clientNumber)
  * Returns the maximum distance for the sound. If the origin is any farther,
  * the delta will not be sent to the client in question.
  */
-dfloat Sv_GetMaxSoundDistance(sounddelta_t const *delta)
+dfloat Sv_GetMaxSoundDistance(const sounddelta_t *delta)
 {
     dfloat volume = 1;
 
@@ -1733,7 +1730,7 @@ dfloat Sv_GetMaxSoundDistance(sounddelta_t const *delta)
  */
 int Sv_ExcludeDelta(pool_t* pool, const void* deltaPtr)
 {
-    const delta_t*      delta = (delta_t const *) deltaPtr;
+    const delta_t*      delta = (const delta_t *) deltaPtr;
     player_t*           plr = DD_Player(pool->owner);
     mobj_t*             poolViewer = plr->publicData().mo;
     int                 flags = delta->flags;
@@ -1741,7 +1738,7 @@ int Sv_ExcludeDelta(pool_t* pool, const void* deltaPtr)
     // Can we exclude information from the delta? (for this player only)
     if (delta->type == DT_MOBJ)
     {
-        const mobjdelta_t *mobjDelta = (mobjdelta_t const *) deltaPtr;
+        const mobjdelta_t *mobjDelta = (const mobjdelta_t *) deltaPtr;
 
         if (poolViewer && poolViewer->thinker.id == delta->id)
         {
@@ -1805,7 +1802,7 @@ int Sv_ExcludeDelta(pool_t* pool, const void* deltaPtr)
         // Sounds that originate from too far away are not added to a pool.
         // Stop Sound deltas have an infinite max distance, though.
         if (Sv_DeltaDistance(delta, &pool->ownerInfo) >
-           Sv_GetMaxSoundDistance((sounddelta_t const *) deltaPtr))
+           Sv_GetMaxSoundDistance((const sounddelta_t *) deltaPtr))
         {
             // Don't add it.
             return 0;
@@ -2070,7 +2067,7 @@ void Sv_NewNullDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
             next = obj->next;
 
             /// @todo Do not assume mobj is from the CURRENT map.
-            if (!worldSys().map().thinkers().isUsedMobjId(obj->mo.thinker.id))
+            if (!ServerWorld::get().map().thinkers().isUsedMobjId(obj->mo.thinker.id))
             {
                 // This object no longer exists!
                 Sv_NewDelta(&null, DT_MOBJ, obj->mo.thinker.id);
@@ -2096,7 +2093,7 @@ void Sv_NewNullDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
  */
 void Sv_NewMobjDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
 {
-    worldSys().map().thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+    ServerWorld::get().map().thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
                                        0x1 /*public*/, [&reg, &doUpdate, &targets] (thinker_t *th)
     {
         auto &mob = *reinterpret_cast<mobj_t *>(th);
@@ -2209,7 +2206,7 @@ void Sv_NewSectorDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
 {
     sectordelta_t delta;
 
-    for (int i = 0; i < worldSys().map().sectorCount(); ++i)
+    for (int i = 0; i < ServerWorld::get().map().sectorCount(); ++i)
     {
         if (Sv_RegisterCompareSector(reg, i, &delta, doUpdate))
         {
@@ -2228,7 +2225,7 @@ void Sv_NewSideDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     static uint numShifts = 2, shift = 0;
 
     /// @todo fixme: Do not assume the current map.
-    world::Map &map = worldSys().map();
+    world::Map &map = ServerWorld::get().map();
 
     // When comparing against an initial register, always compare all
     // sides (since the comparing is only done once, not continuously).
@@ -2268,7 +2265,7 @@ void Sv_NewPolyDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     polydelta_t delta;
 
     /// @todo fixme: Do not assume the current map.
-    for (int i = 0; i < worldSys().map().polyobjCount(); ++i)
+    for (int i = 0; i < ServerWorld::get().map().polyobjCount(); ++i)
     {
         if (Sv_RegisterComparePoly(reg, i, &delta))
         {
@@ -2284,8 +2281,8 @@ void Sv_NewPolyDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     }
 }
 
-void Sv_NewSoundDelta(int soundId, mobj_t const *emitter, Sector *sourceSector,
-    Polyobj *sourcePoly, Plane *sourcePlane, Surface *sourceSurface,
+void Sv_NewSoundDelta(int soundId, const mobj_t *emitter, world::Sector *sourceSector,
+    Polyobj *sourcePoly, world::Plane *sourcePlane, world::Surface *sourceSurface,
     float volume, dd_bool isRepeating, int clientsMask)
 {
     pool_t *targets[DDMAXPLAYERS + 1];
@@ -2312,7 +2309,7 @@ void Sv_NewSoundDelta(int soundId, mobj_t const *emitter, Sector *sourceSector,
         type = DT_SECTOR_SOUND;
 
         // Clients need to know which emitter to use.
-        if (emitter && emitter == (mobj_t const *) &sourcePlane->soundEmitter())
+        if (emitter && emitter == (const mobj_t *) &sourcePlane->soundEmitter())
         {
             if (sourcePlane->isSectorFloor())
             {
@@ -2329,13 +2326,13 @@ void Sv_NewSoundDelta(int soundId, mobj_t const *emitter, Sector *sourceSector,
     }
     else if (sourceSurface)
     {
-        DENG_ASSERT(sourceSurface->parent().type() == DMU_SIDE);
-        DENG2_ASSERT(emitter == 0); // surface sound emitter rather than a real mobj
+        DE_ASSERT(sourceSurface->parent().type() == DMU_SIDE);
+        DE_ASSERT(emitter == 0); // surface sound emitter rather than a real mobj
 
         type = DT_SIDE_SOUND;
 
         // Clients need to know which emitter to use.
-        LineSide &side = sourceSurface->parent().as<LineSide>();
+        auto &side = sourceSurface->parent().as<world::LineSide>();
 
         if (&side.middle() == sourceSurface)
         {
@@ -2383,9 +2380,9 @@ void Sv_NewSoundDelta(int soundId, mobj_t const *emitter, Sector *sourceSector,
  */
 dd_bool Sv_IsFrameTarget(duint plrNum)
 {
-    DENG2_ASSERT(plrNum < DDMAXPLAYERS);
+    DE_ASSERT(plrNum < DDMAXPLAYERS);
 
-    player_t const &plr = *DD_Player(plrNum);
+    const player_t &plr = *DD_Player(plrNum);
 
     // Clients must tell us they are ready before we can begin sending.
     return (plr.publicData().inGame && plr.ready);

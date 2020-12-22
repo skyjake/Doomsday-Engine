@@ -20,24 +20,25 @@
 #ifndef CLIENTAPP_H
 #define CLIENTAPP_H
 
-#include <de/BaseGuiApp>
 #include <doomsday/doomsdayapp.h>
-#include <QUrl>
+#include <doomsday/world/world.h>
+#include <de/baseguiapp.h>
 
 class AudioSystem;
 class ClientPlayer;
 class ClientResources;
-class ClientServerWorld;
-class ClientWindowSystem;
+class ClientWorld;
+class ClientWindow;
 class ConfigProfiles;
 class InFineSystem;
 class InputSystem;
+class IWorldRenderer;
 class RenderSystem;
 class ServerLink;
 class Updater;
 
-#if !defined (DENG_MOBILE)
-#  define DENG_HAVE_BUSYRUNNER 1
+#if !defined (DE_MOBILE)
+#  define DE_HAVE_BUSYRUNNER 1
 class BusyRunner;
 #endif
 
@@ -46,10 +47,8 @@ class BusyRunner;
  */
 class ClientApp : public de::BaseGuiApp, public DoomsdayApp
 {
-    Q_OBJECT
-
 public:
-    ClientApp(int &argc, char **argv);
+    ClientApp(const de::StringList &args);
 
     /**
      * Sets up all the subsystems of the application. Must be called before the
@@ -61,13 +60,15 @@ public:
     void preFrame();
     void postFrame();
 
-    void checkPackageCompatibility(
-            de::StringList const &packageIds,
-            de::String const &userMessageIfIncompatible,
-            std::function<void ()> finalizeFunc) override;
+    void checkPackageCompatibility(const de::StringList &       packageIds,
+                                   const de::String &           userMessageIfIncompatible,
+                                   const std::function<void()> &finalizeFunc) override;
 
-    void gameSessionWasSaved(AbstractSession const &session, GameStateFolder &toFolder) override;
-    void gameSessionWasLoaded(AbstractSession const &session, GameStateFolder const &fromFolder) override;
+    void openInBrowser(const de::String &url);
+    void openHomepageInBrowser();
+    void showLocalFile(const de::NativePath &path);
+
+    IWorldRenderer *makeWorldRenderer() const;
 
 public:
     /**
@@ -76,48 +77,50 @@ public:
      * @param msg    Message to show. May contain style escapes.
      * @param level  Importance of the message.
      */
-    static void alert(de::String const &msg, de::LogEntry::Level level = de::LogEntry::Message);
+    static void alert(const de::String &msg, de::LogEntry::Level level = de::LogEntry::Message);
 
     static ClientPlayer &player(int console);
     static de::LoopResult forLocalPlayers(const std::function<de::LoopResult (ClientPlayer &)> &func);
 
-    static ClientApp &          app();
-    static ConfigProfiles &     logSettings();
-    static ConfigProfiles &     networkSettings();
-    static ConfigProfiles &     audioSettings();    ///< @todo Belongs in AudioSystem.
-    static ConfigProfiles &     uiSettings();
-    static ServerLink &         serverLink();
-    static InFineSystem &       infineSystem();
-    static InputSystem &        inputSystem();
-    static ClientWindowSystem & windowSystem();
-    static AudioSystem &        audioSystem();
-    static RenderSystem &       renderSystem();
-    static ClientResources &    resources();
-    static ClientServerWorld &  world();
+    static ClientApp &      app();
+    static ConfigProfiles & logSettings();
+    static ConfigProfiles & networkSettings();
+    static ConfigProfiles & audioSettings(); ///< @todo Belongs in AudioSystem.
+    static ConfigProfiles & windowSettings();
+    static ConfigProfiles & uiSettings();
+    static ServerLink &     serverLink();
+    static InFineSystem &   infine();
+    static InputSystem &    input();
+    static AudioSystem &    audio();
+    static RenderSystem &   render();
+    static ClientResources &resources();
+    static world::World &   world();
+    static ClientWorld &    classicWorld();
 
-#if defined (DENG_HAVE_BUSYRUNNER)
-    static BusyRunner &         busyRunner();
+#if defined (DE_HAVE_BUSYRUNNER)
+    static BusyRunner &     busyRunner();
 #endif
 
-    static bool hasInputSystem();
-    static bool hasRenderSystem();
-    static bool hasAudioSystem();
+    static ClientWindow *mainWindow();
 
-#if defined (DENG_HAVE_UPDATER)
+    static bool hasInput();
+    static bool hasRender();
+    static bool hasAudio();
+    static bool hasClassicWorld();
+
+#if defined (DE_HAVE_UPDATER)
     static Updater &updater();
 #endif
 
-public slots:
-    void openHomepageInBrowser();
-    void openInBrowser(QUrl url);
-
 protected:
-    void unloadGame(GameProfile const &upcomingGame) override;
-    void makeGameCurrent(GameProfile const &newGame) override;
     void reset() override;
+    void makeGameCurrent(const GameProfile &newGame) override;
+    void unloadGame(const GameProfile &upcomingGame) override;
+    void gameSessionWasSaved(const AbstractSession &session, GameStateFolder &toFolder) override;
+    void gameSessionWasLoaded(const AbstractSession &session, const GameStateFolder &fromFolder) override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // CLIENTAPP_H

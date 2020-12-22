@@ -19,12 +19,12 @@
 
 #include "server_dummies.h"
 #include "ui/nativeui.h"
-#include <doomsday/res/Texture>
+#include <doomsday/res/texture.h>
 
 void BusyMode_FreezeGameForBusyMode()
 {}
 
-DENG_DECLARE_API(Busy) =
+DE_DECLARE_API(Busy) =
 {
     { DE_API_BUSY },
     BusyMode_FreezeGameForBusyMode
@@ -32,12 +32,12 @@ DENG_DECLARE_API(Busy) =
 
 void Con_TransitionTicker(timespan_t t)
 {
-    DENG_UNUSED(t);
+    DE_UNUSED(t);
 }
 
 void Con_SetProgress(int progress)
 {
-    DENG_UNUSED(progress);
+    DE_UNUSED(progress);
 }
 
 void GL_Shutdown()
@@ -45,19 +45,19 @@ void GL_Shutdown()
 
 void R_RenderPlayerView(int num)
 {
-    DENG_UNUSED(num);
+    DE_UNUSED(num);
 }
 
-void R_SetBorderGfx(Uri const *const *paths)
+void R_SetBorderGfx(const Uri *const *paths)
 {
-    DENG_UNUSED(paths);
+    DE_UNUSED(paths);
 }
 
 void R_SkyParams(int layer, int param, void *data)
 {
-    DENG_UNUSED(layer);
-    DENG_UNUSED(param);
-    DENG_UNUSED(data);
+    DE_UNUSED(layer);
+    DE_UNUSED(param);
+    DE_UNUSED(data);
 }
 
 void R_ShutdownSvgs(void)
@@ -65,13 +65,13 @@ void R_ShutdownSvgs(void)
 
 struct font_s* R_CreateFontFromDef(ded_compositefont_t* def)
 {
-    DENG_UNUSED(def);
+    DE_UNUSED(def);
     return 0;
 }
 
 void Rend_CacheForMobjType(int num)
 {
-    DENG_UNUSED(num);
+    DE_UNUSED(num);
 }
 
 void Rend_ConsoleInit()
@@ -79,17 +79,17 @@ void Rend_ConsoleInit()
 
 void Rend_ConsoleOpen(int yes)
 {
-    DENG_UNUSED(yes);
+    DE_UNUSED(yes);
 }
 
 void Rend_ConsoleMove(int y)
 {
-    DENG_UNUSED(y);
+    DE_UNUSED(y);
 }
 
 void Rend_ConsoleResize(int force)
 {
-    DENG_UNUSED(force);
+    DE_UNUSED(force);
 }
 
 void Rend_ConsoleToggleFullscreen()
@@ -103,15 +103,15 @@ void Cl_InitPlayers(void)
 
 void UI_Ticker(timespan_t t)
 {
-    DENG_UNUSED(t);
+    DE_UNUSED(t);
 }
 
 void Sys_MessageBox(messageboxtype_t type, const char* title, const char* msg, const char* detailedMsg)
 {
-    DENG_UNUSED(type);
-    DENG_UNUSED(title);
-    DENG_UNUSED(msg);
-    DENG_UNUSED(detailedMsg);
+    DE_UNUSED(type);
+    DE_UNUSED(title);
+    DE_UNUSED(msg);
+    DE_UNUSED(detailedMsg);
 }
 
 void Sys_MessageBox2(messageboxtype_t /*type*/, const char * /*title*/, const char * /*msg*/, const char * /*informativeMsg*/, const char * /*detailedMsg*/)
@@ -133,7 +133,7 @@ void Sys_MessageBoxWithDetailsFromFile(messageboxtype_t /*type*/, const char* /*
 {
 }
 
-DENG_EXTERN_C void R_ProjectSprite(struct mobj_s *mo)
+DE_EXTERN_C void R_ProjectSprite(struct mobj_s *mo)
 {
-    DENG_UNUSED(mo);
+    DE_UNUSED(mo);
 }

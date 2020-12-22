@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_MODELLOADER_H
-#define DENG_CLIENT_MODELLOADER_H
+#ifndef DE_CLIENT_MODELLOADER_H
+#define DE_CLIENT_MODELLOADER_H
 
-#include <de/GLProgram>
-#include <de/ModelBank>
+#include <de/glprogram.h>
+#include <de/modelbank.h>
 
 namespace render {
 
@@ -30,17 +30,17 @@ namespace render {
 class ModelLoader
 {
 public:
-    DENG2_DEFINE_AUDIENCE2(NewProgram, void newProgramCreated(de::GLProgram &))
+    DE_AUDIENCE(NewProgram, void newProgramCreated(de::GLProgram &))
 
-    DENG2_ERROR(DefinitionError);
-    DENG2_ERROR(TextureMappingError);
+    DE_ERROR(DefinitionError);
+    DE_ERROR(TextureMappingError);
 
 public:
     ModelLoader();
 
     de::ModelBank &bank();
 
-    de::ModelBank const &bank() const;
+    const de::ModelBank &bank() const;
 
     void glInit();
 
@@ -53,7 +53,7 @@ public:
      *                 created and owned by ModelRenderer.
      * @return Name of the shader (in the shader bank).
      */
-    de::String shaderName(de::GLProgram const &program) const;
+    de::String shaderName(const de::GLProgram &program) const;
 
     /**
      * Looks up the definition of a shader based on a GLProgram instance.
@@ -62,21 +62,21 @@ public:
      *                 created and owned by ModelRenderer.
      * @return Shader definition record.
      */
-    de::Record const &shaderDefinition(de::GLProgram const &program) const;
+    const de::Record &shaderDefinition(const de::GLProgram &program) const;
 
 public:
-    static int identifierFromText(de::String const &text,
-                                  std::function<int (de::String const &)> resolver);
+    static int identifierFromText(const de::String &text,
+                                  const std::function<int (const de::String &)>& resolver);
 
-    static de::String const DEF_ANIMATION;
-    static de::String const DEF_MATERIAL;
-    static de::String const DEF_PASS;
-    static de::String const DEF_RENDER;
+    static const char *DEF_ANIMATION;
+    static const char *DEF_MATERIAL;
+    static const char *DEF_PASS;
+    static const char *DEF_RENDER;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 } // namespace render
 
-#endif // DENG_CLIENT_MODELLOADER_H
+#endif // DE_CLIENT_MODELLOADER_H

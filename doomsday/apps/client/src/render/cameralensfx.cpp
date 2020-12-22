@@ -54,26 +54,29 @@
 
 #include <doomsday/console/cmd.h>
 #include <de/libcore.h>
-#include <de/Rectangle>
-#include <de/Drawable>
-#include <de/GLFramebuffer>
-#include <QList>
+#include <de/rectangle.h>
+#include <de/drawable.h>
+#include <de/glframebuffer.h>
 
 using namespace de;
 
 static int fxFramePlayerNum; ///< Player view currently being drawn.
 
-#define IDX_LENS_FLARES         2
+//#define IDX_LENS_FLARES         2
 
 void LensFx_Init()
 {
     for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
         ConsoleEffectStack &stack = DD_Player(i)->fxStack();
-        stack.effects
-                << new fx::Bloom(i)
-                << new fx::Vignette(i)
-                << new fx::LensFlares(i)        // IDX_LENS_FLARES
+
+        if (ClientApp::hasClassicWorld()) // Gloom does its own HDR bloom.
+        {
+            stack.effects << new fx::Bloom(i);
+        }
+
+        stack.effects << new fx::Vignette(i)
+//                << new fx::LensFlares(i)        // IDX_LENS_FLARES
                 << new fx::ColorFilter(i)
                 << new fx::Ramp(i);
     }
@@ -93,7 +96,7 @@ void LensFx_GLRelease()
 {
     for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        foreach (ConsoleEffect *effect, DD_Player(i)->fxStack().effects)
+        for (ConsoleEffect *effect : DD_Player(i)->fxStack().effects)
         {
             if (effect->isInited())
             {
@@ -120,10 +123,10 @@ void LensFx_Draw(int playerNum)
     GLState::push()
             .setTarget(player.viewCompositor().gameView().resolvedFramebuffer());
 
-    auto const &effects = player.fxStack().effects;
+    const auto &effects = player.fxStack().effects;
 
     // Initialize these effects if they currently are not.
-    foreach (ConsoleEffect *effect, effects)
+    for (ConsoleEffect *effect : effects)
     {
         if (!effect->isInited())
         {
@@ -131,17 +134,17 @@ void LensFx_Draw(int playerNum)
         }
     }
 
-    foreach (ConsoleEffect *effect, effects)
+    for (ConsoleEffect *effect : effects)
     {
         effect->beginFrame();
     }
 
-    foreach (ConsoleEffect *effect, effects)
+    for (ConsoleEffect *effect : effects)
     {
         effect->draw();
     }
 
-    for (int i = effects.size() - 1; i >= 0; --i)
+    for (int i = effects.sizei() - 1; i >= 0; --i)
     {
         effects.at(i)->endFrame();
     }
@@ -149,10 +152,12 @@ void LensFx_Draw(int playerNum)
     GLState::pop();
 }
 
-void LensFx_MarkLightVisibleInFrame(IPointLightSource const &lightSource)
+void LensFx_MarkLightVisibleInFrame(const IPointLightSource &/*lightSource*/)
 {
-    auto const &effects = DD_Player(fxFramePlayerNum)->fxStack().effects;
+    /*
+    const auto &effects = DD_Player(fxFramePlayerNum)->fxStack().effects;
 
     static_cast<fx::LensFlares *>(effects.at(IDX_LENS_FLARES))->
             markLightPotentiallyVisibleForCurrentFrame(&lightSource);
+    */
 }

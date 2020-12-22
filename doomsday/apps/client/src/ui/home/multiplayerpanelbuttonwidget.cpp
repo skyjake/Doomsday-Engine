@@ -18,41 +18,40 @@
 
 #include "ui/home/multiplayerpanelbuttonwidget.h"
 #include "ui/dialogs/serverinfodialog.h"
+#include "ui/clientstyle.h"
 #include "ui/clientwindow.h"
 #include "network/net_main.h"
 #include "network/serverlink.h"
-#include "resource/idtech1image.h"
 #include "clientapp.h"
 #include "dd_main.h"
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
 #include <doomsday/console/exec.h>
-#include <doomsday/LumpCatalog>
-#include <doomsday/Games>
+#include <doomsday/res/lumpcatalog.h>
+#include <doomsday/games.h>
 
-#include <de/Async>
 #include <de/charsymbols.h>
-#include <de/CallbackAction>
-#include <de/MessageDialog>
-#include <de/PopupButtonWidget>
-#include <de/PopupMenuWidget>
-
-#include <QRegExp>
+#include <de/callbackaction.h>
+#include <de/messagedialog.h>
+#include <de/popupbuttonwidget.h>
+#include <de/popupmenuwidget.h>
+#include <de/regexp.h>
+#include <de/taskpool.h>
 
 using namespace de;
 
-DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
-, DENG2_OBSERVES(Games, Readiness)
-, public AsyncScope
+DE_GUI_PIMPL(MultiplayerPanelButtonWidget)
+, DE_OBSERVES(Games, Readiness)
 {
-    shell::ServerInfo serverInfo;
-    ButtonWidget *joinButton;
-    String gameConfig;
-    LabelWidget *info;
+    ServerInfo         serverInfo;
+    ButtonWidget *     joinButton;
+    String             gameConfig;
+    LabelWidget *      info;
     PopupButtonWidget *extra;
-    PopupMenuWidget *extraMenu;
-    res::LumpCatalog catalog;
+    PopupMenuWidget *  extraMenu;
+    res::LumpCatalog   catalog;
+    TaskPool           tasks;
 
     Impl(Public *i) : Base(i)
     {
@@ -61,7 +60,7 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         joinButton = new ButtonWidget;
         joinButton->setAttribute(AutomaticOpacity);
         joinButton->disable();
-        joinButton->setText(tr("Join"));
+        joinButton->setText("Join");
         joinButton->useInfoStyle();
         joinButton->setSizePolicy(ui::Expand, ui::Expand);
         joinButton->setActionFn([this] () { joinButtonPressed(); });
@@ -89,9 +88,9 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         self().panel().setContent(info);
         self().panel().open();
 
-        extra->setPopup([this] (PopupButtonWidget const &) -> PopupWidget * {
+        extra->setPopup([this] (const PopupButtonWidget &) -> PopupWidget * {
             auto *dlg = new ServerInfoDialog(serverInfo);
-            QObject::connect(dlg, SIGNAL(joinGame()), thisPublic, SLOT(joinGame()));
+            dlg->audienceForJoinGame() += [this](){ self().joinGame(); };
             return dlg;
         }, ui::Right);
     }
@@ -99,14 +98,14 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
     void joinButtonPressed() const
     {
         self().root().setFocus(nullptr);
-        DENG2_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i)
+        DE_NOTIFY_PUBLIC(AboutToJoin, i)
         {
             i->aboutToJoinMultiplayerGame(serverInfo);
         }
         ClientApp::serverLink().connectToServerAndChangeGameAsync(serverInfo);
     }
 
-    bool hasConfig(String const &token) const
+    bool hasConfig(const String &token) const
     {
         return gameConfig.containsWord(token);
     }
@@ -118,10 +117,10 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         self().updateContent(serverInfo);
     }
 
-    DENG2_PIMPL_AUDIENCE(AboutToJoin)
+    DE_PIMPL_AUDIENCE(AboutToJoin)
 };
 
-DENG2_AUDIENCE_METHOD(MultiplayerPanelButtonWidget, AboutToJoin)
+DE_AUDIENCE_METHOD(MultiplayerPanelButtonWidget, AboutToJoin)
 
 MultiplayerPanelButtonWidget::MultiplayerPanelButtonWidget()
     : d(new Impl(this))
@@ -144,69 +143,65 @@ void MultiplayerPanelButtonWidget::itemRightClicked()
     d->extra->trigger();
 }
 
-void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
+void MultiplayerPanelButtonWidget::updateContent(const ServerInfo &info)
 {
     d->serverInfo = info;
     d->gameConfig = info.gameConfig();
 
-#define DIM_MDASH   _E(C) DENG2_CHAR_MDASH _E(.)
+#define DIM_MDASH   _E(C) DE_CHAR_MDASH _E(.)
 
     //label().setText(info.name);
     String meta;
-    int const playerCount = info.playerCount();
+    const int playerCount = info.playerCount();
     if (playerCount > 0)
     {
-        meta = String("%1 player%2 " DIM_MDASH " ")
-                .arg(playerCount)
-                .arg(DENG2_PLURAL_S(playerCount));
+        meta = Stringf("%i player%s " DIM_MDASH " ", playerCount, DE_PLURAL_S(playerCount));
     }
 
-    meta += String("%1").arg(tr(d->hasConfig("coop")? "Co-op" :
-                                d->hasConfig("dm2")?  "Deathmatch II" :
-                                                      "Deathmatch"));
+    meta += d->hasConfig("coop")? "Co-op" :
+            d->hasConfig("dm2")?  "Deathmatch II" :
+                                  "Deathmatch";
 
     if (ClientApp::serverLink().isServerOnLocalNetwork(info.address()))
     {
         meta = "LAN " DIM_MDASH " " + meta;
     }
 
-    label().setText(String(_E(b) "%1\n" _E(l) "%2")
-                    .arg(info.name())
-                    .arg(meta));
+    label().setText(Stringf(_E(b) "%s\n" _E(l) "%s", info.name().c_str(), meta.c_str()));
 
     // Additional information.
     String infoText = String(info.map()) + " " DIM_MDASH " ";
     if (DoomsdayApp::games().contains(info.gameId()))
     {
-        auto const &game = DoomsdayApp::games()[info.gameId()];
+        const auto &game = DoomsdayApp::games()[info.gameId()];
         infoText += game.title();
         d->joinButton->enable();
 
         if (d->catalog.setPackages(game.requiredPackages()))
         {
             res::LumpCatalog catalog{d->catalog};
-            *d += async([&game, catalog]() { return IdTech1Image::makeGameLogo(game, catalog); },
-                        [this](const Image &logo) { icon().setImage(logo); });
+            d->tasks.async([&game, catalog]() { return Variant(ClientStyle::makeGameLogo(game, catalog)); },
+                           [this](const Variant &logo) { icon().setImage(logo.value<Image>()); });
         }
     }
     else
     {
-        infoText += tr("Unknown game");
+        infoText += "Unknown game";
         d->joinButton->disable();
 
         icon().setImage(nullptr);
     }
-    if (!info.flags().testFlag(shell::ServerInfo::AllowJoin))
+    if (!info.flags().testFlag(ServerInfo::AllowJoin))
     {
         d->joinButton->disable();
     }
-    infoText += "\n" _E(C) + String(info.description()) + _E(.);
+    infoText += "\n" _E(C) + info.description() + _E(.);
 
-    int const localCount = Game::localMultiplayerPackages(info.gameId()).size();
+    const int localCount = Game::localMultiplayerPackages(info.gameId()).sizei();
     if (localCount)
     {
-        infoText += "\n" _E(D)_E(b) + String("%1 local package%2").arg(localCount)
-                .arg(DENG2_PLURAL_S(localCount));
+        infoText += "\n" _E(D) _E(b) +
+                    Stringf("%i local package%s", localCount, DE_PLURAL_S(localCount));
     }
 
     d->info->setFont("small");

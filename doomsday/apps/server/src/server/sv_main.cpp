@@ -17,36 +17,34 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_SERVER
+#define DE_NO_API_MACROS_SERVER
 
 #include "de_base.h"
 #include "server/sv_def.h"
-
-#include <cmath>
-#include <de/stringarray.h>
-#include <de/timer.h>
-#include <de/ArrayValue>
-#include <de/NumberValue>
-#include <de/LogBuffer>
-#include <doomsday/console/exec.h>
-#include <doomsday/filesys/fs_main.h>
-#include <doomsday/filesys/wad.h>
-#include <doomsday/world/MaterialArchive>
-
 #include "dd_main.h"
 #include "def_main.h"
-
 #include "network/net_main.h"
 #include "network/net_buf.h"
 #include "network/net_event.h"
-
-#include "world/map.h"
 #include "world/p_players.h"
-
 #include "api_server.h"
 #include "serversystem.h"
 #include "server/sv_def.h"
 #include "server/sv_pool.h"
+
+#include <doomsday/world/map.h>
+#include <doomsday/console/exec.h>
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/filesys/wad.h>
+#include <doomsday/world/materialarchive.h>
+
+#include <de/legacy/stringarray.h>
+#include <de/legacy/timer.h>
+#include <de/arrayvalue.h>
+#include <de/numbervalue.h>
+#include <de/logbuffer.h>
+
+#include <cmath>
 
 using namespace de;
 
@@ -61,158 +59,19 @@ using namespace de;
 
 void Sv_ClientCoords(dint playerNum);
 
-dint netRemoteUser;  ///< The client who is currently logged in.
+//dint netRemoteUser;  ///< The client who is currently logged in.
 char *netPassword = (char *) "";  ///< Remote login password.
 
 // This is the limit when accepting new clients.
 dint svMaxPlayers = DDMAXPLAYERS;
 
+#define MASTER_HEARTBEAT    120  ///< seconds.
+#define MASTER_UPDATETIME   3    ///< seconds.
+
+// Countdown for master updates.
+static timespan_t masterHeartbeat;
+
 static world::MaterialArchive *materialDict;
-
-#if 0
-/**
- * @defgroup pathToStringFlags  Path To String Flags
- * @ingroup flags
- */
-///@{
-#define PTSF_QUOTED                     0x1  ///< Add double quotes around the path.
-#define PTSF_TRANSFORM_EXCLUDE_PATH     0x2  ///< Exclude the path; e.g., c:/doom/myaddon.wad => myaddon.wad
-#define PTSF_TRANSFORM_EXCLUDE_EXT      0x4  ///< Exclude the extension; e.g., c:/doom/myaddon.wad => c:/doom/myaddon
-///@}
-
-#define DEFAULT_PATHTOSTRINGFLAGS       (PTSF_QUOTED)
-
-/**
- * @param files      List of files from which to compose the path string.
- * @param flags      @ref pathToStringFlags
- * @param delimiter  If not @c nullptr, path fragments in the resultant string
- * will be delimited by this.
- *
- * @return  New string containing a concatenated, possibly delimited set of all
- * file paths in the list.
- */
-static String composeFilePathString(FS1::FileList &files, dint flags = DEFAULT_PATHTOSTRINGFLAGS,
-    String const &delimiter = ";")
-{
-    String result;
-    DENG2_FOR_EACH_CONST(FS1::FileList, i, files)
-    {
-        File1 &file = (*i)->file();
-
-        if (flags & PTSF_QUOTED)
-            result.append('"');
-
-        if (flags & PTSF_TRANSFORM_EXCLUDE_PATH)
-        {
-            if (flags & PTSF_TRANSFORM_EXCLUDE_EXT)
-                result.append(file.name().fileNameWithoutExtension());
-            else
-                result.append(file.name());
-        }
-        else
-        {
-            String path = file.composePath();
-            if (flags & PTSF_TRANSFORM_EXCLUDE_EXT)
-            {
-                result.append(path.fileNamePath() + '/' + path.fileNameWithoutExtension());
-            }
-            else
-            {
-                result.append(path);
-            }
-        }
-
-        if (flags & PTSF_QUOTED)
-            result.append('"');
-
-        if (*i != files.last())
-            result.append(delimiter);
-    }
-
-    return result;
-}
-
-static bool findCustomFilesPredicate(File1 &file, void * /*parameters*/)
-{
-    return file.hasCustom();
-}
-
-/**
- * Compiles a list of file names, separated by @a delimiter.
- */
-static void composePWADFileList(char *outBuf, dsize outBufSize, char const *delimiter)
-{
-    if (!outBuf || 0 == outBufSize) return;
-    std::memset(outBuf, 0, outBufSize);
-
-    FS1::FileList foundFiles;
-    if (!App_FileSystem().findAll<de::Wad>(findCustomFilesPredicate, 0/*no params*/, foundFiles)) return;
-
-    String str = composeFilePathString(foundFiles, PTSF_TRANSFORM_EXCLUDE_PATH, delimiter);
-    QByteArray strUtf8 = str.toUtf8();
-    strncpy(outBuf, strUtf8.constData(), outBufSize);
-}
-#endif
-
-/*Record *Sv_InfoToRecord(serverinfo_t *info)
-{
-    DENG2_ASSERT(info);
-
-    auto *rec = new Record;
-
-    rec->addNumber ("port",  info->port);
-    rec->addText   ("name",  info->name);
-    rec->addText   ("info",  info->description);
-    rec->addNumber ("ver",   info->version);
-    rec->addText   ("game",  info->plugin);
-    rec->addText   ("mode",  info->gameIdentityKey);
-    rec->addText   ("setup", info->gameConfig);
-    rec->addText   ("iwad",  info->iwad);
-    rec->addNumber ("wcrc",  info->loadedFilesCRC);
-    rec->addText   ("pwads", info->pwads);
-    rec->addText   ("map",   info->map);
-    rec->addNumber ("nump",  info->numPlayers);
-    rec->addNumber ("maxp",  info->maxPlayers);
-    rec->addBoolean("open",  info->canJoin);
-    rec->addText   ("plrn",  info->clientNames);
-
-    ArrayValue &data = rec->addArray("data").value<ArrayValue>();
-    for (duint i = 0; i < sizeof(info->data) / sizeof(info->data[0]); ++i)
-    {
-        data << NumberValue(info->data[i]);
-    }
-
-    return rec;
-}*/
-
-/*
- * @return  Length of the string.
- */
-/*dsize Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
-{
-    DENG2_ASSERT(info && msg);
-
-    Str_Appendf(msg, "port:%i\n",  info->port);
-    Str_Appendf(msg, "name:%s\n",  info->name);
-    Str_Appendf(msg, "info:%s\n",  info->description);
-    Str_Appendf(msg, "ver:%i\n",   info->version);
-    Str_Appendf(msg, "game:%s\n",  info->plugin);
-    Str_Appendf(msg, "mode:%s\n",  info->gameIdentityKey);
-    Str_Appendf(msg, "setup:%s\n", info->gameConfig);
-    Str_Appendf(msg, "iwad:%s\n",  info->iwad);
-    Str_Appendf(msg, "wcrc:%i\n",  info->loadedFilesCRC);
-    Str_Appendf(msg, "pwads:%s\n", info->pwads);
-    Str_Appendf(msg, "map:%s\n",   info->map);
-    Str_Appendf(msg, "nump:%i\n",  info->numPlayers);
-    Str_Appendf(msg, "maxp:%i\n",  info->maxPlayers);
-    Str_Appendf(msg, "open:%i\n",  info->canJoin);
-    Str_Appendf(msg, "plrn:%s\n",  info->clientNames);
-    for (duint i = 0; i < sizeof(info->data) / sizeof(info->data[0]); ++i)
-    {
-        Str_Appendf(msg, "data%i:%x\n", i, info->data[i]);
-    }
-    return Str_Length(msg);
-}*/
 
 /**
  * @return  gametic - cmdtime.
@@ -222,47 +81,12 @@ dint Sv_Latency(byte cmdtime)
     return Net_TimeDelta(SECONDS_TO_TICKS(gameTime), cmdtime);
 }
 
-/**
- * For local players.
- * $unifiedangles
- */
-/*
-void Sv_FixLocalAngles(bool clearFixAnglesFlag)
-{
-    for (dint i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        ddplayer_t &pl = players[i];
-
-        if (!pl.inGame || !(pl.flags & DDPF_LOCAL))
-            continue;
-
-        // This is not for clients.
-        if (::isDedicated && i == 0)
-            continue;
-
-        if (pl.flags & DDPF_FIXANGLES)
-        {
-            if (clearFixAnglesFlag)
-            {
-                pl.flags &= ~DDPF_FIXANGLES;
-            }
-            else
-            {
-                DENG2_ASSERT(pl.mo);
-                pl.clAngle   = pl.mo->angle;
-                pl.clLookDir = pl.lookDir;
-            }
-        }
-    }
-}
-*/
-
 void Sv_HandlePlayerInfoFromClient(ServerPlayer *sender)
 {
-    DENG2_ASSERT(sender);
+    DE_ASSERT(sender);
 
     LOG_AS("Sv_HandlePlayerInfoFromClient");
-    DENG2_ASSERT(::netBuffer.player == DoomsdayApp::players().indexOf(sender));
+    DE_ASSERT(::netBuffer.player == DoomsdayApp::players().indexOf(sender));
 
     dint console = Reader_ReadByte(::msgReader); // ignored
     LOG_NET_VERBOSE("from=%i, console=%i") << ::netBuffer.player << console;
@@ -282,6 +106,25 @@ void Sv_HandlePlayerInfoFromClient(ServerPlayer *sender)
 }
 
 /**
+ * The client is removed from the game without delay. This is used when the server
+ * needs to terminate a client's connection abnormally.
+ */
+void Sv_TerminateClient(int console)
+{
+    DE_ASSERT(console >= 0 && console < DDMAXPLAYERS);
+    if(!DD_Player(console)->isConnected())
+        return;
+
+    LOG_NET_NOTE("Terminating connection to console %i (player '%s')")
+        << console << DD_Player(console)->name;
+
+    App_ServerSystem().terminateNode(DD_Player(console)->remoteUserId);
+
+    // Update the master.
+    masterHeartbeat = MASTER_UPDATETIME;
+}
+
+/**
  * Handles a server-specific network message. Assumes that Msg_BeginRead()
  * has already been called to begin reading the message.
  */
@@ -289,8 +132,8 @@ void Sv_HandlePacket()
 {
     LOG_AS("Sv_HandlePacket");
 
-    dint const from  = ::netBuffer.player;
-    DENG2_ASSERT(from >= 0 && from < DDMAXPLAYERS);
+    const dint from  = ::netBuffer.player;
+    DE_ASSERT(from >= 0 && from < DDMAXPLAYERS);
     player_t *sender = DD_Player(from);
     ddplayer_t *ddpl = &sender->publicData();
 
@@ -314,7 +157,7 @@ void Sv_HandlePacket()
                     // Send a message to everybody.
                     LOG_NET_WARNING("New client connection refused: duplicate ID (%08x)") << id;
                     LOGDEV_NET_WARNING("ID conflict from=%i, i=%i") << from << i;
-                    N_TerminateClient(from);
+                    Sv_TerminateClient(from);
                     break;
                 }
             }
@@ -328,10 +171,10 @@ void Sv_HandlePacket()
         {
             // Check the game mode (max 16 chars).
             char buf[17]; Reader_Read(::msgReader, buf, 16);
-            if (strnicmp(buf, App_CurrentGame().id().toUtf8().constData(), 16))
+            if (strnicmp(buf, App_CurrentGame().id(), 16))
             {
                 LOG_NET_ERROR("Client's game ID is incompatible: %-.16s") << buf;
-                N_TerminateClient(from);
+                Sv_TerminateClient(from);
                 break;
             }
         }
@@ -383,9 +226,9 @@ void Sv_HandlePacket()
 
     case PKT_CHAT: {
         // The first byte contains the sender.
-        dint const msgfrom = Reader_ReadByte(::msgReader);
+        const dint msgfrom = Reader_ReadByte(::msgReader);
         // Is the message for us?
-        dint const mask    = Reader_ReadUInt32(::msgReader);
+        const dint mask    = Reader_ReadUInt32(::msgReader);
 
         // Copy the message into a buffer.
         dsize len = Reader_ReadUInt16(::msgReader);
@@ -413,8 +256,8 @@ void Sv_HandlePacket()
         break; }
 
     case PCL_FINALE_REQUEST: {
-        finaleid_t const fid = Reader_ReadUInt32(::msgReader);
-        duint16 const params = Reader_ReadUInt16(::msgReader);
+        const finaleid_t fid = Reader_ReadUInt32(::msgReader);
+        const duint16 params = Reader_ReadUInt16(::msgReader);
         LOGDEV_NET_MSG("PCL_FINALE_REQUEST: fid=%i params=%i") << fid << params;
         if (params == 1)
         {
@@ -433,6 +276,7 @@ void Sv_HandlePacket()
     }
 }
 
+#if 0
 /**
  * Handles a login packet. If the password is OK and no other client
  * is current logged in, a response is sent.
@@ -471,7 +315,9 @@ void Sv_Login(void)
     Msg_End();
     Net_SendBuffer(netRemoteUser, 0);
 }
+#endif
 
+#if 0
 /**
  * Executes the command in the message buffer.
  * Usually sent by Con_Send.
@@ -506,12 +352,12 @@ void Sv_ExecuteCommand(void)
         // New format includes flags and command source.
         // Flags are currently unused but added for future expansion.
         flags = Reader_ReadUInt16(msgReader);
-        DENG_UNUSED(flags);
+        DE_UNUSED(flags);
         cmdSource = Reader_ReadByte(msgReader);
         break;
 
     default:
-        DENG_ASSERT(!"Sv_ExecuteCommand: Not a command packet!");
+        DE_ASSERT_FAIL("Sv_ExecuteCommand: Not a command packet!");
         return;
     }
 
@@ -524,6 +370,7 @@ void Sv_ExecuteCommand(void)
 
     M_Free(cmd);
 }
+#endif
 
 /**
  * Server's packet handler.
@@ -539,7 +386,7 @@ void Sv_GetPackets(void)
         {
         case PCL_GOODBYE:
             // The client is leaving.
-            N_TerminateClient(netBuffer.player);
+            Sv_TerminateClient(netBuffer.player);
             break;
 
         case PKT_COORDS:
@@ -587,6 +434,7 @@ void Sv_GetPackets(void)
             Sv_HandlePacket();
             break;
 
+#if 0
         case PKT_LOGIN:
             Sv_Login();
             break;
@@ -595,6 +443,7 @@ void Sv_GetPackets(void)
         case PKT_COMMAND2:
             Sv_ExecuteCommand();
             break;
+#endif
 
         default:
             if (netBuffer.msg.type >= PKT_GAME_MARKER)
@@ -611,9 +460,8 @@ void Sv_GetPackets(void)
 
 /**
  * Assign a new console to the player. Returns true if successful.
- * Called by N_Update().
  */
-dd_bool Sv_PlayerArrives(unsigned int nodeID, char const *name)
+dd_bool Sv_PlayerArrives(unsigned int nodeID, const char *name)
 {
     LOG_AS("Sv_PlayerArrives");
     LOG_NET_NOTE("'%s' has arrived") << name;
@@ -659,7 +507,7 @@ dd_bool Sv_PlayerArrives(unsigned int nodeID, char const *name)
 }
 
 /**
- * Remove the specified player from the game. Called by N_Update().
+ * Remove the specified player from the game.
  */
 void Sv_PlayerLeaves(unsigned int nodeID)
 {
@@ -672,8 +520,8 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     LOG_AS("Sv_PlayerLeaves");
 
     // Log off automatically.
-    if (netRemoteUser == plrNum)
-        netRemoteUser = 0;
+//    if (netRemoteUser == plrNum)
+//        netRemoteUser = 0;
 
     plr = DD_Player(plrNum);
 
@@ -717,7 +565,7 @@ static StringArray *listThingTypeIDs()
     StringArray *array = StringArray_New();
     for (dint i = 0; i < DED_Definitions()->things.size(); ++i)
     {
-        StringArray_Append(array, DED_Definitions()->things[i].gets("id").toUtf8());
+        StringArray_Append(array, DED_Definitions()->things[i].gets("id"));
     }
     return array;
 }
@@ -733,7 +581,7 @@ static StringArray *listStateIDs()
     StringArray *array = StringArray_New();
     for (dint i = 0; i < DED_Definitions()->states.size(); ++i)
     {
-        StringArray_Append(array, DED_Definitions()->states[i].gets("id").toUtf8());
+        StringArray_Append(array, DED_Definitions()->states[i].gets("id"));
     }
     return array;
 }
@@ -845,14 +693,14 @@ void Sv_StartNetGame(void)
         Smoother_Clear(plr->smoother());
     }
     gameTime = 0;
-    firstNetUpdate = true;
-    netRemoteUser = 0;
+    netState.firstUpdate = true;
+//    netRemoteUser = 0;
 
     // The server is always player number zero.
     consolePlayer = displayPlayer = 0;
 
-    netGame = true;
-    isServer = true;
+    netState.netGame = true;
+    netState.isServer = true;
     allowSending = true;
 
     // Prepare the material dictionary we'll be using with clients.
@@ -874,7 +722,7 @@ void Sv_StopNetGame(void)
 
 unsigned int Sv_IdForMaterial(world::Material *mat)
 {
-    DENG_ASSERT(materialDict);
+    DE_ASSERT(materialDict);
     return materialDict->findUniqueSerialId(mat);
 }
 
@@ -958,7 +806,7 @@ void Sv_SendPlayerFixes(int plrNum)
         Writer_WriteFloat(msgWriter, ddpl->mo->origin[VZ]);
 
         LOGDEV_NET_MSG("Sent position (%i): %s")
-                << ddpl->fixCounter.origin << Vector3d(ddpl->mo->origin).asText();
+                << ddpl->fixCounter.origin << Vec3d(ddpl->mo->origin).asText();
     }
 
     if (ddpl->flags & DDPF_FIXMOM)
@@ -969,7 +817,7 @@ void Sv_SendPlayerFixes(int plrNum)
         Writer_WriteFloat(msgWriter, ddpl->mo->mom[MZ]);
 
         LOGDEV_NET_MSG("Sent momentum (%i): %s")
-                << ddpl->fixCounter.mom << Vector3d(ddpl->mo->mom).asText();
+                << ddpl->fixCounter.mom << Vec3d(ddpl->mo->mom).asText();
     }
 
     Msg_End();
@@ -985,12 +833,53 @@ void Sv_SendPlayerFixes(int plrNum)
     Smoother_Clear(DD_Player(plrNum)->smoother());
 }
 
+void Sv_AnnouncePeriodically(timespan_t time)
+{
+    if (netState.netGame)
+    {
+        masterHeartbeat -= time;
+
+        // Update master periodically.
+        if (serverPublic && App_ServerSystem().isListening() && world::World::get().hasMap() &&
+            masterHeartbeat < 0)
+        {
+            masterHeartbeat = MASTER_HEARTBEAT;
+            N_MasterAnnounceServer(true);
+        }
+    }
+}
+
+void Sv_CheckEvents()
+{
+    netevent_t nevent;
+    while (N_NEGet(&nevent))
+    {
+        switch (nevent.type)
+        {
+            case NE_CLIENT_ENTRY: {
+                // Assign a console to the new player.
+                Sv_PlayerArrives(nevent.id, App_ServerSystem().user(nevent.id).name());
+                masterHeartbeat = MASTER_UPDATETIME;
+                break;
+            }
+            case NE_CLIENT_EXIT: {
+                Sv_PlayerLeaves(nevent.id);
+                masterHeartbeat = MASTER_UPDATETIME;
+                break;
+            }
+            default: DE_ASSERT_FAIL("[Sv_CheckEvents] Invalid value"); break;
+        }
+    }
+}
+
 void Sv_Ticker(timespan_t ticLength)
 {
     int i;
 
-    DENG_ASSERT(isDedicated);
+    DE_ASSERT(isDedicated);
     //if (!isDedicated) return;
+
+    Sv_AnnouncePeriodically(ticLength);
 
     // Note last angles for all players.
     for (i = 0; i < DDMAXPLAYERS; ++i)
@@ -1024,7 +913,7 @@ int Sv_GetNumPlayers(void)
     int i, count;
 
     // Clients can't count.
-    if (isClient)
+    if (netState.isClient)
         return 1;
 
     for (i = count = 0; i < DDMAXPLAYERS; ++i)
@@ -1044,7 +933,7 @@ int Sv_GetNumConnected(void)
     int                 i, count = 0;
 
     // Clients can't count.
-    if (isClient)
+    if (netState.isClient)
         return 1;
 
     for (i = isDedicated ? 1 : 0; i < DDMAXPLAYERS; ++i)
@@ -1187,15 +1076,16 @@ dd_bool Sv_CanTrustClientPos(int plrNum)
     return false;
 }
 
+#if 0
 /**
  * Console command for terminating a remote console connection.
  */
 D_CMD(Logout)
 {
-    DENG2_UNUSED3(src, argc, argv);
+    DE_UNUSED(src, argc, argv);
 
     // Only servers can execute this command.
-    if (!netRemoteUser || !isServer)
+    if (!netRemoteUser || !netState.isServer)
         return false;
     // Notice that the server WILL execute this command when a client
     // is logged in and types "logout".
@@ -1208,8 +1098,9 @@ D_CMD(Logout)
     netRemoteUser = 0;
     return true;
 }
+#endif
 
-DENG_DECLARE_API(Server) =
+DE_DECLARE_API(Server) =
 {
     { DE_API_SERVER },
     Sv_CanTrustClientPos

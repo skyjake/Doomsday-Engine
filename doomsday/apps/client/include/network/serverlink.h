@@ -19,45 +19,40 @@
 #ifndef CLIENT_SERVERLINK_H
 #define CLIENT_SERVERLINK_H
 
-#include <de/Transmitter>
-#include <de/Address>
-#include <de/Observers>
-#include <de/shell/AbstractLink>
-#include <de/shell/Protocol>
-#include <de/shell/ServerInfo>
-#include <de/shell/PackageDownloader>
-#include <QObject>
+#include <doomsday/network/protocol.h>
+#include <de/transmitter.h>
+#include <de/address.h>
+#include <de/observers.h>
+#include <de/abstractlink.h>
+#include <de/serverinfo.h>
+#include <de/packagedownloader.h>
 #include "network/net_main.h"
 
 /**
  * Network connection to a server.
  * @ingroup network
  */
-class ServerLink : public de::shell::AbstractLink
+class ServerLink : public de::AbstractLink
 {
-    Q_OBJECT
-
 public:
-    DENG2_DEFINE_AUDIENCE2(DiscoveryUpdate, void linkDiscoveryUpdate(ServerLink const &link))
-    DENG2_DEFINE_AUDIENCE2(PingResponse,    void pingResponse(de::Address const &, de::TimeSpan))
-    DENG2_DEFINE_AUDIENCE2(MapOutline,      void mapOutlineReceived(de::Address const &, de::shell::MapOutlinePacket const &))
+    DE_AUDIENCE(Discovery,    void serversDiscovered(const ServerLink &link))
+    DE_AUDIENCE(PingResponse, void pingResponse(const de::Address &, de::TimeSpan))
+    DE_AUDIENCE(MapOutline,   void mapOutlineReceived(const de::Address &, const network::MapOutlinePacket &))
 
-    DENG2_DEFINE_AUDIENCE2(Join,  void networkGameJoined())
-    DENG2_DEFINE_AUDIENCE2(Leave, void networkGameLeft())
+    DE_AUDIENCE(Join,  void networkGameJoined())
+    DE_AUDIENCE(Leave, void networkGameLeft())
 
-    enum Flag
-    {
+    enum Flag {
         DiscoverLocalServers = 0x1,
         ManualConnectionOnly = 0,
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     static ServerLink &get();
 
 public:
-    ServerLink(Flags flags = DiscoverLocalServers);
+    ServerLink(de::Flags flags = DiscoverLocalServers);
 
-    de::shell::PackageDownloader &packageDownloader();
+    de::PackageDownloader &packageDownloader();
 
     void clear();
 
@@ -69,14 +64,14 @@ public:
      * @param info  Server to join. This should be one of the servers that have
      *              previously been found via discovery.
      */
-    void connectToServerAndChangeGameAsync(de::shell::ServerInfo info);
+    void connectToServerAndChangeGameAsync(const de::ServerInfo& info);
 
     /**
      * Acquire a game profile that describes the game on a multiplayer server.
      * If information about the server at @a address is not currently available, a
      * discovery query is sent to the address.
      *
-     * After the server's profile is available, a callback is made via LoopCallback.
+     * After the server's profile is available, a callback is made via Dispatch.
      *
      * @param address        Server address.
      * @param resultHandler  Callback for receiving the server profile. ServerLink
@@ -85,18 +80,18 @@ public:
      *                       The callback is called in the main thread (from the app
      *                       event loop).
      */
-    void acquireServerProfileAsync(de::Address const &address,
-                                   std::function<void (GameProfile const *)> resultHandler);
+    void acquireServerProfileAsync(const de::Address &address,
+                                   const std::function<void (const GameProfile *)>& resultHandler);
 
-    void acquireServerProfileAsync(de::String const &domain,
-                                   std::function<void (de::Address, GameProfile const *)> resultHandler);
+    void acquireServerProfileAsync(const de::String &domain,
+                                   std::function<void (de::Address, const GameProfile *)> resultHandler);
 
-    void requestMapOutline(de::Address const &address);
+    void requestMapOutline(const de::Address &address);
 
-    void ping(de::Address const &address);
+    void ping(const de::Address &address);
 
-    void connectDomain(de::String const &domain, de::TimeSpan const &timeout = 0) override;
-    void connectHost(de::Address const &address) override;
+    void connectDomain(const de::String &domain, de::TimeSpan timeout = 0.0) override;
+    void connectHost(const de::Address &address) override;
 
     /**
      * Disconnect from the server.
@@ -109,7 +104,7 @@ public:
      *
      * @param domain
      */
-    void discover(de::String const &domain);
+    void discover(const de::String &domain);
 
     /**
      * Ask the master server for information about currently running servers.
@@ -126,7 +121,7 @@ public:
 
         Any = Direct | LocalNetwork | MasterServer
     };
-    Q_DECLARE_FLAGS(FoundMask, FoundMaskFlag)
+    using FoundMask = de::Flags;
 
     /**
      * @param mask  Defines the sources that are enabled when querying for found servers.
@@ -136,42 +131,36 @@ public:
     /**
      * @param mask  Defines the sources that are enabled when querying for found servers.
      */
-    QList<de::Address> foundServers(FoundMask mask = Any) const;
+    de::List<de::Address> foundServers(FoundMask mask = Any) const;
 
-    bool isFound(de::Address const &host, FoundMask mask = Any) const;
+    bool isFound(const de::Address &host, FoundMask mask = Any) const;
 
     /**
      * @param mask  Defines the sources that are enabled when querying for found servers.
      */
-    bool foundServerInfo(de::Address const &host, de::shell::ServerInfo &info,
+    bool foundServerInfo(const de::Address &host, de::ServerInfo &info,
                          FoundMask mask = Any) const;
 
     /**
      * @param mask  Defines the sources that are enabled when querying for found servers.
      */
-    bool foundServerInfo(int index, de::shell::ServerInfo &info,
+    bool foundServerInfo(int index, de::ServerInfo &info,
                          FoundMask mask = Any) const;
 
-    bool isServerOnLocalNetwork(de::Address const &host) const;
+    bool isServerOnLocalNetwork(const de::Address &host) const;
 
-signals:
-    void serversDiscovered();
-
-public slots:
+public:
     void handleIncomingPackets();
 
-protected slots:
+protected:
     void localServersFound();
     void linkDisconnected();
 
-protected:
-    de::Packet *interpret(de::Message const &msg) override;
+    de::Packet *interpret(const de::Message &msg) override;
     void initiateCommunications() override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(ServerLink::FoundMask)
 
 #endif // CLIENT_LINK_H

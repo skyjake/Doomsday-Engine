@@ -19,17 +19,16 @@
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/home/columnwidget.h"
-#include "resource/idtech1image.h"
 
-#include <doomsday/LumpCatalog>
-#include <doomsday/Game>
-#include <de/SequentialLayout>
-#include <QTimer>
+#include <doomsday/res/lumpcatalog.h>
+#include <doomsday/game.h>
+#include <de/sequentiallayout.h>
+#include <de/timer.h>
 
 using namespace de;
 
-DENG_GUI_PIMPL(HomeItemWidget)
-, DENG2_OBSERVES(MenuWidget, ItemTriggered)
+DE_GUI_PIMPL(HomeItemWidget)
+, DE_OBSERVES(MenuWidget, ItemTriggered)
 {
     // Event handler for mouse clicks on the item.
     struct ClickHandler : public GuiWidget::IEventHandler
@@ -44,13 +43,13 @@ DENG_GUI_PIMPL(HomeItemWidget)
             owner.acquireFocus();
         }
 
-        bool handleEvent(GuiWidget &widget, Event const &event)
+        bool handleEvent(GuiWidget &widget, const Event &event)
         {
             if (widget.isDisabled()) return false;
 
             if (event.type() == Event::MouseButton)
             {
-                MouseEvent const &mouse = event.as<MouseEvent>();
+                const MouseEvent &mouse = event.as<MouseEvent>();
                 if (owner.hitTest(event))
                 {
                     if (mouse.button() == MouseEvent::Right)
@@ -66,7 +65,10 @@ DENG_GUI_PIMPL(HomeItemWidget)
 
                         case MouseClickFinished:
                             owner.itemRightClicked();
-                            emit owner.openContextMenu();
+                            DE_FOR_OBSERVERS(i, owner.audienceForContextMenu())
+                            {
+                                i->openItemContextMenu(owner);
+                            }
                             return true;
 
                         default:
@@ -82,7 +84,10 @@ DENG_GUI_PIMPL(HomeItemWidget)
                     if (mouse.state()  == MouseEvent::DoubleClick &&
                         mouse.button() == MouseEvent::Left)
                     {
-                        emit owner.doubleClicked();
+                        DE_FOR_OBSERVERS(i, owner.audienceForDoubleClick())
+                        {
+                            i->itemCoubleClicked(owner);
+                        }
                         return true;
                     }
                 }
@@ -91,23 +96,23 @@ DENG_GUI_PIMPL(HomeItemWidget)
         }
     };
 
-    Flags flags;
-    AssetGroup assets;
-    LabelWidget *background;
-    LabelWidget *icon { nullptr };
-    LabelWidget *label;
-    QList<GuiWidget *> buttons;
-    AnimationRule *labelRightMargin;
-    IndirectRule *labelMinRightMargin = new IndirectRule;
-    Rule const *buttonsWidth = nullptr;
-    bool selected = false;
-    bool keepButtonsVisible = false;
-    bool buttonsShown = false;
-    DotPath bgColor           { "transparent" };
-    DotPath selectedBgColor   { "background" };
-    DotPath textColor         { "text" };
-    DotPath selectedTextColor { "text" };
-    QTimer buttonHideTimer;
+    Flags             flags;
+    AssetGroup        assets;
+    LabelWidget *     background;
+    LabelWidget *     icon{nullptr};
+    LabelWidget *     label;
+    List<GuiWidget *> buttons;
+    AnimationRule *   labelRightMargin;
+    IndirectRule *    labelMinRightMargin = new IndirectRule;
+    const Rule *      buttonsWidth        = nullptr;
+    bool              selected            = false;
+    bool              keepButtonsVisible  = false;
+    bool              buttonsShown        = false;
+    DotPath           bgColor{"transparent"};
+    DotPath           selectedBgColor{"background"};
+    DotPath           textColor{"text"};
+    DotPath           selectedTextColor{"text"};
+    Timer             buttonHideTimer;
 
     Impl(Public *i, Flags flags) : Base(i), flags(flags)
     {
@@ -142,16 +147,16 @@ DENG_GUI_PIMPL(HomeItemWidget)
         //background->setBehavior(Focusable);
 
         buttonHideTimer.setSingleShot(true);
-        QObject::connect(&buttonHideTimer, &QTimer::timeout, [this] ()
+        buttonHideTimer += [this] ()
         {
             for (auto *button : buttons)
             {
                 button->setAttribute(DontDrawContent);
             }
-        });
+        };
     }
 
-    ~Impl()
+    ~Impl() override
     {
         releaseRef(labelRightMargin);
         releaseRef(labelMinRightMargin);
@@ -175,7 +180,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
         if (buttonsShown)
         {
             labelRightMargin->set(*buttonsWidth,
-                                  labelRightMargin->animation().done()? TimeSpan(0.4) :
+                                  labelRightMargin->animation().done()? 400_ms :
                                   labelRightMargin->animation().remainingTime());
         }
     }
@@ -202,7 +207,7 @@ DENG_GUI_PIMPL(HomeItemWidget)
             }
         }
 
-        TimeSpan const SPAN = (self().hasBeenUpdated()? 0.4 : 0.0);
+        const TimeSpan SPAN = (self().hasBeenUpdated()? 0.4 : 0.0);
         if (show)
         {
             labelRightMargin->set(*buttonsWidth, SPAN/2);
@@ -210,17 +215,16 @@ DENG_GUI_PIMPL(HomeItemWidget)
         else
         {
             labelRightMargin->set(-rule("halfunit"), SPAN);
-            buttonHideTimer.setInterval(SPAN.asMilliSeconds());
+            buttonHideTimer.setInterval(SPAN);
             buttonHideTimer.start();
         }
     }
 
-    void menuItemTriggered(ui::Item const &actionItem) override
+    void menuItemTriggered(const ui::Item &actionItem) override
     {
         // Let the parent menu know which of its items is being interacted with.
-        self().parentMenu()->setInteractedItem(self().parentMenu()->organizer()
-                                             .findItemForWidget(self()),
-                                             &actionItem);
+        self().parentMenu()->setInteractedItem(
+            self().parentMenu()->organizer().findItemForWidget(self()), &actionItem);
     }
 
     void updateColors()
@@ -248,9 +252,13 @@ DENG_GUI_PIMPL(HomeItemWidget)
         }
         return false;
     }
+
+    DE_PIMPL_AUDIENCES(Activity, DoubleClick, ContextMenu, Selection)
 };
 
-HomeItemWidget::HomeItemWidget(Flags flags, String const &name)
+DE_AUDIENCE_METHODS(HomeItemWidget, Activity, DoubleClick, ContextMenu, Selection)
+
+HomeItemWidget::HomeItemWidget(Flags flags, const String &name)
     : GuiWidget(name)
     , d(new Impl(this, flags))
 {
@@ -305,7 +313,7 @@ AssetGroup &HomeItemWidget::assets()
 
 LabelWidget &HomeItemWidget::icon()
 {
-    DENG2_ASSERT(d->icon);
+    DE_ASSERT(d->icon);
     return *d->icon;
 }
 
@@ -314,7 +322,7 @@ LabelWidget &HomeItemWidget::label()
     return *d->label;
 }
 
-LabelWidget const &HomeItemWidget::label() const
+const LabelWidget &HomeItemWidget::label() const
 {
     return *d->label;
 }
@@ -385,7 +393,7 @@ void HomeItemWidget::useColorTheme(ColorTheme unselected, ColorTheme selected)
     d->updateColors();
 }
 
-DotPath const &HomeItemWidget::textColorId() const
+const DotPath &HomeItemWidget::textColorId() const
 {
     return d->textColor;
 }
@@ -400,11 +408,11 @@ HomeMenuWidget *HomeItemWidget::parentMenu()
     return maybeAs<HomeMenuWidget>(parentWidget());
 }
 
-bool HomeItemWidget::handleEvent(Event const &event)
+bool HomeItemWidget::handleEvent(const Event &event)
 {
     if (hasFocus() && event.isKey())
     {
-        auto const &key = event.as<KeyEvent>();
+        const auto &key = event.as<KeyEvent>();
 
         if (key.ddKey() == DDKEY_LEFTARROW || key.ddKey() == DDKEY_RIGHTARROW ||
             key.ddKey() == DDKEY_UPARROW   || key.ddKey() == DDKEY_DOWNARROW)
@@ -425,8 +433,8 @@ bool HomeItemWidget::handleEvent(Event const &event)
 void HomeItemWidget::focusGained()
 {
     setSelected(true);
-    emit selected();
-    emit mouseActivity();
+    DE_NOTIFY(Selection, i) i->itemSelected(*this);
+    DE_NOTIFY(Activity, i)  i->mouseActivity(*this);
 }
 
 void HomeItemWidget::focusLost()
@@ -477,7 +485,7 @@ void HomeItemWidget::setKeepButtonsVisible(bool yes)
     }
 }
 
-void HomeItemWidget::setLabelMinimumRightMargin(Rule const &rule)
+void HomeItemWidget::setLabelMinimumRightMargin(const Rule &rule)
 {
     d->labelMinRightMargin->setSource(rule);
 }

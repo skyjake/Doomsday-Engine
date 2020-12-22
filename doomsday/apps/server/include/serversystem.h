@@ -20,13 +20,14 @@
 #define SERVERSYSTEM_H
 
 #include <de/libcore.h>
-#include <de/System>
-#include <de/Id>
-#include <de/Error>
+#include <de/system.h>
+#include <de/id.h>
+#include <de/error.h>
 #include "remoteuser.h"
 #include "dd_types.h"
 
-#include <QObject>
+#define DEFAULT_TCP_PORT    13209
+#define DEFAULT_UDP_PORT    13209
 
 /**
  * Subsystem for tending to clients.
@@ -44,13 +45,11 @@
  * @todo This is a work in progress, as all remnants of the old network code
  * have not been removed/revised.
  */
-class ServerSystem : public QObject, public de::System
+class ServerSystem : public de::System
 {
-    Q_OBJECT
-
 public:
     /// An error related to identifiers (e.g., invalid ID specified). @ingroup errors
-    DENG2_ERROR(IdError);
+    DE_ERROR(IdError);
 
 public:
     ServerSystem();
@@ -70,9 +69,9 @@ public:
      * The client is removed from the game immediately. This is used when the
      * server needs to terminate a client's connection abnormally.
      */
-    void terminateNode(de::Id const &id);
+    void terminateNode(const de::Id &id);
 
-    RemoteUser &user(de::Id const &id) const;
+    RemoteUser &user(const de::Id &id) const;
 
     /**
      * A network node wishes to become a real client.
@@ -94,14 +93,14 @@ public:
      */
     void printStatus();
 
-    void timeChanged(de::Clock const &);
+    void timeChanged(const de::Clock &);
 
-protected slots:
+protected:
     void handleIncomingConnection();
-    void userDestroyed();
+    void userDestroyed(RemoteUser *);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 ServerSystem &App_ServerSystem();
@@ -111,7 +110,19 @@ dd_bool N_ServerOpen(void);
 dd_bool N_ServerClose(void);
 void    N_PrintNetworkStatus(void);
 
-extern char *nptIPAddress; // cvar
-extern int   nptIPPort;    // cvar
+/**
+ * Sends a server announcement to the master. The announcement includes our
+ * IP address and other information.
+ *
+ * @param isOpen            If @c true, then the server will be
+ *                          visible on the server list for other clients to
+ *                          find by querying the server list.
+ */
+void N_MasterAnnounceServer(bool isOpen);
+
+extern dd_bool  serverPublic;
+extern char    *serverName, *serverInfo;
+extern char *   nptIPAddress; // cvar
+extern int      nptIPPort;    // cvar
 
 #endif // SERVERSYSTEM_H

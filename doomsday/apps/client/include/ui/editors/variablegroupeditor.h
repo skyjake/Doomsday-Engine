@@ -16,15 +16,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_EDITORS_VARIABLEGROUPEDITOR_H
-#define DENG_CLIENT_UI_EDITORS_VARIABLEGROUPEDITOR_H
+#ifndef DE_CLIENT_UI_EDITORS_VARIABLEGROUPEDITOR_H
+#define DE_CLIENT_UI_EDITORS_VARIABLEGROUPEDITOR_H
 
-#include <de/FoldPanelWidget>
-#include <de/ScrollAreaWidget>
-#include <de/VariableToggleWidget>
-#include <de/VariableChoiceWidget>
-#include <de/VariableSliderWidget>
-#include <de/VariableLineEditWidget>
+#include <de/foldpanelwidget.h>
+#include <de/scrollareawidget.h>
+#include <de/variabletogglewidget.h>
+#include <de/variablechoicewidget.h>
+#include <de/variablesliderwidget.h>
+#include <de/variablelineeditwidget.h>
 
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
@@ -40,15 +40,15 @@
  */
 class VariableGroupEditor : public de::FoldPanelWidget
 {
-    Q_OBJECT
-
 public:
     class IOwner
     {
     public:
-        virtual de::Rule const &firstColumnWidthRule() const = 0;
+        virtual const de::Rule &firstColumnWidthRule() const = 0;
         virtual de::ScrollAreaWidget &containerWidget() = 0;
-        virtual void resetToDefaults(de::String const &name) = 0;
+        virtual void resetToDefaults(const de::String &name) = 0;
+
+        virtual ~IOwner() = default;
     };
 
 public:
@@ -59,7 +59,7 @@ public:
      * @param titleText  Title for the group.
      * @param header     Widget to place above the variables. Takes ownership.
      */
-    VariableGroupEditor(IOwner *owner, de::String const &name, de::String const &titleText,
+    VariableGroupEditor(IOwner *owner, const de::String &name, const de::String &titleText,
                         GuiWidget *header = 0);
 
     /**
@@ -73,20 +73,20 @@ public:
     IOwner &owner();
     de::GuiWidget *header() const;
     de::ButtonWidget &resetButton();
-    de::Rule const &firstColumnWidth() const;
+    const de::Rule &firstColumnWidth() const;
 
     enum LabelType { SingleCell, EntireRow };
 
     void addSpace();
-    de::LabelWidget *addLabel(de::String const &text, LabelType labelType = SingleCell);
+    de::LabelWidget *addLabel(const de::String &text, LabelType labelType = SingleCell);
 
-    CVarToggleWidget *addToggle(char const *cvar, de::String const &label);
-    CVarChoiceWidget *addChoice(char const *cvar, de::ui::Direction opening = de::ui::Up);
-    CVarSliderWidget *addSlider(char const *cvar);
-    CVarSliderWidget *addSlider(char const *cvar, de::Ranged const &range, double step, int precision);
+    CVarToggleWidget *addToggle(const char *cvar, const de::String &label);
+    CVarChoiceWidget *addChoice(const char *cvar, de::ui::Direction opening = de::ui::Up);
+    CVarSliderWidget *addSlider(const char *cvar);
+    CVarSliderWidget *addSlider(const char *cvar, const de::Ranged &range, double step, int precision);
 
-    de::VariableToggleWidget *addToggle(de::Variable &var, de::String const &label);
-    de::VariableSliderWidget *addSlider(de::Variable &var, de::Ranged const &range, double step, int precision);
+    de::VariableToggleWidget *addToggle(de::Variable &var, const de::String &label);
+    de::VariableSliderWidget *addSlider(de::Variable &var, const de::Ranged &range, double step, int precision);
     de::VariableLineEditWidget *addLineEdit(de::Variable &var);
 
     void addWidget(GuiWidget *widget);
@@ -103,13 +103,12 @@ public:
     void preparePanelForOpening();
     void panelClosing();
 
-public slots:
     virtual void resetToDefaults();
     virtual void foldAll();
     virtual void unfoldAll();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_EDITORS_VARIABLEGROUPEDITOR_H
+#endif // DE_CLIENT_UI_EDITORS_VARIABLEGROUPEDITOR_H

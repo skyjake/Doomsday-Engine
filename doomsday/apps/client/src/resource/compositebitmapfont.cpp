@@ -21,7 +21,7 @@
 #include "clientapp.h"
 #include "resource/compositebitmapfont.h"
 
-#include <doomsday/res/Textures>
+#include <doomsday/res/textures.h>
 
 #include "api_resource.h" // R_GetPatchInfo
 #include "dd_main.h" // App_Resources(), isDedicated
@@ -30,7 +30,7 @@
 
 using namespace de;
 
-DENG2_PIMPL(CompositeBitmapFont)
+DE_PIMPL(CompositeBitmapFont)
 {
     ded_compositefont_t *def; /// Definition on which "this" font is derived (if any).
     bool needGLInit;
@@ -61,7 +61,7 @@ DENG2_PIMPL(CompositeBitmapFont)
         self().glDeinit();
     }
 
-    Glyph &glyph(uchar ch)
+    Glyph &glyph(dbyte ch)
     {
         //if(ch >= MAX_CHARS) return missingGlyph;
         if(!glyphs[ch].haveSourceImage) return missingGlyph;
@@ -91,38 +91,38 @@ int CompositeBitmapFont::lineSpacing() const
     return d->leading;
 }
 
-Rectanglei const &CompositeBitmapFont::glyphPosCoords(uchar ch) const
+const Rectanglei &CompositeBitmapFont::glyphPosCoords(dbyte ch) const
 {
     glInit();
     return d->glyph(ch).geometry;
 }
 
-Rectanglei const &CompositeBitmapFont::glyphTexCoords(uchar /*ch*/) const
+const Rectanglei &CompositeBitmapFont::glyphTexCoords(dbyte /*ch*/) const
 {
-    static Rectanglei coords(Vector2i(0, 0), Vector2i(1, 1));
+    static Rectanglei coords(Vec2i(0, 0), Vec2i(1, 1));
     glInit();
     return coords;
 }
 
-uint CompositeBitmapFont::glyphTextureBorder(uchar ch) const
+uint CompositeBitmapFont::glyphTextureBorder(dbyte ch) const
 {
     glInit();
     return d->glyph(ch).border;
 }
 
-TextureVariant *CompositeBitmapFont::glyphTexture(uchar ch) const
+TextureVariant *CompositeBitmapFont::glyphTexture(dbyte ch) const
 {
     glInit();
     return d->glyph(ch).tex;
 }
 
-patchid_t CompositeBitmapFont::glyphPatch(uchar ch) const
+patchid_t CompositeBitmapFont::glyphPatch(dbyte ch) const
 {
     glInit();
     return d->glyph(ch).patch;
 }
 
-void CompositeBitmapFont::glyphSetPatch(uchar ch, String encodedPatchName)
+void CompositeBitmapFont::glyphSetPatch(dbyte ch, String encodedPatchName)
 {
     //if(ch >= MAX_CHARS) return;
     d->glyphs[ch].patch = res::Textures::get().declarePatch(encodedPatchName);
@@ -132,7 +132,7 @@ void CompositeBitmapFont::glyphSetPatch(uchar ch, String encodedPatchName)
 }
 
 /// @todo fixme: Do not assume the texture-usage context is @c TC_UI.
-static TextureVariantSpec const &glyphTextureSpec()
+static const TextureVariantSpec &glyphTextureSpec()
 {
     return ClientApp::resources().textureSpec(TC_UI,
         TSF_MONOCHROME | TSF_UPSCALE_AND_SHARPEN, 0, 0, 0, GL_CLAMP_TO_EDGE,
@@ -149,7 +149,7 @@ void CompositeBitmapFont::glInit() const
     glDeinit();
 
     int foundGlyphs = 0;
-    Vector2ui avgSize;
+    Vec2ui avgSize;
     for(int i = 0; i < MAX_CHARS; ++i)
     {
         Glyph *ch = &d->glyphs[i];
@@ -163,7 +163,7 @@ void CompositeBitmapFont::glInit() const
             res::Texture &tex = res::Textures::get().textureScheme("Patches").findByUniqueId(patch).texture();
 
             ch->tex      = static_cast<ClientTexture &>(tex).prepareVariant(glyphTextureSpec());
-            ch->geometry = Rectanglei::fromSize(tex.origin(), tex.dimensions().toVector2ui());
+            ch->geometry = Rectanglei::fromSize(tex.origin(), tex.dimensions().toVec2ui());
 
             ch->border   = 0;
             if(ch->tex && ch->tex->source() == res::Original)
@@ -175,12 +175,12 @@ void CompositeBitmapFont::glInit() const
             avgSize += ch->geometry.size();
             ++foundGlyphs;
         }
-        catch(res::TextureManifest::MissingTextureError const &er)
+        catch(const res::TextureManifest::MissingTextureError &er)
         {
             // Log but otherwise ignore this error.
             LOG_RES_WARNING(er.asText() + ", ignoring.");
         }
-        catch(res::TextureScheme::NotFoundError const &er)
+        catch(const res::TextureScheme::NotFoundError &er)
         {
             // Log but otherwise ignore this error.
             LOG_RES_WARNING(er.asText() + ", ignoring.");
@@ -210,7 +210,7 @@ void CompositeBitmapFont::glDeinit() const
 }
 
 CompositeBitmapFont *CompositeBitmapFont::fromDef(FontManifest &manifest,
-    ded_compositefont_t const &def) // static
+    const ded_compositefont_t &def) // static
 {
     LOG_AS("CompositeBitmapFont::fromDef");
 
@@ -225,7 +225,7 @@ CompositeBitmapFont *CompositeBitmapFont::fromDef(FontManifest &manifest,
             String glyphPatchPath = def.charMap[i].path->resolved();
             font->glyphSetPatch(def.charMap[i].ch, glyphPatchPath);
         }
-        catch(de::Uri::ResolveError const &er)
+        catch(const res::Uri::ResolveError &er)
         {
             LOG_RES_WARNING(er.asText());
         }
@@ -246,7 +246,7 @@ void CompositeBitmapFont::setDefinition(ded_compositefont_t *newDef)
     d->def = newDef;
 }
 
-void CompositeBitmapFont::rebuildFromDef(ded_compositefont_t const &newDef)
+void CompositeBitmapFont::rebuildFromDef(const ded_compositefont_t &newDef)
 {
     LOG_AS("CompositeBitmapFont::rebuildFromDef");
 
@@ -262,7 +262,7 @@ void CompositeBitmapFont::rebuildFromDef(ded_compositefont_t const &newDef)
             String glyphPatchPath = d->def->charMap[i].path->resolved();
             glyphSetPatch(d->def->charMap[i].ch, glyphPatchPath);
         }
-        catch(de::Uri::ResolveError const& er)
+        catch(res::Uri::ResolveError const& er)
         {
             LOG_RES_WARNING(er.asText());
         }

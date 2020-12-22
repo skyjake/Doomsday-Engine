@@ -22,11 +22,12 @@
 #define __DOOMSDAY_SERVER_POOL_H__
 
 #include "dd_share.h"
-#include "world/plane.h"
 #include "world/p_object.h"
-#include "world/polyobj.h"
-#include "world/surface.h"
 #include "sv_missile.h"
+
+#include <doomsday/world/plane.h>
+#include <doomsday/world/polyobj.h>
+#include <doomsday/world/surface.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -185,7 +186,7 @@ typedef struct {
 typedef struct {
     delta_t         delta; // id = Emitter identifier (mobjid/sectoridx)
     int             sound; // Sound ID
-    mobj_t const *  mobj;
+    const mobj_t *  mobj;
     float           volume;
 } sounddelta_t;
 
@@ -289,8 +290,8 @@ uint            Sv_CountUnackedDeltas(uint clientNumber);
  * @param clientsMask    Each bit corresponds a client number;
  *                       -1 if all clients should receive the delta.
  */
-void Sv_NewSoundDelta(int soundId, mobj_t const *emitter, Sector *sourceSector,
-    Polyobj *sourcePoly, Plane *sourcePlane, Surface *sourceSurface,
+void Sv_NewSoundDelta(int soundId, const mobj_t *emitter, world::Sector *sourceSector,
+    Polyobj *sourcePoly, world::Plane *sourcePlane, world::Surface *sourceSurface,
     float volume, dd_bool isRepeating, int clientsMask);
 
 #ifdef __cplusplus

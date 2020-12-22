@@ -25,13 +25,13 @@
 #  error "MaterialAnimator only exists in the Client"
 #endif
 
-#include <de/Error>
-#include <de/Observers>
-#include <de/Vector>
-#include "ClientTexture"
-#include "ClientMaterial"
-#include "MaterialContext"
-#include "MaterialVariantSpec"
+#include <de/error.h>
+#include <de/observers.h>
+#include <de/vector.h>
+#include "resource/clienttexture.h"
+#include "resource/clientmaterial.h"
+#include "render/materialcontext.h"
+#include "resource/materialvariantspec.h"
 #include "gl/gltextureunit.h"
 
 /**
@@ -48,13 +48,13 @@ class MaterialAnimator
 {
 public:
     /// The referenced (GL)texture unit does not exist. @ingroup errors
-    DENG2_ERROR(MissingTextureUnitError);
+    DE_ERROR(MissingTextureUnitError);
 
     /// The referenced decoration does not exist. @ingroup errors
-    DENG2_ERROR(MissingDecorationError);
+    DE_ERROR(MissingDecorationError);
 
     /// Notified whenever one or more decoration stage changes occur.
-    DENG2_DEFINE_AUDIENCE(DecorationStageChange, void materialAnimatorDecorationStageChanged(MaterialAnimator &animator))
+    DE_DEFINE_AUDIENCE(DecorationStageChange, void materialAnimatorDecorationStageChanged(MaterialAnimator &animator))
 
     /**
      * (GL)Texture unit identifier:
@@ -86,11 +86,11 @@ public:
          */
         MaterialDecoration &decor() const;
 
-        de::Vector2f origin() const;
+        de::Vec2f origin() const;
         float elevation() const;
 
         float radius() const;
-        de::Vector3f color() const;
+        de::Vec3f color() const;
         void lightLevels(float &min, float &max) const;
 
         ClientTexture *tex() const;
@@ -107,7 +107,7 @@ public:
         void reset();
 
     private:
-        DENG2_PRIVATE(d)
+        DE_PRIVATE(d)
     };
 
 public:
@@ -117,7 +117,7 @@ public:
      * @param material  Material to animate.
      * @param spec      Draw-context variant specification.
      */
-    MaterialAnimator(ClientMaterial &material, de::MaterialVariantSpec const &variantSpec);
+    MaterialAnimator(ClientMaterial &material, const de::MaterialVariantSpec &variantSpec);
 
     /**
      * Returns the Material being animated.
@@ -127,7 +127,7 @@ public:
     /**
      * Returns the MaterialVariantSpec for the associated usage context.
      */
-    de::MaterialVariantSpec const &variantSpec() const;
+    const de::MaterialVariantSpec &variantSpec() const;
 
     /**
      * Process a system tick event. If not currently paused and still valid; the material's
@@ -175,7 +175,7 @@ public:
     /**
      * Returns the current dimension metrics for the animated Material.
      */
-    de::Vector2ui const &dimensions() const;
+    const de::Vec2ui &dimensions() const;
 
     /**
      * Returns the current glow strength factor for the animated Material.
@@ -190,7 +190,7 @@ public:
     /**
      * Returns the current shine effect minimum color for the animated Material.
      */
-    de::Vector3f const &shineMinColor() const;
+    const de::Vec3f &shineMinColor() const;
 
     /**
      * Lookup a prepared GLTextureUnit by it's unique @a unitIndex.
@@ -205,7 +205,7 @@ public:
     Decoration &decoration(int decorIndex) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // CLIENT_RESOURCE_MATERIALANIMATOR_H

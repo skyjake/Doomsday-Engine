@@ -24,29 +24,28 @@
 #include "client/cl_def.h" // clientPaused
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
-#include "MaterialVariantSpec"
+#include "resource/materialvariantspec.h"
 #include "resource/clientresources.h"
 #include "resource/framemodeldef.h"
 #include "render/rend_main.h"
 #include "render/rend_model.h"
 #include "render/vissprite.h"
 #include "world/sky.h"
-#include "ClientTexture"
+#include "resource/clienttexture.h"
 
 #include <doomsday/console/var.h>
 #include <doomsday/console/exec.h>
-#include <doomsday/world/Materials>
-#include <de/concurrency.h>
-#include <de/timer.h>
-#include <de/Log>
-#include <de/GLInfo>
+#include <doomsday/world/materials.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/timer.h>
+#include <de/log.h>
+#include <de/glinfo.h>
 #include <cmath>
 
 #define MAX_LAYERS  2
 #define MAX_MODELS  32
 
 using namespace de;
-using namespace world;
 
 namespace internal {
 
@@ -81,19 +80,19 @@ struct Hemisphere
     float height        = 0.49f;
     float horizonOffset = -0.105f;
 
-    typedef QVector<Vector3f> VBuf;
+    typedef List<Vec3f> VBuf;
     VBuf verts;
     bool needRebuild = true;
 
     // Look up the precalculated vertex.
-    inline Vector3f const &vertex(int r, int c) const {
+    inline const Vec3f &vertex(int r, int c) const {
         return verts[r * columns + c % columns];
     }
 
     /**
      * Determine the material to use for the given sky @a layer.
      */
-    static world::Material *chooseMaterialForSkyLayer(SkyLayer const &layer)
+    static world::Material *chooseMaterialForSkyLayer(const world::SkyLayer &layer)
     {
         if(renderTextures == 0)
         {
@@ -101,19 +100,19 @@ struct Hemisphere
         }
         if(renderTextures == 2)
         {
-            return world::Materials::get().materialPtr(de::Uri("System", Path("gray")));
+            return world::Materials::get().materialPtr(res::Uri("System", Path("gray")));
         }
         if(world::Material *mat = layer.material())
         {
             return mat;
         }
-        return world::Materials::get().materialPtr(de::Uri("System", Path("missing")));
+        return world::Materials::get().materialPtr(res::Uri("System", Path("missing")));
     }
 
     /**
      * Determine the cap/fadeout color to use for the given sky @a layer.
      */
-    static Vector3f chooseCapColor(SphereComponent hemisphere, SkyLayer const &layer,
+    static Vec3f chooseCapColor(SphereComponent hemisphere, const world::SkyLayer &layer,
                                    bool *needFadeOut = nullptr)
     {
         if (world::Material *mat = chooseMaterialForSkyLayer(layer))
@@ -124,30 +123,31 @@ struct Hemisphere
             matAnimator.prepare();
 
             ClientTexture &pTex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture->base();
-            averagecolor_analysis_t const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>
+            const averagecolor_analysis_t *avgColor = reinterpret_cast<const averagecolor_analysis_t *>
                     (pTex.analysisDataPointer((hemisphere == UpperHemisphere ? res::Texture::AverageTopColorAnalysis
                                                                              : res::Texture::AverageBottomColorAnalysis)));
             if (!avgColor)
             {
-                de::Uri const pTexUri = pTex.manifest().composeUri();
-                throw Error("Hemisphere::capColor", String("Texture \"%1\" has no Average%2ColorAnalysis")
-                                                        .arg(pTexUri)
-                                                        .arg(hemisphere == UpperHemisphere? "Top" : "Bottom"));
+                const res::Uri pTexUri = pTex.manifest().composeUri();
+                throw Error("Hemisphere::capColor",
+                            stringf("Texture \"%s\" has no Average%sColorAnalysis",
+                                    pTexUri.pathCStr(),
+                                    hemisphere == UpperHemisphere ? "Top" : "Bottom"));
             }
 
             // Is the colored fadeout in use?
-            Vector3f color(avgColor->color.rgb);
-            dfloat const fadeOutLimit = layer.fadeOutLimit();
+            Vec3f color(avgColor->color.rgb);
+            const dfloat fadeOutLimit = layer.fadeOutLimit();
             if (color.x >= fadeOutLimit || color.y >= fadeOutLimit || color.z >= fadeOutLimit)
             {
                 if (needFadeOut) *needFadeOut = true;
                 return color;
             }
         }
-        return Vector3f(); // Default color is black.
+        return Vec3f(); // Default color is black.
     }
 
-    void drawCap(Vector3f const &color, bool drawFadeOut) const
+    void drawCap(const Vec3f &color, bool drawFadeOut) const
     {
         GL_SetNoTexture();
 
@@ -157,7 +157,7 @@ struct Hemisphere
         DGL_Begin(DGL_TRIANGLE_FAN);
         for(int c = 0; c < columns; ++c)
         {
-            Vector3f const &vtx = vertex(0, c);
+            const Vec3f &vtx = vertex(0, c);
             DGL_Vertex3f(vtx.x, vtx.y, vtx.z);
         }
         DGL_End();
@@ -167,7 +167,7 @@ struct Hemisphere
 
         // We must fill the background for the top row since it'll be translucent.
         DGL_Begin(DGL_TRIANGLE_STRIP);
-        Vector3f const *vtx = &vertex(0, 0);
+        const Vec3f *vtx = &vertex(0, 0);
         DGL_Vertex3f(vtx->x, vtx->y, vtx->z);
         int c = 0;
         for(; c < columns; ++c)
@@ -184,15 +184,15 @@ struct Hemisphere
         DGL_End();
     }
 
-    void draw(SphereComponent hemisphere, Sky const &sky, dint firstActiveLayer,
-              LayerData const *layerData) const
+    void draw(SphereComponent hemisphere, const world::Sky &sky, dint firstActiveLayer,
+              const LayerData *layerData) const
     {
-        DENG2_ASSERT(layerData);
+        DE_ASSERT(layerData);
 
         if (verts.isEmpty()) return;
         if (firstActiveLayer < 0) return;
 
-        bool const yflip = (hemisphere == LowerHemisphere);
+        const bool yflip = (hemisphere == LowerHemisphere);
         if (yflip)
         {
             // The lower hemisphere must be flipped.
@@ -207,8 +207,8 @@ struct Hemisphere
 
         for (dint i = firstActiveLayer; i < MAX_LAYERS; ++i)
         {
-            SkyLayer const &skyLayer = sky.layer(i);
-            LayerData const &ldata   = layerData[i];
+            const auto &skyLayer = sky.layer(i);
+            const LayerData &ldata   = layerData[i];
 
             if (!ldata.active) continue;
 
@@ -228,7 +228,7 @@ struct Hemisphere
                 DGL_MatrixMode(DGL_TEXTURE);
                 DGL_PushMatrix();
                 DGL_LoadIdentity();
-                Vector2ui const &texSize = layerTex->base().dimensions();
+                const Vec2ui &texSize = layerTex->base().dimensions();
                 if (texSize.x > 0)
                 {
                     DGL_Translatef(ldata.offset / texSize.x, 0, 0);
@@ -264,7 +264,7 @@ struct Hemisphere
     DGL_Vertex3f(svtx->x, svtx->y, svtx->z); \
 }
 
-            Vector3f const *svtx;
+            const Vec3f *svtx;
             for (dint r = 0; r < rows; ++r)
             {
                 DGL_Begin(DGL_TRIANGLE_STRIP);
@@ -309,26 +309,26 @@ struct Hemisphere
      */
     void makeVertices(float height, float horizonOffset)
     {
-        DENG2_ASSERT(height > 0);
+        DE_ASSERT(height > 0);
 
         rows    = de::max(sphereRows,   1);
         columns = de::max(sphereDetail, 1) * 4;
 
         verts.resize(columns * (rows + 1));
 
-        float const maxSideAngle = float(de::PI / 2 * height);
-        float const sideOffset   = float(de::PI / 2 * horizonOffset);
+        const float maxSideAngle = float(de::PI / 2 * height);
+        const float sideOffset   = float(de::PI / 2 * horizonOffset);
 
         for(int r = 0; r < rows + 1; ++r)
         for(int c = 0; c < columns; ++c)
         {
-            Vector3f &svtx = verts[r * columns + c % columns];
+            Vec3f &svtx = verts[r * columns + c % columns];
 
-            float const topAngle  = ((c / float(columns)) * 2) * PI;
-            float const sideAngle = sideOffset + maxSideAngle * (rows - r) / float(rows);
-            float const radius    = cos(sideAngle);
+            const float topAngle  = ((c / float(columns)) * 2) * PI;
+            const float sideAngle = sideOffset + maxSideAngle * (rows - r) / float(rows);
+            const float radius    = cos(sideAngle);
 
-            svtx = Vector3f(radius * cos(topAngle),
+            svtx = Vec3f(radius * cos(topAngle),
                             sin(sideAngle), // The height.
                             radius * sin(topAngle));
         }
@@ -341,12 +341,12 @@ static Hemisphere hemisphere;
 } // namespace internal
 using namespace ::internal;
 
-DENG2_PIMPL(SkyDrawable)
-, DENG2_OBSERVES(Sky, Deletion)
-, DENG2_OBSERVES(Sky, HeightChange)
-, DENG2_OBSERVES(Sky, HorizonOffsetChange)
+DE_PIMPL(SkyDrawable)
+, DE_OBSERVES(Sky, Deletion)
+, DE_OBSERVES(Sky, HeightChange)
+, DE_OBSERVES(Sky, HorizonOffsetChange)
 {
-    Sky const *sky = nullptr;
+    const Sky *sky = nullptr;
 
     dfloat height = 1;
     bool needHeightUpdate = false;
@@ -381,14 +381,14 @@ DENG2_PIMPL(SkyDrawable)
     /**
      * Prepare for drawing; determine layer configuration, sphere dimensions, etc..
      */
-    void prepare(Animator const *animator)
+    void prepare(const Animator *animator)
     {
         // Determine the layer configuration. Note that this is also used for sky
         // models, even if the sphere is not being drawn.
         firstActiveLayer = -1;
         for (dint i = 0; i < MAX_LAYERS; ++i)
         {
-            SkyLayer const &skyLayer = sky->layer(i);
+            const auto &skyLayer = sky->layer(i);
 
             layers[i].active = skyLayer.isActive();
             layers[i].offset = skyLayer.offset() + animator->layer(i).offset;
@@ -441,7 +441,7 @@ DENG2_PIMPL(SkyDrawable)
         DGL_PopState();
     }
 
-    void drawModels(Animator const *animator) const
+    void drawModels(const Animator *animator) const
     {
         if(!haveModels) return;
 
@@ -452,7 +452,7 @@ DENG2_PIMPL(SkyDrawable)
         //glDepthMask(GL_TRUE);
         DGL_Enable(DGL_DEPTH_TEST);
         DGL_Enable(DGL_DEPTH_WRITE);
-        LIBGUI_GL.glClear(GL_DEPTH_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
@@ -462,31 +462,31 @@ DENG2_PIMPL(SkyDrawable)
 
         for(int i = 0; i < MAX_MODELS; ++i)
         {
-            ModelData const &mdata = models[i];
+            const ModelData &mdata = models[i];
 
             // Is this model in use?
             FrameModelDef *modef = mdata.modef;
             if(!modef) continue;
 
             // If the associated layer is not active then the model won't be drawn.
-            Record const &skyModelDef = defn::Sky(*sky->def()).model(i);
-            int const layerNum        = skyModelDef.geti("layer");
+            const Record &skyModelDef = defn::Sky(*sky->def()).model(i);
+            const int layerNum        = skyModelDef.geti("layer");
             if(layerNum > 0 && layerNum <= MAX_LAYERS)
             {
                 if(!layers[layerNum - 1].active)
                     continue;
             }
 
-            Animator::ModelState const &mstate = animator->model(i);
+            const Animator::ModelState &mstate = animator->model(i);
 
             // Prepare a vissprite for ordered drawing.
             vissprite_t vis{};
 
-            vis.pose.origin          = vOrigin.xzy() * -Vector3f(skyModelDef.get("originOffset")).xzy();
+            vis.pose.origin          = vOrigin.xzy() * -Vec3f(skyModelDef.get("originOffset")).xzy();
             vis.pose.topZ            = vis.pose.origin.z;
             vis.pose.distance        = 1;
 
-            Vector2f rotate(skyModelDef.get("rotate"));
+            Vec2f rotate(skyModelDef.get("rotate"));
             vis.pose.yaw             = mstate.yaw;
             vis.pose.extraYawAngle   = vis.pose.yawAngleOffset   = rotate.x;
             vis.pose.extraPitchAngle = vis.pose.pitchAngleOffset = rotate.y;
@@ -498,7 +498,7 @@ DENG2_PIMPL(SkyDrawable)
             visModel.shineTranslateWithViewerPos = true;
             ClientApp::resources().setModelDefFrame(*modef, mstate.frame);
 
-            vis.light.ambientColor = Vector4f(skyModelDef.get("color"), 1);
+            vis.light.ambientColor = Vec4f(skyModelDef.get("color"), 1.0f);
 
             Rend_DrawModel(vis);
         }
@@ -510,10 +510,10 @@ DENG2_PIMPL(SkyDrawable)
 
         // We don't want that anything in the world geometry interferes with what was
         // drawn in the sky.
-        LIBGUI_GL.glClear(GL_DEPTH_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
     }
 
-    void setupModels(Record const *def)
+    void setupModels(const Record *def)
     {
         // Normally the sky sphere is not drawn if models are in use.
         alwaysDrawSphere = (def && (def->geti("flags") & SIF_DRAW_SPHERE) != 0);
@@ -528,7 +528,7 @@ DENG2_PIMPL(SkyDrawable)
         for(int i = 0; i < skyDef.modelCount(); ++i)
         {
             ModelData &mdata          = models[i];
-            Record const &skyModelDef = skyDef.model(i);
+            const Record &skyModelDef = skyDef.model(i);
 
             try
             {
@@ -541,7 +541,7 @@ DENG2_PIMPL(SkyDrawable)
                     }
                 }
             }
-            catch(ClientResources::MissingModelDefError const &)
+            catch(const ClientResources::MissingModelDefError &)
             {} // Ignore this error.
         }
     }
@@ -573,33 +573,33 @@ DENG2_PIMPL(SkyDrawable)
     }
 
     /// Observes Sky Deletion
-    void skyBeingDeleted(Sky const &)
+    void skyBeingDeleted(const world::Sky &) override
     {
         // Stop observing Sky change notifications.
         self().configure();
     }
 
     /// Observes Sky HeightChange
-    void skyHeightChanged(Sky &)
+    void skyHeightChanged(world::Sky &) override
     {
         // Defer the update (we may be part way through drawing a frame).
         needHeightUpdate = true;
     }
 
     /// Observes Sky HeightChange
-    void skyHorizonOffsetChanged(Sky &)
+    void skyHorizonOffsetChanged(world::Sky &) override
     {
         // Defer the update (we may be part way through drawing a frame).
         needHorizonOffsetUpdate = true;
     }
 };
 
-SkyDrawable::SkyDrawable(Sky const *sky) : d(new Impl(this))
+SkyDrawable::SkyDrawable(const Sky *sky) : d(new Impl(this))
 {
     configure(sky);
 }
 
-SkyDrawable &SkyDrawable::configure(Sky const *sky)
+SkyDrawable &SkyDrawable::configure(const Sky *sky)
 {
     if(d->sky)
     {
@@ -625,7 +625,7 @@ SkyDrawable &SkyDrawable::configure(Sky const *sky)
     return *this;
 }
 
-Sky const *SkyDrawable::sky() const
+const Sky *SkyDrawable::sky() const
 {
     return d->sky;
 }
@@ -634,7 +634,7 @@ void SkyDrawable::cacheAssets()
 {
     if (!d->sky) return;
 
-    d->sky->forAllLayers([] (SkyLayer const &layer)
+    d->sky->forAllLayers([] (const world::SkyLayer &layer)
     {
         if (world::Material *mat = layer.material())
         {
@@ -664,12 +664,12 @@ FrameModelDef *SkyDrawable::modelDef(int modelIndex) const
     return nullptr;
 }
 
-void SkyDrawable::draw(Animator const *animator) const
+void SkyDrawable::draw(const Animator *animator) const
 {
-    DENG2_ASSERT(animator);
-    DENG2_ASSERT(&animator->sky() == this && d->sky == animator->sky().sky());
-    DENG2_ASSERT_IN_RENDER_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT(animator);
+    DE_ASSERT(&animator->sky() == this && d->sky == animator->sky().sky());
+    DE_ASSERT_IN_RENDER_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     d->prepare(animator);
 
@@ -684,7 +684,7 @@ void SkyDrawable::draw(Animator const *animator) const
     if(fogParams.usingFog) DGL_Disable(DGL_FOG);
 }
 
-MaterialVariantSpec const &SkyDrawable::layerMaterialSpec(bool masked) // static
+const MaterialVariantSpec &SkyDrawable::layerMaterialSpec(bool masked) // static
 {
     return ClientApp::resources().materialSpec(SkySphereContext, TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
                                  0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE,
@@ -706,7 +706,7 @@ void SkyDrawable::consoleRegister() // static
 
 //---------------------------------------------------------------------------------------
 
-DENG2_PIMPL_NOREF(SkyDrawable::Animator)
+DE_PIMPL_NOREF(SkyDrawable::Animator)
 {
     SkyDrawable *sky = nullptr;
 
@@ -747,9 +747,9 @@ void SkyDrawable::Animator::setSky(SkyDrawable *sky)
         ModelState &mstate = model(i);
 
         // Is this model in use?
-        if(FrameModelDef const *modef = d->sky->modelDef(i))
+        if(const FrameModelDef *modef = d->sky->modelDef(i))
         {
-            Record const &skyModelDef = skyDef.model(i);
+            const Record &skyModelDef = skyDef.model(i);
 
             mstate.frame    = modef->subModelDef(0).frame;
             mstate.maxTimer = int(TICSPERSEC * skyModelDef.getf("frameInterval"));
@@ -760,7 +760,7 @@ void SkyDrawable::Animator::setSky(SkyDrawable *sky)
 
 SkyDrawable &SkyDrawable::Animator::sky() const
 {
-    DENG2_ASSERT(d->sky);
+    DE_ASSERT(d->sky);
     return *d->sky;
 }
 
@@ -773,10 +773,10 @@ SkyDrawable::Animator::LayerState &SkyDrawable::Animator::layer(int index)
 {
     if(hasLayer(index)) return d->layers[index];
     /// @throw MissingLayerStateError An invalid layer state index was specified.
-    throw MissingLayerStateError("SkyDrawable::Animator::layer", "Invalid layer state index #" + String::number(index) + ".");
+    throw MissingLayerStateError("SkyDrawable::Animator::layer", "Invalid layer state index #" + String::asText(index) + ".");
 }
 
-SkyDrawable::Animator::LayerState const &SkyDrawable::Animator::layer(int index) const
+const SkyDrawable::Animator::LayerState &SkyDrawable::Animator::layer(int index) const
 {
     return const_cast<SkyDrawable::Animator *>(this)->layer(index);
 }
@@ -790,10 +790,10 @@ SkyDrawable::Animator::ModelState &SkyDrawable::Animator::model(int index)
 {
     if(hasModel(index)) return d->models[index];
     /// @throw MissingModelStateError An invalid model state index was specified.
-    throw MissingModelStateError("SkyDrawable::Animator::model", "Invalid model state index #" + String::number(index) + ".");
+    throw MissingModelStateError("SkyDrawable::Animator::model", "Invalid model state index #" + String::asText(index) + ".");
 }
 
-SkyDrawable::Animator::ModelState const &SkyDrawable::Animator::model(int index) const
+const SkyDrawable::Animator::ModelState &SkyDrawable::Animator::model(int index) const
 {
     return const_cast<SkyDrawable::Animator *>(this)->model(index);
 }
@@ -812,7 +812,7 @@ void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)
     defn::Sky const skyDef(*sky().sky()->def());
     for(int i = 0; i < MAX_LAYERS; ++i)
     {
-        Record const &skyLayerDef = skyDef.layer(i);
+        const Record &skyLayerDef = skyDef.layer(i);
         LayerState &lstate        = layer(i);
 
         // Translate the layer origin.
@@ -823,10 +823,10 @@ void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)
     for(int i = 0; i < MAX_MODELS; ++i)
     {
         // Is this model in use?
-        FrameModelDef const *modef = sky().modelDef(i);
+        const FrameModelDef *modef = sky().modelDef(i);
         if(!modef) continue;
 
-        Record const &skyModelDef = skyDef.model(i);
+        const Record &skyModelDef = skyDef.model(i);
         ModelState &mstate        = model(i);
 
         // Rotate the model.
@@ -839,10 +839,10 @@ void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)
             mstate.timer = 0;
 
             // Execute a console command?
-            String const execute = skyModelDef.gets("execute");
+            const String execute = skyModelDef.gets("execute");
             if(!execute.isEmpty())
             {
-                Con_Execute(CMDS_SCRIPT, execute.toUtf8().constData(), true, false);
+                Con_Execute(CMDS_SCRIPT, execute, true, false);
             }
         }
     }

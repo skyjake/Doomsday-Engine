@@ -21,8 +21,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_VERSION_H
-#define LIBDENG_VERSION_H
+#ifndef DEAPI_VERSION_H
+#define DEAPI_VERSION_H
 
 #include "dengproject.h"
 
@@ -31,12 +31,8 @@ extern "C" {
 #endif
 
 #define DOOMSDAY_NICENAME       "Doomsday Engine"
-
-#define LIBDENG_PLUGINDESC      "(" DOOMSDAY_NICENAME " Plugin)"
-
 #define DOOMSDAY_HOMEURL        "http://dengine.net"
-#define DOOMSDAY_MASTERURL      "http://dengine.net/master.php"
-#define DOOMSDAY_DOCSURL        "http://dengine.net/dew"
+#define DOOMSDAY_DOCSURL        "https://manual.dengine.net"
 
 /**
  * Version number rules: (major).(minor).(revision)-(release name)
@@ -51,19 +47,19 @@ extern "C" {
  * Revision number increases with each small (maintenance) release.
  */
 
-#define DOOMSDAY_VERSION_BASE   "${DENG_VERSION}"
-#define DOOMSDAY_VERSION_NUMBER ${DENG_VERSION_WINDOWS} // For WIN32 version info.
+#define DOOMSDAY_VERSION_BASE   "${DE_VERSION}"
+#define DOOMSDAY_VERSION_NUMBER ${DE_VERSION_WINDOWS} // For WIN32 version info.
 
 /**
  * DOOMSDAY_RELEASE_TYPE determines the classification of the release.
  * Possible values are "Unstable", "Candidate" and "Stable".
  */
-#define DOOMSDAY_RELEASE_TYPE   "${DENG_RELEASE_TYPE}"
+#define DOOMSDAY_RELEASE_TYPE   "${DE_RELEASE_TYPE}"
 
 /**
  * Copyright string is used in WIN32 binary metadata markup.
  */
-#define DOOMSDAY_COPYRIGHT      "2003-2017, " DENGPROJECT_NICEAUTHOR
+#define DOOMSDAY_COPYRIGHT      "2003-2018, " DENGPROJECT_NICEAUTHOR
 
 /**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
@@ -72,7 +68,7 @@ extern "C" {
  */
 #define DOOMSDAY_VERSION        20000 // Don't touch; see above.
 
-#if !defined(DENG_STABLE) && defined(DOOMSDAY_BUILD_TEXT)
+#if !defined(DE_STABLE) && defined(DOOMSDAY_BUILD_TEXT)
 /** The build number is included only for non-Stable builds. */
 #  define DOOMSDAY_VERSION_TEXT             DOOMSDAY_VERSION_BASE " [#" DOOMSDAY_BUILD_TEXT "]"
 #  if defined(WIN32) && defined(UNICODE)
@@ -96,4 +92,4 @@ extern "C" {
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_VERSION_H */
+#endif /* DEAPI_VERSION_H */

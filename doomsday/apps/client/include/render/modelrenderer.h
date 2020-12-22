@@ -16,22 +16,19 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_MODELRENDERER_H
-#define DENG_CLIENT_MODELRENDERER_H
-
-#include <de/Function>
-#include <de/ModelDrawable>
-#include <de/ModelBank>
-#include <de/GLState>
-#include <de/Timeline>
-#include <de/MultiAtlas>
-
-#include <QList>
-#include <QMap>
-#include <QBitArray>
-#include <functional>
+#ifndef DE_CLIENT_MODELRENDERER_H
+#define DE_CLIENT_MODELRENDERER_H
 
 #include "model.h"
+
+#include <de/scripting/function.h>
+#include <de/scripting/timeline.h>
+#include <de/modeldrawable.h>
+#include <de/modelbank.h>
+#include <de/glstate.h>
+#include <de/multiatlas.h>
+
+#include <functional>
 
 struct vissprite_t;
 struct vispsprite_t;
@@ -63,26 +60,24 @@ public:
     ModelRenderer();
 
     void glInit();
-
     void glDeinit();
 
-    render::ModelLoader &loader();
-
-    render::ModelLoader const &loader() const;
+    render::ModelLoader &      loader();
+    const render::ModelLoader &loader() const;
 
     /**
      * Provides access to the bank containing available drawable models.
      */
     de::ModelBank &bank();
 
-    render::Model::StateAnims const *animations(de::DotPath const &modelId) const;
+    const render::Model::StateAnims *animations(const de::DotPath &modelId) const;
 
     /**
      * Render a GL2 model.
      *
      * @param spr  Parameters for the draw operation (as a vissprite).
      */
-    void render(vissprite_t const &spr);
+    void render(const vissprite_t &spr);
 
     /**
      * Render a GL2 model representing a psprite.
@@ -91,13 +86,13 @@ public:
      * @param playerMobj  Player object. Light originating from this is ignored on the
      *                    psprite omdel.
      */
-    void render(vispsprite_t const &pspr, struct mobj_s const *playerMobj);
+    void render(const vispsprite_t &pspr, const struct mobj_s *playerMobj);
 
 public:
     static void initBindings(de::Binder &binder, de::Record &module);
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_MODELRENDERER_H
+#endif // DE_CLIENT_MODELRENDERER_H

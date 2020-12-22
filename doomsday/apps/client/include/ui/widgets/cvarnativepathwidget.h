@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_CVARNATIVEPATHWIDGET_H
-#define DENG_CLIENT_CVARNATIVEPATHWIDGET_H
+#ifndef DE_CLIENT_CVARNATIVEPATHWIDGET_H
+#define DE_CLIENT_CVARNATIVEPATHWIDGET_H
 
 #include "nativepathwidget.h"
 #include "icvarwidget.h"
@@ -27,20 +27,17 @@
  */
 class CVarNativePathWidget : public NativePathWidget, public ICVarWidget
 {
-    Q_OBJECT
-
 public:
-    CVarNativePathWidget(char const *cvarPath);
-    char const *cvarPath() const;
+    CVarNativePathWidget(const char *cvarPath);
+    const char *cvarPath() const;
 
-public slots:
     void updateFromCVar();
 
-protected slots:
+protected:
     void setCVarValueFromWidget();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_CVARNATIVEPATHWIDGET_H
+#endif // DE_CLIENT_CVARNATIVEPATHWIDGET_H

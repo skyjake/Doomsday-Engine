@@ -18,10 +18,9 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_WORLD_GENERATOR_H
-#define CLIENT_WORLD_GENERATOR_H
+#pragma once
 
-#include <de/Vector>
+#include <de/vector.h>
 #include <doomsday/defs/dedtypes.h>
 #include "map.h"
 
@@ -29,22 +28,18 @@ class Line;
 class Plane;
 struct mobj_s;
 
-namespace world {
-
-class BspLeaf;
-
 /**
  * POD structure used when querying the current state of a particle.
  */
 struct ParticleInfo
 {
-    de::dint stage;           ///< -1 => particle doesn't exist
-    de::dshort tics;
-    fixed_t origin[3];        ///< Coordinates.
-    fixed_t mov[3];           ///< Momentum.
-    world::BspLeaf *bspLeaf;  ///< Updated when needed.
-    Line *contact;            ///< Updated when lines hit/avoided.
-    de::dushort yaw, pitch;   ///< Rotation angles (0-65536 => 0-360).
+    int             stage;      // -1 => particle doesn't exist
+    int16_t         tics;
+    fixed_t         origin[3];  // Coordinates.
+    fixed_t         mov[3];     // Momentum.
+    world::BspLeaf *bspLeaf;    // Updated when needed.
+    Line *          contact;    // Updated when lines hit/avoided.
+    uint16_t        yaw, pitch; // Rotation angles (0-65536 => 0-360).
 };
 
 /**
@@ -74,10 +69,9 @@ struct Generator
             RandomYaw      = 0x800,
             RandomPitch    = 0x1000
         };
-        Q_DECLARE_FLAGS(Flags, Flag)
 
-        de::dshort type;
-        Flags flags;
+        int16_t type;
+        de::Flags flags;
         fixed_t resistance;
         fixed_t bounce;
         fixed_t radius;
@@ -104,24 +98,23 @@ struct Generator
         BlendInverseMultiply = 0x8000,  ///< Inverse multiplicative blending.
         StateChain           = 0x10000  ///< Chain after existing state gen(s).
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     /// Unique identifier associated with each generator (1-based).
-    typedef de::dshort Id;
+    typedef int16_t Id;
 
-public: /// @todo make private:
-    thinker_t thinker;               ///< Func = P_PtcGenThinker
-    Plane *plane;                    ///< Flat-triggered.
-    ded_ptcgen_t const *def;         ///< The definition of this generator.
-    struct mobj_s *source;           ///< If mobj-triggered.
-    de::dint srcid;                  ///< Source mobj ID.
-    de::dint type;                   ///< Type-triggered; mobj type number (-1=none).
-    de::dint type2;                  ///< Type-triggered; alternate type.
-    fixed_t originAtSpawn[3];        ///< Used by untriggered/damage gens.
-    fixed_t vector[3];               ///< Converted from the definition.
-    de::dfloat spawnRateMultiplier;
-    de::dint count;                  ///< Number of particles generated thus far.
-    ParticleStage *stages;
+public:                                   //! @todo make private:
+    thinker_t           thinker;          //  Func = P_PtcGenThinker
+    Plane *             plane;            //  Flat-triggered.
+    const ded_ptcgen_t *def;              //  The definition of this generator.
+    struct mobj_s *     source;           //  If mobj-triggered.
+    int                 srcid;            //  Source mobj ID.
+    int                 type;             //  Type-triggered; mobj type number (-1=none).
+    int                 type2;            //  Type-triggered; alternate type.
+    fixed_t             originAtSpawn[3]; //  Used by untriggered/damage gens.
+    fixed_t             vector[3];        //  Converted from the definition.
+    float               spawnRateMultiplier;
+    int                 count;            // Number of particles generated thus far.
+    ParticleStage *     stages;
 
 public:
     /**
@@ -129,7 +122,7 @@ public:
      *
      * @see Thinker_Map()
      */
-    world::Map &map() const;
+    Map &map() const;
 
     /**
      * Returns the unique identifier of the generator. The identifier is 1-based.
@@ -146,7 +139,7 @@ public:
     /**
      * Set gen->count prior to calling this function.
      */
-    void configureFromDef(ded_ptcgen_t const *def);
+    void configureFromDef(const ded_ptcgen_t *def);
 
     /**
      * Generate and/or move the particles.
@@ -156,12 +149,12 @@ public:
     /**
      * Run the generator's thinker for the given number of @a tics.
      */
-    void presimulate(de::dint tics);
+    void presimulate(int tics);
 
     /**
      * Returns the age of the generator (time since spawn), in tics.
      */
-    de::dint age() const;
+    int age() const;
 
     /**
      * Determine the @em approximate origin of the generator in map space.
@@ -171,7 +164,7 @@ public:
      * spawn time. For all other types of generator the initial origin at generator
      * spawn time is returned.
      */
-    de::Vector3d origin() const;
+    de::Vec3d origin() const;
 
     /**
      * Returns @c true iff the generator is @em static, meaning it will not be
@@ -197,12 +190,12 @@ public:
     /**
      * Returns the total number of @em active particles for the generator.
      */
-    de::dint activeParticleCount() const;
+    int activeParticleCount() const;
 
     /**
      * Provides readonly access to the generator particle info data.
      */
-    ParticleInfo const *particleInfo() const;
+    const ParticleInfo *particleInfo() const;
 
 public: /// @todo make private:
     /**
@@ -215,7 +208,7 @@ public: /// @todo make private:
      *
      * @return  Index of the newly spawned particle; otherwise @c -1.
      */
-    de::dint newParticle();
+    int newParticle();
 
     /**
      * The movement is done in two steps:
@@ -223,14 +216,14 @@ public: /// @todo make private:
      * XY movement checks for hits with solid walls (no backsector).
      * This is supposed to be fast and simple (but not too simple).
      */
-    void moveParticle(de::dint index);
+    void moveParticle(int index);
 
     void spinParticle(ParticleInfo &pt);
 
-    de::dfloat particleZ(ParticleInfo const &pt) const;
+    float particleZ(const ParticleInfo &pt) const;
 
-    de::Vector3f particleOrigin(ParticleInfo const &pt) const;
-    de::Vector3f particleMomentum(ParticleInfo const &pt) const;
+    de::Vec3f particleOrigin(const ParticleInfo &pt) const;
+    de::Vec3f particleMomentum(const ParticleInfo &pt) const;
 
 public:
     /**
@@ -239,23 +232,16 @@ public:
     static void consoleRegister();
 
 private:
-    Id _id;                  ///< Unique in the map.
-    Flags _flags;
-    de::dint _age;           ///< Time since spawn, in tics.
-    de::dfloat _spawnCount;
-    bool _untriggered;       ///< @c true= consider this as not yet triggered.
-    de::dint _spawnCP;       ///< Particle spawn cursor.
-    ParticleInfo *_pinfo;    ///< Info about each generated particle.
+    Id            _id; // Unique in the map.
+    de::Flags     _flags;
+    int           _age; // Time since spawn, in tics.
+    float         _spawnCount;
+    bool          _untriggered; // @c true= consider this as not yet triggered.
+    int           _spawnCP;     // Particle spawn cursor.
+    ParticleInfo *_pinfo;       // Info about each generated particle.
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Generator::Flags)
-Q_DECLARE_OPERATORS_FOR_FLAGS(Generator::ParticleStage::Flags)
 
 typedef Generator::ParticleStage GeneratorParticleStage;
 
 void Generator_Delete(Generator *gen);
 void Generator_Thinker(Generator *gen);
-
-}  // namespace world
-
-#endif  // CLIENT_WORLD_GENERATOR_H

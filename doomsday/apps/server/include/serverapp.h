@@ -20,15 +20,15 @@
 #ifndef SERVERAPP_H
 #define SERVERAPP_H
 
-#include <de/TextApp>
-#include <de/shell/ServerInfo>
+#include <de/textapp.h>
+#include <de/serverinfo.h>
 #include <doomsday/doomsdayapp.h>
-#include <doomsday/Games>
-#include <doomsday/resource/resources.h>
+#include <doomsday/games.h>
+#include <doomsday/res/resources.h>
 #include "serversystem.h"
 #include "ui/infine/infinesystem.h"
 #include "audio/audiosystem.h"
-#include "world/clientserverworld.h"
+#include "serverworld.h"
 
 /**
  * The server application.
@@ -36,8 +36,9 @@
 class ServerApp : public de::TextApp, public DoomsdayApp
 {
 public:
-    ServerApp(int &argc, char **argv);
-    ~ServerApp();
+    ServerApp(const de::StringList &args);
+
+    ~ServerApp() override;
 
     de::duint32 instanceId() const;
 
@@ -47,33 +48,30 @@ public:
      */
     void initialize();
 
-    void checkPackageCompatibility(
-            de::StringList const &packageIds,
-            de::String const &userMessageIfIncompatible,
-            std::function<void ()> finalizeFunc) override;
+    void checkPackageCompatibility(const de::StringList &       packageIds,
+                                   const de::String &           userMessageIfIncompatible,
+                                   const std::function<void()> &finalizeFunc) override;
 
+public:
     /**
      * Fill in a ServerInfo record with the current status of a running server.
      * @return Server information.
      */
-    static de::shell::ServerInfo currentServerInfo();
+    static de::ServerInfo currentServerInfo();
 
-protected:
-    void unloadGame(GameProfile const &upcomingGame) override;
-
-public:
-    static ServerApp &          app();
-    static ServerSystem &       serverSystem();
-    static InFineSystem &       infineSystem();
-    static AudioSystem &        audioSystem();
-    static Resources &          resources();
-    static ClientServerWorld &  world();
+    static ServerApp &   app();
+    static ServerSystem &serverSystem();
+    static InFineSystem &infine();
+    static AudioSystem & audio();
+    static Resources &   resources();
+    static ServerWorld & world();
 
 protected:
     void reset() override;
+    void unloadGame(const GameProfile &upcomingGame) override;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif  // SERVERAPP_H

@@ -16,41 +16,39 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_UI_HOME_GAMECOLUMNWIDGET_H
-#define DENG_CLIENT_UI_HOME_GAMECOLUMNWIDGET_H
+#ifndef DE_CLIENT_UI_HOME_GAMECOLUMNWIDGET_H
+#define DE_CLIENT_UI_HOME_GAMECOLUMNWIDGET_H
 
 #include "columnwidget.h"
 
-#include <de/IPersistent>
+#include <de/ipersistent.h>
 
 class SaveListData;
 
 class GameColumnWidget : public ColumnWidget, public de::IPersistent
 {
-    Q_OBJECT
-
 public:
-    GameColumnWidget(de::String const &gameFamily,
-                     SaveListData const &savedItems);
+    GameColumnWidget(const de::String &gameFamily,
+                     const SaveListData &savedItems);
 
     de::String tabHeading() const override;
-    de::String tabShortcut() const override;
+    int tabShortcut() const override;
     de::String configVariableName() const override;
     void setHighlighted(bool highlighted) override;
 
     // Implements IPersistent.
     void operator>>(de::PersistentState &toState) const override;
-    void operator<<(de::PersistentState const &fromState) override;
+    void operator<<(const de::PersistentState &fromState) override;
 
 public:
-    static const de::String SORT_GAME_ID;
-    static const de::String SORT_MODS;
-    static const de::String SORT_RECENTLY_PLAYED;
-    static const de::String SORT_RELEASE_DATE;
-    static const de::String SORT_TITLE;
+    static const char *SORT_GAME_ID;
+    static const char *SORT_MODS;
+    static const char *SORT_RECENTLY_PLAYED;
+    static const char *SORT_RELEASE_DATE;
+    static const char *SORT_TITLE;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_UI_HOME_GAMECOLUMNWIDGET_H
+#endif // DE_CLIENT_UI_HOME_GAMECOLUMNWIDGET_H

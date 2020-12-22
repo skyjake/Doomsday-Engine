@@ -17,18 +17,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_RESOURCE_FRAMEMODEL_H
-#define DENG_RESOURCE_FRAMEMODEL_H
+#ifndef DE_RESOURCE_FRAMEMODEL_H
+#define DE_RESOURCE_FRAMEMODEL_H
 
 #include <doomsday/filesys/filehandle.h>
 #ifdef __CLIENT__
-#  include "ClientTexture"
+#  include "resource/clienttexture.h"
 #endif
-#include <de/Error>
-#include <de/String>
-#include <de/Vector>
-#include <QBitArray>
-#include <QList>
+#include <de/error.h>
+#include <de/string.h>
+#include <de/bitarray.h>
+#include <de/vector.h>
 
 /// Unique identifier associated with each model.
 typedef uint modelid_t;
@@ -46,13 +45,13 @@ class FrameModel
 {
 public:
     /// Referenced frame is missing. @ingroup errors
-    DENG2_ERROR(MissingFrameError);
+    DE_ERROR(MissingFrameError);
 
     /// Referenced skin is missing. @ingroup errors
-    DENG2_ERROR(MissingSkinError);
+    DE_ERROR(MissingSkinError);
 
     /// Referenced detail level is missing. @ingroup errors
-    DENG2_ERROR(MissingDetailLevelError);
+    DE_ERROR(MissingDetailLevelError);
 
     /**
      * Classification/processing flags.
@@ -60,7 +59,6 @@ public:
     enum Flag {
         NoTextureCompression = 0x1 ///< Do not compress skin textures.
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     /**
      * Animation key-frame.
@@ -69,24 +67,24 @@ public:
     {
         FrameModel &model;
         struct Vertex {
-            de::Vector3f pos;
-            de::Vector3f norm;
+            de::Vec3f pos;
+            de::Vec3f norm;
         };
-        typedef QVector<Vertex> VertexBuf;
+        typedef de::List<Vertex> VertexBuf;
         VertexBuf vertices;
-        de::Vector3f min;
-        de::Vector3f max;
+        de::Vec3f min;
+        de::Vec3f max;
         de::String name;
 
-        Frame(FrameModel &model, de::String const &name = de::String())
+        Frame(FrameModel &model, const de::String &name = de::String())
             : model(model), name(name)
         {}
 
-        void bounds(de::Vector3f &min, de::Vector3f &max) const;
+        void bounds(de::Vec3f &min, de::Vec3f &max) const;
 
         float horizontalRange(float *top, float *bottom) const;
     };
-    typedef QList<Frame *> Frames;
+    typedef de::List<Frame *> Frames;
 
     /**
      * Texture => Skin assignment.
@@ -96,11 +94,11 @@ public:
         de::String name;
         res::Texture *texture; // Not owned.
 
-        Skin(de::String const &name = de::String(), res::Texture *texture = 0)
+        Skin(const de::String &name = de::String(), res::Texture *texture = 0)
             : name(name), texture(texture)
         {}
     };
-    typedef QList<Skin> Skins;
+    typedef de::List<Skin> Skins;
 
     /**
      * Prepared model geometry uses lists of primitives.
@@ -109,14 +107,14 @@ public:
     {
         struct Element
         {
-            de::Vector2f texCoord;
+            de::Vec2f texCoord;
             int index; ///< Index into the model's vertex mesh.
         };
-        typedef QVector<Element> Elements;
+        typedef de::List<Element> Elements;
         Elements elements;
         bool triFan; ///< @c true= triangle fan; otherwise triangle strip.
     };
-    typedef QList<Primitive> Primitives;
+    typedef de::List<Primitive> Primitives;
 
     /**
      * Level of detail information.
@@ -139,19 +137,19 @@ public:
          */
         bool hasVertex(int number) const;
     };
-    typedef QList<DetailLevel *> DetailLevels;
+    typedef de::List<DetailLevel *> DetailLevels;
 
 public:
     /**
      * Construct a new 3D model.
      */
-    FrameModel(Flags flags = 0);
+    FrameModel(de::Flags flags = 0);
 
     /**
      * Determines whether the specified @a file appears to be in a recognised
      * model format.
      */
-    static bool recognise(de::FileHandle &file);
+    static bool recognise(res::FileHandle &file);
 
     /**
      * Attempt to load a new model resource from the specified @a file.
@@ -161,7 +159,7 @@ public:
      *
      * @return  The new FrameModel (if any). Ownership is given to the caller.
      */
-    static FrameModel *loadFromFile(de::FileHandle &file, float aspectScale = 1);
+    static FrameModel *loadFromFile(res::FileHandle &file, float aspectScale = 1);
 
     /**
      * Returns the unique identifier associated with the model.
@@ -178,7 +176,7 @@ public:
     /**
      * Returns a copy of the current model flags.
      */
-    Flags flags() const;
+    de::Flags flags() const;
 
     /**
      * Change the model's flags.
@@ -186,14 +184,14 @@ public:
      * @param flagsToChange  Flags to change the value of.
      * @param operation      Logical operation to perform on the flags.
      */
-    void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
+    void setFlags(de::Flags flagsToChange, de::FlagOp operation = de::SetFlags);
 
     /**
      * Lookup a model animation frame by @a name.
      *
      * @return  Unique number of the found frame; otherwise @c -1 (not found).
      */
-    int frameNumber(de::String name) const;
+    int frameNumber(const de::String& name) const;
 
     /**
      * Convenient method of determining whether the specified model animation
@@ -216,7 +214,7 @@ public:
     /**
      * Provides access to the model animation frames, for efficient traversal.
      */
-    Frames const &frames() const;
+    const Frames &frames() const;
 
     /**
      * Clear all model animation frames.
@@ -228,7 +226,7 @@ public:
      *
      * @return  Unique number of the found skin; otherwise @c -1 (not found).
      */
-    int skinNumber(de::String name) const;
+    int skinNumber(const de::String& name) const;
 
     /**
      * Convenient method of determining whether the specified model skin @a number
@@ -259,7 +257,7 @@ public:
     /**
      * Provides access to the model skins, for efficient traversal.
      */
-    Skins const &skins() const;
+    const Skins &skins() const;
 
     /**
      * Clear all model skin assignments.
@@ -271,7 +269,7 @@ public:
      * model with the highest degree of geometric fidelity (i.e., detail level
      * zero).
      */
-    Primitives const &primitives() const;
+    const Primitives &primitives() const;
 
     /**
      * Returns the total number of vertices used at detail level zero.
@@ -299,19 +297,17 @@ public:
     /**
      * Provides readonly access to the level of detail information.
      */
-    DetailLevels const &lods() const;
+    const DetailLevels &lods() const;
 
     /// @todo Refactor away.
-    QBitArray const &lodVertexUsage() const;
+    const de::BitArray &lodVertexUsage() const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(FrameModel::Flags)
 
 typedef FrameModel::DetailLevel FrameModelLOD;
 typedef FrameModel::Frame FrameModelFrame;
 typedef FrameModel::Skin FrameModelSkin;
 
-#endif // DENG_RESOURCE_FRAMEMODEL_H
+#endif // DE_RESOURCE_FRAMEMODEL_H

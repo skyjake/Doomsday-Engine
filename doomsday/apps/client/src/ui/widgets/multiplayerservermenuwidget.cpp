@@ -22,22 +22,23 @@
 #include "network/serverlink.h"
 #include "clientapp.h"
 
-#include <doomsday/Games>
-#include <de/MenuWidget>
-#include <de/Address>
+#include <doomsday/games.h>
+#include <de/menuwidget.h>
+#include <de/address.h>
+#include <de/textvalue.h>
 
 using namespace de;
 
-DENG2_PIMPL(MultiplayerServerMenuWidget)
-, DENG2_OBSERVES(DoomsdayApp, GameChange)
-, DENG2_OBSERVES(Games, Readiness)
-, DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
-, DENG2_OBSERVES(MultiplayerPanelButtonWidget, AboutToJoin)
+DE_PIMPL(MultiplayerServerMenuWidget)
+, DE_OBSERVES(DoomsdayApp, GameChange)
+, DE_OBSERVES(Games, Readiness)
+, DE_OBSERVES(ServerLink, Discovery)
+, DE_OBSERVES(MultiplayerPanelButtonWidget, AboutToJoin)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     static ServerLink &link() { return ClientApp::serverLink(); }
 
-    static String hostId(shell::ServerInfo const &sv)
+    static String hostId(const ServerInfo &sv)
     {
         if (sv.serverId())
         {
@@ -52,10 +53,10 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
     class ServerListItem : public ui::Item
     {
     public:
-        ServerListItem(shell::ServerInfo const &serverInfo, bool isLocal)
+        ServerListItem(const ServerInfo &serverInfo, bool isLocal)
             : _lan(isLocal)
         {
-            setData(hostId(serverInfo));
+            setData(TextValue(hostId(serverInfo)));
             _info = serverInfo;
         }
 
@@ -69,12 +70,12 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
             _lan = isLocal;
         }
 
-        shell::ServerInfo const &info() const
+        const ServerInfo &info() const
         {
             return _info;
         }
 
-        void setInfo(shell::ServerInfo const &serverInfo)
+        void setInfo(const ServerInfo &serverInfo)
         {
             _info = serverInfo;
             notifyChange();
@@ -91,7 +92,7 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
         }
 
     private:
-        shell::ServerInfo _info;
+        ServerInfo _info;
         bool _lan;
     };
 
@@ -102,19 +103,22 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
     {
         DoomsdayApp::app().audienceForGameChange()  += this;
         DoomsdayApp::games().audienceForReadiness() += this;
-        link().audienceForDiscoveryUpdate() += this;
+        link().audienceForDiscovery() += this;
 
         self().organizer().setWidgetFactory(*this);
     }
 
-    void linkDiscoveryUpdate(ServerLink const &link) override
+    void serversDiscovered(const ServerLink &link) override
     {
+        DE_ASSERT_IN_MAIN_THREAD()
+        self().root().window().glActivate();
+
         ui::Data &items = self().items();
 
-        QSet<String> foundHosts;
-        foreach (Address const &host, link.foundServers(mask))
+        Set<String> foundHosts;
+        for (const Address &host : link.foundServers(mask))
         {
-            shell::ServerInfo info;
+            ServerInfo info;
             if (link.foundServerInfo(host, info, mask))
             {
                 foundHosts.insert(hostId(info));
@@ -124,7 +128,7 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
         // Remove obsolete entries.
         for (ui::Data::Pos idx = 0; idx < items.size(); ++idx)
         {
-            String const id = items.at(idx).data().toString();
+            const String id = items.at(idx).data().asText();
             if (!foundHosts.contains(id))
             {
                 items.remove(idx--);
@@ -132,12 +136,12 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
         }
 
         // Add new entries and update existing ones.
-        foreach (Address const &host, link.foundServers(mask))
+        for (const Address &host : link.foundServers(mask))
         {
-            shell::ServerInfo info;
+            ServerInfo info;
             if (!link.foundServerInfo(host, info, mask)) continue;
 
-            ui::Data::Pos found   = items.findData(hostId(info));
+            ui::Data::Pos found   = items.findData(TextValue(hostId(info)));
             const bool    isLocal = link.isServerOnLocalNetwork(info.address());
 
             if (found == ui::Data::InvalidPos)
@@ -159,10 +163,10 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
             }
         }
 
-        items.stableSort([] (ui::Item const &a, ui::Item const &b)
+        items.stableSort([] (const ui::Item &a, const ui::Item &b)
         {
-            auto const &first  = a.as<ServerListItem>();
-            auto const &second = b.as<ServerListItem>();
+            const auto &first  = a.as<ServerListItem>();
+            const auto &second = b.as<ServerListItem>();
 
             // LAN games shown first.
             if (first.isLocal() == second.isLocal())
@@ -185,7 +189,7 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
         });
     }
 
-    void currentGameChanged(Game const &newGame) override
+    void currentGameChanged(const Game &newGame) override
     {
         if (newGame.isNull() && mode == DiscoverUsingMaster)
         {
@@ -197,7 +201,7 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
 
     void gameReadinessUpdated() override
     {
-        foreach (GuiWidget *w, self().childWidgets())
+        for (GuiWidget *w : self().childWidgets())
         {
             updateAvailability(*w);
         }
@@ -205,7 +209,7 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
 
     void updateAvailability(GuiWidget &menuItemWidget)
     {
-        auto const &item = self().organizer().findItemForWidget(menuItemWidget)->as<ServerListItem>();
+        const auto &item = self().organizer().findItemForWidget(menuItemWidget)->as<ServerListItem>();
 
         bool playable = false;
         String gameId = item.gameId();
@@ -216,23 +220,23 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
         menuItemWidget.enable(playable);
     }
 
-    void aboutToJoinMultiplayerGame(shell::ServerInfo const &sv) override
+    void aboutToJoinMultiplayerGame(const ServerInfo &sv) override
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i) i->aboutToJoinMultiplayerGame(sv);
+        DE_NOTIFY_PUBLIC(AboutToJoin, i) i->aboutToJoinMultiplayerGame(sv);
     }
 
 //- ChildWidgetOrganizer::IWidgetFactory --------------------------------------
 
-    GuiWidget *makeItemWidget(ui::Item const &, GuiWidget const *) override
+    GuiWidget *makeItemWidget(const ui::Item &, const GuiWidget *) override
     {
         auto *b = new MultiplayerPanelButtonWidget;
         b->audienceForAboutToJoin() += this;
         return b;
     }
 
-    void updateItemWidget(GuiWidget &widget, ui::Item const &item) override
+    void updateItemWidget(GuiWidget &widget, const ui::Item &item) override
     {
-        auto const &serverItem = item.as<ServerListItem>();
+        const auto &serverItem = item.as<ServerListItem>();
 
         widget.as<MultiplayerPanelButtonWidget>()
                 .updateContent(serverItem.info());
@@ -241,13 +245,13 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
         updateAvailability(widget);
     }
 
-    DENG2_PIMPL_AUDIENCE(AboutToJoin)
+    DE_PIMPL_AUDIENCE(AboutToJoin)
 };
 
-DENG2_AUDIENCE_METHOD(MultiplayerServerMenuWidget, AboutToJoin);
+DE_AUDIENCE_METHOD(MultiplayerServerMenuWidget, AboutToJoin);
 
 MultiplayerServerMenuWidget::MultiplayerServerMenuWidget(DiscoveryMode discovery,
-                                                         String const &name)
+                                                         const String &name)
     : HomeMenuWidget(name)
     , d(new Impl(this))
 {

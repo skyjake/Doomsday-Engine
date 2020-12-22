@@ -17,35 +17,41 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <de/GuiApp>
-#include <de/LogBuffer>
-#include <QTimer>
-#include <QDebug>
-
 #include "testwindow.h"
+
+#include <de/guiapp.h>
+#include <de/logbuffer.h>
+#include <de/windowsystem.h>
+
+#define SDL_MAIN_HANDLED
+#include <SDL_main.h>
 
 using namespace de;
 
-int main(int argc, char **argv)
+DE_EXTERN_C int main(int argc, char **argv)
 {
+    SDL_SetMainReady();
+
+    int exitCode = -1;
+    init_Foundation();
     try
     {
-        GuiApp::setDefaultOpenGLFormat();
-
-        GuiApp app(argc, argv);
+        GuiApp app(makeList(argc, argv));
+        app.setMetadata("Deng Team", "dengine.net", "GLSandbox", Version().fullNumber());
         app.addInitPackage("net.dengine.test.glsandbox");
-        app.initSubsystems(App::DisablePlugins);
+        app.initSubsystems();
 
-        TestWindow win;
-        win.show();
+        auto *win = new TestWindow;
+        app.windowSystem().addWindow(win);
+        win->show();
 
-        return app.execLoop();
+        exitCode = app.exec();
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
-        qWarning() << err.asText();
+        err.warnPlainText();
     }
-
-    qDebug("Exiting main()...");
-    return 0;
+    deinit_Foundation();
+    debug("Exiting main()...");
+    return exitCode;
 }

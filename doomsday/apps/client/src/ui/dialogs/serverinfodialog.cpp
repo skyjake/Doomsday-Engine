@@ -20,47 +20,45 @@
 #include "ui/dialogs/packageinfodialog.h"
 #include "ui/widgets/packageswidget.h"
 #include "ui/widgets/homemenuwidget.h"
-#include "ui/widgets/mapoutlinewidget.h"
 #include "ui/widgets/packagesbuttonwidget.h"
 #include "network/serverlink.h"
 
-#include <doomsday/Games>
+#include <doomsday/games.h>
+#include <doomsday/gui/mapoutlinewidget.h>
 
 #include <de/charsymbols.h>
-#include <de/ButtonWidget>
-#include <de/CallbackAction>
-#include <de/Config>
-#include <de/DictionaryValue>
-#include <de/PackageLoader>
-#include <de/SequentialLayout>
-#include <de/ui/SubwidgetItem>
-#include <de/ProgressWidget>
-
-#include <QTimer>
+#include <de/buttonwidget.h>
+#include <de/callbackaction.h>
+#include <de/config.h>
+#include <de/dictionaryvalue.h>
+#include <de/packageloader.h>
+#include <de/sequentiallayout.h>
+#include <de/progresswidget.h>
+#include <de/timer.h>
+#include <de/ui/subwidgetitem.h>
 
 using namespace de;
 
-static DialogWidget::RoleFlags const ID_SV_PACKAGES = DialogWidget::Id1;
-static DialogWidget::RoleFlags const ID_JOIN        = DialogWidget::Id2;
-static DialogWidget::RoleFlags const ID_PING        = DialogWidget::Id3;
+static const DialogWidget::RoleFlags ID_SV_PACKAGES = DialogWidget::Id1;
+static const DialogWidget::RoleFlags ID_JOIN        = DialogWidget::Id2;
+static const DialogWidget::RoleFlags ID_PING        = DialogWidget::Id3;
 
-DENG_GUI_PIMPL(ServerInfoDialog)
-, DENG2_OBSERVES(ServerLink, MapOutline)
-, DENG2_OBSERVES(ServerLink, PingResponse)
+DE_GUI_PIMPL(ServerInfoDialog)
+, DE_OBSERVES(ServerLink, MapOutline)
+, DE_OBSERVES(ServerLink, PingResponse)
 , public PackagesWidget::IPackageStatus
 {
     // Server info & status.
     Address host;
     String domainName;
     GameProfile profile;
-    shell::ServerInfo serverInfo;
-    TimeSpan ping = -1;
+    ServerInfo serverInfo;
+    TimeSpan ping = -1.0;
 
     // Network queries.
     ServerLink link; // querying details from the server
-    QTimer queryTimer; // allow the dialog to open nicely before starting network queries
-    enum Query
-    {
+    Timer queryTimer; // allow the dialog to open nicely before starting network queries
+    enum Query {
         QueryNone,
         QueryStatus,
         QueryPing,
@@ -79,41 +77,40 @@ DENG_GUI_PIMPL(ServerInfoDialog)
     LabelWidget *gameState;
     ui::ListData serverPackageActions;
 
-    Impl(Public *i, shell::ServerInfo const &sv)
+    Impl(Public *i, const ServerInfo &sv)
         : Base(i)
         , serverInfo(sv)
         , link(ServerLink::ManualConnectionOnly)
     {
         link.audienceForMapOutline()   += this;
         link.audienceForPingResponse() += this;
-        connect(&queryTimer, &QTimer::timeout, [this] () { beginPendingQuery(); });
+        queryTimer += [this]() { beginPendingQuery(); };
 
         self().useInfoStyle();
 
         // The Close button is always available. Other actions are shown depending
         // on what kind of package is being displayed.
         self().buttons()
-                << new DialogButtonItem(Default | Accept, tr("Close"))
-                << new DialogButtonItem(Action | ID_JOIN, tr("Join Game"), new CallbackAction([this] () {
+                << new DialogButtonItem(Default | Accept, "Close")
+                << new DialogButtonItem(Action | ID_JOIN, "Join Game", [this] () {
                     self().accept();
-                    emit self().joinGame();
-                }))
+                    DE_NOTIFY_PUBLIC(JoinGame, i) i->joinGame(serverInfo);
+                })
                 << new DialogButtonItem(Action | ID_PING,
-                                        style().images().image("refresh"), tr("Ping"),
-                                        new CallbackAction([this] () {
-                    ping = -1;
+                                        style().images().image("refresh"), "Ping", [this] () {
+                    ping = -1.0;
                     updateContent();
                     startQuery(QueryPing);
-                }))
+                })
                 << new DialogButtonItem(ActionPopup | ID_SV_PACKAGES,
-                                        style().images().image("package.icon"), tr("Server"));
+                                        style().images().image("package.icon"), "Server");
 
         createWidgets();
         self().buttonWidget(ID_JOIN)->disable();
         self().buttonWidget(ID_PING)->disable();
     }
 
-    bool isPackageHighlighted(String const &) const
+    bool isPackageHighlighted(const String &) const
     {
         // No highlights.
         return false;
@@ -147,9 +144,9 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         // Right column.
 
         LabelWidget *bg = new LabelWidget;
-        bg->set(Background(Vector4f(style().colors().colorf("inverted.altaccent"), .1f),
+        bg->set(Background(Vec4f(style().colors().colorf("inverted.altaccent"), .1f),
                            Background::GradientFrameWithRoundedFill,
-                           Vector4f(), 8));
+                           Vec4f(), 8));
         area.add(bg);
 
         mapOutline = new MapOutlineWidget;
@@ -167,7 +164,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
                   .setInput(Rule::Bottom, gameState->rule().bottom());
 
         serverPackageActions << new ui::SubwidgetItem(
-            tr("..."), ui::Right, [this]() -> PopupWidget * {
+            "...", ui::Right, [this]() -> PopupWidget * {
                 return new PackageInfoDialog(serverPackages->actionPackage(),
                                              PackageInfoDialog::EnableActions);
             });
@@ -182,7 +179,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         serverPackages->setActionItems(serverPackageActions);
         serverPackages->setActionsAlwaysShown(true);
         serverPackages->setPackageStatus(*this);
-        serverPackages->searchTermsEditor().setEmptyContentHint(tr("Filter Server Mods"));
+        serverPackages->searchTermsEditor().setEmptyContentHint("Filter Server Mods");
         serverPackages->rule().setInput(Rule::Width, rule("dialog.serverinfo.popup.width"));
         serverPopup->setContent(serverPackages);
 
@@ -190,24 +187,22 @@ DENG_GUI_PIMPL(ServerInfoDialog)
 
         auto *svBut = self().popupButtonWidget(ID_SV_PACKAGES);
         svBut->setPopup(*serverPopup);
-        svBut->setText(tr("Server"));
+        svBut->setText("Server");
         svBut->setTextAlignment(ui::AlignLeft);
         svBut->disable();
 
         localPackages = new PackagesButtonWidget;
         localPackages->setColorTheme(Inverted);
-        localPackages->setLabelPrefix(tr("Local: "));
-        localPackages->setNoneLabel(tr("Local Mods..."));
+        localPackages->setLabelPrefix("Local: ");
+        localPackages->setNoneLabel("Local Mods...");
         localPackages->setGameProfile(profile);
         localPackages->disable();
         localPackages->rule().setLeftTop(svBut->rule().right(), svBut->rule().top());
         self().add(localPackages);
 
-        QObject::connect(localPackages, &PackagesButtonWidget::packageSelectionChanged,
-                         [this] (QStringList packages)
-        {
-            Game::setLocalMultiplayerPackages(profile.gameId(), toStringList(packages));
-        });
+        localPackages->audienceForSelection() += [this](){
+            Game::setLocalMultiplayerPackages(profile.gameId(), localPackages->packages());
+        };
 
         updateLayout();
     }
@@ -247,7 +242,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             StringList lines;
             if (!domainName.isEmpty())
             {
-                lines << _E(b) + domainName + _E(.) + String(" (%1)").arg(host.asText());
+                lines << _E(b) + domainName + _E(.) + Stringf(" (%s)", host.asText().c_str());
             }
             else
             {
@@ -262,31 +257,32 @@ DENG_GUI_PIMPL(ServerInfoDialog)
 
         // Additional information.
         {
-            auto const players = serverInfo.players();
+            const auto players = serverInfo.players();
             String plrDesc;
             if (players.isEmpty())
             {
-                plrDesc = DENG2_CHAR_MDASH;
+                plrDesc = DE_CHAR_MDASH;
             }
             else
             {
-                plrDesc = String("%1 " DENG2_CHAR_MDASH " %2")
-                        .arg(players.count())
-                        .arg(String::join(players, ", "));
+                plrDesc = Stringf("%i " DE_CHAR_MDASH " %s",
+                        players.count(),
+                        String::join(players, ", ").c_str());
             }
-            String msg = String(_E(Ta)_E(l) "%1:" _E(.)_E(Tb) " %2\n"
-                                _E(Ta)_E(l) "%3:" _E(.)_E(Tb) " %4\n"
-                                _E(Ta)_E(l) "%5:" _E(.)_E(Tb) " %6\n"
-                                _E(Ta)_E(l) "%7:" _E(.)_E(Tb) " %8")
-                    .arg(tr("Rules"))  .arg(serverInfo.gameConfig())
-                    .arg(tr("Players")).arg(plrDesc)
-                    .arg(tr("Version")).arg(serverInfo.version().asHumanReadableText())
-                    .arg(tr("Ping"))   .arg(ping < 0.0? String(DENG2_CHAR_MDASH)
-                                                      : String("%1 ms").arg(ping.asMilliSeconds()));
+            String msg = Stringf(
+                _E(Ta) _E(l) "Rules:" _E(.) _E(Tb) " %s\n"
+                _E(Ta) _E(l) "Players:" _E(.) _E(Tb) " %s\n"
+                _E(Ta) _E(l) "Version:" _E(.) _E(Tb) " %s\n"
+                _E(Ta) _E(l) "Ping:" _E(.) _E(Tb) " %s",
+                serverInfo.gameConfig().c_str(),
+                plrDesc.c_str(),
+                serverInfo.version().asHumanReadableText().c_str(),
+                ping < 0.0 ? DE_CHAR_MDASH
+                           : Stringf("%i ms", ping.asMilliSeconds()).c_str());
             description->setText(msg);
         }
 
-        String const gameId = serverInfo.gameId();
+        const String gameId = serverInfo.gameId();
         String gameTitle = gameId;
         if (Games::get().contains(gameId))
         {
@@ -295,20 +291,20 @@ DENG_GUI_PIMPL(ServerInfoDialog)
 
         // Game state.
         {
-            String msg = String(_E(b) "%1" _E(.)_E(s) "\n%2 " DENG2_CHAR_MDASH " %3")
-                        .arg(serverInfo.map())
-                        .arg(serverInfo.gameConfig().containsWord("coop")? tr("Co-op")
-                                                                         : tr("Deathmatch"))
-                        .arg(gameTitle);
+            String msg = Stringf(_E(b) "%s" _E(.) _E(s) "\n%s " DE_CHAR_MDASH " %s",
+                                        serverInfo.map().c_str(),
+                                        serverInfo.gameConfig().containsWord("coop") ? "Co-op"
+                                                                                     : "Deathmatch",
+                                        gameTitle.c_str());
             gameState->setText(msg);
         }
 
         // Actions.
-        self().buttonWidget(ID_JOIN)->enable(serverInfo.flags().testFlag(shell::ServerInfo::AllowJoin));
+        self().buttonWidget(ID_JOIN)->enable(serverInfo.flags().testFlag(ServerInfo::AllowJoin));
 
         // Local packages.
         {
-            localPackages->setDialogTitle(tr("Local Mods for %1 Multiplayer").arg(gameTitle));
+            localPackages->setDialogTitle(Stringf("Local Mods for %s Multiplayer", gameTitle.c_str()));
             localPackages->setGameProfile(profile);
             localPackages->setPackages(Game::localMultiplayerPackages(gameId));
         }
@@ -318,7 +314,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             // Check which of the packages are locally available.
             StringList available;
             StringList missing;
-            foreach (String pkgId, serverInfo.packages())
+            for (String pkgId : serverInfo.packages())
             {
                 if (PackageLoader::get().select(pkgId))
                 {
@@ -326,7 +322,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
                 }
                 else
                 {
-                    auto const id_ver = Package::split(pkgId);
+                    const auto id_ver = Package::split(pkgId);
                     pkgId = Package::splitToHumanReadable(pkgId);
                     Version localVersion;
                     if (id_ver.second.isValid())
@@ -335,8 +331,9 @@ DENG_GUI_PIMPL(ServerInfoDialog)
                         if (auto *pkgFile = PackageLoader::get().select(id_ver.first))
                         {
                             localVersion = Package::versionForFile(*pkgFile);
-                            missing << String("%1 " _E(s) "(you have: %2)" _E(.))
-                                       .arg(pkgId).arg(localVersion.fullNumber());
+                            missing << Stringf("%s " _E(s) "(you have: %s)" _E(.),
+                                                      pkgId.c_str(),
+                                                      localVersion.fullNumber().c_str());
                             continue;
                         }
                     }
@@ -355,7 +352,9 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             serverPackages->setManualPackageIds(available);
 
             self().buttonWidget(ID_SV_PACKAGES)->enable();
-            self().buttonWidget(ID_SV_PACKAGES)->setText(tr("Server: %1").arg(serverInfo.packages().size()));
+            self()
+                .buttonWidget(ID_SV_PACKAGES)
+                ->setText(Stringf("Server: %zu", serverInfo.packages().size()));
         }
     }
 
@@ -371,14 +370,14 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         pendingQuery = query;
 
         queryTimer.stop();
-        queryTimer.setInterval(500);
+        queryTimer.setInterval(0.5);
         queryTimer.setSingleShot(true);
         queryTimer.start();
     }
 
     void beginPendingQuery()
     {
-        Query const handling = pendingQuery;
+        const Query handling = pendingQuery;
         pendingQuery = QueryNone;
 
         switch (handling)
@@ -388,7 +387,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             {
                 // Begin a query for the latest details.
                 link.acquireServerProfileAsync(domainName, [this] (Address resolvedAddress,
-                                                              GameProfile const *svProfile)
+                                                              const GameProfile *svProfile)
                 {
                     host = resolvedAddress;
                     statusReceived(*svProfile);
@@ -396,7 +395,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             }
             else
             {
-                link.acquireServerProfileAsync(host, [this] (GameProfile const *svProfile)
+                link.acquireServerProfileAsync(host, [this] (const GameProfile *svProfile)
                 {
                     statusReceived(*svProfile);
                 });
@@ -417,7 +416,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         }
     }
 
-    void statusReceived(GameProfile const &svProfile)
+    void statusReceived(const GameProfile &svProfile)
     {
         link.foundServerInfo(0, serverInfo);
         profile = svProfile;
@@ -431,21 +430,25 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         startQuery(QueryMapOutline);
     }
 
-    void mapOutlineReceived(Address const &, shell::MapOutlinePacket const &packet)
+    void mapOutlineReceived(const Address &, const network::MapOutlinePacket &packet)
     {
         mapOutline->setOutline(packet);
         startQuery(QueryPing);
     }
 
-    void pingResponse(Address const &, TimeSpan pingTime)
+    void pingResponse(const Address &, TimeSpan pingTime)
     {
         ping = pingTime;
         updateContent();
         self().buttonWidget(ID_PING)->enable();
     }
+
+    DE_PIMPL_AUDIENCE(JoinGame)
 };
 
-ServerInfoDialog::ServerInfoDialog(shell::ServerInfo const &serverInfo)
+DE_AUDIENCE_METHOD(ServerInfoDialog, JoinGame)
+
+ServerInfoDialog::ServerInfoDialog(const ServerInfo &serverInfo)
     : d(new Impl(this, serverInfo))
 {
     d->domainName = serverInfo.domainName();

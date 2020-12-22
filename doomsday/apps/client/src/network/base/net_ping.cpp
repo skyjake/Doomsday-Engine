@@ -19,53 +19,50 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_base.h"
 #include "network/net_main.h"
-
-#include <de/timer.h>
 #include "network/net_buf.h"
 #include "world/p_players.h"
 
+#include <doomsday/network/protocol.h>
+#include <doomsday/net.h>
+#include <de/legacy/timer.h>
+
 using namespace de;
 
-void Net_ShowPingSummary(dint player)
+void Net_ShowPingSummary(int player)
 {
-    DENG2_ASSERT(player >= 0 && player < DDMAXPLAYERS);
-    auto const &cl = *DD_Player(player);
-    Pinger const &ping = cl.pinger();
+    DE_ASSERT(player >= 0 && player < DDMAXPLAYERS);
+    const auto &  cl   = *DD_Player(player);
+    const Pinger &ping = cl.pinger();
 
-    if(player < 0 && ping.total > 0)
-        return;
+    if (player < 0 && ping.total > 0) return;
 
-    dint goodCount = 0;
-    dfloat avgTime = 0;
-    for(dint i = 0; i < ping.total; ++i)
+    int    goodCount = 0;
+    dfloat avgTime   = 0;
+    for (int i = 0; i < ping.total; ++i)
     {
-        if(ping.times[i] < 0)
-            continue;
+        if (ping.times[i] < 0) continue;
 
         goodCount++;
         avgTime += ping.times[i];
     }
     avgTime /= goodCount;
 
-    LOG_NET_NOTE("Player %i (%s): average ping %.0f ms")
-        << player << cl.name << (avgTime * 1000);
+    LOG_NET_NOTE("Player %i (%s): average ping %.0f ms") << player << cl.name << (avgTime * 1000);
 }
 
-void Net_SendPing(dint player, dint count)
+void Net_SendPing(int player, int count)
 {
-    DENG2_ASSERT(player >= 0 && player < DDMAXPLAYERS);
+    DE_ASSERT(player >= 0 && player < DDMAXPLAYERS);
     Pinger &ping = DD_Player(player)->pinger();
 
     // Valid destination?
-    if(player == ::consolePlayer || (::isClient && player))
-        return;
+    if (player == ::consolePlayer || (netState.isClient && player)) return;
 
-    if(count)
+    if (count)
     {
         // We can't start a new ping run until the old one is done.
-        if(ping.sent) return;
+        if (ping.sent) return;
 
         // Start a new ping session.
         ping.current = 0;
@@ -74,7 +71,7 @@ void Net_SendPing(dint player, dint count)
     else
     {
         // Continue or finish the current pinger.
-        if(++ping.current >= ping.total)
+        if (++ping.current >= ping.total)
         {
             // We're done.
             ping.sent = 0;
@@ -92,19 +89,19 @@ void Net_SendPing(dint player, dint count)
 
     // Update the length of the message.
     ::netBuffer.player = player;
-    N_SendPacket(10000);
+    N_SendPacket();
 }
 
 // Called when a ping packet comes in.
 void Net_PingResponse()
 {
-    dint const player = ::netBuffer.player;
-    DENG2_ASSERT(player >= 0 && player < DDMAXPLAYERS);
+    const int player = ::netBuffer.player;
+    DE_ASSERT(player >= 0 && player < DDMAXPLAYERS);
     Pinger &ping = DD_Player(player)->pinger();
 
     // Is this a response to our ping?
-    dint const time = Reader_ReadUInt32(msgReader);
-    if(time == ping.sent)
+    const int time = Reader_ReadUInt32(msgReader);
+    if (time == ping.sent)
     {
         // Record the time and send the next ping.
         ping.times[ping.current] = (Timer_RealMilliseconds() - time) / 1000.0f;
@@ -120,39 +117,38 @@ void Net_PingResponse()
 
 D_CMD(Ping)
 {
-    DENG2_UNUSED(src);
+    DE_UNUSED(src);
 
-    if(!::netGame)
+    if (!netState.netGame)
     {
         LOG_SCR_ERROR("Ping is only for netgames");
         return true;
     }
 
-    if(::isServer && argc == 1)
+    if (netState.isServer && argc == 1)
     {
         LOG_SCR_NOTE("Usage: %s (plrnum) (count)") << argv[0];
         LOG_SCR_MSG("(count) is optional. 4 pings are sent by default.");
         return true;
     }
 
-    dint dest = 0, count = 4;
-    if(::isServer)
+    int dest = 0, count = 4;
+    if (netState.isServer)
     {
         dest = String(argv[1]).toInt();
-        if(argc >= 3)
-            count = String(argv[2]).toInt();
+        if (argc >= 3) count = String(argv[2]).toInt();
     }
     else
     {
-        if(argc >= 2)
-            count = String(argv[1]).toInt();
+        if (argc >= 2) count = String(argv[1]).toInt();
     }
 
     // Check that the given parameters are valid.
-    if(count <= 0 || count > MAX_PINGS || dest < 0 || dest >= DDMAXPLAYERS ||
-       dest == ::consolePlayer || (dest && !DD_Player(dest)->publicData().inGame))
+    if (count <= 0 || count > MAX_PINGS || dest < 0 || dest >= DDMAXPLAYERS ||
+        dest == ::consolePlayer || (dest && !DD_Player(dest)->publicData().inGame))
+    {
         return false;
-
+    }
     Net_SendPing(dest, count);
     return true;
 }

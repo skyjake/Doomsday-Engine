@@ -21,21 +21,23 @@
 
 #include "network/net_main.h"
 #include "network/net_msg.h"
-
 #include "ui/infine/finale.h"
+
+#include <doomsday/network/protocol.h>
+#include <doomsday/net.h>
 
 using namespace de;
 
-void Sv_Finale(finaleid_t id, dint flags, char const *script)
+void Sv_Finale(finaleid_t id, dint flags, const char *script)
 {
-    if (::isClient) return;
+    if (netState.isClient) return;
 
     // How much memory do we need?
     dsize scriptLen = 0;
     if (script)
     {
         flags |= FINF_SCRIPT;
-        scriptLen = qstrlen(script);
+        scriptLen = strlen(script);
     }
 
     // First the flags.

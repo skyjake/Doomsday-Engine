@@ -19,11 +19,11 @@
 
 #include "ui/commandbinding.h"
 
-#include <de/str.hh>
-#include <de/Block>
-#include <de/Log>
-#include <de/RecordValue>
-#include "CommandAction"
+#include <de/legacy/str.hh>
+#include <de/block.h>
+#include <de/log.h>
+#include <de/recordvalue.h>
+#include "ui/commandaction.h"
 #include "clientapp.h"
 
 #include "world/p_players.h" // P_ConsoleToLocal
@@ -63,12 +63,12 @@ String CommandBinding::composeDescriptor()
     case E_ANGLE:       str += B_HatAngleToString(getf("pos")); break;
     case E_SYMBOLIC:    str += "-" + gets("symbolicName"); break;
 
-    default: DENG2_ASSERT(!"CommandBinding::composeDescriptor: Unknown bind.type"); break;
+    default: DE_ASSERT_FAIL("CommandBinding::composeDescriptor: Unknown bind.type"); break;
     }
 
     // Append any state conditions.
-    ArrayValue const &conds = def().geta("condition");
-    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
+    const ArrayValue &conds = def().geta("condition");
+    DE_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
         str += " + " + B_ConditionToString(*(*i)->as<RecordValue>().record());
     }
@@ -79,10 +79,10 @@ String CommandBinding::composeDescriptor()
 /**
  * Parse the main part of the event descriptor, with no conditions included.
  */
-static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const *command)
+static bool doConfigure(CommandBinding &bind, const char *eventDesc, const char *command)
 {
-    DENG2_ASSERT(eventDesc);
-    //InputSystem &isys = ClientApp::inputSystem();
+    DE_ASSERT(eventDesc);
+    //InputSystem &isys = ClientApp::input();
 
     bind.resetToDefaults();
     // Take a copy of the command string.
@@ -150,7 +150,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
             bind.def().set("pos", pos);
             break; }
 
-        default: DENG2_ASSERT(!"InputSystem::configure: Invalid bind.type"); break;
+        default: DE_ASSERT_FAIL("InputSystem::configure: Invalid bind.type"); break;
         }
     }
     else if (!Str_CompareIgnoreCase(str, "joy") ||
@@ -198,7 +198,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
             bind.def().set("pos", pos);
             break; }
 
-        default: DENG2_ASSERT(!"InputSystem::configure: Invalid bind.type") break;
+        default: DE_ASSERT_FAIL("InputSystem::configure: Invalid bind.type") break;
         }
     }
     else if (!Str_CompareIgnoreCase(str, "sym"))
@@ -227,9 +227,9 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
     return true;
 }
 
-void CommandBinding::configure(char const *eventDesc, char const *command, bool assignNewId)
+void CommandBinding::configure(const char *eventDesc, const char *command, bool assignNewId)
 {
-    DENG2_ASSERT(eventDesc);
+    DE_ASSERT(eventDesc);
     LOG_AS("CommandBinding");
 
     // The first part specifies the event condition.
@@ -272,11 +272,10 @@ void CommandBinding::configure(char const *eventDesc, char const *command, bool 
  * @param event    Event data.
  * @param out      String with placeholders replaced.
  */
-static void substituteInCommand(String const &command, ddevent_t const &event, ddstring_t *out)
+static void substituteInCommand(const String &command, const ddevent_t &event, ddstring_t *out)
 {
-    DENG2_ASSERT(out);
-    Block const str = command.toUtf8();
-    for (char const *ptr = str.constData(); *ptr; ptr++)
+    DE_ASSERT(out);
+    for (auto ptr = command.begin(); ptr != command.end(); ++ptr)
     {
         if (*ptr == '%')
         {
@@ -311,21 +310,23 @@ static void substituteInCommand(String const &command, ddevent_t const &event, d
             }
             else if (*ptr == '%')
             {
-                Str_AppendChar(out, *ptr);
+                Str_AppendChar(out, char(*ptr));
             }
             continue;
         }
 
-        Str_AppendChar(out, *ptr);
+        iMultibyteChar mb;
+        init_MultibyteChar(&mb, *ptr);
+        Str_Append(out, mb.bytes);
     }
 }
 
-Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &context,
+Action *CommandBinding::makeAction(const ddevent_t &event, const BindContext &context,
     bool respectHigherContexts) const
 {
     if (geti("type") != event.type) return nullptr;
 
-    InputDevice const *dev = nullptr;
+    const InputDevice *dev = nullptr;
     if (event.type != E_SYMBOLIC)
     {
         if (geti("deviceId") != event.device) return nullptr;
@@ -344,7 +345,7 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
         if (geti("controlId") != event.toggle.id)
             return nullptr;
 
-        DENG2_ASSERT(dev);
+        DE_ASSERT(dev);
         ButtonInputControl &button = dev->button(geti("controlId"));
 
         if (respectHigherContexts)
@@ -391,7 +392,7 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
         if (geti("controlId") != event.axis.id)
             return nullptr;
 
-        DENG2_ASSERT(dev);
+        DE_ASSERT(dev);
         if (dev->axis(geti("controlId")).bindContext() != &context)
             return nullptr; // Shadowed by a more important active class.
 
@@ -406,12 +407,12 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
         if (geti("controlId") != event.angle.id)
             return nullptr;
 
-        DENG2_ASSERT(dev);
+        DE_ASSERT(dev);
         if (dev->hat(geti("controlId")).bindContext() != &context)
             return nullptr; // Shadowed by a more important active class.
 
         // Is the position as required?
-        if (event.angle.pos != getf("pos"))
+        if (!fequal(event.angle.pos, getf("pos")))
             return nullptr;
         break;
 
@@ -424,8 +425,8 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
     }
 
     // Any conditions on the current state of the input devices?
-    ArrayValue const &conds = def().geta("condition");
-    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
+    const ArrayValue &conds = def().geta("condition");
+    DE_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
         if (!B_CheckCondition(static_cast<Binding::CompiledConditionRecord *>
                               ((*i)->as<RecordValue>().record()), 0, &context))

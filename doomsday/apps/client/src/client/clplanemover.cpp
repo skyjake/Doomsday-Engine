@@ -19,16 +19,14 @@
 
 #include "de_base.h"
 #include "client/clplanemover.h"
-
 #include "client/cl_def.h"
 #include "client/cl_player.h"
-
 #include "world/map.h"
-#include "world/thinkers.h"
 #include "world/p_players.h"
-#include "Sector"
 
-#include <de/LogBuffer>
+#include <doomsday/world/sector.h>
+#include <doomsday/world/thinkers.h>
+#include <de/logbuffer.h>
 
 using namespace de;
 
@@ -82,14 +80,14 @@ void ClPlaneMover::think()
     // Can we think yet?
     if (!Cl_GameReady()) return;
 
-    DENG2_ASSERT(_plane != 0);
+    DE_ASSERT(_plane != 0);
 
     // The move is cancelled if the consolePlayer becomes obstructed.
-    bool const freeMove = ClPlayer_IsFreeToMove(consolePlayer);
+    const bool freeMove = ClPlayer_IsFreeToMove(consolePlayer);
 
     // How's the gap?
     bool remove = false;
-    coord_t const original = P_GetDoublep(_plane, DMU_HEIGHT);
+    const coord_t original = P_GetDoublep(_plane, DMU_HEIGHT);
     if (de::abs(_speed) > 0 && de::abs(_destination - original) > de::abs(_speed))
     {
         // Do the move.

@@ -24,18 +24,18 @@
 
 #include "de_base.h"
 
-#if defined (DENG_DEBUG) && defined (DENG_OPENGL)
+#if defined (DE_DEBUG) && defined (DE_OPENGL)
 
 #include <cmath>
-#include <de/GLState>
-#include <de/GLInfo>
-#include <de/concurrency.h>
-#include <de/Rectangle>
-#include <de/Vector>
+#include <de/glstate.h>
+#include <de/glinfo.h>
+#include <de/legacy/concurrency.h>
+#include <de/rectangle.h>
+#include <de/vector.h>
 
 /// @todo Find a better way to access the private data of the zone
 /// (e.g., move this into the library and use an abstract graphics interface).
-#include "../../../sdk/liblegacy/src/memoryzone_private.h"
+#include "../../../libs/core/src/legacy/memoryzone_private.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_draw.h"
@@ -43,22 +43,22 @@
 
 using namespace de;
 
-static void drawRegion(memvolume_t &volume, Rectanglei const &rect, size_t start,
+static void drawRegion(memvolume_t &volume, const Rectanglei &rect, size_t start,
     size_t size, float const color[4])
 {
-    DENG2_ASSERT(start + size <= volume.size);
+    DE_ASSERT(start + size <= volume.size);
 
-    int const bytesPerRow = (volume.size - sizeof(memzone_t)) / rect.height();
-    float const toPixelScale = (float)rect.width() / (float)bytesPerRow;
-    size_t const edge = rect.topLeft.x + rect.width();
+    const int bytesPerRow = (volume.size - sizeof(memzone_t)) / rect.height();
+    const float toPixelScale = (float)rect.width() / (float)bytesPerRow;
+    const size_t edge = rect.topLeft.x + rect.width();
     int x = (start % bytesPerRow) * toPixelScale + rect.topLeft.x;
     int y = start / bytesPerRow + rect.topLeft.y;
     int pixels = de::max<dint>(1, std::ceil(size * toPixelScale));
 
     while (pixels > 0)
     {
-        int const availPixels = edge - x;
-        int const usedPixels = de::min(availPixels, pixels);
+        const int availPixels = edge - x;
+        const int usedPixels = de::min(availPixels, pixels);
 
         DGL_Color4fv(color);
         DGL_Vertex2f(x, y);
@@ -72,9 +72,9 @@ static void drawRegion(memvolume_t &volume, Rectanglei const &rect, size_t start
     }
 }
 
-void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, Rectanglei const &rect)
+void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, const Rectanglei &rect)
 {
-    float const opacity = .85f;
+    const float opacity = .85f;
     float const colAppStatic[4]   = { 1, 1, 1, .65f };
     float const colGameStatic[4]  = { 1, 0, 0, .65f };
     float const colMap[4]         = { 0, 1, 0, .65f };
@@ -91,9 +91,9 @@ void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, Rectangle
     // Outline.
 //    GLInfo::setLineWidth(1);
     DGL_Color4f(1, 1, 1, opacity/2);
-    LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     GL_DrawRect(rect);
-    LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     DGL_Begin(DGL_LINES);
 
@@ -102,7 +102,7 @@ void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, Rectangle
         block != &volume->zone->blockList;
         block = block->next)
     {
-        float const *color = colOther;
+        const float *color = colOther;
         if (!block->user) continue; // Free is black.
 
         // Choose the color for this block.
@@ -127,9 +127,9 @@ void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, Rectangle
     {
 //        GLInfo::setLineWidth(2);
         DGL_Color4f(1, 0, 0, 1);
-        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         GL_DrawRect(rect);
-        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 }
 
@@ -141,11 +141,9 @@ void Z_DebugDrawer(void)
 
     if (!CommandLine_Exists("-zonedebug")) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //glDisable(GL_CULL_FACE);
-    //glDisable(GL_DEPTH_TEST);
     DGL_PushState();
     DGL_CullFace(DGL_NONE);
     DGL_Disable(DGL_DEPTH_TEST);
@@ -154,7 +152,7 @@ void Z_DebugDrawer(void)
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
-    DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
+    DGL_Ortho(0, 0, DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT, -1, 1);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -168,19 +166,19 @@ void Z_DebugDrawer(void)
     // Make sure all the volumes fit vertically.
     volCount = pd.volumeCount;
     h = 200;
-    if (h * volCount + 10*(volCount - 1) > DENG_GAMEVIEW_HEIGHT)
+    if (h * volCount + 10*(volCount - 1) > DE_GAMEVIEW_HEIGHT)
     {
-        h = (DENG_GAMEVIEW_HEIGHT - 10*(volCount - 1))/volCount;
+        h = (DE_GAMEVIEW_HEIGHT - 10*(volCount - 1))/volCount;
     }
 
     i = 0;
     for (volume = pd.volumeRoot; volume; volume = volume->next, ++i)
     {
-        int size = de::min(400, DENG_GAMEVIEW_WIDTH);
+        int size = de::min(400, DE_GAMEVIEW_WIDTH);
         Z_DebugDrawVolume(&pd, volume,
-                          Rectanglei::fromSize(Vector2i(DENG_GAMEVIEW_WIDTH - size - 1,
-                                                        DENG_GAMEVIEW_HEIGHT - size * (i+1) - 10*i - 1),
-                                               Vector2ui(size, size)));
+                          Rectanglei::fromSize(Vec2i(DE_GAMEVIEW_WIDTH - size - 1,
+                                                        DE_GAMEVIEW_HEIGHT - size * (i+1) - 10*i - 1),
+                                               Vec2ui(size, size)));
     }
 
     pd.unlock();

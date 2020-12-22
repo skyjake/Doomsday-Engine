@@ -16,13 +16,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_SHADERVAR_H
-#define DENG_CLIENT_RENDER_SHADERVAR_H
+#ifndef DE_CLIENT_RENDER_SHADERVAR_H
+#define DE_CLIENT_RENDER_SHADERVAR_H
 
-#include <de/AnimationValue>
-#include <de/GLUniform>
-#include <de/Range>
-#include <QList>
+#include <de/animationvalue.h>
+#include <de/gluniform.h>
+#include <de/range.h>
+#include <de/list.h>
+#include <de/hash.h>
 
 /**
  * Animatable variable bound to a GL uniform. The value can have 1...4 float
@@ -36,7 +37,7 @@ struct ShaderVar
 
         Value(de::AnimationValue *a = nullptr) : anim(a) {} // not owned
     };
-    QList<Value> values;
+    de::List<Value> values;
     de::GLUniform *uniform = nullptr; // owned
 
 public:
@@ -45,7 +46,7 @@ public:
     void init(float value);
 
     template <typename VecType>
-    void init(VecType const &vec)
+    void init(const VecType &vec)
     {
         values.clear();
         for (int i = 0; i < vec.size(); ++i)
@@ -64,23 +65,21 @@ public:
     /**
      * Sets the pointers to the AnimationValue objects by looking them up from a Record.
      */
-    void updateValuePointers(de::Record &names, de::String const &varName);
+    void updateValuePointers(de::Record &names, const de::String &varName);
 };
 
 struct ShaderVars
 {
-    QHash<de::String, ShaderVar *> members;
+    de::Hash<de::String, std::unique_ptr<ShaderVar>> members;
 
-    DENG2_ERROR(DefinitionError);
+    DE_ERROR(DefinitionError);
 
 public:
-    virtual ~ShaderVars();
-
-    void initVariableFromDefinition(de::String const &variableName,
-                                    de::Record const &valueDef,
+    void initVariableFromDefinition(const de::String &variableName,
+                                    const de::Record &valueDef,
                                     de::Record &bindingNames);
 
-    void addBinding(de::Record &names, de::String const &varName, de::AnimationValue *anim);
+    void addBinding(de::Record &names, const de::String &varName, de::AnimationValue *anim);
 };
 
-#endif // DENG_CLIENT_RENDER_SHADERVAR_H
+#endif // DE_CLIENT_RENDER_SHADERVAR_H

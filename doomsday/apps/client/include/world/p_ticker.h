@@ -17,14 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_WORLD_P_TICKER_H
-#define DENG_WORLD_P_TICKER_H
+#ifndef DE_WORLD_P_TICKER_H
+#define DE_WORLD_P_TICKER_H
 
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 /**
  * Doomsday's own play-ticker.
  */
 void P_Ticker(timespan_t time);
 
-#endif  // DENG_WORLD_P_TICKER_H
+#endif  // DE_WORLD_P_TICKER_H

@@ -21,9 +21,9 @@
 #include "de_base.h"
 #include "gl/svg.h"
 
-#include <de/concurrency.h>
+#include <de/legacy/concurrency.h>
 #include <de/liblegacy.h>
-#include <de/GLInfo>
+#include <de/glinfo.h>
 #include "sys_system.h"
 #include "gl/gl_main.h"
 #include "gl/sys_opengl.h"
@@ -87,10 +87,10 @@ static void draw(const Svg* svg)
 {
     dglprimtype_t nextPrimType, primType = DGL_LINE_STRIP;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-    SvgLine const *lIt = svg->lines;
+    const SvgLine *lIt = svg->lines;
     for (uint i = 0; i < svg->lineCount; ++i, lIt++)
     {
         if (lIt->numPoints != 2)
@@ -303,7 +303,7 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
         }
 
         // Link circularly?
-        DENG_ASSERT(prev);
+        DE_ASSERT(prev);
         prev->next = lineIsLoop? dlIt->head : NULL;
         dlIt->head->prev = lineIsLoop? prev : NULL;
 

@@ -22,20 +22,20 @@
 #include "ui/infine/finaletextwidget.h"
 
 #include <cstring> // memcpy, memmove
-#include <de/concurrency.h>
-#include <de/memoryzone.h>
-#include <de/timer.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/memoryzone.h>
+#include <de/legacy/timer.h>
 #include "api_fontrender.h"
 #include "ui/infine/finalepagewidget.h"
 
 #ifdef __CLIENT__
 #  include "gl/gl_main.h"
-#  include <de/GLInfo>
+#  include <de/glinfo.h>
 #endif
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(FinaleTextWidget)
+DE_PIMPL_NOREF(FinaleTextWidget)
 {
     animatorvector4_t color;
     uint pageColor    = 0;                ///< 1-based page color index. @c 0= Use our own color.
@@ -56,7 +56,7 @@ DENG2_PIMPL_NOREF(FinaleTextWidget)
     ~Impl() { Z_Free(text); }
 
 #ifdef __CLIENT__
-    static int textLineWidth(char const *text)
+    static int textLineWidth(const char *text)
     {
         int width = 0;
 
@@ -81,7 +81,7 @@ DENG2_PIMPL_NOREF(FinaleTextWidget)
 #endif
 };
 
-FinaleTextWidget::FinaleTextWidget(String const &name)
+FinaleTextWidget::FinaleTextWidget(const String &name)
     : FinaleWidget(name)
     , d(new Impl)
 {}
@@ -142,12 +142,12 @@ void FinaleTextWidget::runTicks(/*timespan_t timeDelta*/)
 }
 
 #ifdef __CLIENT__
-void FinaleTextWidget::draw(Vector3f const &offset)
+void FinaleTextWidget::draw(const Vec3f &offset)
 {
     if (!d->text) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT_IN_MAIN_THREAD();
+    DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -168,9 +168,9 @@ void FinaleTextWidget::draw(Vector3f const &offset)
     FR_SetFont(d->pageFont? page()->predefinedFont(d->pageFont - 1) : d->fontNum);
 
     // Set the normal color.
-    animatorvector3_t const *color;
+    const animatorvector3_t *color;
     if (d->pageColor == 0)
-        color = (animatorvector3_t const *)&d->color;
+        color = (const animatorvector3_t *)&d->color;
     else
         color = page()->predefinedColor(d->pageColor - 1);
     FR_SetColor((*color)[CR].value, (*color)[CG].value, (*color)[CB].value);
@@ -203,7 +203,7 @@ void FinaleTextWidget::draw(Vector3f const &offset)
             {
                 uint colorIdx = *ptr - '0';
                 if (colorIdx == 0)
-                    color = (animatorvector3_t const *)&d->color;
+                    color = (const animatorvector3_t *)&d->color;
                 else
                     color = page()->predefinedColor(colorIdx - 1);
                 FR_SetColor((*color)[CR].value, (*color)[CG].value, (*color)[CB].value);
@@ -269,9 +269,9 @@ int FinaleTextWidget::visLength()
     int count = 0;
     if (d->text)
     {
-        float const secondLen = (d->wait? TICRATE / d->wait : 0);
+        const float secondLen = (d->wait? TICRATE / d->wait : 0);
 
-        for (char const *ptr = d->text; *ptr; ptr++)
+        for (const char *ptr = d->text; *ptr; ptr++)
         {
             if (*ptr == '\\') // Escape?
             {
@@ -295,21 +295,21 @@ int FinaleTextWidget::visLength()
     return count;
 }
 
-char const *FinaleTextWidget::text() const
+const char *FinaleTextWidget::text() const
 {
     return d->text;
 }
 
-FinaleTextWidget &FinaleTextWidget::setText(char const *newText)
+FinaleTextWidget &FinaleTextWidget::setText(const char *newText)
 {
     Z_Free(d->text); d->text = nullptr;
     if (newText && newText[0])
     {
-        int len = (int)qstrlen(newText) + 1;
+        int len = (int)strlen(newText) + 1;
         d->text = (char *) Z_Malloc(len, PU_APPSTATIC, 0);
         std::memcpy(d->text, newText, len);
     }
-    int const visLen = visLength();
+    const int visLen = visLength();
     if (d->cursorPos > visLen)
     {
         d->cursorPos = visLen;
@@ -374,7 +374,7 @@ FinaleTextWidget &FinaleTextWidget::setTypeInRate(int newRateInTics)
     return *this;
 }
 
-FinaleTextWidget &FinaleTextWidget::setColor(Vector3f const &newColor, int steps)
+FinaleTextWidget &FinaleTextWidget::setColor(const Vec3f &newColor, int steps)
 {
     AnimatorVector3_Set(*((animatorvector3_t *)d->color), newColor.x, newColor.y, newColor.z, steps);
     d->pageColor = 0;
@@ -387,7 +387,7 @@ FinaleTextWidget &FinaleTextWidget::setAlpha(float alpha, int steps)
     return *this;
 }
 
-FinaleTextWidget &FinaleTextWidget::setColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+FinaleTextWidget &FinaleTextWidget::setColorAndAlpha(const Vec4f &newColorAndAlpha, int steps)
 {
     AnimatorVector4_Set(d->color, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
     d->pageColor = 0;

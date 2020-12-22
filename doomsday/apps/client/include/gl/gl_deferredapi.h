@@ -25,17 +25,17 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_DEFERRED_GL_API_H
-#define LIBDENG_DEFERRED_GL_API_H
+#ifndef DE_DEFERRED_GL_API_H
+#define DE_DEFERRED_GL_API_H
 
 #ifdef __CLIENT__
 
 /**
- * @def LIBDENG_DISABLE_DEFERRED_GL_API
+ * @def DE_DISABLE_DEFERRED_GL_API
  * Disables the automatic rerouting of GL API calls to the deferring queue.
  * Put this in the beginning of a source file, before all #includes.
  */
-#ifndef LIBDENG_DISABLE_DEFERRED_GL_API
+#ifndef DE_DISABLE_DEFERRED_GL_API
 
 #include "sys_opengl.h" // ensure native OpenGL has been included
 
@@ -53,5 +53,5 @@ void Deferred_glDeleteTextures(GLsizei num, const GLuint* names);
 
 #endif // __CLIENT__
 
-#endif // LIBDENG_DISABLE_DEFERRED_GL_API
-#endif // LIBDENG_DEFERRED_GL_API_H
+#endif // DE_DISABLE_DEFERRED_GL_API
+#endif // DE_DEFERRED_GL_API_H

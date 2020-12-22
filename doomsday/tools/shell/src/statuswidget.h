@@ -19,33 +19,29 @@
 #ifndef STATUSWIDGET_H
 #define STATUSWIDGET_H
 
-#include <QWidget>
-#include <de/String>
-#include <de/shell/Link>
-#include <de/shell/Protocol>
+#include <de/guiwidget.h>
+#include <de/string.h>
+#include <doomsday/network/link.h>
 
 /**
  * Widget for showing server's status.
  */
-class StatusWidget : public QWidget
-{
-    Q_OBJECT
-
+class StatusWidget : public de::GuiWidget
+{    
 public:
-    explicit StatusWidget(QWidget *parent = 0);
+    explicit StatusWidget();
 
-    void setGameState(QString mode, QString rules, QString mapId, QString mapTitle);
-    void setMapOutline(de::shell::MapOutlinePacket const &outline);
-    void setPlayerInfo(de::shell::PlayerInfoPacket const &plrInfo);
+    void setGameState(de::String mode, de::String rules, de::String mapId, de::String mapTitle);
+    void setMapOutline(const network::MapOutlinePacket &outline);
+    void setPlayerInfo(const network::PlayerInfoPacket &plrInfo);
 
-    void paintEvent(QPaintEvent *);
+//    void paintEvent(QPaintEvent *);
 
-public slots:
-    void linkConnected(de::shell::Link *link);
+    void linkConnected(network::Link *link);
     void linkDisconnected();
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 #endif // STATUSWIDGET_H

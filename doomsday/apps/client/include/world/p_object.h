@@ -25,84 +25,36 @@
 #  error Attempted to include internal Doomsday p_object.h from a game
 #endif
 
-#include <de/aabox.h>
-#include <de/Record>
-#include <de/Vector>
+#include <de/legacy/aabox.h>
+#include <de/record.h>
+#include <de/vector.h>
 #include <doomsday/defs/ded.h>
 #include <doomsday/world/thinker.h>
 #include <doomsday/world/mobj.h>
-
-#include "world/bspleaf.h"
-#include "api_map.h"
+#include <doomsday/world/bspleaf.h>
+#include <doomsday/api_map.h>
 #include "dd_def.h"
 #ifdef __CLIENT__
 #  include "resource/framemodeldef.h"
 #endif
 
-namespace world {
-class Subsector;
-}
-class Plane;
-
-#define MOBJ_SIZE               gx.GetInteger(DD_MOBJ_SIZE)
-
-class MobjThinker : public ThinkerT<mobj_t>
+namespace world
 {
-public:
-    MobjThinker(AllocMethod alloc = AllocateStandard) : ThinkerT(MOBJ_SIZE, alloc) {}
-    MobjThinker(mobj_t const &existingToCopy) : ThinkerT(existingToCopy, MOBJ_SIZE) {}
-    MobjThinker(mobj_t *existingToTake) : ThinkerT(existingToTake, MOBJ_SIZE) {}
-
-    static void zap(mobj_t &mob) { ThinkerT::zap(mob, MOBJ_SIZE); }
-};
+    class Subsector;
+    class Plane;
+}
 
 #define DEFAULT_FRICTION        FIX2FLT(0xe800)
 #define NOMOMENTUM_THRESHOLD    (0.0001)
 
 #define IS_BLOCK_LINKED(mo)     ((mo)->bNext != 0)
 
-DENG_EXTERN_C de::dint useSRVO, useSRVOAngle;
-
-void P_InitUnusedMobjList();
+DE_EXTERN_C int useSRVO, useSRVOAngle;
 
 /**
  * To be called to register the commands and variables of this module.
  */
 void Mobj_ConsoleRegister();
-
-mobj_t *P_MobjCreate(thinkfunc_t function, de::Vector3d const &origin, angle_t angle,
-    coord_t radius, coord_t height, de::dint ddflags);
-
-void P_MobjRecycle(mobj_t *mob);
-
-/**
- * Returns the map in which the map-object exists. Note that a map-object may exist in a
- * map while not being @em linked into data structures such as the blockmap and sectors.
- * To determine whether the map-object is linked, call @ref Mobj_IsLinked().
- *
- * @see Thinker_Map()
- */
-world::Map &Mobj_Map(mobj_t const &mob);
-
-/**
- * Returns @c true if the map-object has been linked into the map. The only time this is
- * not true is if @ref Mobj_SetOrigin() has not yet been called.
- *
- * @param mob  Map-object.
- *
- * @todo Automatically link all new mobjs into the map (making this redundant).
- */
-bool Mobj_IsLinked(mobj_t const &mob);
-
-/**
- * Returns a copy of the map-object's origin in map space.
- */
-de::Vector3d Mobj_Origin(mobj_t const &mob);
-
-/**
- * Returns the map-object's visual center (i.e., origin plus z-height offset).
- */
-de::Vector3d Mobj_Center(mobj_t &mob);
 
 /**
  * Set the origin of the map-object in map space.
@@ -115,22 +67,12 @@ de::Vector3d Mobj_Center(mobj_t &mob);
 dd_bool Mobj_SetOrigin(mobj_t *mob, coord_t x, coord_t y, coord_t z);
 
 /**
- * Returns the map BSP leaf at the origin of the map-object. Note that the mobj must be
- * linked in the map (i.e., @ref Mobj_SetOrigin() has been called).
- *
- * @param mob  Map-object.
- *
- * @see Mobj_IsLinked(), Mobj_SetOrigin()
- */
-world::BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mob);
-
-/**
  * Returns @c true if the BSP leaf at the map-object's origin is known (i.e., it has been
  * linked into the map by calling @ref Mobj_SetOrigin() and has a convex geometry).
  *
  * @param mob  Map-object.
  */
-bool Mobj_HasSubsector(mobj_t const &mob);
+bool Mobj_HasSubsector(const mobj_t &mob);
 
 /**
  * Returns the subsector in which the map-object currently resides.
@@ -139,7 +81,7 @@ bool Mobj_HasSubsector(mobj_t const &mob);
  *
  * @see Mobj_HasSubsector()
  */
-world::Subsector &Mobj_Subsector(mobj_t const &mob);
+world_Subsector &Mobj_Subsector(const mobj_t &mob);
 
 /**
  * Returns a pointer to subsector in which the mobj currently resides, or @c nullptr
@@ -149,15 +91,23 @@ world::Subsector &Mobj_Subsector(mobj_t const &mob);
  *
  * @see Mobj_HasSubsector()
  */
-world::Subsector *Mobj_SubsectorPtr(mobj_t const &mob);
+world_Subsector *Mobj_SubsectorPtr(const mobj_t &mob);
 
 /**
  * Creates a new map-object triggered particle generator based on the given definition.
  * The generator is added to the list of active ptcgens.
  */
-void Mobj_SpawnParticleGen(mobj_t *source, ded_ptcgen_t const *def);
+void Mobj_SpawnParticleGen(mobj_t *source, const ded_ptcgen_t *def);
 
 #ifdef __CLIENT__
+
+/**
+ * Calculate the visible @a origin of @a mob in world space, including
+ * any short range offset.
+ */
+void Mobj_OriginSmoothed(const mobj_t *mob, coord_t origin[3]);
+
+angle_t Mobj_AngleSmoothed(const mobj_t *mob);
 
 /**
  * Determines whether the Z origin of the mobj lies above the visual ceiling, or below the
@@ -185,13 +135,13 @@ void Mobj_AnimateHaloOcclussion(mobj_t &mob);
  * @note Implemented using a greatly simplified version of the lighting equation;
  *       no light diminishing or light range compression.
  */
-de::dfloat Mobj_ShadowStrength(mobj_t const &mob);
+float Mobj_ShadowStrength(const mobj_t &mob);
 
 /**
  * Determines which of the available sprites is in effect for the current map-object state
  * and frame. May return @c nullptr if the state and/or frame is not valid.
  */
-de::Record const *Mobj_SpritePtr(mobj_t const &mob);
+const de::Record *Mobj_SpritePtr(const mobj_t &mob);
 
 /**
  * Determines which of the available model definitions (if any), are in effect for the
@@ -203,8 +153,8 @@ de::Record const *Mobj_SpritePtr(mobj_t const &mob);
  *
  * @return  Active model definition for the current frame (if any).
  */
-FrameModelDef *Mobj_ModelDef(mobj_t const &mob, FrameModelDef **nextModef = nullptr,
-                        de::dfloat *interp = nullptr);
+FrameModelDef *Mobj_ModelDef(const mobj_t &mob, FrameModelDef **nextModef = nullptr,
+                        float *interp = nullptr);
 
 /**
  * Calculates the shadow radius of the map-object. Falls back to Mobj_VisualRadius().
@@ -213,33 +163,20 @@ FrameModelDef *Mobj_ModelDef(mobj_t const &mob, FrameModelDef **nextModef = null
  *
  * @return Radius for shadow.
  */
-coord_t Mobj_ShadowRadius(mobj_t const &mob);
+coord_t Mobj_ShadowRadius(const mobj_t &mob);
+
+void Mobj_SpawnDamageParticleGen(const mobj_t *mob, const mobj_t *inflictor, int amount);
 
 #endif // __CLIENT__
 
-coord_t Mobj_ApproxPointDistance(mobj_t const *mob, coord_t const *point);
-
-/**
- * Returns @c true if the map-object is physically inside (and @em presently linked to)
- * some Sector of the owning Map.
- */
-bool Mobj_IsSectorLinked(mobj_t const &mob);
+coord_t Mobj_ApproxPointDistance(const mobj_t *mob, const coord_t *point);
 
 /**
  * Returns the current "float bob" offset (if enabled); otherwise @c 0.
  */
-coord_t Mobj_BobOffset(mobj_t const &mob);
+coord_t Mobj_BobOffset(const mobj_t &mob);
 
-de::dfloat Mobj_Alpha(mobj_t const &mob);
-
-/**
- * Returns the physical radius of the mobj.
- *
- * @param mob  Map-object.
- *
- * @see Mobj_VisualRadius()
- */
-coord_t Mobj_Radius(mobj_t const &mob);
+float Mobj_Alpha(const mobj_t &mob);
 
 /**
  * Returns the radius of the mobj as it would visually appear to be, according
@@ -249,16 +186,6 @@ coord_t Mobj_Radius(mobj_t const &mob);
  *
  * @see Mobj_Radius()
  */
-coord_t Mobj_VisualRadius(mobj_t const &mob);
-
-/**
- * Returns an axis-aligned bounding box for the mobj in map space, centered
- * on the origin with dimensions equal to @code radius * 2 @endcode.
- *
- * @param mob  Map-object.
- *
- * @see Mobj_Radius()
- */
-AABoxd Mobj_Bounds(mobj_t const &mob);
+coord_t Mobj_VisualRadius(const mobj_t &mob);
 
 #endif  // WORLD_P_OBJECT_H

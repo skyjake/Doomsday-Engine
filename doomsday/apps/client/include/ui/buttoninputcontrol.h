@@ -20,7 +20,7 @@
 #ifndef CLIENT_UI_BUTTONINPUTCONTROL_H
 #define CLIENT_UI_BUTTONINPUTCONTROL_H
 
-#include <de/String>
+#include <de/string.h>
 #include "inputdevice.h"
 
 /**
@@ -31,7 +31,7 @@
 class ButtonInputControl : public InputDevice::Control
 {
 public:
-    explicit ButtonInputControl(de::String const &name = de::String());
+    explicit ButtonInputControl(const de::String &name = de::String());
     virtual ~ButtonInputControl();
 
     /**

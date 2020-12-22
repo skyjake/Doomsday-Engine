@@ -18,20 +18,18 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_RENDER_R_MAIN_H
-#define DENG_RENDER_R_MAIN_H
+#pragma once
 
 #include "dd_types.h"
+#include <de/matrix.h>
 
-DENG_EXTERN_C int      levelFullBright;
+DE_EXTERN_C int      levelFullBright;
 
-DENG_EXTERN_C float    pspOffset[2], pspLightLevelMultiplier;
-DENG_EXTERN_C int      psp3d;
-DENG_EXTERN_C float    weaponOffsetScale, weaponFOVShift;
-DENG_EXTERN_C int      weaponOffsetScaleY;
-DENG_EXTERN_C byte     weaponScaleMode; // cvar
-
-DENG_EXTERN_C fixed_t  fineTangent[FINEANGLES / 2];
+DE_EXTERN_C float    pspOffset[2], pspLightLevelMultiplier;
+DE_EXTERN_C int      psp3d;
+DE_EXTERN_C float    weaponOffsetScale, weaponFOVShift;
+DE_EXTERN_C int      weaponOffsetScaleY;
+DE_EXTERN_C byte     weaponScaleMode; // cvar
 
 /**
  * Draws 2D HUD sprites. If they were already drawn 3D, this won't do anything.
@@ -43,4 +41,80 @@ void Rend_Draw2DPlayerSprites();
  */
 void Rend_Draw3DPlayerSprites();
 
-#endif // DENG_RENDER_R_MAIN_H
+#ifdef min
+#  undef min
+#endif
+#ifdef max
+#  undef max
+#endif
+
+/**
+ * Description of an inclusive..inclusive light intensity range.
+ *
+ * @ingroup data
+ */
+struct LightRange
+{
+    float min;
+    float max;
+
+    LightRange(float _min = 0, float _max = 0) : min(_min), max(_max)    {}
+    LightRange(float const minMax[2]) : min(minMax[0]), max(minMax[1])   {}
+    LightRange(const de::Vec2f &minMax) : min(minMax.x), max(minMax.y) {}
+    LightRange(const LightRange &other) : min(other.min), max(other.max) {}
+
+    /// Returns a textual representation of the lightlevels.
+    de::String asText() const {
+        return de::Stringf("(min: %.2f max: %.2f)", min, max);
+    }
+};
+
+/**
+ * Get a global angle from Cartesian coordinates in the map coordinate space
+ * relative to the viewer.
+ *
+ * @param point  Map point to test.
+ *
+ * @return  Angle between the test point and view x,y.
+ */
+angle_t R_ViewPointToAngle(de::Vec2d point);
+
+/// @copydoc R_ViewPointToAngle()
+inline angle_t R_ViewPointToAngle(coord_t x, coord_t y) {
+    return R_ViewPointToAngle(de::Vec2d(x, y));
+}
+
+/**
+ * Determine distance to the specified point relative to the viewer.
+ *
+ * @param x   X coordinate to test.
+ * @param y   Y coordinate to test.
+ *
+ * @return  Distance from the viewer to the test point.
+ */
+coord_t R_ViewPointDistance(coord_t x, coord_t y);
+
+void R_ProjectViewRelativeLine2D(coord_t const center[2], dd_bool alignToViewPlane,
+                                 coord_t width, coord_t offset, coord_t start[2], coord_t end[2]);
+
+void R_ProjectViewRelativeLine2D(de::Vec2d const center, bool alignToViewPlane,
+                                 coord_t width, coord_t offset, de::Vec2d &start, de::Vec2d &end);
+
+
+/**
+ * Generate texcoords on the surface centered on point.
+ *
+ * @param s              Texture s coords written back here.
+ * @param t              Texture t coords written back here.
+ * @param point          Point on surface around which texture is centered.
+ * @param xScale         Scale multiplier on the horizontal axis.
+ * @param yScale         Scale multiplier on the vertical axis.
+ * @param v1             Top left vertex of the surface being projected on.
+ * @param v2             Bottom right vertex of the surface being projected on.
+ * @param tangentMatrix  Normalized tangent space matrix for the surface being projected to.
+ *
+ * @return  @c true if the generated coords are within bounds.
+ */
+bool R_GenerateTexCoords(de::Vec2f &s, de::Vec2f &t, const de::Vec3d &point,
+                         float xScale, float yScale, const de::Vec3d &v1, const de::Vec3d &v2,
+                         const de::Mat3f &tangentMatrix);

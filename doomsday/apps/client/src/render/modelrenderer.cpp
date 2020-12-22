@@ -26,16 +26,16 @@
 #include "gl/gl_main.h"
 #include "world/p_players.h"
 #include "world/p_object.h"
-#include "world/bspleaf.h"
 #include "world/clientmobjthinkerdata.h"
+#include "world/clientworld.h"
 #include "world/convexsubspace.h"
 #include "clientapp.h"
-#include "world/clientserverworld.h"
 
-#include <de/App>
-#include <de/ModelBank>
-#include <de/NativePointerValue>
-#include <de/TextValue>
+#include <doomsday/world/bspleaf.h>
+#include <de/app.h>
+#include <de/modelbank.h>
+#include <de/nativepointervalue.h>
+#include <de/textvalue.h>
 
 using namespace de;
 
@@ -43,8 +43,8 @@ static int constexpr MAX_LIGHTS = 4;
 
 float weaponFixedFOV = 95.f;
 
-DENG2_PIMPL(ModelRenderer)
-, DENG2_OBSERVES(render::ModelLoader, NewProgram)
+DE_PIMPL(ModelRenderer)
+, DE_OBSERVES(render::ModelLoader, NewProgram)
 {
     render::ModelLoader loader;
 
@@ -60,7 +60,7 @@ DENG2_PIMPL(ModelRenderer)
     GLUniform uFogRange         { "uFogRange",         GLUniform::Vec4 };
     GLUniform uFogColor         { "uFogColor",         GLUniform::Vec4 };
 
-    Matrix4f inverseLocal; ///< Translation ignored, this is used for light vectors.
+    Mat4f inverseLocal; ///< Translation ignored, this is used for light vectors.
     int lightCount = 0;
 
     Variable lightIntensityFactor;
@@ -103,9 +103,9 @@ DENG2_PIMPL(ModelRenderer)
         // Ambient color and lighting vectors.
         setAmbientLight(lighting.ambientColor * .6f, alpha);
         clearLights();
-        ClientApp::renderSystem().forAllVectorLights(lighting.vLightListIdx,
+        ClientApp::render().forAllVectorLights(lighting.vLightListIdx,
                                                      [this, excludeSourceMobj]
-                                                     (VectorLightData const &vlight)
+                                                     (const VectorLightData &vlight)
         {
             if (excludeSourceMobj && vlight.sourceMobj == excludeSourceMobj)
             {
@@ -124,7 +124,7 @@ DENG2_PIMPL(ModelRenderer)
             if (model.flags & render::Model::ThingAlphaAsAmbientLightAlpha)
             {
                 ambient.w = p.alpha;
-            }
+    }
             if (model.flags & render::Model::ThingFullBrightAsAmbientLight)
             {
                 ambient = {1.0f, 1.0f, 1.0f, ambient.w};
@@ -134,9 +134,9 @@ DENG2_PIMPL(ModelRenderer)
 */
     }
 
-    void setAmbientLight(Vector3f const &ambientIntensity, float alpha)
+    void setAmbientLight(const Vec3f &ambientIntensity, float alpha)
     {
-        uAmbientLight = Vector4f(ambientIntensity, alpha);
+        uAmbientLight = Vec4f(ambientIntensity, alpha);
     }
 
     void clearLights()
@@ -145,18 +145,18 @@ DENG2_PIMPL(ModelRenderer)
 
         for (int i = 0; i < MAX_LIGHTS; ++i)
         {
-            uLightDirs       .set(i, Vector3f());
-            uLightIntensities.set(i, Vector4f());
+            uLightDirs       .set(i, Vec3f());
+            uLightIntensities.set(i, Vec4f());
         }
     }
 
-    void addLight(Vector3f const &direction, Vector3f const &intensity)
+    void addLight(const Vec3f &direction, const Vec3f &intensity)
     {
         if (lightCount == MAX_LIGHTS) return;
 
         int idx = lightCount;
         uLightDirs       .set(idx, (inverseLocal * direction).normalize());
-        uLightIntensities.set(idx, Vector4f(intensity, intensity.max()) * lightIntensityFactor);
+        uLightIntensities.set(idx, Vec4f(intensity, intensity.max()) * lightIntensityFactor);
 
         lightCount++;
     }
@@ -169,35 +169,36 @@ DENG2_PIMPL(ModelRenderer)
                    bool usePSpriteClipPlane,
                    const Mat4f *preModelToLocal = nullptr)
     {
-        Vector3f const aspectCorrect(1.0f, 1.0f/1.2f, 1.0f);
-        Vector3d origin = modelWorldOrigin + modelOffset * aspectCorrect;
+        Vec3f const aspectCorrect(1.0f, 1.0f/1.2f, 1.0f);
+        Vec3d origin = modelWorldOrigin + modelOffset * aspectCorrect;
 
         // "local" == world space but with origin at model origin
 
-        Matrix4f modelToLocal =
-                Matrix4f::rotate(-90 + yawAngle, Vector3f(0, 1, 0) /* vertical axis for yaw */) *
-                Matrix4f::rotate(pitchAngle,     Vector3f(1, 0, 0));
+        Mat4f modelToLocal =
+                Mat4f::rotate(-90 + yawAngle, Vec3f(0, 1, 0) /* vertical axis for yaw */) *
+                Mat4f::rotate(pitchAngle,     Vec3f(1, 0, 0));
 
-        Vector3f relativePos = Rend_EyeOrigin() - origin;
+        Vec3f relativePos = Rend_EyeOrigin() - origin;
 
-        uReflectionMatrix = Matrix4f::rotate(-yawAngle,  Vector3f(0, 1, 0)) *
-                            Matrix4f::rotate(pitchAngle, Vector3f(0, 0, 1));
+        uReflectionMatrix = Mat4f::rotate(-yawAngle,  Vec3f(0, 1, 0)) *
+                            Mat4f::rotate(pitchAngle, Vec3f(0, 0, 1));
 
         if (preModelToLocal)
         {
             modelToLocal = modelToLocal * (*preModelToLocal);
         }
 
-        const Matrix4f localToWorld = Matrix4f::translate(origin) *
-                                      Matrix4f::scale(aspectCorrect); // Inverse aspect correction.
+        const Mat4f localToWorld =
+                Mat4f::translate(origin) *
+                Mat4f::scale(aspectCorrect); // Inverse aspect correction.
 
-        const Matrix4f viewProj =
+        const Mat4f viewProj =
             Rend_GetProjectionMatrix(
                 fixedFOVAngle,
                 usePSpriteClipPlane ? 0.1f /* near plane distance: IssueID #2373 */ : 1.0f) *
-            ClientApp::renderSystem().uViewMatrix().toMatrix4f();
+            ClientApp::render().uViewMatrix().toMat4f();
 
-        const Matrix4f localToScreen = viewProj * localToWorld;
+        const Mat4f localToScreen = viewProj * localToWorld;
 
         uWorldMatrix = localToWorld * modelToLocal;
 
@@ -216,22 +217,22 @@ DENG2_PIMPL(ModelRenderer)
      *                        (object's local frame in world space).
      * @param localToScreen   Transformation from local space to screen (projected 2D) space.
      */
-    void setTransformation(Vector3f const &relativeEyePos,
-                           Matrix4f const &modelToLocal,
-                           Matrix4f const &localToScreen)
+    void setTransformation(const Vec3f &relativeEyePos,
+                           const Mat4f &modelToLocal,
+                           const Mat4f &localToScreen)
     {
         uMvpMatrix   = localToScreen * modelToLocal;
         inverseLocal = modelToLocal.inverse();
         uEyePos      = inverseLocal * relativeEyePos;
     }
 
-    void setReflectionForSubsector(world::Subsector const *subsec)
+    void setReflectionForSubsector(const world::Subsector *subsec)
     {
-        uReflectionTex = ClientApp::renderSystem()
+        uReflectionTex = ClientApp::render()
                             .environment().reflectionInSubsector(subsec);
     }
 
-    void setReflectionForObject(mobj_t const *object)
+    void setReflectionForObject(const mobj_t *object)
     {
         if (object && Mobj_HasSubsector(*object))
         {
@@ -239,16 +240,16 @@ DENG2_PIMPL(ModelRenderer)
         }
         else
         {
-            uReflectionTex = ClientApp::renderSystem()
+            uReflectionTex = ClientApp::render()
                                  .environment().defaultReflection();
         }
     }
 
     template <typename Params> // generic to accommodate psprites and vispsprites
-    void draw(Params const &p)
+    void draw(const Params &p)
     {
         DGL_FogParams(uFogRange, uFogColor);
-        uTex = static_cast<AtlasTexture const *>(p.model->textures->atlas());
+        uTex = static_cast<const AtlasTexture *>(p.model->textures->atlas());
 
         p.model->draw(&p.animator->appearance(), p.animator);
     }
@@ -272,7 +273,7 @@ render::ModelLoader &ModelRenderer::loader()
     return d->loader;
 }
 
-render::ModelLoader const &ModelRenderer::loader() const
+const render::ModelLoader &ModelRenderer::loader() const
 {
     return d->loader;
 }
@@ -282,9 +283,9 @@ ModelBank &ModelRenderer::bank()
     return d->loader.bank();
 }
 
-render::Model::StateAnims const *ModelRenderer::animations(DotPath const &modelId) const
+const render::Model::StateAnims *ModelRenderer::animations(const DotPath &modelId) const
 {
-    auto const &model = d->loader.bank().model<render::Model const>(modelId);
+    const auto &model = d->loader.bank().model<render::Model const>(modelId);
     if (!model.animations.isEmpty())
     {
         return &model.animations;
@@ -292,7 +293,7 @@ render::Model::StateAnims const *ModelRenderer::animations(DotPath const &modelI
     return nullptr;
 }
 
-void ModelRenderer::render(vissprite_t const &spr)
+void ModelRenderer::render(const vissprite_t &spr)
 {
     /*
      * Work in progress:
@@ -303,9 +304,9 @@ void ModelRenderer::render(vissprite_t const &spr)
      * sprite, etc.) by creating a VisSprite instance and telling it to draw itself.
      */
 
-    drawmodel2params_t const &p = spr.data.model2;
+    const drawmodel2params_t &p = spr.data.model2;
 
-    auto const *mobjData = (p.object? &THINKER_DATA(p.object->thinker, ClientMobjThinkerData) :
+    const auto *mobjData = (p.object? &THINKER_DATA(p.object->thinker, ClientMobjThinkerData) :
                                       nullptr);
 
     // Use the reflection cube map appropriate for the object's location.
@@ -328,10 +329,10 @@ void ModelRenderer::render(vissprite_t const &spr)
     GLState::pop();
 }
 
-void ModelRenderer::render(vispsprite_t const &pspr, mobj_t const *playerMobj)
+void ModelRenderer::render(const vispsprite_t &pspr, const mobj_t *playerMobj)
 {
-    auto const &p = pspr.data.model2;
-    world::ConvexSubspace const *sub = pspr.bspLeaf ? pspr.bspLeaf->subspacePtr() : nullptr;
+    const auto &p = pspr.data.model2;
+    const world::ConvexSubspace *sub = pspr.bspLeaf ? pspr.bspLeaf->subspacePtr() : nullptr;
 
     d->setReflectionForSubsector(sub ? sub->subsectorPtr() : nullptr);
 
@@ -339,10 +340,10 @@ void ModelRenderer::render(vispsprite_t const &pspr, mobj_t const *playerMobj)
     dfloat yaw   = vang   + p.yawAngleOffset;
     dfloat pitch = vpitch + p.pitchAngleOffset;
 
-    Matrix4f eyeSpace = Matrix4f::rotate(180 - yaw, Vector3f(0, 1, 0))
-                      * Matrix4f::rotate(pitch    , Vector3f(1, 0, 0));
+    Mat4f eyeSpace = Mat4f::rotate(180 - yaw, Vec3f(0, 1, 0))
+                      * Mat4f::rotate(pitch    , Vec3f(1, 0, 0));
 
-    Matrix4f xform = p.model->transformation;
+    Mat4f xform = p.model->transformation;
 
     d->setupPose(Rend_EyeOrigin(),
                  eyeSpace * p.model->offset,
@@ -385,17 +386,17 @@ static render::StateAnimator &animatorInstance(Context &ctx)
                               "Not a StateAnimator instance");
 }
 
-static Value *Function_StateAnimator_Thing(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_StateAnimator_Thing(Context &ctx, const Function::ArgumentValues &)
 {
     render::StateAnimator &anim = animatorInstance(ctx);
-    if (anim.ownerNamespaceName() == QStringLiteral("__thing__"))
+    if (anim.ownerNamespaceName() == DE_STR("__thing__"))
     {
         return anim[anim.ownerNamespaceName()].value().duplicate();
     }
     return nullptr;
 }
 
-static Value *Function_StateAnimator_PlayingSequences(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_StateAnimator_PlayingSequences(Context &ctx, const Function::ArgumentValues &)
 {
     render::StateAnimator &anim = animatorInstance(ctx);
     std::unique_ptr<ArrayValue> playing(new ArrayValue);
@@ -406,7 +407,7 @@ static Value *Function_StateAnimator_PlayingSequences(Context &ctx, Function::Ar
     return playing.release();
 }
 
-static Value *Function_StateAnimator_StartSequence(Context &ctx, Function::ArgumentValues const &args)
+static Value *Function_StateAnimator_StartSequence(Context &ctx, const Function::ArgumentValues &args)
 {
     render::StateAnimator &anim = animatorInstance(ctx);
     int animId = anim.animationId(args.at(0)->asText());
@@ -427,11 +428,11 @@ static Value *Function_StateAnimator_StartSequence(Context &ctx, Function::Argum
     return nullptr;
 }
 
-static Value *Function_StateAnimator_StartTimeline(Context &ctx, Function::ArgumentValues const &args)
+static Value *Function_StateAnimator_StartTimeline(Context &ctx, const Function::ArgumentValues &args)
 {
     render::StateAnimator &anim = animatorInstance(ctx);
-    render::Model const &model = anim.model();
-    String const timelineName = args.first()->asText();
+    const render::Model &model = anim.model();
+    const String timelineName = args.first()->asText();
     if (model.timelines.contains(timelineName))
     {
         anim.scheduler().start(*model.timelines[timelineName],
@@ -447,7 +448,7 @@ static Value *Function_StateAnimator_StartTimeline(Context &ctx, Function::Argum
     return nullptr;
 }
 
-static Value *Function_StateAnimator_StopTimeline(Context &ctx, Function::ArgumentValues const &args)
+static Value *Function_StateAnimator_StopTimeline(Context &ctx, const Function::ArgumentValues &args)
 {
     render::StateAnimator &anim = animatorInstance(ctx);
     anim.scheduler().stop(args.first()->asText());
@@ -460,14 +461,14 @@ void ModelRenderer::initBindings(Binder &binder, Record &module) // static
     {
         Record &anim = module.addSubrecord("StateAnimator");
         binder.init(anim)
-                << DENG2_FUNC_NOARG(StateAnimator_Thing,            "thing")
-                << DENG2_FUNC_NOARG(StateAnimator_PlayingSequences, "playingSequences")
-                << DENG2_FUNC_DEFS (StateAnimator_StartSequence,    "startSequence",
+                << DE_FUNC_NOARG(StateAnimator_Thing,            "thing")
+                << DE_FUNC_NOARG(StateAnimator_PlayingSequences, "playingSequences")
+                << DE_FUNC_DEFS (StateAnimator_StartSequence,    "startSequence",
                                     "sequence" << "priority" << "looping" << "node",
                                     Function::Defaults({ std::make_pair("priority", new NumberValue(0)),
                                                          std::make_pair("looping",  new NumberValue(0)),
                                                          std::make_pair("node",     new TextValue) }))
-                << DENG2_FUNC      (StateAnimator_StartTimeline,    "startTimeline", "name")
-                << DENG2_FUNC      (StateAnimator_StopTimeline,     "stopTimeline", "name");
+                << DE_FUNC      (StateAnimator_StartTimeline,    "startTimeline", "name")
+                << DE_FUNC      (StateAnimator_StopTimeline,     "stopTimeline", "name");
     }
 }
