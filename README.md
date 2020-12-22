@@ -1,6 +1,6 @@
 # Doomsday Engine
 
-This is the source code for Doomsday Engine: a portable, enhanced source port of id Software's Doom I/II and Raven Software's Heretic and Hexen. The sources are under the GNU General Public license (see doomsday/gpl-3.0.txt), with the exception of the Doomsday 2 libraries that are under the GNU Lesser General Public License (see doomsday/lgpl-3.0.txt).
+This is the source code for Doomsday Engine: a portable, enhanced source port of id Software's Doom I/II and Raven Software's Heretic and Hexen. The sources are under the GNU General Public license (see doomsday/gpl-3.0.txt), with the exception of the Doomsday 3 libraries that are under the GNU Lesser General Public License (see doomsday/lgpl-3.0.txt).
 
 For [compilation instructions](https://manual.dengine.net/devel/compilation) and other details, see the [Doomsday Manual](https://manual.dengine.net/).
 
@@ -34,9 +34,9 @@ Doomsday is compiled using [CMake](http://cmake.org/). Version 3.1 or later is r
 
 [the_Foundation](https://git.skyjake.fi/skyjake/the_Foundation/) is a C library for low-level functionality such as multithreading and Unicode text processing. Use the `build_deps.py` script to download and compile this.
 
-### GLM
+### glbinding
 
-[OpenGL Mathematics](https://glm.g-truc.net/) library. Use the `build_deps.py` script to download and compile this.
+[glbinding](https://glbinding.org) is a C++ OpenGL bindings library. Use the `build_deps.py` script to download and compile this.
 
 ### Open Asset Import Library
 
