@@ -5195,7 +5195,7 @@ static void drawMobjBoundingBoxes(Map &map)
 
 #ifndef _DEBUG
     // Bounding boxes are not allowed in non-debug netgames.
-    if (netGame) return;
+    if (netState.netGame) return;
 #endif
 
 //    if (!dlBBox)
