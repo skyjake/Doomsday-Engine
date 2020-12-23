@@ -16,6 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#if defined (DE_USE_GENERIC_FILEDIALOG)
+
 #include "de/filedialog.h"
 #include "de/directorybrowserwidget.h"
 #include "de/messagedialog.h"
@@ -172,3 +174,5 @@ bool FileDialog::exec(GuiRootWidget &root)
 }
 
 } // namespace de
+
+#endif // USE_GENERIC_FILEDIALOG

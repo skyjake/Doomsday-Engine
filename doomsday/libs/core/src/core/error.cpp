@@ -21,7 +21,7 @@
 #include "de/error.h"
 #include "de/escapeparser.h"
 #include "de/string.h"
-#include "logtextstyle.h"
+#include "../src/core/logtextstyle.h"
 
 namespace de {
 

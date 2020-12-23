@@ -22,7 +22,8 @@
 #include <de/hash.h>
 #include <de/threadlocal.h>
 
-#include "stbttnativefont.h"
+#include "../src/text/stbttnativefont.h"
+
 namespace de { using PlatformFont = StbTtNativeFont; }
 
 namespace std {

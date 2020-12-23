@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "bindings.h"
+#include "../src/world/bindings.h"
 #include "doomsday/defs/ded.h"
 #include "doomsday/doomsdayapp.h"
 #include "doomsday/players.h"

@@ -54,11 +54,11 @@ deng_merge_sources (core           src/core/*.cpp)
 deng_merge_sources (data           src/data/*.cpp)
 deng_merge_sources (filesys        src/filesys/*.cpp)
 deng_merge_sources (filesys_remote src/filesys/remote/*.cpp)
-deng_merge_sources (legacy         src/legacy/*.c*)
 deng_merge_sources (net            src/net/*.cpp)
 deng_merge_sources (scripting      src/scripting/*.cpp)
 deng_merge_sources (term           src/term/*.cpp)
 deng_merge_sources (widgets        src/widgets/*.cpp)
+deng_glob_sources (SOURCES         src/legacy/*.c*) # no merging where C/C++ mixed
 
 if (WIN32)
     # Update the resource file.

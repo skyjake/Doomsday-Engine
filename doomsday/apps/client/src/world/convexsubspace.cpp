@@ -30,7 +30,6 @@
 #include <de/set.h>
 
 using namespace de;
-using Vertex = world::Vertex;
 
 /// Compute the area of a triangle defined by three 2D point vectors.
 static double triangleArea(const Vec2d &v1, const Vec2d &v2, const Vec2d &v3)
@@ -76,6 +75,8 @@ DE_PIMPL(ConvexSubspace)
      */
     void chooseFanBase()
     {
+        using world::Vertex;
+
         const double MIN_TRIANGLE_EPSILON = 0.1; // Area
 
         auto *firstNode = self().poly().hedge();

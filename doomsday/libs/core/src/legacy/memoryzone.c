@@ -57,7 +57,7 @@
 #include "de/legacy/memory.h"
 #include "de/legacy/concurrency.h"
 #include "de/c_wrapper.h"
-#include "memoryzone_private.h"
+#include "../src/legacy/memoryzone_private.h"
 
 // Size of one memory zone volume.
 #define MEMORY_VOLUME_SIZE  0x2000000   // 32 Mb

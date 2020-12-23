@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "stbttnativefont.h"
+#include "../src/text/stbttnativefont.h"
 
 #include <de/keymap.h>
 #include <de/string.h>
@@ -24,7 +24,7 @@
 #include <de/nativepath.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
-#include "stb_truetype.h"
+#include "../src/text/stb_truetype.h"
 
 namespace de {
 

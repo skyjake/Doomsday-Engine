@@ -34,7 +34,6 @@
 #include <de/list.h>
 
 using namespace de;
-using namespace world;
 
 // Function to be called when the polyobj collides with some map element.
 static void (*collisionCallback) (mobj_t *mob, void *line, void *pob);
@@ -44,7 +43,7 @@ static inline bool mobCanBlockMovement(const mobj_t &mob)
     return (mob.ddFlags & DDMF_SOLID) || (mob.dPlayer && !(mob.dPlayer->flags & DDPF_CAMERA));
 }
 
-void Polyobj::NotifyCollision(Polyobj &pob, mobj_t *mob, Line *line)  // static
+void Polyobj::NotifyCollision(Polyobj &pob, mobj_t *mob, world::Line *line)  // static
 {
     if (collisionCallback)
     {
@@ -54,9 +53,9 @@ void Polyobj::NotifyCollision(Polyobj &pob, mobj_t *mob, Line *line)  // static
 
 bool Polyobj::blocked() const
 {
-    for (const Line *line : lines())
+    for (const auto *line : lines())
     {
-        const dint localValidCount = ++World::validCount;
+        const dint localValidCount = ++world::World::validCount;
 
         bool collision = false;
         map().mobjBlockmap().forAllInBox(AABoxd(line->bounds().minX - DDMOBJ_RADIUS_MAX,
@@ -84,7 +83,7 @@ bool Polyobj::blocked() const
                 if (!line->boxOnSide(mobBox))
                 {
                     // This map-object blocks our path!
-                    NotifyCollision(*const_cast<Polyobj *>(this), &mob, const_cast<Line *>(line));
+                    NotifyCollision(*const_cast<Polyobj *>(this), &mob, const_cast<world::Line *>(line));
                     collision = true;
                 }
             }
@@ -116,23 +115,23 @@ polyobj_s::polyobj_s(const Vec2d &origin_)
     _bspLeaf = 0;
 
     // Allocate private data.
-    thinker.d = Factory::newPolyobjData();
-    THINKER_DATA(thinker, PolyobjData).setThinker(&thinker);
+    thinker.d = world::Factory::newPolyobjData();
+    THINKER_DATA(thinker, world::PolyobjData).setThinker(&thinker);
 }
 
 polyobj_s::~polyobj_s()
 {
-    delete THINKER_DATA_MAYBE(thinker, PolyobjData);
+    delete THINKER_DATA_MAYBE(thinker, world::PolyobjData);
 }
 
-PolyobjData &polyobj_s::data()
+world::PolyobjData &polyobj_s::data()
 {
-    return THINKER_DATA(thinker, PolyobjData);
+    return THINKER_DATA(thinker, world::PolyobjData);
 }
 
-const PolyobjData &polyobj_s::data() const
+const world::PolyobjData &polyobj_s::data() const
 {
-    return THINKER_DATA(thinker, PolyobjData);
+    return THINKER_DATA(thinker, world::PolyobjData);
 }
 
 void Polyobj::setCollisionCallback(void (*func) (mobj_t *mob, void *line, void *polyob))  // static
@@ -143,7 +142,7 @@ void Polyobj::setCollisionCallback(void (*func) (mobj_t *mob, void *line, void *
 world::Map &Polyobj::map() const
 {
     /// @todo Do not assume the CURRENT map.
-    return World::get().map();
+    return world::World::get().map();
 }
 
 mesh::Mesh &Polyobj::mesh() const
@@ -160,9 +159,9 @@ void Polyobj::unlink()
 {
     if (_bspLeaf)
     {
-        if (((BspLeaf *)_bspLeaf)->hasSubspace())
+        if (((world::BspLeaf *)_bspLeaf)->hasSubspace())
         {
-            ((BspLeaf *)_bspLeaf)->subspace().unlink(*this);
+            ((world::BspLeaf *)_bspLeaf)->subspace().unlink(*this);
         }
         _bspLeaf = nullptr;
 
@@ -178,7 +177,7 @@ void Polyobj::link()
 
         // Find the center point of the polyobj.
         Vec2d avg;
-        for (Line *line : lines())
+        for (world::Line *line : lines())
         {
             avg += line->from().origin();
         }
@@ -186,9 +185,9 @@ void Polyobj::link()
 
         // Given the center point determine in which BSP leaf the polyobj resides.
         _bspLeaf = &map().bspLeafAt(avg);
-        if (((BspLeaf *)_bspLeaf)->hasSubspace())
+        if (((world::BspLeaf *)_bspLeaf)->hasSubspace())
         {
-            ((BspLeaf *)_bspLeaf)->subspace().link(*this);
+            ((world::BspLeaf *)_bspLeaf)->subspace().link(*this);
         }
     }
 }
@@ -198,9 +197,9 @@ bool Polyobj::hasBspLeaf() const
     return _bspLeaf != nullptr;
 }
 
-BspLeaf &Polyobj::bspLeaf() const
+world::BspLeaf &Polyobj::bspLeaf() const
 {
-    if (hasBspLeaf()) return *(BspLeaf *)_bspLeaf;
+    if (hasBspLeaf()) return *(world::BspLeaf *)_bspLeaf;
     /// @throw Polyobj::NotLinkedError Attempted while the polyobj is not linked to the BSP.
     throw Polyobj::NotLinkedError("Polyobj::bspLeaf", "Polyobj is not presently linked in the BSP");
 }
@@ -210,12 +209,12 @@ bool Polyobj::hasSector() const
     return hasBspLeaf() && bspLeaf().hasSubspace();
 }
 
-Sector &Polyobj::sector() const
+world::Sector &Polyobj::sector() const
 {
     return *bspLeaf().sectorPtr();
 }
 
-Sector *Polyobj::sectorPtr() const
+world::Sector *Polyobj::sectorPtr() const
 {
     return hasBspLeaf() ? bspLeaf().sectorPtr() : nullptr;
 }
@@ -230,27 +229,27 @@ const SoundEmitter &Polyobj::soundEmitter() const
     return const_cast<const SoundEmitter &>(const_cast<Polyobj &>(*this).soundEmitter());
 }
 
-List<Line *> const &Polyobj::lines() const
+List<world::Line *> const &Polyobj::lines() const
 {
     return data().lines;
 }
 
-List<Vertex *> const &Polyobj::uniqueVertexes() const
+List<world::Vertex *> const &Polyobj::uniqueVertexes() const
 {
     return data().uniqueVertexes;
 }
 
 void Polyobj::buildUniqueVertexes()
 {
-    Set<Vertex *> vertexSet;
-    for (Line *line : lines())
+    Set<world::Vertex *> vertexSet;
+    for (auto *line : lines())
     {
         vertexSet.insert(&line->from());
         vertexSet.insert(&line->to());
     }
 
-    List<Vertex *> &uniqueVertexes = data().uniqueVertexes;
-    uniqueVertexes = compose<List<Vertex *>>(vertexSet.begin(), vertexSet.end());
+    List<world::Vertex *> &uniqueVertexes = data().uniqueVertexes;
+    uniqueVertexes = compose<List<world::Vertex *>>(vertexSet.begin(), vertexSet.end());
 
     // Resize the coordinate vectors as they are implicitly linked to the unique vertexes.
     data().originalPts.resize(uniqueVertexes.count());
@@ -259,8 +258,8 @@ void Polyobj::buildUniqueVertexes()
 
 void Polyobj::updateOriginalVertexCoords()
 {
-    PolyobjData::VertexCoords::iterator origCoordsIt = data().originalPts.begin();
-    for (Vertex *vertex : uniqueVertexes())
+    auto origCoordsIt = data().originalPts.begin();
+    for (auto *vertex : uniqueVertexes())
     {
         // The original coordinates are relative to the polyobj origin.
         (*origCoordsIt) = vertex->origin() - Vec2d(origin);
@@ -285,9 +284,9 @@ void Polyobj::updateBounds()
 
 void Polyobj::updateSurfaceTangents()
 {
-    for (Line *line : lines())
+    for (auto *line : lines())
     {
-        line->forAllSides([] (LineSide &side)
+        line->forAllSides([] (world::LineSide &side)
         {
             side.updateAllSurfaceNormals();
             return LoopContinue;
@@ -297,12 +296,14 @@ void Polyobj::updateSurfaceTangents()
 
 bool Polyobj::move(const Vec2d &delta)
 {
+    using world::Vertex;
+
     LOG_AS("Polyobj::move");
     //LOG_DEBUG("Applying delta %s to [%p]") << delta.asText() << this;
 
     unlink();
     {
-        PolyobjData::VertexCoords::iterator prevCoordsIt = data().prevPts.begin();
+        auto prevCoordsIt = data().prevPts.begin();
         for (Vertex *vertex : uniqueVertexes())
         {
             // Remember the previous coords in case we need to undo.
@@ -371,6 +372,8 @@ static void rotatePoint2d(Vec2d &point, const Vec2d &about, duint fineAngle)
 
 bool Polyobj::rotate(angle_t delta)
 {
+    using world::Vertex;
+
     LOG_AS("Polyobj::rotate");
     //LOG_DEBUG("Applying delta %u (%f) to [%p]")
     //    << delta << (delta / float( ANGLE_MAX ) * 360) << this;

@@ -22,9 +22,8 @@
 #include "doomsday/world/sector.h"
 
 using namespace de;
-using namespace world;
 
-lineopening_s::lineopening_s(const Line &line)
+lineopening_s::lineopening_s(const world::Line &line)
 {
     if (!line.back().hasSector())
     {
@@ -32,8 +31,8 @@ lineopening_s::lineopening_s(const Line &line)
         return;
     }
 
-    const Sector *frontSector = line.front().sectorPtr();
-    const Sector *backSector  = line.back().sectorPtr();
+    const auto *frontSector = line.front().sectorPtr();
+    const auto *backSector  = line.back().sectorPtr();
     DE_ASSERT(frontSector);
 
     if (backSector && backSector->ceiling().height() < frontSector->ceiling().height())

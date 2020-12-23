@@ -25,7 +25,7 @@
 #include "de/legacy/timer.h"
 #include "de/legacy/texgamma.h"
 #include "de/garbage.h"
-#include "memoryzone_private.h"
+#include "../src/legacy/memoryzone_private.h"
 
 #include <stdlib.h>
 

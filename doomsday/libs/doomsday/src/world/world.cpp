@@ -39,7 +39,7 @@
 #include "doomsday/busymode.h"
 #include "doomsday/players.h"
 #include "api_player.h"
-#include "bindings.h"
+#include "../src/world/bindings.h"
 
 #include <de/dscript.h>
 #include <de/scripting/scheduler.h>

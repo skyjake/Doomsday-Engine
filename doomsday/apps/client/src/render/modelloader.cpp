@@ -53,7 +53,7 @@ DE_STATIC_STRING(DEF_SEQUENCE           , "sequence");
 DE_STATIC_STRING(DEF_SHADER             , "shader");
 DE_STATIC_STRING(DEF_STATE              , "state");
 DE_STATIC_STRING(DEF_TEXTURE_MAPPING    , "textureMapping");
-DE_STATIC_STRING(DEF_TIMELINE           , "timeline");
+DE_STATIC_STRING(DEF_ANIM_TIMELINE      , "timeline");
 DE_STATIC_STRING(DEF_UP_VECTOR          , "up");
 DE_STATIC_STRING(DEF_WEAPON_OPACITY     , "opacityFromWeapon");
 DE_STATIC_STRING(DEF_WEAPON_FULLBRIGHT  , "fullbrightFromWeapon");
@@ -538,7 +538,8 @@ DE_PIMPL(ModelLoader)
 
             // Timelines.
             for (const auto &timeline :
-                 ScriptedInfo::subrecordsOfType(DEF_TIMELINE(), asset.subrecord(DEF_ANIMATION)))
+                 ScriptedInfo::subrecordsOfType(DEF_ANIM_TIMELINE(),
+                                                asset.subrecord(DEF_ANIMATION)))
             {
                 Timeline *scheduler = new Timeline;
                 scheduler->addFromInfo(*timeline.second);

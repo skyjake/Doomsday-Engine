@@ -87,43 +87,43 @@ ClientWorld::ClientWorld()
     using world::Factory;
 
     Factory::setConvexSubspaceConstructor([](mesh::Face &f, world::BspLeaf *bl) -> world::ConvexSubspace * {
-        return new ConvexSubspace(f, bl);
+        return new ::ConvexSubspace(f, bl);
     });
     Factory::setLineConstructor([](world::Vertex &s, world::Vertex &t, int flg, world::Sector *fs, world::Sector *bs) -> world::Line * {
-        return new Line(s, t, flg, fs, bs);
+        return new ::Line(s, t, flg, fs, bs);
     });
     Factory::setLineSideConstructor([](world::Line &ln, world::Sector *s) -> world::LineSide * {
-        return new LineSide(ln, s);
+        return new ::LineSide(ln, s);
     });
     Factory::setLineSideSegmentConstructor([](world::LineSide &ls, mesh::HEdge &he) -> world::LineSideSegment * {
-        return new LineSideSegment(ls, he);
+        return new ::LineSideSegment(ls, he);
     });
     Factory::setMapConstructor([]() -> world::Map * {
-        return new Map();
+        return new ::Map();
     });
     Factory::setMobjThinkerDataConstructor([](const Id &id) -> MobjThinkerData * {
-        return new ClientMobjThinkerData(id);
+        return new ::ClientMobjThinkerData(id);
     });
     Factory::setMaterialConstructor([](world::MaterialManifest &m) -> world::Material * {
-        return new ClientMaterial(m);
+        return new ::ClientMaterial(m);
     });
     Factory::setPlaneConstructor([](world::Sector &sec, const Vec3f &norm, double hgt) -> world::Plane * {
-        return new Plane(sec, norm, hgt);
+        return new ::Plane(sec, norm, hgt);
     });
     Factory::setPolyobjDataConstructor([]() -> world::PolyobjData * {
-        return new PolyobjData();
+        return new ::PolyobjData();
     });
     Factory::setSkyConstructor([](const defn::Sky *def) -> world::Sky * {
-        return new Sky(def);
+        return new ::Sky(def);
     });
     Factory::setSubsectorConstructor([](const List<world::ConvexSubspace *> &sl) -> world::Subsector * {
-        return new Subsector(sl);
+        return new ::Subsector(sl);
     });
     Factory::setSurfaceConstructor([](world::MapElement &me, float opac, const Vec3f &clr) -> world::Surface * {
-        return new Surface(me, opac, clr);
+        return new ::Surface(me, opac, clr);
     });
     Factory::setVertexConstructor([](mesh::Mesh &m, const Vec2d &p) -> world::Vertex * {
-        return new Vertex(m, p);
+        return new ::Vertex(m, p);
     });
     
     audienceForMapChange() += []() {
@@ -133,9 +133,9 @@ ClientWorld::ClientWorld()
     };
 }
 
-Map &ClientWorld::map() const
+::Map &ClientWorld::map() const
 {
-    return world::World::map().as<Map>();
+    return world::World::map().as<::Map>();
 }
 
 void ClientWorld::aboutToChangeMap()
@@ -181,7 +181,7 @@ void ClientWorld::mapFinalized()
         {
             if (Mobj_HasSubsector(*mob))
             {
-                const auto &subsec = Mobj_Subsector(*mob).as<Subsector>();
+                const auto &subsec = Mobj_Subsector(*mob).as<::Subsector>();
                 if (   mob->origin[2] >= subsec.visFloor  ().heightSmoothed()
                     && mob->origin[2] <  subsec.visCeiling().heightSmoothed() - 4)
                 {
@@ -201,7 +201,7 @@ void ClientWorld::mapFinalized()
     audienceForFrameState() += map();
 
     // Set up the SkyDrawable to get its config from the map's Sky.
-    map().skyAnimator().setSky(&ClientApp::render().sky().configure(&map().sky().as<Sky>()));
+    map().skyAnimator().setSky(&ClientApp::render().sky().configure(&map().sky().as<::Sky>()));
 
     ClientApp::audio().worldMapChanged();
 
