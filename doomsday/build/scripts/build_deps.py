@@ -19,7 +19,7 @@ if IS_MSYS:
 elif IS_MINGW:
     UNISTRING_DIR = '-DUNISTRING_DIR=' + os.getenv('MINGW_PREFIX')
 elif platform.system() == 'Darwin':
-    UNISTRING_DIR = '-DUNISTRING_DIR=/usr/local'    
+    UNISTRING_DIR = '-DUNISTRING_DIR=/usr/local'
 else:
     UNISTRING_DIR = '' # installed on system
 
@@ -34,13 +34,13 @@ ENABLED_FORMATS = ['3DS', 'COLLADA', 'MD2', 'MD3', 'MD5', 'MDL', 'OBJ', 'BLEND',
 fmt_flag = {}
 for fmt in FORMATS:
     fmt_flag[fmt] = 'YES' if fmt in ENABLED_FORMATS else 'NO'
-    
+
 # Builds dependencies using CMake.
 # The libraries are installed under the specified directory.
 dependencies = [
     (
         'the_Foundation',
-        'ssh://git@github.com/skyjake/the_Foundation.git', 'origin/master',
+        'https://git.skyjake.fi/skyjake/the_Foundation.git', 'origin/master',
         [UNISTRING_DIR,
          '-DTFDN_ENABLE_DEBUG_OUTPUT=YES']
     ),
