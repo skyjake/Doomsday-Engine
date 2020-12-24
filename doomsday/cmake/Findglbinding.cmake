@@ -4,5 +4,6 @@ if (APPLE)
     # Homebrew's glbinding CMake config doesn't seem to work.
     include (${glbinding_DIR}/cmake/glbinding/glbinding-export.cmake)
 else ()
-    find_package (glbinding REQUIRED NO_CMAKE_PATH)
+    # Use the glbinding built by build_deps.py.
+    include (${DE_DEPENDS_DIR}/products/glbinding-config.cmake)
 endif ()
