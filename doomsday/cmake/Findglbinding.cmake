@@ -6,4 +6,5 @@ if (APPLE)
 else ()
     # Use the glbinding built by build_deps.py.
     include (${DE_DEPENDS_DIR}/products/glbinding-config.cmake)
+    set (glbinding_DIR ${DE_DEPENDS_DIR}/products)
 endif ()

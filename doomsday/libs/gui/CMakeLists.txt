@@ -125,8 +125,7 @@ endif ()
 if (CYGWIN)
     install (
         PROGRAMS ${ASSIMP_ROOT_DIR}/bin/cygassimp-4.dll
-                 ${glbinding_DIR}/cygglbinding-3.dll
-                 ${glbinding_DIR}/cygglbinding-aux-3.dll
+                 ${glbinding_DIR}/cygglbinding-2.dll
         DESTINATION bin
         COMPONENT client
     )
@@ -135,10 +134,8 @@ if (UNIX_LINUX)
     install (
         FILES ${ASSIMP_ROOT_DIR}/lib/libassimp.so.4
               ${ASSIMP_ROOT_DIR}/lib/libassimp.so.4.1.0
-              ${glbinding_DIR}/lib/libglbinding.so.3
-              ${glbinding_DIR}/lib/libglbinding.so.3.0.2
-              ${glbinding_DIR}/lib/libglbinding-aux.so.3
-              ${glbinding_DIR}/lib/libglbinding-aux.so.3.0.2
+              ${glbinding_DIR}/lib/libglbinding.so.2
+              ${glbinding_DIR}/lib/libglbinding.so.2.1.4
         DESTINATION lib
         COMPONENT client
     )
