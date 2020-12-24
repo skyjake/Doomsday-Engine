@@ -26,10 +26,7 @@ deng_merge_sources (libgloom src/*.cpp)
 deng_merge_sources (geo      src/geo/*.cpp)
 deng_merge_sources (render   src/render/*.cpp)
 deng_merge_sources (world    src/world/*.cpp)
-
-if (HAVE_FMOD)
-    deng_merge_sources (audio src/audio/*.cpp)
-endif ()
+deng_merge_sources (audio    src/audio/*.cpp)
 
 # TODO: This should be a static library.
 deng_add_library (libgloom ${SOURCES} ${HEADERS})
