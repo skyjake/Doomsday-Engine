@@ -29,7 +29,6 @@
 #include "dd_share.h"
 #include "net_buf.h"
 #include "net_main.h"
-#include "monitor.h"
 #include "serverlink.h"
 
 #include <de/serverinfo.h>
