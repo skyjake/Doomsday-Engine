@@ -11,14 +11,15 @@ else ()
     endif ()
 endif ()
 
-option (DE_ENABLE_TURBO      "Enable/disable Turbo mode (source merging)" ${DE_ENABLE_TURBO_DEFAULT})
-option (DE_ENABLE_GUI        "Enable/disable the client and all GUI related functionality" ON)
-option (DE_ENABLE_GLOOM      "Enable/disable use of libgloom for rendering" OFF)
-option (DE_ENABLE_SERVER     "Enable/disable the server executable" ON)
-option (DE_ENABLE_SDK        "Enable/disable installation of the Doomsday 2 SDK" ON)
-option (DE_ENABLE_TESTS      "Enable/disable tests" OFF)
-option (DE_ENABLE_TOOLS      "Compile the Doomsday tools" ON)
-option (DE_ENABLE_DEPLOYMENT "Enable/disable the deployment script" ON)
+option (DE_ENABLE_TURBO      "Enable Turbo build: merge sources for faster build (avoid when debugging)" ${DE_ENABLE_TURBO_DEFAULT})
+option (DE_ENABLE_GUI        "Enable the client app and all GUI related functionality" ON)
+option (DE_ENABLE_GLOOM      "Enable use of libgloom for client rendering" OFF)
+option (DE_ENABLE_GLOOMED    "Enable the Gloom Editor app" OFF)
+option (DE_ENABLE_SERVER     "Enable the server app" ON)
+option (DE_ENABLE_SDK        "Enable installation of the Doomsday SDK" ON)
+option (DE_ENABLE_TESTS      "Enable tests" OFF)
+option (DE_ENABLE_TOOLS      "Enable tools" ON)
+option (DE_ENABLE_DEPLOYMENT "Enable deployment of all dependencies" ON)
 option (DE_FIXED_ASM
     "Use inline assembler for fixed-point math"
     ${DE_FIXED_ASM_DEFAULT}
@@ -38,7 +39,7 @@ if (APPLE OR CCACHE_FOUND OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 else ()
     set (DE_ENABLE_COTIRE_DEFAULT ON)
 endif ()
-option (DE_ENABLE_COTIRE "Enable/disable precompiled headers (cotire) for faster builds"
+option (DE_ENABLE_COTIRE "Enable precompiled headers (cotire) for faster builds"
     ${DE_ENABLE_COTIRE_DEFAULT}
 )
 
