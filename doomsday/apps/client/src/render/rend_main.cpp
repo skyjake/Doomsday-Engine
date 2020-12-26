@@ -85,6 +85,7 @@
 #include <doomsday/res/texturemanifest.h>
 #include <doomsday/r_util.h>
 #include <doomsday/mesh/face.h>
+#include <doomsday/net.h>
 #include <doomsday/world/blockmap.h>
 #include <doomsday/world/bspleaf.h>
 #include <doomsday/world/lineowner.h>
