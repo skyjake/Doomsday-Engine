@@ -43,7 +43,8 @@ dependencies = [
         'https://git.skyjake.fi/skyjake/the_Foundation.git', 'origin/master',
         [UNISTRING_DIR,
          '-DTFDN_ENABLE_DEBUG_OUTPUT=YES',
-         '-DTFDN_ENABLE_TLSREQUEST=NO']
+         '-DTFDN_ENABLE_TLSREQUEST=NO',
+         '-DTFDN_ENABLE_TESTS=NO']
     ),
     (
         'Open Asset Import Library',
@@ -55,7 +56,7 @@ dependencies = [
     ),
     (
         'cginternals/glbinding',
-        'https://github.com/cginternals/glbinding.git', 'v2.1.4',
+        'https://github.com/cginternals/glbinding.git', 'v3.0.2' if IS_MSYS else 'v2.1.4',
         ['-Wno-dev',
          '-DOPTION_BUILD_EXAMPLES=NO',
          '-DOPTION_BUILD_TOOLS=NO',

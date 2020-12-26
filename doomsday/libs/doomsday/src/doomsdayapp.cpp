@@ -69,7 +69,7 @@
 #ifdef DE_WINDOWS
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
-#  include <de/core/registry.h>
+#  include <de/registry.h>
 #  define ENV_PATH_SEP_CHAR ';'
 #else
 #  define ENV_PATH_SEP_CHAR ':'

@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/core/registry.h"
+#include "de/registry.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>

@@ -297,13 +297,14 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
             try
             {
                 debug("[GLInfo] calling glbinding initialize");
-#if 0 // glbinding 3.0
+#if DE_GLBINDING_VERSION == 3
                 glbinding::Binding::initialize(
                     reinterpret_cast<glbinding::ProcAddress (*)(const char *)>(
                         SDL_GL_GetProcAddress),
                     false);
-#endif
+#else
                 glbinding::Binding::initialize();
+#endif
             }
             catch (const std::exception &x)
             {
