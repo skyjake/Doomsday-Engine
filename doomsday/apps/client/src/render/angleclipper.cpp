@@ -39,8 +39,7 @@ namespace internal
      */
     static inline binangle_t pointToAngle(const Vec2d &point)
     {
-        // Shift for more accuracy;
-        return bamsAtan2(dint(point.y * 100), dint(point.x * 100));
+        return RAD2BANG(atan2f(point.y, point.x));
     }
 
     /**
@@ -902,9 +901,9 @@ void AngleClipper::addViewRelOcclusion(const Vec2d &from, const Vec2d &to,
 {
     // Calculate the occlusion plane normal.
     // We'll use the game's coordinate system (left-handed, but Y and Z are swapped).
-    const Vec3d eyeOrigin    = Rend_EyeOrigin().xzy();
-    const auto eyeToV1          = Vec3d(from, height) - eyeOrigin;
-    const auto eyeToV2          = Vec3d(to,   height) - eyeOrigin;
+    const Vec3d eyeOrigin = Rend_EyeOrigin().xzy();
+    const auto  eyeToV1   = Vec3d(from, height) - eyeOrigin;
+    const auto  eyeToV2   = Vec3d(to, height) - eyeOrigin;
 
     const binangle_t startAngle = pointToAngle(eyeToV2);
     const binangle_t endAngle   = pointToAngle(eyeToV1);
