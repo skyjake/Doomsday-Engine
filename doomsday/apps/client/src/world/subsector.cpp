@@ -305,7 +305,7 @@ DE_PIMPL(Subsector)
             if (hasDecoratedMaterial(*surface))
             {
                 allocDecorationState(*surface);
-        }
+            }
         }
         else
         {
@@ -1115,6 +1115,8 @@ DE_PIMPL(Subsector)
                 projectDecorations(surface, animator, materialOrigin, topLeft, bottomRight);
             }
         }
+
+        ds.needUpdate = false;
     }
 
     void markDependentSurfacesForRedecoration(Plane &plane, bool yes = true)
@@ -1742,6 +1744,7 @@ void Subsector::decorate()
 
     if (!hasDecorations()) return;
 
+#if 0
     // Surfaces of the edge loops.
     forAllEdgeLoops([this](const ClEdgeLoop &loop)
     {
@@ -1767,21 +1770,17 @@ void Subsector::decorate()
     // Surfaces of the visual planes.
     d->decorate(visFloor  ().surface());
     d->decorate(visCeiling().surface());
+#endif
+
+    for (Surface *surface : d.getConst()->decorSurfaces)
+    {
+        d->decorate(*surface);
+    }
 }
 
 bool Subsector::hasDecorations() const
 {
     return !d.getConst()->decorSurfaces.isEmpty();
-    /*
-    for (Surface *surface : d.getConst()->decorSurfaces)
-    {
-        if (!static_cast<const Impl::DecoratedSurface *>
-                (surface->decorationState())->decorations.isEmpty())
-        {
-            return true;
-        }
-    }
-    return false;*/
 }
 
 void Subsector::generateLumobjs()
