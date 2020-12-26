@@ -658,8 +658,6 @@ DE_PIMPL(Line)
 , DE_OBSERVES(Vertex, OriginChange)
 {
     dint flags;                      ///< Public DDLF_* flags.
-    std::unique_ptr<LineSide> front; ///< Front side of the line.
-    std::unique_ptr<LineSide> back;  ///< Back side of the line.
     std::array<bool, DDMAXPLAYERS> mapped {}; ///< Whether the line has been seen by each player yet.
 
     Vertex *from     = nullptr; ///< Start vertex (not owned).
@@ -676,7 +674,7 @@ DE_PIMPL(Line)
      */
     struct GeomData
     {
-        Vec2d direction;     ///< From start to end vertex.
+        Vec2d direction;        ///< From start to end vertex.
         ddouble length;         ///< Accurate length.
         binangle_t angle;       ///< Calculated from the direction vector.
         slopetype_t slopeType;  ///< Logical line slope (i.e., world angle) classification.
@@ -699,11 +697,14 @@ DE_PIMPL(Line)
     };
     std::unique_ptr<GeomData> gdata;
 
-    Impl(Public *i, Sector *frontSector, Sector *backSector)
-        : Base (i)
-        , front(Factory::newLineSide(*i, frontSector))
-        , back (Factory::newLineSide(*i, backSector))
+    Impl(Public *i) : Base (i)
     {}
+
+    ~Impl()
+    {
+        delete self()._front;
+        delete self()._back;
+    }
 
     /**
      * Returns the additional geometry metrics (cached).
@@ -731,8 +732,10 @@ DE_PIMPL(Line)
 
 Line::Line(Vertex &from, Vertex &to, dint flags, Sector *frontSector, Sector *backSector)
     : MapElement(DMU_LINE)
-    , d(new Impl(this, frontSector, backSector))
+    , d(new Impl(this))
 {
+    _front   = Factory::newLineSide(*this, frontSector);
+    _back    = Factory::newLineSide(*this, backSector);
     d->flags = flags;
     replaceVertex(From, from);
     replaceVertex(To  , to);
@@ -803,16 +806,6 @@ bool Line::isSelfReferencing() const
             Impl::IsSelfRef : Impl::IsNotSelfRef;
     }
     return d->selfRef == Impl::IsSelfRef;
-}
-
-LineSide &Line::side(dint back)
-{
-    return (back ? *d->back : *d->front);
-}
-
-const LineSide &Line::side(dint back) const
-{
-    return (back ? *d->back : *d->front);
 }
 
 LoopResult Line::forAllSides(std::function<LoopResult(LineSide &)> func) const
@@ -991,26 +984,6 @@ void Line::setValidCount(dint newValidCount)
     d->validCount = newValidCount;
 }
 
-LineSide &Line::front()
-{
-    return side(Front);
-}
-
-const LineSide &Line::front() const
-{
-    return side(Front);
-}
-
-LineSide &Line::back()
-{
-    return side(Back);
-}
-
-const LineSide &Line::back() const
-{
-    return side(Back);
-}
-
 LineOwner *Line::vertexOwner(dint to) const
 {
     DE_ASSERT((to ? _vo2 : _vo1) != nullptr);
@@ -1026,12 +999,12 @@ dint Line::property(DmuArgs &args) const
         break;
     case DMU_FRONT: {
         /// @todo Update the games so that sides without sections can be returned.
-        const LineSide *frontAdr = front().hasSections() ? d->front.get() : nullptr;
+        const LineSide *frontAdr = front().hasSections() ? _front : nullptr;
         args.setValue(DDVT_PTR, &frontAdr, 0);
         break; }
     case DMU_BACK: {
         /// @todo Update the games so that sides without sections can be returned.
-        const LineSide *backAdr  = back().hasSections() ? d->back.get()   : nullptr;
+        const LineSide *backAdr  = back().hasSections() ? _back : nullptr;
         args.setValue(DDVT_PTR, &backAdr, 0);
         break; }
     case DMU_VERTEX0:

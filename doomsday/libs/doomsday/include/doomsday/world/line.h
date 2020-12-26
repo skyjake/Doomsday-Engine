@@ -563,22 +563,22 @@ public:
     /**
      * Returns the @em Front side of the line.
      */
-    LineSide       &front();
-    const LineSide &front() const;
+    inline LineSide       &front() { return *_front; }
+    inline const LineSide &front() const { return *_front; }
 
     /**
      * Returns the @em Back side of the line.
      */
-    LineSide       &back();
-    const LineSide &back() const;
+    inline LineSide       &back() { return *_back; }
+    inline const LineSide &back() const { return *_back; }
 
     /**
      * Returns the logical side of the line by it's fixed index.
      *
      * @param back  If not @c 0 return the Back side; otherwise the Front side.
      */
-    LineSide       &side(int back);
-    const LineSide &side(int back) const;
+    inline LineSide       &side(int side) { return *(side == Back ? _back : _front); }
+    inline const LineSide &side(int side) const { return *(side == Back ? _back : _front); }
 
     /**
      * Iterate through the Sides of the line.
@@ -766,6 +766,9 @@ protected:
 
 private:
     DE_PRIVATE(d)
+
+    LineSide *_front = nullptr; ///< Front side of the line.
+    LineSide *_back = nullptr;  ///< Back side of the line.
 
     /// Links to vertex line owner nodes:
     LineOwner *_vo1 = nullptr;
