@@ -42,7 +42,8 @@ dependencies = [
         'the_Foundation',
         'https://git.skyjake.fi/skyjake/the_Foundation.git', 'origin/master',
         [UNISTRING_DIR,
-         '-DTFDN_ENABLE_DEBUG_OUTPUT=YES']
+         '-DTFDN_ENABLE_DEBUG_OUTPUT=YES',
+         '-DTFDN_ENABLE_TLSREQUEST=NO']
     ),
     (
         'Open Asset Import Library',
