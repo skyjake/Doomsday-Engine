@@ -61,12 +61,20 @@ public:
     /**
      * Returns @c true iff a @em twin is linked to the half-edge.
      */
-    bool hasTwin() const;
+    inline bool hasTwin() const
+    {
+        return _twin != nullptr;
+    }
 
     /**
      * Returns the linked @em twin of the half-edge.
      */
-    HEdge &twin() const;
+    inline HEdge &twin() const
+    {
+        if (_twin) return *_twin;
+        /// @throw MissingTwinError Attempted with no twin associated.
+        throw MissingTwinError("HEdge::twin", "No twin half-edge is associated");
+    }
 
     /**
      * Change the linked @em twin half-edge.
@@ -88,7 +96,8 @@ public:
      *
      * @see hasFace()
      */
-    inline Face &face() const { 
+    inline Face &face() const
+    {
         DE_ASSERT(_face != nullptr);
         return *_face;
     }
@@ -106,14 +115,28 @@ public:
     /**
      * Returns @c true if the half-edge has a neighbor in the specifed direction.
      */
-    bool hasNeighbor(de::ClockDirection direction) const;
+    bool hasNeighbor(de::ClockDirection direction) const
+    {
+        return _neighbors[int(direction)] != nullptr;
+    }
 
     /**
      * Returns the neighbor half-edge in the specified @a direction.
      *
      * @param direction  Relative direction of the desired neighbor half-edge.
      */
-    HEdge &neighbor(de::ClockDirection direction) const;
+    inline HEdge &neighbor(de::ClockDirection direction) const
+    {
+        if (HEdge *neighbor = _neighbors[int(direction)])
+        {
+            return *neighbor;
+        }
+        /// @throw MissingNeighborError Attempted with no relevant neighbor attributeds.
+        throw MissingNeighborError("HEdge::neighbor",
+                                   std::string("No ") +
+                                       (direction == de::Clockwise ? "clockwise" : "counterclockwise") +
+                                       " neighbor is attributed");
+    }
 
     /**
      * Change the neighbor half-edge in the specified @a direction.

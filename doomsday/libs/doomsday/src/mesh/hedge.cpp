@@ -34,18 +34,6 @@ HEdge::HEdge(Mesh &mesh, world::Vertex &vertex)
     , _vertex(&vertex)
 {}
 
-bool HEdge::hasTwin() const
-{
-    return _twin != nullptr;
-}
-
-HEdge &HEdge::twin() const
-{
-    if (_twin) return *_twin;
-    /// @throw MissingTwinError Attempted with no twin associated.
-    throw MissingTwinError("HEdge::twin", "No twin half-edge is associated");
-}
-
 void HEdge::setTwin(HEdge *newTwin)
 {
     _twin = newTwin;
@@ -54,22 +42,6 @@ void HEdge::setTwin(HEdge *newTwin)
 void HEdge::setFace(Face *newFace)
 {
     _face = newFace;
-}
-
-bool HEdge::hasNeighbor(ClockDirection direction) const
-{
-    return _neighbors[int(direction)] != nullptr;
-}
-
-HEdge &HEdge::neighbor(ClockDirection direction) const
-{
-    HEdge *neighbor = _neighbors[int(direction)];
-    if (neighbor) return *neighbor;
-    /// @throw MissingNeighborError Attempted with no relevant neighbor attributed.
-    throw MissingNeighborError("HEdge::neighbor",
-                               std::string("No ") +
-                                   (direction == Clockwise ? "clockwise" : "counterclockwise") +
-                                   " neighbor is attributed");
 }
 
 void HEdge::setNeighbor(ClockDirection direction, HEdge *newNeighbor)
