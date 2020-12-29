@@ -1721,7 +1721,8 @@ DENG2_PIMPL(MapImporter)
             for (auto &sector : sectors)
             {
                 if (sector.foundHacks &&
-                    sectors[sector.hackParams.visPlaneLinkTargetSector].foundHacks)
+                    (sectors[sector.hackParams.visPlaneLinkTargetSector].foundHacks &
+                     ~(HACK_MISSING_OUTSIDE_BOTTOM | HACK_MISSING_OUTSIDE_TOP))) /* allow linking to deep water */
                 {
                     qDebug("sector %d is linked to hacked sector %d -> cancelling",
                            indexOf(sector), sector.hackParams.visPlaneLinkTargetSector);
