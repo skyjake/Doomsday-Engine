@@ -131,12 +131,7 @@ Folder &FileSystem::makeFolder(const String &path, FolderCreationBehaviors behav
 
         // Folders may be interpreted just like any other file; however, they must
         // remain instances derived from Folder.
-
-        // Technically folders could be interpreted, but that would require knowing
-        // their source data at this time, and we only know the file name.
-        //subFolder = &interpret())->as<Folder>();
-
-        subFolder = new Folder(path.fileName());
+        subFolder = &interpret(new Folder(path.fileName()))->as<Folder>();
 
         // If parent folder is writable, this will be too.
         if (parentFolder.mode() & File::Write)
@@ -154,7 +149,7 @@ Folder &FileSystem::makeFolder(const String &path, FolderCreationBehaviors behav
                 if (!feed) continue; // Check next one instead.
 
                 LOGDEV_RES_XVERBOSE_DEBUGONLY("Creating subfeed \"%s\" from %s",
-                                             subFolder->name() << parentFeed->description());
+                                              subFolder->name() << parentFeed->description());
 
                 subFolder->attach(feed);
 
