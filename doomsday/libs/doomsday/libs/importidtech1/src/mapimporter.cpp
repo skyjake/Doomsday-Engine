@@ -1725,7 +1725,8 @@ DE_PIMPL(MapImporter)
             for (auto &sector : sectors)
             {
                 if (sector.foundHacks &&
-                    sectors[sector.hackParams.visPlaneLinkTargetSector].foundHacks)
+                    (sectors[sector.hackParams.visPlaneLinkTargetSector].foundHacks &
+                     ~(HACK_MISSING_OUTSIDE_BOTTOM | HACK_MISSING_OUTSIDE_TOP))) /* allow linking to deep water */
                 {
                     LOGDEV_MAP_VERBOSE("sector %d is linked to hacked sector %d -> cancelling")
                         << indexOf(sector) << sector.hackParams.visPlaneLinkTargetSector;
