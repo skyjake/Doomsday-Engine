@@ -420,8 +420,6 @@ DE_PIMPL(MenuWidget)
     {
         DE_ASSERT(is<PanelWidget>(w));
 
-        openSubs.insert(w);
-
         w->audienceForClose()    += this;
         w->audienceForDeletion() += this;
 
@@ -435,6 +433,8 @@ DE_PIMPL(MenuWidget)
         {
             if (panel != w) panel->close();
         }
+        openSubs.clear();
+        openSubs.insert(w);
     }
 
     bool isVisibleItem(const GuiWidget *child) const
@@ -721,7 +721,10 @@ bool MenuWidget::handleEvent(const Event &event)
 
 void MenuWidget::dismissPopups()
 {
-    for (PanelWidget *pop : d->openSubs)
+    const auto openSubs = d->openSubs;
+    d->openSubs.clear();
+
+    for (PanelWidget *pop : openSubs)
     {
         pop->close();
     }
