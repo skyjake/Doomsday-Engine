@@ -475,7 +475,7 @@ DE_PIMPL(ModelLoader)
                 .forSubrecords([this, &model](const String &blockName, const Record &block) {
                     try
                     {
-                if (ScriptedInfo::blockType(block) == DEF_VARIANT())
+                        if (ScriptedInfo::blockType(block) == DEF_VARIANT())
                         {
                             const String materialName = blockName;
                             if (!model.materialIndexForName.contains(materialName))
