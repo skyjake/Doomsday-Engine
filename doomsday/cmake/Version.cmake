@@ -19,8 +19,8 @@ endif ()
 
 set (DENG_RELEASE_TYPE
     #Unstable
-    Candidate
-    #Stable
+    #Candidate
+    Stable
 )
 
 set (DENG_TEAM_COPYRIGHT "Copyright (c) 2003-2020 Deng Team")
