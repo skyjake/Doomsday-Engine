@@ -55,6 +55,20 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="2.3" date="2020-12-30">
+            <description>
+                <p>This version improves support for vanilla DOOM render hacks and adds more script bindings to manipulate things in the map. In Heretic, ambient sound sequences are now customizable.</p>
+                <p>Bug fixes:</p>
+                <ul>
+                    <li>Color adjustments only affect the game view.</li>
+                    <li>Bullet trajectories when looking up/down.</li>
+                    <li>Heretic Phoenix Rod effect was too bright.</li>
+                    <li>Targa images with 8-bit colors or run-length encoding.</li>
+                    <li>FPS limiter was only available when a game was loaded.</li>
+                </ul>
+            </description>
+            <url>https://manual.dengine.net/version/2.3</url>
+        </release>
         <release version="2.2.2" date="2020-01-28">
             <description>
                 <p>Patch release that addresses issues found in version 2.2.</p>
