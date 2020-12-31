@@ -416,10 +416,14 @@ DE_PIMPL(DataBundle), public Lockable
             {
                 meta.set(VAR_VERSION(), parsedVersion.fullNumber());
             }
-            else
+            else if (self().asFile().type() == File::Type::File)
             {
                 // Compose a default version number from file status.
                 meta.set(VAR_VERSION(), self().asFile().status().modifiedAt.asText(TIMESTAMP_FORMAT));
+            }
+            else
+            {
+                meta.set(VAR_VERSION(), "0.0.0"); // no known version
             }
 
             packageId = stripRedundantParts(formatDomains[format]
