@@ -1463,14 +1463,15 @@ String DataBundle::cleanIdentifier(const String &text)
 
 String DataBundle::stripVersion(const String &text, Version *version)
 {
-    static const RegExp re(".*([-_. ]v?([0-9._-]+))$");
+    if (!text) return {};
+    static const RegExp re("(([-._]?v?)([\\d]+[-._\\d]+))$");
     RegExpMatch match;
-    if (re.exactMatch(text, match))
+    if (re.match(text, match))
     {
         if (version)
         {
-            String str = match.captured(2);
-            str.replace("_", ".");
+            String str = match.captured(3);
+            str.replace(RegExp("[-_]"), ".");
             version->parseVersionString(str);
         }
         return text.substr(BytePos(0), text.size() - match.captured(1).size());
