@@ -1464,7 +1464,7 @@ String DataBundle::cleanIdentifier(const String &text)
 String DataBundle::stripVersion(const String &text, Version *version)
 {
     if (!text) return {};
-    static const RegExp re("(([-._]?v?)([\\d]+[-._\\d]+))$");
+    static const RegExp re("(([-._]?v?)([\\d]+[-._\\d]*))$");
     RegExpMatch match;
     if (re.match(text, match))
     {
@@ -1473,6 +1473,15 @@ String DataBundle::stripVersion(const String &text, Version *version)
             String str = match.captured(3);
             str.replace(RegExp("[-_]"), ".");
             version->parseVersionString(str);
+            if (!str.contains('.') && match.captured(2).isEmpty())
+            {
+                // Single-component version numbers without a separator must be a date.
+                if (version->major < 1000000)
+                {
+                    *version = {};
+                    return text;
+                }
+            }
         }
         return text.substr(BytePos(0), text.size() - match.captured(1).size());
     }
