@@ -19,7 +19,10 @@ if IS_MSYS:
 elif IS_MINGW:
     UNISTRING_DIR = '-DUNISTRING_DIR=' + os.getenv('MINGW_PREFIX')
 elif platform.system() == 'Darwin':
-    UNISTRING_DIR = '-DUNISTRING_DIR=/usr/local'
+    if os.path.exists('/opt/homebrew'):
+        UNISTRING_DIR = '-DUNISTRING_DIR=/opt/homebrew'
+    else:
+        UNISTRING_DIR = '-DUNISTRING_DIR=/usr/local'
 else:
     UNISTRING_DIR = '' # installed on system
 
