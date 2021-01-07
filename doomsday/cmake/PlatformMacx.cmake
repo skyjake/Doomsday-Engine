@@ -46,8 +46,10 @@ endif ()
 if (${CLANG_VERSION_STRING} VERSION_EQUAL 7.0 OR
     ${CLANG_VERSION_STRING} VERSION_GREATER 7.0)
     # Too many warnings from Qt.
-    append_unique (CMAKE_CXX_FLAGS "-Wno-deprecated-declarations -Wno-inconsistent-missing-override")
+    append_unique (CMAKE_CXX_FLAGS "-Wno-deprecated-declarations")
+    append_unique (CMAKE_CXX_FLAGS "-Wno-inconsistent-missing-override")
     append_unique (CMAKE_CXX_FLAGS "-Wno-gnu-anonymous-struct")
+    append_unique (CMAKE_CXX_FLAGS "-Wno-gnu-zero-variadic-macro-arguments")
     append_unique (CMAKE_CXX_FLAGS "-Wno-nested-anon-types")
 endif ()
 

@@ -63,6 +63,7 @@ else ()
 endif ()
 
 if (APPLE)
+    message (STATUS "Clang version: ${CLANG_VERSION_STRING}")
     if (CLANG_VERSION_STRING VERSION_EQUAL 12.0 OR
         CLANG_VERSION_STRING VERSION_GREATER 12.0)
         # Lots of warnings from Obj-C++ files.
@@ -73,6 +74,16 @@ if (APPLE)
         append_unique (CMAKE_CXX_FLAGS "-Wno-zero-length-array")
         append_unique (CMAKE_CXX_FLAGS "-Wno-missing-method-return-type")
         append_unique (CMAKE_CXX_FLAGS "-Wno-availability")
+        # Objective-C warnings from system headers.
+        append_unique (CMAKE_C_FLAGS "-Wno-pedantic")
+        append_unique (CMAKE_C_FLAGS "-Wno-extra-semi")
+        append_unique (CMAKE_C_FLAGS "-Wno-gnu-zero-variadic-macro-arguments")
+        append_unique (CMAKE_C_FLAGS "-Wno-four-char-constants")
+        append_unique (CMAKE_C_FLAGS "-Wno-deprecated-declarations")
+        append_unique (CMAKE_C_FLAGS "-Wno-variadic-macros")
+        append_unique (CMAKE_C_FLAGS "-Wno-zero-length-array")
+        append_unique (CMAKE_C_FLAGS "-Wno-missing-method-return-type")
+        append_unique (CMAKE_C_FLAGS "-Wno-availability")
     endif ()
 endif ()
 
