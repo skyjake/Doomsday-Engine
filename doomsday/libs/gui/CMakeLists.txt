@@ -63,7 +63,6 @@ else ()
 endif ()
 
 if (APPLE)
-    message (STATUS "Clang version: ${CLANG_VERSION_STRING}")
     if (CLANG_VERSION_STRING VERSION_EQUAL 12.0 OR
         CLANG_VERSION_STRING VERSION_GREATER 12.0)
         # Lots of warnings from Obj-C++ files.

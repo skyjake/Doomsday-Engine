@@ -225,10 +225,10 @@ DE_EXTERN_C void R_SetViewWindowGeometry(dint player, const RectRaw *geometry, d
     const viewport_t *vp = &viewportOfLocalPlayer[p];
     viewdata_t *vd = &DD_Player(player)->viewport();
 
-    Rectanglei newGeom = Rectanglei::fromSize(Vec2i(de::clamp<dint>(0, geometry->origin.x, vp->geometry.width()),
-                                                       de::clamp<dint>(0, geometry->origin.y, vp->geometry.height())),
-                                              Vec2ui(de::abs(geometry->size.width),
-                                                        de::abs(geometry->size.height)));
+    Rectanglei newGeom =
+        Rectanglei::fromSize(Vec2i(de::clamp<dint>(0, geometry->origin.x, vp->geometry.width()),
+                                   de::clamp<dint>(0, geometry->origin.y, vp->geometry.height())),
+                             Vec2ui(de::abs(geometry->size.width), de::abs(geometry->size.height)));
 
     if((unsigned) newGeom.bottomRight.x > vp->geometry.width())
     {
