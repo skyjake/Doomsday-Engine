@@ -191,6 +191,7 @@ static int DS_Init(void)
         return false;
     }
 
+#if FMOD_VERSION < 0x20000
     // Options.
     FMOD_ADVANCEDSETTINGS settings;
     de::zap(settings);
@@ -199,6 +200,7 @@ static int DS_Init(void)
     settings.HRTFMinAngle = 180;
     settings.HRTFFreq = 11000;
     FMOD_System_SetAdvancedSettings(fmodSystem, &settings);
+#endif
 
 #ifdef _DEBUG
     int numPlugins = 0;

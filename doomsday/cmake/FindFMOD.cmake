@@ -5,10 +5,16 @@ set (_oldPath ${FMOD_FMOD_H})
 # We may need to clean up the provided path.
 deng_clean_path (fmodRoot ${FMOD_DIR})
 
-find_file (FMOD_FMOD_H api/lowlevel/inc/fmod.h
+find_file (FMOD_FMOD_H 
+    NAMES 
+        api/lowlevel/inc/fmod.h 
+        api/core/inc/fmod.h
     PATHS "${fmodRoot}"
     HINTS ENV DENG_DEPEND_PATH
-    PATH_SUFFIXES "FMOD" "FMOD Programmers API" "FMOD Studio API Windows"
+    PATH_SUFFIXES
+        "FMOD"
+        "FMOD Programmers API"
+        "FMOD Studio API Windows"
     NO_DEFAULT_PATH
     NO_CMAKE_FIND_ROOT_PATH
 )
@@ -16,9 +22,9 @@ mark_as_advanced (FMOD_FMOD_H)
 
 if (NOT _oldPath STREQUAL FMOD_FMOD_H)
     if (FMOD_FMOD_H)
-        message (STATUS "Looking for FMOD Low Level Programmer API - found")
+        message (STATUS "Looking for FMOD Programmer API - found")
     else ()
-        message (STATUS "Looking for FMOD Low Level Programmer API - not found (set the FMOD_DIR variable)")
+        message (STATUS "Looking for FMOD Programmer API - not found (set the FMOD_DIR variable)")
     endif ()
 endif ()
 

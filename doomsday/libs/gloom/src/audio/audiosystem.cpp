@@ -384,7 +384,11 @@ DE_PIMPL(AudioSystem)
                 vel.y = velocity().y;
                 vel.z = velocity().z;
 
+#if FMOD_VERSION < 0x20000
                 FMOD_Channel_Set3DAttributes(channel, &pos, &vel, NULL);
+#else
+                FMOD_Channel_Set3DAttributes(channel, &pos, &vel);
+#endif
                 FMOD_Channel_Set3DMinMaxDistance(channel, minDistance(), 10000);
                 FMOD_Channel_Set3DSpread(channel, spatialSpread());
             }

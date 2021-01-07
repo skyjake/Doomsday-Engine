@@ -429,7 +429,11 @@ void fmod_DS_SFX_Play(sfxbuffer_t* buf)
         FMOD_Channel_Set3DMinMaxDistance(info.channel,
                                          info.minDistanceMeters,
                                          info.maxDistanceMeters);
+#if FMOD_VERSION < 0x20000
         FMOD_Channel_Set3DAttributes(info.channel, &info.position, &info.velocity, 0);
+#else
+        FMOD_Channel_Set3DAttributes(info.channel, &info.position, &info.velocity);
+#endif
         FMOD_Channel_SetMode(info.channel, info.mode);
     }
 
@@ -557,15 +561,23 @@ void fmod_DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
     case SFXBP_POSITION:
         info.position.set(values);
         if (info.channel)
+#if FMOD_VERSION < 0x20000
             FMOD_Channel_Set3DAttributes(info.channel, &info.position,
                                          &info.velocity, 0);
+#else
+            FMOD_Channel_Set3DAttributes(info.channel, &info.position, &info.velocity);
+#endif
         break;
 
     case SFXBP_VELOCITY:
         info.velocity.set(values);
         if (info.channel)
+#if FMOD_VERSION < 0x20000
             FMOD_Channel_Set3DAttributes(info.channel, &info.position,
                                          &info.velocity, 0);
+#else
+            FMOD_Channel_Set3DAttributes(info.channel, &info.position, &info.velocity);
+#endif
         break;
 
     default:
