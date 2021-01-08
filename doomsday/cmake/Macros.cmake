@@ -343,12 +343,14 @@ function (deng_add_package packName)
     file (GLOB_RECURSE packSrc "${fullPath}/*")
     list_remove_matches (packSrc ".*\\.DS_Store")
     # Ensure the package gets rebuilt if the source files are edited.
-    add_custom_command (OUTPUT ${outDir}/${outName}
-        COMMAND ${PYTHON_EXECUTABLE} "${DE_SOURCE_DIR}/build/scripts/buildpackage.py"
-                ${fullPath} ${outDir}
-        DEPENDS ${packSrc}
-        COMMENT "Packaging ${packName}..."
-    )
+    if (NOT CMAKE_GENERATOR STREQUAL "Xcode")
+        add_custom_command (OUTPUT ${outDir}/${outName}
+            COMMAND ${PYTHON_EXECUTABLE} "${DE_SOURCE_DIR}/build/scripts/buildpackage.py"
+                    ${fullPath} ${outDir}
+                    DEPENDS ${packSrc}
+            COMMENT "Packaging ${packName}..."
+        )
+    endif ()
     # The package target is used for dependency tracking and deployment.
     add_custom_target (${packName} SOURCES ${packSrc} ${outDir}/${outName})
     set_target_properties (${packName} PROPERTIES
@@ -524,11 +526,13 @@ macro (deng_codesign target)
                 --force -s \"${DE_CODESIGN_APP_CERT}\"
                 ${DE_CODESIGN_EXTRA_FLAGS}
             )
-            message (STATUS \"Notarizing \${CMAKE_INSTALL_PREFIX}/${_outName}.app...\")
-            execute_process (COMMAND ${DENG_SOURCE_DIR}/build/scripts/notarize.py 
-                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
-                ${DENG_NOTARIZATION_APPLE_ID}
-            )")
+            if (NOT \"${DE_NOTARIZATION_APPLE_ID}\" STREQUAL \"\")
+                message (STATUS \"Notarizing \${CMAKE_INSTALL_PREFIX}/${_outName}.app...\")
+                execute_process (COMMAND ${DENG_SOURCE_DIR}/build/scripts/notarize.py
+                    \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
+                    ${DE_NOTARIZATION_APPLE_ID}
+                )
+            endif ()")
     endif ()
     if (WIN32 AND DE_SIGNTOOL_CERT)
         get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
