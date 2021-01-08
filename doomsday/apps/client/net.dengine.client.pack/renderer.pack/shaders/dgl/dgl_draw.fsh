@@ -31,83 +31,87 @@ flat DE_VAR int vBatchIndex;
 DE_VAR vec4 vColor;
 DE_VAR vec2 vTexCoord[2];
 
-vec4 sampleTexture0(int batchIndex, vec2 uv)
+#define SAMPLE_UTEX0(n)     if (vBatchIndex == n) { return texture(uTex0[n], uv); }
+#define SAMPLE_UTEX1(n)     if (vBatchIndex == n) { return texture(uTex1[n], uv); }
+
+vec4 sampleTexture0(vec2 uv)
 {
-    switch (batchIndex)
-    {
-        case 0: return texture(uTex0[0], uv);
-        case 1: return texture(uTex0[1], uv);
-        case 2: return texture(uTex0[2], uv);
-        case 3: return texture(uTex0[3], uv);
-        case 4: return texture(uTex0[4], uv);
-        case 5: return texture(uTex0[5], uv);
-        case 6: return texture(uTex0[6], uv);
-        case 7: return texture(uTex0[7], uv);
+    SAMPLE_UTEX0(0)
+    SAMPLE_UTEX0(1)
+    SAMPLE_UTEX0(2)
+    SAMPLE_UTEX0(3)
+#if DGL_BATCH_MAX > 4
+    SAMPLE_UTEX0(4)
+    SAMPLE_UTEX0(5)
+    SAMPLE_UTEX0(6)
+    SAMPLE_UTEX0(7)
+#endif
 #if DGL_BATCH_MAX > 8
-        case 8: return texture(uTex0[8], uv);
+    SAMPLE_UTEX0(8)
 #endif
 #if DGL_BATCH_MAX > 9
-        case 9: return texture(uTex0[9], uv);
+    SAMPLE_UTEX0(9)
 #endif
 #if DGL_BATCH_MAX > 10
-        case 10: return texture(uTex0[10], uv);
+    SAMPLE_UTEX0(10)
 #endif
 #if DGL_BATCH_MAX > 11
-        case 11: return texture(uTex0[11], uv);
+    SAMPLE_UTEX0(11)
 #endif
 #if DGL_BATCH_MAX > 12
-        case 12: return texture(uTex0[12], uv);
+    SAMPLE_UTEX0(12)
 #endif
 #if DGL_BATCH_MAX > 13
-        case 13: return texture(uTex0[13], uv);
+    SAMPLE_UTEX0(13)
 #endif
 #if DGL_BATCH_MAX > 14
-        case 14: return texture(uTex0[14], uv);
+    SAMPLE_UTEX0(14)
 #endif
 #if DGL_BATCH_MAX > 15
-        case 15: return texture(uTex0[15], uv);
+    SAMPLE_UTEX0(15)
 #endif
-    }
+    return vec4(1.0, 0.0, 1.0, 1.0);
 }
 
-vec4 sampleTexture1(int batchIndex, vec2 uv)
+vec4 sampleTexture1(vec2 uv)
 {
-    switch (batchIndex)
-    {
-        case 0: return texture(uTex1[0], uv);
-        case 1: return texture(uTex1[1], uv);
-        case 2: return texture(uTex1[2], uv);
-        case 3: return texture(uTex1[3], uv);
-        case 4: return texture(uTex1[4], uv);
-        case 5: return texture(uTex1[5], uv);
-        case 6: return texture(uTex1[6], uv);
-        case 7: return texture(uTex1[7], uv);
+    SAMPLE_UTEX1(0)
+    SAMPLE_UTEX1(1)
+    SAMPLE_UTEX1(2)
+    SAMPLE_UTEX1(3)
+#if DGL_BATCH_MAX > 4
+    SAMPLE_UTEX1(4)
+    SAMPLE_UTEX1(5)
+    SAMPLE_UTEX1(6)
+    SAMPLE_UTEX1(7)
+#endif
 #if DGL_BATCH_MAX > 8
-        case 8: return texture(uTex1[8], uv);
+    SAMPLE_UTEX1(8)
 #endif
 #if DGL_BATCH_MAX > 9
-        case 9: return texture(uTex1[9], uv);
+    SAMPLE_UTEX1(9)
 #endif
 #if DGL_BATCH_MAX > 10
-        case 10: return texture(uTex1[10], uv);
+    SAMPLE_UTEX1(10)
 #endif
 #if DGL_BATCH_MAX > 11
-        case 11: return texture(uTex1[11], uv);
+    SAMPLE_UTEX1(11)
 #endif
 #if DGL_BATCH_MAX > 12
-        case 12: return texture(uTex1[12], uv);
+    SAMPLE_UTEX1(12)
 #endif
 #if DGL_BATCH_MAX > 13
-        case 13: return texture(uTex1[13], uv);
+    SAMPLE_UTEX1(13)
 #endif
 #if DGL_BATCH_MAX > 14
-        case 14: return texture(uTex1[14], uv);
+    SAMPLE_UTEX1(14)
 #endif
 #if DGL_BATCH_MAX > 15
-        case 15: return texture(uTex1[15], uv);
+    SAMPLE_UTEX1(15)
 #endif
-    }
+    return vec4(1.0, 0.0, 1.0, 1.0);
 }
+
 void main()
 {
     out_FragColor = vColor;
@@ -116,11 +120,11 @@ void main()
     vec4 texColor[2] = vec4[2](vec4(1.0), vec4(1.0));
     if ((uTexEnabled[vBatchIndex] & 0x1) != 0)
     {
-        texColor[0] = sampleTexture0(vBatchIndex, vTexCoord[0]);
+        texColor[0] = sampleTexture0(vTexCoord[0]);
     }
     if ((uTexEnabled[vBatchIndex] & 0x2) != 0)
     {
-        texColor[1] = sampleTexture1(vBatchIndex, vTexCoord[1]);
+        texColor[1] = sampleTexture1(vTexCoord[1]);
     }
 
     // Modulate the texture colors in the requested manner.
