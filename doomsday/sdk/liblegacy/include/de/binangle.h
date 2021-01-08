@@ -35,63 +35,63 @@ extern "C" {
 
 #if BAMS_BITS == 32
 typedef uint32_t binangle_t;
-#  define BANG_TO_ANGLE(bang)     ((angle_t)bang)
+#  define BANG_TO_ANGLE(bang)     ((angle_t)(bang))
 #elif BAMS_BITS == 16
 typedef uint16_t binangle_t;
-#  define BANG_TO_ANGLE(bang)     ((angle_t)bang << 16)
+#  define BANG_TO_ANGLE(bang)     ((angle_t)(bang) << 16)
 #else
 typedef unsigned char binangle_t;
-#  define BANG_TO_ANGLE(bang)     ((angle_t)bang << 24)
+#  define BANG_TO_ANGLE(bang)     ((angle_t)(bang) << 24)
 #endif
 
-#define ANGLE_TO_BANG(angle)      ((binangle_t)((angle_t)angle >> BAMS_BITS))
+#define ANGLE_TO_BANG(angle)      ((binangle_t)((angle_t)(angle) >> BAMS_BITS))
 
 #if BAMS_BITS == 32
 
 // Some predefined angles.
-#define BANG_0      0              // To the east.
-#define BANG_45     0x20000000     // To the northeast.
-#define BANG_90     0x40000000     // To the north.
-#define BANG_135    0x60000000     // To the northwest.
-#define BANG_180    0x80000000     // To the west.
-#define BANG_225    0xa0000000     // To the southwest.
-#define BANG_270    0xc0000000     // To the south.
-#define BANG_315    0xe0000000     // To the southeast.
-#define BANG_360    0x100000000    // Actually the same as angle 0.
-#define BANG_MAX    0xffffffff     // The largest possible angle.
+#define BANG_0      0u             // To the east.
+#define BANG_45     0x20000000u    // To the northeast.
+#define BANG_90     0x40000000u    // To the north.
+#define BANG_135    0x60000000u    // To the northwest.
+#define BANG_180    0x80000000u    // To the west.
+#define BANG_225    0xa0000000u    // To the southwest.
+#define BANG_270    0xc0000000u    // To the south.
+#define BANG_315    0xe0000000u    // To the southeast.
+#define BANG_360    0x100000000u   // Actually the same as angle 0.
+#define BANG_MAX    0xffffffffu    // The largest possible angle.
 
 #elif BAMS_BITS == 16
 
 // Some predefined angles.
-#define BANG_0      0              // To the east.
-#define BANG_45     0x2000         // To the northeast.
-#define BANG_90     0x4000         // To the north.
-#define BANG_135    0x6000         // To the northwest.
-#define BANG_180    0x8000         // To the west.
-#define BANG_225    0xa000         // To the southwest.
-#define BANG_270    0xc000         // To the south.
-#define BANG_315    0xe000         // To the southeast.
-#define BANG_360    0x10000        // Actually the same than angle 0.
-#define BANG_MAX    0xffff         // The largest possible angle.
+#define BANG_0      ((binangle_t) 0)        // To the east.
+#define BANG_45     ((binangle_t) 0x2000)   // To the northeast.
+#define BANG_90     ((binangle_t) 0x4000)   // To the north.
+#define BANG_135    ((binangle_t) 0x6000)   // To the northwest.
+#define BANG_180    ((binangle_t) 0x8000)   // To the west.
+#define BANG_225    ((binangle_t) 0xa000)   // To the southwest.
+#define BANG_270    ((binangle_t) 0xc000)   // To the south.
+#define BANG_315    ((binangle_t) 0xe000)   // To the southeast.
+#define BANG_360    0x10000u
+#define BANG_MAX    ((binangle_t) 0xffff)   // The largest possible angle.
 
 #else                           // Byte-sized.
 
 // Some predefined angles.
-#define BANG_0      0              // To the east.
-#define BANG_45     0x20           // To the northeast.
-#define BANG_90     0x40           // To the north.
-#define BANG_135    0x60           // To the northwest.
-#define BANG_180    0x80           // To the west.
-#define BANG_225    0xa0           // To the southwest.
-#define BANG_270    0xc0           // To the south.
-#define BANG_315    0xe0           // To the southeast.
-#define BANG_360    0x100          // Actually the same than angle 0.
-#define BANG_MAX    0xff           // The largest possible angle.
+#define BANG_0      ((binangle_t) 0)        // To the east.
+#define BANG_45     ((binangle_t) 0x20)     // To the northeast.
+#define BANG_90     ((binangle_t) 0x40)     // To the north.
+#define BANG_135    ((binangle_t) 0x60)     // To the northwest.
+#define BANG_180    ((binangle_t) 0x80)     // To the west.
+#define BANG_225    ((binangle_t) 0xa0)     // To the southwest.
+#define BANG_270    ((binangle_t) 0xc0)     // To the south.
+#define BANG_315    ((binangle_t) 0xe0)     // To the southeast.
+#define BANG_360    ((binangle_t) 0x100)    // Actually the same than angle 0.
+#define BANG_MAX    ((binangle_t) 0xff)     // The largest possible angle.
 
 #endif
 
 #define BAMS_PI             3.14159265359
-#define RAD2BANG(x)         ((binangle_t)((x)/BAMS_PI*BANG_180))
+#define RAD2BANG(x)         ((binangle_t)((int)((x)/BAMS_PI*BANG_180)))
 #define BANG2RAD(x)         ((float)((x)/(float)BANG_180*BAMS_PI))
 #define BANG2DEG(x)         ((float)((x)/(float)BANG_180*180))
 

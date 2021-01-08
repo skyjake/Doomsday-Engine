@@ -9,6 +9,7 @@ Session.vim
 macx_release_build
 /doomsday/build/win32/license.txt
 *.user.*
+*.txt.user
 *-build-*
 *-build
 build-*
@@ -41,4 +42,3 @@ compile_commands.json
 /products
 /debian
 .vsbuild
-
