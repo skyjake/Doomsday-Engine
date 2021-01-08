@@ -547,6 +547,12 @@ struct DGLDrawState
         GL.glBindBuffer(GL_ARRAY_BUFFER, buf.arrayData.glName());
         LIBGUI_ASSERT_GL_OK();
 
+        DENG2_ASSERT(GL.glGetAttribLocation(gl->shader.glName(), "aVertex") == VAA_VERTEX);
+        DENG2_ASSERT(GL.glGetAttribLocation(gl->shader.glName(), "aColor") == VAA_COLOR);
+        DENG2_ASSERT(GL.glGetAttribLocation(gl->shader.glName(), "aTexCoord") == VAA_TEXCOORD0);
+        DENG2_ASSERT(GL.glGetAttribLocation(gl->shader.glName(), "aFragOffset") == VAA_FRAG_OFFSET);
+        DENG2_ASSERT(GL.glGetAttribLocation(gl->shader.glName(), "aBatchIndex") == VAA_BATCH_INDEX);
+
         // Updated pointers.
         GL.glVertexAttribPointer(VAA_VERTEX,      3, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, vertex));
         GL.glVertexAttribPointer(VAA_COLOR,       4, GL_UNSIGNED_BYTE, GL_TRUE,  stride, DENG2_OFFSET_PTR(Vertex, color));
@@ -615,11 +621,6 @@ struct DGLDrawState
         s_maxBatchLength = de::max(s_maxBatchLength, batchLength);
         s_totalBatchCount += batchLength;
 
-        int oldTex[2];
-        getBoundTextures(oldTex[0], oldTex[1]);
-
-        glBindBatchTextures(batchLength);
-
         // Batched uniforms.
         gl->uMvpMatrix.set(gl->batchMvpMatrix, batchLength);
         gl->uTexMatrix0.set(gl->batchTexMatrix0, batchLength);
@@ -648,8 +649,12 @@ struct DGLDrawState
 
         glState.apply();
 
+        int oldTex[2];
+        getBoundTextures(oldTex[0], oldTex[1]);
+
         glBindArrays();
         gl->shader.beginUse();
+        glBindBatchTextures(batchLength);
         DENG2_ASSERT(gl->shader.validate());
         GL.glDrawArrays(glPrimitive(batchPrimType), 0, numVertices()); ++s_drawCallCount;
         gl->shader.endUse();
