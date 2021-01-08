@@ -55,6 +55,12 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
+        <release version="2.3.1" date="2021-01-31">
+            <description>
+                <p>Patch release that addresses issues found in version 2.3.</p>
+            </description>
+            <url>https://manual.dengine.net/version/2.3.1</url>
+        </release>
         <release version="2.3" date="2020-12-30">
             <description>
                 <p>This version improves support for vanilla DOOM render hacks and adds more script bindings to manipulate things in the map. In Heretic, ambient sound sequences are now customizable.</p>

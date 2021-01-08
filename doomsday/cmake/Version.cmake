@@ -1,6 +1,6 @@
 set (DENG_VERSION_MAJOR 2)
 set (DENG_VERSION_MINOR 3)
-set (DENG_VERSION_PATCH 0)
+set (DENG_VERSION_PATCH 1)
 
 set (DENG_VERSION ${DENG_VERSION_MAJOR}.${DENG_VERSION_MINOR}.${DENG_VERSION_PATCH})
 if (DEFINED DENG_BUILD)
@@ -19,11 +19,11 @@ endif ()
 
 set (DENG_RELEASE_TYPE
     #Unstable
-    #Candidate
-    Stable
+    Candidate
+    #Stable
 )
 
-set (DENG_TEAM_COPYRIGHT "Copyright (c) 2003-2020 Deng Team")
+set (DENG_TEAM_COPYRIGHT "Copyright (c) 2003-2021 Deng Team")
 
 # Build Configuration --------------------------------------------------------
 
