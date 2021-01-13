@@ -185,14 +185,6 @@ public:
 // --------------------------------------------------------------------------------------
 
     /**
-     * Returns the vector described by the offset from the map coordinate space origin to
-     * the top most, left most point of the geometry of the subspace.
-     *
-     * @see bounds()
-     */
-    de::Vector2d const &worldGridOffset() const;
-
-    /**
      * Returns a pointer to the face geometry half-edge which has been chosen for use as
      * the base for a triangle fan GL primitive. May return @c nullptr if no suitable base
      * was determined.

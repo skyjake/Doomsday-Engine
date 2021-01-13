@@ -61,8 +61,6 @@ DENG2_PIMPL(ConvexSubspace)
     Polyobjs polyobjs;                     ///< Linked polyobjs (not owned).
 
 #ifdef __CLIENT__
-    Vector2d worldGridOffset;              ///< For aligning the materials to the map space grid.
-
     typedef QSet<Lumobj *> Lumobjs;
     Lumobjs lumobjs;                       ///< Linked lumobjs (not owned).
 
@@ -167,11 +165,6 @@ ConvexSubspace::ConvexSubspace(Face &convexPolygon, BspLeaf *bspLeaf)
     , d(new Impl(this))
 {
     d->poly = &convexPolygon;
-#ifdef __CLIENT__
-    // Determine the world grid offset.
-    d->worldGridOffset = Vector2d(fmod(poly().bounds().minX, 64),
-                                  fmod(poly().bounds().maxY, 64));
-#endif
     poly().setMapElement(this);
     setBspLeaf(bspLeaf);
 }
@@ -300,11 +293,6 @@ void ConvexSubspace::setValidCount(dint newValidCount)
 }
 
 #ifdef __CLIENT__
-
-Vector2d const &ConvexSubspace::worldGridOffset() const
-{
-    return d->worldGridOffset;
-}
 
 dint ConvexSubspace::shadowLineCount() const
 {

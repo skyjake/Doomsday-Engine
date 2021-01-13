@@ -2904,8 +2904,12 @@ static void writeSubspacePlane(Plane &plane)
 
     MaterialAnimator &matAnimator = material->getAnimator(Rend_MapSurfaceMaterialSpec());
 
-    Vector2f materialOrigin = curSubspace->worldGridOffset() // Align to the worldwide grid.
-                            + surface.originSmoothed();
+    Vec2f materialOrigin =
+        // Align to the worldwide grid.
+        Vec2f(fmod(curSubspace->poly().bounds().minX, material->width()),
+              fmod(curSubspace->poly().bounds().maxY, material->height())) +
+        surface.originSmoothed();
+
     // Add the Y offset to orient the Y flipped material.
     /// @todo fixme: What is this meant to do? -ds
     if (plane.isSectorCeiling())
