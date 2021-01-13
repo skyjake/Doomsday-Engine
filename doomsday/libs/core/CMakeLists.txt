@@ -106,7 +106,7 @@ if (CYGWIN)
 endif ()
 if (UNIX_LINUX)
     install (FILES ${the_Foundation_DIR}/../../lib_Foundation.so
-             DESTINATION lib)
+             DESTINATION ${DE_INSTALL_LIB_DIR})
 endif ()
 deng_deploy_library (libcore DengCore)
 deng_cotire (libcore src/precompiled.h)

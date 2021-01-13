@@ -149,7 +149,7 @@ if (UNIX_LINUX)
               ${ASSIMP_ROOT_DIR}/lib/libassimp.so.4.1.0
               ${glbinding_DIR}/lib/libglbinding.so.2
               ${glbinding_DIR}/lib/libglbinding.so.2.1.4
-        DESTINATION lib
+        DESTINATION ${DE_INSTALL_LIB_DIR}
         COMPONENT client
     )
 endif ()
