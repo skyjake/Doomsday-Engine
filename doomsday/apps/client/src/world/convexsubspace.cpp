@@ -41,7 +41,6 @@ static double triangleArea(const Vec2d &v1, const Vec2d &v2, const Vec2d &v3)
 
 DE_PIMPL(ConvexSubspace)
 {
-    Vec2d           worldGridOffset; // For aligning the materials to the map space grid.
     Set<Lumobj *>   lumobjs;         // Linked lumobjs (not owned).
     Set<LineSide *> shadowLines;     // Linked map lines for fake radio shadowing.
 
@@ -134,16 +133,7 @@ DE_PIMPL(ConvexSubspace)
 ConvexSubspace::ConvexSubspace(mesh::Face &face, world::BspLeaf *bspLeaf)
     : world::ConvexSubspace(face, bspLeaf)
     , d(new Impl(this))
-{
-    // Determine the world grid offset.
-    d->worldGridOffset = Vec2d(fmod(poly().bounds().minX, 64),
-                               fmod(poly().bounds().maxY, 64));
-}
-
-const Vec2d &ConvexSubspace::worldGridOffset() const
-{
-    return d->worldGridOffset;
-}
+{}
 
 int ConvexSubspace::shadowLineCount() const
 {

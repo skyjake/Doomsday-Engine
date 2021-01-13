@@ -37,14 +37,6 @@ public:
     ConvexSubspace(mesh::Face &convexPolygon, world::BspLeaf *bspLeaf = nullptr);
 
     /**
-     * Returns the vector described by the offset from the map coordinate space origin to
-     * the top most, left most point of the geometry of the subspace.
-     *
-     * @see bounds()
-     */
-    const de::Vec2d &worldGridOffset() const;
-
-    /**
      * Returns a pointer to the face geometry half-edge which has been chosen for use as
      * the base for a triangle fan GL primitive. May return @c nullptr if no suitable base
      * was determined.
