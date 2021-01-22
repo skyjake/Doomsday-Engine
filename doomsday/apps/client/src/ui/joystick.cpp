@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 #include <SDL.h>
+#undef main
 
 #include "de_base.h"
 #include "ui/joystick.h"

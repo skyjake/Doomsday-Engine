@@ -124,16 +124,17 @@ bool PackageFeed::prune(File &file) const
             return true;
 
         //if (const Folder *pkg = maybeAs<Folder>(link->target()))
-        {
+//        {
             // Links to unloaded packages should be pruned.
             //if (!d->loader.isLoaded(*pkg)) return true;
 
 //            qDebug() << "Link:" << link->description() << link->status().modifiedAt.asText();
 //            qDebug() << " tgt:" << link->target().description() << link->target().status().modifiedAt.asText();
 
-            // Package has been modified, should be pruned.
-            if (link->status() != link->target().status()) return true;
-        }
+        // Package has been modified, should be pruned.
+        if (link->status() != link->target().status())
+            return true;
+//        }
     }
     return false; // Don't prune.
 }

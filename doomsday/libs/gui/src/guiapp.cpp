@@ -35,6 +35,7 @@
 #include <de/windowsystem.h>
 
 #include <SDL.h>
+#undef main
 
 #include <fstream>
 #include <the_Foundation/thread.h>
