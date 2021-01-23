@@ -1,0 +1,13 @@
+diff --git a/source/glbinding/include/glbinding/glbinding.h b/source/glbinding/include/glbinding/glbinding.h
+index ad8f201b..6ff086c4 100644
+--- a/source/glbinding/include/glbinding/glbinding.h
++++ b/source/glbinding/include/glbinding/glbinding.h
+@@ -1,7 +1,7 @@
+ 
+ #pragma once
+ 
+-
++#include <string>
+ #include <set>
+ #include <vector>
+ #include <functional>
