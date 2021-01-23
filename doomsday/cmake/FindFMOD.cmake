@@ -66,17 +66,19 @@ if (FMOD_FMOD_H AND NOT TARGET fmodex)
         set (fmodInstLib ${fmodLib})
     endif ()
     target_link_libraries (fmodex INTERFACE ${fmodLib})
-    install (TARGETS fmodex
-        EXPORT fmod
-        ARCHIVE DESTINATION ${DE_INSTALL_LIB_DIR} 
-        COMPONENT libs
-    )
-    install (EXPORT fmod
-        DESTINATION ${DE_INSTALL_CMAKE_DIR}/fmod
-        FILE fmod-config.cmake
-        NAMESPACE FMOD::
-        COMPONENT sdk
-    )
+    if (DE_ENABLE_SDK)
+        install (TARGETS fmodex
+            EXPORT fmod
+            ARCHIVE DESTINATION ${DE_INSTALL_LIB_DIR} 
+            COMPONENT libs
+        )
+        install (EXPORT fmod
+            DESTINATION ${DE_INSTALL_CMAKE_DIR}/fmod
+            FILE fmod-config.cmake
+            NAMESPACE FMOD::
+            COMPONENT sdk
+        )
+    endif ()
     if (fmodInstLib)
         deng_install_library (${fmodInstLib})
     endif ()

@@ -22,7 +22,7 @@ set (MAC_RES
     res/macx/English.lproj,Resources
 )
 set (MACOSX_BUNDLE_ICON_FILE "shell.icns")
-if (WIN32)
+if (WIN32 OR MSYS)
     list (APPEND SOURCES res/windows/shell.rc)
 endif ()
 

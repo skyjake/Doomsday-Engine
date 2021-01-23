@@ -17,9 +17,10 @@ if (DE_ENABLE_DEPLOYMENT)
             message (STATUS \"Copying dependencies...\")
             execute_process (
                 COMMAND ${PYTHON_EXECUTABLE} ${DE_SOURCE_DIR}/build/scripts/${scriptName}
-                    ${CMAKE_INSTALL_PREFIX}/bin
+                    \${CMAKE_INSTALL_PREFIX}/bin
                 OUTPUT_QUIET
-            )")
+            )"
+            COMPONENT post)
     endif ()
 endif ()
 

@@ -78,6 +78,10 @@ if (WIN32)
     list (APPEND SHARED_WITH_CLIENT ${src}/src/init_windows.cpp)
 endif ()
 
+if (WIN32 OR MSYS)
+    list (APPEND SOURCES res/windows/doomsday.rc)
+endif ()
+
 if (UNIX)
     include_directories (../client/include/unix)
     list (APPEND SHARED_WITH_CLIENT ${src}/src/init_unix.cpp)

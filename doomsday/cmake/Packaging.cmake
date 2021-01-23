@@ -52,14 +52,17 @@ if (APPLE)
     set (CPACK_DMG_FORMAT UDZO)
     set (CPACK_DMG_BACKGROUND_IMAGE "${DE_SOURCE_DIR}/build/macx/dmg_background.jpg")
     set (CPACK_DMG_DS_STORE_SETUP_SCRIPT "${DE_CMAKE_DIR}/DMGSetup.scpt")
+elseif (MSYS)
+    set (CPACK_GENERATOR External)
+    set (CPACK_EXTERNAL_PACKAGE_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/MsysInnoSetup.cmake)
+    set (CPACK_EXTERNAL_ENABLE_STAGING YES)
 elseif (UNIX)
-    #set (CPACK_GENERATOR RPM;DEB)
-    # Set CPACK_GENERATOR manually.
+    # CPACK_GENERATOR is set manually.
     set (CPACK_PROJECT_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/PackagingUnix.cmake)
 else ()
-	set (CPACK_PACKAGE_NAME "Doomsday ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+    set (CPACK_PACKAGE_NAME "Doomsday ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
     set (CPACK_GENERATOR WIX;ZIP)
-	set (CPACK_PROJECT_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/WIX.cmake)
+    set (CPACK_PROJECT_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/WIX.cmake)
     set (CPACK_WIX_UI_DIALOG "${DE_SOURCE_DIR}/build/win32/installer_dialog.png")
     set (CPACK_WIX_UI_BANNER "${DE_SOURCE_DIR}/build/win32/installer_banner.png")
 endif ()
@@ -88,6 +91,7 @@ if (NOT CPack_CMake_INCLUDED)
     if (DE_ENABLE_TESTS)
         list (APPEND CPACK_COMPONENTS_ALL tests)
     endif ()
+    list (APPEND CPACK_COMPONENTS_ALL post)
 
     include (CPack)
 
@@ -131,6 +135,10 @@ if (NOT CPack_CMake_INCLUDED)
         DESCRIPTION "Various test applications."
         DEPENDS libs packs
         INSTALL_TYPES sdk
+    )
+    cpack_add_component (post
+        DISPLAY_NAME "Post-install tasks"
+        HIDDEN REQUIRED
     )
 
     cpack_add_install_type (gui DISPLAY_NAME "Standard")

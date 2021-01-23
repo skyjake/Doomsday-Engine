@@ -45,4 +45,5 @@ deng_install_tool (dshell)
 if (CYGWIN OR MSYS)
     # Curses requires terminfo to be available.
     install (FILES /usr/share/terminfo/63/cygwin DESTINATION share/terminfo/63)
+    install (FILES /usr/share/terminfo/78/xterm-256color DESTINATION share/terminfo/78)
 endif ()
