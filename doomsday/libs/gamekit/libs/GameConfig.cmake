@@ -105,19 +105,21 @@ macro (deng_add_gamelib target)
 
     # if (NOT APPLE)
     install (TARGETS ${target}
-        EXPORT ${target}
+        #EXPORT ${target}
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION ${DE_INSTALL_LIB_DIR}
-        ARCHIVE DESTINATION ${DE_INSTALL_LIB_DIR}
+        #ARCHIVE DESTINATION ${DE_INSTALL_LIB_DIR}
         COMPONENT libs
     )
-    install (EXPORT ${target}
-        DESTINATION ${DE_INSTALL_CMAKE_DIR}/${target}
-        FILE ${target}-config.cmake
-        NAMESPACE GameKit::
-        COMPONENT sdk
-    )
-    # endif ()
+    if (DE_ENABLE_SDK)
+        install (TARGETS ${target} EXPORT ${target} ARCHIVE DESTINATION ${DE_INSTALL_LIB_DIR})
+        install (EXPORT ${target}
+            DESTINATION ${DE_INSTALL_CMAKE_DIR}/${target}
+            FILE ${target}-config.cmake
+            NAMESPACE GameKit::
+            COMPONENT sdk
+        )
+    endif ()
     # set (_src)
     # set (_script)
 endmacro (deng_add_gamelib)
