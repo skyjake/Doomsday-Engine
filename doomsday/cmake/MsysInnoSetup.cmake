@@ -32,6 +32,13 @@ ArchitecturesInstallIn64BitMode=x64
 [Files]
 ")
 
+macro (do_sign path)
+    execute_process (COMMAND /opt/bin/signtool.exe
+        sign -n $ENV{DE_SIGNTOOL_CERT}
+        -t $ENV{DE_SIGNTOOL_TIMESTAMP} -fd sha256 -v ${path}
+    )
+endmacro (do_sign)
+
 foreach (fn ${files})
     get_filename_component (fnDir ${fn} DIRECTORY)
     get_filename_component (fnName ${fn} NAME)
@@ -40,6 +47,7 @@ foreach (fn ${files})
     if (fnExt STREQUAL ".exe" OR fnExt STREQUAL ".dll")
         list (APPEND binaries ${depsDir}/${fnName})
         file (COPY ${CPACK_TEMPORARY_DIRECTORY}/${fn} DESTINATION ${depsDir})
+        do_sign (${CPACK_TEMPORARY_DIRECTORY}/${fn})
     endif ()
     file (APPEND ${outFile} "Source: \"${fn}\"; DestDir: \"{app}/${fnDir}\"\n")
 endforeach (fn)
@@ -51,6 +59,7 @@ file (GLOB deps ${depsDir}/*.dll)
 foreach (fn ${deps})
     get_filename_component (fnName ${fn} NAME)
     file (APPEND ${outFile} "Source: \"deps/${fnName}\"; DestDir: \"{app}/bin\"\n")
+    do_sign (${CPACK_TEMPORARY_DIRECTORY}/deps/${fnName})
 endforeach ()
 
 file (APPEND ${outFile} "
@@ -63,3 +72,5 @@ execute_process (COMMAND "${INNOSETUP_COMMAND}" setup.iss
     WORKING_DIRECTORY ${CPACK_TEMPORARY_DIRECTORY}
 )
 
+# Sign the generated installer.
+do_sign (${CPACK_TEMPORARY_DIRECTORY}/../../../../${CPACK_PACKAGE_FILE_NAME}.exe)
