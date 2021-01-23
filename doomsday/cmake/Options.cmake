@@ -16,7 +16,7 @@ option (DE_ENABLE_GUI        "Enable the client app and all GUI related function
 option (DE_ENABLE_GLOOM      "Enable use of libgloom for client rendering" OFF)
 option (DE_ENABLE_GLOOMED    "Enable the Gloom Editor app" OFF)
 option (DE_ENABLE_SERVER     "Enable the server app" ON)
-option (DE_ENABLE_SDK        "Enable installation of the Doomsday SDK" ON)
+option (DE_ENABLE_SDK        "Enable installation of the Doomsday SDK" OFF)
 option (DE_ENABLE_TESTS      "Enable tests" OFF)
 option (DE_ENABLE_TOOLS      "Enable tools" ON)
 option (DE_ENABLE_DEPLOYMENT "Enable deployment of all dependencies" ON)
