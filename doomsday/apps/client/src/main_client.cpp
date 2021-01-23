@@ -69,6 +69,7 @@ DE_EXTERN_C void GameKit_Init();
  */
 int main(int argc, char **argv)
 {
+#undef main
     SDL_SetMainReady();
 
     init_Foundation();
