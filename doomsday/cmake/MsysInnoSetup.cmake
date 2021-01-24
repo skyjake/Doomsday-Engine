@@ -1,5 +1,17 @@
 message (STATUS "Packaging with Inno Setup for MSYS")
 
+# Check Inno Setup location from Windows registry.
+execute_process (COMMAND reg query "HKLM\\SOFTWARE\\Classes\\InnoSetupScriptFile\\shell\\Compile\\command" OUTPUT_VARIABLE regVals)
+string (REGEX MATCH "REG_SZ(.*)/cc" _ ${regVals})
+set (regVals ${CMAKE_MATCH_1})
+string (STRIP ${regVals} regVals)
+if (regVals MATCHES "\"(.*)\"")
+    set (regVals ${CMAKE_MATCH_1})
+endif ()
+execute_process (COMMAND cygpath -u ${regVals} OUTPUT_VARIABLE regVals)
+get_filename_component (INNOSETUP_DIR ${regVals} DIRECTORY)
+message (STATUS "Inno Setup path: ${INNOSETUP_DIR}")
+
 set (INNOSETUP_COMMAND $ENV{INNOSETUP_DIR}/iscc.exe)
 
 file (GLOB_RECURSE files 
@@ -8,7 +20,7 @@ file (GLOB_RECURSE files
 )
 
 set (deployScript ${CMAKE_CURRENT_LIST_DIR}/../build/scripts/deploy_msys.py)
-message (STATUS "Script: ${deployScript}")
+#message (STATUS "Script: ${deployScript}")
 set (outFile ${CPACK_TEMPORARY_DIRECTORY}/setup.iss)
 set (depsDir ${CPACK_TEMPORARY_DIRECTORY}/deps)
 file (MAKE_DIRECTORY ${depsDir})
