@@ -50,6 +50,10 @@ extern "C" {
 #define DOOMSDAY_VERSION_BASE   "${DE_VERSION}"
 #define DOOMSDAY_VERSION_NUMBER ${DE_VERSION_WINDOWS} // For WIN32 version info.
 
+#if defined (DOOMSDAY_BUILD_NUMBER)
+#  define DOOMSDAY_BUILD_TEXT   "${DE_BUILD}"
+#endif
+
 /**
  * DOOMSDAY_RELEASE_TYPE determines the classification of the release.
  * Possible values are "Unstable", "Candidate" and "Stable".
