@@ -3,6 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
+ *\author Copyright (c) 2021 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright (c) 2008-2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -128,11 +129,11 @@ BEGIN
     BEGIN
         BLOCK "040904E4"
         BEGIN
-            VALUE "CompanyName",        "Open Source Developer, Jaakko Keränen\0"
+            VALUE "CompanyName",        "Open Source Developer, Jaakko Ker\xe4nen\0"
             VALUE "FileDescription",    "Doomsday Engine\0"
             VALUE "FileVersion",        DOOMSDAY_VERSION_TEXT "\0"
             VALUE "InternalName",       "Doomsday Engine\0"
-            VALUE "LegalCopyright",     "Copyright (c) 2003-2018, deng Team\0"
+            VALUE "LegalCopyright",     DOOMSDAY_COPYRIGHT "\0"
             VALUE "OriginalFilename",   "Doomsday.exe\0"
             VALUE "ProductName",        "Doomsday Engine\0"
             VALUE "ProductVersion",     DOOMSDAY_VERSION_TEXT "\0"
