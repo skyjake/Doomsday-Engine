@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-#define DENGPROJECT_HOMEURL     "http://sourceforge.net/projects/deng/"
+#define DENGPROJECT_HOMEURL     "https://sourceforge.net/projects/deng/"
 #define DENGPROJECT_AUTHOR      "dengteam"
 #define DENGPROJECT_NICEAUTHOR  "Deng Team"
 
