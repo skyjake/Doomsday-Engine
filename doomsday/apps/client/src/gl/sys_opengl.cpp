@@ -180,7 +180,7 @@ dd_bool Sys_GLInitialize(void)
             {
                 Sys_CriticalMessagef("Your OpenGL is too old!\n"
                                      "  Driver version: %s\n"
-                                     "  The minimum supported version is 2.0",
+                                     "  The minimum supported version is 3.3",
                                      glGetString(GL_VERSION));
                 return false;
             }
