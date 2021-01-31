@@ -9,6 +9,7 @@ if (NOT AMETHYST_COMMAND)
             ENV HOMEPATH
         PATH_SUFFIXES
             bin
+            .local/bin
             amethyst/bin
             Amethyst/bin
         DOC "Amethyst document processor executable"
