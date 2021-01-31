@@ -267,7 +267,7 @@ DENG2_PIMPL(Textures)
 
             // Ensure the offset is within valid range.
             if (offset < 0 || unsigned(offset) < unsigned(definitionCount) * sizeof(offset) ||
-               dsize(offset) > reader.source()->size())
+                dsize(offset) > reader.source()->size())
             {
                 LOG_RES_WARNING("Ignoring definition #%i: invalid offset %i") << i << offset;
             }
@@ -474,9 +474,22 @@ DENG2_PIMPL(Textures)
 
             try
             {
-                TextureManifest &manifest =
-                    self().declareTexture(uri, flags, def.logicalDimensions(),
-                                        Vector2i(), def.origIndex());
+                // BUG: See IssueID #2446 -- The SKY* patches in Heretic are 200 pixels tall
+                // even though the texture is declared as 128 pixels tall. The extra height
+                // is supposed to make the sky extend upward to facilitate looking up.
+                // However, for some reason only Composite::dimensions() is updated to account for
+                // this extended height, and not Composite::logicalDimensions(). If both are
+                // updated, skyfix walls appear as black in DOOM (for an unknown reason).
+                // Therefore, apply a hacky workaround that uses the true composite dimensions
+                // for sky textures only.
+
+                TextureManifest &manifest = self().declareTexture(
+                    uri,
+                    flags,
+                    def.percentEncodedName().beginsWith("SKY") ? def.dimensions()
+                                                               : def.logicalDimensions(),
+                    Vec2i(),
+                    def.origIndex());
 
                 // Are we redefining an existing texture?
                 if (manifest.hasTexture())

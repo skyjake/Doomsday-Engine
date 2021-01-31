@@ -8,11 +8,12 @@ Header { Version = 6; }
 
 Sky {
   ID = "sky1";
-  Height = 0.6;
-  Horizon offset = -0.105;
+  Height = 0.75;
+  Horizon offset = 0;
   Layer 1 {
     Flags = enable;
     Material = "textures:SKY1";
+    Color limit = 0.1;
   };
 }
 
