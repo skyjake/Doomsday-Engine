@@ -284,7 +284,10 @@ Composite *Composite::constructFrom(de::Reader &reader,
     if (geom.top() < 0) geom.topLeft.y = 0;
     if (geom.height() > pctex->d->logicalDimensions.y)
     {
-        pctex->d->dimensions.y = geom.height();
+        // BUG: Why not update both logical dimensions and pixel dimensions? Are these
+        // only intended to be different if there are more than 1 pixel per logical unit?
+
+        /*pctex->d->logicalDimensions.y = */pctex->d->dimensions.y = geom.height();
     }
 
     if (!foundComponentCount)

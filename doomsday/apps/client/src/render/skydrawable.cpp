@@ -117,7 +117,9 @@ struct Hemisphere
     {
         if (world::Material *mat = chooseMaterialForSkyLayer(layer))
         {
-            MaterialAnimator &matAnimator = mat->as<ClientMaterial>().getAnimator(SkyDrawable::layerMaterialSpec(layer.isMasked()));
+            MaterialAnimator &matAnimator =
+                mat->as<ClientMaterial>()
+                    .getAnimator(SkyDrawable::layerMaterialSpec(layer.isMasked()));
 
             // Ensure we've up to date info about the material.
             matAnimator.prepare();
