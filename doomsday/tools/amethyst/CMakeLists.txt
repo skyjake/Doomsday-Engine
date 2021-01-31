@@ -16,6 +16,8 @@
 cmake_minimum_required (VERSION 3.1)
 project (Amethyst)
 
+find_package (Qt5 COMPONENTS Core)
+
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
 set (CMAKE_AUTOMOC ON)
 
@@ -27,7 +29,6 @@ set (CMAKE_MODULE_PATH
 )
 
 include (Macros)
-include (FindQt)
 list (APPEND CMAKE_PREFIX_PATH "${QT_PREFIX_DIR}")
 
 file (GLOB SOURCES src/*.cpp src/*.h)
@@ -35,14 +36,8 @@ add_executable (amethyst ${SOURCES})
 set_property (TARGET amethyst PROPERTY FOLDER Tools)
 strict_warnings (amethyst)
 
-find_package (Qt5Core QUIET)
-if (Qt5Core_FOUND)
-    add_definitions (-DHAVE_QT5)
-    target_link_libraries (amethyst Qt5::Core)
-else ()
-    find_package (Qt4 REQUIRED)
-    target_link_libraries (amethyst Qt4::Core)
-endif ()
+add_definitions (-DHAVE_QT5)
+target_link_libraries (amethyst Qt5::Core)
 
 if (UNIX)
     set (LIB_PREFIX "share/amethyst")
