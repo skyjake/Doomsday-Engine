@@ -1519,6 +1519,10 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
             {
                 os << "\n  Flags = " + allFlags.join(" | ") + ";";
             }
+            if (DoomsdayApp::game().id().beginsWith("hexen"))
+            {
+                os << "\n  Sky height = 0.75;\n";
+            }
             de::Uri skyLayer1MaterialUri(info.gets(doubleSky? "sky2Material" : "sky1Material"), RC_NULL);
             if(!skyLayer1MaterialUri.path().isEmpty())
             {
