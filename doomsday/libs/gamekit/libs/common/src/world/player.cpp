@@ -775,7 +775,7 @@ void P_SetYellowMessage(player_t *pl, const char *msg)
 
 void P_Thrust3D(player_t *player, angle_t angle, float lookdir, coord_t forwardMove, coord_t sideMove)
 {
-    angle_t pitch = LOOKDIR2DEG(lookdir) / 360 * ANGLE_MAX;
+    angle_t pitch = int(LOOKDIR2DEG(lookdir) / 360 * ANGLE_MAX);
     angle_t sideangle = angle - ANG90;
     mobj_t *mo = player->plr->mo;
     coord_t zmul, mom[3];
