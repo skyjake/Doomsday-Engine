@@ -304,7 +304,7 @@ void P_TrajectoryNoise(angle_t *angle, float *slope, float degreesPhi, float deg
     trajectory = Slope::fromVec(Mat4f::rotate(angles.x, up) *
                                 Mat4f::rotate(angles.y, side) * front);
 
-    *angle = angle_t(trajectory.angle / DD_PI * ANG180);
+    *angle = int(trajectory.angle / DD_PI * ANG180);
     *slope = trajectory.slope;
 }
 
