@@ -55,9 +55,13 @@
     <update_contact>jaakko.keranen@iki.fi</update_contact>
 
     <releases>
-        <release version="2.3.1" date="2021-01-31">
+        <release version="2.3.1" date="2021-02-04">
             <description>
                 <p>Patch release that addresses issues found in version 2.3.</p>
+                <ul>
+                    <li>Incorrect positioning of sky textures in Heretic and Hexen.</li>
+                    <li>Alignment of floor/ceiling textures whose size is not 64×64.</li>
+                </ul>
             </description>
             <url>https://manual.dengine.net/version/2.3.1</url>
         </release>
