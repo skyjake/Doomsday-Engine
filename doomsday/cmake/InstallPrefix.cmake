@@ -12,7 +12,7 @@ endif ()
 # Install destination.
 option (DE_ENABLE_INSTALL_TO_PRODUCTS "Set the install prefix to the 'products' directory" NO)
 if (DE_ENABLE_INSTALL_TO_PRODUCTS)
-    get_filename_component (defaultInstallPrefix "${DE_DISTRIB_DIR}" REALPATH)
+    get_filename_component (defaultInstallPrefix "${DE_SOURCE_DIR}/../products" REALPATH)
     set (CMAKE_INSTALL_PREFIX "${defaultInstallPrefix}" CACHE STRING "Install prefix" FORCE)
 
     # Some CMake targets may be exported to the install directory.
