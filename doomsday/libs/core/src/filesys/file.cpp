@@ -418,17 +418,13 @@ String File::fileListAsText(List<const File *> files)
         if (!txt.isEmpty()) txt += "\n";
 
         // Folder / Access flags / source flag / has origin feed.
-        String flags = Stringf("%c%c%c%c%c",
-                                      is<Folder>(f)?                'd' : '-',
-                                      f->mode().testFlag(Write)?    'w' : 'r',
-                                      f->mode().testFlag(Truncate)? 't' : '-',
-                                      f->source() != f?             'i' : '-',
-                                      f->originFeed()?              'f' : '-');
-
-        txt += flags + Stringf("%9zu %23s %s",
-                                      f->size(),
-                                      f->status().modifiedAt.asText().c_str(),
-                                      f->name().c_str());
+        txt += Stringf("%c%c%c%c%c",
+                       is<Folder>(f) ? 'd' : '-',
+                       f->mode().testFlag(Write) ? 'w' : 'r',
+                       f->source() != f ? 'i' : '-',
+                       f->originFeed() ? 'f' : '-');
+        txt += Stringf(
+            "%9zu %23s %s", f->size(), f->status().modifiedAt.asText().c_str(), f->name().c_str());
 
         // Link target.
         if (const LinkFile *link = maybeAs<LinkFile>(f))

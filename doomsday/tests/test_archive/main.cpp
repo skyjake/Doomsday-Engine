@@ -73,7 +73,8 @@ int main(int argc, char **argv)
         // FS::refresh() is called. createFile() doesn't interpret anything, just
         // makes a plain file.
         File &zip2 = app.homeFolder().replaceFile("test2.zip");
-        zip2.setMode(File::Write | File::Truncate);
+        zip2.setMode(File::Write);
+        zip2.clear();
         ZipArchive arch;
         arch.add(Path("world.txt"), content.toUtf8());
         Writer(zip2) << arch;

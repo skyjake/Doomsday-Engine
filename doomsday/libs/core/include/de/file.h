@@ -84,7 +84,6 @@ public:
     {
         ReadOnly  = 0,
         Write     = 0x1,
-        Truncate  = 0x2,
         DontPrune = 0x4, ///< File should never be pruned. Used for files we create ourselves.
     };
 

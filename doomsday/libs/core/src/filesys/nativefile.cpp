@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libcore
  *
- * Copyright © 2009-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2021 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -22,106 +22,52 @@
 #include "de/guard.h"
 #include "de/math.h"
 
+#include <the_Foundation/file.h>
+
 namespace de {
 
 DE_PIMPL(NativeFile)
 {
-    /// Path of the native file in the OS file system.
-    NativePath nativePath;
-
-    /// Input stream.
-    mutable std::ifstream *in;
-
-    /// Output stream. Kept open until flush() is called.
-    /// (Re)opened before changing the contents of the file.
-    std::ofstream *out;
-
-    /// Output file should be truncated before the next write.
-    bool needTruncation;
-
+    NativePath nativePath;     // Path of the native file in the OS file system.
+    iFile *    file = nullptr; // NOTE: One NativeFile shouldn't be accessed by multiple
+                               // threads simultaneously (each read/write mutexed).
     Impl(Public *i)
         : Base(i)
-        , in(nullptr)
-        , out(nullptr)
-        , needTruncation(false)
     {}
 
     ~Impl()
     {
-        DE_ASSERT(!in);
-        DE_ASSERT(!out);
+        DE_ASSERT(!file);
     }
 
-    std::ifstream &getInput()
+    iFile *getFile()
     {
-        if (!in)
+        if (!file)
         {
-            // Reading is allowed always.
-            in = new std::ifstream(nativePath, std::ios::binary);
-            if (!*in)
+            file = new_File(nativePath.toString());
+            const bool isWrite = self().mode().testFlag(Write);
+            // Open with Append mode so that missing files will get created.
+            // Seek position will be updated anyway when something is written to the file.
+            if (!open_File(file, isWrite ? append_FileMode | readWrite_FileMode : readOnly_FileMode))
             {
-                delete in;
-                in = nullptr;
-                /// @throw InputError  Opening the input stream failed.
-                throw InputError("NativeFile::openInput", "Failed to read " + nativePath);
-            }
-        }
-        return *in;
-    }
-
-    std::ofstream &getOutput()
-    {
-        using namespace std;
-        if (!out)
-        {
-            // Are we allowed to output?
-            self().verifyWriteAccess();
-
-            ios::openmode fileMode = ios::binary | ios::out;
-            if (self().mode() & Truncate)
-            {
-                if (needTruncation)
+                iReleasePtr(&file);
+                if (isWrite)
                 {
-                    fileMode |= ios::trunc;
-                    needTruncation = false;
+                    throw OutputError("NativeFile::getFile",
+                                      Stringf("Failed to write (%s)", strerror(errno)));
+                }
+                else
+                {
+                    throw InputError("NativeFile::getFile", "Failed to read " + nativePath);
                 }
             }
-            out = new std::ofstream{nativePath, fileMode};
-            if (!*out)
-            {
-                delete out;
-                out = nullptr;
-                /// @throw OutputError  Opening the output stream failed.
-                throw OutputError("NativeFile::output",
-                                  "Failed to write " + nativePath + " (" + strerror(errno) + ")");
-            }
-            if (self().mode() & Truncate)
-            {
-                Status st = self().status();
-                st.size = 0;
-                st.modifiedAt = Time();
-                self().setStatus(st);
-            }
         }
-        return *out;
+        return file;
     }
 
-    void closeInput()
+    void closeFile()
     {
-        if (in)
-        {
-            delete in;
-            in = 0;
-        }
-    }
-
-    void closeOutput()
-    {
-        if (out)
-        {
-            delete out;
-            out = 0;
-        }
+        iReleasePtr(&file);
     }
 };
 
@@ -164,17 +110,17 @@ void NativeFile::close()
     DE_GUARD(this);
 
     flush();
-    DE_ASSERT(!d->out);
+    DE_ASSERT(!d->file);
 
-    d->closeInput();
+    d->closeFile();
 }
 
 void NativeFile::flush()
 {
     DE_GUARD(this);
 
-    d->closeOutput();
-    DE_ASSERT(!d->out);
+    d->closeFile();
+    DE_ASSERT(!d->file);
 }
 
 const NativePath &NativeFile::nativePath() const
@@ -188,12 +134,24 @@ void NativeFile::clear()
 {
     DE_GUARD(this);
 
-    File::clear();
+    File::clear(); // checks for write access
 
-    Flags oldMode = mode();
-    setMode(Write | Truncate);
-    d->getOutput();
-    File::setMode(oldMode);
+    d->closeFile();
+
+    if (remove(d->nativePath.toString().c_str()))
+    {
+        if (errno != ENOENT)
+        {
+            throw OutputError("NativeFile::clear",
+                              "Failed to clear " + d->nativePath +
+                                  Stringf(" (%s)", strerror(errno)));
+        }
+    }
+
+    Status st = status();
+    st.size = 0;
+    st.modifiedAt = Time();
+    setStatus(st);
 }
 
 NativeFile::Size NativeFile::size() const
@@ -209,20 +167,24 @@ void NativeFile::get(Offset at, Byte *values, Size count) const
 
     if (at + count > size())
     {
-        d->closeInput();
+        d->closeFile();
         /// @throw IByteArray::OffsetError  The region specified for reading extends
         /// beyond the bounds of the file.
         throw OffsetError("NativeFile::get", description() + ": cannot read past end of file " +
                           Stringf("(%zu[+%zu] > %zu)", at, count, size()));
     }
-    auto &in = input();
-    if (in.tellg() != std::ifstream::pos_type(at)) in.seekg(at);
-    in.read(reinterpret_cast<char *>(values), count);
+
+    d->getFile();
+    if (pos_File(d->file) != at)
+    {
+        seek_File(d->file, at);
+    }
+    readData_File(d->file, count, values);
 
     // Close the native input file after the full contents have been read.
     if (at + count == size())
     {
-        d->closeInput();
+        d->closeFile();
     }
 }
 
@@ -230,20 +192,24 @@ void NativeFile::set(Offset at, const Byte *values, Size count)
 {
     DE_GUARD(this);
 
-    auto &out = output();
     if (at > size())
     {
         /// @throw IByteArray::OffsetError  @a at specified a position beyond the
         /// end of the file.
         throw OffsetError("NativeFile::set", description() + ": cannot write past end of file");
     }
-    out.seekp(at);
-    out.write(reinterpret_cast<const char *>(values), count);
-    if (out.bad())
+
+    d->getFile();
+    if (pos_File(d->file) != at)
     {
-        /// @throw OutputError  Failure to write to the native file.
-        throw OutputError("NativeFile::set", description() + ": error writing to file");
+        seek_File(d->file, at);
     }
+    if (writeData_File(d->file, values, count) != count)
+    {
+        throw OutputError("NativeFile::set",
+                          description() + Stringf(": error writing to file (%s)", strerror(errno)));
+    }
+
     // Update status.
     Status st = status();
     st.size = max(st.size, at + count);
@@ -268,25 +234,6 @@ void NativeFile::setMode(const Flags &newMode)
 
     close();
     File::setMode(newMode);
-
-    if (newMode.testFlag(Truncate))
-    {
-        d->needTruncation = true;
-    }
-}
-
-std::ifstream &NativeFile::input() const
-{
-    DE_GUARD(this);
-
-    return d->getInput();
-}
-
-std::ofstream &NativeFile::output()
-{
-    DE_GUARD(this);
-
-    return d->getOutput();
 }
 
 } // namespace de

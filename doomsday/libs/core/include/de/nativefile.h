@@ -83,12 +83,6 @@ public:
     static NativeFile *newStandalone(const NativePath &nativePath);
 
 protected:
-    /// Returns the input stream.
-    std::ifstream &input() const;
-
-    /// Returns the output stream.
-    std::ofstream &output();
-
     /// Close any open streams.
     void close();
 

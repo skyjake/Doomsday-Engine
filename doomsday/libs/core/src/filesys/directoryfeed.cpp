@@ -258,7 +258,6 @@ void DirectoryFeed::destroyFile(const String &name)
         return;
     }
     if (!path.destroy())
-    if (remove(path))
     {
         /// @throw RemoveError  The file @a name exists but could not be removed.
         throw RemoveError("DirectoryFeed::destroyFile", "Cannot remove \"" + name +
