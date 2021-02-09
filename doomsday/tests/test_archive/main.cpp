@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     try
     {
         TextApp app(makeList(argc, argv));
-        app.initSubsystems();
+        app.initSubsystems(App::DisablePersistentData);
 
         Block b;
         Writer(b, littleEndianByteOrder) << duint32(0x11223344);
