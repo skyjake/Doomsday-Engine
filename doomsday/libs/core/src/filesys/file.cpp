@@ -418,7 +418,7 @@ String File::fileListAsText(List<const File *> files)
         if (!txt.isEmpty()) txt += "\n";
 
         // Folder / Access flags / source flag / has origin feed.
-        txt += Stringf("%c%c%c%c%c",
+        txt += Stringf("%c%c%c%c",
                        is<Folder>(f) ? 'd' : '-',
                        f->mode().testFlag(Write) ? 'w' : 'r',
                        f->source() != f ? 'i' : '-',
