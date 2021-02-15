@@ -47,7 +47,8 @@ dependencies = [
         [UNISTRING_DIR,
          '-DTFDN_ENABLE_DEBUG_OUTPUT=YES',
          '-DTFDN_ENABLE_TLSREQUEST=NO',
-         '-DTFDN_ENABLE_TESTS=NO']
+         '-DTFDN_ENABLE_TESTS=NO',
+         '-DTFDN_ENABLE_WIN32_FILE_API=' + 'YES' if IS_MSYS or IS_MINGW else 'NO']
     ),
     (
         'Open Asset Import Library',
@@ -59,12 +60,12 @@ dependencies = [
     ),
     (
         'cginternals/glbinding',
-        'https://github.com/cginternals/glbinding.git', 'v3.0.2' if IS_MSYS else 'v2.1.4',
+        'https://github.com/cginternals/glbinding.git', 'v3.0.2' if IS_MSYS or IS_MINGW else 'v2.1.4',
         ['-Wno-dev',
          '-DOPTION_BUILD_EXAMPLES=NO',
          '-DOPTION_BUILD_TOOLS=NO',
          '-DOPTION_BUILD_TESTS=NO',
-         '-DCMAKE_CXX_FLAGS=-Wno-deprecated-copy' if IS_MSYS else '']
+         '-DCMAKE_CXX_FLAGS=-Wno-deprecated-copy' if IS_MSYS or IS_MINGW else '']
     )
 ]
 

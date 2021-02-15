@@ -16,7 +16,7 @@ if (TARGET SDL2)
     return ()
 endif ()
 
-if (PKG_CONFIG_FOUND AND (NOT MSYS OR CYGWIN OR IOS))
+if (PKG_CONFIG_FOUND AND NOT (MSYS OR MINGW OR CYGWIN OR IOS))
     # The Unix Way: use pkg-config to find the SDL2 libs installed on system.
     if (NOT TARGET SDL2)
         add_pkgconfig_interface_library (SDL2 OPTIONAL sdl2)
@@ -29,9 +29,9 @@ elseif (WIN32 OR CYGWIN OR MSYS)
     # installed in SDL2_DIR. Note that Cygwin also uses the native SDL2 libraries
     # and *not* the Cygwin ones, which would presumably have an X11 dependency.
     set (_oldPath ${SDL2_LIBRARY})
-    if (CYGWIN OR MSYS)
+    if (CYGWIN OR MSYS OR MINGW)
        if (SDL2_DIR STREQUAL "")
-           message (FATAL_ERROR "SDL2_DIR must be set in MSYS/Cygwin")
+           message (FATAL_ERROR "SDL2_DIR must be set in MSYS/Cygwin/MinGW")
        endif ()
        # Assume it has been set manually.
        if (MSVC)
@@ -72,7 +72,7 @@ elseif (WIN32 OR CYGWIN OR MSYS)
     # Also attempt to locate SLD2_mixer.
     deng_clean_path (sdlMixerDir ${SDL2_MIXER_DIR})
     set (_oldPath ${SDL_MIXER_LIBRARY})
-    if (MSYS OR CYGWIN)
+    if (MSYS OR CYGWIN OR MINGW)
         if (SDL2_MIXER_DIR STREQUAL "")
             message (FATAL_ERROR "SDL2_MIXER_DIR must be set in MSYS/Cygwin")
         endif ()

@@ -9,7 +9,7 @@ else ()
     set (glbinding_DIR ${DE_DEPENDS_DIR}/products)
 endif ()
 
-if (MSYS)
+if (MSYS OR WIN32)
    set (DE_GLBINDING_VERSION 3)
 else ()
    set (DE_GLBINDING_VERSION 2)

@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#if defined (WIN32) && defined (_MSC_VER)
+#if defined (WIN32) && (defined (_MSC_VER) || defined (__MINGW32__))
 
 #include <io.h>
 #include <stdlib.h>
