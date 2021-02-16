@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#if defined (_MSC_VER)
+#if defined (_MSC_VER) || defined (__MINGW32__)
 
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_DCOM
@@ -83,10 +83,8 @@ char const *DD_Win32_GetLastErrorMessage()
 
 dd_bool DD_Win32_Init()
 {
-    // Initialize COM.
+    SetProcessDPIAware();
     CoInitialize(NULL);
-
-    //Library_Init();
 
     DoomsdayApp::app().determineGlobalPaths();
 
@@ -132,4 +130,5 @@ void DD_Shutdown()
     CoUninitialize();
 }
 
-#endif // defined (_MSC_VER)
+#endif // defined (_MSC_VER) || defined (__MINGW32__)
+

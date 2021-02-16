@@ -117,7 +117,7 @@ DE_PIMPL(GuiApp)
 
     void determineDevicePixelRatio()
     {
-#if 0 //defined (WIN32)
+#if 0// defined (WIN32)
         // Use the Direct2D API to find out the desktop DPI factor.
         ID2D1Factory *d2dFactory = nullptr;
         HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2dFactory);
@@ -229,7 +229,7 @@ void GuiApp::setPixelRatio(float pixelRatio)
     // Apply the overall UI scale factor.
     pixelRatio *= config().getf(VAR_UI_SCALE_FACTOR(), 1.0f);
 
-#if defined (DE_X11)
+#if defined (DE_X11) || defined (WIN32)
     // Apply monitor DPI-based scaling (assumes single monitor as we can't scale per-window).
     {
         float vdpi = 0.0f;

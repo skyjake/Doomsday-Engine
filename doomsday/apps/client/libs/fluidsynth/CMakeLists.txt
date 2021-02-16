@@ -129,6 +129,9 @@ if (DE_FLUIDSYNTH_EMBEDDED)
             -fomit-frame-pointer -fdiagnostics-show-option -Wno-parentheses -Wno-unused-value
         )
     endif ()
+    if (WIN32)
+        target_link_libraries (${tgt} PUBLIC ws2_32)
+    endif ()
 
     # if (APPLE)
     #     deng_bundle_install_names (${tgt} ${GLIB_LIBRARIES})

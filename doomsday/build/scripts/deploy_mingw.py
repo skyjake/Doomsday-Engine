@@ -1,4 +1,4 @@
-#/usr/bin/python
+#!/usr/bin/env python3
 # This script goes through a MinGW deployment and copies all the required
 # dependencies from the system directory. All executables (EXE, DLL) are
 # checked.
