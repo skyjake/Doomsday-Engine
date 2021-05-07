@@ -31,7 +31,6 @@
 
 typedef void *thread_t;
 typedef void *mutex_t;
-typedef void *sem_t;
 
 typedef enum systhreadexitstatus_e {
     DE_THREAD_STOPPED_NORMALLY,
