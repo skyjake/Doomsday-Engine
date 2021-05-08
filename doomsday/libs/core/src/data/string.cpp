@@ -1228,7 +1228,7 @@ Char mb_iterator::decode(const char **end) const
     }
 
     uint32_t ch = 0;
-    int      rc = decodeBytes_MultibyteChar(cur, strnlen(cur, 8), &ch);
+    int      rc = decodeBytes_MultibyteChar(cur, cur + strnlen(cur, 8), &ch);
     if (rc < 0)
     {
         // Multibyte decoding failed. Let's return something valid, though, so the iterator

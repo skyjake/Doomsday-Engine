@@ -78,6 +78,7 @@
 #  include <typeinfo>
 #  include <stdexcept>
 #  include <string>
+#  include <limits>
 #endif
 
 #if defined(__x86_64__) || defined(__x86_64) || defined(_LP64) || defined(DE_64BIT_HOST)
