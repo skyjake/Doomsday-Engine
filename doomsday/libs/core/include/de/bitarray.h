@@ -32,6 +32,7 @@ class DE_PUBLIC BitArray
 {
 public:
     BitArray(dsize initialSize = 0);
+    BitArray(const BitArray &) = default;
 
     bool        isEmpty() const;
     bool        testBit(dsize pos) const;

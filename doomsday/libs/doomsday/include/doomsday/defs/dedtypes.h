@@ -101,7 +101,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_ptcstage_s {
     float particleRadius(int ptcIDX) const;
 } ded_ptcstage_t;
 
-typedef struct {
+typedef struct ded_sprid_s {
     char id[DED_SPRITEID_LEN + 1];
 
     void release() {}
@@ -170,14 +170,14 @@ struct ded_text_t {
     }
 };
 
-typedef struct {
+typedef struct ded_tenviron_s {
     ded_stringid_t      id;
     DEDArray<ded_uri_t> materials;
 
     void release() { materials.clear(); }
 } ded_tenviron_t;
 
-typedef struct {
+typedef struct ded_value_s {
     char *id;
     char *text;
 
