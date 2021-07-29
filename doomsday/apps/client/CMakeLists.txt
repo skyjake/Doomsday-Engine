@@ -312,8 +312,9 @@ endif ()
 
 if (APPLE AND NOT IOS)
     set_target_properties (client PROPERTIES
-        MACOSX_BUNDLE_BUNDLE_NAME net.dengine.doomsday
-        MACOSX_BUNDLE_INFO_PLIST  MacOSXBundleInfo.plist.in
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER  net.dengine.doomsday 
+        MACOSX_BUNDLE_BUNDLE_NAME                  net.dengine.doomsday
+        MACOSX_BUNDLE_INFO_PLIST                   MacOSXBundleInfo.plist.in
     )
     # Install binaries built by targets in the project.
     deng_install_bundle_deps (client

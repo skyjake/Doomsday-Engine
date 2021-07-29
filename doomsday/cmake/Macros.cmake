@@ -484,6 +484,10 @@ endfunction ()
 
 macro (deng_codesign target)
     if (APPLE AND DE_CODESIGN_APP_CERT)
+        if (NOT DE_ENABLE_DEPLOYMENT)
+            # Enable attaching a debugger.
+            set (DE_CODESIGN_ENTITLEMENTS "--entitlements ${DE_SOURCE_DIR}/build/macx/get-task-allow.plist")
+        endif ()
         get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
         install (CODE "
             file (GLOB fw
@@ -509,22 +513,29 @@ macro (deng_codesign target)
                 endif ()
                 if (NOT _skip)
                 message (STATUS \"Signing \${fn}...\")
-                execute_process (COMMAND ${CODESIGN_COMMAND} --verbose
-                            --deep
+                execute_process (COMMAND ${CODESIGN_COMMAND}
+                        --deep
+                        --verbose
                         --options runtime
                         --timestamp
-                        --force -s \"${DE_CODESIGN_APP_CERT}\"
+                        --force
+                        -s \"${DE_CODESIGN_APP_CERT}\"
                         ${DE_FW_CODESIGN_EXTRA_FLAGS}
+                        ${DE_CODESIGN_ENTITLEMENTS}
                         \"\${fn}\"
                 )
                 endif ()
             endforeach (fn)
             message (STATUS \"Signing \${CMAKE_INSTALL_PREFIX}/${_outName}.app using '${DE_CODESIGN_APP_CERT}'...\")
-            execute_process (COMMAND ${CODESIGN_COMMAND} --verbose
+            execute_process (COMMAND ${CODESIGN_COMMAND} 
+                --verbose
                 --options runtime
                 --timestamp
-                --force -s \"${DE_CODESIGN_APP_CERT}\"
+                --force
+                -s \"${DE_CODESIGN_APP_CERT}\"
                 ${DE_CODESIGN_EXTRA_FLAGS}
+                ${DE_CODESIGN_ENTITLEMENTS}
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
             )
             if (NOT \"${DE_NOTARIZATION_APPLE_ID}\" STREQUAL \"\")
                 message (STATUS \"Notarizing \${CMAKE_INSTALL_PREFIX}/${_outName}.app...\")
@@ -546,6 +557,9 @@ macro (deng_xcode_attribs target)
         XCODE_ATTRIBUTE_GCC_SYMBOLS_PRIVATE_EXTERN NO
         XCODE_ATTRIBUTE_GCC_INLINES_ARE_PRIVATE_EXTERN NO
     )
+    if (NOT DE_CODESIGN_APP_CERT)
+        set_property (TARGET ${target} PROPERTY XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "-")
+    endif ()
 endmacro (deng_xcode_attribs)
 
 macro (macx_set_bundle_name name)
@@ -772,6 +786,8 @@ function (deng_install_tool target)
                     \"\${CMAKE_INSTALL_PREFIX}/${dest}/${name}\"
                 )
             ")
+        else ()
+            set_property (TARGET ${target} PROPERTY XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "-")
         endif ()
     else ()
         sublist (comp 1 -1 ${ARGV})

@@ -38,6 +38,7 @@ if (APPLE OR WIN32)
     set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "Doomsday Shell")
     set_target_properties (shell PROPERTIES
         OUTPUT_NAME "Doomsday Shell"
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER net.dengine.shell
         MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_LIST_DIR}/res/macx/Info.plist
     )
 else ()
