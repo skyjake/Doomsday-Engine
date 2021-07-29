@@ -66,12 +66,15 @@ for binary in actions:
         subprocess.check_call([name_cmd, '-change', old_path, new_path, path])
 avail_fws = os.listdir(os.path.join(root, 'Frameworks'))
 def base_name(fn):
+    end_pos = fn.find('-')
+    if end_pos > 0: return fn[:end_pos]
     return fn[:fn.find('.')]
 for lib in libraries:
     if not os.path.exists(os.path.join(root, 'Frameworks', lib)):
         print('%s: missing link' % lib)
         name = base_name(lib)
         for avail in avail_fws:
+            #print('got', avail, 'base:', base_name(avail), 'name:', name, 'matching:', base_name(avail) == name)
             if base_name(avail) == name:
                 print(' -> to %s' % avail)
                 subprocess.check_call([ln_cmd, '-s',
