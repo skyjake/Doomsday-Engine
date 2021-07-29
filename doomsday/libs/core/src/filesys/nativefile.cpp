@@ -23,8 +23,55 @@
 #include "de/math.h"
 
 #include <the_Foundation/file.h>
+#include <iostream>
+#include <deque>
 
 namespace de {
+
+struct OpenFiles : public Lockable
+{
+    // We need to keep track of how many native files are open at once, because
+    // operating systems have a hard limit on this. We shouldn't open and close
+    // a file for each read/write, because that's very slow, but we shouldn't keep
+    // files open for a long time either. Note that files may be accessed
+    // from multiple threads, although usually not simultanously.
+
+    static constexpr int MAX_COUNT = 32;
+    
+    std::deque<SafePtr<NativeFile>> currentlyOpen;
+        
+    void insert(NativeFile &file)
+    {
+        try
+        {
+            SafePtr<NativeFile> toFlush;
+            {
+                DE_GUARD(this);
+                currentlyOpen.push_back(&file);
+                if (currentlyOpen.size() > MAX_COUNT)
+                {
+                    toFlush = currentlyOpen.front();
+                    currentlyOpen.pop_front();
+                }
+            }
+            toFlush->flush();
+        }
+        catch (const Error &)
+        {
+            // Was deleted already.
+        }
+    }
+    
+    void remove(NativeFile &file)
+    {
+        DE_GUARD(this);
+        std::remove_if(currentlyOpen.begin(),
+                       currentlyOpen.end(),
+                       [&file](const SafePtr<NativeFile> &open) { return open == &file; });
+    }
+};
+            
+static OpenFiles s_openFiles;
 
 DE_PIMPL(NativeFile)
 {
@@ -44,7 +91,12 @@ DE_PIMPL(NativeFile)
     {
         if (!file)
         {
+            // Keep track of how many open files there are.
+            s_openFiles.insert(self());
+//            std::cout << "File opened: " << this << " (" << nativePath.asText() << ")" << std::endl;
+
             file = new_File(nativePath.toString());
+            
             const bool isWrite = self().mode().testFlag(Write);
             // Open with Append mode so that missing files will get created.
             // Seek position will be updated anyway when something is written to the file.
@@ -67,7 +119,12 @@ DE_PIMPL(NativeFile)
 
     void closeFile()
     {
-        iReleasePtr(&file);
+        if (file)
+        {
+            s_openFiles.remove(self());
+//            std::cout << "File closed: " << this << std::endl;
+            iReleasePtr(&file);
+        }
     }
 };
 
@@ -79,6 +136,7 @@ NativeFile::NativeFile(const String &name, const NativePath &nativePath)
 
 NativeFile::~NativeFile()
 {
+    s_openFiles.remove(*this);
     DE_GUARD(this);
 
     DE_NOTIFY(Deletion, i) i->fileBeingDeleted(*this);
@@ -107,16 +165,17 @@ Block NativeFile::metaId() const
 
 void NativeFile::close()
 {
+    s_openFiles.remove(*this);
     DE_GUARD(this);
 
     flush();
     DE_ASSERT(!d->file);
-
     d->closeFile();
 }
 
 void NativeFile::flush()
 {
+    s_openFiles.remove(*this);
     DE_GUARD(this);
 
     d->closeFile();
@@ -132,6 +191,7 @@ const NativePath &NativeFile::nativePath() const
 
 void NativeFile::clear()
 {
+    s_openFiles.remove(*this);
     DE_GUARD(this);
 
     File::clear(); // checks for write access
