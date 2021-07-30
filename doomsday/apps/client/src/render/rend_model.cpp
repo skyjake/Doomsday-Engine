@@ -418,12 +418,10 @@ static void drawPrimitives(rendcmd_t mode,
     // Combine all triangle strips and fans into one big strip. Fans are converted
     // to strips. When joining strips, winding is retained so that each sub-strip
     // begins with the same winding.
-
+    
     DGL_Begin(DGL_TRIANGLE_STRIP);
     foreach (FrameModel::Primitive const &prim, primitives)
-    {
-        DGLenum const primType = (prim.triFan? DGL_TRIANGLE_FAN : DGL_TRIANGLE_STRIP);
-
+    {        
         joining = false;
         if (lastLength > 0)
         {
@@ -434,7 +432,7 @@ static void drawPrimitives(rendcmd_t mode,
         }
         firstElem = nullptr;
 
-        if (primType == DGL_TRIANGLE_STRIP)
+        if (!prim.triFan)
         {
             lastLength = prim.elements.size();
             foreach (FrameModel::Primitive::Element const &elem, prim.elements)
@@ -1075,6 +1073,8 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         selectTexUnits(1);
         DGL_ModulateTexture(1);
     }
+    
+    DGL_Flush();
 
     // We're done!
     DGL_Disable(DGL_TEXTURE_2D);
