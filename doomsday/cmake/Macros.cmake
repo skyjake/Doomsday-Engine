@@ -486,7 +486,7 @@ macro (deng_codesign target)
     if (APPLE AND DE_CODESIGN_APP_CERT)
         if (NOT DE_ENABLE_DEPLOYMENT)
             # Enable attaching a debugger.
-            set (DE_CODESIGN_ENTITLEMENTS "--entitlements ${DE_SOURCE_DIR}/build/macx/get-task-allow.plist")
+            set (DE_CODESIGN_ENTITLEMENTS "--entitlements ${DE_SOURCE_DIR}/build/macx/debugging.plist")
         endif ()
         get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
         install (CODE "
