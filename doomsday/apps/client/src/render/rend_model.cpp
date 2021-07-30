@@ -987,6 +987,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     // If we mirror the model, triangles have a different orientation.
     if (zSign < 0)
     {
+        DGL_Flush();
         LIBGUI_GL.glFrontFace(GL_CCW);
     }
 
@@ -1089,6 +1090,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
 
     if (zSign < 0)
     {
+        DGL_Flush();
         LIBGUI_GL.glFrontFace(GL_CW);
     }
     //glDepthFunc(GL_LESS);
