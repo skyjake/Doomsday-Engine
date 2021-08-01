@@ -8,6 +8,7 @@ set (SOURCES
 )
 
 add_library (doomsdaygui STATIC ${SOURCES})
+set_property (TARGET doomsdaygui PROPERTY FOLDER Libraries)
 deng_target_defaults (doomsdaygui)
 target_include_directories (doomsdaygui PUBLIC include)
 deng_link_libraries (doomsdaygui PUBLIC DengGui DengDoomsday)
