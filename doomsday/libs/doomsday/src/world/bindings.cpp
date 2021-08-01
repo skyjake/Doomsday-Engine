@@ -1,6 +1,6 @@
 /** @file world/bindings.cpp  World related Doomsday Script bindings.
  *
- * @authors Copyright (c) 2015-2020 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2015-2021 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -72,6 +72,19 @@ static Value *Function_Thing_State(Context &ctx, const Function::ArgumentValues 
 {
     const auto &mo = World::get().contextMobj(ctx);
     return new NumberValue(runtimeDefs.states.indexOf(mo.state));
+}
+
+static Value *Function_Thing_Angle(Context &ctx, const Function::ArgumentValues &)
+{
+    const auto &mo = World::get().contextMobj(ctx);
+    return new NumberValue(double(mo.angle) / double(ANGLE_MAX) * 360.0);
+}
+
+static Value *Function_Thing_SetAngle(Context &ctx, const Function::ArgumentValues &args)
+{
+    mobj_t &mo = World::contextMobj(ctx);
+    mo.angle = angle_t(args.at(0)->asNumber() / 360.0 * ANGLE_MAX);
+    return nullptr;
 }
 
 static Value *Function_Thing_AddMom(Context &ctx, const Function::ArgumentValues &args)
@@ -194,6 +207,8 @@ void initBindings(Binder &binder, Record &worldModule)
                 << DE_FUNC_NOARG(Thing_Pos,        "pos")
                 << DE_FUNC      (Thing_SetState,   "setState", "index")
                 << DE_FUNC_NOARG(Thing_State,      "state")
+                << DE_FUNC      (Thing_SetAngle,   "setAngle", "degrees")
+                << DE_FUNC_NOARG(Thing_Angle,      "angle")
                 << DE_FUNC      (Thing_Recoil,     "recoil", "force")
                 << DE_FUNC_NOARG(Thing_Type,       "type");
     }
