@@ -61,6 +61,14 @@ DE_PIMPL_NOREF(Writer)
           offset     (other.offset     ),
           fixedOffset(other.fixedOffset)
     {}
+    
+    ~Impl()
+    {
+        if (File *f = maybeAs<File>(destination))
+        {
+            f->release();
+        }
+    }
 
     void write(const IByteArray::Byte *ptr, dsize size)
     {

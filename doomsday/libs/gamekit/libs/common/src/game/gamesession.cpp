@@ -283,7 +283,6 @@ DE_PIMPL(GameSession)
             ZipArchive arch;
             arch.add("Info", composeSaveInfo(metadata).toUtf8());
             de::Writer(save) << arch;
-            save.flush();
 
             // We can now reinterpret and populate the contents of the archive.
             saved = &save.reinterpret()->as<GameStateFolder>();
@@ -307,7 +306,7 @@ DE_PIMPL(GameSession)
         //DoomsdayApp::app().gameSessionWasSaved(self(), *saved);
         //self().setThinkerMapping(nullptr);
 
-        saved->flush();  // No need to populate; FS2 Files already in sync with source data.
+        saved->release();  // No need to populate; FS2 Files already in sync with source data.
         saved->cacheMetadata(metadata);  // Avoid immediately reopening the .save package.
 
         return *saved;
@@ -1234,7 +1233,7 @@ void GameSession::leaveMap(const res::Uri &nextMapUri, uint nextMapEntryPoint)
 
         // Ensure changes are written to disk right away (otherwise would stay
         // in memory only).
-        saved->flush();
+        saved->release();
     }
 
 #if __JHEXEN__
@@ -1315,7 +1314,7 @@ void GameSession::leaveMap(const res::Uri &nextMapUri, uint nextMapEntryPoint)
         //DoomsdayApp::app().gameSessionWasSaved(*this, *saved);
         //setThinkerMapping(nullptr);
 
-        saved->flush(); // Write all changes to the package.
+        saved->release(); // Write all changes to the package.
         saved->cacheMetadata(metadata); // Avoid immediately reopening the .save package.
     }
 }

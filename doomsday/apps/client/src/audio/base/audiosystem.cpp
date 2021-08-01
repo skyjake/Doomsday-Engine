@@ -740,7 +740,7 @@ DE_PIMPL(AudioSystem)
                     Block buf(hndl->length());
                     hndl->read(buf.data(), buf.size());
                     file << buf;
-                    file.flush();
+                    file.release();
                     return iMusic->PlayFile(file.as<NativeFile>().nativePath(), looped);
                 }
                 else if (iMusic->Play && iMusic->SongBuffer)
@@ -790,7 +790,7 @@ DE_PIMPL(AudioSystem)
             Block buf(lump.size());
             lump.read(buf.data(), 0, lump.size());
             midi << M_Mus2Midi(buf);
-            midi.flush();
+            midi.release();
             //M_Free(buf); buf = nullptr;
 
             return forAllInterfaces(AUDIO_IMUSIC, [&midi, &looped] (void *ifs)

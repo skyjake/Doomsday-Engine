@@ -100,9 +100,9 @@ void ArchiveEntryFile::clear()
     setStatus(st);
 }
 
-void ArchiveEntryFile::flush()
+void ArchiveEntryFile::release() const
 {
-    ByteArrayFile::flush();
+    ByteArrayFile::release();
     if (ArchiveFeed *feed = maybeAs<ArchiveFeed>(originFeed()))
     {
         feed->rewriteFile();

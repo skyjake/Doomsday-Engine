@@ -62,7 +62,7 @@ public:
      * manual flushing this occurs automatically when the root ArchiveFeed
      * instance is deleted.
      */
-    void flush() override;
+    void release() const override;
 
     Block metaId() const override;
 

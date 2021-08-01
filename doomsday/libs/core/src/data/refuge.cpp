@@ -82,7 +82,7 @@ void Refuge::write() const
         Writer(App::mutablePersistentData().entryBlock(d->persistentPath)).withHeader()
             << d->names;
 
-        App::persistPackFolder().flush();
+        App::persistPackFolder().release();
     }
 }
 

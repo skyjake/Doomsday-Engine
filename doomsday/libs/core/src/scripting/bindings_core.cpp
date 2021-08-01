@@ -183,7 +183,7 @@ static Value *Function_File_Write(Context &ctx, const Function::ArgumentValues &
 
 static Value *Function_File_Flush(Context &ctx, const Function::ArgumentValues &)
 {
-    fileInstance(ctx).flush();
+    fileInstance(ctx).release();
     return nullptr;
 }
 

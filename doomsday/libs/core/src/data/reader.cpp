@@ -22,6 +22,7 @@
 #include "de/block.h"
 #include "de/iserializable.h"
 #include "de/iistream.h"
+#include "de/file.h"
 #include "de/fixedbytearray.h"
 #include "de/byterefarray.h"
 #include "de/byteorder.h"
@@ -70,6 +71,14 @@ DE_PIMPL_NOREF(Reader)
         upgradeToByteArray();
     }
 
+    ~Impl()
+    {
+        if (const File *f = maybeAs<File>(source))
+        {
+            f->release();
+        }
+    }
+    
     /**
      * Byte arrays provide more freedom with reading. If the streaming object
      * happens to support the byte array interface, Reader will use it instead.

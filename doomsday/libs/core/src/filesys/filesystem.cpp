@@ -314,7 +314,7 @@ File &FileSystem::copySerialized(const String &sourcePath, const String &destina
 
     File *dest = &fs.root().replaceFile(destinationPath);
     *dest << contents;
-    dest->flush();
+    dest->release();
 
     if (behavior & ReinterpretDestination)
     {

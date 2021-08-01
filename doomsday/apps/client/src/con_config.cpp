@@ -177,8 +177,6 @@ static bool writeConsoleState(const Path &filePath)
 
         out.writeText("\n#\n# ALIASES\n#\n\n");
         writeAliasesToFile(out);
-
-        file.flush();
     }
     catch (const Error &er)
     {
@@ -244,8 +242,6 @@ static bool writeBindingsState(const Path &filePath)
 
             return LoopContinue;
         });
-
-        file.flush();
         return true;
     }
     catch (const Error &er)

@@ -41,7 +41,7 @@ void FileLogSink::flush()
 {
     if (_file)
     {
-        _file->flush();
+        _file->release();
     }
 }
 
