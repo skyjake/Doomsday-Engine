@@ -79,13 +79,13 @@ static Value *Function_Thing_State(Context &ctx, const Function::ArgumentValues 
 
 static Value *Function_Thing_Angle(Context &ctx, const Function::ArgumentValues &)
 {
-    const auto &mo = World::get().contextMobj(ctx);
+    const auto &mo = ClientServerWorld::contextMobj(ctx);
     return new NumberValue(double(mo.angle) / double(ANGLE_MAX) * 360.0);
 }
 
 static Value *Function_Thing_SetAngle(Context &ctx, const Function::ArgumentValues &args)
 {
-    mobj_t &mo = World::contextMobj(ctx);
+    mobj_t &mo = ClientServerWorld::contextMobj(ctx);
     mo.angle = angle_t(args.at(0)->asNumber() / 360.0 * ANGLE_MAX);
     return nullptr;
 }
