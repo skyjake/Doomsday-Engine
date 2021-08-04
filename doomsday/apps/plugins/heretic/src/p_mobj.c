@@ -1104,13 +1104,13 @@ void P_MobjThinker(void *thinkerPtr)
             return;
         }
     }
-
+    
+    P_MobjAngleSRVOTicker(mobj); // "angle-servo"; smooth actor turning.
+    
     // Cycle through states, calling action functions at transitions.
     if (mobj->tics != -1)
     {
         mobj->tics--;
-
-        P_MobjAngleSRVOTicker(mobj); // "angle-servo"; smooth actor turning.
 
         // You can cycle through multiple states in a tic.
         if (!mobj->tics)
