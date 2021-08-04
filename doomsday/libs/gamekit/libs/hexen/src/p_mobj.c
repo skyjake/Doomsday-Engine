@@ -1082,12 +1082,13 @@ void P_MobjThinker(void *thinkerPtr)
             return;
         }
     }
-
+    
+    P_MobjAngleSRVOTicker(mobj);
+    
     // Cycle through states, calling action functions at transitions.
     if(mobj->tics != -1)
     {
         mobj->tics--;
-        P_MobjAngleSRVOTicker(mobj);
         // You can cycle through multiple states in a tic.
         while(!mobj->tics)
         {
