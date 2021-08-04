@@ -520,7 +520,8 @@ enum { MX, MY, MZ };
     int             flags2;\
     int             flags3;\
     int             health;\
-    mobjinfo_t     *info; /* &mobjinfo[mobj->type] */
+    mobjinfo_t     *info; /* &mobjinfo[mobj->type] */\
+    int             mapSpotNum; /* map spot number that spawned this, or -1 */
 
 /// Base Polyobj elements. Games MUST use this as the basis for Polyobj. @ingroup world
 #define DD_BASE_POLYOBJ_ELEMENTS() \

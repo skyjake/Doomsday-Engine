@@ -130,6 +130,11 @@ static Value *Function_Thing_Id(Context &ctx, const Function::ArgumentValues &)
     return new NumberValue(ClientServerWorld::contextMobj(ctx).thinker.id);
 }
 
+static Value *Function_Thing_MapSpotNum(Context &ctx, const Function::ArgumentValues &)
+{
+    return new NumberValue(ClientServerWorld::contextMobj(ctx).mapSpotNum);
+}
+
 static Value *Function_Thing_Health(Context &ctx, const Function::ArgumentValues &)
 {
     return new NumberValue(ClientServerWorld::contextMobj(ctx).health);
@@ -219,6 +224,7 @@ void initBindings(Binder &binder, Record &worldModule)
                 << DENG2_FUNC      (Thing_ChangeFlags,"changeFlags", "index" << "flags" << "doSet")
                 << DENG2_FUNC      (Thing_Flags,      "flags", "index")
                 << DENG2_FUNC_NOARG(Thing_Id,         "id")
+                << DE_FUNC_NOARG   (Thing_MapSpotNum, "mapSpotNum")
                 << DENG2_FUNC_NOARG(Thing_Health,     "health")
                 << DENG2_FUNC_NOARG(Thing_Height,     "height")
                 << DENG2_FUNC_NOARG(Thing_Mom,        "mom")
