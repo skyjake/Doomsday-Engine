@@ -601,6 +601,8 @@ static void spawnMapObjects()
 
             if(mobj_t *mo = P_SpawnMobj(type, spot->origin, spot->angle, spot->flags))
             {
+                mo->mapSpotNum = i;
+                
                 if(mo->tics > 0)
                     mo->tics = 1 + (P_Random() % mo->tics);
 

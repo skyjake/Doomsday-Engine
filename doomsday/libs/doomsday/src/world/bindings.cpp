@@ -127,6 +127,11 @@ static Value *Function_Thing_Id(Context &ctx, const Function::ArgumentValues &)
     return new NumberValue(World::contextMobj(ctx).thinker.id);
 }
 
+static Value *Function_Thing_MapSpotNum(Context &ctx, const Function::ArgumentValues &)
+{
+    return new NumberValue(World::contextMobj(ctx).mapSpotNum);
+}
+
 static Value *Function_Thing_Health(Context &ctx, const Function::ArgumentValues &)
 {
     return new NumberValue(World::contextMobj(ctx).health);
@@ -201,6 +206,7 @@ void initBindings(Binder &binder, Record &worldModule)
                 << DE_FUNC      (Thing_Flags,      "flags", "index")
                 << DE_FUNC_NOARG(Thing_Id,         "id")
                 << DE_FUNC_NOARG(Thing_Health,     "health")
+                << DE_FUNC_NOARG(Thing_MapSpotNum, "mapSpotNum")
                 << DE_FUNC_NOARG(Thing_Height,     "height")
                 << DE_FUNC_NOARG(Thing_Mom,        "mom")
                 << DE_FUNC_NOARG(Thing_Player,     "player")

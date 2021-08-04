@@ -61,6 +61,7 @@ mobj_t *P_MobjCreate(thinkfunc_t function, const Vec3d &origin, angle_t angle,
     mob->height   = height;
     mob->ddFlags  = ddflags;
     mob->lumIdx   = -1;
+    mob->mapSpotNum = -1; // unknown
     mob->thinker.function = function;
     Mobj_Map(*mob).thinkers().add(mob->thinker);
 
