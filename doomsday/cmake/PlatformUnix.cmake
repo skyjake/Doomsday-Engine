@@ -29,7 +29,7 @@ else ()
 endif ()
 
 if (CMAKE_COMPILER_IS_GNUCXX)
-    foreach (cxxOpt -Wno-deprecated-copy;-Wno-class-memaccess;-Wno-address-of-packed-member)
+    foreach (cxxOpt -Wno-deprecated-declarations;-Wno-deprecated-copy;-Wno-class-memaccess;-Wno-address-of-packed-member)
         append_unique (CMAKE_CXX_FLAGS ${cxxOpt})
     endforeach (cxxOpt)
 
