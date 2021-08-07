@@ -1237,7 +1237,9 @@ bool DataBundle::identifyPackages() const
     LOG_AS("DataBundle");
     try
     {
-        return d->identify();
+        const bool ok = d->identify();
+        asFile().release();
+        return ok;
     }
     catch (const Error &er)
     {

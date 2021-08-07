@@ -257,7 +257,7 @@ void GameWidget::renderCubeMap(uint size, const String &outputImagePath)
 
         File &outFile = FS::get().root().replaceFile(uniquePath);
         outFile << buf;
-        outFile.flush();
+        outFile.release();
 
         LOG_GL_MSG("Cube map saved to \"%s\"") << outFile.correspondingNativePath();
     }

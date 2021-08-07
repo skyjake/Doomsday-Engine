@@ -288,7 +288,7 @@ DE_PIMPL(Bank)
                 Writer(*serial).withHeader()
                         << source->modifiedAt()
                         << *data->asSerializable();
-                serial->flush();
+                serial->release();
             }
             catch (...)
             {

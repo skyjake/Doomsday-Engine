@@ -75,7 +75,7 @@ File::~File()
 
     DE_NOTIFY(Deletion, i) i->fileBeingDeleted(*this);
 
-    flush();
+    release();
     if (d->source != this)
     {
         // If we own a source, get rid of it.
@@ -95,8 +95,14 @@ void File::deindex()
     fileSystem().deindex(*this);
 }
 
-void File::flush()
-{}
+void File::release() const
+{
+    const File *src = source();
+    if (src != this)
+    {
+        src->release();
+    }
+}
 
 void File::clear()
 {
@@ -283,7 +289,7 @@ void File::setMode(const Flags &newMode)
     // Implicitly flush the file before switching away from write mode.
     if (d->mode.testFlag(Write) && !newMode.testFlag(Write))
     {
-        flush();
+        release();
     }
 
     if (this != d->source)
@@ -349,7 +355,7 @@ File *File::reinterpret()
         deindex();
     }
 
-    original->flush();
+    original->release();
     File *result = fileSystem().interpret(original);
 
     // The interpreter should use whatever origin feed the file was previously using.

@@ -178,7 +178,7 @@ void RemoteFile::download()
             File &data = cacheFolder.replaceFile(fn);
             data << d->buffer;
             d->buffer.clear();
-            data.flush();
+            data.release();
 
             // Override the last modified time.
             {

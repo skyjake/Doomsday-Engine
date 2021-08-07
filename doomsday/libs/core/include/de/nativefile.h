@@ -53,7 +53,7 @@ public:
     Block metaId() const;
 
     void clear();
-    void flush();
+    void release() const;
 
     /**
      * Returns the native path of the file.

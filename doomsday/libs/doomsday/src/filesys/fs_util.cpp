@@ -506,7 +506,7 @@ dd_bool F_DumpFile(File1 &file, const char *outputPath)
     {
         File &out = App::rootFolder().replaceFile(dumpPath);
         out << Block(file.cache(), file.info().size);
-        out.flush();
+        out.release();
         file.unlock();
         LOG_RES_VERBOSE("%s dumped to %s") << file.name() << out.description();
         return true;

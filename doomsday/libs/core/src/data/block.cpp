@@ -42,6 +42,11 @@ Block::Block(const IByteArray &other)
     other.get(0, data(), num);
     // Ensure it's null-terminated.
     data()[num] = 0;
+    if (const File *f = maybeAs<File>(other))
+    {
+        // We are done with this file.
+        f->release();
+    }
 }
 
 Block::Block(const Block &other)
@@ -126,6 +131,11 @@ void Block::copyFrom(const IByteArray &array, Offset at, Size count)
     // Read the other's data directly into our data buffer.
     resize(count);
     array.get(at, data(), count);
+    if (const File *f = maybeAs<File>(array))
+    {
+        // We are done with this file.
+        f->release();
+    }
 }
 
 void Block::resize(Size size)

@@ -51,7 +51,7 @@ public:
 
     virtual ~ArchiveFolder();
 
-    void flush();
+    void release() const;
 
     String describe() const;
 

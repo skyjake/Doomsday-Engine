@@ -39,6 +39,9 @@ class IIStream;
  * a IByteArray or IIStream interface). Byte order defaults to little-endian
  * but can be changed to big-endian.
  *
+ * When a Reader is destroyed, the source file is automatically released,
+ * if there is one.
+ *
  * Note about versioning: readers must be prepared to support old versions of
  * the serialization protocol in addition to the latest one for backwards
  * compatibility.

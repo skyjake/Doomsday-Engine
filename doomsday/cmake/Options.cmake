@@ -13,6 +13,7 @@ endif ()
 
 option (DE_ENABLE_TURBO      "Enable Turbo build: merge sources for faster build (avoid when debugging)" ${DE_ENABLE_TURBO_DEFAULT})
 option (DE_ENABLE_GUI        "Enable the client app and all GUI related functionality" ON)
+option (DE_ENABLE_SHELL      "Enable the Shell GUI app" ON)
 option (DE_ENABLE_GLOOM      "Enable use of libgloom for client rendering" OFF)
 option (DE_ENABLE_GLOOMED    "Enable the Gloom Editor app" OFF)
 option (DE_ENABLE_SERVER     "Enable the server app" ON)

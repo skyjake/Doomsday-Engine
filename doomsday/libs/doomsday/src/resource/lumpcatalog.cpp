@@ -43,17 +43,25 @@ DE_PIMPL(LumpCatalog)
         , packageIds(other.packageIds)
         , bundles(other.bundles)
     {}
+    
+    ~Impl()
+    {
+        for (const auto *bundle : bundles)
+        {
+            bundle->asFile().release();
+        }
+    }
 
     void clear()
     {
         packageIds.clear();
         bundles.clear();
     }
-
+    
     void updateBundles()
     {
         bundles.clear();
-
+        
         for (const auto &pkg : packageIds)
         {
             // The package must be available as a file.

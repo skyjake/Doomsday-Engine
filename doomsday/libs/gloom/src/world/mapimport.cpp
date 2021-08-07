@@ -438,7 +438,7 @@ void MapImport::exportPackage(const String &packageRootPath) const
                      "@include <maps.dei>\n";
         // TODO: Include all information known about the map based on the WAD file, etc.
         f << dei.toUtf8();
-        f.flush();
+        f.release();
     }
 
     // Maps included in the pacakge.
@@ -452,14 +452,14 @@ void MapImport::exportPackage(const String &packageRootPath) const
                              d->metersPerUnit.x, d->metersPerUnit.y, d->metersPerUnit.z) +
                      "\n}\n";
         f << dei.toUtf8();
-        f.flush();
+        f.release();
     }
 
     // The map itself.
     {
         File &f = maps.replaceFile(d->mapId + ".gloommap");
         f << d->map.serialize();
-        f.flush();
+        f.release();
     }
 
     // Source index lookup tables.
@@ -474,7 +474,7 @@ void MapImport::exportPackage(const String &packageRootPath) const
         std::ostringstream os;
         os << lut;
         f << String(os.str()).toUtf8();
-        f.flush();
+        f.release();
     }
 
     // Materials used in the map.
@@ -522,7 +522,7 @@ void MapImport::exportPackage(const String &packageRootPath) const
 
         File &f = root.replaceFile("materials.dei");
         f << String(os.str());
-        f.flush();
+        f.release();
     }
 }
 

@@ -40,6 +40,9 @@ class IOStream;
  * array object (anything with a IByteArray interface). Defaults to
  * little-endian byte order.
  *
+ * When a Writer is destroyed, the destination file is automatically released,
+ * if there is one.
+ *
  * Note about versioning: when instructed to include a header, Writer always
  * uses the latest version of serialization.
  *

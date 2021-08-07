@@ -84,6 +84,7 @@ static Value *Function_Thing_SetAngle(Context &ctx, const Function::ArgumentValu
 {
     mobj_t &mo = World::contextMobj(ctx);
     mo.angle = angle_t(args.at(0)->asNumber() / 360.0 * ANGLE_MAX);
+    mo.visAngle = mo.angle >> 16;
     return nullptr;
 }
 
@@ -125,6 +126,11 @@ static Value *Function_Thing_Flags(Context &ctx, const Function::ArgumentValues 
 static Value *Function_Thing_Id(Context &ctx, const Function::ArgumentValues &)
 {
     return new NumberValue(World::contextMobj(ctx).thinker.id);
+}
+
+static Value *Function_Thing_MapSpotNum(Context &ctx, const Function::ArgumentValues &)
+{
+    return new NumberValue(World::contextMobj(ctx).mapSpotNum);
 }
 
 static Value *Function_Thing_Health(Context &ctx, const Function::ArgumentValues &)
@@ -201,6 +207,7 @@ void initBindings(Binder &binder, Record &worldModule)
                 << DE_FUNC      (Thing_Flags,      "flags", "index")
                 << DE_FUNC_NOARG(Thing_Id,         "id")
                 << DE_FUNC_NOARG(Thing_Health,     "health")
+                << DE_FUNC_NOARG(Thing_MapSpotNum, "mapSpotNum")
                 << DE_FUNC_NOARG(Thing_Height,     "height")
                 << DE_FUNC_NOARG(Thing_Mom,        "mom")
                 << DE_FUNC_NOARG(Thing_Player,     "player")

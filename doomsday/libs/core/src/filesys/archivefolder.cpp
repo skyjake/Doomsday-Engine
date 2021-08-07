@@ -34,9 +34,9 @@ ArchiveFolder::~ArchiveFolder()
     deindex();
 }
 
-void ArchiveFolder::flush()
+void ArchiveFolder::release() const
 {
-    Folder::flush();
+    Folder::release();
     primaryFeed()->as<ArchiveFeed>().rewriteFile();
 }
 

@@ -131,7 +131,6 @@ DE_PIMPL(ArchiveFeed)
 
             file->clear();
             Writer(*file) << *arch;
-            file->flush();
         }
         else
         {

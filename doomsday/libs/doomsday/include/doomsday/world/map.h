@@ -303,6 +303,20 @@ public:
      * to re-link).
      */
     virtual int unlink(struct mobj_s &mob);
+    
+    /**
+     * When map objects are being created, they will be associated with the map spot number
+     * specified with this method. @a mapSpotNum should be set to -1 to disassociate further
+     * spawning from any map spot.
+     *
+     * This Map-wide value exists because the map object creation APIs do not take a map spot
+     * as argument, and adding this argument would have an impact on many functions. Also, mobj
+     * creation is libdoomsday's responsibility, while only the game knows when map spots are
+     * being spawned.
+     */
+    void setCurrentMapSpot(int mapSpotNum);
+    
+    int currentMapSpot(void);
 
 //- Vertices --------------------------------------------------------------------------------------
 

@@ -273,7 +273,7 @@ void Profiles::serialize() const
     // Create the pack and update the file system.
     File &outFile = App::rootFolder().replaceFile(d->fileName());
     outFile << Block(os.str());
-    outFile.flush(); // we're done
+    outFile.release(); // we're done
 
     LOG_VERBOSE("Wrote \"%s\" with %i profile%s")
             << d->fileName() << count << (count != 1? "s" : "");

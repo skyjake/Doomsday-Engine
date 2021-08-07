@@ -63,7 +63,7 @@ class Feed;
  * Subclasses have some special requirements for their destructors:
  * - deindex() must be called in all subclass destructors so that the instances indexed
  *   under the subclasses' type are removed from the file system's index, too.
- * - The file must be automatically flushed before it gets destroyed (see flush()).
+ * - The file must be automatically flushed before it gets destroyed (see release()).
  * - The deletion audience must be notified and @c audienceForDeletion must be cleared
  *   afterwards.
  *
@@ -148,14 +148,21 @@ public:
      * Remove this file from its file system's index.
      */
     virtual void deindex();
-
+    
     /**
-     * Commits any buffered changes to the content of the file. All subclasses of File
-     * must make sure they flush themselves right before they get deleted. Subclasses
-     * must also flush themselves when a file in write mode is changed to read-only mode,
-     * if necessary.
+     * Commits any buffered changes to the content of the file and releases any internal
+     * buffers and temporary resources.
+     *
+     * All subclasses of File must make sure they release themselves right before they get
+     * deleted. Subclasses must also release themselves when a file in write mode is changed
+     * to read-only mode, if necessary.
+     *
+     * For example, native files need to close their native file handles. This should always
+     * be called after one is finished reading or writing a file, so resources are not
+     * needlessly kept around. However, if this is called too early, the file may need to
+     * reopen handles and reallocate buffers, degrading performance.
      */
-    virtual void flush();
+    virtual void release() const;
 
     /**
      * Empties the contents of the file.
