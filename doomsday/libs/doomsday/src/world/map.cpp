@@ -152,6 +152,7 @@ DE_PIMPL(Map)
     //
     // Map entities and element properties (things, line specials, etc...).
     //
+    int                       currentMapSpotNum = -1;
     EntityDatabase            entityDatabase;
     std::unique_ptr<Thinkers> thinkers;
     std::unique_ptr<Sky>      sky;
@@ -182,6 +183,8 @@ DE_PIMPL(Map)
     
     void clearData()
     {
+        currentMapSpotNum = -1;
+        
         // Delete thinkers before the map elements, because thinkers may reference them
         // in their private data destructors.
         thinkers.reset();
@@ -2424,6 +2427,16 @@ void Map::restoreObjects(const Info &objState, const world::IThinkerMapping &thi
     {
         LOGDEV_MAP_MSG("State of map objects has been restored");
     }
+}
+
+void Map::setCurrentMapSpot(int mapSpotNum)
+{
+    d->currentMapSpotNum = mapSpotNum;
+}
+
+int Map::currentMapSpot(void)
+{
+    return d->currentMapSpotNum;
 }
 
 void Map::initDummyElements() // static
