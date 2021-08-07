@@ -91,7 +91,7 @@ deng_link_libraries (libgui PUBLIC DengCore)
 target_link_libraries (libgui PRIVATE SDL2 stb assimp)
 if (NOT DE_HAVE_OPENGL_ES)
     target_compile_definitions (libgui PRIVATE DE_GLBINDING_VERSION=${DE_GLBINDING_VERSION})
-    target_link_libraries (libgui PUBLIC glbinding::glbinding)    
+    target_link_libraries (libgui PUBLIC glbinding::glbinding)
 endif ()
 if (WIN32)
     target_link_libraries (libgui PUBLIC opengl32.lib)
@@ -132,8 +132,7 @@ if (MSYS)
         DESTINATION bin
         COMPONENT client
     )
-endif ()
-if (CYGWIN)
+elseif (CYGWIN)
     install (
         PROGRAMS ${ASSIMP_ROOT_DIR}/bin/cygassimp-4.dll
                  ${glbinding_DIR}/cygglbinding-2.dll

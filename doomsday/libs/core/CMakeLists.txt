@@ -99,8 +99,7 @@ endif ()
 if (MSYS)
     install (PROGRAMS ${the_Foundation_DIR}/../../msys-Foundation.dll
              DESTINATION bin)
-endif ()
-if (CYGWIN)
+elseif (CYGWIN)
     install (PROGRAMS ${the_Foundation_DIR}/../../cyg_Foundation.dll
              DESTINATION bin)
 endif ()
