@@ -87,6 +87,7 @@ static Value *Function_Thing_SetAngle(Context &ctx, const Function::ArgumentValu
 {
     mobj_t &mo = ClientServerWorld::contextMobj(ctx);
     mo.angle = angle_t(args.at(0)->asNumber() / 360.0 * ANGLE_MAX);
+    mo.visAngle = mo.angle >> 16;
     return nullptr;
 }
 
