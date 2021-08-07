@@ -26,6 +26,7 @@
 #include <the_Foundation/thread.h> // debug prints
 #include <iostream>
 #include <deque>
+#include <atomic>
 
 namespace de {
 

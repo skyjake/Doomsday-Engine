@@ -487,7 +487,7 @@ ddstring_t *Str_StripLeft2(ddstring_t *str, int *count)
     num = 0;
     while (i < (int)str->length && !isDone)
     {
-        if (isspace(str->str[i]))
+        if (isspace((int)str->str[i]))
         {
             num++;
             i++;
@@ -528,14 +528,14 @@ ddstring_t *Str_StripRight2(ddstring_t *str, int *count)
 
     i = str->length - 1;
     num = 0;
-    if (isspace(str->str[i]))
+    if (isspace((int)str->str[i]))
     do
     {
         // Remove this char.
         num++;
         str->str[i] = '\0';
         str->length--;
-    } while (i != 0 && isspace(str->str[--i]));
+    } while (i != 0 && isspace((int)str->str[--i]));
 
     if (count) *count = num;
     return str;
@@ -645,7 +645,7 @@ char const *Str_CopyDelim2(ddstring_t *str, char const *src, char delimiter, int
     ddstring_t buf; Str_Init(&buf);
     for (cursor = src; *cursor && *cursor != delimiter; ++cursor)
     {
-        if ((cdflags & CDF_OMIT_WHITESPACE) && isspace(*cursor))
+        if ((cdflags & CDF_OMIT_WHITESPACE) && isspace((int)*cursor))
             continue;
         Str_PartAppend(&buf, cursor, 0, 1);
     }

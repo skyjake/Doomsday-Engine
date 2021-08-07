@@ -109,7 +109,7 @@ void M_StripLeft(char* str)
     len = strlen(str);
     // Count leading whitespace characters.
     num = 0;
-    while (num < len && isspace(str[num]))
+    while (num < len && isspace((int)str[num]))
         ++num;
     if (0 == num) return;
 
@@ -125,7 +125,7 @@ void M_StripRight(char* str, size_t len)
     if (NULL == str || 0 == len) return;
 
     end = str + strlen(str) - 1;
-    while (end >= str && isspace(*end))
+    while (end >= str && isspace((int)*end))
     {
         end--;
         numZeroed++;
