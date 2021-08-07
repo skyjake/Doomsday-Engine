@@ -25,6 +25,8 @@
 
 #include <doomsday/world/entitydef.h>
 #include <gamefw/mapspot.h>
+#include <doomsday/world/map.h>
+#include <doomsday/world/world.h>
 #include <de/Script>
 #include <de/Process>
 
@@ -569,9 +571,12 @@ mapspot_t const *P_ChooseRandomMaceSpot()
 
 static void spawnMapObjects()
 {
+    auto &map = World::get().map();
+    
     for(uint i = 0; i < numMapSpots; ++i)
     {
         mapspot_t const *spot = &mapSpots[i];
+        map.setCurrentMapSpot(i);
 
         // Not all map spots spawn mobjs on map load.
         if(!checkMapSpotAutoSpawn(spot))
@@ -601,7 +606,7 @@ static void spawnMapObjects()
 
             if(mobj_t *mo = P_SpawnMobj(type, spot->origin, spot->angle, spot->flags))
             {
-                mo->mapSpotNum = i;
+                DE_ASSERT(mo->mapSpotNum == i);
                 
                 if(mo->tics > 0)
                     mo->tics = 1 + (P_Random() % mo->tics);
@@ -673,6 +678,8 @@ static void spawnMapObjects()
         }
     }
 #endif
+
+    map.setCurrentMapSpot(-1);
 
 #if __JHEXEN__
     P_CreateTIDList();

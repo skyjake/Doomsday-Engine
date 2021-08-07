@@ -29,6 +29,7 @@ DENG2_PIMPL(BaseMap)
 {
     EntityDatabase entityDatabase;
     res::MapManifest *manifest = nullptr;  ///< Not owned, may be @c nullptr.
+    int currentMapSpotNum = -1;
 
     Impl(Public *i) : Base(i)
     {}
@@ -101,5 +102,15 @@ void BaseMap::serializeInternalState(Writer &) const
 
 void BaseMap::deserializeInternalState(Reader &, IThinkerMapping const &)
 {}
+
+void BaseMap::setCurrentMapSpot(int mapSpotNum)
+{
+    d->currentMapSpotNum = mapSpotNum;
+}
+
+int BaseMap::currentMapSpot(void)
+{
+    return d->currentMapSpotNum;
+}
 
 }  // namespace world
