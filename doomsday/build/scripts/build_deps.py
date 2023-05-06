@@ -43,7 +43,7 @@ for fmt in FORMATS:
 dependencies = [
     (
         'the_Foundation',
-        'https://git.skyjake.fi/skyjake/the_Foundation.git', 'origin/master',
+        'https://git.skyjake.fi/skyjake/the_Foundation.git', 'origin/main',
         [UNISTRING_DIR,
          '-DTFDN_ENABLE_DEBUG_OUTPUT=YES',
          '-DTFDN_ENABLE_TLSREQUEST=NO',
