@@ -12,6 +12,8 @@ IS_CYGWIN = platform.system().startswith('CYGWIN_NT')
 IS_MSYS   = os.getenv('MSYSTEM') == 'MSYS'
 IS_MINGW  = os.getenv('MSYSTEM') == 'MINGW64'
 
+build_foundation = build_assimp = build_glbinding = True
+
 PATCH_DIR = os.path.abspath(os.path.dirname(__file__))
 
 if IS_MSYS:
@@ -69,7 +71,7 @@ dependencies = [
     )
 ]
 
-if IS_MACOS: del dependencies[2] # using glbinding from Homebrew
+if IS_MACOS: build_glbinding = False # using glbinding from Homebrew
 
 import shutil
 import subprocess
@@ -111,6 +113,12 @@ while idx < len(sys.argv):
     elif opt == '-d':
         idx += 1
         cfg['build_dir'] = os.path.abspath(sys.argv[idx])
+    elif opt == '--skip-foundation':
+        build_foundation = False
+    elif opt == '--skip-assimp':
+        build_assimp = False
+    elif opt == '--skip-glbinding':
+        build_glbinding = False
     else:
         raise Exception('Unknown option: ' + opt)
     idx += 1
@@ -120,14 +128,17 @@ if not do_build and show_help:
 Usage: build_deps.py [opts] [commands] build-dir
 
 Commands:
-  build           Build using existing config.
-  clean           Clean the build directory.
+  build             Build using existing config.
+  clean             Clean the build directory.
 
 Options:
-  -G <generator>  Use CMake <generator> when configuring build.
-  -t <type>       Set CMake build type (e.g., Release).
-  -d <dir>        Set build directory.
-  --help          Show this help.
+  -G <generator>    Use CMake <generator> when configuring build.
+  -t <type>         Set CMake build type (e.g., Release).
+  -d <dir>          Set build directory.
+  --help            Show this help.
+  --skip-foundation Do not build the_Foundation library
+  --skip-assimp     Do not build Open Asset Importer library
+  --skip-glbinding  Do not build glbinding library
 """)
     print_config(cfg)
     exit(0)
@@ -146,6 +157,15 @@ if do_clean and os.path.exists(PRODUCTS_DIR):
     print("Deleting:", PRODUCTS_DIR)
     shutil.rmtree(PRODUCTS_DIR)
 os.makedirs(PRODUCTS_DIR, exist_ok=True)
+
+if not build_glbinding:
+  del dependencies[2]
+
+if not build_assimp:
+  del dependencies[1]
+
+if not build_foundation:
+  del dependencies[0]
 
 for long_name, git_url, git_tag, cmake_opts in dependencies:
     name = os.path.splitext(os.path.basename(git_url))[0]

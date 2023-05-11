@@ -221,6 +221,16 @@ endif()
 target_link_libraries (client PUBLIC doomsdaygui)
 deng_link_libraries (client PUBLIC DengGui DengDoomsday DengGameKit DengGloom)
 
+if (DE_USE_SYSTEM_GLBINDING)
+  target_link_libraries (client PUBLIC glbinding)
+  deng_link_libraries (client PUBLIC glbinding)
+endif()
+
+if (DE_USE_SYSTEM_ASSIMP)
+  target_link_libraries (client PUBLIC assimp)
+  deng_link_libraries (client PUBLIC assimp)
+endif()
+
 # Extensions ----------------------------------------------------------------------------
 
 target_link_libraries (client PRIVATE importsave)
