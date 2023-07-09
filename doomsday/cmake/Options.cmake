@@ -21,6 +21,8 @@ option (DE_ENABLE_SDK        "Enable installation of the Doomsday SDK" OFF)
 option (DE_ENABLE_TESTS      "Enable tests" OFF)
 option (DE_ENABLE_TOOLS      "Enable tools" ON)
 option (DE_ENABLE_DEPLOYMENT "Enable deployment of all dependencies" ON)
+option (DE_USE_SYSTEM_ASSIMP "Use system-provided assimp library" OFF)
+option (DE_USE_SYSTEM_GLBINDING "Use system-provided glbinding library" OFF)
 option (DE_FIXED_ASM
     "Use inline assembler for fixed-point math"
     ${DE_FIXED_ASM_DEFAULT}

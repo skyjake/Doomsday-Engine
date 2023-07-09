@@ -91,7 +91,11 @@ deng_link_libraries (libgui PUBLIC DengCore)
 target_link_libraries (libgui PRIVATE SDL2 stb assimp)
 if (NOT DE_HAVE_OPENGL_ES)
     target_compile_definitions (libgui PRIVATE DE_GLBINDING_VERSION=${DE_GLBINDING_VERSION})
-    target_link_libraries (libgui PUBLIC glbinding::glbinding)
+    if (DE_USE_SYSTEM_GLBINDING)
+        target_link_libraries (libgui PUBLIC glbinding)
+    else ()
+        target_link_libraries (libgui PUBLIC glbinding::glbinding)
+    endif ()
 endif ()
 if (WIN32)
     target_link_libraries (libgui PUBLIC opengl32.lib)
@@ -140,11 +144,17 @@ elseif (CYGWIN)
         COMPONENT client
     )
 endif ()
-if (UNIX_LINUX)
+if (UNIX_LINUX AND NOT DE_USE_SYSTEM_ASSIMP)
     install (
         FILES ${ASSIMP_ROOT_DIR}/lib/libassimp.so.4
               ${ASSIMP_ROOT_DIR}/lib/libassimp.so.4.1.0
-              ${glbinding_DIR}/lib/libglbinding.so.2
+        DESTINATION ${DE_INSTALL_LIB_DIR}
+        COMPONENT client
+    )
+endif ()
+if (UNIX_LINUX AND NOT DE_USE_SYSTEM_GLBINDING)
+    install (
+        FILES ${glbinding_DIR}/lib/libglbinding.so.2
               ${glbinding_DIR}/lib/libglbinding.so.2.1.4
         DESTINATION ${DE_INSTALL_LIB_DIR}
         COMPONENT client
