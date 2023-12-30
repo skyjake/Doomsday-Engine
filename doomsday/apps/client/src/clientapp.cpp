@@ -626,7 +626,8 @@ ClientApp::ClientApp(const StringList &args)
     // Show the splash image in a separate window.
 #if !defined (DE_MSYS)
     {
-        SDL_Surface *splashSurface = createSDLSurfaceFromImage(Image::fromXpmData(doomsdaySplashXpm));
+        const Image splashImage = Image::fromXpmData(doomsdaySplashXpm);
+        SDL_Surface *splashSurface = createSDLSurfaceFromImage(splashImage);
 
         d->splashWindow =
             SDL_CreateWindow(DOOMSDAY_NICENAME,
