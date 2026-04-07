@@ -1,8 +1,0 @@
-########========-------- BARREL --------========########
-
-Model {
-  State = "BARREL";
-  Flags = "df_autoscale";
-  Shadow radius = 25;
-  Md2 { File = "Decor/Barrel/Barrel.md2"; Frame = "resting1"; };
-}

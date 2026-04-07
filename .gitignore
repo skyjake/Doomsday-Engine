@@ -7,7 +7,6 @@ Session.vim
 .DS_Store
 ._*
 macx_release_build
-/doomsday/build/win32/license.txt
 *.user.*
 *.user
 *-build-*
@@ -21,8 +20,6 @@ server-runtime
 client-runtime
 Zcustom.conf
 .web.manifest
-doxyissues-*.txt
-doomsday/apidoc/api2
 /distrib/win32/vcredist_x86.exe
 Makefile.Debug
 Makefile.Release
@@ -40,6 +37,12 @@ precompiled.h.cpp
 .vscode
 .vsbuild
 compile_commands.json
+Doomsday.tmproj
+mybuild
+myrelease
+.kdev4
+*.kdev4
+apidoc-qch
 /products
 /debian
 /build
