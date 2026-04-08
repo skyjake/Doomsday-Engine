@@ -71,6 +71,8 @@ using namespace de;
 static dd_bool     reboundPacket;
 static netbuffer_t reboundStore;
 
+static int netDev; ///< @c 1= developer/debug mode for networking.
+
 #ifdef __CLIENT__
 static int coordTimer;
 #endif
@@ -809,6 +811,7 @@ D_CMD(Ping);  // net_ping.cpp
 
 void Net_Register()
 {
+    C_VAR_INT   ("net-dev",             &netDev,                           0, 0, 1);
 #ifdef DE_DEBUG
     C_VAR_FLOAT ("net-dev-latency",     &netState.simulatedLatencySeconds, CVF_NO_MAX, 0, 0);
 #endif
