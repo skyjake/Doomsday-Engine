@@ -318,7 +318,11 @@ function (deng_add_package packName)
         )
     endif ()
     # The package target is used for dependency tracking and deployment.
-    add_custom_target (${packName} SOURCES ${packSrc} ${outDir}/${outName})
+    if (NOT CMAKE_GENERATOR STREQUAL "Xcode")
+        add_custom_target (${packName} DEPENDS ${outDir}/${outName} SOURCES ${packSrc})
+    else ()
+        add_custom_target (${packName} SOURCES ${packSrc})
+    endif ()
     set_target_properties (${packName} PROPERTIES
         DE_LOCATION "${outDir}/${outName}"
         FOLDER Packages
@@ -569,6 +573,12 @@ function (deng_add_application target)
     if (WIN32)
         set_property (TARGET ${target} PROPERTY WIN32_EXECUTABLE ON)
     endif ()
+    # Ensure package targets are built before the application.
+    foreach (pkg ${DE_REQUIRED_PACKAGES})
+        if (TARGET ${pkg})
+            add_dependencies (${target} ${pkg})
+        endif ()
+    endforeach ()
     deng_target_defaults (${target})
     set_property (TARGET ${target} PROPERTY FOLDER Apps)
     if (target MATCHES "test_.*")
