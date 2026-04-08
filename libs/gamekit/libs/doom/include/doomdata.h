@@ -27,8 +27,7 @@
  * doomdata.h: Thing and line attributes.
  */
 
-#ifndef __DOOMDATA__
-#define __DOOMDATA__
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -78,4 +77,3 @@ enum {
 #define SPAC_USE                1 // Player uses line.
 #define SPAC_IMPACT             3 // Projectile hits line.
 
-#endif

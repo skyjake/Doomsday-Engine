@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_THREAD_H
-#define LIBCORE_THREAD_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/time.h"
@@ -60,4 +59,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_THREAD_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_TEXTCANVAS_H
-#define LIBSHELL_TEXTCANVAS_H
+#pragma once
 
 #include "../ilinewrapping.h"
 #include "../vector.h"
@@ -215,4 +214,3 @@ private:
 
 }} // namespace de::term
 
-#endif // LIBSHELL_TEXTCANVAS_H

@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_THINKER_SCROLL_H
-#define LIBCOMMON_THINKER_SCROLL_H
+#pragma once
 
 #include "doomsday.h"
 #ifdef __cplusplus
@@ -54,4 +53,3 @@ scroll_t *P_SpawnSectorMaterialOriginScroller(Sector *sector, uint planeId, shor
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_THINKER_SCROLL_H

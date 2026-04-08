@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_NAMEEXPRESSION_H
-#define LIBCORE_NAMEEXPRESSION_H
+#pragma once
 
 #include "expression.h"
 #include "de/string.h"
@@ -67,4 +66,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_NAMEEXPRESSION_H */

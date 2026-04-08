@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_BITARRAY_H
-#define LIBCORE_BITARRAY_H
+#pragma once
 
 #include "de/libcore.h"
 #include <vector>
@@ -56,4 +55,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_BITARRAY_H

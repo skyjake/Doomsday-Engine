@@ -26,8 +26,7 @@
  * r_defs.h: shared data struct definitions.
  */
 
-#ifndef __R_DEFS_H__
-#define __R_DEFS_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -89,4 +88,3 @@ typedef struct xline_s {
 DE_EXTERN_C xline_t *xlines;
 DE_EXTERN_C xsector_t *xsectors;
 
-#endif

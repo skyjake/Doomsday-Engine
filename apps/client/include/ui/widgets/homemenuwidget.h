@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_HOME_HOMEMENUWIDGET_H
-#define DE_CLIENT_UI_HOME_HOMEMENUWIDGET_H
+#pragma once
 
 #include <de/menuwidget.h>
 
@@ -71,4 +70,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UI_HOME_HOMEMENUWIDGET_H

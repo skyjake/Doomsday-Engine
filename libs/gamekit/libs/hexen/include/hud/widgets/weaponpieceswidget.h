@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_UI_WEAPONPIECESWIDGET_H
-#define LIBHEXEN_UI_WEAPONPIECESWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -45,4 +44,3 @@ private:
     int _ownedPieces = 0;
 };
 
-#endif  // LIBHEXEN_UI_WEAPONPIECESWIDGET_H

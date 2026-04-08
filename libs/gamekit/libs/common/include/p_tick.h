@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_P_TICK_H
-#define LIBCOMMON_P_TICK_H
+#pragma once
 
 #include "dd_types.h"
 #include "pause.h"
@@ -47,4 +46,3 @@ void P_DoTick(void);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_P_TICK_H

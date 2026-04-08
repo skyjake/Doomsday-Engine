@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef PREFERENCES_H
-#define PREFERENCES_H
+#pragma once
 
 #include <de/dialogwidget.h>
 #include <de/nativepath.h>
@@ -43,4 +42,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // PREFERENCES_H

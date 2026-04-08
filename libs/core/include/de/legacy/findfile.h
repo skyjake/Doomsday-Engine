@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_FILESYS_FILEFINDER_H
-#define DE_FILESYS_FILEFINDER_H
+#pragma once
 
 #include "types.h"
 #include "str.h"
@@ -117,4 +116,3 @@ DE_PUBLIC void _splitpath(const char* path, char* drive, char* dir, char* name, 
 } // extern "C"
 #endif
 
-#endif /* DE_FILESYS_FILEFINDER_H */

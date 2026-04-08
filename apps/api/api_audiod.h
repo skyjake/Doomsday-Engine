@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_AUDIO_DRIVER_INTERFACE_H
-#define DE_AUDIO_DRIVER_INTERFACE_H
+#pragma once
 
 /**
  * @defgroup audio Audio
@@ -74,4 +73,3 @@ typedef struct audiointerface_base_s {
 
 ///@}
 
-#endif /* DE_AUDIO_DRIVER_INTERFACE_H */

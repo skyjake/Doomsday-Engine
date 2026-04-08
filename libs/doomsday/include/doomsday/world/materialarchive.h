@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_MATERIALARCHIVE_H
-#define LIBDOOMSDAY_WORLD_MATERIALARCHIVE_H
+#pragma once
 
 #include <de/error.h>
 #include <dd_share.h>  // materialarchive_serialid_t
@@ -173,4 +172,3 @@ void (*Read)(MaterialArchive *arc, Reader *reader, int forcedVersion);
 } // extern "C"
 #endif
 
-#endif /* LIBDOOMSDAY_WORLD_MATERIALARCHIVE_H */

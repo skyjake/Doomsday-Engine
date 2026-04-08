@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_RENDER_ANGLECLIPPER
-#define CLIENT_RENDER_ANGLECLIPPER
+#pragma once
 
 #include <de/legacy/binangle.h>
 #include <de/vector.h>
@@ -147,4 +146,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif  // CLIENT_RENDER_ANGLECLIPPER

@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_STRING_H__
-#define __AMETHYST_STRING_H__
+#pragma once
 
 #include <QString>
 
@@ -28,4 +27,3 @@ public:
     String(const char* str);
 };
 
-#endif

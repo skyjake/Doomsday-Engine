@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_RENDER_MISC_H
-#define DE_CLIENT_RENDER_MISC_H
+#pragma once
 
 #include "resource/clienttexture.h"
 #include "resource/texturevariantspec.h"
@@ -50,4 +49,3 @@ void R_DrawPatchTiled(ClientTexture &   texture,
                       de::gfx::Wrapping wrapS,
                       de::gfx::Wrapping wrapT);
 
-#endif // DE_CLIENT_RENDER_MISC_H

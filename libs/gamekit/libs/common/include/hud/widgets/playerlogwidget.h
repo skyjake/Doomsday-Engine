@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_PLAYERLOGWIDGET_H
-#define LIBCOMMON_UI_PLAYERLOGWIDGET_H
+#pragma once
 
 #include <de/string.h>
 #include "hud/hudwidget.h"
@@ -95,4 +94,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif  // LIBCOMMON_UI_PLAYERLOGWIDGET_H

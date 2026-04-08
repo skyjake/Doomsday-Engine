@@ -23,8 +23,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_VECTOR_H
-#define LIBCORE_VECTOR_H
+#pragma once
 
 #include "de/math.h"
 #include "de/error.h"
@@ -867,4 +866,3 @@ DE_PUBLIC Vec2i ratio(const Vec2i &);
 
 } // namespace de
 
-#endif /* LIBCORE_VECTOR_H */

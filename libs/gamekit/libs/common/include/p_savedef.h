@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_SAVEGAME_DEFS_H
-#define LIBCOMMON_SAVEGAME_DEFS_H
+#pragma once
 
 #define MY_SAVE_VERSION         15
 
@@ -60,4 +59,3 @@
 
 #endif
 
-#endif // LIBCOMMON_SAVEGAME_DEFS_H

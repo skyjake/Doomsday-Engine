@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_AUTOMAPSTYLE_H
-#define LIBCOMMON_UI_AUTOMAPSTYLE_H
+#pragma once
 
 #include "doomsday.h"
 
@@ -207,4 +206,3 @@ AutomapStyle *ST_AutomapStyle();
 
 void AM_GetMapColor(float *rgb, const float *uColor, int palidx, dd_bool customPal);
 
-#endif  // LIBCOMMON_UI_AUTOMAPSTYLE_H

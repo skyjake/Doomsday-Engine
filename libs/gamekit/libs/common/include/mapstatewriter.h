@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_MAPSTATEWRITER_H
-#define LIBCOMMON_MAPSTATEWRITER_H
+#pragma once
 
 #include "common.h"
 #include "thingarchive.h"
@@ -82,4 +81,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBCOMMON_MAPSTATEWRITER_H

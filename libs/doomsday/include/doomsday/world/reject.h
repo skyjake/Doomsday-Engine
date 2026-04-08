@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_WORLD_REJECT_H
-#define DE_WORLD_REJECT_H
+#pragma once
 
 #if 0 // Needs updating
 class Map;
@@ -74,4 +73,3 @@ class Map;
 byte *BuildRejectForMap(const Map &map);
 #endif
 
-#endif // DE_WORLD_REJECT_H

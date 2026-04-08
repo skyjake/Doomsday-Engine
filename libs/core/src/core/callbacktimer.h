@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_CALLBACKTIMER_H
-#define LIBCORE_CALLBACKTIMER_H
+#pragma once
 
 #include "de/timer.h"
 
@@ -41,4 +40,3 @@ private:
 } // namespace internal
 } // namespace de
 
-#endif // LIBCORE_CALLBACKTIMER_H

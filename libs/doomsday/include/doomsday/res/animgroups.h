@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_ANIMGROUPS_H
-#define LIBDOOMSDAY_RESOURCE_ANIMGROUPS_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include <de/libcore.h>
@@ -67,4 +66,3 @@ private:
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_RESOURCE_ANIMGROUPS_H

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_NONEVALUE_H
-#define LIBCORE_NONEVALUE_H
+#pragma once
 
 #include "de/value.h"
 
@@ -50,4 +49,3 @@ public:
 
 } // namespace de
 
-#endif /* LIBCORE_NONEVALUE_H */

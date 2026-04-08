@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_NETWORKINTERFACES_H
-#define LIBCORE_NETWORKINTERFACES_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/list.h"
@@ -54,4 +53,3 @@ private:
 } // namespace internal
 } // namespace de
 
-#endif // LIBCORE_NETWORKINTERFACES_H

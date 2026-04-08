@@ -21,8 +21,7 @@
  * Demos.
  */
 
-#ifndef DE_DEMO_H
-#define DE_DEMO_H
+#pragma once
 
 #ifdef __SERVER__
 #  error Demos are not available in a SERVER build
@@ -59,4 +58,3 @@ void            Demo_StopPlayback(void);
 } // extern "C"
 #endif
 
-#endif /* DE_DEMO_H */

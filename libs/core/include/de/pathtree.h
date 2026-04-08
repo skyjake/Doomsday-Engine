@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_PATHTREE_H
-#define LIBCORE_PATHTREE_H
+#pragma once
 
 #include "error.h"
 #include "lockable.h"
@@ -594,4 +593,3 @@ typedef PathTreeT<UserDataNode> UserDataPathTree;
 
 } // namespace de
 
-#endif /* LIBCORE_PATHTREE_H */

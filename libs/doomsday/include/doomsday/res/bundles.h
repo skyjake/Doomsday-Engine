@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_BUNDLES_H
-#define LIBDOOMSDAY_RESOURCE_BUNDLES_H
+#pragma once
 
 #include "databundle.h"
 #include <de/info.h>
@@ -111,4 +110,3 @@ private:
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_RESOURCE_BUNDLES_H

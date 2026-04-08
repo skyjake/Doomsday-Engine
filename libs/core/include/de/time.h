@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_TIME_H
-#define LIBCORE_TIME_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/math.h"
@@ -351,4 +350,3 @@ constexpr TimeSpan operator""_s(long double seconds)
 
 } // namespace de
 
-#endif // LIBCORE_TIME_H

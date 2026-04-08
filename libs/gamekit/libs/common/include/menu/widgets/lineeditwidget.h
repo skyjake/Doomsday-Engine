@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_LINEEDITWIDGET
-#define LIBCOMMON_UI_LINEEDITWIDGET
+#pragma once
 
 #include <de/string.h>
 #include "widget.h"
@@ -99,4 +98,3 @@ private:
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_LINEEDITWIDGET

@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_PLAY_SWITCH_H
-#define LIBCOMMON_PLAY_SWITCH_H
+#pragma once
 
 #include "doomsday.h"
 #include "p_mobj.h"
@@ -95,4 +94,3 @@ void T_MaterialChanger(void *materialChangedThinker);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_PLAY_SWITCH_H

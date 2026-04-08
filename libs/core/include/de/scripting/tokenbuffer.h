@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_TOKENBUFFER_H
-#define LIBCORE_TOKENBUFFER_H
+#pragma once
 
 #include "../libcore.h"
 #include "de/range.h"
@@ -244,4 +243,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_TOKENBUFFER_H */

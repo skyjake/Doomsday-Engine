@@ -19,8 +19,7 @@
  */
 
 #ifdef __CLIENT__
-#ifndef DE_CLIENT_WORLD_CONTACTSPREADER_H
-#define DE_CLIENT_WORLD_CONTACTSPREADER_H
+#pragma once
 
 #include <doomsday/world/blockmap.h>
 #include <de/legacy/aabox.h>
@@ -32,4 +31,4 @@
 void spreadContacts(const world::Blockmap &blockmap, const AABoxd &region, de::BitArray *spreadBlocks = 0);
 
 #endif  // DE_CLIENT_WORLD_CONTACTSPREADER_H
-#endif  // __CLIENT__
+

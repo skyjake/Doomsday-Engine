@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_GAME_H
-#define LIBDOOMSDAY_GAME_H
+#pragma once
 
 #ifdef __cplusplus
 
@@ -324,4 +323,3 @@ public:
 
 #endif // __cplusplus
 
-#endif /* LIBDOOMSDAY_GAME_H */

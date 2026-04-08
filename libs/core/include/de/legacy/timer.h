@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_SYSTEM_TIMER_H
-#define DE_SYSTEM_TIMER_H
+#pragma once
 
 #include "types.h"
 
@@ -92,4 +91,3 @@ DE_PUBLIC float Timer_TicksPerSecond(void);
 } // extern "C"
 #endif
 
-#endif // DE_SYSTEM_TIMER_H

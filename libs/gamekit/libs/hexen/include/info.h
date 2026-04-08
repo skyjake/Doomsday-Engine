@@ -27,8 +27,7 @@
  * info.h: Sprite, state, mobjtype and text identifiers.
  */
 
-#ifndef __INFO_CONSTANTS_H__
-#define __INFO_CONSTANTS_H__
+#pragma once
 
 // Sprites.
 typedef enum {
@@ -4017,4 +4016,3 @@ typedef enum {
     NUMMUSIC
 } musicenum_t;
 
-#endif

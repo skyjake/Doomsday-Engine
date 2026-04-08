@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_BYTEREFARRAY_H
-#define LIBCORE_BYTEREFARRAY_H
+#pragma once
 
 #include "de/ibytearray.h"
 
@@ -108,4 +107,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_BYTEREFARRAY_H

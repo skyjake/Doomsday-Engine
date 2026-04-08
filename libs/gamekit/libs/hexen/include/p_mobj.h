@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_P_MOBJ_H
-#define LIBHEXEN_P_MOBJ_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -252,4 +251,3 @@ void P_ExplodeMissile(mobj_t *mo);
 }  // extern "C"
 #endif
 
-#endif  // LIBHEXEN_P_MOBJ_H

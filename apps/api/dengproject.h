@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENGPROJECT_H
-#define DENGPROJECT_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,4 +34,3 @@ extern "C" {
 } // extern "C"
 #endif
 
-#endif /* DENGPROJECT_H */

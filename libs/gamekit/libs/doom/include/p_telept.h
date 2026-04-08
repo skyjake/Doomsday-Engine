@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_PLAY_TELEPT_H
-#define LIBDOOM_PLAY_TELEPT_H
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -36,4 +35,3 @@ int EV_Teleport(Line *line, int side, mobj_t *mo, dd_bool spawnFog);
 } // extern "C"
 #endif
 
-#endif // LIBDOOM_PLAY_TELEPT_H

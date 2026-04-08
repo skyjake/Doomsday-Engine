@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_REMOTEFEEDRELAY_H
-#define LIBCORE_REMOTEFEEDRELAY_H
+#pragma once
 
 #include "de/remotefeed.h"
 #include "de/record.h"
@@ -84,4 +83,3 @@ private:
 
 }} // namespace de::filesys
 
-#endif // LIBCORE_REMOTEFEEDRELAY_H

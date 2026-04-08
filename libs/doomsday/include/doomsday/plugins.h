@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_PLUGINS_H
-#define LIBDOOMSDAY_PLUGINS_H
+#pragma once
 
 #include <de/legacy/str.h>
 #include <de/legacy/rect.h>
@@ -427,4 +426,3 @@ int Plug_CheckForHook(HookType type);
 LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC
 void Plug_Notify(int notification, void *data);
 
-#endif  // LIBDOOMSDAY_PLUGINS_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_ACTIONS_H
-#define LIBDOOMSDAY_WORLD_ACTIONS_H
+#pragma once
 
 #include "../libdoomsday.h"
 
@@ -47,6 +46,4 @@ LIBDOOMSDAY_PUBLIC acfnptr_t P_GetAction(const de::String &name);
 LIBDOOMSDAY_PUBLIC void      P_SetCurrentAction(const de::String &name);
 
 #endif // __cplusplus
-
-#endif // LIBDOOMSDAY_WORLD_ACTIONS_H
 

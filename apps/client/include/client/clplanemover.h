@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_PLANEMOVER_H
-#define DE_CLIENT_PLANEMOVER_H
+#pragma once
 
 #if !defined(__CLIENT__)
 #  error clplanemover.h is client only
@@ -57,4 +56,3 @@ public:
     static thinker_s *newThinker(Plane &plane, coord_t dest, float speed);
 };
 
-#endif // DE_CLIENT_PLANEMOVER_H

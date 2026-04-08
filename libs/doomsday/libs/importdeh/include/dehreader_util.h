@@ -22,8 +22,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDEHREAD_DEHREADER_UTIL_H
-#define LIBDEHREAD_DEHREADER_UTIL_H
+#pragma once
 
 #include <de/string.h>
 #include <doomsday/defs/mapinfo.h>
@@ -52,4 +51,3 @@ int valueDefForPath(const de::String &id, ded_value_t **def = 0);
  */
 de::StringList splitMax(const de::String &string, de::Char sep, int max = -1);
 
-#endif // LIBDEHREAD_DEHREADER_UTIL_H

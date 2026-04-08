@@ -23,8 +23,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_SYSTEM_INPUT_H
-#define DE_SYSTEM_INPUT_H
+#pragma once
 
 #ifndef __CLIENT__
 #  error "Input requires __CLIENT__"
@@ -131,4 +130,3 @@ size_t Keyboard_GetEvents(keyevent_t *evbuf, size_t bufsize);
 } // extern "C"
 #endif
 
-#endif

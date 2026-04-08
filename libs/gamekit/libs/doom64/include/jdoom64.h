@@ -27,8 +27,7 @@
  * A convenience header for including all jDoom64 headers.
  */
 
-#ifndef __JDOOM64_CONVENIENCE_H__
-#define __JDOOM64_CONVENIENCE_H__
+#pragma once
 
 #include "../../doom64/include/acfnlink.h"
 #include "../../doom64/include/d64_api.h"
@@ -56,4 +55,3 @@
 #include "../../doom64/include/st_stuff.h"
 #include "../../doom64/include/tables.h"
 
-#endif // __JDOOM64_CONVENIENCE_H__

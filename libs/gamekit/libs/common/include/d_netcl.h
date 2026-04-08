@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_D_NETCL_H
-#define LIBCOMMON_D_NETCL_H
+#pragma once
 
 #include "common.h"
 #include <de/legacy/reader.h>
@@ -90,4 +89,3 @@ void NetCl_FloorHitRequest(player_t *player);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_D_NETCL_H

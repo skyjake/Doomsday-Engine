@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_GAMES_H
-#define LIBDOOMSDAY_GAMES_H
+#pragma once
 
 #include "game.h"
 
@@ -159,4 +158,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBDOOMSDAY_GAMES_H

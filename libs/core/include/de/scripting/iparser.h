@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_IPARSER_H
-#define LIBCORE_IPARSER_H
+#pragma once
 
 #include "de/string.h"
 
@@ -54,4 +53,3 @@ public:
 
 } // namespace de
 
-#endif /* LIBCORE_IPARSER_H */

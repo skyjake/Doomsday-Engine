@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_P_WAGGLE_H
-#define LIBHEXEN_P_WAGGLE_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -67,4 +66,3 @@ dd_bool EV_StartFloorWaggle(int tag, int height, int speed, int offset, int time
 } // extern "C"
 #endif
 
-#endif // LIBHEXEN_P_WAGGLE_H

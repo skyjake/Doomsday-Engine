@@ -27,8 +27,7 @@
  * d_event.h: Game actions (instegate changes to game state).
  */
 
-#ifndef __D_EVENT_H__
-#define __D_EVENT_H__
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -94,4 +93,3 @@ typedef enum
 
 } buttoncode_t;*/
 
-#endif

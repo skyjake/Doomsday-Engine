@@ -32,8 +32,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_READER_H
-#define DE_READER_H
+#pragma once
 
 #include "../liblegacy.h"
 #include "types.h"
@@ -153,4 +152,3 @@ DE_PUBLIC void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_
 } // extern "C"
 #endif
 
-#endif // DE_READER_H

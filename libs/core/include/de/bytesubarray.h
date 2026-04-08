@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_BYTESUBARRAY_H
-#define LIBCORE_BYTESUBARRAY_H
+#pragma once
 
 #include "de/ibytearray.h"
 
@@ -68,4 +67,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_BYTESUBARRAY_H */

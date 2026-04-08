@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_URIVALUE_H
-#define LIBDOOMSDAY_URIVALUE_H
+#pragma once
 
 #include "uri.h"
 #include <de/value.h>
@@ -68,4 +67,3 @@ private:
     res::Uri _uri;
 };
 
-#endif // LIBDOOMSDAY_URIVALUE_H

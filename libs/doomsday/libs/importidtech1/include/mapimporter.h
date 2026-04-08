@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef IMPORTIDTECH1_MAPIMPORTER_H
-#define IMPORTIDTECH1_MAPIMPORTER_H
+#pragma once
 
 #include "dd_types.h"                   // lumpnum_t
 #include <doomsday/filesys/file.h>
@@ -80,4 +79,3 @@ private:
 
 } // namespace idtech1
 
-#endif // IMPORTIDTECH1_MAPIMPORTER_H

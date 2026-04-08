@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_VRCONFIG_H
-#define LIBAPPFW_VRCONFIG_H
+#pragma once
 
 #include <de/oculusrift.h>
 #include <de/matrix.h>
@@ -231,4 +230,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_VRCONFIG_H

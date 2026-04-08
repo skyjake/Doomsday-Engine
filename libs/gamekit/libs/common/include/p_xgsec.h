@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_XG_SECTORTYPE_H
-#define LIBCOMMON_XG_SECTORTYPE_H
+#pragma once
 
 #include "g_common.h"
 #ifdef __cplusplus
@@ -208,4 +207,3 @@ void XS_ChangePlaneColor(Sector &sector, bool ceiling, const de::Vec3f &newColor
 
 #endif
 
-#endif // LIBCOMMON_XG_SECTORTYPE_H

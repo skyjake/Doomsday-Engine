@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef RENDER_WALLEDGE
-#define RENDER_WALLEDGE
+#pragma once
 
 #include "world/line.h"
 #include "world/ihplane.h"
@@ -126,4 +125,3 @@ private:
     static void recycleImpl(Impl *d);
 };
 
-#endif  // RENDER_WALLEDGE

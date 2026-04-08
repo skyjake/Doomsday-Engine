@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_PACKAGESBUTTONWIDGET_H
-#define DE_CLIENT_UI_PACKAGESBUTTONWIDGET_H
+#pragma once
 
 #include "ui/dialogs/packagesdialog.h"
 
@@ -50,4 +49,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UI_PACKAGESBUTTONWIDGET_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_RENDER_H
-#define GLOOM_RENDER_H
+#pragma once
 
 #include "gloom/render/context.h"
 #include <de/time.h>
@@ -50,4 +49,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_RENDER_H

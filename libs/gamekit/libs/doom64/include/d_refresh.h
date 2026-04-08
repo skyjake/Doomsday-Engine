@@ -21,8 +21,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef JDOOM64_REFRESH_H
-#define JDOOM64_REFRESH_H
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -56,4 +55,3 @@ void R_UpdateViewFilter(int player);
 } // extern "C"
 #endif
 
-#endif /* JDOOM64_REFRESH_H */

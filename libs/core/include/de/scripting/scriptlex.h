@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_SCRIPTLEX_H
-#define LIBCORE_SCRIPTLEX_H
+#pragma once
 
 #include "lex.h"
 #include "tokenbuffer.h"
@@ -140,4 +139,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_SCRIPTLEX_H */

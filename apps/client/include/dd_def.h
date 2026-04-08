@@ -19,8 +19,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef __DOOMSDAY_DEFS_H__
-#define __DOOMSDAY_DEFS_H__
+#pragma once
 
 /**
  * @defgroup flags Flags (Internal)
@@ -116,4 +115,3 @@ extern float    texGamma;
 
 #define gx (DoomsdayApp::plugins().gameExports())
 
-#endif

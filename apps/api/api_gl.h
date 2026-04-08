@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DOOMSDAY_GL_H
-#define DOOMSDAY_GL_H
+#pragma once
 
 #include <de/legacy/rect.h>
 #include <doomsday/api_map.h>
@@ -482,4 +481,3 @@ DE_USING_API(GL);
 } // extern "C"
 #endif
 
-#endif /* DOOMSDAY_GL_H */

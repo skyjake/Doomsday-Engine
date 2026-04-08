@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_RENDER_MATERIALLIB_H
-#define GLOOM_RENDER_MATERIALLIB_H
+#pragma once
 
 #include "gloom/render/render.h"
 
@@ -77,4 +76,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_RENDER_MATERIALLIB_H

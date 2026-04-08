@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCOMMON_REFRESH_SPECIAL_H
-#define LIBCOMMON_REFRESH_SPECIAL_H
+#pragma once
 
 #include <de/libcore.h>
 
@@ -33,4 +32,3 @@ DE_EXTERN_C void R_UpdateSpecialFilter(int player);
 
 DE_EXTERN_C void R_UpdateSpecialFilterWithTimeDelta(int player, float delta);
 
-#endif // LIBCOMMON_REFRESH_SPECIAL_H

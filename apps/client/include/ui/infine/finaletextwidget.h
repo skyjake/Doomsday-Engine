@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_UI_INFINE_FINALETEXTWIDGET_H
-#define DE_UI_INFINE_FINALETEXTWIDGET_H
+#pragma once
 
 #include <de/string.h>
 #include <de/vector.h>
@@ -84,4 +83,3 @@ public:
     DE_PRIVATE(d)
 };
 
-#endif // DE_UI_INFINE_FINALETEXTWIDGET_H

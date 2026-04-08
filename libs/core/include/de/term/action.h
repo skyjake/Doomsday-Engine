@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_ACTION_H
-#define LIBSHELL_ACTION_H
+#pragma once
 
 #include "keyevent.h"
 #include "de/action.h"
@@ -68,4 +67,3 @@ private:
 
 }} // namespace de::shell
 
-#endif // LIBSHELL_ACTION_H

@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_LENGTH_H__
-#define __AMETHYST_LENGTH_H__
+#pragma once
 
 #include "string.h"
 
@@ -53,4 +52,3 @@ private:
     int _values[NumValues];
 };
 
-#endif

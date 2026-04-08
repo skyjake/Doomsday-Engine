@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_DEFN_MUSIC_H
-#define LIBDOOMSDAY_DEFN_MUSIC_H
+#pragma once
 
 #include "definition.h"
 #include <de/recordaccessor.h>
@@ -45,4 +44,3 @@ public:
 
 } // namespace defn
 
-#endif // LIBDOOMSDAY_DEFN_MUSIC_H

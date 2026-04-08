@@ -24,8 +24,7 @@
  * Uses SDL_mixer, for SFX, Ext and Mus interfaces.
  */
 
-#ifndef __DOOMSDAY_SYSTEM_AUDIO_SDLMIXER_H__
-#define __DOOMSDAY_SYSTEM_AUDIO_SDLMIXER_H__
+#pragma once
 
 #include <de/liblegacy.h>
 #include "api_audiod.h"
@@ -36,4 +35,3 @@ DE_EXTERN_C audiodriver_t audiod_sdlmixer;
 DE_EXTERN_C audiointerface_sfx_t audiod_sdlmixer_sfx;
 DE_EXTERN_C audiointerface_music_t audiod_sdlmixer_music;
 
-#endif

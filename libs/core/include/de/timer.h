@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_TIMER_H
-#define LIBCORE_TIMER_H
+#pragma once
 
 #include "de/time.h"
 #include "de/observers.h"
@@ -69,4 +68,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_TIMER_H

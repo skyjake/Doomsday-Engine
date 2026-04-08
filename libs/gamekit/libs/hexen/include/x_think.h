@@ -31,8 +31,7 @@
  * violent nature.
  */
 
-#ifndef __X_THINK_H__
-#define __X_THINK_H__
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -55,4 +54,3 @@ typedef union {
     actionf_p2      acp2;
 } actionf_t;
 
-#endif

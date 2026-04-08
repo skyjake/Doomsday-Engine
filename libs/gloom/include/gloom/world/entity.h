@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_ENTITY_H
-#define GLOOM_ENTITY_H
+#pragma once
 
 #include <de/vector.h>
 #include "gloom/identity.h"
@@ -64,4 +63,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_ENTITY_H

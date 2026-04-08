@@ -25,8 +25,7 @@
  * m_random.h: Random numbers.
  */
 
-#ifndef __M_RANDOM_H__
-#define __M_RANDOM_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -44,4 +43,3 @@ void        M_ResetRandom(void);
 } // extern "C"
 #endif
 
-#endif

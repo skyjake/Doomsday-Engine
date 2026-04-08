@@ -31,8 +31,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_BUSYRUNNER_H
-#define CLIENT_BUSYRUNNER_H
+#pragma once
 
 #include <doomsday/busymode.h>
 
@@ -78,4 +77,3 @@ private:
  */
 void BusyMode_Loop();
 
-#endif // CLIENT_BUSYRUNNER_H

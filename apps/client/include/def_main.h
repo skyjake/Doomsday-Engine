@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DEFINITIONS_MAIN_H
-#define DEFINITIONS_MAIN_H
+#pragma once
 
 #ifndef __cplusplus
 #  error "def_main.h requires C++"
@@ -104,4 +103,3 @@ int Def_Get(int type, const char *id, void *out);
  */
 int Def_Set(int type, int index, int value, const void *ptr);
 
-#endif  // DEFINITIONS_MAIN_H

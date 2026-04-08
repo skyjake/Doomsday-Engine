@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_VECTOR_H
-#define DE_VECTOR_H
+#pragma once
 
 #include "types.h"
 #include "fixedpoint.h"
@@ -710,4 +709,3 @@ DE_PUBLIC void V4d_Lerp(pvec4d_t dest, const_pvec4d_t a, const_pvec4d_t b, doubl
 } // extern "C"
 #endif
 
-#endif // DE_VECTOR_H

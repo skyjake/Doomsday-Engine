@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_GZIP_H
-#define DE_GZIP_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/block.h"
@@ -28,4 +27,3 @@ DE_PUBLIC Block gDecompress(const Block &gzData);
 
 } // namespace de
 
-#endif // DE_GZIP_H

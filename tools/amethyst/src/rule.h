@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_RULE_H__
-#define __AMETHYST_RULE_H__
+#pragma once
 
 #include "linkable.h"
 #include "block.h"
@@ -48,4 +47,3 @@ protected:
     GemTest _terms; // At least one must be fully met.
 };
 
-#endif

@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_PROCESSOR_H__
-#define __AMETHYST_PROCESSOR_H__
+#pragma once
 
 #include "source.h"
 #include "macro.h"
@@ -112,4 +111,3 @@ private:
     void dumpGems(Gem *at, int level = 0);
 };
 
-#endif

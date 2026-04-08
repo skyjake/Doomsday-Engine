@@ -27,8 +27,7 @@
  * dstrings.h:
  */
 
-#ifndef __DSTRINGS_H__
-#define __DSTRINGS_H__
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -43,4 +42,3 @@
 #define DEVMAPS             "devmaps"
 #define DEVDATA             "devdata"
 
-#endif

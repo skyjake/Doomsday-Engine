@@ -22,8 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef __JHEXEN_CONFIG_H__
-#define __JHEXEN_CONFIG_H__
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -96,4 +95,3 @@ extern game_config_t cfg;
 } // extern "C"
 #endif
 
-#endif

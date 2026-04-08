@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GLPROGRAM_H
-#define LIBGUI_GLPROGRAM_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/ibytearray.h>
@@ -137,4 +136,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_GLPROGRAM_H

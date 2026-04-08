@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_GUARD_H
-#define LIBCORE_GUARD_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/lockable.h"
@@ -141,4 +140,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_GUARD_H

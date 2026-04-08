@@ -32,8 +32,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_WRITER_H
-#define DE_WRITER_H
+#pragma once
 
 #include "types.h"
 
@@ -170,4 +169,3 @@ DE_PUBLIC void Writer_WritePackedUInt32(Writer1 *writer, uint32_t v);
 } // extern "C"
 #endif
 
-#endif // DE_WRITER_H

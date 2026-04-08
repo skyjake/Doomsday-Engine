@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_FONTBANK_H
-#define LIBGUI_FONTBANK_H
+#pragma once
 
 #include <de/infobank.h>
 #include <de/file.h>
@@ -70,4 +69,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_FONTBANK_H

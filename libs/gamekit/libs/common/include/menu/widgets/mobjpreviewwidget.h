@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_MOBJPREVIEWWIDGET
-#define LIBCOMMON_UI_MOBJPREVIEWWIDGET
+#pragma once
 
 #include "sliderwidget.h"
 
@@ -55,4 +54,3 @@ private:
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_MOBJPREVIEWWIDGET

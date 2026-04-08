@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_UI_INFINE_FINALEINTERPRETER_H
-#define DE_UI_INFINE_FINALEINTERPRETER_H
+#pragma once
 
 #include <de/error.h>
 #include <de/string.h>
@@ -143,4 +142,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_UI_INFINE_FINALEINTERPRETER_H

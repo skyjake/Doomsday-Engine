@@ -28,8 +28,7 @@
  * p_inter.h: Handling mobj vs mobj interactions (i.e., collisions).
  */
 
-#ifndef __P_INTER_H__
-#define __P_INTER_H__
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -63,4 +62,3 @@ int             P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
 } // extern "C"
 #endif
 
-#endif

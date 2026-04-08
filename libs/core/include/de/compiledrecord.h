@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_COMPILEDRECORD_H
-#define LIBCORE_COMPILEDRECORD_H
+#pragma once
 
 #include "de/record.h"
 
@@ -73,4 +72,3 @@ protected:
 
 } // namespace de
 
-#endif // LIBCORE_COMPILEDRECORD_H

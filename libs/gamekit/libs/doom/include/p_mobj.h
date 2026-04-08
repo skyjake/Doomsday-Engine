@@ -27,8 +27,7 @@
  * p_mobj.h: Map Objects, definition and handling.
  */
 
-#ifndef __P_MOBJ__
-#define __P_MOBJ__
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -258,4 +257,3 @@ mobj_t *P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
 } // extern "C"
 #endif
 
-#endif

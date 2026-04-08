@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef ICAMERA_H
-#define ICAMERA_H
+#pragma once
 
 #include <de/matrix.h>
 #include "../libgloom.h"
@@ -49,4 +48,3 @@ public:
 
 } // namespace gloom
 
-#endif // ICAMERA_H

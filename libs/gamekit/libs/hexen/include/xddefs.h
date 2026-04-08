@@ -26,8 +26,7 @@
  * xddefs.h:
  */
 
-#ifndef __XDDEFS_H__
-#define __XDDEFS_H__
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -72,4 +71,3 @@ enum {
 #define SPAC_PUSH       4          // when player/monster pushes line
 #define SPAC_PCROSS     5          // when projectile crosses line
 
-#endif                          // __XDDEFS__

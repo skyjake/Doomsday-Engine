@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_RESOURCE_FONTMANIFEST_H
-#define DE_RESOURCE_FONTMANIFEST_H
+#pragma once
 
 #include "abstractfont.h"
 #include <doomsday/uri.h>
@@ -147,4 +146,3 @@ private:
 
 } // namespace de
 
-#endif // DE_RESOURCE_FONTMANIFEST_H

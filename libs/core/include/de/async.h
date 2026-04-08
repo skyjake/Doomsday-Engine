@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ASYNCTASK_H
-#define LIBCORE_ASYNCTASK_H
+#pragma once
 
 #include "de/app.h"
 #include "de/deletable.h"
@@ -162,4 +161,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_ASYNCTASK_H

@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_MISC_DECOMPRESS64_H
-#define LIBDOOMSDAY_MISC_DECOMPRESS64_H
+#pragma once
 
 #include "libdoomsday.h"
 #include <de/legacy/types.h>
@@ -44,4 +43,3 @@ LIBDOOMSDAY_PUBLIC void M_Decompress64(byte* dst, const byte* src);
 } // extern "C"
 #endif
 
-#endif // LIBDOOMSDAY_MISC_DECOMPRESS64_H

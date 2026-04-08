@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_FILESYSTEM_H
-#define LIBCORE_FILESYSTEM_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/folder.h"
@@ -401,4 +400,3 @@ typedef FileSystem FS;
 
 } // namespace de
 
-#endif // LIBCORE_FILESYSTEM_H

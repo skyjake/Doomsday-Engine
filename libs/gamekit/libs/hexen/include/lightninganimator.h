@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_PLAY_LIGHTNINGANIMATOR_H
-#define LIBHEXEN_PLAY_LIGHTNINGANIMATOR_H
+#pragma once
 
 #include "jhexen.h"
 
@@ -59,4 +58,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBHEXEN_PLAY_LIGHTNINGANIMATOR_H

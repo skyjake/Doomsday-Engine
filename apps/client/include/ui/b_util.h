@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
-#define CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
+#pragma once
 
 #include <de/record.h>
 #include "dd_types.h"
@@ -76,6 +75,4 @@ void B_EvaluateImpulseBindings(const BindContext *context, int localNum, int imp
 const char *B_ShortNameForKey(int ddKey, bool forceLowercase = true);
 
 int B_KeyForShortName(const char *key);
-
-#endif // CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_BLURWIDGET_H
-#define LIBAPPFW_BLURWIDGET_H
+#pragma once
 
 #include "de/guiwidget.h"
 
@@ -38,4 +37,3 @@ public:
 
 } // namespace de
 
-#endif // LIBAPPFW_BLURWIDGET_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_STRING_H
-#define LIBCORE_STRING_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/block.h"
@@ -915,4 +914,3 @@ namespace std
     };
 }
 
-#endif // LIBCORE_STRING_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_LUMPCATALOG_H
-#define LIBDOOMSDAY_LUMPCATALOG_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include "doomsday/res/databundle.h"
@@ -100,4 +99,3 @@ inline res::LumpCatalog::LumpPos operator+(const res::LumpCatalog::LumpPos &pos,
     return res::LumpCatalog::LumpPos{pos.first, pos.second + offset};
 }
 
-#endif // LIBDOOMSDAY_LUMPCATALOG_H

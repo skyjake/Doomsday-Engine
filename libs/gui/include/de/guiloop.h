@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GUILOOP_H
-#define GUILOOP_H
+#pragma once
 
 #include "libgui.h"
 #include <de/loop.h>
@@ -47,4 +46,3 @@ private:
 
 } // namespace de
 
-#endif // GUILOOP_H

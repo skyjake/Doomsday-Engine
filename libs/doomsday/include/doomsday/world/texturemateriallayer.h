@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_TEXTUREMATERIALLAYER_H
-#define LIBDOOMSDAY_WORLD_TEXTUREMATERIALLAYER_H
+#pragma once
 
 #include <de/string.h>
 #include "../defs/dedtypes.h"
@@ -113,4 +112,3 @@ public:
 
 } // namespace world
 
-#endif  // LIBDOOMSDAY_WORLD_TEXTUREMATERIALLAYER_H

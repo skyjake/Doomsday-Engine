@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_CVARCOLOREDITWIDGET
-#define LIBCOMMON_UI_CVARCOLOREDITWIDGET
+#pragma once
 
 #include "coloreditwidget.h"
 
@@ -56,4 +55,3 @@ void CVarColorEditWidget_UpdateCVar(Widget &wi, Widget::Action action);
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_CVARCOLOREDITWIDGET

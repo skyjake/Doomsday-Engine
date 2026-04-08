@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_BUTTONWIDGET
-#define LIBCOMMON_UI_BUTTONWIDGET
+#pragma once
 
 #include "widget.h"
 
@@ -57,4 +56,3 @@ private:
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_BUTTONWIDGET

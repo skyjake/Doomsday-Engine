@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_RENDER_LIGHT_H
-#define GLOOM_RENDER_LIGHT_H
+#pragma once
 
 #include <de/glframebuffer.h>
 #include <de/gltexture.h>
@@ -76,4 +75,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_RENDER_LIGHT_H

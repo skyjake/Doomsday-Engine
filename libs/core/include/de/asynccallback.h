@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ASYNCCALLBACK_H
-#define LIBCORE_ASYNCCALLBACK_H
+#pragma once
 
 #include "de/waitable.h"
 
@@ -71,4 +70,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_ASYNCCALLBACK_H

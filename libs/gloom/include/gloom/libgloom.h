@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGLOOM_MAIN_H
-#define LIBGLOOM_MAIN_H
+#pragma once
 
 #include <de/libcore.h>
 
@@ -37,4 +36,3 @@
 #  define LIBGLOOM_PUBLIC   DE_PUBLIC
 #endif
 
-#endif // LIBGLOOM_MAIN_H

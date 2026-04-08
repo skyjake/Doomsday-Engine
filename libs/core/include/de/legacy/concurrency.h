@@ -21,8 +21,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_SYSTEM_CONCURRENCY_H
-#define DE_SYSTEM_CONCURRENCY_H
+#pragma once
 
 #include <de/liblegacy.h>
 
@@ -149,4 +148,3 @@ DE_PUBLIC void Sys_Unlock(mutex_t mutexHandle);
 } // extern "C"
 #endif
 
-#endif // DE_SYSTEM_CONCURRENCY_H

@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_PLAYSIM_XG_H
-#define LIBCOMMON_PLAYSIM_XG_H
+#pragma once
 
 #include "p_xgline.h"
 #include "p_xgsec.h"
@@ -66,4 +65,3 @@ sectortype_t *XG_GetLumpSector(int id);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_PLAYSIM_XG_H

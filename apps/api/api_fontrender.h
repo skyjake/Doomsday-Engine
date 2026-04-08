@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_API_FONT_RENDERER_H
-#define DE_API_FONT_RENDERER_H
+#pragma once
 
 #include "api_base.h"
 
@@ -309,4 +308,3 @@ DE_USING_API(FR);
 } // extern "C"
 #endif
 
-#endif /* DE_API_FONT_RENDERER_H */

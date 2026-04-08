@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_PAUSE_H
-#define LIBCOMMON_PAUSE_H
+#pragma once
 
 #include "dd_share.h"
 
@@ -91,4 +90,3 @@ void Pause_MapStarted(void);
 }
 #endif
 
-#endif // LIBCOMMON_PAUSE_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_ENTITIES_H
-#define GLOOM_ENTITIES_H
+#pragma once
 
 #include "gloom/world/entitymap.h"
 #include "gloom/render/render.h"
@@ -45,4 +44,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_ENTITIES_H

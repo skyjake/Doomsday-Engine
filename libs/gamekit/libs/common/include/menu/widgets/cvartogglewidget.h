@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_CVARTOGGLEWIDGET
-#define LIBCOMMON_UI_CVARTOGGLEWIDGET
+#pragma once
 
 #include "buttonwidget.h"
 #include <functional>
@@ -71,4 +70,3 @@ void CVarToggleWidget_UpdateCVar(Widget &wi, Widget::Action action);
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_CVARTOGGLEWIDGET

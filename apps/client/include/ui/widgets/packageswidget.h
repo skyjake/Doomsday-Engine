@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_HOME_PACKAGESWIDGET_H
-#define DE_CLIENT_UI_HOME_PACKAGESWIDGET_H
+#pragma once
 
 #include <de/buttonwidget.h>
 #include <de/lineeditwidget.h>
@@ -126,4 +125,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UI_HOME_PACKAGESWIDGET_H

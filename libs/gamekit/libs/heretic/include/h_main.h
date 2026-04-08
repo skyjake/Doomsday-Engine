@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBJHERETIC_MAIN_H
-#define LIBJHERETIC_MAIN_H
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -71,4 +70,3 @@ void *H_GetVariable(int id);
 } // extern "C"
 #endif
 
-#endif // LIBJHERETIC_MAIN_H

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENTAPP_H
-#define CLIENTAPP_H
+#pragma once
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/world/world.h>
@@ -123,4 +122,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif  // CLIENTAPP_H

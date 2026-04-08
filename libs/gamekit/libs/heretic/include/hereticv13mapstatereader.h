@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHERETIC_HERETICV13_MAPSTATEREADER
-#define LIBHERETIC_HERETICV13_MAPSTATEREADER
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -47,4 +46,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBHERETIC_HERETICV13_MAPSTATEREADER

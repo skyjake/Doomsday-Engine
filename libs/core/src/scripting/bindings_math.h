@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_BINDINGS_MATH_H
-#define LIBCORE_BINDINGS_MATH_H
+#pragma once
 
 #include "de/scripting/function.h"
 
@@ -26,6 +25,4 @@ namespace de {
 void initMathModule(Binder &binder, Record &mathModule);
 
 } // namespace de
-
-#endif // LIBCORE_BINDINGS_CORE_H
 

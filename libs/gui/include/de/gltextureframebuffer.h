@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GLTEXTUREFRAMEBUFFER_H
-#define LIBGUI_GLTEXTUREFRAMEBUFFER_H
+#pragma once
 
 #include <de/vector.h>
 #include <de/asset.h>
@@ -110,4 +109,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_GLTEXTUREFRAMEBUFFER_H

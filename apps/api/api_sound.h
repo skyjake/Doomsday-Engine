@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DOOMSDAY_API_SOUND_H
-#define DOOMSDAY_API_SOUND_H
+#pragma once
 
 #include "apis.h"
 #include <de/legacy/types.h>
@@ -174,4 +173,3 @@ DE_API_T(S);
 DE_USING_API(S);
 #endif
 
-#endif  // DOOMSDAY_API_SOUND_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_SET_H
-#define LIBCORE_SET_H
+#pragma once
 
 #include <unordered_set>
 #include <ostream>
@@ -77,4 +76,3 @@ inline std::ostream &operator<<(std::ostream &os, const Set<T> &set)
 
 } // namespace de
 
-#endif // LIBCORE_SET_H

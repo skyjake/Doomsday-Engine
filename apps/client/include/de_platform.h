@@ -22,8 +22,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef __DOOMSDAY_PLATFORM__
-#define __DOOMSDAY_PLATFORM__
+#pragma once
 
 #include "dd_types.h"
 #include <de/libcore.h>
@@ -95,4 +94,3 @@ typedef unsigned int  DWORD;
 #  endif
 #endif
 
-#endif // __DOOMSDAY_PLATFORM__

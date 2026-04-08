@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_IDTECH1TEXTURELIB_H
-#define LIBDOOMSDAY_RESOURCE_IDTECH1TEXTURELIB_H
+#pragma once
 
 #include "lumpcatalog.h"
 #include "idtech1image.h"
@@ -46,4 +45,3 @@ private:
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_RESOURCE_IDTECH1TEXTURELIB_H

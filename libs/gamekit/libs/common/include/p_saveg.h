@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_SAVESTATE_H
-#define LIBCOMMON_SAVESTATE_H
+#pragma once
 #ifdef __cplusplus
 
 #include "common.h"
@@ -89,4 +88,4 @@ void SV_LoadGameClient(uint gameId);
 #endif
 
 #endif // __cplusplus
-#endif // LIBCOMMON_SAVESTATE_H
+

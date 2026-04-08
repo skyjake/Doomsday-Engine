@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_COREEVENT_H
-#define LIBCORE_COREEVENT_H
+#pragma once
 
 #include "de/event.h"
 #include "de/value.h"
@@ -53,4 +52,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_COREEVENT_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGAMEFW_H
-#define LIBGAMEFW_H
+#pragma once
 
 #include <de/legacy/types.h>
 #include "../libdoomsday.h"
@@ -77,4 +76,3 @@ typedef gfw_game_id_t GameId;
 
 #endif // __cplusplus
 
-#endif // LIBGAMEFW_H

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_UI_INFINESYSTEM_H
-#define DE_UI_INFINESYSTEM_H
+#pragma once
 
 #include <de/list.h>
 #include <de/error.h>
@@ -93,4 +92,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_UI_INFINESYSTEM_H

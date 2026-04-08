@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GLINFO_H
-#define LIBGUI_GLINFO_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/guiapp.h> // checking for render thread
@@ -107,4 +106,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_GLINFO_H

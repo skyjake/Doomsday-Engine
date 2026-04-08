@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_HUD_CROSSHAIR_H
-#define LIBCOMMON_HUD_CROSSHAIR_H
+#pragma once
 
 #define NUM_XHAIRS                  (5)
 
@@ -40,4 +39,3 @@ void X_Register(void);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_HUD_CROSSHAIR_H

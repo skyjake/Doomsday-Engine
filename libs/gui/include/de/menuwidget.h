@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_MENUWIDGET_H
-#define LIBAPPFW_MENUWIDGET_H
+#pragma once
 
 #include "de/ui/data.h"
 #include "de/ui/actionitem.h"
@@ -193,4 +192,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_MENUWIDGET_H

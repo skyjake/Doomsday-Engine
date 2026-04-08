@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_COMMANDWIDGET_H
-#define LIBAPPFW_COMMANDWIDGET_H
+#pragma once
 
 #include "de/lineeditwidget.h"
 #include "de/ipersistent.h"
@@ -92,4 +91,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_COMMANDWIDGET_H

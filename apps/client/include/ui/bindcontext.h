@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTSYSTEM_BINDCONTEXT_H
-#define CLIENT_INPUTSYSTEM_BINDCONTEXT_H
+#pragma once
 
 #include <functional>
 #include <de/observers.h>
@@ -193,4 +192,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // CLIENT_INPUTSYSTEM_BINDCONTEXT_H

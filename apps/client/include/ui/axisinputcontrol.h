@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_UI_AXISINPUTCONTROL_H
-#define CLIENT_UI_AXISINPUTCONTROL_H
+#pragma once
 
 #include <de/legacy/types.h>
 #include <de/string.h>
@@ -105,4 +104,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // CLIENT_UI_AXISINPUTCONTROL_H

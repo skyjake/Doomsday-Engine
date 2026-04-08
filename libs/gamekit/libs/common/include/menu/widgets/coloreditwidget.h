@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_COLOREDITWIDGET
-#define LIBCOMMON_UI_COLOREDITWIDGET
+#pragma once
 
 #include <de/vector.h>
 #include "widget.h"
@@ -104,4 +103,3 @@ private:
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_COLOREDITWIDGET

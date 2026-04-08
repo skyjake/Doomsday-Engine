@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_PLAYER_H
-#define LIBCOMMON_PLAYER_H
+#pragma once
 
 #include "common.h"
 
@@ -271,4 +270,3 @@ void Player_PostTick(player_t *player);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_PLAYER_H

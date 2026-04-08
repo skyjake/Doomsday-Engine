@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_LENGTH_RULE_H__
-#define __AMETHYST_LENGTH_RULE_H__
+#pragma once
 
 #include "rule.h"
 #include "length.h"
@@ -32,4 +31,3 @@ protected:
     Length  _length;
 };
 
-#endif

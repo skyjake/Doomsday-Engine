@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_INFOBANK_H
-#define LIBCORE_INFOBANK_H
+#pragma once
 
 #include "de/string.h"
 #include "de/time.h"
@@ -119,4 +118,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_INFOBANK_H

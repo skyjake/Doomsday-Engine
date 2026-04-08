@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_RENDER_BUSYVISUAL_H
-#define DE_RENDER_BUSYVISUAL_H
+#pragma once
 
 #include "api_busy.h"
 
@@ -65,4 +64,3 @@ void Con_DrawTransition(void);
 } // extern "C"
 #endif
 
-#endif /* DE_RENDER_BUSYVISUAL_H */

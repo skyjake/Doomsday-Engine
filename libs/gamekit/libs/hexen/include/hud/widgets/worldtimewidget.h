@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_UI_WORLDTIMEWIDGET_H
-#define LIBHEXEN_UI_WORLDTIMEWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -42,4 +41,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif  // LIBHEXEN_UI_WORLDTIMEWIDGET_H

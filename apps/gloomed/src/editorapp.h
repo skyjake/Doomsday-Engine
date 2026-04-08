@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOMED_EDITORAPP_H
-#define GLOOMED_EDITORAPP_H
+#pragma once
 
 #include <doomsday/doomsdayapp.h>
 #include <de/EmbeddedApp>
@@ -42,4 +41,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // GLOOMED_EDITORAPP_H

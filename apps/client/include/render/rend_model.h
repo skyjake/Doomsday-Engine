@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_RENDER_MODEL_H
-#define CLIENT_RENDER_MODEL_H
+#pragma once
 
 #include "resource/framemodeldef.h"
 #include "render/modelrenderer.h"
@@ -134,4 +133,3 @@ const TextureVariantSpec &Rend_ModelShinyTextureSpec();
  */
 void Rend_DrawModel(const vissprite_t &spr);
 
-#endif  // CLIENT_RENDER_MODEL_H

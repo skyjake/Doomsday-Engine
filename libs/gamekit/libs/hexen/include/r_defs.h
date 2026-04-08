@@ -26,8 +26,7 @@
  * r_defs.h:
  */
 
-#ifndef __R_DEFS_H__
-#define __R_DEFS_H__
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -62,4 +61,3 @@ typedef struct xline_s {
 DE_EXTERN_C xline_t* xlines;
 DE_EXTERN_C xsector_t* xsectors;
 
-#endif

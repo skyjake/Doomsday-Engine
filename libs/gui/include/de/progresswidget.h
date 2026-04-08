@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_PROGRESSWIDGET_H
-#define LIBAPPFW_PROGRESSWIDGET_H
+#pragma once
 
 #include "de/labelwidget.h"
 
@@ -99,4 +98,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_PROGRESSWIDGET_H

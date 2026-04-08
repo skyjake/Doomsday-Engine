@@ -21,9 +21,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef __COMMON_PLAYER_VIEW_H__
-#define __COMMON_PLAYER_VIEW_H__
+#pragma once
 
 void            P_CalcHeight(player_t *player);
 
-#endif

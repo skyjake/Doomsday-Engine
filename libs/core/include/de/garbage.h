@@ -21,8 +21,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_GARBAGE_COLLECTOR_H
-#define LIBCORE_GARBAGE_COLLECTOR_H
+#pragma once
 
 #include "de/libcore.h"
 
@@ -134,4 +133,3 @@ void trash(Type *ptr) {
 
 #endif // __cplusplus
 
-#endif // LIBCORE_GARBAGE_COLLECTOR_H

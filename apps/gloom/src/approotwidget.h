@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef APPROOTWIDGET_H
-#define APPROOTWIDGET_H
+#pragma once
 
 #include <de/guirootwidget.h>
 #include <de/glwindow.h>
@@ -41,4 +40,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // APPROOTWIDGET_H

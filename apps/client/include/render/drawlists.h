@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_RENDER_DRAWLISTS_H
-#define DE_CLIENT_RENDER_DRAWLISTS_H
+#pragma once
 
 #include "render/drawlist.h"
 #include <de/vector.h>
@@ -66,4 +65,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_RENDER_DRAWLISTS_H

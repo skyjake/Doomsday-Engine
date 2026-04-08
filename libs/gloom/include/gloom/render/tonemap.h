@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_TONEMAP_H
-#define GLOOM_TONEMAP_H
+#pragma once
 
 #include "gloom/render/render.h"
 
@@ -42,4 +41,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_TONEMAP_H

@@ -27,8 +27,7 @@
  * version.h: Version numbering, naming etc.
  */
 
-#ifndef __DSOPENAL_VERSION_H__
-#define __DSOPENAL_VERSION_H__
+#pragma once
 
 #ifndef DSOPENAL_VER_ID
 #  ifdef _DEBUG
@@ -49,4 +48,3 @@
 #define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" DSOPENAL_VER_ID ")"
 #define PLUGIN_VERSION_NUMBER 1,2,4,0 // For WIN32 version info.
 
-#endif

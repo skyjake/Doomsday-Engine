@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_INPUTDIALOG_H
-#define LIBAPPFW_INPUTDIALOG_H
+#pragma once
 
 #include "de/messagedialog.h"
 #include "de/lineeditwidget.h"
@@ -47,4 +46,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_INPUTDIALOG_H

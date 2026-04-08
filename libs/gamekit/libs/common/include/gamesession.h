@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_GAMESESSION_H
-#define LIBCOMMON_GAMESESSION_H
+#pragma once
 
 #include <de/string.h>
 #include <doomsday/abstractsession.h>
@@ -251,4 +250,3 @@ de::String gfw_GameId();
  */
 const GameProfile *gfw_GameProfile();
 
-#endif // LIBCOMMON_GAMESESSION_H

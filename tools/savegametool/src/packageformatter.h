@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef SAVEGAMETOOL_PACKAGEFORMATER_H
-#define SAVEGAMETOOL_PACKAGEFORMATER_H
+#pragma once
 
 #include <de/string.h>
 #include <de/error.h>
@@ -94,4 +93,3 @@ public:
     virtual void convert(de::Path savePath) = 0;
 };
 
-#endif // SAVEGAMETOOL_PACKAGEFORMATER_H

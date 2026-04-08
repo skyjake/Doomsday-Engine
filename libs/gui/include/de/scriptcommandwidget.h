@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_SCRIPTCOMMANDWIDGET_H
-#define LIBAPPFW_SCRIPTCOMMANDWIDGET_H
+#pragma once
 
 #include "de/commandwidget.h"
 
@@ -61,4 +60,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_SCRIPTCOMMANDWIDGET_H

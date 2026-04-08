@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_CLIENTSTYLE_H
-#define DE_CLIENT_UI_CLIENTSTYLE_H
+#pragma once
 
 #include <de/image.h>
 #include <de/ui/style.h>
@@ -65,4 +64,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UI_CLIENTSTYLE_H

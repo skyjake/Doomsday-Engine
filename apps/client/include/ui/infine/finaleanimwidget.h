@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_UI_INFINE_FINALEANIMWIDGET_H
-#define DE_UI_INFINE_FINALEANIMWIDGET_H
+#pragma once
 
 #include <doomsday/world/material.h>
 #include "finalewidget.h"
@@ -113,4 +112,3 @@ private:
 
 typedef FinaleAnimWidget::Frame FinaleAnimWidgetFrame;
 
-#endif // DE_UI_INFINE_FINALEANIMWIDGET_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GLATLASBUFFER_H
-#define LIBGUI_GLATLASBUFFER_H
+#pragma once
 
 #include "de/glbuffer.h"
 
@@ -50,4 +49,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_GLATLASBUFFER_H

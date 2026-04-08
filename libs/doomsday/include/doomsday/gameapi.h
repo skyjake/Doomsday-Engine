@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_GAME_API_H
-#define LIBDOOMSDAY_GAME_API_H
+#pragma once
 
 #include <de/legacy/types.h>
 #include <de/legacy/rect.h>
@@ -79,4 +78,3 @@ enum {
 }  // extern "C"
 #endif
 
-#endif  // LIBDOOMSDAY_GAME_API_H

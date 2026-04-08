@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_POPUPMENUWIDGET_H
-#define LIBAPPFW_POPUPMENUWIDGET_H
+#pragma once
 
 #include "de/popupwidget.h"
 #include "de/menuwidget.h"
@@ -59,4 +58,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_POPUPMENUWIDGET_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_VERTEXBUILDER_H
-#define LIBGUI_VERTEXBUILDER_H
+#pragma once
 
 #include <de/list.h>
 #include <de/vector.h>
@@ -306,4 +305,3 @@ struct VertexBuilder
 
 } // namespace de
 
-#endif // LIBGUI_VERTEXBUILDER_H

@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_ENTITYDATABASE_H
-#define LIBDOOMSDAY_WORLD_ENTITYDATABASE_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/error.h>
@@ -87,4 +86,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBDOOMSDAY_WORLD_ENTITYDATABASE_H

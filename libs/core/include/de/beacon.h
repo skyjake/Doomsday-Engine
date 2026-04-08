@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_BEACON_H
-#define LIBCORE_BEACON_H
+#pragma once
 
 #include "de/error.h"
 #include "de/block.h"
@@ -94,4 +93,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_BEACON_H

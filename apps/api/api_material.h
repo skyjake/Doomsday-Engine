@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DOOMSDAY_API_MATERIAL_H
-#define DOOMSDAY_API_MATERIAL_H
+#pragma once
 
 #include "api_base.h"
 #include "api_uri.h"
@@ -56,4 +55,3 @@ DE_USING_API(Material);
 
 ///@}
 
-#endif // DOOMSDAY_API_MATERIAL_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_POLYGON_H
-#define GLOOM_POLYGON_H
+#pragma once
 
 #include "gloom/geo/geomath.h"
 #include "gloom/identity.h"
@@ -76,4 +75,3 @@ struct LIBGLOOM_PUBLIC Polygon
 
 }} // namespace gloom::geo
 
-#endif // GLOOM_POLYGON_H

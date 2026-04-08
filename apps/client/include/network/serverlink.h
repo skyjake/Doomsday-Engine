@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_SERVERLINK_H
-#define CLIENT_SERVERLINK_H
+#pragma once
 
 #include <doomsday/network/protocol.h>
 #include <de/transmitter.h>
@@ -163,4 +162,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // CLIENT_LINK_H

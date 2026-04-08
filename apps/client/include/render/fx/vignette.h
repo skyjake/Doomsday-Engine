@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_FX_VIGNETTE_H
-#define DE_CLIENT_FX_VIGNETTE_H
+#pragma once
 
 #include "render/consoleeffect.h"
 
@@ -46,4 +45,3 @@ public:
 
 } // namespace fx
 
-#endif // DE_CLIENT_FX_VIGNETTE_H

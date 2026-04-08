@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LOCALSERVERDIALOG_H
-#define LOCALSERVERDIALOG_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/term/inputdialog.h>
@@ -38,4 +37,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LOCALSERVERDIALOG_H

@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_REFRESH_H
-#define LIBDOOM_REFRESH_H
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -51,4 +50,3 @@ void R_UpdateViewFilter(int player);
 } // extern "C"
 #endif
 
-#endif // LIBDOOM_REFRESH_H

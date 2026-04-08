@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_FONTLINEWRAPPING_H
-#define LIBAPPFW_FONTLINEWRAPPING_H
+#pragma once
 
 #include "libgui.h"
 
@@ -152,4 +151,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_FONTLINEWRAPPING_H

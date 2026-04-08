@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_FADETOBLACKWIDGET
-#define LIBAPPFW_FADETOBLACKWIDGET
+#pragma once
 
 #include "de/labelwidget.h"
 #include <de/time.h>
@@ -51,6 +50,4 @@ private:
 };
 
 } // namespace de
-
-#endif // LIBAPPFW_FADETOBLACKWIDGET
 

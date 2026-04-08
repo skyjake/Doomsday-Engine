@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_ITEXTEDITOR_H
-#define LIBSHELL_ITEXTEDITOR_H
+#pragma once
 
 #include "de/string.h"
 
@@ -42,4 +41,3 @@ public:
 
 } // namespace de
 
-#endif // LIBSHELL_ITEXTEDITOR_H

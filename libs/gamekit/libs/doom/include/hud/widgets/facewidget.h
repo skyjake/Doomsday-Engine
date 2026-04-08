@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_UI_FACEWIDGET_H
-#define LIBDOOM_UI_FACEWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 #include "doomdef.h"
@@ -54,4 +53,3 @@ void SBarFace_Drawer(guidata_face_t *face, const Point2Raw *offset);
 void Face_UpdateGeometry    (guidata_face_t *face);
 void SBarFace_UpdateGeometry(guidata_face_t *face);
 
-#endif  // LIBDOOM_UI_FACEWIDGET_H

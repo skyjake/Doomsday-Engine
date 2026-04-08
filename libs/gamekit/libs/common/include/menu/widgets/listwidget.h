@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_LISTWIDGET
-#define LIBCOMMON_UI_LISTWIDGET
+#pragma once
 
 #include <de/list.h>
 #include <de/string.h>
@@ -134,4 +133,3 @@ typedef ListWidget::Item ListWidgetItem;
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_LISTWIDGET

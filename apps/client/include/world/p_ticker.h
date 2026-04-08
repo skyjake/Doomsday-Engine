@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_WORLD_P_TICKER_H
-#define DE_WORLD_P_TICKER_H
+#pragma once
 
 #include <de/legacy/types.h>
 
@@ -27,4 +26,3 @@
  */
 void P_Ticker(timespan_t time);
 
-#endif  // DE_WORLD_P_TICKER_H

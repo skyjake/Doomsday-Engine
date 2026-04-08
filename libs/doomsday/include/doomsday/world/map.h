@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_MAP_H
-#define LIBDOOMSDAY_WORLD_MAP_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include "../res/mapmanifest.h"
@@ -661,4 +660,3 @@ enum InternalSerialIds
 
 }  // namespace world
 
-#endif  // LIBDOOMSDAY_WORLD_MAP_H

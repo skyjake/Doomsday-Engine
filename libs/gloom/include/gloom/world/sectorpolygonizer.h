@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_SECTORPOLYGONIZER_H
-#define GLOOM_SECTORPOLYGONIZER_H
+#pragma once
 
 #include "gloom/world/map.h"
 
@@ -38,4 +37,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_SECTORPOLYGONIZER_H

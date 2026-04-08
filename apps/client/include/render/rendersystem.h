@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_RENDERSYSTEM_H
-#define CLIENT_RENDERSYSTEM_H
+#pragma once
 
 #include <functional>
 #include <de/glshaderbank.h>
@@ -148,4 +147,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif  // CLIENT_RENDERSYSTEM_H

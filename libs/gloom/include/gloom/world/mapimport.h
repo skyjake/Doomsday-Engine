@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_MAPIMPORT_H
-#define GLOOM_MAPIMPORT_H
+#pragma once
 
 #include "gloom/world/map.h"
 #include "../libgloom.h"
@@ -57,4 +56,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_MAPIMPORT_H

@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_CVARSLIDERWIDGET
-#define LIBCOMMON_UI_CVARSLIDERWIDGET
+#pragma once
 
 #include "sliderwidget.h"
 
@@ -49,4 +48,3 @@ void CVarSliderWidget_UpdateCVar(Widget &wi, Widget::Action action);
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_SLIDERWIDGET

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_SEQUENTIALLAYOUT_H
-#define LIBAPPFW_SEQUENTIALLAYOUT_H
+#pragma once
 
 #include "ui/defs.h"
 #include "guiwidget.h"
@@ -97,4 +96,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_SEQUENTIALLAYOUT_H

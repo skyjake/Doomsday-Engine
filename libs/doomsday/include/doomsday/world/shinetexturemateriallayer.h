@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_SHINETEXTUREMATERIALLAYER_H
-#define LIBDOOMSDAY_WORLD_SHINETEXTUREMATERIALLAYER_H
+#pragma once
 
 #include <de/string.h>
 #include <doomsday/defs/dedtypes.h>
@@ -84,4 +83,3 @@ public:
 
 } // namespace world
 
-#endif // LIBDOOMSDAY_WORLD_SHINETEXTUREMATERIALLAYER_H

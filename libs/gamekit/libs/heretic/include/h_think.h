@@ -31,8 +31,7 @@
  * suffers state changes of more or less violent nature.
  */
 
-#ifndef __JHERETIC_THINK_H__
-#define __JHERETIC_THINK_H__
+#pragma once
 
 typedef void    (*actionf_v) ();
 typedef void    (*actionf_p1) (void *);
@@ -46,4 +45,3 @@ typedef union {
     actionf_p2      acp2;
 } actionf_t;
 
-#endif

@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __WAD_TOOL_H__
-#define __WAD_TOOL_H__
+#pragma once
 
 #define VERSION_STR     "1.1"
 
@@ -44,4 +43,3 @@ typedef struct {
     char name[8];
 } lumpinfo_t;
 
-#endif

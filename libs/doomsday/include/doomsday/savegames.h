@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_SAVEGAMES_H
-#define LIBDOOMSDAY_SAVEGAMES_H
+#pragma once
 
 #include "libdoomsday.h"
 #include <de/string.h>
@@ -60,4 +59,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBDOOMSDAY_SAVEGAMES_H

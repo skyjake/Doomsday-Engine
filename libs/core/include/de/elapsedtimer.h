@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ELAPSEDTIMER_H
-#define LIBCORE_ELAPSEDTIMER_H
+#pragma once
 
 #include "de/libcore.h"
 #include <chrono>
@@ -41,4 +40,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_ELAPSEDTIMER_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_SSAO_H
-#define GLOOM_SSAO_H
+#pragma once
 
 #include "gloom/render/render.h"
 
@@ -45,4 +44,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_SSAO_H

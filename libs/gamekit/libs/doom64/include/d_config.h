@@ -28,8 +28,7 @@
  * Global settings. Most of these are console variables.
  */
 
-#ifndef __JDOOM64_SETTINGS_H__
-#define __JDOOM64_SETTINGS_H__
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -130,4 +129,3 @@ extern game_config_t cfg;
 } // extern "C"
 #endif
 
-#endif

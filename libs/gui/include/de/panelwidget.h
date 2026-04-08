@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_PANELWIDGET_H
-#define LIBAPPFW_PANELWIDGET_H
+#pragma once
 
 #include "ui/defs.h"
 #include "de/scrollareawidget.h"
@@ -149,4 +148,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_PANELWIDGET_H

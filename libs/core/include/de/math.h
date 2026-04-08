@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_MATH_H
-#define LIBCORE_MATH_H
+#pragma once
 
 #include "de/ibytearray.h"
 #include <cmath>
@@ -254,4 +253,3 @@ DE_PUBLIC duint32 crc32(const IByteArray &bytes);
 
 } // namespace de
 
-#endif /* LIBCORE_MATH_H */

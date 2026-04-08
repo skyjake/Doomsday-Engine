@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_PROFILEPICKERWIDGET_H
-#define DE_CLIENT_PROFILEPICKERWIDGET_H
+#pragma once
 
 #include <de/choicewidget.h>
 #include "configprofiles.h"
@@ -67,4 +66,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_PROFILEPICKERWIDGET_H

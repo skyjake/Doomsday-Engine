@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_DATAFOLDER_H
-#define LIBDOOMSDAY_DATAFOLDER_H
+#pragma once
 
 #include "../res/databundle.h"
 #include <de/folder.h>
@@ -42,4 +41,3 @@ public:
     const IIStream &operator >> (IByteArray &bytes) const override;
 };
 
-#endif // LIBDOOMSDAY_DATABUNDLE_H

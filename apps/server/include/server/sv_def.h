@@ -19,8 +19,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SERVER_DEF_H
-#define SERVER_DEF_H
+#pragma once
 
 #ifndef __cplusplus
 #  error "server/sv_def.h requires C++"
@@ -107,4 +106,3 @@ dd_bool Sv_CanTrustClientPos(int plrNum);
  */
 de::duint Sv_IdForMaterial(world::Material *mat);
 
-#endif  // SERVER_DEF_H

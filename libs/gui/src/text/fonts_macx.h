@@ -15,8 +15,7 @@
  * the GNU Lesser General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
-#ifndef LIBGUI_FONTS_MACX_H
-#define LIBGUI_FONTS_MACX_H
+#pragma once
 
 #if defined (__cplusplus)
 extern "C" {
@@ -29,4 +28,3 @@ void *  Apple_CreateMonospaceSystemFont   (float size, int weight, int italic);
 } // extern "C"
 #endif
 
-#endif // LIBGUI_FONTS_MACX_H

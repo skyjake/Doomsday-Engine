@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_TABWIDGET_H
-#define LIBAPPFW_TABWIDGET_H
+#pragma once
 
 #include "de/guiwidget.h"
 #include "de/ui/imageitem.h"
@@ -101,4 +100,3 @@ typedef TabWidget::TabItem TabItem;
 
 } // namespace de
 
-#endif // LIBAPPFW_TABWIDGET_H

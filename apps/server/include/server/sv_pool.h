@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef __DOOMSDAY_SERVER_POOL_H__
-#define __DOOMSDAY_SERVER_POOL_H__
+#pragma once
 
 #include "dd_share.h"
 #include "world/p_object.h"
@@ -298,4 +297,3 @@ void Sv_NewSoundDelta(int soundId, const mobj_t *emitter, world::Sector *sourceS
 } // extern "C"
 #endif
 
-#endif

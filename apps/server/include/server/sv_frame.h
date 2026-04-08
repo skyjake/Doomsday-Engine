@@ -19,8 +19,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SERVER_FRAME_H
-#define SERVER_FRAME_H
+#pragma once
 
 #include <de/libcore.h>
 
@@ -31,4 +30,3 @@
 void Sv_TransmitFrame();
 de::dsize Sv_GetMaxFrameSize(int playerNumber);
 
-#endif  // SERVER_FRAME_H

@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_THINKER_H
-#define DE_THINKER_H
+#pragma once
 
 #include "api_base.h"
 #include <de/legacy/reader.h>
@@ -74,4 +73,3 @@ DE_USING_API(Thinker);
 } // extern "C"
 #endif
 
-#endif // DE_THINKER_H

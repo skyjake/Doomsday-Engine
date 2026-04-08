@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_BINDINGS_CORE_H
-#define LIBCORE_BINDINGS_CORE_H
+#pragma once
 
 #include "de/scripting/function.h"
 
@@ -26,6 +25,4 @@ namespace de {
 void initCoreModule(Binder &binder, Record &coreModule);
 
 } // namespace de
-
-#endif // LIBCORE_BINDINGS_CORE_H
 

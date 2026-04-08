@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_UI_ARMORICONSWIDGET_H
-#define LIBHEXEN_UI_ARMORICONSWIDGET_H
+#pragma once
 
 #include "h2def.h"
 #include "hud/hudwidget.h"
@@ -46,4 +45,3 @@ private:
     int _armorPoints[NUMARMOR];
 };
 
-#endif  // LIBHEXEN_UI_ARMORICONSWIDGET_H

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_MATHUTIL_H
-#define DE_MATHUTIL_H
+#pragma once
 
 #include "../liblegacy.h"
 
@@ -164,4 +163,3 @@ DE_PUBLIC void RNG_Reset(void);
 } // extern "C"
 #endif
 
-#endif // DE_MATHUTIL_H

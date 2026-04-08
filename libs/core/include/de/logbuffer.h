@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_LOGBUFFER_H
-#define LIBCORE_LOGBUFFER_H
+#pragma once
 
 #include "de/log.h"
 #include "de/file.h"
@@ -216,4 +215,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_LOGBUFFER_H

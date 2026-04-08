@@ -26,8 +26,7 @@
  * midistream.h: Plays MIDI streams via the winmm API.
  */
 
-#ifndef __WIN_MIDISTREAMER_H__
-#define __WIN_MIDISTREAMER_H__
+#pragma once
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -80,4 +79,3 @@ protected:
     int         readTime; // In ticks.
 };
 
-#endif

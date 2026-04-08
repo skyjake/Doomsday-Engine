@@ -26,8 +26,7 @@
  * Doomsday API exchange - DOOM specific.
  */
 
-#ifndef LIBJDOOM_API_H
-#define LIBJDOOM_API_H
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -65,4 +64,3 @@ DE_USING_API(Uri);
 } // extern "C"
 #endif
 
-#endif /* LIBJDOOM_API_H */

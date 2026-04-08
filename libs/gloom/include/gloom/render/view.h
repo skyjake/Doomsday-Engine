@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_VIEW_H
-#define GLOOM_VIEW_H
+#pragma once
 
 #include <de/gluniform.h>
 #include "gloom/render/icamera.h"
@@ -42,4 +41,3 @@ struct View
 
 } // namespace gloom
 
-#endif // GLOOM_VIEW_H

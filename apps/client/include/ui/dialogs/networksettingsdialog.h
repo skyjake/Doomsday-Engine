@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_NETWORKSETTINGSDIALOG_H
-#define DE_CLIENT_NETWORKSETTINGSDIALOG_H
+#pragma once
 
 #include <de/dialogwidget.h>
 
@@ -36,4 +35,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_NETWORKSETTINGSDIALOG_H

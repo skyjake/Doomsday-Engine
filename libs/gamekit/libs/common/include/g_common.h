@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_GAME_H
-#define LIBCOMMON_GAME_H
+#pragma once
 
 #include "dd_share.h"
 #include <doomsday/uri.h>
@@ -245,4 +244,3 @@ D_CMD( CCmdExitLevel );
 
 DE_EXTERN_C dd_bool singledemo;
 
-#endif  // LIBCOMMON_GAME_H

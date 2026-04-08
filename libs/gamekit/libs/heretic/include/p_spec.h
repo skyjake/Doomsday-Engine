@@ -35,8 +35,7 @@
  * special lines, or by timed thinkers.
  */
 
-#ifndef __P_SPEC_H__
-#define __P_SPEC_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -104,4 +103,3 @@ dd_bool         P_UseSpecialLine2(mobj_t* mo, Line* line, int side);
 } // extern "C"
 #endif
 
-#endif

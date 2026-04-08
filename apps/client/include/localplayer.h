@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef CLIENT_LOCALPLAYER_H
-#define CLIENT_LOCALPLAYER_H
+#pragma once
 
 #include <de/libcore.h>
 
@@ -36,4 +35,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // CLIENT_LOCALPLAYER_H

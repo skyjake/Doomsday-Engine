@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_SHARED_GAME_DEFINITIONS_H
-#define DE_SHARED_GAME_DEFINITIONS_H
+#pragma once
 
 #include "dd_types.h"
 #include <doomsday/world/actions.h>
@@ -216,4 +215,3 @@ sfxinfo_t;
 } // extern "C"
 #endif
 
-#endif // DE_SHARED_GAME_DEFINITIONS_H

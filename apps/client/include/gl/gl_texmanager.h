@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_GL_TEXMANAGER_H
-#define DE_CLIENT_GL_TEXMANAGER_H
+#pragma once
 
 #ifndef __CLIENT__
 #  error "GL Texture Manager only exists in the Client"
@@ -83,5 +82,3 @@ void GL_ReleaseTexturesForRawImages();
  */
 void GL_SetRawTexturesMinFilter(GLenum minFilter);
 
-
-#endif // DE_CLIENT_GL_TEXMANAGER_H

@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_ITERLIST_H
-#define LIBCOMMON_ITERLIST_H
+#pragma once
 
 typedef enum {
     ITERLIST_BACKWARD = 0, /// Top to bottom.
@@ -68,4 +67,3 @@ void IterList_SetIteratorDirection(iterlist_t *list, iterlist_iterator_direction
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_ITERLIST_H */

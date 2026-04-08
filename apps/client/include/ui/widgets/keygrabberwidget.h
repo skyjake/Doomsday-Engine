@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_KEYGRABBERWIDGET_H
-#define DE_CLIENT_KEYGRABBERWIDGET_H
+#pragma once
 
 #include <de/labelwidget.h>
 
@@ -36,4 +35,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_KEYGRABBERWIDGET_H

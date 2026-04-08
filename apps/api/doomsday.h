@@ -21,8 +21,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DOOMSDAY_PUBLIC_API_H
-#define DOOMSDAY_PUBLIC_API_H
+#pragma once
 
 // The calling convention.
 #if defined(WIN32)
@@ -106,4 +105,3 @@
  * @defgroup render Renderer
  */
 
-#endif /* DOOMSDAY_PUBLIC_API_H */

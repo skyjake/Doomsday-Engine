@@ -22,8 +22,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_ANIMATOR_H
-#define DE_ANIMATOR_H
+#pragma once
 
 #include "../liblegacy.h"
 
@@ -80,4 +79,3 @@ DE_PUBLIC void AnimatorVector4_Think(animatorvector4_t v);
 
 /// @}
 
-#endif /* DE_ANIMATOR_H */

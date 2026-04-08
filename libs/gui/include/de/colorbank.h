@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_COLORBANK_H
-#define LIBGUI_COLORBANK_H
+#pragma once
 
 #include "libgui.h"
 #include <de/infobank.h>
@@ -76,4 +75,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_COLORBANK_H

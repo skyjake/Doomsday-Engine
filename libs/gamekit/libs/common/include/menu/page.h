@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_PAGE
-#define LIBCOMMON_UI_PAGE
+#pragma once
 
 #include <de/list.h>
 #include <de/string.h>
@@ -226,4 +225,3 @@ private:
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_PAGE

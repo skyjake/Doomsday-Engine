@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_BYTEORDER_H
-#define LIBCORE_BYTEORDER_H
+#pragma once
 
 #include "de/libcore.h"
 
@@ -209,4 +208,3 @@ DE_PUBLIC extern LittleEndianByteOrder littleEndianByteOrder;
 
 }
 
-#endif /* LIBCORE_BYTEORDER_H */

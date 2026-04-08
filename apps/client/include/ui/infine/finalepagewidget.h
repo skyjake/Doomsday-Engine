@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_UI_INFINE_FINALEPAGEWIDGET_H
-#define DE_UI_INFINE_FINALEPAGEWIDGET_H
+#pragma once
 
 #include <de/list.h>
 #include <de/error.h>
@@ -127,4 +126,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_UI_INFINE_FINALEPAGEWIDGET_H

@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_SAVESTATE_THINKERINFO_H
-#define LIBCOMMON_SAVESTATE_THINKERINFO_H
+#pragma once
 
 #include "common.h"
 #ifdef __cplusplus
@@ -95,4 +94,3 @@ ThinkerClassInfo *SV_ThinkerInfoForClass(thinkerclass_t tClass);
 ThinkerClassInfo *SV_ThinkerInfo(const thinker_t &thinker);
 #endif
 
-#endif // LIBCOMMON_SAVESTATE_THINKERINFO_H

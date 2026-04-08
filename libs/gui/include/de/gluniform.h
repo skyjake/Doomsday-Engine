@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GLUNIFORM_H
-#define LIBGUI_GLUNIFORM_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/vector.h>
@@ -160,4 +159,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_GLUNIFORM_H

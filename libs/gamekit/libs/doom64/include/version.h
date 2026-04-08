@@ -26,8 +26,7 @@
  * Version numbering, naming etc.
  */
 
-#ifndef JDOOM64_VERSION_H
-#define JDOOM64_VERSION_H
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -65,4 +64,3 @@
 #define PLUGIN_DESC         PLUGIN_NICENAME " " DE_PLUGINDESC
 #define PLUGIN_COPYRIGHT    "2003-2019, " DENGPROJECT_NICEAUTHOR
 
-#endif /* JDOOM64_VERSION_H */

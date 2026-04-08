@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_RENDER_BILLBOARD_H
-#define DE_CLIENT_RENDER_BILLBOARD_H
+#pragma once
 
 #include "dd_types.h"
 #include "resource/clientmaterial.h"
@@ -131,4 +130,3 @@ DE_EXTERN_C de::dbyte devNoSprites;
 
 DE_EXTERN_C void Rend_SpriteRegister();
 
-#endif  // CLIENT_RENDER_BILLBOARD_H

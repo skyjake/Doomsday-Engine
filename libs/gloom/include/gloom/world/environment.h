@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef ENVIRONMENT_H
-#define ENVIRONMENT_H
+#pragma once
 
 #include <de/time.h>
 
@@ -42,4 +41,3 @@ private:
 
 } // namespace gloom
 
-#endif // ENVIRONMENT_H

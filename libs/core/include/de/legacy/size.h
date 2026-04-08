@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBLEGACY_SIZE_H
-#define LIBLEGACY_SIZE_H
+#pragma once
 
 #include "../liblegacy.h"
 
@@ -121,4 +120,3 @@ DE_PUBLIC dd_bool Size2f_Equality(const Size2f *size, const Size2f *other);
 } // extern "C"
 #endif
 
-#endif /* LIBLEGACY_SIZE_H */

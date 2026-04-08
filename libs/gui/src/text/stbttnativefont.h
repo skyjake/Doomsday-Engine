@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_STBTTNATIVEFONT_H
-#define LIBGUI_STBTTNATIVEFONT_H
+#pragma once
 
 #include "de/nativefont.h"
 #include "de/image.h"
@@ -56,6 +55,4 @@ private:
 };
 
 } // namespace de
-
-#endif // LIBGUI_STBTTNATIVEFONT_H
 

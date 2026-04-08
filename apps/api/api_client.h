@@ -1,5 +1,4 @@
-#ifndef DOOMSDAY_API_CLIENT_H
-#define DOOMSDAY_API_CLIENT_H
+#pragma once
 
 #include "apis.h"
 
@@ -65,4 +64,3 @@ DE_API_T(Client);
 DE_USING_API(Client);
 #endif
 
-#endif // DOOMSDAY_API_CLIENT_H

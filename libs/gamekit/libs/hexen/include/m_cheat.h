@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_M_CHEAT_H
-#define LIBHEXEN_M_CHEAT_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -40,4 +39,3 @@ void G_RegisterCheats(void);
 } // extern "C"
 #endif
 
-#endif // LIBHEXEN_M_CHEAT_H

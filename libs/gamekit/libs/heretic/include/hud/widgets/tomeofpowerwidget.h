@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHERETIC_UI_TOMEOFPOWERWIDGET_H
-#define LIBHERETIC_UI_TOMEOFPOWERWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -45,4 +44,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif  // LIBHERETIC_UI_TOMEOFPOWERWIDGET_H

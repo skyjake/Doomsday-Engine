@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_RENDER_VECTORLIGHTDATA_H
-#define CLIENT_RENDER_VECTORLIGHTDATA_H
+#pragma once
 
 #include <de/vector.h>
 
@@ -38,4 +37,3 @@ struct VectorLightData
     const struct mobj_s *sourceMobj = nullptr; ///< Originating mobj, or nullptr.
 };
 
-#endif  // CLIENT_RENDER_VECTORLIGHTDATA_H

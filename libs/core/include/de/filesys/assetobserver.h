@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_FILESYS_ASSETOBSERVER_H
-#define LIBCORE_FILESYS_ASSETOBSERVER_H
+#pragma once
 
 #include "de/fileindex.h"
 
@@ -55,4 +54,3 @@ private:
 } // namespace filesys
 } // namespace de
 
-#endif // LIBCORE_FILESYS_ASSETOBSERVER_H

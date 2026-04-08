@@ -16,11 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SAVEGAMETOOL_H
-#define SAVEGAMETOOL_H
+#pragma once
 
 #include <de/string.h>
 
 extern de::String fallbackGameId;
 
-#endif // SAVEGAMETOOL_H

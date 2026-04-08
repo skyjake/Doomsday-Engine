@@ -39,8 +39,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_API_STRING_H
-#define DE_API_STRING_H
+#pragma once
 
 #include "de/liblegacy.h"
 #include "types.h"
@@ -485,4 +484,3 @@ DE_PUBLIC Str *Str_FromAutoStr(AutoStr *as);
 #  include "str.hh" // C++ wrapper for ddstring_t
 #endif
 
-#endif /* DE_API_STRING_H */

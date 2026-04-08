@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_RESOURCE_COMPOSITEBITMAPFONT_H
-#define CLIENT_RESOURCE_COMPOSITEBITMAPFONT_H
+#pragma once
 
 #include "abstractfont.h"
 #include "resource/clienttexture.h"
@@ -82,4 +81,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // CLIENT_RESOURCE_COMPOSITEBITMAPFONT_H

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_VIEWPORTS_H
-#define DE_CLIENT_VIEWPORTS_H
+#pragma once
 
 #ifdef __SERVER__
 #  error "viewports.h is for the client only"
@@ -237,4 +236,3 @@ void R_ViewWindowTicker(int consoleNum, timespan_t ticLength);
  */
 const de::Mat4f &Viewer_Matrix();
 
-#endif // DE_CLIENT_VIEWPORTS_H

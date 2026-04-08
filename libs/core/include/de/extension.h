@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_EXTENSION_H
-#define LIBCORE_EXTENSION_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/string.h"
@@ -62,4 +61,3 @@ DE_PUBLIC void *extensionSymbol(const char *extensionName, const char *symbolNam
 
 } // namespace de
 
-#endif // LIBCORE_EXTENSION_H

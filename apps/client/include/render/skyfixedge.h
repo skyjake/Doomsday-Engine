@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_RENDER_SKY_FIX_EDGE
-#define DE_RENDER_SKY_FIX_EDGE
+#pragma once
 
 #include <doomsday/mesh/hedge.h>
 #include <de/vector.h>
@@ -82,4 +81,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_RENDER_SKY_FIX_EDGE

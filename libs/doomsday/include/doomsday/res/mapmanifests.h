@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_MAPMANIFESTS_H
-#define LIBDOOMSDAY_RESOURCE_MAPMANIFESTS_H
+#pragma once
 
 #include "mapmanifest.h"
 #include <de/pathtree.h>
@@ -66,4 +65,3 @@ private:
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_RESOURCE_MAPMANIFESTS_H

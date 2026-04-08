@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GLDRAWQUEUE_H
-#define LIBGUI_GLDRAWQUEUE_H
+#pragma once
 
 #include <de/gluniform.h>
 
@@ -82,4 +81,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_GLDRAWQUEUE_H

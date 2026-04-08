@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_DELETABLE_H
-#define LIBCORE_DELETABLE_H
+#pragma once
 
 #include "de/observers.h"
 
@@ -101,6 +100,4 @@ private:
 };
 
 } // namespace de
-
-#endif // LIBCORE_DELETABLE_H
 

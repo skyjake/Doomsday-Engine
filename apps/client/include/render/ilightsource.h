@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_ILIGHTSOURCE_H
-#define DE_CLIENT_ILIGHTSOURCE_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/vector.h>
@@ -92,4 +91,3 @@ public:
     virtual float lightSourceRadius() const = 0;
 };
 
-#endif // DE_CLIENT_ILIGHTSOURCE_H

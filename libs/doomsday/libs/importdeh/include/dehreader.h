@@ -22,8 +22,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDEHREAD_DEHREADER_H
-#define LIBDEHREAD_DEHREADER_H
+#pragma once
 
 #include "importdeh.h"
 #include <de/block.h>
@@ -50,4 +49,3 @@ using DehReaderFlags = de::Flags;
  */
 void readDehPatch(const de::Block &patch, bool patchIsCustom, DehReaderFlags flags = 0);
 
-#endif  // LIBDEHREAD_DEHREADER_H

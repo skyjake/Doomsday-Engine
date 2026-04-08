@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_SHARED_H
-#define LIBCORE_SHARED_H
+#pragma once
 
 #include "de/counted.h"
 
@@ -73,4 +72,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_SHARED_H

@@ -25,8 +25,7 @@
  * p_telept.h:
  */
 
-#ifndef __P_TELEPT_H__
-#define __P_TELEPT_H__
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -35,4 +34,3 @@
 void            P_TeleportToDeathmatchStarts(mobj_t* mo);
 void            P_TeleportToPlayerStarts(mobj_t* mo);
 
-#endif

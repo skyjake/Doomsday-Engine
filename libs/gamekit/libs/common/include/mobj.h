@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_MOBJ_H
-#define LIBCOMMON_MOBJ_H
+#pragma once
 
 #include "common.h"
 
@@ -265,4 +264,3 @@ void Mobj_RestoreObjectState(mobj_t *mob, const de::Info::BlockElement &state);
 
 #endif
 
-#endif  // LIBCOMMON_MOBJ_H

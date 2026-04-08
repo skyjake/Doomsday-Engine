@@ -24,8 +24,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_STRING_ARRAY_H
-#define DE_STRING_ARRAY_H
+#pragma once
 
 #include "types.h"
 #include "str.h"
@@ -192,4 +191,3 @@ DE_PUBLIC void StringArray_Read(StringArray *ar, Reader1 *reader);
 } // extern "C"
 #endif
 
-#endif // DE_STRING_ARRAY_H

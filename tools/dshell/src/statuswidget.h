@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef STATUSWIDGET_H
-#define STATUSWIDGET_H
+#pragma once
 
 #include <de/term/widget.h>
 #include <doomsday/network/link.h>
@@ -42,4 +41,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // STATUSWIDGET_H

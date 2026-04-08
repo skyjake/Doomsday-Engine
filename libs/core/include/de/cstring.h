@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_CSTRING_H
-#define LIBCORE_CSTRING_H
+#pragma once
 
 #include "de/range.h"
 #include "de/string.h"
@@ -143,4 +142,3 @@ namespace std
     };
 }
 
-#endif // LIBCORE_CSTRING_H

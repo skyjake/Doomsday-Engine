@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_RENDER_SHADOWEDGE_H
-#define CLIENT_RENDER_SHADOWEDGE_H
+#pragma once
 
 #include <doomsday/mesh/hedge.h>
 #include <de/legacy/types.h>
@@ -94,4 +93,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif  // CLIENT_RENDER_SHADOWEDGE_H

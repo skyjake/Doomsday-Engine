@@ -25,8 +25,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_FILESYS_FILEINFO_H
-#define DE_FILESYS_FILEINFO_H
+#pragma once
 
 #ifdef __cplusplus
 
@@ -88,4 +87,3 @@ struct LIBDOOMSDAY_PUBLIC FileInfo
 
 #endif // __cplusplus
 
-#endif /* DE_FILESYS_FILEINFO_H */

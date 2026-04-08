@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_BASEWINDOW_H
-#define LIBAPPFW_BASEWINDOW_H
+#pragma once
 
 #include "libgui.h"
 #include <de/vector.h>
@@ -111,4 +110,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_BASEWINDOW_H

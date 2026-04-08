@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_LOGTEXTSTYLE_H
-#define LIBCORE_LOGTEXTSTYLE_H
+#pragma once
 
 #include "de/libcore.h"
 
@@ -41,4 +40,3 @@ extern const char *TEXT_MARK_INDENT;
 
 } // namespace de
 
-#endif // LIBCORE_LOGTEXTSTYLE_H

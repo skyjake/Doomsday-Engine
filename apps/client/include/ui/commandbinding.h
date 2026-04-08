@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTSYSTEM_COMMANDBINDING_H
-#define CLIENT_INPUTSYSTEM_COMMANDBINDING_H
+#pragma once
 
 #include <de/action.h>
 #include <de/string.h>
@@ -78,4 +77,3 @@ public:
                            bool respectHigherContexts) const;
 };
 
-#endif // CLIENT_INPUTSYSTEM_COMMANDBINDING_H

@@ -28,8 +28,7 @@
  * Global settings. Most of these are console variables.
  */
 
-#ifndef __JHERETIC_CONFIG_H__
-#define __JHERETIC_CONFIG_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -133,4 +132,3 @@ extern game_config_t cfg;      // in g_game.c
 } // extern "C"
 #endif
 
-#endif

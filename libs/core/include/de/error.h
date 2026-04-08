@@ -17,9 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ERROR_H
-#define LIBCORE_ERROR_H
+#pragma once
 
 #include "libcore.h"
 
-#endif // LIBCORE_ERROR_H

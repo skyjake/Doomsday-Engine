@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_FILELOGSINK_H
-#define LIBCORE_FILELOGSINK_H
+#pragma once
 
 #include "de/logsink.h"
 #include "de/file.h"
@@ -45,4 +44,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_FILELOGSINK_H

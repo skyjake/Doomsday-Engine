@@ -26,8 +26,7 @@
  * resource.h:
  */
 
-#ifndef __JHERETIC_RESOURCE_H__
-#define __JHERETIC_RESOURCE_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -45,4 +44,3 @@
 #endif
 #endif
 
-#endif

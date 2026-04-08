@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_ABSTRACTLINEEDITOR_H
-#define LIBSHELL_ABSTRACTLINEEDITOR_H
+#pragma once
 
 #include "de/itexteditor.h"
 #include "de/ilinewrapping.h"
@@ -136,4 +135,3 @@ private:
 
 } // namespace de
 
-#endif // LIBSHELL_ABSTRACTLINEEDITOR_H

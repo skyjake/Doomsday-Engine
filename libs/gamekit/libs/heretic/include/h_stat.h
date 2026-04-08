@@ -30,8 +30,7 @@
  * have to include this header file. In practice, things are a bit messy.
  */
 
-#ifndef __JHERETIC_STATE_H__
-#define __JHERETIC_STATE_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -46,4 +45,3 @@ extern gamestate_t wipeGameState;
 
 extern int bodyQueueSlot;
 
-#endif

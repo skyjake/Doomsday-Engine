@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_PATH_H
-#define LIBCORE_PATH_H
+#pragma once
 
 #include <algorithm> // std::swap
 
@@ -577,4 +576,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_PATH_H

@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __DSWINMM_H__
-#define __DSWINMM_H__
+#pragma once
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -111,4 +110,3 @@ void DM_CDAudio_Stop();
  */
 int DM_CDAudio_Play(int track, int looped);
 
-#endif // __DSWINMM_H__

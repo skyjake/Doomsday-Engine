@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_ACS_INTERPRETER_H
-#define LIBCOMMON_ACS_INTERPRETER_H
+#pragma once
 
 #if __cplusplus
 #  include "acs/script.h"
@@ -115,4 +114,3 @@ void acs_Interpreter_Think(acs_Interpreter *interp);
 }  // extern "C"
 #endif
 
-#endif  // LIBCOMMON_ACS_INTERPRETER_H

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_MOBJ_H
-#define LIBDOOMSDAY_MOBJ_H
+#pragma once
 
 #include "dd_share.h" /// @todo dd_share.h is not part of libdoomsday.
 #include "../api_map.h"
@@ -144,4 +143,3 @@ LIBDOOMSDAY_PUBLIC world::Map &Mobj_Map(const mobj_t &mob);
  */
 DE_EXTERN_C LIBDOOMSDAY_PUBLIC world_Sector *Mobj_Sector(const mobj_t *mobj);
 
-#endif // LIBDOOMSDAY_MOBJ_H

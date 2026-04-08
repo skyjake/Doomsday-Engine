@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_P_MAPUTL_H
-#define LIBDOOM_P_MAPUTL_H
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -31,4 +30,3 @@
  */
 void P_ApplyTorque(mobj_t *mobj);
 
-#endif // LIBDOOM_P_MAPUTL_H

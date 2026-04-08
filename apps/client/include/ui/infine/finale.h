@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_UI_INFINE_FINALE_H
-#define DE_UI_INFINE_FINALE_H
+#pragma once
 
 #include <de/observers.h>
 #include <de/string.h>
@@ -81,4 +80,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_UI_INFINE_FINALE_H

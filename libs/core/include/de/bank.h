@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_BANK_H
-#define LIBCORE_BANK_H
+#pragma once
 
 #include <set>
 #include <functional>
@@ -403,4 +402,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_BANK_H

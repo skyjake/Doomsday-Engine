@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_RECTANGLE_H
-#define LIBCORE_RECTANGLE_H
+#pragma once
 
 #include "de/vector.h"
 #include "de/range.h"
@@ -220,4 +219,3 @@ typedef Rectangle<Vec2d,  Vec2d>  Rectangled;
 
 } // namespace de
 
-#endif /* LIBCORE_RECTANGLE_H */

@@ -22,8 +22,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_GRAPHICS_DRAW_H
-#define DE_GRAPHICS_DRAW_H
+#pragma once
 
 #include <de/rectangle.h>
 #include <de/vector.h>
@@ -66,4 +65,3 @@ void GL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int t
 } // extern "C"
 #endif
 
-#endif // DE_GRAPHICS_DRAW_H

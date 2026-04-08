@@ -26,8 +26,7 @@
  * r_defs.h: Shared data struct definitions.
  */
 
-#ifndef __R_DEFS__
-#define __R_DEFS__
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -86,4 +85,3 @@ typedef struct xline_s {
 DE_EXTERN_C xsector_t* xsectors;
 DE_EXTERN_C xline_t* xlines;
 
-#endif

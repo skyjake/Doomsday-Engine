@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_GBUFFER_H
-#define GLOOM_GBUFFER_H
+#pragma once
 
 #include <de/glframebuffer.h>
 #include <de/gltexture.h>
@@ -59,4 +58,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_GBUFFER_H

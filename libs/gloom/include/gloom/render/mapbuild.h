@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_MAPBUILD_H
-#define GLOOM_MAPBUILD_H
+#pragma once
 
 #include "gloom/world/map.h"
 #include "gloom/render/materiallib.h"
@@ -120,4 +119,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_MAPBUILD_H

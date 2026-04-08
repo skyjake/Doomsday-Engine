@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_MATH_IHPLANE
-#define DE_MATH_IHPLANE
+#pragma once
 
 #include <de/error.h>
 #include <de/partition.h>
@@ -123,4 +122,3 @@ public:
 
 } // namespace de
 
-#endif // DE_MATH_IHPLANE

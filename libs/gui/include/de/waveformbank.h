@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_WAVEFORMBANK_H
-#define LIBGUI_WAVEFORMBANK_H
+#pragma once
 
 #include "de/waveform.h"
 #include <de/infobank.h>
@@ -57,4 +56,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_WAVEFORMBANK_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_BLOOM_H
-#define GLOOM_BLOOM_H
+#pragma once
 
 #include "gloom/render/render.h"
 
@@ -40,4 +39,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_BLOOM_H

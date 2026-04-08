@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHERETIC_PLAY_PSPR_H
-#define LIBHERETIC_PLAY_PSPR_H
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -54,4 +53,3 @@ void P_FireWeapon(struct player_s *player);
 } // extern "C"
 #endif
 
-#endif // LIBHERETIC_PLAY_PSPR_H

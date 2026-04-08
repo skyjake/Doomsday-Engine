@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_FILE_H
-#define LIBCORE_FILE_H
+#pragma once
 
 #include "de/observers.h"
 #include "de/iiostream.h"
@@ -371,4 +370,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_FILE_H */

@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_MEMORY_BLOCKSET_H
-#define DE_MEMORY_BLOCKSET_H
+#pragma once
 
 #include "../liblegacy.h"
 
@@ -102,4 +101,3 @@ DE_PUBLIC size_t BlockSet_Count(blockset_t *set);
 } // extern "C"
 #endif
 
-#endif /* DE_BLOCKSET_H */

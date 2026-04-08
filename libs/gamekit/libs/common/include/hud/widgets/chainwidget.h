@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_CHAINWIDGET_H
-#define LIBCOMMON_UI_CHAINWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -46,4 +45,3 @@ private:
     int _wiggle = 0;
 };
 
-#endif  // LIBCOMMON_UI_CHAINWIDGET_H

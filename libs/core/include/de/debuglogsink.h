@@ -17,8 +17,7 @@
  */
 
 #if 0
-#ifndef LIBCORE_DEBUGLOGSINK_H
-#define LIBCORE_DEBUGLOGSINK_H
+#pragma once
 
 #include "de/logsink.h"
 #include "de/monospacelogsinkformatter.h"
@@ -46,4 +45,4 @@ private:
 } // namespace de
 
 #endif // LIBCORE_DEBUGLOGSINK_H
-#endif
+

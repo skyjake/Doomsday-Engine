@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_BLOCKVALUE_H
-#define LIBCORE_BLOCKVALUE_H
+#pragma once
 
 #include "de/value.h"
 #include "de/block.h"
@@ -67,4 +66,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_BLOCKVALUE_H */

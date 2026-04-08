@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHERETIC_P_INTER_H
-#define LIBHERETIC_P_INTER_H
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -146,4 +145,3 @@ int P_DamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP,
 } // extern "C"
 #endif
 
-#endif // LIBHERETIC_P_INTER_H

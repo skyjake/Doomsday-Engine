@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_POLYMOVER_H
-#define DE_CLIENT_POLYMOVER_H
+#pragma once
 
 #include "api_thinker.h"
 #include <doomsday/world/thinkerdata.h>
@@ -44,4 +43,3 @@ public:
     static thinker_s *newThinker(Polyobj &polyobj, bool moving, bool rotating);
 };
 
-#endif  // DE_CLIENT_POLYMOVER_H

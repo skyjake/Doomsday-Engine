@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_LEXICON_H
-#define LIBSHELL_LEXICON_H
+#pragma once
 
 #include "de/string.h"
 #include "de/set.h"
@@ -55,4 +54,3 @@ private:
 
 } // namespace de
 
-#endif // LIBSHELL_LEXICON_H

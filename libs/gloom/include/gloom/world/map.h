@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_MAP_H
-#define GLOOM_MAP_H
+#pragma once
 
 #include <de/rectangle.h>
 #include <de/vector.h>
@@ -229,4 +228,3 @@ template <> struct hash<gloom::Edge> {
 
 } // std
 
-#endif // GLOOM_MAP_H

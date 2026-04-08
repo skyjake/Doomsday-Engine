@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_TOGGLEWIDGET_H
-#define LIBAPPFW_TOGGLEWIDGET_H
+#pragma once
 
 #include "de/buttonwidget.h"
 
@@ -73,4 +72,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_TOGGLEWIDGET_H

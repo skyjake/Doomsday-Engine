@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_COMPOSITETEXTURE_H
-#define LIBDOOMSDAY_RESOURCE_COMPOSITETEXTURE_H
+#pragma once
 
 #include "patchname.h"
 
@@ -194,4 +193,3 @@ typedef Composite::Component CompositeComponent;
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_RESOURCE_COMPOSITETEXTURE_H

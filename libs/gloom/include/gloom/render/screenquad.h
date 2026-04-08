@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_SCREENQUAD_H
-#define GLOOM_SCREENQUAD_H
+#pragma once
 
 #include "gloom/render/render.h"
 
@@ -46,4 +45,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_SCREENQUAD_H

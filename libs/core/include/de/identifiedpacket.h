@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_IDENTIFIEDPACKET_H
-#define LIBCORE_IDENTIFIEDPACKET_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/packet.h"
@@ -59,4 +58,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_IDENTIFIEDPACKET_H

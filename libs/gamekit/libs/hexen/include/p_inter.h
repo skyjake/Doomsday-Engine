@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_P_INTER_H
-#define LIBHEXEN_P_INTER_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -65,4 +64,3 @@ dd_bool P_MorphPlayer(player_t *player);
 } // extern "C"
 #endif
 
-#endif // LIBHEXEN_P_INTER_H

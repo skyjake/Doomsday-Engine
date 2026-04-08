@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_RENDER_DECORATION_H
-#define DE_CLIENT_RENDER_DECORATION_H
+#pragma once
 
 #include <de/error.h>
 #include <de/vector.h>
@@ -86,4 +85,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif  // DE_CLIENT_RENDER_DECORATION_H

@@ -22,8 +22,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_REFRESH_H
-#define LIBCOMMON_REFRESH_H
+#pragma once
 
 #include "doomsday.h"
 
@@ -85,4 +84,3 @@ void G_ResetViewEffects();
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_REFRESH_H */

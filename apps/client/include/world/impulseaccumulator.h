@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_PLAY_IMPULSEACCUMULATOR_H
-#define CLIENT_PLAY_IMPULSEACCUMULATOR_H
+#pragma once
 
 #include <de/string.h>
 
@@ -86,4 +85,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // CLIENT_PLAY_IMPULSEACCUMULATOR_H

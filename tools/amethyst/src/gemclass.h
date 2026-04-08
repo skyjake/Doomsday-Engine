@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_GEM_CLASS_H__
-#define __AMETHYST_GEM_CLASS_H__
+#pragma once
 
 #include "string.h"
 #include "length.h"
@@ -119,4 +118,3 @@ private:
     Length      _length;
 };
 
-#endif

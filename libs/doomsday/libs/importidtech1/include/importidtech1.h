@@ -23,8 +23,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef IMPORTIDTECH1_H
-#define IMPORTIDTECH1_H
+#pragma once
 
 #include "doomsday.h"
 #include "mapimporter.h"
@@ -35,4 +34,3 @@ DE_USING_API(Material);
 DE_USING_API(MPE);
 DE_USING_API(Uri);
 
-#endif // IMPORTIDTECH1_H

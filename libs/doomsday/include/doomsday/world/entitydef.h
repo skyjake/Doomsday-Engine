@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_ENTITYDEF_H
-#define LIBDOOMSDAY_WORLD_ENTITYDEF_H
+#pragma once
 
 #include "dd_share.h"
 #include "api_mapedit.h"
@@ -150,4 +149,3 @@ LIBDOOMSDAY_PUBLIC dd_bool  P_GMOPropertyIsSet(int entityId, int elementIndex, i
 } // extern "C"
 #endif
 
-#endif // LIBDOOMSDAY_WORLD_ENTITYDEF_H

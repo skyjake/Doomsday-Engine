@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_MAIN_H
-#define LIBDOOMSDAY_MAIN_H
+#pragma once
 
 #include <de/libcore.h>
 
@@ -63,4 +62,3 @@
 #  endif
 #endif
 
-#endif // LIBDOOMSDAY_MAIN_H

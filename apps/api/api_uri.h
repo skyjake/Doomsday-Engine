@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_API_URI_H
-#define DE_API_URI_H
+#pragma once
 
 #include "api_base.h"
 #include <de/legacy/str.h>
@@ -289,4 +288,3 @@ DE_API_TYPEDEF(Uri) // v1
 DE_USING_API(Uri);
 #endif
 
-#endif /* DE_API_URI_H */

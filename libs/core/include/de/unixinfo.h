@@ -19,8 +19,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_UNIXINFO_H
-#define LIBCORE_UNIXINFO_H
+#pragma once
 
 #include "de/string.h"
 #include "de/nativepath.h"
@@ -79,4 +78,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_UNIXINFO_H

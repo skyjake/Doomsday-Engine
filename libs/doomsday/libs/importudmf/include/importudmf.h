@@ -17,12 +17,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef IMPORTUDMF_H
-#define IMPORTUDMF_H
+#pragma once
 
 #include <doomsday.h> // Doomsday's Public API
 
 DE_USING_API(Material);
 DE_USING_API(MPE);
 
-#endif // IMPORTUDMF_H

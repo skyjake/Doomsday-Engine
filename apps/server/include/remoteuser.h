@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef REMOTEUSER_H
-#define REMOTEUSER_H
+#pragma once
 
 #include <de/id.h>
 #include <de/socket.h>
@@ -84,4 +83,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // REMOTEUSER_H

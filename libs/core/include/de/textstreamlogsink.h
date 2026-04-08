@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_TEXTSTREAMLOGSINK_H
-#define LIBCORE_TEXTSTREAMLOGSINK_H
+#pragma once
 
 #include "de/logsink.h"
 #include "de/monospacelogsinkformatter.h"
@@ -53,4 +52,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_TEXTSTREAMLOGSINK_H

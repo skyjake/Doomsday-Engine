@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_RULE_H
-#define LIBCORE_RULE_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/counted.h"
@@ -185,4 +184,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_RULE_H

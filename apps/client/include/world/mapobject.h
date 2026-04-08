@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_WORLD_MAPOBJECT_H
-#define DE_WORLD_MAPOBJECT_H
+#pragma once
 
 #include <de/error.h>
 #include <de/vector.h>
@@ -139,4 +138,3 @@ private:
 
 }  // namespace world
 
-#endif  // DE_WORLD_MAPOBJECT_H

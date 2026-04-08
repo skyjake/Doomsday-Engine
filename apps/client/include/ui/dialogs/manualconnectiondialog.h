@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_MANUALCONNECTIONDIALOG_H
-#define DE_CLIENT_MANUALCONNECTIONDIALOG_H
+#pragma once
 
 #include <de/inputdialog.h>
 #include <de/ipersistent.h>
@@ -59,4 +58,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_MANUALCONNECTIONDIALOG_H

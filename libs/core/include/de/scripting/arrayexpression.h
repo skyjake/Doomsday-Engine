@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_ARRAYEXPRESSION_H
-#define LIBCORE_ARRAYEXPRESSION_H
+#pragma once
 
 #include "expression.h"
 
@@ -86,4 +85,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_ARRAYEXPRESSION_H */

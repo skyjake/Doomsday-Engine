@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ANIMATIONVALUE_H
-#define LIBCORE_ANIMATIONVALUE_H
+#pragma once
 
 #include "de/animation.h"
 #include "de/counted.h"
@@ -67,4 +66,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_ANIMATIONVALUE_H

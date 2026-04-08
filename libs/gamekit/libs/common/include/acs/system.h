@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_ACS_SYSTEM_H
-#define LIBCOMMON_ACS_SYSTEM_H
+#pragma once
 
 #include "common.h"
 #include <array>
@@ -143,4 +142,3 @@ private:
 
 }  // namespace acs
 
-#endif  // LIBCOMMON_ACS_SYSTEM_H

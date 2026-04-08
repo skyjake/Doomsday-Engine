@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_ATLAS_H
-#define LIBGUI_ATLAS_H
+#pragma once
 
 #include <de/deletable.h>
 #include <de/hash.h>
@@ -310,4 +309,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_ATLAS_H

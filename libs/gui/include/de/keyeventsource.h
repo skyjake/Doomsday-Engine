@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_KEYEVENTSOURCE_H
-#define LIBGUI_KEYEVENTSOURCE_H
+#pragma once
 
 #include "libgui.h"
 #include "keyevent.h"
@@ -45,4 +44,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_KEYEVENTSOURCE_H

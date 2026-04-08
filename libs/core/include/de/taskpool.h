@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_TASKPOOL_H
-#define LIBCORE_TASKPOOL_H
+#pragma once
 
 #include "de/observers.h"
 #include "de/time.h"
@@ -132,4 +131,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_TASKPOOL_H

@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_PLAYSIM_MAP_SPECIAL_H
-#define LIBCOMMON_PLAYSIM_MAP_SPECIAL_H
+#pragma once
 
 #include "doomsday.h"
 #include "p_iterlist.h"
@@ -45,4 +44,3 @@ void P_NotifyPolyobjFinished(int tag);
 } // extern "C"
 #endif
 
-#endif  // LIBCOMMON_PLAYSIM_MAP_SPECIAL_H

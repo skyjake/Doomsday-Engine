@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_PACKAGEFEED_H
-#define LIBCORE_PACKAGEFEED_H
+#pragma once
 
 #include "de/feed.h"
 
@@ -55,4 +54,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_PACKAGEFEED_H

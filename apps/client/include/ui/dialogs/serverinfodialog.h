@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_SERVERINFODIALOG_H
-#define DE_CLIENT_UI_SERVERINFODIALOG_H
+#pragma once
 
 #include <de/dialogwidget.h>
 #include <de/serverinfo.h>
@@ -37,4 +36,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UI_SERVERINFODIALOG_H

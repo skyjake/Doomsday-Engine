@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_CONSTANTRULE_H
-#define LIBCORE_CONSTANTRULE_H
+#pragma once
 
 #include "de/rule.h"
 
@@ -99,4 +98,3 @@ typedef ConstantRule::Builder<float>    Constf;
 
 } // namespace de
 
-#endif // LIBCORE_CONSTANTRULE_H

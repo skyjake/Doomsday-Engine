@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_DEFINITION_TYPES_H
-#define LIBDOOMSDAY_DEFINITION_TYPES_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/vector.h>
@@ -455,4 +454,3 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_compositefont_s {
     }
 } ded_compositefont_t;
 
-#endif // LIBDOOMSDAY_DEFINITION_TYPES_H

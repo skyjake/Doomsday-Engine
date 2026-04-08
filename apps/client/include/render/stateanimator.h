@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_RENDER_STATEANIMATOR_H
-#define DE_CLIENT_RENDER_STATEANIMATOR_H
+#pragma once
 
 #include "render/modelrenderer.h"
 
@@ -104,4 +103,3 @@ private:
 
 } // namespace render
 
-#endif // DE_CLIENT_RENDER_STATEANIMATOR_H

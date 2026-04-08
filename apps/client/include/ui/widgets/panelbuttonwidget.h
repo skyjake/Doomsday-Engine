@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_PANELBUTTONWIDGET_H
-#define DE_CLIENT_UI_PANELBUTTONWIDGET_H
+#pragma once
 
 #include "ui/widgets/homeitemwidget.h"
 
@@ -39,4 +38,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UI_PANELBUTTONWIDGET_H

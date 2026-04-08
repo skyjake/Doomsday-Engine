@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SHELLAPP_H
-#define SHELLAPP_H
+#pragma once
 
 #include "cursesapp.h"
 #include <de/address.h>
@@ -48,4 +47,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // SHELLAPP_H

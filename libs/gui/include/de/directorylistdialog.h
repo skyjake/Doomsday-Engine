@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_DIRECTORYLISTDIALOG_H
-#define LIBAPPFW_DIRECTORYLISTDIALOG_H
+#pragma once
 
 #include "de/messagedialog.h"
 #include "de/directoryarraywidget.h"
@@ -59,4 +58,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_DIRECTORYLISTDIALOG_H

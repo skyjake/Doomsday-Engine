@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_MAIN_H
-#define DE_MAIN_H
+#pragma once
 
 #include <de/string.h>
 #include <doomsday/res/resources.h>
@@ -122,4 +121,3 @@ de::String DD_MaterialSchemeNameForTextureScheme(const de::String& textureScheme
 fontschemeid_t DD_ParseFontSchemeName(const char *str);
 #endif
 
-#endif  // DE_MAIN_H

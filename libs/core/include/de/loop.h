@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_LOOP_H
-#define LIBCORE_LOOP_H
+#pragma once
 
 #include "de/observers.h"
 #include "de/time.h"
@@ -130,4 +129,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_LOOP_H

@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_NATIVEUI_H
-#define DE_NATIVEUI_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,4 +72,3 @@ void Sys_MessageBoxWithDetailsFromFile(messageboxtype_t type, const char* title,
 } // extern "C"
 #endif
 
-#endif // DE_NATIVEUI_H

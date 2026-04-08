@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_FILESYS_NODE_H
-#define LIBCORE_FILESYS_NODE_H
+#pragma once
 
 #include "../string.h"
 #include "../path.h"
@@ -111,4 +110,3 @@ private:
 } // namespace filesys
 } // namespace de
 
-#endif // LIBCORE_FILESYS_NODE_H

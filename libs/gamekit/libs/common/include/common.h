@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_GAME_INCLUDES
-#define LIBCOMMON_GAME_INCLUDES
+#pragma once
 
 #include <de/legacy/mathutil.h>
 #include <de/legacy/timer.h>
@@ -86,4 +85,3 @@ inline const res::LumpIndex &CentralLumpIndex()
 
 #endif
 
-#endif // LIBCOMMON_GAME_INCLUDES

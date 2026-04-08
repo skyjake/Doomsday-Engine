@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_FLIGHTWIDGET_H
-#define LIBCOMMON_UI_FLIGHTWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -46,4 +45,3 @@ private:
     bool _hitCenterFrame = false;
 };
 
-#endif  // LIBCOMMON_UI_FLIGHTWIDGET_H

@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_P_ACTOR_H
-#define LIBCOMMON_P_ACTOR_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -139,4 +138,3 @@ mobj_t *P_FindMobjFromTID(int tid, int *searchPosition);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_P_ACTOR_H

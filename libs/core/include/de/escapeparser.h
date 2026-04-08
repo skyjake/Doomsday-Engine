@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ESCAPEPARSER_H
-#define LIBCORE_ESCAPEPARSER_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/string.h"
@@ -69,4 +68,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_ESCAPEPARSER_H

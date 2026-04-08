@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_LINEEDITTEDGET_H
-#define LIBSHELL_LINEEDITTEDGET_H
+#pragma once
 
 #include "widget.h"
 #include "../abstractlineeditor.h"
@@ -77,4 +76,3 @@ private:
 
 }} // namespace de::term
 
-#endif // LIBSHELL_LINEEDITTEDGET_H

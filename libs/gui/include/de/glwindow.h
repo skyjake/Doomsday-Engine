@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GLWINDOW_H
-#define LIBGUI_GLWINDOW_H
+#pragma once
 
 #include "de/windoweventhandler.h"
 #include "de/gltextureframebuffer.h"
@@ -289,4 +288,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_GLWINDOW_H

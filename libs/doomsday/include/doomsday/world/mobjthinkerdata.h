@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_MOBJTHINKERDATA_H
-#define LIBDOOMSDAY_MOBJTHINKERDATA_H
+#pragma once
 
 #include "thinkerdata.h"
 #include "mobj.h"
@@ -66,4 +65,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBDOOMSDAY_MOBJTHINKERDATA_H

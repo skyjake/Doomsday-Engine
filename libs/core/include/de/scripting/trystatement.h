@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_TRYSTATEMENT_H
-#define LIBCORE_TRYSTATEMENT_H
+#pragma once
 
 #include "statement.h"
 #include "compound.h"
@@ -47,4 +46,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_TRYSTATEMENT_H */

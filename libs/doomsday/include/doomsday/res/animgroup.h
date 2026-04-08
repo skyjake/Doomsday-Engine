@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_ANIMATIONGROUP_H
-#define LIBDOOMSDAY_RESOURCE_ANIMATIONGROUP_H
+#pragma once
 
 #include "texturemanifest.h"
 #include <de/list.h>
@@ -141,4 +140,3 @@ typedef AnimGroup::Frame AnimGroupFrame;
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_RESOURCE_ANIMATIONGROUP_H

@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_FILESYS_WAD_H
-#define LIBDOOMSDAY_FILESYS_WAD_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include "../filesys/lumpindex.h"
@@ -246,4 +245,3 @@ private:
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_FILESYS_WAD_H

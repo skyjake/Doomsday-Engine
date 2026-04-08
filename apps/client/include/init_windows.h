@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_WINIT_H
-#define DE_WINIT_H
+#pragma once
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -38,4 +37,3 @@ const char *DD_Win32_GetLastErrorMessage(void);
 } // extern "C"
 #endif
 
-#endif /* DE_WINIT_H */

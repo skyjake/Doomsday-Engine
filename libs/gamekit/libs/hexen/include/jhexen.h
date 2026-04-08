@@ -28,8 +28,7 @@
  * A convenience header for including all jHexen headers.
  */
 
-#ifndef __JHEXEN_CONVENIENCE_H__
-#define __JHEXEN_CONVENIENCE_H__
+#pragma once
 
 #include "../../hexen/include/h2def.h"
 #include "../../hexen/include/x_api.h"
@@ -69,4 +68,3 @@
 #include "../../hexen/include/x_think.h"
 #include "../../hexen/include/xddefs.h"
 
-#endif // __JHEXEN_CONVENIENCE_H__

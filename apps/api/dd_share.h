@@ -22,8 +22,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_SHARED_H
-#define DE_SHARED_H
+#pragma once
 
 #ifndef C_DECL
 #  if defined(WIN32)
@@ -831,4 +830,3 @@ enum {
 } // extern "C"
 #endif
 
-#endif /* DE_SHARED_H */

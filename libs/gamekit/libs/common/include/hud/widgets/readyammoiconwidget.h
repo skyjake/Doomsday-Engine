@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_READUAMMOICONWIDGET_H
-#define LIBCOMMON_UI_READUAMMOICONWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -61,4 +60,3 @@ void ReadyAmmoIconWidget_UpdateGeometry    (guidata_readyammoicon_t *icon);
 void SBarReadyAmmoIconWidget_UpdateGeometry(guidata_readyammoicon_t *icon);
 #endif  // __JHERETIC__
 
-#endif  // LIBCOMMON_UI_READUAMMOICONWIDGET_H

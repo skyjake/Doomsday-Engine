@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_CHOICEWIDGET_H
-#define LIBAPPFW_CHOICEWIDGET_H
+#pragma once
 
 #include "de/popupbuttonwidget.h"
 #include "de/popupmenuwidget.h"
@@ -107,4 +106,3 @@ typedef ChoiceWidget::Item ChoiceItem;
 
 } // namespace de
 
-#endif // LIBAPPFW_CHOICEWIDGET_H

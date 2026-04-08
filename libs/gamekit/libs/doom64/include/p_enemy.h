@@ -25,8 +25,7 @@
  * p_enemy.h: Enemy thinking, AI (jDoom64-specific).
  */
 
-#ifndef __P_ENEMY_H__
-#define __P_ENEMY_H__
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -43,4 +42,3 @@ int P_Massacre(void);
 } // extern "C"
 #endif
 
-#endif

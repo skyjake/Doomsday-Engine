@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SERVERAPP_H
-#define SERVERAPP_H
+#pragma once
 
 #include <de/textapp.h>
 #include <de/serverinfo.h>
@@ -74,4 +73,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif  // SERVERAPP_H

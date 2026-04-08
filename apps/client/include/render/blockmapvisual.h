@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_RENDER_BLOCKMAPVISUAL_H
-#define DE_CLIENT_RENDER_BLOCKMAPVISUAL_H
+#pragma once
 
 #include <de/liblegacy.h>
 
@@ -31,4 +30,3 @@ DE_EXTERN_C float bmapDebugSize; ///< cvar
  */
 DE_EXTERN_C void Rend_BlockmapDebug();
 
-#endif // DE_CLIENT_RENDER_BLOCKMAPVISUAL_H

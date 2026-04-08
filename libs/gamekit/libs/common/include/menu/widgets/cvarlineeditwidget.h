@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_CVARLINEEDITWIDGET
-#define LIBCOMMON_UI_CVARLINEEDITWIDGET
+#pragma once
 
 #include "lineeditwidget.h"
 
@@ -46,4 +45,3 @@ void CVarLineEditWidget_UpdateCVar(Widget &wi, Widget::Action action);
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_CVARLINEEDITWIDGET

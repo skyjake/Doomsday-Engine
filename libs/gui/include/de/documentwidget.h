@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_DOCUMENTWIDGET_H
-#define LIBAPPFW_DOCUMENTWIDGET_H
+#pragma once
 
 #include "de/scrollareawidget.h"
 #include "ui/defs.h"
@@ -103,4 +102,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_DOCUMENTWIDGET_H

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_RECORD_H
-#define LIBCORE_RECORD_H
+#pragma once
 
 #include "de/observers.h"
 #include "de/hash.h"
@@ -661,4 +660,3 @@ DE_PUBLIC std::ostream &operator << (std::ostream &os, const Record &record);
 
 } // namespace de
 
-#endif /* LIBCORE_RECORD_H */

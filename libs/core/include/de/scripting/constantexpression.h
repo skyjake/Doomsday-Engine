@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_CONSTANTEXPRESSION_H
-#define LIBCORE_CONSTANTEXPRESSION_H
+#pragma once
 
 #include "expression.h"
 #include "de/value.h"
@@ -64,4 +63,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_CONSTANTEXPRESSION_H */

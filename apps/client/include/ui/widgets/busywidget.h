@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_BUSYWIDGET_H
-#define CLIENT_BUSYWIDGET_H
+#pragma once
 
 #include <de/progresswidget.h>
 #include <de/gltexture.h>
@@ -55,4 +54,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // CLIENT_BUSYWIDGET_H

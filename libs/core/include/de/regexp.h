@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_REGEXP_H
-#define LIBCORE_REGEXP_H
+#pragma once
 
 #include "de/cstring.h"
 #include <the_Foundation/object.h>
@@ -64,4 +63,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_REGEXP_H

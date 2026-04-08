@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHERETIC_INTERMISSION_H
-#define LIBHERETIC_INTERMISSION_H
+#pragma once
 #ifdef __cplusplus
 
 #ifndef __JHERETIC__
@@ -107,4 +106,4 @@ void IN_SkipToNext();
 void IN_ConsoleRegister();
 
 #endif // __cplusplus
-#endif // LIBHERETIC_INTERMISSION_H
+

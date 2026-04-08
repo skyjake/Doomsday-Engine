@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef IDTECH1UTIL_H
-#define IDTECH1UTIL_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include <de/string.h>
@@ -61,4 +60,3 @@ struct LIBDOOMSDAY_PUBLIC Image8
 
 } // namespace res
 
-#endif // IDTECH1UTIL_H

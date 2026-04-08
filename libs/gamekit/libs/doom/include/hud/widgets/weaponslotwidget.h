@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_UI_WEAPONSLOTWIDGET_H
-#define LIBDOOM_UI_WEAPONSLOTWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -48,4 +47,3 @@ private:
     patchid_t _patchId = 0;
 };
 
-#endif  // LIBDOOM_UI_WEAPONSLOTWIDGET_H

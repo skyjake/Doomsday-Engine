@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_FILESYS_NATIVELINK_H
-#define DE_FILESYS_NATIVELINK_H
+#pragma once
 
 #include "link.h"
 
@@ -49,4 +48,3 @@ private:
 
 }} // namespace de::filesys
 
-#endif // DE_FILESYS_NATIVELINK_H

@@ -23,8 +23,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef ENGINE_TYPES_H
-#define ENGINE_TYPES_H
+#pragma once
 
 #include <de/legacy/types.h> // libdeng types
 
@@ -60,4 +59,3 @@ typedef int32_t lumpnum_t;
 #include <de/legacy/fixedpoint.h>
 #include "api_uri.h"
 
-#endif /* ENGINE_TYPES_H */

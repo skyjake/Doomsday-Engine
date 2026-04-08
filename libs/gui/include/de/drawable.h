@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_DRAWABLE_H
-#define LIBGUI_DRAWABLE_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/asset.h>
@@ -302,4 +301,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_DRAWABLE_H

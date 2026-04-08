@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_ABOUTDIALOG_H
-#define DE_CLIENT_ABOUTDIALOG_H
+#pragma once
 
 #include <de/dialogwidget.h>
 
@@ -33,4 +32,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_ABOUTDIALOG_H

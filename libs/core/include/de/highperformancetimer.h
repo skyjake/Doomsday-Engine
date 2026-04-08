@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_HIGHPERFORMANCETIMER_H
-#define LIBCORE_HIGHPERFORMANCETIMER_H
+#pragma once
 
 #include "de/time.h"
 
@@ -48,4 +47,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_HIGHPERFORMANCETIMER_H

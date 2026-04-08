@@ -23,8 +23,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_FILESYS_UTIL_H
-#define DE_FILESYS_UTIL_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include "../filesys/file.h"
@@ -117,4 +116,3 @@ LIBDOOMSDAY_PUBLIC bool F_DumpNativeFile(const de::Block &data, const de::Native
 
 #endif
 
-#endif // DE_FILESYS_UTIL_H

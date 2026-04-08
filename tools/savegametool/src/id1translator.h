@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef SAVEGAMETOOL_ID1TRANSLATOR_H
-#define SAVEGAMETOOL_ID1TRANSLATOR_H
+#pragma once
 
 #include "packageformatter.h"
 
@@ -51,4 +50,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // SAVEGAMETOOL_ID1TRANSLATOR_H

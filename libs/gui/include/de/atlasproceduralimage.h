@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_ATLASPROCEDURALIMAGE_H
-#define LIBAPPFW_ATLASPROCEDURALIMAGE_H
+#pragma once
 
 #include "libgui.h"
 #include "de/proceduralimage.h"
@@ -139,4 +138,3 @@ private:
 
 } // namespace de
 
-#endif // ATLASPROCEDURALIMAGE_H

@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_HEALTHICONWIDGET_H
-#define LIBCOMMON_UI_HEALTHICONWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -42,4 +41,3 @@ public:
     void draw(const de::Vec2i &offset = de::Vec2i()) const;
 };
 
-#endif  // LIBCOMMON_UI_HEALTHICONWIDGET_H

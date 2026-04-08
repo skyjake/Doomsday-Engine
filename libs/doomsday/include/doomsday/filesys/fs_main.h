@@ -29,8 +29,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_FILESYS_MAIN_H
-#define DE_FILESYS_MAIN_H
+#pragma once
 
 #include "file.h"
 #include "filehandle.h"
@@ -598,4 +597,4 @@ LIBDOOMSDAY_PUBLIC void F_Shutdown();
 LIBDOOMSDAY_PUBLIC const void *F_LumpIndex();
 
 #endif // __cplusplus
-#endif /* DE_FILESYS_MAIN_H */
+

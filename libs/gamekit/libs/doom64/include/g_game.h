@@ -27,8 +27,7 @@
  * Top-level (common) game routines jDoom64 - specific.
  */
 
-#ifndef LIBDOOM64_G_GAME_H
-#define LIBDOOM64_G_GAME_H
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -98,4 +97,3 @@ void G_QueueBody(mobj_t* body);
 } // extern "C"
 #endif
 
-#endif /* LIBDOOM64_G_GAME_H */

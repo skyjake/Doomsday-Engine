@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_UI_GREENMANAWIDGET_H
-#define LIBHEXEN_UI_GREENMANAWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -50,4 +49,3 @@ void SBarGreenManaWidget_Draw(guidata_greenmana_t *mana, const Point2Raw *offset
 void GreenManaWidget_UpdateGeometry    (guidata_greenmana_t *mana);
 void SBarGreenManaWidget_UpdateGeometry(guidata_greenmana_t *mana);
 
-#endif  // LIBHEXEN_UI_GREENMANAWIDGET_H

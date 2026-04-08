@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_PACKAGELOADER_H
-#define LIBCORE_PACKAGELOADER_H
+#pragma once
 
 #include "de/string.h"
 #include "de/package.h"
@@ -187,4 +186,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_PACKAGELOADER_H

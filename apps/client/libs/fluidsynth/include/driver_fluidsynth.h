@@ -24,8 +24,7 @@
  * FluidSynth music plugin.
  */
 
-#ifndef __DSFLUIDSYNTH_DRIVER_H__
-#define __DSFLUIDSYNTH_DRIVER_H__
+#pragma once
 
 #include <stdio.h>
 #include <cassert>
@@ -52,4 +51,3 @@ audiointerface_sfx_generic_t *  DMFluid_Sfx();
 
 DE_USING_API(Con);
 
-#endif /* end of include guard: __DSFLUIDSYNTH_DRIVER_H__ */

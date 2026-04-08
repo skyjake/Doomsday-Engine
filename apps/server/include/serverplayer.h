@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef SERVER_SERVERPLAYER_H
-#define SERVER_SERVERPLAYER_H
+#pragma once
 
 #include <de/id.h>
 #include <doomsday/player.h>
@@ -66,4 +65,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // SERVER_SERVERPLAYER_H

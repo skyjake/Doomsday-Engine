@@ -26,8 +26,7 @@
  * x_player.h:
  */
 
-#ifndef __X_PLAYER_H__
-#define __X_PLAYER_H__
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -130,4 +129,3 @@ typedef struct player_s {
 #endif
 } player_t;
 
-#endif

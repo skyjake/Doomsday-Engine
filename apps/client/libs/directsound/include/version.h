@@ -27,8 +27,7 @@
  * version.h: Version numbering, naming etc.
  */
 
-#ifndef __DSDIRECTSOUND_VERSION_H__
-#define __DSDIRECTSOUND_VERSION_H__
+#pragma once
 
 #ifndef DSDIRECTSOUND_VER_ID
 #  ifdef _DEBUG
@@ -49,4 +48,3 @@
 #define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" DSDIRECTSOUND_VER_ID ")"
 #define PLUGIN_VERSION_NUMBER 1,2,5,0 // For WIN32 version info.
 
-#endif

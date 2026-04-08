@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DOOMSDAY_API_RENDER_H
-#define DOOMSDAY_API_RENDER_H
+#pragma once
 
 #include "apis.h"
 #include "api_gl.h"
@@ -181,4 +180,3 @@ DE_API_T(Rend);
 DE_USING_API(Rend);
 #endif
 
-#endif // DOOMSDAY_API_RENDER_H

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTSYSTEM_H
-#define CLIENT_INPUTSYSTEM_H
+#pragma once
 
 #include <de/error.h>
 #include <de/record.h>
@@ -298,4 +297,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // CLIENT_INPUTSYSTEM_H

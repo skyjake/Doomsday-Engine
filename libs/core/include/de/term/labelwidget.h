@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_LABELTEDGET_H
-#define LIBSHELL_LABELTEDGET_H
+#pragma once
 
 #include "widget.h"
 #include "textcanvas.h"
@@ -88,4 +87,3 @@ private:
 
 }} // namespace de::term
 
-#endif // LIBSHELL_LABELTEDGET_H

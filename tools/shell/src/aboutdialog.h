@@ -1,5 +1,4 @@
-#ifndef ABOUTDIALOG_H
-#define ABOUTDIALOG_H
+#pragma once
 
 #include <de/messagedialog.h>
 
@@ -9,4 +8,3 @@ public:
     explicit AboutDialog();
 };
 
-#endif // ABOUTDIALOG_H

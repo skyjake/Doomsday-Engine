@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_PACKAGESDIALOG_H
-#define DE_CLIENT_PACKAGESDIALOG_H
+#pragma once
 
 #include <de/dialogwidget.h>
 #include <doomsday/gameprofiles.h>
@@ -41,6 +40,4 @@ protected:
 private:
     DE_PRIVATE(d)
 };
-
-#endif // DE_CLIENT_PACKAGESDIALOG_H
 

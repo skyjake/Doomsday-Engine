@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_BLOCK_H__
-#define __AMETHYST_BLOCK_H__
+#pragma once
 
 #include "string.h"
 #include "gem.h"
@@ -28,4 +27,3 @@ public:
     String collect(bool separateWithSpace = false);
 };
 
-#endif

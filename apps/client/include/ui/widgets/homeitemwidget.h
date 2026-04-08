@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_HOME_HOMEITEMWIDGET_H
-#define DE_CLIENT_UI_HOME_HOMEITEMWIDGET_H
+#pragma once
 
 #include <de/asset.h>
 #include <de/buttonwidget.h>
@@ -85,4 +84,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UI_HOME_HOMEITEMWIDGET_H

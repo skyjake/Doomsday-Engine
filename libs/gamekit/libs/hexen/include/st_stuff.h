@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_STUFF_H
-#define LIBHEXEN_STUFF_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -158,4 +157,3 @@ int ST_ReadyItemFlashCounter(int localPlayer);
 } // extern "C"
 #endif
 
-#endif  // LIBHEXEN_STUFF_H

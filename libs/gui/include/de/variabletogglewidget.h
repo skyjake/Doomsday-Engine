@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_VARIABLETOGGLEWIDGET_H
-#define LIBAPPFW_VARIABLETOGGLEWIDGET_H
+#pragma once
 
 #include <de/variable.h>
 
@@ -51,4 +50,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_VARIABLETOGGLEWIDGET_H

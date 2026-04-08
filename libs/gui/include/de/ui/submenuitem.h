@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_UI_SUBMENUITEM_H
-#define LIBAPPFW_UI_SUBMENUITEM_H
+#pragma once
 
 #include "../ui/defs.h"
 #include "imageitem.h"
@@ -52,4 +51,3 @@ private:
 } // namespace ui
 } // namespace de
 
-#endif // LIBAPPFW_UI_SUBMENUITEM_H

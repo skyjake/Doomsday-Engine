@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CONFIGPROFILES_H
-#define DE_CONFIGPROFILES_H
+#pragma once
 
 #include <de/string.h>
 #include <de/observers.h>
@@ -144,4 +143,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CONFIGPROFILES_H

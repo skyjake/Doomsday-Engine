@@ -18,8 +18,7 @@
  */
 
 #ifdef __CLIENT__
-#ifndef WORLD_MAPUTIL_H
-#define WORLD_MAPUTIL_H
+#pragma once
 
 #include <doomsday/world/lineowner.h>
 #include <de/libcore.h>
@@ -49,4 +48,4 @@ Line *R_FindSolidLineNeighbor(const Line &line, const world::LineOwner &own, de:
     const world::Sector *sector, binangle_t *diff = nullptr);
 
 #endif  // WORLD_MAPUTIL_H
-#endif  // __CLIENT__
+

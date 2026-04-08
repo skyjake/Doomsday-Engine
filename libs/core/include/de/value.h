@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_VALUE_H
-#define LIBCORE_VALUE_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/deletable.h"
@@ -359,4 +358,3 @@ RangeType rangeFromValue(const Value &value) {
 
 } // namespace de
 
-#endif /* LIBCORE_VALUE_H */

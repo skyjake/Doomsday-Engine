@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_AUTOMAPWIDGET_H
-#define LIBCOMMON_UI_AUTOMAPWIDGET_H
+#pragma once
 
 #include <functional>
 #include <de/error.h>
@@ -285,4 +284,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif  // LIBCOMMON_UI_AUTOMAPWIDGET_H

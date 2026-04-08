@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_UNTRAPPER_H
-#define LIBAPPFW_UNTRAPPER_H
+#pragma once
 
 #include "libgui.h"
 #include <de/glwindow.h>
@@ -46,4 +45,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_UNTRAPPER_H

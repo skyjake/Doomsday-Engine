@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_FILEDOWNLOADDIALOG_H
-#define DE_CLIENT_FILEDOWNLOADDIALOG_H
+#pragma once
 
 #include "downloaddialog.h"
 #include <de/packagedownloader.h>
@@ -40,4 +39,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_FILEDOWNLOADDIALOG_H

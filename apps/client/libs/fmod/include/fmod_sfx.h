@@ -39,8 +39,7 @@
  * exception.) </small>
  */
 
-#ifndef __DSFMOD_SFX_H__
-#define __DSFMOD_SFX_H__
+#pragma once
 
 #include "api_audiod_sfx.h"
 
@@ -58,4 +57,3 @@ void            fmod_DS_SFX_Listener(int prop, float value);
 void            fmod_DS_SFX_Listenerv(int prop, float* values);
 int             fmod_DS_SFX_Getv(int prop, void* values);
 
-#endif /* end of include guard: __DSFMOD_SFX_H__ */

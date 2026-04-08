@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_TEXTURESCHEME_H
-#define LIBDOOMSDAY_RESOURCE_TEXTURESCHEME_H
+#pragma once
 
 #include <de/observers.h>
 #include <de/pathtree.h>
@@ -146,4 +145,3 @@ private:
 
 } // namespace res
 
-#endif  // LIBDOOMSDAY_RESOURCE_TEXTURESCHEME_H

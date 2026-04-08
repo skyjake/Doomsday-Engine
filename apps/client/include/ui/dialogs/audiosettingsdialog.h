@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_AUDIOSETTINGSDIALOG_H
-#define DE_CLIENT_AUDIOSETTINGSDIALOG_H
+#pragma once
 
 #include <de/dialogwidget.h>
 
@@ -38,4 +37,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_AUDIOSETTINGSDIALOG_H

@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_INTERMISSION_H
-#define LIBHEXEN_INTERMISSION_H
+#pragma once
 
 #include "jhexen.h"
 #include <doomsday/uri.h>
@@ -82,4 +81,3 @@ void IN_ConsoleRegister();
 } // extern "C
 #endif
 
-#endif  // LIBHEXEN_INTERMISSION_H

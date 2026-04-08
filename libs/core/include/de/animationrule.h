@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ANIMATIONRULE_H
-#define LIBCORE_ANIMATIONRULE_H
+#pragma once
 
 #include "rule.h"
 
@@ -113,4 +112,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_ANIMATIONRULE_H

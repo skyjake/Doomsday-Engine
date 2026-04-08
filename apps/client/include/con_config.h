@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CONSOLE_CONFIG_H
-#define DE_CONSOLE_CONFIG_H
+#pragma once
 
 #include "dd_share.h"
 
@@ -49,4 +48,3 @@ void Con_SaveDefaultsIfChanged();
 
 D_CMD(WriteConsole);
 
-#endif // DE_CONSOLE_CONFIG_H

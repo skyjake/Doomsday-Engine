@@ -27,8 +27,7 @@
  * Version numbering, naming etc.
  */
 
-#ifndef JDOOM_VERSION_H
-#define JDOOM_VERSION_H
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -66,4 +65,3 @@
 #define PLUGIN_DESC         PLUGIN_NICENAME " " DE_PLUGINDESC
 #define PLUGIN_COPYRIGHT    "2000-2019, " DENGPROJECT_NICEAUTHOR
 
-#endif /* JDOOM_VERSION_H */

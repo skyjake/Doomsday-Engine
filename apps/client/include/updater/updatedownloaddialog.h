@@ -19,8 +19,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UPDATEDOWNLOADDIALOG_H
-#define DE_CLIENT_UPDATEDOWNLOADDIALOG_H
+#pragma once
 
 #include "ui/dialogs/downloaddialog.h"
 
@@ -64,4 +63,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UPDATEDOWNLOADDIALOG_H

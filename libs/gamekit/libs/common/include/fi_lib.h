@@ -27,8 +27,7 @@
  * use in conjunction with the Doomsday Engine's InFine API.
  */
 
-#ifndef LIBCOMMON_INFINE_LIB
-#define LIBCOMMON_INFINE_LIB
+#pragma once
 
 #include "d_net.h"
 
@@ -112,4 +111,3 @@ void NetCl_UpdateFinaleState(Reader1 *msg);
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_INFINE_LIB */

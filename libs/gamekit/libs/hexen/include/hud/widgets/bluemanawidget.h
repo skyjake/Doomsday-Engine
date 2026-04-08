@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_UI_BLUEMANAWIDGET_H
-#define LIBHEXEN_UI_BLUEMANAWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -50,4 +49,3 @@ void SBarBlueManaWidget_Draw(guidata_bluemana_t *mana, const Point2Raw *offset);
 void BlueMana_UpdateGeometry          (guidata_bluemana_t *mana);
 void SBarBlueManaWidget_UpdateGeometry(guidata_bluemana_t *mana);
 
-#endif  // LIBHEXEN_UI_BLUEMANAWIDGET_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef STATUSWIDGET_H
-#define STATUSWIDGET_H
+#pragma once
 
 #include <de/guiwidget.h>
 #include <de/string.h>
@@ -44,4 +43,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // STATUSWIDGET_H

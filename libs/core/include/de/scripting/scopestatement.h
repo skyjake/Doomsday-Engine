@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_SCOPESTATEMENT_H
-#define LIBCORE_SCOPESTATEMENT_H
+#pragma once
 
 #include "statement.h"
 #include "expression.h"
@@ -53,4 +52,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_SCOPESTATEMENT_H

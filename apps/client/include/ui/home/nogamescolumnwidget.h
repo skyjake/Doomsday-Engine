@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_HOME_NOGAMESCOLUMNWIDGET_H
-#define DE_CLIENT_UI_HOME_NOGAMESCOLUMNWIDGET_H
+#pragma once
 
 #include "columnwidget.h"
 
@@ -32,4 +31,3 @@ public:
     void browseForDataFiles();
 };
 
-#endif // DE_CLIENT_UI_HOME_NOGAMESCOLUMNWIDGET_H

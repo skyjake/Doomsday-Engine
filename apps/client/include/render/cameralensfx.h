@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_CAMERALENSFX_H
-#define DE_CLIENT_CAMERALENSFX_H
+#pragma once
 
 #include "ilightsource.h"
 
@@ -56,4 +55,3 @@ void LensFx_Draw(int playerNum);
  */
 void LensFx_MarkLightVisible(const IPointLightSource &lightSource);
 
-#endif // DE_CLIENT_CAMERALENSFX_H

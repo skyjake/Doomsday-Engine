@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_DEFN_SPRITE_H
-#define LIBDOOMSDAY_DEFN_SPRITE_H
+#pragma once
 
 #include "definition.h"
 #include "../uri.h"
@@ -139,4 +138,3 @@ public:
 
 }  // namespace defn
 
-#endif  // LIBDOOMSDAY_DEFN_SPRITE_H

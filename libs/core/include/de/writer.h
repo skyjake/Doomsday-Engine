@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_WRITER_H
-#define LIBCORE_WRITER_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/ibytearray.h"
@@ -318,4 +317,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_WRITER_H */

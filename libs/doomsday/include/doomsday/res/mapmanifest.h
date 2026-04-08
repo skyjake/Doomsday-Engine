@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_MAPMANIFEST_H
-#define LIBDOOMSDAY_RESOURCE_MAPMANIFEST_H
+#pragma once
 
 #include "../filesys/file.h"
 #include "../filesys/lumpindex.h"
@@ -73,4 +72,3 @@ private:
 
 }  // namespace res
 
-#endif  // LIBDOOMSDAY_RESOURCE_MAPMANIFEST_H

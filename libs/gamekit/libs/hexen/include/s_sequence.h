@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_AUDIO_SOUNDSEQUENCE_H
-#define LIBHEXEN_AUDIO_SOUNDSEQUENCE_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -98,4 +97,3 @@ void SN_ReadSequences(Reader1 *reader, int mapVersion);
 } // extern "C"
 #endif
 
-#endif // LIBHEXEN_AUDIO_SOUNDSEQUENCE_H

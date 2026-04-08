@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_ANIMDEFS_H
-#define LIBCOMMON_ANIMDEFS_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,4 +29,3 @@ void P_InitPicAnims(void);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_ANIMDEFS_H

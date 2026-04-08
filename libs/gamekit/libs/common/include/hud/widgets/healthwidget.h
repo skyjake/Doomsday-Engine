@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_HEALTHWIDGET_H
-#define LIBCOMMON_UI_HEALTHWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -50,4 +49,3 @@ void SBarHealthWidget_Draw(guidata_health_t *hlth, const Point2Raw *offset);
 void HealthWidget_UpdateGeometry    (guidata_health_t *hlth);
 void SBarHealthWidget_UpdateGeometry(guidata_health_t *hlth);
 
-#endif  // LIBCOMMON_UI_HEALTHWIDGET_H

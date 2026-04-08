@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_DOOMSDAYAPP_H
-#define LIBDOOMSDAY_DOOMSDAYAPP_H
+#pragma once
 
 #include "plugins.h"
 #include "busymode.h"
@@ -263,4 +262,3 @@ private:
  */
 LIBDOOMSDAY_PUBLIC bool App_GameLoaded();
 
-#endif // LIBDOOMSDAY_DOOMSDAYAPP_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_MULTIATLAS_H
-#define LIBGUI_MULTIATLAS_H
+#pragma once
 
 #include "de/atlas.h"
 #include <de/asset.h>
@@ -131,6 +130,4 @@ private:
 };
 
 } // namespace de
-
-#endif // LIBGUI_MULTIATLAS_H
 

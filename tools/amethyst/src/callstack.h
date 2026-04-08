@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_CALL_STACK_H__
-#define __AMETHYST_CALL_STACK_H__
+#pragma once
 
 #include "list.h"
 #include "shard.h"
@@ -35,4 +34,3 @@ private:
     List<Shard> _stack;
 };
 
-#endif

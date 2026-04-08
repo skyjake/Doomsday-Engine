@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_DIALOGCONTENTSTYLIST_H
-#define LIBAPPFW_DIALOGCONTENTSTYLIST_H
+#pragma once
 
 #include "libgui.h"
 #include "de/ui/stylist.h"
@@ -70,4 +69,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_DIALOGCONTENTSTYLIST_H

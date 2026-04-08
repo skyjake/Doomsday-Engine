@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_FIFO_H
-#define LIBCORE_FIFO_H
+#pragma once
 
 #include "de/lockable.h"
 #include "de/guard.h"
@@ -137,4 +136,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_FIFO_H

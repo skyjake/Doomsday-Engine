@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef __DOOMSDAY_MUS2MIDI_H__
-#define __DOOMSDAY_MUS2MIDI_H__
+#pragma once
 
 #include <de/block.h>
 
@@ -31,4 +30,3 @@
  */
 de::Block M_Mus2Midi(const de::Block &musData);
 
-#endif

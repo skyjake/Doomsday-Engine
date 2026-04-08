@@ -26,8 +26,7 @@
  * d_player.h: Player data structures.
  */
 
-#ifndef __D_PLAYER_H__
-#define __D_PLAYER_H__
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -147,4 +146,3 @@ typedef struct player_s {
 #endif
 } player_t;
 
-#endif

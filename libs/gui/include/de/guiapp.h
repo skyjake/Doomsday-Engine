@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GUIAPP_H
-#define LIBGUI_GUIAPP_H
+#pragma once
 
 #include "de/libgui.h"
 #include <de/app.h>
@@ -140,4 +139,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_GUIAPP_H

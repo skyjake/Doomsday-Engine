@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DOOMSDAY_API_VECTORGRAPHIC_H
-#define DOOMSDAY_API_VECTORGRAPHIC_H
+#pragma once
 
 #include <de/legacy/point.h>
 #include "apis.h"
@@ -53,4 +52,3 @@ DE_API_T(Svg);
 DE_USING_API(Svg);
 #endif
 
-#endif /* DOOMSDAY_API_VECTORGRAPHIC_H */

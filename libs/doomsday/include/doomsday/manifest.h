@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_MANIFEST_H
-#define LIBDOOMSDAY_RESOURCE_MANIFEST_H
+#pragma once
 
 #include <de/string.h>
 #include "resourceclass.h"
@@ -96,4 +95,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBDOOMSDAY_RESOURCE_MANIFEST_H

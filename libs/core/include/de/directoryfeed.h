@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_DIRECTORYFEED_H
-#define LIBCORE_DIRECTORYFEED_H
+#pragma once
 
 #include "de/file.h"
 #include "de/feed.h"
@@ -139,4 +138,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_DIRECTORYFEED_H */

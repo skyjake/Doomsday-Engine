@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_PLAY_ENEMY_H
-#define LIBDOOM_PLAY_ENEMY_H
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -37,4 +36,3 @@ int P_Massacre(void);
 } // extern "C"
 #endif
 
-#endif // LIBDOOM_PLAY_ENEMY_H

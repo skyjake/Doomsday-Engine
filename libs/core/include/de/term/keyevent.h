@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_KEYEVENT_H
-#define LIBSHELL_KEYEVENT_H
+#pragma once
 
 #include "de/event.h"
 #include "de/string.h"
@@ -102,4 +101,3 @@ private:
 
 }} // namespace de::term
 
-#endif // LIBSHELL_KEYEVENT_H

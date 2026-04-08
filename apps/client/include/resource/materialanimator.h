@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_RESOURCE_MATERIALANIMATOR_H
-#define CLIENT_RESOURCE_MATERIALANIMATOR_H
+#pragma once
 
 #ifndef __CLIENT__
 #  error "MaterialAnimator only exists in the Client"
@@ -208,4 +207,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif  // CLIENT_RESOURCE_MATERIALANIMATOR_H

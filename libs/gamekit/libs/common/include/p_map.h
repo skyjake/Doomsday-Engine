@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_P_MAP_H
-#define LIBCOMMON_P_MAP_H
+#pragma once
 
 #include "common.h"
 
@@ -241,4 +240,3 @@ int P_MobjCount(int type, int tid);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_P_MAP_H

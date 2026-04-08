@@ -25,8 +25,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_FILEID_H
-#define DE_FILEID_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include <de/block.h>
@@ -114,4 +113,3 @@ private:
 
 } // namespace de
 
-#endif /* DE_FILEID_H */

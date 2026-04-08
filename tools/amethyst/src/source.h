@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_SOURCE_H__
-#define __AMETHYST_SOURCE_H__
+#pragma once
 
 #include "linkable.h"
 #include "string.h"
@@ -69,4 +68,3 @@ private:
     QStringList _pushedTokens;
 };
 
-#endif

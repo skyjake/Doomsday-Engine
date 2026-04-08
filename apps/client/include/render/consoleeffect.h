@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_CONSOLEEFFECT_H
-#define DE_CLIENT_CONSOLEEFFECT_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/rectangle.h>
@@ -98,4 +97,3 @@ struct ConsoleEffectStack
     }
 };
 
-#endif // DE_CLIENT_CONSOLEEFFECT_H

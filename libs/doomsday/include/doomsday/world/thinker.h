@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_THINKER_H
-#define LIBDOOMSDAY_THINKER_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include <de/libcore.h>
@@ -295,4 +294,3 @@ public:
 
 #endif // __cplusplus
 
-#endif // LIBDOOMSDAY_THINKER_H

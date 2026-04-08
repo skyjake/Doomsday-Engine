@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_RENDER_PROJECTIONLIST_H
-#define DE_CLIENT_RENDER_PROJECTIONLIST_H
+#pragma once
 
 #include "projectedtexturedata.h"
 
@@ -45,6 +44,4 @@ private:
 
     static Node *newNode();
 };
-
-#endif // DE_CLIENT_RENDER_PROJECTIONLIST_H
 

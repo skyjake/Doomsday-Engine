@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_HELP_H
-#define LIBDOOMSDAY_HELP_H
+#pragma once
 
 #include "libdoomsday.h"
 #include <de/file.h>
@@ -75,4 +74,3 @@ LIBDOOMSDAY_PUBLIC HelpId DH_Find(const char *id);
  */
 LIBDOOMSDAY_PUBLIC const char *DH_GetString(HelpId found, int type);
 
-#endif /* LIBDOOMSDAY_HELP_H */

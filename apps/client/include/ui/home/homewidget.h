@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_HOMEWIDGET_H
-#define DE_CLIENT_UI_HOMEWIDGET_H
+#pragma once
 
 #include <de/popupwidget.h>
 #include <de/ipersistent.h>
@@ -60,4 +59,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UI_HOMEWIDGET_H

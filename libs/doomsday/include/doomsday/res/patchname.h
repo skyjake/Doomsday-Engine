@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_PATCHNAME_H
-#define LIBDOOMSDAY_RESOURCE_PATCHNAME_H
+#pragma once
 
 #include "dd_types.h" // For lumpnum_t
 
@@ -58,4 +57,3 @@ private:
 
 } // namespace res
 
-#endif /* LIBDOOMSDAY_RESOURCE_PATCHNAME_H */

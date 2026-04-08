@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_UI_HATINPUTCONTROL_H
-#define CLIENT_UI_HATINPUTCONTROL_H
+#pragma once
 
 #include "inputdevice.h"
 
@@ -56,4 +55,3 @@ private:
     de::duint _time = 0;   ///< Timestamp of the latest change.
 };
 
-#endif // CLIENT_UI_HATINPUTCONTROL_H

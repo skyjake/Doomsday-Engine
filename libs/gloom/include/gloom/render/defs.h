@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_RENDER_DEFS_H
-#define GLOOM_RENDER_DEFS_H
+#pragma once
 
 #include <cstdint>
 
@@ -41,4 +40,3 @@ enum BloomMode {
 
 } // namespace gloom
 
-#endif // GLOOM_RENDER_DEFS_H

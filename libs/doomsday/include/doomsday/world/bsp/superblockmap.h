@@ -23,8 +23,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_WORLD_BSP_LINESEGMENTBLOCK_H
-#define DE_WORLD_BSP_LINESEGMENTBLOCK_H
+#pragma once
 
 #include <de/list.h>
 #include <de/legacy/aabox.h>
@@ -100,4 +99,3 @@ struct LineSegmentBlockTreeNode : public de::BinaryTree<LineSegmentBlock *> {
 }  // namespace bsp
 }  // namespace world
 
-#endif  // DE_WORLD_BSP_LINESEGMENTBLOCK_H

@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_IDGAMESPACKAGEINFOFILE_H
-#define LIBDOOMSDAY_IDGAMESPACKAGEINFOFILE_H
+#pragma once
 
 #include <de/file.h>
 #include <de/remotefile.h>
@@ -48,4 +47,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBDOOMSDAY_IDGAMESPACKAGEINFOFILE_H

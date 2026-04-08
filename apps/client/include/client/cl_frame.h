@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_FRAME_H
-#define DE_CLIENT_FRAME_H
+#pragma once
 
 void Cl_InitFrame();
 void Cl_ResetFrame();
@@ -30,4 +29,3 @@ void Cl_Frame2Received(int packetType);
 
 float Cl_FrameGameTime();
 
-#endif // DE_CLIENT_FRAME_H

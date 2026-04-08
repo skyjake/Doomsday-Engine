@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_WHILESTATEMENT_H
-#define LIBCORE_WHILESTATEMENT_H
+#pragma once
 
 #include "statement.h"
 #include "compound.h"
@@ -59,4 +58,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_WHILESTATEMENT_H */

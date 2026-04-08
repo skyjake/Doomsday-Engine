@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_CONTEXT_H
-#define LIBCORE_CONTEXT_H
+#pragma once
 
 #include "evaluator.h"
 #include "de/record.h"
@@ -175,4 +174,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_CONTEXT_H */

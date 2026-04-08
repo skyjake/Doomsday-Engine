@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_RENDER_ENVIRON_H
-#define DE_CLIENT_RENDER_ENVIRON_H
+#pragma once
 
 #include <de/gltexture.h>
 
@@ -51,4 +50,3 @@ private:
 
 } // namespace render
 
-#endif // DE_CLIENT_RENDER_ENVIRON_H

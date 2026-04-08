@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_EDITOR_H
-#define GLOOM_EDITOR_H
+#pragma once
 
 #include <QWidget>
 #include <gloom/world/map.h>
@@ -66,4 +65,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // GLOOM_EDITOR_H

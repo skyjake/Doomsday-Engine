@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTDEBUG_H
-#define CLIENT_INPUTDEBUG_H
+#pragma once
 
 #include <de/libcore.h>
 
@@ -34,6 +33,4 @@ void I_DebugDrawer();
 void I_DebugDrawerConsoleRegister();
 
 #endif // DE_DEBUG
-
-#endif // CLIENT_INPUTDEBUG_H
 

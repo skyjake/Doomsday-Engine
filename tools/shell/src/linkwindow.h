@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LINKWINDOW_H
-#define LINKWINDOW_H
+#pragma once
 
 #include <de/basewindow.h>
 #include <de/guirootwidget.h>
@@ -75,4 +74,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LINKWINDOW_H

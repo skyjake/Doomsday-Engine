@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef IMPORTUDMF_UDMFLEX_H
-#define IMPORTUDMF_UDMFLEX_H
+#pragma once
 
 #include <de/scripting/lex.h>
 #include <de/scripting/tokenbuffer.h>
@@ -68,4 +67,3 @@ public:
     static bool isKeyword(const de::Token &token);
 };
 
-#endif // IMPORTUDMF_UDMFLEX_H

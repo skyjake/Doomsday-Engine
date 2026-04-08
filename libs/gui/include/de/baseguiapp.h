@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_BASEGUIAPP_H
-#define LIBAPPFW_BASEGUIAPP_H
+#pragma once
 
 #include "de/persistentstate.h"
 
@@ -79,4 +78,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_BASEGUIAPP_H

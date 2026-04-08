@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_FILESYS_LINK_H
-#define DE_FILESYS_LINK_H
+#pragma once
 
 #include "../dictionaryvalue.h"
 #include "../identifiedpacket.h"
@@ -109,4 +108,3 @@ private:
 } // namespace filesys
 } // namespace de
 
-#endif // DE_FILESYS_LINK_H

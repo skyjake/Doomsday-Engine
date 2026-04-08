@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DOOMSDAY_API_RESOURCE_H
-#define DOOMSDAY_API_RESOURCE_H
+#pragma once
 
 #include "apis.h"
 #include "api_uri.h"
@@ -155,4 +154,3 @@ DE_API_T(R);
 DE_USING_API(R);
 #endif
 
-#endif // DOOMSDAY_API_RESOURCE_H

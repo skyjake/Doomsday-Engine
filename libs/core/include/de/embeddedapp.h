@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_EMBEDDEDAPP_H
-#define LIBCORE_EMBEDDEDAPP_H
+#pragma once
 
 #include "de/app.h"
 #include "de/eventloop.h"
@@ -44,4 +43,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_EMBEDDEDAPP_H

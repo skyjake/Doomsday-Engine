@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_TASK_H
-#define LIBCORE_TASK_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/taskpool.h"
@@ -59,4 +58,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_TASK_H

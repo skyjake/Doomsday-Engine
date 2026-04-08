@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHERETIC_P_MAPUTL_H
-#define LIBHERETIC_P_MAPUTL_H
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -32,4 +31,3 @@
  */
 void P_ApplyTorque(mobj_t *mo);
 
-#endif // LIBHERETIC_P_MAPUTL_H

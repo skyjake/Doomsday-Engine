@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_THREADLOCAL_H
-#define LIBCORE_THREADLOCAL_H
+#pragma once
 
 #include <the_Foundation/stdthreads.h>
 #include "de/libcore.h"
@@ -64,4 +63,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_THREADLOCAL_H

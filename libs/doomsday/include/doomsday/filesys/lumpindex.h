@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_FILESYS_LUMPINDEX_H
-#define DE_FILESYS_LUMPINDEX_H
+#pragma once
 
 #ifdef __cplusplus
 
@@ -307,4 +306,4 @@ typedef LumpIndex::Id1MapRecognizer Id1MapRecognizer;
 } // namespace res
 
 #endif // __cplusplus
-#endif // DE_FILESYS_LUMPINDEX_H
+

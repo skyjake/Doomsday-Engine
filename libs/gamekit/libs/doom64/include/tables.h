@@ -26,8 +26,7 @@
  * Lookup tables.
  */
 
-#ifndef __TABLES__
-#define __TABLES__
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -76,4 +75,3 @@ int SlopeDiv(unsigned num, unsigned den);
 } // extern "C"
 #endif
 
-#endif

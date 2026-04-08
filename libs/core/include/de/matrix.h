@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_MATRIX_H
-#define LIBCORE_MATRIX_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/math.h"
@@ -506,4 +505,3 @@ typedef Matrix4<ddouble> Mat4d;
 
 } // namespace de
 
-#endif // LIBCORE_MATRIX_H

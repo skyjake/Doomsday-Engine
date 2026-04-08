@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __DOOMSDAY_AUDIO_DRIVER_SFX_H__
-#define __DOOMSDAY_AUDIO_DRIVER_SFX_H__
+#pragma once
 
 /// @addtogroup audio
 ///@{
@@ -138,4 +137,3 @@ typedef struct audiointerface_sfx_s {
 
 ///@}
 
-#endif

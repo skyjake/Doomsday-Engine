@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_DEFINITION_ARRAY_H
-#define LIBDOOMSDAY_DEFINITION_ARRAY_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include <de/vector.h>
@@ -225,4 +224,3 @@ public:
     }
 };
 
-#endif // LIBDOOMSDAY_DEFINITION_ARRAY_H

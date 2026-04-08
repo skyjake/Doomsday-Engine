@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_CHARSYMBOLS_H
-#define LIBCORE_CHARSYMBOLS_H
+#pragma once
 
 #include "libcore.h"
 
@@ -64,4 +63,3 @@ DE_PUBLIC duint codePage437ToUnicode(dbyte code);
 
 } // namespace de
 
-#endif // LIBCORE_CHARSYMBOLS_H

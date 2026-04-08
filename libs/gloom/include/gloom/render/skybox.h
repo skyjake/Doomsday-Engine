@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_SKYBOX_H
-#define GLOOM_SKYBOX_H
+#pragma once
 
 #include <de/atlastexture.h>
 #include <de/matrix.h>
@@ -43,4 +42,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_SKYBOX_H

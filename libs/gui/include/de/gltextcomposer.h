@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_GLTEXTCOMPOSER_H
-#define LIBAPPFW_GLTEXTCOMPOSER_H
+#pragma once
 
 #include <de/font.h>
 #include <de/atlas.h>
@@ -126,4 +125,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_GLTEXTCOMPOSER_H

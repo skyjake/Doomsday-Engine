@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_BLOCKPACKET_H
-#define LIBCORE_BLOCKPACKET_H
+#pragma once
 
 #include "de/packet.h"
 #include "de/block.h"
@@ -50,4 +49,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_BLOCKPACKET_H

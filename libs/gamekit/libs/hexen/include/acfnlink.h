@@ -26,8 +26,7 @@
  * acfnlink.h:
  */
 
-#ifndef __ACTION_LINK_H__
-#define __ACTION_LINK_H__
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -324,4 +323,3 @@ ACTION_MOBJ(A_PuzzGear4);
 } // extern "C"
 #endif
 
-#endif

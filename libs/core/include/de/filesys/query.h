@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_FILESYS_QUERY_H
-#define DE_FILESYS_QUERY_H
+#pragma once
 
 #include "../asynccallback.h"
 #include "../dictionaryvalue.h"
@@ -82,4 +81,3 @@ public:
 } // namespace filesys
 } // namespace de
 
-#endif // DE_FILESYS_QUERY_H

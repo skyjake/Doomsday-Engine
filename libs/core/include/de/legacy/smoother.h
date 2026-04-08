@@ -23,8 +23,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_SMOOTHER_H
-#define DE_SMOOTHER_H
+#pragma once
 
 #include <de/liblegacy.h>
 
@@ -152,4 +151,3 @@ void Smoother_Debug(const Smoother *sm);
 } // extern "C"
 #endif
 
-#endif /* DE_SMOOTHER_H */

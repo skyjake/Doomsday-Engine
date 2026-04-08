@@ -21,8 +21,7 @@
  * m_profiler.h: Utility Macros for Profiling
  */
 
-#ifndef __DOOMSDAY_MISC_PROFILER_H__
-#define __DOOMSDAY_MISC_PROFILER_H__
+#pragma once
 
 #include "dd_types.h"
 #include <de/legacy/timer.h>
@@ -55,4 +54,3 @@ typedef struct profiler_s {
 # define PRINT_PROF(x)
 #endif                          // DD_PROFILE
 
-#endif

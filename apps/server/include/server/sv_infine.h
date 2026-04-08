@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SERVER_INFINE
-#define SERVER_INFINE
+#pragma once
 
 #include "api_infine.h"
 
@@ -35,4 +34,3 @@ void Sv_Finale(finaleid_t id, int flags, const char *script);
 }  // extern "C"
 #endif
 
-#endif  // SERVER_INFINE

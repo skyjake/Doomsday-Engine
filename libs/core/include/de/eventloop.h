@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_EVENTLOOP_H
-#define LIBCORE_EVENTLOOP_H
+#pragma once
 
 #include "de/event.h"
 #include "de/observers.h"
@@ -93,4 +92,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_EVENTLOOP_H

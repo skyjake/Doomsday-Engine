@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_LOG_H
-#define LIBCORE_LOG_H
+#pragma once
 
 #include "de/guard.h"
 #include "de/iserializable.h"
@@ -796,4 +795,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_LOG_H */

@@ -39,8 +39,7 @@
  * exception.) </small>
  */
 
-#ifndef __FMOD_CD_H__
-#define __FMOD_CD_H__
+#pragma once
 
 #include "api_audiod_mus.h"
 
@@ -67,4 +66,3 @@ void    DM_CDAudio_Stop(void);
 void    DMFmod_CDAudio_Shutdown(void);
 #endif
 
-#endif /* end of include guard: __FMOD_CD_H__ */

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_ZEROED_H
-#define LIBCORE_ZEROED_H
+#pragma once
 
 #include "de/libcore.h"
 
@@ -64,4 +63,3 @@ using Uint64 = Zeroed<duint64>;
 
 } // namespace de
 
-#endif /* LIBCORE_ZEROED_H */

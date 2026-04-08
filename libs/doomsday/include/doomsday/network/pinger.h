@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_NETWORK_PINGER_H
-#define LIBDOOMSDAY_NETWORK_PINGER_H
+#pragma once
 
 #include "../libdoomsday.h"
 
@@ -36,6 +35,4 @@ struct Pinger
     int total;
     int current;
 };
-
-#endif // LIBDOOMSDAY_NETWORK_PINGER_H
 

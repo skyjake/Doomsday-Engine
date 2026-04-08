@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_EDITORS_VARIABLEGROUPEDITOR_H
-#define DE_CLIENT_UI_EDITORS_VARIABLEGROUPEDITOR_H
+#pragma once
 
 #include <de/foldpanelwidget.h>
 #include <de/scrollareawidget.h>
@@ -111,4 +110,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UI_EDITORS_VARIABLEGROUPEDITOR_H

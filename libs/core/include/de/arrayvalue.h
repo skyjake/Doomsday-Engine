@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ARRAYVALUE_H
-#define LIBCORE_ARRAYVALUE_H
+#pragma once
 
 #include "de/value.h"
 #include "de/list.h"
@@ -224,4 +223,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_ARRAYVALUE_H */

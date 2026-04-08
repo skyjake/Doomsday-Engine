@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_SCHEDULE_H__
-#define __AMETHYST_SCHEDULE_H__
+#pragma once
 
 #include "outputcontext.h"
 #include "contextrelation.h"
@@ -51,4 +50,3 @@ protected:
     ContextRelation _relationRoot;
 };
 
-#endif

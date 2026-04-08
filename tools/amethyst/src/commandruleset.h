@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_COMMAND_RULESET_H__
-#define __AMETHYST_COMMAND_RULESET_H__
+#pragma once
 
 #include "commandrule.h"
 
@@ -38,4 +37,3 @@ protected:
     CommandRule _defaultRule;
 };
 
-#endif

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENTROOTWIDGET_H
-#define DE_CLIENTROOTWIDGET_H
+#pragma once
 
 #include <de/guirootwidget.h>
 #include <de/glwindow.h>
@@ -45,4 +44,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENTROOTWIDGET_H

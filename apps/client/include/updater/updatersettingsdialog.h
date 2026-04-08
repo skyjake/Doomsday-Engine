@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_UPDATERSETTINGSDIALOG_H
-#define DE_CLIENT_UPDATERSETTINGSDIALOG_H
+#pragma once
 
 #include <de/dialogwidget.h>
 
@@ -50,4 +49,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UPDATERSETTINGSDIALOG_H

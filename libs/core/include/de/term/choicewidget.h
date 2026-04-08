@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_CHOICETEDGET_H
-#define LIBSHELL_CHOICETEDGET_H
+#pragma once
 
 #include "labelwidget.h"
 #include "de/list.h"
@@ -67,4 +66,3 @@ private:
 
 }} // namespace de::term
 
-#endif // LIBSHELL_CHOICETEDGET_H

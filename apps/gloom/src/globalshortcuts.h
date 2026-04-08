@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOBALSHORTCUTS_H
-#define GLOBALSHORTCUTS_H
+#pragma once
 
 #include <de/widget.h>
 
@@ -33,4 +32,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // GLOBALSHORTCUTS_H

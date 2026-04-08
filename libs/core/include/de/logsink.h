@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_LOGSINK_H
-#define LIBCORE_LOGSINK_H
+#pragma once
 
 #include "de/string.h"
 #include "de/log.h"
@@ -112,4 +111,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_LOGSINK_H

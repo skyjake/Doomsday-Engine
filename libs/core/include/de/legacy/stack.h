@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_STACK_H
-#define DE_STACK_H
+#pragma once
 
 #include <de/liblegacy.h>
 
@@ -48,4 +47,3 @@ DE_PUBLIC void *Stack_Pop(ddstack_t *stack);
 } // extern "C"
 #endif
 
-#endif // DE_STACK_H

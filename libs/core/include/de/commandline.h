@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_COMMANDLINE_H
-#define LIBCORE_COMMANDLINE_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -255,4 +254,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_COMMANDLINE_H */

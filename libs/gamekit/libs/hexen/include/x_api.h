@@ -26,8 +26,7 @@
  * Doomsday API exchange - jHexen specific.
  */
 
-#ifndef LIBJHEXEN_API_H
-#define LIBJHEXEN_API_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -65,4 +64,3 @@ DE_USING_API(Uri);
 } // extern "C"
 #endif
 
-#endif /* LIBJHEXEN_API_H */

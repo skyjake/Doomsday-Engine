@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHERETIC_PLAY_LIGHTS_H
-#define LIBHERETIC_PLAY_LIGHTS_H
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -100,4 +99,3 @@ void EV_LightTurnOn(Line *line, float bright);
 } // extern "C"
 #endif
 
-#endif // LIBHERETIC_PLAY_LIGHTS_H

@@ -26,8 +26,7 @@
  * hu_pspr.h:
  */
 
-#ifndef __COMMON_PSPRITE_H__
-#define __COMMON_PSPRITE_H__
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,4 +39,3 @@ float           HU_PSpriteYOffset(player_t* pl);
 } // extern "C"
 #endif
 
-#endif

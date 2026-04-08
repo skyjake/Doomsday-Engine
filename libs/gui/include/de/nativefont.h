@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_NATIVEFONT_H
-#define LIBGUI_NATIVEFONT_H
+#pragma once
 
 #include "libgui.h"
 
@@ -181,4 +180,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_NATIVEFONT_H

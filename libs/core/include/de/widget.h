@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_WIDGET_H
-#define LIBCORE_WIDGET_H
+#pragma once
 
 /** @defgroup widgets  Widget Framework
  * @ingroup core */
@@ -410,4 +409,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_WIDGET_H

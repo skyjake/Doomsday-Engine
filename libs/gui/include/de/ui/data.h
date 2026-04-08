@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_UI_DATA_H
-#define LIBAPPFW_UI_DATA_H
+#pragma once
 
 #include <de/observers.h>
 #include <functional>
@@ -143,4 +142,3 @@ typedef Data::Pos DataPos;
 } // namespace ui
 } // namespace de
 
-#endif // LIBAPPFW_UI_DATA_H

@@ -18,8 +18,7 @@
  */
  
  
-#ifndef LIBCORE_COMPOUND_H
-#define LIBCORE_COMPOUND_H
+#pragma once
 
 #include "../libcore.h"
 #include "de/iserializable.h"
@@ -77,5 +76,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_COMPOUND_H */
- 

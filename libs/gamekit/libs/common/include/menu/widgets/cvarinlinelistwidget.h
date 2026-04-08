@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_CVARINLINELISTWIDGET
-#define LIBCOMMON_UI_CVARINLINELISTWIDGET
+#pragma once
 
 #include "inlinelistwidget.h"
 
@@ -48,4 +47,3 @@ void CVarInlineListWidget_UpdateCVar(Widget &wi, Widget::Action action);
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_CVARINLINELISTWIDGET

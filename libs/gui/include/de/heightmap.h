@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_HEIGHTMAP_H
-#define LIBGUI_HEIGHTMAP_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/image.h>
@@ -56,4 +55,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_HEIGHTMAP_H

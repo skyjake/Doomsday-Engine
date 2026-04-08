@@ -26,8 +26,7 @@
  * Doomsday API exchange - jHeretic specific.
  */
 
-#ifndef LIBJHERETIC_API_H
-#define LIBJHERETIC_API_H
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -65,4 +64,3 @@ DE_USING_API(Uri);
 } // extern "C"
 #endif
 
-#endif /* LIBJHERETIC_API_H */

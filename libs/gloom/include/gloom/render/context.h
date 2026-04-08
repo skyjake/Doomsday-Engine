@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_CONTEXT_H
-#define GLOOM_CONTEXT_H
+#pragma once
 
 #include "gloom/render/view.h"
 #include "gloom/world/map.h"
@@ -79,4 +78,3 @@ struct Context {
 
 } // namespace gloom
 
-#endif // GLOOM_CONTEXT_H

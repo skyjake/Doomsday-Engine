@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_IDENT_H
-#define GLOOM_IDENT_H
+#pragma once
 
 #include <de/list.h>
 #include "libgloom.h"
@@ -29,4 +28,3 @@ typedef de::List<ID> IDList;
 
 } // namespace gloom
 
-#endif // GLOOM_IDENT_H

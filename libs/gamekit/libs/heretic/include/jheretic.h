@@ -28,8 +28,7 @@
  * A convenience header for including all jHeretic headers.
  */
 
-#ifndef __JHERETIC_CONVENIENCE_H__
-#define __JHERETIC_CONVENIENCE_H__
+#pragma once
 
 #include "../../heretic/include/h_api.h"
 #include "../../heretic/include/acfnlink.h"
@@ -59,4 +58,3 @@
 #include "../../heretic/include/st_stuff.h"
 #include "../../heretic/include/tables.h"
 
-#endif // __JHERETIC_CONVENIENCE_H__

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ISIZERULE_H
-#define LIBCORE_ISIZERULE_H
+#pragma once
 
 #include "de/rule.h"
 
@@ -61,4 +60,3 @@ struct DE_PUBLIC RulePair
 
 } // namespace de
 
-#endif // LIBCORE_ISIZERULE_H

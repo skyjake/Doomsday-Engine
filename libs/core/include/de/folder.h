@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_FOLDER_H
-#define LIBCORE_FOLDER_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/file.h"
@@ -395,4 +394,3 @@ DE_EXTERN_AUDIENCE(FolderPopulation)
 
 } // namespace de
 
-#endif /* LIBCORE_FOLDER_H */

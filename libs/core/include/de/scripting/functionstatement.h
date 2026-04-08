@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_FUNCTIONSTATEMENT_H
-#define LIBCORE_FUNCTIONSTATEMENT_H
+#pragma once
 
 #include "statement.h"
 #include "function.h"
@@ -67,4 +66,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_FUNCTIONSTATEMENT_H */

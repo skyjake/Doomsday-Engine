@@ -27,8 +27,7 @@
  * p_local.h: Play functions, animation, global header.
  */
 
-#ifndef __P_LOCAL_H__
-#define __P_LOCAL_H__
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -106,4 +105,3 @@ void        P_ExplodeMissile(mobj_t *mo);
 } // extern "C"
 #endif
 
-#endif

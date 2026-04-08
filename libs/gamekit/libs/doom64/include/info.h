@@ -27,8 +27,7 @@
  * info.h: Sprite, state, mobjtype and text identifiers.
  */
 
-#ifndef __INFO_CONSTANTS_H__
-#define __INFO_CONSTANTS_H__
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -1751,4 +1750,3 @@ typedef enum {
     NUMMUSIC
 } musicenum_t;*/
 
-#endif

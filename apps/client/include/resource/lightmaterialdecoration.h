@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_RESOURCE_MATERIALLIGHTDECORATION_H
-#define CLIENT_RESOURCE_MATERIALLIGHTDECORATION_H
+#pragma once
 
 #ifndef __CLIENT__
 #  error "LightMaterialDecoration only exists in the Client"
@@ -112,4 +111,3 @@ private:
     bool _useInterpolation;
 };
 
-#endif  // CLIENT_RESOURCE_MATERIALLIGHTDECORATION_H

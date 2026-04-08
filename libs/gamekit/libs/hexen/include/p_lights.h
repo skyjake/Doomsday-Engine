@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_PLAY_LIGHTS_H
-#define LIBHEXEN_PLAY_LIGHTS_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -90,4 +89,3 @@ dd_bool EV_SpawnLight(Line *line, byte *arg, lighttype_t type);
 } // extern "C"
 #endif
 
-#endif // LIBHEXEN_PLAY_LIGHTS_H

@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_RENDER_DRAWLIST_H
-#define CLIENT_RENDER_DRAWLIST_H
+#pragma once
 
 #include <array>
 #include <de/glbuffer.h>
@@ -229,4 +228,3 @@ private:
 
 typedef DrawList::Spec DrawListSpec;
 
-#endif  // CLIENT_RENDER_DRAWLIST_H

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_RENDER_HALO_H
-#define DE_CLIENT_RENDER_HALO_H
+#pragma once
 
 #include <de/vector.h>
 
@@ -68,4 +67,3 @@ bool H_RenderHalo(const de::Vec3d &origin, float size,
 // Console commands.
 D_CMD(FlareConfig);
 
-#endif // DE_CLIENT_RENDER_HALO_H

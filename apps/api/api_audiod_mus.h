@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __DOOMSDAY_AUDIO_DRIVER_MUSIC_H__
-#define __DOOMSDAY_AUDIO_DRIVER_MUSIC_H__
+#pragma once
 
 /// @addtogroup audio
 ///@{
@@ -60,4 +59,3 @@ typedef struct audiointerface_cd_s {
 
 ///@}
 
-#endif

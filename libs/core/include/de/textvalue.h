@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_TEXTVALUE_H
-#define LIBCORE_TEXTVALUE_H
+#pragma once
 
 #include "de/value.h"
 #include "de/string.h"
@@ -83,4 +82,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_TEXTVALUE_H */

@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __DSFLUIDSYNTH_VERSION_H__
-#define __DSFLUIDSYNTH_VERSION_H__
+#pragma once
 
 #ifndef DSFLUIDSYNTH_VER_ID
 #  ifdef _DEBUG
@@ -41,4 +40,3 @@
 #define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" DSFLUIDSYNTH_VER_ID ")"
 #define PLUGIN_VERSION_NUMBER 1,1,0,0 // For WIN32 version info.
 
-#endif

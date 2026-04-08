@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_BUILTINEXPRESSION_H
-#define LIBCORE_BUILTINEXPRESSION_H
+#pragma once
 
 #include "../libcore.h"
 #include "../string.h"
@@ -96,4 +95,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_BUILTINEXPRESSION_H */

@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_SYSTEM_MEMORY_H
-#define DE_SYSTEM_MEMORY_H
+#pragma once
 
 #include <de/liblegacy.h>
 #include <string.h> // memcpy
@@ -69,4 +68,3 @@ DE_PUBLIC char *M_StrDup(const char *str);
 } // extern "C"
 #endif
 
-#endif // DE_SYSTEM_MEMORY_H

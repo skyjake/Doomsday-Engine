@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_TIMELINE_H
-#define LIBCORE_TIMELINE_H
+#pragma once
 
 #include "../libcore.h"
 #include "de/time.h"
@@ -110,6 +109,4 @@ private:
 };
 
 } // namespace de
-
-#endif // LIBCORE_TIMELINE_H
 

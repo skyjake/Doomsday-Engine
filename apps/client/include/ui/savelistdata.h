@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_SAVELISTDATA_H
-#define DE_CLIENT_UI_SAVELISTDATA_H
+#pragma once
 
 #include <de/ui/listdata.h>
 #include <de/ui/imageitem.h>
@@ -57,4 +56,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UI_SAVELISTDATA_H

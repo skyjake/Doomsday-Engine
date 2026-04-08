@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_EVALUATOR_H
-#define LIBCORE_EVALUATOR_H
+#pragma once
 
 #include "../libcore.h"
 #include "de/nonevalue.h"
@@ -174,4 +173,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_EVALUATOR_H */

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GLBUFFER_H
-#define LIBGUI_GLBUFFER_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/list.h>
@@ -459,4 +458,3 @@ public:
 
 } // namespace de
 
-#endif // LIBGUI_GLBUFFER_H

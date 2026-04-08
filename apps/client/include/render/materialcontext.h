@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_RENDER_MATERIALCONTEXT_H
-#define CLIENT_RENDER_MATERIALCONTEXT_H
+#pragma once
 
 /**
  * Material render-context identifier.
@@ -38,4 +37,3 @@ enum MaterialContextId
     LastMaterialContextId = SkySphereContext
 };
 
-#endif  // CLIENT_RENDER_MATERIALCONTEXT_H

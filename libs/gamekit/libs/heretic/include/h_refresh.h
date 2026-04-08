@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef JHERETIC_REFRESH_H
-#define JHERETIC_REFRESH_H
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -56,4 +55,3 @@ void R_UpdateViewFilter(int player);
 } // extern "C"
 #endif
 
-#endif // JHERETIC_REFRESH_H

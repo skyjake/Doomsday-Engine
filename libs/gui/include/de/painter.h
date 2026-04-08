@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_PAINTER_H
-#define LIBAPPFW_PAINTER_H
+#pragma once
 
 #include <de/glatlasbuffer.h>
 #include <de/glsubbuffer.h>
@@ -87,4 +86,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_PAINTER_H

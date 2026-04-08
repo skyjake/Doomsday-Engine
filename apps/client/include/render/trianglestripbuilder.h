@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_RENDER_TRIANGLE_STRIP_BUILDER
-#define DE_RENDER_TRIANGLE_STRIP_BUILDER
+#pragma once
 
 #include <de/libcore.h>
 #include <de/vector.h>
@@ -207,4 +206,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_RENDER_TRIANGLE_STRIP_BUILDER

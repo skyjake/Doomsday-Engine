@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_THINKER_FLOOR_H
-#define LIBCOMMON_THINKER_FLOOR_H
+#pragma once
 
 #include "doomsday.h"
 #ifdef __cplusplus
@@ -138,4 +137,3 @@ int EV_DoFloorAndCeiling(Line *li, int ftype, int ctype);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_THINKER_FLOOR_H

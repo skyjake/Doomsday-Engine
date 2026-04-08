@@ -26,8 +26,7 @@
  * x_items.h: Items, key cards/weapons/ammunition...
  */
 
-#ifndef __X_ITEMS_H__
-#define __X_ITEMS_H__
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -75,4 +74,3 @@ void P_InitWeaponInfo(void);
 } // extern "C"
 #endif
 
-#endif // __X_ITEMS_H__

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SERVER_SHELLUSER_H
-#define SERVER_SHELLUSER_H
+#pragma once
 
 #include <de/socket.h>
 #include <doomsday/network/link.h>
@@ -64,4 +63,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // SERVER_SHELLUSER_H

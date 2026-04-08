@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_RENDER_MODEL_H
-#define DE_CLIENT_RENDER_MODEL_H
+#pragma once
 
 #include <de/record.h>
 #include <de/modeldrawable.h>
@@ -104,6 +103,4 @@ struct Model : public ModelDrawable
 };
 
 } // namespace render
-
-#endif // DE_CLIENT_RENDER_MODEL_H
 

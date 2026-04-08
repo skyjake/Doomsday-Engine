@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_RESOURCE_FRAMEMODELDEF_H
-#define DE_RESOURCE_FRAMEMODELDEF_H
+#pragma once
 
 #include <vector>
 #include <de/vector.h>
@@ -218,4 +217,3 @@ struct FrameModelDef
     }
 };
 
-#endif // DE_RESOURCE_FRAMEMODELDEF_H

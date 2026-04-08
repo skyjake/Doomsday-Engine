@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHERETIC_STUFF_H
-#define LIBHERETIC_STUFF_H
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -158,4 +157,3 @@ int ST_ReadyItemFlashCounter(int localPlayer);
 } // extern "C"
 #endif
 
-#endif  // LIBHERETIC_STUFF_H

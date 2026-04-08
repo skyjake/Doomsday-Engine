@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GLFRAMEBUFFER_H
-#define LIBGUI_GLFRAMEBUFFER_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/asset.h>
@@ -327,4 +326,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_GLFRAMEBUFFER_H

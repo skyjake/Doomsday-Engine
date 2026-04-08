@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ARCHIVEENTRYFILE_H
-#define LIBCORE_ARCHIVEENTRYFILE_H
+#pragma once
 
 #include "de/bytearrayfile.h"
 
@@ -95,4 +94,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_ARCHIVEENTRYFILE_H */

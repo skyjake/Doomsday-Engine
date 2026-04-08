@@ -31,8 +31,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_RENDER_FAKERADIO
-#define DE_CLIENT_RENDER_FAKERADIO
+#pragma once
 
 #ifdef __SERVER__
 #  error "rend_fakeradio.h is only for the Client"
@@ -71,4 +70,3 @@ void Rend_DrawFlatRadio(const ConvexSubspace &subspace);
  */
 void Rend_RadioRegister();
 
-#endif  // DE_CLIENT_RENDER_FAKERADIO

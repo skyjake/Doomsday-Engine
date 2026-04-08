@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_STRINGPOOL_H
-#define LIBCORE_STRINGPOOL_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/iserializable.h"
@@ -236,4 +235,3 @@ private:
 
 }  // namespace de
 
-#endif  // LIBCORE_STRINGPOOL_H

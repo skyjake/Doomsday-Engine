@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_UNIT_TEST_H
-#define DE_UNIT_TEST_H
+#pragma once
 
 /// @addtogroup legacy
 /// @{
@@ -36,4 +35,3 @@
 
 /// @}
 
-#endif // DE_UNIT_TEST_H

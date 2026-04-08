@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_SOUND_H
-#define DE_CLIENT_SOUND_H
+#pragma once
 
 #include <doomsday/network/protocol.h>
 
@@ -33,4 +32,3 @@ void Cl_ReadSoundDelta(deltatype_t type);
  */
 void Cl_Sound();
 
-#endif // DE_CLIENT_SOUND_H

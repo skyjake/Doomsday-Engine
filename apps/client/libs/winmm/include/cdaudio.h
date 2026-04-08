@@ -25,8 +25,7 @@
  * cdaudio.h: Plays CDAudio tracks via winmm API.
  */
 
-#ifndef __WIN_CDAUDIO_H__
-#define __WIN_CDAUDIO_H__
+#pragma once
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -65,4 +64,3 @@ protected:
     double      startTime, pauseTime, trackLength;
 };
 
-#endif

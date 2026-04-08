@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_DEFINITION_UTILS_H
-#define LIBCOMMON_DEFINITION_UTILS_H
+#pragma once
 
 #ifndef __cplusplus
 #  error "g_defs.h requires C++"
@@ -62,4 +61,3 @@ de::String FirstPlayableEpisodeId();
  */
 res::Uri TranslateMapWarpNumber(const de::String &episodeId, int warpNumber);
 
-#endif  // LIBCOMMON_DEFINITION_UTILS_H

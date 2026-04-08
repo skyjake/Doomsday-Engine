@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_RENDER_RENDPOLY_H
-#define DE_RENDER_RENDPOLY_H
+#pragma once
 
 #include <de/liblegacy.h>
 #include <de/vector.h>
@@ -79,4 +78,3 @@ void R_FreeRendColors(de::Vec4f *colorCoords);
  */
 void R_FreeRendTexCoords(de::Vec2f *texCoords);
 
-#endif // DE_RENDER_RENDPOLY_H

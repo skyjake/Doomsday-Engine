@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_HEADERWIDGET_H
-#define DE_CLIENT_UI_HEADERWIDGET_H
+#pragma once
 
 #include <de/popupbuttonwidget.h>
 #include <de/panelwidget.h>
@@ -43,4 +42,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UI_HEADERWIDGET_H

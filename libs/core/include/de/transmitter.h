@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_TRANSMITTER_H
-#define LIBCORE_TRANSMITTER_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/iostream.h"
@@ -70,4 +69,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_TRANSMITTER_H

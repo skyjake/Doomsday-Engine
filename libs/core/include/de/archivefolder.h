@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ARCHIVEFOLDER_H
-#define LIBCORE_ARCHIVEFOLDER_H
+#pragma once
 
 #include "de/folder.h"
 #include "de/archive.h"
@@ -66,4 +65,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_ARCHIVEFOLDER_H

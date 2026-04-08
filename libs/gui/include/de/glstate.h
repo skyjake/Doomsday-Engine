@@ -20,8 +20,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GLSTATE_H
-#define LIBGUI_GLSTATE_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/rectangle.h>
@@ -282,4 +281,3 @@ struct GLStateStack : public List<GLState *> {
 
 } // namespace de
 
-#endif // LIBGUI_GLSTATE_H

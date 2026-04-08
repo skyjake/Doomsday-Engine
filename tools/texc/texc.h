@@ -1,5 +1,4 @@
-#ifndef __DDTEXCOMPILER_H__
-#define __DDTEXCOMPILER_H__
+#pragma once
 
 #ifdef UNIX
 #  include <string.h>
@@ -76,4 +75,3 @@ typedef struct patch_s
 // Global variables.
 extern bool fullImport;
 
-#endif

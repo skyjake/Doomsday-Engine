@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_INLINELISTWIDGET
-#define LIBCOMMON_UI_INLINELISTWIDGET
+#pragma once
 
 #include "listwidget.h"
 
@@ -43,4 +42,3 @@ public:
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_INLINELISTWIDGET

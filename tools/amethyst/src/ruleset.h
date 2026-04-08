@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_RULESET_H__
-#define __AMETHYST_RULESET_H__
+#pragma once
 
 #include "command.h"
 #include "rule.h"
@@ -58,4 +57,3 @@ private:
     Rule _root;
 };
 
-#endif

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_RULEBANK_H
-#define LIBGUI_RULEBANK_H
+#pragma once
 
 #include "de/infobank.h"
 #include "de/constantrule.h"
@@ -67,4 +66,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_RULEBANK_H

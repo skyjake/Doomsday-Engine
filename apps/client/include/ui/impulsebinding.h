@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
-#define CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
+#pragma once
 
 #include <de/string.h>
 #include <de/compiledrecord.h>
@@ -98,6 +97,4 @@ public:
      */
     void configure(const char *ctrlDesc, int impulseId, int localPlayer, bool assignNewId = true);
 };
-
-#endif // CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
 

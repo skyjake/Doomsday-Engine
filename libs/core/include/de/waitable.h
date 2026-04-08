@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_WAITABLE_H
-#define LIBCORE_WAITABLE_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/time.h"
@@ -63,4 +62,3 @@ private:
 
 }
 
-#endif /* LIBCORE_WAITABLE_H */

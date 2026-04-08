@@ -26,8 +26,7 @@
  * p_setup.h: Map setup routines
  */
 
-#ifndef __X_SETUP_H__
-#define __X_SETUP_H__
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -70,4 +69,3 @@ int             P_HandleMapObjectStatusReport(int code, uint id, int dtype, void
 } // extern "C"
 #endif
 
-#endif

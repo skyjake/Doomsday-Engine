@@ -25,11 +25,9 @@
  * m_argv.h:
  */
 
-#ifndef __M_ARGV__
-#define __M_ARGV__
+#pragma once
 
 #define myargc      CommandLine_Count()
 
 #define M_CheckParm     gi.CheckParm
 
-#endif

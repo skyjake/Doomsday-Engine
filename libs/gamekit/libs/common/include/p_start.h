@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_PLAYSIM_START_H
-#define LIBCOMMON_PLAYSIM_START_H
+#pragma once
 
 #include "common.h"
 
@@ -268,4 +267,3 @@ dd_bool P_CheckSpot(coord_t x, coord_t y);
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_PLAYSIM_START_H */

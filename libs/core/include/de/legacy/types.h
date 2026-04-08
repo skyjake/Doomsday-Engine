@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_BASIC_TYPES_H
-#define DE_BASIC_TYPES_H
+#pragma once
 
 // This header is ignored if read by Microsoft RC.
 #ifndef RC_INVOKED
@@ -184,4 +183,3 @@ typedef int32_t         int_from_pointer_t;
 
 #endif // RC_INVOKED
 
-#endif // DE_BASIC_TYPES_H

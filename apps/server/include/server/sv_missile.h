@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef __DOOMSDAY_SERVER_POOL_MISSILE_H__
-#define __DOOMSDAY_SERVER_POOL_MISSILE_H__
+#pragma once
 
 #include "sv_def.h"
 
@@ -41,4 +40,3 @@ void            Sv_MRAdd(struct pool_s *pool, const struct mobjdelta_s *delta);
 int             Sv_MRCheck(struct pool_s *pool, const struct mobjdelta_s *mobj);
 void            Sv_MRRemove(struct pool_s *pool, thid_t id);
 
-#endif

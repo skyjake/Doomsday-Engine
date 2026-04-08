@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_READYITEMWIDGET_H
-#define LIBCOMMON_UI_READYITEMWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -53,4 +52,3 @@ void SBarReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw *offset);
 void ReadyItem_UpdateGeometry    (guidata_readyitem_t *item);
 void SBarReadyItem_UpdateGeometry(guidata_readyitem_t *item);
 
-#endif  // LIBCOMMON_UI_READYITEMWIDGET_H

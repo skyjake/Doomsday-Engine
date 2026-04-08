@@ -25,8 +25,7 @@
  * p_enemy.h:
  */
 
-#ifndef __P_ENEMY_H__
-#define __P_ENEMY_H__
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -42,4 +41,3 @@ void P_ClearBodyQueue(void);
 } // extern "C"
 #endif
 
-#endif

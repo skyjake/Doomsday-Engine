@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_REMOTEFEED_H
-#define LIBCORE_REMOTEFEED_H
+#pragma once
 
 #include "de/feed.h"
 #include "de/address.h"
@@ -47,4 +46,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_REMOTEFEED_H

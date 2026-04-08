@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DOOMSDAY_API_INFINE_H
-#define DOOMSDAY_API_INFINE_H
+#pragma once
 
 #include "apis.h"
 
@@ -143,4 +142,3 @@ DE_USING_API(Infine);
 
 ///@}
 
-#endif /* DOOMSDAY_API_INFINE_H */

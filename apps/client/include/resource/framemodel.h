@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_RESOURCE_FRAMEMODEL_H
-#define DE_RESOURCE_FRAMEMODEL_H
+#pragma once
 
 #include <doomsday/filesys/filehandle.h>
 #ifdef __CLIENT__
@@ -310,4 +309,3 @@ typedef FrameModel::DetailLevel FrameModelLOD;
 typedef FrameModel::Frame FrameModelFrame;
 typedef FrameModel::Skin FrameModelSkin;
 
-#endif // DE_RESOURCE_FRAMEMODEL_H

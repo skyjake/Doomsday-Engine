@@ -24,8 +24,7 @@
  * @defgroup updater Automatic Updater
  */
 
-#ifndef DE_UPDATER_H
-#define DE_UPDATER_H
+#pragma once
 
 #ifndef __CLIENT__
 #  error "updater.h is only for the client"
@@ -87,4 +86,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_UPDATER_H

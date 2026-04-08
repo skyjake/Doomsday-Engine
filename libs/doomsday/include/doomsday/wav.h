@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_WAV_H
-#define LIBDOOMSDAY_RESOURCE_WAV_H
+#pragma once
 
 #include "libdoomsday.h"
 #include <de/legacy/types.h>
@@ -66,4 +65,3 @@ LIBDOOMSDAY_PUBLIC void* WAV_MemoryLoad(const byte* data, size_t datalength, int
  */
 LIBDOOMSDAY_PUBLIC void* WAV_Load(const char* filename, int* bits, int* rate, int* samples);
 
-#endif // LIBDOOMSDAY_RESOURCE_WAV_H

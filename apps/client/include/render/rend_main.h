@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_RENDER_MAIN_H
-#define CLIENT_RENDER_MAIN_H
+#pragma once
 
 #ifndef __CLIENT__
 #  error "render/rend_main.h only exists in the Client"
@@ -354,4 +353,3 @@ void R_DivTexCoords(de::Vec2f *dst, const de::Vec2f *src,
 void R_DivVertColors(de::Vec4f *dst, const de::Vec4f *src,
     const WorldEdge &leftEdge, const WorldEdge &rightEdge);
 
-#endif // CLIENT_RENDER_MAIN_H

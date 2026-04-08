@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef AUDIO_SFXSAMPLECACHE_H
-#define AUDIO_SFXSAMPLECACHE_H
+#pragma once
 
 #include "api_audiod_sfx.h"  // sfxsample_t
 #include <de/observers.h>
@@ -114,4 +113,3 @@ private:
 
 }  // namespace audio
 
-#endif  // AUDIO_SFXSAMPLECACHE_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOMWIDGET_H
-#define GLOOMWIDGET_H
+#pragma once
 
 #include <de/guiwidget.h>
 #include "gloom/render/icamera.h"
@@ -68,4 +67,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOMWIDGET_H

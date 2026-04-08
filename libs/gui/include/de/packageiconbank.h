@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_PACKAGEICONBANK_H
-#define LIBGUI_PACKAGEICONBANK_H
+#pragma once
 
 #include "de/texturebank.h"
 #include <de/vector.h>
@@ -66,4 +65,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_PACKAGEICONBANK_H

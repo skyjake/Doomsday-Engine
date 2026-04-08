@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_TEXTROOTWIDGET_H
-#define LIBSHELL_TEXTROOTWIDGET_H
+#pragma once
 
 #include "../rootwidget.h"
 #include "textcanvas.h"
@@ -71,4 +70,3 @@ private:
 
 }} // namespace de::term
 
-#endif // LIBSHELL_TEXTROOTWIDGET_H

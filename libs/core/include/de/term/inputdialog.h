@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_INPUTDIALOGTEDGET_H
-#define LIBSHELL_INPUTDIALOGTEDGET_H
+#pragma once
 
 #include "dialogwidget.h"
 
@@ -74,4 +73,3 @@ private:
 
 }} // namespace de::term
 
-#endif // LIBSHELL_INPUTDIALOGTEDGET_H

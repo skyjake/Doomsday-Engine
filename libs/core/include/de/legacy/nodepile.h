@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_NODEPILE_H
-#define DE_NODEPILE_H
+#pragma once
 
 #define NP_ROOT_NODE ((void*) -1)
 
@@ -62,4 +61,3 @@ DE_PUBLIC void        NP_Unlink(nodepile_t *pile, nodeindex_t node);
 } // extern "C"
 #endif
 
-#endif // DE_NODEPILE_H

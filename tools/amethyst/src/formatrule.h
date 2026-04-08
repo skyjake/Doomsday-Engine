@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_FORMAT_RULE_H__
-#define __AMETHYST_FORMAT_RULE_H__
+#pragma once
 
 #include "rule.h"
 #include "outputcontext.h"
@@ -41,4 +40,3 @@ protected:
     bool _hasAnchorAppend;
 };
 
-#endif

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_IPERSISTENT_H
-#define LIBAPPFW_IPERSISTENT_H
+#pragma once
 
 #include "libgui.h"
 
@@ -44,4 +43,3 @@ public:
 
 } // namespace de
 
-#endif // LIBAPPFW_IPERSISTENT_H

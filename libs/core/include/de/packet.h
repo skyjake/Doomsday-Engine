@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_PACKET_H
-#define LIBCORE_PACKET_H
+#pragma once
 
 #include "de/iserializable.h"
 #include "de/address.h"
@@ -131,4 +130,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_PACKET_H */

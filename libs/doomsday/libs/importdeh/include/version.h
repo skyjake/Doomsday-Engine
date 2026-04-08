@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDEHREAD_VERSION_H
-#define LIBDEHREAD_VERSION_H
+#pragma once
 
 #ifndef DEHREAD_VER_ID
 #  ifdef _DEBUG
@@ -42,4 +41,3 @@
 #define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" DEHREAD_VER_ID ")"
 #define PLUGIN_VERSION_NUMBER 2,0,0,0 // For WIN32 version info.
 
-#endif // LIBDEHREAD_VERSION_H

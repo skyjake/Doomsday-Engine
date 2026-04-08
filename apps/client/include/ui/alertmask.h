@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_ALERTMASK_H
-#define DE_CLIENT_ALERTMASK_H
+#pragma once
 
 #include <de/logfilter.h>
 
@@ -38,4 +37,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_ALERTMASK_H

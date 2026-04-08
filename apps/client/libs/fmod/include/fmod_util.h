@@ -39,8 +39,7 @@
  * exception.) </small>
  */
 
-#ifndef __DSFMOD_UTIL_H__
-#define __DSFMOD_UTIL_H__
+#pragma once
 
 #include <fmod.h>
 #include <fmod.hpp>
@@ -77,4 +76,3 @@ inline void zeroStruct(T& t) {
 
 bool endsWith(const char* str, const char* ending);
 
-#endif /* end of include guard: __DSFMOD_UTIL_H__ */

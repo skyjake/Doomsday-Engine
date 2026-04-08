@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_LISTENSOCKET_H
-#define LIBCORE_LISTENSOCKET_H
+#pragma once
 
 #include "de/observers.h"
 
@@ -61,4 +60,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_LISTENSOCKET_H

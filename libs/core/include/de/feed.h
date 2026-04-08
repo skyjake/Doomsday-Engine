@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_FEED_H
-#define LIBCORE_FEED_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/list.h"
@@ -129,4 +128,3 @@ public:
 
 } // namespace de
 
-#endif /* LIBCORE_FEED_H */

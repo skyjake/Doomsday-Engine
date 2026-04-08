@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_FX_POSTPROCESSING_H
-#define DE_CLIENT_FX_POSTPROCESSING_H
+#pragma once
 
 #include "render/consoleeffect.h"
 #include <de/matrix.h>
@@ -73,4 +72,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_FX_POSTPROCESSING_H

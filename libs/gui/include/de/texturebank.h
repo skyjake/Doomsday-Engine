@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_TEXTUREBANK_H
-#define LIBGUI_TEXTUREBANK_H
+#pragma once
 
 #include <de/bank.h>
 #include "de/atlas.h"
@@ -105,4 +104,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_TEXTUREBANK_H

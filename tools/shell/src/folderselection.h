@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef FOLDERSELECTION_H
-#define FOLDERSELECTION_H
+#pragma once
 
 #include <de/guiwidget.h>
 #include <de/nativepath.h>
@@ -44,4 +43,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // FOLDERSELECTION_H

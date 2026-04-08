@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_TIMEVALUE_H
-#define LIBCORE_TIMEVALUE_H
+#pragma once
 
 #include "de/value.h"
 #include "de/time.h"
@@ -54,4 +53,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_TIMEVALUE_H

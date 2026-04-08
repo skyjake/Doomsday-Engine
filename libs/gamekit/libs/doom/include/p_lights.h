@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_PLAY_LIGHTS_H
-#define LIBDOOM_PLAY_LIGHTS_H
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -115,4 +114,3 @@ void EV_LightTurnOn(Line *line, float bright);
 } // extern "C"
 #endif
 
-#endif // LIBDOOM_PLAY_LIGHTS_H

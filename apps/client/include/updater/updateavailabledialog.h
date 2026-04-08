@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_UPDATEAVAILABLEDIALOG_H
-#define DE_CLIENT_UPDATEAVAILABLEDIALOG_H
+#pragma once
 
 #include <de/messagedialog.h>
 #include <de/version.h>
@@ -47,4 +46,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_UPDATEAVAILABLEDIALOG_H

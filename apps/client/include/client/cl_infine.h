@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INFINE
-#define CLIENT_INFINE
+#pragma once
 
 #include "api_infine.h"
 #include <de/legacy/reader.h>
@@ -34,4 +33,3 @@ void Cl_Finale(Reader1 *msg);
  */
 void Cl_RequestFinaleSkip();
 
-#endif  // CLIENT_INFINE

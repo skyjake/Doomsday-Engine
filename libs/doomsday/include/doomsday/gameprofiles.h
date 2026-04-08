@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_GAMEPROFILES_H
-#define LIBDOOMSDAY_GAMEPROFILES_H
+#pragma once
 
 #include "libdoomsday.h"
 
@@ -155,4 +154,3 @@ private:
 
 typedef GameProfiles::Profile GameProfile;
 
-#endif // LIBDOOMSDAY_GAMEPROFILES_H

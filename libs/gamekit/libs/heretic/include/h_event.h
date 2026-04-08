@@ -26,8 +26,7 @@
  * h_event.h:
  */
 
-#ifndef __JHERETIC_EVENT_H__
-#define __JHERETIC_EVENT_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -93,4 +92,3 @@ typedef enum
 
 } buttoncode_t;*/
 
-#endif

@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_KEYSLOTWIDGET_H
-#define LIBCOMMON_UI_KEYSLOTWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -47,4 +46,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif  // LIBCOMMON_UI_KEYSLOTWIDGET_H

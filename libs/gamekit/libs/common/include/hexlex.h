@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_HEXLEX_H
-#define LIBCOMMON_HEXLEX_H
+#pragma once
 
 #include "common.h"
 
@@ -99,4 +98,3 @@ private:
     bool _multiline;    ///< @c true= current token spans multiple lines.
 };
 
-#endif // LIBCOMMON_HEXLEX_H

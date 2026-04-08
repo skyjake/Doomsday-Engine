@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_OPERATORRULE_H
-#define LIBCORE_OPERATORRULE_H
+#pragma once
 
 #include "de/rule.h"
 #include "de/constantrule.h"
@@ -198,4 +197,3 @@ inline void maxInto(const RuleType *&maximum, const Rule &value) {
 
 } // namespace de
 
-#endif // LIBCORE_OPERATORRULE_H

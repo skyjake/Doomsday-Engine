@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_CONSOLE_EXEC_H
-#define LIBDOOMSDAY_CONSOLE_EXEC_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include "../game.h"
@@ -84,4 +83,3 @@ LIBDOOMSDAY_PUBLIC de::String Con_GameAsStyledText(const Game *game);
 
 #endif // __cplusplus
 
-#endif // LIBDOOMSDAY_CONSOLE_EXEC_H

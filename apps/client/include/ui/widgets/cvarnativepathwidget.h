@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_CVARNATIVEPATHWIDGET_H
-#define DE_CLIENT_CVARNATIVEPATHWIDGET_H
+#pragma once
 
 #include "nativepathwidget.h"
 #include "icvarwidget.h"
@@ -40,4 +39,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_CVARNATIVEPATHWIDGET_H

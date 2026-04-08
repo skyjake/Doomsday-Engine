@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_MAPRENDER_H
-#define GLOOM_MAPRENDER_H
+#pragma once
 
 #include <de/atlastexture.h>
 
@@ -54,4 +53,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_MAPRENDER_H

@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDEHREAD_DEHREAD_H
-#define LIBDEHREAD_DEHREAD_H
+#pragma once
 
 #include <doomsday/defs/ded.h>
 
@@ -45,4 +44,3 @@ DE_USING_API(Con);
 DE_USING_API(Def);
 DE_USING_API(F);
 
-#endif // LIBDEHREAD_DEHREAD_H

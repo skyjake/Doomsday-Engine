@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_EVENT_H
-#define LIBCORE_EVENT_H
+#pragma once
 
 #include "de/libcore.h"
 
@@ -80,4 +79,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_EVENT_H

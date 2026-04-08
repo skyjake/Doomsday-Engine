@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_THINKER_CEILING_H
-#define LIBCOMMON_THINKER_CEILING_H
+#pragma once
 
 #include "doomsday.h"
 #ifdef __cplusplus
@@ -116,4 +115,3 @@ int P_CeilingDeactivate(short tag);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_THINKER_CEILING_H

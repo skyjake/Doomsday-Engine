@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_MODELLOADER_H
-#define DE_CLIENT_MODELLOADER_H
+#pragma once
 
 #include <de/glprogram.h>
 #include <de/modelbank.h>
@@ -79,4 +78,3 @@ private:
 
 } // namespace render
 
-#endif // DE_CLIENT_MODELLOADER_H

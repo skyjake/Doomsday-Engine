@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_ARMORWIDGET_H
-#define LIBCOMMON_UI_ARMORWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -50,4 +49,3 @@ void SBarArmorWidget_Draw(guidata_armor_t *armor, const Point2Raw *offset);
 void Armor_UpdateGeometry    (guidata_armor_t *armor);
 void SBarArmor_UpdateGeometry(guidata_armor_t *armor);
 
-#endif  // LIBCOMMON_UI_ARMORWIDGET_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_COLUMNWIDGET_H
-#define DE_CLIENT_UI_COLUMNWIDGET_H
+#pragma once
 
 #include "headerwidget.h"
 #include <de/scrollareawidget.h>
@@ -61,4 +60,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UI_COLUMNWIDGET_H

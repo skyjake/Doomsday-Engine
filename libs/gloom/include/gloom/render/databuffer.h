@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_DATABUFFER_H
-#define GLOOM_DATABUFFER_H
+#pragma once
 
 #include <de/glbuffer.h>
 #include <de/gltexture.h>
@@ -98,4 +97,3 @@ struct DataBuffer
 
 } // namespace gloom
 
-#endif // GLOOM_DATABUFFER_H

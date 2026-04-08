@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_THINGARCHIVE_H
-#define LIBCOMMON_THINGARCHIVE_H
+#pragma once
 
 #include "common.h"
 
@@ -78,4 +77,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBCOMMON_P_ACTOR_H

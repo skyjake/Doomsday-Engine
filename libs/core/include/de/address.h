@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ADDRESS_H
-#define LIBCORE_ADDRESS_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/log.h"
@@ -116,4 +115,3 @@ DE_PUBLIC std::ostream &operator << (std::ostream &os, const Address &address);
 
 } // namespace de
 
-#endif // LIBCORE_ADDRESS_H

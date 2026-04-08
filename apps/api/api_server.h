@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DOOMSDAY_API_SERVER_H
-#define DOOMSDAY_API_SERVER_H
+#pragma once
 
 #include "apis.h"
 
@@ -43,4 +42,3 @@ DE_API_T(Server);
 DE_USING_API(Server);
 #endif
 
-#endif // DOOMSDAY_API_SERVER_H

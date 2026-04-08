@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_STUFF_H
-#define LIBDOOM_STUFF_H
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -155,4 +154,3 @@ void ST_HUDUnHide(int localPlayer, hueevent_t event);
 } // extern "C"
 #endif
 
-#endif  // LIBDOOM_STUFF_H

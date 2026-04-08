@@ -26,8 +26,7 @@
  * tables.h: Lookup tables.
  */
 
-#ifndef __TABLES_H__
-#define __TABLES_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -75,4 +74,3 @@ int SlopeDiv(unsigned num, unsigned den);
 } // extern "C"
 #endif
 
-#endif

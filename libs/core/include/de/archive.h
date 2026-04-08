@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ARCHIVE_H
-#define LIBCORE_ARCHIVE_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/ibytearray.h"
@@ -327,4 +326,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_ARCHIVE_H */

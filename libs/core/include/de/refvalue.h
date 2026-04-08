@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_REFVALUE_H
-#define LIBCORE_REFVALUE_H
+#pragma once
 
 #include "de/value.h"
 #include "de/variable.h"
@@ -96,4 +95,3 @@ public:
 
 } // namespace de
 
-#endif /* LIBCORE_REFVALUE_H */

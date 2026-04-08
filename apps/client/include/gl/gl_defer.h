@@ -23,8 +23,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_GL_DEFERRED_H
-#define DE_CLIENT_GL_DEFERRED_H
+#pragma once
 
 #include "api_gl.h"
 #include "sys_opengl.h"
@@ -111,4 +110,3 @@ DE_GL_DEFER2(uintArray, GLsizei count, const GLuint* values);
 } // extern "C"
 #endif
 
-#endif // DE_CLIENT_GL_DEFERRED_H

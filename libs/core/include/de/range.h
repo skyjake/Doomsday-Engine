@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_RANGE_H
-#define LIBCORE_RANGE_H
+#pragma once
 
 #include "de/list.h"
 #include "de/string.h"
@@ -163,4 +162,3 @@ typedef Range<const char *> Rangecc;
 
 } // namespace de
 
-#endif // LIBCORE_RANGE_H

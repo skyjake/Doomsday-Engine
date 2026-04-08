@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_DATE_H
-#define LIBCORE_DATE_H
+#pragma once
 
 #include "de/time.h"
 #include "de/log.h"
@@ -87,4 +86,3 @@ DE_PUBLIC std::ostream &operator << (std::ostream &os, const Date &date);
 
 } // namespace de
 
-#endif /* LIBCORE_DATE_H */

@@ -26,8 +26,7 @@
  * r_local.h:
  */
 
-#ifndef __R_LOCAL_H__
-#define __R_LOCAL_H__
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -76,4 +75,3 @@ extern int extralight;
 
 extern fixed_t  pspritescale, pspriteiscale;
 
-#endif

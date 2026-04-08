@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_TEXGAMMA_H
-#define DE_TEXGAMMA_H
+#pragma once
 
 #include "../liblegacy.h"
 #include <de/legacy/types.h>
@@ -34,4 +33,3 @@ DE_PUBLIC byte R_TexGammaLut(byte colorValue);
 } // extern "C"
 #endif
 
-#endif // DE_TEXGAMMA_H

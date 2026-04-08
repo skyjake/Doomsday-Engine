@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_MODELDRAWABLE_H
-#define LIBGUI_MODELDRAWABLE_H
+#pragma once
 
 #include <de/animation.h>
 #include <de/asset.h>
@@ -586,4 +585,3 @@ private:
 
 //LIBGUI_PUBLIC uint qHash(const de::ModelDrawable::Pass &pass);
 
-#endif // LIBGUI_MODELDRAWABLE_H

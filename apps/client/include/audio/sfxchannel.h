@@ -19,8 +19,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_AUDIO_SFXCHANNEL_H
-#define CLIENT_AUDIO_SFXCHANNEL_H
+#pragma once
 
 #ifndef __cplusplus
 #  error "sfxchannel.h requires C++"
@@ -182,4 +181,3 @@ extern byte refMonitor;
  */
 void Sfx_ChannelDrawer();
 
-#endif  // CLIENT_AUDIO_SFXCHANNEL_H

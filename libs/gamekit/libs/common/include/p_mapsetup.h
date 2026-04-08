@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_PLAYSIM_MAPSETUP_H
-#define LIBCOMMON_PLAYSIM_MAPSETUP_H
+#pragma once
 
 #include <de/legacy/types.h>
 #include <doomsday/uri.h>
@@ -89,4 +88,3 @@ const struct xsector_s *P_ToXSector_const(const world_Sector *sector);
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_PLAYSIM_MAPSETUP_H */

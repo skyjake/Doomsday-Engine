@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_POPUPWIDGET_H
-#define LIBAPPFW_POPUPWIDGET_H
+#pragma once
 
 #include "de/panelwidget.h"
 #include "de/buttonwidget.h"
@@ -139,4 +138,3 @@ PopupWidget *makePopup() { return new ClassName; }
 
 } // namespace de
 
-#endif // LIBAPPFW_POPUPWIDGET_H

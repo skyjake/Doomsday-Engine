@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_METADATABANK_H
-#define LIBCORE_METADATABANK_H
+#pragma once
 
 #include "de/bank.h"
 
@@ -68,4 +67,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_METADATABANK_H

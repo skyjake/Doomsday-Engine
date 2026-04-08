@@ -28,8 +28,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_MEMORY_ZONE_PRIVATE_H
-#define DE_MEMORY_ZONE_PRIVATE_H
+#pragma once
 
 #include <de/liblegacy.h>
 #include <de/legacy/memoryzone.h> // public API
@@ -130,4 +129,3 @@ struct memzone_private_s {
 } // extern "C"
 #endif
 
-#endif /* DE_MEMORY_ZONE_PRIVATE_H */

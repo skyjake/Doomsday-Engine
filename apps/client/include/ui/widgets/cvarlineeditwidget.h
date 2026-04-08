@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_CVARLINEEDITWIDGET_H
-#define DE_CLIENT_CVARLINEEDITWIDGET_H
+#pragma once
 
 #include <de/lineeditwidget.h>
 #include "icvarwidget.h"
@@ -44,4 +43,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_CVARLINEEDITWIDGET_H

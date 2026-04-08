@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_XG_H
-#define LIBDOOMSDAY_WORLD_XG_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include "xgclass.h"
@@ -34,4 +33,3 @@ LIBDOOMSDAY_PUBLIC xgclass_t *XG_Class(int number);
 } // extern "C"
 #endif
 
-#endif // LIBDOOMSDAY_WORLD_XG_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_GRIDLAYOUT_H
-#define LIBAPPFW_GRIDLAYOUT_H
+#pragma once
 
 #include "ui/defs.h"
 #include "de/guiwidget.h"
@@ -143,4 +142,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_GRIDLAYOUT_H

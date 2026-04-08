@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_FX_BLOOM_H
-#define DE_CLIENT_FX_BLOOM_H
+#pragma once
 
 #include "render/consoleeffect.h"
 
@@ -47,4 +46,3 @@ private:
 
 } // namespace fx
 
-#endif // DE_CLIENT_FX_BLOOM_H

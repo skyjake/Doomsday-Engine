@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_RESOURCE_CLIENTMATERIAL_H
-#define DE_RESOURCE_CLIENTMATERIAL_H
+#pragma once
 
 #include <doomsday/world/material.h>
 #include "resource/materialvariantspec.h"
@@ -248,4 +247,3 @@ private:
 
 typedef ClientMaterial::Decoration MaterialDecoration;
 
-#endif  // DE_RESOURCE_CLIENTMATERIAL_H

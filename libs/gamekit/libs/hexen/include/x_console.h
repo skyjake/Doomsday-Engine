@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_CONSOLE_H
-#define LIBHEXEN_CONSOLE_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -38,4 +37,3 @@ void G_ConsoleRegistration(void);
 } // extern "C"
 #endif
 
-#endif // LIBHEXEN_CONSOLE_H

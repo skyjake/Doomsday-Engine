@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_STATEMENT_H
-#define LIBCORE_STATEMENT_H
+#pragma once
 
 #include "de/iserializable.h"
 
@@ -89,4 +88,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_STATEMENT_H */

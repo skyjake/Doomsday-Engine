@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_TEST_APP_H
-#define GLOOM_TEST_APP_H
+#pragma once
 
 #include <de/baseguiapp.h>
 #include <de/imagebank.h>
@@ -43,4 +42,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // GLOOM_TEST_APP_H

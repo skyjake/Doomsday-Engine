@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBLEGACY_H
-#define LIBLEGACY_H
+#pragma once
 
 /**
  * @defgroup legacy Legacy Support
@@ -184,4 +183,3 @@ DE_PUBLIC DE_NORETURN void Libdeng_BadAlloc(void);
 } // extern "C"
 #endif
 
-#endif // LIBLEGACY_H

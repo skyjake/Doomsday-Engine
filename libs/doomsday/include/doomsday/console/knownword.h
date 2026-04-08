@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_CONSOLE_KNOWNWORD_H
-#define LIBDOOMSDAY_CONSOLE_KNOWNWORD_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include "../game.h"
@@ -113,4 +112,3 @@ LIBDOOMSDAY_PUBLIC de::Lexicon Con_Lexicon();
 LIBDOOMSDAY_PUBLIC void Con_TermsRegex(de::StringList &terms, const de::String &pattern,
                                        knownwordtype_t wordType);
 
-#endif // LIBDOOMSDAY_CONSOLE_KNOWNWORD_H

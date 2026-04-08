@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_CONSOLE_VAR_H
-#define LIBDOOMSDAY_CONSOLE_VAR_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include <de/legacy/types.h>
@@ -204,4 +203,3 @@ LIBDOOMSDAY_PUBLIC de::String Con_VarAsStyledText(cvar_t *var, const char *prefi
 
 #endif // __cplusplus
 
-#endif // LIBDOOMSDAY_CONSOLE_VAR_H

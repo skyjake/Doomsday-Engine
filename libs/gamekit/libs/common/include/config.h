@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCOMMON_CONFIG_H
-#define LIBCOMMON_CONFIG_H
+#pragma once
 
 #include <de/legacy/types.h>
 
@@ -183,4 +182,3 @@ typedef struct libcommon_config_s {
 
 } libcommon_config_t;
 
-#endif // LIBCOMMON_CONFIG_H

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTSYSTEM_BINDING_H
-#define CLIENT_INPUTSYSTEM_BINDING_H
+#pragma once
 
 #include <de/error.h>
 #include <de/compiledrecord.h>
@@ -137,4 +136,3 @@ public:
     static void resetIdentifiers();
 };
 
-#endif // CLIENT_INPUTSYSTEM_BINDING_H

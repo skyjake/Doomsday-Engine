@@ -21,8 +21,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_PLAY_SOUND_H
-#define LIBCOMMON_PLAY_SOUND_H
+#pragma once
 
 #include "doomsday.h"
 #ifdef __cplusplus
@@ -77,4 +76,3 @@ void SndInfoParser(const Str *path);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_PLAY_SOUND_H

@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_PLAYSIM_USER_H
-#define LIBCOMMON_PLAYSIM_USER_H
+#pragma once
 
 #include "dd_types.h"
 
@@ -87,4 +86,3 @@ dd_bool         P_UndoPlayerMorph(player_t *player);
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_PLAYSIM_USER_H */

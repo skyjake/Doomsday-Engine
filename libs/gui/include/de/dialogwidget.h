@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_DIALOGWIDGET_H
-#define LIBAPPFW_DIALOGWIDGET_H
+#pragma once
 
 #include "popupwidget.h"
 #include "scrollareawidget.h"
@@ -282,4 +281,3 @@ typedef DialogWidget::ButtonItem DialogButtonItem;
 
 } // namespace de
 
-#endif // LIBAPPFW_DIALOGWIDGET_H

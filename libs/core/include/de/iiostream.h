@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_IIOSTREAM_H
-#define LIBCORE_IIOSTREAM_H
+#pragma once
 
 #include "de/iistream.h"
 #include "de/iostream.h"
@@ -39,4 +38,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_IIOSTREAM_H

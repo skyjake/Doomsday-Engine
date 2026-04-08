@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_CMDLINE_H__
-#define __AMETHYST_CMDLINE_H__
+#pragma once
 
 #include "string.h"
 #include <QList>
@@ -35,4 +34,3 @@ private:
     QList<String> _args;
 };
 
-#endif

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ANIMATIONVECTOR_H
-#define LIBCORE_ANIMATIONVECTOR_H
+#pragma once
 
 #include "de/animation.h"
 #include "de/vector.h"
@@ -137,4 +136,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_ANIMATIONVECTOR_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef CLIENT_COMMANDACTION_H
-#define CLIENT_COMMANDACTION_H
+#pragma once
 
 #include "dd_share.h"
 #include <de/action.h>
@@ -42,4 +41,3 @@ private:
     int _source;
 };
 
-#endif // CLIENT_COMMANDACTION_H

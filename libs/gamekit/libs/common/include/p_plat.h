@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_THINKER_PLAT_H
-#define LIBCOMMON_THINKER_PLAT_H
+#pragma once
 
 #include "doomsday.h"
 #ifdef __cplusplus
@@ -126,4 +125,3 @@ int P_PlatDeactivate(short tag);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_THINKER_PLAT_H

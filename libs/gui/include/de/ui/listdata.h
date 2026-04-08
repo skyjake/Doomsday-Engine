@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_UI_LISTDATA_H
-#define LIBAPPFW_UI_LISTDATA_H
+#pragma once
 
 #include "de/ui/data.h"
 #include "de/ui/item.h"
@@ -88,4 +87,3 @@ public:
 } // namespace ui
 } // namespace de
 
-#endif // LIBAPPFW_UI_LISTDATA_H

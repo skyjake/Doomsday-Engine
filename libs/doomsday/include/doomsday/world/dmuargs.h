@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_DMUARGS_H
-#define LIBDOOMSDAY_WORLD_DMUARGS_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include "valuetype.h"
@@ -68,4 +67,3 @@ public: /// @todo make private
 
 } // namespace world
 
-#endif // LIBDOOMSDAY_WORLD_DMUARGS_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_WORLD_CLIENTMOBJTHINKERDATA_H
-#define DE_WORLD_CLIENTMOBJTHINKERDATA_H
+#pragma once
 
 #include <doomsday/world/mobjthinkerdata.h>
 #include <de/legacy/timer.h>
@@ -118,4 +117,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_WORLD_CLIENTMOBJTHINKERDATA_H

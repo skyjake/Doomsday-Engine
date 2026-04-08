@@ -24,7 +24,7 @@
 #include <de/nativepath.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
-#include "../src/text/stb_truetype.h"
+#include <stb/stb_truetype.h>
 
 namespace de {
 
@@ -300,7 +300,7 @@ DE_PIMPL(StbTtNativeFont)
             }
 
             xPos += fontScale * advance;
-            
+
             previousUcp = ucp;
         }
         if (advanceWidth)

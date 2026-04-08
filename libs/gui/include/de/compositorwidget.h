@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_COMPOSITORWIDGET_H
-#define LIBAPPFW_COMPOSITORWIDGET_H
+#pragma once
 
 #include "de/guiwidget.h"
 
@@ -73,4 +72,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_COMPOSITORWIDGET_H

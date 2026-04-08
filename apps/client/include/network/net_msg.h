@@ -21,8 +21,7 @@
  * net_msg.h: Network Messaging
  */
 
-#ifndef __DOOMSDAY_NETMESSAGE_H__
-#define __DOOMSDAY_NETMESSAGE_H__
+#pragma once
 
 #include <de/legacy/reader.h>
 #include <de/legacy/writer.h>
@@ -54,4 +53,3 @@ void Msg_EndRead(void);
 } // extern "C"
 #endif
 
-#endif

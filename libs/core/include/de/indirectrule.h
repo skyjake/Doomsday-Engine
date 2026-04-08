@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_INDIRECTRULE_H
-#define LIBCORE_INDIRECTRULE_H
+#pragma once
 
 #include "de/rule.h"
 
@@ -61,4 +60,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_INDIRECTRULE_H

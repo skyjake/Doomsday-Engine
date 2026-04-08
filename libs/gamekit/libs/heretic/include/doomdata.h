@@ -27,8 +27,7 @@
  * doomdata.h: Thing and line attributes
  */
 
-#ifndef __DOOMDATA_H__
-#define __DOOMDATA_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -78,4 +77,3 @@ enum {
 #define SPAC_USE            1 // when player uses line
 #define SPAC_IMPACT         3 // when projectile hits line
 
-#endif

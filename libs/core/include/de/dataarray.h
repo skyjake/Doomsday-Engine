@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_DATAARRAY_H
-#define LIBCORE_DATAARRAY_H
+#pragma once
 
 #include "de/block.h"
 
@@ -58,4 +57,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_DATAARRAY_H

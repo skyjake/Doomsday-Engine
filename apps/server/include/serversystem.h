@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SERVERSYSTEM_H
-#define SERVERSYSTEM_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/system.h>
@@ -125,4 +124,3 @@ extern char    *serverName, *serverInfo;
 extern char *   nptIPAddress; // cvar
 extern int      nptIPPort;    // cvar
 
-#endif // SERVERSYSTEM_H

@@ -23,8 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBHERETIC_DEFS_H
-#define LIBHERETIC_DEFS_H
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -277,4 +276,3 @@ void       *G_GetVariable(int id);
 DE_EXTERN_C int localQuakeHappening[MAXPLAYERS];
 DE_EXTERN_C int localQuakeTimeout[MAXPLAYERS];
 
-#endif /* LIBHERETIC_DEFS_H */

@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_COMMAND_RULE_H__
-#define __AMETHYST_COMMAND_RULE_H__
+#pragma once
 
 #include "gemclass.h"
 #include "linkable.h"
@@ -68,4 +67,3 @@ protected:
     String          _argTypes;
 };
 
-#endif

@@ -25,8 +25,7 @@
  * http://oss.sgi.com/projects/ogl-sample/
  */
 
-#ifndef DE_SYSTEM_OPENGL_H
-#define DE_SYSTEM_OPENGL_H
+#pragma once
 
 #ifdef __SERVER__
 #  define GL_CLAMP_TO_EDGE    0
@@ -148,4 +147,3 @@ de::String Sys_GLDescription();
 
 #endif
 
-#endif /* DE_SYSTEM_OPENGL_H */

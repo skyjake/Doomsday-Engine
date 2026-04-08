@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_RENDER_VECTORLIGHTLIST_H
-#define DE_CLIENT_RENDER_VECTORLIGHTLIST_H
+#pragma once
 
 #include "render/vectorlightdata.h"
 
@@ -44,6 +43,4 @@ private:
 
     static Node *newNode();
 };
-
-#endif // DE_CLIENT_RENDER_VECTORLIGHTLIST_H
 

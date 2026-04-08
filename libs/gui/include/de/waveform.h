@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_WAVEFORM_H
-#define LIBGUI_WAVEFORM_H
+#pragma once
 
 #include "libgui.h"
 #include <de/time.h>
@@ -104,4 +103,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_WAVEFORM_H

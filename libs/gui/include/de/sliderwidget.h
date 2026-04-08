@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_SLIDERWIDGET_H
-#define LIBAPPFW_SLIDERWIDGET_H
+#pragma once
 
 #include "de/guiwidget.h"
 
@@ -83,4 +82,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_SLIDERWIDGET_H

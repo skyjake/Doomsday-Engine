@@ -26,8 +26,7 @@
  * Common code for game controls
  */
 
-#ifndef LIBCOMMON_CONTROLS_H
-#define LIBCOMMON_CONTROLS_H
+#pragma once
 
 #include <api_player.h>
 
@@ -169,4 +168,3 @@ void        P_PlayerThinkHeadTurning(int pnum, timespan_t ticLength);
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_CONTROLS_H */

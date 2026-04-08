@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_WIDGET
-#define LIBCOMMON_UI_WIDGET
+#pragma once
 
 #include "doomsday.h"
 
@@ -245,4 +244,3 @@ private:
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_WIDGET

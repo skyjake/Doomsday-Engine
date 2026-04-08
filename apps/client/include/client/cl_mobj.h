@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_WORLD_MOBJ_H
-#define DE_CLIENT_WORLD_MOBJ_H
+#pragma once
 
 #include "world/p_object.h"
 #include "world/clientmobjthinkerdata.h"
@@ -84,4 +83,3 @@ void ClMobj_ReadNullDelta();
  */
 dd_bool Cl_IsClientMobj(const mobj_t *mo);
 
-#endif // DE_CLIENT_WORLD_MOBJ_H

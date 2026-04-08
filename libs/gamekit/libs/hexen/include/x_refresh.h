@@ -21,8 +21,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef JHEXEN_REFRESH_H
-#define JHEXEN_REFRESH_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -50,4 +49,3 @@ void R_UpdateViewFilter(int player);
 } // extern "C"
 #endif
 
-#endif /* JHEXEN_REFRESH_H */

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SERVER_REMOTEFEEDUSER_H
-#define SERVER_REMOTEFEEDUSER_H
+#pragma once
 
 #include "users.h"
 #include <de/socket.h>
@@ -38,5 +37,3 @@ private:
     DE_PRIVATE(d)
 };
 
-
-#endif // SERVER_REMOTEFEEDUSER_H

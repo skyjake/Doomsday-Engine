@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_ATLASTEXTURE_H
-#define LIBGUI_ATLASTEXTURE_H
+#pragma once
 
 #include "de/gltexture.h"
 #include "de/atlas.h"
@@ -71,4 +70,3 @@ protected:
 
 } // namespace de
 
-#endif // LIBGUI_ATLASTEXTURE_H

@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_GL_TEXTURECONTENT_H
-#define DE_CLIENT_GL_TEXTURECONTENT_H
+#pragma once
 
 #include "api_gl.h"
 #include "gl/gl_defer.h"
@@ -96,4 +95,3 @@ void GL_PrepareTextureContent(texturecontent_t &c,
 void GL_UploadTextureContent(const texturecontent_t &content,
                              de::gfx::UploadMethod method = de::gfx::Deferred);
 
-#endif // DE_CLIENT_GL_TEXTURECONTENT_H

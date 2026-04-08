@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_KEYSWIDGET_H
-#define LIBCOMMON_UI_KEYSWIDGET_H
+#pragma once
 
 #include "common.h"
 #include "hud/hudwidget.h"
@@ -46,4 +45,3 @@ private:
     bool _keyBoxes[NUM_KEY_TYPES];
 };
 
-#endif  // LIBCOMMON_UI_KEYSWIDGET_H

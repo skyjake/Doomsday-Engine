@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_IBLOCK_H
-#define LIBCORE_IBLOCK_H
+#pragma once
 
 #include "de/ibytearray.h"
 
@@ -65,4 +64,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_IBLOCK_H

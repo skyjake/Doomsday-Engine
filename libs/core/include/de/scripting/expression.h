@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_EXPRESSION_H
-#define LIBCORE_EXPRESSION_H
+#pragma once
 
 #include "de/iserializable.h"
 
@@ -145,4 +144,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_EXPRESSION_H */

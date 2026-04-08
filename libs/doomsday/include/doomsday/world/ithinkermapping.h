@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_ITHINKERMAPPING_H
-#define LIBDOOMSDAY_WORLD_ITHINKERMAPPING_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include "thinker.h"
@@ -44,4 +43,3 @@ public:
 
 } // namespace world
 
-#endif // LIBDOOMSDAY_WORLD_ITHINKERMAPPING_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_VARIABLELINEEDITWIDGET_H
-#define LIBAPPFW_VARIABLELINEEDITWIDGET_H
+#pragma once
 
 #include <de/variable.h>
 
@@ -52,4 +51,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_VARIABLELINEEDITWIDGET_H

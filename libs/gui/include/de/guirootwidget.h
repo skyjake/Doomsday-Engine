@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_GUIROOTWIDGET_H
-#define LIBAPPFW_GUIROOTWIDGET_H
+#pragma once
 
 #include <de/rootwidget.h>
 #include <de/matrix.h>
@@ -158,4 +157,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_GUIROOTWIDGET_H

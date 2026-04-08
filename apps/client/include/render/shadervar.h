@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_RENDER_SHADERVAR_H
-#define DE_CLIENT_RENDER_SHADERVAR_H
+#pragma once
 
 #include <de/animationvalue.h>
 #include <de/gluniform.h>
@@ -82,4 +81,3 @@ public:
     void addBinding(de::Record &names, const de::String &varName, de::AnimationValue *anim);
 };
 
-#endif // DE_CLIENT_RENDER_SHADERVAR_H

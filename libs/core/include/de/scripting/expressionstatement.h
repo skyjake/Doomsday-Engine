@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_EXPRESSIONSTATEMENT_H
-#define LIBCORE_EXPRESSIONSTATEMENT_H
+#pragma once
 
 #include "statement.h"
 
@@ -56,4 +55,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_EXPRESSIONSTATEMENT_H */

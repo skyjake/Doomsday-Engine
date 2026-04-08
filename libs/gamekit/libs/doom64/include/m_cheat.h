@@ -21,11 +21,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef M_CHEAT_H
-#define M_CHEAT_H
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
-#endif /* M_CHEAT_H */

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_DEDREGISTER_H
-#define LIBDOOMSDAY_DEDREGISTER_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include <de/dictionaryvalue.h>
@@ -118,4 +117,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBDOOMSDAY_DEDREGISTER_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_STRINGLIST_H
-#define LIBCORE_STRINGLIST_H
+#pragma once
 
 #include "de/string.h"
 
@@ -59,4 +58,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_STRINGLIST_H

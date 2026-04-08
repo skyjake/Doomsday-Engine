@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ANIMATION_H
-#define LIBCORE_ANIMATION_H
+#pragma once
 
 #include "de/string.h"
 #include "de/time.h"
@@ -191,4 +190,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_ANIMATION_H

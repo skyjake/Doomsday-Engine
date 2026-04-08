@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_RECTANGLERULE_H
-#define LIBCORE_RECTANGLERULE_H
+#pragma once
 
 #include "de/animationvector.h"
 #include "de/isizerule.h"
@@ -167,4 +166,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_RECTANGLERULE_H

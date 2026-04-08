@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_IOBJECT_H
-#define LIBCORE_IOBJECT_H
+#pragma once
 
 #include "de/record.h"
 
@@ -79,6 +78,4 @@ public:
 };
 
 } // namespace de
-
-#endif // LIBCORE_IOBJECT_H
 

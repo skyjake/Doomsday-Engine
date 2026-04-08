@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_UI_BUTTONINPUTCONTROL_H
-#define CLIENT_UI_BUTTONINPUTCONTROL_H
+#pragma once
 
 #include <de/string.h>
 #include "inputdevice.h"
@@ -58,4 +57,3 @@ private:
     de::duint _time = 0;
 };
 
-#endif // CLIENT_UI_BUTTONINPUTCONTROL_H

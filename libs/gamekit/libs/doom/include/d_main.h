@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBJDOOM_MAIN_H
-#define LIBJDOOM_MAIN_H
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -70,4 +69,3 @@ void *D_GetVariable(int id);
 } // extern "C"
 #endif
 
-#endif // LIBJDOOM_MAIN_H

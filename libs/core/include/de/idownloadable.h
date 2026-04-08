@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef IDOWNLOADABLE_H
-#define IDOWNLOADABLE_H
+#pragma once
 
 #include "de/asset.h"
 
@@ -47,4 +46,3 @@ public:
 
 } // namespace de
 
-#endif // IDOWNLOADABLE_H

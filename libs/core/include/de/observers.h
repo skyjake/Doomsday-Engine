@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_OBSERVERS_H
-#define LIBCORE_OBSERVERS_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/lockable.h"
@@ -550,4 +549,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_OBSERVERS_H */

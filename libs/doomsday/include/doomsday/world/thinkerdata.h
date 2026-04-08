@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
   */
 
-#ifndef LIBDOOMSDAY_THINKERDATA_H
-#define LIBDOOMSDAY_THINKERDATA_H
+#pragma once
 
 #include "thinker.h"
 
@@ -123,4 +122,3 @@ DE_SCRIPT_ARGUMENT_TYPE(const ThinkerData *,
     return scriptArgumentAsText(arg->objectNamespace());
 )
 
-#endif // LIBDOOMSDAY_THINKERDATA_H

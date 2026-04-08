@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_VARIABLESLIDERWIDGET_H
-#define LIBAPPFW_VARIABLESLIDERWIDGET_H
+#pragma once
 
 #include <de/variable.h>
 
@@ -59,4 +58,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_VARIABLESLIDERWIDGET_H

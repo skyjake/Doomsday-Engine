@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_SYSTEM_H
-#define LIBCORE_SYSTEM_H
+#pragma once
 
 #include "de/clock.h"
 #include "de/event.h"
@@ -72,4 +71,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_SYSTEM_H

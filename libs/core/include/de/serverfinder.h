@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_SERVERFINDER_H
-#define LIBSHELL_SERVERFINDER_H
+#pragma once
 
 #include "de/serverinfo.h"
 #include "de/address.h"
@@ -65,4 +64,3 @@ private:
 
 } // namespace de
 
-#endif // LIBSHELL_SERVERFINDER_H

@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_MENU_CONTROLS
-#define LIBCOMMON_MENU_CONTROLS
+#pragma once
 #ifdef __cplusplus
 
 #include "hu_lib.h"
@@ -51,4 +50,4 @@ void Hu_MenuControlGrabDrawer(const char *niceName, float alpha);
 } // namespace common
 
 #endif // __cplusplus
-#endif // LIBCOMMON_MENU_CONTROLS
+

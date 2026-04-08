@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_SCROLLAREAWIDGET_H
-#define LIBAPPFW_SCROLLAREAWIDGET_H
+#pragma once
 
 #include "de/guiwidget.h"
 
@@ -187,4 +186,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_SCROLLAREAWIDGET_H

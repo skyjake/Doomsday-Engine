@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_VALUETYPE_H
-#define LIBDOOMSDAY_WORLD_VALUETYPE_H
+#pragma once
 
 /// Value types.
 typedef enum {
@@ -37,6 +36,4 @@ typedef enum {
     DDVT_PTR,
     DDVT_BLENDMODE
 } valuetype_t;
-
-#endif // LIBDOOMSDAY_WORLD_VALUETYPE_H
 

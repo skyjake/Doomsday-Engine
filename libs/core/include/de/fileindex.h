@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_FILEINDEX_H
-#define LIBCORE_FILEINDEX_H
+#pragma once
 
 #include "de/file.h"
 
@@ -154,4 +153,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_FILEINDEX_H

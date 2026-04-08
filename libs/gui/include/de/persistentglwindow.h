@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_PERSISTENTGLWINDOW_H
-#define LIBGUI_PERSISTENTGLWINDOW_H
+#pragma once
 
 #if !defined (DE_MOBILE)
 
@@ -181,4 +180,3 @@ private:
 
 #endif
 
-#endif // LIBGUI_PERSISTENTGLWINDOW_H

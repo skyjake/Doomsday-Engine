@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __DOOMSDAY_BASELOOP_H__
-#define __DOOMSDAY_BASELOOP_H__
+#pragma once
 
 #include "dd_types.h"
 
@@ -99,4 +98,3 @@ int DD_GameLoopExitCode(void);
 } // extern "C"
 #endif
 
-#endif

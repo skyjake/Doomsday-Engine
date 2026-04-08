@@ -26,8 +26,7 @@
  * p_setup.h: Map setup routines
  */
 
-#ifndef __P_SETUP_H__
-#define __P_SETUP_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -63,4 +62,3 @@ int             P_HandleMapObjectStatusReport(int code, uint id, int dtype, void
 } // extern "C"
 #endif
 
-#endif

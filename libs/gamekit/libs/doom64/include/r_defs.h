@@ -27,8 +27,7 @@
  * r_defs.h: shared data struct definitions.
  */
 
-#ifndef __R_DEFS__
-#define __R_DEFS__
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -127,4 +126,3 @@ DE_EXTERN_C xline_t* xlines;
 // If true we are in the process of setting up a map.
 DE_EXTERN_C dd_bool mapSetup;
 
-#endif

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_NATIVEPATH_H
-#define LIBCORE_NATIVEPATH_H
+#pragma once
 
 #include "de/path.h"
 
@@ -212,4 +211,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_NATIVEPATH_H

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_WAITABLEFIFO_H
-#define LIBCORE_WAITABLEFIFO_H
+#pragma once
 
 #include "de/fifo.h"
 #include "de/waitable.h"
@@ -57,4 +56,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_WAITABLEFIFO_H

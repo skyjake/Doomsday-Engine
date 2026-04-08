@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DOOMSDAY_API_BUSY_H
-#define DOOMSDAY_API_BUSY_H
+#pragma once
 
 #include "api_base.h"
 
@@ -40,4 +39,3 @@ DE_API_T(Busy);
 DE_USING_API(Busy);
 #endif
 
-#endif /* DOOMSDAY_API_BUSY_H */

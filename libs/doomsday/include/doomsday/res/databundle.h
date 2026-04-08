@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_DATABUNDLE_H
-#define LIBDOOMSDAY_DATABUNDLE_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include "lumpdirectory.h"
@@ -202,4 +201,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBDOOMSDAY_DATABUNDLE_H

@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_UI_DEFS_H
-#define LIBAPPFW_UI_DEFS_H
+#pragma once
 
 #include "../libgui.h"
 #include <de/vector.h>
@@ -131,4 +130,3 @@ enum SizePolicy {
 
 }} // namespace de::ui
 
-#endif // LIBAPPFW_UI_DEFS_H

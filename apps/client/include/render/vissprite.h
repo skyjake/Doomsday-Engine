@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_RENDER_VISSPRITE_H
-#define DE_CLIENT_RENDER_VISSPRITE_H
+#pragma once
 
 #include <de/vector.h>
 #include <de/glstate.h>
@@ -209,4 +208,3 @@ vissprite_t *R_NewVisSprite(visspritetype_t type);
 
 void R_SortVisSprites();
 
-#endif  // DE_CLIENT_RENDER_VISSPRITE_H

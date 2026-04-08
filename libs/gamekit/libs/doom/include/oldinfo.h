@@ -29,8 +29,7 @@
  * This one is the original DOOM version, preserved.
  */
 
-#ifndef __INFO__
-#define __INFO__
+#pragma once
 
 typedef enum {
     SPR_TROO,
@@ -1328,4 +1327,3 @@ typedef struct {
 } mobjinfo_t;
 */
 
-#endif

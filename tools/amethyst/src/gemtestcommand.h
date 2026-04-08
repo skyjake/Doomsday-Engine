@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_GEM_TEST_COMMAND_H__
-#define __AMETHYST_GEM_TEST_COMMAND_H__
+#pragma once
 
 #include "string.h"
 #include "linkable.h"
@@ -58,4 +57,3 @@ private:
     bool _escalate;
 };
 
-#endif

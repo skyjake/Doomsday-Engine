@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_GLTEXTUREUNIT_H
-#define DE_CLIENT_GLTEXTUREUNIT_H
+#pragma once
 
 #include "resource/clienttexture.h"
 #include <de/gltexture.h>
@@ -159,4 +158,3 @@ public:
 
 } // namespace de
 
-#endif // DE_CLIENT_GLTEXTUREUNIT_H

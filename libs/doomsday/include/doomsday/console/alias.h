@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_CONSOLE_ALIAS_H
-#define LIBDOOMSDAY_CONSOLE_ALIAS_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include <de/string.h>
@@ -45,4 +44,3 @@ LIBDOOMSDAY_PUBLIC void Con_DeleteAlias(calias_t *cal);
 
 LIBDOOMSDAY_PUBLIC de::String Con_AliasAsStyledText(calias_t *alias);
 
-#endif // LIBDOOMSDAY_CONSOLE_ALIAS_H

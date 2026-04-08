@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_HUD_MESSAGE_H
-#define LIBCOMMON_HUD_MESSAGE_H
+#pragma once
 
 #include "common.h"
 
@@ -86,4 +85,3 @@ void Hu_MsgStart(msgtype_t type, const char *msg, msgfunc_t callback, int userVa
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_HUD_MESSAGE_H

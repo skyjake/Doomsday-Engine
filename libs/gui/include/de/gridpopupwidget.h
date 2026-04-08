@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_GRIDPOPUPWIDGET_H
-#define LIBAPPFW_GRIDPOPUPWIDGET_H
+#pragma once
 
 #include "de/popupwidget.h"
 #include "de/labelwidget.h"
@@ -89,4 +88,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_GRIDPOPUPWIDGET_H

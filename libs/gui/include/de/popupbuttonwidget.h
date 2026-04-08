@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_POPUPBUTTONWIDGET_H
-#define LIBAPPFW_POPUPBUTTONWIDGET_H
+#pragma once
 
 #include "de/buttonwidget.h"
 #include "de/popupwidget.h"
@@ -96,6 +95,4 @@ private:
 };
 
 } // namespace de
-
-#endif // LIBAPPFW_POPUPBUTTONWIDGET_H
 

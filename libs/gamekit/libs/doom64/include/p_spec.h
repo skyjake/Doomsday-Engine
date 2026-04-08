@@ -34,8 +34,7 @@
  * lines, or by timed thinkers.
  */
 
-#ifndef __P_SPEC__
-#define __P_SPEC__
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -93,4 +92,3 @@ dd_bool P_UseSpecialLine2(mobj_t *mo, Line *line, int side);
 } // extern "C"
 #endif
 
-#endif

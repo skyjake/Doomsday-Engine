@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_WORLD_EDITMAP_H
-#define DE_WORLD_EDITMAP_H
+#pragma once
 
 #include <doomsday/world/map.h>
 
@@ -36,4 +35,3 @@ world::Map *MPE_Map();
  */
 world::Map *MPE_TakeMap();
 
-#endif  // DE_WORLD_EDITMAP_H

@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DOOMSDAY_API_INTERNALDATA_H
-#define DOOMSDAY_API_INTERNALDATA_H
+#pragma once
 
 #include "apis.h"
 #include "dd_share.h"
@@ -48,4 +47,3 @@ DE_API_T(InternalData);
 DE_USING_API(InternalData);
 #endif
 
-#endif  // DOOMSDAY_API_INTERNALDATA_H

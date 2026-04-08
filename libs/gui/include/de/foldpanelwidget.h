@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_FOLDPANELWIDGET_H
-#define LIBAPPFW_FOLDPANELWIDGET_H
+#pragma once
 
 #include "de/panelwidget.h"
 #include "de/buttonwidget.h"
@@ -78,4 +77,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_FOLDPANELWIDGET_H

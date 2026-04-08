@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_COMMON_DEFS_H__
-#define __AMETHYST_COMMON_DEFS_H__
+#pragma once
 
 #define VERSION_STR     "1.1.2"
 #define BUILD_STR       "Version " VERSION_STR " (" __DATE__ ")"
@@ -24,4 +23,3 @@
 
 #define IS_BREAK(c)     ((c)=='@' || (c)=='{' || (c)=='}' || (c)=='$')
 
-#endif

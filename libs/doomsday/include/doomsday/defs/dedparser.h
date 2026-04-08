@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_DED_V1_PARSER_H
-#define LIBDOOMSDAY_DED_V1_PARSER_H
+#pragma once
 
 #include <de/libcore.h>
 #include "../libdoomsday.h"
@@ -43,4 +42,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBDOOMSDAY_DED_V1_PARSER_H

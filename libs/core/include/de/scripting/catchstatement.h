@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_CATCHSTATEMENT_H
-#define LIBCORE_CATCHSTATEMENT_H
+#pragma once
 
 #include "statement.h"
 #include "arrayexpression.h"
@@ -82,4 +81,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_CATCHSTATEMENT_H */

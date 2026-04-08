@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_OCULUSRIFT_H
-#define LIBAPPFW_OCULUSRIFT_H
+#pragma once
 
 #include "libgui.h"
 #include <de/vector.h>
@@ -158,4 +157,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_OCULUSRIFT_H

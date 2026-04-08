@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_CVARCHOICEWIDGET_H
-#define DE_CLIENT_CVARCHOICEWIDGET_H
+#pragma once
 
 #include <de/choicewidget.h>
 #include "icvarwidget.h"
@@ -42,4 +41,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_CVARCHOICEWIDGET_H

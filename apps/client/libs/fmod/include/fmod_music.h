@@ -39,8 +39,7 @@
  * exception.) </small>
  */
 
-#ifndef __DSFMOD_MUS_H__
-#define __DSFMOD_MUS_H__
+#pragma once
 
 #include <fmod.h>
 #include <fmod.hpp>
@@ -66,4 +65,3 @@ void    fmod_Music_Set(int prop, float value);
 int     fmod_Music_Get(int prop, void* ptr);
 void    fmod_Music_SetSoundFont(const char* fileName);
 
-#endif /* end of include guard: __DSFMOD_MUS_H__ */

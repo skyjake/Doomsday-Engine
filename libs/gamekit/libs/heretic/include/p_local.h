@@ -27,8 +27,7 @@
  * p_local.h:
  */
 
-#ifndef __P_LOCAL_H__
-#define __P_LOCAL_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -133,4 +132,3 @@ void            Draw_EndZoom(void);
 } // extern "C"
 #endif
 
-#endif

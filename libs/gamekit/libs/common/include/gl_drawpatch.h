@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_GRAPHICS_DRAW_PATCH_H
-#define LIBCOMMON_GRAPHICS_DRAW_PATCH_H
+#pragma once
 #ifdef __cplusplus
 
 #include <de/vector.h>
@@ -44,4 +43,4 @@ void GL_DrawPatch(patchid_t id, const de::Vec2i &origin = de::Vec2i(),
                   int alignFlags = ALIGN_TOPLEFT, int patchFlags = 0);
 
 #endif  // __cplusplus
-#endif  // LIBCOMMON_GRAPHICS_DRAW_PATCH_H
+

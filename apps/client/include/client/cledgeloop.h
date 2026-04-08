@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_WORLD_CLEDGELOOP_H
-#define DE_CLIENT_WORLD_CLEDGELOOP_H
+#pragma once
 
 #include <de/string.h>
 #include <doomsday/mesh/hedge.h>
@@ -58,4 +57,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_WORLD_CLEDGELOOP_H

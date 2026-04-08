@@ -21,8 +21,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_UI_JOYSTICK_H
-#define DE_CLIENT_UI_JOYSTICK_H
+#pragma once
 
 #ifdef __SERVER__
 #  error Joystick is not available in a SERVER build
@@ -59,4 +58,3 @@ void Joystick_GetState(joystate_t *state);
 
 de::String Joystick_Name();
 
-#endif // DE_CLIENT_UI_JOYSTICK_H

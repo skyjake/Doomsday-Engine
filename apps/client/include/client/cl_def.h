@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_H
-#define DE_CLIENT_H
+#pragma once
 
 #include <doomsday/net.h>
 #include "world/p_object.h"
@@ -52,4 +51,3 @@ int Cl_GameReady();
  */
 void Cl_SendHello();
 
-#endif // DE_CLIENT_H

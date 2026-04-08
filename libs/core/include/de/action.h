@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ACTION_H
-#define LIBCORE_ACTION_H
+#pragma once
 
 #include "observers.h"
 #include "counted.h"
@@ -61,4 +60,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_ACTION_H

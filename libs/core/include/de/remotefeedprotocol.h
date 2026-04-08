@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_REMOTEFEEDPROTOCOL_H
-#define LIBCORE_REMOTEFEEDPROTOCOL_H
+#pragma once
 
 #include "dictionaryvalue.h"
 #include "file.h"
@@ -133,4 +132,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_REMOTEFEEDPROTOCOL_H

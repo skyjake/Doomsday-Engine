@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef OPENCONNECTIONDIALOG_H
-#define OPENCONNECTIONDIALOG_H
+#pragma once
 
 #include <de/term/inputdialog.h>
 
@@ -39,4 +38,3 @@ protected:
     void finish(int result);
 };
 
-#endif // OPENCONNECTIONDIALOG_H

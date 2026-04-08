@@ -27,8 +27,7 @@
  * x_event.h:
  */
 
-#ifndef __X_EVENT_H__
-#define __X_EVENT_H__
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -91,4 +90,3 @@ typedef enum
 
 } buttoncode_t;
 
-#endif

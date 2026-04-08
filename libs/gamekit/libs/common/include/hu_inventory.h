@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_HUD_INVENTORY
-#define LIBCOMMON_HUD_INVENTORY
+#pragma once
 #if __JHERETIC__ || __JHEXEN__
 
 #ifdef __cplusplus
@@ -62,4 +61,4 @@ void Hu_InventoryRegister(void);
 #endif
 
 #endif // __JHERETIC__ || __JHEXEN__
-#endif // LIBCOMMON_HUD_INVENTORY
+

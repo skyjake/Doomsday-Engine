@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_MONOSPACELOGSINKFORMATTER_H
-#define LIBCORE_MONOSPACELOGSINKFORMATTER_H
+#pragma once
 
 #include "de/logsink.h"
 
@@ -54,4 +53,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_MONOSPACELOGSINKFORMATTER_H

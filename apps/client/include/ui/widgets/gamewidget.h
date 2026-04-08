@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_GAMEWIDGET_H
-#define CLIENT_GAMEWIDGET_H
+#pragma once
 
 #include <de/guiwidget.h>
 
@@ -54,4 +53,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // CLIENT_GAMEWIDGET_H

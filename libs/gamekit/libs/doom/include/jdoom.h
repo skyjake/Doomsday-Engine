@@ -28,8 +28,7 @@
  * A convenience header for including all jDoom headers.
  */
 
-#ifndef __JDOOM_CONVENIENCE_H__
-#define __JDOOM_CONVENIENCE_H__
+#pragma once
 
 #include "../../doom/include/acfnlink.h"
 #include "../../doom/include/d_api.h"
@@ -61,4 +60,3 @@
 #include "../../doom/include/st_stuff.h"
 #include "../../doom/include/tables.h"
 
-#endif // __JDOOM_CONVENIENCE_H__

@@ -20,8 +20,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCOMMON_NETWORK_DEF_H
-#define LIBCOMMON_NETWORK_DEF_H
+#pragma once
 
 #include "doomsday.h"
 #include <de/legacy/reader.h>
@@ -261,4 +260,3 @@ de::String D_NetDefaultEpisode();
 res::Uri D_NetDefaultMap();
 #endif
 
-#endif  // LIBCOMMON_NETWORK_DEF_H

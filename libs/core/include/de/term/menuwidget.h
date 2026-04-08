@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_MENUTEDGET_H
-#define LIBSHELL_MENUTEDGET_H
+#pragma once
 
 #include "widget.h"
 #include "action.h"
@@ -122,4 +121,3 @@ private:
 
 }} // namespace de::term
 
-#endif // LIBSHELL_MENUTEDGET_H

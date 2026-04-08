@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOMAPP_UTILS_H
-#define GLOOMAPP_UTILS_H
+#pragma once
 
 #include <QVector2D>
 #include <QString>
@@ -54,4 +53,3 @@ inline QString convertToQString(const de::String &str)
     return convert(str);
 }
 
-#endif // GLOOMAPP_UTILS_H

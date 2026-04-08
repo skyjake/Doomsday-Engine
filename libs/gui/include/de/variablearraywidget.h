@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_VARIABLEARRAYWIDGET_H
-#define LIBAPPFW_VARIABLEARRAYWIDGET_H
+#pragma once
 
 #include <de/variable.h>
 
@@ -79,6 +78,4 @@ private:
 };
 
 } // namespace de
-
-#endif // LIBAPPFW_VARIABLEARRAYWIDGET_H
 

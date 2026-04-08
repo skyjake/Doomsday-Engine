@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_STRUCT_COUNTER_H__
-#define __AMETHYST_STRUCT_COUNTER_H__
+#pragma once
 
 #include "string.h"
 
@@ -48,4 +47,3 @@ private:
     int _counts[NUM_COUNTS];
 };
 
-#endif

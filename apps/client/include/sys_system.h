@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CORE_SYSTEM_H
-#define DE_CORE_SYSTEM_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/nativepath.h>
@@ -55,4 +54,3 @@ void Sys_BlockUntilRealTime(de::duint realTimeMs);
 int Sys_CriticalMessage(const char *msg);
 int Sys_CriticalMessagef(const char *format, ...) PRINTF_F(1,2);
 
-#endif  // DE_CORE_SYSTEM_H

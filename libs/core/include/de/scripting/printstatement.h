@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_PRINTSTATEMENT_H
-#define LIBCORE_PRINTSTATEMENT_H
+#pragma once
 
 #include "statement.h"
 
@@ -56,4 +55,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_PRINTSTATEMENT_H */

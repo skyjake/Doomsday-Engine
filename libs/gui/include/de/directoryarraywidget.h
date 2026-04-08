@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_DIRECTORYARRAYWIDGET_H
-#define LIBAPPFW_DIRECTORYARRAYWIDGET_H
+#pragma once
 
 #include "de/variablearraywidget.h"
 
@@ -43,4 +42,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_DIRECTORYARRAYWIDGET_H

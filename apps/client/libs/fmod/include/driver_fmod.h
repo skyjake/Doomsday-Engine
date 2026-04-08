@@ -44,8 +44,7 @@
  * FMOD Ex audio plugin.
  */
 
-#ifndef __DSFMOD_DRIVER_H__
-#define __DSFMOD_DRIVER_H__
+#pragma once
 
 #include <fmod.h>
 #include <fmod_errors.h>
@@ -70,4 +69,3 @@ extern FMOD_SYSTEM *fmodSystem;
 
 DE_USING_API(Con);
 
-#endif /* end of include guard: __DSFMOD_DRIVER_H__ */

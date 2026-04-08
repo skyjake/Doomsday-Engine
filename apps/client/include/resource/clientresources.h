@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_RESOURCES_H
-#define DE_CLIENT_RESOURCES_H
+#pragma once
 
 #include <de/list.h>
 #include <de/keymap.h>
@@ -440,4 +439,3 @@ private:
 
 DE_EXTERN_C byte precacheMapMaterials, precacheSprites;
 
-#endif // DE_CLIENT_RESOURCES_H

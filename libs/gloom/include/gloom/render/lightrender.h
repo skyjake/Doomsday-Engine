@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_LIGHTRENDER_H
-#define GLOOM_LIGHTRENDER_H
+#pragma once
 
 #include "gloom/render/render.h"
 
@@ -64,4 +63,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_LIGHTRENDER_H

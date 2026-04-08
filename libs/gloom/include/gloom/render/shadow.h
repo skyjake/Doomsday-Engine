@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_RENDER_SHADOW_H
-#define GLOOM_RENDER_SHADOW_H
+#pragma once
 
 #include "gloom/render/light.h"
 
@@ -43,4 +42,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_RENDER_SHADOW_H

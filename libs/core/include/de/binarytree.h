@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_BINARYTREE_H
-#define LIBCORE_BINARYTREE_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/error.h"
@@ -547,4 +546,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_BINARYTREE_H

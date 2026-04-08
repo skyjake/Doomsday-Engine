@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_RECORDVALUE_H
-#define LIBCORE_RECORDVALUE_H
+#pragma once
 
 #include "de/value.h"
 #include "de/record.h"
@@ -136,4 +135,3 @@ public:
 
 } // namespace de
 
-#endif /* LIBCORE_RECORDVALUE_H */

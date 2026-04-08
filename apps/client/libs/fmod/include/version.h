@@ -39,8 +39,7 @@
  * exception.) </small>
  */
 
-#ifndef __DSFMOD_VERSION_H__
-#define __DSFMOD_VERSION_H__
+#pragma once
 
 #ifndef DSFMOD_VER_ID
 #  ifdef _DEBUG
@@ -61,4 +60,3 @@
 #define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" DSFMOD_VER_ID ")"
 #define PLUGIN_VERSION_NUMBER 1,0,2,0 // For WIN32 version info.
 
-#endif

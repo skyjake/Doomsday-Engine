@@ -26,8 +26,7 @@
  * d_items.h: Items key cards, weapon, ammunition.
  */
 
-#ifndef __D_ITEMS__
-#define __D_ITEMS__
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -76,4 +75,3 @@ void P_InitPlayerValues(struct player_s *p);
 } // extern "C"
 #endif
 
-#endif // __D_ITEMS__

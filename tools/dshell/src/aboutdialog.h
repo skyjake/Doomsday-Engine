@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef ABOUTDIALOG_H
-#define ABOUTDIALOG_H
+#pragma once
 
 #include <de/term/dialogwidget.h>
 
@@ -32,4 +31,3 @@ public:
     bool handleEvent(const de::Event &event);
 };
 
-#endif // ABOUTDIALOG_H

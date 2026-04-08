@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_WINDOWEVENTHANDLER_H
-#define LIBGUI_WINDOWEVENTHANDLER_H
+#pragma once
 
 #include <de/observers.h>
 #include <de/libcore.h>
@@ -80,4 +79,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_WINDOWEVENTHANDLER_H

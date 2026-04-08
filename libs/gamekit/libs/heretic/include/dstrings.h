@@ -26,8 +26,7 @@
  * dstrings.h:
  */
 
-#ifndef __HERETICSTRINGS__
-#define __HERETICSTRINGS__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -222,4 +221,3 @@
 #define DELETESAVEGAME_CONFIRM GET_TXT(TXT_DELETESAVEGAME_CONFIRM)
 #define REBORNLOAD_CONFIRM  GET_TXT(TXT_REBORNLOAD_CONFIRM)
 
-#endif

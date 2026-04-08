@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_RENDER_PLAYERWEAPONANIMATOR_H
-#define CLIENT_RENDER_PLAYERWEAPONANIMATOR_H
+#pragma once
 
 #include <de/modeldrawable.h>
 #include "stateanimator.h"
@@ -61,6 +60,4 @@ private:
 };
 
 } // namespace render
-
-#endif // CLIENT_RENDER_PLAYERWEAPONANIMATOR_H
 

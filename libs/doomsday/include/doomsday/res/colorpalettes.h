@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_COLORPALETTES_H
-#define LIBDOOMSDAY_RESOURCE_COLORPALETTES_H
+#pragma once
 
 #include "colorpalette.h"
 
@@ -91,4 +90,3 @@ private:
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_RESOURCE_COLORPALETTES_H

@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_CHATWIDGET_H
-#define LIBCOMMON_UI_CHATWIDGET_H
+#pragma once
 
 #include <de/error.h>
 #include <de/string.h>
@@ -149,4 +148,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif  // LIBCOMMON_UI_CHATWIDGET_H

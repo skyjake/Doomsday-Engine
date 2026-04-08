@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_WORLD_P_PLAYERS_H
-#define DE_WORLD_P_PLAYERS_H
+#pragma once
 
 #include "api_player.h"
 #include <de/string.h>
@@ -122,4 +121,3 @@ PlayerImpulse *P_PlayerImpulseByName(const de::String &name);
  */
 void P_ConsoleRegister();
 
-#endif // DE_WORLD_P_PLAYERS_H

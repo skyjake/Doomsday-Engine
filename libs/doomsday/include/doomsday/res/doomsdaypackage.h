@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_DOOMSDAYPACKAGE_H
-#define LIBDOOMSDAY_DOOMSDAYPACKAGE_H
+#pragma once
 
 #include <de/package.h>
 #include "../uri.h"
@@ -59,4 +58,3 @@ private:
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_DOOMSDAYPACKAGE_H

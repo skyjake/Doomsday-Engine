@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_CVARTEXTUALSLIDERWIDGET
-#define LIBCOMMON_UI_CVARTEXTUALSLIDERWIDGET
+#pragma once
 
 #include <de/string.h>
 #include "cvarsliderwidget.h"
@@ -58,4 +57,3 @@ private:
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_CVARTEXTUALSLIDERWIDGET

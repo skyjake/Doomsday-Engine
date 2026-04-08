@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ROOTWIDGET_H
-#define LIBCORE_ROOTWIDGET_H
+#pragma once
 
 #include "de/widget.h"
 #include "de/vector.h"
@@ -109,4 +108,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_ROOTWIDGET_H

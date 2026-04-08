@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef IMPORTIDTECH1_MAPINFOTRANSLATOR_H
-#define IMPORTIDTECH1_MAPINFOTRANSLATOR_H
+#pragma once
 
 #include "importidtech1.h"
 
@@ -53,4 +52,3 @@ private:
 
 } // namespace idtech1
 
-#endif // IMPORTIDTECH1_MAPINFOTRANSLATOR_H

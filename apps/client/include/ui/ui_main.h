@@ -19,8 +19,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_UI_MAIN_H
-#define DE_UI_MAIN_H
+#pragma once
 
 #include <de/legacy/rect.h>
 #include "ddevent.h"
@@ -106,4 +105,3 @@ void UI_TextOutEx2(const char* text, const Point2Raw* origin, ui_color_t* color,
 
 //const de::MaterialVariantSpec &UI_MaterialSpec(int texSpecFlags = 0);
 
-#endif

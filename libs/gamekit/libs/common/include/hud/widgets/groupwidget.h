@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_GROUPWIDGET_H
-#define LIBCOMMON_UI_GROUPWIDGET_H
+#pragma once
 
 #include <functional>
 #include "hud/hudwidget.h"
@@ -79,4 +78,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif  // LIBCOMMON_UI_GROUPWIDGET_H

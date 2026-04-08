@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SERVER_USERS_H
-#define SERVER_USERS_H
+#pragma once
 
 #include <de/address.h>
 #include <de/observers.h>
@@ -62,5 +61,3 @@ private:
     DE_PRIVATE(d)
 };
 
-
-#endif // SERVER_USERS_H

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_RECORDPACKET_H
-#define LIBCORE_RECORDPACKET_H
+#pragma once
 
 #include "de/identifiedpacket.h"
 #include "de/record.h"
@@ -107,4 +106,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_RECORDPACKET_H */

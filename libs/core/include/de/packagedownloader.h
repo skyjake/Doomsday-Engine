@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_PACKAGEDOWNLOADER_H
-#define LIBSHELL_PACKAGEDOWNLOADER_H
+#pragma once
 
 #include "de/filesys/link.h"
 #include "de/range.h"
@@ -85,4 +84,3 @@ private:
 
 } // namespace de
 
-#endif // LIBSHELL_PACKAGEDOWNLOADER_H

@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_FRAGSWIDGET_H
-#define LIBCOMMON_UI_FRAGSWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -50,4 +49,3 @@ void SBarFragsWidget_Draw(guidata_frags_t *frags, const Point2Raw *offset);
 void FragsWidget_UpdateGeometry    (guidata_frags_t *frags);
 void SBarFragsWidget_UpdateGeometry(guidata_frags_t *frags);
 
-#endif  // LIBCOMMON_UI_FRAGSWIDGET_H

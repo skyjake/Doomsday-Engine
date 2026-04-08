@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_P_INTER_H
-#define LIBDOOM_P_INTER_H
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -119,4 +118,3 @@ dd_bool P_GiveArmor(player_t *player, int type, int points);
 } // extern "C"
 #endif
 
-#endif // LIBDOOM_P_INTER_H

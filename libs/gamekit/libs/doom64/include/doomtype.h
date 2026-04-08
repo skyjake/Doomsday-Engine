@@ -28,8 +28,7 @@
  * separating modules.
  */
 
-#ifndef __DOOMTYPE_H__
-#define __DOOMTYPE_H__
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -66,4 +65,3 @@
 #define MINLONG     ((long)0x80000000)
 #endif
 
-#endif

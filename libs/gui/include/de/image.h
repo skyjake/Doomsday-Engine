@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_IMAGE_H
-#define LIBGUI_IMAGE_H
+#pragma once
 
 #include <de/vector.h>
 #include <de/rectangle.h>
@@ -337,4 +336,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_IMAGE_H

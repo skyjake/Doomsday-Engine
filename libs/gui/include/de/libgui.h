@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_MAIN_H
-#define LIBGUI_MAIN_H
+#pragma once
 
 #include <de/c_wrapper.h>
 
@@ -76,4 +75,3 @@ namespace de {
 
 } // namespace de
 
-#endif // LIBGUI_MAIN_H

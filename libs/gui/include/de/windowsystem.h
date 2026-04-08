@@ -20,8 +20,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_WINDOWSYSTEM_H
-#define LIBAPPFW_WINDOWSYSTEM_H
+#pragma once
 
 #include <de/system.h>
 #include <de/string.h>
@@ -157,4 +156,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_WINDOWSYSTEM_H

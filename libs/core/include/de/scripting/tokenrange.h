@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_TOKENRANGE_H
-#define LIBCORE_TOKENRANGE_H
+#pragma once
 
 #include "de/string.h"
 #include "tokenbuffer.h"
@@ -214,4 +213,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_TOKENRANGE_H */

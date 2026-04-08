@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_WINDOWTRANSFORM_H
-#define LIBAPPFW_WINDOWTRANSFORM_H
+#pragma once
 
 #include "libgui.h"
 #include <de/rectangle.h>
@@ -85,4 +84,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_WINDOWTRANSFORM_H

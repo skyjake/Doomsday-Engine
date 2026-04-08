@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_SOUND_H
-#define LIBGUI_SOUND_H
+#pragma once
 
 #include <de/id.h>
 #include <de/observers.h>
@@ -131,4 +130,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_SOUND_H

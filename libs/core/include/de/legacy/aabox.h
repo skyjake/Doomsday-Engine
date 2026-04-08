@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_AABOX_H
-#define DE_AABOX_H
+#pragma once
 
 #include "types.h"
 
@@ -190,4 +189,3 @@ DE_PUBLIC int M_BoxOnLineSide2(const struct aaboxd_s* box, double const linePoin
 } // extern "C"
 #endif
 
-#endif // DE_AABOX_H

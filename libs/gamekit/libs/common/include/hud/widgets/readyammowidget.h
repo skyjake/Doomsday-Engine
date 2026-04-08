@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_READYAMMOWIDGET_H
-#define LIBCOMMON_UI_READYAMMOWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -50,4 +49,3 @@ void SBarReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo);
 void ReadyAmmo_Drawer    (guidata_readyammo_t *ammo, const Point2Raw *offset);
 void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, const Point2Raw *offset);
 
-#endif  // LIBCOMMON_UI_READYAMMOWIDGET_H

@@ -27,8 +27,7 @@
  * Global settings. Most of these are console variables.
  */
 
-#ifndef __JDOOM_SETTINGS_H__
-#define __JDOOM_SETTINGS_H__
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -134,4 +133,3 @@ extern game_config_t cfg;
 } // extern "C"
 #endif
 
-#endif

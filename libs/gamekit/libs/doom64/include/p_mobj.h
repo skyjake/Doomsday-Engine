@@ -28,8 +28,7 @@
  * Map Objects, Mobj, definition and handling jDoom64 - specific.
  */
 
-#ifndef LIBDOOM64_P_MOBJ_H
-#define LIBDOOM64_P_MOBJ_H
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -308,4 +307,3 @@ void P_HitFloor(mobj_t *mo);
 } // extern "C"
 #endif
 
-#endif // LIBDOOM64_P_MOBJ_H

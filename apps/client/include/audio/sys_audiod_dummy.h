@@ -23,8 +23,7 @@
  * Used in dedicated server mode.
  */
 
-#ifndef __DOOMSDAY_SYSTEM_AUDIO_DUMMY_H__
-#define __DOOMSDAY_SYSTEM_AUDIO_DUMMY_H__
+#pragma once
 
 #include <de/liblegacy.h>
 #include "api_audiod.h"
@@ -36,4 +35,3 @@ DE_EXTERN_C audiointerface_sfx_t   audiod_dummy_sfx;
 DE_EXTERN_C audiointerface_music_t audiod_dummy_music;
 DE_EXTERN_C audiointerface_cd_t    audiod_dummy_cd;
 
-#endif

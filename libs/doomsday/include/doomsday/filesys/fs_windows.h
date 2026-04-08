@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_FS_WINDOWS_H
-#define LIBDOOMSDAY_FS_WINDOWS_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include <stdio.h>
@@ -42,4 +41,3 @@ LIBDOOMSDAY_PUBLIC int FS_Win32_mkdir(const char *dirnameUtf8);
 } //extern "C"
 #endif
 
-#endif // LIBDOOMSDAY_FS_WINDOWS_H

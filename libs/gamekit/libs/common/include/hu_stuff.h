@@ -21,8 +21,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_HU_STUFF_H
-#define LIBCOMMON_HU_STUFF_H
+#pragma once
 
 #include "doomsday.h"
 #include "gl_drawpatch.h"
@@ -189,4 +188,4 @@ void WI_DrawPatch(patchid_t patchId,
                   short textFlags               = 0);
 
 #endif // __cplusplus
-#endif // LIBCOMMON_HU_STUFF_H
+

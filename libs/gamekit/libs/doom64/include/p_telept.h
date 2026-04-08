@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM64_PLAY_TELEPT_H
-#define LIBDOOM64_PLAY_TELEPT_H
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -48,4 +47,3 @@ int EV_FadeAway(Line *line, mobj_t *thing);
 } // extern "C"
 #endif
 
-#endif // LIBDOOM64_PLAY_TELEPT_H

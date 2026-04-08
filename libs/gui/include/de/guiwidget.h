@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_GUIWIDGET_H
-#define LIBAPPFW_GUIWIDGET_H
+#pragma once
 
 #include <de/widget.h>
 #include <de/rulerectangle.h>
@@ -602,4 +601,3 @@ public:
 
 } // namespace de
 
-#endif // LIBAPPFW_GUIWIDGET_H

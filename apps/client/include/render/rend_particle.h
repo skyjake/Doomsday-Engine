@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_RENDER_PARTICLE_H
-#define DE_CLIENT_RENDER_PARTICLE_H
+#pragma once
 
 class Map;
 
@@ -68,4 +67,3 @@ void Rend_ParticleReleaseExtraTextures();
  */
 void Rend_RenderParticles(Map &map);
 
-#endif  // DE_CLIENT_RENDER_PARTICLE_H

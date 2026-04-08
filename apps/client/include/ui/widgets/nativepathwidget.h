@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_NATIVEPATHWIDGET_H
-#define DE_CLIENT_UI_NATIVEPATHWIDGET_H
+#pragma once
 
 #include <de/auxbuttonwidget.h>
 #include <de/filedialog.h>
@@ -65,4 +64,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UI_NATIVEPATHWIDGET_H

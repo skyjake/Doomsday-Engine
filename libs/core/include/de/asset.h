@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ASSET_H
-#define LIBCORE_ASSET_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/observers.h"
@@ -161,4 +160,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_ASSET_H

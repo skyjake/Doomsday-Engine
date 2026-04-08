@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_TERRAINTYPE_H
-#define LIBCOMMON_TERRAINTYPE_H
+#pragma once
 
 #define TTF_NONSOLID        0x1 /**
                                  * Various implications:
@@ -60,4 +59,3 @@ const terraintype_t *P_PlaneMaterialTerrainType(world_Sector *sec, int plane);
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_TERRAINTYPE_H */

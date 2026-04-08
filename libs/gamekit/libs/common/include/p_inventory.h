@@ -20,8 +20,7 @@
  */
 
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
-#ifndef LIBCOMMON_PLAY_INVENTORY_H
-#define LIBCOMMON_PLAY_INVENTORY_H
+#pragma once
 
 #include "common.h"
 
@@ -139,4 +138,4 @@ uint P_InventoryCount(int player, inventoryitemtype_t type);
 #endif
 
 #endif // LIBCOMMON_PLAY_INVENTORY_H
-#endif // __JHERETIC__ || __JHEXEN__ || __JDOOM64__
+

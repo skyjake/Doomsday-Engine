@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_BUNDLELINKFEED_H
-#define LIBDOOMSDAY_BUNDLELINKFEED_H
+#pragma once
 
 #include <de/feed.h>
 
@@ -40,4 +39,3 @@ public:
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_BUNDLELINKFEED_H

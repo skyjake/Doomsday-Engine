@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDOOMSDAY_DEFS_THING_H
-#define LIBDOOMSDAY_DEFS_THING_H
+#pragma once
 
 #include "definition.h"
 
@@ -45,4 +44,3 @@ public:
     
 } // namespace defn
 
-#endif // LIBDOOMSDAY_DEFS_THING_H

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_NUMBERVALUE_H
-#define LIBCORE_NUMBERVALUE_H
+#pragma once
 
 #include "de/value.h"
 
@@ -110,4 +109,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_NUMBERVALUE_H */

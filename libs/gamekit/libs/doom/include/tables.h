@@ -27,8 +27,7 @@
  * tables.h: Lookup tables.
  */
 
-#ifndef __TABLES__
-#define __TABLES__
+#pragma once
 
 #include "doomsday.h"
 
@@ -69,4 +68,3 @@ int SlopeDiv(unsigned num, unsigned den);
 } // extern "C"
 #endif
 
-#endif

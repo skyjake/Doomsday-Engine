@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHERETIC_M_CHEAT_H
-#define LIBHERETIC_M_CHEAT_H
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -40,4 +39,3 @@ void G_RegisterCheats(void);
 } // extern "C"
 #endif
 
-#endif // LIBHERETIC_M_CHEAT_H

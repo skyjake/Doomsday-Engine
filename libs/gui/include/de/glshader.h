@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GLSHADER_H
-#define LIBGUI_GLSHADER_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/error.h>
@@ -85,4 +84,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_GLSHADER_H

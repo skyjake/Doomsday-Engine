@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_RESOURCE_BITMAPFONT_H
-#define CLIENT_RESOURCE_BITMAPFONT_H
+#pragma once
 
 #include "abstractfont.h"
 #include <de/rectangle.h>
@@ -58,4 +57,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // CLIENT_RESOURCE_BITMAPFONT_H

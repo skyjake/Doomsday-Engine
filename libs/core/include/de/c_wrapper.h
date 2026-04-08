@@ -24,8 +24,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_C_WRAPPER_H
-#define LIBCORE_C_WRAPPER_H
+#pragma once
 
 #include "libcore.h"
 
@@ -268,4 +267,3 @@ DE_PUBLIC ddouble LittleEndianByteOrder_ToNativeDouble(ddouble value);
 } // extern "C"
 #endif
 
-#endif // LIBCORE_C_WRAPPER_H

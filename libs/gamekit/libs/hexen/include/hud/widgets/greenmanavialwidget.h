@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_UI_GREENMANAVIALWIDGET_H
-#define LIBHEXEN_UI_GREENMANAVIALWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -46,4 +45,3 @@ private:
     float _filled = 0;  ///< Percentage.
 };
 
-#endif  // LIBHEXEN_UI_GREENMANAVIALWIDGET_H

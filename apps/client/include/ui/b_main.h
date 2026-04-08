@@ -17,9 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTSYSTEM_BINDINGS_H
-#define CLIENT_INPUTSYSTEM_BINDINGS_H
+#pragma once
 
 void B_Init();
 
-#endif // CLIENT_INPUTSYSTEM_BINDINGS_H

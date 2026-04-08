@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_OUTPUT_STATE_H__
-#define __AMETHYST_OUTPUT_STATE_H__
+#pragma once
 
 #include "linkable.h"
 #include "outputcontext.h"
@@ -76,4 +75,3 @@ private:
     bool _cleanBreaks;
 };
 
-#endif

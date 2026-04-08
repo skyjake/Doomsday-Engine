@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_LOGFILTER_H
-#define LIBCORE_LOGFILTER_H
+#pragma once
 
 #include "de/log.h"
 #include "de/logbuffer.h"
@@ -81,4 +80,3 @@ struct DE_PUBLIC SimpleLogFilter : public LogBuffer::IFilter
 
 } // namespace de
 
-#endif // LIBCORE_LOGFILTER_H

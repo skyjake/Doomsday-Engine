@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GLSHADERBANK_H
-#define LIBGUI_GLSHADERBANK_H
+#pragma once
 
 #include <de/infobank.h>
 #include "de/glshader.h"
@@ -79,4 +78,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_GLSHADERBANK_H

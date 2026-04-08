@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DOOMSDAY_APIS_H
-#define DOOMSDAY_APIS_H
+#pragma once
 
 #ifndef RC_INVOKED
 #  include <de/liblegacy.h>
@@ -203,4 +202,3 @@ typedef struct de_api_s {
     }
 #endif
 
-#endif  // DOOMSDAY_APIS_H

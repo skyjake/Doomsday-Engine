@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_DATAFILESETTINGSDIALOG_H
-#define DE_CLIENT_DATAFILESETTINGSDIALOG_H
+#pragma once
 
 #include <de/directorylistdialog.h>
 
@@ -36,4 +35,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_DATAFILESETTINGSDIALOG_H

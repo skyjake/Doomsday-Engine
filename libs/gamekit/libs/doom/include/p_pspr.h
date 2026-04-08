@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_PLAY_PSPR_H
-#define LIBDOOM_PLAY_PSPR_H
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -61,4 +60,3 @@ void P_FireWeapon(struct player_s *player);
 } // extern "C"
 #endif
 
-#endif // LIBDOOM_PLAY_PSPR_H

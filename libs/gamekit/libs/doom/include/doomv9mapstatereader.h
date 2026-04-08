@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_DOOMV9_MAPSTATEREADER
-#define LIBDOOM_DOOMV9_MAPSTATEREADER
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -47,4 +46,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBDOOM_DOOMV9_MAPSTATEREADER

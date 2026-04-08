@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_RESOURCE_HQ2X_H
-#define DE_RESOURCE_HQ2X_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,4 +56,3 @@ uint8_t *GL_SmartFilterHQ2x(const uint8_t *src, int width, int height, int flags
 } // extern "C"
 #endif
 
-#endif /* DE_RESOURCE_HQ2X_H */

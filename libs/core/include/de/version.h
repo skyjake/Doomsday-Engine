@@ -19,8 +19,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_VERSION_H
-#define LIBCORE_VERSION_H
+#pragma once
 
 #ifdef __cplusplus
 
@@ -142,4 +141,3 @@ public:
 
 #endif // __cplusplus
 
-#endif // LIBCORE_VERSION_H

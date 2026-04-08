@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_BYTEARRAYFILE_H
-#define LIBCORE_BYTEARRAYFILE_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/file.h"
@@ -55,4 +54,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_BYTEARRAYFILE_H

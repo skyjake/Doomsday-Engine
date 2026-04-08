@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_EXCEPTION_H__
-#define __AMETHYST_EXCEPTION_H__
+#pragma once
 
 #include "string.h"
 #include <QDebug>
@@ -39,4 +38,3 @@ public:
 
 QDebug operator << (QDebug dbg, const Exception& ex);
 
-#endif

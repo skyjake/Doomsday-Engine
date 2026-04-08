@@ -22,8 +22,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_GL_IMAGE_MANIPULATION_H
-#define DE_GL_IMAGE_MANIPULATION_H
+#pragma once
 
 #include <doomsday/color.h>
 #include <doomsday/res/colorpalette.h>
@@ -272,4 +271,3 @@ dd_bool GL_QuantizeImageToPalette(uint8_t *out, int outformat,
 void GL_DeSaturatePalettedImage(uint8_t *buffer, const res::ColorPalette &palette,
     int width, int height);
 
-#endif // DE_GL_IMAGE_MANIPULATION_H

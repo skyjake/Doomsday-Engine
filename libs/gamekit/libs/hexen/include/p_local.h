@@ -27,8 +27,7 @@
  * p_local.h
  */
 
-#ifndef __P_LOCAL__
-#define __P_LOCAL__
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -145,4 +144,3 @@ void C_DECL A_NoBlocking(mobj_t* mo);
 } // extern "C"
 #endif
 
-#endif

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_COMMANDLINEWIDGET_H
-#define LIBSHELL_COMMANDLINEWIDGET_H
+#pragma once
 
 #include "lineeditwidget.h"
 
@@ -46,4 +45,3 @@ private:
 
 }} // namespace de::term
 
-#endif // LIBSHELL_COMMANDLINEWIDGET_H

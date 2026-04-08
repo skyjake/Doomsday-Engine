@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBJDOOM64_MAIN_H
-#define LIBJDOOM64_MAIN_H
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -72,4 +71,3 @@ void *D64_GetVariable(int id);
 } // extern "C"
 #endif
 
-#endif // LIBJDOOM64_MAIN_H

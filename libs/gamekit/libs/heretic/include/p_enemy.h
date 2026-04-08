@@ -25,8 +25,7 @@
  * p_enemy.h: Enemy thinking, AI.
  */
 
-#ifndef __P_ENEMY_H__
-#define __P_ENEMY_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -47,4 +46,3 @@ void        P_DSparilTeleport(mobj_t* actor);
 } // extern "C"
 #endif
 
-#endif

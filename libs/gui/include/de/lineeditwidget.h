@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_LINEEDITWIDGET_H
-#define LIBAPPFW_LINEEDITWIDGET_H
+#pragma once
 
 #include "de/guiwidget.h"
 #include <de/abstractlineeditor.h>
@@ -108,4 +107,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_LINEEDITWIDGET_H

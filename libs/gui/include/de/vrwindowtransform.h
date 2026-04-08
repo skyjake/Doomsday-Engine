@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_VRWINDOWTRANSFORM_H
-#define LIBAPPFW_VRWINDOWTRANSFORM_H
+#pragma once
 
 #include "libgui.h"
 #include "de/windowtransform.h"
@@ -54,4 +53,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_VRWINDOWTRANSFORM_H

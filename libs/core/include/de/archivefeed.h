@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ARCHIVEFEED_H
-#define LIBCORE_ARCHIVEFEED_H
+#pragma once
 
 #include "de/feed.h"
 #include "de/bytearrayfile.h"
@@ -113,4 +112,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_ARCHIVEFEED_H */

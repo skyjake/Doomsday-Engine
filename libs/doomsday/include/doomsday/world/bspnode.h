@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_BSPNODE_H
-#define LIBDOOMSDAY_WORLD_BSPNODE_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include <de/binarytree.h>
@@ -58,4 +57,3 @@ typedef de::BinaryTree<BspElement *> BspTree;
 
 }  // namespace world
 
-#endif  // LIBDOOMSDAY_WORLD_BSPNODE_H

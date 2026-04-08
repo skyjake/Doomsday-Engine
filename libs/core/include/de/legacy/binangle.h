@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_BAMS_MATH_H
-#define DE_BAMS_MATH_H
+#pragma once
 
 #include <de/liblegacy.h>
 #include <de/legacy/types.h>
@@ -115,4 +114,3 @@ DE_PUBLIC binangle_t bamsAtan2(int y, int x);
 } // extern "C"
 #endif
 
-#endif

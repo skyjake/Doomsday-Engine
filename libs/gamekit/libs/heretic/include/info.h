@@ -27,8 +27,7 @@
  * info.h: Sprite, state, mobjtype, text, sfx and music identifiers
  */
 
-#ifndef __JHERETIC_INFO_H__
-#define __JHERETIC_INFO_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -1970,4 +1969,3 @@ typedef enum {
     NUMMUSIC
 } musicenum_t; */
 
-#endif

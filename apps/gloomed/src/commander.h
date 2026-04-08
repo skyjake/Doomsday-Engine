@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOMED_COMMANDER_H
-#define GLOOMED_COMMANDER_H
+#pragma once
 
 #include <de/String>
 
@@ -38,4 +37,3 @@ public:
     bool isConnected() const;
 };
 
-#endif // GLOOMED_COMMANDER_H

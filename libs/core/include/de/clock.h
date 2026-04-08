@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_CLOCK_H
-#define LIBCORE_CLOCK_H
+#pragma once
 
 #include "de/time.h"
 #include "de/observers.h"
@@ -86,4 +85,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_ICLOCK_H */

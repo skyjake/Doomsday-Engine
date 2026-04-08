@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_IISTREAM_H
-#define LIBCORE_IISTREAM_H
+#pragma once
 
 #include "de/ibytearray.h"
 
@@ -76,4 +75,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_IISTREAM_H

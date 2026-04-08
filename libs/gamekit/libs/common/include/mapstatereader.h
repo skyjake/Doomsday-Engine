@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_MAPSTATEREADER_H
-#define LIBCOMMON_MAPSTATEREADER_H
+#pragma once
 
 #include <de/legacy/reader.h>
 #include <de/string.h>
@@ -92,4 +91,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBCOMMON_MAPSTATEREADER_H

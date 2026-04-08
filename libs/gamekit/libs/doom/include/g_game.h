@@ -27,8 +27,7 @@
  * Top-level (common) game routines jDoom - specific.
  */
 
-#ifndef LIBJDOOM_G_GAME_H
-#define LIBJDOOM_G_GAME_H
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -96,4 +95,3 @@ void G_QueueBody(mobj_t *body);
 } // extern "C"
 #endif
 
-#endif // LIBJDOOM_G_GAME_H

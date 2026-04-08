@@ -27,8 +27,7 @@
  * Map Objects, MObj, definition and handling.
  */
 
-#ifndef LIBHERETIC_P_MOBJ_H
-#define LIBHERETIC_P_MOBJ_H
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -294,4 +293,3 @@ mobj_t *P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
 } // extern "C"
 #endif
 
-#endif // LIBHERETIC_P_MOBJ_H

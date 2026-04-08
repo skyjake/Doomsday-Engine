@@ -21,8 +21,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_FILETYPE_H
-#define DE_FILETYPE_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include "../resourceclass.h"
@@ -195,4 +194,3 @@ LIBDOOMSDAY_PUBLIC res::FileTypes &DD_FileTypes();
 #endif // DE_C_API_ONLY
 #endif // __cplusplus
 
-#endif /* DE_FILETYPE_H */

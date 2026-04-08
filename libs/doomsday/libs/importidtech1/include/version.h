@@ -21,8 +21,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef IMPORTIDTECH1_VERSION_H
-#define IMPORTIDTECH1_VERSION_H
+#pragma once
 
 #ifndef IMPORTIDTECH1_VER_ID
 #  ifdef _DEBUG
@@ -43,4 +42,3 @@
 #define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" IMPORTIDTECH1_VER_ID ")"
 #define PLUGIN_VERSION_NUMBER 1,0,0,0 // For WIN32 version info.
 
-#endif // IMPORTIDTECH1_VERSION_H

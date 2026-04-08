@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_PLAY_PSPR_H
-#define LIBHEXEN_PLAY_PSPR_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -52,4 +51,3 @@ void P_FireWeapon(struct player_s *player);
 } // extern "C"
 #endif
 
-#endif // LIBHEXEN_PLAY_PSPR_H

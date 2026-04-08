@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_TEXTDRAWABLE_H
-#define LIBAPPFW_TEXTDRAWABLE_H
+#pragma once
 
 #include "gltextcomposer.h"
 #include "fontlinewrapping.h"
@@ -105,4 +104,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_TEXTDRAWABLE_H

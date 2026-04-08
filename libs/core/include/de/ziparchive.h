@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ZIPARCHIVE_H
-#define LIBCORE_ZIPARCHIVE_H
+#pragma once
 
 #include "de/archive.h"
 #include "de/nativepath.h"
@@ -128,4 +127,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_ZIPARCHIVE_H

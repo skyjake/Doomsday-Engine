@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_FIXEDBYTEARRAY_H
-#define LIBCORE_FIXEDBYTEARRAY_H
+#pragma once
 
 #include "de/bytesubarray.h"
 
@@ -74,4 +73,3 @@ public:
 
 } // namespace de
 
-#endif /* LIBCORE_FIXEDBYTEARRAY_H */

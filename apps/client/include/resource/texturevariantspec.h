@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_RESOURCE_TEXTUREVARIANTSPEC_H
-#define DE_RESOURCE_TEXTUREVARIANTSPEC_H
+#pragma once
 
 #ifndef __CLIENT__
 #  error "resource/texturevariantspec.h only exists in the Client"
@@ -181,4 +180,3 @@ public:
     de::String asText() const;
 };
 
-#endif // DE_RESOURCE_TEXTUREVARIANTSPEC_H

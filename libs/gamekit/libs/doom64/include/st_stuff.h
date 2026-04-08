@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM64_STUFF_H
-#define LIBDOOM64_STUFF_H
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -175,4 +174,3 @@ void    ST_HUDUnHide(int, hueevent_t);
 }  // extern "C"
 #endif
 
-#endif  // LIBDOOM64_STUFF_H

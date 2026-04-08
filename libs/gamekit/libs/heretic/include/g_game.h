@@ -27,8 +27,7 @@
  * Top-level (common) game routines jHeretic - specific.
  */
 
-#ifndef LIBJHERETIC_G_GAME_H
-#define LIBJHERETIC_G_GAME_H
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -94,4 +93,3 @@ int G_Responder(event_t *ev);
 } // extern "C"
 #endif
 
-#endif /* LIBJHERETIC_G_GAME_H */

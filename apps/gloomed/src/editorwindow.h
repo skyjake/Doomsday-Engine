@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef EDITORWINDOW_H
-#define EDITORWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 #include "editor.h"
@@ -37,4 +36,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // EDITORWINDOW_H

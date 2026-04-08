@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DOOMSDAY_API_PLAYER_H
-#define DOOMSDAY_API_PLAYER_H
+#pragma once
 
 #include "apis.h"
 #include "dd_share.h" // DDMAXPLAYERS
@@ -176,4 +175,3 @@ DE_API_T(Player);
 DE_USING_API(Player);
 #endif
 
-#endif // DOOMSDAY_API_PLAYER_H

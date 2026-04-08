@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GUISHELLAPP_H
-#define GUISHELLAPP_H
+#pragma once
 
 #include <de/baseguiapp.h>
 #include <de/imagebank.h>
@@ -69,4 +68,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // GUISHELLAPP_H

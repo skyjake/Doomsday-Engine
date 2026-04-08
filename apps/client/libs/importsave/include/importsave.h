@@ -25,12 +25,10 @@
  * Legacy savegame converter plugin.
  */
 
-#ifndef IMPORTSAVE_H
-#define IMPORTSAVE_H
+#pragma once
 
 #include <doomsday.h>
 #include <de/libcore.h>
 
 DE_USING_API(Base);
 
-#endif // IMPORTSAVE_H

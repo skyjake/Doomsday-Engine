@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_FILESYS_VIRTUALMAPPINGS_H
-#define LIBDOOMSDAY_FILESYS_VIRTUALMAPPINGS_H
+#pragma once
 
 #include "../libdoomsday.h"
 
@@ -33,4 +32,3 @@ DE_EXTERN_C LIBDOOMSDAY_PUBLIC void FS_InitVirtualPathMappings();
  */
 DE_EXTERN_C LIBDOOMSDAY_PUBLIC void FS_InitPathLumpMappings();
 
-#endif // LIBDOOMSDAY_FILESYS_VIRTUALMAPPINGS_H

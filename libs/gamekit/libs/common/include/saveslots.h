@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_SAVESLOTS_H
-#define LIBCOMMON_SAVESLOTS_H
+#pragma once
 
 #include <de/error.h>
 #include <de/path.h>
@@ -194,4 +193,3 @@ private:
 
 typedef SaveSlots::Slot SaveSlot;
 
-#endif  // LIBCOMMON_SAVESLOTS_H

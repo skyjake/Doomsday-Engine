@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_MESSAGE_H
-#define LIBCORE_MESSAGE_H
+#pragma once
 
 #include "de/block.h"
 #include "de/address.h"
@@ -67,4 +66,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_MESSAGE_H

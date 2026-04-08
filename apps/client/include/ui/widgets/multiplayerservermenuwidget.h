@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_MULTIPLAYERSERVERMENUWIDGET_H
-#define DE_CLIENT_UI_MULTIPLAYERSERVERMENUWIDGET_H
+#pragma once
 
 #include "homemenuwidget.h"
 #include <de/serverinfo.h>
@@ -43,4 +42,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UIMULTIPLAYERSERVERMENUWIDGET_H

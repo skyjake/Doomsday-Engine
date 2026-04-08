@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_SOURCELINETABLE_H
-#define LIBCORE_SOURCELINETABLE_H
+#pragma once
 
 #include "de/string.h"
 
@@ -63,6 +62,4 @@ private:
 };
 
 } // namespace de
-
-#endif // LIBCORE_SOURCELINETABLE_H
 

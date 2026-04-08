@@ -26,8 +26,7 @@
  * Map setup routines.
  */
 
-#ifndef LIBDOOM64_SETUP_H
-#define LIBDOOM64_SETUP_H
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -81,4 +80,3 @@ int             P_HandleMapObjectStatusReport(int code, uint id, int dtype,
 } // extern "C"
 #endif
 
-#endif /* LIBDOOM64_SETUP_H */

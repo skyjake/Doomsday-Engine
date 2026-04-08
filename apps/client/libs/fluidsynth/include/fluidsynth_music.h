@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __DSFLUIDSYNTH_MUS_H__
-#define __DSFLUIDSYNTH_MUS_H__
+#pragma once
 
 #include <de/libcore.h>
 #include "api_audiod_mus.h"
@@ -41,4 +40,3 @@ void    DMFluid_Update();
 void    DMFluid_Shutdown();
 void    DMFluid_SetSoundFont(const char* fileName);
 
-#endif /* end of include guard: __DSFLUIDSYNTH_MUS_H__ */

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_LOGTEDGET_H
-#define LIBSHELL_LOGTEDGET_H
+#pragma once
 
 #include "widget.h"
 #include "../logsink.h"
@@ -88,4 +87,3 @@ private:
 
 }} // namespace de::term
 
-#endif // LIBSHELL_LOGTEDGET_H

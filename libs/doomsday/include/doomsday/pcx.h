@@ -21,8 +21,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_PCX_H
-#define LIBDOOMSDAY_RESOURCE_PCX_H
+#pragma once
 
 #ifdef __cplusplus
 
@@ -47,4 +46,3 @@ LIBDOOMSDAY_PUBLIC const char *PCX_LastError();
 
 #endif //__cplusplus
 
-#endif // LIBDOOMSDAY_RESOURCE_PCX_H

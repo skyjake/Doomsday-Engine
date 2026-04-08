@@ -1,5 +1,4 @@
-#ifndef AUDIOSYSTEM_H
-#define AUDIOSYSTEM_H
+#pragma once
 
 #include <de/system.h>
 #include <de/waveform.h>
@@ -60,4 +59,3 @@ private:
 
 } // namespace gloom
 
-#endif // AUDIOSYSTEM_H

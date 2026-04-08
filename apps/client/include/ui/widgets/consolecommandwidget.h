@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef DE_CLIENT_CONSOLECOMMANDWIDGET_H
-#define DE_CLIENT_CONSOLECOMMANDWIDGET_H
+#pragma once
 
 #include <de/commandwidget.h>
 
@@ -49,4 +48,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_CONSOLECOMMANDWIDGET_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_BITFIELD_H
-#define LIBCORE_BITFIELD_H
+#pragma once
 
 #include "block.h"
 #include "error.h"
@@ -207,4 +206,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_BITFIELD_H

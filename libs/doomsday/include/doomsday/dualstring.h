@@ -22,8 +22,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_DUALSTRING_H
-#define LIBDOOMSDAY_DUALSTRING_H
+#pragma once
 
 #ifdef __cplusplus
 
@@ -117,4 +116,3 @@ private:
 
 #endif // LIBDOOMSDAY_DUALSTRING_H
 
-#endif // 0

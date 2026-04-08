@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_DMU_ARCHIVEINDEX_H
-#define LIBCOMMON_DMU_ARCHIVEINDEX_H
+#pragma once
 
 #include <vector>
 #include <memory>
@@ -163,4 +162,3 @@ typedef ArchiveIndex<DMU_SECTOR>  SectorArchive; ///< ArchiveIndex of DMU_SECTOR
 
 } // namespace dmu_lib
 
-#endif // LIBCOMMON_DMU_ARCHIVEINDEX_H

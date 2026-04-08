@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_RECORDACCESSOR_H
-#define LIBCORE_RECORDACCESSOR_H
+#pragma once
 
 #include "de/arrayvalue.h"
 
@@ -92,4 +91,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_RECORDACCESSOR_H

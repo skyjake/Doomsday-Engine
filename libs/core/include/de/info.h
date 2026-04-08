@@ -19,8 +19,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_INFO_H
-#define LIBCORE_INFO_H
+#pragma once
 
 #include "de/nativepath.h"
 #include "de/record.h"
@@ -424,4 +423,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_INFO_H

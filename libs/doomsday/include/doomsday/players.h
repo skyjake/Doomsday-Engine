@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_PLAYERS_H
-#define LIBDOOMSDAY_PLAYERS_H
+#pragma once
 
 /// Maximum number of players supported by the engine.
 #define DDMAXPLAYERS        16
@@ -81,6 +80,4 @@ private:
 };
 
 #endif // __cplusplus
-
-#endif // LIBDOOMSDAY_PLAYERS_H
 

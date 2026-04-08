@@ -27,8 +27,7 @@
  * acfnlink.h: Action functions (mobj AI).
  */
 
-#ifndef __ACTION_LINK_H__
-#define __ACTION_LINK_H__
+#pragma once
 
 #include "dd_share.h"
 #include <doomsday/world/actions.h>
@@ -135,4 +134,3 @@ ACTION_MOBJ(A_XScream);
 } // extern "C"
 #endif
 
-#endif

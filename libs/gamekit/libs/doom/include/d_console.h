@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_DCONSOLE_H
-#define LIBDOOM_DCONSOLE_H
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -39,4 +38,3 @@ void G_ConsoleRegistration(void);
 } // extern "C"
 #endif
 
-#endif // LIBDOOM_DCONSOLE_H

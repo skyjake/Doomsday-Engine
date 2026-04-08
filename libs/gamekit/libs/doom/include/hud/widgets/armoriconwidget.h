@@ -22,8 +22,7 @@
 #   define LIBCOMMON_UI_ARMORICONWIDGET_H
 #endif
 
-#ifndef LIBCOMMON_UI_ARMORICONWIDGET_H
-#define LIBCOMMON_UI_ARMORICONWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -48,4 +47,3 @@ private:
     int armorSprite2       = 0;
 };
 
-#endif  // LIBCOMMON_UI_ARMORICONWIDGET_H

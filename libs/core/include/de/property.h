@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_PROPERTY_H
-#define LIBCORE_PROPERTY_H
+#pragma once
 
 #include "de/observers.h"
 
@@ -87,4 +86,3 @@ protected:
 
 } // namespace de
 
-#endif // LIBCORE_PROPERTY_H

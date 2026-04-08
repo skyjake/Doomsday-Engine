@@ -22,8 +22,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_PROPERTYVALUE_H
-#define LIBDOOMSDAY_WORLD_PROPERTYVALUE_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include "valuetype.h"
@@ -211,4 +210,3 @@ private:
  */
 LIBDOOMSDAY_PUBLIC PropertyValue *BuildPropertyValue(valuetype_t type, void *valueAdr);
 
-#endif // LIBDOOMSDAY_WORLD_PROPERTYVALUE_H

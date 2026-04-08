@@ -23,8 +23,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_WORLD_BSP_HPLANE_H
-#define DE_WORLD_BSP_HPLANE_H
+#pragma once
 
 #include "linesegment.h"
 
@@ -304,4 +303,3 @@ typedef HPlane::Intercept HPlaneIntercept;
 }  // namespace bsp
 }  // namespace world
 
-#endif  // DE_WORLD_BSP_HPLANE_H

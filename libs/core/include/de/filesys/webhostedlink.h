@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_FILESYS_WEBHOSTEDLINK_H
-#define DE_FILESYS_WEBHOSTEDLINK_H
+#pragma once
 
 #include "link.h"
 #include "../pathtree.h"
@@ -66,4 +65,3 @@ private:
 
 }} // namespace de::filesys
 
-#endif // DE_FILESYS_WEBHOSTEDLINK_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_DATAFILE_H
-#define LIBDOOMSDAY_DATAFILE_H
+#pragma once
 
 #include "../res/databundle.h"
 #include <de/bytearrayfile.h>
@@ -37,4 +36,3 @@ public:
     void set(Offset at, const Byte *values, Size count);
 };
 
-#endif // LIBDOOMSDAY_DATAFILE_H

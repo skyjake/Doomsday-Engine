@@ -25,8 +25,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_MEMORY_ZONE_H
-#define DE_MEMORY_ZONE_H
+#pragma once
 
 /**
  * @defgroup memzone Memory Zone
@@ -198,4 +197,3 @@ DE_PUBLIC void Z_GetPrivateData(MemoryZonePrivateData *pd);
 } // extern "C"
 #endif
 
-#endif // DE_MEMORY_ZONE_H

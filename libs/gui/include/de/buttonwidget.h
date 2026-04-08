@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_BUTTONWIDGET_H
-#define LIBAPPFW_BUTTONWIDGET_H
+#pragma once
 
 #include <de/action.h>
 #include <de/observers.h>
@@ -128,4 +127,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_BUTTONWIDGET_H

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_PARTITION_H
-#define LIBCORE_PARTITION_H
+#pragma once
 
 #include "de/math.h"
 #include "de/string.h"
@@ -120,4 +119,3 @@ public:
 
 }  // namespace de
 
-#endif  // LIBCORE_PARTITION_H

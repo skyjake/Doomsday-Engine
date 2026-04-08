@@ -26,8 +26,7 @@
  * p_setup.h: Map setup routines
  */
 
-#ifndef __D_SETUP_H__
-#define __D_SETUP_H__
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -63,4 +62,3 @@ int             P_HandleMapObjectStatusReport(int code, uint id, int dtype, void
 } // extern "C"
 #endif
 
-#endif

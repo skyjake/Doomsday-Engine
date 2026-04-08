@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_REFRESH_SVG_H
-#define DE_REFRESH_SVG_H
+#pragma once
 
 #include "api_svg.h"
 
@@ -74,4 +73,3 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint numLines);
 } // extern "C"
 #endif
 
-#endif // DE_REFRESH_SVG_H

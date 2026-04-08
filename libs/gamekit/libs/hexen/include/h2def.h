@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef __H2DEF_H__
-#define __H2DEF_H__
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -381,4 +380,3 @@ void M_ResetRandom(void);
 } // extern "C"
 #endif
 
-#endif // __H2DEF_H__

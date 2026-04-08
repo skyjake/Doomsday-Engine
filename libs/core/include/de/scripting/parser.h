@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_PARSER_H
-#define LIBCORE_PARSER_H
+#pragma once
 
 #include "../libcore.h"
 #include "tokenbuffer.h"
@@ -152,4 +151,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_PARSER_H */

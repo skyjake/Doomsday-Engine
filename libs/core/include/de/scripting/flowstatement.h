@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
  
-#ifndef LIBCORE_FLOWSTATEMENT_H
-#define LIBCORE_FLOWSTATEMENT_H
+#pragma once
 
 #include "statement.h"
 
@@ -63,4 +62,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_FLOWSTATEMENT_H */

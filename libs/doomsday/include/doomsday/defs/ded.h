@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_DEFINITION_DATABASE_H
-#define LIBDOOMSDAY_DEFINITION_DATABASE_H
+#pragma once
 
 #include <vector>
 #include <de/libcore.h>
@@ -320,4 +319,3 @@ int             DED_AddCompositeFontMapCharacter(ded_compositefont_t* font);
 } // extern "C"
 #endif
 
-#endif // LIBDOOMSDAY_DEFINITION_DATABASE_H

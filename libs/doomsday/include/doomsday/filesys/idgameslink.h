@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_FILESYS_IDGAMESLINK_H
-#define LIBDOOMSDAY_FILESYS_IDGAMESLINK_H
+#pragma once
 
 #include <de/filesys/webhostedlink.h>
 
@@ -46,4 +45,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBDOOMSDAY_FILESYS_IDGAMESLINK_H

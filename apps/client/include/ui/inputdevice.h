@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTSYSTEM_INPUTDEVICE_H
-#define CLIENT_INPUTSYSTEM_INPUTDEVICE_H
+#pragma once
 
 #include <functional>
 #include <de/error.h>
@@ -349,4 +348,3 @@ private:
 
 typedef InputDevice::Control InputControl;
 
-#endif // CLIENT_INPUTSYSTEM_INPUTDEVICE_H

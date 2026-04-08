@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GRAPHICS_OPENGL_H
-#define LIBGUI_GRAPHICS_OPENGL_H
+#pragma once
 
 #include <SDL_video.h>
 
@@ -56,4 +55,3 @@ using namespace gl33core;
 #  define DE_HAVE_TEXTURE_BUFFER
 #endif
 
-#endif // LIBGUI_GRAPHICS_OPENGL_H

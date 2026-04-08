@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTSYSTEM_DDEVENT_H
-#define CLIENT_INPUTSYSTEM_DDEVENT_H
+#pragma once
 
 #include <de/event.h>
 #include <de/string.h>
@@ -109,4 +108,3 @@ struct ddevent_t
 #define IS_MOUSE_UP(evp)               ((evp)->device == IDEV_MOUSE && IS_TOGGLE_UP(evp))
 #define IS_MOUSE_MOTION(evp)           ((evp)->device == IDEV_MOUSE && (evp)->type == E_AXIS)
 
-#endif // CLIENT_INPUTSYSTEM_DDEVENT_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_ENTITYMAP_H
-#define GLOOM_ENTITYMAP_H
+#pragma once
 
 #include <de/rectangle.h>
 #include <de/vector.h>
@@ -49,4 +48,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_ENTITYMAP_H

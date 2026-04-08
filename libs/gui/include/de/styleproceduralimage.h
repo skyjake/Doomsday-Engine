@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_STYLEPROCEDURALIMAGE_H
-#define LIBAPPFW_STYLEPROCEDURALIMAGE_H
+#pragma once
 
 #include "de/proceduralimage.h"
 #include "de/guiwidget.h"
@@ -104,4 +103,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_STYLEPROCEDURALIMAGE_H

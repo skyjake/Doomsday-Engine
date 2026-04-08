@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_PLAYER_H
-#define DE_CLIENT_PLAYER_H
+#pragma once
 
 #include "cl_mobj.h"
 #include "clientplayer.h"
@@ -72,4 +71,3 @@ mobj_t *ClPlayer_LocalGameMobj(int plrNum);
  */
 bool ClPlayer_IsFreeToMove(int plrnum);
 
-#endif // DE_CLIENT_PLAYER_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_MODELRENDERER_H
-#define DE_CLIENT_MODELRENDERER_H
+#pragma once
 
 #include "model.h"
 
@@ -95,4 +94,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_MODELRENDERER_H

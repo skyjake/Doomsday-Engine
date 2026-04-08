@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_SIDEBARWIDGET_H
-#define DE_CLIENT_UI_SIDEBARWIDGET_H
+#pragma once
 
 #include <de/buttonwidget.h>
 #include <de/constantrule.h>
@@ -55,5 +54,3 @@ private:
     DE_PRIVATE(d)
 };
 
-
-#endif // DE_CLIENT_UI_SIDEBARWIDGET_H

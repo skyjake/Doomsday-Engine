@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_P_MAPUTL_H
-#define LIBHEXEN_P_MAPUTL_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -35,4 +34,3 @@
  */
 mobj_t *P_RoughMonsterSearch(mobj_t *mobj, int distance);
 
-#endif // LIBHEXEN_P_MAPUTL_H

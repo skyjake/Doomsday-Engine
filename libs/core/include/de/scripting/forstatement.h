@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_FORSTATEMENT_H
-#define LIBCORE_FORSTATEMENT_H
+#pragma once
 
 #include "statement.h"
 #include "compound.h"
@@ -64,4 +63,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_FORSTATEMENT_H */

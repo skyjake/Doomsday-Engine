@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_ACS_MODULE_H
-#define LIBCOMMON_ACS_MODULE_H
+#pragma once
 
 #include <functional>
 #include <doomsday/filesys/file.h>
@@ -115,4 +114,3 @@ private:
 
 } // namespace acs
 
-#endif  // LIBCOMMON_ACS_MODULE_H

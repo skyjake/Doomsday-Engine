@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_OUTPUT_CONTEXT_H__
-#define __AMETHYST_OUTPUT_CONTEXT_H__
+#pragma once
 
 #include "string.h"
 #include "linkable.h"
@@ -89,4 +88,3 @@ private:
     Gem *_gem, *_top;
 };
 
-#endif

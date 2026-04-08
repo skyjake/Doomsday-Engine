@@ -27,8 +27,7 @@
  */
 
 // Extended Generalized Line Types
-#ifndef __XG_LINETYPE_H__
-#define __XG_LINETYPE_H__
+#pragma once
 
 #include "doomsday.h"
 #include <doomsday/world/xgclass.h>
@@ -437,4 +436,3 @@ void SV_ReadXGLine(Line *li, MapStateReader *msr);
 } // extern "C"
 #endif
 
-#endif

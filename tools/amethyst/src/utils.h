@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_UTILS_H__
-#define __AMETHYST_UTILS_H__
+#pragma once
 
 #include "string.h"
 #include <stdint.h>
@@ -67,4 +66,3 @@ String trim(const String& str);
 String dateString(String format = "yyyy-MM-dd");
 bool fileFound(const String& fileName);
 
-#endif

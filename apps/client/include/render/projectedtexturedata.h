@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_RENDER_PROJECTEDTEXTUREDATA_H
-#define CLIENT_RENDER_PROJECTEDTEXTUREDATA_H
+#pragma once
 
 #include <de/vector.h>
 #include "api_gl.h"  // DGLuint
@@ -35,4 +34,3 @@ struct ProjectedTextureData
     de::Vec4f color;
 };
 
-#endif  // CLIENT_RENDER_PROJECTEDTEXTUREDATA_H

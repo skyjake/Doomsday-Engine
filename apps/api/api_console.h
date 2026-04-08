@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DOOMSDAY_API_CONSOLE_H
-#define DOOMSDAY_API_CONSOLE_H
+#pragma once
 
 #include "api_base.h"
 #include "dd_share.h"
@@ -116,4 +115,3 @@ DE_USING_API(Con);
 
 ///@}
 
-#endif // DOOMSDAY_API_CONSOLE_H

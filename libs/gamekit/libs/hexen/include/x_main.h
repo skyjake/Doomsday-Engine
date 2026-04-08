@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBJHEXEN_MAIN_H
-#define LIBJHEXEN_MAIN_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -69,4 +68,3 @@ void *X_GetVariable(int id);
 } // extern "C"
 #endif
 
-#endif // LIBJHEXEN_MAIN_H

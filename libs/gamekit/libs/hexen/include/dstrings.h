@@ -27,8 +27,7 @@
  * dstrings.h:
  */
 
-#ifndef __DSTRINGS_H__
-#define __DSTRINGS_H__
+#pragma once
 
 #define PRESSKEY    "press a key."
 #define PRESSYN     "press y or n."
@@ -218,4 +217,4 @@
                     "just have been a scream.\n\n"\
                     "then again, what about the other\n"\
                     "serpent riders?"
-#endif
+

@@ -27,8 +27,7 @@
  * Version numbering, naming etc.
  */
 
-#ifndef JHEXEN_VERSION_H
-#define JHEXEN_VERSION_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -66,4 +65,3 @@
 #define PLUGIN_DESC         PLUGIN_NICENAME " " DE_PLUGINDESC
 #define PLUGIN_COPYRIGHT    "1999-2019, " DENGPROJECT_NICEAUTHOR
 
-#endif /* JHEXEN_VERSION_H */

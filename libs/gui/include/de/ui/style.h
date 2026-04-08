@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_STYLE_H
-#define LIBAPPFW_STYLE_H
+#pragma once
 
 #include "../libgui.h"
 #include <de/rulebank.h>
@@ -104,4 +103,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_STYLE_H

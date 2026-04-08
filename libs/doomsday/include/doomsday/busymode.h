@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_BUSYMODE_H
-#define LIBDOOMSDAY_BUSYMODE_H
+#pragma once
 
 #include "libdoomsday.h"
 #include <de/observers.h>
@@ -162,6 +161,4 @@ LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC int  BusyMode_RunTask(BusyTask *task);
 LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC int  BusyMode_RunTasks(BusyTask *task, int numTasks);
 LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC int  BusyMode_RunNewTask(int flags, busyworkerfunc_t worker, void *workerData);
 LIBDOOMSDAY_EXTERN_C LIBDOOMSDAY_PUBLIC int  BusyMode_RunNewTaskWithName(int flags, busyworkerfunc_t worker, void *workerData, const char *taskName);
-
-#endif // LIBDOOMSDAY_BUSYMODE_H
 

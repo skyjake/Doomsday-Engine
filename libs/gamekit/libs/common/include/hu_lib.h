@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_GUI_LIBRARY_H
-#define LIBCOMMON_GUI_LIBRARY_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -116,4 +115,3 @@ struct ui_rendstate_t
 
 DE_EXTERN_C const ui_rendstate_t *uiRendState;
 
-#endif  // LIBCOMMON_UI_LIBRARY_H

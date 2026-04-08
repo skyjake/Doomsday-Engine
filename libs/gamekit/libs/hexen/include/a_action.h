@@ -22,8 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBHEXEN_A_ACTION_H
-#define LIBHEXEN_A_ACTION_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -43,4 +42,3 @@ void X_DestroyLUTs(void);
 } // extern "C"
 #endif
 
-#endif /* LIBHEXEN_A_ACTION_H */

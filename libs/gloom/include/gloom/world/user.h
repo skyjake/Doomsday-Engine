@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_USER_H
-#define GLOOM_USER_H
+#pragma once
 
 #include <de/vector.h>
 #include <de/time.h>
@@ -77,4 +76,3 @@ private:
 
 } // namespace gloom
 
-#endif // GLOOM_USER_H

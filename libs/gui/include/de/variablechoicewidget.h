@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_VARIABLECHOICEWIDGET_H
-#define LIBAPPFW_VARIABLECHOICEWIDGET_H
+#pragma once
 
 #include <de/variable.h>
 
@@ -55,4 +54,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_VARIABLECHOICEWIDGET_H

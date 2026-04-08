@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHERETIC_CONSOLE_H
-#define LIBHERETIC_CONSOLE_H
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -39,4 +38,3 @@ void G_ConsoleRegistration(void);
 } // extern "C"
 #endif
 
-#endif // LIBHERETIC_CONSOLE_H

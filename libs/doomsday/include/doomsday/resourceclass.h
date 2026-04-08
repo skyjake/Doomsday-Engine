@@ -21,8 +21,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCECLASS_H
-#define LIBDOOMSDAY_RESOURCECLASS_H
+#pragma once
 
 #include "libdoomsday.h"
 
@@ -126,4 +125,3 @@ inline bool isNullResourceClass(ResourceClass const& rclass) {
 
 #endif // __cplusplus
 
-#endif /* LIBDOOMSDAY_RESOURCECLASS_H */

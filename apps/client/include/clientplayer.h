@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_CLIENTPLAYER_H
-#define CLIENT_CLIENTPLAYER_H
+#pragma once
 
 #include <doomsday/player.h>
 #include "render/viewports.h"
@@ -108,4 +107,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // CLIENT_CLIENTPLAYER_H

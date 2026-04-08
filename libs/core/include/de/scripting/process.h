@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_PROCESS_H
-#define LIBCORE_PROCESS_H
+#pragma once
 
 #include "script.h"
 #include "context.h"
@@ -368,4 +367,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_PROCESS_H */

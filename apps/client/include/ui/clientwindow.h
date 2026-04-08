@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_CLIENTWINDOW_H
-#define CLIENT_CLIENTWINDOW_H
+#pragma once
 
 #include <de/persistentglwindow.h>
 #include <de/basewindow.h>
@@ -151,4 +150,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // CANVASWINDOW_H

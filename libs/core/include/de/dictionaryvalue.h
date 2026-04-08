@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_DICTIONARYVALUE_H
-#define LIBCORE_DICTIONARYVALUE_H
+#pragma once
 
 #include "de/value.h"
 
@@ -135,4 +134,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_DICTIONARYVALUE_H */

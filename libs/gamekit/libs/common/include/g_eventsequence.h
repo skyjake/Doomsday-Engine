@@ -26,8 +26,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_EVENTSEQUENCE_H
-#define LIBCOMMON_EVENTSEQUENCE_H
+#pragma once
 
 #include "doomsday.h"
 
@@ -79,4 +78,3 @@ void G_AddEventSequenceCommand(const char *sequence, const char *commandTemplate
 } // extern "C"
 #endif
 
-#endif  // LIBCOMMON_EVENTSEQUENCE_H

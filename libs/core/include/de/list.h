@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_LIST_H
-#define LIBCORE_LIST_H
+#pragma once
 
 #include <algorithm>
 #include <vector>
@@ -158,4 +157,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_LIST_H

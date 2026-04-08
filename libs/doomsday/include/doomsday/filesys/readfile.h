@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_FILESYS_READFILE_H
-#define LIBDOOMSDAY_FILESYS_READFILE_H
+#pragma once
 
 #include <de/legacy/str.h>
 
@@ -37,4 +36,3 @@ DE_PUBLIC AutoStr *M_ReadFileIntoString(const ddstring_t *path, dd_bool *isCusto
 } // extern "C"
 #endif
 
-#endif // LIBDOOMSDAY_FILESYS_READFILE_H

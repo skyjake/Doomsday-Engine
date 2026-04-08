@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_RESOURCE_RAWTEXTURE
-#define DE_RESOURCE_RAWTEXTURE
+#pragma once
 
 #include "dd_share.h" // For lumpnum_t
 #include <de/string.h>
@@ -45,4 +44,3 @@ struct rawtex_t
     {}
 };
 
-#endif // DE_RESOURCE_RAWTEXTURE

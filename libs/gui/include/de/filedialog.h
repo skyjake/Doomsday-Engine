@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_FILEDIALOG_H
-#define LIBGUI_FILEDIALOG_H
+#pragma once
 
 #include "libgui.h"
 #include <de/nativepath.h>
@@ -73,4 +72,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_FILEDIALOG_H

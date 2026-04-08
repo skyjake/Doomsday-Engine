@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_FX_COLORFILTERCONSOLEEFFECT_H
-#define DE_CLIENT_FX_COLORFILTERCONSOLEEFFECT_H
+#pragma once
 
 #include "render/consoleeffect.h"
 
@@ -38,4 +37,3 @@ public:
 
 } // namespace fx
 
-#endif // DE_CLIENT_FX_COLORFILTERCONSOLEEFFECT_H

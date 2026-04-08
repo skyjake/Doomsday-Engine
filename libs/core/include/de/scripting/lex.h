@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_LEX_H
-#define LIBCORE_LEX_H
+#pragma once
 
 #include "../libcore.h"
 #include "de/string.h"
@@ -178,4 +177,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_LEX_H */

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_OPERATOREXPRESSION_H
-#define LIBCORE_OPERATOREXPRESSION_H
+#pragma once
 
 #include "../libcore.h"
 #include "operator.h"
@@ -107,4 +106,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_OPERATOREXPRESSION_H */

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_TEXTURES_H
-#define LIBDOOMSDAY_RESOURCE_TEXTURES_H
+#pragma once
 
 #include "texturescheme.h"
 #include "texture.h"
@@ -234,4 +233,3 @@ private:
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_RESOURCE_TEXTURES_H

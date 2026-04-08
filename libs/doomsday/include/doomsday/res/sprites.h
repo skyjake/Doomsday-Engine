@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_SPRITES_H
-#define LIBDOOMSDAY_RESOURCE_SPRITES_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include "../defs/sprite.h"
@@ -89,4 +88,3 @@ private:
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_RESOURCE_SPRITES_H

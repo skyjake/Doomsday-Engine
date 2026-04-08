@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_ITEMSWIDGET_H
-#define LIBCOMMON_UI_ITEMSWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -42,4 +41,3 @@ private:
     int _value = 1994;
 };
 
-#endif  // LIBCOMMON_UI_ITEMSWIDGET_H

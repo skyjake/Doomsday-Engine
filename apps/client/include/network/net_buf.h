@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_NETWORK_BUFFER_H
-#define DE_NETWORK_BUFFER_H
+#pragma once
 
 #include "dd_types.h"
 
@@ -138,4 +137,3 @@ void N_PostMessage(netmessage_t *msg);
 } // extern "C"
 #endif
 
-#endif /* DE_NETWORK_BUFFER_H */

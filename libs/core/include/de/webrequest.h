@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_WEBREQUEST_H
-#define LIBCORE_WEBREQUEST_H
+#pragma once
 
 #include "de/block.h"
 #include "de/string.h"
@@ -84,4 +83,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_WEBREQUEST_H

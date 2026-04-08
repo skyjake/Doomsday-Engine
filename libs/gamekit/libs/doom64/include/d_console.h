@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM64_CONSOLE_H
-#define LIBDOOM64_CONSOLE_H
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -39,4 +38,3 @@ void G_ConsoleRegistration(void);
 } // extern "C"
 #endif
 
-#endif // LIBDOOM64_CONSOLE_H

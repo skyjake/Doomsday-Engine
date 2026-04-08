@@ -29,8 +29,7 @@
  * Isolated here to make it easier separating modules.
  */
 
-#ifndef __JHERETIC_TYPE_H__
-#define __JHERETIC_TYPE_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -67,4 +66,3 @@
 #define MINLONG     ((long)0x80000000)
 #endif
 
-#endif

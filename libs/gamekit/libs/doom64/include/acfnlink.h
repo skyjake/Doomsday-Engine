@@ -28,8 +28,7 @@
  * acfnlink.h:
  */
 
-#ifndef __ACTION_LINK_H__
-#define __ACTION_LINK_H__
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -146,4 +145,3 @@ ACTION_MOBJ(A_EMarineAttack2);
 } // extern "C"
 #endif
 
-#endif

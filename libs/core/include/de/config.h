@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_CONFIG_H
-#define LIBCORE_CONFIG_H
+#pragma once
 
 #include "de/string.h"
 #include "de/path.h"
@@ -120,4 +119,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_CONFIG_H */

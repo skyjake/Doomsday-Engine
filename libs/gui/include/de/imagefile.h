@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_IMAGEFILE_H
-#define LIBGUI_IMAGEFILE_H
+#pragma once
 
 #include <de/file.h>
 #include <de/filesys/iinterpreter.h>
@@ -91,6 +90,4 @@ private:
 };
 
 } // namespace de
-
-#endif // LIBGUI_IMAGEFILE_H
 

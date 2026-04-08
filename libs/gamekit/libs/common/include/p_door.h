@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_THINKER_DOOR_H
-#define LIBCOMMON_THINKER_DOOR_H
+#pragma once
 
 #ifdef __cplusplus
 #  include "mapstatereader.h"
@@ -108,4 +107,3 @@ int EV_AnimateDoor(Line* li, mobj_t *mo);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_THINKER_DOOR_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_LABELWIDGET_H
-#define LIBAPPFW_LABELWIDGET_H
+#pragma once
 
 #include "ui/defs.h"
 #include "ui/data.h"
@@ -305,4 +304,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_LABELWIDGET_H

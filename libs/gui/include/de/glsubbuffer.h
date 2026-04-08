@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GLSUBBUFFER_H
-#define LIBGUI_GLSUBBUFFER_H
+#pragma once
 
 #include <de/glbuffer.h>
 
@@ -94,4 +93,3 @@ public:
 */
 } // namespace de
 
-#endif // LIBGUI_GLSUBBUFFER_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_MESSAGEDIALOG_H
-#define LIBAPPFW_MESSAGEDIALOG_H
+#pragma once
 
 #include "de/dialogwidget.h"
 
@@ -54,4 +53,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_MESSAGEDIALOG_H

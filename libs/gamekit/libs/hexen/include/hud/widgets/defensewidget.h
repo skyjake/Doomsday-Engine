@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_UI_DEFENSEWIDGET_H
-#define LIBHEXEN_UI_DEFENSEWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 
@@ -45,4 +44,3 @@ private:
     patchid_t _patchId = 0;
 };
 
-#endif  // LIBHEXEN_UI_DEFENSEWIDGET_H

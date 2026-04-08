@@ -26,8 +26,7 @@
  * r_local.h:
  */
 
-#ifndef __R_LOCAL_H__
-#define __R_LOCAL_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -42,4 +41,3 @@
 extern int      centerx, centery;
 extern int      flyheight;
 
-#endif

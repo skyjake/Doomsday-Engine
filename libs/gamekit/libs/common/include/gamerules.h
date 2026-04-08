@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_GAMERULES_H
-#define LIBCOMMON_GAMERULES_H
+#pragma once
 
 typedef enum gfw_gamerule_e {
     GFW_RULE_skill,
@@ -109,4 +108,3 @@ int gfw_SessionRule(gfw_gamerule_t rule);
 
 #endif // __cplusplus
 
-#endif // LIBCOMMON_GAMERULES_H

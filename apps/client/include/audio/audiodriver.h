@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef AUDIO_AUDIODRIVER_H
-#define AUDIO_AUDIODRIVER_H
+#pragma once
 
 #ifndef __cplusplus
 #  error "audiodriver.h requires C++"
@@ -157,4 +156,3 @@ private:
 
 de::String AudioDriver_GetName(audiodriverid_t id);
 
-#endif  // AUDIO_AUDIODRIVER_H

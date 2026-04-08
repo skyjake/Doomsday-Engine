@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_AUXBUTTONWIDGET_H
-#define LIBAPPFW_AUXBUTTONWIDGET_H
+#pragma once
 
 #include <de/buttonwidget.h>
 
@@ -47,4 +46,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_AUXBUTTONWIDGET_H

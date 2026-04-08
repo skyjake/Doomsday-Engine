@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_RESOURCE_MATERIALVARIANTSPEC_H
-#define CLIENT_RESOURCE_MATERIALVARIANTSPEC_H
+#pragma once
 
 #ifndef __CLIENT__
 #  error "resource/materialvariantspec.h only exists in the Client"
@@ -85,4 +84,3 @@ public:
 
 } // namespace de
 
-#endif  // CLIENT_RESOURCE_MATERIALVARIANTSPEC_H

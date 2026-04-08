@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_HUDWIDGET_H
-#define LIBCOMMON_UI_HUDWIDGET_H
+#pragma once
 
 #include <de/vector.h>
 #include "doomsday.h"
@@ -82,4 +81,3 @@ private:
 typedef void (*UpdateGeometryFunc)(HudWidget *);
 typedef void (*DrawFunc)(HudWidget *, const Point2Raw *);
 
-#endif  // LIBCOMMON_UI_HUDWIDGET_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_SCRIPTSYSTEM_H
-#define LIBCORE_SCRIPTSYSTEM_H
+#pragma once
 
 #include "de/error.h"
 #include "de/system.h"
@@ -143,4 +142,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_SCRIPTSYSTEM_H

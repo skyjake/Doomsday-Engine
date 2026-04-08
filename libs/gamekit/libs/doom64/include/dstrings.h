@@ -27,8 +27,7 @@
  * dstrings.h:
  */
 
-#ifndef __DSTRINGS_H__
-#define __DSTRINGS_H__
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -37,4 +36,3 @@
 // All important printed strings.
 #include "d_englsh.h"
 
-#endif

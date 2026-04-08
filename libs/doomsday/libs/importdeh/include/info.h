@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDEHREAD_INFO_H
-#define LIBDEHREAD_INFO_H
+#pragma once
 
 #include <de/string.h>
 #include "importdeh.h"
@@ -200,4 +199,3 @@ int stateIndexForActionOffset(int offset);
 
 int originalHeightForMobjType(int type);
 
-#endif // LIBDEHREAD_INFO_H

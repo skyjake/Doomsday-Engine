@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_SERVER_SOUND_H
-#define DE_SERVER_SOUND_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,4 +57,3 @@ void Sv_StopSound(int soundId, const struct mobj_s *origin);
 } // extern "C"
 #endif
 
-#endif // DE_SERVER_SOUND_H

@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_M_CHEAT_H
-#define LIBDOOM_M_CHEAT_H
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -40,4 +39,3 @@ void G_RegisterCheats(void);
 } // extern "C"
 #endif
 
-#endif  // LIBDOOM_M_CHEAT_H

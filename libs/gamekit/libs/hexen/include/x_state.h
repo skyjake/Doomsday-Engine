@@ -27,8 +27,7 @@
  * x_state.h: All the global variables that store the internal state.
  */
 
-#ifndef __X_STATE_H__
-#define __X_STATE_H__
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -67,4 +66,3 @@ DE_EXTERN_C dd_bool singledemo;
 
 extern int      bodyqueslot;
 
-#endif

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_WORLD_MAP_H
-#define DE_CLIENT_WORLD_MAP_H
+#pragma once
 
 void Cl_InitTransTables();
 void Cl_ResetTransTables();
@@ -57,4 +56,3 @@ void Cl_ReadSideDelta(int deltaType);
  */
 void Cl_ReadPolyDelta();
 
-#endif // DE_CLIENT_WORLD_MAP_H

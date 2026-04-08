@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_GEOMATH_H
-#define GLOOM_GEOMATH_H
+#pragma once
 
 #include <de/vector.h>
 #include "../libgloom.h"
@@ -186,4 +185,3 @@ struct LIBGLOOM_PUBLIC Plane
 
 }} // namespace gloom::geo
 
-#endif // GLOOM_GEOMATH_H

@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_GL_MAIN_H
-#define DE_GL_MAIN_H
+#pragma once
 
 #ifndef __CLIENT__
 #  error "gl only exists in the Client"
@@ -342,4 +341,3 @@ void            DGL_CullFace(DGLenum cull);
 
 //D_CMD(UpdateGammaRamp);
 
-#endif // DE_GL_MAIN_H

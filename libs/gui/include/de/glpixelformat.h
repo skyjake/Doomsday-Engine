@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_GLPIXELFORMAT_H
-#define LIBGUI_GLPIXELFORMAT_H
+#pragma once
 
 #include "libgui.h"
 #include "opengl.h"
@@ -48,4 +47,3 @@ struct LIBGUI_PUBLIC GLPixelFormat {
 
 } // namespace de
 
-#endif // LIBGUI_GLPIXELFORMAT_H

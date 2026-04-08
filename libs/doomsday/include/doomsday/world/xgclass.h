@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_XG_CLASSES_H
-#define LIBDOOMSDAY_XG_CLASSES_H
+#pragma once
 
 #include "../api_map.h"
 
@@ -80,4 +79,3 @@ typedef struct xgclass_s {
     xgclassparm_t   iparm[20]; // iparms
 } xgclass_t;
 
-#endif // LIBDOOMSDAY_XG_CLASSES_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_PACKAGESSIDEBARWIDGET_H
-#define DE_CLIENT_UI_PACKAGESSIDEBARWIDGET_H
+#pragma once
 
 #include "ui/widgets/sidebarwidget.h"
 
@@ -33,4 +32,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UI_PACKAGESSIDEBARWIDGET_H

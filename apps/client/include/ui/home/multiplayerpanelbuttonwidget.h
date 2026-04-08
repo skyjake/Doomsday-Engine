@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_HOME_MULTIPLAYERPANELBUTTONWIDGET_H
-#define DE_CLIENT_UI_HOME_MULTIPLAYERPANELBUTTONWIDGET_H
+#pragma once
 
 #include "../widgets/panelbuttonwidget.h"
 #include <de/buttonwidget.h>
@@ -44,4 +43,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UI_HOME_MULTIPLAYERPANELBUTTONWIDGET_H

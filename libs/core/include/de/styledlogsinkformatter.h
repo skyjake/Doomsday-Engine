@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_STYLEDLOGSINKFORMATTER_H
-#define LIBCORE_STYLEDLOGSINKFORMATTER_H
+#pragma once
 
 #include "logsink.h"
 #include "string.h"
@@ -56,4 +55,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_STYLEDLOGSINKFORMATTER_H

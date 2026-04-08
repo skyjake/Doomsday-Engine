@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_NATIVEPOINTERVALUE_H
-#define LIBCORE_NATIVEPOINTERVALUE_H
+#pragma once
 
 #include "de/value.h"
 #include "de/record.h"
@@ -70,6 +69,4 @@ private:
 };
 
 } // namespace de
-
-#endif // LIBCORE_NATIVEPOINTERVALUE_H
 

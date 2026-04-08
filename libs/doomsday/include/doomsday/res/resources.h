@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCES_H
-#define LIBDOOMSDAY_RESOURCES_H
+#pragma once
 
 #include "../resourceclass.h"
 #include <de/info.h>
@@ -152,6 +151,4 @@ LIBDOOMSDAY_PUBLIC ResourceClass &App_ResourceClass(const de::String& className)
 
 /// @overload
 LIBDOOMSDAY_PUBLIC ResourceClass &App_ResourceClass(resourceclassid_t classId);
-
-#endif // LIBDOOMSDAY_RESOURCES_H
 

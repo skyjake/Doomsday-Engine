@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_RENDER_LUMOBJ_H
-#define DE_CLIENT_RENDER_LUMOBJ_H
+#pragma once
 
 #include <de/legacy/aabox.h>
 
@@ -251,4 +250,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_RENDER_LUMOBJ_H

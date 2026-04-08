@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
-#define LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H
+#pragma once
 
 #include <de/file.h>
 #include <de/reader.h>
@@ -45,4 +44,3 @@ Reader1 *SV_NewReader();
 /// Provides access to the wrapped de::Reader instance used for deserialization.
 de::Reader &SV_RawReader();
 
-#endif // LIBCOMMON_SAVESTATE_INPUT_OUTPUT_H

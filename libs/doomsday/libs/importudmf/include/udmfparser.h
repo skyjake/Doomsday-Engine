@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef IMPORTUDMF_UDMFPARSER_H
-#define IMPORTUDMF_UDMFPARSER_H
+#pragma once
 
 #include "udmflex.h"
 #include <de/scripting/tokenrange.h>
@@ -72,4 +71,3 @@ private:
     de::TokenRange  _range;
 };
 
-#endif // IMPORTUDMF_UDMFPARSER_H

@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_UNIQUE_LIST_H__
-#define __AMETHYST_UNIQUE_LIST_H__
+#pragma once
 
 #include "list.h"
 
@@ -48,4 +47,3 @@ T *UniqueList<T>::add(T *ptr)
 
 typedef UniqueList<void> UniquePtrList;
 
-#endif

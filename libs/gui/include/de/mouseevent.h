@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_MOUSEEVENT_H
-#define LIBGUI_MOUSEEVENT_H
+#pragma once
 
 #include <de/event.h>
 #include <de/vector.h>
@@ -76,4 +75,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_MOUSEEVENT_H

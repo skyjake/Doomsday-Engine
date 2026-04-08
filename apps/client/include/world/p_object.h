@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef WORLD_P_OBJECT_H
-#define WORLD_P_OBJECT_H
+#pragma once
 
 #if defined(__JDOOM__) || defined(__JHERETIC__) || defined(__JHEXEN__)
 #  error Attempted to include internal Doomsday p_object.h from a game
@@ -188,4 +187,3 @@ float Mobj_Alpha(const mobj_t &mob);
  */
 coord_t Mobj_VisualRadius(const mobj_t &mob);
 
-#endif  // WORLD_P_OBJECT_H

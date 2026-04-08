@@ -26,8 +26,7 @@
  * r_data.h:
  */
 
-#ifndef __R_DATA_H__
-#define __R_DATA_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -35,4 +34,3 @@
 
 #include "r_defs.h"
 
-#endif

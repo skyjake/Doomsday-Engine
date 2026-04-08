@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_PLAYER_H
-#define LIBDOOMSDAY_PLAYER_H
+#pragma once
 
 #include "libdoomsday.h"
 #include "network/pinger.h"
@@ -177,4 +176,3 @@ private:
 
 #endif // __cplusplus
 
-#endif // LIBDOOMSDAY_PLAYER_H

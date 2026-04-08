@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_GUIWIDGETPRIVATE_H
-#define LIBAPPFW_GUIWIDGETPRIVATE_H
+#pragma once
 
 #include <de/libcore.h>
 #include "de/guirootwidget.h"
@@ -159,4 +158,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_GUIWIDGETPRIVATE_H

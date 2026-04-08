@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_IREADABLE_H
-#define LIBCORE_IREADABLE_H
+#pragma once
 
 #include "de/libcore.h"
 
@@ -49,4 +48,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_IREADABLE_H

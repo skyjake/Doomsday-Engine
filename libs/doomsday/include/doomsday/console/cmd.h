@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_CONSOLE_CMD_H
-#define LIBDOOMSDAY_CONSOLE_CMD_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include "var.h"
@@ -205,4 +204,3 @@ LIBDOOMSDAY_PUBLIC void Con_AddMappedConfigVariable(const char *consoleName,
 
 #endif // __cplusplus
 
-#endif // LIBDOOMSDAY_CONSOLE_CMD_H

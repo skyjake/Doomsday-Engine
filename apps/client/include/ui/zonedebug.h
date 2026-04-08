@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_ZONEDEBUG_H
-#define CLIENT_ZONEDEBUG_H
+#pragma once
 
 #include <de/liblegacy.h>
 #if defined (DE_DEBUG) && defined (DE_OPENGL)
@@ -37,4 +36,3 @@ void Z_DebugDrawer(void);
 
 #endif // DE_DEBUG
 
-#endif // CLIENT_ZONEDEBUG_H

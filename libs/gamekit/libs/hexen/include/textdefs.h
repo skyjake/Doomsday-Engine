@@ -26,8 +26,7 @@
  * textdefs.h:
  */
 
-#ifndef __TEXTDEFS_H__
-#define __TEXTDEFS_H__
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -190,4 +189,3 @@
 #define DELETESAVEGAME_CONFIRM GET_TXT(TXT_DELETESAVEGAME_CONFIRM)
 #define REBORNLOAD_CONFIRM  GET_TXT(TXT_REBORNLOAD_CONFIRM)
 
-#endif

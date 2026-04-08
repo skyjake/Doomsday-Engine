@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_URI_H
-#define LIBDOOMSDAY_URI_H
+#pragma once
 
 #ifdef __cplusplus
 
@@ -376,4 +375,3 @@ namespace std {
 
 #endif // __cplusplus
 
-#endif // LIBDOOMSDAY_URI_H

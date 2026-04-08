@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_HASH_H
-#define LIBCORE_HASH_H
+#pragma once
 
 #include <unordered_map>
 #include <list>
@@ -178,4 +177,3 @@ inline bool multiRemove(MultiContainer &multi,
 
 } // namespace de
 
-#endif // LIBCORE_HASH_H

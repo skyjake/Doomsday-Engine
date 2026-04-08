@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_RENDER_LIGHTDECORATION_H
-#define DE_CLIENT_RENDER_LIGHTDECORATION_H
+#pragma once
 
 #include "decoration.h"
 #include "lumobj.h"
@@ -77,4 +76,3 @@ public:
     Lumobj *generateLumobj() const;
 };
 
-#endif  // DE_CLIENT_RENDER_LIGHTDECORATION_H

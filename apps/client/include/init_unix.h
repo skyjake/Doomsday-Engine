@@ -21,8 +21,7 @@
  * Unix Initialization.
  */
 
-#ifndef DE_UINIT_H
-#define DE_UINIT_H
+#pragma once
 
 #include "dd_pinit.h"
 
@@ -37,4 +36,3 @@ void DD_Shutdown(void);
 } // extern "C"
 #endif
 
-#endif /* DE_UINIT_H */

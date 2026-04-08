@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_CALLBACKACTION_H
-#define LIBAPPFW_CALLBACKACTION_H
+#pragma once
 
 #include "libgui.h"
 #include <de/action.h>
@@ -43,4 +42,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_CALLBACKACTION_H

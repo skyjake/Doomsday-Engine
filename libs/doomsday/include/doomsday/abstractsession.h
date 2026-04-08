@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_SESSION_H
-#define LIBDOOMSDAY_SESSION_H
+#pragma once
 
 #include "libdoomsday.h"
 #include "uri.h"
@@ -118,4 +117,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // LIBDOOMSDAY_SESSION_H

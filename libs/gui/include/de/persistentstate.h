@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_PERSISTENTSTATE_H
-#define LIBAPPFW_PERSISTENTSTATE_H
+#pragma once
 
 #include "libgui.h"
 #include <de/refuge.h>
@@ -43,4 +42,3 @@ public:
 
 } // namespace de
 
-#endif // LIBAPPFW_PERSISTENTSTATE_H

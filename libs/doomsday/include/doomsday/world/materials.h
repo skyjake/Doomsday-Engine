@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_MATERIALS_H
-#define LIBDOOMSDAY_WORLD_MATERIALS_H
+#pragma once
 
 #include "material.h"
 #include "materialmanifest.h"
@@ -205,4 +204,3 @@ private:
 
 } // namespace world
 
-#endif // LIBDOOMSDAY_WORLD_MATERIALS_H

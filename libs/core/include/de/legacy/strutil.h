@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_STRING_UTIL_H
-#define DE_STRING_UTIL_H
+#pragma once
 
 #include "types.h"
 #include <stdarg.h>
@@ -122,4 +121,3 @@ DE_PUBLIC dd_bool M_IsStringValidFloat(const char* str);
 } // extern "C"
 #endif
 
-#endif // DE_STRING_UTIL_H

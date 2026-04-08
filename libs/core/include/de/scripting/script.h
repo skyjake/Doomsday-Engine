@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_SCRIPT_H
-#define LIBCORE_SCRIPT_H
+#pragma once
 
 /**
  * @defgroup script Script Runtime
@@ -98,4 +97,3 @@ private:
 
 } // namespace de
 
-#endif

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_BASE_H
-#define DE_BASE_H
+#pragma once
 
 // System headers needed everywhere.
 #include <assert.h>
@@ -53,4 +52,3 @@
 #  include "server_dummies.h"
 #endif
 
-#endif // DE_BASE_H

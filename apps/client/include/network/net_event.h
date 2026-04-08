@@ -22,8 +22,7 @@
  * net_event.h: Network Events
  */
 
-#ifndef __DOOMSDAY_NETWORK_EVENT_H__
-#define __DOOMSDAY_NETWORK_EVENT_H__
+#pragma once
 
 #include "net_main.h"
 
@@ -62,4 +61,3 @@ void            N_NETicker(void);
 } // extern "C"
 #endif
 
-#endif

@@ -25,8 +25,7 @@
  * Top-level (common) game routines jHexen - specific.
  */
 
-#ifndef LIBJHEXEN_G_GAME_H
-#define LIBJHEXEN_G_GAME_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -94,4 +93,3 @@ int G_Responder(event_t *ev);
 } // extern "C"
 #endif
 
-#endif /* LIBJHEXEN_G_GAME_H */

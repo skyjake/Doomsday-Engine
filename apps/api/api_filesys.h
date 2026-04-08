@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DOOMSDAY_API_FILE_H
-#define DOOMSDAY_API_FILE_H
+#pragma once
 
 #include <de/legacy/str.h>
 #include "api_base.h"
@@ -87,4 +86,3 @@ DE_API_T(F);
 DE_USING_API(F);
 #endif
 
-#endif // DOOMSDAY_API_FILE_H

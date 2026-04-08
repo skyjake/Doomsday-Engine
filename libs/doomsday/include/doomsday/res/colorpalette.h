@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_COLORPALETTE_H
-#define LIBDOOMSDAY_RESOURCE_COLORPALETTE_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include <de/error.h>
@@ -169,4 +168,3 @@ typedef ColorPalette::Translation ColorPaletteTranslation;
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_RESOURCE_COLORPALETTE_H

@@ -23,8 +23,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_FILESYS_FILEHANDLE_H
-#define DE_FILESYS_FILEHANDLE_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include <de/libcore.h>
@@ -144,4 +143,3 @@ private:
 
 } // namespace res
 
-#endif /* DE_FILESYS_FILEHANDLE_H */

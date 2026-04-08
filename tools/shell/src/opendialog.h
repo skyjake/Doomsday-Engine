@@ -1,5 +1,4 @@
-#ifndef OPENDIALOG_H
-#define OPENDIALOG_H
+#pragma once
 
 #include <de/dialogwidget.h>
 #include <de/address.h>
@@ -26,4 +25,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // OPENDIALOG_H

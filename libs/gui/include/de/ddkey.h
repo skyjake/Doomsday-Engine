@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_DDKEY_H
-#define LIBGUI_DDKEY_H
+#pragma once
 
 /** @defgroup keyConstants Key Constants
  * @ingroup gui */
@@ -94,4 +93,3 @@ enum {
     DD_HIGHEST_KEYCODE
 };
 
-#endif // LIBGUI_DDKEY_H

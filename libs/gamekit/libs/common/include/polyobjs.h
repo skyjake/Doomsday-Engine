@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_PLAYSIM_POLYOBJS_H
-#define LIBCOMMON_PLAYSIM_POLYOBJS_H
+#pragma once
 
 #include "common.h"
 #ifdef __cplusplus
@@ -124,4 +123,3 @@ dd_bool EV_OpenPolyDoor(Line *line, byte *args, podoortype_t type);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_PLAYSIM_POLYOBJS_H

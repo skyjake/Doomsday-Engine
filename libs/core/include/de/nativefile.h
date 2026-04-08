@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_NATIVEFILE_H
-#define LIBCORE_NATIVEFILE_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/bytearrayfile.h"
@@ -92,4 +91,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_NATIVEFILE_H */

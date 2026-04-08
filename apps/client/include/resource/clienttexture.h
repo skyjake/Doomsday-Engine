@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_RESOURCE_CLIENTTEXTURE_H
-#define DE_RESOURCE_CLIENTTEXTURE_H
+#pragma once
 
 #include "image.h" // res::Source
 #include "texturevariantspec.h"
@@ -214,4 +213,3 @@ private:
 
 typedef ClientTexture::Variant TextureVariant;
 
-#endif // DE_RESOURCE_CLIENTTEXTURE_H

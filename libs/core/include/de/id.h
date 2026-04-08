@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ID_H
-#define LIBCORE_ID_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/iserializable.h"
@@ -131,4 +130,3 @@ namespace std
     };
 }
 
-#endif // LIBCORE_ID_H

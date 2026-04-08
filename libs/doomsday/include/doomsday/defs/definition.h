@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_DEFN_DEFINITION_H
-#define LIBDOOMSDAY_DEFN_DEFINITION_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include <de/recordaccessor.h>
@@ -70,4 +69,3 @@ public:
 
 } // namespace defn
 
-#endif // LIBDOOMSDAY_DEFN_DEFINITION_H

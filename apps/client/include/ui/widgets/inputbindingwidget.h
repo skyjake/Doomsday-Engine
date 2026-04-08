@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_INPUTBINDINGWIDGET_H
-#define DE_CLIENT_INPUTBINDINGWIDGET_H
+#pragma once
 
 #include <de/auxbuttonwidget.h>
 
@@ -59,4 +58,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_INPUTBINDINGWIDGET_H

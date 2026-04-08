@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DOOMSDAY_API_MAP_EDIT_H
-#define DOOMSDAY_API_MAP_EDIT_H
+#pragma once
 
 #include <de/legacy/str.h>
 #include <de/legacy/types.h>
@@ -154,4 +153,3 @@ DE_USING_API(MPE);
 
 ///@}
 
-#endif // DOOMSDAY_API_MAP_EDIT_H

@@ -28,8 +28,7 @@
  * d_englsh.h: Printed strings for translation (native is English).
  */
 
-#ifndef __D_ENGLSH_H__
-#define __D_ENGLSH_H__
+#pragma once
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -229,4 +228,3 @@
 #define DELETESAVEGAME_CONFIRM GET_TXT(TXT_DELETESAVEGAME_CONFIRM)
 #define REBORNLOAD_CONFIRM  GET_TXT(TXT_REBORNLOAD_CONFIRM)
 
-#endif

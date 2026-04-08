@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_SYSTEM_NETWORK_H
-#define CLIENT_SYSTEM_NETWORK_H
+#pragma once
 
 #ifndef __CLIENT__
 #  error "sys_network.h requires __CLIENT__"
@@ -48,4 +47,3 @@ void    N_PrintNetworkStatus(void);
  */
 void Net_Drawer(void);
 
-#endif  // CLIENT_SYSTEM_NETWORK_H

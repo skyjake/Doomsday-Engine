@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_IMAGEBANK_H
-#define LIBGUI_IMAGEBANK_H
+#pragma once
 
 #include "libgui.h"
 #include "de/image.h"
@@ -63,4 +62,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_IMAGEBANK_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_FOCUSWIDGET_H
-#define LIBAPPFW_FOCUSWIDGET_H
+#pragma once
 
 #include <de/labelwidget.h>
 
@@ -57,4 +56,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_FOCUSWIDGET_H

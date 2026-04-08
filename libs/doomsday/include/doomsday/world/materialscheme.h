@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_WORLD_MATERIALSCHEME_H
-#define LIBDOOMSDAY_WORLD_MATERIALSCHEME_H
+#pragma once
 
 #include <de/error.h>
 #include <de/observers.h>
@@ -115,4 +114,3 @@ private:
 
 } // namespace world
 
-#endif // LIBDOOMSDAY_WORLD_MATERIALSCHEME_H

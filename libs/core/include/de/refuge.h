@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_REFUGE_H
-#define LIBCORE_REFUGE_H
+#pragma once
 
 #include "de/record.h"
 #include "de/scripting/iobject.h"
@@ -77,4 +76,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_REFUGE_H

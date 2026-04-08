@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_RENDER_VR_H
-#define CLIENT_RENDER_VR_H
+#pragma once
 
 #include "dd_types.h"
 #include <de/vrconfig.h>
@@ -46,4 +45,3 @@ void VR_ConsoleRegister();
  */
 //bool VR_LoadRiftParameters();
 
-#endif // CLIENT_RENDER_VR_H

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
  
-#ifndef LIBCORE_MODULE_H
-#define LIBCORE_MODULE_H
+#pragma once
 
 #include "de/string.h"
 
@@ -82,4 +81,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_MODULE_H */

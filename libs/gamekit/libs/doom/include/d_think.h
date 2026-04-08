@@ -31,8 +31,7 @@
  * violent nature.
  */
 
-#ifndef __D_THINK__
-#define __D_THINK__
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -55,4 +54,3 @@ typedef union {
     actionf_p2      acp2;
 } actionf_t;
 
-#endif

@@ -20,8 +20,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_FIXED_POINT_MATH_H
-#define DE_FIXED_POINT_MATH_H
+#pragma once
 
 #include "../liblegacy.h"
 
@@ -90,4 +89,3 @@ DE_PUBLIC fixed_t FixedDiv(fixed_t a, fixed_t b);
 } // extern "C"
 #endif
 
-#endif // DE_FIXED_POINT_MATH_H

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_PROCEDURALIMAGE_H
-#define LIBAPPFW_PROCEDURALIMAGE_H
+#pragma once
 
 #include <de/vector.h>
 #include <de/glbuffer.h>
@@ -72,4 +71,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_PROCEDURALIMAGE_H

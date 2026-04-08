@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_PATCH_H
-#define LIBDOOMSDAY_RESOURCE_PATCH_H
+#pragma once
 
 #include "colorpalette.h"
 
@@ -119,4 +118,3 @@ typedef Patch::Metadata PatchMetadata;
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_RESOURCE_PATCH_H

@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SERVER_SHELLUSERS_H
-#define SERVER_SHELLUSERS_H
+#pragma once
 
 #include <doomsday/world/world.h>
 #include "users.h"
@@ -40,4 +39,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif  // SERVER_SHELLUSERS_H

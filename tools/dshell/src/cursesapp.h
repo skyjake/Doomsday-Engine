@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CURSESAPP_H
-#define CURSESAPP_H
+#pragma once
 
 #include <de/textapp.h>
 #include <de/term/textrootwidget.h>
@@ -37,4 +36,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // CURSESAPP_H

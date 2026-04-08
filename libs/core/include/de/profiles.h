@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_PROFILES_H
-#define DE_PROFILES_H
+#pragma once
 
 #include "de/string.h"
 #include "de/info.h"
@@ -208,4 +207,3 @@ private:
 
 } // namespace de
 
-#endif // DE_PROFILES_H

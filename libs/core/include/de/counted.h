@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_COUNTED_H
-#define LIBCORE_COUNTED_H
+#pragma once
 
 #include "libcore.h"
 #include <atomic>
@@ -262,4 +261,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_COUNTED_H */

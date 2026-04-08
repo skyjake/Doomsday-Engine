@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGAMEFW_MAPSPOT_H
-#define LIBGAMEFW_MAPSPOT_H
+#pragma once
 
 #include "doomsday/gamefw/defs.h"
 
@@ -58,4 +57,3 @@ LIBDOOMSDAY_PUBLIC gfw_mapspot_flags_t gfw_MapSpot_TranslateFlagsFromInternal(in
 } // extern "C"
 #endif
 
-#endif // LIBGAMEFW_MAPSPOT_H

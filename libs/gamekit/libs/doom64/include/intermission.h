@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM64_INTERMISSION_H
-#define LIBDOOM64_INTERMISSION_H
+#pragma once
 #ifdef __cplusplus
 
 #ifndef __JDOOM64__
@@ -148,4 +147,4 @@ void IN_End();
 void IN_SkipToNext();
 
 #endif // __cplusplus
-#endif // LIBDOOM64_INTERMISSION_H
+

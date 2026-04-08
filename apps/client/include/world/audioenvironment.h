@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_WORLD_AUDIOENVIRONMENT_H_
-#define DE_CLIENT_WORLD_AUDIOENVIRONMENT_H_
+#pragma once
 
 #include <de/legacy/types.h>
 
@@ -42,4 +41,3 @@ public:
 
 }  // namespace world
 
-#endif  // DE_CLIENT_WORLD_AUDIOENVIRONMENT_H_

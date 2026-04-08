@@ -27,8 +27,7 @@
  * acfnlink.h:
  */
 
-#ifndef __ACTION_LINK_H__
-#define __ACTION_LINK_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -196,4 +195,3 @@ ACTION_MOBJ(A_Invulnerability);
 } // extern "C"
 #endif
 
-#endif

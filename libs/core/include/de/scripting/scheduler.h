@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_SCHEDULER_H
-#define LIBCORE_SCHEDULER_H
+#pragma once
 
 #include "de/scripting/timeline.h"
 
@@ -70,4 +69,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_SCHEDULER_H

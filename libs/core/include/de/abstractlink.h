@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_ABSTRACTLINK_H
-#define LIBSHELL_ABSTRACTLINK_H
+#pragma once
 
 #include "de/address.h"
 #include "de/socket.h"
@@ -116,4 +115,3 @@ private:
 
 } // namespace de
 
-#endif // LIBSHELL_ABSTRACTLINK_H

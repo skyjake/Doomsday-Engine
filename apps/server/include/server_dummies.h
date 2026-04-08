@@ -26,8 +26,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef SERVER_DUMMIES_H
-#define SERVER_DUMMIES_H
+#pragma once
 
 #include <de/liblegacy.h>
 #include <doomsday/defs/ded.h>
@@ -64,4 +63,3 @@ DE_EXTERN_C void Cl_InitPlayers(void);
 DE_EXTERN_C void UI_Ticker(timespan_t t);
 DE_EXTERN_C void UI_Shutdown();
 
-#endif // SERVER_DUMMIES_H

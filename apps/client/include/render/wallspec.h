@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_RENDER_WALLSPEC
-#define DE_RENDER_WALLSPEC
+#pragma once
 
 #include "world/line.h"
 
@@ -89,4 +88,3 @@ public:
     static WallSpec fromMapSide(const LineSide &side, int section);
 };
 
-#endif // DE_RENDER_WALLSPEC

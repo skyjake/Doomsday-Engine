@@ -15,8 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __AMETHYST_MACRO_H__
-#define __AMETHYST_MACRO_H__
+#pragma once
 
 #include "linkable.h"
 #include "shard.h"
@@ -44,4 +43,3 @@ private:
     Shard   _shard;
 };
 
-#endif

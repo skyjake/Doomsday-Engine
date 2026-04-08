@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_LOGWIDGET_H
-#define LIBAPPFW_LOGWIDGET_H
+#pragma once
 
 #include <de/logsink.h>
 #include <de/animation.h>
@@ -86,4 +85,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_LOGWIDGET_H

@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_P_SPEC_H
-#define LIBHEXEN_P_SPEC_H
+#pragma once
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -90,4 +89,3 @@ dd_bool EV_ThingDestroy(int tid);
 } // extern "C"
 #endif
 
-#endif // LIBHEXEN_P_SPEC_H

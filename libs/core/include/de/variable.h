@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_VARIABLE_H
-#define LIBCORE_VARIABLE_H
+#pragma once
 
 #include "de/iserializable.h"
 #include "de/string.h"
@@ -308,4 +307,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_VARIABLE_H */

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_FUNCTIONVALUE_H
-#define LIBCORE_FUNCTIONVALUE_H
+#pragma once
 
 #include "de/value.h"
 #include "function.h"
@@ -58,4 +57,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_FUNCTIONVALUE_H */

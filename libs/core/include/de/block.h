@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_BLOCK_H
-#define LIBCORE_BLOCK_H
+#pragma once
 
 #include "de/ibytearray.h"
 #include "de/iblock.h"
@@ -265,4 +264,3 @@ namespace std
     };
 }
 
-#endif // LIBCORE_BLOCK_H

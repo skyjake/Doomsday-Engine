@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_IDTECH1IMAGE_H
-#define LIBDOOMSDAY_RESOURCE_IDTECH1IMAGE_H
+#pragma once
 
 #include <de/ibytearray.h>
 #include <de/vector.h>
@@ -84,4 +83,3 @@ private:
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_RESOURCE_IDTECH1IMAGE_H

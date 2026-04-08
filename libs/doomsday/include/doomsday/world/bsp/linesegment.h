@@ -23,8 +23,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_WORLD_BSP_LINESEGMENT_H
-#define DE_WORLD_BSP_LINESEGMENT_H
+#pragma once
 
 #include <de/error.h>
 #include <de/vector.h>
@@ -561,4 +560,3 @@ typedef LineSegment::Side LineSegmentSide;
 }  // namespace bsp
 }  // namespace world
 
-#endif  // DE_WORLD_BSP_LINESEGMENT_H

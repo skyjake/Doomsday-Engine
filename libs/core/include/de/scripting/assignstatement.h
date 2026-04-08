@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
  
-#ifndef LIBCORE_ASSIGNSTATEMENT_H
-#define LIBCORE_ASSIGNSTATEMENT_H
+#pragma once
 
 #include "../libcore.h"
 #include "statement.h"
@@ -71,4 +70,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_ASSIGNSTATEMENT_H */

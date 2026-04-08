@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_UI_FILTEREDDATA_H
-#define LIBAPPFW_UI_FILTEREDDATA_H
+#pragma once
 
 #include "data.h"
 #include <functional>
@@ -108,4 +107,3 @@ public:
 } // namespace ui
 } // namespace de
 
-#endif // LIBAPPFW_UI_FILTEREDDATA_H

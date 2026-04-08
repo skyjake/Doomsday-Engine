@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_NETSV_H
-#define LIBCOMMON_NETSV_H
+#pragma once
 
 #include <de/legacy/reader.h>
 #include "common.h"
@@ -163,4 +162,3 @@ D_CMD(MapCycle);
 } // extern "C"
 #endif
 
-#endif // LIBCOMMON_NETSV_H

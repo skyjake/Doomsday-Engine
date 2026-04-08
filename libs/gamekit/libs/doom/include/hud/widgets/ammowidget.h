@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_UI_AMMOWIDGET_H
-#define LIBDOOM_UI_AMMOWIDGET_H
+#pragma once
 
 #include "hud/hudwidget.h"
 #include "doomdef.h"
@@ -46,4 +45,3 @@ private:
     ammotype_t _ammotype = ammotype_t(0);
 };
 
-#endif  // LIBDOOM_UI_AMMOWIDGET_H

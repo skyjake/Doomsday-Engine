@@ -26,8 +26,7 @@
  * h_items.h: Items, key cards/weapons/ammunition...
  */
 
-#ifndef __JHERETIC_ITEMS_H__
-#define __JHERETIC_ITEMS_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -81,4 +80,3 @@ void P_InitWeaponInfo(void);
 } // extern "C"
 #endif
 
-#endif // __JHERETIC_ITEMS_H__

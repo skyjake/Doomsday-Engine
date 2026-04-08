@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_TEXTAPP_H
-#define LIBCORE_TEXTAPP_H
+#pragma once
 
 #include "app.h"
 #include "loop.h"
@@ -67,4 +66,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_TEXTAPP_H

@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_RENDER_SKYDRAWABLE_H
-#define DE_CLIENT_RENDER_SKYDRAWABLE_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/error.h>
@@ -157,4 +156,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif  // DE_CLIENT_RENDER_SKYDRAWABLE_H

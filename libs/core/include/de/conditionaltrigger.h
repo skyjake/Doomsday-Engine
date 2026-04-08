@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_CONDITIONALTRIGGER_H
-#define LIBCORE_CONDITIONALTRIGGER_H
+#pragma once
 
 #include "de/variable.h"
 
@@ -67,4 +66,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_CONDITIONALTRIGGER_H

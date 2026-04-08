@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_AUDIO_SYSTEM_H
-#define CLIENT_AUDIO_SYSTEM_H
+#pragma once
 
 #include "dd_types.h"  // lumpnum_t
 #include "api_sound.h"
@@ -331,4 +330,3 @@ int S_StopSoundWithLowerPriority(int soundId, struct mobj_s *emitter, ddboolean_
 #define SF_DONT_STOP        0x20  ///< Sound can't be stopped while playing.
 /// @}
 
-#endif  // CLIENT_AUDIO_SYSTEM_H

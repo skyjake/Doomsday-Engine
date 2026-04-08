@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef OPTIONSPAGE_H
-#define OPTIONSPAGE_H
+#pragma once
 
 #include <de/guiwidget.h>
 #include <de/record.h>
@@ -35,4 +34,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // OPTIONSPAGE_H

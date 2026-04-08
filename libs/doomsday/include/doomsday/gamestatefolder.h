@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_GAMESTATEFOLDER_H
-#define LIBDOOMSDAY_GAMESTATEFOLDER_H
+#pragma once
 
 #include "libdoomsday.h"
 #include "world/ithinkermapping.h"
@@ -221,4 +220,3 @@ private:
 
 typedef GameStateFolder::Metadata GameStateMetadata;
 
-#endif // LIBDOOMSDAY_GAMESTATEFOLDER_H

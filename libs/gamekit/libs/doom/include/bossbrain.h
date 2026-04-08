@@ -21,8 +21,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_PLAY_BOSSBRAIN_H
-#define LIBDOOM_PLAY_BOSSBRAIN_H
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -83,4 +82,3 @@ struct mobj_s *BossBrain_NextTarget(BossBrain *brain);
 /// The One BossBrain instance.
 DE_EXTERN_C BossBrain *theBossBrain;
 
-#endif // LIBDOOM_PLAY_BOSSBRAIN_H

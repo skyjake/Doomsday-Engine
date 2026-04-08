@@ -19,8 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_DEFS_DED_H
-#define LIBDOOMSDAY_DEFS_DED_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include "ded.h"
@@ -53,4 +52,3 @@ void DED_SetError(const de::String &message);
 
 LIBDOOMSDAY_PUBLIC const char *DED_Error();
 
-#endif // LIBDOOMSDAY_DEFS_DED_H

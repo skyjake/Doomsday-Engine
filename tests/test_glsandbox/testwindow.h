@@ -17,8 +17,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GLSANDBOX_TESTWINDOW_H
-#define GLSANDBOX_TESTWINDOW_H
+#pragma once
 
 #include <de/glwindow.h>
 
@@ -41,4 +40,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // GLSANDBOX_TESTWINDOW_H

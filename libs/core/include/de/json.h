@@ -19,8 +19,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_JSON_H
-#define LIBCORE_JSON_H
+#pragma once
 
 #include "de/string.h"
 
@@ -60,4 +59,3 @@ DE_PUBLIC String composeJSON(const Record &rec);
 
 } // namespace de
 
-#endif // LIBCORE_JSON_H

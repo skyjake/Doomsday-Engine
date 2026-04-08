@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_CHILDWIDGETORGANIZER_H
-#define LIBAPPFW_CHILDWIDGETORGANIZER_H
+#pragma once
 
 #include "libgui.h"
 #include "de/ui/data.h"
@@ -197,4 +196,3 @@ public:
 
 } // namespace de
 
-#endif // LIBAPPFW_CHILDWIDGETORGANIZER_H

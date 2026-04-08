@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBAPPFW_RELAYWIDGET_H
-#define LIBAPPFW_RELAYWIDGET_H
+#pragma once
 
 #include "de/guiwidget.h"
 
@@ -66,4 +65,3 @@ private:
 
 } // namespace de
 
-#endif // LIBAPPFW_RELAYWIDGET_H

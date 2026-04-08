@@ -26,8 +26,7 @@
  * Helper routines for accessing the DMU API
  */
 
-#ifndef LIBCOMMON_DMU_LIB_H
-#define LIBCOMMON_DMU_LIB_H
+#pragma once
 
 #include "doomsday.h"
 #include "p_iterlist.h"
@@ -302,4 +301,3 @@ void P_TranslatePlaneMaterialOriginXY(Plane *plane, float deltaX, float deltaY);
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_DMU_LIB_H */

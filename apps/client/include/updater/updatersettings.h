@@ -20,8 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_CLIENT_UPDATERSETTINGS_H
-#define DE_CLIENT_UPDATERSETTINGS_H
+#pragma once
 
 #include <de/time.h>
 #include <de/string.h>
@@ -82,4 +81,3 @@ public:
     static de::NativePath defaultDownloadPath();
 };
 
-#endif // DE_CLIENT_UPDATERSETTINGS_H

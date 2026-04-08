@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_HU_MENU_H
-#define LIBCOMMON_HU_MENU_H
+#pragma once
 
 typedef enum menucommand_e
 {
@@ -262,4 +261,4 @@ short Hu_MenuMergeEffectWithDrawTextFlags(short flags);
 } // namespace common
 
 #endif // __cplusplus
-#endif  // LIBCOMMON_HU_MENU_H
+

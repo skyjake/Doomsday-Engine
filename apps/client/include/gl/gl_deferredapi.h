@@ -25,8 +25,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_DEFERRED_GL_API_H
-#define DE_DEFERRED_GL_API_H
+#pragma once
 
 #ifdef __CLIENT__
 
@@ -54,4 +53,4 @@ void Deferred_glDeleteTextures(GLsizei num, const GLuint* names);
 #endif // __CLIENT__
 
 #endif // DE_DISABLE_DEFERRED_GL_API
-#endif // DE_DEFERRED_GL_API_H
+

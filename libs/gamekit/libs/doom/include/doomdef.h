@@ -23,8 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDOOM_DEFS_H
-#define LIBDOOM_DEFS_H
+#pragma once
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -244,4 +243,3 @@ typedef enum {
 
 #define DEFAULT_PLAYER_VIEWHEIGHT (41)
 
-#endif /* LIBDOOM_DEFS_H */

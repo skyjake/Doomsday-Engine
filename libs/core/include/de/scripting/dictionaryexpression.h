@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBCORE_DICTIONARYEXPRESSION_H
-#define LIBCORE_DICTIONARYEXPRESSION_H
+#pragma once
 
 #include "expression.h"
 
@@ -72,4 +71,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_DICTIONARYEXPRESSION_H */

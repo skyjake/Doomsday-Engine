@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_MODELBANK_H
-#define LIBGUI_MODELBANK_H
+#pragma once
 
 #include <de/bank.h>
 #include <de/modeldrawable.h>
@@ -92,4 +91,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_MODELBANK_H

@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DOOMSDAY_API_EVENT_H
-#define DOOMSDAY_API_EVENT_H
+#pragma once
 
 #include "api_base.h"
 
@@ -125,4 +124,3 @@ DE_USING_API(B);
 
 ///@}
 
-#endif // DOOMSDAY_API_EVENT_H

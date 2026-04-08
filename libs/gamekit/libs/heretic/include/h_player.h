@@ -26,8 +26,7 @@
  * h_player.h:
  */
 
-#ifndef __JHERETIC_PLAYER_H__
-#define __JHERETIC_PLAYER_H__
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -166,4 +165,3 @@ typedef struct player_s {
 #endif
 } player_t;
 
-#endif

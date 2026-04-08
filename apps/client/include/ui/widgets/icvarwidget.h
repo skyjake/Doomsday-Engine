@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_ICVARWIDGET_H
-#define DE_CLIENT_ICVARWIDGET_H
+#pragma once
 
 /**
  * Interface for console variable widgets.
@@ -31,4 +30,3 @@ public:
     virtual void updateFromCVar() = 0;
 };
 
-#endif // DE_CLIENT_ICVARWIDGET_H

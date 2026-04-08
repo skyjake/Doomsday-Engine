@@ -18,8 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DOOMSDAY_API_BASE_H
-#define DOOMSDAY_API_BASE_H
+#pragma once
 
 #include <de/legacy/str.h>
 #include <doomsday/resourceclass.h>
@@ -148,4 +147,3 @@ DE_API_T(Base);
 DE_USING_API(Base);
 #endif
 
-#endif // DOOMSDAY_API_BASE_H

@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UPDATE_H
-#define LIBCOMMON_UPDATE_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,4 +30,3 @@ void G_UpdateState(int step);
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_UPDATE_H */

@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_FONT_H
-#define LIBGUI_FONT_H
+#pragma once
 
 #include <de/libcore.h>
 #include <de/rule.h>
@@ -360,4 +359,3 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_FONT_H

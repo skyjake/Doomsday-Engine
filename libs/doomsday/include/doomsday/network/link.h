@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBSHELL_LINK_H
-#define LIBSHELL_LINK_H
+#pragma once
 
 #include "../libdoomsday.h"
 #include "protocol.h"
@@ -84,4 +83,3 @@ private:
 
 } // namespace network
 
-#endif // LIBSHELL_LINK_H

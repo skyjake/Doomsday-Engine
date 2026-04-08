@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_SCRIPTEDINFO_H
-#define LIBCORE_SCRIPTEDINFO_H
+#pragma once
 
 #include "de/info.h"
 #include "de/file.h"
@@ -254,4 +253,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_SCRIPTEDINFO_H

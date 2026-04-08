@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include <de/basewindow.h>
 
@@ -44,4 +43,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // MAINWINDOW_H

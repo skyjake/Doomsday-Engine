@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_UI_INFINE_FINALEWIDGET_H
-#define DE_UI_INFINE_FINALEWIDGET_H
+#pragma once
 
 #include <de/legacy/animator.h>
 #include <de/id.h>
@@ -94,4 +93,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_UI_INFINE_FINALEWIDGET_H

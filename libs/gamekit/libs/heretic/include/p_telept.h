@@ -17,8 +17,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHERETIC_PLAY_TELEPT_H
-#define LIBHERETIC_PLAY_TELEPT_H
+#pragma once
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -38,4 +37,3 @@ void P_ArtiTele(player_t *player);
 } // extern "C"
 #endif
 
-#endif // LIBHERETIC_PLAY_TELEPT_H

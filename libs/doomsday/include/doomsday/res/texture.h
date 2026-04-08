@@ -18,8 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOMSDAY_RESOURCE_TEXTURE_H
-#define LIBDOOMSDAY_RESOURCE_TEXTURE_H
+#pragma once
 
 #include "../libdoomsday.h"
 
@@ -245,4 +244,3 @@ private:
 
 } // namespace res
 
-#endif // LIBDOOMSDAY_RESOURCE_TEXTURE_H

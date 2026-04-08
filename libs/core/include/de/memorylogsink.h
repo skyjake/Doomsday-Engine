@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_MEMORYLOGSINK_H
-#define LIBCORE_MEMORYLOGSINK_H
+#pragma once
 
 #include "de/logsink.h"
 #include "de/lockable.h"
@@ -62,4 +61,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_MEMORYLOGSINK_H

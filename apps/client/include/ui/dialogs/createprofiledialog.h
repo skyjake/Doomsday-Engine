@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_CREATEPROFILEDIALOG_H
-#define DE_CLIENT_UI_CREATEPROFILEDIALOG_H
+#pragma once
 
 #include <doomsday/gameprofiles.h>
 #include <de/inputdialog.h>
@@ -57,4 +56,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // DE_CLIENT_UI_CREATEPROFILEDIALOG_H

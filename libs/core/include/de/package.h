@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_PACKAGE_H
-#define LIBCORE_PACKAGE_H
+#pragma once
 
 #include "de/string.h"
 #include "de/file.h"
@@ -255,4 +254,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_PACKAGE_H

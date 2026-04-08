@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_ISERIALIZABLE_H
-#define LIBCORE_ISERIALIZABLE_H
+#pragma once
 
 #include "de/libcore.h"
 #include "de/iwritable.h"
@@ -50,4 +49,3 @@ public:
 
 } // namespace de
 
-#endif // LIBCORE_ISERIALIZABLE_H

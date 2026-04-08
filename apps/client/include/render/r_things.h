@@ -19,8 +19,7 @@
  */
 
 #ifdef __CLIENT__
-#ifndef DE_CLIENT_RENDER_THINGS_H
-#define DE_CLIENT_RENDER_THINGS_H
+#pragma once
 
 #include "world/p_object.h"
 
@@ -30,4 +29,4 @@
 void R_ProjectSprite(mobj_t &mob);
 
 #endif  // DE_CLIENT_RENDER_THINGS_H
-#endif  // __CLIENT__
+

@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_FUNCTION_H
-#define LIBCORE_FUNCTION_H
+#pragma once
 
 #include "compound.h"
 #include "de/iserializable.h"
@@ -324,4 +323,3 @@ private:
 
 } // namespace de
 
-#endif /* LIBCORE_FUNCTION_H */

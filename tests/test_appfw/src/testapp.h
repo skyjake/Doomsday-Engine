@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef APPFW_TEST_APP_H
-#define APPFW_TEST_APP_H
+#pragma once
 
 #include <de/baseguiapp.h>
 #include <de/imagebank.h>
@@ -44,4 +43,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // APPFW_TEST_APP_H

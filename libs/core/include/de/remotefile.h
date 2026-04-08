@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBCORE_REMOTEFILE_H
-#define LIBCORE_REMOTEFILE_H
+#pragma once
 
 #include "asset.h"
 #include "linkfile.h"
@@ -68,4 +67,3 @@ private:
 
 } // namespace de
 
-#endif // LIBCORE_REMOTEFILE_H

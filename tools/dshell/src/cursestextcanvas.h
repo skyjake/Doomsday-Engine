@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CURSESTEXTCANVAS_H
-#define CURSESTEXTCANVAS_H
+#pragma once
 
 #include <curses.h>
 #include <de/term/textcanvas.h>
@@ -35,4 +34,3 @@ private:
     DE_PRIVATE(d)
 };
 
-#endif // CURSESTEXTCANVAS_H

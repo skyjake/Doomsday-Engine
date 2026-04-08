@@ -17,8 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_RESOURCE_ABSTRACTFONT_H
-#define CLIENT_RESOURCE_ABSTRACTFONT_H
+#pragma once
 
 #include <de/observers.h>
 #include <de/rectangle.h>
@@ -84,4 +83,3 @@ public:
     virtual void glDeinit() const;
 };
 
-#endif // CLIENT_RESOURCE_ABSTRACTFONT_H
