@@ -1780,7 +1780,7 @@ static int slopeDiv(unsigned num, unsigned den)
     return ans <= SLOPERANGE ? ans : SLOPERANGE;
 }
 
-angle_t M_PointToAngle(double const point[])
+angle_t M_PointToAngle(double const point[2])
 {
     fixed_t pos[2];
 
@@ -1863,12 +1863,12 @@ double M_DirectionToAngleXY(double dx, double dy)
     return angle;
 }
 
-double M_DirectionToAngle(double const direction[])
+double M_DirectionToAngle(double const direction[2])
 {
     return M_DirectionToAngleXY(direction[VX], direction[VY]);
 }
 
-double M_PointDistance(double const a[], double const b[])
+double M_PointDistance(double const a[2], double const b[2])
 {
     double delta[2];
     uint angle;
@@ -1922,7 +1922,7 @@ float M_ApproxDistance3f(float dx, float dy, float dz)
     return M_ApproxDistancef(M_ApproxDistancef(dx, dy), dz);
 }
 
-double M_TriangleArea(double const v1[], double const v2[], double const v3[])
+double M_TriangleArea(double const v1[2], double const v2[2], double const v3[2])
 {
     double a[2], b[2];
     double area;
@@ -2052,7 +2052,7 @@ int M_FloorPow2(int num)
     return fl;
 }
 
-slopetype_t M_SlopeType(double const direction[])
+slopetype_t M_SlopeType(double const direction[2])
 {
     return M_SlopeTypeXY(direction[VX], direction[VY]);
 }

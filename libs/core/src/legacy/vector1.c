@@ -23,14 +23,14 @@
 
 #include "de/legacy/vector1.h"
 
-void V2x_Set(fixed_t vec[], fixed_t x, fixed_t y)
+void V2x_Set(fixed_t vec[2], fixed_t x, fixed_t y)
 {
     vec[VX] = x;
     vec[VY] = y;
 }
 
-fixed_t V2x_Intersection(fixed_t const v1[], fixed_t const v1Delta[],
-                         fixed_t const v2[], fixed_t const v2Delta[])
+fixed_t V2x_Intersection(fixed_t const v1[2], fixed_t const v1Delta[2],
+                         fixed_t const v2[2], fixed_t const v2Delta[2])
 {
     fixed_t r, div = FixedMul(v1Delta[VY] >> 8, v2Delta[VX]) -
                      FixedMul(v1Delta[VX] >> 8, v2Delta[VY]);
@@ -48,7 +48,7 @@ fixed_t V2x_Intersection(fixed_t const v1[], fixed_t const v1Delta[],
     return r;
 }
 
-int V2x_PointOnLineSide(fixed_t const point[], fixed_t const lineOrigin[], fixed_t const lineDirection[])
+int V2x_PointOnLineSide(fixed_t const point[2], fixed_t const lineOrigin[2], fixed_t const lineDirection[2])
 {
     if (!lineDirection[VX])
     {

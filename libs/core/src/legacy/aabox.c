@@ -21,7 +21,7 @@
 #include "de/legacy/vector1.h"
 #include "de/legacy/mathutil.h"
 
-int M_BoxOnLineSide(const AABoxd* box, double const linePoint[], double const lineDirection[])
+int M_BoxOnLineSide(const AABoxd* box, double const linePoint[2], double const lineDirection[2])
 {
     int a, b;
 
@@ -110,7 +110,7 @@ int M_BoxOnLineSide_FixedPrecision(const fixed_t box[], const fixed_t linePoint[
     return 0; // on the line
 }
 
-int M_BoxOnLineSide2(const AABoxd* box, double const linePoint[], double const lineDirection[],
+int M_BoxOnLineSide2(const AABoxd* box, double const linePoint[2], double const lineDirection[2],
     double linePerp, double lineLength, double epsilon)
 {
 #define NORMALIZE(v)        ((v) < 0? -1 : (v) > 0? 1 : 0)

@@ -26,7 +26,7 @@
 
 using namespace de;
 
-float R_MovementYaw(float const mom[])
+float R_MovementYaw(float const mom[2])
 {
     return radianToDegree(atan2f(-mom[MY], mom[MX]));
 }
@@ -37,7 +37,7 @@ float R_MovementXYYaw(float momx, float momy)
     return R_MovementYaw(mom);
 }
 
-float R_MovementPitch(float const mom[])
+float R_MovementPitch(float const mom[3])
 {
     return radianToDegree(atan2f(1.2f * mom[MZ], V2f_Length(mom)));
 }
