@@ -654,8 +654,8 @@ D_CMD(MakeCamera)
     }
 
     ::clients[cp].connected   = true;*/
-        //DD_Player(cp)->ready       = true;
-        DD_Player(cp)->viewConsole = cp;
+    //DD_Player(cp)->ready       = true;
+    DD_Player(cp)->viewConsole = cp;
 
     DD_Player(cp)->publicData().flags |= DDPF_LOCAL;
     Smoother_Clear(DD_Player(cp)->smoother());
