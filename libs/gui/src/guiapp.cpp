@@ -84,10 +84,6 @@ DE_PIMPL(GuiApp)
         // The default render thread is the main thread.
         renderThread = thrd_current();
 
-        arrowCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
-        vsizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS);
-        hsizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
-
         // Script bindings.
         {
             binder.initNew() << DE_FUNC_NOARG(DisplayMode_OriginalMode, "originalMode");
@@ -162,6 +158,9 @@ GuiApp::GuiApp(const StringList &args)
     {
         throw Error("GuiApp::GuiApp", stringf("Failed to initialize SDL: %s", SDL_GetError()));
     }
+    d->arrowCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+    d->vsizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS);
+    d->hsizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
     SDL_EventState(SDL_MOUSEMOTION, SDL_ENABLE);
     const int displayCount = SDL_GetNumVideoDisplays();
     if (displayCount == 0)
