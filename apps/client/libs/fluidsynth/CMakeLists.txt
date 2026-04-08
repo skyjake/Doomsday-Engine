@@ -126,7 +126,10 @@ if (DE_FLUIDSYNTH_EMBEDDED)
     endif ()
     if (CMAKE_C_COMPILER_ID MATCHES ".*Clang")
         target_compile_options (${tgt} PRIVATE
-            -fomit-frame-pointer -fdiagnostics-show-option -Wno-parentheses -Wno-unused-value
+            -fomit-frame-pointer -fdiagnostics-show-option
+            -Wno-parentheses -Wno-unused-value
+            -Wno-deprecated-declarations
+            -Wno-single-bit-bitfield-constant-conversion
         )
     endif ()
     if (WIN32)
