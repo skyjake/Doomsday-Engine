@@ -53,13 +53,13 @@ public:
 public:
     MouseEvent();
     MouseEvent(MotionType motion, const Vec2i &pos);
-    MouseEvent(WheelMotion wheelMotion, const Vec2i &wheel, const Vec2i &pos);
+    MouseEvent(WheelMotion wheelMotion, const Vec2f &wheel, const Vec2i &pos);
     MouseEvent(Button button, ButtonState state, const Vec2i &pos);
 
     MotionType   motion() const;
     const Vec2i &pos() const { return _pos; }
     WheelMotion  wheelMotion() const { return _wheelMotion; }
-    const Vec2i &wheel() const { return _wheel; }
+    const Vec2f &wheel() const { return _wheel; }
     Button       button() const { return _button; }
     ButtonState  state() const { return _state; }
 
@@ -68,7 +68,7 @@ public:
 private:
     Vec2i       _pos;
     WheelMotion _wheelMotion;
-    Vec2i       _wheel;
+    Vec2f       _wheel;
     Button      _button;
     ButtonState _state;
 };

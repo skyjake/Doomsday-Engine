@@ -156,7 +156,7 @@ DE_GUI_PIMPL(ScrollAreaWidget), public Lockable
         const auto &margins = self().margins();
         const float contentHeight = float(contentRule.height().value());
         int indHeight = 0;
-        
+
         if (contentHeight > 0)
         {
             indHeight = de::clamp(
@@ -478,16 +478,14 @@ bool ScrollAreaWidget::handleEvent(const Event &event)
         if (event.type() == Event::MouseWheel)
         {
             const MouseEvent &mouse = event.as<MouseEvent>();
-#ifdef MACOSX
             if (mouse.wheelMotion() == MouseEvent::Pixels)
             {
-                d->y->set(de::clamp(0, int(d->y->animation().target()) +
-                                    pointsToPixels(mouse.wheel().y * (d->origin == Top? -1 : 1)),
-                                    d->maxY->valuei()), .05f);
+                d->y->set(de::clamp(0.f, d->y->animation().target() -
+                                    mouse.wheel().y * (d->origin == Top? -1 : 1),
+                                    d->maxY->value()));
                 d->restartScrollOpacityFade();
             }
-#else
-            if (mouse.wheelMotion() == MouseEvent::Steps)
+            else if (mouse.wheelMotion() == MouseEvent::Steps)
             {
                 unsigned int lineCount = 1;
 #ifdef DE_WINDOWS
@@ -503,7 +501,6 @@ bool ScrollAreaWidget::handleEvent(const Event &event)
                                         (d->origin == Top? -1 : 1)), d->maxY->valuei()), .15f);
                 d->restartScrollOpacityFade();
             }
-#endif
             return true;
         }
         else if (d->indicatorDrawEnabled)

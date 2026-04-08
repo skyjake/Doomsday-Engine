@@ -299,17 +299,32 @@ DE_PIMPL(WindowEventHandler)
 
     void handleMouseWheelEvent(const SDL_MouseWheelEvent &ev)
     {
+        const float dir   = (ev.direction == SDL_MOUSEWHEEL_FLIPPED ? -1.f : 1.f);
+        const float ratio = DE_GUI_APP->devicePixelRatio();
         DE_NOTIFY_PUBLIC(MouseEvent, i)
         {
-            if (ev.x)
+            // Prefer per-pixel precise values (trackpad on macOS).
+            if (ev.preciseX || ev.preciseY)
             {
-                i->mouseEvent(MouseEvent(MouseEvent::Steps, Vec2i(ev.x, 0),
+                i->mouseEvent(MouseEvent(MouseEvent::Pixels,
+                                         Vec2f(ev.preciseX * dir * ratio,
+                                               ev.preciseY * dir * ratio),
                                          currentMousePos));
             }
-            if (ev.y)
+            else
             {
-                i->mouseEvent(MouseEvent(MouseEvent::Steps, Vec2i(0, ev.y),
-                                         currentMousePos));
+                if (ev.x)
+                {
+                    i->mouseEvent(MouseEvent(MouseEvent::Steps,
+                                             Vec2f(float(ev.x) * dir, 0.f),
+                                             currentMousePos));
+                }
+                if (ev.y)
+                {
+                    i->mouseEvent(MouseEvent(MouseEvent::Steps,
+                                             Vec2f(0.f, float(ev.y) * dir),
+                                             currentMousePos));
+                }
             }
         }
 

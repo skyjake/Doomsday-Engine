@@ -41,7 +41,7 @@ MouseEvent::MouseEvent(MotionType motion, const Vec2i &pos)
     }
 }
 
-MouseEvent::MouseEvent(WheelMotion wheelMotion, const Vec2i &wheel, const Vec2i &pos)
+MouseEvent::MouseEvent(WheelMotion wheelMotion, const Vec2f &wheel, const Vec2i &pos)
     : Event(MouseWheel)
     , _pos(pos)
     , _wheelMotion(wheelMotion)

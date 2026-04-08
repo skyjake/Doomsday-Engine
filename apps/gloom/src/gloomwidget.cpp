@@ -209,7 +209,7 @@ bool GloomWidget::handleEvent(const Event &event)
 
         if (mouse.type() == Event::MouseWheel)
         {
-            d->user.turn(Vec2f(mouse.wheel()) / 1.f);
+            d->user.turn(mouse.wheel());
             return true;
         }
         if (mouse.type() == Event::MouseMotion && d->mouseLook)
