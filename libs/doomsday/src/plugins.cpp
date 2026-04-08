@@ -79,7 +79,6 @@ DE_PIMPL_NOREF(Plugins)
     Impl()
     {
         zap(gameExports);
-        zap(hInstPlug);
     }
 
     bool loadPlugin(const char *plugName)

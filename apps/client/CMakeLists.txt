@@ -215,7 +215,7 @@ if (TARGET DirectX)
     target_link_libraries (client PUBLIC DirectX)
 endif ()
 if (CMAKE_SYSTEM_NAME MATCHES "BSD")
-    target_link_libraries (client PUBLIC execinfo) 
+    target_link_libraries (client PUBLIC execinfo)
 endif()
 
 target_link_libraries (client PUBLIC doomsdaygui)
@@ -322,7 +322,7 @@ endif ()
 
 if (APPLE AND NOT IOS)
     set_target_properties (client PROPERTIES
-        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER  net.dengine.doomsday 
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER  net.dengine.doomsday
         MACOSX_BUNDLE_BUNDLE_NAME                  net.dengine.doomsday
         MACOSX_BUNDLE_INFO_PLIST                   MacOSXBundleInfo.plist.in
     )
@@ -400,5 +400,3 @@ endif ()
 #     endif ()
 #     add_custom_command (TARGET client POST_BUILD COMMAND ${fn} ${_intDir})
 # endif ()
-
-deng_cotire (client include/precompiled.h)

@@ -22,16 +22,6 @@ option (DE_ENABLE_COUNTED_TRACING
     OFF
 )
 
-if (APPLE OR CCACHE_FOUND OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    # GCC seems to have trouble with cotire when using C++11.
-    set (DE_ENABLE_COTIRE_DEFAULT OFF) # just use the cache
-else ()
-    set (DE_ENABLE_COTIRE_DEFAULT ON)
-endif ()
-option (DE_ENABLE_COTIRE "Enable precompiled headers (cotire) for faster builds"
-    ${DE_ENABLE_COTIRE_DEFAULT}
-)
-
 if (NOT DE_FIXED_ASM)
     add_definitions (-DDE_NO_FIXED_ASM=1)
 endif ()

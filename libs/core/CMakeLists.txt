@@ -108,7 +108,6 @@ if (UNIX_LINUX)
              DESTINATION ${DE_INSTALL_LIB_DIR})
 endif ()
 deng_deploy_library (libcore DengCore)
-deng_cotire (libcore src/precompiled.h)
 
 if (DE_ENABLE_TESTS)
     set (coreTests

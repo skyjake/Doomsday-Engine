@@ -10,8 +10,7 @@ builddir/Makefile: builddir
 		-DCMAKE_BUILD_TYPE=Release \
 		-DDE_BUILD=${BuildNumber} \
 		-DCMAKE_CXX_FLAGS=-std=c++11 \
-		-DDENG_ENABLE_SDK=OFF \
-		-DDE_ENABLE_COTIRE=OFF \
+		-DDENG_ENABLE_SDK=OFF
 		../../doomsday
 
 build: build-arch build-indep

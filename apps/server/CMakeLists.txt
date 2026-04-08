@@ -112,5 +112,3 @@ deng_link_libraries (server PRIVATE
 # Server is installed as part of the "client" component instead of the
 # default "tools".
 deng_install_tool (server client)
-
-deng_cotire (server include/precompiled.h)

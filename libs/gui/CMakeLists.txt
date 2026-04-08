@@ -148,8 +148,6 @@ if (UNIX_LINUX AND NOT DE_USE_SYSTEM_GLBINDING)
     )
 endif ()
 
-deng_cotire (libgui src/precompiled.h)
-
 if (DE_ENABLE_TESTS)
     set (guiTests
         test_glsandbox

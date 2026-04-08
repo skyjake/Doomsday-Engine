@@ -99,17 +99,6 @@ macro (relaxed_warnings target)
     endif ()
 endmacro (relaxed_warnings)
 
-# Apply cotire to improve build efficiency.
-macro (deng_cotire target precompiledHeader)
-    if (DE_ENABLE_COTIRE)
-        set_target_properties (${target} PROPERTIES
-            COTIRE_ADD_UNITY_BUILD        FALSE
-            COTIRE_CXX_PREFIX_HEADER_INIT ${precompiledHeader}
-        )
-        cotire (${target})
-    endif ()
-endmacro (deng_cotire)
-
 macro (deng_target_rpath target)
     if (APPLE)
         set (_extraRPath)
@@ -411,7 +400,6 @@ macro (deng_add_library target)
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
         $<INSTALL_INTERFACE:include/>
     )
-    #cotire (${target})
 endmacro (deng_add_library)
 
 macro (deng_deploy_library target name)

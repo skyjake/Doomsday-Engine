@@ -80,7 +80,4 @@ if (pythonVer VERSION_LESS 3)
     message (FATAL_ERROR "Python 3 required; found ${pythonVer}")
 endif ()
 
-if (DE_ENABLE_COTIRE)
-    include (cotire)
-endif ()
 include (LegacyPK3s)
