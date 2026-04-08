@@ -112,6 +112,7 @@ public:
     explicit Vector2(const Type *ab) : x(ab[0]), y(ab[1]) {}
     Vector2(const Value &value) { *this = vectorFromValue<Vector2<Type>>(value); }
     Vector2(const Vector2 &other) = default;
+    Vector2 &operator=(const Vector2 &other) = default;
 
     /// Implicit conversion operator to a float vector.
     operator Vector2<dfloat> () const {
@@ -330,6 +331,7 @@ public:
     explicit Vector3(const Type *abc) : Vector2<Type>(abc), z(abc[2]) {}
     Vector3(const Value &value) { *this = vectorFromValue<Vector3<Type>>(value); }
     Vector3(const Vector3 &other) = default;
+    Vector3 &operator=(const Vector3 &other) = default;
 
     /// Implicit conversion operator to a float vector.
     operator Vector3<dfloat> () const {
@@ -564,6 +566,7 @@ public:
     Vector4(const Value &value4) { *this = vectorFromValue<Vector4<Type>>(value4); }
     Vector4(const Value &value3, Type d) { *this = Vector4<Type>(vectorFromValue<Vector3<Type>>(value3), d); }
     Vector4(const Vector4 &other) = default;
+    Vector4 &operator=(const Vector4 &other) = default;
 
     /// Implicit conversion operator to a float vector.
     operator Vector4<dfloat> () const {

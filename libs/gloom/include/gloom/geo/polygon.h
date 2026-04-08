@@ -45,6 +45,7 @@ struct LIBGLOOM_PUBLIC Polygon
 
     explicit Polygon(const Points &points = Points());
     Polygon(const Polygon &) = default;
+    Polygon &operator=(const Polygon &) = default;
 
     int             size() const { return points.sizei(); }
     inline bool     isEmpty() const { return size() == 0; }

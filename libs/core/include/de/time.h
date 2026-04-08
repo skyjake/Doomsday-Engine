@@ -334,17 +334,17 @@ inline Reader &operator>>(Reader &from, TimeSpan span)
     return from;
 }
 
-constexpr TimeSpan operator"" _ns(unsigned long long int nanoseconds)
+constexpr TimeSpan operator""_ns(unsigned long long int nanoseconds)
 {
     return TimeSpan(double(nanoseconds) / 1.0e9);
 }
 
-constexpr TimeSpan operator"" _ms(unsigned long long int milliseconds)
+constexpr TimeSpan operator""_ms(unsigned long long int milliseconds)
 {
     return TimeSpan(double(milliseconds) / 1.0e3);
 }
 
-constexpr TimeSpan operator"" _s(long double seconds)
+constexpr TimeSpan operator""_s(long double seconds)
 {
     return TimeSpan(double(seconds));
 }
