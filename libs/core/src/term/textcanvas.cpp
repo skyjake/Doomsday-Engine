@@ -79,7 +79,8 @@ DE_PIMPL_NOREF(TextCanvas)
         for (duint row = 0; row < lines.size(); ++row)
         {
             AttribChar *newLine = new AttribChar[newSize.x];
-            std::memcpy(newLine, lines[row], sizeof(AttribChar) * de::min(size.x, newSize.x));
+            std::memcpy(
+                (void *) newLine, lines[row], sizeof(AttribChar) * de::min(size.x, newSize.x));
             delete [] lines[row];
             lines[row] = newLine;
         }

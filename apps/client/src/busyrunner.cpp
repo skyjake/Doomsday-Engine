@@ -68,15 +68,15 @@ DE_PIMPL_NOREF(BusyRunner)
     class WorkThread : public Thread
     {
         BusyTask *task;
-        
+
     public:
         int    result = 0;
         String abortMsg;
-        
+
     public:
         WorkThread(BusyTask *task) : task(task)
         {}
-        
+
         void run() override
         {
             try
@@ -89,7 +89,7 @@ DE_PIMPL_NOREF(BusyRunner)
             }
         }
     };
-    
+
     EventLoop * eventLoop = nullptr;
     const BusyTask *task = nullptr;
     std::unique_ptr<WorkThread> busyThread;
@@ -115,7 +115,7 @@ DE_PIMPL_NOREF(BusyRunner)
     {
         return busyThread == nullptr || busyThread->isFinished();
     }
-    
+
     void busyModeWillBegin(BusyTask &firstTask) override
     {
         if (auto *fader = ClientWindow::main().contentFade())
@@ -144,7 +144,7 @@ DE_PIMPL_NOREF(BusyRunner)
     {
         DE_ASSERT(!eventLoop);
         DE_ASSERT(isTaskDone());
-        
+
         DD_ResetTimer();
 
         // Discard input events so that any and all accumulated input events are ignored.
@@ -194,7 +194,7 @@ DE_PIMPL_NOREF(BusyRunner)
             exitEventLoop();
         });
     }
-    
+
     /**
      * Exits the busy mode event loop. Called in the main thread, does not return
      * until the worker thread is stopped.
@@ -340,17 +340,17 @@ void BusyRunner::loop()
     // Only perform pending tasks after Home has been hidden, as otherwise there
     // might be nasty stutters in the window refresh if one of the pending tasks
     // blocks the thread for a while.
-    bool pendingRemain = false;
-    if (ClientWindow::main().home().isHidden())
-    {
-        DE_NOTIFY(DeferredGLTask, i)
-        {
-            if (i->performDeferredGLTask() == TasksPending)
-            {
-                pendingRemain = true;
-            }
-        }
-    }
+    // bool pendingRemain = false;
+    // if (ClientWindow::main().home().isHidden())
+    // {
+    //     DE_NOTIFY(DeferredGLTask, i)
+    //     {
+    //         if (i->performDeferredGLTask() == TasksPending)
+    //         {
+    //             pendingRemain = true;
+    //         }
+    //     }
+    // }
 
     if (canUpload)
     {

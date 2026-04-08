@@ -3006,7 +3006,7 @@ void XL_Thinker(void *xlThinkerPtr)
         Side* side;
         float spd = info->materialMoveSpeed;
         coord_t offset[2];
-        angle_t ang = ((angle_t) (ANGLE_MAX * (info->materialMoveAngle / 360))) >> ANGLETOFINESHIFT;
+        angle_t ang = ((angle_t) (float(ANGLE_MAX) * (info->materialMoveAngle / 360))) >> ANGLETOFINESHIFT;
 
         offset[VX] = -(FIX2FLT(finecosine[ang]) * spd);
         offset[VY] = FIX2FLT(finesine[ang]) * spd;

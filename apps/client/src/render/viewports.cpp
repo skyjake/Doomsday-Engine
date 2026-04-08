@@ -460,11 +460,11 @@ viewer_t R_SharpViewer(ClientPlayer &player)
         const dfloat distance = 90;
 
         duint angle = view.angle() >> ANGLETOFINESHIFT;
-        duint pitch = angle_t(LOOKDIR2DEG(view.pitch) / 360 * ANGLE_MAX) >> ANGLETOFINESHIFT;
+        duint pitch = angle_t(LOOKDIR2DEG(view.pitch) / 360 * float(ANGLE_MAX)) >> ANGLETOFINESHIFT;
 
         view.origin -= Vec3d(FIX2FLT(finecosine[angle]),
-                                FIX2FLT(finesine[angle]),
-                                FIX2FLT(finesine[pitch])) * distance;
+                             FIX2FLT(finesine[angle]),
+                             FIX2FLT(finesine[pitch])) * distance;
     }
 
     // Check that the viewZ doesn't go too high or low.

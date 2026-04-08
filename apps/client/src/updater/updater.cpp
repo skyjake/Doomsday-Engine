@@ -69,6 +69,7 @@ using namespace de;
 
 #define PLATFORM_ID     DE_PLATFORM_ID
 
+#ifndef MACOSX
 static CommandLine* installerCommand;
 
 /**
@@ -82,6 +83,7 @@ static void runInstallerCommand(void)
     delete installerCommand;
     installerCommand = nullptr;
 }
+#endif
 
 /**
  * Notification widget about the status of the Updater.
