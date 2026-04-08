@@ -126,7 +126,7 @@ void P_SetPsprite(player_t *player, int position, statenum_t stnum)
             // Custom parameters in the action function are passed to libdoomsday this way.
             P_SetCurrentActionState((int) stnum);
 
-            state->action(player, psp);
+            ((void (*)(player_t *, pspdef_t *)) state->action)(player, psp);
             if(!psp->state)
                 break;
         }

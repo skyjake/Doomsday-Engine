@@ -325,7 +325,7 @@ void P_SetPsprite(player_t *plr, int position, statenum_t stnum)
             P_SetCurrentActionState((int) stnum);
 
             // Call action routine.
-            state->action(plr, psp);
+            ((void (*)(player_t *, pspdef_t *)) state->action)(plr, psp);
             if(!psp->state)
             {
                 break;

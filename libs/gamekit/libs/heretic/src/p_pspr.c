@@ -91,7 +91,7 @@ void P_SetPsprite(player_t *player, int position, statenum_t stnum)
             P_SetCurrentActionState((int) stnum);
 
             // Call action routine.
-            state->action(player, psp);
+            ((void (*)(player_t *, pspdef_t *)) state->action)(player, psp);
             if(!psp->state)
             {
                 break;
@@ -1081,7 +1081,7 @@ void C_DECL A_SkullRodStorm(mobj_t* actor)
     player_t* player;
 
     if(actor->special3-- == 0)
-    {        
+    {
         P_MobjChangeState(actor, S_NULL);
         playerNum = (IS_NETGAME ? actor->special2 : 0);
 
@@ -1122,7 +1122,7 @@ void C_DECL A_SkullRodStorm(mobj_t* actor)
         // Rain color matches the player's color.
         rainColor = cfg.playerColor[actor->special2 /*plrnum*/];
     }
-    
+
     // Rain colors match the player colors.
     if((mo = P_SpawnMobjXYZ(MT_RAINPLR1 + rainColor, pos[VX], pos[VY], 0,
                             P_Random() << 24, MSF_Z_CEIL)))
@@ -1256,7 +1256,7 @@ void C_DECL A_ShutdownPhoenixPL2(player_t *player, pspdef_t *psp)
 {
     if(IS_CLIENT)
         return;
-    
+
     P_ShotAmmo(player);
 }
 
