@@ -638,7 +638,13 @@ ClientApp::ClientApp(const StringList &args)
                              SDL_WINDOW_BORDERLESS | SDL_WINDOW_SHOWN | SDL_WINDOW_ALWAYS_ON_TOP |
                              SDL_WINDOW_ALLOW_HIGHDPI);
 
-        SDL_BlitSurface(splashSurface, nullptr, SDL_GetWindowSurface(d->splashWindow), nullptr);
+        // On HiDPI/Retina displays the window surface is larger in pixels than the
+        // window size in points. Scale the splash image to fill the full pixel surface.
+        SDL_Surface *windowSurface = SDL_GetWindowSurface(d->splashWindow);
+        const int winW = windowSurface->w;
+        const int winH = windowSurface->h;
+        SDL_Rect dstRect = { 0, 0, winW, winH };
+        SDL_BlitScaled(splashSurface, nullptr, windowSurface, &dstRect);
 
         // Version text.
         {
@@ -651,8 +657,8 @@ ClientApp::ClientApp(const StringList &args)
                                                     Vec4ub(90, 110, 95, 255),
                                                     Vec4ub(90, 110, 95, 0));
             auto *surf = createSDLSurfaceFromImage(rasterized);
-            SDL_Rect rect = { splashSurface->w / 2 - surf->w / 2,
-                              splashSurface->h - surf->h * 3 / 2, 0, 0 };
+            SDL_Rect rect = { winW / 2 - surf->w / 2,
+                              winH - surf->h * 3 / 2, 0, 0 };
             SDL_BlitSurface(surf, nullptr, SDL_GetWindowSurface(d->splashWindow), &rect);
             SDL_FreeSurface(surf);
         }
