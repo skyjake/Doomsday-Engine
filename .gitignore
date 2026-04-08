@@ -48,3 +48,4 @@ tools/*/debug
 tools/*/release
 vc100.pdb
 Zcustom.conf
+/.cache/

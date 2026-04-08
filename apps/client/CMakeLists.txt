@@ -150,6 +150,7 @@ if (APPLE AND NOT IOS)
 endif ()
 
 deng_add_application (client ${src} EXTRA_RESOURCES ${MACX_RESOURCES})
+target_precompile_headers (client PRIVATE "${DE_SOURCE_DIR}/cmake/pch/pch_client.h")
 
 # There's some old code here so relax the warnings a bit.
 relaxed_warnings (client)

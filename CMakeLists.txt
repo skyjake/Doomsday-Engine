@@ -1,7 +1,7 @@
 # Doomsday Engine
 # Top-level CMakeLists
 
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.16)
 project (Doomsday)
 
 # Build external dependencies (the_Foundation, Assimp, glbinding) via

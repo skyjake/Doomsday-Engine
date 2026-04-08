@@ -21,3 +21,4 @@ deng_merge_sources (hud_widgets src/hud/widgets/*.cpp)
 deng_find_resources (libheretic.pk3)
 
 deng_add_gamelib (heretic ${SOURCES} ${COMMON_SOURCES})
+target_precompile_headers (heretic PRIVATE "${DE_SOURCE_DIR}/cmake/pch/pch_jheretic.h")

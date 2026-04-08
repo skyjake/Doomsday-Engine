@@ -44,6 +44,7 @@ deng_merge_sources (world_bsp   src/world/bsp/*.cpp)
 deng_add_package (net.dengine.base)
 
 deng_add_library (libdoomsday ${SOURCES} ${HEADERS})
+target_precompile_headers (libdoomsday PRIVATE "${DE_SOURCE_DIR}/cmake/pch/pch_doomsday.h")
 relaxed_warnings (libdoomsday)
 deng_link_libraries (libdoomsday PUBLIC DengCore)
 target_link_libraries (libdoomsday PRIVATE importdeh importidtech1 importudmf lzss)

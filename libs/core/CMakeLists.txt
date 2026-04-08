@@ -71,6 +71,7 @@ endif ()
 deng_add_package (net.dengine.stdlib)
 
 deng_add_library (libcore ${SOURCES} ${HEADERS})
+target_precompile_headers (libcore PRIVATE "${DE_SOURCE_DIR}/cmake/pch/pch_core.h")
 target_include_directories (libcore PRIVATE ${ZLIB_INCLUDE_DIR})
 target_link_libraries (libcore PUBLIC ${ZLIB_LIBRARIES} the_Foundation::the_Foundation)
 if (UNIX AND NOT APPLE)

@@ -23,6 +23,7 @@ file (GLOB_RECURSE HEADERS include/gamekit/*)
 deng_merge_sources (libgamekit src/*.cpp)
 
 deng_add_library (libgamekit ${SOURCES} ${HEADERS})
+target_precompile_headers (libgamekit PRIVATE "${DE_SOURCE_DIR}/cmake/pch/pch_gamekit_lib.h")
 deng_link_libraries (libgamekit PUBLIC DengCore)
 
 # Game extensions.

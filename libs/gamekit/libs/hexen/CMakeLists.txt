@@ -21,3 +21,4 @@ deng_merge_sources (hud_widgets src/hud/widgets/*.cpp)
 deng_find_resources (libhexen.pk3)
 
 deng_add_gamelib (hexen ${SOURCES} ${COMMON_SOURCES})
+target_precompile_headers (hexen PRIVATE "${DE_SOURCE_DIR}/cmake/pch/pch_jhexen.h")

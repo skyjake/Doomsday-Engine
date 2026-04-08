@@ -20,3 +20,4 @@ deng_merge_sources (hud_widgets src/hud/widgets/*.cpp)
 deng_find_resources (libdoom.pk3)
 
 deng_add_gamelib (doom ${SOURCES} ${COMMON_SOURCES})
+target_precompile_headers (doom PRIVATE "${DE_SOURCE_DIR}/cmake/pch/pch_jdoom.h")

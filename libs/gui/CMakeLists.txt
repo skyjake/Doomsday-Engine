@@ -49,6 +49,13 @@ elseif (APPLE)
 endif ()
 
 deng_add_library (libgui ${SOURCES} ${HEADERS})
+target_precompile_headers (libgui PRIVATE "${DE_SOURCE_DIR}/cmake/pch/pch_gui.h")
+# Objective-C and Objective-C++ source files cannot use the C++ PCH.
+set_source_files_properties (
+    src/text/fonts_macx.m
+    src/dialogs/filedialog_macx.mm
+    PROPERTIES SKIP_PRECOMPILE_HEADERS ON
+)
 
 if (DE_OPENGL_API STREQUAL "3.3")
     target_compile_definitions (libgui PUBLIC -DDE_OPENGL=330)

@@ -18,3 +18,4 @@ file (GLOB_RECURSE SOURCES src/*.c src/*.cpp include/*.h)
 deng_find_resources (libdoom64.pk3)
 
 deng_add_gamelib (doom64 ${SOURCES} ${COMMON_SOURCES})
+target_precompile_headers (doom64 PRIVATE "${DE_SOURCE_DIR}/cmake/pch/pch_jdoom64.h")

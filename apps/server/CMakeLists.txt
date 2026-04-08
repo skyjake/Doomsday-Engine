@@ -94,6 +94,7 @@ if (UNIX)
 endif ()
 
 add_executable (server ${SOURCES} ${HEADERS} ${API_HEADERS} ${SHARED_WITH_CLIENT})
+target_precompile_headers (server PRIVATE "${DE_SOURCE_DIR}/cmake/pch/pch_server.h")
 deng_target_defaults (server)
 set_target_properties (server PROPERTIES
     OUTPUT_NAME "doomsday-server"
