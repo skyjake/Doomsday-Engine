@@ -34,6 +34,8 @@ public:
     Music(de::Record &d)       : Definition(d) {}
     Music(const de::Record &d) : Definition(d) {}
 
+    Music &operator=(const Music &other) = default;
+
     void resetToDefaults();
 
     /**

@@ -39,6 +39,8 @@ public:
     Decoration(de::Record &d)           : Definition(d) {}
     Decoration(const de::Record &d)     : Definition(d) {}
 
+    Decoration &operator=(const Decoration &other) = default;
+
     void resetToDefaults();
 
     int lightCount() const;

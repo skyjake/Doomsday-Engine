@@ -85,6 +85,8 @@ public:
     Sprite(de::Record &d)       : Definition(d) {}
     Sprite(const de::Record &d) : Definition(d) {}
 
+    Sprite &operator=(const Sprite &other) = default;
+
     CompiledSpriteRecord &       def();
     const CompiledSpriteRecord & def() const;
 

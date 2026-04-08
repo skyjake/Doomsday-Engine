@@ -192,7 +192,7 @@ public:
         elements[destIndex].release();
 
         // Do a plain copy and then duplicate allocations.
-        memcpy(&elements[destIndex], &elements[srcIndex], sizeof(PODType));
+        memcpy((void *) &elements[destIndex], &elements[srcIndex], sizeof(PODType));
         elements[destIndex].reallocate();
     }
 

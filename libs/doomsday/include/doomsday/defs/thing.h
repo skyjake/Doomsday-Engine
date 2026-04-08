@@ -32,6 +32,8 @@ public:
     Thing(const Thing &other)  : Definition(other) {}
     Thing(de::Record &d)       : Definition(d) {}
     Thing(const de::Record &d) : Definition(d) {}
+
+    Thing &operator=(const Thing &other) = default;
     
     void resetToDefaults();
     

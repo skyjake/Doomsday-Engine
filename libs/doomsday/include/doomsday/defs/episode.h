@@ -34,6 +34,8 @@ public:
     Episode(de::Record &d)        : Definition(d) {}
     Episode(const de::Record &d)  : Definition(d) {}
 
+    Episode &operator=(const Episode &other) = default;
+
     void resetToDefaults();
 
     de::Record &addHub();

@@ -46,6 +46,8 @@ public:
     Sky(de::Record &d)       : Definition(d) {}
     Sky(const de::Record &d) : Definition(d) {}
 
+    Sky &operator=(const Sky &other) = default;
+
     void resetToDefaults();
 
     de::Record &addLayer();

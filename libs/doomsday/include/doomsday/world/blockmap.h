@@ -52,6 +52,8 @@ public:
 
         CellBlock(const Cell &min = Cell(), const Cell &max = Cell()) : min(min), max(max) {}
         CellBlock(const CellBlock &other) : min(other.min), max(other.max) {}
+
+        CellBlock &operator=(const CellBlock &other) = default;
     };
 
 public:

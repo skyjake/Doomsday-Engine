@@ -42,6 +42,8 @@ public:
     MapInfo(de::Record &d)        : Definition(d) {}
     MapInfo(const de::Record &d)  : Definition(d) {}
 
+    MapInfo &operator=(const MapInfo &other) = default;
+
     void resetToDefaults();
 };
 

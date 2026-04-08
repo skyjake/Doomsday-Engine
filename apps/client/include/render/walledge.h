@@ -54,6 +54,7 @@ public:
         Event();
         Event(WallEdge &owner, double distance = 0);
 
+        Event(const Event &other) = default;
         Event &operator = (const Event &other);
         bool operator < (const Event &other) const;
         double distance() const;

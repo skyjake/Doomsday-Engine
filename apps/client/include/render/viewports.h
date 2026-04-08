@@ -55,6 +55,8 @@ struct viewer_t
         , _angle(other._angle)
     {}
 
+    viewer_t &operator=(const viewer_t &other) = default;
+
     viewer_t lerp(const viewer_t &end, float pos) const {
         return viewer_t(de::lerp(origin, end.origin, pos),
                         _angle + int(pos * (int(end._angle) - int(_angle))),

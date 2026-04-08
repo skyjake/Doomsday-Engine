@@ -34,6 +34,8 @@ public:
     MapGraphNode(de::Record &d)             : Definition(d) {}
     MapGraphNode(const de::Record &d)       : Definition(d) {}
 
+    MapGraphNode &operator=(const MapGraphNode &other) = default;
+
     void resetToDefaults();
 
     de::Record &addExit();

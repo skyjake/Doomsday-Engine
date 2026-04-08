@@ -32,6 +32,8 @@ public:
     State(const State &other)  : Definition(other) {}
     State(de::Record &d)       : Definition(d) {}
     State(const de::Record &d) : Definition(d) {}
+
+    State &operator=(const State &other) = default;
     
     void resetToDefaults();
     

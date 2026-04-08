@@ -47,6 +47,8 @@ public:
     Partition(const Partition &other)
         : direction(other.direction), origin(other.origin) {}
 
+    Partition &operator=(const Partition &other) = default;
+
     /**
      * Where does the given @a point lie relative to the partition line?
      *

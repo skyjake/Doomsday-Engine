@@ -422,6 +422,8 @@ DE_PIMPL(FinaleInterpreter)
             : gotoMarker(other.gotoMarker) {
             std::memcpy(&ev, &other.ev, sizeof(ev));
         }
+
+        EventHandler &operator=(const EventHandler &other) = default;
     };
 
     typedef List<EventHandler> EventHandlers;

@@ -34,6 +34,8 @@ public:
     Finale(de::Record &d)       : Definition(d) {}
     Finale(const de::Record &d) : Definition(d) {}
 
+    Finale &operator=(const Finale &other) = default;
+
     void resetToDefaults();
 };
 

@@ -34,6 +34,8 @@ public:
     Model(de::Record &d)       : Definition(d) {}
     Model(const de::Record &d) : Definition(d) {}
 
+    Model &operator=(const Model &other) = default;
+
     void resetToDefaults();
 
     de::Record &addSub();

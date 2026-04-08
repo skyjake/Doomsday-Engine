@@ -34,6 +34,8 @@ public:
     MaterialDecoration(de::Record &d)                   : Definition(d) {}
     MaterialDecoration(const de::Record &d)             : Definition(d) {}
 
+    MaterialDecoration &operator=(const MaterialDecoration &other) = default;
+
     void resetToDefaults();
 
     int stageCount() const;
@@ -56,6 +58,8 @@ public:
     MaterialLayer(de::Record &d)              : Definition(d) {}
     MaterialLayer(const de::Record &d)        : Definition(d) {}
 
+    MaterialLayer &operator=(const MaterialLayer &other) = default;
+
     void resetToDefaults();
 
     int stageCount() const;
@@ -77,6 +81,8 @@ public:
     Material(const Material &other) : Definition(other) {}
     Material(de::Record &d)         : Definition(d) {}
     Material(const de::Record &d)   : Definition(d) {}
+
+    Material &operator=(const Material &other) = default;
 
     void resetToDefaults();
 
