@@ -31,7 +31,7 @@ public:
     List *prev() { return (List*) Linkable::prev(); }
 
     virtual T *add(T *ptr)
-    {   
+    {
         addLast(new List(ptr)); // Also makes this a root node.
         return ptr;
     }
@@ -52,7 +52,7 @@ List<T>::List(const List &otherRoot)
 {
     _pointer = otherRoot._pointer;
     // We must make a copy of all the nodes in the other's list.
-    for (List *n = otherRoot.next(); !n->IsRoot(); n = n->next())
+    for (List *n = otherRoot.next(); !n->isRoot(); n = n->next())
         add(n->get());
 }
 
