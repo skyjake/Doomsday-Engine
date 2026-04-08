@@ -56,6 +56,7 @@ deng_install_bundle_deps (shell
     Deng::libgui
     the_Foundation::the_Foundation
     glbinding::glbinding
+    assimp::assimp
 )
 deng_deploy_target (shell)
 

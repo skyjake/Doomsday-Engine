@@ -40,6 +40,7 @@ if (APPLE)
         Deng::liblegacy
         Deng::libdoomsday
         Deng::libgloom
+        assimp::assimp
     )
     deng_install_deployqt (gloomed)
 endif ()

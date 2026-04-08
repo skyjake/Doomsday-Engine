@@ -339,6 +339,7 @@ if (APPLE AND NOT IOS)
         hexen
         the_Foundation::the_Foundation
         glbinding::glbinding
+        assimp::assimp
     )
     if (TARGET audio_fmod)
         deng_install_bundle_deps (client fmodex)

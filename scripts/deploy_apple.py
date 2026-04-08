@@ -9,6 +9,7 @@ ln_cmd = '/bin/ln'
 chmod_cmd = '/bin/chmod'
 otool_cmd = '/usr/bin/otool'
 name_cmd = '/usr/bin/install_name_tool'
+codesign_cmd = '/usr/bin/codesign'
 print("Fixing install names in:", sys.argv[1])
 root = os.path.join(sys.argv[1], 'Contents')
 binaries = \
@@ -60,10 +61,19 @@ for binary in actions:
     print(binary)
     #print(actions[binary])
     path = root + binary
-    if binary.startswith('/MacOS/'):
-        subprocess.check_call([name_cmd, '-id', '@rpath/' + os.path.basename(binary), path])
+    if binary.startswith('/MacOS/') or binary.startswith('/Frameworks/'):
+        # Only rewrite the LC_ID_DYLIB if it's still an absolute/external path.
+        # Libraries built with @rpath already have the correct identity (which may
+        # differ from the filename, e.g. lib_Foundation.1.12.3.dylib has ID
+        # lib_Foundation.1.dylib); overwriting it would break dyld deduplication.
+        current_id = subprocess.check_output(
+            [otool_cmd, '-D', path], encoding='utf-8').strip().splitlines()
+        current_id = current_id[-1].strip() if len(current_id) > 1 else ''
+        if not current_id.startswith('@'):
+            subprocess.check_call([name_cmd, '-id', '@rpath/' + os.path.basename(binary), path])
     for old_path, new_path in actions[binary]:
         subprocess.check_call([name_cmd, '-change', old_path, new_path, path])
+
 avail_fws = os.listdir(os.path.join(root, 'Frameworks'))
 def base_name(fn):
     end_pos = fn.find('-')

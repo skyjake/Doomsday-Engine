@@ -453,70 +453,78 @@ function (deng_deploy_target target)
         get_property (outName TARGET ${target} PROPERTY OUTPUT_NAME)
         install (CODE "
             execute_process (COMMAND ${PYTHON_EXECUTABLE}
-                ${DE_SOURCE_DIR}/build/scripts/deploy_apple.py
+                ${DE_SOURCE_DIR}/scripts/deploy_apple.py
                 \"${DE_DISTRIB_DIR}/${outName}.app\"
             )")
     endif ()
 endfunction ()
 
 macro (deng_codesign target)
-    if (APPLE AND DE_CODESIGN_APP_CERT)
-        if (NOT DE_ENABLE_DEPLOYMENT)
-            # Enable attaching a debugger.
-            set (DE_CODESIGN_ENTITLEMENTS "--entitlements ${DE_SOURCE_DIR}/build/macx/debugging.plist")
-        endif ()
+    if (APPLE)
         get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
+        if (DE_CODESIGN_APP_CERT)
+            # Full Developer ID signing with optional notarization.
+            if (NOT DE_ENABLE_DEPLOYMENT)
+                set (DE_CODESIGN_ENTITLEMENTS "--entitlements ${DE_SOURCE_DIR}/scripts/macx/debugging.plist")
+            endif ()
+            set (_cs_cert "${DE_CODESIGN_APP_CERT}")
+            set (_cs_extra_opts "--options runtime --timestamp ${DE_CODESIGN_EXTRA_FLAGS}")
+            set (_cs_fw_extra_opts "--options runtime --timestamp ${DE_FW_CODESIGN_EXTRA_FLAGS}")
+        else ()
+            # No Developer ID configured: fall back to the CODESIGN_IDENTITY env var
+            # (defaults to "-" for ad-hoc signing). This keeps the bundle launchable
+            # on the local machine without a paid Apple developer account.
+            set (_cs_cert "\$ENV{CODESIGN_IDENTITY}")
+            if (NOT _cs_cert)
+                set (_cs_cert "-")
+            endif ()
+            set (_cs_extra_opts "")
+            set (_cs_fw_extra_opts "")
+        endif ()
         install (CODE "
-            file (GLOB fw
-                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/Doomsday/*.bundle/Contents/MacOS/*\"
-                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/Doomsday/*.bundle/Contents/Frameworks/*.dylib\"
-                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/Doomsday/*.bundle\"
-                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/*/*.dylib\"
+            # Sign inside-out: Frameworks dylibs first, then MacOS executables,
+            # then the top-level bundle seal. install_name_tool (called earlier by
+            # deploy_apple.py) invalidates embedded signatures; modern macOS enforces
+            # this strictly at dyld load time.
+            set (_cert \"${_cs_cert}\")
+            if (NOT _cert)
+                set (_cert \"-\")
+            endif ()
+            message (STATUS \"Signing \${CMAKE_INSTALL_PREFIX}/${_outName}.app with '\${_cert}'...\")
+            file (GLOB _fws
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/Frameworks/*.dylib\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/Frameworks/*.framework\"
-                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/MacOS/*\"
-                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/PlugIns/*.bundle/*\"
-                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/PlugIns/*.bundle\"
-                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/*.dylib\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/*/*.dylib\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/Doomsday/*.bundle/Contents/Frameworks/*.dylib\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/Doomsday/*.bundle/Contents/MacOS/*\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/Doomsday/*.bundle\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/*.bundle/*\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/*.bundle\"
             )
-            foreach (fn IN LISTS fw)
-                set (_skip NO)
-                if (fn MATCHES \".*app/PlugIns.*\" AND NOT fn MATCHES \".*\\\\.bundle$\")
-                    get_filename_component (fn2 \${fn} NAME)
-                    if (NOT fn MATCHES \".*\${fn2}.bundle/\${fn2}$\")
-                        set (_skip YES)
-                        message (STATUS \"Skipping \${fn} -- not an executable\")
-                    endif ()
+            foreach (_fn IN LISTS _fws)
+                if (NOT IS_SYMLINK \"\${_fn}\")
+                    execute_process (COMMAND ${CODESIGN_COMMAND}
+                        --force --sign \"\${_cert}\"
+                        ${_cs_fw_extra_opts} ${DE_CODESIGN_ENTITLEMENTS}
+                        \"\${_fn}\")
                 endif ()
-                if (NOT _skip)
-                message (STATUS \"Signing \${fn}...\")
-                execute_process (COMMAND ${CODESIGN_COMMAND}
-                        --deep
-                        --verbose
-                        --options runtime
-                        --timestamp
-                        --force
-                        -s \"${DE_CODESIGN_APP_CERT}\"
-                        ${DE_FW_CODESIGN_EXTRA_FLAGS}
-                        ${DE_CODESIGN_ENTITLEMENTS}
-                        \"\${fn}\"
-                )
+            endforeach ()
+            file (GLOB _bins \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/MacOS/*\")
+            foreach (_fn IN LISTS _bins)
+                if (NOT IS_SYMLINK \"\${_fn}\")
+                    execute_process (COMMAND ${CODESIGN_COMMAND}
+                        --force --sign \"\${_cert}\"
+                        ${_cs_extra_opts} ${DE_CODESIGN_ENTITLEMENTS}
+                        \"\${_fn}\")
                 endif ()
-            endforeach (fn)
-            message (STATUS \"Signing \${CMAKE_INSTALL_PREFIX}/${_outName}.app using '${DE_CODESIGN_APP_CERT}'...\")
-            execute_process (COMMAND ${CODESIGN_COMMAND} 
-                --verbose
-                --options runtime
-                --timestamp
-                --force
-                -s \"${DE_CODESIGN_APP_CERT}\"
-                ${DE_CODESIGN_EXTRA_FLAGS}
-                ${DE_CODESIGN_ENTITLEMENTS}
-                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
-            )
+            endforeach ()
+            execute_process (COMMAND ${CODESIGN_COMMAND}
+                --force --sign \"\${_cert}\"
+                ${_cs_extra_opts} ${DE_CODESIGN_ENTITLEMENTS}
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\")
             if (NOT \"${DE_NOTARIZATION_APPLE_ID}\" STREQUAL \"\")
                 message (STATUS \"Notarizing \${CMAKE_INSTALL_PREFIX}/${_outName}.app...\")
-                execute_process (COMMAND ${DENG_SOURCE_DIR}/build/scripts/notarize.py
+                execute_process (COMMAND ${DE_SOURCE_DIR}/scripts/notarize.py
                     \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
                     ${DE_NOTARIZATION_APPLE_ID}
                 )
