@@ -46,6 +46,7 @@ if (DE_X11 OR RASPBERRYPI)
     add_definitions (-DDE_USE_GENERIC_FILEDIALOG=1)
 elseif (APPLE)
     list (APPEND SOURCES src/dialogs/filedialog_macx.mm)
+    list (APPEND SOURCES src/guiapp_macx.mm)
 endif ()
 
 deng_add_library (libgui ${SOURCES} ${HEADERS})
@@ -54,6 +55,7 @@ target_precompile_headers (libgui PRIVATE "${DE_SOURCE_DIR}/cmake/pch/pch_gui.h"
 set_source_files_properties (
     src/text/fonts_macx.m
     src/dialogs/filedialog_macx.mm
+    src/guiapp_macx.mm
     PROPERTIES SKIP_PRECOMPILE_HEADERS ON
 )
 

@@ -27,6 +27,10 @@
 
 #include <SDL_events.h>
 
+#if defined (MACOSX)
+extern "C" void GuiApp_DiscardWheelMomentum(bool trapped);
+#endif
+
 namespace de {
 
 static constexpr TimeSpan GESTURE_MOMENTUM_EVAL_TIME = 70_ms;
@@ -168,6 +172,9 @@ DE_PIMPL(WindowEventHandler)
         {
             LOG_INPUT_VERBOSE("Grabbing mouse") << mouseGrabbed;
             mouseGrabbed = true;
+#if defined (MACOSX)
+            GuiApp_DiscardWheelMomentum(true);
+#endif
             DE_NOTIFY_PUBLIC(MouseStateChange, i) { i->mouseStateChanged(Trapped); }
         }
     }
@@ -178,6 +185,9 @@ DE_PIMPL(WindowEventHandler)
         {
             LOG_INPUT_VERBOSE("Ungrabbing mouse");
             mouseGrabbed = false;
+#if defined (MACOSX)
+            GuiApp_DiscardWheelMomentum(false);
+#endif
             DE_NOTIFY_PUBLIC(MouseStateChange, i) { i->mouseStateChanged(Untrapped); }
         }
     }
@@ -251,7 +261,7 @@ DE_PIMPL(WindowEventHandler)
     void handleMouseButtonEvent(const SDL_MouseButtonEvent &ev)
     {
         const auto pos = Vec2i(ev.x, ev.y) * DE_GUI_APP->devicePixelRatio();
-        
+
         if (ev.type == SDL_MOUSEBUTTONDOWN)
         {
             DE_NOTIFY_PUBLIC(MouseEvent, i)
@@ -299,17 +309,24 @@ DE_PIMPL(WindowEventHandler)
 
     void handleMouseWheelEvent(const SDL_MouseWheelEvent &ev)
     {
+        const bool isPrecise = ev.preciseX || ev.preciseY;
+
+        if (mouseGrabbed && isPrecise) return; // Discard trackpad scroll events while mouse is trapped.
+
         const float dir   = (ev.direction == SDL_MOUSEWHEEL_FLIPPED ? -1.f : 1.f);
-        const float ratio = DE_GUI_APP->devicePixelRatio();
+        const float ratio = float(window->pixelRatio());
+
         DE_NOTIFY_PUBLIC(MouseEvent, i)
         {
             // Prefer per-pixel precise values (trackpad on macOS).
-            if (ev.preciseX || ev.preciseY)
+            if (isPrecise)
             {
-                i->mouseEvent(MouseEvent(MouseEvent::Pixels,
-                                         Vec2f(ev.preciseX * dir * ratio,
-                                               ev.preciseY * dir * ratio),
-                                         currentMousePos));
+                const float sensitivity = 2.0f; // FIXME: shouldn't be needed, something's off
+
+                i->mouseEvent(MouseEvent(
+                    MouseEvent::Pixels,
+                    Vec2f(ev.preciseX * dir * ratio, ev.preciseY * dir * ratio) * sensitivity,
+                    currentMousePos));
             }
             else
             {
@@ -327,52 +344,6 @@ DE_PIMPL(WindowEventHandler)
                 }
             }
         }
-
-        /*
-        const float devicePixels = d->window->devicePixelRatio();
-
-        QPoint numPixels = ev->pixelDelta();
-        QPoint numDegrees = ev->angleDelta() / 8;
-        d->wheelAngleAccum += numDegrees;
-
-        if (!numPixels.isNull())
-        {
-            DE_NOTIFY(MouseEvent, i)
-            {
-                if (numPixels.x())
-                {
-                    i->mouseEvent(MouseEvent(MouseEvent::FineAngle, Vec2i(devicePixels * numPixels.x(), 0),
-                                             d->translatePosition(ev)));
-                }
-                if (numPixels.y())
-                {
-                    i->mouseEvent(MouseEvent(MouseEvent::FineAngle, Vec2i(0, devicePixels * numPixels.y()),
-                                             d->translatePosition(ev)));
-                }
-            }
-        }
-
-        const QPoint steps = d->wheelAngleAccum / 15;
-        if (!steps.isNull())
-        {
-            DE_NOTIFY(MouseEvent, i)
-            {
-                if (steps.x())
-                {
-                    i->mouseEvent(MouseEvent(MouseEvent::Step, Vec2i(steps.x(), 0),
-                                             !d->mouseGrabbed? d->translatePosition(ev) : Vec2i()));
-                }
-                if (steps.y())
-                {
-                    i->mouseEvent(MouseEvent(MouseEvent::Step, Vec2i(0, steps.y()),
-                                             !d->mouseGrabbed? d->translatePosition(ev) : Vec2i()));
-                }
-            }
-            d->wheelAngleAccum -= steps * 15;
-        }
-
-        d->prevWheelAt.start();
-        */
     }
 
     void handleGestureEvent(const SDL_MultiGestureEvent &ev)

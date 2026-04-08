@@ -37,6 +37,10 @@
 #include <SDL.h>
 #undef main
 
+#if defined (MACOSX)
+extern "C" void GuiApp_InitMacOSScrolling();
+#endif
+
 #include <fstream>
 #include <the_Foundation/thread.h>
 
@@ -162,6 +166,9 @@ GuiApp::GuiApp(const StringList &args)
     d->vsizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS);
     d->hsizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
     SDL_EventState(SDL_MOUSEMOTION, SDL_ENABLE);
+#if defined (MACOSX)
+    GuiApp_InitMacOSScrolling();
+#endif
     const int displayCount = SDL_GetNumVideoDisplays();
     if (displayCount == 0)
     {
