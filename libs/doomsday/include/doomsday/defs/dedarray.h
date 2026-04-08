@@ -159,7 +159,7 @@ public:
         }
 
         PODType *np = elements + first;
-        memset(np, 0, sizeof(PODType) * addedCount); // Clear the new entries.
+        std::memset(static_cast<void *>(np), 0, sizeof(PODType) * addedCount); // Clear the new entries.
         return np;
     }
 

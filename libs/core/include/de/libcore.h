@@ -626,7 +626,7 @@ inline ToType functionAssign(ToType &dest, FromType src)
  */
 template <typename Type>
 inline void zap(Type &t) {
-    std::memset(&t, 0, sizeof(Type));
+    std::memset(static_cast<void *>(&t), 0, sizeof(Type));
 }
 
 /**
@@ -639,7 +639,19 @@ inline void zap(Type &t) {
  */
 template <typename Type>
 inline void zapPtr(Type *t) {
-    std::memset(t, 0, sizeof(Type));
+    std::memset(static_cast<void *>(t), 0, sizeof(Type));
+}
+
+/**
+ * Clears an array of elements. The type need not be trivially copyable as
+ * long as zeroing the representation is semantically valid (i.e. POD in
+ * practice).
+ * @param t      Pointer to the first element.
+ * @param count  Number of elements.
+ */
+template <typename Type>
+inline void zapN(Type *t, std::size_t count) {
+    std::memset(static_cast<void *>(t), 0, sizeof(Type) * count);
 }
 
 template <typename Container>
