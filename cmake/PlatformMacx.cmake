@@ -9,6 +9,7 @@ set (DE_INSTALL_MAN_DIR ${DE_INSTALL_DOC_DIR})
 
 # Code signing.
 set (DE_CODESIGN_APP_CERT "" CACHE STRING "ID of the certificate for signing applications.")
+option (DE_ENABLE_CODESIGN "Sign app bundles during install (disable to speed up development installs)" OFF)
 find_program (CODESIGN_COMMAND codesign)
 mark_as_advanced (CODESIGN_COMMAND)
 

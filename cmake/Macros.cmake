@@ -452,7 +452,7 @@ function (deng_deploy_target target)
 endfunction ()
 
 macro (deng_codesign target)
-    if (APPLE)
+    if (APPLE AND DE_ENABLE_CODESIGN)
         get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
         if (DE_CODESIGN_APP_CERT)
             # Full Developer ID signing with optional notarization.
