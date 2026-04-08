@@ -38,97 +38,112 @@
 #include "dd_share.h"
 #include <doomsday/world/actions.h>
 
+typedef struct mobj_s   mobj_t;
+typedef struct player_s player_t;
+typedef struct pspdef_s pspdef_t;
+
+#define ACTION_MOBJ(name)   void C_DECL name(mobj_t *actor)
+#define ACTION_WEAPON(name) void C_DECL name(player_t *player, pspdef_t *psp)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 DE_EXTERN_C actionlink_t actionlinks[];
 
-void C_DECL A_BabyMetal();
-void C_DECL A_BFGsound();
-void C_DECL A_BFGSpray();
-void C_DECL A_BossDeath();
-void C_DECL A_BruisAttack();
-void C_DECL A_BspiAttack();
-void C_DECL A_Chase();
-void C_DECL A_RectChase();
-void C_DECL A_CheckReload();
-void C_DECL A_CyberAttack();
-void C_DECL A_Explode();
-void C_DECL A_BarrelExplode();
-void C_DECL A_FaceTarget();
-void C_DECL A_BspiFaceTarget();
-void C_DECL A_Fall();
-void C_DECL A_FatAttack1();
-void C_DECL A_FatAttack2();
-void C_DECL A_FatAttack3();
-void C_DECL A_FatRaise();
-void C_DECL A_FireBFG();
-void C_DECL A_FireCGun();
-void C_DECL A_FireMissile();
-void C_DECL A_FirePistol();
-void C_DECL A_FirePlasma();
-void C_DECL A_FireShotgun();
-void C_DECL A_FireShotgun2();
-void C_DECL A_GunFlash();
-void C_DECL A_HeadAttack();
-void C_DECL A_Hoof();
-void C_DECL A_Light0();
-void C_DECL A_Light1();
-void C_DECL A_Light2();
-void C_DECL A_LoadShotgun2();
-void C_DECL A_Look();
-void C_DECL A_Lower();
-void C_DECL A_Metal();
-void C_DECL A_OpenShotgun2();
-void C_DECL A_Pain();
-void C_DECL A_PainAttack();
-void C_DECL A_PainDie();
-void C_DECL A_PosAttack();
-void C_DECL A_Punch();
-void C_DECL A_Raise();
-void C_DECL A_PlasmaShock();
-void C_DECL A_ReFire();
-void C_DECL A_SargAttack();
-void C_DECL A_Saw();
-void C_DECL A_Scream();
-void C_DECL A_SkelFist();
-void C_DECL A_SkelMissile();
-void C_DECL A_SkelWhoosh();
-void C_DECL A_SkullAttack();
-void C_DECL A_SpidRefire();
-void C_DECL A_SPosAttack();
-void C_DECL A_Tracer();
-void C_DECL A_TroopAttack();
-void C_DECL A_WeaponReady();
-void C_DECL A_XScream();
+ACTION_MOBJ(A_BabyMetal);
+ACTION_WEAPON(A_BFGsound);
+ACTION_MOBJ(A_BFGSpray);
+ACTION_MOBJ(A_BossDeath);
+ACTION_MOBJ(A_BruisAttack);
+ACTION_MOBJ(A_BspiAttack);
+ACTION_MOBJ(A_Chase);
+ACTION_MOBJ(A_RectChase);
+ACTION_WEAPON(A_CheckReload);
+ACTION_MOBJ(A_CyberAttack);
+ACTION_MOBJ(A_Explode);
+ACTION_MOBJ(A_BarrelExplode);
+ACTION_MOBJ(A_FaceTarget);
+ACTION_MOBJ(A_BspiFaceTarget);
+ACTION_MOBJ(A_Fall);
+ACTION_MOBJ(A_FatAttack1);
+ACTION_MOBJ(A_FatAttack2);
+ACTION_MOBJ(A_FatAttack3);
+ACTION_MOBJ(A_FatRaise);
+ACTION_WEAPON(A_FireBFG);
+ACTION_WEAPON(A_FireCGun);
+ACTION_WEAPON(A_FireMissile);
+ACTION_WEAPON(A_FirePistol);
+ACTION_WEAPON(A_FirePlasma);
+ACTION_WEAPON(A_FireShotgun);
+ACTION_WEAPON(A_FireShotgun2);
+ACTION_WEAPON(A_GunFlash);
+ACTION_MOBJ(A_HeadAttack);
+ACTION_MOBJ(A_Hoof);
+ACTION_WEAPON(A_Light0);
+ACTION_WEAPON(A_Light1);
+ACTION_WEAPON(A_Light2);
+ACTION_WEAPON(A_LoadShotgun2);
+ACTION_MOBJ(A_Look);
+ACTION_WEAPON(A_Lower);
+ACTION_MOBJ(A_Metal);
+ACTION_WEAPON(A_OpenShotgun2);
+ACTION_MOBJ(A_Pain);
+ACTION_MOBJ(A_PainAttack);
+ACTION_MOBJ(A_PainDie);
+ACTION_MOBJ(A_PosAttack);
+ACTION_WEAPON(A_Punch);
+ACTION_WEAPON(A_Raise);
+ACTION_WEAPON(A_PlasmaShock);
+ACTION_WEAPON(A_ReFire);
+ACTION_MOBJ(A_SargAttack);
+ACTION_WEAPON(A_Saw);
+ACTION_MOBJ(A_Scream);
+ACTION_MOBJ(A_SkelFist);
+ACTION_MOBJ(A_SkelMissile);
+ACTION_MOBJ(A_SkelWhoosh);
+ACTION_MOBJ(A_SkullAttack);
+ACTION_MOBJ(A_SpidRefire);
+ACTION_MOBJ(A_SPosAttack);
+ACTION_MOBJ(A_Tracer);
+ACTION_MOBJ(A_TroopAttack);
+ACTION_WEAPON(A_WeaponReady);
+ACTION_MOBJ(A_XScream);
 
 //jd64
-void C_DECL A_Lasersmoke();
-void C_DECL A_FireSingleLaser();
-void C_DECL A_FireDoubleLaser();
-void C_DECL A_FireDoubleLaser1();
-void C_DECL A_FireDoubleLaser2();
-void C_DECL A_PossSpecial();
-void C_DECL A_SposSpecial();
-void C_DECL A_TrooSpecial();
-void C_DECL A_SargSpecial();
-void C_DECL A_HeadSpecial();
-void C_DECL A_SkulSpecial();
-void C_DECL A_Bos2Special();
-void C_DECL A_BossSpecial();
-void C_DECL A_PainSpecial();
-void C_DECL A_FattSpecial();
-void C_DECL A_BabySpecial();
-void C_DECL A_CybrSpecial();
-void C_DECL A_RectSpecial();
-void C_DECL A_Rocketpuff();
-void C_DECL A_CyberDeath();
-void C_DECL A_TroopClaw();
-void C_DECL A_MotherFloorFire();
-void C_DECL A_MotherMissle();
-void C_DECL A_SetFloorFire();
-void C_DECL A_MotherBallExplode();
-void C_DECL A_RectTracerPuff();
-void C_DECL A_TargetCamera();
-void C_DECL A_ShadowsAction1();
-void C_DECL A_ShadowsAction2();
-void C_DECL A_EMarineAttack2();
+ACTION_MOBJ(A_Lasersmoke);
+ACTION_WEAPON(A_FireSingleLaser);
+ACTION_WEAPON(A_FireDoubleLaser);
+ACTION_WEAPON(A_FireDoubleLaser1);
+ACTION_WEAPON(A_FireDoubleLaser2);
+ACTION_MOBJ(A_PossSpecial);
+ACTION_MOBJ(A_SposSpecial);
+ACTION_MOBJ(A_TrooSpecial);
+ACTION_MOBJ(A_SargSpecial);
+ACTION_MOBJ(A_HeadSpecial);
+ACTION_MOBJ(A_SkulSpecial);
+ACTION_MOBJ(A_Bos2Special);
+ACTION_MOBJ(A_BossSpecial);
+ACTION_MOBJ(A_PainSpecial);
+ACTION_MOBJ(A_FattSpecial);
+ACTION_MOBJ(A_BabySpecial);
+ACTION_MOBJ(A_CybrSpecial);
+ACTION_MOBJ(A_RectSpecial);
+ACTION_MOBJ(A_Rocketpuff);
+ACTION_MOBJ(A_CyberDeath);
+ACTION_MOBJ(A_TroopClaw);
+ACTION_MOBJ(A_MotherFloorFire);
+ACTION_MOBJ(A_MotherMissle);
+ACTION_MOBJ(A_SetFloorFire);
+ACTION_MOBJ(A_MotherBallExplode);
+ACTION_MOBJ(A_RectTracerPuff);
+ACTION_MOBJ(A_TargetCamera);
+ACTION_MOBJ(A_ShadowsAction1);
+ACTION_MOBJ(A_ShadowsAction2);
+ACTION_MOBJ(A_EMarineAttack2);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

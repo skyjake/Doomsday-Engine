@@ -38,7 +38,7 @@ typedef enum {
     NUMPSPRITES
 } psprnum_t;
 
-typedef struct {
+typedef struct pspdef_s {
     state_t *state; // A NULL state means not active.
     int tics;
     float pos[2]; // [x, y]

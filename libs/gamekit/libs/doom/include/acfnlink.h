@@ -33,91 +33,106 @@
 #include "dd_share.h"
 #include <doomsday/world/actions.h>
 
+typedef struct mobj_s   mobj_t;
+typedef struct player_s player_t;
+typedef struct pspdef_s pspdef_t;
+
+#define ACTION_MOBJ(name)   void C_DECL name(mobj_t *actor)
+#define ACTION_WEAPON(name) void C_DECL name(player_t *player, pspdef_t *psp)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 DE_EXTERN_C actionlink_t actionlinks[];
 
-void C_DECL A_BabyMetal();
-void C_DECL A_BFGsound();
-void C_DECL A_BFGSpray();
+ACTION_MOBJ(A_BabyMetal);
+ACTION_WEAPON(A_BFGsound);
+ACTION_MOBJ(A_BFGSpray);
 
 /**
  * Possibly trigger special effects if there are no more bosses.
  */
-void C_DECL A_BossDeath();
+ACTION_MOBJ(A_BossDeath);
 
-void C_DECL A_BrainAwake();
-void C_DECL A_BrainDie();
-void C_DECL A_BrainExplode();
-void C_DECL A_BrainPain();
-void C_DECL A_BrainScream();
-void C_DECL A_BrainSpit();
-void C_DECL A_BruisAttack();
-void C_DECL A_BspiAttack();
-void C_DECL A_Chase();
-void C_DECL A_CheckReload();
-void C_DECL A_CloseShotgun2();
-void C_DECL A_CPosAttack();
-void C_DECL A_CPosRefire();
-void C_DECL A_CyberAttack();
-void C_DECL A_Explode();
-void C_DECL A_FaceTarget();
-void C_DECL A_Fall();
-void C_DECL A_FatAttack1();
-void C_DECL A_FatAttack2();
-void C_DECL A_FatAttack3();
-void C_DECL A_FatRaise();
-void C_DECL A_Fire();
-void C_DECL A_FireBFG();
-void C_DECL A_FireCGun();
-void C_DECL A_FireCrackle();
-void C_DECL A_FireMissile();
-void C_DECL A_FirePistol();
-void C_DECL A_FirePlasma();
-void C_DECL A_FireShotgun();
-void C_DECL A_FireShotgun2();
-void C_DECL A_GunFlash();
-void C_DECL A_HeadAttack();
-void C_DECL A_Hoof();
+ACTION_MOBJ(A_BrainAwake);
+ACTION_MOBJ(A_BrainDie);
+ACTION_MOBJ(A_BrainExplode);
+ACTION_MOBJ(A_BrainPain);
+ACTION_MOBJ(A_BrainScream);
+ACTION_MOBJ(A_BrainSpit);
+ACTION_MOBJ(A_BruisAttack);
+ACTION_MOBJ(A_BspiAttack);
+ACTION_MOBJ(A_Chase);
+ACTION_WEAPON(A_CheckReload);
+ACTION_WEAPON(A_CloseShotgun2);
+ACTION_MOBJ(A_CPosAttack);
+ACTION_MOBJ(A_CPosRefire);
+ACTION_MOBJ(A_CyberAttack);
+ACTION_MOBJ(A_Explode);
+ACTION_MOBJ(A_FaceTarget);
+ACTION_MOBJ(A_Fall);
+ACTION_MOBJ(A_FatAttack1);
+ACTION_MOBJ(A_FatAttack2);
+ACTION_MOBJ(A_FatAttack3);
+ACTION_MOBJ(A_FatRaise);
+ACTION_MOBJ(A_Fire);
+ACTION_WEAPON(A_FireBFG);
+ACTION_WEAPON(A_FireCGun);
+ACTION_MOBJ(A_FireCrackle);
+ACTION_WEAPON(A_FireMissile);
+ACTION_WEAPON(A_FirePistol);
+ACTION_WEAPON(A_FirePlasma);
+ACTION_WEAPON(A_FireShotgun);
+ACTION_WEAPON(A_FireShotgun2);
+ACTION_WEAPON(A_GunFlash);
+ACTION_MOBJ(A_HeadAttack);
+ACTION_MOBJ(A_Hoof);
 
 /**
  * DOOM II special targeting sectors with tag 666.
  */
-void C_DECL A_KeenDie();
+ACTION_MOBJ(A_KeenDie);
 
-void C_DECL A_Light0();
-void C_DECL A_Light1();
-void C_DECL A_Light2();
-void C_DECL A_LoadShotgun2();
-void C_DECL A_Look();
-void C_DECL A_Lower();
-void C_DECL A_Metal();
-void C_DECL A_OpenShotgun2();
-void C_DECL A_Pain();
-void C_DECL A_PainAttack();
-void C_DECL A_PainDie();
-void C_DECL A_PlayerScream();
-void C_DECL A_PosAttack();
-void C_DECL A_Punch();
-void C_DECL A_Raise();
-void C_DECL A_ReFire();
-void C_DECL A_SargAttack();
-void C_DECL A_Saw();
-void C_DECL A_Scream();
-void C_DECL A_SkelFist();
-void C_DECL A_SkelMissile();
-void C_DECL A_SkelWhoosh();
-void C_DECL A_SkullAttack();
-void C_DECL A_SpawnFly();
-void C_DECL A_SpawnSound();
-void C_DECL A_SpidRefire();
-void C_DECL A_SPosAttack();
-void C_DECL A_StartFire();
-void C_DECL A_Tracer();
-void C_DECL A_TroopAttack();
-void C_DECL A_VileAttack();
-void C_DECL A_VileChase();
-void C_DECL A_VileStart();
-void C_DECL A_VileTarget();
-void C_DECL A_WeaponReady();
-void C_DECL A_XScream();
+ACTION_WEAPON(A_Light0);
+ACTION_WEAPON(A_Light1);
+ACTION_WEAPON(A_Light2);
+ACTION_WEAPON(A_LoadShotgun2);
+ACTION_MOBJ(A_Look);
+ACTION_WEAPON(A_Lower);
+ACTION_MOBJ(A_Metal);
+ACTION_WEAPON(A_OpenShotgun2);
+ACTION_MOBJ(A_Pain);
+ACTION_MOBJ(A_PainAttack);
+ACTION_MOBJ(A_PainDie);
+ACTION_MOBJ(A_PlayerScream);
+ACTION_MOBJ(A_PosAttack);
+ACTION_WEAPON(A_Punch);
+ACTION_WEAPON(A_Raise);
+ACTION_WEAPON(A_ReFire);
+ACTION_MOBJ(A_SargAttack);
+ACTION_WEAPON(A_Saw);
+ACTION_MOBJ(A_Scream);
+ACTION_MOBJ(A_SkelFist);
+ACTION_MOBJ(A_SkelMissile);
+ACTION_MOBJ(A_SkelWhoosh);
+ACTION_MOBJ(A_SkullAttack);
+ACTION_MOBJ(A_SpawnFly);
+ACTION_MOBJ(A_SpawnSound);
+ACTION_MOBJ(A_SpidRefire);
+ACTION_MOBJ(A_SPosAttack);
+ACTION_MOBJ(A_StartFire);
+ACTION_MOBJ(A_Tracer);
+ACTION_MOBJ(A_TroopAttack);
+ACTION_MOBJ(A_VileAttack);
+ACTION_MOBJ(A_VileChase);
+ACTION_MOBJ(A_VileStart);
+ACTION_MOBJ(A_VileTarget);
+ACTION_WEAPON(A_WeaponReady);
+ACTION_MOBJ(A_XScream);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif
