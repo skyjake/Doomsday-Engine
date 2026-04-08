@@ -43,7 +43,7 @@
 namespace de {
 
 DE_STATIC_STRING(VAR_UI_SCALE_FACTOR, "ui.scaleFactor");
-    
+
 static Value *Function_DisplayMode_OriginalMode(Context &, const Function::ArgumentValues &)
 {
     SDL_DisplayMode mode;
@@ -162,6 +162,7 @@ GuiApp::GuiApp(const StringList &args)
     {
         throw Error("GuiApp::GuiApp", stringf("Failed to initialize SDL: %s", SDL_GetError()));
     }
+    SDL_EventState(SDL_MOUSEMOTION, SDL_ENABLE);
     const int displayCount = SDL_GetNumVideoDisplays();
     if (displayCount == 0)
     {
@@ -198,7 +199,7 @@ void GuiApp::initSubsystems(SubsystemInitFlags subsystemInitFlags)
     {
         Config::get().set(VAR_UI_SCALE_FACTOR(), 1.0f);
     }
-    
+
     // The "-dpi" option overrides the detected pixel ratio.
     if (auto dpi = commandLine().check("-dpi", 1))
     {
@@ -216,7 +217,7 @@ const Rule &GuiApp::pixelRatio() const
 {
     return *d->pixelRatio;
 }
-    
+
 float GuiApp::devicePixelRatio() const
 {
     return d->windowPixelRatio;
