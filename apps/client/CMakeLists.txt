@@ -345,24 +345,7 @@ if (APPLE AND NOT IOS)
     if (TARGET audio_fmod)
         deng_install_bundle_deps (client fmodex)
     endif ()
-
-    # Plugins are bundled inside the client app. We'll run macdeployqt on the
-    # installed app before the plugins are there so it won't do unnecessary
-    # work on them -- plugins are already self-contained.
-#    get_property (outName TARGET client PROPERTY OUTPUT_NAME)
-#    set (stageDir "${DE_BUILD_STAGING_DIR}/DengPlugins")
-#    if (IOS)
-#        set (destDir "${outName}.app/PlugIns")
-#    else ()
-#        set (destDir "${outName}.app/Contents/PlugIns/Doomsday")
-#    endif ()
-#    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E remove_directory
-#        \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
-#    #deng_install_deployqt (client)
-#    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E copy_directory \"${stageDir}\"
-#        \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
-else ()
-    #deng_install_deployqt (client)
+    deng_bundle_sdl3 (client)
 endif ()
 
 deng_deploy_target (client)

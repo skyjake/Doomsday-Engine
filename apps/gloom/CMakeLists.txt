@@ -52,6 +52,7 @@ if (APPLE)
         Deng::libdoomsday
         Deng::libgloom
     )
+    deng_bundle_sdl3 (gloom)
 endif ()
 
 if (WIN32)

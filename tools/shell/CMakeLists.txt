@@ -11,6 +11,7 @@ include (../../cmake/Config.cmake)
 
 find_package (the_Foundation REQUIRED)
 find_package (glbinding REQUIRED)
+find_package (SDL3Libs REQUIRED)
 
 add_definitions (
     -DSHELL_VERSION="${DE_VERSION}"
@@ -58,6 +59,7 @@ deng_install_bundle_deps (shell
     glbinding::glbinding
     assimp::assimp
 )
+deng_bundle_sdl3 (shell)
 deng_deploy_target (shell)
 
 if (UNIX_LINUX)

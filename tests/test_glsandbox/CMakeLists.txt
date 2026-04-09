@@ -26,6 +26,7 @@ if (APPLE)
         the_Foundation::the_Foundation
         glbinding::glbinding
     )
+    deng_bundle_sdl3 (test_glsandbox)
 endif ()
 
 deng_deploy_target (test_glsandbox)

@@ -42,6 +42,7 @@ if (APPLE)
         Deng::libgloom
         assimp::assimp
     )
+    deng_bundle_sdl3 (gloomed)
     deng_install_deployqt (gloomed)
 endif ()
 
