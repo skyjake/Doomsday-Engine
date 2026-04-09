@@ -51,8 +51,6 @@ void Joystick_Register(void)
 #ifndef DE_NO_SDL
 static void initialize(void)
 {
-    int joycount;
-
     if (isDedicated || CommandLine_Check("-nojoy"))
         return;
 
@@ -69,24 +67,27 @@ static void initialize(void)
         LOG_INPUT_ERROR("SDL init failed for joystick: %s") << SDL_GetError();
     }
 
-    if ((joycount = SDL_NumJoysticks()) > 0)
+    int joycount = 0;
+    SDL_JoystickID *joyIds = SDL_GetJoysticks(&joycount);
+    if (joycount > 0)
     {
         if (joydevice > joycount)
         {
             LOG_INPUT_WARNING("Using the default joystick instead of joystick #%i") << joydevice;
-            joy = SDL_OpenJoystick(0);
+            joy = SDL_OpenJoystick(joyIds[0]);
         }
         else
-            joy = SDL_OpenJoystick(joydevice);
+            joy = SDL_OpenJoystick(joyIds[joydevice]);
     }
+    SDL_free(joyIds);
 
     if (joy)
     {
         // Show some info.
         LOG_INPUT_MSG("Joystick name: %s" ) << Joystick_Name();
 
-        // We'll handle joystick events manually
-        SDL_JoystickEventState(SDL_ENABLE);
+        // We'll handle joystick events manually.
+        SDL_SetJoystickEventsEnabled(true);
 
         LOG_INPUT_VERBOSE("Joystick reports %i axes, %i buttons, %i hats, and %i trackballs")
                 << SDL_GetNumJoystickAxes(joy)

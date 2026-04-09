@@ -370,7 +370,7 @@ void GL_Init2DState()
     DE_ASSERT_IN_MAIN_THREAD();
 
     //DGL_SetInteger(DGL_FLUSH_BACKTRACE, true);
-    
+
     // Here we configure the OpenGL state and set the projection matrix.
     DGL_CullFace(DGL_NONE);
     DGL_Disable(DGL_DEPTH_TEST);
@@ -1365,19 +1365,18 @@ D_CMD(DisplayModeInfo)
     ClientWindow *win = ClientApp::mainWindow();
     if(!win) return false;
 
-    SDL_DisplayMode disp;
-    Vec2i ratio = de::ratio({disp.w, disp.h});
-    SDL_GetCurrentDisplayMode(win->displayIndex(), &disp);
+    const SDL_DisplayMode *disp = SDL_GetCurrentDisplayMode(win->displayIndex());
+    Vec2i ratio = de::ratio({disp->w, disp->h});
 
     String str = Stringf("Current display mode:%ix%i depth:%i (%i:%i",
-                         disp.w,
-                         disp.h,
-                         SDL_BITSPERPIXEL(disp.format),
+                         disp->w,
+                         disp->h,
+                         SDL_BITSPERPIXEL(disp->format),
                          ratio.x,
                          ratio.y);
-    if (disp.refresh_rate > 0)
+    if (disp->refresh_rate > 0)
     {
-        str += Stringf(", refresh: %d Hz", disp.refresh_rate);
+        str += Stringf(", refresh: %.1f Hz", disp->refresh_rate);
     }
     str += Stringf(")\nMain window:\n  current origin:%s size:%s"
                   "\n  windowed origin:%s size:%s"

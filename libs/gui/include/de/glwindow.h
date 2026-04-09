@@ -272,7 +272,7 @@ public:
 
     /**
      * Enumerates the available display modes of a display.
-     * @param displayIndex  Which display.
+     * @param displayId  Which display.
      * @return List of supported modes.
      */
     static List<DisplayMode> displayModes(SDL_DisplayID displayId);

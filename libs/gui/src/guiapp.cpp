@@ -50,8 +50,8 @@ DE_STATIC_STRING(VAR_UI_SCALE_FACTOR, "ui.scaleFactor");
 
 static Value *Function_DisplayMode_OriginalMode(Context &, const Function::ArgumentValues &)
 {
-    const SDL_DisplayMode *mode =
-        SDL_GetDesktopDisplayMode(GLWindow::mainExists() ? GLWindow::getMain().displayIndex() : 0);
+    const SDL_DisplayMode *mode = SDL_GetDesktopDisplayMode(
+        GLWindow::mainExists() ? GLWindow::getMain().displayIndex() : SDL_GetPrimaryDisplay());
     const auto dim = de::ratio({mode->w, mode->h});
 
     auto *dict = new DictionaryValue;
