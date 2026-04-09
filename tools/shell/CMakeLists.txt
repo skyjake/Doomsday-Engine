@@ -45,7 +45,7 @@ else ()
     set_property (TARGET shell PROPERTY OUTPUT_NAME "doomsday-shell")
 endif ()
 
-target_link_sdl2 (shell PUBLIC)
+target_link_sdl3 (shell PUBLIC)
 deng_link_libraries (shell PUBLIC DengCore DengDoomsday DengGui)
 target_link_libraries (shell PUBLIC doomsdaygui)
 

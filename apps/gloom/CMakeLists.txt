@@ -4,7 +4,7 @@ project (DE_GLOOM)
 include (../../cmake/Config.cmake)
 
 find_package (FMOD)
-find_Package (SDL2Libs)
+find_Package (SDL3Libs)
 
 list (APPEND DE_REQUIRED_PACKAGES
     net.dengine.stdlib
@@ -37,7 +37,7 @@ if (APPLE)
 endif ()
 
 deng_add_application (gloom ${SOURCES} ${HEADERS})
-deng_link_libraries (gloom PRIVATE DengGloom SDL2)
+deng_link_libraries (gloom PRIVATE DengGloom SDL3::SDL3)
 
 if (APPLE)
     set_target_properties (gloom PROPERTIES

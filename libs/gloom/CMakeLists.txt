@@ -32,7 +32,7 @@ deng_merge_sources (audio    src/audio/*.cpp)
 deng_add_library (libgloom ${SOURCES} ${HEADERS})
 
 deng_link_libraries (libgloom PUBLIC DengGui DengDoomsday)
-target_link_libraries (libgloom PRIVATE SDL2 json)
+target_link_libraries (libgloom PRIVATE SDL3::SDL3 json)
 if (HAVE_FMOD)
     target_compile_definitions (libgloom PRIVATE -DLIBGLOOM_HAVE_FMOD=1)
     target_link_libraries (libgloom PRIVATE fmodex)

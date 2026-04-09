@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.10)
 project (DE_TEST_GLSANDBOX)
 include (../TestConfig.cmake)
 
-find_package (SDL2Libs)
+find_package (SDL3Libs)
 
 list (APPEND DE_REQUIRED_PACKAGES net.dengine.stdlib)
 deng_add_package (net.dengine.test.glsandbox)
@@ -13,7 +13,7 @@ deng_add_application (test_glsandbox
     testwindow.h
 )
 
-target_link_sdl2 (test_glsandbox PUBLIC)
+target_link_sdl3 (test_glsandbox PUBLIC)
 deng_link_libraries (test_glsandbox PRIVATE DengGui)
 
 if (APPLE)

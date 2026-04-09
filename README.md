@@ -24,9 +24,9 @@ For [compilation instructions](https://manual.dengine.net/devel/compilation) and
 
 Doomsday is compiled using [CMake](http://cmake.org/). Version 3.1 or later is required.
 
-### SDL 2
+### SDL 3
 
-[SDL 2](http://libsdl.org) provides window system integration (windows, graphics API initialization, input events, game controllers). Additionally, SDL2_mixer can be used for audio output.
+[SDL 3](http://libsdl.org) provides window system integration (windows, graphics API initialization, input events, game controllers). Additionally, SDL3_mixer can be used for audio output.
 
 ### the_Foundation
 

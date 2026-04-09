@@ -24,7 +24,7 @@ add_subdirectory (libs/fluidsynth)
 find_package (the_Foundation REQUIRED)
 find_package (glbinding REQUIRED)
 find_package (Amethyst QUIET)
-find_package (SDL2Libs)
+find_package (SDL3Libs)
 
 # Sources and includes ------------------------------------------------------------------
 
@@ -211,7 +211,7 @@ elseif (APPLE)
         link_framework (client PUBLIC QTKit) # MusicPlayer
     endif ()
 endif ()
-target_link_sdl2 (client PUBLIC)
+target_link_sdl3 (client PUBLIC)
 if (TARGET DirectX)
     target_link_libraries (client PUBLIC DirectX)
 endif ()
