@@ -33,7 +33,7 @@
 #include <de/imagebank.h>
 #include <de/modeldrawable.h>
 
-#include <SDL_messagebox.h>
+#include <SDL3/SDL_messagebox.h>
 
 using namespace de;
 

@@ -21,7 +21,7 @@
 #include "de/keyevent.h"
 #include <de/log.h>
 
-#include <SDL_keycode.h>
+#include <SDL3/SDL_keycode.h>
 
 namespace de {
 
@@ -190,10 +190,10 @@ bool KeyEvent::isModifier() const
 KeyEvent::Modifiers KeyEvent::modifiersFromSDL(int mods) // static
 {
     Modifiers m;
-    if (mods & KMOD_SHIFT) m |= Shift;
-    if (mods & KMOD_ALT)   m |= Alt;
-    if (mods & KMOD_CTRL)  m |= Control;
-    if (mods & KMOD_GUI)   m |= Meta;
+    if (mods & SDL_KMOD_SHIFT) m |= Shift;
+    if (mods & SDL_KMOD_ALT)   m |= Alt;
+    if (mods & SDL_KMOD_CTRL)  m |= Control;
+    if (mods & SDL_KMOD_GUI)   m |= Meta;
     return m;
 }
 

@@ -34,7 +34,7 @@
 #include <de/thread.h>
 #include <de/windowsystem.h>
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #undef main
 
 #if defined (MACOSX)
@@ -50,16 +50,15 @@ DE_STATIC_STRING(VAR_UI_SCALE_FACTOR, "ui.scaleFactor");
 
 static Value *Function_DisplayMode_OriginalMode(Context &, const Function::ArgumentValues &)
 {
-    SDL_DisplayMode mode;
-    SDL_GetDesktopDisplayMode(GLWindow::mainExists() ? GLWindow::getMain().displayIndex() : 0,
-                              &mode);
-    const auto dim = de::ratio({mode.w, mode.h});
+    const SDL_DisplayMode *mode =
+        SDL_GetDesktopDisplayMode(GLWindow::mainExists() ? GLWindow::getMain().displayIndex() : 0);
+    const auto dim = de::ratio({mode->w, mode->h});
 
     auto *dict = new DictionaryValue;
-    dict->add(new TextValue("width"),       new NumberValue(mode.w));
-    dict->add(new TextValue("height"),      new NumberValue(mode.h));
-    dict->add(new TextValue("depth"),       new NumberValue(SDL_BITSPERPIXEL(mode.format)));
-    dict->add(new TextValue("refreshRate"), new NumberValue(mode.refresh_rate));
+    dict->add(new TextValue("width"),       new NumberValue(mode->w));
+    dict->add(new TextValue("height"),      new NumberValue(mode->h));
+    dict->add(new TextValue("depth"),       new NumberValue(SDL_BITSPERPIXEL(mode->format)));
+    dict->add(new TextValue("refreshRate"), new NumberValue(mode->refresh_rate));
 
     auto *ratio = new ArrayValue;
     *ratio << NumberValue(dim.x) << NumberValue(dim.y);
@@ -104,9 +103,9 @@ DE_PIMPL(GuiApp)
         windowSystem->closeAll();
         windowSystem.reset();
         releaseRef(pixelRatio);
-        SDL_FreeCursor(arrowCursor);
-        SDL_FreeCursor(vsizeCursor);
-        SDL_FreeCursor(hsizeCursor);
+        SDL_DestroyCursor(arrowCursor);
+        SDL_DestroyCursor(vsizeCursor);
+        SDL_DestroyCursor(hsizeCursor);
         SDL_Quit();
     }
 
@@ -157,26 +156,28 @@ GuiApp::GuiApp(const StringList &args)
     : App(args)
     , d(new Impl(this))
 {
-    if (SDL_InitSubSystem(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
-                          SDL_INIT_GAMECONTROLLER) != 0)
+    if (!SDL_InitSubSystem(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
+                          SDL_INIT_GAMEPAD))
     {
         throw Error("GuiApp::GuiApp", stringf("Failed to initialize SDL: %s", SDL_GetError()));
     }
-    d->arrowCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
-    d->vsizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS);
-    d->hsizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
-    SDL_EventState(SDL_MOUSEMOTION, SDL_ENABLE);
+    d->arrowCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_DEFAULT);
+    d->vsizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_NS_RESIZE);
+    d->hsizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_EW_RESIZE);
+    SDL_SetEventEnabled(SDL_EVENT_MOUSE_MOTION, true);
 #if defined (MACOSX)
     GuiApp_InitMacOSScrolling();
 #endif
-    const int displayCount = SDL_GetNumVideoDisplays();
-    if (displayCount == 0)
-    {
-        throw Error("GuiApp::GuiApp", "No video displays available");
-    }
     setLocale_Foundation();
 
-    // List available display modes.
+    // List available displays and their display modes.
+    int displayCount = 0;
+    SDL_DisplayID *displayIds = SDL_GetDisplays(&displayCount);
+    if (displayCount == 0)
+    {
+        SDL_free(displayIds);
+        throw Error("GuiApp::GuiApp", "No video displays available");
+    }
     for (int i = 0; i < displayCount; ++i)
     {
         LOG_GL_MSG("Display %d:") << i;
@@ -186,6 +187,7 @@ GuiApp::GuiApp(const StringList &args)
                 << mode.resolution.x << mode.resolution.y << mode.refreshRate << mode.bitDepth;
         }
     }
+    SDL_free(displayIds);
 
     d->determineDevicePixelRatio();
     NativeFont::setPixelRatio(d->windowPixelRatio);
@@ -305,7 +307,7 @@ GuiLoop &GuiApp::loop()
 
 void GuiApp::setMouseCursor(MouseCursor cursor)
 {
-    SDL_ShowCursor(cursor != None ? SDL_ENABLE : SDL_DISABLE);
+    if (cursor != None) SDL_ShowCursor(); else SDL_HideCursor();
 
     switch (cursor)
     {

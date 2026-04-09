@@ -20,7 +20,7 @@
 #include <de/Map>
 #include <de/String>
 #include <de/ThreadLocal>
-#include <SDL_ttf.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 namespace de {
 

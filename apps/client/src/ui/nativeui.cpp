@@ -27,7 +27,7 @@
 #include <de/app.h>
 #include <de/bytearrayfile.h>
 #include <de/filesystem.h>
-#include <SDL_messagebox.h>
+#include <SDL3/SDL_messagebox.h>
 #include <stdarg.h>
 
 void Sys_MessageBox(messageboxtype_t type,

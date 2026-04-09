@@ -35,7 +35,7 @@
 #include <de/timer.h>
 #include <de/windowsystem.h>
 #include <doomsday/network/localserver.h>
-#include <SDL_messagebox.h>
+#include <SDL3/SDL_messagebox.h>
 
 using namespace de;
 using namespace network;

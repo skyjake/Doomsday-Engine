@@ -84,10 +84,10 @@
 #include <de/vrconfig.h>
 #include <de/windowsystem.h>
 
-#include <SDL_events.h>
-#include <SDL_surface.h>
-#include <SDL_timer.h>
-#include <SDL_video.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_surface.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_video.h>
 
 #include <cstdlib>
 
@@ -184,12 +184,11 @@ static SDL_Surface *createSDLSurfaceFromImage(const Image &image)
 {
     const int imageWidth  = int(image.width());
     const int imageHeight = int(image.height());
-    return SDL_CreateRGBSurfaceWithFormatFrom(const_cast<uint8_t *>(image.bits()),
-                                              imageWidth,
-                                              imageHeight,
-                                              int(image.depth()),
-                                              int(image.stride()),
-                                              SDL_PIXELFORMAT_ABGR8888);
+    return SDL_CreateSurfaceFrom(imageWidth,
+                                 imageHeight,
+                                 SDL_PIXELFORMAT_ABGR8888,
+                                 const_cast<uint8_t *>(image.bits()),
+                                 int(image.stride()));
 }
 
 DE_PIMPL(ClientApp)
@@ -305,7 +304,7 @@ DE_PIMPL(ClientApp)
         try
         {
             ClientWindow::glActivateMain(); // for GL deinit
-                        
+
             self().players().forAll([](Player &p) {
                 p.as<ClientPlayer>().viewCompositor().glDeinit();
                 return LoopContinue;
@@ -313,10 +312,10 @@ DE_PIMPL(ClientApp)
             LogBuffer::get().removeSink(logAlarm);
 
             Sys_Shutdown();
-            
+
             delete classicWorld; classicWorld = nullptr;
             delete gloomWorld;   gloomWorld   = nullptr;
-            
+
             DD_Shutdown();
 
             self().glDeinit();
@@ -629,14 +628,18 @@ ClientApp::ClientApp(const StringList &args)
         const Image splashImage = Image::fromXpmData(doomsdaySplashXpm);
         SDL_Surface *splashSurface = createSDLSurfaceFromImage(splashImage);
 
-        d->splashWindow =
-            SDL_CreateWindow(DOOMSDAY_NICENAME,
-                             SDL_WINDOWPOS_CENTERED,
-                             SDL_WINDOWPOS_CENTERED,
-                             splashSurface->w,
-                             splashSurface->h,
-                             SDL_WINDOW_BORDERLESS | SDL_WINDOW_SHOWN | SDL_WINDOW_ALWAYS_ON_TOP |
-                             SDL_WINDOW_ALLOW_HIGHDPI);
+        SDL_PropertiesID props = SDL_CreateProperties();
+        SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, DOOMSDAY_NICENAME);
+        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, SDL_WINDOWPOS_CENTERED);
+        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, SDL_WINDOWPOS_CENTERED);
+        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, splashSurface->w);
+        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, splashSurface->h);
+        SDL_SetNumberProperty(props,
+                              SDL_PROP_WINDOW_CREATE_FLAGS_NUMBER,
+                              SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP |
+                                  SDL_WINDOW_HIGH_PIXEL_DENSITY);
+        d->splashWindow = SDL_CreateWindowWithProperties(props);
+        SDL_DestroyProperties(props);
 
         // On HiDPI/Retina displays the window surface is larger in pixels than the
         // window size in points. Scale the splash image to fill the full pixel surface.
@@ -644,7 +647,7 @@ ClientApp::ClientApp(const StringList &args)
         const int winW = windowSurface->w;
         const int winH = windowSurface->h;
         SDL_Rect dstRect = { 0, 0, winW, winH };
-        SDL_BlitScaled(splashSurface, nullptr, windowSurface, &dstRect);
+        SDL_BlitSurfaceScaled(splashSurface, nullptr, windowSurface, &dstRect, SDL_SCALEMODE_LINEAR);
 
         // Version text.
         {
@@ -660,11 +663,11 @@ ClientApp::ClientApp(const StringList &args)
             SDL_Rect rect = { winW / 2 - surf->w / 2,
                               winH - surf->h * 3 / 2, 0, 0 };
             SDL_BlitSurface(surf, nullptr, SDL_GetWindowSurface(d->splashWindow), &rect);
-            SDL_FreeSurface(surf);
+            SDL_DestroySurface(surf);
         }
 
         SDL_UpdateWindowSurface(d->splashWindow);
-        SDL_FreeSurface(splashSurface);
+        SDL_DestroySurface(splashSurface);
         SDL_RaiseWindow(d->splashWindow);
         SDL_PumpEvents(); // allow it to appear immediately
     }

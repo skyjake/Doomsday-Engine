@@ -39,8 +39,11 @@ endif ()
 # entries in the compile command.  This ensures deps headers take priority
 # over any system-wide installation (e.g. /usr/local/include on macOS).
 foreach (_lang C CXX)
-    set (CMAKE_${_lang}_FLAGS "-I${DE_DEPENDS_DIR}/products/include ${CMAKE_${_lang}_FLAGS}"
-         CACHE STRING "Flags for ${_lang} compiler" FORCE)
+    set (_incFlag "-I${DE_DEPENDS_DIR}/products/include")
+    #string (FIND "${CMAKE_${_lang}_FLAGS}" "${_incFlag}" _pos)
+    #if (_pos LESS 0)
+    set (CMAKE_${_lang}_FLAGS "${_incFlag} ${CMAKE_${_lang}_FLAGS}")
+    #endif ()
 endforeach ()
 
 # Platform-Specific Configuration --------------------------------------------

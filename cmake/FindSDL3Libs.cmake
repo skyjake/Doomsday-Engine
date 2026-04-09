@@ -1,5 +1,5 @@
 find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3)
-find_package(SDL3_mixer REQUIRED CONFIG REQUIRED COMPONENTS SDL3_mixer)
+find_package(SDL3_mixer REQUIRED CONFIG)
 
 
 find_package (PkgConfig QUIET)

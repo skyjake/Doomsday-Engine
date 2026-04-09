@@ -19,7 +19,7 @@
 #include "testapp.h"
 #include "mainwindow.h"
 #include <de/escapeparser.h>
-#include <SDL_messagebox.h>
+#include <SDL3/SDL_messagebox.h>
 
 using namespace de;
 

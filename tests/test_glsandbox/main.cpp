@@ -24,7 +24,7 @@
 #include <de/windowsystem.h>
 
 #define SDL_MAIN_HANDLED
-#include <SDL_main.h>
+#include <SDL3/SDL_main.h>
 
 using namespace de;
 

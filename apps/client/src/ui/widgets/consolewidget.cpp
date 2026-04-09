@@ -42,7 +42,7 @@
 #include <de/ui/variabletoggleitem.h>
 #include <doomsday/doomsdayapp.h>
 
-#include <SDL_clipboard.h>
+#include <SDL3/SDL_clipboard.h>
 
 //#if !defined (DE_MOBILE)
 //#  include <QApplication>

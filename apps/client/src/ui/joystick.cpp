@@ -21,7 +21,7 @@
  */
 
 #include <stdlib.h>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #undef main
 
 #include "de_base.h"
@@ -74,10 +74,10 @@ static void initialize(void)
         if (joydevice > joycount)
         {
             LOG_INPUT_WARNING("Using the default joystick instead of joystick #%i") << joydevice;
-            joy = SDL_JoystickOpen(0);
+            joy = SDL_OpenJoystick(0);
         }
         else
-            joy = SDL_JoystickOpen(joydevice);
+            joy = SDL_OpenJoystick(joydevice);
     }
 
     if (joy)
@@ -89,10 +89,10 @@ static void initialize(void)
         SDL_JoystickEventState(SDL_ENABLE);
 
         LOG_INPUT_VERBOSE("Joystick reports %i axes, %i buttons, %i hats, and %i trackballs")
-                << SDL_JoystickNumAxes(joy)
-                << SDL_JoystickNumButtons(joy)
-                << SDL_JoystickNumHats(joy)
-                << SDL_JoystickNumBalls(joy);
+                << SDL_GetNumJoystickAxes(joy)
+                << SDL_GetNumJoystickButtons(joy)
+                << SDL_GetNumJoystickHats(joy)
+                << SDL_GetNumJoystickBalls(joy);
 
         joyAvailable = true;
     }
@@ -124,7 +124,7 @@ void Joystick_Shutdown(void)
 
     if (joy)
     {
-        SDL_JoystickClose(joy);
+        SDL_CloseJoystick(joy);
         joy = 0;
     }
 
@@ -149,16 +149,17 @@ void Joystick_GetState(joystate_t *state)
         return;
 
     // Update joysticks
-    SDL_JoystickUpdate();
+    SDL_UpdateJoysticks();
 
     // What do we have available to us?
-    state->numAxes =    MIN_OF( SDL_JoystickNumAxes(joy),    IJOY_MAXAXES );
-    state->numButtons = MIN_OF( SDL_JoystickNumButtons(joy), IJOY_MAXBUTTONS );
-    state->numHats =    MIN_OF( SDL_JoystickNumHats(joy),    IJOY_MAXHATS );
+    state->numAxes =    MIN_OF(SDL_GetNumJoystickAxes(joy),    IJOY_MAXAXES );
+    state->numButtons = MIN_OF(SDL_GetNumJoystickButtons(joy),
+                               IJOY_MAXBUTTONS );
+    state->numHats =    MIN_OF(SDL_GetNumJoystickHats(joy),    IJOY_MAXHATS );
 
     for (i = 0; i < state->numAxes; ++i)
     {
-        int value = SDL_JoystickGetAxis(joy, i);
+        int value = SDL_GetJoystickAxis(joy, i);
         // SDL returns a value between -32768 and 32767, but Doomsday is expecting
         // -10000 to 10000. We'll convert as we go.
         value = ((value + 32768) * CONVCONST) + IJOY_AXISMIN;
@@ -166,7 +167,7 @@ void Joystick_GetState(joystate_t *state)
     }
     for (i = 0; i < state->numButtons; ++i)
     {
-        int isDown = SDL_JoystickGetButton(joy, i);
+        int isDown = SDL_GetJoystickButton(joy, i);
 
         if (isDown && !joyButtonWasDown[i])
         {
@@ -183,7 +184,7 @@ void Joystick_GetState(joystate_t *state)
     }
     for (i = 0; i < state->numHats; ++i)
     {
-        pov = SDL_JoystickGetHat(joy, i);
+        pov = SDL_GetJoystickHat(joy, i);
         switch (pov)
         {
             case SDL_HAT_UP:
@@ -230,7 +231,7 @@ void Joystick_GetState(joystate_t *state)
 de::String Joystick_Name()
 {
 #ifndef DE_NO_SDL
-    const char *joyName = SDL_JoystickName(joy);
+    const char *joyName = SDL_GetJoystickName(joy);
     return joyName ? joyName : "";
 #else
     return "";

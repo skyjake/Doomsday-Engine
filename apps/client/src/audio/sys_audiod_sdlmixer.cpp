@@ -24,8 +24,8 @@
 
 #include <cstdlib>
 #include <cstring>
-#include <SDL.h>
-#include <SDL_mixer.h>
+#include <SDL3/SDL.h>
+#include <SDL3_mixer/SDL_mixer.h>
 #undef main
 
 #include <de/legacy/timer.h>
@@ -184,7 +184,7 @@ int DS_SDLMixerInit(void)
                       "Frequency: %iHz (%iHz)\n"
                       "Initial Channels: %i")
             << (channels > 1? "stereo" : "mono")
-            << format << (uint16_t) AUDIO_S16LSB
+            << format << (uint16_t) SDL_AUDIO_S16LE
             << freq << (int) MIX_DEFAULT_FREQUENCY
             << MIX_CHANNELS;
 
@@ -329,7 +329,8 @@ void DS_SDLMixer_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     *(Uint32 *) (conv + 40) = DD_ULONG(sample->size);
     memcpy(conv + 44, sample->data, sample->size);
 
-    buf->ptr = Mix_LoadWAV_RW(SDL_RWFromMem(conv, 44 + sample->size), SDL_TRUE);
+    buf->ptr = Mix_LoadWAV_RW(SDL_IOFromMem(conv, 44 + sample->size),
+                              true);
     if (!buf->ptr)
     {
         LOG_AS("DS_SDLMixer_SFX_Load");

@@ -71,7 +71,7 @@
 #include <de/glstate.h>
 #include <de/logbuffer.h>
 
-#include <SDL_video.h>
+#include <SDL3/SDL_video.h>
 
 using namespace de;
 using namespace res;

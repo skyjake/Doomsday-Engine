@@ -275,7 +275,7 @@ public:
      * @param displayIndex  Which display.
      * @return List of supported modes.
      */
-    static List<DisplayMode> displayModes(int displayIndex);
+    static List<DisplayMode> displayModes(SDL_DisplayID displayId);
 
 protected:
     virtual void initializeGL();

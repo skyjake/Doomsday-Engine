@@ -5,6 +5,7 @@ include (../../cmake/Config.cmake)
 
 find_package (FMOD)
 find_package (Json)
+find_package (SDL3Libs)
 
 if (TARGET fmodex)
     set (HAVE_FMOD YES)

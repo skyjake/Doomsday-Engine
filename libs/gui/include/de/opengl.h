@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <SDL_video.h>
+#include <SDL3/SDL_video.h>
 
 /*
  * OpenGL API selection
@@ -37,7 +37,7 @@ using namespace gl33core;
 #  define QOpenGLFunctions_Doomsday QOpenGLExtraFunctions
 
 #elif (DE_OPENGL_ES == 20)
-#  include <SDL_opengles2.h>
+#  include <SDL3/SDL_opengles2.h>
 #  include <GLES2/gl2ext.h>
 #endif
 

@@ -48,8 +48,8 @@
 #include "dd_version.h"
 
 #include <de/escapeparser.h>
-#include <SDL_main.h>
-#include <SDL_messagebox.h>
+#include <SDL3/SDL_main.h>
+#include <SDL3/SDL_messagebox.h>
 
 #if defined (DE_STATIC_LINK)
 

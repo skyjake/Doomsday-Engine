@@ -101,7 +101,7 @@ endif ()
 
 # Link libraries.
 deng_link_libraries (libgui PUBLIC DengCore)
-target_link_libraries (libgui PRIVATE SDL3 stb assimp)
+target_link_libraries (libgui PRIVATE SDL3::SDL3 stb assimp)
 if (NOT DE_HAVE_OPENGL_ES)
     target_compile_definitions (libgui PRIVATE DE_GLBINDING_VERSION=${DE_GLBINDING_VERSION})
     if (DE_USE_SYSTEM_GLBINDING)

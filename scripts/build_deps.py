@@ -46,11 +46,11 @@ dependencies = [
     (
         'the_Foundation',
         'https://git.skyjake.fi/skyjake/the_Foundation.git', 'origin/main',
-        [UNISTRING_DIR,
+        ([UNISTRING_DIR] if UNISTRING_DIR else []) + [
          '-DTFDN_ENABLE_DEBUG_OUTPUT=YES',
          '-DTFDN_ENABLE_TLSREQUEST=NO',
          '-DTFDN_ENABLE_TESTS=NO',
-         '-DTFDN_ENABLE_WIN32_FILE_API=' + 'YES' if IS_MSYS or IS_MINGW else 'NO']
+         '-DTFDN_ENABLE_WIN32_FILE_API=' + ('YES' if IS_MSYS or IS_MINGW else 'NO')]
     ),
     (
         'Open Asset Import Library',
@@ -68,8 +68,8 @@ dependencies = [
         ['-Wno-dev',
          '-DOPTION_BUILD_EXAMPLES=NO',
          '-DOPTION_BUILD_TOOLS=NO',
-         '-DOPTION_BUILD_TESTS=NO',
-         '-DCMAKE_CXX_FLAGS=-Wno-deprecated-copy' if IS_MSYS or IS_MINGW else '']
+         '-DOPTION_BUILD_TESTS=NO'] +
+        ['-DCMAKE_CXX_FLAGS=-Wno-deprecated-copy'] if IS_MSYS or IS_MINGW else []
     )
 ]
 
@@ -183,6 +183,9 @@ for long_name, git_url, git_tag, cmake_opts in dependencies:
     else:
         os.chdir(src_dir)
         subprocess.check_call(['git', 'fetch', '--depth', '1', '--tags'])
+        #
+        # TODO: If the checked out revision changes, do a clean rebuild of this dependency.
+        #
     print('Current directory:', os.getcwd())
     subprocess.check_call(['git', 'reset', '--hard'])
     subprocess.check_call(['git', 'checkout', git_tag])

@@ -25,7 +25,7 @@
 #include <de/rule.h>
 #include <de/windowsystem.h>
 
-#include <SDL_events.h>
+#include <SDL3/SDL_events.h>
 
 #if defined (MACOSX)
 extern "C" void GuiApp_DiscardWheelMomentum(bool trapped);
@@ -166,6 +166,11 @@ DE_PIMPL(WindowEventHandler)
         Clock::get().audienceForTimeChange() += this;
     }
 
+    SDL_Window *sdlWindow() const
+    {
+        return reinterpret_cast<SDL_Window *>(window->sdlWindow());
+    }
+
     void grabMouse()
     {
         if (!mouseGrabbed)
@@ -203,14 +208,14 @@ DE_PIMPL(WindowEventHandler)
 
     void handleKeyEvent(const SDL_KeyboardEvent &ev)
     {
-        LOGDEV_INPUT_XVERBOSE("text input active: %i", SDL_IsTextInputActive());
+        LOGDEV_INPUT_XVERBOSE("text input active: %i", SDL_TextInputActive(sdlWindow()));
 
-        KeyEvent keyEvent(ev.state == SDL_PRESSED
+        KeyEvent keyEvent(ev.down
                               ? (ev.repeat ? KeyEvent::Repeat : KeyEvent::Pressed)
                               : KeyEvent::Released,
-                          ev.keysym.sym,
-                          ev.keysym.scancode,
-                          KeyEvent::modifiersFromSDL(ev.keysym.mod));
+                          ev.key,
+                          ev.scancode,
+                          KeyEvent::modifiersFromSDL(ev.mod));
 
         DE_NOTIFY_PUBLIC(KeyEvent, i)
         {
@@ -262,7 +267,7 @@ DE_PIMPL(WindowEventHandler)
     {
         const auto pos = Vec2i(ev.x, ev.y) * DE_GUI_APP->devicePixelRatio();
 
-        if (ev.type == SDL_MOUSEBUTTONDOWN)
+        if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
         {
             DE_NOTIFY_PUBLIC(MouseEvent, i)
             {
@@ -309,7 +314,7 @@ DE_PIMPL(WindowEventHandler)
 
     void handleMouseWheelEvent(const SDL_MouseWheelEvent &ev)
     {
-        const bool isPrecise = ev.preciseX || ev.preciseY;
+        const bool isPrecise = ev.x || ev.y;
 
         if (mouseGrabbed && isPrecise) return; // Discard trackpad scroll events while mouse is trapped.
 
@@ -321,31 +326,32 @@ DE_PIMPL(WindowEventHandler)
             // Prefer per-pixel precise values (trackpad on macOS).
             if (isPrecise)
             {
-                const float sensitivity = 2.0f; // FIXME: shouldn't be needed, something's off
+                //const float sensitivity = 2.0f; // FIXME: shouldn't be needed, something's off
 
                 i->mouseEvent(MouseEvent(
                     MouseEvent::Pixels,
-                    Vec2f(ev.preciseX * dir * ratio, ev.preciseY * dir * ratio) * sensitivity,
+                    Vec2f(ev.x * dir * ratio, ev.y * dir * ratio),
                     currentMousePos));
             }
             else
             {
-                if (ev.x)
+                if (ev.integer_x)
                 {
                     i->mouseEvent(MouseEvent(MouseEvent::Steps,
-                                             Vec2f(float(ev.x) * dir, 0.f),
+                                             Vec2f(float(ev.integer_x) * dir, 0.f),
                                              currentMousePos));
                 }
-                if (ev.y)
+                if (ev.integer_y)
                 {
                     i->mouseEvent(MouseEvent(MouseEvent::Steps,
-                                             Vec2f(0.f, float(ev.y) * dir),
+                                             Vec2f(0.f, float(ev.integer_y) * dir),
                                              currentMousePos));
                 }
             }
         }
     }
 
+#if 0 // removed in SDL3
     void handleGestureEvent(const SDL_MultiGestureEvent &ev)
     {
         if (ev.numFingers == 2)
@@ -383,15 +389,16 @@ DE_PIMPL(WindowEventHandler)
             scr.prevGesturePos = currentPos;
         }
     }
+#endif
 
     void handleFingerEvent(const SDL_TouchFingerEvent &ev)
     {
-        if (ev.type == SDL_FINGERUP)
+        if (ev.type == SDL_EVENT_FINGER_UP)
         {
             inertiaScroll.pos[0].release(ev.timestamp);
             inertiaScroll.pos[1].release(ev.timestamp);
         }
-        else if (ev.type == SDL_FINGERDOWN)
+        else if (ev.type == SDL_EVENT_FINGER_DOWN)
         {
             // Stop scrolling.
             inertiaScroll.active = false;
@@ -461,12 +468,12 @@ void WindowEventHandler::setKeyboardMode(KeyboardMode kbMode)
         if (kbMode == TextInput)
         {
             LOGDEV_INPUT_VERBOSE("Keyboard mode changed to text input");
-            SDL_StartTextInput();
+            SDL_StartTextInput(d->sdlWindow());
         }
         else
         {
             LOGDEV_INPUT_VERBOSE("Keyboard mode changed to raw key events");
-            SDL_StopTextInput();
+            SDL_StopTextInput(d->sdlWindow());
         }
     }
 }
@@ -486,45 +493,40 @@ void WindowEventHandler::handleSDLEvent(const void *ptr)
     const SDL_Event *event = reinterpret_cast<const SDL_Event *>(ptr);
     switch (event->type)
     {
-    case SDL_MOUSEMOTION:
+    case SDL_EVENT_MOUSE_MOTION:
         d->handleMouseMoveEvent(event->motion);
         break;
 
-    case SDL_MOUSEBUTTONDOWN:
-    case SDL_MOUSEBUTTONUP:
+    case SDL_EVENT_MOUSE_BUTTON_DOWN:
+    case SDL_EVENT_MOUSE_BUTTON_UP:
         d->handleMouseButtonEvent(event->button);
         break;
 
-    case SDL_MOUSEWHEEL:
+    case SDL_EVENT_MOUSE_WHEEL:
         d->handleMouseWheelEvent(event->wheel);
         break;
 
-    case SDL_FINGERDOWN:
-    case SDL_FINGERUP:
+    case SDL_EVENT_FINGER_DOWN:
+    case SDL_EVENT_FINGER_UP:
         d->handleFingerEvent(event->tfinger);
         break;
 
-    case SDL_MULTIGESTURE:
-        d->handleGestureEvent(event->mgesture);
-        break;
+    // case SDL_MULTIGESTURE:
+    //     d->handleGestureEvent(event->mgesture);
+    //     break;
 
-    case SDL_KEYDOWN:
-    case SDL_KEYUP:
+    case SDL_EVENT_KEY_DOWN:
+    case SDL_EVENT_KEY_UP:
         d->handleKeyEvent(event->key);
         break;
 
-    case SDL_TEXTINPUT:
+    case SDL_EVENT_TEXT_INPUT:
         d->handleTextInput(event->text);
         break;
 
-    case SDL_WINDOWEVENT:
-        switch (event->window.event)
-        {
-        case SDL_WINDOWEVENT_FOCUS_GAINED:
-        case SDL_WINDOWEVENT_FOCUS_LOST:
-            d->handleFocus(event->window.event == SDL_WINDOWEVENT_FOCUS_GAINED);
-            break;
-        }
+    case SDL_EVENT_WINDOW_FOCUS_GAINED:
+    case SDL_EVENT_WINDOW_FOCUS_LOST:
+        d->handleFocus(event->type == SDL_EVENT_WINDOW_FOCUS_GAINED);
         break;
     }
 }

@@ -23,7 +23,7 @@
 
 #include <de/keymap.h>
 
-#include <SDL_events.h>
+#include <SDL3/SDL_events.h>
 
 namespace de {
 
@@ -106,20 +106,30 @@ DE_PIMPL(WindowSystem)
 
         switch (event.type)
         {
-            case SDL_KEYDOWN:
-            case SDL_KEYUP:
-            case SDL_TEXTINPUT:
-            case SDL_MOUSEMOTION:
-            case SDL_MOUSEBUTTONDOWN:
-            case SDL_MOUSEBUTTONUP:
-            case SDL_MOUSEWHEEL:
-            case SDL_FINGERUP:
-            case SDL_FINGERDOWN:
-            case SDL_MULTIGESTURE:
+            case SDL_EVENT_KEY_DOWN:
+            case SDL_EVENT_KEY_UP:
+            case SDL_EVENT_TEXT_INPUT:
+            case SDL_EVENT_MOUSE_MOTION:
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            case SDL_EVENT_MOUSE_BUTTON_UP:
+            case SDL_EVENT_MOUSE_WHEEL:
+            case SDL_EVENT_FINGER_UP:
+            case SDL_EVENT_FINGER_DOWN:
+            //case SDL_EVENT_MULTIGESTURE:
                 window.eventHandler().handleSDLEvent(&event);
                 break;
 
-            case SDL_WINDOWEVENT:
+            case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+            case SDL_EVENT_WINDOW_EXPOSED:
+            case SDL_EVENT_WINDOW_FOCUS_GAINED:
+            case SDL_EVENT_WINDOW_FOCUS_LOST:
+            case SDL_EVENT_WINDOW_HIDDEN:
+            case SDL_EVENT_WINDOW_MAXIMIZED:
+            case SDL_EVENT_WINDOW_MINIMIZED:
+            case SDL_EVENT_WINDOW_MOVED:
+            case SDL_EVENT_WINDOW_RESIZED:
+            case SDL_EVENT_WINDOW_RESTORED:
+            case SDL_EVENT_WINDOW_SHOWN:
                 window.handleWindowEvent(&event);
                 break;
 
@@ -263,7 +273,7 @@ void WindowSystem::closeAll()
     DE_NOTIFY(AllClosing, i) { i->allWindowsClosing(); }
 
     while (!d->windows.empty())
-    {        
+    {
         delete d->windows.begin()->second.window; // Removes itself from the window system.
     }
 }
@@ -332,14 +342,29 @@ static uint32_t getWindowId(const SDL_Event &event)
 {
     switch (event.type)
     {
-        case SDL_MOUSEMOTION: return event.motion.windowID;
-        case SDL_MOUSEBUTTONUP:
-        case SDL_MOUSEBUTTONDOWN: return event.button.windowID;
-        case SDL_MOUSEWHEEL: return event.wheel.windowID;
-        case SDL_KEYDOWN:
-        case SDL_KEYUP: return event.key.windowID;
-        case SDL_TEXTINPUT: return event.text.windowID;
-        case SDL_WINDOWEVENT: return event.window.windowID;
+        case SDL_EVENT_MOUSE_MOTION: return event.motion.windowID;
+
+        case SDL_EVENT_MOUSE_BUTTON_UP:
+        case SDL_EVENT_MOUSE_BUTTON_DOWN: return event.button.windowID;
+
+        case SDL_EVENT_MOUSE_WHEEL: return event.wheel.windowID;
+
+        case SDL_EVENT_KEY_DOWN:
+        case SDL_EVENT_KEY_UP: return event.key.windowID;
+
+        case SDL_EVENT_TEXT_INPUT: return event.text.windowID;
+
+        case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+        case SDL_EVENT_WINDOW_EXPOSED:
+        case SDL_EVENT_WINDOW_FOCUS_GAINED:
+        case SDL_EVENT_WINDOW_FOCUS_LOST:
+        case SDL_EVENT_WINDOW_HIDDEN:
+        case SDL_EVENT_WINDOW_MAXIMIZED:
+        case SDL_EVENT_WINDOW_MINIMIZED:
+        case SDL_EVENT_WINDOW_MOVED:
+        case SDL_EVENT_WINDOW_RESIZED:
+        case SDL_EVENT_WINDOW_RESTORED:
+        case SDL_EVENT_WINDOW_SHOWN: return event.window.windowID;
     }
     return ~0u;
 }
@@ -353,20 +378,30 @@ void WindowSystem::pollAndDispatchEvents()
         {
             switch (event.type)
             {
-                case SDL_QUIT:
+                case SDL_EVENT_QUIT:
                     DE_GUI_APP->quitRequested();
                     break;
 
-                /// @todo Handle game controller events, too.
+                /// @todo Handle gamepad events, too.
 
-                case SDL_WINDOWEVENT:
-                case SDL_MOUSEMOTION:
-                case SDL_MOUSEBUTTONDOWN:
-                case SDL_MOUSEBUTTONUP:
-                case SDL_MOUSEWHEEL:
-                case SDL_KEYDOWN:
-                case SDL_KEYUP:
-                case SDL_TEXTINPUT:
+                case SDL_EVENT_KEY_DOWN:
+                case SDL_EVENT_KEY_UP:
+                case SDL_EVENT_MOUSE_BUTTON_DOWN:
+                case SDL_EVENT_MOUSE_BUTTON_UP:
+                case SDL_EVENT_MOUSE_MOTION:
+                case SDL_EVENT_MOUSE_WHEEL:
+                case SDL_EVENT_TEXT_INPUT:
+                case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+                case SDL_EVENT_WINDOW_EXPOSED:
+                case SDL_EVENT_WINDOW_FOCUS_GAINED:
+                case SDL_EVENT_WINDOW_FOCUS_LOST:
+                case SDL_EVENT_WINDOW_HIDDEN:
+                case SDL_EVENT_WINDOW_MAXIMIZED:
+                case SDL_EVENT_WINDOW_MINIMIZED:
+                case SDL_EVENT_WINDOW_MOVED:
+                case SDL_EVENT_WINDOW_RESIZED:
+                case SDL_EVENT_WINDOW_RESTORED:
+                case SDL_EVENT_WINDOW_SHOWN:
                     // These events are specific to one window.
                     if (auto *win = d->findWindow(getWindowId(event)))
                     {
@@ -374,9 +409,9 @@ void WindowSystem::pollAndDispatchEvents()
                     }
                     break;
 
-                case SDL_MULTIGESTURE:
-                case SDL_FINGERUP:
-                case SDL_FINGERDOWN:
+                // case SDL_MULTIGESTURE:
+                case SDL_EVENT_FINGER_UP:
+                case SDL_EVENT_FINGER_DOWN:
                     // Gestures affect the currently focused window.
                     if (auto *win = focusedWindow())
                     {
