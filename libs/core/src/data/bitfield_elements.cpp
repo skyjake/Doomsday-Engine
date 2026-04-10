@@ -26,8 +26,8 @@ DE_PIMPL(BitField::Elements)
 {
     struct Element
     {
-        int numBits;
-        int firstBit;
+        dsize numBits;
+        dsize firstBit;
     };
     typedef KeyMap<Id, Element> Elements; // needs to be ordered
 
@@ -87,13 +87,13 @@ BitField::Elements &BitField::Elements::add(Id id, dsize numBits)
     d->totalBits += numBits;
 
     // Update the lookup table.
-    int pos = elem.firstBit / 8;
-    int endPos = (elem.firstBit + (numBits - 1)) / 8;
-    while (d->lookup.sizei() <= endPos)
+    dsize pos = elem.firstBit / 8;
+    dsize endPos = (elem.firstBit + (numBits - 1)) / 8;
+    while (d->lookup.size() <= endPos)
     {
         d->lookup.append(Ids());
     }
-    for (int i = pos; i <= endPos; ++i)
+    for (dsize i = pos; i <= endPos; ++i)
     {
         d->lookup[i].insert(id);
     }
@@ -120,7 +120,7 @@ void BitField::Elements::add(const List<Spec> &elements)
 
 int BitField::Elements::size() const
 {
-    return d->elements.size();
+    return int(d->elements.size());
 }
 
 BitField::Spec BitField::Elements::at(int index) const
@@ -133,7 +133,7 @@ BitField::Spec BitField::Elements::at(int index) const
     {
         if (i == index)
         {
-            return Spec{elem->first, elem->second.numBits};
+            return Spec{elem->first, int(elem->second.numBits)};
         }
     }
     return {};
@@ -142,13 +142,13 @@ BitField::Spec BitField::Elements::at(int index) const
 void BitField::Elements::elementLayout(const Id &id, int &firstBit, int &numBits) const
 {
     const Impl::Element &elem = d->element(id);
-    firstBit = elem.firstBit;
-    numBits  = elem.numBits;
+    firstBit = int(elem.firstBit);
+    numBits  = int(elem.numBits);
 }
 
 int BitField::Elements::bitCount() const
 {
-    return d->totalBits;
+    return int(d->totalBits);
 }
 
 BitField::Ids BitField::Elements::ids() const

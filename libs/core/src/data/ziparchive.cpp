@@ -447,7 +447,7 @@ DE_PIMPL(ZipArchive)
         summary.diskEntryCount = summary.totalEntryCount = self().index().leafNodes().size();
 
         // This is where the central directory begins.
-        summary.offset = writer.offset();
+        summary.offset = Uint32(writer.offset());
 
         // Write the central directory.
         for (PathTreeIterator<Index> iter(self().index().leafNodes()); iter.hasNext(); )
@@ -464,16 +464,16 @@ DE_PIMPL(ZipArchive)
             header.lastModDate = DOSDate(at.year() - 1980, at.month(), at.dayOfMonth());
             header.compression = entry.compression;
             header.crc32 = entry.crc32;
-            header.compressedSize = entry.sizeInArchive;
-            header.size = entry.size;
+            header.compressedSize = Uint32(entry.sizeInArchive);
+            header.size = Uint32(entry.size);
             header.fileNameSize = fullPath.size();
-            header.relOffset = entry.localHeaderOffset;
+            header.relOffset = Uint32(entry.localHeaderOffset);
 
             writer << header << FixedByteArray(fullPath.toLatin1());
         }
 
         // Size of the central directory.
-        summary.size = writer.offset() - summary.offset;
+        summary.size = Uint32(writer.offset() - summary.offset);
 
         // End of central directory.
         writer << duint32(SIG_END_OF_CENTRAL_DIR) << summary;
@@ -586,11 +586,11 @@ void ZipArchive::readFromSource(const Entry &e, const Path &, IBlock &uncompress
         z_stream stream;
         zap(stream);
         stream.next_in = const_cast<IByteArray::Byte *>(entry.dataInArchive->data());
-        stream.avail_in = entry.sizeInArchive;
+        stream.avail_in = uInt(entry.sizeInArchive);
         stream.zalloc = Z_NULL;
         stream.zfree = Z_NULL;
         stream.next_out = const_cast<IByteArray::Byte *>(uncompressedData.data());
-        stream.avail_out = entry.size;
+        stream.avail_out = uInt(entry.size);
 
         /*
          * Set up a raw inflate with a window of -15 bits.
@@ -663,8 +663,8 @@ void ZipArchive::operator >> (Writer &to) const
         header.lastModTime = DOSTime(at.hours(), at.minutes(), at.seconds());
         header.lastModDate = DOSDate(at.year() - 1980, at.month(), at.dayOfMonth());
         header.crc32 = entry.crc32;
-        header.compressedSize = entry.sizeInArchive;
-        header.size = entry.size;
+        header.compressedSize = Uint32(entry.sizeInArchive);
+        header.size = Uint32(entry.size);
         header.fileNameSize = fullPath.size();
 
         // Can we use the data already in the source archive?
@@ -695,11 +695,11 @@ void ZipArchive::operator >> (Writer &to) const
             z_stream stream;
             zap(stream);
             stream.next_in = const_cast<IByteArray::Byte *>(entry.data->data());
-            stream.avail_in = entry.data->size();
+            stream.avail_in = uInt(entry.data->size());
             stream.zalloc = Z_NULL;
             stream.zfree = Z_NULL;
             stream.next_out = const_cast<IByteArray::Byte *>(archived.data());
-            stream.avail_out = archived.size();
+            stream.avail_out = uInt(archived.size());
 
             /*
              * The deflation is done in raw mode. From zlib documentation:
@@ -777,7 +777,7 @@ void ZipArchive::ZipEntry::update()
     if (data)
     {
         size  = data->size();
-        crc32 = ::crc32(0L, data->data(), data->size());
+        crc32 = ::crc32(0L, data->data(), uInt(data->size()));
     }
 }
 

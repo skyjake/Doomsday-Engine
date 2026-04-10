@@ -38,6 +38,7 @@ DE_PIMPL(Thread)
     tF::ref<iThread> thread;
     std::condition_variable cv;
     volatile bool isFinished = false;
+    bool isJoined = false;
 
     Impl(Public *i) : Base(i)
     {
@@ -103,7 +104,11 @@ void Thread::start()
 
 void Thread::join()
 {
-    join_Thread(d->thread);
+    if (!d->isJoined)
+    {
+        join_Thread(d->thread);
+        d->isJoined = true;
+    }
 }
 
 void Thread::terminate()

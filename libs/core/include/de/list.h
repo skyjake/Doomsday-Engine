@@ -83,7 +83,7 @@ public:
     {
         auto found = std::find(begin(), end(), v);
         if (found == end()) return -1;
-        return found - begin();
+        return int(found - begin());
     }
     bool     contains(const T &v) const { return indexOf(v) != -1; }
     void     append(const T &v) { push_back(v); }
