@@ -497,7 +497,18 @@ static GLWindow::DisplayMode fromSdl(const SDL_DisplayMode &disp)
 
 GLWindow::DisplayMode GLWindow::fullscreenDisplayMode() const
 {
-    return fromSdl(*SDL_GetWindowFullscreenMode(d->window));
+    const SDL_DisplayMode *fullMode = SDL_GetWindowFullscreenMode(d->window);
+    if (!fullMode)
+    {
+        fullMode = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
+        if (!fullMode)
+        {
+            LOG_AS("GLWindow");
+            LOG_GL_ERROR(Stringf("Unable to determine fullscreen display mode: %s",
+                                 SDL_GetError()));
+        }
+    }
+    return fromSdl(*fullMode);
 }
 
 GLWindow::DisplayMode GLWindow::desktopDisplayMode() const
@@ -649,6 +660,11 @@ void GLWindow::glDone()
 
 void GLWindow::update()
 {
+    if (!d->initialized)
+    {
+        initializeGL();
+    }
+    
     if (!d->paintPending)
     {
         d->paintPending = true;
