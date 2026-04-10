@@ -595,7 +595,7 @@ ClientApp::ClientApp(const StringList &args)
 //    QNetworkProxyFactory::setUseSystemConfiguration(true);
 
     // Metadata.
-    setMetadata("Deng Team", "dengine.net", "Doomsday Engine", DOOMSDAY_VERSION_BASE);
+    setMetadata("Doomsday", "dengine.net", "Doomsday Engine", DOOMSDAY_VERSION_BASE);
     setUnixHomeFolderName(".doomsday");
 
     // Callbacks.

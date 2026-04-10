@@ -23,7 +23,7 @@ set (DE_RELEASE_TYPE
     #Stable
 )
 
-set (DE_TEAM_COPYRIGHT "Copyright (c) 2003-2021 Jaakko Keränen et al.")
+set (DE_TEAM_COPYRIGHT "Copyright (c) 2003-2026 Jaakko Keränen (skyjake) et al.")
 
 # Build Configuration --------------------------------------------------------
 

@@ -2,7 +2,7 @@ $ Man page for doomsday-server
 @macro{TITLE}{ doomsday-server }
 @macro{ONELINER}{ Doomsday Engine multiplayer daemon }
 @macro{VERSION}{ Version 3.0 }
-@macro{AUTHOR}{ Deng Team }
+@macro{AUTHOR}{ Jaakko Keränen (skyjake) & Contributors }
 @macro{LINK}{ https://dengine.net/ }
 @require{amestd}
 

@@ -2,7 +2,7 @@ $ Man page for dshell
 @macro{TITLE}{ dshell }
 @macro{ONELINER}{ Utility for controlling and monitoring Doomsday servers }
 @macro{VERSION}{ Version 3.0 }
-@macro{AUTHOR}{ Deng Team }
+@macro{AUTHOR}{ Jaakko Keränen (skyjake) & Contributors }
 @macro{LINK}{ https://dengine.net/ }
 @require{amestd}
 

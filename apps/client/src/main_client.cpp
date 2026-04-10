@@ -22,7 +22,7 @@
 /**
  * @page mainFlow Engine Control Flow
  *
- * The main Qt application instance is ClientApp, based on de::BaseGuiApp.
+ * The main application instance is ClientApp, based on de::BaseGuiApp.
  *
  * The event loop is started after the application has been initialized. Initialization
  * comprises the creation of subsystems and the main window. As a final step during

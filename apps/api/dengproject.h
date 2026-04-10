@@ -26,9 +26,9 @@
 extern "C" {
 #endif
 
-#define DENGPROJECT_HOMEURL     "https://sourceforge.net/projects/deng/"
-#define DENGPROJECT_AUTHOR      "dengteam"
-#define DENGPROJECT_NICEAUTHOR  "Deng Team"
+#define DENGPROJECT_HOMEURL     "https://git.skyjake.fi/doomsday/engine/"
+#define DENGPROJECT_AUTHOR      "Jaakko Keränen (skyjake) et al."
+#define DENGPROJECT_NICEAUTHOR  "Jaakko Keränen"
 
 #ifdef __cplusplus
 } // extern "C"

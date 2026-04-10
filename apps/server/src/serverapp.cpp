@@ -179,7 +179,7 @@ ServerApp::ServerApp(const StringList &args)
     novideo = true;
 
     // Metadata.
-    setMetadata("Deng Team", "dengine.net", "Doomsday Server", DOOMSDAY_VERSION_BASE);
+    setMetadata("Doomsday", "dengine.net", "Doomsday Server", DOOMSDAY_VERSION_BASE);
     setUnixHomeFolderName(".doomsday-server");
 
     setTerminateFunc(handleAppTerminate);

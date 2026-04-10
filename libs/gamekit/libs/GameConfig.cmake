@@ -49,7 +49,7 @@ macro (deng_add_gamelib target)
         # endif ()
         # The plugins have some messy code.
         set_property (TARGET ${target}
-            APPEND PROPERTY COMPILE_OPTIONS -Wno-missing-braces
+            APPEND PROPERTY COMPILE_OPTIONS -Wno-missing-braces -Wno-shorten-64-to-32
         )
         # set (_extraRPath)
         # if (NOT DE_ENABLE_DEPLOYQT)

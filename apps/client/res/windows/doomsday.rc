@@ -83,7 +83,7 @@ BEGIN
     "            VALUE ""FileDescription"", ""Doomsday Engine\0""\r\n"
     "            VALUE ""FileVersion"",     DOOMSDAY_VERSION_TEXT ""\0""\r\n"
     "            VALUE ""InternalName"",    ""Doomsday Engine\0""\r\n"
-    "            VALUE ""LegalCopyright"",  ""Copyright (c) 2003-2018, deng Team\0""\r\n"
+    "            VALUE ""LegalCopyright"",  ""Copyright (c) 2003-2026, deng Team\0""\r\n"
     "            VALUE ""OriginalFilename"", ""Doomsday.exe\0""\r\n"
     "            VALUE ""ProductName"",     ""Doomsday Engine\0""\r\n"
     "            VALUE ""ProductVersion"",  DOOMSDAY_VERSION_TEXT ""\0""\r\n"
