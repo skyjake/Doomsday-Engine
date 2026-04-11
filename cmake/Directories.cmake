@@ -18,7 +18,7 @@ else ()
     set_path (DE_DISTRIB_DIR /usr)
 endif ()
 set (DE_DEPENDS_DIR "${DE_SOURCE_DIR}/deps")
-set (DE_EXTERNAL_SOURCE_DIR "${DE_SOURCE_DIR}/deps/external")
+set (DE_EXTERNAL_SOURCE_DIR "${DE_SOURCE_DIR}/extlibs")
 set (DE_API_DIR "${DE_SOURCE_DIR}/apps/api")
 set (DE_SDK_DIR "" CACHE PATH "Location of the Doomsday SDK to use for compiling")
 
