@@ -131,7 +131,7 @@ bool Thread::isCurrentThread() const
 {
     if (d->thread)
     {
-        return thrd_current() == id_Thread(d->thread);
+        return thrd_equal(thrd_current(), id_Thread(d->thread)) != 0;
     }
     return false;
 }

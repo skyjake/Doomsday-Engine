@@ -248,7 +248,7 @@ using namespace de;
  * Password challenge.
  * @ingroup shell
  */
-class DE_PUBLIC ChallengePacket : public Packet
+class LIBDOOMSDAY_PUBLIC ChallengePacket : public Packet
 {
 public:
     ChallengePacket();
@@ -259,7 +259,7 @@ public:
  * Packet with one or more log entries.
  * @ingroup shell
  */
-class DE_PUBLIC LogEntryPacket : public Packet
+class LIBDOOMSDAY_PUBLIC LogEntryPacket : public Packet
 {
 public:
     typedef List<LogEntry *> Entries;
@@ -298,7 +298,7 @@ private:
  * Packet containing information about the players' current positions, colors,
  * and names. @ingroup shell
  */
-class DE_PUBLIC PlayerInfoPacket : public Packet
+class LIBDOOMSDAY_PUBLIC PlayerInfoPacket : public Packet
 {
 public:
     struct Player {
@@ -344,7 +344,7 @@ private:
  * representation of a map. It is only meant to be used as an informative
  * visualization for the shell user (2D outline of the map).
  */
-class DE_PUBLIC MapOutlinePacket : public Packet
+class LIBDOOMSDAY_PUBLIC MapOutlinePacket : public Packet
 {
 public:
     enum LineType {
@@ -390,7 +390,7 @@ private:
 /**
  * Network protocol for communicating with a server. @ingroup shell
  */
-class DE_PUBLIC Protocol : public de::Protocol
+class LIBDOOMSDAY_PUBLIC Protocol : public de::Protocol
 {
 public:
     /// Type of provided packet is incorrect. @ingroup errors

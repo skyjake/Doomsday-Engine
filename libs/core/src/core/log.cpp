@@ -726,37 +726,23 @@ LogEntry &Log::enter(duint32 metadata, const String &format, LogEntry::Args argu
     return *entry;
 }
 
-/*static internal::Logs &theLogs()
-{
-    if (logsPtr.get()) return *logsPtr;
-    static Lockable lock;
-    DE_GUARD(lock);
-    if (!logsPtr.get()) logsPtr.reset(new internal::Logs);
-    return *logsPtr;
-}*/
-
-static tss_t threadLogKey;
+static tss_t     threadLogKey;
+static once_flag threadLogKeyInited = ONCE_FLAG_INIT;
 
 static void deleteLog(void *log)
 {
     if (log) delete static_cast<Log *>(log);
 }
 
-//static void destroyThreadLog()
-//{
-//    if (threadLogKey)
-//    {
-//        deleteLog(tss_get(threadLogKey));
-//        tss_set(threadLogKey, nullptr);
-//    }
-//}
+static void createThreadLog()
+{
+    tss_create(&threadLogKey, deleteLog);
+}
 
 Log &Log::threadLog()
 {
-    if (!threadLogKey)
-    {
-        tss_create(&threadLogKey, deleteLog);
-    }
+    call_once(&threadLogKeyInited, createThreadLog);
+
     Log *log = static_cast<Log *>(tss_get(threadLogKey));
     if (!log)
     {

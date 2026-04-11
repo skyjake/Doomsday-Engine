@@ -195,11 +195,11 @@ DE_PIMPL(DoomsdayApp)
             configSaveTimer.setSingleShot(false);
             configSaveTimer += [this]()
             {
-                DE_NOTIFY_PUBLIC(PeriodicAutosave, i)
+                DE_NOTIFY_PUBLIC(PeriodicAutosave, j)
                 {
                     if (!this->busyMode.isActive())
                     {
-                        i->periodicAutosave();
+                        j->periodicAutosave();
                     }
                 }
             };

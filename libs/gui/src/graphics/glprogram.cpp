@@ -318,7 +318,7 @@ DE_PIMPL(GLProgram)
         auto &stack = stacks[uniform->name()];
         if (stack.back() == uniform)
         {
-            stack.back();
+            stack.pop_back();
             if (!stack.isEmpty())
             {
                 // The new topmost binding becomes active.

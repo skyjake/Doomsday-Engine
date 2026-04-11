@@ -43,6 +43,7 @@
 
 #include "tables.h"
 
+#if 0
 // finecosine and finesine use the same array of values.
 fixed_t *finecosine = &finesine[FINEANGLES / 4];
 
@@ -2367,6 +2368,7 @@ angle_t tantoangle[SLOPERANGE + 1] = {
     536536992, 536704000,
     536870912
 };
+#endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

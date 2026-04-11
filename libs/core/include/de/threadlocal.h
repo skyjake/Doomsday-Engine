@@ -34,16 +34,21 @@ class ThreadLocal
 {
 public:
     ThreadLocal()
-    {
+    {        
+        _tsInited = false;
         zap(_tsKey);
     }
 
     T &get()
-    {
-        if (!_tsKey)
+    {        
+        if (!_tsInited)
         {
-            tss_create(&_tsKey, deleter);
+            if (tss_create(&_tsKey, deleter) == thrd_success)
+            {
+                _tsInited = true;
+            }
         }
+        DE_ASSERT(_tsInited);
         T *obj = static_cast<T *>(tss_get(_tsKey));
         if (!obj)
         {
@@ -58,7 +63,8 @@ public:
     }
 
 private:
-    tss_t _tsKey;
+    tss_t        _tsKey;
+    mutable bool _tsInited;
 };
 
 } // namespace de

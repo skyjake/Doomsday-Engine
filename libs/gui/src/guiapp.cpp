@@ -238,14 +238,16 @@ void GuiApp::setPixelRatio(float pixelRatio)
     // Apply the overall UI scale factor.
     pixelRatio *= config().getf(VAR_UI_SCALE_FACTOR(), 1.0f);
 
+    /*
 #if defined (DE_X11) || defined (WIN32)
     // Apply monitor DPI-based scaling (assumes single monitor as we can't scale per-window).
     {
-        float vdpi = 0.0f;
-        SDL_GetDisplayDPI(0, nullptr, nullptr, &vdpi);
+        float displayScale = 0.0f;
+        SDL_GetWindowDisplayScale(0, nullptr, nullptr, &vdpi);
         pixelRatio *= de::max(1.0f, vdpi / 96.0f);
     }
 #endif
+    */
 
     NativeFont::setPixelRatio(pixelRatio);
 
@@ -324,7 +326,7 @@ bool GuiApp::inRenderThread()
     {
         return false;
     }
-    return thrd_current() == DE_GUI_APP->d->renderThread;
+    return thrd_equal(thrd_current(), DE_GUI_APP->d->renderThread) != 0;
 }
 
 void GuiApp::setRenderThread()

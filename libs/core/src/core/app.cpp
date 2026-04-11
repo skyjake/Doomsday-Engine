@@ -539,7 +539,7 @@ bool App::inMainThread()
         // No app even created yet, must be main thread.
         return true;
     }
-    return DE_APP->d->mainThread == thrd_current();
+    return thrd_equal(DE_APP->d->mainThread, thrd_current()) != 0;
 }
 
 #if 0

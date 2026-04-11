@@ -292,19 +292,18 @@ public:
      * @todo Use GLState instead of than having individual GL parameters?
      * The state must be set up to not touch viewport, clipping, etc., though.
      */
-    struct LIBGUI_PUBLIC Pass {
-        String          name;
+    struct LIBGUI_PUBLIC Pass
+    {
+        String          name;              ///< Passes are uniquely identified by names.
         BitArray        meshes;            ///< One bit per model mesh.
-        GLProgram *     program = nullptr; ///< Shading program.
+        GLProgram      *program = nullptr; ///< Shading program.
         gfx::BlendFunc  blendFunc{gfx::SrcAlpha, gfx::OneMinusSrcAlpha};
         gfx::BlendOp    blendOp    = gfx::Add;
         bool            depthWrite = true;
         gfx::Comparison depthFunc  = gfx::Less;
 
-        bool operator==(const Pass &other) const
-        {
-            return name == other.name; // Passes are uniquely identified by names.
-        }
+        bool operator<(const Pass &other) const { return name < other.name; }
+        bool operator==(const Pass &other) const { return name == other.name; }
     };
 
     struct LIBGUI_PUBLIC Passes : public List<Pass>

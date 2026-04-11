@@ -30,6 +30,7 @@
 #pragma once
 
 #include "doomsday.h"
+#include <doomsday/tab_tables.h>
 
 #define FINEANGLES          8192
 #define FINEMASK            (FINEANGLES-1)
@@ -51,11 +52,11 @@ DE_EXTERN_C fixed_t *finecosine;
 
 // Effective size is 4096.
 DE_EXTERN_C fixed_t finetangent[FINEANGLES / 2];
-*/
 
 // Effective size is 2049;
 // The +1 size is to handle the case when x==y without additional checking.
 DE_EXTERN_C angle_t tantoangle[SLOPERANGE + 1];
+*/
 
 #ifdef __cplusplus
 extern "C" {
