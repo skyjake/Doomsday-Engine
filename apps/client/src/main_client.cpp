@@ -41,8 +41,6 @@
  * another loop that continues handling events received by the application.
  */
 
-#define SDL_MAIN_HANDLED
-
 #include "clientapp.h"
 #include "dd_loop.h"
 #include "dd_version.h"
@@ -69,8 +67,8 @@ DE_EXTERN_C void GameKit_Init();
  */
 int main(int argc, char **argv)
 {
-#undef main
-    SDL_SetMainReady();
+//#undef main
+//  SDL_SetMainReady();
 
     init_Foundation();
     GameKit_Init();

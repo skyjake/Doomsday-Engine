@@ -106,7 +106,7 @@ public:
     /**
      * Multiple layers can be used for parallax effects.
      */
-    class Layer
+    class LIBDOOMSDAY_PUBLIC Layer
     {
     public:
         DE_AUDIENCE(ActiveChange,   void skyLayerActiveChanged(Layer &layer))

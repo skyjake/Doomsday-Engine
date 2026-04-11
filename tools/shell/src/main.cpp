@@ -19,6 +19,8 @@
 #include "guishellapp.h"
 #include "linkwindow.h"
 
+#include <SDL3/SDL_main.h>
+
 using namespace de;
 
 int main(int argc, char *argv[])

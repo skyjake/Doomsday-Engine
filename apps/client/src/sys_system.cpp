@@ -18,18 +18,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifdef WIN32
-#  define WIN32_LEAN_AND_MEAN
-#  include <windows.h>
-#  include <process.h>
-#endif
-
-//#ifdef MACOSX
-//#  include <QDir>
-//#endif
-//#ifdef WIN32
-//#  include <QSettings>
-//#endif
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/exec.h>
 
@@ -204,11 +192,6 @@ int Sys_CriticalMessagef(const char* format, ...)
 
 void Sys_Sleep(int millisecs)
 {
-    /*
-#ifdef WIN32
-    Sleep(millisecs);
-#endif
-*/
     Thread_Sleep(millisecs);
 }
 
@@ -231,6 +214,7 @@ void Sys_BlockUntilRealTime(uint realTimeMs)
 
 void Sys_HideMouseCursor()
 {
+/*
 #ifdef WIN32
     if(novideo) return;
 
@@ -238,6 +222,7 @@ void Sys_HideMouseCursor()
 #else
     // The cursor is controlled using Qt in Canvas.
 #endif
+*/
 }
 
 /**

@@ -44,7 +44,7 @@ public:
      * The items of the widget are expected to be instanced of
      * ChoiceWidget::Item or derived from it (or at least ui::ActionItem).
      */
-    class Item : public ui::ActionItem
+    class LIBGUI_PUBLIC Item : public ui::ActionItem
     {
     public:
         Item(const String &label, const Image &image = Image())

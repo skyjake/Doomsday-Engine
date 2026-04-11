@@ -67,7 +67,7 @@ Image ClientStyle::makeGameLogo(const Game &game, const res::LumpCatalog &catalo
 
             if (flags & ColorizedByFamily)
             {
-                const String colorId = "home.icon." +
+                const String colorId = String("home.icon.") +
                         (game.family().isEmpty()? "other" : game.family());
                 return logoImage.colorized(Style::get().colors().color(colorId));
             }

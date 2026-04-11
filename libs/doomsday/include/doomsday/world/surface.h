@@ -42,7 +42,7 @@ class LIBDOOMSDAY_PUBLIC Surface : public MapElement
 
 public:
     /// Interface for surface decoration state.
-    class IDecorationState
+    class LIBDOOMSDAY_PUBLIC IDecorationState
     {
     public:
         virtual ~IDecorationState();

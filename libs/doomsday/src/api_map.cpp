@@ -182,7 +182,8 @@ int P_Count(int type)
 
     default:
         /// @throw Invalid/unknown DMU element type.
-        throw Error("P_Count", stringf("Unknown type %s", DMU_Str(type)));
+        //throw Error("P_Count", stringf("Unknown type %s", DMU_Str(type)));
+        return 0;
     }
 }
 
@@ -209,7 +210,8 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
             });
 
         default:
-            throw Error("P_Iteratep", stringf("Property %s unknown/not vector", DMU_Str(prop)));
+            //throw Error("P_Iteratep", stringf("Property %s unknown/not vector", DMU_Str(prop)));
+            break;
         }}
 
     case DMU_SUBSPACE:
@@ -245,11 +247,13 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
             return result; }
 
         default:
-            throw Error("P_Iteratep", stringf("Property %s unknown/not vector", DMU_Str(prop)));
+            //throw Error("P_Iteratep", stringf("Property %s unknown/not vector", DMU_Str(prop)));
+            break;
         }
 
     default:
-        throw Error("P_Iteratep", stringf("Type %s unknown", DMU_Str(elem->type())));
+        //throw Error("P_Iteratep", stringf("Type %s unknown", DMU_Str(elem->type())));
+        break;
     }
 
     return false;
