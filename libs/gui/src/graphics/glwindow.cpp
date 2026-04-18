@@ -375,8 +375,14 @@ void GLWindow::close()
 
 void GLWindow::setGeometry(const Rectanglei &rect)
 {
-    SDL_SetWindowPosition(d->window, rect.left(),  rect.top());
-    SDL_SetWindowSize    (d->window, rect.width(), rect.height());
+    SDL_Rect usable;
+    SDL_GetDisplayUsableBounds(SDL_GetDisplayForWindow(d->window), &usable);
+
+    // Update geometry, keeping the window inside the usable bounds of the display.
+    SDL_SetWindowPosition(
+        d->window, de::max(rect.left(), usable.x), de::max(rect.top(), usable.y));
+    SDL_SetWindowSize(
+        d->window, de::min(rect.width(), duint(usable.w)), de::min(rect.height(), duint(usable.h)));
 
     // Update the current size immediately.
     Vec2i pixels;
@@ -664,7 +670,7 @@ void GLWindow::update()
     {
         initializeGL();
     }
-    
+
     if (!d->paintPending)
     {
         d->paintPending = true;
