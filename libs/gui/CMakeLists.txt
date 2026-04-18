@@ -132,11 +132,34 @@ endif ()
 
 deng_deploy_library (libgui DengGui)
 
-if (WIN32 OR MSYS OR CYGWIN)
+if (MSVC)
+    # Collect all third-party DLLs needed at runtime on Windows/MSVC.
+    get_target_property (_assimp_dll assimp::assimp IMPORTED_LOCATION_RELEASE)
+    set (_win_dep_dlls
+        "${_assimp_dll}"
+        "${glbinding_DIR}/glbinding.dll"
+        "${DE_DEPENDS_DIR}/products/lib/x64/SDL3.dll"
+    )
+    if (TARGET SDL3_mixer::SDL3_mixer)
+        list (APPEND _win_dep_dlls "${DE_DEPENDS_DIR}/products/lib/x64/SDL3_mixer.dll")
+        file (GLOB _sdl3mixer_optional_dlls
+              "${DE_DEPENDS_DIR}/products/lib/x64/optional/*.dll")
+        list (APPEND _win_dep_dlls ${_sdl3mixer_optional_dlls})
+    endif ()
+    install (
+        PROGRAMS ${_win_dep_dlls}
+        DESTINATION bin
+        COMPONENT client
+    )
+    # Also copy to VS in-tree staging directories so executables can be run directly.
+    foreach (cfg ${DE_CONFIGURATION_TYPES})
+        file (MAKE_DIRECTORY "${DE_VS_STAGING_DIR}/${cfg}/bin")
+        file (COPY ${_win_dep_dlls} DESTINATION "${DE_VS_STAGING_DIR}/${cfg}/bin")
+    endforeach ()
+elseif (MSYS OR CYGWIN)
     install (
         PROGRAMS $<TARGET_FILE:assimp::assimp>
                  ${glbinding_DIR}/libglbinding.dll
-                 ${glbinding_DIR}/libglbinding-aux.dll
         DESTINATION bin
         COMPONENT client
     )

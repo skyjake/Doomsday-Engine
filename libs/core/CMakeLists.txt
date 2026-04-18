@@ -94,10 +94,10 @@ endif ()
 if (WIN32)
     # timeBeginPeriod, timeEndPeriod
     target_link_libraries (libcore PRIVATE winmm)
-    install (PROGRAMS ${the_Foundation_DIR}/../../lib_Foundation.dll
-             DESTINATION bin)
 endif ()
-if (MSYS)
+if (MSVC)
+    deng_install_library ("${DE_DEPENDS_DIR}/products/lib/_Foundation.dll")
+elseif (MSYS)
     install (PROGRAMS ${the_Foundation_DIR}/../../msys-Foundation.dll
              DESTINATION bin)
 elseif (CYGWIN)
