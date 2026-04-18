@@ -118,7 +118,7 @@ DE_PIMPL(GuiApp)
     {
         // Per-window content scaling.
 
-        // On Windows, there is no points/pixels distinction. We are expected to scale 
+        // On Windows, there is no points/pixels distinction. We are expected to scale
         // window contents according to the display scaling factor. It would be nice
         // is this were a per-window property, though.
         //windowPixelRatio = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
@@ -132,8 +132,7 @@ GuiApp::GuiApp(const StringList &args)
     : App(args)
     , d(new Impl(this))
 {
-    if (!SDL_InitSubSystem(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
-                           SDL_INIT_GAMEPAD))
+    if (!SDL_InitSubSystem(SDL_INIT_EVENTS | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD))
     {
         throw Error("GuiApp::GuiApp", stringf("Failed to initialize SDL: %s", SDL_GetError()));
     }

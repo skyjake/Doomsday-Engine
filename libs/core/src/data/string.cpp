@@ -115,9 +115,10 @@ String::String(String &&moved)
 String::String(const Block &bytes)
 {
     // Blocks are not guaranteed to be well-formed strings, so null characters
-    // may appear within, and the encoding is unknown. Caller should use 
+    // may appear within, and the encoding is unknown. Caller should use
     // String::fromUtf8() if they know the encoding is UTF-8.
-    initCopy_String(&_str, &forceToValidUtf8(bytes)._str);
+    const String valid = forceToValidUtf8(bytes);
+    initCopy_String(&_str, &valid._str);
     DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
 }
 
@@ -126,7 +127,8 @@ String::String(const iBlock *bytes)
     // Blocks are not guaranteed to be well-formed strings, so null characters
     // may appear within, and the encoding is unknown. Caller should use
     // String::fromUtf8() if they know the encoding is UTF-8.
-    initCopy_String(&_str, &forceToValidUtf8(bytes)._str);
+    const String valid = forceToValidUtf8(bytes);
+    initCopy_String(&_str, &valid._str);
     DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
 }
 
@@ -154,7 +156,7 @@ String::String(const std::wstring &text)
 #else
     init_String(&_str);
     for (auto ch : text)
-    {     
+    {
         iMultibyteChar mb;
         init_MultibyteChar(&mb, ch);
         appendCStr_String(&_str, mb.bytes);
@@ -646,8 +648,8 @@ String String::operator%(const PatternArgs &args) const
 
 String String::concatenatePath(const String &other, Char dirChar) const
 {
-    if (other.beginsWith(dirChar) || 
-        // Could be a file system path, though? That has additional rules for 
+    if (other.beginsWith(dirChar) ||
+        // Could be a file system path, though? That has additional rules for
         // absolute paths.
         ((dirChar == '/' || dirChar == '\\') && isAbsolute_Path(&other._str)))
     {

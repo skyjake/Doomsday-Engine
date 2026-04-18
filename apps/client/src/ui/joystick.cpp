@@ -62,7 +62,7 @@ static void initialize(void)
     return;
 #endif
 
-    if (SDL_InitSubSystem(SDL_INIT_JOYSTICK))
+    if (!SDL_InitSubSystem(SDL_INIT_JOYSTICK))
     {
         LOG_INPUT_ERROR("SDL init failed for joystick: %s") << SDL_GetError();
     }

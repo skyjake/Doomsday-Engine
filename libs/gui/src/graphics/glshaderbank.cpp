@@ -191,7 +191,7 @@ DE_PIMPL(GLShaderBank)
 
     String prependPredefines(const IByteArray &source) const
     {
-        String sourceText = source;
+        String sourceText = String(source);
         if (preDefines)
         {
             String predefs;
