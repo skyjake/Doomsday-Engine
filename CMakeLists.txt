@@ -2,6 +2,13 @@
 # Top-level CMakeLists
 
 cmake_minimum_required (VERSION 3.16)
+
+# Default install destination: <root>/products (unless the user specified something else).
+if (NOT DEFINED CMAKE_INSTALL_PREFIX)
+    set (CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/products"
+         CACHE PATH "Install prefix")
+endif ()
+
 project (Doomsday)
 
 # Build external dependencies (the_Foundation, Assimp, glbinding) via
