@@ -628,12 +628,16 @@ ClientApp::ClientApp(const StringList &args)
         const Image splashImage = Image::fromXpmData(doomsdaySplashXpm);
         SDL_Surface *splashSurface = createSDLSurfaceFromImage(splashImage);
 
+        const float contentScale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+        const int   winW         = int(splashSurface->w * contentScale);
+        const int   winH         = int(splashSurface->h * contentScale);
+
         SDL_PropertiesID props = SDL_CreateProperties();
         SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, DOOMSDAY_NICENAME);
         SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, SDL_WINDOWPOS_CENTERED);
         SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, SDL_WINDOWPOS_CENTERED);
-        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, splashSurface->w);
-        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, splashSurface->h);
+        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, winW);
+        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, winH);
         SDL_SetNumberProperty(props,
                               SDL_PROP_WINDOW_CREATE_FLAGS_NUMBER,
                               SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP |
@@ -644,16 +648,14 @@ ClientApp::ClientApp(const StringList &args)
         // On HiDPI/Retina displays the window surface is larger in pixels than the
         // window size in points. Scale the splash image to fill the full pixel surface.
         SDL_Surface *windowSurface = SDL_GetWindowSurface(d->splashWindow);
-        const int winW = windowSurface->w;
-        const int winH = windowSurface->h;
-        SDL_Rect dstRect = { 0, 0, winW, winH };
+        const SDL_Rect dstRect = { 0, 0, winW, winH };
         SDL_BlitSurfaceScaled(splashSurface, nullptr, windowSurface, &dstRect, SDL_SCALEMODE_LINEAR);
 
         // Version text.
         {
             FontParams fp{};
             fp.family = "Builtin";
-            fp.pointSize = 16;
+            fp.pointSize = 16 * contentScale;
             fp.spec.weight = 50;
             Font font(fp);
             const Image rasterized = font.rasterize(Version::currentBuild().asHumanReadableText(),
