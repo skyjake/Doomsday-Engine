@@ -127,7 +127,7 @@ static void continueInitWithEventLoopRunning()
 #if !defined (DE_MOBILE)
     // Show the main window. This causes initialization to finish (in busy mode)
     // as the canvas is visible and ready for initialization.
-    ClientWindow::getMain().show();
+    ClientWindow::main().show();
 #endif
 
 #if defined (DE_HAVE_UPDATER)
