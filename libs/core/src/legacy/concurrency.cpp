@@ -93,6 +93,9 @@ void CallbackThread::run()
     {
         _terminationFunc(_exitStatus);
     }
+    
+    // Prevent self-deletion: remove `this` if it was trashed for this thread.
+    Garbage_RemoveIfTrashed(this);
 
     Garbage_ClearForThread();
 }
@@ -150,7 +153,7 @@ void Thread_KillAbnormally(thread_t handle)
     }
     DE_ASSERT(t);
     t->terminate();
-    de::trash(t);
+    de::trash(t); // FIXME: which thread owns the garbage? self-deletion is not safe.
 }
 
 void Thread_SetCallback(thread_t thread, void (*terminationFunc)(systhreadexitstatus_t))
