@@ -628,9 +628,11 @@ ClientApp::ClientApp(const StringList &args)
         const Image splashImage = Image::fromXpmData(doomsdaySplashXpm);
         SDL_Surface *splashSurface = createSDLSurfaceFromImage(splashImage);
 
+        // We need to scale the content manually here because we're creating
+        // the window ourselves. GLWindow normally handles all this for us.
         const float contentScale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
-        const int   winW         = int(splashSurface->w * contentScale);
-        const int   winH         = int(splashSurface->h * contentScale);
+        int         winW         = int(splashSurface->w * contentScale);
+        int         winH         = int(splashSurface->h * contentScale);
 
         SDL_PropertiesID props = SDL_CreateProperties();
         SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, DOOMSDAY_NICENAME);
@@ -648,6 +650,9 @@ ClientApp::ClientApp(const StringList &args)
         // On HiDPI/Retina displays the window surface is larger in pixels than the
         // window size in points. Scale the splash image to fill the full pixel surface.
         SDL_Surface *windowSurface = SDL_GetWindowSurface(d->splashWindow);
+#if defined (MACOSX)
+        SDL_GetWindowSizeInPixels(d->splashWindow, &winW, &winH);
+#endif
         const SDL_Rect dstRect = { 0, 0, winW, winH };
         SDL_BlitSurfaceScaled(splashSurface, nullptr, windowSurface, &dstRect, SDL_SCALEMODE_LINEAR);
 
@@ -656,6 +661,9 @@ ClientApp::ClientApp(const StringList &args)
             FontParams fp{};
             fp.family = "Builtin";
             fp.pointSize = 15 * contentScale;
+#if defined (MACOSX)
+            fp.pointSize *= winW / splashSurface->w;
+#endif
             fp.spec.weight = 50;
             Font font(fp);
             const Image rasterized = font.rasterize(Version::currentBuild().asHumanReadableText(),
