@@ -35,11 +35,6 @@
 
 namespace de {
 
-static char *duplicateStringAsUtf8(const String &s)
-{
-    return iDupStr(s);
-}
-
 DE_PIMPL(CommandLine)
 {
     NativePath initialDir;
@@ -47,7 +42,7 @@ DE_PIMPL(CommandLine)
     typedef StringList Arguments;
     Arguments arguments;
 
-    typedef std::vector<char *> ArgumentPointers; // UTF-8 representation
+    typedef std::vector<const char *> ArgumentPointers; // UTF-8 representation; points to strings in `arguments`.
     ArgumentPointers pointers;
 
     typedef std::vector<String> ArgumentStrings;
@@ -66,8 +61,7 @@ DE_PIMPL(CommandLine)
 
     void clear()
     {
-        arguments.clear();
-        DE_FOR_EACH(ArgumentPointers, i, pointers) free(*i);
+        arguments.clear();        
         pointers.clear();
         pointers.push_back(nullptr);
     }
@@ -78,13 +72,13 @@ DE_PIMPL(CommandLine)
 
         if (pointers.empty())
         {
-            pointers.push_back(duplicateStringAsUtf8(arg));
+            pointers.push_back(arguments[0].c_str());
             pointers.push_back(nullptr); // Keep null-terminated.
         }
         else
         {
             // Insert before the NULL.
-            pointers.insert(pointers.end() - 1, duplicateStringAsUtf8(arg));
+            pointers.insert(pointers.end() - 1, arguments.back().c_str());
         }
         DE_ASSERT(pointers.back() == nullptr);
     }
@@ -98,8 +92,9 @@ DE_PIMPL(CommandLine)
         }
 
         arguments.insert(pos, arg);
+        pointers.insert(pointers.begin() + pos, arguments[pos].c_str());
 
-        pointers.insert(pointers.begin() + pos, duplicateStringAsUtf8(arg));
+        DE_ASSERT(pointers.back() - 1 == arguments.back().c_str());
         DE_ASSERT(pointers.back() == nullptr);
     }
 
@@ -112,9 +107,8 @@ DE_PIMPL(CommandLine)
         }
 
         arguments.removeAt(pos);
-
-        free(pointers[pos]);
         pointers.erase(pointers.begin() + pos);
+
         DE_ASSERT(pointers.back() == nullptr);
     }
 
@@ -358,8 +352,7 @@ void CommandLine::makeAbsolutePath(dsize pos)
         iRelease(info);
 
         // Replace the pointer string.
-        free(d->pointers[pos]);
-        d->pointers[pos] = duplicateStringAsUtf8(d->arguments[pos]);
+        d->pointers[pos] = d->arguments[pos].c_str();
 
         if (converted)
         {
