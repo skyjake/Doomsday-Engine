@@ -130,8 +130,8 @@ void GLShader::compile(Type shaderType, const IByteArray &shaderSource)
                                "#endif\n");
 #else
     const int glesVer = DE_OPENGL_ES;
-    static Block const DEFAULT_VERSION(glesVer == 30? "#version 300 es\n" : "#version 100\n");
-    static Block const PREFIX("\n");
+    static const String DEFAULT_VERSION(glesVer == 30? "#version 300 es\n" : "#version 100\n");
+    static const String PREFIX("\n");
 #endif
 
     DE_ASSERT(shaderType == Vertex || shaderType == Geometry || shaderType == Fragment);

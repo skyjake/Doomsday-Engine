@@ -25,9 +25,11 @@
 #include "de/charsymbols.h"
 
 #include <the_Foundation/path.h>
-#include <cstdio>
-#include <cstdarg>
 #include <cerrno>
+#include <codecvt>
+#include <cstdarg>
+#include <cstdio>
+#include <locale>
 
 namespace de {
 
@@ -61,6 +63,36 @@ bool Char::isAlphaNumeric() const
     return isAlphaNumeric_Char(_ch);
 }
 
+static String forceToValidUtf8(const Block &bytes /* unknown text encoding */)
+{
+    String valid;
+    valid.reserve(bytes.size()); // prepare to append individual characters
+
+    // Try to decode the characters, keeping only the valid ones.
+    const char *ptr = bytes.c_str();
+    const char *end = ptr + bytes.size();
+    while (ptr < end)
+    {
+        if (*ptr == 0)
+        {
+            break; // Apparently the string ends here.
+        }
+        iChar     ch;
+        const int n = decodeBytes_MultibyteChar(ptr, end, &ch);
+        if (n > 0)
+        {
+            valid += Char(ch);
+            ptr += n;
+        }
+        else
+        {
+            valid += '?';
+            ptr++;
+        }
+    }
+    return valid;
+}
+
 String::String()
 {
     init_String(&_str);
@@ -70,101 +102,115 @@ String::String(const String &other)
 {
     initCopy_String(&_str, &other._str);
     DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
+    DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
 }
 
 String::String(String &&moved)
 {
     initCopy_String(&_str, &moved._str);
+    DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
     DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
 }
 
 String::String(const Block &bytes)
 {
-    initCopy_Block(&_str.chars, bytes);
     // Blocks are not guaranteed to be well-formed strings, so null characters
-    // may appear within.
-    truncate_Block(&_str.chars, strlen(bytes.c_str()));
-    DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
+    // may appear within, and the encoding is unknown. Caller should use 
+    // String::fromUtf8() if they know the encoding is UTF-8.
+    initCopy_String(&_str, &forceToValidUtf8(bytes)._str);
+    DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
 }
 
 String::String(const iBlock *bytes)
 {
-    initCopy_Block(&_str.chars, bytes);
     // Blocks are not guaranteed to be well-formed strings, so null characters
-    // may appear within.
-    truncate_Block(&_str.chars, strlen(constBegin_Block(bytes)));
-    DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
+    // may appear within, and the encoding is unknown. Caller should use
+    // String::fromUtf8() if they know the encoding is UTF-8.
+    initCopy_String(&_str, &forceToValidUtf8(bytes)._str);
+    DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
 }
 
 String::String(const iString *other)
 {
     initCopy_String(&_str, other);
     DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
+    DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
 }
 
 String::String(const std::string &text)
 {
     initCStrN_String(&_str, text.data(), text.size());
     DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
+    DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
 }
 
 String::String(const std::wstring &text)
 {
+#if defined(DE_WINDOWS)
+    // Windows wstrings use UTF-16.
+    const std::string utfText =
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.to_bytes(text);
+    initCStr_String(&_str, utfText.c_str());
+#else
     init_String(&_str);
     for (auto ch : text)
-    {
+    {     
         iMultibyteChar mb;
         init_MultibyteChar(&mb, ch);
         appendCStr_String(&_str, mb.bytes);
     }
+#endif
     DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
+    DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
 }
 
 String::String(const char *nullTerminatedCStr)
 {
     initCStr_String(&_str, nullTerminatedCStr ? nullTerminatedCStr : "");
+    DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
 }
-
-//String::String(const wchar_t *nullTerminatedWideStr)
-//{
-//    initWide_String(&_str, nullTerminatedWideStr ? nullTerminatedWideStr : L"");
-//}
 
 String::String(const char *cStr, int length)
 {
     DE_ASSERT(cStr != nullptr);
     initCStrN_String(&_str, cStr, length);
     DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
+    DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
 }
 
 String::String(const char *cStr, dsize length)
 {
     initCStrN_String(&_str, cStr, length);
     DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
+    DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
 }
 
 String::String(dsize length, char ch)
 {
     init_Block(&_str.chars, length);
     fill_Block(&_str.chars, ch);
+    DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
 }
 
 String::String(const char *start, const char *end)
 {
     initCStrN_String(&_str, start, end - start);
     DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
+    DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
 }
 
 String::String(const Range<const char *> &range)
 {
     initCStrN_String(&_str, range.start, range.end - range.start);
     DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
+    DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
 }
 
 String::String(const CString &cstr)
 {
     initCStrN_String(&_str, cstr.begin(), cstr.size());
     DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
+    DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
 }
 
 String::String(dsize length, Char ch)
@@ -185,6 +231,7 @@ String::String(dsize length, Char ch)
             appendCStr_String(&_str, mb.bytes);
         }
     }
+    DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
 }
 
 String::~String()
@@ -199,6 +246,11 @@ String::~String()
 void String::resize(size_t newSize)
 {
     resize_Block(&_str.chars, newSize);
+}
+
+void String::reserve(size_t newCapacity)
+{
+    reserve_Block(&_str.chars, newCapacity);
 }
 
 std::wstring String::toWideString() const
@@ -415,7 +467,7 @@ String &String::operator+=(char ch)
 String &String::operator+=(Char ch)
 {
     appendChar_String(&_str, ch);
-    return*this;
+    return *this;
 }
 
 String &String::operator+=(const char *cStr)

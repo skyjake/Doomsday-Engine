@@ -247,6 +247,7 @@ public:
         {
             push_back(*i);
         }
+        DE_ASSERT(isUtf8_Rangecc(range_String(&_str)));
     }
 
     ~String() override;
@@ -273,6 +274,7 @@ public:
     inline dint lengthi() const { return dint(length_String(&_str)); }
 
     void resize(size_t newSize);
+    void reserve(size_t newCapacity);
 
     /// Determines whether the string is empty.
     inline bool empty() const { return sizeu() == 0; }

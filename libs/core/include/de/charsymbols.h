@@ -25,12 +25,12 @@
  * Unicode key symbols. @ingroup types
  * @{
  */
-#define DE_CHAR_MDASH               "\u2014"
-#define DE_CHAR_COPYRIGHT           "\u00a9"
-#define DE_CHAR_UP_ARROW            "\u2191"
-#define DE_CHAR_DOWN_ARROW          "\u2193"
+#define DE_CHAR_MDASH               u8"\u2014"
+#define DE_CHAR_COPYRIGHT           u8"\u00a9"
+#define DE_CHAR_UP_ARROW            u8"\u2191"
+#define DE_CHAR_DOWN_ARROW          u8"\u2193"
 #define DE_CHAR_UP_DOWN_ARROW       DE_CHAR_UP_ARROW " / " DE_CHAR_DOWN_ARROW
-#define DE_CHAR_RIGHT_DOUBLEARROW   "\u21d2"
+#define DE_CHAR_RIGHT_DOUBLEARROW   u8"\u21d2"
 
 #ifdef MACOSX
 #  define DE_CHAR_MAC_COMMAND_KEY   "\u2318"

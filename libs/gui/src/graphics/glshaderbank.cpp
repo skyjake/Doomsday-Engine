@@ -73,7 +73,7 @@ DE_PIMPL(GLShaderBank)
             {
                 if (type == FilePath)
                 {
-                    source = String::fromLatin1(Block(FS::locate<File const>(source)));
+                    source = String(Block(FS::locate<File const>(source)));
                     type = ShaderSourceText;
                 }
             }
@@ -83,9 +83,8 @@ DE_PIMPL(GLShaderBank)
                 if (type == None) return;
                 convertToSourceText();
                 source += "\n";
-                Block combo = GLShader::prefixToSource(source.toLatin1(),
-                        Block(FS::locate<File const>(path)));
-                source = String::fromLatin1(combo);
+                Block combo = GLShader::prefixToSource(source, Block(FS::locate<File const>(path)));
+                source = combo;
             }
 
             void insertDefinition(const String &macroName, const String &content)
@@ -190,18 +189,17 @@ DE_PIMPL(GLShaderBank)
         shaders.clear();
     }
 
-    Block prependPredefines(const IByteArray &source) const
+    String prependPredefines(const IByteArray &source) const
     {
-        Block sourceText = source;
+        String sourceText = source;
         if (preDefines)
         {
-            Block predefs;
+            String predefs;
             for (auto i : preDefines->elements())
             {
                 predefs += String::format("#define %s %s\n",
-                                          i.first.value->asText().toLatin1().constData(),
-                                          i.second->asText().toLatin1().constData())
-                               .toLatin1();
+                                          i.first.value->asText().c_str(),
+                                          i.second->asText().c_str());
             }
             predefs += "#line 1\n";
             sourceText = GLShader::prefixToSource(sourceText, predefs);
