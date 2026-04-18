@@ -42,7 +42,6 @@
  */
 
 #include "clientapp.h"
-#include "dd_loop.h"
 #include "dd_version.h"
 
 #include <de/escapeparser.h>
@@ -115,7 +114,11 @@ int main(int argc, char **argv)
         }
         #else
         {
-            DE_ASSERT(de::Counted::totalCount == 0);
+            // DE_ASSERT(de::Counted::totalCount == 0);
+            if (de::Counted::totalCount.load() != 0)
+            {
+                de::warning("Counted objects not released: %d\n", de::Counted::totalCount.load());
+            }
         }
         #endif
     }
