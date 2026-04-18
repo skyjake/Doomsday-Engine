@@ -655,7 +655,7 @@ ClientApp::ClientApp(const StringList &args)
         {
             FontParams fp{};
             fp.family = "Builtin";
-            fp.pointSize = 16 * contentScale;
+            fp.pointSize = 15 * contentScale;
             fp.spec.weight = 50;
             Font font(fp);
             const Image rasterized = font.rasterize(Version::currentBuild().asHumanReadableText(),

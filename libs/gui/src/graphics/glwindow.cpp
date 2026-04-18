@@ -129,7 +129,6 @@ DE_PIMPL(GLWindow)
         SDL_GetWindowSize(window, &points, nullptr);
         SDL_GetWindowSizeInPixels(window, &pixels, nullptr);
         const double ratio = double(pixels) / double(points);
-        // TODO: factor in SDL_GetWindowDisplayScale() / 96.0f ?
         if (!fequal(ratio, pixelRatio))
         {
             pixelRatio = ratio;

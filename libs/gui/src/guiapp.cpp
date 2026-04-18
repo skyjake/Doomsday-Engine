@@ -116,36 +116,12 @@ DE_PIMPL(GuiApp)
 
     void determineDevicePixelRatio()
     {
-#if 0// defined (WIN32)
-        // Use the Direct2D API to find out the desktop DPI factor.
-        ID2D1Factory *d2dFactory = nullptr;
-        HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2dFactory);
-        if (SUCCEEDED(hr))
-        {
-            FLOAT dpiX = 96;
-            FLOAT dpiY = 96;
-            d2dFactory->GetDesktopDpi(&dpiX, &dpiY);
-            windowPixelRatio = dpiX / 96.0;
-            d2dFactory->Release();
-            d2dFactory = nullptr;
-        }
-#else
-/*        // Use a hidden SDL window to determine pixel ratio.
-        SDL_Window *temp =
-            SDL_CreateWindow("",
-                             SDL_WINDOWPOS_UNDEFINED,
-                             SDL_WINDOWPOS_UNDEFINED,
-                             100,
-                             100,
-                             SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
-        int points, pixels;
-        SDL_GetWindowSize(temp, &points, nullptr);
-        SDL_GL_GetDrawableSize(temp, &pixels, nullptr);
-        SDL_DestroyWindow(temp);
+        // Per-window content scaling.
 
-        windowPixelRatio = float(pixels) / float(points);
-*/
-#endif
+        // On Windows, there is no points/pixels distinction. We are expected to scale 
+        // window contents according to the display scaling factor. It would be nice
+        // is this were a per-window property, though.
+        //windowPixelRatio = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
     }
 
     DE_PIMPL_AUDIENCE(DisplayModeChange)
@@ -238,16 +214,11 @@ void GuiApp::setPixelRatio(float pixelRatio)
     // Apply the overall UI scale factor.
     pixelRatio *= config().getf(VAR_UI_SCALE_FACTOR(), 1.0f);
 
-    /*
-#if defined (DE_X11) || defined (WIN32)
+#if defined (DE_X11) || defined(DE_WINDOWS)
     // Apply monitor DPI-based scaling (assumes single monitor as we can't scale per-window).
-    {
-        float displayScale = 0.0f;
-        SDL_GetWindowDisplayScale(0, nullptr, nullptr, &vdpi);
-        pixelRatio *= de::max(1.0f, vdpi / 96.0f);
-    }
+    // This may be called before any windows have been created, so check the display.
+    pixelRatio *= SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
 #endif
-    */
 
     NativeFont::setPixelRatio(pixelRatio);
 

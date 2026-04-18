@@ -81,10 +81,10 @@ DE_PIMPL(WindowSystem)
 
     void windowPixelRatioChanged(GLWindow &win)
     {
-        /// @todo Different windows may have different pixel ratios.
+        /// @todo Different windows may have different pixel ratios. Here we assume one window, essentially.
         DE_BASE_GUI_APP->setPixelRatio(float(win.pixelRatio()));
     }
-
+    
     GLWindow *findWindow(duint32 sdlId) const
     {
         for (const auto &w : windows)

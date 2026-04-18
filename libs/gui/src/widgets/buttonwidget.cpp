@@ -140,8 +140,7 @@ DE_GUI_PIMPL(ButtonWidget)
 
     void setDefaultBackground()
     {
-        self().set(Background(style().colors().colorf(bgColorId),
-                            bgType, borderColor(), 6));
+        self().set(Background(style().colors().colorf(bgColorId), bgType, borderColor(), 6));
     }
 
     void updateBackground()
