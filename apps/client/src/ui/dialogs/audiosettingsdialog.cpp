@@ -140,11 +140,15 @@ DE_GUI_PIMPL(AudioSettingsDialog)
         enumerateAudioOutputs();
 
         soundPlugin->items()
+            #if defined (DE_HAVE_AUDIO_FMOD)
                 << new ChoiceItem("FMOD", "fmod")
-           #if !defined (DE_DISABLE_SDLMIXER)
+            #endif
+            #if !defined (DE_DISABLE_SDLMIXER)
                 << new ChoiceItem("SDL_mixer", "sdlmixer")
-           #endif
+            #endif
+            #if defined (DE_HAVE_AUDIO_OPENAL)
                 << new ChoiceItem("OpenAL", "openal")
+            #endif
 //           #if defined (WIN32)
 //                << new ChoiceItem(tr("DirectSound"), "dsound")
 //           #endif
@@ -152,10 +156,12 @@ DE_GUI_PIMPL(AudioSettingsDialog)
 
         musicPlugin->items()
                 << new ChoiceItem("FluidSynth", "fluidsynth")
+            #if defined (DE_HAVE_AUDIO_FMOD)
                 << new ChoiceItem("FMOD", "fmod")
-           #if !defined (DE_DISABLE_SDLMIXER)
+            #endif
+            #if !defined (DE_DISABLE_SDLMIXER)
                 << new ChoiceItem("SDL_mixer", "sdlmixer")
-           #endif
+            #endif
 //           #if defined (WIN32)
 //                << new ChoiceItem("Windows Multimedia", "winmm")
 //           #endif
@@ -261,7 +267,7 @@ AudioSettingsDialog::AudioSettingsDialog(const String &name)
 
         // Layout.
         LabelWidget::appendSeparatorWithText("Sound Effects", &area(), &layout);
-        layout << *sfxVolLabel      << *d->sfxVolume                  
+        layout << *sfxVolLabel      << *d->sfxVolume
                << Const(0)          << *d->overlapStop
                << Const(0)          << *d->sound3D
                << *rvbVolLabel      << *d->reverbVolume;
@@ -276,14 +282,14 @@ AudioSettingsDialog::AudioSettingsDialog(const String &name)
     {
         d->backendFold->open();
     }
-    
+
     SequentialLayout layout2(area().contentRule().left(),
                              area().contentRule().top() + layout.height());
     layout2.setOverrideWidth(d->backendBase->rule().width());
-    
+
     layout2 << d->backendFold->title()
             << *d->backendFold;
-    
+
     area().setContentSize(OperatorRule::maximum(layout.width(), layout2.width()),
                           layout.height() + layout2.height());
 
