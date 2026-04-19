@@ -39,6 +39,8 @@
 #include "de/garbage.h"
 #include <de/c_wrapper.h>
 
+#include <the_Foundation/string.h>
+
 static void *zoneAlloc(size_t n) {
     return Z_Malloc(n, PU_APPSTATIC, 0);
 }
@@ -645,7 +647,7 @@ char const *Str_CopyDelim2(ddstring_t *str, char const *src, char delimiter, int
     ddstring_t buf; Str_Init(&buf);
     for (cursor = src; *cursor && *cursor != delimiter; ++cursor)
     {
-        if ((cdflags & CDF_OMIT_WHITESPACE) && isspace((int)*cursor))
+        if ((cdflags & CDF_OMIT_WHITESPACE) && isSpace_Char((int)*cursor))
             continue;
         Str_PartAppend(&buf, cursor, 0, 1);
     }
