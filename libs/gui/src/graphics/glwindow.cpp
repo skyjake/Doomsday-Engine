@@ -92,6 +92,7 @@ DE_PIMPL(GLWindow)
         window = SDL_CreateWindow("GLWindow",
                                   640,
                                   400,
+                                  SDL_WINDOW_HIDDEN |
                                   SDL_WINDOW_OPENGL |
                                   SDL_WINDOW_RESIZABLE |
                                   SDL_WINDOW_HIGH_PIXEL_DENSITY);
