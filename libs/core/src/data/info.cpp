@@ -648,7 +648,7 @@ DE_PIMPL(Info)
     void parse(const File &file)
     {
         sourcePath = file.path();
-        parse(String::fromUtf8(Block(file)));
+        parse(String(Block(file))); // unknown text encoding; converted to UTF-8
     }
 };
 
