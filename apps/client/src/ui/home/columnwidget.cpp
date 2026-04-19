@@ -30,6 +30,8 @@ using namespace de;
 
 DE_GUI_PIMPL(ColumnWidget)
 {
+    static constexpr double ColorAnimationSpan = 0.33;
+
     /**
      * Procedural image for drawing the background of a column.
      */
@@ -45,7 +47,7 @@ DE_GUI_PIMPL(ColumnWidget)
         void setColor(const Color &color)
         {
             StyleProceduralImage::setColor(color);
-            colorAnim.setValue(color, 0.5);
+            colorAnim.setValue(color, ColorAnimationSpan);
         }
 
         bool update() override
@@ -196,7 +198,7 @@ void ColumnWidget::setHighlighted(bool highlighted)
         auto &img = d->back->image()->as<Impl::BackgroundImage>();
         img.setColor(highlighted? Vec4f(1) : d->backTintColor);
 
-        d->backSaturation.setValue(highlighted? 1.f : 0.f, 0.5);
+        d->backSaturation.setValue(highlighted ? 1.f : 0.f, Impl::ColorAnimationSpan);
     }
 }
 

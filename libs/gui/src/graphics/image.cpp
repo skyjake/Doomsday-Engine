@@ -907,6 +907,7 @@ Image Image::multiplied(Color color) const
 Image Image::colorized(Color color) const
 {
     const float targetHue = hsv(color).x;
+    const float targetSaturation = hsv(color).y; 
 
     Image copy = convertToFormat(RGBA_8888);
     for (duint y = 0; y < height(); ++y)
@@ -916,6 +917,7 @@ Image Image::colorized(Color color) const
             Vec4f pixelHsv = hsv(unpackColor(*ptr));
 
             pixelHsv.x = targetHue;
+            pixelHsv.y *= targetSaturation;
             pixelHsv.w = (color.w / 255.f) * pixelHsv.w;
 
             *ptr = packColor(fromHsv(pixelHsv));
