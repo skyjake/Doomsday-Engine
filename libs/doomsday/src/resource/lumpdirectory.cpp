@@ -85,12 +85,12 @@ DE_PIMPL_NOREF(LumpDirectory), public ISerializable
         index.clear();
         for (int i = 0; i < entries.sizei(); ++i)
         {
-            index.insert(entries.at(i).name, i);
+            const auto &lumpName = entries.at(i).name;
+            index.insert(lumpName, i);
 
             // If there are a map lumps, check which kind it is.
             if (mapType == None)
             {
-                const String lumpName = String::fromLatin1(entries.at(i).name);
                 if (regExMy.hasMatch(lumpName))
                 {
                     mapType = ExMy;
