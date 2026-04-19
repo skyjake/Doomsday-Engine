@@ -52,6 +52,7 @@ public:
 
     bool match(const String &subject, RegExpMatch &match) const;
     bool hasMatch(const String &subject) const;
+    bool hasMatch(const Block &subjectBytes) const; /* treated as raw bytes, not necessarily UTF-8 */
     bool exactMatch(const String &subject) const;
     bool exactMatch(const String &subject, RegExpMatch &match) const;
 

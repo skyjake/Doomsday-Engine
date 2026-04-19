@@ -101,4 +101,11 @@ bool RegExp::hasMatch(const String &subject) const
     return matchString_RegExp(_d, subject, &match);
 }
 
+bool RegExp::hasMatch(const Block &subjectBytes) const
+{
+    iRegExpMatch match;
+    init_RegExpMatch(&match);
+    return matchRange_RegExp(_d, range_Block(subjectBytes), &match);
+}
+
 } // namespace de
