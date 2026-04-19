@@ -1203,8 +1203,7 @@ String String::fromUtf8(const char *nullTerminatedCStr)
 
 String String::fromLatin1(const IByteArray &byteArray)
 {
-    const Block bytes(byteArray);
-    return String(reinterpret_cast<const char *>(bytes.data()), bytes.size());
+    return Block(byteArray).decode("latin1");
 }
 
 String String::fromCP437(const IByteArray &byteArray)

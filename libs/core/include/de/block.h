@@ -141,6 +141,7 @@ public:
     Block  decompressed() const;
     Block  md5Hash() const;
     String asHexadecimalText() const;
+    String decode(const String &charset) const;
 
     void fill(Byte b);
 

@@ -225,7 +225,7 @@ int Block::compare(const Block &other) const
 {
     return cmp_Block(*this, other);
 }
-    
+
 bool Block::operator==(const Block &other) const
 {
     return size() == other.size() && compare(other) == 0;
@@ -297,7 +297,7 @@ Block &Block::operator=(Block &&moved)
     set_Block(&_block, &moved._block);
     return *this;
 }
-    
+
 Block &Block::operator=(const IByteArray &byteArray)
 {
     copyFrom(byteArray, 0, byteArray.size());
@@ -343,6 +343,15 @@ String Block::asHexadecimalText() const
         hex += asciiHexNumber(ch & 0xf);
     }
     return hex;
+}
+
+String Block::decode(const String &charset) const
+{
+    // Convert to UTF-8 according to the specified encoding.
+    iString *dec = decode_Block(&_block, charset);
+    String decStr(dec);
+    delete_String(dec);
+    return decStr;
 }
 
 void Block::fill(Byte b)
