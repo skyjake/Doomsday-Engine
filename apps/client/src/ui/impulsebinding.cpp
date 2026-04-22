@@ -164,6 +164,11 @@ static bool doConfigure(ImpulseBinding &bind, const char *ctrlDesc, int impulseI
             bind.def().set("angle", angle);
         }
     }
+    else
+    {
+        LOG_INPUT_WARNING("Unknown device \"%s\"") << Str_Text(str);
+        return false;
+    }
 
     // Finally, there may be some flags at the end.
     while (ctrlDesc)
