@@ -155,7 +155,9 @@ DE_GUI_PIMPL(AudioSettingsDialog)
                 << new ChoiceItem("Disabled", "dummy");
 
         musicPlugin->items()
+            #if defined (DE_HAVE_AUDIO_FLUIDSYNTH)
                 << new ChoiceItem("FluidSynth", "fluidsynth")
+            #endif
             #if defined (DE_HAVE_AUDIO_FMOD)
                 << new ChoiceItem("FMOD", "fmod")
             #endif
