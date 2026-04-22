@@ -78,8 +78,11 @@ DE_PIMPL_NOREF(FinalePageWidget)
 
     ~Impl()
     {
+        for (FinaleWidget *w : children) {
+            w->audienceForDeletion -= this;
+        }
         deleteAll(children);
-        DE_ASSERT(children.isEmpty());
+        children.clear();
     }
 
     void finaleWidgetBeingDeleted(const FinaleWidget &widget)
