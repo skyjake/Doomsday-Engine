@@ -84,7 +84,7 @@ package "com.idsoftware.doom.shareware_1.9" {
     fileName: doom1.wad
     fileSize: 4196020
     lumps <E1M1, E1M2, E1M3, E1M4, E1M5, E1M6, E1M7, E1M8, E1M9, D_E1M1, FLOOR4_8, FLOOR7_2>
-    lumpDirCRC32: b3950597
+    lumpDirCRC32: b27a4c65
     info {
         title: DOOM Shareware (Episode 1)
         author: id Software
@@ -98,7 +98,7 @@ package "com.idsoftware.doom.ultimate_1.9" {
     fileName <doomu.wad, doom.wad>
     fileSize: 12408292
     lumps <E4M1, E4M2, E4M3, E4M4, E4M5, E4M6, E4M7, E4M8, E4M9, M_EPI4>
-    lumpDirCRC32: a990524d
+    lumpDirCRC32: f537432d
     info {
         title: Ultimate DOOM
         author: id Software
@@ -112,7 +112,7 @@ package "com.idsoftware.doom.bfg_2012.10.16" {
     fileName: doom.wad
     fileSize: 12487824
     lumps <E4M1, E4M2, E4M3, E4M4, E4M5, E4M6, E4M7, E4M8, E4M9, M_EPI4>
-    lumpDirCRC32: 8aed7bf2
+    lumpDirCRC32: 7c1acdce
     info {
         title: Ultimate DOOM (BFG Edition)
         author: id Software
@@ -126,7 +126,7 @@ package "com.idsoftware.doom.bfg.decensor_1.0" {
     fileName <udoomcen.wad, doom.wad>
     fileSize: 12487826
     lumps <E4M1, E4M2, E4M3, E4M4, E4M5, E4M6, E4M7, E4M8, E4M9, M_EPI4>
-    lumpDirCRC32: e51d82df
+    lumpDirCRC32: 13ea34e3
     info {
         title: Ultimate DOOM (BFG Edition + decensor)
         author: id Software
@@ -140,7 +140,7 @@ package "com.idsoftware.doom2_1.6.66" {
     format: IWAD
     fileName: doom2.wad
     fileSize: 14943400
-    lumpDirCRC32: b0b547e0
+    lumpDirCRC32: fb588ef9
     info {
         title: DOOM 2: Hell on Earth
         author: id Software
@@ -165,7 +165,7 @@ package "com.idsoftware.doom2_1.7" {
     format: IWAD
     fileName: doom2.wad
     fileSize: 14612688
-    lumpDirCRC32: 66db63b3
+    lumpDirCRC32: 38640966
     info {
         title: DOOM 2: Hell on Earth
         author: id Software
@@ -178,7 +178,7 @@ package "com.idsoftware.doom2.french_1.8" {
     format: IWAD
     fileName: doom2f.wad
     fileSize: 14607420
-    lumpDirCRC32: 3234e940
+    lumpDirCRC32: b13bf209
     info {
         title: DOOM 2: Hell on Earth (French)
         author: id Software
@@ -192,7 +192,7 @@ package "com.idsoftware.doom2_1.9" {
     fileName <doom2f.wad, doom2.wad>
     fileSize: 14604584
     lumps <MAP01, MAP02, MAP03, MAP04, MAP10, MAP20, MAP25, MAP30, VILEN1, VILEO1, VILEQ1, GRNROCK>
-    lumpDirCRC32: 687126dc
+    lumpDirCRC32: 36ce4c09
     info {
         title: DOOM 2: Hell on Earth
         author: id Software
@@ -206,7 +206,7 @@ package "com.idsoftware.doom2.bfg_2012.10.16" {
     fileName: doom2.wad
     fileSize: 14691821
     lumps <MAP01, MAP02, MAP03, MAP04, MAP10, MAP20, MAP25, MAP30, VILEN1, VILEO1, VILEQ1, GRNROCK>
-    lumpDirCRC32: 2f9a0a30
+    lumpDirCRC32: 2e73646e
     info {
         title: DOOM 2: Hell on Earth (BFG Edition)
         author: id Software
@@ -220,7 +220,7 @@ package "com.idsoftware.doom2.bfg.decensor_1.0" {
     fileName <doom2cen.wad, doom2.wad>
     fileSize: 14692182
     lumps <MAP01, MAP02, MAP03, MAP04, MAP10, MAP20, MAP25, MAP30, VILEN1, VILEO1, VILEQ1, GRNROCK>
-    lumpDirCRC32: 376c997e
+    lumpDirCRC32: 3685f720
     info {
         title: DOOM 2: Hell on Earth (BFG Edition + decensor)
         author: id Software
@@ -235,7 +235,7 @@ package "com.nervesoftware.norestfortheliving_2012.10.16" {
     fileName: nerve.wad
     fileSize: 3819855
     lumps <CWILV00, CWILV08, MAP01, MAP02, MAP03, MAP04, MAP09>
-    lumpDirCRC32: 29240a37
+    lumpDirCRC32: 776650bc
     info {
         title: No Rest for the Living
         author: Nerve Software
@@ -250,7 +250,7 @@ package "com.idsoftware.finaldoom.plutonia_1.9" {
     fileName: plutonia.wad
     fileSize: 17420824
     lumps <_DEUTEX_, MAP01, MAP25, MC5, MC11, MC16, MC20>
-    lumpDirCRC32: d926b798
+    lumpDirCRC32: 55dc0af3
     info {
         title: Final DOOM: The Plutonia Experiment
         author: Dario Casali and Milo Casali
@@ -264,7 +264,7 @@ package "com.idsoftware.finaldoom.plutonia_1.9.1" {
     fileName: plutonia.wad
     fileSize: 18240172
     lumps <_DEUTEX_, MAP01, MAP25, MC5, MC11, MC16, MC20>
-    lumpDirCRC32: 36fb4f7a
+    lumpDirCRC32: 86b5a4b9
     info {
         title: Final DOOM: The Plutonia Experiment
         author: Dario Casali and Milo Casali
@@ -278,7 +278,7 @@ package "com.idsoftware.finaldoom.tnt_1.9" {
     fileName: tnt.wad
     fileSize: 18195736
     lumps <CAVERN5, CAVERN7, STONEW1>
-    lumpDirCRC32: 5d08a3ea
+    lumpDirCRC32: 67f796a8
     info {
         title: Final DOOM: TNT: Evilution
         author: Team TNT
@@ -292,7 +292,7 @@ package "com.idsoftware.finaldoom.tnt_1.9.1" {
     fileName: tnt.wad
     fileSize: 18654796
     lumps <CAVERN5, CAVERN7, STONEW1>
-    lumpDirCRC32: 22eb92fe
+    lumpDirCRC32: 35026e91
     info {
         title: Final DOOM: TNT: Evilution
         author: Team TNT
@@ -329,7 +329,7 @@ package "kaiser.doom64" {
     fileName: doom64.wad
     fileSize: 47458247
     lumps <MAP01, MAP20, MAP33, F_SUCK>
-    lumpDirCRC32: c3f5ef4a
+    lumpDirCRC32: bd5aac5b
     info {
         title: DOOM 64: Absolution
         author: Kaiser et al.
@@ -343,7 +343,7 @@ package "freedoom.phase2_0.6.4" {
     fileName: doom2.wad
     fileSize: 19801320
     lumps <MAP01>
-    lumpDirCRC32: ab472d37
+    lumpDirCRC32: dbb55a22
     info {
         title: Freedoom: Phase 2
         author: Freedoom Project
@@ -357,7 +357,7 @@ package "freedoom.phase2_0.7" {
     fileName: doom2.wad
     fileSize: 27625596
     lumps <MAP01>
-    lumpDirCRC32: 85e31f19
+    lumpDirCRC32: 2277fba0
     info {
         title: Freedoom: Phase 2
         author: Freedoom Project
@@ -371,7 +371,7 @@ package "freedoom.phase2_0.8" {
     fileName: doom2.wad
     fileSize: 28592816
     lumps <MAP01>
-    lumpDirCRC32: 6ce5db8
+    lumpDirCRC32: faeb669a
     info {
         title: Freedoom: Phase 2
         author: Freedoom Project
@@ -385,7 +385,7 @@ package "freedoom.phase2_0.8.1" {
     fileName: doom2.wad
     fileSize: 28144744
     lumps <MAP01>
-    lumpDirCRC32: 5a5e07d3
+    lumpDirCRC32: 8369759a
     info {
         title: Freedoom: Phase 2
         author: Freedoom Project
@@ -399,7 +399,7 @@ package "freedoom.phase2_0.9" {
     fileName <freedoom2.wad, doom2.wad>
     fileSize: 30426864
     lumps <MAP01>
-    lumpDirCRC32: a06d5ffa
+    lumpDirCRC32: 4b0d5e7d
     info {
         title: Freedoom: Phase 2
         author: Freedoom Project
@@ -413,7 +413,7 @@ package "freedoom.phase2_0.10" {
     fileName <freedoom2.wad, doom2.wad>
     fileSize: 29182560
     lumps <MAP01>
-    lumpDirCRC32: 42e4d4d7
+    lumpDirCRC32: e07a6efd
     info {
         title: Freedoom: Phase 2
         author: Freedoom Project
@@ -427,7 +427,7 @@ package "freedoom.phase2_0.10.1" {
     fileName <freedoom2.wad, doom2.wad>
     fileSize: 29182140
     lumps <MAP01>
-    lumpDirCRC32: b0dfa116
+    lumpDirCRC32: 12411b3c
     info {
         title: Freedoom: Phase 2
         author: Freedoom Project
@@ -441,7 +441,7 @@ package "freedoom.phase2_0.11.2" {
     fileName <freedoom2.wad>
     fileSize: 29093468
     lumps <MAP01, MAP32>
-    lumpDirCRC32: 9bb60797
+    lumpDirCRC32: b1a1d589
     info {
         title: Freedoom: Phase 2
         author: Freedoom Project
@@ -455,7 +455,7 @@ package "freedoom.phase2_0.11.3" {
     fileName <freedoom2.wad>
     fileSize: 29102220
     lumps <MAP01, MAP32>
-    lumpDirCRC32: a8eb8bcd
+    lumpDirCRC32: 82fc59d3
     info {
         title: Freedoom: Phase 2
         author: Freedoom Project
@@ -469,7 +469,7 @@ package "freedoom.phase2_0.12.1" {
     fileName <freedoom2.wad>
     fileSize: 28544132
     lumps <MAP01, MAP32>
-    lumpDirCRC32: 4e1e69f7
+    lumpDirCRC32: d3003444
     info {
         title: Freedoom: Phase 2
         author: Freedoom Project
@@ -495,7 +495,7 @@ package "freedoom.phase1_0.9" {
     fileName: freedoom1.wad
     fileSize: 20165884
     lumps <E1M1>
-    lumpDirCRC32: 48366311
+    lumpDirCRC32: 14f5bd3a
     info {
         title: Freedoom: Phase 1
         author: Freedoom Project
@@ -509,7 +509,7 @@ package "freedoom.phase1_0.10" {
     fileName: freedoom1.wad
     fileSize: 21493744
     lumps <E1M1>
-    lumpDirCRC32: abf1ec9b
+    lumpDirCRC32: c279c711
     info {
         title: Freedoom: Phase 1
         author: Freedoom Project
@@ -523,7 +523,7 @@ package "freedoom.phase1_0.10.1" {
     fileName: freedoom1.wad
     fileSize: 21493744
     lumps <E1M1>
-    lumpDirCRC32: cbfe59dc
+    lumpDirCRC32: a2767256
     info {
         title: Freedoom: Phase 1
         author: Freedoom Project
@@ -537,7 +537,7 @@ package "freedoom.phase1_0.11.2" {
     fileName: freedoom1.wad
     fileSize: 23559728
     lumps <E1M1, E4M9>
-    lumpDirCRC32: 4ab81689
+    lumpDirCRC32: 25fe149e
     info {
         title: Freedoom: Phase 1
         author: Freedoom Project
@@ -551,7 +551,7 @@ package "freedoom.phase1_0.11.3" {
     fileName: freedoom1.wad
     fileSize: 23578720
     lumps <E1M1, E4M9>
-    lumpDirCRC32: c03f5092
+    lumpDirCRC32: af795285
     info {
         title: Freedoom: Phase 1
         author: Freedoom Project
@@ -565,7 +565,7 @@ package "freedoom.phase1_0.12.1" {
     fileName: freedoom1.wad
     fileSize: 27284988
     lumps <E1M1, E4M9>
-    lumpDirCRC32: 1e08d29f
+    lumpDirCRC32: f5da598b
     info {
         title: Freedoom: Phase 1
         author: Freedoom Project
@@ -591,7 +591,7 @@ package "freedoom.freedm_0.10.1" {
     fileName: freedm.wad
     fileSize: 19127900
     lumps <MAP01>
-    lumpDirCRC32: c3be5175
+    lumpDirCRC32: 1a336bc1
     info {
         title: Freedoom Deathmatch
         author: Freedoom Project
@@ -605,7 +605,7 @@ package "freedoom.freedm_0.11.2" {
     fileName: freedm.wad
     fileSize: 21103364
     lumps <MAP01, MAP32>
-    lumpDirCRC32: 68d2ddfd
+    lumpDirCRC32: 67bbad83
     info {
         title: Freedoom Deathmatch
         author: Freedoom Project
@@ -619,7 +619,7 @@ package "freedoom.freedm_0.11.3" {
     fileName: freedm.wad
     fileSize: 21112116
     lumps <MAP01, MAP32>
-    lumpDirCRC32: 521c112b
+    lumpDirCRC32: 5d756155
     info {
         title: Freedoom Deathmatch
         author: Freedoom Project
@@ -633,7 +633,7 @@ package "freedoom.freedm_0.12.1" {
     fileName: freedm.wad
     fileSize: 21824448
     lumps <MAP01, MAP32>
-    lumpDirCRC32: 30fd81a7
+    lumpDirCRC32: ccd7dc39
     info {
         title: Freedoom Deathmatch
         author: Freedoom Project
@@ -684,7 +684,7 @@ package "com.ravensoftware.heretic.shareware_1.2" {
     fileName: heretic1.wad
     fileSize: 5120920
     lumps <E1M1, MUMSIT, WIZACT, MUS_CPTD, CHKNC5, SPAXA1A5>
-    lumpDirCRC32: c3aefe95
+    lumpDirCRC32: 71bae267
     info {
         title: Heretic Shareware
         author: Raven Software
@@ -711,7 +711,7 @@ package "com.ravensoftware.heretic.extended" {
     fileName: heretic.wad
     fileSize: 14189976
     lumps <EXTENDED, E5M2, E5M7, E6M2, MUMSIT, WIZACT, MUS_CPTD, CHKNC5, SPAXA1A5>
-    lumpDirCRC32: 515ab4d9
+    lumpDirCRC32: 7c424de
     info {
         title: Heretic: Shadow of the Serpent Riders
         author: Raven Software
@@ -725,7 +725,7 @@ package "com.ravensoftware.hexen.deathkings_1.0" {
     fileName: hexdd.wad
     fileSize: 4429700
     lumps <MAP59, MAP60>
-    lumpDirCRC32: b0b096be
+    lumpDirCRC32: 2aa0de29
     info {
         title: Hexen: Deathkings of the Dark Citadel (Expansion)
         author: Raven Software
@@ -740,7 +740,7 @@ package "com.ravensoftware.hexen.deathkings_1.1" {
     fileName: hexdd.wad
     fileSize: 4440584
     lumps <MAP59, MAP60>
-    lumpDirCRC32: 9097cb5c
+    lumpDirCRC32: 76fdc56b
     info {
         title: Hexen: Deathkings of the Dark Citadel (Expansion)
         author: Raven Software
@@ -755,7 +755,7 @@ package "com.ravensoftware.hexen_1.0" {
     fileName: hexen.wad
     fileSize: 20128392
     lumps <MAP08, MAP22, MAP41, TINTTAB, FOGMAP, DARTA1, ARTIPORK, SKYFOG, GROVER>
-    lumpDirCRC32: 37edddfd
+    lumpDirCRC32: ada24cef
     info {
         title: Hexen
         author: Raven Software
@@ -769,7 +769,7 @@ package "com.ravensoftware.hexen_1.1" {
     fileName: hexen.wad
     fileSize: 20083672
     lumps <MAP08, MAP22, TINTTAB, FOGMAP, TRANTBLA, DARTA1, ARTIPORK, SKYFOG, TALLYTOP, GROVER>
-    lumpDirCRC32: d334ff57
+    lumpDirCRC32: cdee22b3
     info {
         title: Hexen
         author: Raven Software
@@ -783,7 +783,7 @@ package "com.ravensoftware.hexen.mac_1.1" {
     fileName: hexen.wad
     fileSize: 21078584
     lumps <MAP08, MAP22, TINTTAB, FOGMAP, TRANTBLA, DARTA1, ARTIPORK, SKYFOG, TALLYTOP, GROVER>
-    lumpDirCRC32: 6340baf
+    lumpDirCRC32: 2770e5a3
     info {
         title: Hexen (Macintosh)
         author: Raven Software
@@ -797,7 +797,7 @@ package "com.ravensoftware.hexen.beta" {
     fileName <hexen.wad, hexenbeta.wad>
     fileSize: 10615976
     lumps <MAP01, MAP04, TINTTAB, FOGMAP, DARTA1, ARTIPORK, AFLYA0, "DEMO3==13866">
-    lumpDirCRC32: 2f99489f
+    lumpDirCRC32: 848d39ea
     info {
         title: Hexen (Beta)
         author: Raven Software
@@ -811,7 +811,7 @@ package "com.ravensoftware.hexen.demo" {
     fileName <hexen.wad, hexendemo.wad>
     fileSize: 10644136
     lumps <MAP01, MAP04, TINTTAB, FOGMAP, DARTA1, ARTIPORK, "DEMO3==18150">
-    lumpDirCRC32: 96c03af2
+    lumpDirCRC32: 918ee12d
     info {
         title: Hexen (Demo)
         author: Raven Software
@@ -824,7 +824,7 @@ package "com.ravensoftware.hexen.macdemo" {
     format: IWAD
     fileName <hexen.wad, machexendemo.wad>
     fileSize: 13596228
-    lumpDirCRC32: 4b8db35c
+    lumpDirCRC32: 66aba5fb
     info {
         title: Hexen (Macintosh Demo)
         author: Raven Software

@@ -113,13 +113,15 @@ DE_PIMPL(DataBundle), public Lockable
                                   " WAD lump directory was not found");
             }
 
-            /*
-            qDebug() << self().description()
-                     << "format:" << (lumpDir->type()==res::LumpDirectory::Pwad? "PWAD" : "IWAD")
-                     << "\nfileName:" << source->name()
-                     << "\nfileSize:" << source->size()
-                     << "\nlumpDirCRC32:" << QString::number(lumpDir->crc32(), 16).toLatin1();
-            */
+#if 0
+            LOGDEV_RES_MSG("%s format:%s fileName:`%s` fileSize:%u  lumpDirCRC32:%08x")
+                << self().description()
+                << (lumpDir->type()==res::LumpDirectory::Pwad? "PWAD" : "IWAD")
+                << source->name()
+                << source->size()
+                << lumpDir->crc32();
+#endif
+            
             return true;
         }
         return false;
@@ -146,14 +148,6 @@ DE_PIMPL(DataBundle), public Lockable
         {
             // Determine the WAD type, if unspecified.
             format = (lumpDir->type() == res::LumpDirectory::Pwad? Pwad : Iwad);
-
-            /*
-            qDebug() << self().description()
-                     << "format:" << (lumpDir->type()==res::LumpDirectory::Pwad? "PWAD" : "IWAD")
-                     << "\nfileName:" << source->name()
-                     << "\nfileSize:" << source->size()
-                     << "\nlumpDirCRC32:" << QString::number(lumpDir->crc32(), 16).toLatin1();
-            */
         }
         else if (!self().containerPackageId().isEmpty())
         {
