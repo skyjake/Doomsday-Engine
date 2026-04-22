@@ -513,7 +513,7 @@ String AbstractLineEditor::prompt() const
 
 void AbstractLineEditor::setText(const String &contents)
 {
-    d->completion.reset();
+    d->resetCompletion();
     d->text = contents;
     d->cursor = contents.sizeb();
     d->rewrapLater();
@@ -526,7 +526,7 @@ String AbstractLineEditor::text() const
 
 void AbstractLineEditor::setCursor(BytePos index)
 {
-    d->completion.reset();
+    d->resetCompletion();
     d->cursor = index;
     cursorMoved();
 }
