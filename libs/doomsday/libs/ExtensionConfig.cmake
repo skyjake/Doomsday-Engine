@@ -14,6 +14,7 @@ macro (deng_add_extlib target)
         ${CMAKE_CURRENT_LIST_DIR}/../../include  # libdoomsday
     )
     deng_link_libraries (${target} PRIVATE DengCore)
+    target_compile_definitions (${target} PRIVATE __LIBDOOMSDAY__=1)
     enable_cxx11 (${target})
     set_target_properties (${target} PROPERTIES FOLDER Extensions)
     if (UNIX_LINUX)
