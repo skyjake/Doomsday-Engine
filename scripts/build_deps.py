@@ -8,6 +8,11 @@
 THE_FOUNDATION_GIT = 'https://git.skyjake.fi/skyjake/the_Foundation.git'
 THE_FOUNDATION_TAG = 'origin/main'
 
+SDL3_VERSION       = '3.4.4'
+SDL3_MIXER_VERSION = '3.2.0'
+
+FLUIDSYNTH_VERSION = '2.5.4'
+
 ASSIMP_GIT = 'https://github.com/assimp/assimp.git'
 ASSIMP_TAG = 'v6.0.4'
 ASSIMP_ENABLED_IMPORTERS = [
@@ -16,9 +21,6 @@ ASSIMP_ENABLED_IMPORTERS = [
 
 GLBINDING_GIT = 'https://github.com/cginternals/glbinding.git'
 GLBINDING_TAG = 'v3.5.0'
-
-SDL3_VERSION       = '3.4.4'
-SDL3_MIXER_VERSION = '3.2.0'
 
 #----------------------------------------------------------------------------------------
 
@@ -34,6 +36,7 @@ IS_NATIVE_WINDOWS = IS_WINDOWS and not IS_MSYS and not IS_MINGW and not IS_CYGWI
 
 build_foundation = build_assimp = build_glbinding = True
 build_sdl3 = build_sdl3_mixer = True
+build_fluidsynth = IS_NATIVE_WINDOWS
 
 PATCH_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -171,6 +174,14 @@ def sdl3_mixer_url(version):
     return None
 
 
+def fluidsynth_url(version):
+    tag = 'v' + version
+    if IS_NATIVE_WINDOWS:
+        return ('https://github.com/FluidSynth/fluidsynth/releases/download/'
+                '%s/fluidsynth-v%s-win10-x64-cpp11.zip' % (tag, version))
+    return None
+
+
 def install_sdl_package(name, version, url, products_dir):
     """Download and install an SDL prebuilt package, skipping if already at this version."""
     sentinel = os.path.join(products_dir, '.%s-version' % name.lower().replace('_', '-'))
@@ -183,6 +194,20 @@ def install_sdl_package(name, version, url, products_dir):
         download_dmg(url, products_dir)
     else:
         download_prebuilt(url, products_dir)
+    with open(sentinel, 'w') as f:
+        f.write(version)
+
+
+def install_fluidsynth_package(version, products_dir):
+    """Download and install FluidSynth as a prebuilt package, skipping if already 
+    at this version."""
+    sentinel = os.path.join(products_dir, '.fluidsynth-version')
+    if os.path.exists(sentinel):
+        with open(sentinel) as f:
+            if f.read().strip() == version:
+                print('  FluidSynth %s already installed.' % version)
+                return
+    download_prebuilt(fluidsynth_url(version), products_dir)
     with open(sentinel, 'w') as f:
         f.write(version)
 
@@ -236,6 +261,8 @@ while idx < len(sys.argv):
         build_sdl3 = False
     elif opt == '--skip-sdl3-mixer':
         build_sdl3_mixer = False
+    elif opt == '--skip-fluidsynth':
+        build_fluidsynth = False
     else:
         raise Exception('Unknown option: ' + opt)
     idx += 1
@@ -259,6 +286,7 @@ Options:
   --skip-glbinding    Do not build glbinding library
   --skip-sdl3         Do not download SDL3 (Windows/macOS only)
   --skip-sdl3-mixer   Do not download SDL3_mixer (Windows/macOS only)
+  --skip-fluidsynth   Do not download FluidSynth (Windows only)
 """)
     print_config(cfg)
     exit(0)
@@ -364,3 +392,11 @@ for name, version, url_fn, enabled in [
         continue
     if do_build:
         install_sdl_package(name, version, url, PRODUCTS_DIR)
+
+# FluidSynth: prebuilt binaries on Windows.
+if build_fluidsynth:
+    print('\n--- FluidSynth ---')
+    if do_build:
+        install_fluidsynth_package(FLUIDSYNTH_VERSION, PRODUCTS_DIR)
+
+print()

@@ -12,10 +12,8 @@ if (APPLE)
     set (embed ON)
 elseif (UNIX)
     set (embed OFF)
-endif ()
-if (WIN32 AND NOT MINGW)
-    message (STATUS "Not building ${tgt} because the MSYS2 version of glib-2.0 is required on Windows (set MSYS2_LIBS_DIR)")
-    return ()
+elseif (WIN32 AND NOT MINGW)
+    set (embed OFF)
 endif ()
 
 option (DE_FLUIDSYNTH_EMBEDDED
@@ -96,16 +94,36 @@ if (DE_FLUIDSYNTH_EMBEDDED)
     )
 
 else ()
-    # We will use the libfluidsynth installed on the system.
-    find_package (PkgConfig)
-    pkg_check_modules (FLUIDSYNTH fluidsynth)
-    if (NOT FLUIDSYNTH_FOUND)
-        message (STATUS "Not building ${tgt} because \"fluidsynth\" not found (using pkg-config).\n\
-   You could try an embedded build instead (DE_FLUIDSYNTH_EMBEDDED).")
-        return ()
+    # Try the deps directory first.
+    if (MSVC)
+        add_library (fluidsynth INTERFACE)
+        target_link_libraries (fluidsynth INTERFACE
+            ${DE_DEPENDS_DIR}/products/lib/libfluidsynth-3.lib
+        )
+        target_include_directories (fluidsynth INTERFACE
+            ${DE_DEPENDS_DIR}/products/include/
+        )
+        deng_install_library (${DE_DEPENDS_DIR}/products/bin/libfluidsynth-3.dll)
+        deng_install_library (${DE_DEPENDS_DIR}/products/bin/sndfile.dll)
+    else ()
+        if (MSVC)
+            message ("FluidSynth must be installed via build_deps.py")
+        endif ()
+        # We will use the libfluidsynth installed on the system.
+        find_package (PkgConfig)
+        pkg_check_modules (FLUIDSYNTH fluidsynth)
+        if (NOT FLUIDSYNTH_FOUND)
+            message (STATUS "Not building ${tgt} because \"fluidsynth\" not found (using pkg-config).\n\
+                You could try an embedded build instead (DE_FLUIDSYNTH_EMBEDDED).")
+            return ()
+        endif ()
     endif ()
 
-    add_definitions (-DFLUIDSYNTH_DEFAULT_DRIVER_NAME="pulseaudio")
+    if (WIN32)
+        add_definitions (-DFLUIDSYNTH_DEFAULT_DRIVER_NAME="dsound")
+    else ()
+        add_definitions (-DFLUIDSYNTH_DEFAULT_DRIVER_NAME="pulseaudio")
+    endif ()
 endif ()
 
 append (CMAKE_CXX_FLAGS_DEBUG "-DDE_DSFLUIDSYNTH_DEBUG")
@@ -140,5 +158,9 @@ if (DE_FLUIDSYNTH_EMBEDDED)
     #     deng_bundle_install_names (${tgt} ${GLIB_LIBRARIES})
     # endif ()
 else ()
-    target_link_libraries (${tgt} PRIVATE ${FLUIDSYNTH_LIBRARIES})
+    if (TARGET fluidsynth)
+        target_link_libraries (${tgt} PRIVATE fluidsynth)
+    else ()
+        target_link_libraries (${tgt} PRIVATE ${FLUIDSYNTH_LIBRARIES})
+    endif ()
 endif ()
