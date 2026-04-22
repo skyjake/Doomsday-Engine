@@ -22,6 +22,10 @@
 #include "de/log.h"
 #include "de/thread.h"
 
+#if defined (DE_DEBUG)
+#   include "de/app.h"
+#endif
+
 #include <map>
 #include <set>
 #include <the_Foundation/thread.h>
@@ -175,6 +179,10 @@ void Garbage_TrashInstance(void *ptr, GarbageDestructor destructor)
 {
     if (ptr)
     {
+#if defined (DE_DEBUG)
+        iThread *cur = current_Thread();
+        if (cur == NULL) DE_ASSERT_IN_MAIN_THREAD(); // the thread must be known to us
+#endif
         Garbage *g = garbageForThread(current_Thread());
         DE_ASSERT(!Garbage_IsTrashed(ptr));
         g->allocs[ptr] = destructor;
