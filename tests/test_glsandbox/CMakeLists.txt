@@ -19,7 +19,7 @@ deng_link_libraries (test_glsandbox PRIVATE DengGui)
 if (APPLE)
     set_property (TARGET test_glsandbox PROPERTY OUTPUT_NAME test_glsandbox)
     find_package (the_Foundation REQUIRED)
-    find_package (glbinding REQUIRED)
+    find_package (glbinding REQUIRED MODULE)
     deng_install_bundle_deps (test_glsandbox
         Deng::libcore
         Deng::libgui

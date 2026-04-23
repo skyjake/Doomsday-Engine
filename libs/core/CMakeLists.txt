@@ -105,7 +105,8 @@ elseif (CYGWIN)
              DESTINATION bin)
 endif ()
 if (UNIX_LINUX)
-    install (FILES ${the_Foundation_DIR}/../../lib_Foundation.so
+    install (FILES $<TARGET_FILE:the_Foundation::the_Foundation>
+                   $<TARGET_SONAME_FILE:the_Foundation::the_Foundation>
              DESTINATION ${DE_INSTALL_LIB_DIR})
 endif ()
 deng_deploy_library (libcore DengCore)

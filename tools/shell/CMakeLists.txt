@@ -10,7 +10,7 @@ project (DE_SHELL)
 include (../../cmake/Config.cmake)
 
 find_package (the_Foundation REQUIRED)
-find_package (glbinding REQUIRED)
+find_package (glbinding REQUIRED MODULE)
 find_package (SDL3Libs REQUIRED)
 
 add_definitions (

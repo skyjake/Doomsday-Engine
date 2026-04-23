@@ -22,7 +22,7 @@ add_subdirectory (libs/fluidsynth)
 # Dependencies --------------------------------------------------------------------------
 
 find_package (the_Foundation REQUIRED)
-find_package (glbinding REQUIRED)
+find_package (glbinding REQUIRED MODULE)
 find_package (Amethyst QUIET)
 find_package (SDL3Libs)
 

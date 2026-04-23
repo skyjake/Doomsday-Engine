@@ -15,7 +15,7 @@ endif ()
 # Dependencies.
 find_package (SDL3Libs)
 find_package (Stb)
-find_package (glbinding)
+find_package (glbinding MODULE)
 find_package (Assimp)
 if (NOT DE_USE_SYSTEM_ASSIMP AND TARGET assimp::assimp)
     # Promote to global so apps/ directories can reference it in deng_install_bundle_deps.
@@ -167,14 +167,15 @@ endif ()
 if (UNIX_LINUX AND NOT DE_USE_SYSTEM_ASSIMP)
     install (
         FILES $<TARGET_FILE:assimp::assimp>
+              $<TARGET_SONAME_FILE:assimp::assimp>
         DESTINATION ${DE_INSTALL_LIB_DIR}
         COMPONENT client
     )
 endif ()
 if (UNIX_LINUX AND NOT DE_USE_SYSTEM_GLBINDING)
     install (
-        FILES ${glbinding_DIR}/lib/libglbinding.so.2
-              ${glbinding_DIR}/lib/libglbinding.so.2.1.4
+        FILES $<TARGET_FILE:glbinding::glbinding>
+              $<TARGET_SONAME_FILE:glbinding::glbinding>
         DESTINATION ${DE_INSTALL_LIB_DIR}
         COMPONENT client
     )

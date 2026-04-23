@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 #
 # Command line utility for zipping a directory of files into a .pack.
 # Checks that the required Info file is present.
@@ -7,7 +7,6 @@
 #   buildpackage (pack-dir) (output-dir)
 #
 
-from __future__ import print_function
 import sys, os, os.path, zipfile, time
 
 if len(sys.argv) < 2:

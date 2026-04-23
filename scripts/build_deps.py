@@ -9,7 +9,9 @@ THE_FOUNDATION_GIT = 'https://git.skyjake.fi/skyjake/the_Foundation.git'
 THE_FOUNDATION_TAG = 'origin/main'
 
 SDL3_VERSION       = '3.4.4'
+SDL3_GIT           = 'https://github.com/libsdl-org/SDL.git'
 SDL3_MIXER_VERSION = '3.2.0'
+SDL3_MIXER_GIT     = 'https://github.com/libsdl-org/SDL_mixer.git'
 
 FLUIDSYNTH_VERSION = '2.5.4'
 
@@ -28,6 +30,7 @@ import os, platform, subprocess, shutil, sys, json, urllib.request, zipfile, tem
 
 IS_MACOS   = platform.system() == 'Darwin'
 IS_WINDOWS = platform.system() == 'Windows'
+IS_LINUX   = platform.system() == 'Linux'
 IS_CYGWIN  = platform.system().startswith('CYGWIN_NT')
 IS_MSYS    = os.getenv('MSYSTEM') == 'MSYS'
 IS_MINGW   = os.getenv('MSYSTEM') == 'MINGW64' and os.getenv('MINGW_PREFIX') is not None
@@ -78,7 +81,8 @@ dependencies = [
         ASSIMP_GIT, ASSIMP_TAG,
         ['-Wno-dev',
          '-DASSIMP_BUILD_ASSIMP_TOOLS=OFF',
-         '-DASSIMP_BUILD_TESTS=OFF'] +
+         '-DASSIMP_BUILD_TESTS=OFF',
+         '-DASSIMP_WARNINGS_AS_ERRORS=OFF'] +
         (['-DCMAKE_OSX_SYSROOT=' + subprocess.check_output(
               ['xcrun', '--show-sdk-path']).decode().strip()] if IS_MACOS else []) +
         ['-DASSIMP_BUILD_%s_IMPORTER=%s' % (fmt, _assimp_fmt_flag[fmt])
@@ -93,7 +97,26 @@ dependencies = [
          '-DOPTION_BUILD_TESTS=NO'] +
         (['-DCMAKE_CXX_FLAGS=-Wno-deprecated-copy'] if IS_MSYS or IS_MINGW else [])
     ),
-]
+] + ([
+    (
+        'SDL3',
+        SDL3_GIT, 'release-' + SDL3_VERSION,
+        ['-DSDL_TESTS=OFF',
+         '-DSDL_EXAMPLES=OFF',
+         '-DSDL_X11_XTEST=OFF',
+         '-DSDL_SHARED=OFF',
+         '-DSDL_STATIC=ON',
+         '-DCMAKE_POSITION_INDEPENDENT_CODE=ON']
+    ),
+    (
+        'SDL3_mixer',
+        SDL3_MIXER_GIT, 'release-' + SDL3_MIXER_VERSION,
+        ['-DSDLMIXER_TESTS=OFF',
+         '-DSDLMIXER_EXAMPLES=OFF',
+         '-DBUILD_SHARED_LIBS=OFF',
+         '-DCMAKE_POSITION_INDEPENDENT_CODE=ON']
+    ),
+] if IS_LINUX else [])
 
 
 def print_config(cfg):
@@ -199,7 +222,7 @@ def install_sdl_package(name, version, url, products_dir):
 
 
 def install_fluidsynth_package(version, products_dir):
-    """Download and install FluidSynth as a prebuilt package, skipping if already 
+    """Download and install FluidSynth as a prebuilt package, skipping if already
     at this version."""
     sentinel = os.path.join(products_dir, '.fluidsynth-version')
     if os.path.exists(sentinel):
@@ -210,6 +233,93 @@ def install_fluidsynth_package(version, products_dir):
     download_prebuilt(fluidsynth_url(version), products_dir)
     with open(sentinel, 'w') as f:
         f.write(version)
+
+
+# System packages required to build SDL3 and SDL3_mixer from source, by distro family.
+REQUIRED_PACKAGES = {
+    'debian': [
+        # the_Foundation
+        'libunistring-dev',
+        # SDL3
+        'libx11-dev', 'libxext-dev', 'libxrandr-dev', 'libxcursor-dev',
+        'libxfixes-dev', 'libxi-dev', 'libxss-dev',
+        'libwayland-dev', 'wayland-protocols', 'libxkbcommon-dev', 'libdecor-0-dev',
+        'libasound2-dev', 'libpulse-dev', 'libpipewire-0.3-dev', 'libsndio-dev',
+        'libudev-dev', 'libdbus-1-dev', 'libdrm-dev', 'libgbm-dev',
+        # SDL3_mixer
+        'libxmp-dev', 'libogg-dev', 'libvorbis-dev', 'libflac-dev',
+        'libmpg123-dev', 'libopus-dev', 'libopusfile-dev', 'libwavpack-dev',
+    ],
+    'fedora': [
+        # the_Foundation
+        'libunistring-devel',
+        # SDL3
+        'libX11-devel', 'libXext-devel', 'libXrandr-devel', 'libXcursor-devel',
+        'libXfixes-devel', 'libXi-devel', 'libXScrnSaver-devel',
+        'wayland-devel', 'wayland-protocols-devel', 'libxkbcommon-devel', 'libdecor-devel',
+        'alsa-lib-devel', 'pulseaudio-libs-devel', 'pipewire-devel',
+        'systemd-devel', 'dbus-devel', 'libdrm-devel', 'mesa-libgbm-devel',
+        # SDL3_mixer
+        'libxmp-devel', 'libogg-devel', 'libvorbis-devel', 'flac-devel',
+        'mpg123-devel', 'opus-devel', 'opusfile-devel', 'wavpack-devel',
+    ],
+    'arch': [
+        # the_Foundation
+        'libunistring',
+        # SDL3
+        'libx11', 'libxext', 'libxrandr', 'libxcursor', 'libxfixes', 'libxi', 'libxscrnsaver',
+        'wayland', 'wayland-protocols', 'libxkbcommon', 'libdecor',
+        'alsa-lib', 'libpulse', 'pipewire', 'sndio',
+        'systemd-libs', 'dbus', 'libdrm',
+        # SDL3_mixer
+        'libxmp', 'libogg', 'libvorbis', 'flac', 'mpg123', 'opus', 'opusfile', 'wavpack',
+    ],
+    'suse': [
+        # the_Foundation
+        'libunistring-devel',
+        # SDL3
+        'libX11-devel', 'libXext-devel', 'libXrandr-devel', 'libXcursor-devel',
+        'libXfixes-devel', 'libXi-devel', 'libXss-devel',
+        'wayland-devel', 'wayland-protocols-devel', 'libxkbcommon-devel', 'libdecor-devel',
+        'alsa-devel', 'libpulse-devel', 'pipewire-devel',
+        'libudev-devel', 'dbus-1-devel', 'libdrm-devel', 'libgbm-devel',
+        # SDL3_mixer
+        'libxmp-devel', 'libogg-devel', 'libvorbis-devel', 'libFLAC-devel',
+        'mpg123-devel', 'opus-devel', 'opusfile-devel', 'wavpack-devel',
+    ],
+}
+
+PACKAGE_MANAGERS = {
+    'debian': ['sudo', 'apt', 'install'],
+    'fedora': ['sudo', 'dnf', 'install'],
+    'arch':   ['sudo', 'pacman', '-S', '--needed'],
+    'suse':   ['sudo', 'zypper', 'install'],
+}
+
+
+def detect_linux_distro():
+    """Return (family, pretty_name) by reading /etc/os-release, or (None, name)."""
+    info = {}
+    try:
+        with open('/etc/os-release') as f:
+            for line in f:
+                k, _, v = line.strip().partition('=')
+                info[k] = v.strip('"')
+    except OSError:
+        return None, 'unknown'
+    distro_id   = info.get('ID', '').lower()
+    distro_like = info.get('ID_LIKE', '').lower()
+    name        = info.get('PRETTY_NAME', distro_id)
+    if distro_id in ('debian', 'ubuntu', 'linuxmint', 'pop') or 'debian' in distro_like:
+        return 'debian', name
+    if distro_id == 'fedora' or 'fedora' in distro_like or \
+            distro_id in ('centos', 'rhel', 'rocky', 'almalinux'):
+        return 'fedora', name
+    if distro_id in ('arch', 'manjaro', 'endeavouros') or 'arch' in distro_like:
+        return 'arch', name
+    if distro_id.startswith('opensuse') or 'suse' in distro_like:
+        return 'suse', name
+    return None, name
 
 
 CFG_PATH = os.path.join(os.path.expanduser('~'), '.doomsday', 'build_deps')
@@ -230,6 +340,7 @@ show_help = (len(sys.argv) == 1)
 do_build = False
 do_clean = False
 do_distclean = False
+do_required = False
 idx = 1
 while idx < len(sys.argv):
     opt = sys.argv[idx]
@@ -248,6 +359,8 @@ while idx < len(sys.argv):
         do_distclean = True
     elif opt == 'build':
         do_build = True
+    elif opt == 'required':
+        do_required = True
     elif opt == '-d':
         idx += 1
         cfg['build_dir'] = os.path.abspath(sys.argv[idx])
@@ -267,11 +380,12 @@ while idx < len(sys.argv):
         raise Exception('Unknown option: ' + opt)
     idx += 1
 
-if not do_build and show_help:
+if not do_build and not do_required and show_help:
     print("""
 Usage: build_deps.py [opts] [commands]
 
 Commands:
+  required      Install system packages needed to build dependencies (Linux only).
   build         Build using existing config.
   clean         Delete build directories (keeps installed products).
   distclean     Delete both build and the installed products directories.
@@ -285,7 +399,7 @@ Options:
   --skip-assimp       Do not build Open Asset Importer library
   --skip-glbinding    Do not build glbinding library
   --skip-sdl3         Do not download SDL3 (Windows/macOS only)
-  --skip-sdl3-mixer   Do not download SDL3_mixer (Windows/macOS only)
+  --skip-sdl3-mixer   Do not build/download SDL3_mixer
   --skip-fluidsynth   Do not download FluidSynth (Windows only)
 """)
     print_config(cfg)
@@ -297,6 +411,24 @@ if not os.path.exists(os.path.dirname(CFG_PATH)):
 print_config(cfg)
 json.dump(cfg, open(CFG_PATH, 'wt'))
 
+if do_required:
+    if not IS_LINUX:
+        print("The 'required' command is only supported on Linux.")
+    else:
+        family, distro_name = detect_linux_distro()
+        if family is None:
+            print("Unrecognized Linux distribution: cannot install packages automatically.")
+            print("Please install the SDL3 and SDL3_mixer build dependencies manually.")
+        else:
+            packages = REQUIRED_PACKAGES[family]
+            cmd = PACKAGE_MANAGERS[family] + packages
+            print("Detected: %s" % distro_name)
+            print("Running: %s" % ' '.join(cmd))
+            subprocess.call(cmd)
+    if not do_build and not do_clean:
+        print()
+        sys.exit(0)
+
 BUILD_TYPE = cfg['build_type']
 BUILD_DIR = cfg['build_dir']
 GENERATOR = cfg['generator']
@@ -306,6 +438,10 @@ if do_distclean and os.path.exists(PRODUCTS_DIR):
     shutil.rmtree(PRODUCTS_DIR)
 os.makedirs(PRODUCTS_DIR, exist_ok=True)
 
+if IS_LINUX and not build_sdl3:
+    dependencies[:] = [d for d in dependencies if d[1] != SDL3_GIT]
+if IS_LINUX and not build_sdl3_mixer:
+    dependencies[:] = [d for d in dependencies if d[1] != SDL3_MIXER_GIT]
 if not build_glbinding:
     del dependencies[2]
 if not build_assimp:
@@ -366,7 +502,8 @@ for long_name, git_url, git_tag, cmake_opts in dependencies:
             cmake_configure = (['cmake', '-G', GENERATOR] +
                                (['-A', 'x64'] if IS_VS_GENERATOR else []) +
                                ['-DCMAKE_BUILD_TYPE=' + BUILD_TYPE,
-                                '-DCMAKE_INSTALL_PREFIX=' + PRODUCTS_DIR] +
+                                '-DCMAKE_INSTALL_PREFIX=' + PRODUCTS_DIR,
+                                '-DCMAKE_PREFIX_PATH=' + PRODUCTS_DIR] +
                                cmake_opts + ['..'])
             subprocess.check_call(cmake_configure)
         cmake_build = (['cmake', '--build', '.',
@@ -380,11 +517,14 @@ for long_name, git_url, git_tag, cmake_opts in dependencies:
             f.write(current_rev)
 
 # SDL3 and SDL3_mixer: prebuilt binaries on Windows/macOS; system packages on Linux.
+# SDL3_mixer on Linux is built from source via the cmake dependencies loop above.
 for name, version, url_fn, enabled in [
         ('SDL3',       SDL3_VERSION,       sdl3_url,       build_sdl3),
         ('SDL3_mixer', SDL3_MIXER_VERSION, sdl3_mixer_url, build_sdl3_mixer)]:
     if not enabled:
         continue
+    if IS_LINUX and name in ('SDL3', 'SDL3_mixer'):
+        continue  # built from source via the cmake dependencies loop
     print('\n--- %s ---' % name)
     url = url_fn(version)
     if url is None:

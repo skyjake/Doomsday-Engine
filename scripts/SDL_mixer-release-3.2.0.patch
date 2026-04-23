@@ -1,0 +1,13 @@
+diff --git a/cmake/SDL3_mixerConfig.cmake.in b/cmake/SDL3_mixerConfig.cmake.in
+index acea4bd..c748a8d 100644
+--- a/cmake/SDL3_mixerConfig.cmake.in
++++ b/cmake/SDL3_mixerConfig.cmake.in
+@@ -20,7 +20,7 @@ set(SDLMIXER_GME                   @SDLMIXER_GME_ENABLED@)
+ 
+ set(SDLMIXER_MOD                   @SDLMIXER_MOD_ENABLED@)
+ set(SDLMIXER_MOD_XMP               @SDLMIXER_MOD_XMP_ENABLED@)
+-set(SDLMIXER_MOD_XMP_LITE          @SDLMIXER_MOD_XMP_ENABLED@)
++set(SDLMIXER_MOD_XMP_LITE          @SDLMIXER_MOD_XMP_LITE@)
+ 
+ set(SDLMIXER_MP3                   @SDLMIXER_MP3_ENABLED@)
+ set(SDLMIXER_MP3_DRMP3             @SDLMIXER_MP3_DRMP3_ENABLED@)
