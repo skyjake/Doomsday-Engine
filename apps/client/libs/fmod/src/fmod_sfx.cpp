@@ -143,7 +143,7 @@ static BufferInfo& bufferInfo(sfxbuffer_t* buf)
     return *reinterpret_cast<BufferInfo*>(buf->ptr);
 }
 
-static FMOD_RESULT F_CALLBACK channelCallback(FMOD_CHANNELCONTROL *channelcontrol,
+static FMOD_RESULT F_CALL channelCallback(FMOD_CHANNELCONTROL *channelcontrol,
                                               FMOD_CHANNELCONTROL_TYPE controltype,
                                               FMOD_CHANNELCONTROL_CALLBACK_TYPE callbacktype,
                                               void *,
@@ -238,7 +238,7 @@ static void toSigned8bit(const unsigned char* source, int size, RawSamplePCM8& o
 }
 #endif
 
-static FMOD_RESULT F_CALLBACK pcmReadCallback(FMOD_SOUND* soundPtr, void* data, unsigned int datalen)
+static FMOD_RESULT F_CALL pcmReadCallback(FMOD_SOUND* soundPtr, void* data, unsigned int datalen)
 {
     FMOD_SOUND *sound = reinterpret_cast<FMOD_SOUND *>(soundPtr);
 
@@ -288,6 +288,7 @@ void fmod_DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 
     FMOD_CREATESOUNDEXINFO params;
     zeroStruct(params);
+    params.cbsize = sizeof(params);
     params.length = sample->size;
     params.defaultfrequency = sample->rate;
     params.numchannels = 1; // Doomsday only uses mono samples currently.

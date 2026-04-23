@@ -65,7 +65,7 @@ static float          musicVolume;
 static SongBuffer *   songBuffer;
 static std::string    soundFontFileName;
 
-static FMOD_RESULT F_CALLBACK
+static FMOD_RESULT F_CALL
 musicCallback(FMOD_CHANNELCONTROL *channelcontrol,
               FMOD_CHANNELCONTROL_TYPE controltype,
               FMOD_CHANNELCONTROL_CALLBACK_TYPE callbacktype,
@@ -284,6 +284,7 @@ int fmod_DM_Music_Play(int looped)
 
         FMOD_CREATESOUNDEXINFO extra;
         zeroStruct(extra);
+        extra.cbsize = sizeof(extra);
         extra.length = songBuffer->size;
         if (endsWith(soundFontFileName.c_str(), ".dls"))
         {
@@ -345,6 +346,7 @@ int fmod_DM_Music_PlayFile(const char *filename, int looped)
 
     FMOD_CREATESOUNDEXINFO extra;
     zeroStruct(extra);
+    extra.cbsize = sizeof(extra);
     if (endsWith(soundFontFileName.c_str(), ".dls"))
     {
         extra.dlsname = soundFontFileName.c_str();

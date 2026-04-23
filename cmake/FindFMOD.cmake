@@ -1,4 +1,4 @@
-set (FMOD_DIR "" CACHE PATH "Location of the FMOD Programmer's API SDK")
+set (FMOD_DIR "" CACHE PATH "Location of the FMOD Studio API")
 
 set (_oldPath ${FMOD_FMOD_H})
 
@@ -14,6 +14,7 @@ find_file (FMOD_FMOD_H
     PATH_SUFFIXES
         "FMOD"
         "FMOD Programmers API"
+        "FMOD Studio API"
         "FMOD Studio API Windows"
     NO_DEFAULT_PATH
     NO_CMAKE_FIND_ROOT_PATH
@@ -22,9 +23,9 @@ mark_as_advanced (FMOD_FMOD_H)
 
 if (NOT _oldPath STREQUAL FMOD_FMOD_H)
     if (FMOD_FMOD_H)
-        message (STATUS "Looking for FMOD Programmer API - found")
+        message (STATUS "Looking for FMOD Studio API - found")
     else ()
-        message (STATUS "Looking for FMOD Programmer API - not found (set the FMOD_DIR variable)")
+        message (STATUS "Looking for FMOD Studio API - not found (set the FMOD_DIR variable)")
     endif ()
 endif ()
 
@@ -51,11 +52,22 @@ if (FMOD_FMOD_H AND NOT TARGET fmodex)
         set (fmodInstLib ${fmodLib})
     elseif (WIN32 OR CYGWIN OR MSYS)
         if (ARCH_BITS EQUAL 64)
-            set (fmodLib "${fmodApi}/lib/fmod64_vc.lib")
-            set (fmodInstLib "${fmodApi}/lib/fmod64.dll")
+            # Newer FMOD API (2.x) uses x64 subdirectory without the "64" suffix.
+            if (EXISTS "${fmodApi}/lib/x64/fmod_vc.lib")
+                set (fmodLib "${fmodApi}/lib/x64/fmod_vc.lib")
+                set (fmodInstLib "${fmodApi}/lib/x64/fmod.dll")
+            else ()
+                set (fmodLib "${fmodApi}/lib/fmod64_vc.lib")
+                set (fmodInstLib "${fmodApi}/lib/fmod64.dll")
+            endif ()
         else ()
-            set (fmodLib "${fmodApi}/lib/fmod_vc.lib")
-            set (fmodInstLib "${fmodApi}/lib/fmod.dll")
+            if (EXISTS "${fmodApi}/lib/x86/fmod_vc.lib")
+                set (fmodLib "${fmodApi}/lib/x86/fmod_vc.lib")
+                set (fmodInstLib "${fmodApi}/lib/x86/fmod.dll")
+            else ()
+                set (fmodLib "${fmodApi}/lib/fmod_vc.lib")
+                set (fmodInstLib "${fmodApi}/lib/fmod.dll")
+            endif ()
         endif ()
     elseif (UNIX)
         if (ARCH_BITS EQUAL 64)

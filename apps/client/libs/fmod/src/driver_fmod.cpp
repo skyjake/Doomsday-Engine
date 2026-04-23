@@ -97,7 +97,7 @@ static int DS_Init(void)
 
     // Create the FMOD audio system.
     FMOD_RESULT result;
-    if ((result = FMOD_System_Create(&fmodSystem)) != FMOD_OK)
+    if ((result = FMOD_System_Create(&fmodSystem, FMOD_VERSION)) != FMOD_OK)
     {
         LOGDEV_AUDIO_ERROR("FMOD::System_Create failed (%d) %s") << result << FMOD_ErrorString(result);
         fmodSystem = 0;
