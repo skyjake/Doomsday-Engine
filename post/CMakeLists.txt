@@ -3,7 +3,10 @@
 cmake_minimum_required (VERSION 3.10)
 include (../cmake/Config.cmake)
 
-# Deployment of system libraries
+# Deployment of system libraries. These scripts are needed on platforms where the
+# regular "install" target does not produce fully standalone binaries. On macOS,
+# deploy_apple.py is run separately on each application bundle after it has been
+# fully assembled (via `deng_deploy_target`).
 if (DE_ENABLE_DEPLOYMENT)
     if (CYGWIN)
         set (scriptName "deploy_cygwin.py")
@@ -27,7 +30,8 @@ if (DE_ENABLE_DEPLOYMENT)
 endif ()
 
 if (APPLE)
-    # Code-sign and notarize the application bundles.
+    # Code-sign and notarize the application bundles (deploy_apple.py has already
+    # been run at this point).
     if (TARGET client)
         deng_codesign (client)
     endif ()
