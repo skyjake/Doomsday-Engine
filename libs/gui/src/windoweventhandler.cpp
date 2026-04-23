@@ -314,7 +314,9 @@ DE_PIMPL(WindowEventHandler)
 
     void handleMouseWheelEvent(const SDL_MouseWheelEvent &ev)
     {
-        const bool isPrecise = ev.x || ev.y;
+        // A trackpad produces fractional float values without corresponding integer steps.
+        // A regular mouse wheel always sets integer_x/integer_y, so if those are set it's Steps.
+        const bool isPrecise = (ev.x || ev.y) && !ev.integer_x && !ev.integer_y;
 
         if (mouseGrabbed && isPrecise) return; // Discard trackpad scroll events while mouse is trapped.
 
