@@ -47,5 +47,3 @@ The optional FMOD audio plugin requires the [FMOD Studio Low-Level Programmer AP
 ### FluidSynth
 
 FluidSynth is used for rendering MIDI music using software instruments. FluidSynth can be built as part of the main Doomsday build, in which case GLib 2 is also required as a dependency.
-
-
