@@ -314,9 +314,11 @@ DE_PIMPL(WindowEventHandler)
 
     void handleMouseWheelEvent(const SDL_MouseWheelEvent &ev)
     {
-        // A trackpad produces fractional float values without corresponding integer steps.
-        // A regular mouse wheel always sets integer_x/integer_y, so if those are set it's Steps.
-        const bool isPrecise = (ev.x || ev.y) && !ev.integer_x && !ev.integer_y;
+        // Mouse wheel: each notch produces y=1.0 and integer_y=1 (they match exactly).
+        // Trackpad: per-event delta is fractional (e.g. y=0.3) while integer_y is the separately
+        // accumulated tick count (0 or 1), so they never match. This is the reliable distinguisher.
+        const bool isPrecise = (ev.x || ev.y) &&
+                               (ev.x != float(ev.integer_x) || ev.y != float(ev.integer_y));
 
         if (mouseGrabbed && isPrecise) return; // Discard trackpad scroll events while mouse is trapped.
 
