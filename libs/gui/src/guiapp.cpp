@@ -39,6 +39,7 @@
 
 #if defined (MACOSX)
 extern "C" void GuiApp_InitMacOSScrolling();
+extern "C" Uint32 GuiApp_TrackpadScrollEventType(void);
 #endif
 
 #include <fstream>

@@ -26,9 +26,11 @@
 #include <de/windowsystem.h>
 
 #include <SDL3/SDL_events.h>
+#include <string.h>
 
 #if defined (MACOSX)
-extern "C" void GuiApp_DiscardWheelMomentum(bool trapped);
+extern "C" void   GuiApp_DiscardWheelMomentum(bool trapped);
+extern "C" Uint32 GuiApp_TrackpadScrollEventType(void);
 #endif
 
 namespace de {
@@ -314,46 +316,44 @@ DE_PIMPL(WindowEventHandler)
 
     void handleMouseWheelEvent(const SDL_MouseWheelEvent &ev)
     {
-        // Mouse wheel: each notch produces y=1.0 and integer_y=1 (they match exactly).
-        // Trackpad: per-event delta is fractional (e.g. y=0.3) while integer_y is the separately
-        // accumulated tick count (0 or 1), so they never match. This is the reliable distinguisher.
-        const bool isPrecise = (ev.x || ev.y) &&
-                               (ev.x != float(ev.integer_x) || ev.y != float(ev.integer_y));
+        if (mouseGrabbed) return;
 
-        if (mouseGrabbed && isPrecise) return; // Discard trackpad scroll events while mouse is trapped.
+        const float dir = (ev.direction == SDL_MOUSEWHEEL_FLIPPED ? -1.f : 1.f);
 
-        const float dir   = (ev.direction == SDL_MOUSEWHEEL_FLIPPED ? -1.f : 1.f);
+        DE_NOTIFY_PUBLIC(MouseEvent, i)
+        {
+            if (ev.integer_x)
+            {
+                i->mouseEvent(MouseEvent(MouseEvent::Steps,
+                                         Vec2f(float(ev.integer_x) * dir, 0.f),
+                                         currentMousePos));
+            }
+            if (ev.integer_y)
+            {
+                i->mouseEvent(MouseEvent(MouseEvent::Steps,
+                                         Vec2f(0.f, float(ev.integer_y) * dir),
+                                         currentMousePos));
+            }
+        }
+    }
+
+#if defined (MACOSX)
+    void handleTrackpadScrollEvent(const SDL_UserEvent &ev)
+    {
+        float dx, dy;
+        memcpy(&dx, &ev.data1, sizeof(float));
+        memcpy(&dy, &ev.data2, sizeof(float));
+
         const float ratio = float(window->pixelRatio());
 
         DE_NOTIFY_PUBLIC(MouseEvent, i)
         {
-            // Prefer per-pixel precise values (trackpad on macOS).
-            if (isPrecise)
-            {
-                //const float sensitivity = 2.0f; // FIXME: shouldn't be needed, something's off
-
-                i->mouseEvent(MouseEvent(
-                    MouseEvent::Pixels,
-                    Vec2f(ev.x * dir * ratio, ev.y * dir * ratio),
-                    currentMousePos));
-            }
-            else
-            {
-                if (ev.integer_x)
-                {
-                    i->mouseEvent(MouseEvent(MouseEvent::Steps,
-                                             Vec2f(float(ev.integer_x) * dir, 0.f),
-                                             currentMousePos));
-                }
-                if (ev.integer_y)
-                {
-                    i->mouseEvent(MouseEvent(MouseEvent::Steps,
-                                             Vec2f(0.f, float(ev.integer_y) * dir),
-                                             currentMousePos));
-                }
-            }
+            i->mouseEvent(MouseEvent(MouseEvent::Pixels,
+                                     Vec2f(dx * ratio, dy * ratio),
+                                     currentMousePos));
         }
     }
+#endif
 
 #if 0 // removed in SDL3
     void handleGestureEvent(const SDL_MultiGestureEvent &ev)
@@ -532,6 +532,15 @@ void WindowEventHandler::handleSDLEvent(const void *ptr)
     case SDL_EVENT_WINDOW_FOCUS_LOST:
         d->handleFocus(event->type == SDL_EVENT_WINDOW_FOCUS_GAINED);
         break;
+
+#if defined (MACOSX)
+    default:
+        if (event->type == GuiApp_TrackpadScrollEventType())
+        {
+            d->handleTrackpadScrollEvent(event->user);
+        }
+        break;
+#endif
     }
 }
 
