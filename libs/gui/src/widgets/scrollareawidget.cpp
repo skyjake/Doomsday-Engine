@@ -482,7 +482,7 @@ bool ScrollAreaWidget::handleEvent(const Event &event)
             const MouseEvent &mouse = event.as<MouseEvent>();
             if (mouse.wheelMotion() == MouseEvent::Pixels)
             {
-                d->y->set(de::clamp(0.f, d->y->animation().target() -
+                d->y->set(de::clamp(0.f, d->y->animation().target() +
                                     mouse.wheel().y * (d->origin == Top? -1 : 1),
                                     d->maxY->value()));
                 d->restartScrollOpacityFade();

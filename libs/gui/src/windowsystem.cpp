@@ -84,7 +84,7 @@ DE_PIMPL(WindowSystem)
         /// @todo Different windows may have different pixel ratios. Here we assume one window, essentially.
         DE_BASE_GUI_APP->setPixelRatio(float(win.pixelRatio()));
     }
-    
+
     GLWindow *findWindow(duint32 sdlId) const
     {
         for (const auto &w : windows)
@@ -133,7 +133,12 @@ DE_PIMPL(WindowSystem)
                 window.handleWindowEvent(&event);
                 break;
 
-            default: break;
+            default:
+                if (event.type >= SDL_EVENT_USER && event.type < SDL_EVENT_LAST)
+                {
+                    window.eventHandler().handleSDLEvent(&event);
+                }
+                break;
         }
     }
 
@@ -416,6 +421,16 @@ void WindowSystem::pollAndDispatchEvents()
                     if (auto *win = focusedWindow())
                     {
                         d->handleSDLEvent(*win, event);
+                    }
+                    break;
+
+                default:
+                    if (event.type >= SDL_EVENT_USER && event.type < SDL_EVENT_LAST)
+                    {
+                        if (auto *win = focusedWindow())
+                        {
+                            d->handleSDLEvent(*win, event);
+                        }
                     }
                     break;
             }
