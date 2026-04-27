@@ -63,8 +63,10 @@ struct Header : public IReadable
 
     void operator << (Reader &from)
     {
-        from >> magic
-             >> version
+        from >> magic;
+        if (magic != MAGIC) return; // doesn't look like PCX
+
+        from >> version
              >> encoding
              >> bitsPerPixel
              >> xMin
