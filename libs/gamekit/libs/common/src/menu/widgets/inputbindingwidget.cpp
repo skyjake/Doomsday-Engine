@@ -63,16 +63,14 @@ static const char *findInString(const char *str, const char *token, int n)
     return 0;
 }
 
-static void drawSmallText(const char *string, int x, int y, float alpha)
+static void drawSmallText(const char *string, int x, int y, int pivotOffset, float alpha)
 {
-    int height = FR_TextHeight(string);
-
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
 
-    DGL_Translatef(x, y + height/2, 0);
+    DGL_Translatef(x, y + pivotOffset, 0);
     DGL_Scalef(SMALL_SCALE, SMALL_SCALE, 1);
-    DGL_Translatef(-x, -y - height/2, 0);
+    DGL_Translatef(-x, -y - pivotOffset, 0);
 
     FR_SetColorAndAlpha(1, 1, 1, alpha);
     FR_DrawTextXY3(string, x, y, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
@@ -258,6 +256,11 @@ DE_PIMPL(InputBindingWidget)
 #endif
                 FR_SetFont(FID(GF_FONTA));
                 const int lineHeight = FR_TextHeight("W");
+#if __JHERETIC__ || __JHEXEN__
+                const int pivotOffset = lineHeight / 2 - 3;
+#else
+                const int pivotOffset = lineHeight / 2;
+#endif
 
                 if (type == MIBT_KEY)
                 {
@@ -285,6 +288,7 @@ DE_PIMPL(InputBindingWidget)
                         drawSmallText(name,
                                       ctx.widgetTopLeft.x + ctx.origin.x + 1,
                                       ctx.widgetTopLeft.y + ctx.origin.y,
+                                      pivotOffset,
                                       ctx.alpha);
                         DGL_Disable(DGL_TEXTURE_2D);
                     }
@@ -314,6 +318,7 @@ DE_PIMPL(InputBindingWidget)
                         drawSmallText(buf,
                                       ctx.widgetTopLeft.x + ctx.origin.x,
                                       ctx.widgetTopLeft.y + ctx.origin.y,
+                                      pivotOffset,
                                       ctx.alpha);
                         DGL_Disable(DGL_TEXTURE_2D);
                     }

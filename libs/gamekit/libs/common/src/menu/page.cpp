@@ -200,8 +200,13 @@ DE_PIMPL(Page)
 
             if (wi->flags() & Widget::RightColumn)
             {
-                // Move widget to the right side.
-                wi->geometry().move(Vec2i(leftColumnWidth, 0));
+                // Move widget to the right side, but never overlap the left-column peer.
+                int rightX = leftColumnWidth;
+                if (prevWidget && (prevWidget->flags() & Widget::LeftColumn))
+                {
+                    rightX = MAX_OF(rightX, prevWidget->geometry().width() + lineOffset);
+                }
+                wi->geometry().move(Vec2i(rightX, 0));
 
                 if (prevWidget && prevWidget->flags() & Widget::LeftColumn)
                 {
