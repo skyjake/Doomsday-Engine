@@ -32,7 +32,7 @@ DE_GUI_PIMPL(ButtonWidget)
 , DE_OBSERVES(Action, Triggered)
 {
     State            state{Up};
-    DotPath          bgColorId{"background"};
+    DotPath          bgColorId{"button.background"};
     DotPath          borderColorId{"text"};
     HoverColorMode   hoverColorMode{ReplaceColor};
     ColorTheme       colorTheme{Normal};
@@ -231,7 +231,7 @@ void ButtonWidget::setColorTheme(ColorTheme theme)
         setTextColor("text");
         setHoverTextColor("text", ReplaceColor);
         setBorderColor("text");
-        setBackgroundColor("background");
+        setBackgroundColor("button.background");
     }
     set(bg);
     setImageColor(textColorf());

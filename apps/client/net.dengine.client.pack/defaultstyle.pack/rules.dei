@@ -16,8 +16,8 @@ dialog {
         rule content.minheight  { constant $= UNIT * 100 }
         rule description.normal { constant $= UNIT * 100 }
         rule description.wide   { constant $= UNIT * 150 }
-        rule icon.height        { constant $= UNIT * 45 }
-        rule metadata.width     { constant $= UNIT * 60 }
+        rule icon.height        { constant $= UNIT * 30 }
+        rule metadata.width     { constant $= UNIT * 50 }
     }
     serverinfo {
         rule content.minheight { constant $= UNIT * 90 }

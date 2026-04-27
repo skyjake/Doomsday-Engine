@@ -46,12 +46,12 @@ group {
 }
 
 font title inherits default {
-    size $: gui.scale(self.size, 1.5)
+    size $: gui.scale(self.size, 1.4)
     weight: bold
 }
 
 font heading inherits title {
-    size $: gui.scale(default.size, 1.25)
+    size $: gui.scale(default.size, 1.2)
     weight: normal
 }
 

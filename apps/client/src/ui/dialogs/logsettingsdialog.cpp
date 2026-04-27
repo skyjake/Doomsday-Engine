@@ -256,9 +256,6 @@ void LogSettingsDialog::resetToDefaults()
 {
     ClientApp::logSettings().resetToDefaults();
 
-    LOG_MSG("FoldLayout width: ") << d->foldLayout.width().description();
-    LOG_MSG("Content area width: ") << area().contentRule().width().description();
-
     d->applyFilterFromConfig();
 }
 

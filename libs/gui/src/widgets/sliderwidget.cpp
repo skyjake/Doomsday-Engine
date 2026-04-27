@@ -104,7 +104,9 @@ DE_GUI_PIMPL(SliderWidget)
     int endLabelSize;
     Animation frameOpacity;
     ColorBank::Colorf textColor;
-    ColorBank::Colorf invTextColor;
+    ColorBank::Colorf accentColor;
+    ColorBank::Colorf bgColor;
+    ColorBank::Colorf invBgColor;
 
     // GL objects.
     enum Labels {
@@ -140,8 +142,10 @@ DE_GUI_PIMPL(SliderWidget)
 
     void updateStyle()
     {
-        textColor    = style().colors().colorf("text");
-        invTextColor = style().colors().colorf("inverted.text");
+        textColor   = style().colors().colorf("text");
+        accentColor = style().colors().colorf("altaccent");
+        bgColor     = style().colors().colorf("background");
+        invBgColor  = style().colors().colorf("inverted.background");
 
         endLabelSize = rule("slider.label").valuei();
 
@@ -258,11 +262,11 @@ DE_GUI_PIMPL(SliderWidget)
 
         // Current slider position.
         Rectanglei slider = sliderValueRect();
-        verts.makeQuad(slider.expanded(2), state == Grabbed? textColor : invTextColor,
+        verts.makeQuad(slider.expanded(2), state == Grabbed ? invBgColor : bgColor,
                        atlas().imageRectf(root().solidWhitePixel()).middle());
         verts.makeFlexibleFrame(slider.expanded(pointsToPixels(5)),
                                 pointsToPixels(6),
-                                Vec4f(1, 1, 1, frameOpacity),
+                                (state == Grabbed ? accentColor : textColor) * Vec4f(1, 1, 1, frameOpacity),
                                 atlas().imageRectf(root().boldRoundCorners()));
 
         // Labels.
@@ -288,7 +292,7 @@ DE_GUI_PIMPL(SliderWidget)
         {
             labels[Value].makeVertices(verts, slider,
                                        ui::AlignCenter, ui::AlignCenter,
-                                       state == Grabbed? invTextColor : textColor);
+                                       state == Grabbed? accentColor : textColor);
         }
 
         /*drawable.buffer<DefaultVertexBuf>()
