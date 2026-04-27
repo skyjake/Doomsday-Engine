@@ -196,7 +196,11 @@ DE_PIMPL(Page)
             usedColumns |= widgetColumns;
 
             wi->geometry().moveTopLeft(origin);
-            rowHeight = MAX_OF(rowHeight, wi->geometry().height() + lineOffset);
+            {
+                const bool isHeader = !(wi->flags() & (Widget::LeftColumn | Widget::RightColumn))
+                                      && (wi->flags() & Widget::NoFocus);
+                rowHeight = MAX_OF(rowHeight, wi->geometry().height() + (isHeader ? lh * 0.75f : lineOffset));
+            }
 
             if (wi->flags() & Widget::RightColumn)
             {
