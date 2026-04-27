@@ -397,14 +397,17 @@ DE_PIMPL(GridLayout)
             (layoutWidth ? *layoutWidth : widget ? widget->rule().width() : *space);
 
         // Update the column and row maximum width/height.
+        // Multi-cell spanning widgets are not used to constrain individual column/row
+        // sizes: a spanning widget's dimension is the sum of its covered columns/rows,
+        // so updating only the last one with the full width/height would inflate it.
         if (mode == ColumnFirst)
         {
-            updateMaximum(cols, cell.x + cellSpan - 1, cellWidth);
+            if (cellSpan == 1) updateMaximum(cols, cell.x, cellWidth);
             if (widget) updateMaximum(rows, cell.y, widget->rule().height());
         }
         else
         {
-            updateMaximum(rows, cell.y + cellSpan - 1, widget ? widget->rule().height() : *space);
+            if (cellSpan == 1) updateMaximum(rows, cell.y, widget ? widget->rule().height() : *space);
             if (widget) updateMaximum(cols, cell.x, cellWidth);
         }
 

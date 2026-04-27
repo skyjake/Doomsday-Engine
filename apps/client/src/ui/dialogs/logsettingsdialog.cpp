@@ -89,7 +89,6 @@ DE_PIMPL(LogSettingsDialog)
                                   fold->content().rule().top());
             foldLayout.setGridSize(4, 0);
             foldLayout.setColumnFixedWidth(1, *columnWidth);
-            foldLayout.setColumnAlignment(0, ui::AlignRight);
 
             for (uint i = 0; i < NUM_DOMAINS; ++i)
             {
@@ -234,8 +233,7 @@ LogSettingsDialog::LogSettingsDialog(const String &name)
            << *d->domWidgets[0].alert
            << Const(0);
     layout.append(*d->separately, 3);
-    layout.append(*d->fold, 4)
-           << Const(0);
+    layout.append(*d->fold, 4);
 
     // Fold's layout is complete.
     d->fold->content().rule().setSize(d->foldLayout.width(), d->foldLayout.height());
@@ -257,6 +255,9 @@ LogSettingsDialog::LogSettingsDialog(const String &name)
 void LogSettingsDialog::resetToDefaults()
 {
     ClientApp::logSettings().resetToDefaults();
+
+    LOG_MSG("FoldLayout width: ") << d->foldLayout.width().description();
+    LOG_MSG("Content area width: ") << area().contentRule().width().description();
 
     d->applyFilterFromConfig();
 }
