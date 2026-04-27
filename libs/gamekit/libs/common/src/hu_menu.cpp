@@ -2864,6 +2864,22 @@ int Hu_MenuFallbackResponder(event_t *ev)
 
     if(!Hu_MenuIsActive() || !page) return false;
 
+    // Mouse wheel scrolls the menu up/down.
+    if(ev->type == EV_MOUSE_BUTTON && ev->state == EVS_DOWN)
+    {
+        // IMB_MWHEELUP == 3, IMB_MWHEELDOWN == 4
+        if(ev->data1 == 3)
+        {
+            Hu_MenuCommand(MCMD_NAV_UP);
+            return true;
+        }
+        if(ev->data1 == 4)
+        {
+            Hu_MenuCommand(MCMD_NAV_DOWN);
+            return true;
+        }
+    }
+
     if(cfg.common.menuShortcutsEnabled)
     {
         if(ev->type == EV_KEY && (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
