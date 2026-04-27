@@ -397,17 +397,59 @@ DE_PIMPL(GridLayout)
             (layoutWidth ? *layoutWidth : widget ? widget->rule().width() : *space);
 
         // Update the column and row maximum width/height.
-        // Multi-cell spanning widgets are not used to constrain individual column/row
-        // sizes: a spanning widget's dimension is the sum of its covered columns/rows,
-        // so updating only the last one with the full width/height would inflate it.
+        // For a single-cell widget, update that column directly.
+        // For a spanning widget, constrain only the last covered column to the amount
+        // the span exceeds the widths of the preceding covered columns — so that the
+        // total span sum is at least the widget width without inflating any one column.
         if (mode == ColumnFirst)
         {
-            if (cellSpan == 1) updateMaximum(cols, cell.x, cellWidth);
+            if (cellSpan == 1)
+            {
+                updateMaximum(cols, cell.x, cellWidth);
+            }
+            else
+            {
+                const int endCol = cell.x + cellSpan - 1;
+                const Rule *endAccum   = cols.at(endCol)->accumulatedLengths; // sum cols[0..endCol-1]
+                const Rule *startAccum = cols.at(cell.x)->accumulatedLengths; // sum cols[0..start-1]
+                // Contribution of the start..endCol-1 columns that are already covered.
+                // endAccum - startAccum = sum of cols[start..endCol-1].
+                if (endAccum)
+                {
+                    updateMaximum(cols, endCol,
+                                  startAccum ? cellWidth - (*endAccum - *startAccum)
+                                             : cellWidth - *endAccum);
+                }
+                else
+                {
+                    updateMaximum(cols, endCol, cellWidth);
+                }
+            }
             if (widget) updateMaximum(rows, cell.y, widget->rule().height());
         }
         else
         {
-            if (cellSpan == 1) updateMaximum(rows, cell.y, widget ? widget->rule().height() : *space);
+            if (cellSpan == 1)
+            {
+                updateMaximum(rows, cell.y, widget ? widget->rule().height() : *space);
+            }
+            else
+            {
+                const int endRow = cell.y + cellSpan - 1;
+                const Rule *endAccum   = rows.at(endRow)->accumulatedLengths;
+                const Rule *startAccum = rows.at(cell.y)->accumulatedLengths;
+                const Rule &cellHeight = widget ? widget->rule().height() : *space;
+                if (endAccum)
+                {
+                    updateMaximum(rows, endRow,
+                                  startAccum ? cellHeight - (*endAccum - *startAccum)
+                                             : cellHeight - *endAccum);
+                }
+                else
+                {
+                    updateMaximum(rows, endRow, cellHeight);
+                }
+            }
             if (widget) updateMaximum(cols, cell.x, cellWidth);
         }
 
