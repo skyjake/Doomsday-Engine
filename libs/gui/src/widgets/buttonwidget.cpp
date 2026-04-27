@@ -34,6 +34,7 @@ DE_GUI_PIMPL(ButtonWidget)
     State            state{Up};
     DotPath          bgColorId{"button.background"};
     DotPath          borderColorId{"text"};
+    DotPath          downColorId;
     HoverColorMode   hoverColorMode{ReplaceColor};
     ColorTheme       colorTheme{Normal};
     Background::Type bgType{Background::GradientFrame};
@@ -70,6 +71,11 @@ DE_GUI_PIMPL(ButtonWidget)
             scale.setValue(1.f, .3f);
             scale.setStyle(prev == Down? Animation::Bounce : Animation::EaseOut);
             frameOpacity.setValue(.08f, .6f);
+            if (!downColorId.isEmpty() && prev == Down)
+            {
+                // Restore the original color.
+                setTemporaryTextColor(originalTextColor);
+            }
             if (!hoverTextColor.isEmpty())
             {
                 // Restore old color.
@@ -87,6 +93,11 @@ DE_GUI_PIMPL(ButtonWidget)
 
         case Hover:
             frameOpacity.setValue(.4f, .15f);
+            if (!downColorId.isEmpty() && prev == Down)
+            {
+                // Restore the original color.
+                setTemporaryTextColor(originalTextColor);
+            }
             if (!hoverTextColor.isEmpty())
             {
                 switch (hoverColorMode)
@@ -104,6 +115,10 @@ DE_GUI_PIMPL(ButtonWidget)
         case Down:
             scale.setValue(.95f);
             frameOpacity.setValue(0);
+            if (!downColorId.isEmpty())
+            {
+                setTemporaryTextColor(downColorId);
+            }
             break;
         }
 
@@ -253,6 +268,11 @@ void ButtonWidget::setHoverTextColor(const DotPath &hoverTextId, HoverColorMode 
 {
     d->hoverTextColor = hoverTextId;
     d->hoverColorMode = mode;
+}
+
+void ButtonWidget::setDownTextColor(const DotPath &downTextId)
+{
+    d->downColorId = downTextId;
 }
 
 void ButtonWidget::setBackgroundColor(const DotPath &bgColorId)

@@ -221,6 +221,7 @@ DE_GUI_PIMPL(PopupMenuWidget)
 
         button.setTextColor     (colorTheme == Normal? "text"          : "inverted.text" );
         button.setHoverTextColor(colorTheme == Normal? "inverted.text" : "text",         ButtonWidget::ReplaceColor);
+        button.setDownTextColor(colorTheme == Normal? "background" : "inverted.background");
     }
 
     void updateItemHitRules()
@@ -322,8 +323,8 @@ DE_GUI_PIMPL(PopupMenuWidget)
 
     void updateImageColor(ButtonWidget &button, bool invert = false)
     {
-        button.setImageColor(style().colors().colorf(invert ^ (colorTheme == Inverted)? "inverted.text"
-                                                                                      : "text"));
+        button.setImageColor(style().colors().colorf(invert ^ (colorTheme == Inverted)? "inverted.accent"
+                                                                                      : "accent"));
     }
 
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state)
@@ -489,7 +490,7 @@ void PopupMenuWidget::glMakeGeometry(GuiVertexBuilder &verts)
         verts.makeQuad(d->highlightRect(),
                        d->hover->state() == ButtonWidget::Hover?
                            style().colors().colorf(d->colorTheme == Normal? "inverted.background" : "background") :
-                           style().colors().colorf(d->colorTheme == Normal? "accent" : "inverted.accent"),
+                           style().colors().colorf(d->colorTheme == Normal? "altaccent" : "inverted.altaccent"),
                        root().atlas().imageRectf(root().solidWhitePixel()).middle());
     }
 }

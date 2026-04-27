@@ -76,6 +76,8 @@ public:
      */
     void setHoverTextColor(const DotPath &hoverTextId, HoverColorMode mode = ModulateColor);
 
+    void setDownTextColor(const DotPath &downTextId);
+
     void setBackgroundColor(const DotPath &bgColorId);
 
     void setBorderColor(const DotPath &borderColorId);
