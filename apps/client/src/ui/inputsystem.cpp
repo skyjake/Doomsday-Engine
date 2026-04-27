@@ -1142,6 +1142,25 @@ void InputSystem::postMouseEvent(const MouseEvent &event)
 
     case Event::MouseWheel:
     {
+        if (event.wheelMotion() != MouseEvent::Steps) break;
+        ev.type = E_TOGGLE;
+        // Post a down+up pair for each scroll step on each axis.
+        const auto postWheel = [&](int id, int steps) {
+            ev.toggle.id = id;
+            for (int s = 0; s < steps; ++s)
+            {
+                ev.toggle.state = ETOG_DOWN;
+                postEvent(ev);
+                ev.toggle.state = ETOG_UP;
+                postEvent(ev);
+            }
+        };
+        const int wy = int(event.wheel().y);
+        const int wx = int(event.wheel().x);
+        if (wy > 0) postWheel(IMB_MWHEELUP,    wy);
+        if (wy < 0) postWheel(IMB_MWHEELDOWN, -wy);
+        if (wx > 0) postWheel(IMB_MWHEELRIGHT,  wx);
+        if (wx < 0) postWheel(IMB_MWHEELLEFT,  -wx);
         break;
     }
 

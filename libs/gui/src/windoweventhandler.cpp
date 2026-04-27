@@ -316,8 +316,6 @@ DE_PIMPL(WindowEventHandler)
 
     void handleMouseWheelEvent(const SDL_MouseWheelEvent &ev)
     {
-        if (mouseGrabbed) return;
-
         const float dir = (ev.direction == SDL_MOUSEWHEEL_FLIPPED ? -1.f : 1.f);
 
         DE_NOTIFY_PUBLIC(MouseEvent, i)
