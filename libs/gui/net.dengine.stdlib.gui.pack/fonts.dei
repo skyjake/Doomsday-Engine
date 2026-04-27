@@ -46,16 +46,17 @@ group {
 }
 
 font title inherits default {
-    size $: gui.scale(self.size, 1.75)
-    weight: light
+    size $: gui.scale(self.size, 1.5)
+    weight: bold
 }
 
 font heading inherits title {
-    size $: gui.scale(default.size, 1.2)
+    size $: gui.scale(default.size, 1.25)
+    weight: normal
 }
 
 font small inherits default {
-    size $: gui.scale(self.size, 0.75)
+    size $: gui.scale(self.size, 0.80)
 }
 
 menu {
@@ -82,7 +83,7 @@ separator {
     }
     font label inherits default {
         #condition: Version.OS == 'macx' or Version.OS == 'ios'
-        size $: gui.scale(self.size, 0.7)
+        size $: gui.scale(self.size, 0.80)
         transform: uppercase
     }
     #font label inherits small {
@@ -100,7 +101,8 @@ choice {
 
 tab {
     font label inherits title {
-        size $: gui.scale(self.size, 0.75)
+        size $: gui.scale(self.size, 0.80)
+        weight: normal
     }
     font selected inherits tab.label {}
 }
@@ -120,9 +122,9 @@ document {
     font monospace inherits monospace {}
 }
 
-script {
-    # Make monospace a bit smaller on Windows - Courier New is pretty wide.
-    if Version.OS == 'windows'
-        document.monospace.size = '9pt'
-    end
-}
+#script {
+#    # Make monospace a bit smaller on Windows - Courier New is pretty wide.
+#    if Version.OS == 'windows'
+#        document.monospace.size = '9pt'
+#    end
+#}

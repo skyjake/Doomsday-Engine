@@ -50,7 +50,7 @@ DE_GUI_PIMPL(ScrollAreaWidget), public Lockable
     Rule *maxX;
     Rule *maxY;
 
-    String scrollBarColorId { "accent" };
+    String scrollBarColorId { "text" };
     ColorBank::Colorf scrollBarColor;
     ColorBank::Colorf scrollBarHoverColor;
     Animation scrollOpacity { 0 };
