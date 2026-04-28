@@ -51,6 +51,7 @@ if (APPLE)
         Deng::libgui
         Deng::libdoomsday
         Deng::libgloom
+        glbinding::glbinding
     )
     deng_bundle_sdl3 (gloom)
 endif ()
@@ -58,3 +59,6 @@ endif ()
 if (WIN32)
     set_property (TARGET gloom PROPERTY OUTPUT_NAME "Gloom")
 endif ()
+
+deng_deploy_target (gloom)
+deng_codesign (gloom)

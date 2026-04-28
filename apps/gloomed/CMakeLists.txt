@@ -8,6 +8,7 @@ set (CMAKE_AUTOMOC ON)
 set (CMAKE_AUTORCC ON)
 
 find_package (Qt5 COMPONENTS Gui Widgets)
+find_package (SDL3Libs)
 
 set (SOURCES
     src/commander.cpp
@@ -40,6 +41,7 @@ if (APPLE)
         Deng::liblegacy
         Deng::libdoomsday
         Deng::libgloom
+        glbinding::glbinding
         assimp::assimp
     )
     deng_bundle_sdl3 (gloomed)
@@ -50,3 +52,6 @@ if (APPLE OR WIN32)
     set_property (TARGET gloomed PROPERTY OUTPUT_NAME "GloomEd")
     set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "GloomEd")
 endif ()
+
+deng_deploy_target (gloomed)
+deng_codesign (gloomed)

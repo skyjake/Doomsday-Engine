@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <de/String>
+#include <de/string.h>
 
 /**
  * Sends commands to the Gloom viewer app and listens to beacon messages.

@@ -20,12 +20,12 @@
 #include "editorapp.h"
 #include "utils.h"
 
-#include <doomsday/DoomsdayApp>
+#include <doomsday/doomsdayapp.h>
 
-#include <de/App>
-#include <de/Async>
-#include <de/CommandLine>
-#include <de/FileSystem>
+#include <de/app.h>
+#include <de/async.h>
+#include <de/commandline.h>
+#include <de/filesystem.h>
 
 #include <QApplication>
 #include <QMessageBox>

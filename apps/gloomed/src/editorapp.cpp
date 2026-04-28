@@ -21,8 +21,8 @@
 #include "commander.h"
 #include "utils.h"
 
-#include <de/Async>
-#include <de/FileSystem>
+#include <de/async.h>
+#include <de/filesystem.h>
 #include <QMessageBox>
 #include <QTimer>
 
@@ -64,7 +64,7 @@ EditorApp::EditorApp(int &argc, char **argv)
 
 void EditorApp::initialize()
 {
-    initSubsystems(DisablePersistentData | DisablePlugins);
+    initSubsystems(DisablePersistentData);
     DoomsdayApp::initialize();
 
     /* We are not running a de::App, but some classes assume that the Loop/EventLoop are

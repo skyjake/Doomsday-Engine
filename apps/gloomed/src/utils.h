@@ -20,8 +20,8 @@
 
 #include <QVector2D>
 #include <QString>
-#include <de/String>
-#include <de/Vector>
+#include <de/string.h>
+#include <de/vector.h>
 
 inline de::Vec2d toVec2d(const QVector2D &vec)
 {

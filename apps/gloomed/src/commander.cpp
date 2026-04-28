@@ -19,11 +19,11 @@
 #include "commander.h"
 #include "utils.h"
 
-#include <de/Address>
-#include <de/Beacon>
-#include <de/CommandLine>
-#include <de/Info>
-#include <de/Waitable>
+#include <de/address.h>
+#include <de/beacon.h>
+#include <de/commandline.h>
+#include <de/info.h>
+#include <de/waitable.h>
 #include <the_Foundation/datagram.h>
 #include <the_Foundation/process.h>
 

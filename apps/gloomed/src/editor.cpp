@@ -21,11 +21,11 @@
 
 #include <gloom/geo/geomath.h>
 #include <gloom/world/mapimport.h>
-#include <doomsday/DataBundle>
-#include <doomsday/LumpCatalog>
-#include <de/FS>
-#include <de/Info>
-#include <de/Matrix>
+#include <doomsday/res/databundle.h>
+#include <doomsday/res/lumpcatalog.h>
+#include <de/filesystem.h>
+#include <de/info.h>
+#include <de/matrix.h>
 #include <de/charsymbols.h>
 
 #include <QAction>
@@ -367,7 +367,7 @@ DE_PIMPL(Editor)
 
     QPointF worldToView(const Vec3d &worldPos) const
     {
-        const auto p = viewTransform * worldPos;
+        const auto p = viewTransform * worldPos.toVec3f();
         return QPointF(p.x, p.y);
     }
 
@@ -520,7 +520,7 @@ DE_PIMPL(Editor)
         case EditPlanes:
             emit self().planeSelectionChanged();
             break;
-                
+
         case EditVolumes:
             break;
         }
@@ -607,7 +607,7 @@ DE_PIMPL(Editor)
                 ent->setId(map.append(map.entities(), ent));
             }
             break;
-                
+
         case EditPlanes:
             break;
         }
@@ -655,7 +655,7 @@ DE_PIMPL(Editor)
                 hoverEntity = 0;
             }
             break;
-                
+
         case EditPlanes:
         case EditVolumes:
             break;
@@ -1001,7 +1001,7 @@ DE_PIMPL(Editor)
                 selectOrUnselect(hoverEntity);
             }
             break;
-                
+
         case EditVolumes:
             break;
         }
@@ -1222,7 +1222,7 @@ DE_PIMPL(Editor)
             const auto mapData = map.serialize();
             File &mapFile = root.replaceFile("maps" / mapId + ".gloommap");
             mapFile << mapData;
-            mapFile.flush();
+            mapFile.release();
         }
 
         // Check that the maps.dei includes this map.
@@ -1252,7 +1252,7 @@ DE_PIMPL(Editor)
                                 mpu.z);
                 File &updated = root.replaceFile("maps.dei");
                 updated << maps;
-                updated.flush();
+                updated.release();
             }
         }
     }
@@ -1810,7 +1810,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
         {
             if (d->map.isPoint(id))
             {
-                d->map.point(id).coord = xf * Vec3d(d->map.point(id).coord);
+                d->map.point(id).coord = xf * Vec3f(d->map.point(id).coord);
             }
         }
         break;

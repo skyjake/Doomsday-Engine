@@ -19,7 +19,7 @@
 #pragma once
 
 #include <doomsday/doomsdayapp.h>
-#include <de/EmbeddedApp>
+#include <de/embeddedapp.h>
 #include <QApplication>
 
 class Editor;
