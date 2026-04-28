@@ -95,7 +95,6 @@ DE_GUI_PIMPL(PackageInfoDialog)
     {
         auto &area = self().area();
 
-        // Left column.
         title = LabelWidget::newWithText("", &area);
         title->setFont("title");
         title->setSizePolicy(ui::Filled, ui::Expand);
@@ -108,8 +107,6 @@ DE_GUI_PIMPL(PackageInfoDialog)
         path->setTextColor("text");
         path->setTextLineAlignment(ui::AlignLeft);
         path->margins().setTop("unit");
-
-        AutoRef<Rule> contentHeight(OperatorRule::maximum(*minContentHeight, *targetHeight));
 
         description = new DocumentWidget;
         description->setFont("small");
@@ -124,21 +121,10 @@ DE_GUI_PIMPL(PackageInfoDialog)
         description->progress().setShadowColor("progress.light.shadow");
 
         description->setWidthPolicy(ui::Fixed);
-        description->rule().setInput(
-            Rule::Height, contentHeight - title->rule().height() - path->rule().height());
         area.add(description);
 
-        SequentialLayout layout(area.contentRule().left(), area.contentRule().top(), ui::Down);
-        layout.setOverrideWidth(*descriptionWidth);
-        layout << *title << *path << *description;
-
-        // Right column.
         icon = LabelWidget::newWithText("", &area);
         icon->setSizePolicy(ui::Filled, ui::Expand);
-        //icon->setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
-        //icon->setStyleImage("package.large");
-        //icon->setImageColor(style().colors().colorf("inverted.accent"));
-        //icon->rule().setInput(Rule::Height, rule("dialog.packageinfo.icon.height"));
 
         metaInfo = LabelWidget::newWithText("", &area);
         metaInfo->setSizePolicy(ui::Filled, ui::Expand);
@@ -146,12 +132,24 @@ DE_GUI_PIMPL(PackageInfoDialog)
         metaInfo->setFont("small");
         metaInfo->setTextColor("altaccent");
 
-        SequentialLayout rightLayout(title->rule().right(), title->rule().top(), ui::Down);
-        rightLayout.setOverrideWidth(rule("dialog.packageinfo.metadata.width"));
-        rightLayout << *icon << *metaInfo;
+        // Description's height depends on the other elements.
+        AutoRef<Rule> contentHeight(OperatorRule::maximum(*minContentHeight, *targetHeight));
+        description->rule().setInput(
+            Rule::Height, contentHeight - title->rule().height() - path->rule().height());
 
-        targetHeight->setSource(rightLayout.height());
-        area.setContentSize(layout.width() + rightLayout.width(), contentHeight);
+        // Two-column layout.
+        SequentialLayout leftLayout(area.contentRule().left(), area.contentRule().top(), ui::Down);
+        const Rule &leftWidth = rule("dialog.packageinfo.metadata.width");
+        leftLayout.setOverrideWidth(leftWidth);
+        leftLayout << *icon << *metaInfo;
+
+        SequentialLayout rightLayout(
+            area.contentRule().left() + leftWidth, area.contentRule().top(), ui::Down);
+        rightLayout.setOverrideWidth(*descriptionWidth);
+        rightLayout << *title << *path << *description;
+
+        targetHeight->setSource(leftLayout.height());
+        area.setContentSize(leftLayout.width() + rightLayout.width(), contentHeight);
     }
 
     void setPackageIcon(const Image &iconImage)
