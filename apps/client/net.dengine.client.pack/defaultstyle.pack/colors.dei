@@ -9,13 +9,13 @@ script { import gui, Version }
 color transparent { rgb <0.0, 0.0, 0.0, 0.0> }
 color text        { rgb <0.85, 0.85, 0.85> }
 color background  { rgb <0.0, 0.0, 0.0, 0.75> }
-color accent      { rgb <0.65, 0.85, 0.725> }
+color accent      { rgb <0.75, 0.85, 0.80> }
 color altaccent   { rgb <0.45, 0.75, 0.55> }
-color glow        { rgb <0.0, 0.2, 0.1, 0.2> }
+color glow        { rgb <0.0, 0.1, 0.06, 0.2> }
 
 inverted {
     color text       { rgb <1.0, 1.0, 1.0> }
-    color background { rgb <0.13, 0.15, 0.14> }
+    color background { rgb <0.13, 0.14, 0.135> }
     color accent     { rgb <0.5, 1.0, 0.55> }
     color altaccent  { rgb <0.7, 0.8, 0.7> }
     color glow       { rgb <0.10, 0.20, 0.0, 0.15> }
@@ -94,8 +94,8 @@ log {
         condition: Version.OS == 'windows'
         rgb <0.58, 0.58, 0.55>
     }
-    color accent    { rgb $= accent.rgb }
-    color altaccent { rgb $= altaccent.rgb }
+    color accent    { rgb $= altaccent.rgb }
+    color altaccent { rgb $= accent.rgb }
     color dimaccent { rgb <0.76, 0.61, 0.30> }
 }
 
@@ -125,8 +125,9 @@ home {
     color icon.other   { rgb <1.0, 1.0, 1.0> }
 
     item.background {
+        color tag { rgb <0.55, 0.6, 0.55> }
         color selected.inverted {
-            rgb $= gui.colorMix(accent.rgb, text.rgb, 0.35)
+            rgb $= gui.colorMix(accent.rgb, background.rgb, 0.35)
         }
     }
 }

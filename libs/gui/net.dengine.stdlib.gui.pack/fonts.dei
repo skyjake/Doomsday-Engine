@@ -83,8 +83,9 @@ separator {
     }
     font label inherits default {
         #condition: Version.OS == 'macx' or Version.OS == 'ios'
-        size $: gui.scale(self.size, 0.80)
-        transform: uppercase
+        size $: gui.scale(self.size, 0.90)
+        #transform: uppercase
+        weight: bold
     }
     #font label inherits small {
     #    condition: Version.OS != 'macx' and Version.OS != 'ios'

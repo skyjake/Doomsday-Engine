@@ -189,14 +189,14 @@ DE_GUI_PIMPL(PackagesWidget)
             for (const String &tag : Package::tags(*_item->file))
             {
                 auto *btn = new ButtonWidget;
-                btn->setText(_E(l) + tag);
+                btn->setText(tag);
                 btn->setActionFn([this, tag]() {
                     String terms = _owner.d->search->text();
                     if (!terms.isEmpty() && !terms.last().isSpace()) terms += " ";
                     terms += tag;
                     _owner.d->search->setText(terms);
                 });
-                updateTagButtonStyle(btn, "accent");
+                updateTagButtonStyle(btn, "altaccent");
                 btn->setSizePolicy(ui::Expand, ui::Expand);
                 btn->margins()
                     .setTop(RuleBank::UNIT)
@@ -233,8 +233,10 @@ DE_GUI_PIMPL(PackagesWidget)
         void updateTagButtonStyle(ButtonWidget *tag, const String &color)
         {
             tag->setFont("small");
-            tag->setTextColor(color);
-            tag->set(Background(Background::Rounded, style().colors().colorf(color), 6));
+            tag->setTextColor("background");
+            tag->setHoverTextColor("inverted.background", ButtonWidget::ReplaceColor);
+            tag->setBackgroundColor(color);
+            tag->set(tag->background().withType(Background::GradientFrameWithRoundedFill));
         }
 
         PackageIconBank &iconBank()
@@ -321,10 +323,10 @@ DE_GUI_PIMPL(PackagesWidget)
                 icon().setImageScale(.5f);
             }
 
-            String labelText = Stringf(_E(b) "%s\n" _E(l)_E(C) _E(s) "%s",
-                                              _item->label().c_str(),
-                                              pkgIdVer.first.c_str());
-                
+            String labelText = Stringf(_E(b) "%s\n" _E(w) _E(C) _E(s) "%s",
+                                       _item->label().c_str(),
+                                       pkgIdVer.first.c_str());
+
             if (!isFile && pkgIdVer.second.isValid())
             {
                 labelText += Stringf(_E(C) " %s" _E(.), pkgIdVer.second.compactNumber().c_str());
@@ -345,11 +347,11 @@ DE_GUI_PIMPL(PackagesWidget)
                 }
             }
 
-            String auxColor = "accent";
+            String auxColor = "home.item.background.tag";
             if (highlight)
             {
                 useColorTheme(_owner.d->unselectedItemHilit, _owner.d->selectedItemHilit);
-                auxColor = "background";
+                auxColor = "inverted.text";
             }
             else
             {

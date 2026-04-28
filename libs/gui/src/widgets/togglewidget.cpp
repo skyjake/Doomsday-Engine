@@ -98,7 +98,7 @@ DE_PIMPL(ToggleWidget)
         void updateStyle()
         {
             _bgColor     = style().colors().colorf("background").min(Vec4f(0, 0, 0, 1));
-            _accentColor = style().colors().colorf("accent");
+            _accentColor = style().colors().colorf("altaccent");
             _textColor   = style().colors().colorf("text");
         }
 

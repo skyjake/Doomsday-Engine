@@ -133,7 +133,7 @@ DE_GUI_PIMPL(PopupMenuWidget)
         {
             LabelWidget &lab = widget.as<LabelWidget>();
             lab.setTextColor(item.semantics().testFlag(ui::Item::Annotation)? "label.altaccent" :
-                                                                              "label.accent");
+                                                                              "label.altaccent");
             lab.setMaximumTextWidth(*maxItemWidth);
             lab.rule().setInput(Rule::Width, *maxItemWidth);
             return;

@@ -52,7 +52,7 @@ DE_PIMPL(DirectoryListDialog)
         group->title->setTextLineAlignment(ui::AlignLeft);
         group->title->setAlignment(ui::AlignLeft);
         group->title->setFont("separator.label");
-        group->title->setTextColor("accent");
+        group->title->setTextColor("altaccent");
         group->title->margins().setTop("gap");
 
         self().area().add(group->description = new LabelWidget("group-desc"));

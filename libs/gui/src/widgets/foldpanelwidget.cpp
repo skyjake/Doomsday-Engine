@@ -115,7 +115,7 @@ ButtonWidget *FoldPanelWidget::makeTitle(const String &text)
 
     d->title->setSizePolicy(Expand, Expand);
     d->title->setText(text);
-    d->title->setTextColor("accent");
+    d->title->setTextColor("altaccent");
     d->title->setHoverTextColor("text", ButtonWidget::ReplaceColor);
     d->title->setFont("heading");
     d->title->setAlignment(ui::AlignLeft);

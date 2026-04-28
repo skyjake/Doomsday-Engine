@@ -943,7 +943,7 @@ LabelWidget *LabelWidget::newWithText(const String &text, GuiWidget *parent)
 void LabelWidget::useSeparatorStyle()
 {
     setSizePolicy(ui::Expand, ui::Expand);
-    setTextColor("accent");
+    setTextColor("altaccent");
     setFont("separator.label");
     setAlignment(ui::AlignLeft);
     margins().setTop("gap");

@@ -131,9 +131,11 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
         };
 
         playButton = new ButtonWidget;
-        playButton->useInfoStyle();
+        playButton->set(
+            playButton->background().withType(Background::GradientFrameWithRoundedFill));
+        playButton->setBackgroundColor("inverted.text");
         playButton->setStyleImage("play", "default");
-        playButton->setImageColor(style().colors().colorf("inverted.text"));
+        playButton->setImageColor(style().colors().colorf("background"));
         playButton->setActionFn([this] () { playButtonPressed(); });
         playButton->audienceForStateChange() += this;
         self().addButton(playButton);
@@ -394,7 +396,7 @@ void GamePanelButtonWidget::updateContent()
     }
 
     label().setText(
-        Stringf(_E(b) "%s\n" _E(l)_E(C) "%s", d->gameProfile.name().c_str(), meta.c_str()));
+        Stringf(_E(b) "%s\n" _E(w)_E(C) "%s", d->gameProfile.name().c_str(), meta.c_str()));
 
     d->packagesButton->setPackages(d->gameProfile.packages());
     d->updatePackagesIndicator();
