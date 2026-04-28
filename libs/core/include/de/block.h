@@ -139,6 +139,7 @@ public:
 
     Block  compressed(int level = -1) const;
     Block  decompressed() const;
+    Block  decompressedGzip() const;
     Block  md5Hash() const;
     String asHexadecimalText() const;
     String decode(const String &charset) const;

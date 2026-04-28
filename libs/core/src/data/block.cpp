@@ -306,15 +306,32 @@ Block &Block::operator=(const IByteArray &byteArray)
 
 Block Block::compressed(int level) const
 {
-    iBlock *deflated = compressLevel_Block(&_block, level);
-    Block i(deflated);
-    delete_Block(deflated);
-    return i;
+    // Format compatible with Qt's qCompress: 4-byte big-endian uncompressed size
+    // followed by standard zlib-compressed data.
+    iBlock *zlibData = compressZlib_Block(&_block, level);
+    const dsize originalSize = size();
+    Block result;
+    Writer(result, bigEndianByteOrder) << uint32_t(originalSize);
+    result += Block(zlibData);
+    delete_Block(zlibData);
+    return result;
 }
 
 Block Block::decompressed() const
 {
-    iBlock *inflated = decompress_Block(&_block);
+    // Format compatible with Qt's qUncompress: skip the 4-byte uncompressed size prefix,
+    // then decompress standard zlib data.
+    if (size() < 4) return Block();
+    const Block payload = mid(4);
+    iBlock *inflated = decompressZlib_Block(payload);
+    Block result(inflated);
+    delete_Block(inflated);
+    return result;
+}
+
+Block Block::decompressedGzip() const
+{
+    iBlock *inflated = decompressGzip_Block(&_block);
     Block i(inflated);
     delete_Block(inflated);
     return i;
