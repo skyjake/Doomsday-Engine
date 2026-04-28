@@ -693,7 +693,7 @@ GameColumnWidget::GameColumnWidget(const String &gameFamily,
                                 d->menu->rule().height() +
                                 d->newProfileButton->rule().height());
 
-    header().title().setText(Stringf(_E(s)_E(C) "%s\n" _E(.)_E(.)_E(w) "%s",
+    header().title().setText(Stringf(_E(s)_E(l)_E(C) "%s\n" _E(.)_E(.)_E(.) "%s",
                               gameFamily == "DOOM"? "id Software" : gameFamily ? "Raven Software" : "",
                               gameFamily ? gameFamily.c_str() : "Other Games"));
     if (gameFamily)

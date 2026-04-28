@@ -93,7 +93,7 @@ MultiplayerColumnWidget::MultiplayerColumnWidget()
                                 rule("gap") +
                                 d->menu->rule().height());
 
-    header().title().setText(_E(s)_E(C) "dengine.net\n" _E(.)_E(.)_E(w) "Multiplayer Games");
+    header().title().setText(_E(s)_E(l)_E(C) "dengine.net\n" _E(.)_E(.)_E(.) "Multiplayer Games");
     header().info().setText("Multiplayer servers are discovered via the dengine.net "
                             "master server and by broadcasting on the local network.");
 }

@@ -388,6 +388,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
     d->logo->setImage(style().images().image("logo.px128"));
     d->logo->setImageScale(.475f);
     d->logo->setImageFit(FitToHeight | OriginalAspectRatio);
+    d->logo->setBackgroundColor("background");
 
     d->updateLogoButtonText();
 
@@ -399,6 +400,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
     // Settings.
     d->conf = new PopupButtonWidget("conf-button");
     d->conf->setImage(style().images().image("gear"));
+    d->conf->setBackgroundColor("background");
     d->conf->setSizePolicy(ui::Expand, ui::Filled);
     d->conf->rule().setInput(Rule::Height, rule().height());
     add(d->conf);
@@ -416,6 +418,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
     d->multi = new PopupButtonWidget;
     d->multi->hide(); // hidden when not connected
     d->multi->setImage(style().images().image("network"));
+    d->multi->setBackgroundColor("background");
     d->multi->setTextAlignment(ui::AlignRight);
     d->multi->setText("MP");
     d->multi->setSizePolicy(ui::Expand, ui::Filled);

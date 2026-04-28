@@ -129,7 +129,7 @@ DE_GUI_PIMPL(DialogWidget)
         buttons->setItems(mainButtonItems);
         buttons->organizer().audienceForWidgetCreation() += this;
         buttons->organizer().audienceForWidgetUpdate() += this;
-        
+
         extraButtons = new MenuWidget("extra");
         extraButtons->margins().setTop("");
         extraButtons->setItems(extraButtonItems);

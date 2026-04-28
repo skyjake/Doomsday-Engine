@@ -241,6 +241,7 @@ ChoiceWidget::ChoiceWidget(const String &name)
 {
     d->updateButtonWithSelection();
     d->updateStyle();
+    set(background().withType(Background::GradientFrameWithRoundedFill));
     setOpeningDirection(ui::Right);
     d->choices->setAllowDirectionFlip(false);
 }

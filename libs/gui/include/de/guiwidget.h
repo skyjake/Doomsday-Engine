@@ -131,6 +131,12 @@ public:
                    float borderThickness = 0)
             : solidFill(solid), type(t), color(borderColor), thickness(borderThickness) {}
 
+        inline Background withType(Type t) const {
+            Background bg = *this;
+            bg.type = t;
+            return bg;
+        }
+
         inline Background withSolidFill(const Vec4f &newSolidFill) const {
             Background bg = *this;
             bg.solidFill = newSolidFill;
@@ -430,7 +436,7 @@ public:
 
     MouseClickStatus handleMouseClick(const Event &event,
                                       MouseEvent::Button button = MouseEvent::Left);
-    
+
     /**
      * Requests the widget to refresh its geometry, if it has any static
      * geometry. Normally this does not need to be called. It is provided

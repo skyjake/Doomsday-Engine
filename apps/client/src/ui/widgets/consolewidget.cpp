@@ -246,7 +246,7 @@ DE_GUI_PIMPL(ConsoleWidget)
 
         if (scriptMode != yes)
         {
-            scriptMode = yes;        
+            scriptMode = yes;
             DE_NOTIFY_PUBLIC(CommandMode, i)
             {
                 i->commandModeChanged();
@@ -328,6 +328,7 @@ ConsoleWidget::ConsoleWidget()
 
     // Button for opening the Log History menu.
     d->button = new PopupButtonWidget;
+    d->button->setBackgroundColor("background");
     d->button->setSizePolicy(ui::Expand, ui::Expand);
     d->button->setImage(style().images().image("log"));
     d->button->setOverrideImageSize(style().fonts().font("default").height());
@@ -342,6 +343,7 @@ ConsoleWidget::ConsoleWidget()
     // Button for opening the console prompt menu.
     d->promptButton = new PopupButtonWidget;
     d->promptButton->addEventHandler(new Impl::RightClick(d));
+    d->promptButton->setBackgroundColor("background");
 
     d->promptButton->rule()
             .setInput(Rule::Width,  d->promptButton->rule().height())
