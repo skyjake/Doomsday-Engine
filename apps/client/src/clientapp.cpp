@@ -746,13 +746,16 @@ void ClientApp::initialize()
     #endif
 
     // Create the world system.
-#if defined (DE_ENABLE_GLOOM)
-    d->gloomWorld = new GloomWorld;
-    addSystem(*d->gloomWorld);
-#else
-    d->classicWorld = new ClientWorld;
-    addSystem(*d->classicWorld);
-#endif
+    if (App::commandLine().has("-gloom"))
+    {
+        d->gloomWorld = new GloomWorld;
+        addSystem(*d->gloomWorld);
+    }
+    else
+    {
+        d->classicWorld = new ClientWorld;
+        addSystem(*d->classicWorld);
+    }
 
     // Create the render system.
     d->rendSys = new RenderSystem;
