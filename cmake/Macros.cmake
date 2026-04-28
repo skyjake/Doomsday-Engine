@@ -497,23 +497,43 @@ macro (deng_codesign target)
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/*.bundle/*\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/*.bundle\"
             )
+            set (_sign_fws)
             foreach (_fn IN LISTS _fws)
                 if (NOT IS_SYMLINK \"\${_fn}\")
-                    execute_process (COMMAND ${CODESIGN_COMMAND}
-                        --force --sign \"\${_cert}\"
-                        ${_cs_fw_extra_opts} ${DE_CODESIGN_ENTITLEMENTS}
-                        \"\${_fn}\")
+                    list (APPEND _sign_fws \"\${_fn}\")
                 endif ()
             endforeach ()
+            if (_sign_fws)
+                string (REPLACE \";\" \"\\n\" _list_str \"\${_sign_fws}\")
+                set (_list_file \"\${CMAKE_INSTALL_PREFIX}/.deng_sign_tmp.txt\")
+                file (WRITE \"\${_list_file}\" \"\${_list_str}\\n\")
+                execute_process (COMMAND bash -c
+                    \"while IFS= read -r f; do ${CODESIGN_COMMAND} --force --sign '\${_cert}' ${_cs_fw_extra_opts} ${DE_CODESIGN_ENTITLEMENTS} \\\"\\$f\\\" & done < '\${_list_file}'; wait\"
+                    RESULT_VARIABLE _sign_res)
+                file (REMOVE \"\${_list_file}\")
+                if (_sign_res)
+                    message (FATAL_ERROR \"Parallel signing of frameworks failed (result: \${_sign_res})\")
+                endif ()
+            endif ()
             file (GLOB _bins \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/MacOS/*\")
+            set (_sign_bins)
             foreach (_fn IN LISTS _bins)
                 if (NOT IS_SYMLINK \"\${_fn}\")
-                    execute_process (COMMAND ${CODESIGN_COMMAND}
-                        --force --sign \"\${_cert}\"
-                        ${_cs_extra_opts} ${DE_CODESIGN_ENTITLEMENTS}
-                        \"\${_fn}\")
+                    list (APPEND _sign_bins \"\${_fn}\")
                 endif ()
             endforeach ()
+            if (_sign_bins)
+                string (REPLACE \";\" \"\\n\" _list_str \"\${_sign_bins}\")
+                set (_list_file \"\${CMAKE_INSTALL_PREFIX}/.deng_sign_tmp.txt\")
+                file (WRITE \"\${_list_file}\" \"\${_list_str}\\n\")
+                execute_process (COMMAND bash -c
+                    \"while IFS= read -r f; do ${CODESIGN_COMMAND} --force --sign '\${_cert}' ${_cs_extra_opts} ${DE_CODESIGN_ENTITLEMENTS} \\\"\\$f\\\" & done < '\${_list_file}'; wait\"
+                    RESULT_VARIABLE _sign_res)
+                file (REMOVE \"\${_list_file}\")
+                if (_sign_res)
+                    message (FATAL_ERROR \"Parallel signing of executables failed (result: \${_sign_res})\")
+                endif ()
+            endif ()
             execute_process (COMMAND ${CODESIGN_COMMAND}
                 --force --sign \"\${_cert}\"
                 ${_cs_extra_opts} ${DE_CODESIGN_ENTITLEMENTS}
