@@ -42,6 +42,13 @@ extern "C" void GuiApp_InitMacOSScrolling();
 extern "C" Uint32 GuiApp_TrackpadScrollEventType(void);
 #endif
 
+#if defined (DE_WINDOWS)
+#   define WIN32_LEAN_AND_MEAN
+#   define NOMINMAX
+#   include <Windows.h>
+#   include <shlobj.h>
+#endif
+
 #include <fstream>
 #include <the_Foundation/thread.h>
 
@@ -363,26 +370,20 @@ void GuiApp::revealFile(const NativePath &fileOrFolder) // static
     }
     #else
     {
-        DE_ASSERT_FAIL("File revealing not implemented on this platform");
+        WCHAR wPath[MAX_PATH];
+        MultiByteToWideChar(CP_UTF8, 0, fileOrFolder.c_str(), -1, wPath, MAX_PATH);
+        PIDLIST_ABSOLUTE pidl = ILCreateFromPathW(wPath);
+        if (pidl) {
+            SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0);
+            ILFree(pidl);
+        }
     }
     #endif
 }
 
 void GuiApp::openBrowserUrl(const String &url)
 {
-    #if defined (DE_X11)
-    {
-        CommandLine({"/usr/bin/x-www-browser", url}).execute();
-    }
-    #elif defined (MACOSX)
-    {
-        CommandLine({"/usr/bin/open", url}).execute();
-    }
-    #else
-    {
-        DE_ASSERT_FAIL("Browser URL opening not implemented on this platform");
-    }
-    #endif
+    SDL_OpenURL(url.c_str());
 }
 
 void GuiApp::quitRequested()
