@@ -107,8 +107,12 @@ macro (deng_target_rpath target)
         )
         if (${target} MATCHES "test_.*")
             # These won't be deployed, so we can use the full path.
+            # Also search the main app bundle's Frameworks since dylibs are not installed flat on macOS.
             set_property (TARGET ${target} APPEND PROPERTY
-                INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DE_INSTALL_LIB_DIR};${CMAKE_INSTALL_PREFIX}/${DE_INSTALL_PLUGIN_DIR}"
+                INSTALL_RPATH
+                    "@executable_path/../Doomsday.app/Contents/Frameworks"
+                    "${CMAKE_INSTALL_PREFIX}/${DE_INSTALL_LIB_DIR}"
+                    "${CMAKE_INSTALL_PREFIX}/${DE_INSTALL_PLUGIN_DIR}"
             )
         endif ()
         set (_extraRPath)
