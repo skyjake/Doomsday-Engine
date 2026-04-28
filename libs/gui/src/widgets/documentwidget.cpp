@@ -223,7 +223,12 @@ public Font::RichFormat::IStyle
                 glText.makeVertices(textVerts, Vec2i(0, 0), ui::AlignLeft);
 
                 // Update content size to match the generated vertices exactly.
-                self().setContentWidth(glText.verticesMaxWidth());
+                // This also corrects contentMaxWidth, which may have been set
+                // from wrappedSize().x (an approximation that can overestimate
+                // tab-expanded content widths).
+                const int vw = glText.verticesMaxWidth();
+                contentMaxWidth->set(de::max(contentMaxWidth->value(), float(vw)));
+                self().setContentWidth(vw);
             }
 
             scrollMvpMatrix = root().projMatrix2D() *
