@@ -126,7 +126,7 @@ int main(int argc, char **argv)
         // Changes were made to the archive via files. The archive won't be
         // written back to its source file until the ArchiveFolder instance
         // is deleted or when a flush is done.
-        updated.flush();
+        updated.release();
 
         LOG_MSG("After flushing:\n") << app.homeFolder().contentsAsText();
 

@@ -47,6 +47,10 @@ popup {
     }
 }
 
+button {
+    color background { rgb $= gui.colorAlpha(background.rgb, 0.5) }
+}
+
 choice {
     color popup { rgb $= gui.colorAlpha(background.rgb, 1.0) }
 }

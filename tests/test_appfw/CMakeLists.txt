@@ -20,9 +20,11 @@ if (APPLE)
         Deng::libgui
         the_Foundation::the_Foundation
         glbinding::glbinding
+        assimp::assimp
     )
     deng_bundle_sdl3 (test_appfw)
 endif ()
 
 deng_deploy_target (test_appfw)
+deng_codesign (test_appfw)
 
