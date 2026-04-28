@@ -413,13 +413,14 @@ DE_PIMPL_NOREF(Socket)
                         }
                     }
                     else if (incomingHeader.isDeflated)
-                    {
-                        payload = payload.decompressed(); //qUncompress(payload);
-                        if (!payload.size())
+                    {                        
+                        Block decompressed = payload.decompressed();                                                
+                        if (!decompressed.size())
                         {
                             throw ProtocolError("Socket::Impl::deserializeMessages",
                                                 "Deflate failed");
                         }
+                        payload = decompressed;
                     }
 
                     receivedMessages << new Message(
@@ -505,14 +506,23 @@ DE_PIMPL_NOREF(Socket)
             Socket &self = *static_cast<Socket *>(userData_Object(sock));
             Impl *d = self.d;
             d->receivedBytes += Block::take(readAll_Socket(sock));
-            d->deserializeMessages();
-            if (d->receivedMessages)
+            try
             {
-                DE_FOR_OBSERVERS(i, self.audienceForMessage())
+                d->deserializeMessages();
+                if (d->receivedMessages)
                 {
-                    i->messagesIncoming(self);
+                    DE_FOR_OBSERVERS(i, self.audienceForMessage())
+                    {
+                        i->messagesIncoming(self);
+                    }
                 }
             }
+            catch (const ProtocolError& er)
+            {
+                LOG_NET_ERROR("Closing socket due to error: ") << er.asText();
+                self.close();
+                return;
+            }                        
         });
     }
 
