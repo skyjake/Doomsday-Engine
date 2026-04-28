@@ -11,6 +11,10 @@
 #if defined (LIBGLOOM_HAVE_FMOD)
 #  include <fmod.h>
 #  include <fmod_errors.h>
+// F_CALLBACK was renamed to F_CALL in FMOD 2.x.
+#  if FMOD_VERSION >= 0x20000 && !defined(F_CALLBACK)
+#    define F_CALLBACK F_CALL
+#  endif
 #endif
 
 using namespace de;
@@ -431,7 +435,11 @@ DE_PIMPL(AudioSystem)
     void init()
     {
         // Initialize FMOD.
+#if FMOD_VERSION >= 0x20000
+        FMOD_RESULT result = FMOD_System_Create(&system, FMOD_VERSION);
+#else
         FMOD_RESULT result = FMOD_System_Create(&system);
+#endif
         if (result != FMOD_OK)
         {
             throw NativeError("AudioSystem::init", FMOD_ErrorString(result));
