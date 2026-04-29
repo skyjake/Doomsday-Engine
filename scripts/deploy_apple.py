@@ -14,7 +14,8 @@ print("Fixing install names in:", sys.argv[1])
 root = os.path.join(sys.argv[1], 'Contents')
 binaries = \
     list(map(lambda n: '/MacOS/' + n, os.listdir(root + '/MacOS'))) + \
-    list(map(lambda n: '/Frameworks/' + n, os.listdir(root + '/Frameworks')))
+    ['/Frameworks/' + n for n in os.listdir(root + '/Frameworks')
+     if os.path.isfile(os.path.join(root, 'Frameworks', n))]
 actions = {}
 for binary in binaries:
     if binary.startswith('/Frameworks/'):
@@ -44,9 +45,9 @@ while len(binaries) > 0:
             if dep_name.startswith('lib') and not dep_path.startswith('/usr/lib') \
                     and not dep_path.startswith('/System'):
                 libraries.add(dep_name)
-            if dep_path.startswith('@rpath') or dep_path.startswith('/System') or \
+            if dep_path.startswith('@') or dep_path.startswith('/System') or \
                     dep_path.startswith('/usr/lib'):
-                # Not going to touch system libraries.
+                # Already bundle-relative or system library — leave it alone.
                 continue
             dep_actions.append((dep_path, '@rpath/' + dep_name))
             new_dep_path = os.path.join(root, 'Frameworks', dep_name)
