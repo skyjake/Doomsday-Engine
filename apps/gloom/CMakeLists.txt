@@ -3,6 +3,8 @@ project (DE_GLOOM)
 
 include (../../cmake/Config.cmake)
 
+find_package (the_Foundation)
+find_package (glbinding)
 find_package (FMOD)
 find_Package (SDL3Libs)
 

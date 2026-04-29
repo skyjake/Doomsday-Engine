@@ -23,6 +23,7 @@
 
 #include <de/async.h>
 #include <de/filesystem.h>
+#include <doomsday/player.h>
 #include <QMessageBox>
 #include <QTimer>
 
@@ -40,7 +41,7 @@ DE_PIMPL(EditorApp)
 EditorApp::EditorApp(int &argc, char **argv)
     : QApplication(argc, argv)
     , EmbeddedApp(makeList(argc, argv))
-    , DoomsdayApp(nullptr,
+    , DoomsdayApp([] () -> Player * { return new Player; },
                   DoomsdayApp::DisableGameProfiles |
                   DoomsdayApp::DisablePersistentConfig |
                   DoomsdayApp::DisableSaveGames)

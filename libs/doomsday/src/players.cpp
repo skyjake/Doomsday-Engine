@@ -104,6 +104,7 @@ void Players::initBindings()
 {
     for (auto *plr : d->players)
     {
+        DE_ASSERT(plr);
         plr->initBindings();
     }
 }

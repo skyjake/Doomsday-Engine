@@ -22,6 +22,12 @@ set (SOURCES
     src/main.cpp
 )
 
+list (APPEND DE_REQUIRED_PACKAGES
+    net.dengine.stdlib
+    net.dengine.base
+    net.dengine.gloom
+)
+
 deng_add_application (gloomed ${SOURCES} ${HEADERS})
 deng_link_libraries (gloomed PRIVATE DengGloom SDL3::SDL3)
 deng_target_link_qt (gloomed PRIVATE Widgets)
@@ -30,7 +36,9 @@ if (APPLE)
     set_target_properties (gloomed PROPERTIES
         OUTPUT_NAME gloomed
         MACOSX_BUNDLE_INFO_PLIST ${DE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in
-     )
+    )
+    find_package (the_Foundation REQUIRED)
+    find_package (glbinding REQUIRED MODULE)
     deng_install_bundle_deps (gloomed
         fmodex
         the_Foundation::the_Foundation

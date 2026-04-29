@@ -35,14 +35,15 @@ using namespace de;
 
 int main(int argc, char **argv)
 {
+    init_Foundation();
     EditorApp app(argc, argv);
-
     EditorWindow win;
     QObject::connect(&win.editor(), &Editor::buildMapRequested, &win, [&win, &app]() {
         app.loadEditorMapInViewer(win.editor());
     });
     win.showNormal();
-
     app.initialize();
-    return app.exec();
+    const int result = app.exec();
+    deinit_Foundation();
+    return result;
 }
