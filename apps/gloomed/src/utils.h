@@ -45,7 +45,7 @@ inline de::String convertToString(const QString &qstr)
 
 inline QString convert(const de::String &str)
 {
-    return QString::fromUtf8(str);
+    return QString::fromUtf8(str.c_str(), str.size());
 }
 
 inline QString convertToQString(const de::String &str)

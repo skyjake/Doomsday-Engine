@@ -159,9 +159,9 @@ DE_PIMPL(Editor)
     {
         if (self().parentWidget())
         {
-            const String path = filePath ? filePath : "(unsaved)";
-            const String id   = mapId ? mapId : "(unnamed)";
-            const String pkg  = packageName ? packageName : "(no package)";
+            const String path = filePath ? filePath : String("(unsaved)");
+            const String id   = mapId ? mapId : String("(unnamed)");
+            const String pkg  = packageName ? packageName : String("(no package)");
 
             self().parentWidget()->setWindowTitle(
                 convert(Stringf("%s (%s) " DE_CHAR_MDASH " %s " DE_CHAR_MDASH " GloomEd",
@@ -813,7 +813,7 @@ DE_PIMPL(Editor)
         ptr.setPen(Qt::NoPen);
 
         QFontMetrics  metrics(metaFont);
-        const QSize   dims(metrics.width(text), metrics.height());
+        const QSize   dims(metrics.horizontalAdvance(text), metrics.height());
         const QPointF off(-dims.width() / 2, dims.height() / 2);
         const QPointF gap(-3, 3);
 
@@ -1076,11 +1076,13 @@ DE_PIMPL(Editor)
 
         QFile f(path);
         DE_ASSERT(f.exists());
-        f.open(QFile::ReadOnly);
-        const QByteArray mapData = f.readAll();
-        map.deserialize(Block(mapData.constData(), mapData.size()));
-        resetState();
-        updateWindowTitle();
+        if (f.open(QFile::ReadOnly))
+        {
+            const QByteArray mapData = f.readAll();
+            map.deserialize(Block(mapData.constData(), mapData.size()));
+            resetState();
+            updateWindowTitle();
+        }
     }
 
     void saveAsFile()
@@ -1103,10 +1105,12 @@ DE_PIMPL(Editor)
             return;
         }
         QFile f(convert(filePath));
-        f.open(QFile::WriteOnly);
-        const Block mapData = map.serialize();
-        f.write(mapData.c_str(), mapData.size());
-        isModified = false;
+        if (f.open(QFile::WriteOnly))
+        {
+            const Block mapData = map.serialize();
+            f.write(mapData.c_str(), mapData.size());
+            isModified = false;
+        }
     }
 
     void importWADLevel()
@@ -1662,7 +1666,7 @@ void Editor::paintEvent(QPaintEvent *)
                 .arg(d->viewOrigin.x, 0, 'f', 1)
                 .arg(d->viewOrigin.y, 0, 'f', 1)
                 .arg(d->viewScale,    0, 'f', 2);
-        ptr.drawText(content.right() - fontMetrics.width(viewText), y, viewText);
+        ptr.drawText(content.right() - fontMetrics.horizontalAdvance(viewText), y, viewText);
     }
 
     // Current selection.

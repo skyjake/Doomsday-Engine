@@ -7,7 +7,7 @@ include (QtConfig)
 set (CMAKE_AUTOMOC ON)
 set (CMAKE_AUTORCC ON)
 
-find_package (Qt5 COMPONENTS Gui Widgets)
+find_package (Qt6 COMPONENTS Gui Widgets)
 find_package (SDL3Libs)
 
 set (SOURCES
