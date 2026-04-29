@@ -22,7 +22,7 @@
 #include "exception.h"
 #include <QFile>
 #include <QDateTime>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QDebug>
 
 String stringCase(const String& src, StringCasing casing)
@@ -331,7 +331,7 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
             case LINE_PREFIX:
             {
                 // The prefix is enclosed in parentheses.
-                output += char(OutputContext::CtrlLinePrefixBegin);
+                output += toChar(OutputContext::CtrlLinePrefixBegin);
                 if (c != '(')
                 {
                     throw Exception("Line prefix must be enclosed in parentheses.", "applyFilter");
@@ -354,8 +354,8 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
                     {
                         if (c == '_') c = ' '; // Space.
                         if (c == 't') c = '\t'; // Breaking space.
-                        if (c == 'n') c = OutputContext::CtrlLineBreak;
-                        if (c == 'N') c = OutputContext::CtrlParagraphBreak;
+                        if (c == 'n') c = toChar(OutputContext::CtrlLineBreak);
+                        if (c == 'N') c = toChar(OutputContext::CtrlParagraphBreak);
                         output += c;
                         esc = false;
                     }
@@ -364,7 +364,7 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
                 {
                     throw Exception("Line prefix must be enclosed in parentheses.", "applyFilter");
                 }
-                output += char(OutputContext::CtrlLinePrefixEnd);
+                output += toChar(OutputContext::CtrlLinePrefixEnd);
                 break;
             }
 
@@ -404,8 +404,8 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
                     {
                         if (c == '_') c = ' '; // Space.
                         if (c == 't') c = '\t'; // Breaking space.
-                        if (c == 'n') c = OutputContext::CtrlLineBreak;
-                        if (c == 'N') c = OutputContext::CtrlParagraphBreak;
+                        if (c == 'n') c = toChar(OutputContext::CtrlLineBreak);
+                        if (c == 'N') c = toChar(OutputContext::CtrlParagraphBreak);
                         *current += c;
                         esc = false;
                     }

@@ -16,7 +16,8 @@
 cmake_minimum_required (VERSION 3.10)
 project (Amethyst)
 
-find_package (Qt5 COMPONENTS Core)
+include (../../cmake/QtConfig.cmake)
+find_package (Qt6 COMPONENTS Core)
 
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
 set (CMAKE_AUTOMOC ON)
@@ -36,8 +37,8 @@ add_executable (amethyst ${SOURCES})
 set_property (TARGET amethyst PROPERTY FOLDER Tools)
 strict_warnings (amethyst)
 
-add_definitions (-DHAVE_QT5)
-target_link_libraries (amethyst Qt5::Core)
+add_definitions (-DHAVE_QT6)
+target_link_libraries (amethyst Qt6::Core)
 
 if (UNIX)
     set (LIB_PREFIX "share/amethyst")
@@ -47,6 +48,10 @@ else ()
     set (LIB_PREFIX ".")
     set (DOC_PREFIX "doc")
     add_definitions (-DAME_LIBDIR="${CMAKE_INSTALL_PREFIX}/lib")
+endif ()
+
+if (MSVC)
+    target_compile_definitions (amethyst PUBLIC _CRT_SECURE_NO_WARNINGS)
 endif ()
 
 install (TARGETS amethyst DESTINATION bin)

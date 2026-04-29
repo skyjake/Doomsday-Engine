@@ -125,7 +125,7 @@ bool Processor::parseVerbatim(Shard *parent)
     bool escaped = false;
     QChar c;
 
-    while ((c = _in->peek()) != EOF)
+    while ((c = _in->peek()) != QChar(EOF))
     {
         if (!escaped)
         {
@@ -806,12 +806,12 @@ void Processor::partialPrint(PartialPrintMode mode, Gem *gem, OutputContext *ctx
         String out = _rules.anchorPrependApply(gem);
         if (!out.isEmpty())
         {
-            ctx->print(QChar(OutputContext::CtrlAnchorPrepend) + out + QChar(OutputContext::CtrlAnchorPrepend));
+            ctx->print(OutputContext::CtrlAnchorPrepend + out + OutputContext::CtrlAnchorPrepend);
         }
         out = _rules.anchorAppendApply(gem);
         if (!out.isEmpty())
         {
-            ctx->print(QChar(OutputContext::CtrlAnchorAppend) + out + QChar(OutputContext::CtrlAnchorAppend));
+            ctx->print(OutputContext::CtrlAnchorAppend + out + OutputContext::CtrlAnchorAppend);
         }
     }
 

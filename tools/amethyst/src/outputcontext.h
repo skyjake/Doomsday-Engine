@@ -25,21 +25,22 @@ class OutputContext : public Linkable
 {
 public:
     enum AlignMode { AlignLeft, AlignRight, AlignCenter };
+
     enum ControlChar {
-        CtrlAlign = 1,
-        CtrlFill = 2,
-        CtrlUnderfill = 3,
+        CtrlAlign           = 1,
+        CtrlFill            = 2,
+        CtrlUnderfill       = 3,
         CtrlLinePrefixBegin = 4,
-        CtrlLinePrefixEnd = 5,
-        CtrlCleanBreaks = 6,    // remove duplicate breaks
-        CtrlRawBreaks = 7,      // output breaks as-is
-        CtrlAnchor = 8,         // position marker for anchor output
-        CtrlBreakingSpace = 9,  // \t
-        CtrlParagraphBreak = 10,// \n
-        CtrlAnchorPrepend = 11,
-        CtrlAnchorAppend = 12,
-        CtrlLineBreak = 13,     // \r
-        CtrlTab = 14
+        CtrlLinePrefixEnd   = 5,
+        CtrlCleanBreaks     = 6,  // remove duplicate breaks
+        CtrlRawBreaks       = 7,  // output breaks as-is
+        CtrlAnchor          = 8,  // position marker for anchor output
+        CtrlBreakingSpace   = 9,  // \t
+        CtrlParagraphBreak  = 10, // \n
+        CtrlAnchorPrepend   = 11,
+        CtrlAnchorAppend    = 12,
+        CtrlLineBreak       = 13, // \r
+        CtrlTab             = 14
     };
 
 public:
@@ -88,3 +89,37 @@ private:
     Gem *_gem, *_top;
 };
 
+inline QChar toChar(OutputContext::ControlChar c)
+{
+    return QChar(int(c));
+}
+
+inline bool operator==(OutputContext::ControlChar a, QChar b)
+{
+    return toChar(a) == b;
+}
+
+inline bool operator==(QChar a, OutputContext::ControlChar b)
+{
+    return a == toChar(b);
+}
+
+inline bool operator!=(OutputContext::ControlChar a, QChar b)
+{
+    return toChar(a) != b;
+}
+
+inline bool operator!=(QChar a, OutputContext::ControlChar b)
+{
+    return a != toChar(b);
+}
+
+inline QString operator+(const QString &s, OutputContext::ControlChar c)
+{
+    return s + toChar(c);
+}
+
+inline QString operator+(OutputContext::ControlChar c, const QString &s)
+{
+    return toChar(c) + s;
+}

@@ -25,3 +25,9 @@ String::String(const QString& qs) : QString(qs)
 
 String::String(const char* str) : QString(str)
 {}
+
+String &String::operator+=(int ch)
+{
+    *this += QChar(ch);
+    return *this;
+}

@@ -186,7 +186,7 @@ abortLine:
 
 static bool insertAnchorText(QString& line, QString text, bool prepend)
 {
-    int pos = line.lastIndexOf(QChar(OutputContext::CtrlAnchor));
+    int pos = line.lastIndexOf(toChar(OutputContext::CtrlAnchor));
     if (pos >= 0)
     {
         line.insert(prepend? pos : pos + 1, text);
@@ -236,13 +236,13 @@ void OutputState::rawOutput(String& currentLine, String& linePrefix, QStringList
         case OutputContext::CtrlAnchorPrepend:
         case OutputContext::CtrlAnchorAppend:
         {
-            bool prepend = (c.toLatin1() == OutputContext::CtrlAnchorPrepend);
+            bool prepend = (c == OutputContext::CtrlAnchorPrepend);
             QString str;
             // Get the entire anchor string from the source.
             forever
             {
                 c = (*source)[_pos++];
-                if (c.toLatin1() == OutputContext::CtrlAnchorAppend || c.toLatin1() == OutputContext::CtrlAnchorPrepend)
+                if (c == OutputContext::CtrlAnchorAppend || c == OutputContext::CtrlAnchorPrepend)
                     break;
                 str += c;
             }

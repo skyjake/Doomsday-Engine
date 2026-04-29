@@ -25,5 +25,13 @@ public:
     String();
     String(const QString& qs);
     String(const char* str);
-};
 
+    String &operator+=(int);
+    
+    inline String &operator+=(const String &other) {
+        QString::operator+=(other);
+        return *this;
+    }
+
+    using QString::operator+=;
+};

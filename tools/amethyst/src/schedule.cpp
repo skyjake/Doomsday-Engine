@@ -241,7 +241,7 @@ void Schedule::render(QTextStream &os, bool structuredOutput)
         if (!structuredOutput)
         {
             // Filter out any remaining control characters.
-            s.replace(QChar(OutputContext::CtrlAnchor), "");
+            s.replace(toChar(OutputContext::CtrlAnchor), "");
         }
 
         line = s + "\n";

@@ -27,7 +27,7 @@ Source::Source() : Linkable(true)
     _lineNumber = 0;
     _mustDeleteStream = false;
     _is = 0;
-    _peekedChar = 0;
+    _peekedChar = '\0';
 }
 
 Source::Source(QTextStream& inputStream) : Linkable()
