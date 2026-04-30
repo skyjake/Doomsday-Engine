@@ -7,7 +7,6 @@ include (QtConfig)
 set (CMAKE_AUTOMOC ON)
 set (CMAKE_AUTORCC ON)
 
-find_package (Qt6 COMPONENTS Gui Widgets)
 find_package (SDL3Libs)
 
 set (SOURCES
@@ -62,4 +61,3 @@ if (APPLE OR WIN32)
 endif ()
 
 deng_deploy_target (gloomed)
-deng_codesign (gloomed)

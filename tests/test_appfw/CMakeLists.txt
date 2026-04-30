@@ -26,5 +26,3 @@ if (APPLE)
 endif ()
 
 deng_deploy_target (test_appfw)
-deng_codesign (test_appfw)
-

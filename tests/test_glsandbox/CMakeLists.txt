@@ -31,4 +31,3 @@ if (APPLE)
 endif ()
 
 deng_deploy_target (test_glsandbox)
-deng_codesign (test_glsandbox)

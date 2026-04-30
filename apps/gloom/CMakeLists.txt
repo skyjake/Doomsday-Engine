@@ -63,4 +63,3 @@ if (WIN32)
 endif ()
 
 deng_deploy_target (gloom)
-deng_codesign (gloom)
