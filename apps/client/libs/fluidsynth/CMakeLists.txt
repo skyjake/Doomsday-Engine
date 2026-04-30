@@ -21,7 +21,7 @@ option (DE_FLUIDSYNTH_EMBEDDED
 )
 
 if (DE_FLUIDSYNTH_EMBEDDED)
-    find_package (Glib)
+    find_package (Glib REQUIRED)
 
     if (APPLE)
         # Bundle library dependencies on macOS.

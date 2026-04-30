@@ -53,9 +53,11 @@ macro (deng_install_deployqt target)
     if (APPLE)
         get_target_property (_qtbin Qt6::qmake IMPORTED_LOCATION)
         get_filename_component (_qtbin "${_qtbin}" DIRECTORY)
-        find_program (MACDEPLOYQT_EXECUTABLE macdeployqt HINTS "${_qtbin}")
+        # Derive macdeployqt from Qt6::qmake's bin directory to avoid using a
+        # stale cached find_program result pointing to a different Qt version.
+        set (_macdeployqt "${_qtbin}/macdeployqt")
         install (CODE "
-            execute_process (COMMAND \"${MACDEPLOYQT_EXECUTABLE}\"
+            execute_process (COMMAND \"${_macdeployqt}\"
                 \"\${CMAKE_INSTALL_PREFIX}/$<TARGET_BUNDLE_DIR_NAME:${target}>\")
         ")
     elseif (WIN32)

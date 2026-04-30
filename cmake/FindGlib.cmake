@@ -32,11 +32,9 @@ elseif (MSYS2_LIBS_DIR)
     endforeach (_bin)
 else ()
     # Find GLib via pkg-config.
-    find_package (PkgConfig)
-
-    add_pkgconfig_interface_library (glib glib-2.0 gthread-2.0)
-
-    get_property (GLIB_LIBRARIES TARGET glib
-        PROPERTY INTERFACE_LINK_LIBRARIES
-    )
+    find_package (PkgConfig REQUIRED)
+    pkg_check_modules (GLIB REQUIRED IMPORTED_TARGET glib-2.0 gthread-2.0)
+    add_library (glib INTERFACE)
+    target_link_libraries (glib INTERFACE PkgConfig::GLIB)
+    set (GLIB_LIBRARIES ${GLIB_LINK_LIBRARIES})
 endif ()
