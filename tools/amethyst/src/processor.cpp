@@ -43,9 +43,9 @@ void Processor::warning(const char *format, ...)
     va_list args;
 
     va_start(args, format);
-    vsprintf(buf, format, args);
+    vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
-    
+
     qWarning() << Exception(String("Warning: ") + buf, _in->fileName(), _in->lineNumber());
 }
 
@@ -55,7 +55,7 @@ void Processor::error(const char *format, ...)
     va_list args;
 
     va_start(args, format);
-    vsprintf(buf, format, args);
+    vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
 
     throw Exception(buf, _in->fileName(), _in->lineNumber());
@@ -97,7 +97,7 @@ void Processor::init(QTextStream &input, QTextStream &output)
 
 bool Processor::getToken(String &token, bool require)
 {
-    if (require) 
+    if (require)
     {
         _in->mustGetToken(token);
         return true;
@@ -129,7 +129,7 @@ bool Processor::parseVerbatim(Shard *parent)
     {
         if (!escaped)
         {
-            if (c == '@') 
+            if (c == '@')
             {
                 escaped = true;
                 _in->ignore();
@@ -219,7 +219,7 @@ bool Processor::parseAt(Shard *parent)
 
     // First the command name.
     getToken(token, true);
-    if (token != "{") 
+    if (token != "{")
     {
         commandName = token;
     }
@@ -228,7 +228,7 @@ bool Processor::parseAt(Shard *parent)
         pushToken(token);
         warning("Missing command name.");
     }
-    
+
     // Any style modifiers?
     if ((pos = commandName.indexOf('/')) >= 0)
     {
@@ -295,7 +295,7 @@ bool Processor::parseAt(Shard *parent)
                 break;
             }
         }
-        // There is an argument. 
+        // There is an argument.
         switch (command->rule()->argType(childCount))
         {
         case ArgShard:
@@ -429,11 +429,11 @@ bool Processor::parseAt(Shard *parent)
         if (!command->first())
             error("Rules must have at least one argument.");
 
-        // GenerateRule will steal the requirement blocks.      
+        // GenerateRule will steal the requirement blocks.
         _rules.generateRule(command);
     }
 
-    // Preformatting requires that \n => \r. 
+    // Preformatting requires that \n => \r.
     if (command->isName("pre"))
     {
         Token *tok = command->arg();
@@ -454,17 +454,17 @@ bool Processor::parseStatement(Shard *parent, bool expectClose)
 {
     String token;
     bool gotToken;
-        
+
     // The first token determines the type of the statement.
     if (!getToken(token)) return false; // No more tokens.
     pushToken(token);
 
     // Each statement is represented by a shard.
     Shard *statement = parent->add(new Shard);
-    
+
     while ((gotToken = getTokenOrBlank(token)))
     {
-        if (token == "}") 
+        if (token == "}")
         {
             if (parent == &_root) error("Mismatched end of block.");
             break;
@@ -476,9 +476,9 @@ bool Processor::parseStatement(Shard *parent, bool expectClose)
         }
         else if (token == "{")   // Sub-statement.
             parseStatement(statement);
-        else if (token == "@") 
+        else if (token == "@")
             parseAt(statement);
-        else 
+        else
         {
             pushToken(token);
             parseBlock(statement);

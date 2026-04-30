@@ -22,7 +22,7 @@
 #include <QDebug>
 
 #ifndef _WIN32
-# ifdef HAVE_QT5
+# ifdef HAVE_QT6
 void messagePrinter(QtMsgType type, const QMessageLogContext &, const QString &msg)
 # else
 void messagePrinter(QtMsgType type, const char* msg)
@@ -33,7 +33,7 @@ void messagePrinter(QtMsgType type, const char* msg)
     case QtDebugMsg:
     case QtWarningMsg:
     case QtCriticalMsg:
-# ifdef HAVE_QT5
+# ifdef HAVE_QT6
         fwprintf(stderr, L"%s\n", msg.toLatin1().constData());
 # else
         fwprintf(stderr, L"%s\n", msg);
@@ -41,12 +41,15 @@ void messagePrinter(QtMsgType type, const char* msg)
         break;
 
     case QtFatalMsg:
-# ifdef HAVE_QT5
+# ifdef HAVE_QT6
         fwprintf(stderr, L"Fatal Error: %s\n", msg.toLatin1().constData());
 # else
         fwprintf(stderr, L"Fatal Error: %s\n", msg);
 # endif
         abort();
+
+    default:
+        break;
     }
 }
 #endif
@@ -81,7 +84,7 @@ void printUsage(void)
 int main(int argc, char **argv)
 {
 #ifndef _WIN32
-# ifdef HAVE_QT5
+# if defined (HAVE_QT6)
     qInstallMessageHandler(messagePrinter);
 # else
     qInstallMsgHandler(messagePrinter);

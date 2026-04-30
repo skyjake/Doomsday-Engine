@@ -30,7 +30,7 @@ Length::Length(const Length &other)
 
 bool Length::isClear() const
 {
-    for (int i = 0; i < NumValues; i++) 
+    for (int i = 0; i < NumValues; i++)
         if (_values[i] != NotSet) return false;
     return true;
 }
@@ -92,7 +92,7 @@ bool Length::canLearnFrom(const Length &other)
     return false;
 }
 
-Length &Length::operator += (const Length &other)
+Length &Length::operator+=(const Length &other)
 {
     for (int i = 0; i < NumValues; i++)
         if (_values[i] == NotSet && other._values[i] != NotSet)

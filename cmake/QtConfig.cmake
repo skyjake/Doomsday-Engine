@@ -1,32 +1,44 @@
-# Auto-detect Qt 6 under C:/Qt/ on Windows (standard Qt installer layout)
-if (WIN32 AND NOT Qt6_DIR)
-    file (GLOB _qt6_candidates
-        "C:/Qt/6.*/msvc*_64"
-        "C:/Qt/6.*/*_64"
-    )
-    if (_qt6_candidates)
-        list (SORT _qt6_candidates ORDER DESCENDING)
-        list (GET _qt6_candidates 0 _qt6_prefix)
-        list (INSERT CMAKE_PREFIX_PATH 0 "${_qt6_prefix}")
-    endif ()
-    unset (_qt6_candidates)
-    unset (_qt6_prefix)
-endif ()
+find_package (Qt6 COMPONENTS Core Gui Widgets)
 
-# Auto-detect Homebrew qt@6 on macOS (keg-only, not in PATH by default)
-if (APPLE AND NOT Qt6_DIR)
-    find_program (_brew brew)
-    if (_brew)
-        execute_process (COMMAND ${_brew} --prefix qt@6
-            OUTPUT_VARIABLE _qt6_prefix
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            ERROR_QUIET
+if (NOT Qt6_FOUND)
+    # Auto-detect Qt 6 under C:/Qt/ on Windows (standard Qt installer layout)
+    if (WIN32 AND NOT Qt6_DIR)
+        file (GLOB _qt6_candidates
+            "C:/Qt/6.*/msvc*_64"
+            "C:/Qt/6.*/*_64"
         )
-        if (_qt6_prefix)
+        if (_qt6_candidates)
+            list (SORT _qt6_candidates ORDER DESCENDING)
+            list (GET _qt6_candidates 0 _qt6_prefix)
             list (INSERT CMAKE_PREFIX_PATH 0 "${_qt6_prefix}")
         endif ()
+        unset (_qt6_candidates)
+        unset (_qt6_prefix)
     endif ()
+
+    # Auto-detect Homebrew qt@6 on macOS (keg-only, not in PATH by default)
+    if (APPLE AND NOT Qt6_DIR)
+        find_program (_brew brew)
+        if (_brew)
+            execute_process (COMMAND ${_brew} --prefix qt@6
+                OUTPUT_VARIABLE _qt6_prefix
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                ERROR_QUIET
+            )
+            if (_qt6_prefix)
+                list (INSERT CMAKE_PREFIX_PATH 0 "${_qt6_prefix}")
+            endif ()
+        endif ()
+    endif ()
+
+    find_package (Qt6 COMPONENTS Core Gui Widgets)
 endif ()
+
+if (NOT Qt6_FOUND)
+    message (FATAL_ERROR "Qt6 not found (try setting Qt6_DIR)")
+endif ()
+
+add_definitions (-DHAVE_QT6)
 
 # Convenience wrapper: deng_target_link_qt (target PRIVATE Widgets Core ...)
 macro (deng_target_link_qt target visibility)

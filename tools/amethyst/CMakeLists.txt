@@ -17,15 +17,14 @@ cmake_minimum_required (VERSION 3.10)
 project (Amethyst)
 
 include (../../cmake/QtConfig.cmake)
-find_package (Qt6 COMPONENTS Core)
 
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
 set (CMAKE_AUTOMOC ON)
 
 # In a standalone source package, the cmake modules are in a subdirectory.
 # Otherwise, use Doomsday's CMake modules.
-set (CMAKE_MODULE_PATH 
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake 
+set (CMAKE_MODULE_PATH
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake
 )
 

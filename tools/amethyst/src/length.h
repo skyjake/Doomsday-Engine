@@ -25,7 +25,7 @@ class Length
 {
 public:
     enum { NotSet = -1 };
-    enum ID { Invalid = -1, LeftMargin, RightMargin, Spacing, 
+    enum ID { Invalid = -1, LeftMargin, RightMargin, Spacing,
         Indent, NumValues };
 
 public:
@@ -42,7 +42,8 @@ public:
     void defaults();
     bool canLearnFrom(const Length &other);
 
-    Length &operator += (const Length &other);
+    Length &operator=(const Length &other) = default;
+    Length &operator+=(const Length &other);
 
 private:
     ID IDForName(const String& name);
