@@ -78,7 +78,7 @@ void App_Log(unsigned int metadata, const char *format, ...)
     char buffer[0x2000];
     va_list args;
     va_start(args, format);
-    size_t nc = vsprintf(buffer, format, args); /// @todo unsafe
+    size_t nc = vsnprintf(buffer, sizeof(buffer), format, args); /// @todo unsafe
     va_end(args);
     DE_ASSERT(nc < sizeof(buffer) - 2);
     if (!nc) return;
@@ -211,7 +211,7 @@ void LogBuffer_Printf(unsigned int metadata, const char *format, ...)
     char buffer[0x2000];
     va_list args;
     va_start(args, format);
-    size_t nc = vsprintf(buffer, format, args); /// @todo unsafe
+    size_t nc = vsnprintf(buffer, sizeof(buffer), format, args); /// @todo unsafe
     va_end(args);
     DE_ASSERT(nc < sizeof(buffer) - 1);
     DE_UNUSED(nc);

@@ -142,7 +142,7 @@ int DD_Executef(int silent, const char *command, ...)
     char            buffer[4096];
 
     va_start(argptr, command);
-    vsprintf(buffer, command, argptr);
+    vsnprintf(buffer, sizeof(buffer), command, argptr);
     va_end(argptr);
     return Con_Execute(CMDS_GAME, buffer, silent, false);
 }
