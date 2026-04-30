@@ -32,6 +32,7 @@ deng_link_libraries (gloomed PRIVATE DengGloom SDL3::SDL3)
 deng_target_link_qt (gloomed PRIVATE Widgets)
 
 if (APPLE)
+    set (MACOSX_BUNDLE_BUNDLE_NAME "net.dengine.gloomed")
     set_target_properties (gloomed PROPERTIES
         OUTPUT_NAME gloomed
         MACOSX_BUNDLE_INFO_PLIST ${DE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in
