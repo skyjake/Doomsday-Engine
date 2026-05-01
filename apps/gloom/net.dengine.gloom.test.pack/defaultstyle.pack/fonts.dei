@@ -1,142 +1,131 @@
 # Fonts for the default UI style
 #
+# - family: font family name
 # - size can be "pt" or "px", defaults to "pt"
-# - weight: normal bold light
-# - style: normal italic
+# - weight: normal, bold, light
+# - style: normal, italic
+# - transform: normal, uppercase, lowercase
 
 script {
-    import Version, DisplayMode, gui
-    # Load the Open Sans font contained in this pack.
-    def loadOpenSans()
-        import App, Path
-        fontDir = __file__.fileNamePath() / "fonts"
-        for style in ['Regular', 'Bold', 'Italic', 'BoldItalic', 'Light', 'LightItalic']
-            App.loadFont(fontDir / ("OpenSans-%s.ttf" % style))
+    import Version, gui, DisplayMode
+
+    # Load the fonts contained in this pack.
+    # Note that this pack may be included from other UI styles, so we'll use an
+    # absolute directory to find the font files.
+    def loadFonts()
+        import App
+        fontDir = "/packs/net.dengine.stdlib.gui/fonts"
+        fontStyles = ['Regular', 'Bold', 'Italic', 'BoldItalic', 'Light', 'LightItalic']
+        for style in fontStyles
+            App.loadFont(fontDir / ("Source Sans Pro/SourceSansPro-%s.ttf" % style))
+        end
+        # Monospace font, too.
+        for style in ['Regular', 'Bold', 'Light']
+            App.loadFont(fontDir / ("Source Code Pro/SourceCodePro-%s.ttf" % style))
         end
     end
 }
 
 group {
-    condition: Version.OS == 'windows'
+    # All platforms use the same stbtt TrueType font renderer.
+    condition: True
 
-    script { loadOpenSans() }
+    script { loadFonts() }
 
     font default {
-        family: Open Sans
-        size: 12pt
+        family: SourceSansPro
+        size: 16pt
         weight: normal
         style: normal
     }
 
     font monospace inherits default {
-        family: Courier New
-        size: 10pt
-    }
-}
-
-group {
-    condition: Version.OS == 'macx'
-
-    script {
-        # Define mappings for native font styles and weights.
-        import App
-        App.addFontMapping("Helvetica Neue", {
-            ['regular', 25]: 'HelveticaNeue-Light',
-            ['regular', 50]: 'HelveticaNeue',
-            ['regular', 75]: 'HelveticaNeue-Bold',
-            ['italic',  25]: 'HelveticaNeue-LightItalic',
-            ['italic',  50]: 'HelveticaNeue-Italic',
-            ['italic',  75]: 'HelveticaNeue-BoldItalic'
-        })
-        App.addFontMapping("Menlo", {
-            ['regular', 25]: 'Menlo-Regular',
-            ['regular', 50]: 'Menlo-Regular',
-            ['regular', 75]: 'Menlo-Bold',
-            ['italic',  25]: 'Menlo-Italic',
-            ['italic',  50]: 'Menlo-Italic',
-            ['italic',  75]: 'Menlo-BoldItalic'
-        })
-    }
-
-    font default {
-        family: Helvetica Neue
-        size $: gui.scale('16pt', DisplayMode.PIXEL_RATIO)
-        weight: normal
-        style: normal
-    }
-
-    font monospace inherits default {
-        family: Menlo
-        size $: gui.scale('13pt', DisplayMode.PIXEL_RATIO)
-    }
-}
-
-group {
-    condition: Version.OS == 'unix'
-
-    font default {
-        family: Liberation Sans
-        size: 13pt
-        weight: normal
-        style: normal
-    }
-
-    font monospace inherits default {
-        family: FreeMono
+        family: SourceCodePro
         size: 12pt
     }
 }
 
 font title inherits default {
-    size $: gui.scale(self.size, 1.75)
-    weight: light
+    size $: gui.scale(self.size, 1.4)
+    weight: bold
 }
 
 font heading inherits title {
     size $: gui.scale(default.size, 1.2)
+    weight: normal
 }
 
 font small inherits default {
-    size $: gui.scale(self.size, 0.75)
+    size $: gui.scale(self.size, 0.80)
 }
 
-group editor {
+menu {
+    font empty inherits heading {
+        weight: bold
+    }
+}
+
+editor {
     font plaintext inherits default {}
-    font hint inherits default {
+    font hint.default inherits default {
+        style: italic
+        weight: light
+    }
+    font hint.small inherits small {
         style: italic
         weight: light
     }
 }
 
-group separator {
+separator {
     font empty inherits default {
         size $: gui.scale(self.size, 0.5)
     }
-    font label inherits small {
+    font label inherits default {
+        #condition: Version.OS == 'macx' or Version.OS == 'ios'
+        size $: gui.scale(self.size, 0.90)
+        #transform: uppercase
         weight: bold
     }
+    #font label inherits small {
+    #    condition: Version.OS != 'macx' and Version.OS != 'ios'
+    #    weight: bold
+    #}
+    font annotation inherits small {}
 }
 
-group choice {
+choice {
     font selected inherits default {
         weight: bold
     }
 }
 
-group tab {
-    font label inherits small {
-        weight: bold
+tab {
+    font label inherits title {
+        size $: gui.scale(self.size, 0.80)
+        weight: normal
     }
     font selected inherits tab.label {}
 }
 
-group slider {
+slider {
     font label inherits small {}
     font value inherits slider.label {
         weight: bold
     }
 }
 
-group log {
+log {
     font normal inherits default {}
 }
+
+document {
+    font monospace inherits monospace {}
+}
+
+#script {
+#    # Make monospace a bit smaller on Windows - Courier New is pretty wide.
+#    if Version.OS == 'windows'
+#        document.monospace.size = '9pt'
+#    end
+#}

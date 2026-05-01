@@ -24,6 +24,7 @@ group generic
             }"
     }
 
+#>
     shader texture
     {
         vertex = "
@@ -44,6 +45,7 @@ group generic
                 out_FragColor = texture(uTex, vUV);
             }"
     }
+<#
 
     group textured
     {
