@@ -1028,8 +1028,22 @@ Image Image::withAlpha(const Image &grayscale) const
 
 Image Image::rgbSwapped() const
 {
-    DE_ASSERT_FAIL("Image::rgbSwapped is not implemented");
-    return {};
+    DE_ASSERT(d->format == RGB_888 || d->format == RGBA_8888 || d->format == RGBx_8888);
+    Image result(d->size, d->format);
+    const dsize bpp = bytesPerPixel();
+    for (duint y = 0; y < height(); ++y)
+    {
+        const dbyte *src = row(y);
+        dbyte *      dst = result.row(y);
+        for (duint x = 0; x < width(); ++x, src += bpp, dst += bpp)
+        {
+            dst[0] = src[2];
+            dst[1] = src[1];
+            dst[2] = src[0];
+            if (bpp == 4) dst[3] = src[3];
+        }
+    }
+    return result;
 }
 
 Image Image::flipped() const
