@@ -54,6 +54,8 @@ if (APPLE)
         Deng::libdoomsday
         Deng::libgloom
         glbinding::glbinding
+        assimp::assimp
+        fmodex
     )
     deng_bundle_sdl3 (gloom)
 endif ()

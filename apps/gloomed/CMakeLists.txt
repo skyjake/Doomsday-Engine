@@ -7,6 +7,7 @@ include (QtConfig)
 set (CMAKE_AUTOMOC ON)
 set (CMAKE_AUTORCC ON)
 
+find_package (FMOD)
 find_package (SDL3Libs)
 
 set (SOURCES
