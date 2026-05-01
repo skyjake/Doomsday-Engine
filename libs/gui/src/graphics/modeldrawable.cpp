@@ -54,10 +54,12 @@ public:
 
     size_t Read(void *pvBuffer, size_t pSize, size_t pCount)
     {
-        const size_t num = pSize * pCount;
+        const size_t fileSize = _file.size();
+        if (_pos >= fileSize || pSize == 0) return 0;
+        const size_t num = de::min(pSize * pCount, fileSize - _pos);
         _file.get(_pos, reinterpret_cast<IByteArray::Byte *>(pvBuffer), num);
         _pos += num;
-        return pCount;
+        return num / pSize;
     }
 
     size_t Write(const void *, size_t, size_t)
