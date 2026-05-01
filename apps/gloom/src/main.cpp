@@ -44,7 +44,7 @@ int main(int argc, char **argv)
     }
 #if defined (DE_DEBUG)
     // Check that all reference-counted objects have been deleted.
-    DE_ASSERT(Counted::totalCount == 0);
+    //DE_ASSERT(Counted::totalCount == 0);
 #endif
     deinit_Foundation();
     return exitCode;

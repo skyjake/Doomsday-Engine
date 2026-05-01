@@ -468,7 +468,7 @@ DE_PIMPL(AudioSystem)
             duint version = 0;
             FMOD_System_GetPluginInfo(system,
                 handle, 0, reinterpret_cast<char *>(name.data()), int(name.size()), &version);
-            LOG_AUDIO_VERBOSE(" - %i: %s v%x") << i << String::fromLatin1(name) << version;
+            LOG_AUDIO_VERBOSE(" - %i: %s v%x") << i << name.c_str() << version;
         }
     }
 
