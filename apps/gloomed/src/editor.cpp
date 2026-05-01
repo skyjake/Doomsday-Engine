@@ -1219,7 +1219,11 @@ DE_PIMPL(Editor)
         DE_ASSERT(mapId);
         DE_ASSERT(packageName);
 
-        Folder &root = FS::get().makeFolder(packageRootPath()); // or use existing folder...
+        auto &fs = FS::get();
+
+        Folder &root = fs.makeFolder(packageRootPath()); // or use existing folder...
+
+        fs.makeFolder(root.path() / "maps");
 
         // Rewrite the .gloommap file.
         {
