@@ -1,5 +1,5 @@
-# The Doomsday Engine Project
-# Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+﻿# The Doomsday Engine Project
+# Copyright (c) 2015-2017 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
 
 cmake_minimum_required (VERSION 3.10)
 project (DE_LIBGAMEKIT_HEXEN)
@@ -16,7 +16,7 @@ add_definitions (
 include_directories (include)
 file (GLOB_RECURSE SOURCES include/*.h)
 file (GLOB SOURCES src/*.c src/*.cpp)
-deng_merge_sources (hud_widgets src/hud/widgets/*.cpp)
+deng_sources (src/hud/widgets/*.cpp)
 
 deng_find_resources (libhexen.pk3)
 

@@ -196,7 +196,7 @@ macro (deng_glob_sources varName globbing)
     set (_src)
 endmacro ()
 
-macro (deng_merge_sources srcName globbing)
+macro (deng_sources globbing)
     deng_glob_sources (SOURCES ${globbing})
 endmacro ()
 
@@ -594,7 +594,7 @@ function (deng_add_application target)
         install (TARGETS ${target} DESTINATION bin)
         # Packages are installed separately.
     endif ()
-    if (WIN32)
+    if (WIN32 AND NOT target MATCHES "test_.*")
         set_property (TARGET ${target} PROPERTY WIN32_EXECUTABLE ON)
     endif ()
     # Ensure package targets are built before the application.

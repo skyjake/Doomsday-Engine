@@ -1,4 +1,4 @@
-# Doomsday Engine -- libgui
+﻿# Doomsday Engine -- libgui
 
 cmake_minimum_required (VERSION 3.10)
 project (DE_LIBGUI)
@@ -34,13 +34,13 @@ add_definitions (-D__LIBGUI__=1)
 file (GLOB_RECURSE HEADERS include/de/*)
 file (GLOB SOURCES src/stb_impl.c src/*.cpp src/*.h src/input/*.c src/text/*.m)
 
-deng_merge_sources (audio    src/audio/*.cpp)
-deng_merge_sources (dialogs  src/dialogs/*.cpp)
-deng_merge_sources (graphics src/graphics/*.cpp)
-deng_merge_sources (input    src/input/*.cpp)
-deng_merge_sources (text     src/text/*.cpp)
-deng_merge_sources (vr       src/vr/*.cpp)
-deng_merge_sources (widgets  src/widgets/*.cpp)
+deng_sources (src/audio/*.cpp)
+deng_sources (src/dialogs/*.cpp)
+deng_sources (src/graphics/*.cpp)
+deng_sources (src/input/*.cpp)
+deng_sources (src/text/*.cpp)
+deng_sources (src/vr/*.cpp)
+deng_sources (src/widgets/*.cpp)
 
 if (DE_X11 OR RASPBERRYPI)
     add_definitions (-DDE_USE_GENERIC_FILEDIALOG=1)

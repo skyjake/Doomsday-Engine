@@ -1,4 +1,4 @@
-# Doomsday Engine -- libcore
+﻿# Doomsday Engine -- libcore
 
 cmake_minimum_required (VERSION 3.10)
 project (DE_LIBCORE)
@@ -18,20 +18,6 @@ if (DE_LIBLEGACY_WRITER_TYPE_CHECK)
     add_definitions (-DDE_WRITER_TYPECHECK=1)
 endif ()
 
-# Definitions.
-add_definitions (
-    -D__LIBCORE__=1
-    -D__DE__=1
-    -D__DOOMSDAY__=1
-    -DLIBCORE_MAJOR_VERSION=${DE_VERSION_MAJOR}
-    -DLIBCORE_MINOR_VERSION=${DE_VERSION_MINOR}
-    -DLIBCORE_PATCHLEVEL=${DE_VERSION_PATCH}
-    -DLIBCORE_RELEASE_LABEL="${DE_RELEASE_TYPE}"
-    -DLIBCORE_VERSION="${DE_VERSION}"
-)
-if (DEFINED DE_BUILD)
-    add_definitions (-DLIBCORE_BUILD_TEXT="${DE_BUILD}")
-endif ()
 if (GIT_FOUND)
     execute_process (
         COMMAND ${GIT_EXECUTABLE} describe --tags --always --long
@@ -41,7 +27,6 @@ if (GIT_FOUND)
     )
     if (DE_GIT_DESCRIPTION)
         message (STATUS "Revision: ${DE_GIT_DESCRIPTION}")
-        add_definitions (-DLIBCORE_GIT_DESCRIPTION="${DE_GIT_DESCRIPTION}")
     endif ()
 endif ()
 
@@ -49,16 +34,16 @@ endif ()
 file (GLOB_RECURSE HEADERS include/de/*.h)
 file (GLOB SOURCES src/*.cpp src/*.h)
 
-deng_merge_sources (concurrency    src/concurrency/*.cpp)
-deng_merge_sources (core           src/core/*.cpp)
-deng_merge_sources (data           src/data/*.cpp)
-deng_merge_sources (filesys        src/filesys/*.cpp)
-deng_merge_sources (filesys_remote src/filesys/remote/*.cpp)
-deng_merge_sources (net            src/net/*.cpp)
-deng_merge_sources (scripting      src/scripting/*.cpp)
-deng_merge_sources (term           src/term/*.cpp)
-deng_merge_sources (widgets        src/widgets/*.cpp)
-deng_glob_sources (SOURCES         src/legacy/*.c*) # no merging where C/C++ mixed
+deng_sources (src/concurrency/*.cpp)
+deng_sources (src/core/*.cpp)
+deng_sources (src/data/*.cpp)
+deng_sources (src/filesys/*.cpp)
+deng_sources (src/filesys/remote/*.cpp)
+deng_sources (src/net/*.cpp)
+deng_sources (src/scripting/*.cpp)
+deng_sources (src/term/*.cpp)
+deng_sources (src/widgets/*.cpp)
+deng_sources (src/legacy/*.c*)
 
 if (WIN32)
     # Update the resource file.
@@ -71,6 +56,22 @@ endif ()
 deng_add_package (net.dengine.stdlib)
 
 deng_add_library (libcore ${SOURCES} ${HEADERS})
+target_compile_definitions (libcore PRIVATE
+    __LIBCORE__=1
+    __DE__=1
+    __DOOMSDAY__=1
+    LIBCORE_MAJOR_VERSION=${DE_VERSION_MAJOR}
+    LIBCORE_MINOR_VERSION=${DE_VERSION_MINOR}
+    LIBCORE_PATCHLEVEL=${DE_VERSION_PATCH}
+    LIBCORE_RELEASE_LABEL="${DE_RELEASE_TYPE}"
+    LIBCORE_VERSION="${DE_VERSION}"
+)
+if (DEFINED DE_BUILD)
+    target_compile_definitions (libcore PRIVATE LIBCORE_BUILD_TEXT="${DE_BUILD}")
+endif ()
+if (DE_GIT_DESCRIPTION)
+    target_compile_definitions (libcore PRIVATE LIBCORE_GIT_DESCRIPTION="${DE_GIT_DESCRIPTION}")
+endif ()
 target_precompile_headers (libcore PRIVATE "${DE_SOURCE_DIR}/cmake/pch/pch_core.h")
 target_include_directories (libcore PRIVATE ${ZLIB_INCLUDE_DIR})
 target_link_libraries (libcore PUBLIC ${ZLIB_LIBRARIES} the_Foundation::the_Foundation)

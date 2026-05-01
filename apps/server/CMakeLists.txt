@@ -1,5 +1,5 @@
-# The Doomsday Engine Project -- Server
-# Copyright (c) 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+﻿# The Doomsday Engine Project -- Server
+# Copyright (c) 2012-2017 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
 # Copyright (c) 2012-2015 Daniel Swanson <danij@dengine.net>
 
 cmake_minimum_required (VERSION 3.10)
@@ -17,7 +17,7 @@ file (GLOB API_HEADERS ../api/*.h)
 file (GLOB_RECURSE HEADERS include/*.h)
 file (GLOB SOURCES src/*.cpp)
 
-deng_merge_sources (server src/server/*.cpp)
+deng_sources (src/server/*.cpp)
 
 # TODO: Get rid of these, shared code should be in libdoomsday.
 set (src ../client)
@@ -66,12 +66,12 @@ set (SHARED_WITH_CLIENT
     ${src}/src/sys_system.cpp
 )
 
-deng_merge_sources (audio_base    ${src}/src/audio/base/*.cpp)
-deng_merge_sources (infine        ${src}/src/ui/infine/*.cpp)
-deng_merge_sources (misc          ${src}/src/misc/*.cpp)
-deng_merge_sources (net_base      ${src}/src/network/base/*.cpp)
-deng_merge_sources (resource_base ${src}/src/resource/base/*.cpp)
-deng_merge_sources (world_base    ${src}/src/world/base/*.cpp)
+deng_sources (${src}/src/audio/base/*.cpp)
+deng_sources (${src}/src/ui/infine/*.cpp)
+deng_sources (${src}/src/misc/*.cpp)
+deng_sources (${src}/src/network/base/*.cpp)
+deng_sources (${src}/src/resource/base/*.cpp)
+deng_sources (${src}/src/world/base/*.cpp)
 
 if (WIN32)
     include_directories (../client/include/windows)

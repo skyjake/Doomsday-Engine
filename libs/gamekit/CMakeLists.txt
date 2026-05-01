@@ -1,4 +1,4 @@
-# Doomsday Engine -- GameKit: game extensions
+﻿# Doomsday Engine -- GameKit: game extensions
 
 cmake_minimum_required (VERSION 3.10)
 project (DE_LIBGAMEKIT)
@@ -20,7 +20,7 @@ include_directories (${DE_API_DIR})
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/gamekit/*)
 
-deng_merge_sources (libgamekit src/*.cpp)
+deng_sources (src/*.cpp)
 
 deng_add_library (libgamekit ${SOURCES} ${HEADERS})
 target_precompile_headers (libgamekit PRIVATE "${DE_SOURCE_DIR}/cmake/pch/pch_gamekit_lib.h")

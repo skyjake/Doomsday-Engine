@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.10)
+﻿cmake_minimum_required (VERSION 3.10)
 project (DE_LIBGLOOM)
 
 include (../../cmake/Config.cmake)
@@ -23,11 +23,11 @@ add_definitions (-D__LIBGLOOM__=1)
 
 file (GLOB_RECURSE HEADERS include/gloom/[a-zA-Z]*)
 
-deng_merge_sources (libgloom src/*.cpp)
-deng_merge_sources (geo      src/geo/*.cpp)
-deng_merge_sources (render   src/render/*.cpp)
-deng_merge_sources (world    src/world/*.cpp)
-deng_merge_sources (audio    src/audio/*.cpp)
+deng_sources (src/*.cpp)
+deng_sources (src/geo/*.cpp)
+deng_sources (src/render/*.cpp)
+deng_sources (src/world/*.cpp)
+deng_sources (src/audio/*.cpp)
 
 # TODO: This should be a static library.
 deng_add_library (libgloom ${SOURCES} ${HEADERS})

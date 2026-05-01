@@ -1,5 +1,5 @@
-# The Doomsday Engine Project -- Client
-# Copyright (c) 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+﻿# The Doomsday Engine Project -- Client
+# Copyright (c) 2012-2017 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
 # Copyright (c) 2012-2014 Daniel Swanson <danij@dengine.net>
 
 cmake_minimum_required (VERSION 3.10)
@@ -36,30 +36,30 @@ file (GLOB         API_HEADERS ../api/*.h)
 file (GLOB_RECURSE HEADERS     include/[A-Za-z]*)
 file (GLOB         SOURCES     src/*.cpp src/*.c)
 
-deng_merge_sources (audio         src/audio/*.cpp)
-deng_merge_sources (audio_base    src/audio/base/*.cpp)
-deng_merge_sources (client        src/client/*.cpp)
-deng_merge_sources (misc          src/misc/*.cpp)
-deng_merge_sources (network       src/network/*.cpp)
-deng_merge_sources (network_base  src/network/base/*.cpp)
-deng_merge_sources (render        src/render/*.cpp)
-deng_merge_sources (render_fx     src/render/fx/*.cpp)
-deng_merge_sources (resource      src/resource/*.cpp)
-deng_merge_sources (resource_base src/resource/base/*.cpp)
-deng_merge_sources (ui            src/ui/*.cpp)
-deng_merge_sources (ui_dialogs    src/ui/dialogs/*.cpp)
-deng_merge_sources (ui_editors    src/ui/editors/*.cpp)
-deng_merge_sources (ui_home       src/ui/home/*.cpp)
-deng_merge_sources (ui_infine     src/ui/infine/*.cpp)
-deng_merge_sources (ui_widgets    src/ui/widgets/*.cpp)
+deng_sources (src/audio/*.cpp)
+deng_sources (src/audio/base/*.cpp)
+deng_sources (src/client/*.cpp)
+deng_sources (src/misc/*.cpp)
+deng_sources (src/network/*.cpp)
+deng_sources (src/network/base/*.cpp)
+deng_sources (src/render/*.cpp)
+deng_sources (src/render/fx/*.cpp)
+deng_sources (src/resource/*.cpp)
+deng_sources (src/resource/base/*.cpp)
+deng_sources (src/ui/*.cpp)
+deng_sources (src/ui/dialogs/*.cpp)
+deng_sources (src/ui/editors/*.cpp)
+deng_sources (src/ui/home/*.cpp)
+deng_sources (src/ui/infine/*.cpp)
+deng_sources (src/ui/widgets/*.cpp)
 if (NOT IOS)
     add_definitions (-DDE_HAVE_UPDATER)
-    deng_merge_sources (updater   src/updater/*.cpp)
+    deng_sources (src/updater/*.cpp)
 endif ()
-deng_merge_sources (world         src/world/*.cpp)
-deng_merge_sources (world_base    src/world/base/*.cpp)
+deng_sources (src/world/*.cpp)
+deng_sources (src/world/base/*.cpp)
 
-deng_glob_sources (SOURCES src/gl/*.cpp) # Can't merge due to GL deferred calls mechanism.
+deng_sources (src/gl/*.cpp)
 
 if (APPLE)
     include_directories (include/macx)
@@ -75,7 +75,7 @@ if (MSYS)
 endif ()
 if (UNIX)
     include_directories (include/unix)
-    deng_merge_sources (unix src/unix/*.cpp)
+    deng_sources (src/unix/*.cpp)
 endif ()
 
 # Documentation sources.

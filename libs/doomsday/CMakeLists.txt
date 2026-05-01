@@ -1,4 +1,4 @@
-# Doomsday Engine -- libdoomsday
+﻿# Doomsday Engine -- libdoomsday
 
 cmake_minimum_required (VERSION 3.10)
 project (DE_LIBDOOMSDAY)
@@ -29,17 +29,17 @@ configure_file (
 file (GLOB_RECURSE HEADERS include/doomsday/*)
 file (GLOB SOURCES src/c_wrapper/*.cpp)
 
-deng_merge_sources (libdoomsday src/*.cpp)
-deng_merge_sources (audio       src/audio/*.cpp)
-deng_merge_sources (defs        src/defs/*.cpp)
-deng_merge_sources (console     src/console/*.cpp)
-deng_merge_sources (filesys     src/filesys/*.cpp)
-deng_merge_sources (gamefw      src/gamefw/*.cpp)
-deng_merge_sources (mesh        src/mesh/*.cpp)
-deng_merge_sources (network     src/network/*.cpp)
-deng_merge_sources (resource    src/resource/*.cpp)
-deng_merge_sources (world       src/world/*.cpp)
-deng_merge_sources (world_bsp   src/world/bsp/*.cpp)
+deng_sources (src/*.cpp)
+deng_sources (src/audio/*.cpp)
+deng_sources (src/defs/*.cpp)
+deng_sources (src/console/*.cpp)
+deng_sources (src/filesys/*.cpp)
+deng_sources (src/gamefw/*.cpp)
+deng_sources (src/mesh/*.cpp)
+deng_sources (src/network/*.cpp)
+deng_sources (src/resource/*.cpp)
+deng_sources (src/world/*.cpp)
+deng_sources (src/world/bsp/*.cpp)
 
 deng_add_package (net.dengine.base)
 
