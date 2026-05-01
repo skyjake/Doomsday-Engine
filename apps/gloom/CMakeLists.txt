@@ -42,11 +42,12 @@ deng_add_application (gloom ${SOURCES} ${HEADERS})
 deng_link_libraries (gloom PRIVATE DengGloom SDL3::SDL3)
 
 if (APPLE)
+    set (MACOSX_BUNDLE_BUNDLE_NAME "net.dengine.gloom")
+    set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "Gloom")
     set_target_properties (gloom PROPERTIES
         OUTPUT_NAME Gloom
         MACOSX_BUNDLE_INFO_PLIST ${DE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in
      )
-    set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "Gloom")
     deng_install_bundle_deps (gloom
         the_Foundation::the_Foundation
         Deng::libcore
