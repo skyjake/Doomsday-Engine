@@ -38,8 +38,8 @@ class File;
  * All element names (key identifiers, block names, etc.) are case insensitive, although
  * their case is preserved when parsing the tree.
  *
- * See the Doomsday Wiki for an example of the syntax:
- * http://dengine.net/dew/index.php?title=Info
+ * See the Doomsday Manual for an example of the syntax:
+ * https://manual.dengine.net/modding/info
  *
  * This implementation is based on a C++ port of cfparser.py from Snowberry.
  * @ingroup data
