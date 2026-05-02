@@ -146,27 +146,15 @@ struct ImpIOSystem : public Assimp::IOSystem
 
 #if defined (DE_WINDOWS)
     // On Windows, assimp may be a release build while this DLL is a debug build.
-    // MSVC debug builds use _ITERATOR_DEBUG_LEVEL=2, which changes the std::string
-    // binary layout (adds a _Container_proxy* at offset 0). Accessing a release-mode
-    // std::string via debug-mode member functions reads wrong offsets and crashes.
-    // Override the directory stack methods to avoid dereferencing the mismatched
-    // std::string argument. resolvePath() uses referencePath directly, so the stack
-    // content is not needed for correct file resolution.
-    bool PushDirectory(const std::string &) override { ++_stackDepth; return true; }
-    bool PopDirectory() override
-    {
-        if (_stackDepth == 0) return false;
-        --_stackDepth;
-        return true;
-    }
-    size_t StackSize() const override { return _stackDepth; }
-    const std::string &CurrentDirectory() const override
-    {
-        static const std::string empty;
-        return empty;
-    }
-private:
-    int _stackDepth = 0;
+    // MSVC debug builds use _ITERATOR_DEBUG_LEVEL=2, which adds a _Container_proxy*
+    // at offset 0 in all STL containers, changing the binary layout of std::string.
+    // Accessing a release-mode std::string via debug-mode member functions reads
+    // wrong field offsets and crashes. Override PushDirectory to avoid dereferencing
+    // the mismatched std::string argument, and keep StackSize() at 0 so the OBJ
+    // parser takes the bare-filename path (which resolvePath handles via referencePath).
+    bool PushDirectory(const std::string &) override { return true; }
+    bool PopDirectory() override { return false; }
+    size_t StackSize() const override { return 0; }
 #endif
 };
 
