@@ -1408,7 +1408,11 @@ Editor::Editor()
     addKeyAction("Return",          [this]() { d->build(); });
 
     // Menu items.
+#if !defined (MACOSX)
+    QMenuBar *menuBar = new QMenuBar(this);
+#else
     QMenuBar *menuBar = new QMenuBar;
+#endif
     QMenu *fileMenu = menuBar->addMenu(tr("&File"));
     fileMenu->addAction("&New",        [this]() { d->newFile(); });
     fileMenu->addAction("&Open...",    [this]() { d->openFile(); }, QKeySequence("Ctrl+O"));
