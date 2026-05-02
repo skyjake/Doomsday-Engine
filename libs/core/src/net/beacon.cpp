@@ -28,6 +28,7 @@
 
 #include <the_Foundation/address.h>
 #include <the_Foundation/datagram.h>
+#include <the_Foundation/objectlist.h>
 
 namespace de {
 
@@ -107,7 +108,7 @@ DE_PIMPL(Beacon)
                     send_Datagram(sock, d->message, from);
                 }
                 iRelease(from);
-            }     
+            }
         });
     }
 
@@ -217,22 +218,39 @@ void Beacon::discover(const TimeSpan& timeOut, const TimeSpan& interval)
             d->listenPort = duint16(p);
             break;
         }
-        }
+    }
+
     if (!isOpen_Datagram(d->socket))
-        {
-            /// @throws PortError Could not open the UDP port.
+    {
+        /// @throws PortError Could not open the UDP port.
         throw PortError(
             "Beacon::discover",
             stringf("Could not bind to UDP ports %u...%u", d->udpPorts.start, d->udpPorts.end));
     }
 
     d->found.clear();
-
-    // Set up the broadcast range in advance.
     d->broadcastAddresses.clear();
-    for (duint p = d->udpPorts.start; p < d->udpPorts.end; ++p)
+
+    // Use per-interface subnet broadcast addresses.
+    auto interfaces = tF::make_ref(networkInterfaces_Address());
+    iConstForEach(ObjectList, i, interfaces)
     {
-        d->broadcastAddresses << tF::make_ref(newBroadcast_Address(duint16(p)));
+        const iAddress *iface = reinterpret_cast<const iAddress *>(i.object);
+        for (duint p = d->udpPorts.start; p < d->udpPorts.end; ++p)
+        {
+            if (iAddress *bcast = makeBroadcast_Address(iface, duint16(p)))
+            {
+                d->broadcastAddresses << tF::make_ref(bcast);
+            }
+        }
+    }
+    if (d->broadcastAddresses.isEmpty())
+    {
+        // Fallback if no interfaces were found.
+        for (duint p = d->udpPorts.start; p < d->udpPorts.end; ++p)
+        {
+            d->broadcastAddresses << tF::make_ref(newBroadcast_Address(duint16(p)));
+        }
     }
 
     // Time-out timer.
