@@ -102,6 +102,9 @@ bool Commander::launch()
 #if defined (MACOSX)
     cmd << convert(qApp->applicationDirPath() + "/../../../Gloom.app/Contents/MacOS/Gloom");
 #endif
+#if defined (DE_WINDOWS)
+    cmd << convert(qApp->applicationDirPath() + "/Gloom.exe");
+#endif
     d->proc.reset(cmd.executeProcess());
     return bool(d->proc);
 }
