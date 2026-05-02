@@ -111,10 +111,16 @@ DE_PIMPL(MaterialLib)
     {
         debug("Adding material: %s\n%s", name.c_str(), asset.accessedRecord().asText().c_str());
 
+        const bool transparent  = ScriptedInfo::isTrue(asset, "transparent", false);
+        const bool reflective   = ScriptedInfo::isTrue(asset, "reflective", false);
+        const bool animationMask  = ScriptedInfo::isTrue(asset, "animationMask", false);
         const bool verticalAspect = ScriptedInfo::isTrue(asset, "verticalAspect", false);
 
         Properties props;
         props.texelsPerMeter = asset.getf("ppm", 100.f);
+        applyFlagOperation(props.flags, Transparent, transparent);
+        applyFlagOperation(props.flags, Reflective, reflective);
+        applyFlagOperation(props.metricsFlags, Metrics_AnimationMask, animationMask);
         applyFlagOperation(props.metricsFlags, Metrics_VerticalAspect, verticalAspect);
         materials.insert(name, props);
 

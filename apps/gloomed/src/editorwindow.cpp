@@ -43,6 +43,7 @@ EditorWindow::EditorWindow()
     setCentralWidget(d->editor);
     d->editor->updateWindowTitle();
 
+    // FIXME: Hardcoded test materials should be replaced by actual user-definable materials.
     const QStringList allMaterials({"",
                                     "world.stone",
                                     "world.dirt",

@@ -1223,6 +1223,21 @@ DE_PIMPL(Editor)
 
         Folder &root = fs.makeFolder(packageRootPath()); // or use existing folder...
 
+        // Update the package metadata file.
+        {
+            File &info = root.replaceFile("Info.dei");
+            info << Stringf("title: %s\n"
+                            "version: 1.0\n"
+                            "license: unknown\n"
+                            "tags: map\n"
+                            "generator: GloomEd %s\n"
+                            "\n@include <materials.dei>\n"
+                            "@include <maps.dei>\n",
+                            packageName.c_str(),
+                            Version::currentBuild().fullNumber().c_str());
+            info.release();
+        }
+
         fs.makeFolder(root.path() / "maps");
 
         // Rewrite the .gloommap file.
@@ -1231,6 +1246,98 @@ DE_PIMPL(Editor)
             File &mapFile = root.replaceFile("maps" / mapId + ".gloommap");
             mapFile << mapData;
             mapFile.release();
+        }
+
+        // Export the materials. (FIXME: This is a hardcoded test set.)
+        {
+            File &materials = root.replaceFile("materials.dei");
+
+            struct TestMaterial
+            {
+                const char *id;
+                bool        transparent;
+                float       ppm;
+                bool        animationMask;
+                const char *diffuse;
+                const char *specgloss;
+                const char *emissive;
+                const char *basecolor;
+                const char *metallic;
+                const char *roughness;
+                const char *normal;
+            };
+
+            // Test materials use image assets from the Gloom Test package.
+            #define IMG_PATH "/packs/net.dengine.gloom.test/images/"
+
+            /* clang-format off */
+            const TestMaterial testMats[] = {
+                {"world.stone", false, 200.f, false, IMG_PATH "mat-stone.png", 0, 0, 0, 0, 0, 0},
+                {"world.dirt",  false, 200.f, false, IMG_PATH "mat-dirt.jpg",  0, 0, 0, 0, 0, 0},
+                {"world.grass", false, 200.f, false, IMG_PATH "mat-grass.jpg", 0, 0, 0, 0, 0, 0},
+                {"world.test",  false, 200.f, false,
+                    IMG_PATH "mat-stone.png",
+                    0, 0, 0, 0, 0,
+                    IMG_PATH "softnoise.png/HeightMap.toNormals" },
+                {"world.test2", false, 200.f, false, IMG_PATH "mat-test2.png", 0, 0, 0, 0, 0, 0},
+                {"world.metal", false, 200.f, false,
+                    0, 0, 0,
+                    IMG_PATH "rustediron-streaks_basecolor.png",
+                    IMG_PATH "rustediron-streaks_metallic.png",
+                    IMG_PATH "rustediron-streaks_roughness.png",
+                    IMG_PATH "rustediron-streaks_normal.png"
+                },
+                {"world.water", true, 100.f, true,
+                    IMG_PATH "softnoise.png/Color.solid:128,64,0,128",
+                    IMG_PATH "softnoise.png/Color.solid:255,255,255,255",
+                    0, 0, 0, 0,
+                    IMG_PATH "softnoise.png/HeightMap.toNormals"
+                }
+            };
+            /* clang-format on */
+
+            for (const auto &m : testMats)
+            {
+                materials << Stringf("asset material.%s {\n"
+                                     "    ppm = %f\n"
+                                     "    transparent = %s\n"
+                                     "    animationMask = %s\n",
+                                     m.id,
+                                     m.ppm,
+                                     m.transparent ? "True" : "False",
+                                     m.animationMask ? "True" : "False");
+                if (m.diffuse)
+                {
+                    materials << Stringf("    diffuse: %s\n", m.diffuse);
+                }
+                if (m.specgloss)
+                {
+                    materials << Stringf("    specgloss: %s\n", m.specgloss);
+                }
+                if (m.emissive)
+                {
+                    materials << Stringf("    emissive: %s\n", m.emissive);
+                }
+                if (m.normal)
+                {
+                    materials << Stringf("    normal: %s\n", m.normal);
+                }
+                if (m.basecolor)
+                {
+                    materials << Stringf("    basecolor: %s\n", m.basecolor);
+                }
+                if (m.metallic)
+                {
+                    materials << Stringf("    metallic: %s\n", m.metallic);
+                }
+                if (m.roughness)
+                {
+                    materials << Stringf("    roughness: %s\n", m.roughness);
+                }
+                materials << String("}\n");
+            }
+
+            materials.release();
         }
 
         // Check that the maps.dei includes this map.
