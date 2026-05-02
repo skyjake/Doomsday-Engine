@@ -39,8 +39,8 @@ DE_PIMPL(Commander)
 , public Waitable
 {
     tF::ref<iProcess>  proc;
-    Beacon                beacon{{COMMAND_PORT, COMMAND_PORT + 4}};
-    Address               address;
+    Beacon             beacon{{COMMAND_PORT, COMMAND_PORT + 4}};
+    Address            address;
     tF::ref<iDatagram> commandSocket;
 
     Impl(Public *i) : Base(i)
@@ -55,30 +55,37 @@ DE_PIMPL(Commander)
 
         qDebug("GloomEd beacon found:%s [%s]", host.asText().c_str(), message.c_str());
 
-        if (message.beginsWith(DE_STR("GloomApp:")))
+        if (message.beginsWith("GloomApp:"))
         {
-            const Info    msg(message.mid(9));
-            const duint16 commandPort = duint16(msg["port"].toUInt32());
-
-            //beacon.stop();
-            address = host;
-
-            commandSocket.reset(new_Datagram());
-            for (int i = 0; i < 10; ++i)
+            try
             {
-                // Open a socket in the private port range.
-                if (open_Datagram(commandSocket, duint16(Rangeui(0xc000, 0x10000).random())))
+                const Info    msg(String::fromUtf8(message.mid(9)));
+                const duint16 commandPort = duint16(msg["port"].toUInt32());
+
+                address = host;
+
+                commandSocket.reset(new_Datagram());
+                for (int i = 0; i < 10; ++i)
                 {
-                    break;
+                    // Open a socket in the private port range.
+                    if (openRandom_Datagram(commandSocket))
+                    {
+                        qDebug("Opened UDP port %d", port_Datagram(commandSocket));
+                        break;
+                    }
                 }
-            }
-            if (!isOpen_Datagram(commandSocket))
-            {
-                qWarning("Failed to open UDP port for sending commands");
-            }
-            connect_Datagram(commandSocket, Address(host.hostName(), commandPort));
+                if (!isOpen_Datagram(commandSocket))
+                {
+                    qWarning("Failed to open UDP port for sending commands");
+                }
+                connect_Datagram(commandSocket, Address(host.hostName(), commandPort));
 
-            post();
+                post();
+            }
+            catch (const Error &er)
+            {
+                qWarning("Commander: %s", er.asPlainText().c_str());
+            }
         }
     }
 };
