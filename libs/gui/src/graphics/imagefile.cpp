@@ -180,8 +180,7 @@ Image ImageFile::image() const
         {
             img = img.colorized(Image::Color(255, 255, 255, 255));
         }
-        else if (d->filter == ColorSolid ||
-                 d->filter == ColorMultiply)
+        else if (d->filter == ColorSolid || d->filter == ColorMultiply)
         {
             // Parse the parameters.
             const auto components = d->filterParameter.split(',');
@@ -199,6 +198,7 @@ Image ImageFile::image() const
 
             if (d->filter == ColorSolid)
             {
+                img = img.convertToFormat(Image::RGBA_8888);
                 img.fill(paramColor);
             }
             else
