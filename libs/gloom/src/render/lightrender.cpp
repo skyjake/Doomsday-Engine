@@ -41,7 +41,7 @@ struct LightData {
     LIBGUI_DECLARE_VERTEX_FORMAT(5)
 };
 
-internal::AttribSpec const LightData::_spec[5] = {
+const internal::AttribSpec LightData::_spec[5] = {
     { internal::AttribSpec::Origin,    3, GL_FLOAT, false, sizeof(LightData), 0 * 4 },
     { internal::AttribSpec::Intensity, 3, GL_FLOAT, false, sizeof(LightData), 3 * 4 },
     { internal::AttribSpec::Direction, 3, GL_FLOAT, false, sizeof(LightData), 6 * 4 },
@@ -144,7 +144,8 @@ DE_PIMPL(LightRender)
             .setStencilTest(true)
             .setStencilFunc(gfx::NotEqual, 0, 0xff);
 
-#if 0
+#if 1
+        // FIXME: Hardcoded sky light. This should be an entity in the map.
         skyLight.reset(new Light);
         skyLight->setType(Light::Directional);
         skyLight->setCastShadows(true);
@@ -318,7 +319,7 @@ DE_PIMPL(LightRender)
 
                 shadowCasters << proxEntry.second;
 
-                if (shadowCasters.size() == MAX_OMNI_SHADOWS + 1)
+                if (shadowCasters.size() == size_t(MAX_OMNI_SHADOWS + (skyLight ? 1 : 0)))
                 {
                     break; // skyLight has a separate shadow map
                 }
