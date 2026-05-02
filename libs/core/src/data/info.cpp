@@ -340,7 +340,7 @@ DE_PIMPL(Info)
         }
         else
         {
-            if (atEnd())
+            if (peekToken().isEmpty())
             {
                 throw SyntaxError("Info::parseValue",
                                   "Expected a value token but found end-of-file");
