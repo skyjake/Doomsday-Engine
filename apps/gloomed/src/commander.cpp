@@ -81,6 +81,8 @@ DE_PIMPL(Commander)
                 connect_Datagram(commandSocket, Address(host.hostName(), commandPort));
 
                 post();
+
+                qDebug("Gloom found: %s", address.asText().c_str());
             }
             catch (const Error &er)
             {
@@ -126,6 +128,6 @@ bool Commander::isLaunched() const
 }
 
 bool Commander::isConnected() const
-{
-    return !d->address.isNull();
+{    
+    return d->commandSocket && isConnected_Datagram(d->commandSocket);
 }
