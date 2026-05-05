@@ -326,6 +326,7 @@ class Vector3 : public Vector2<Type>
 public:
     constexpr Vector3(Type xyz = Type(0)) : Vector2<Type>(xyz), z(xyz) {}
     constexpr Vector3(Type a, Type b, Type c) : Vector2<Type>(a, b), z(c) {}
+    Vector3(Type, Type) = delete; // two-arg form silently misroutes via Vector2(xy)
     constexpr Vector3(const Vector2<Type> &v2, Type c = Type(0)) : Vector2<Type>(v2), z(c) {}
     explicit Vector3(const Type *abc) : Vector2<Type>(abc), z(abc[2]) {}
     Vector3(const Value &value) { *this = vectorFromValue<Vector3<Type>>(value); }
@@ -558,6 +559,7 @@ class Vector4 : public Vector3<Type>
 public:
     constexpr Vector4(Type xyzw = Type(0)) : Vector3<Type>(xyzw, xyzw, xyzw), w(xyzw) {}
     constexpr Vector4(Type a, Type b, Type c, Type d) : Vector3<Type>(a, b, c), w(d) {}
+    Vector4(Type, Type, Type) = delete; // three-arg form silently misroutes via Vector2(xy)
     constexpr Vector4(Vector3<Type> const &v3, Type d = Type(0)) : Vector3<Type>(v3), w(d) {}
     constexpr Vector4(Vector2<Type> const &a, Type c = Type(0), Type d = Type(0)) : Vector3<Type>(a, c), w(d) {}
     constexpr Vector4(Vector2<Type> const &a, Vector2<Type> const &b) : Vector3<Type>(a, b.x), w(b.y) {}
