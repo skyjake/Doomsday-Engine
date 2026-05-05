@@ -65,9 +65,10 @@ static const QMap<Entity::Type, QString> entityMetadata {
 };
 
 enum Direction {
-    Horizontal = 0x1,
-    Vertical   = 0x2,
-    Both       = Horizontal | Vertical,
+    Horizontal    = 0x1,
+    Vertical      = 0x2,
+    WorldVertical = 0x4,
+    Both          = Horizontal | Vertical,
 };
 Q_DECLARE_FLAGS(Directions, Direction)
 Q_DECLARE_OPERATORS_FOR_FLAGS(Directions)
@@ -79,6 +80,7 @@ DE_PIMPL(Editor)
     enum UserAction {
         None,
         TranslateView,
+        RotateView,
         SelectRegion,
         Move,
         Scale,
@@ -379,7 +381,7 @@ DE_PIMPL(Editor)
 
     Vec3d viewToWorldCoord(const QPointF &pos) const
     {
-        return inverseViewTransform * Vec3f(float(pos.x()), float(pos.y()));
+        return inverseViewTransform * Vec3f(float(pos.x()), float(pos.y()), 0.f);
     }
 
     Point viewToWorldPoint(const QPointF &pos) const
@@ -389,10 +391,19 @@ DE_PIMPL(Editor)
         return Point{Vec2d(p.x, p.z)};
     }
 
+    void rotateView(float yawDelta, float pitchDelta)
+    {
+        viewYawAngle   = de::wrap(viewYawAngle + yawDelta, 0.f, 360.f);
+        viewPitchAngle = de::clamp(viewPitchAngle + pitchDelta, -90.f, 0.f);
+    }
+
     Mat4f viewOrientation() const
     {
-        return Mat4f::rotate(viewPitchAngle, Vec3f(1, 0, 0)) *
-               Mat4f::rotate(viewYawAngle,   Vec3f(0, 1, 0));
+        static const float snapStep = 5.f;
+        const float pitch = de::roundf(viewPitchAngle / snapStep) * snapStep;
+        const float yaw   = de::roundf(viewYawAngle   / snapStep) * snapStep;
+        return Mat4f::rotate(pitch, Vec3f(1, 0, 0)) *
+               Mat4f::rotate(yaw,   Vec3f(0, 1, 0));
     }
 
     void updateView()
@@ -404,7 +415,7 @@ DE_PIMPL(Editor)
         worldFront = mapRot.inverse() * Vec3f{0, -1, 0};
 
         viewPlane     = Plane{{viewOrigin.x, 0, viewOrigin.y}, {0, 1, 0}, {"", ""}};
-        viewTransform = Mat4f::translate(Vec3f(viewSize.width() / 2, viewSize.height() / 2)) *
+        viewTransform = Mat4f::translate(Vec3f(viewSize.width() / 2, viewSize.height() / 2, 0.f)) *
                         Mat4f::rotate(-90, Vec3f(1, 0, 0)) *
                         mapRot *
                         Mat4f::scale(viewScale) *
@@ -777,13 +788,24 @@ DE_PIMPL(Editor)
                       const QColor &color,
                       Directions dirs = Both)
     {
-        const QRect   winRect = self().rect();
-        const QPointF origin  = worldToView(worldPos);
+        static const float ext = 1e5f;
+        const QPointF origin  = worldToView(Vec3d(worldPos.x, 0, worldPos.y));
+        const QPointF screenX = worldToView(Vec3d(worldPos.x + 1, 0, worldPos.y)) - origin;
+        const QPointF screenZ = worldToView(Vec3d(worldPos.x, 0, worldPos.y + 1)) - origin;
 
         ptr.setPen(color);
 
-        if (dirs & Vertical)   ptr.drawLine(QLineF(origin.x(), 0, origin.x(), winRect.height()));
-        if (dirs & Horizontal) ptr.drawLine(QLineF(0, origin.y(), winRect.width(), origin.y()));
+        if (dirs & Horizontal) ptr.drawLine(origin + ext * screenX, origin - ext * screenX);
+        if (dirs & Vertical)   ptr.drawLine(origin + ext * screenZ, origin - ext * screenZ);
+        if (dirs & WorldVertical)
+        {
+            static const float snapStep = 5.f;
+            if (de::roundf(viewPitchAngle / snapStep) != 0.f)
+            {
+                const QPointF screenY = worldToView(Vec3d(worldPos.x, 1, worldPos.y)) - origin;
+                ptr.drawLine(origin + ext * screenY, origin - ext * screenY);
+            }
+        }
     }
 
     void drawArrow(QPainter &ptr, QPointF a, QPointF b)
@@ -1272,14 +1294,22 @@ DE_PIMPL(Editor)
 
             /* clang-format off */
             const TestMaterial testMats[] = {
-                {"world.stone", false, 200.f, false, IMG_PATH "mat-stone.png", 0, 0, 0, 0, 0, 0},
-                {"world.dirt",  false, 200.f, false, IMG_PATH "mat-dirt.jpg",  0, 0, 0, 0, 0, 0},
-                {"world.grass", false, 200.f, false, IMG_PATH "mat-grass.jpg", 0, 0, 0, 0, 0, 0},
+                {"world.stone", false, 200.f, false,
+                    IMG_PATH "mat-stone.png",
+                    0, 0, 0, 0, 0, 0},
+                {"world.dirt",  false, 200.f, false,
+                    IMG_PATH "mat-dirt.jpg",
+                    0, 0, 0, 0, 0, 0},
+                {"world.grass", false, 200.f, false,
+                    IMG_PATH "mat-grass.jpg",
+                    0, 0, 0, 0, 0, 0},
                 {"world.test",  false, 200.f, false,
                     IMG_PATH "mat-stone.png",
                     0, 0, 0, 0, 0,
                     IMG_PATH "softnoise.png/HeightMap.toNormals" },
-                {"world.test2", false, 200.f, false, IMG_PATH "mat-test2.png", 0, 0, 0, 0, 0, 0},
+                {"world.test2", false, 200.f, false,
+                    IMG_PATH "mat-test2.png",
+                    0, 0, 0, 0, 0, 0},
                 {"world.metal", false, 200.f, false,
                     0, 0, 0,
                     IMG_PATH "rustediron-streaks_basecolor.png",
@@ -1489,7 +1519,7 @@ void Editor::paintEvent(QPaintEvent *)
     const int lineHgt = fontMetrics.height();
     const int gap     = 6;
 
-    static const QColor panelBgs[ModeCount] = {
+    static const QColor panelBgsLight[ModeCount] = {
         {  0,   0,   0, 128},   // Points
         {  0,  20,  90, 160},   // Lines
         {255, 160,   0, 192},   // Sectors
@@ -1497,21 +1527,32 @@ void Editor::paintEvent(QPaintEvent *)
         {225,  50, 225, 128},   // Volumes
         {140,  10,   0, 160},   // Entities
     };
+    static const QColor panelBgsDark[ModeCount] = {
+        { 80,  80,  80, 128},   // Points
+        { 20,  60, 160, 160},   // Lines
+        {150,  90,   0, 192},   // Sectors
+        { 20, 100, 120, 128},   // Planes
+        {150,  40, 150, 128},   // Volumes
+        {200,  40,   0, 160},   // Entities
+    };
 
-    const QColor panelBg = panelBgs[d->mode];
-    const QColor selectColor(64, 92, 255);
+    const bool   darkMode         = palette().color(QPalette::Window).lightness() < 128;
+    const QColor panelBg          = (darkMode ? panelBgsDark : panelBgsLight)[d->mode];
+    const QColor selectColor      = darkMode ? QColor(100, 140, 255)      : QColor( 64,  92, 255);
     const QColor selectColorAlpha(selectColor.red(), selectColor.green(), selectColor.blue(), 150);
-    const QColor gridMajor{180, 180, 180, 255};
-    const QColor gridMinor{220, 220, 220, 255};
-    const QColor textColor = (panelBg.lightnessF() > 0.45 ? Qt::black : Qt::white);
-    const QColor pointColor(170, 0, 0, 255);
-    const QColor lineColor(64, 64, 64);
-    const QColor verticalLineColor(128, 128, 128);
-    const QColor sectorColor(128, 92, 0, 64);
+    const QColor gridMajor        = darkMode ? QColor( 80,  80,  80, 255) : QColor(180, 180, 180, 255);
+    const QColor gridMinor        = darkMode ? QColor( 50,  50,  50, 255) : QColor(220, 220, 220, 255);
+    const QColor gridVertical     = darkMode ? QColor( 50,  80,  50, 255) : QColor(180, 220, 180, 255);
+    const QColor textColor        = darkMode ? Qt::white : Qt::black;
+    const QColor pointColor       = darkMode ? QColor(220,  60,  60, 255) : QColor(170,   0,   0, 255);
+    const QColor lineColor        = darkMode ? QColor(180, 180, 180)       : QColor( 64,  64,  64);
+    const QColor verticalLineColor = darkMode ? QColor(100, 100, 100)      : QColor(128, 128, 128);
+    const QColor sectorColor      = darkMode ? QColor(180, 130,  20,  64) : QColor(128,  92,   0,  64);
 
     // Grid.
     {
         d->drawGridLine(ptr, d->worldMousePoint().coord, gridMinor);
+        d->drawGridLine(ptr, d->worldMousePoint().coord, gridVertical, WorldVertical);
         d->drawGridLine(ptr, Vec2d(), gridMajor);
     }
 
@@ -1737,7 +1778,7 @@ void Editor::paintEvent(QPaintEvent *)
     // Entities.
     {
         const QFontMetrics metrics(d->metaFont);
-        ptr.setPen(Qt::black);
+        ptr.setPen(textColor);
         ptr.setFont(d->metaFont);
 
         for (const auto &i : mapEnts)
@@ -1746,7 +1787,8 @@ void Editor::paintEvent(QPaintEvent *)
             const QPointF pos = d->worldToView(ent->position());
 
             float radius = 0.5f * d->viewScale;
-            ptr.setBrush(d->selection.contains(i.first)? selectColor : QColor(Qt::white));
+            ptr.setBrush(d->selection.contains(i.first) ? selectColor
+                                                        : QColor(darkMode ? Qt::black : Qt::white));
             ptr.drawEllipse(pos, radius, radius);
 
             ptr.drawText(pos + QPointF(radius + 5, metrics.ascent() / 2), d->entityLabel(*ent));
@@ -1855,8 +1897,10 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
         }
         if ((event->modifiers() & Qt::ShiftModifier) && (event->buttons() & Qt::RightButton))
         {
-            // Translate the view.
-            d->beginAction(Impl::TranslateView);
+            if (event->modifiers() & Qt::ControlModifier)
+                d->beginAction(Impl::RotateView);
+            else
+                d->beginAction(Impl::TranslateView);
             update();
         }
     }
@@ -1867,6 +1911,13 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
         QPoint delta = event->pos() - d->actionPos;
         d->actionPos = event->pos();
         d->viewOrigin -= Vec2d(delta.x(), delta.y()) / d->viewScale;
+        d->updateView();
+        break;
+    }
+    case Impl::RotateView: {
+        QPoint delta = event->pos() - d->actionPos;
+        d->actionPos = event->pos();
+        d->rotateView(delta.x() * .25f, delta.y() * .25f);
         d->updateView();
         break;
     }
@@ -1881,21 +1932,22 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
             QPoint delta = event->pos() - d->actionPos;
             d->actionPos = event->pos();
 
-            const Vec2d worldDelta = Vec2d(delta.x(), delta.y()) / d->viewScale;
+            const Vec3d worldDelta = d->viewToWorldCoord(QPointF(delta.x(), delta.y())) -
+                                     d->viewToWorldCoord(QPointF(0, 0));
             foreach (auto id, d->selection)
             {
                 if (d->mode == EditPoints && d->map.points().contains(id))
                 {
-                    d->map.point(id).coord += worldDelta;
+                    d->map.point(id).coord += Vec2d(worldDelta.x, worldDelta.z);
                 }
                 else if (d->mode == EditEntities && d->map.entities().contains(id))
                 {
                     auto &ent = d->map.entity(id);
-                    ent.setPosition(ent.position() + Vec3d(worldDelta.x, 0, worldDelta.y));
+                    ent.setPosition(ent.position() + worldDelta);
                 }
                 else if (d->mode == EditPlanes && d->map.planes().contains(id))
                 {
-                    d->map.plane(id).point.y -= worldDelta.y;
+                    d->map.plane(id).point.y -= delta.y() / d->viewScale;
                 }
             }
         }
@@ -1915,12 +1967,12 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
             const float angle = delta.y() / 2.f;
 
             xf = Mat4f::rotateAround(
-                Vec3f(float(pivot.coord.x), float(pivot.coord.y)), angle, Vec3f(0, 0, 1));
+                Vec3f(float(pivot.coord.x), float(pivot.coord.y), 0.f), angle, Vec3f(0, 0, 1));
         }
         else
         {
             const Vec3d pivot = d->viewToWorldPoint(d->pivotPos).coord;
-            Vec3f scaler(1 + delta.x()/100.f, 1 + delta.y()/100.f);
+            Vec3f scaler(1 + delta.x()/100.f, 1 + delta.y()/100.f, 0.f);
             if (!(event->modifiers() & Qt::AltModifier)) scaler.y = scaler.x;
             xf = Mat4f::translate(pivot) * Mat4f::scale(scaler) * Mat4f::translate(-pivot);
         }
@@ -1998,8 +2050,7 @@ void Editor::wheelEvent(QWheelEvent *event)
     const QPoint delta = event->pixelDelta();
     if (event->modifiers() & Qt::ControlModifier)
     {
-        d->viewYawAngle   += delta.x() * .25f;
-        d->viewPitchAngle += delta.y() * .25f;
+        d->rotateView(delta.x() * .25f, delta.y() * .25f);
     }
     else if (event->modifiers() & Qt::ShiftModifier)
     {
