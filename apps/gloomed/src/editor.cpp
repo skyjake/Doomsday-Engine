@@ -435,7 +435,8 @@ DE_PIMPL(Editor)
             if (heightReferencePointId)
             {
                 auto ref = floorPoints.find(heightReferencePointId);
-                coord.y = std::max(coord.y, ref.value().y);
+                if (ref != floorPoints.end())
+                    coord.y = std::max(coord.y, ref.value().y);
             }
             return worldToView(coord);
         }
