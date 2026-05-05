@@ -242,7 +242,7 @@ static bool recognize(const Block &data)
         if (header.size.x == 0 || header.size.y == 0)
         {
             return false;
-        }        
+        }
         if (header.imageType == Header::ColorMapped && header.colorMapType == Header::ColorMap256 &&
             header.depth == 8)
         {
@@ -349,7 +349,7 @@ static Image load(const Block &data)
 
         Block lineBuf(header.size.x);
         for (int y = 0; y < header.size.y; y++)
-        {           
+        {
             input.readBytesFixedSize(lineBuf);
 
             const int inY = (isUpperOrigin ? y : (header.size.y - y - 1));
@@ -451,7 +451,7 @@ Image::Image(const Size &size, Format format)
 Image::Image(const Size &size, Format format, const Block &pixels)
     : d(new Impl(this, size, format, pixels))
 {}
-    
+
 Image::Image(const Size &size, Format format, const IByteArray &pixels)
     : d(new Impl(this, size, format, pixels))
 {}
@@ -722,7 +722,7 @@ Image::Color Image::pixel(Vec2ui pos) const
     switch (d->format)
     {
     case RGBA_8888: return Color(ptr[0], ptr[1], ptr[2], ptr[3]);
-    case RGB_888:   return Color(ptr[0], ptr[1], ptr[2]);
+    case RGB_888:   return Color(ptr[0], ptr[1], ptr[2], 255);
 
     default: DE_ASSERT_FAIL("Image::pixel does not support this format"); break;
     }
@@ -909,7 +909,7 @@ Image Image::multiplied(Color color) const
 Image Image::colorized(Color color) const
 {
     const float targetHue = hsv(color).x;
-    const float targetSaturation = hsv(color).y; 
+    const float targetSaturation = hsv(color).y;
 
     Image copy = convertToFormat(RGBA_8888);
     for (duint y = 0; y < height(); ++y)
@@ -978,7 +978,7 @@ Image Image::mixed(const Image &low, const Image &high) const
     }
     return mix;
 }
-    
+
 Image Image::mixed(const Color &zero, const Color &one, const int componentIndices[4]) const
 {
     static const int defaultIndices[] = { 0, 1, 2, 3 };
@@ -1000,9 +1000,9 @@ Image Image::mixed(const Color &zero, const Color &one, const int componentIndic
             int green = (one.y * mg + zero.y * (255 - mg)) / 255;
             int blue  = (one.z * mb + zero.z * (255 - mb)) / 255;
             int alpha = (one.w * ma + zero.w * (255 - ma)) / 255;
-            
+
             *ptr = packColor(makeColor(red, green, blue, alpha));
-            
+
             ptr++;
         }
     }
@@ -1544,13 +1544,13 @@ Image::Color Image::mix(Color a, Color b, Color m)
     const duint mg = m.y;
     const duint mb = m.z;
     const duint ma = m.w;
-    
+
     int red   = (b.x * mr + a.x * (255u - mr)) / 255u;
     int green = (b.y * mg + a.y * (255u - mg)) / 255u;
     int blue  = (b.z * mb + a.z * (255u - mb)) / 255u;
     int alpha = (b.w * ma + a.w * (255u - ma)) / 255u;
-    
+
     return makeColor(red, green, blue, alpha);
 }
-    
+
 } // namespace de

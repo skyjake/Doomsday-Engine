@@ -138,6 +138,18 @@ void Map::removeInvalid()
         }
     }
 
+    // Volumes: remove any that reference missing planes.
+    {
+        for (auto iter = d->volumes.begin(); iter != d->volumes.end(); )
+        {
+            const Volume &vol = iter->second;
+            if (!d->planes.contains(vol.planes[0]) || !d->planes.contains(vol.planes[1]))
+                iter = d->volumes.erase(iter);
+            else
+                ++iter;
+        }
+    }
+
     // Sectors.
     {
 //        for (QMutableHashIterator<ID, Sector> iter(d->sectors); iter.hasNext(); )
@@ -177,8 +189,16 @@ void Map::removeInvalid()
                 }
                 ++i;
             }
+            // Remove references to volumes that were erased above.
+            for (auto i = sector.volumes.begin(); i != sector.volumes.end(); )
+            {
+                if (!d->volumes.contains(*i))
+                    i = sector.volumes.erase(i);
+                else
+                    ++i;
+            }
             // Remove empty sectors.
-            if (sector.points.isEmpty() || sector.walls.isEmpty())
+            if (sector.points.isEmpty() || sector.walls.isEmpty() || sector.volumes.isEmpty())
             {
                 iter = d->sectors.erase(iter);
                 continue;
