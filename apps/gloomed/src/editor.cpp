@@ -1521,12 +1521,12 @@ void Editor::paintEvent(QPaintEvent *)
     const int gap     = 6;
 
     static const QColor panelBgsLight[ModeCount] = {
-        {  0,   0,   0, 128},   // Points
-        {  0,  20,  90, 160},   // Lines
-        {255, 160,   0, 192},   // Sectors
-        {  0, 128, 255, 128},   // Planes
-        {225,  50, 225, 128},   // Volumes
-        {140,  10,   0, 160},   // Entities
+        {255, 255, 255, 192},   // Points
+        {175, 192, 255, 192},   // Lines
+        {255, 192,  64, 192},   // Sectors
+        { 64, 192, 255, 192},   // Planes
+        {255, 160, 255, 192},   // Volumes
+        {255, 192, 160, 192},   // Entities
     };
     static const QColor panelBgsDark[ModeCount] = {
         { 80,  80,  80, 128},   // Points
