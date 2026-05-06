@@ -42,6 +42,8 @@
 #include <QPainter>
 #include <QPushButton>
 #include <QSettings>
+#include <QTextBrowser>
+#include <QTimer>
 #include <QVBoxLayout>
 
 using namespace de;
@@ -119,6 +121,7 @@ DE_PIMPL(Editor)
     Mat4f inverseViewTransform;
 
     QHash<ID, Vec3d> floorPoints;
+    QTimer           snapTimer;
 
     const QColor metaBg{255, 255, 255, 192};
     const QColor metaColor{0, 0, 0, 128};
@@ -127,6 +130,13 @@ DE_PIMPL(Editor)
 
     Impl(Public *i) : Base(i)
     {
+        snapTimer.setSingleShot(true);
+        QObject::connect(&snapTimer, &QTimer::timeout, [this]() {
+            snapViewAngles();
+            updateView();
+            self().update();
+        });
+
         // Load the last map.
         if (!persistentMapPath().isEmpty())
         {
@@ -208,6 +218,7 @@ DE_PIMPL(Editor)
         switch (userAction)
         {
         case TranslateView: return "Translate view";
+        case RotateView: return "Rotate view";
         case SelectRegion: return "Select";
         case Move: return "Move";
         case Scale: return "Scale";
@@ -314,6 +325,11 @@ DE_PIMPL(Editor)
         case TranslateView:
             break;
 
+        case RotateView:
+            snapViewAngles();
+            updateView();
+            break;
+
         case SelectRegion:
             switch (mode)
             {
@@ -397,13 +413,17 @@ DE_PIMPL(Editor)
         viewPitchAngle = de::clamp(viewPitchAngle + pitchDelta, -90.f, 0.f);
     }
 
-    Mat4f viewOrientation() const
+    void snapViewAngles()
     {
         static const float snapStep = 5.f;
-        const float pitch = de::roundf(viewPitchAngle / snapStep) * snapStep;
-        const float yaw   = de::roundf(viewYawAngle   / snapStep) * snapStep;
-        return Mat4f::rotate(pitch, Vec3f(1, 0, 0)) *
-               Mat4f::rotate(yaw,   Vec3f(0, 1, 0));
+        viewYawAngle   = de::roundf(viewYawAngle   / snapStep) * snapStep;
+        viewPitchAngle = de::roundf(viewPitchAngle / snapStep) * snapStep;
+    }
+
+    Mat4f viewOrientation() const
+    {
+        return Mat4f::rotate(viewPitchAngle, Vec3f(1, 0, 0)) *
+               Mat4f::rotate(viewYawAngle,   Vec3f(0, 1, 0));
     }
 
     void updateView()
@@ -1042,6 +1062,98 @@ DE_PIMPL(Editor)
         emit self().buildMapRequested();
     }
 
+    void showUserGuide()
+    {
+#if defined(MACOSX)
+        const char *ctrl  = "&#8984;";
+        const char *shift = "&#8679;";
+        const char *bksp  = "&#9003;";
+        const char *ret   = "&#9166;";
+        const char *rotateViewNote =
+            "Two-finger swipe with &#8984; held, or drag with &#8984;+&#8679;+Right button";
+#else
+        const char *ctrl  = "Ctrl";
+        const char *shift = "Shift";
+        const char *bksp  = "Backspace";
+        const char *ret   = "Enter";
+        const char *rotateViewNote =
+            "Drag with Ctrl+Shift+Right button";
+#endif
+        const QString html = QString(R"(
+<html><body style="font-family:sans-serif;">
+<h2>GloomEd User Guide</h2>
+
+<h3>Edit Modes</h3>
+<table border="0" cellspacing="4" cellpadding="2">
+<tr><th align="left">Shortcut</th><th align="left">Mode</th></tr>
+<tr><td>%1+1</td><td>Points</td></tr>
+<tr><td>%1+2</td><td>Lines</td></tr>
+<tr><td>%1+3</td><td>Sectors</td></tr>
+<tr><td>%1+4</td><td>Planes</td></tr>
+<tr><td>%1+5</td><td>Volumes</td></tr>
+<tr><td>%1+6</td><td>Entities</td></tr>
+</table>
+
+<h3>Editing</h3>
+<table border="0" cellspacing="4" cellpadding="2">
+<tr><th align="left">Shortcut</th><th align="left">Action</th></tr>
+<tr><td>%1+D</td><td>Add object at cursor (point, entity, volume&hellip;)</td></tr>
+<tr><td>%1+%3</td><td>Delete selected</td></tr>
+<tr><td>%1+A</td><td>Select all</td></tr>
+<tr><td>%1+%2+A</td><td>Select none</td></tr>
+<tr><td>%1+F</td><td>Find point by ID (Points mode)</td></tr>
+<tr><td>R</td><td>Begin/finish rotating selected objects</td></tr>
+<tr><td>S</td><td>Begin/finish scaling selected objects</td></tr>
+<tr><td>%1+Z</td><td>Undo</td></tr>
+<tr><td>%4</td><td>Build / export map</td></tr>
+</table>
+
+<h3>Mouse &mdash; Editing</h3>
+<table border="0" cellspacing="4" cellpadding="2">
+<tr><th align="left">Input</th><th align="left">Action</th></tr>
+<tr><td>Left click</td><td>Select object under cursor</td></tr>
+<tr><td>Left drag</td><td>Move selected objects</td></tr>
+<tr><td>%2+Left drag</td><td>Region select</td></tr>
+<tr><td>Right click</td><td>Context menu (entities)</td></tr>
+</table>
+
+<h3>Mouse &mdash; View Navigation</h3>
+<table border="0" cellspacing="4" cellpadding="2">
+<tr><th align="left">Input</th><th align="left">Action</th></tr>
+<tr><td>Scroll</td><td>Pan view</td></tr>
+<tr><td>%2+Right drag</td><td>Pan view</td></tr>
+<tr><td>%2+Scroll</td><td>Zoom in/out</td></tr>
+<tr><td>%5</td><td>Rotate view (yaw and pitch); snaps to 5&deg; steps when released</td></tr>
+</table>
+
+<h3>File</h3>
+<table border="0" cellspacing="4" cellpadding="2">
+<tr><th align="left">Shortcut</th><th align="left">Action</th></tr>
+<tr><td>%1+O</td><td>Open map file</td></tr>
+<tr><td>%1+S</td><td>Save map file</td></tr>
+<tr><td>%1+%2+I</td><td>Import level from WAD</td></tr>
+</table>
+</body></html>
+)").arg(ctrl).arg(shift).arg(bksp).arg(ret).arg(rotateViewNote);
+
+        auto *dlg    = new QDialog(&self());
+        auto *layout = new QVBoxLayout(dlg);
+        auto *view   = new QTextBrowser(dlg);
+        auto *close  = new QPushButton(tr("Close"), dlg);
+
+        dlg->setWindowTitle(tr("GloomEd User Guide"));
+        dlg->resize(560, 620);
+        view->setHtml(html);
+        view->setReadOnly(true);
+        view->setFontPointSize(11);
+        close->setDefault(true);
+        QObject::connect(close, &QPushButton::clicked, dlg, &QDialog::accept);
+
+        layout->addWidget(view);
+        layout->addWidget(close);
+        dlg->exec();
+    }
+
     bool askSaveFile()
     {
         if (isModified)
@@ -1452,6 +1564,9 @@ Editor::Editor()
     fileMenu->addSeparator();
     fileMenu->addAction("Save &as...", [this]() { d->saveAsFile(); });
     fileMenu->addAction("&Save",       [this]() { d->saveFile(); }, QKeySequence("Ctrl+S"));
+
+    QMenu *helpMenu = menuBar->addMenu(tr("&Help"));
+    helpMenu->addAction(tr("User &Guide"), [this]() { d->showUserGuide(); }, QKeySequence("F1"));
 }
 
 String Editor::mapId() const
@@ -2052,6 +2167,7 @@ void Editor::wheelEvent(QWheelEvent *event)
     if (event->modifiers() & Qt::ControlModifier)
     {
         d->rotateView(delta.x() * .25f, delta.y() * .25f);
+        d->snapTimer.start(300);
     }
     else if (event->modifiers() & Qt::ShiftModifier)
     {
