@@ -319,7 +319,7 @@ DE_PIMPL(LightRender)
 
                 shadowCasters << proxEntry.second;
 
-                if (shadowCasters.size() == size_t(MAX_OMNI_SHADOWS + (skyLight ? 1 : 0)))
+                if (shadowCasters.size() == MAX_OMNI_SHADOWS + (skyLight ? 1 : 0))
                 {
                     break; // skyLight has a separate shadow map
                 }
