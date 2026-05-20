@@ -1021,6 +1021,9 @@ OutputContext *Processor::processTable(Gem *table, OutputContext *host)
     _schedule.link(host, midCtx);
     midCtx->moveLeftEdge(leftMargin);
     midCtx->moveRightEdge(-rightMargin);
+    // A width override sets an absolute column count regardless of margins.
+    int tableWidth = tableLen.get(Length::Width);
+    if (tableWidth > 0) midCtx->setWidth(tableWidth);
     rowWidth = midCtx->width();
 
     // Process each row.
@@ -1121,10 +1124,14 @@ OutputContext *Processor::processContents(Gem *contents, OutputContext *host)
         if (theFirst || !(_modeFlags & PMF_STRUCTURED))
         {
             theFirst = false;
-            minSpace = visualSize(_rules.apply(tempParent->firstGem()->
-                firstGem())) + 1;
+            int numVisSize = visualSize(_rules.apply(tempParent->firstGem()->firstGem()));
+            // Only add the separator space when the number is non-empty.
+            minSpace = numVisSize > 0 ? numVisSize + 1 : 0;
         }
-        if (minSpace > spacing)
+        // When the number is empty, use zero width regardless of element spacing.
+        if (minSpace == 0)
+            space = 0;
+        else if (minSpace > spacing)
             space = minSpace;
         else
             space = spacing;
@@ -1184,6 +1191,9 @@ OutputContext *Processor::process(Gem *gem, OutputContext *ctx)
         int rightEdge = len.get(Length::RightMargin);
         if (!rightEdge) rightEdge = DEFAULT_RIGHT_MARGIN;
         ctx->setRightEdge(rightEdge);
+        // A width override sets an absolute column count for the context.
+        int widthOverride = len.get(Length::Width);
+        if (widthOverride > 0) ctx->setWidth(widthOverride);
     }
 
     // If no gem has been provided, use the context's current position.

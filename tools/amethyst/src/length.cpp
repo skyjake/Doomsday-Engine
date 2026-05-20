@@ -56,7 +56,7 @@ void Length::defaults()
 Length::ID Length::IDForName(const String& name)
 {
     const char *lengthNames[NumValues] = {
-        "leftmargin", "rightmargin", "spacing", "indent"
+        "leftmargin", "rightmargin", "spacing", "indent", "width"
     };
     for (int i = 0; i < NumValues; i++)
         if (name == lengthNames[i]) return (Length::ID) i;

@@ -26,7 +26,7 @@ class Length
 public:
     enum { NotSet = -1 };
     enum ID { Invalid = -1, LeftMargin, RightMargin, Spacing,
-        Indent, NumValues };
+        Indent, Width, NumValues };
 
 public:
     Length();
