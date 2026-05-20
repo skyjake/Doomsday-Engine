@@ -28,6 +28,9 @@
 #include "schedule.h"
 #include "callstack.h"
 
+#include "gemtest.h"
+
+#include <QList>
 #include <QStringList>
 #include <QTextStream>
 
@@ -86,6 +89,8 @@ public:
     
     void print(Gem *gem, OutputContext *ctx);
     void partialPrint(PartialPrintMode mode, Gem *gem, OutputContext *ctx);
+    bool fillModeForGem(Gem *gem) const;
+    void applyFillMode(OutputContext *ctx, Gem *gem);
     
     // Messages.
     void warning(const char *format, ...);
@@ -109,5 +114,8 @@ private:
 
     void dumpRoot(Shard *at, int level = 0);
     void dumpGems(Gem *at, int level = 0);
+
+    struct ScopedFillMode { GemTest *test; bool fill; };
+    QList<ScopedFillMode> _fillModeRules;
 };
 

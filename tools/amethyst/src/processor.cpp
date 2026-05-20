@@ -125,7 +125,7 @@ bool Processor::parseVerbatim(Shard *parent)
     bool escaped = false;
     QChar c;
 
-    while ((c = _in->peek()) != QChar(EOF))
+    while ((c = _in->peek()) != QChar(ushort(0xffff)))
     {
         if (!escaped)
         {
@@ -368,17 +368,44 @@ bool Processor::parseAt(Shard *parent)
     // Mode commands modify the operation of the processor.
     if (command->isModeCommand())
     {
-        for (arg = command->first(); arg; arg = arg->next())
+        Shard *firstArg = command->first();
+        Shard *lastArg  = command->last();
+        if (firstArg && lastArg && firstArg != lastArg)
         {
-            Block *block = (Block*) arg->first();
-            if (!block) continue;
-            for (Token *it = (Token*) block->first(); it; it = (Token*) it->next())
+            // Two-argument form: @output{scope}{fill} -- scoped fill mode rule.
+            bool fillOn = false;
+            Block *lastBlock = (Block *) lastArg->first();
+            if (lastBlock)
             {
-                String str = it->token();
-                if (str == "fill") // Fill between contexts (structured output).
-                    _modeFlags |= PMF_STRUCTURED;
-                if (str == "!fill")
-                    _modeFlags &= ~PMF_STRUCTURED;
+                for (Token *it = (Token *) lastBlock->first(); it; it = (Token *) it->next())
+                {
+                    String str = it->token();
+                    if (str == "fill")  { fillOn = true;  break; }
+                    if (str == "!fill") { fillOn = false; break; }
+                }
+            }
+            Block *scopeBlock = (Block *) firstArg->first();
+            if (scopeBlock && scopeBlock->first())
+            {
+                GemTest *test = new GemTest((Token *) scopeBlock->first());
+                _fillModeRules.append({test, fillOn});
+            }
+        }
+        else
+        {
+            // Single-argument form: @output{fill} or @output{!fill} -- global flag.
+            for (arg = command->first(); arg; arg = arg->next())
+            {
+                Block *block = (Block*) arg->first();
+                if (!block) continue;
+                for (Token *it = (Token*) block->first(); it; it = (Token*) it->next())
+                {
+                    String str = it->token();
+                    if (str == "fill") // Fill between contexts (structured output).
+                        _modeFlags |= PMF_STRUCTURED;
+                    if (str == "!fill")
+                        _modeFlags &= ~PMF_STRUCTURED;
+                }
             }
         }
     }
@@ -1021,6 +1048,7 @@ OutputContext *Processor::processTable(Gem *table, OutputContext *host)
     _schedule.link(host, midCtx);
     midCtx->moveLeftEdge(leftMargin);
     midCtx->moveRightEdge(-rightMargin);
+    applyFillMode(midCtx, table);
     // A width override sets an absolute column count regardless of margins.
     int tableWidth = tableLen.get(Length::Width);
     if (tableWidth > 0) midCtx->setWidth(tableWidth);
@@ -1275,6 +1303,21 @@ abortProcess:
 
     // Return a pointer to the current context.
     return ctx;
+}
+
+bool Processor::fillModeForGem(Gem *gem) const
+{
+    for (int i = _fillModeRules.size() - 1; i >= 0; --i)
+    {
+        ScopedFillMode const &r = _fillModeRules[i];
+        if (r.test->test(gem)) return r.fill;
+    }
+    return (_modeFlags & PMF_STRUCTURED) != 0;
+}
+
+void Processor::applyFillMode(OutputContext *ctx, Gem *gem)
+{
+    ctx->setFillMode(fillModeForGem(gem));
 }
 
 void Processor::generateOutput()

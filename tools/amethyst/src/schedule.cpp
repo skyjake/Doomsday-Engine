@@ -38,7 +38,7 @@ OutputContext *Schedule::newContext(OutputContext *initializer)
 {
     OutputContext *ctx;
 
-    if (initializer) 
+    if (initializer)
         ctx = new OutputContext(*initializer);
     else
         ctx = new OutputContext;
@@ -135,7 +135,7 @@ bool Schedule::advance(OutputState &state)
     ContextRelation *r;
     UniquePtrList candidates, *it;
     bool wasAdvanced = false;
-    
+
     // Collect the list of candidates.
     candidates.setRoot();
     for (s = state.next(); !s->isRoot(); s = s->next())
@@ -203,7 +203,7 @@ bool Schedule::advance(OutputState &state)
 void Schedule::render(QTextStream &os, bool structuredOutput)
 {
     OutputState state;
-    
+
     if (_contextRoot.isListEmpty()) return; // Nothing to print.
 
     // Initialize the state.
@@ -218,13 +218,22 @@ void Schedule::render(QTextStream &os, bool structuredOutput)
     while (!state.allDone())
     {
         OutputState *s, *next;
-        if (structuredOutput) line = "";
+
+        // Determine fill mode for this tick: global flag, or any active context requests fill.
+        bool tickFill = structuredOutput;
+        if (!tickFill)
+        {
+            for (s = state.next(); !s->isRoot(); s = s->next())
+                if (s->context()->fillMode()) { tickFill = true; break; }
+        }
+
+        if (tickFill) line = "";
 
         // A part of the line is taken from all of the current contexts.
         for (s = state.next(); !s->isRoot(); s = next)
         {
             next = s->next();
-            if (structuredOutput)
+            if (tickFill)
             {
                 // ctxLine will be exactly as long as the context is wide.
                 String ctxLine = s->filledLine(completedLines);
@@ -233,8 +242,8 @@ void Schedule::render(QTextStream &os, bool structuredOutput)
                 int prevEdge = 0;
                 if (!s->prev()->isRoot())
                     prevEdge = s->prev()->context()->rightEdge() + 1;
-                qDebug() << "  ctx" << s->context() << "leftEdge=" << s->context()->leftEdge()
-                         << "prevEdge=" << prevEdge << "ctxLine=" << ctxLine.left(20);
+                //qDebug() << "  ctx" << s->context() << "leftEdge=" << s->context()->leftEdge()
+                //         << "prevEdge=" << prevEdge << "ctxLine=" << ctxLine.left(20);
                 for (; prevEdge < s->context()->leftEdge(); prevEdge++)
                     line += " ";
 
@@ -250,7 +259,7 @@ void Schedule::render(QTextStream &os, bool structuredOutput)
                     break;
             }
         }
-        if (structuredOutput)
+        if (tickFill)
         {
             // Now the line can be printed.
             completedLines << trimRight(line);

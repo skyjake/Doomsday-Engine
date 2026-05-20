@@ -26,6 +26,7 @@ OutputContext::OutputContext() : Linkable()
     _align = AlignLeft;
     _gem = _top = 0;
     _full = false;
+    _fillMode = false;
 }
 
 OutputContext::OutputContext(const OutputContext &other) : Linkable()
@@ -42,6 +43,7 @@ void OutputContext::initWith(const OutputContext &other)
     _gem = other._gem;
     _top = other._top;
     _full = other._full;
+    _fillMode = other._fillMode;
 }
 
 /**

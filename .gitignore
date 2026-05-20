@@ -50,3 +50,4 @@ tools/*/release
 vc100.pdb
 Zcustom.conf
 .jked/config.jked
+tools/amethyst/build/

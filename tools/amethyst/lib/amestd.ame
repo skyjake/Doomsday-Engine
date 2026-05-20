@@ -3,13 +3,15 @@ $*
     -------------------------
 
     The following output languages are defined by the library:
-     - TXT:  plain text
-     - HTML: HTML/CSS formatted text
-     - RTF:  rich text format
-     - MAN:  Unix manual page
+     - TXT:      plain text
+     - HTML:     HTML/CSS formatted text
+     - RTF:      rich text format
+     - MAN:      Unix manual page
      - DOKUWIKI: Dokuwiki source
-     - WIKI: Mediawiki source
-     - HELP: Doomsday Help strings
+     - WIKI:     Mediawiki source
+     - HELP:     Doomsday Help strings
+     - MARKDOWN: Markdown (CommonMark with HTML tables)
+     - GEMTEXT:  Gemini protocol Gemtext
 
     Note: For everything to work properly, @begin must be called at the
     beginning of the document.
@@ -26,6 +28,8 @@ $ Format and length rules
 @ifdef{DOKUWIKI}{ @require{amedokuwiki} }
 @ifdef{WIKI}{ @require{amewiki} }
 @ifdef{HELP}{ @require{amehelp} }
+@ifdef{MARKDOWN}{ @require{amemarkdown} }
+@ifdef{GEMTEXT}{ @require{amegemtext} }
 
 $*** COMMON MACROS ***$
 
@@ -42,10 +46,11 @@ $ Paragraph heading.
 @macro{parag}{
     @ifdef{TXT}{
         __ @glue{@arg} @glue{__}
-    }
-    @else{
+    }@else{@ifdef{GEMTEXT}{
+        @em{@arg}
+    }@else{
         @strong{@arg}
-    }
+    }}
 }
 
 $ Date.
@@ -57,22 +62,23 @@ $ Table of contents.
     @ifdef{MAN}{
         .Sh "TABLE OF CONTENTS" @br
         @contents{1 2}
-    }@else{
-        @ifdef{WIKI}{__TOC__} $ Mediawiki handles this for us.
-        @else{
-            @ifndef{DOKUWIKI}{@stdtoc}
-        }
-    }
+    }@else{@ifdef{WIKI}{
+        __TOC__ $ Mediawiki handles this for us.
+    }@else{@ifndef{DOKUWIKI}{
+        @stdtoc
+    }}}
 }
 
 $ Underline.
 @macro{underline}{
     @ifdef{HTML}{
         @tag{<span style="text-decoration: underline;">}@arg@tag{</span>}
+    }@else{@ifdef{MARKDOWN}{
+        @tag{<u>}@arg@tag{</u>}
     }@else{
         @ifdef{TXT}{ @arg @apply{@R-}{.} }
         @else{@arg}
-    }
+    }}
 }
 
 $ Double quoting.
@@ -89,6 +95,9 @@ $ Anchor.
 	@ifdef{HTML}{
 		@tag{<a name=@nsp{" @arg "></a>}}
 	}
+    @ifdef{MARKDOWN}{
+        @tag{<a name=@nsp{" @arg "></a>}}
+    }
     @ifdef{DOKUWIKI}{
         @tag{<html><a name=@nsp{" @arg "></a></html>}}
     }
@@ -99,6 +108,9 @@ $ Reference to an anchor.
 	@ifdef{HTML}{
 		@tag{<a href="#@nsp{@arg{1}">}} @glue{@arg{2}} @tag{@nsp{</a>}}
     }
+    @else{@ifdef{MARKDOWN}{
+        @tag{[} @glue{@arg{2}} @tag{@nsp{](#@nsp{@arg{1}}@nsp{)}}}
+    }
     @else{@ifdef{DOKUWIKI}{
         @tag{<html><a href="#@nsp{@arg{1}">}} @glue{@arg{2}} @tag{@nsp{</a></html>}}
     }
@@ -107,7 +119,7 @@ $ Reference to an anchor.
     }
     @else{
         @arg{2}
-    }}}
+    }}}}
 }
 
 $ Hyperlink with a title.
@@ -118,15 +130,20 @@ $ Hyperlink with a title.
 	@ifdef{MAN}{ @arg{1} (@url{@arg{2}}) }
 	@ifdef{DOKUWIKI}{[[@glue{@arg{2}}@glue{|}@glue{@arg{1}}@glue{]]}}
 	@ifdef{WIKI}{[@arg{2} @arg{1}]}
+	@ifdef{MARKDOWN}{ @tag{[}@glue{@arg{1}}@glue{@tag{](}}@glue{@arg{2}}@glue{@tag{)}} }
+	@ifdef{GEMTEXT}{ @arg{1} }
 }
 
 $ mailto: link.
 @macro{mailto}{
+    @ifdef{TXT}{ @email{@arg} }
 	@ifdef{HTML}{ @tag{ <a href="mailto:@nsp{@arg ">&lt;@arg &gt;</a>} } }
-	@else{
-    	@ifdef{WIKI}{ [@nsp{mailto:@arg @sp @arg{}] } }
-    	@else{ @email{@arg} }
-	}
+	@ifdef{RTF}{ @email{@arg} }
+    @ifdef{MAN}{ @email{@arg} }
+    @ifdef{DOKUWIKI}{ @email{@arg} }
+    @ifdef{WIKI}{ [@nsp{mailto:@arg @sp @arg{}] } }
+	@ifdef{MARKDOWN}{ [@nsp{&lt; @arg &gt;}](mailto:@nsp{@arg}@nsp{)} }
+	@ifdef{GEMTEXT}{ => mailto:@nsp{@arg} @sp @nsp{@arg} }
 }
 
 $ Executable/binary file.
@@ -202,6 +219,22 @@ ul li div,ol li div@{margin-bottom:1em;@}</style></head><body>} @break
 	@ifdef{HELP}{
 	    $ Doomsday Help does not use a header.
 	}
+	@ifdef{MARKDOWN}{
+	    @tag{# } @TITLE @apply{@n@n}{.}
+	    @ifdef{VERSION}{ @tag{**}@glue{@VERSION}@glue{@tag{**}} @br }
+	    @ifdef{AUTHOR}{ by @AUTHOR @br }
+	    @ifdef{EMAIL}{ @mailto{@EMAIL} @br }
+	    @date @ifdef{LINK}{ @break @link{@LINK}{@LINK} }
+	    @apply{@n@n}{.}
+	}
+	@ifdef{GEMTEXT}{
+	    @tag{# } @TITLE @apply{@n@n}{.}
+	    @ifdef{VERSION}{ @VERSION @br }
+	    @ifdef{AUTHOR}{ by @AUTHOR @br }
+	    @ifdef{EMAIL}{ @mailto{@EMAIL} @br }
+	    @date @ifdef{LINK}{ @break @tag{=> } @LINK }
+	    @apply{@n@n}{.}
+	}
 }
 
 $ Specify an author with contact information. (Manual page only.)
@@ -253,14 +286,15 @@ $ Specify an author with contact information. (Manual page only.)
 $ Makes a special note.
 @macro{notice}{
     @ifdef{DOKUWIKI}{@tag{<note>}@arg@tag{</note>}}
-    @else{
-    	@ifdef{HTML}{
-    		@tag{<table border="0" cellpadding="3" valign="top"><tr>
-    		<td><b>NOTE:</b></td><td>}
-    		@arg @tag{</td></tr></table>}
-    	}
-    	@else{ @list/note{ @item @arg }	}
+    @else{@ifdef{HTML}{
+        @tag{<table border="0" cellpadding="3" valign="top"><tr>
+        <td><b>NOTE:</b></td><td>}
+        @arg @tag{</td></tr></table>}
     }
+    @else{@ifdef{MARKDOWN}{ @tag{> **NOTE:**@_}@arg }
+    @else{@ifdef{GEMTEXT}{ @tag{NOTE:@_}@arg }
+    @else{ @list/note{ @item @arg }
+    }}}}
 }
 
 $ Doomsday Engine Wiki specific macros.
@@ -276,13 +310,22 @@ $ Doomsday Engine Wiki specific macros.
 	@macro{wikilink}{@link{@arg{1}}{@tag{https://manual.dengine.net/@glue{@arg{2}}}}}
     @macro{wikiterm}{@wikilink{@arg}{@arg}}
 }
+@else{@ifdef{MARKDOWN}{
+	@macro{wikilink}{@link{@arg{1}}{@tag{https://manual.dengine.net/@glue{@arg{2}}}}}
+    @macro{wikiterm}{@wikilink{@arg}{@arg}}
+}
 @else{
 	@macro{wikiterm}{@arg}
 	@macro{wikilink}{@link{@arg{1}}{https://manual.dengine.net/@arg{2}}}
-}}}
+}}}}
 @ifdef{TXT}{
 	$ Omit the hyperlinks in TXT files.
 	@macro{wikilink}{@arg}
+}
+@ifdef{GEMTEXT}{
+    $ Omit hyperlinks in Gemtext; links must be standalone lines.
+    @macro{wikiterm}{@arg}
+    @macro{wikilink}{@arg{1}}
 }
 @ifdef{HELP}{
     @macro{wikiterm}{@dquote{@arg} in wiki}

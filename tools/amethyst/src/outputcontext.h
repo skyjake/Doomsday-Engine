@@ -78,6 +78,9 @@ public:
     void setAlignMode(AlignMode mode);
     AlignMode alignMode() { return _align; }
 
+    bool fillMode() const { return _fillMode; }
+    void setFillMode(bool m) { _fillMode = m; }
+
     friend class Schedule;
 
 private:
@@ -85,6 +88,7 @@ private:
     int     _cursor;
     AlignMode _align;
     bool    _full;
+    bool    _fillMode;
     String  _output;
     Gem *_gem, *_top;
 };

@@ -17,9 +17,8 @@
 
 #pragma once
 
-#define VERSION_STR     "1.1.2"
+#define VERSION_STR     "1.2.0"
 #define BUILD_STR       "Version " VERSION_STR " (" __DATE__ ")"
 #define MAX_COLUMNS     40
 
 #define IS_BREAK(c)     ((c)=='@' || (c)=='{' || (c)=='}' || (c)=='$')
-

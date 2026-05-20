@@ -1,0 +1,65 @@
+$ Amethyst Markdown formatting.
+
+$*** FORMATTING RULES ***$
+@format{@=}
+@format{break}{@N@N}
+@format{br}{@n}
+
+$ Styles.
+@format{order 1 parent em parent !em}{*@=}
+@format{order -1 parent em parent !em}{@=*}
+@format{order 1 parent try strong cmd header pass}{**@=}
+@format{order -1 parent try strong cmd header pass}{@=**}
+@format{order 1 parent try file opt cmd code pass}{`@=}
+@format{order -1 parent try file opt cmd code pass}{@=`}
+
+$ Preformatted blocks.
+@format{pre !control}{@g @< @B``` @> ```@b}
+
+$ Blockquote / cite.
+@format{order 1 parent cite}{>@_@=}
+
+$ Remove section numbers; heading text is in child 2.
+@format{parent child 1 parent try chapter section subsec sub2sec sub3sec pass}{}
+
+$ Titles -- only outside the table of contents.
+@format{!^contents child 2 parent chapter}{@<##@_@>}
+@format{!^contents child 2 parent section}{@<###@_@>}
+@format{!^contents child 2 parent subsec}{@<####@_@>}
+@format{!^contents child 2 parent sub2sec}{@<#####@_@>}
+@format{!^contents child 2 parent sub3sec}{@<######@_@>}
+
+$ Table of contents entries -- each on its own line.
+@format{parent3 contents @ order -1 parent child 2}{@=@N}
+
+$ Lists.
+@format{list}{@< @> }
+@format{enum list}{@< @> }
+@format{parent list}{-@_ @> @N}
+@format{parent enum list}{1.@_ @> @N}
+
+$ Definition lists -- use HTML to avoid spacing issues with ** markers.
+@format{deflist}{@< <dl> @> </dl>}
+@format{child 1 parent2 deflist}{@< <dt> @> </dt>}
+@format{child 2 parent2 deflist}{@< <dd> @> </dd>}
+
+$ Tables -- HTML tables are valid in Markdown; use @_ for spaces in attributes.
+@format{table}{@< <table@_align="center"> @> </table>}
+@format{parent table}{@< <tr> @> </tr>}
+@format{parent2 table}{@< <td@_valign="top"@_width="@w%"> @> </td>}
+
+$ Indented content.
+@format{indent !cite}{@< >@_ @> }
+
+$*** LENGTH RULES ***$
+@length{!text . !text , !text : !text ; !begins ) !begins ] !email !url}{
+    try email url pass order 1}{opt !order 1}{spacing 1}
+@length{order 1 single}{try text ) text ] pass}{prev try text ( text [ pass}{
+    order 1 parent prev try text ( text [ pass}{spacing 0}
+@length{thin list}{spacing 0}
+@length{thin deflist}{spacing 0 indent 2}
+@length{deflist}{indent 4}
+@length{list}{spacing 0}
+@length{table}{spacing 0 leftmargin 1 rightmargin 1}
+@length{large table}{spacing 1}
+@length{indent}{leftmargin 4}
