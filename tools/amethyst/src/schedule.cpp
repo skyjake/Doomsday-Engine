@@ -67,19 +67,50 @@ ContextRelation *Schedule::list(ListType type, OutputContext *ctx)
     return list;
 }
 
+static QString escapeCtrl(const String &s)
+{
+    QString out;
+    for (int i = 0; i < s.size(); i++)
+    {
+        int c = s[i].toLatin1();
+        switch (c)
+        {
+        case OutputContext::CtrlBreakingSpace:   out += "<BS>";  break;
+        case OutputContext::CtrlParagraphBreak:  out += "<PB>";  break;
+        case OutputContext::CtrlLineBreak:       out += "<LB>";  break;
+        case OutputContext::CtrlFill:            out += "<FILL>"; i++; break;
+        case OutputContext::CtrlUnderfill:       out += "<UF>";  break;
+        case OutputContext::CtrlAlign:           out += "<ALN>"; i++; break;
+        case OutputContext::CtrlLinePrefixBegin: out += "<PFX:"; break;
+        case OutputContext::CtrlLinePrefixEnd:   out += ">";     break;
+        case OutputContext::CtrlCleanBreaks:     out += "<CB>";  break;
+        case OutputContext::CtrlRawBreaks:       out += "<RB>";  break;
+        case OutputContext::CtrlAnchor:          out += "<ANC>"; break;
+        default:
+            out += s[i];
+            break;
+        }
+    }
+    return out;
+}
+
 void Schedule::dumpContexts()
 {
     ContextRelation *it;
+    int idx = 0;
 
     qDebug() << "SCHEDULE DUMP:";
 
     QString dump;
     QTextStream out(&dump);
 
-    for (OutputContext *ctx = _contextRoot.next(); !ctx->isRoot(); ctx = ctx->next())
+    for (OutputContext *ctx = _contextRoot.next(); !ctx->isRoot(); ctx = ctx->next(), idx++)
     {
-        out << ctx << " (left:" << ctx->leftEdge()
-            << ", right: " << ctx->rightEdge() << ")";
+        out << "[" << idx << "] " << ctx
+            << " (left:" << ctx->leftEdge()
+            << ", right:" << ctx->rightEdge()
+            << ", width:" << ctx->width()
+            << ", len:" << ctx->output().size() << ")";
         QScopedPointer<ContextRelation> prec(list(Preceding, ctx));
         QScopedPointer<ContextRelation> fol(list(Following, ctx));
         out << "\n  Preceded by: ";
@@ -88,7 +119,7 @@ void Schedule::dumpContexts()
         out << "\n  Followed by: ";
         for (it = fol->next(); !it->isRoot(); it = it->next())
             out << it->target() << " ";
-        out << "\n  Text: `" << ctx->output() << "'";
+        out << "\n  Text: `" << escapeCtrl(ctx->output()) << "'";
 
         qDebug() << dump.toLatin1().data();
         dump.clear();
@@ -202,6 +233,8 @@ void Schedule::render(QTextStream &os, bool structuredOutput)
                 int prevEdge = 0;
                 if (!s->prev()->isRoot())
                     prevEdge = s->prev()->context()->rightEdge() + 1;
+                qDebug() << "  ctx" << s->context() << "leftEdge=" << s->context()->leftEdge()
+                         << "prevEdge=" << prevEdge << "ctxLine=" << ctxLine.left(20);
                 for (; prevEdge < s->context()->leftEdge(); prevEdge++)
                     line += " ";
 
