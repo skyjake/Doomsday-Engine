@@ -1396,7 +1396,7 @@ void Processor::addIncludePath(const String& path)
     if (str.isEmpty()) return;
     c = str[str.size() - 1];
     if (c != '/') str += '/';
-    _includeDirs << str;
+    _includeDirs.prepend(str);
 }
 
 String Processor::locateInclude(const String& fileName)
