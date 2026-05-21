@@ -426,6 +426,19 @@ DE_PIMPL(Editor)
                Mat4f::rotate(viewYawAngle,   Vec3f(0, 1, 0));
     }
 
+    // Maps a screen-space drag delta to a world XZ translation for view panning.
+    // Screen Y is foreshortened by cos(pitch) in the orthographic projection, so
+    // the vertical component is scaled by 1/cos(pitch) before yaw rotation.
+    Vec2d screenDeltaToWorld(float dx, float dy) const
+    {
+        const float pitchRad = viewPitchAngle * float(de::PI) / 180.f;
+        const float pitchCos = std::cos(pitchRad);
+        const float depthScale = (std::abs(pitchCos) > 0.01f) ? (1.f / pitchCos) : 0.f;
+        const Vec2f result = Mat4f::rotate(viewYawAngle, Vec3f(0, 0, 1)) *
+                             Vec2f(dx, dy * depthScale) / viewScale;
+        return Vec2d(result.x, result.y);
+    }
+
     void updateView()
     {
         const QSize viewSize = self().rect().size();
@@ -2026,7 +2039,7 @@ void Editor::mouseMoveEvent(QMouseEvent *event)
     case Impl::TranslateView: {
         QPoint delta = event->pos() - d->actionPos;
         d->actionPos = event->pos();
-        d->viewOrigin -= Vec2d(delta.x(), delta.y()) / d->viewScale;
+        d->viewOrigin -= d->screenDeltaToWorld(delta.x(), delta.y());
         d->updateView();
         break;
     }
@@ -2163,7 +2176,12 @@ void Editor::mouseDoubleClickEvent(QMouseEvent *event)
 
 void Editor::wheelEvent(QWheelEvent *event)
 {
-    const QPoint delta = event->pixelDelta();
+    QPoint delta = event->pixelDelta();
+    if (delta.isNull())
+    {
+        // angleDelta() units are eighths of a degree; 120 == one standard notch.
+        delta = event->angleDelta() / 3;
+    }
     if (event->modifiers() & Qt::ControlModifier)
     {
         d->rotateView(delta.x() * .25f, delta.y() * .25f);
@@ -2175,8 +2193,7 @@ void Editor::wheelEvent(QWheelEvent *event)
     }
     else
     {
-        d->viewOrigin -= Mat4f::rotate(d->viewYawAngle, Vec3f(0, 0, 1)) *
-                         Vec2f(delta.x(), delta.y()) / d->viewScale;
+        d->viewOrigin -= d->screenDeltaToWorld(delta.x(), delta.y());
     }
     d->updateView();
     update();
