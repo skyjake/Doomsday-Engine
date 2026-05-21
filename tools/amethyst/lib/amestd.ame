@@ -63,7 +63,10 @@ $ Table of contents.
         .Sh "TABLE OF CONTENTS" @br
         @contents{1 2}
     }@elifdef{WIKI}{
-        __TOC__ $ Mediawiki handles this for us.
+        $ Mediawiki handles this for us.
+        __TOC__
+    }@elifdef{GEMTEXT}{
+        $ no TOC, client provides one
     }@elifndef{DOKUWIKI}{
         @stdtoc
     }
@@ -130,10 +133,10 @@ $ Hyperlink with a title.
 	@ifdef{DOKUWIKI}{[[@glue{@arg{2}}@glue{|}@glue{@arg{1}}@glue{]]}}
 	@ifdef{WIKI}{[@arg{2} @arg{1}]}
 	@ifdef{MARKDOWN}{ @tag{[}@glue{@arg{1}}@glue{@tag{](}}@glue{@arg{2}}@glue{@tag{)}} }
-	@ifdef{GEMTEXT}{ @arg{1} }
+	@ifdef{GEMTEXT}{ @br @url{=> @sp @arg{2}} @sp @arg{1} @br }
 }
 
-$ mailto: link.
+$ "mailto:" link.
 @macro{mailto}{
     @ifdef{TXT}{ @email{@arg} }
 	@ifdef{HTML}{ @tag{ <a href="mailto:@nsp{@arg ">&lt;@arg &gt;</a>} } }
@@ -142,7 +145,7 @@ $ mailto: link.
     @ifdef{DOKUWIKI}{ @email{@arg} }
     @ifdef{WIKI}{ [@nsp{mailto:@arg @sp @arg{}] } }
 	@ifdef{MARKDOWN}{ [@nsp{&lt; @arg &gt;}](mailto:@nsp{@arg}@nsp{)} }
-	@ifdef{GEMTEXT}{ => mailto:@nsp{@arg} @sp @nsp{@arg} }
+	@ifdef{GEMTEXT}{ @br => mailto:@nsp{@arg} @sp @nsp{@arg} @br }
 }
 
 $ Executable/binary file.
@@ -224,15 +227,24 @@ ul li div,ol li div@{margin-bottom:1em;@}</style></head><body>} @break
 	    @ifdef{AUTHOR}{ by @AUTHOR @br }
 	    @ifdef{EMAIL}{ @mailto{@EMAIL} @br }
 	    @date @ifdef{LINK}{ @break @link{@LINK}{@LINK} }
-	    @apply{@n@n}{.}
+	    @break
 	}
 	@ifdef{GEMTEXT}{
 	    @tag{# } @TITLE @apply{@n@n}{.}
 	    @ifdef{VERSION}{ @VERSION @br }
-	    @ifdef{AUTHOR}{ by @AUTHOR @br }
-	    @ifdef{EMAIL}{ @mailto{@EMAIL} @br }
+	    @ifdef{AUTHOR}{
+            @ifdef{EMAIL}{
+                => mailto:@nsp{@EMAIL} by @AUTHOR
+            }@else{
+                by @AUTHOR
+            }
+            @br
+        }
+        @else{
+	        @ifdef{EMAIL}{ @mailto{@EMAIL} @br }
+        }
 	    @date @ifdef{LINK}{ @break @tag{=> } @LINK }
-	    @apply{@n@n}{.}
+	    @break
 	}
 }
 
@@ -304,19 +316,19 @@ $ Doomsday Engine Wiki specific macros.
 	@macro{wikilink}{@link{@arg{1}}{@tag{https://manual.dengine.net/@glue{@arg{2}}}}}
     @macro{wikiterm}{@wikilink{@arg}{@arg}}
 }
-@else{
-	@macro{wikiterm}{@arg}
-	@macro{wikilink}{@link{@arg{1}}{https://manual.dengine.net/@arg{2}}}
-}
-@ifdef{TXT}{
+@elifdef{TXT}{
 	$ Omit the hyperlinks in TXT files.
 	@macro{wikilink}{@arg}
 }
-@ifdef{GEMTEXT}{
+@elifdef{GEMTEXT}{
     $ Omit hyperlinks in Gemtext; links must be standalone lines.
+    @macro{wikilink}{@link{@arg{1}}{https://manual.dengine.net/@glue{@arg{2}}}}
     @macro{wikiterm}{@arg}
-    @macro{wikilink}{@arg{1}}
 }
-@ifdef{HELP}{
+@elifdef{HELP}{
     @macro{wikiterm}{@dquote{@arg} in wiki}
+}
+@else{
+	@macro{wikilink}{@link{@arg{1}}{https://manual.dengine.net/@arg{2}}}
+	@macro{wikiterm}{@arg}
 }

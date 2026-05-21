@@ -8,8 +8,8 @@ $ Copyright (c) 2011-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
 @begin
 
 @macro{stdlib}{@em{amestd}}
-@macro{ameword}{@cmd{@@}@glue{@cmd{@arg}}}
-@macro{amearg}{@glue{@{}@glue{@arg}@glue{@}}}
+@macro{ameword}{@cmd{@@ @nsp{@arg}}}
+@macro{amearg}{@nsp{@{ @arg @}}}
 
 @toc
 
@@ -121,8 +121,8 @@ they need to be escaped by putting another @@ in front.
 @samp{@pre{Escaping the @@@@ character.}}
 
 Lines that begin with @cmd{@$} are comments. To begin a longer commented
-section, use @cmd{@$}@glue{@cmd{*}}. The comment section ends at
-@cmd{*}@glue{@cmd{@$}}.
+section, use @cmd{@$ @nsp{*}}. The comment section ends at
+@cmd{* @nsp{@$}}.
 
 @samp{@pre{$ This is a line of comment.
 $* Begin a longer comment...

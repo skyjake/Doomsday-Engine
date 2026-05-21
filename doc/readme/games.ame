@@ -2,7 +2,7 @@
 
 @section{ Loading IWADs }
 
-Doomsday requires @link{IWAD files}{http://wiki.dengine.net/w/WAD} to run
+Doomsday requires @link{IWAD files}{https://manual.dengine.net/guide/wad} to run
 games. You can use the following ways to let the engine know where your IWADs
 can be found:
 
