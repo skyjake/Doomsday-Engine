@@ -46,11 +46,11 @@ $ Paragraph heading.
 @macro{parag}{
     @ifdef{TXT}{
         __ @glue{@arg} @glue{__}
-    }@else{@ifdef{GEMTEXT}{
+    }@elifdef{GEMTEXT}{
         @em{@arg}
     }@else{
         @strong{@arg}
-    }}
+    }
 }
 
 $ Date.
@@ -62,32 +62,31 @@ $ Table of contents.
     @ifdef{MAN}{
         .Sh "TABLE OF CONTENTS" @br
         @contents{1 2}
-    }@else{@ifdef{WIKI}{
+    }@elifdef{WIKI}{
         __TOC__ $ Mediawiki handles this for us.
-    }@else{@ifndef{DOKUWIKI}{
+    }@elifndef{DOKUWIKI}{
         @stdtoc
-    }}}
+    }
 }
 
 $ Underline.
 @macro{underline}{
     @ifdef{HTML}{
         @tag{<span style="text-decoration: underline;">}@arg@tag{</span>}
-    }@else{@ifdef{MARKDOWN}{
+    }@elifdef{MARKDOWN}{
         @tag{<u>}@arg@tag{</u>}
+    }@elifdef{TXT}{
+        @arg @apply{@R-}{.}
     }@else{
-        @ifdef{TXT}{ @arg @apply{@R-}{.} }
-        @else{@arg}
-    }}
+        @arg
+    }
 }
 
 $ Double quoting.
 @macro{dquote}{
     @ifdef{HTML}{@tag{&#147;}@glue{@arg}@tag{@nsp{&#148;}}}
-    @else{
-        @ifdef{TXT}{"@glue{@arg}@nsp{"}} $ previously used LaTeX-like `` and ''
-        @else{"@glue{@arg}@nsp{"}}
-    }
+    @elifdef{TXT}{"@glue{@arg}@nsp{"}} $ previously used LaTeX-like `` and ''
+    @else{"@glue{@arg}@nsp{"}}
 }
 
 $ Anchor.
@@ -108,18 +107,18 @@ $ Reference to an anchor.
 	@ifdef{HTML}{
 		@tag{<a href="#@nsp{@arg{1}">}} @glue{@arg{2}} @tag{@nsp{</a>}}
     }
-    @else{@ifdef{MARKDOWN}{
+    @elifdef{MARKDOWN}{
         @tag{[} @glue{@arg{2}} @tag{@nsp{](#@nsp{@arg{1}}@nsp{)}}}
     }
-    @else{@ifdef{DOKUWIKI}{
+    @elifdef{DOKUWIKI}{
         @tag{<html><a href="#@nsp{@arg{1}">}} @glue{@arg{2}} @tag{@nsp{</a></html>}}
     }
-    @else{@ifdef{MAN}{
+    @elifdef{MAN}{
         @apply{@u}{@arg{2}}
     }
     @else{
         @arg{2}
-    }}}}
+    }
 }
 
 $ Hyperlink with a title.
@@ -258,43 +257,34 @@ $ Specify an author with contact information. (Manual page only.)
 
 @macro{ident}{
     @ifdef{DOKUWIKI}{''@arg{}''}
-    @else{
-        @ifdef{WIKI}{@{@{Identifier|@glue{@arg}@}@}}
-        @else{
-            @ifdef{HELP}{@arg}
-            @else{@cmd{@arg}}
-        }
-    }
+    @elifdef{WIKI}{@{@{Identifier|@glue{@arg}@}@}}
+    @elifdef{HELP}{@arg}
+    @else{@cmd{@arg}}
 }
 
 @macro{help_arg}{
     @ifdef{DOKUWIKI}{//@arg{}//}
-    @else{
-        @ifdef{WIKI}{@{@{Argument|@glue{@arg}@}@}}
-        @else{(@arg{})}
-    }
+    @elifdef{WIKI}{@{@{Argument|@glue{@arg}@}@}}
+    @else{(@arg{})}
 }
 
 @macro{help_optionalarg}{
     @ifdef{DOKUWIKI}{//[ @arg ]//}
-    @else{
-        @ifdef{WIKI}{@{@{Optional|@glue{@help_arg{@arg}}@}@}}
-        @else{[@help_arg{@arg}]}
-    }
+    @elifdef{WIKI}{@{@{Optional|@glue{@help_arg{@arg}}@}@}}
+    @else{[@help_arg{@arg}]}
 }
 
 $ Makes a special note.
 @macro{notice}{
     @ifdef{DOKUWIKI}{@tag{<note>}@arg@tag{</note>}}
-    @else{@ifdef{HTML}{
+    @elifdef{HTML}{
         @tag{<table border="0" cellpadding="3" valign="top"><tr>
         <td><b>NOTE:</b></td><td>}
         @arg @tag{</td></tr></table>}
     }
-    @else{@ifdef{MARKDOWN}{ @tag{> **NOTE:**@_}@arg }
-    @else{@ifdef{GEMTEXT}{ @tag{NOTE:@_}@arg }
-    @else{ @list/note{ @item @arg }
-    }}}}
+    @elifdef{MARKDOWN}{ @tag{> **NOTE:**@_}@arg }
+    @elifdef{GEMTEXT}{ @tag{NOTE:@_}@arg }
+    @else{ @list/note{ @item @arg } }
 }
 
 $ Doomsday Engine Wiki specific macros.
@@ -302,22 +292,22 @@ $ Doomsday Engine Wiki specific macros.
     @macro{wikiterm}{[[@glue{@arg}]]}
     @macro{wikilink}{[[@glue{@arg{2}}@glue{|}@glue{@arg{1}}]]}
 }
-@else{@ifdef{WIKI}{
+@elifdef{WIKI}{
 	@macro{wikiterm}{[[@glue{@arg}]]}
 	@macro{wikilink}{[[@glue{@arg{2}}@glue{|}@glue{@arg{1}}]]}
 }
-@else{@ifdef{HTML}{
+@elifdef{HTML}{
 	@macro{wikilink}{@link{@arg{1}}{@tag{https://manual.dengine.net/@glue{@arg{2}}}}}
     @macro{wikiterm}{@wikilink{@arg}{@arg}}
 }
-@else{@ifdef{MARKDOWN}{
+@elifdef{MARKDOWN}{
 	@macro{wikilink}{@link{@arg{1}}{@tag{https://manual.dengine.net/@glue{@arg{2}}}}}
     @macro{wikiterm}{@wikilink{@arg}{@arg}}
 }
 @else{
 	@macro{wikiterm}{@arg}
 	@macro{wikilink}{@link{@arg{1}}{https://manual.dengine.net/@arg{2}}}
-}}}}
+}
 @ifdef{TXT}{
 	$ Omit the hyperlinks in TXT files.
 	@macro{wikilink}{@arg}

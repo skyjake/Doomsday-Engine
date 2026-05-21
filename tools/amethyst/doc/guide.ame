@@ -44,7 +44,7 @@ following software installed on your system:
 
 The Amethyst source code is included in the Doomsday Engine Git repository:
 
-@ind{@url{http://github.com/skyjake/Doomsday-Engine/tree/master/doomsday/tools/amethyst}}
+@ind{@url{https://git.skyjake.fi/doomsday/engine/tree/main/tools/amethyst}}
 
 @section{Installation}
 

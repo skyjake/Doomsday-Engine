@@ -329,39 +329,58 @@ bool Processor::parseAt(Shard *parent)
             parent->steal(command->last());
         }
 
-        // The conditional may be followed by @else, let's check.
-        getToken(token);
-        if (token == "@")
+        // The conditional may be followed by @else or @elifdef/@elifndef.
+        for (bool elseChaining = true; elseChaining; )
         {
-            // Ok, let's see what it is.
+            getToken(token);
+            if (token != "@") { pushToken(token); break; }
+
             getToken(token);
             if (token == "else")
             {
                 getToken(token);
-                if (token != "{") error("Expected an argument after else.");
+                if (token != "{") error("Expected an argument after @else.");
+                if (!condFail)
+                    _in->skipToMatching();
+                else
+                    parseStatement(parent);
+                elseChaining = false;
+            }
+            else if (token == "elifdef" || token == "elifndef")
+            {
+                bool elseIfDefined = (token == "elifdef");
+                // Read the condition name from {COND}.
+                getToken(token);
+                if (token != "{") error("Expected a condition after @elifdef/@elifndef.");
+                getToken(token);
+                String newCond = token;
+                String skip;
+                while (getToken(skip) && skip != "}") {} // consume rest of condition block
+                // Read the opening { of the content block.
+                getToken(token);
+                if (token != "{") error("Expected a content block after @elifdef/@elifndef condition.");
                 if (!condFail)
                 {
-                    // The actual condition succeeded, so just skip the else part.
+                    // A prior branch already matched; skip this content.
                     _in->skipToMatching();
                 }
                 else
                 {
-                    // The condition failed, which means we must parse else's
-                    // contents and use them.
-                    parseStatement(parent);
+                    condFail = (_macros.find(newCond) != 0) != elseIfDefined;
+                    if (!condFail)
+                        parseStatement(parent);
+                    else
+                        _in->skipToMatching();
                 }
+                // Continue the loop: more @elifdef or @else may follow.
             }
             else
             {
-                // Go back, this is not an else.
+                // Not an else continuation; put back what we consumed.
                 pushToken(token);
                 pushToken("@");
+                elseChaining = false;
             }
-        }
-        else
-        {
-            // Go back, this is not a command...
-            pushToken(token);
         }
     }
 
