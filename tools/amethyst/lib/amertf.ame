@@ -106,7 +106,7 @@ $ Indented styles.
 $ Tables.
 @format{parent table}{
     @< @N\itap1\trowd@v(7=x @.)
-       $ Left-side padding cell.
+       $ Left-side padding cell for indentation (600 twips = \li600 body margin).
        \clwWidth600\clftsWidth3
        \trbrdrt\brdrnil \trbrdrl\brdrnil \trbrdrr\brdrnil
        \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil
