@@ -4,15 +4,36 @@ $ Header/footer.
 @format{top}{@< @{\rtf1\ansi\ansicpg1252@n
     @{\fonttbl\f0\fswiss\fcharset0@_Helvetica;
         \f1\fmodern\fcharset0@_Courier@_New;@}@n
-        \paperw11900\vieww9500\viewh13000
-        \sb240\li600\fi0\tx600\tx1200\tx1800\tx2400\tx3000@n @> @}}
+        \paperw11900\paperh16837\vieww9500\viewh13000
+        \fs22\sb240\li600\fi0\tx600\tx1200\tx1800\tx2400\tx3000@n @> @}}
 
 $*** FORMATTING RULES ***$
 
 $ Escape any RTF control characters in the input text.
 @format{tag}{@=}
-@format{!tag}{@s(\|\\) @s(@{|\@{) @s(@}|\@}) @s(ä|\'e4) @s(ö|\'f6) @s(Ä|\'c4) @s(Ö|\'d6) @=}
-@format{break prev try center part chapter section subsec sub2sec pre list deflist table !pass 
+@format{!tag}{@s(\|\\) @s(@{|\@{) @s(@}|\@})
+    $ Lowercase accented: a e i o u n c y s z
+    @s(à|\'e0) @s(á|\'e1) @s(â|\'e2) @s(ã|\'e3) @s(ä|\'e4) @s(å|\'e5) @s(æ|\'e6)
+    @s(è|\'e8) @s(é|\'e9) @s(ê|\'ea) @s(ë|\'eb)
+    @s(ì|\'ec) @s(í|\'ed) @s(î|\'ee) @s(ï|\'ef)
+    @s(ò|\'f2) @s(ó|\'f3) @s(ô|\'f4) @s(õ|\'f5) @s(ö|\'f6) @s(ø|\'f8)
+    @s(ù|\'f9) @s(ú|\'fa) @s(û|\'fb) @s(ü|\'fc)
+    @s(ñ|\'f1) @s(ç|\'e7) @s(ý|\'fd) @s(ÿ|\'ff) @s(ß|\'df)
+    @s(š|\'9a) @s(ž|\'9e) @s(œ|\'9c)
+    $ Uppercase accented: A E I O U N C Y S Z
+    @s(À|\'c0) @s(Á|\'c1) @s(Â|\'c2) @s(Ã|\'c3) @s(Ä|\'c4) @s(Å|\'c5) @s(Æ|\'c6)
+    @s(È|\'c8) @s(É|\'c9) @s(Ê|\'ca) @s(Ë|\'cb)
+    @s(Ì|\'cc) @s(Í|\'cd) @s(Î|\'ce) @s(Ï|\'cf)
+    @s(Ò|\'d2) @s(Ó|\'d3) @s(Ô|\'d4) @s(Õ|\'d5) @s(Ö|\'d6) @s(Ø|\'d8)
+    @s(Ù|\'d9) @s(Ú|\'da) @s(Û|\'db) @s(Ü|\'dc)
+    @s(Ñ|\'d1) @s(Ç|\'c7) @s(Ý|\'dd)
+    @s(Š|\'8a) @s(Ž|\'8e) @s(Œ|\'8c) @s(Ÿ|\'9f)
+    $ Common symbols
+    @s(€|\'80) @s(©|\'a9) @s(®|\'ae) @s(™|\'99)
+    @s(°|\'b0) @s(§|\'a7) @s(µ|\'b5) @s(¶|\'b6)
+    @s(«|\'ab) @s(»|\'bb) @s(·|\'b7)
+    @=}
+@format{break prev try center part chapter section subsec sub2sec pre list deflist table !pass
     @ preceding !^indent !^pre}{\@n}
 @format{br}{\line@n}
 
@@ -44,9 +65,9 @@ $*
 *$
 
 $ Lists.
-@format{prev try chapter section subsec sub2sec !pass 
+@format{prev try chapter section subsec sub2sec !pass
     @ try br break pass following list}{ \@n@{\li1200 }
-@format{prev try chapter section subsec sub2sec pass 
+@format{prev try chapter section subsec sub2sec pass
     @ try br break pass following list}{ @{\li1200 }
 @format{thin list}{@< \sb40 }
 @format{list}{ @> @} }
@@ -69,7 +90,7 @@ $ Titles.
 @format{!^contents try part chapter pass}{@< @=\fs36@_}
 @format{!^contents section}{@< @=\fs30@_}
 @format{parent child 1 parent chapter}{@=.}
-@format{!^contents parent child 1 parent 
+@format{!^contents parent child 1 parent
     try part chapter section subsec sub2sec sub3sec sub4sec pass}{@=\tab@_}
 
 $ Table of contents.
@@ -86,23 +107,23 @@ $ Tables.
 @format{parent table}{
     @< @N\itap1\trowd@v(7=x @.)
        $ Left-side padding cell.
-       \clwWidth600\clftsWidth3 
+       \clwWidth600\clftsWidth3
        \trbrdrt\brdrnil \trbrdrl\brdrnil \trbrdrr\brdrnil
        \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil
        \gaph\cellx600 @n
        $ Anchor for the real cell defs.
-       @& 
+       @&
     @> \row}
 @format{child 1 parent child 1 parent2 table}{@< \cell @| @=} $ Padding cell.
 @format{parent2 table}{
-    @< \pard\intbl\itap1 
-    @] \clwWidth@v(81*@w)\clftsWidth3 
+    @< \pard\intbl\itap1
+    @] \clwWidth@v(81*@w)\clftsWidth3
        \trbrdrt\brdrnil \trbrdrl\brdrnil \trbrdrr\brdrnil
        \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil
        \clvertalt\clpadl100\clpadr100\gaph\cellx@v(x+@w=x * 81)@n
     @> \cell}
 @format{parent child 1 parent table}{
-    @< \pard\sb240\intbl\itap1 
+    @< \pard\sb240\intbl\itap1
 }
 @format{count 0 parent2 table}{@< \pard\intbl\itap1 \cell}
 @format{child -1 parent table}{@> \lastrow\row@n\sb240\li600\fi0\tx600\tx1200\tx1800\tx2400\tx3000@n}
