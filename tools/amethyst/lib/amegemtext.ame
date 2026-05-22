@@ -16,12 +16,20 @@ $ (Tables are preformatted, so even more limited styling inside them.)
 @format{!^table order 1  parent cmd}{`@=}
 @format{!^table order -1 parent cmd}{@=`}
 
-$ Standalone URL elements.
-$@format{!^list !^deflist parent url}{@n=>@_@=@n}
+@ifndef{NUMBERED}{
+    $ Remove section numbers; heading text is in child 2.
+    @format{
+        parent child 1
+        parent try
+            chapter section subsec sub2sec sub3sec
+        pass
+    }{}
+    @format{!^contents parent child 1 parent chapter}{##@_@=}
+}@else{
+    @format{!^contents parent child 1 parent chapter}{##@_@=.}
+}
 
 $ Headings with number columns: prefix with ## / ### markers.
-$@format{^contents parent child 1 parent chapter}{@=.}
-@format{!^contents parent child 1 parent chapter}{##@_@=.}
 @format{!^contents parent child 1 parent section}{###@_@=}
 @format{!^contents parent child 1 parent subsec}{###@_@=}
 @format{!^contents parent child 1 parent sub2sec}{###@_@=}

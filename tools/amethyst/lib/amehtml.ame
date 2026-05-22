@@ -50,7 +50,7 @@ $ Table of contents.
 
 $ Titles.
 @format{parent child 1 parent chapter}{@=.}
-@format{!^contents parent2 try chapter section subsec pass 
+@format{!^contents parent2 try chapter section subsec pass
 	@ order 1 parent child 1}{<a@_name="@=">@=</a>@_}
 @format{!^contents parent2 chapter @ order 1 parent child 1}{<h2>@=}
 @format{!^contents parent2 chapter @ order -1 parent child 2}{@=</h2>}

@@ -67,6 +67,8 @@ $ Table of contents.
         __TOC__
     }@elifdef{GEMTEXT}{
         $ no TOC, client provides one
+    }@elifdef{MARKDOWN}{
+        $ no TOC, viewer provides one
     }@elifndef{DOKUWIKI}{
         @stdtoc
     }
