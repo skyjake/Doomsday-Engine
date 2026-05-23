@@ -24,13 +24,13 @@ $ (Tables are preformatted, so even more limited styling inside them.)
             chapter section subsec sub2sec sub3sec
         pass
     }{}
-    @format{!^contents parent child 1 parent chapter}{##@_@=}
+    @format{!^contents parent child 1 parent chapter}{#@_@=}
 }@else{
-    @format{!^contents parent child 1 parent chapter}{##@_@=.}
+    @format{!^contents parent child 1 parent chapter}{#@_@=.}
 }
 
 $ Headings with number columns: prefix with ## / ### markers.
-@format{!^contents parent child 1 parent section}{###@_@=}
+@format{!^contents parent child 1 parent section}{##@_@=}
 @format{!^contents parent child 1 parent subsec}{###@_@=}
 @format{!^contents parent child 1 parent sub2sec}{###@_@=}
 @format{!^contents parent child 1 parent sub3sec}{###@_@=}
