@@ -263,6 +263,9 @@ void Schedule::render(QTextStream &os, bool structuredOutput)
         {
             // Now the line can be printed.
             completedLines << trimRight(line);
+            // Reset the line buffer so non-fill rendering after this tick
+            // does not inherit the padded fill content.
+            line = linePrefix;
         }
 
         // Advance as long as possible.
