@@ -31,7 +31,7 @@ String stringCase(const String& src, StringCasing casing)
     bool firstInWord = true;
     bool firstAlnum = true;
     const int len = src.size();
-    
+
     // Move past spaces in the beginning.
     int i = 0;
     while (i < len && src[i].isSpace()) ++i;
@@ -71,7 +71,7 @@ String stringInterlace(const String& src, QChar c)
 {
     String dest;
     int len = src.size();
-    
+
     for (int i = 0; i < len; i++)
     {
         dest += src[i];
@@ -143,7 +143,7 @@ String romanCounter(int num)
                 num -= symbols[i].value;
                 break;
             }
-            if (symbols[i].unit > 0 
+            if (symbols[i].unit > 0
                 && num >= symbols[i].value - symbols[i].unit)
             {
                 for (int k = 0; k < numSymbols; k++)
@@ -198,6 +198,7 @@ String hmtlCharacterFilter(const String& input)
     String out = input;
     out.replace("&", "&amp;");
     out.replace("\"", "&quot;");
+    // FIXME: The HTML output is UTF-8 encoded now so these are largely unnecessary.
     out.replace(QString::fromWCharArray(L"ä"), "&auml;");
     out.replace(QString::fromWCharArray(L"Ä"), "&Auml;");
     out.replace(QString::fromWCharArray(L"ö"), "&ouml;");
@@ -255,7 +256,7 @@ String cutMarkedSegments(String segmented)
 String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem *gem)
 {
     String output, fmt = filter;
-    bool escape = false; 
+    bool escape = false;
     typedef QPair<QString, QString> Replacement;
     QList<Replacement> replacements;
     static int xVar = 0;
@@ -302,7 +303,7 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
         fmt.remove(0, 1);
         if (!escape)
         {
-            if (c == '@') 
+            if (c == '@')
                 escape = true;
             else
                 output += c;
@@ -575,7 +576,7 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
             output += OutputContext::CtrlAnchor;
             break;
 
-        case 'a':       // Alphabetic counter.      
+        case 'a':       // Alphabetic counter.
         case 'A':
             output += stringCase(alphaCounter(gem->order()), c == 'A'? UPPERCASE_ALL : LOWERCASE_ALL);
             break;
@@ -588,7 +589,7 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
         case 'c':       // Counter.
             output += QString::number(gem->order() + 1);
             break;
-        
+
         case 'd':       // Flush left.
             output += char(OutputContext::CtrlAlign);
             output += 'L';
@@ -707,7 +708,7 @@ String applyFilter(String input, const String& filter, FilterApplyMode mode, Gem
         output.replace(r.first, r.second);
     }
 
-    return output;          
+    return output;
 }
 
 ArgType interpretArgType(const String& types, int index)
@@ -715,7 +716,7 @@ ArgType interpretArgType(const String& types, int index)
     if (types.isEmpty()) return ArgShard;
     if (index < 0) index = 0;
     if (index >= int(types.size())) index = types.size() - 1;
-        
+
     QChar t = types[index];
     if (t == 't') return ArgToken;
     if (t == 'b') return ArgBlock;
@@ -762,7 +763,7 @@ static struct { const char *condition; uint32_t flag; } gemFlags[] =
 int styleForName(const String& name)
 {
     for (int i = 0; gemFlags[i].condition; i++)
-        if (name == gemFlags[i].condition) 
+        if (name == gemFlags[i].condition)
             return gemFlags[i].flag;
     return 0;
 }
