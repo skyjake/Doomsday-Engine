@@ -75,4 +75,4 @@ $ Lists.
 $ Tables use the same column width as plain text format.
 $ leftmargin 0 avoids a stale-context padding artifact that would add a
 $ spurious leading space to all headings and TOC entries after a table.
-@length{table}{spacing 0 leftmargin 0 rightmargin 0 width 65}
+@length{table}{spacing 0 leftmargin 2 rightmargin 2 width 60}

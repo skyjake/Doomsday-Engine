@@ -134,8 +134,8 @@ $ Hyperlink with a title.
 	@ifdef{MAN}{ @arg{1} (@url{@arg{2}}) }
 	@ifdef{DOKUWIKI}{[[@glue{@arg{2}}@glue{|}@glue{@arg{1}}@glue{]]}}
 	@ifdef{WIKI}{[@arg{2} @arg{1}]}
-	@ifdef{MARKDOWN}{ @tag{[}@glue{@arg{1}}@glue{@tag{](}}@glue{@arg{2}}@glue{@tag{)}} }
-	@ifdef{GEMTEXT}{ @br @url{=> @sp @arg{2}} @sp @arg{1} @br }
+	@ifdef{MARKDOWN}{ @tag{[}@glue{@arg{1}}@glue{@tag{](}}@nsp{@arg{2}}@glue{@tag{)}} }
+	@ifdef{GEMTEXT}{ @br @url{=> @sp @arg{2}} @sp@sp @arg{1} @br }
 }
 
 $ "mailto:" link.
@@ -172,7 +172,8 @@ ul li div,ol li div@{margin-bottom:1em;@}</style></head><body>} @break
 		@ifdef{VERSION}{ @tag{<b>} @VERSION @tag{</b>} @br }
 		@ifdef{AUTHOR}{ by @AUTHOR @br }
 		@ifdef{EMAIL}{ @mailto{@EMAIL} @br }
-		@date @ifdef{LINK}{ @break @link{@LINK}{@LINK} }
+		@ifndef{NODATE}{@date}
+        @ifdef{LINK}{ @break @link{@LINK}{@LINK} }
 		@tag{</center>}
 		@break
 	}
@@ -199,7 +200,7 @@ ul li div,ol li div@{margin-bottom:1em;@}</style></head><body>} @break
 			@ifdef{VERSION}{ @VERSION @break }
 			@ifdef{AUTHOR}{ by @AUTHOR @br }
 			@ifdef{EMAIL}{ @mailto{@EMAIL} @br }
-			@date @break
+			@ifndef{NODATE}{ @date @break }
 			@ifdef{LINK}{ @LINK }
 		}
 		@apply{@n@n}{.}
@@ -217,7 +218,7 @@ ul li div,ol li div@{margin-bottom:1em;@}</style></head><body>} @break
 			    by @ifdef{LINK}{@link{@AUTHOR}{@LINK}}@else{@AUTHOR} @br
 		    }
 			@ifdef{EMAIL}{ @mailto{@EMAIL} @br }
-			@date @br
+			@ifndef{NODATE}{ @date }
 	    }
 	}
 	@ifdef{HELP}{
@@ -228,7 +229,8 @@ ul li div,ol li div@{margin-bottom:1em;@}</style></head><body>} @break
 	    @ifdef{VERSION}{ @tag{**}@glue{@VERSION}@glue{@tag{**}} @br }
 	    @ifdef{AUTHOR}{ by @AUTHOR @br }
 	    @ifdef{EMAIL}{ @mailto{@EMAIL} @br }
-	    @date @ifdef{LINK}{ @break @link{@LINK}{@LINK} }
+	    @ifndef{NODATE}{ @date @br }
+        @ifdef{LINK}{ @break @link{@LINK}{@LINK} }
 	    @break
 	}
 	@ifdef{GEMTEXT}{
@@ -245,7 +247,8 @@ ul li div,ol li div@{margin-bottom:1em;@}</style></head><body>} @break
         @else{
 	        @ifdef{EMAIL}{ @mailto{@EMAIL} @br }
         }
-	    @date @ifdef{LINK}{ @break @tag{=> } @LINK }
+	    @ifndef{NODATE}{ @date @br }
+        @ifdef{LINK}{ @break @tag{=> } @LINK }
 	    @break
 	}
 }

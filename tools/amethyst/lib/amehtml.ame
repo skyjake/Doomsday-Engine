@@ -1,9 +1,10 @@
 $ Amethyst HTML formatting.
 
 $ HTML header/footer.
-@format{top}{@< <!DOCTYPE@_HTML@_PUBLIC@_"-//W3C//DTD@_HTML@_4.0@_
-	Transitional//EN"@n"http://www.w3.org/TR/REC-html40/loose.dtd">@n
+@format{top}{@< <!DOCTYPE@_html>@n
 	<html>@n
+	<head><meta@_charset="UTF-8"></head>@n
+	<body>@n
 	@> @N</body>@n</html>}
 
 $*** FORMATTING RULES ***$

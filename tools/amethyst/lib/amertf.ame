@@ -32,6 +32,7 @@ $ Escape any RTF control characters in the input text.
     @s(€|\'80) @s(©|\'a9) @s(®|\'ae) @s(™|\'99)
     @s(°|\'b0) @s(§|\'a7) @s(µ|\'b5) @s(¶|\'b6)
     @s(«|\'ab) @s(»|\'bb) @s(·|\'b7)
+    @s(–|\'96) @s(—|\'97)
     @=}
 @format{break prev try center part chapter section subsec sub2sec pre list deflist table !pass
     @ preceding !^indent !^pre}{\@n}
@@ -39,9 +40,10 @@ $ Escape any RTF control characters in the input text.
 
 $ Styles.
 @format{control center parent !center}{@< \qc}
-@format{order -1 parent control center parent !center}
-    {order -1 parent child -1 center parent control center parent !center}
-    {@= @> \par\ql@n}
+@format{!center prev control center parent !center}{@< \par\ql@_}
+$@format{order -1 parent control center parent !center}
+$    {order -1 parent child -1 center parent control center parent !center}
+$    {@= @> \par\ql@n}
 @format{order 1 parent try em def var caption pass}{@{\i@_@=}
 @format{order -1 parent try em def var caption pass}{@=@}}
 @format{order 1 parent try strong cmd header pass}{@{\b@_@=}
