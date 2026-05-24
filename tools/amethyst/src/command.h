@@ -49,16 +49,17 @@ public:
     bool isItemCommand();
     bool isRuleCommand();
     bool isSourceCommand();
+    bool isEnvCommand() const { return _name == "ENV"; }
     bool isApplyCommand() const { return _name == "apply"; }
     bool isSetCommand() const { return _name == "set"; }
-    
+
     bool isIndependent();
     bool isBreaking(); // paragraph break before
     bool isPostBreaking() { return _rule.hasFlag(CRF_POST_BREAKING); }
     bool isLineBreaking(); // line break before
     bool isPostLineBreaking() { return _rule.hasFlag(CRF_POST_LINE_BREAKING); }
     bool isTidy() { return _rule.hasFlag(CRF_TIDY); }
-    
+
     int styleFlag();
     const GemClass &gemClass() { return _rule.gemClass(); }
 

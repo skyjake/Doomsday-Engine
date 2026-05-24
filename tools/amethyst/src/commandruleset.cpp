@@ -64,6 +64,7 @@ void CommandRuleSet::initStandardRules()
     // Independent commands have a Gem of their own, and breaking ones
     // require a Break gem in front.
 
+    newRule("ENV",      GemClass(), CRF_TIDY, "t");
     newRule("output",   GemClass(), CRF_TIDY, "b");
     //newRule("input",    GemClass(), CRF_TIDY, "b");
     newRule("include",  GemClass(), CRF_TIDY, "t");
@@ -101,7 +102,7 @@ void CommandRuleSet::initStandardRules()
     newRule("huge",     GemClass(GSF_HUGE), CRF_INDEPENDENT);
     newRule("small",    GemClass(GSF_SMALL), CRF_INDEPENDENT);
     newRule("tiny",     GemClass(GSF_TINY), CRF_INDEPENDENT);
-    
+
     // Pure style commands only affect other gems.
     newRule("enum",     GemClass(GSF_ENUMERATE), 0);
 

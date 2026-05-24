@@ -486,6 +486,19 @@ bool Processor::parseAt(Shard *parent)
         if (tok) tok->set(replace(tok->token(), '\n', '\r'));
     }
 
+    // ENV commands inject the value of the named environment variable.
+    if (command->isEnvCommand())
+    {
+        Token *nameTok = command->arg();
+        if (nameTok)
+        {
+            QByteArray val = qgetenv(nameTok->token().toUtf8().constData());
+            Block *block = new Block;
+            parent->add(block);
+            block->add(new Token(QString::fromUtf8(val)));
+        }
+    }
+
     // Tidy commands do not generate even shards.
     if (command->isTidy()) delete parent->remove(command);
     return true;
