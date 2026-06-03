@@ -4,11 +4,6 @@ cmake_minimum_required (VERSION 3.10)
 project (Tools)
 include (../cmake/Config.cmake)
 
-# Amethyst is expected to go to (e.g.) /usr/local/bin, while the rest
-# goes to products/. Compile and install it manually beforehand.
-#
-# add_subdirectory (amethyst)
-
 add_subdirectory (doomsdayscript)
 add_subdirectory (md2tool)
 add_subdirectory (savegametool)
