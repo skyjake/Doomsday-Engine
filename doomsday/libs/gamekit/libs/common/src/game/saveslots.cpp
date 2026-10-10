@@ -285,7 +285,7 @@ DE_PIMPL(SaveSlots)
         DE_FOR_EACH_CONST(Slots, i, sslots)
         {
             SaveSlot *sslot = i->second;
-            if (sslot->savePath() == saveFolder.path())
+            if (!sslot->savePath().compareWithoutCase(saveFolder.path()))
             {
                 sslot->setGameStateFolder(nullptr);
             }
