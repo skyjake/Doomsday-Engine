@@ -45,6 +45,32 @@ fluid_audio_driver_t* DMFluid_Driver()
     return fsDriver;
 }
 
+bool DMFluid_StopDriver()
+{
+    if (!fsDriver)
+    {
+        return false;
+    }
+
+    delete_fluid_audio_driver(fsDriver);
+    fsDriver = nullptr;
+    return true;
+}
+
+void DMFluid_StartDriver()
+{
+#ifndef FLUIDSYNTH_NOT_A_DLL
+    if (fsSynth && !fsDriver)
+    {
+        fsDriver = new_fluid_audio_driver(fsConfig, fsSynth);
+        if (!fsDriver)
+        {
+            App_Log(DE2_AUDIO_ERROR, "[FluidSynth] Failed to restart audio driver");
+        }
+    }
+#endif
+}
+
 audiointerface_sfx_generic_t* DMFluid_Sfx()
 {
     DE_ASSERT(fsSfx != 0);
@@ -84,7 +110,7 @@ static int DS_Init(void)
         free(cfgValue);
     }
     fluid_settings_setstr(fsConfig, "audio.driver", driverName.c_str());
-    fsDriver = new_fluid_audio_driver(fsConfig, fsSynth);
+    DMFluid_StartDriver();
     if (!fsDriver)
     {
         App_Log(DE2_AUDIO_ERROR, "[FluidSynth] Failed to load audio driver '%s'", driverName.c_str());
@@ -109,10 +135,7 @@ static void DS_Shutdown(void)
 
     DSFLUIDSYNTH_TRACE("DS_Shutdown.");
 
-    if (fsDriver)
-    {
-        delete_fluid_audio_driver(fsDriver);
-    }
+    DMFluid_StopDriver();
     delete_fluid_synth(fsSynth);
     delete_fluid_settings(fsConfig);
 
