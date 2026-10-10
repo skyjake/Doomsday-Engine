@@ -42,6 +42,8 @@
 
 fluid_synth_t *                 DMFluid_Synth();
 fluid_audio_driver_t *          DMFluid_Driver();
+bool                            DMFluid_StopDriver();
+void                            DMFluid_StartDriver();
 audiointerface_sfx_generic_t *  DMFluid_Sfx();
 
 #define MAX_SYNTH_GAIN      0.4f
