@@ -308,7 +308,11 @@ static void stopPlayer()
     DSFLUIDSYNTH_TRACE("stopPlayer: fsPlayer " << fsPlayer);
     if (!fsPlayer) return;
 
-    if (!DMFluid_Driver())
+    // The audio driver's render thread may be traversing this player's sample
+    // timers. Stop it before deleting the player to avoid a use-after-free.
+    bool restartDriver = DMFluid_StopDriver();
+
+    if (!restartDriver)
     {
         stopWorker();
 
@@ -326,6 +330,11 @@ static void stopPlayer()
     blockBuffer->clear();
 
     fluid_synth_system_reset(DMFluid_Synth());
+
+    if (restartDriver)
+    {
+        DMFluid_StartDriver();
+    }
 }
 
 int fluidsynth_DM_Music_Init(void)
